@@ -917,6 +917,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<AssetManagementAiAnalysisHistoryEntry>
       _assetManagementAiSummaryReferencedHistory =
       const <AssetManagementAiAnalysisHistoryEntry>[];
+  // 同日 (基準日) の「保存済み最新分析」を再利用判定に使うためのセッション内
+  // キャッシュ。プローブ (loadLatestForBaseDate) は指紋が変わる度 (残高編集・
+  // 引落確認など) に走るが、同一基準日では結果が保存されるまで不変なので、
+  // 端末内にキャッシュして毎回の DB 往復を省く。新規保存でキーを無効化し、
+  // 基準日が変われば別キーとして必ず取り直す。
+  String? _assetManagementLatestForBaseDateCacheKey;
+  AssetManagementAiAnalysisHistoryEntry? _assetManagementLatestForBaseDateCache;
+  bool _assetManagementLatestForBaseDateCacheLoaded = false;
   UserProfile? _assetManagementUserProfile;
   bool _isLoadingAssetManagementUserProfile = false;
   List<Map<String, dynamic>> _payslipRows = <Map<String, dynamic>>[];
@@ -20007,11 +20015,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!force) {
       AssetManagementAiAnalysisHistoryEntry? reusable;
       try {
-        final latest = await _assetManagementAiAnalysisHistoryService
-            .loadLatestForBaseDate(
-          reportBaseDate:
-              AssetManagementAiAnalysisHistoryService.reportBaseDateKey(
-                  report.workbook.baseDate),
+        final latest = await _latestAssetManagementAiAnalysisForBaseDate(
+          report.workbook.baseDate,
         );
         if (latest != null &&
             (latest.requestFingerprint == key ||
@@ -20112,6 +20117,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           report: report,
           requestFingerprint: key,
         );
+        // 新しい分析を保存したので「同日最新」キャッシュを無効化する
+        // (次回プローブが最新行を取り直し、再利用/クールダウン判定に反映)。
+        _invalidateAssetManagementLatestForBaseDateCache();
       } catch (_) {
         // AI分析の表示を優先し、履歴保存失敗は次回の再試行に任せます。
       }
@@ -20130,6 +20138,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _assetManagementAiSummaryInFlightKey = null;
       _assetManagementAiSummaryRequestKey = key;
     });
+  }
+
+  /// 同一基準日の「保存済み最新分析」を返す (セッション内キャッシュ優先)。
+  /// 指紋が変わる度に呼ばれるが、同一基準日ではキャッシュを返して DB 往復を
+  /// 省く。キャッシュ未ロード or 基準日変化時のみ実フェッチする。
+  Future<AssetManagementAiAnalysisHistoryEntry?>
+      _latestAssetManagementAiAnalysisForBaseDate(DateTime baseDate) async {
+    final baseKey =
+        AssetManagementAiAnalysisHistoryService.reportBaseDateKey(baseDate);
+    if (_assetManagementLatestForBaseDateCacheLoaded &&
+        _assetManagementLatestForBaseDateCacheKey == baseKey) {
+      return _assetManagementLatestForBaseDateCache;
+    }
+    final latest = await _assetManagementAiAnalysisHistoryService
+        .loadLatestForBaseDate(reportBaseDate: baseKey);
+    _assetManagementLatestForBaseDateCacheKey = baseKey;
+    _assetManagementLatestForBaseDateCache = latest;
+    _assetManagementLatestForBaseDateCacheLoaded = true;
+    return latest;
+  }
+
+  void _invalidateAssetManagementLatestForBaseDateCache() {
+    _assetManagementLatestForBaseDateCacheLoaded = false;
+    _assetManagementLatestForBaseDateCache = null;
+    _assetManagementLatestForBaseDateCacheKey = null;
   }
 
   /// 直近の AI 要約生成試行からの経過時間。基準日が変われば null を返し
