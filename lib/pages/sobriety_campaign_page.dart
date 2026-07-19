@@ -33,6 +33,7 @@ class SobrietyCampaignPage extends StatefulWidget {
 class _SobrietyCampaignPageState extends State<SobrietyCampaignPage> {
   final _pageController = PageController();
   late List<CampaignVideo> _all;
+  late final DateTime _today;
   CampaignCategory? _filter; // null = すべて
 
   final _liked = <String>{};
@@ -45,9 +46,10 @@ class _SobrietyCampaignPageState extends State<SobrietyCampaignPage> {
   @override
   void initState() {
     super.initState();
+    _today = DateTime.now();
     // 今日の風刺画 (日替わりローテーション) を先頭に、応援クリップ seed を続ける。
     _all = [
-      ...SatiricalPrintLibrary.dailyPicks(DateTime.now()),
+      ...SatiricalPrintLibrary.dailyPicks(_today),
       ...CampaignVideo.seed(),
     ];
   }
@@ -174,7 +176,7 @@ class _SobrietyCampaignPageState extends State<SobrietyCampaignPage> {
                 if (_pageController.hasClients) _pageController.jumpToPage(0);
               },
             ),
-            const _DailyBanner(),
+            _DailyBanner(date: _today),
             Expanded(
               child: videos.isEmpty
                   ? const Center(
@@ -297,10 +299,13 @@ class _FilterChip extends StatelessWidget {
 }
 
 class _DailyBanner extends StatelessWidget {
-  const _DailyBanner();
+  const _DailyBanner({required this.date});
+
+  final DateTime date;
 
   @override
   Widget build(BuildContext context) {
+    final label = '今日の風刺画 — ${date.month}月${date.day}日更新 · 毎日ランダムでお届け';
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
@@ -310,14 +315,17 @@ class _DailyBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
         border: Border.all(color: DesignTokens.orange.withValues(alpha: 0.4)),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Text('🎨', style: TextStyle(fontSize: 18)),
-          SizedBox(width: DesignTokens.space8),
+          const Text('🎨', style: TextStyle(fontSize: 18)),
+          const SizedBox(width: DesignTokens.space8),
           Expanded(
             child: Text(
-              '今日の風刺画 — 酒・煙草・風俗を断つ名画を毎日ランダムでお届け',
-              style: TextStyle(color: DesignTokens.textOnDark, fontSize: 13),
+              label,
+              style: const TextStyle(
+                color: DesignTokens.textOnDark,
+                fontSize: 13,
+              ),
             ),
           ),
         ],
