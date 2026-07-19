@@ -5,7 +5,8 @@ import {
 } from "./auto_error_reports.ts";
 
 Deno.test("extractAutoErrorFirstLine: ヘッダ行を飛ばし最初の意味行を返す", () => {
-  const msg = "[自動エラー報告]\nNull check operator used on a null value\n\n#0 foo\n#1 bar";
+  const msg =
+    "[自動エラー報告]\nNull check operator used on a null value\n\n#0 foo\n#1 bar";
   assertEquals(
     extractAutoErrorFirstLine(msg),
     "Null check operator used on a null value",
