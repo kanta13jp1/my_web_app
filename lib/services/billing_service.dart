@@ -129,17 +129,29 @@ class BillingSupporterAttribution {
   factory BillingSupporterAttribution.fromUri(
     Uri uri, {
     String landingTouchpoint = 'subscription_billing',
+    String? fallbackTouchpoint,
   }) {
     final params = uri.queryParameters;
+    final isXProfile =
+        fallbackTouchpoint == GrowthAcquisitionService.touchProfile;
+    final isXFirstUserGrowth = isXProfile ||
+        fallbackTouchpoint == GrowthAcquisitionService.touchXFirstUserGrowth;
     return BillingSupporterAttribution(
-      utmSource: params['utm_source'],
-      utmMedium: params['utm_medium'],
-      utmCampaign: params['utm_campaign'],
-      utmContent: params['utm_content'],
-      experimentKey: params['experiment_key'] ?? params['utm_campaign'],
-      variant: params['variant'] ?? params['utm_content'],
+      utmSource: params['utm_source'] ?? (isXFirstUserGrowth ? 'x' : null),
+      utmMedium: params['utm_medium'] ??
+          (isXFirstUserGrowth ? (isXProfile ? 'profile' : 'organic') : null),
+      utmCampaign: params['utm_campaign'] ??
+          (isXFirstUserGrowth ? 'first_user_growth' : null),
+      utmContent: params['utm_content'] ??
+          (isXFirstUserGrowth ? 'activation_to_paid' : null),
+      experimentKey: params['experiment_key'] ??
+          params['utm_campaign'] ??
+          (isXFirstUserGrowth ? 'first_user_growth' : null),
+      variant: params['variant'] ??
+          params['utm_content'] ??
+          (isXFirstUserGrowth ? 'activation_to_paid' : null),
       sourceLogId: params['source_log_id'] ?? params['x_post_log_id'],
-      landingTouchpoint: landingTouchpoint,
+      landingTouchpoint: fallbackTouchpoint ?? landingTouchpoint,
     );
   }
 
