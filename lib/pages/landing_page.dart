@@ -2294,8 +2294,8 @@ $input
       (
         Icons.upload_file,
         '0xFF3B82F6',
-        'Notion/Evernoteから移行',
-        'CSVやENEXをそのままインポート。移行コストゼロ。',
+        'Excel/Word/Notion/Evernoteから0ステップ移行',
+        'XLSX・DOCX・CSV・ENEXをそのままインポート。Notionのエージェント対応より先に企業データを取り込める。移行コストゼロ。',
       ),
       (Icons.hub, '0xFFA855F7', 'マインドマップ', '思考の整理をビジュアルで。ノートと連携。'),
       (Icons.public, '0xFF22C55E', '公開メモ・SEO', 'メモをURLで共有。知識のアウトプットが集客につながる。'),
@@ -2608,8 +2608,8 @@ $input
       (
         Icons.webhook,
         '0xFF4A154B',
-        'Slack 通知連携',
-        'タスク完了・習慣達成・機能リクエストをリアルタイムでSlackチャンネルに通知。Webhook URL設定だけで即稼働。Slack AI に対抗するインテリジェント通知ルーティング。',
+        'Slack 連携 × 6部署 KPI 通知 (法人導入)',
+        '売上/資産/タスク/習慣など 6 部署 KPI の達成をリアルタイムで Slack チャンネルへ配信。Webhook URL 設定のみで即稼働。法人チームへの AI 組織 OS 導入差別化軸。',
       ),
       (
         Icons.psychology,
@@ -3187,7 +3187,7 @@ $input
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Notion / Evernote / Markdown から移行',
+                  'Excel / Word / Notion / Evernote から 0 ステップ移行',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -3200,7 +3200,7 @@ $input
           ),
           const SizedBox(height: 8),
           const Text(
-            'ファイルをアップロードするだけで、過去のデータがそのまま引き継げます。移行後も元のサービスを使い続けながら、少しずつ切り替えられます。',
+            'XLSX・DOCX・CSV・ENEX をアップロードするだけ。Notion のエージェント Excel 対応より先に、企業データを 0 ステップで取り込めます。移行後も元のサービスと併用可。',
             style: TextStyle(
               fontSize: 12,
               color: Color(0xB3FFFFFF),
@@ -3378,8 +3378,8 @@ $input
       ),
       (
         Icons.upload_file_outlined,
-        '3. 既存データを移行',
-        'NotionのCSV・EvernoteのENEXをインポート。移行コストゼロ。',
+        '3. 既存データを移行 (XLSX/DOCX/CSV/ENEX)',
+        'Excel・Word・Notion CSV・Evernote ENEX をそのままインポート。移行コストゼロ。',
         Color(0xFFF59E0B),
       ),
     ];
