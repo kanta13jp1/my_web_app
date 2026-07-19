@@ -32,6 +32,7 @@ enum AssetManagementSectionId {
   mustTasks,
   chart,
   cashflowStatement,
+  alertCenter,
 }
 
 /// セクション単位の表示上書き。auto はティア×モードの既定に従う。
@@ -112,6 +113,8 @@ extension AssetManagementSectionIdMeta on AssetManagementSectionId {
         return 'グラフ';
       case AssetManagementSectionId.cashflowStatement:
         return '月次キャッシュフロー';
+      case AssetManagementSectionId.alertCenter:
+        return 'アラートセンター';
     }
   }
 
@@ -140,6 +143,7 @@ extension AssetManagementSectionIdMeta on AssetManagementSectionId {
       case AssetManagementSectionId.chart:
       // 新規パネルは段階的 rollout のため full モード限定 (= OFF by default)。
       case AssetManagementSectionId.cashflowStatement:
+      case AssetManagementSectionId.alertCenter:
         return AssetManagementSectionTier.full;
     }
   }
