@@ -364,8 +364,7 @@ class _VideoCard extends StatelessWidget {
                 onTap: onLike,
               ),
               _ActionButton(
-                icon:
-                    bookmarked ? Icons.bookmark : Icons.bookmark_border,
+                icon: bookmarked ? Icons.bookmark : Icons.bookmark_border,
                 color: bookmarked ? DesignTokens.orange : null,
                 onTap: onBookmark,
               ),
@@ -517,6 +516,9 @@ class _CreatorRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fg = following ? DesignTokens.textSecondary : Colors.white;
+    final bg = following ? Colors.transparent : DesignTokens.surface3;
+    final borderColor = following ? DesignTokens.divider : Colors.transparent;
     return Row(
       children: [
         CircleAvatar(
@@ -543,8 +545,11 @@ class _CreatorRow extends StatelessWidget {
                   ),
                   if (video.verified) ...[
                     const SizedBox(width: DesignTokens.space4),
-                    const Icon(Icons.verified,
-                        size: 16, color: DesignTokens.indigo),
+                    const Icon(
+                      Icons.verified,
+                      size: 16,
+                      color: DesignTokens.indigo,
+                    ),
                   ],
                 ],
               ),
@@ -561,11 +566,9 @@ class _CreatorRow extends StatelessWidget {
         OutlinedButton(
           onPressed: onFollow,
           style: OutlinedButton.styleFrom(
-            foregroundColor: following ? DesignTokens.textSecondary : Colors.white,
-            backgroundColor: following ? Colors.transparent : DesignTokens.surface3,
-            side: BorderSide(
-              color: following ? DesignTokens.divider : Colors.transparent,
-            ),
+            foregroundColor: fg,
+            backgroundColor: bg,
+            side: BorderSide(color: borderColor),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(DesignTokens.radiusCircle),
             ),
@@ -623,24 +626,25 @@ class _Scrubber extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return const Row(
       children: [
-        const Icon(Icons.play_arrow, color: Colors.white, size: 20),
-        const SizedBox(width: DesignTokens.space8),
+        Icon(Icons.play_arrow, color: Colors.white, size: 20),
+        SizedBox(width: DesignTokens.space8),
         Expanded(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusCircle),
+            borderRadius: BorderRadius.all(
+              Radius.circular(DesignTokens.radiusCircle),
+            ),
             child: LinearProgressIndicator(
               value: 0.15,
               minHeight: 4,
               backgroundColor: DesignTokens.surface3,
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(DesignTokens.orange),
+              valueColor: AlwaysStoppedAnimation<Color>(DesignTokens.orange),
             ),
           ),
         ),
-        const SizedBox(width: DesignTokens.space8),
-        const Text(
+        SizedBox(width: DesignTokens.space8),
+        Text(
           '0:03',
           style: TextStyle(color: DesignTokens.textSecondary, fontSize: 12),
         ),
