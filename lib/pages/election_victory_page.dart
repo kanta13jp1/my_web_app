@@ -4757,6 +4757,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               color: const Color(0xFFB45309),
               icon: Icons.warning_amber_rounded,
             ),
+            if (dpjFirstEndorsementPrefectureCount > 0) ...[
+              const SizedBox(height: 12),
+              _buildFirstEndorsementSummary(),
+            ],
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerLeft,
@@ -4796,6 +4800,100 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         ),
       ),
     );
+  }
+
+  // 第1次公認(県連が実際に公認を決めた候補予定者)の全国サマリー。
+  // 「擁立目標」とは別の実績値で、目標に対する進捗として示す。
+  // 数値は県連公式発表・報道を出典に手動で構造化し、更新元は党公式一覧。
+  Widget _buildFirstEndorsementSummary() {
+    const accent = Color(0xFF2563EB);
+    final incumbent = dpjFirstEndorsementIncumbentTotal;
+    final newcomer = dpjFirstEndorsementNewcomerTotal;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.how_to_reg_outlined, size: 18, color: accent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '第1次公認の発表状況',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: accent,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildMiniStatChip(
+                '公認合計',
+                dpjFirstEndorsementTotal,
+                color: accent,
+              ),
+              if (incumbent > 0)
+                _buildMiniStatChip(
+                  '現職',
+                  incumbent,
+                  color: const Color(0xFF0F766E),
+                ),
+              if (newcomer > 0)
+                _buildMiniStatChip(
+                  '新人',
+                  newcomer,
+                  color: const Color(0xFF7C3AED),
+                ),
+              _buildMiniStatChip(
+                '発表済み',
+                dpjFirstEndorsementPrefectureCount,
+                suffix: '県',
+                color: const Color(0xFF64748B),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '県連が第1次として公認を決めた候補予定者の実績です(擁立目標とは別)。'
+            '数値は県連公式発表・報道を出典に確認できたものだけを掲載しています。',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: () => _openUrl(dpjLocalElectionOfficialListUrl),
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: Text(
+                '党公式の公認予定候補一覧を開く'
+                '(${_formatOfficialListAsOf(dpjLocalElectionOfficialListAsOf)}現在)',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatOfficialListAsOf(String iso) {
+    final parsed = DateTime.tryParse(iso);
+    if (parsed == null) {
+      return iso;
+    }
+    return _dateOnlyFormat.format(parsed);
   }
 
   Widget _buildAnnouncedTargetPill(DpjPrefectureAnnouncedTarget item) {
@@ -4850,7 +4948,54 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ),
             ),
           ],
+          if (item.firstEndorsement case final endorsement?) ...[
+            const SizedBox(height: 8),
+            _buildFirstEndorsementBadge(endorsement),
+          ],
         ],
+      ),
+    );
+  }
+
+  // 県別ピル内の第1次公認バッジ。出典タップで県連発表ページを開く。
+  Widget _buildFirstEndorsementBadge(DpjFirstEndorsement endorsement) {
+    const badgeColor = Color(0xFF1D4ED8);
+    final breakdown =
+        endorsement.hasBreakdown ? ' (${endorsement.breakdownLabel})' : '';
+    return InkWell(
+      onTap: endorsement.sourceUrl.isEmpty
+          ? null
+          : () => _openUrl(endorsement.sourceUrl),
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: badgeColor.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: badgeColor.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.how_to_reg_outlined, size: 14, color: badgeColor),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                '第1次公認 ${_formatInt(endorsement.totalCount)}人$breakdown',
+                style: const TextStyle(
+                  color: badgeColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                ),
+              ),
+            ),
+            if (endorsement.sourceUrl.isNotEmpty) ...[
+              const SizedBox(width: 4),
+              const Icon(Icons.open_in_new, size: 12, color: badgeColor),
+            ],
+          ],
+        ),
       ),
     );
   }
