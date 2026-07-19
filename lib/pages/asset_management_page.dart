@@ -849,6 +849,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _assetDebtTrendPriorBalancesMonth;
   // 今月の残高記録の重複実行を防ぐシグネチャ(monthKey + 残高内容)。
   String? _assetDebtTrendSyncedSignature;
+
+  /// レガシーキー移行 (`_scheduleAssetLiabilityStateIdMigration`) の適用回数。
+  /// この移行は build から毎フレーム評価され、差分があると setState + 月次state
+  /// 保存を行うため、変換が不動点にならない場合フレーム毎に upsert が走り得る。
+  /// 本来1回で収束する処理なので上限で暴走を止める (超過時は debugPrint)。
+  int _assetLiabilityStateIdMigrationApplies = 0;
+  static const int _assetLiabilityStateIdMigrationMaxApplies = 5;
   final AssetSalaryDayStore _salaryDayStore = const AssetSalaryDayStore();
   static const String _salaryDayMirrorKey = 'salary_day';
   final AssetSalaryAmountStore _salaryAmountStore =
@@ -2679,6 +2686,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _sameTransferTasks(_transferTasks, migrated.transferTasks)) {
       return;
     }
+
+    // このメソッドは build から毎フレーム呼ばれ、差分があると setState + 月次state
+    // 保存 (2テーブル upsert) を行い、その setState が次の build を呼ぶ。
+    // migrateLegacyKeys が不動点でない場合 (ある負債行の name が別行の id と一致し
+    // キーが連鎖する等) 収束せずフレーム毎に upsert が走り得る。レガシーキー移行は
+    // 本来1回で収束するため、マウントあたりの適用回数に上限を設けて暴走書き込みを
+    // 止め、異常を可視化する。
+    if (_assetLiabilityStateIdMigrationApplies >=
+        _assetLiabilityStateIdMigrationMaxApplies) {
+      debugPrint(
+        'asset liability state id migration did not converge '
+        '(applied $_assetLiabilityStateIdMigrationApplies times); skipping',
+      );
+      return;
+    }
+    _assetLiabilityStateIdMigrationApplies++;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -8912,7 +8935,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) {
         return;
       }
-      if (restored != _salaryDay || !_salaryDayConfigured) {
+      final changed = restored != _salaryDay || !_salaryDayConfigured;
+      if (changed) {
         setState(() {
           _salaryDay = restored;
           _salaryDayConfigured = true;
@@ -8922,8 +8946,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _salaryDayStore.save(restored),
         'salary day restore save',
       );
-      // サイクル基準が変わるため月次stateを読み直す。
-      unawaited(_loadAssetLiabilityMonthlyState());
+      // サイクル基準が変わったときだけ月次stateを読み直す。ミラー値が現在値と
+      // 同じなら同一サイクル月の同一データで、起動毎に7往復のフルバッチが余分に
+      // 走るだけだった (兄弟の _restoreSalaryAmountFromMirror は同値なら早期
+      // return しており、そちらに揃える)。
+      if (changed) {
+        unawaited(_loadAssetLiabilityMonthlyState());
+      }
     } catch (e) {
       debugPrint('salary day mirror restore failed: $e');
     }
