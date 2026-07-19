@@ -48,6 +48,7 @@ import 'package:my_web_app/services/household_tracker_share_service.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
+import 'package:my_web_app/services/fx_rate_service.dart';
 import 'package:my_web_app/services/asset_recurring_suggestion_ignore_store.dart';
 import 'package:my_web_app/services/asset_subscription_audit_catalog.dart';
 import 'package:my_web_app/services/asset_subscription_audit_store.dart';
@@ -634,6 +635,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // UI 登録の定期固定費 (家賃・光熱費など)。振替日昇順で保持する。
   List<AssetRecurringFixedCost> _recurringFixedCosts =
       <AssetRecurringFixedCost>[];
+  // USD/JPY 為替レート (ドル建てサブスクの円換算用)。null = 未取得。
+  final FxRateService _fxRateService = FxRateService();
+  FxRate? _usdJpyRate;
   // サブスク棚卸し: 支払い元ごとの最終確認日時 (sourceId → UTC)。
   Map<String, DateTime> _subscriptionAuditState = <String, DateTime>{};
   // サブスク棚卸し: 確認の取り消し日時 (tombstone / sourceId → UTC)。checked と
@@ -1043,6 +1047,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_loadRevolvingConfigs());
     unawaited(_loadCategoryBudgets());
     unawaited(_loadRecurringFixedCosts());
+    // ドル建てサブスクの円換算に使う USD/JPY を取得し、最新レートで再計算する。
+    unawaited(_loadUsdJpyRate());
     unawaited(_loadSubscriptionAudit());
     unawaited(_loadRecurringIgnored());
     unawaited(_loadRecurringIncomeIgnored());
@@ -10597,6 +10603,56 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_mirrorRecurringIncomeIgnored());
   }
 
+  /// USD/JPY レートを取得し、ドル建てサブスクの円額を最新レートで再計算する。
+  Future<void> _loadUsdJpyRate() async {
+    try {
+      // まずキャッシュで即時反映 → 次にネットワークで鮮度を更新。
+      final cached = await _fxRateService.cachedUsdJpy();
+      if (cached != null && mounted) {
+        _applyUsdJpyRate(cached);
+      }
+      final fresh = await _fxRateService.getUsdJpy();
+      if (fresh != null && mounted) {
+        _applyUsdJpyRate(fresh);
+      }
+    } catch (e) {
+      debugPrint('Error loading USD/JPY rate: $e');
+    }
+  }
+
+  /// 取得したレートを保持し、ドル建てサブスクの円額 (amount) を再計算する。
+  /// 円額が変わったものだけ差し替えて永続化する (レート変動を自動追随)。
+  void _applyUsdJpyRate(FxRate rate) {
+    final recomputed = <AssetRecurringFixedCost>[];
+    var changed = false;
+    for (final cost in _recurringFixedCosts) {
+      if (!cost.isUsd || cost.usdAmount == null) {
+        recomputed.add(cost);
+        continue;
+      }
+      final jpy = cost.resolveJpyAmount(rate.jpyPerUnit);
+      if (jpy > 0 && jpy != cost.amount) {
+        recomputed.add(cost.copyWith(amount: jpy));
+        changed = true;
+      } else {
+        recomputed.add(cost);
+      }
+    }
+    setState(() {
+      _usdJpyRate = rate;
+      if (changed) {
+        _recurringFixedCosts = recomputed;
+      }
+    });
+    if (changed) {
+      _persistInBackground(
+        _recurringFixedCostStore.save(_recurringFixedCosts),
+        'recurring fixed cost fx recompute',
+      );
+      unawaited(_mirrorRecurringFixedCosts());
+    }
+  }
+
   void _saveRecurringFixedCost(AssetRecurringFixedCost cost) {
     setState(() {
       final next = List<AssetRecurringFixedCost>.from(_recurringFixedCosts);
@@ -10652,6 +10708,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       sourceAccounts: sourceOptions,
       category: category,
       gateway: gateway,
+      usdJpyRate: _usdJpyRate?.jpyPerUnit,
+      usdJpyRateAsOf: _usdJpyRate?.asOf,
     );
     if (result != null) {
       _saveRecurringFixedCost(result);
