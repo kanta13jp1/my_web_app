@@ -121,4 +121,75 @@ void main() {
 
     expect(task.isGithubIssueLinkedTask, isTrue);
   });
+
+  // ── Issue ミラー行 と 素のタイトル行 の collapse (幽霊タスク対策) ──────────
+  // 同じ要望が「[Issue #N] タイトル」(起票後 / completed) と「タイトル」
+  // (起票前 / pending) の 2 行に分かれ、完了済みの作業が未完了として
+  // 二重計上されていた回帰の防止。
+
+  test('mirrored [Issue #N] row collapses with its bare-title row', () {
+    final tasks = dedupeWbsTasksForDisplay([
+      _task(
+        id: 'bare-pending',
+        title: '[追加要望] [資産管理] 月次支払不足額の早期アラートと強制対応フロー',
+        status: 'pending',
+      ),
+      _task(
+        id: 'issue-completed',
+        title: '[Issue #3367] [追加要望] [資産管理] 月次支払不足額の早期アラートと強制対応フロー',
+        issueNumber: 3367,
+        status: 'completed',
+        progress: 100,
+      ),
+    ]);
+
+    // 1 行に畳まれ、生存するのは Issue 番号を持つ完了行 (= 未完了に数えない)。
+    expect(tasks, hasLength(1));
+    expect(tasks.single.id, 'issue-completed');
+    expect(tasks.single.isEffectivelyCompleted, isTrue);
+  });
+
+  test('collapse works regardless of row order', () {
+    final tasks = dedupeWbsTasksForDisplay([
+      _task(
+        id: 'issue-completed',
+        title: '[Issue #3367] Shared title',
+        issueNumber: 3367,
+        status: 'completed',
+        progress: 100,
+      ),
+      _task(id: 'bare-pending', title: 'Shared title', status: 'pending'),
+    ]);
+
+    expect(tasks, hasLength(1));
+    expect(tasks.single.id, 'issue-completed');
+  });
+
+  test('repeated filings of the same request collapse to one row', () {
+    // 同一タイトルで別 Issue 番号の重複起票 (例 #2941/#2948/#2955) も 1 行に。
+    final tasks = dedupeWbsTasksForDisplay([
+      _task(id: 'i-2941', title: '[Issue #2941] 口座間移動タスク管理', issueNumber: 2941),
+      _task(id: 'i-2948', title: '[Issue #2948] 口座間移動タスク管理', issueNumber: 2948),
+      _task(id: 'i-2955', title: '[Issue #2955] 口座間移動タスク管理', issueNumber: 2955),
+    ]);
+
+    expect(tasks, hasLength(1));
+  });
+
+  test('different titles stay separate even when both are Issue rows', () {
+    final tasks = dedupeWbsTasksForDisplay([
+      _task(
+        id: 'issue-1',
+        title: '[Issue #1962] VSCode sync',
+        issueNumber: 1962,
+      ),
+      _task(
+        id: 'issue-2',
+        title: '[Issue #2204] Calendar sync',
+        issueNumber: 2204,
+      ),
+    ]);
+
+    expect(tasks.map((task) => task.id), ['issue-1', 'issue-2']);
+  });
 }
