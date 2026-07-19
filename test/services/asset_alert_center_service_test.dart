@@ -152,5 +152,100 @@ void main() {
 
       expect(center.alerts.map((a) => a.id).toList(), ['a', 'z']);
     });
+
+    test('surfaces a payment source that is not a cash/deposit asset account',
+        () {
+      // 原資に資産一覧へ存在しない ID (PayPay カードの請求名フォールバック) を
+      // 指定したケース。planner の無効化ガードは cardLoan しか見ないため
+      // 非 null のまま残り、「未設定」にも入らないので従来は完全に不可視だった。
+      final now = DateTime(2026, 5, 15);
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: <String, double>{
+          '三井住友銀行大塚支店': 500000,
+          'モビット': -1000000,
+        },
+        baseDate: now,
+        paymentSourceAccountIds: const <String, String>{
+          'mobit': 'paypay_card',
+        },
+      );
+
+      final row = workbook.debtMasterRows.firstWhere((r) => r.name == 'モビット');
+      // 前提: 原資は非 null のまま残る (cardLoan ではないので無効化されない)。
+      expect(row.paymentSourceAccountId, 'paypay_card');
+      // 従来の「未設定」判定には入らない = 既存レビュー/一括設定から不可視。
+      expect(
+        workbook.paymentSourceMissingRows.any((r) => r.id == row.id),
+        isFalse,
+      );
+      // 新しい「資産口座でない」判定で捕捉する。
+      expect(
+        workbook.paymentSourceInvalidRows.any((r) => r.id == row.id),
+        isTrue,
+      );
+      // 口座別の見込み残高からは差し引かれていない (どの口座とも ID が一致しない)。
+      expect(
+        workbook.accountCashflowSummaries
+            .any((s) => s.accountId == 'paypay_card'),
+        isFalse,
+      );
+
+      final center = service.build(workbook: workbook, now: now);
+      final alert = center.alerts.firstWhere(
+        (a) => a.id == 'payment_source_invalid:${row.id}',
+      );
+      expect(alert.category, AssetAlertCategory.paymentSourceMissing);
+      // 「どこからも引かれていない=残高が過大に見える」ことを本文で明示する。
+      expect(alert.detail.contains('見込み残高からも差し引かれておらず'), isTrue);
+      expect(alert.detail.contains('実際より多く見えています'), isTrue);
+    });
+
+    test('does not flag an already-paid row as an invalid payment source', () {
+      // 支払済みはどの口座の見込み残高からも引かれないのが正しい状態なので、
+      // 「残高が実際より多く見える」は成立せず、警告を出すと誤報になる。
+      final now = DateTime(2026, 5, 15);
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: <String, double>{
+          '三井住友銀行大塚支店': 500000,
+          'モビット': -1000000,
+        },
+        baseDate: now,
+        paymentSourceAccountIds: const <String, String>{
+          'mobit': 'paypay_card',
+        },
+        paidAccountNames: const <String>{'モビット'},
+      );
+
+      final row = workbook.debtMasterRows.firstWhere((r) => r.name == 'モビット');
+      expect(row.paid, isTrue);
+      expect(workbook.paymentSourceInvalidRows, isEmpty);
+
+      final center = service.build(workbook: workbook, now: now);
+      expect(
+        center.alerts.any((a) => a.id.startsWith('payment_source_invalid:')),
+        isFalse,
+      );
+    });
+
+    test('does not flag a payment source that is a real deposit account', () {
+      final now = DateTime(2026, 5, 15);
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: <String, double>{
+          '三井住友銀行大塚支店': 500000,
+          'モビット': -1000000,
+        },
+        baseDate: now,
+        paymentSourceAccountIds: const <String, String>{
+          'mobit': 'smbc_otsuka_branch',
+        },
+      );
+
+      expect(workbook.paymentSourceInvalidRows, isEmpty);
+      final center = service.build(workbook: workbook, now: now);
+      expect(
+        center.alerts.any((a) => a.id.startsWith('payment_source_invalid:')),
+        isFalse,
+      );
+    });
   });
 }
