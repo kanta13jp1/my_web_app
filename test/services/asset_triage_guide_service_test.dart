@@ -128,6 +128,84 @@ void main() {
       );
     });
 
+    test('prompts to register an income plan when none exists', () {
+      // 収入予定ゼロ = 資金繰りが「収入なし」で計算され実態より厳しく出るため、
+      // まず登録を促す。支払予定のある家計にだけ出す。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 50000,
+          'モビット': -1000000,
+        },
+        baseDate: DateTime(2026, 5, 15),
+      );
+      expect(workbook.incomePlans, isEmpty);
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      final step = plan.todaySteps.firstWhere(
+        (s) => s.kind == AssetTriageStepKind.registerIncomePlan,
+      );
+      expect(step.detail.contains('収入予定が1件も登録されていません'), isTrue);
+      // 数字が実態より厳しく出ていることを明示し、過度な不安を防ぐ。
+      expect(step.detail.contains('実際より大幅に厳しい数字'), isTrue);
+    });
+
+    test('does not prompt to register income when a plan already exists', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 50000,
+          'モビット': -1000000,
+        },
+        baseDate: DateTime(2026, 5, 15),
+        incomePlans: <AssetLiabilityIncomePlan>[
+          AssetLiabilityIncomePlan(
+            id: 'salary',
+            date: DateTime(2026, 5, 25),
+            name: '給料',
+            amount: 450000,
+            destinationAccountId: null,
+            destinationAccountName: null,
+            received: false,
+          ),
+        ],
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      expect(
+        plan.todaySteps.where(
+          (s) => s.kind == AssetTriageStepKind.registerIncomePlan,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('does not prompt to register income without scheduled payments', () {
+      // 支払予定が無い (データ未入力の新規利用者) には出さない。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'財布(現金)': 50000},
+        baseDate: DateTime(2026, 5, 15),
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      expect(
+        plan.todaySteps.where(
+          (s) => s.kind == AssetTriageStepKind.registerIncomePlan,
+        ),
+        isEmpty,
+      );
+    });
+
     test('confirms unreceived past-due income as a today step', () {
       // 期日を過ぎても未受取の給料は「着金確認」を今日ステップに出す。
       final workbook = planner.buildWorkbook(
