@@ -1,7 +1,8 @@
 name: GitHub Issue Fix
 
 # Open Issue を 1 件ずつ修正レーンに載せるオーケストレーター
-# 10:00 JST に oldest-first で対象 Issue を選び、修正ブランチ + draft PR を自動作成する
+# 10:00 JST に repair PR 履歴のない Issue を oldest-first で選び、修正ブランチ + draft PR を自動作成する
+# 閉じたレーンの再試行は workflow_dispatch で Issue 番号を明示した場合だけ許可する
 # 以後は通常の CI と ci-auto-fix.yml が小さな整形/自動修復を引き継ぐ
 
 on:
@@ -10,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       issue_number:
-        description: '処理する Issue 番号 (空欄で oldest-first 自動選択)'
+        description: '処理または再試行する Issue 番号 (空欄で履歴なし oldest-first 自動選択)'
         required: false
         default: ''
       dry_run:
@@ -62,7 +63,9 @@ jobs:
             const pullRequests = await github.paginate(github.rest.pulls.list, {
               owner,
               repo,
-              state: 'open',
+              // Keep repair-lane memory after stale draft PRs are closed. A
+              // scheduled run must not recreate a plan-only lane every day.
+              state: 'all',
               per_page: 100,
             });
 
@@ -75,19 +78,27 @@ jobs:
                 return { issue, labels };
               });
 
-            const hasExistingRepairPr = (issueNumber) =>
-              pullRequests.some((pr) => {
-                const headRef = pr.head?.ref || '';
-                const title = pr.title || '';
-                const body = pr.body || '';
-                return (
-                  headRef.startsWith(`issue-fix/${issueNumber}-`) ||
-                  title.includes(`#${issueNumber}`) ||
-                  body.includes(`#${issueNumber}`)
-                );
-              });
+            const matchesRepairPr = (pr, issueNumber) => {
+              const headRef = pr.head?.ref || '';
+              const title = pr.title || '';
+              const body = pr.body || '';
+              const exactIssueRef = new RegExp(`(^|[^0-9])#${issueNumber}(?![0-9])`);
+              return (
+                headRef.startsWith(`issue-fix/${issueNumber}-`) ||
+                exactIssueRef.test(title) ||
+                exactIssueRef.test(body)
+              );
+            };
 
-            const isEligible = ({ issue, labels }) => {
+            const hasRepairPr = (issueNumber, state = null) =>
+              pullRequests.some(
+                (pr) => (!state || pr.state === state) && matchesRepairPr(pr, issueNumber),
+              );
+
+            const eligibility = (
+              { issue, labels },
+              { allowHistoricalRetry = false } = {},
+            ) => {
               const title = issue.title || '';
               const lowerLabels = labels.map((label) => label.toLowerCase());
               const allowed =
@@ -97,7 +108,22 @@ jobs:
               const blocked = lowerLabels.some((label) =>
                 ['question', 'duplicate', 'invalid', 'wontfix'].includes(label),
               );
-              return allowed && !blocked && !hasExistingRepairPr(issue.number);
+              if (!allowed || blocked) {
+                return { eligible: false, reason: `Issue #${issue.number} is not eligible.` };
+              }
+              if (hasRepairPr(issue.number, 'open')) {
+                return {
+                  eligible: false,
+                  reason: `Issue #${issue.number} already has an open repair PR.`,
+                };
+              }
+              if (!allowHistoricalRetry && hasRepairPr(issue.number)) {
+                return {
+                  eligible: false,
+                  reason: `Issue #${issue.number} already has repair PR history.`,
+                };
+              }
+              return { eligible: true, reason: '' };
             };
 
             let selected;
@@ -108,14 +134,15 @@ jobs:
                 core.setOutput('skip_reason', `Issue #${requested} was not found or is closed.`);
                 return;
               }
-              if (!isEligible(selected)) {
+              const result = eligibility(selected, { allowHistoricalRetry: true });
+              if (!result.eligible) {
                 core.setOutput('has_issue', 'false');
-                core.setOutput('skip_reason', `Issue #${requested} is not eligible or already has an open repair PR.`);
+                core.setOutput('skip_reason', result.reason);
                 return;
               }
             } else {
               selected = issueList
-                .filter(isEligible)
+                .filter((candidate) => eligibility(candidate).eligible)
                 .sort((a, b) => new Date(a.issue.created_at) - new Date(b.issue.created_at))[0];
               if (!selected) {
                 core.setOutput('has_issue', 'false');
