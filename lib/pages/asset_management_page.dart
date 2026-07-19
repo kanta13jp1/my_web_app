@@ -68,6 +68,7 @@ import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 import 'package:my_web_app/services/asset_alert_center_service.dart';
 import 'package:my_web_app/services/asset_alert_dismissal_store.dart';
 import 'package:my_web_app/services/asset_cashflow_statement_service.dart';
+import 'package:my_web_app/services/asset_net_worth_panel_service.dart';
 import 'package:my_web_app/services/asset_category_budget_service.dart';
 import 'package:my_web_app/services/asset_category_budget_store.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
@@ -97,6 +98,7 @@ import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
 import 'package:my_web_app/widgets/asset_alert_center_card.dart';
 import 'package:my_web_app/widgets/asset_cashflow_statement_card.dart';
+import 'package:my_web_app/widgets/asset_net_worth_panel_card.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
@@ -8777,6 +8779,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             )) ...[
               _buildAssetAlertCenterCard(assetLiabilityWorkbook),
             ],
+            if (_isSectionShown(
+              AssetManagementSectionId.netWorthPanel,
+            )) ...[
+              _buildAssetNetWorthPanelCard(assetLiabilityWorkbook),
+            ],
             // 提案カード(定期取引/定期収入の自動検出)は給与内訳に相乗りせず専用
             // セクションへ。salaryBreakdown を隠しても提案だけ独立表示できる。
             if (_isSectionShown(AssetManagementSectionId.proposals)) ...[
@@ -14359,6 +14366,36 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       padding: const EdgeInsets.only(bottom: 16),
       child: AssetCashflowStatementCard(
         statement: statement,
+        currencyFormatter: _formatYen,
+      ),
+    );
+  }
+
+  /// 純資産パネル (Issue #2473)。履歴スナップショット + ライブの当月から
+  /// 「純資産」「前月比 ±¥ / ±%」「直近6月スパークライン」を集計する。
+  /// 金額・変化率は純サービス [AssetNetWorthPanelService] で deterministic に算出。
+  Widget _buildAssetNetWorthPanelCard(AssetLiabilityWorkbook? workbook) {
+    AssetLiabilityMonthlySnapshot? currentMonthSnapshot;
+    if (workbook != null) {
+      final monthKey =
+          AssetLiabilityMonthlyStateStore.formatMonthKey(DateTime.now());
+      currentMonthSnapshot = _assetLiabilityHistoryService.buildSnapshot(
+        monthKey: monthKey,
+        workbook: workbook,
+        savedAt: DateTime.now(),
+      );
+    }
+    final panel = const AssetNetWorthPanelService().build(
+      snapshots: _monthlySnapshots,
+      currentMonthSnapshot: currentMonthSnapshot,
+    );
+    if (!panel.hasData) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: AssetNetWorthPanelCard(
+        panel: panel,
         currencyFormatter: _formatYen,
       ),
     );
