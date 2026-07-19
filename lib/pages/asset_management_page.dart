@@ -65,6 +65,8 @@ import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_triage_guide_service.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
+import 'package:my_web_app/services/asset_alert_center_service.dart';
+import 'package:my_web_app/services/asset_alert_dismissal_store.dart';
 import 'package:my_web_app/services/asset_cashflow_statement_service.dart';
 import 'package:my_web_app/services/asset_category_budget_service.dart';
 import 'package:my_web_app/services/asset_category_budget_store.dart';
@@ -93,6 +95,7 @@ import 'package:my_web_app/services/waste_tracking_service.dart';
 import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
+import 'package:my_web_app/widgets/asset_alert_center_card.dart';
 import 'package:my_web_app/widgets/asset_cashflow_statement_card.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
@@ -777,6 +780,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetLiabilityPlanningService();
   final AssetLiabilityPaymentReminderService _assetLiabilityReminderService =
       const AssetLiabilityPaymentReminderService();
+  final AssetAlertCenterService _assetAlertCenterService =
+      const AssetAlertCenterService();
+  final AssetAlertDismissalStore _assetAlertDismissalStore =
+      const AssetAlertDismissalStore();
+  Set<String> _assetAlertDismissedIds = <String>{};
   final AssetLiabilityRepaymentSimulationService
       _assetLiabilityRepaymentSimulationService =
       const AssetLiabilityRepaymentSimulationService();
@@ -1054,6 +1062,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_loadRecurringIncomeIgnored());
     unawaited(_loadDuplicateIgnored());
     unawaited(_loadDrinkChallenge());
+    unawaited(_loadAssetAlertDismissedIds());
     _loadExpectedInflows();
     // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
     unawaited(_initTombstoneGcAndPull());
@@ -8740,6 +8749,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             )) ...[
               _buildCashflowStatementCard(assetLiabilityWorkbook),
             ],
+            if (_isSectionShown(
+              AssetManagementSectionId.alertCenter,
+            )) ...[
+              _buildAssetAlertCenterCard(assetLiabilityWorkbook),
+            ],
             // 提案カード(定期取引/定期収入の自動検出)は給与内訳に相乗りせず専用
             // セクションへ。salaryBreakdown を隠しても提案だけ独立表示できる。
             if (_isSectionShown(AssetManagementSectionId.proposals)) ...[
@@ -14317,6 +14331,60 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: AssetCashflowStatementCard(
         statement: statement,
         currencyFormatter: _formatYen,
+      ),
+    );
+  }
+
+  /// dismiss 済みアラート id をローカルから読み込む (Issue #2475)。
+  Future<void> _loadAssetAlertDismissedIds() async {
+    final ids = await _assetAlertDismissalStore.load();
+    if (!mounted) {
+      return;
+    }
+    setState(() => _assetAlertDismissedIds = ids);
+  }
+
+  Future<void> _dismissAssetAlert(String id) async {
+    final next = await _assetAlertDismissalStore.dismiss(id);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _assetAlertDismissedIds = next);
+  }
+
+  Future<void> _restoreDismissedAssetAlerts() async {
+    final store = await SharedPreferences.getInstance();
+    await store.remove(AssetAlertDismissalStore.prefsKey);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _assetAlertDismissedIds = <String>{});
+  }
+
+  /// 統合アラートパネル (Issue #2475)。延滞・口座ショート・支払リマインダー(#2453)・
+  /// 支払原資未設定を重要度別に集約する。異常検知 (第2弾D) は将来 anomalyAlerts で
+  /// 注入する統合設計。金額・重要度判定は純サービスで deterministic に行う。
+  Widget _buildAssetAlertCenterCard(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null) {
+      return const SizedBox.shrink();
+    }
+    final center = _assetAlertCenterService.build(
+      workbook: workbook,
+      now: _now,
+      dismissedIds: _assetAlertDismissedIds,
+    );
+    // 表示するアラートも dismiss 済みも無ければカードを出さない。
+    if (!center.hasAlerts && center.dismissedCount == 0) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: AssetAlertCenterCard(
+        center: center,
+        onDismiss: _dismissAssetAlert,
+        onRestoreDismissed: center.dismissedCount > 0
+            ? () => unawaited(_restoreDismissedAssetAlerts())
+            : null,
       ),
     );
   }
