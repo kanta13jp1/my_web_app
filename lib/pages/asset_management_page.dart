@@ -27264,9 +27264,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         List<AssetLiabilityDebtRow>.from(
           workbook.billingConfirmationPendingRows,
         ),
-      _DebtMasterReviewFilter.paymentSource => List<AssetLiabilityDebtRow>.from(
-          workbook.paymentSourceMissingRows,
-        ),
+      // 未設定に加えて「設定済みだが現金・預金口座を指していない」行も出す。
+      // 後者はどの口座の見込み残高からも引かれない盲点で、ここに出さないと
+      // アラートで指摘しても直す場所に辿り着けない。両者は述語が排他
+      // (未設定=ID空 / 不正=ID非空) なので重複は発生しない。
+      _DebtMasterReviewFilter.paymentSource => <AssetLiabilityDebtRow>[
+          ...workbook.paymentSourceMissingRows,
+          ...workbook.paymentSourceInvalidRows,
+        ],
       _DebtMasterReviewFilter.all => List<AssetLiabilityDebtRow>.from(
           workbook.debtMasterRows,
         ),
