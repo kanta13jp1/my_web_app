@@ -97,8 +97,11 @@ void main() {
           _snapshot('2026-01', income: 300000, expense: 100000), // 黒字
           _snapshot('2026-02', income: 100000, expense: 300000), // 赤字
           _snapshot('2026-03', income: null, expense: 300000), // 未追跡→除外
-          _snapshot('2026-04',
-              income: 200000, expense: 200000), // 黒字(0はsurplus)
+          _snapshot(
+            '2026-04',
+            income: 200000,
+            expense: 200000,
+          ), // 黒字(0はsurplus)
         ],
         asOf: DateTime(2026, 4, 15),
       );
