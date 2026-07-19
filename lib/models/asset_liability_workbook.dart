@@ -283,6 +283,17 @@ enum AssetRecurringFixedCostCategory {
   subscription,
 }
 
+/// 定期固定費の入力通貨。既定は円 (jpy)。ドル建て (usd) の場合は毎月の為替で
+/// 円換算額が変動するため、原資の USD 額を保持し、最新レートで円へ materialize する。
+enum AssetRecurringFixedCostCurrency {
+  /// 円建て (既定)。[AssetRecurringFixedCost.amount] がそのまま月額。
+  jpy,
+
+  /// ドル建て。[AssetRecurringFixedCost.usdAmount] が原資で、[amount] は
+  /// 最新レートで換算した円額 (レート未取得時は前回換算値を据え置く)。
+  usd,
+}
+
 /// サブスクの請求経路 (どこ経由で課金されるか)。
 ///
 /// 例: ChatGPT Pro は Apple App Store のサブスクとして課金され、Apple ID の支払い方法
@@ -337,6 +348,15 @@ class AssetRecurringFixedCost {
   /// 突き合わせ表示に使い、資金繰りの計上額には影響しない。
   final AssetSubscriptionBillingGateway billingGateway;
 
+  /// 入力通貨。既定は円 (jpy)。ドル建て (usd) のサブスク (Claude/Notion 等) は
+  /// 毎月の為替で円額が変わるため usd を指定し、[usdAmount] に原資の USD 額を持つ。
+  final AssetRecurringFixedCostCurrency currency;
+
+  /// ドル建て時の原資 (USD 額)。[currency] == usd のときのみ意味を持つ。
+  /// 円換算額 [amount] は「最新レートで再計算した値」を都度保存するため、
+  /// レート未取得時でも前回値で計上でき、レート更新時に自動で追随する。
+  final double? usdAmount;
+
   const AssetRecurringFixedCost({
     required this.id,
     required this.name,
@@ -346,7 +366,22 @@ class AssetRecurringFixedCost {
     this.sourceAccountId,
     this.category = AssetRecurringFixedCostCategory.utility,
     this.billingGateway = AssetSubscriptionBillingGateway.direct,
+    this.currency = AssetRecurringFixedCostCurrency.jpy,
+    this.usdAmount,
   });
+
+  /// ドル建てか。
+  bool get isUsd => currency == AssetRecurringFixedCostCurrency.usd;
+
+  /// 指定レート (1 USD = [usdJpyRate] 円) で円換算した月額を返す。
+  /// ドル建てかつ原資・レートが有効なときのみ再計算し、それ以外は現行の
+  /// [amount] を据え置く (レート未取得時に 0 円へ落ちないようにする)。
+  double resolveJpyAmount(double? usdJpyRate) {
+    if (!isUsd || usdAmount == null || usdJpyRate == null || usdJpyRate <= 0) {
+      return amount;
+    }
+    return (usdAmount! * usdJpyRate).roundToDouble();
+  }
 
   /// 指定した月 (1-12) にこの固定費が発生するか (隔月は偶数/奇数月のみ計上)。
   bool appliesToMonth(int month) {
@@ -370,6 +405,9 @@ class AssetRecurringFixedCost {
     bool clearSourceAccountId = false,
     AssetRecurringFixedCostCategory? category,
     AssetSubscriptionBillingGateway? billingGateway,
+    AssetRecurringFixedCostCurrency? currency,
+    double? usdAmount,
+    bool clearUsdAmount = false,
   }) {
     return AssetRecurringFixedCost(
       id: id ?? this.id,
@@ -382,6 +420,8 @@ class AssetRecurringFixedCost {
           : (sourceAccountId ?? this.sourceAccountId),
       category: category ?? this.category,
       billingGateway: billingGateway ?? this.billingGateway,
+      currency: currency ?? this.currency,
+      usdAmount: clearUsdAmount ? null : (usdAmount ?? this.usdAmount),
     );
   }
 
@@ -399,6 +439,10 @@ class AssetRecurringFixedCost {
         'category': category.name,
       if (billingGateway != AssetSubscriptionBillingGateway.direct)
         'billingGateway': billingGateway.name,
+      // 通貨は既定 (jpy) のとき出力しない (既存ペイロードと互換を保つ)。
+      if (currency != AssetRecurringFixedCostCurrency.jpy)
+        'currency': currency.name,
+      if (usdAmount != null) 'usdAmount': usdAmount,
     };
   }
 
@@ -441,6 +485,13 @@ class AssetRecurringFixedCost {
       (value) => value.name == gatewayName,
       orElse: () => AssetSubscriptionBillingGateway.direct,
     );
+    final currencyName = json['currency']?.toString();
+    final currency = AssetRecurringFixedCostCurrency.values.firstWhere(
+      (value) => value.name == currencyName,
+      orElse: () => AssetRecurringFixedCostCurrency.jpy,
+    );
+    final usdAmount = (json['usdAmount'] as num?)?.toDouble() ??
+        double.tryParse(json['usdAmount']?.toString() ?? '');
     return AssetRecurringFixedCost(
       id: trimmedId,
       name: name,
@@ -451,6 +502,8 @@ class AssetRecurringFixedCost {
           rawSource == null || rawSource.isEmpty ? null : rawSource,
       category: category,
       billingGateway: billingGateway,
+      currency: currency,
+      usdAmount: usdAmount != null && usdAmount > 0 ? usdAmount : null,
     );
   }
 }
