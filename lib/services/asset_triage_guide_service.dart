@@ -28,6 +28,9 @@ enum AssetTriageStepKind {
   /// 今週: リボ/分割の設定解除を支払先へ電話する。
   disableRevolving,
 
+  /// 今月: サブスク区分の固定費を名指しで解約候補として見直す。
+  cancelSubscriptions,
+
   /// 今月: 脱却プランを見て返済ペースを決める。
   reviewRepaymentPace,
 
@@ -392,7 +395,49 @@ class AssetTriageGuideService {
       );
     }
 
-    // ⑥ 返済ペースを脱却プランで決める。例示カードも本文どおり
+    // ⑥ サブスク区分の固定費を名指しで解約候補にする。fullPaymentEstimate は
+    // 家賃とサブスクを区別できないが、subscriptionFixedCostAccountIds はサブスク
+    // 区分だけを正確に指すため、家賃を「解約候補」と誤提示せず安全に名指しできる。
+    // 借入のある利用者にだけ出す (このカードは家計が苦しい人向けの整理であり、
+    // 無借金の健全な利用者にサブスク解約を促すのはノイズになるため)。
+    final hasBorrowingDebt = workbook.debtMasterRows.any(
+      (row) =>
+          !row.fullPaymentEstimate &&
+          AssetDebtDisciplineMonitor.isBorrowingKind(row.kind) &&
+          row.balance.abs() > 1,
+    );
+    final subscriptionRows = workbook.debtMasterRows
+        .where(
+          (row) =>
+              workbook.subscriptionFixedCostAccountIds.contains(row.id) &&
+              row.scheduledPaymentAmount > 0,
+        )
+        .toList()
+      ..sort(
+        (a, b) => b.scheduledPaymentAmount.compareTo(a.scheduledPaymentAmount),
+      );
+    if (hasBorrowingDebt && subscriptionRows.isNotEmpty) {
+      final total = subscriptionRows.fold<double>(
+        0,
+        (sum, row) => sum + row.scheduledPaymentAmount,
+      );
+      final names = subscriptionRows
+          .take(4)
+          .map((row) => '${row.name} ${_yen(row.scheduledPaymentAmount)}')
+          .join(' / ');
+      monthSteps.add(
+        AssetTriageStep(
+          kind: AssetTriageStepKind.cancelSubscriptions,
+          title: 'サブスクを見直す',
+          detail: '$names'
+              '${subscriptionRows.length > 4 ? ' ほか${subscriptionRows.length - 4}件' : ''}'
+              '（毎月 ${_yen(total)}）。使う月だけ入れて、終わったら切る運用にすれば'
+              'この分がそのまま浮きます。今すぐ使っていないものから解約してください。',
+        ),
+      );
+    }
+
+    // ⑦ 返済ペースを脱却プランで決める。例示カードも本文どおり
     // 「金利の高い順」で選ぶ (違反リスト自体は繰越額順のため並べ直す)。
     final annualRateById = <String, double>{
       for (final row in workbook.debtMasterRows) row.id: row.annualRate,
@@ -431,7 +476,7 @@ class AssetTriageGuideService {
             title: '支払予定と収入の差を埋める',
             detail: '今月の支払予定合計${_yen(monthlyPaymentTotal)}は'
                 '月収目安${_yen(monthlyIncome)}に対して重すぎます。'
-                '通信費・サブスクなど固定費の解約候補を明細から洗い出してください。',
+                '通信費・保険など固定費の見直し候補を明細から洗い出してください。',
           ),
         );
       }

@@ -265,6 +265,109 @@ void main() {
       expect(lifeline.detail.contains('30,000円'), isFalse);
     });
 
+    test(
+        'cancelSubscriptions names subscription fixed costs but not '
+        'utilities', () {
+      // サブスク (ChatGPT/Claude) は名指しで解約候補に。光熱費 (電気代) は含めない。
+      // 借入 (モビット) がある家計でのみ発火する。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'モビット': -1000000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        recurringFixedCosts: const <AssetRecurringFixedCost>[
+          AssetRecurringFixedCost(
+            id: 'chatgpt_pro',
+            name: 'ChatGPT Pro',
+            amount: 30000,
+            paymentDay: 20,
+            category: AssetRecurringFixedCostCategory.subscription,
+          ),
+          AssetRecurringFixedCost(
+            id: 'claude',
+            name: 'Claude',
+            amount: 36000,
+            paymentDay: 26,
+            category: AssetRecurringFixedCostCategory.subscription,
+          ),
+          AssetRecurringFixedCost(
+            id: 'denki',
+            name: '電気代',
+            amount: 12000,
+            paymentDay: 20,
+            category: AssetRecurringFixedCostCategory.utility,
+          ),
+        ],
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      final step = plan.monthSteps.firstWhere(
+        (s) => s.kind == AssetTriageStepKind.cancelSubscriptions,
+      );
+      expect(step.detail.contains('ChatGPT Pro'), isTrue);
+      expect(step.detail.contains('Claude'), isTrue);
+      // 光熱費は解約候補に混ぜない (誤って生活必需の停止を促さない)。
+      expect(step.detail.contains('電気代'), isFalse);
+      // 合計 (30,000 + 36,000 = 66,000) を提示。
+      expect(step.detail.contains('66,000円'), isTrue);
+    });
+
+    test('no cancelSubscriptions step when there are no subscriptions', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'モビット': -1000000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      expect(
+        plan.monthSteps.where(
+          (s) => s.kind == AssetTriageStepKind.cancelSubscriptions,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('no cancelSubscriptions step for a debt-free household', () {
+      // 無借金の利用者にはサブスク解約を促さない (ノイズ回避)。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 500000},
+        baseDate: DateTime(2026, 5, 1),
+        recurringFixedCosts: const <AssetRecurringFixedCost>[
+          AssetRecurringFixedCost(
+            id: 'chatgpt_pro',
+            name: 'ChatGPT Pro',
+            amount: 30000,
+            paymentDay: 20,
+            category: AssetRecurringFixedCostCategory.subscription,
+          ),
+        ],
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      expect(
+        plan.monthSteps.where(
+          (s) => s.kind == AssetTriageStepKind.cancelSubscriptions,
+        ),
+        isEmpty,
+      );
+    });
+
     test('protects high-interest loans as a distinct week step', () {
       // モビット (年18% cardLoan) は高金利ローンとして最低額死守ステップに出る。
       final workbook = planner.buildWorkbook(
