@@ -33,6 +33,7 @@ enum AssetManagementSectionId {
   chart,
   cashflowStatement,
   alertCenter,
+  netWorthPanel,
 }
 
 /// セクション単位の表示上書き。auto はティア×モードの既定に従う。
@@ -115,6 +116,8 @@ extension AssetManagementSectionIdMeta on AssetManagementSectionId {
         return '月次キャッシュフロー';
       case AssetManagementSectionId.alertCenter:
         return 'アラートセンター';
+      case AssetManagementSectionId.netWorthPanel:
+        return '純資産パネル';
     }
   }
 
@@ -144,6 +147,7 @@ extension AssetManagementSectionIdMeta on AssetManagementSectionId {
       // 新規パネルは段階的 rollout のため full モード限定 (= OFF by default)。
       case AssetManagementSectionId.cashflowStatement:
       case AssetManagementSectionId.alertCenter:
+      case AssetManagementSectionId.netWorthPanel:
         return AssetManagementSectionTier.full;
     }
   }
