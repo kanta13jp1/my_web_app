@@ -464,3 +464,21 @@ String autoErrorReportsHealthLabel(int count) {
   if (count <= 0) return '自動エラー報告なし（正常）';
   return '自動エラー報告 $count件';
 }
+
+// R30: 成長実績サマリーカードは growth-hub `achievement.list` を呼ぶが、この
+// action は {success, items:[]} を返すだけで newUsers/totalUsersEver/
+// acquisitionSignals/referralsCompleted/importPreviews を一切返さない。カードは
+// それらのキーを `?? 0` で読むため、実データがあっても常に「0人/0件」を捏造表示
+// していた。集計 action が未実装なので、期待キーが無いレスポンスを「集計未接続」
+// として扱い、捏造ゼロを出さないためのガード。
+bool growthSummaryHasMetrics(Map<String, dynamic>? summary) {
+  if (summary == null) return false;
+  const metricKeys = [
+    'newUsers',
+    'totalUsersEver',
+    'acquisitionSignals',
+    'referralsCompleted',
+    'importPreviews',
+  ];
+  return metricKeys.any(summary.containsKey);
+}
