@@ -133,6 +133,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   int _comparisonSignups = 0;
   bool _comparisonCvrLoading = false;
 
+  // R29: 自動エラー報告 (error_reporter が hub_data へ無言送信する caught error)
+  // の可視化。管理者自身の直近報告を admin-hub errors.recent で取得する。
+  List<AutoErrorReportEntry> _autoErrorReports = const [];
+  bool _autoErrorReportsLoading = false;
+
   int _toInt(dynamic value) {
     if (value is int) return value;
     if (value is num) return value.toInt();
@@ -874,6 +879,34 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     _loadGrowthSummary();
     _loadComparisonCvr();
     _loadAppFeedbacks();
+    _loadRecentErrors();
+  }
+
+  /// R29: 自動エラー報告を admin-hub errors.recent で取得する。取得失敗や未認証は
+  /// 空へ degrade し、カードは「正常」表示 or 非表示になる (ダッシュボードは必ず描画)。
+  Future<void> _loadRecentErrors() async {
+    if (!mounted) return;
+    if (_supabase.auth.currentUser == null) return;
+    setState(() => _autoErrorReportsLoading = true);
+    try {
+      final res = await _supabase.functions.invoke(
+        'admin-hub',
+        body: const {'action': 'errors.recent', 'limit': 20},
+      );
+      final data = res.data;
+      final entries = data is Map && data['success'] == true
+          ? parseAutoErrorReports(data['errors'])
+          : const <AutoErrorReportEntry>[];
+      if (mounted) {
+        setState(() {
+          _autoErrorReports = entries;
+          _autoErrorReportsLoading = false;
+        });
+      }
+    } catch (error) {
+      debugPrint('errors.recent unavailable: $error');
+      if (mounted) setState(() => _autoErrorReportsLoading = false);
+    }
   }
 
   Future<void> _loadAppFeedbacks() async {
@@ -2228,6 +2261,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     _buildFeatureRequestsAdminCard(),
                     const SizedBox(height: 16),
                     _buildAutomationOpsCard(),
+                    const SizedBox(height: 16),
+                    _buildAutoErrorReportsCard(),
                     const SizedBox(height: 16),
                     const SelfDevinControlTowerCard(),
                     const SizedBox(height: 16),
@@ -5468,6 +5503,125 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     );
                   },
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // R29: 自動エラー報告 (error_reporter が hub_data へ無言送信していた caught
+  // error) の可視化カード。0件なら「正常」を明示し、あれば直近を先頭行だけ出す。
+  Widget _buildAutoErrorReportsCard() {
+    final theme = Theme.of(context);
+    final count = _autoErrorReports.length;
+    final hasErrors = count > 0;
+    final accent =
+        hasErrors ? const Color(0xFFB45309) : const Color(0xFF0D9488);
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  hasErrors
+                      ? Icons.report_gmailerrorred
+                      : Icons.verified_outlined,
+                  color: accent,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    autoErrorReportsHealthLabel(count),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                      color: accent,
+                    ),
+                  ),
+                ),
+                if (_autoErrorReportsLoading)
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  IconButton(
+                    icon: const Icon(Icons.refresh, size: 20),
+                    tooltip: '再取得',
+                    onPressed: _loadRecentErrors,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              hasErrors
+                  ? 'アプリが自動で捕捉・記録した例外です (公開 Issue 化はされません)。'
+                      '本文は自分のセッション分のみ表示しています。'
+                  : 'アプリが捕捉した例外は記録されていません。',
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.5,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (hasErrors) ...[
+              const SizedBox(height: 10),
+              ..._autoErrorReports.take(8).map((entry) {
+                final when =
+                    formatAgeAwareDate(entry.createdAt, DateTime.now());
+                final line =
+                    entry.firstLine.isEmpty ? '(本文なし)' : entry.firstLine;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.chevron_right,
+                        size: 16,
+                        color: Color(0xFFB45309),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          line,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            height: 1.5,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        when,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              if (count > 8)
+                Text(
+                  'ほか ${count - 8}件',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
             ],
           ],
