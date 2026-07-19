@@ -107,10 +107,15 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
   Future<void> _openSupporterCheckout() async {
     await _record('supporter_checkout');
     await _openStripeSession(() {
-      return _service.createSupporterCheckoutSession(
-        returnUrl: _currentReturnUrl,
-        attribution: BillingSupporterAttribution.fromUri(_sourceUri),
-      );
+      return widget.acquisitionService.loadLatestTouchpoint().then(
+            (latestTouchpoint) => _service.createSupporterCheckoutSession(
+              returnUrl: _currentReturnUrl,
+              attribution: BillingSupporterAttribution.fromUri(
+                _sourceUri,
+                fallbackTouchpoint: latestTouchpoint,
+              ),
+            ),
+          );
     });
   }
 

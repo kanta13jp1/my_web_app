@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class GrowthAcquisitionService {
   static const String touchLanding = 'touch_landing';
   static const String touchProfile = 'touch_profile';
+  static const String touchXFirstUserGrowth = 'touch_x_first_user_growth';
   static const String touchImport = 'touch_import';
   static const String touchPublicMemo = 'touch_public_memo';
   static const String touchReferral = 'touch_referral';
@@ -19,6 +20,8 @@ class GrowthAcquisitionService {
 
   static const String signupSubmitLanding = 'signup_submit_landing';
   static const String signupSubmitProfile = 'signup_submit_profile';
+  static const String signupSubmitXFirstUserGrowth =
+      'signup_submit_x_first_user_growth';
   static const String signupSubmitImport = 'signup_submit_import';
   static const String signupSubmitPublicMemo = 'signup_submit_public_memo';
   static const String signupSubmitReferral = 'signup_submit_referral';
@@ -81,7 +84,7 @@ class GrowthAcquisitionService {
       case 'profile':
         return touchProfile;
       default:
-        return null;
+        return touchXFirstUserGrowth;
     }
   }
 
@@ -102,6 +105,8 @@ class GrowthAcquisitionService {
     switch (latestTouchpoint) {
       case touchProfile:
         return signupSubmitProfile;
+      case touchXFirstUserGrowth:
+        return signupSubmitXFirstUserGrowth;
       case touchImport:
         return signupSubmitImport;
       case touchPublicMemo:

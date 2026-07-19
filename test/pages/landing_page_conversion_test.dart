@@ -8,7 +8,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _LandingAdapter extends Fake implements LandingPageAdapter {
   int lpViews = 0;
+  int saveCtas = 0;
   final List<String> conversionEvents = <String>[];
+  final List<String> magicLinkEmails = <String>[];
 
   @override
   Stream<AuthState> authStateChanges() => const Stream<AuthState>.empty();
@@ -25,6 +27,23 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
 
   @override
   Future<void> recordTrialRun() async {}
+
+  @override
+  Future<void> recordSaveCta() async {
+    saveCtas += 1;
+  }
+
+  @override
+  Future<void> recordInboxOpen() async {}
+
+  @override
+  Future<void> sendMagicLink({
+    required String email,
+    String? emailRedirectTo,
+    bool shouldCreateUser = true,
+  }) async {
+    magicLinkEmails.add(email);
+  }
 
   @override
   Future<String> improveTrialPrompt({required String prompt}) async {
@@ -65,9 +84,7 @@ void main() {
     final adapter = _LandingAdapter();
     await tester.pumpWidget(
       MaterialApp(
-        routes: {
-          '/privacy': (_) => const Scaffold(body: Text('privacy')),
-        },
+        routes: {'/privacy': (_) => const Scaffold(body: Text('privacy'))},
         home: LandingPage(
           key: ValueKey(
             '${assignment.hypothesis.id}-${assignment.variant.name}-${size.width}',
@@ -82,8 +99,9 @@ void main() {
     return adapter;
   }
 
-  testWidgets('treatment renders the complete conversion-first journey',
-      (tester) async {
+  testWidgets('treatment renders the complete conversion-first journey', (
+    tester,
+  ) async {
     final adapter = await pumpLanding(
       tester,
       assignment: _assignment('h01', LandingExperimentVariant.treatment),
@@ -118,18 +136,64 @@ void main() {
     );
     expect(adapter.lpViews, 1);
     expect(adapter.conversionEvents, contains('lp_exp_h01_treatment_view'));
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('landing_hero_section')),
+        matching: find.byKey(const Key('landing_h03_inline_trial')),
+      ),
+      findsOneWidget,
+    );
 
-    await tester.ensureVisible(find.text('今日の最優先'));
-    await tester.tap(find.text('今日の最優先'));
+    await tester.tap(find.byKey(const Key('landing_trial_sample_priority')));
     await tester.pump(const Duration(milliseconds: 100));
     expect(
       find.byKey(const Key('landing_h10_continuity_value')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const Key('landing_h04_inline_magic_capture')),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('all ten control conditions remove only their tested mechanism',
-      (tester) async {
+  testWidgets('trial result converts inline with one-field Magic Link', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h04', LandingExperimentVariant.treatment),
+    );
+
+    await tester.tap(find.byKey(const Key('landing_trial_sample_priority')));
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.enterText(
+      find.byKey(const Key('landing_h04_inline_email')),
+      'first-user@example.com',
+    );
+    await tester.tap(find.byKey(const Key('landing_h04_inline_magic_link')));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(adapter.saveCtas, 1);
+    expect(adapter.magicLinkEmails, ['first-user@example.com']);
+    expect(
+      adapter.conversionEvents,
+      containsAll(<String>[
+        'lp_exp_h04_treatment_trial',
+        'lp_exp_h04_treatment_save_cta',
+        'lp_exp_h04_treatment_signup_submit',
+      ]),
+    );
+    expect(
+      find.byKey(const Key('landing_h04_inline_open_inbox')),
+      findsOneWidget,
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  testWidgets('all ten control conditions remove only their tested mechanism', (
+    tester,
+  ) async {
     for (final id in <String>[
       'h01',
       'h02',
@@ -174,6 +238,10 @@ void main() {
                   .dy,
             ),
           );
+          expect(
+            find.byKey(const Key('landing_h03_inline_trial')),
+            findsNothing,
+          );
           break;
         case 'h04':
           expect(
@@ -183,6 +251,18 @@ void main() {
           expect(
             find.byKey(const Key('landing_h04_password_toggle')),
             findsNothing,
+          );
+          await tester.tap(
+            find.byKey(const Key('landing_trial_sample_priority')),
+          );
+          await tester.pump(const Duration(milliseconds: 100));
+          expect(
+            find.byKey(const Key('landing_h04_inline_magic_capture')),
+            findsNothing,
+          );
+          expect(
+            find.byKey(const Key('landing_h04_control_save_scroll')),
+            findsOneWidget,
           );
           break;
         case 'h05':
@@ -222,8 +302,9 @@ void main() {
           );
           break;
         case 'h10':
-          await tester.ensureVisible(find.text('今日の最優先'));
-          await tester.tap(find.text('今日の最優先'));
+          await tester.tap(
+            find.byKey(const Key('landing_trial_sample_priority')),
+          );
           await tester.pump(const Duration(milliseconds: 100));
           expect(
             find.byKey(const Key('landing_h10_continuity_value')),
@@ -236,8 +317,9 @@ void main() {
     }
   });
 
-  testWidgets('mobile treatment exposes and measures the sticky signup CTA',
-      (tester) async {
+  testWidgets('mobile treatment exposes and measures the sticky signup CTA', (
+    tester,
+  ) async {
     final adapter = await pumpLanding(
       tester,
       assignment: _assignment('h09', LandingExperimentVariant.treatment),
@@ -246,8 +328,9 @@ void main() {
 
     final sticky = find.byKey(const Key('landing_h09_mobile_sticky_cta'));
     expect(sticky, findsOneWidget);
-    await tester
-        .tap(find.descendant(of: sticky, matching: find.text('無料で始める')));
+    await tester.tap(
+      find.descendant(of: sticky, matching: find.text('無料で始める')),
+    );
     await tester.pump(const Duration(milliseconds: 350));
     expect(
       adapter.conversionEvents,

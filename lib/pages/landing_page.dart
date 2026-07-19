@@ -43,6 +43,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   );
 
   final _emailController = TextEditingController();
+  final _trialEmailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _trialPromptController = TextEditingController();
   final _emailFocusNode = FocusNode();
@@ -188,6 +189,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     _authSubscription?.cancel();
     _magicLinkCooldownTimer?.cancel();
     _emailController.dispose();
+    _trialEmailController.dispose();
     _passwordController.dispose();
     _trialPromptController.dispose();
     _emailFocusNode.dispose();
@@ -379,11 +381,15 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     }
   }
 
-  Future<void> _sendMagicLink() async {
-    final email = _emailController.text.trim();
+  Future<void> _sendMagicLink({String? emailOverride}) async {
+    final email = (emailOverride ?? _emailController.text).trim();
     if (email.isEmpty) {
       _showMessage('Magic Link を送るにはメールアドレスを入力してください。');
       return;
+    }
+
+    if (_emailController.text.trim() != email) {
+      _emailController.text = email;
     }
 
     setState(() => _isLoading = true);
@@ -497,6 +503,16 @@ $input
     });
     _showMessage('この結果を保存するには登録が必要です。下の登録セクションから30秒で保存を開始できます。');
     _scrollToAuthSection();
+  }
+
+  Future<void> _saveTrialWithMagicLink() async {
+    unawaited(_recordConversionStage('save_cta'));
+    unawaited(widget.adapter.recordSaveCta());
+    setState(() {
+      _showSaveCtaPrompt = true;
+      _isSignUp = true;
+    });
+    await _sendMagicLink(emailOverride: _trialEmailController.text);
   }
 
   void _runQuickTrialSample(String prompt) {
@@ -994,9 +1010,8 @@ $input
             : 'landing_h03_auth_before_trial',
       ),
       children: [
-        if (trialFirst) _buildTrialSection() else _buildAuthSection(),
-        const SizedBox(height: 20),
-        if (trialFirst) _buildAuthSection() else _buildTrialSection(),
+        _buildAuthSection(),
+        if (!trialFirst) ...[const SizedBox(height: 20), _buildTrialSection()],
       ],
     );
   }
@@ -1046,11 +1061,13 @@ $input
   }
 
   Widget _buildHeroSection() {
+    final trialFirst = _hypothesisEnabled('h03');
     return _WorkflowLandingHero(
       achievementCount: _achievementCount,
       showFirstUserGrowthCta: _isFirstUserGrowthTraffic,
       outcomeFirstMessage: _hypothesisEnabled('h01'),
       showRiskReversal: _hypothesisEnabled('h05'),
+      inlineTrial: trialFirst ? _buildTrialSection(heroMode: true) : null,
       onGetStarted: _handleHeroSignup,
       onWatchDemo: _scrollToTrialSection,
     );
@@ -3498,30 +3515,36 @@ $input
     );
   }
 
-  Widget _buildTrialSection() {
+  Widget _buildTrialSection({bool heroMode = false}) {
     return KeyedSubtree(
       key: const Key('landing_trial_section'),
       child: Card(
         key: _trialSectionKey,
-        elevation: 1,
+        elevation: heroMode ? 0 : 1,
+        color: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          key: Key(
+            heroMode ? 'landing_h03_inline_trial' : 'landing_h03_lower_trial',
+          ),
+          padding: EdgeInsets.all(heroMode ? 16 : 18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'AIに「今日やる1件」を聞く',
-                style: TextStyle(
+              Text(
+                heroMode ? '30秒で試す: いま詰まっていることは？' : 'AIに「今日やる1件」を聞く',
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                   height: 1.4,
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
-                style: TextStyle(color: Color(0xFF64748B), height: 1.5),
+              Text(
+                heroMode
+                    ? '登録はまだ不要です。1行書くか、下の例を押すと「今やる1件」を返します。'
+                    : 'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
+                style: const TextStyle(color: Color(0xFF64748B), height: 1.5),
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -3529,6 +3552,7 @@ $input
                 runSpacing: 8,
                 children: [
                   ActionChip(
+                    key: const Key('landing_trial_sample_priority'),
                     avatar: const Icon(Icons.flash_on, size: 18),
                     label: const Text('今日の最優先'),
                     onPressed: _isTrialLoading
@@ -3536,6 +3560,7 @@ $input
                         : () => _runQuickTrialSample('今日の最優先タスクを1件に絞りたい'),
                   ),
                   ActionChip(
+                    key: const Key('landing_trial_sample_plan'),
                     avatar: const Icon(Icons.event_note, size: 18),
                     label: const Text('今日の計画を立てる'),
                     onPressed: _isTrialLoading
@@ -3544,6 +3569,7 @@ $input
                             _runQuickTrialSample('今日1日の計画を立てて、最も重要なことに集中したい'),
                   ),
                   ActionChip(
+                    key: const Key('landing_trial_sample_procrastination'),
                     avatar: const Icon(Icons.done_all, size: 18),
                     label: const Text('先送り解消'),
                     onPressed: _isTrialLoading
@@ -3555,8 +3581,8 @@ $input
               const SizedBox(height: 14),
               TextField(
                 controller: _trialPromptController,
-                minLines: 2,
-                maxLines: 3,
+                minLines: heroMode ? 1 : 2,
+                maxLines: heroMode ? 2 : 3,
                 decoration: const InputDecoration(
                   labelText: '例: 今日いちばん詰まっていることを簡単に書く',
                   border: OutlineInputBorder(),
@@ -3585,7 +3611,7 @@ $input
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF2F7FF),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: const Color(0xFF3D5AFE).withValues(alpha: 0.2),
                     ),
@@ -3635,18 +3661,22 @@ $input
                         ),
                       ],
                       const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: _promptRegistrationForTrialSave,
-                          icon: const Icon(Icons.save_outlined),
-                          label: Text(
-                            _hypothesisEnabled('h10')
-                                ? 'この結果を保存して明日も続ける'
-                                : 'この結果を保存して続ける',
+                      if (_hypothesisEnabled('h04'))
+                        _buildInlineTrialMagicLink()
+                      else
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            key: const Key('landing_h04_control_save_scroll'),
+                            onPressed: _promptRegistrationForTrialSave,
+                            icon: const Icon(Icons.save_outlined),
+                            label: Text(
+                              _hypothesisEnabled('h10')
+                                  ? 'この結果を保存して明日も続ける'
+                                  : 'この結果を保存して続ける',
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -3654,6 +3684,87 @@ $input
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInlineTrialMagicLink() {
+    return Container(
+      key: const Key('landing_h04_inline_magic_capture'),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFB9D7F2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'この提案を保存して、明日もここから再開',
+            style: TextStyle(
+              color: Color(0xFF172033),
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            key: const Key('landing_h04_inline_email'),
+            controller: _trialEmailController,
+            keyboardType: TextInputType.emailAddress,
+            autofillHints: const [AutofillHints.email],
+            onSubmitted: (_) {
+              if (!_isLoading && !_isMagicLinkCoolingDown) {
+                unawaited(_saveTrialWithMagicLink());
+              }
+            },
+            decoration: const InputDecoration(
+              labelText: 'メールアドレス',
+              hintText: 'you@example.com',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.email_outlined),
+              isDense: true,
+            ),
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            key: const Key('landing_h04_inline_magic_link'),
+            onPressed: (_isLoading || _isMagicLinkCoolingDown)
+                ? null
+                : _saveTrialWithMagicLink,
+            icon: Icon(
+              _showInboxShortcut
+                  ? Icons.check_circle_outline
+                  : Icons.bookmark_add_outlined,
+              size: 18,
+            ),
+            label: Text(
+              _showInboxShortcut ? 'Magic Linkを送信しました' : '無料で保存して始める',
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _showInboxShortcut
+                ? '受信箱のリンクを開くと、保存した提案から開始できます。'
+                : 'パスワード・カード入力は不要です。',
+            style: const TextStyle(
+              color: Color(0xFF64748B),
+              fontSize: 12,
+              height: 1.45,
+            ),
+          ),
+          if (_showInboxShortcut) ...[
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              key: const Key('landing_h04_inline_open_inbox'),
+              onPressed: _openInbox,
+              icon: const Icon(Icons.open_in_new, size: 17),
+              label: const Text('受信箱を開く'),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -4540,6 +4651,7 @@ class _WorkflowLandingHero extends StatelessWidget {
   final bool showFirstUserGrowthCta;
   final bool outcomeFirstMessage;
   final bool showRiskReversal;
+  final Widget? inlineTrial;
   final VoidCallback onGetStarted;
   final VoidCallback onWatchDemo;
 
@@ -4548,6 +4660,7 @@ class _WorkflowLandingHero extends StatelessWidget {
     this.showFirstUserGrowthCta = false,
     required this.outcomeFirstMessage,
     required this.showRiskReversal,
+    this.inlineTrial,
     required this.onGetStarted,
     required this.onWatchDemo,
   });
@@ -4618,6 +4731,15 @@ class _WorkflowLandingHero extends StatelessWidget {
               ),
             ),
           ),
+          if (inlineTrial != null) ...[
+            const SizedBox(height: 18),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: inlineTrial,
+              ),
+            ),
+          ],
           if (achievementCount > 0) ...[
             const SizedBox(height: 12),
             Center(
@@ -4633,7 +4755,7 @@ class _WorkflowLandingHero extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 24),
-          if (showFirstUserGrowthCta) ...[
+          if (showFirstUserGrowthCta && inlineTrial == null) ...[
             _FirstUserGrowthHeroCta(
               onGetStarted: onGetStarted,
               onWatchDemo: onWatchDemo,
@@ -4663,24 +4785,25 @@ class _WorkflowLandingHero extends StatelessWidget {
                   ),
                 ),
               ),
-              OutlinedButton.icon(
-                key: const Key('landing_primary_trial_cta'),
-                onPressed: onWatchDemo,
-                icon: const Icon(Icons.play_circle_outline, size: 19),
-                label: const Text('登録なしで1件試す'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF172033),
-                  minimumSize: const Size(190, 52),
-                  side: const BorderSide(color: Color(0xFF9CB7CC)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
+              if (inlineTrial == null)
+                OutlinedButton.icon(
+                  key: const Key('landing_primary_trial_cta'),
+                  onPressed: onWatchDemo,
+                  icon: const Icon(Icons.play_circle_outline, size: 19),
+                  label: const Text('登録なしで1件試す'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF172033),
+                    minimumSize: const Size(190, 52),
+                    side: const BorderSide(color: Color(0xFF9CB7CC)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           if (showRiskReversal) ...[
