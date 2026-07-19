@@ -7,6 +7,10 @@ enum AssetTriageStepKind {
   /// 今日: 食費・移動費など最低限の生活費を確保する。
   secureLivingExpense,
 
+  /// 今日: 収入予定が1件も未登録のため、資金繰りが実態より厳しく出ていることを
+  /// 知らせ、給料日・金額・入金先の登録を促す。
+  registerIncomePlan,
+
   /// 今日: 期日を過ぎた入金予定（給料等）が着金したか確認する。
   confirmIncomeArrival,
 
@@ -264,6 +268,27 @@ class AssetTriageGuideService {
           title: 'カードを財布から抜く',
           detail: '$namesを今日から使わないでください。$newBorrowingNote'
               '「増やさない」が返済より先です。支払いは現金かデビットに切り替えてください。',
+        ),
+      );
+    }
+
+    // ③.5 収入予定が1件も未登録なら、資金繰りは「収入ゼロ」で計算され、使用可能額が
+    // 実態より大幅に低く出る。数字を鵜呑みにして過度に不安になるのを防ぐため登録を促す。
+    // ただし生存行動 (生活費確保・本日期日・カード停止) より後に置き、今日の3件枠が
+    // 埋まっているときはそちらを優先する (データ入力より今日を生き延びる方が先)。
+    // 支払予定がある家計にだけ出す (データ未入力の新規利用者への誤発火防止)。
+    final hasScheduledPayments = workbook.cashflowRows.any(
+      (row) => row.isPayment && row.isDirectCashflowTarget,
+    );
+    if (workbook.incomePlans.isEmpty && hasScheduledPayments) {
+      todaySteps.add(
+        const AssetTriageStep(
+          kind: AssetTriageStepKind.registerIncomePlan,
+          title: '収入予定を登録する',
+          detail: '今月の収入予定が1件も登録されていません。'
+              'そのため使用可能額や口座の見込み残高は「収入ゼロ」で計算されており、'
+              '実際より大幅に厳しい数字が出ています。'
+              '給料日・金額・入金先の口座を登録すると正しい資金繰りに直ります。',
         ),
       );
     }
