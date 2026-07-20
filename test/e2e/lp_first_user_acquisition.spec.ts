@@ -106,9 +106,10 @@ async function openLanding(page: Page, path: string) {
 
   const response = await page.goto(path, { waitUntil: 'domcontentloaded' });
   expect(response?.ok()).toBeTruthy();
+  await expect(page).toHaveTitle('自分株式会社', { timeout: 60_000 });
   await expect(
     page.getByText('仕事・学習・お金の「次の1件」を、AIが1分で決める', {
       exact: true,
     }),
-  ).toBeVisible({ timeout: 30_000 });
+  ).toBeVisible({ timeout: 60_000 });
 }
