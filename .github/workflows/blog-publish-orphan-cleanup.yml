@@ -2,7 +2,7 @@ name: Blog Publish Orphan Branch Cleanup
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # every 6 hours
+    - cron: '0 */12 * * *'  # every 12 hours (2026-07-20 ci-audit: 6h→12h, -60 runs/月)
   workflow_dispatch:
 
 concurrency:
