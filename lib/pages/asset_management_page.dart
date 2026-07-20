@@ -1048,7 +1048,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _bootPrefMirrorFuture = null;
     });
     _loadDataFromSupabase();
-    _loadAssetLiabilityMonthlyState();
+    unawaited(_loadAssetLiabilityBootState());
     _loadWatchlistEntries();
     _loadAssetManagementUserProfile();
     _loadPayslipFinanceData();
@@ -1057,10 +1057,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchMustTasks();
     _loadDisplayMode();
     _loadMainAccount();
-    unawaited(_loadSalaryDay());
     unawaited(_loadHouseholdTrackerPublishing());
     unawaited(_loadSalaryAmount());
-    unawaited(_loadSalaryResetMarker());
     unawaited(_loadRevolvingConfigs());
     unawaited(_loadCategoryBudgets());
     unawaited(_loadRecurringFixedCosts());
@@ -1900,8 +1898,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return Map<String, double>.from(snapshot);
   }
 
+  /// 起動時は給与サイクルの基準を確定してから月次stateを一度だけ読む。
+  Future<void> _loadAssetLiabilityBootState() async {
+    await Future.wait<void>(<Future<void>>[
+      _loadSalaryDay(),
+      _loadSalaryResetMarker(),
+    ]);
+    if (!mounted) {
+      return;
+    }
+    await _loadAssetLiabilityMonthlyState();
+  }
+
   /// 月次stateロードの入口。同一サイクル月のロードが進行中ならその Future を
-  /// 返して重複バッチ (各 7 往復) を抑える。対象月が異なる場合は新規に走らせる。
+  /// 返して重複バッチを抑える。対象月が異なる場合は新規に走らせる。
   Future<void> _loadAssetLiabilityMonthlyState() {
     final monthKey = _assetLiabilityStateMonthKey(_now);
     final inFlight = _assetLiabilityMonthlyStateInFlight;
@@ -1927,10 +1937,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final targetMonth = _assetLiabilityStateMonth(_now);
       final monthKey = _assetLiabilityStateMonthKey(_now);
       final state = await _assetLiabilityRepository.loadMonth(targetMonth);
-      final defaultSources =
-          await _assetLiabilityRepository.loadDefaultPaymentSources();
+      final defaultPaymentSettings =
+          await _assetLiabilityRepository.loadDefaultPaymentSettings();
+      final defaultSources = defaultPaymentSettings.paymentSourceAccountIds;
       final defaultCardBillingAccounts =
-          await _assetLiabilityRepository.loadDefaultCardBillingAccounts();
+          defaultPaymentSettings.cardBillingAccountIds;
       // #part295: ロード時もトゥームストーン済み支払日上書きを除外する
       // (pull とロードの順序に依らず「削除した上書き」を復活させない)。
       final loadedDebtOverrides =
@@ -8957,9 +8968,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       // 同じなら同一サイクル月の同一データで、起動毎に7往復のフルバッチが余分に
       // 走るだけだった (兄弟の _restoreSalaryAmountFromMirror は同値なら早期
       // return しており、そちらに揃える)。
-      if (changed) {
-        unawaited(_loadAssetLiabilityMonthlyState());
-      }
     } catch (e) {
       debugPrint('salary day mirror restore failed: $e');
     }
@@ -9098,8 +9106,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _salaryResetMarkerStore.save(merged),
         'salary reset marker restore save',
       );
-      // 実効サイクルが変わるため月次stateを読み直す。
-      unawaited(_loadAssetLiabilityMonthlyState());
     } catch (e) {
       debugPrint('salary reset marker mirror restore failed: $e');
     }
