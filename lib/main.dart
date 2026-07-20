@@ -161,6 +161,7 @@ import 'package:my_web_app/pages/mcp_file_search_page.dart';
 import 'package:my_web_app/pages/semantic_search_page.dart';
 import 'package:my_web_app/pages/smart_inbox_triage_page.dart';
 import 'package:my_web_app/pages/social_feed_page.dart';
+import 'package:my_web_app/pages/sobriety_campaign_page.dart';
 import 'package:my_web_app/pages/family_sharing_manager_page.dart';
 import 'package:my_web_app/pages/gift_registry_page.dart';
 import 'package:my_web_app/pages/mindmap_diagram_page.dart';
@@ -1098,6 +1099,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             return MaterialPageRoute(builder: (_) => const McpFileSearchPage());
           case '/social-feed':
             return MaterialPageRoute(builder: (_) => const SocialFeedPage());
+          case '/sobriety-campaign':
+            return MaterialPageRoute(
+              builder: (_) => const SobrietyCampaignPage(),
+            );
           case '/notifications':
             return MaterialPageRoute(builder: (_) => const NotificationsPage());
           case '/meeting-manager':

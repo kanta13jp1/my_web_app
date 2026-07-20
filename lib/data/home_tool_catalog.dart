@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/feature_tap_logger.dart';
 
 import '../pages/abstinence_guard_page.dart';
+import '../pages/sobriety_campaign_page.dart';
 import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
 import '../pages/agent_gpa_dashboard_page.dart';
@@ -2065,6 +2066,24 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF1565C0),
       keywords: const <String>['SNS', 'フィード', 'ソーシャル', 'タイムライン', 'social'],
       onOpen: (context) => _pushPage(context, const SocialFeedPage()),
+    ),
+    HomeToolEntry(
+      id: 'sobriety-campaign',
+      sectionId: 'today',
+      title: '断つ応援キャンペーン',
+      subtitle: '酒・煙草・風俗をやめる動画を観てシェアする縦型フィード',
+      icon: Icons.play_circle_outline,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        '禁酒',
+        '禁煙',
+        '脱風俗',
+        '動画',
+        'シェア',
+        'キャンペーン',
+        'sobriety',
+      ],
+      onOpen: (context) => _pushPage(context, const SobrietyCampaignPage()),
     ),
     HomeToolEntry(
       id: 'referral-program',
