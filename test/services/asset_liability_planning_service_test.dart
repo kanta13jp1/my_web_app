@@ -219,6 +219,36 @@ void main() {
       expect(reviewed.paymentSourceMissingRows, isEmpty);
     });
 
+    test('drops paid rows from the payment source missing review', () {
+      const snapshot = <String, double>{'bank': 50000, 'PayPay': -20000};
+      const overrides = <String, double>{'paypay_card': 20000};
+
+      final unpaid = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: overrides,
+      );
+
+      // 原資未設定かつ未払いなので、警告対象として拾われる。
+      expect(unpaid.paymentSourceMissingRows.single.id, 'paypay_card');
+      expect(unpaid.hasPaymentSourceMissingRows, isTrue);
+      expect(unpaid.paymentSourceMissingTotal, closeTo(20000, 0.001));
+
+      final paid = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: overrides,
+        paidAccountNames: const <String>{'paypay_card'},
+      );
+
+      // 支払済みにしたら、原資を後付けしなくてもバナー・アラート・合計から消える。
+      // 見込み残高は支払済み行を最初から控除しないので、警告する盲点も無い。
+      expect(paid.debtMasterRows.single.paid, isTrue);
+      expect(paid.paymentSourceMissingRows, isEmpty);
+      expect(paid.hasPaymentSourceMissingRows, isFalse);
+      expect(paid.paymentSourceMissingTotal, 0);
+    });
+
     test('treats zero yen as a valid manually entered payment', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
