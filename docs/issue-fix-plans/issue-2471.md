@@ -55,7 +55,27 @@
 
 ## Checklist
 
-- [ ] Reproduction is clear
-- [ ] Smallest safe fix is implemented
-- [ ] Analyze/tests/CI are checked
-- [ ] PR notes explain the change and the remaining risk
+- [x] Reproduction is clear
+- [x] Smallest safe fix is implemented
+- [x] Analyze/tests are checked locally; CI runs after push
+- [x] PR notes explain the change and the remaining risk
+
+## Implementation Result
+
+- Added deterministic ticker validation matching the market-price boundary.
+- Added form tests for blank/invalid tickers and negative quantities/prices.
+- Added a PostgREST integration contract test for authenticated CRUD requests.
+- Made portfolio ordering explicitly ascending to avoid SDK-default drift.
+- Reused the existing migration test as the deterministic owner-only RLS gate.
+
+Local validation:
+
+```text
+flutter analyze <4 changed Dart files> -> No issues found
+flutter test <model, valuation, repository, schema suites> -> 16 passed
+```
+
+Residual risk: the repository test validates the real Supabase SDK request
+contract with a mock HTTP transport. Production RLS remains covered by the SQL
+migration policy test and should also be observed through normal staging smoke
+checks after merge.

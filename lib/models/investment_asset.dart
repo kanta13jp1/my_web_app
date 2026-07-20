@@ -121,6 +121,13 @@ class InvestmentAssetDraft {
     if (normalizedTicker.isEmpty) {
       throw ArgumentError.value(ticker, 'ticker', 'must not be empty');
     }
+    if (!_investmentTickerPattern.hasMatch(normalizedTicker)) {
+      throw ArgumentError.value(
+        ticker,
+        'ticker',
+        'must be 1-32 chars of A-Z, 0-9, dot, underscore, colon, or hyphen',
+      );
+    }
     if (!quantity.isFinite || quantity <= 0) {
       throw ArgumentError.value(quantity, 'quantity', 'must be positive');
     }
@@ -146,6 +153,8 @@ class InvestmentAssetDraft {
     }
   }
 }
+
+final RegExp _investmentTickerPattern = RegExp(r'^[A-Z0-9._:-]{1,32}$');
 
 String _requiredString(Map<String, dynamic> row, String key) {
   final value = row[key]?.toString().trim() ?? '';

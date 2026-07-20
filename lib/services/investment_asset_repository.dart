@@ -46,8 +46,8 @@ class SupabaseInvestmentAssetRepository implements InvestmentAssetRepository {
         .from(tableName)
         .select(selectColumns)
         .eq('user_id', normalizedUserId)
-        .order('asset_type')
-        .order('ticker');
+        .order('asset_type', ascending: true)
+        .order('ticker', ascending: true);
 
     return (rows as List)
         .whereType<Map>()
