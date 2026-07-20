@@ -1362,6 +1362,104 @@ void main() {
       expect(workbook.transferSuggestions.single.toAccountId, 'custom_bank');
     });
 
+    test('caps the transfer suggestion by the donor current balance', () {
+      // ユーザー報告: 「じぶん銀行の残高より多い額を移動提案に出さないで」。
+      // 移動元の projectedBalance は未着金の収入を含むため、それだけで決めると
+      // 実際には無い残高の移動を提案してしまう。現在残高で上限を掛ける。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          // 移動元: 今は 18,918 しかないが、給料 80,000 の入金予定がある。
+          'cash': 18918,
+          'bank': 10000,
+          'mobit': -100000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 60041},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'custom_bank'},
+        incomePlans: <AssetLiabilityIncomePlan>[
+          AssetLiabilityIncomePlan(
+            id: 'income_cash_salary',
+            date: DateTime(2026, 5, 25),
+            name: 'Salary',
+            amount: 80000,
+            destinationAccountId: 'custom_cash',
+            destinationAccountName: null,
+            received: false,
+          ),
+        ],
+      );
+
+      final donor = workbook.accountCashflowSummaries.firstWhere(
+        (summary) => summary.accountId == 'custom_cash',
+      );
+      final shortage = workbook.accountCashflowSummaries.firstWhere(
+        (summary) => summary.accountId == 'custom_bank',
+      );
+
+      // 見込みは膨らむが、今動かせるのは現在残高まで。
+      expect(donor.currentBalance, 18918);
+      expect(donor.projectedBalance, 98918);
+      expect(shortage.shortfall, 50041);
+
+      final suggestion = workbook.transferSuggestions.single;
+      expect(suggestion.fromAccountId, 'custom_cash');
+      expect(suggestion.toAccountId, 'custom_bank');
+      // 修正前は min(不足額, 見込み余剰) = 50,041 を提案していた (実行不能)。
+      expect(suggestion.amount, 18918);
+    });
+
+    test('excludes already-reserved transfers from the movable amount', () {
+      // 移動予約済み (未完了の移動タスク) の資金は既に他へ約束済みなので、
+      // 同じ現金を二重に当て込まないよう移動可能額から差し引く。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 60000,
+          'bank': 10000,
+          'mobit': -100000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 60041},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'custom_bank'},
+        incomePlans: <AssetLiabilityIncomePlan>[
+          // 未着金の収入。見込みは膨らむが今は動かせない。
+          AssetLiabilityIncomePlan(
+            id: 'income_cash_salary',
+            date: DateTime(2026, 5, 25),
+            name: 'Salary',
+            amount: 100000,
+            destinationAccountId: 'custom_cash',
+            destinationAccountName: null,
+            received: false,
+          ),
+        ],
+        transferTasks: <AssetLiabilityTransferTask>[
+          AssetLiabilityTransferTask(
+            id: 'transfer_reserved',
+            fromAccountId: 'custom_cash',
+            fromAccountName: 'cash',
+            toAccountId: 'custom_other',
+            toAccountName: 'other',
+            amount: 40000,
+            dueDate: DateTime(2026, 5, 20),
+          ),
+        ],
+      );
+
+      final donor = workbook.accountCashflowSummaries.firstWhere(
+        (summary) => summary.accountId == 'custom_cash',
+      );
+      expect(donor.currentBalance, 60000);
+      expect(donor.pendingTransferOut, 40000);
+      // 見込みは 60,000 + 100,000(未着金) - 40,000(予約) = 120,000 と潤沢。
+      expect(donor.projectedBalance, 120000);
+
+      // だが今動かせるのは 60,000 - 40,000(予約済み) = 20,000 まで。
+      // 見込みだけで判断すると不足額 50,041 を提案してしまう。
+      final suggestion = workbook.transferSuggestions.single;
+      expect(suggestion.fromAccountId, 'custom_cash');
+      expect(suggestion.amount, 20000);
+    });
+
     test('applies pending transfer tasks to account-level cashflow', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{
