@@ -98,6 +98,7 @@ import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
 import 'package:my_web_app/widgets/asset_alert_center_card.dart';
 import 'package:my_web_app/widgets/asset_cashflow_statement_card.dart';
+import 'package:my_web_app/widgets/asset_dashboard_grid.dart';
 import 'package:my_web_app/widgets/asset_net_worth_panel_card.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
@@ -8781,19 +8782,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildCashflowForecastCard(assetLiabilityWorkbook),
             ],
             if (_isSectionShown(
-              AssetManagementSectionId.cashflowStatement,
+              AssetManagementSectionId.monthlyDashboard,
             )) ...[
-              _buildCashflowStatementCard(assetLiabilityWorkbook),
-            ],
-            if (_isSectionShown(
-              AssetManagementSectionId.alertCenter,
-            )) ...[
-              _buildAssetAlertCenterCard(assetLiabilityWorkbook),
-            ],
-            if (_isSectionShown(
-              AssetManagementSectionId.netWorthPanel,
-            )) ...[
-              _buildAssetNetWorthPanelCard(assetLiabilityWorkbook),
+              _buildMonthlyDashboardGrid(assetLiabilityWorkbook),
             ],
             // 提案カード(定期取引/定期収入の自動検出)は給与内訳に相乗りせず専用
             // セクションへ。salaryBreakdown を隠しても提案だけ独立表示できる。
@@ -14348,7 +14339,59 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 月次キャッシュフローパネル (Issue #2474)。履歴スナップショット + ライブの当月から
   /// 「当月CF (月収 − 月支出)」「年初来累積CF」「直近12か月の黒字/赤字月数」を集計する。
   /// 金額計算は純サービス [AssetCashflowStatementService] で deterministic に行う。
-  Widget _buildCashflowStatementCard(AssetLiabilityWorkbook? workbook) {
+  /// 月次資産ダッシュボード (Issue #2472)。純資産 / キャッシュフロー / アラートを
+  /// responsive な 2x2 グリッド (mobile 1 列) に並べる。
+  ///
+  /// 4 枚目の「投資」パネルは第2弾B (#2468-#2470) が未実装のため現時点では
+  /// 渡していない。着地後にこの配列へ 1 要素足すだけでグリッドに乗る。
+  /// データが無いパネルは配列に入れないので空セルは発生しない。
+  Widget _buildMonthlyDashboardGrid(AssetLiabilityWorkbook? workbook) {
+    final panels = <AssetDashboardPanel>[];
+
+    final netWorth = _assetNetWorthPanelChild(workbook);
+    if (netWorth != null) {
+      panels.add(
+        AssetDashboardPanel(
+          title: '純資産',
+          onOpenDetail: () => _scrollTo(_keyStock),
+          child: netWorth,
+        ),
+      );
+    }
+
+    final cashflow = _cashflowStatementPanelChild(workbook);
+    if (cashflow != null) {
+      panels.add(
+        AssetDashboardPanel(
+          title: 'キャッシュフロー',
+          onOpenDetail: () => _scrollTo(_keyFlow),
+          child: cashflow,
+        ),
+      );
+    }
+
+    final alerts = _assetAlertCenterPanelChild(workbook);
+    if (alerts != null) {
+      panels.add(
+        AssetDashboardPanel(
+          title: 'アラート',
+          onOpenDetail: () => _scrollTo(_keyCalendar),
+          child: alerts,
+        ),
+      );
+    }
+
+    if (panels.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: AssetDashboardGrid(panels: panels),
+    );
+  }
+
+  /// キャッシュフローパネルの中身。データが無ければ null (グリッドから除外される)。
+  Widget? _cashflowStatementPanelChild(AssetLiabilityWorkbook? workbook) {
     // ライブの当月スナップショットを履歴サービスで生成し、未保存でも当月CFを反映する。
     AssetLiabilityMonthlySnapshot? currentMonthSnapshot;
     if (workbook != null) {
@@ -14366,21 +14409,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       asOf: DateTime.now(),
     );
     if (!statement.hasData) {
-      return const SizedBox.shrink();
+      return null;
     }
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: AssetCashflowStatementCard(
-        statement: statement,
-        currencyFormatter: _formatYen,
-      ),
+    return AssetCashflowStatementCard(
+      statement: statement,
+      currencyFormatter: _formatYen,
     );
   }
 
   /// 純資産パネル (Issue #2473)。履歴スナップショット + ライブの当月から
   /// 「純資産」「前月比 ±¥ / ±%」「直近6月スパークライン」を集計する。
   /// 金額・変化率は純サービス [AssetNetWorthPanelService] で deterministic に算出。
-  Widget _buildAssetNetWorthPanelCard(AssetLiabilityWorkbook? workbook) {
+  Widget? _assetNetWorthPanelChild(AssetLiabilityWorkbook? workbook) {
     AssetLiabilityMonthlySnapshot? currentMonthSnapshot;
     if (workbook != null) {
       final monthKey =
@@ -14396,14 +14436,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       currentMonthSnapshot: currentMonthSnapshot,
     );
     if (!panel.hasData) {
-      return const SizedBox.shrink();
+      return null;
     }
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: AssetNetWorthPanelCard(
-        panel: panel,
-        currencyFormatter: _formatYen,
-      ),
+    return AssetNetWorthPanelCard(
+      panel: panel,
+      currencyFormatter: _formatYen,
     );
   }
 
@@ -14436,9 +14473,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 統合アラートパネル (Issue #2475)。延滞・口座ショート・支払リマインダー(#2453)・
   /// 支払原資未設定を重要度別に集約する。異常検知 (第2弾D) は将来 anomalyAlerts で
   /// 注入する統合設計。金額・重要度判定は純サービスで deterministic に行う。
-  Widget _buildAssetAlertCenterCard(AssetLiabilityWorkbook? workbook) {
+  /// アラートパネルの中身。データが無ければ null (グリッドから除外される)。
+  Widget? _assetAlertCenterPanelChild(AssetLiabilityWorkbook? workbook) {
     if (workbook == null) {
-      return const SizedBox.shrink();
+      return null;
     }
     final center = _assetAlertCenterService.build(
       workbook: workbook,
@@ -14447,17 +14485,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     // 表示するアラートも dismiss 済みも無ければカードを出さない。
     if (!center.hasAlerts && center.dismissedCount == 0) {
-      return const SizedBox.shrink();
+      return null;
     }
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: AssetAlertCenterCard(
-        center: center,
-        onDismiss: _dismissAssetAlert,
-        onRestoreDismissed: center.dismissedCount > 0
-            ? () => unawaited(_restoreDismissedAssetAlerts())
-            : null,
-      ),
+    return AssetAlertCenterCard(
+      center: center,
+      onDismiss: _dismissAssetAlert,
+      onRestoreDismissed: center.dismissedCount > 0
+          ? () => unawaited(_restoreDismissedAssetAlerts())
+          : null,
     );
   }
 
