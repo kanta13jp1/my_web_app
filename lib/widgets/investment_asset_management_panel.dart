@@ -523,15 +523,20 @@ class _InvestmentAssetEditorDialogState
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
+    final ticker = _tickerController.text.trim().toUpperCase();
+    final asset = widget.asset;
+    final keepsPriceCache = asset != null &&
+        asset.assetType == _assetType &&
+        asset.ticker.trim().toUpperCase() == ticker;
     Navigator.of(context).pop(
       InvestmentAssetDraft(
         assetType: _assetType,
-        ticker: _tickerController.text,
+        ticker: ticker,
         quantity: _parseNumber(_quantityController.text)!,
         buyPriceJpy: _parseNumber(_buyPriceController.text)!,
         buyDate: _buyDate,
-        currentPriceJpy: widget.asset?.currentPriceJpy,
-        lastPricedAt: widget.asset?.lastPricedAt,
+        currentPriceJpy: keepsPriceCache ? asset.currentPriceJpy : null,
+        lastPricedAt: keepsPriceCache ? asset.lastPricedAt : null,
       ),
     );
   }

@@ -141,6 +141,24 @@ void main() {
     expect(repository.updateCalls, 1);
     expect(repository.lastUpdatedDraft?.quantity, 3);
     expect(repository.lastUpdatedDraft?.currentPriceJpy, 1200);
+    expect(repository.lastUpdatedDraft?.lastPricedAt, isNotNull);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('investment_asset_edit_asset-1')),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_ticker_field')),
+      '7203',
+    );
+    await tester.tap(find.byKey(const Key('investment_asset_save')));
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCalls, 2);
+    expect(repository.lastUpdatedDraft?.normalizedTicker, '7203');
+    expect(repository.lastUpdatedDraft?.currentPriceJpy, isNull);
+    expect(repository.lastUpdatedDraft?.lastPricedAt, isNull);
+    expect(find.text('7203'), findsOne);
 
     await tester.tap(
       find.byKey(const ValueKey<String>('investment_asset_delete_asset-1')),
