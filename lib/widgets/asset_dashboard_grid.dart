@@ -39,8 +39,7 @@ int dashboardColumnCountFor(
 ///
 /// スコープの 4 パネル (純資産 / キャッシュフロー / 投資 / アラート) を
 /// mobile 1 列 / web 2x2 で並べる。**渡されたパネルだけ**を描画するため、
-/// 未実装のパネル (= 投資は第2弾B #2468-#2470 待ち) は呼び出し側が単に
-/// 渡さなければよく、空セルも出ない。
+/// 利用できないパネルは呼び出し側が単に渡さなければよく、空セルも出ない。
 class AssetDashboardGrid extends StatelessWidget {
   const AssetDashboardGrid({
     super.key,

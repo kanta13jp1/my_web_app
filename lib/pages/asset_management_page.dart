@@ -45,6 +45,7 @@ import 'package:my_web_app/services/asset_debt_trend_analyzer.dart';
 import 'package:my_web_app/services/asset_advisory_briefing_service.dart';
 import 'package:my_web_app/services/advisory_briefing_share_service.dart';
 import 'package:my_web_app/services/household_tracker_share_service.dart';
+import 'package:my_web_app/services/investment_asset_repository.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
@@ -108,6 +109,7 @@ import 'package:my_web_app/widgets/subscription_duplicate_alert_card.dart';
 import 'package:my_web_app/widgets/subscription_fixed_cost_card.dart';
 import 'package:my_web_app/widgets/asset_recurring_transaction_suggestion_card.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
+import 'package:my_web_app/widgets/investment_asset_management_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -198,6 +200,7 @@ class AssetManagementPage extends StatefulWidget {
   final bool emphasizeMonthlyFlow;
   final AssetWatchlistService watchlistService;
   final AssetLiabilityRepository? assetLiabilityRepository;
+  final InvestmentAssetRepository? investmentAssetRepository;
   final String? entryLabel;
   final String? entryDescription;
 
@@ -313,6 +316,7 @@ class AssetManagementPage extends StatefulWidget {
     this.emphasizeMonthlyFlow = false,
     this.watchlistService = const AssetWatchlistService(),
     this.assetLiabilityRepository,
+    this.investmentAssetRepository,
     this.entryLabel,
     this.entryDescription,
     this.debugInitialAssetData,
@@ -779,6 +783,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   // --- 返済計画用 ---
   late final AssetLiabilityRepository _assetLiabilityRepository;
+  late final InvestmentAssetRepository _investmentAssetRepository;
   final AssetLiabilityPlanningService _assetLiabilityPlanner =
       const AssetLiabilityPlanningService();
   final AssetLiabilityPaymentReminderService _assetLiabilityReminderService =
@@ -1040,6 +1045,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         AssetLiabilityRepositoryFactory.createDefault(
           supabaseClient: _supabase,
         );
+    _investmentAssetRepository = widget.investmentAssetRepository ??
+        SupabaseInvestmentAssetRepository(client: _supabase);
     unawaited(_loadMinimumSafetyBalance());
     // 起動時の asset_pref_mirror 個別読み取りを 1 回のバッチ取得へ集約する
     // (端末跨ぎ同期の多数 REST が ERR_INSUFFICIENT_RESOURCES を誘発するのを緩和)。
@@ -14343,12 +14350,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 月次キャッシュフローパネル (Issue #2474)。履歴スナップショット + ライブの当月から
   /// 「当月CF (月収 − 月支出)」「年初来累積CF」「直近12か月の黒字/赤字月数」を集計する。
   /// 金額計算は純サービス [AssetCashflowStatementService] で deterministic に行う。
-  /// 月次資産ダッシュボード (Issue #2472)。純資産 / キャッシュフロー / アラートを
+  /// 月次資産ダッシュボード (Issue #2472)。純資産 / キャッシュフロー / 投資 / アラートを
   /// responsive な 2x2 グリッド (mobile 1 列) に並べる。
   ///
-  /// 4 枚目の「投資」パネルは第2弾B (#2468-#2470) が未実装のため現時点では
-  /// 渡していない。着地後にこの配列へ 1 要素足すだけでグリッドに乗る。
-  /// データが無いパネルは配列に入れないので空セルは発生しない。
+  /// 投資パネルは未登録状態でも追加導線を表示するため常に配列へ含める。
   Widget _buildMonthlyDashboardGrid(AssetLiabilityWorkbook? workbook) {
     final panels = <AssetDashboardPanel>[];
 
@@ -14373,6 +14378,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       );
     }
+
+    panels.add(
+      AssetDashboardPanel(
+        title: '投資',
+        child: InvestmentAssetManagementPanel(
+          repository: _investmentAssetRepository,
+          userId: _supabase.auth.currentUser?.id,
+          currencyFormatter: (value) => _formatYen(value),
+        ),
+      ),
+    );
 
     final alerts = _assetAlertCenterPanelChild(workbook);
     if (alerts != null) {
