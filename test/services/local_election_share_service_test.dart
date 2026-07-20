@@ -184,6 +184,7 @@ void main() {
           prefectureOfficerSourceUrl:
               'https://www.new-kokumin.tokyo/2025/10/yakuin2025/',
           cdpLocalMembers: 83,
+          ldpLocalMembers: 362,
         ),
         LocalElectionPrefecturePlan(
           prefecture: '香川県',
@@ -199,6 +200,7 @@ void main() {
           announcedCandidateCount: 3,
           confirmedCandidateCount: 2,
           cdpLocalMembers: 20,
+          ldpLocalMembers: 112,
           endorsementConfirmed: true,
         ),
       ],
@@ -493,6 +495,42 @@ void main() {
       uri.queryParameters['text'],
       isNot(contains('https://example.com/public/local-election-700')),
     );
+  });
+
+  test('公開ノートに自民参考値と第1次公認が載る (共有面の欠落防止)', () {
+    final plan = buildPlan();
+    final draft = service.buildPlanDashboardDraft(
+      plan: plan,
+      snapshot: buildSnapshot(),
+      publicDashboardUrl: 'https://example.com/public/local-election-700',
+    );
+
+    // 全国サマリー: 立憲だけでなく自民と第1次公認も出す。
+    expect(draft.content, contains('自民地方議員参考合計: 474人'));
+    expect(draft.content, contains('第1次公認:'));
+    expect(draft.content, contains('県が発表済み'));
+    // 県別行: 自民参考と地力差 (ラベルは自民であって立憲ではない)。
+    expect(draft.content, contains('自民参考362人'));
+    expect(draft.content, contains('自民+319'));
+    // metadata にも機械可読で載る。
+    expect(draft.metadata['totalLdpLocalMembers'], 474);
+    expect(draft.metadata['firstEndorsementTotal'], isA<int>());
+    final prefectures = draft.metadata['prefectures'] as List<dynamic>;
+    final tokyo =
+        Map<String, dynamic>.from(prefectures.first as Map<dynamic, dynamic>);
+    expect(tokyo['ldpLocalMembers'], 362);
+    expect(tokyo['ldpMemberGap'], 319);
+  });
+
+  test('地力差ラベルは比較相手の党名を取り違えない', () {
+    final plan = buildPlan();
+    final draft = service.buildPlanDashboardDraft(
+      plan: plan,
+      snapshot: buildSnapshot(),
+      publicDashboardUrl: 'https://example.com/public/local-election-700',
+    );
+    // 自民の差分行に立憲ラベルが混入しない (汎用ヘルパの党名直書き対策)。
+    expect(draft.content, isNot(contains('自民参考362人(立憲')));
   });
 
   test('buildPlanDashboardDraft creates a public note for all prefecture KPIs',
