@@ -1,15 +1,12 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-18T22:08:40Z`
-- Previous check: `2026-07-17T22:07:58Z`
-- Changed/new official sources: `4`
+- Checked at: `2026-07-19T22:10:28Z`
+- Previous check: `2026-07-18T22:08:40Z`
+- Changed/new official sources: `1`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.214 / July 18, 2026
-- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
-- `changed` Codex changelog: 2026-07-18 / Codex CLI 0.144.6 pre
-- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.87.0 / June 19, 2026
+- `changed` Claude Code changelog: 2.1.215 / July 19, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -21,7 +18,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.214 / July 18, 2026
+  - Latest signal: 2.1.215 / July 19, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .

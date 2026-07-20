@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/local_election_plan.dart';
+import 'package:my_web_app/services/local_election_plan_service.dart';
 import 'package:my_web_app/services/local_election_ldp_benchmark.dart';
 
 void main() {
@@ -52,5 +54,48 @@ void main() {
     expect(bench.membersByPrefecture['東京'], 362);
     expect(bench.membersByPrefecture['神奈川'], 173);
     expect(bench.membersByPrefecture['岩手'], 18);
+  });
+
+  test('アセットのキーは正規化後に全47県プランと突合できる', () async {
+    final raw =
+        await rootBundle.loadString(LocalElectionLdpBenchmark.assetPath);
+    final bench = LocalElectionLdpBenchmark.parse(raw);
+    // 素のキーでも、総務省形式(青森県/東京都)でも、正規化すれば
+    // プラン側の県名と1件残らず一致すること。片方しか一致しないと
+    // 「掲載 1/47」が正しい値のように出る沈黙した誤りになる。
+    final planPrefectures = const LocalElectionPlanService()
+        .buildDefaultPlan()
+        .prefectures
+        .map((item) => item.prefecture)
+        .toSet();
+    expect(planPrefectures.length, 47);
+
+    final normalizedAssetKeys = bench.membersByPrefecture.keys
+        .map(LocalElectionPlanDashboard.normalizePrefectureKey)
+        .toSet();
+    expect(normalizedAssetKeys.length, 47);
+    expect(
+      normalizedAssetKeys.difference(planPrefectures),
+      isEmpty,
+      reason: 'アセットにプラン外の県名がある',
+    );
+    expect(
+      planPrefectures.difference(normalizedAssetKeys),
+      isEmpty,
+      reason: 'プランの県がアセットに無い(自民データ欠落)',
+    );
+  });
+
+  test('総務省形式のフルネームキーでも全47県に適用される', () {
+    // 将来アセットを総務省の正式名で再生成しても、正規化により
+    // 全県へ反映されること (北海道だけ一致する退行を防ぐ)。
+    final plan = const LocalElectionPlanService().buildDefaultPlan();
+    final fullNameBenchmark = <String, int>{
+      for (final item in plan.prefectures)
+        item.prefecture == '北海道' ? '北海道' : '${item.prefecture}県': 7,
+    };
+    final applied = plan.withLdpLocalMembers(fullNameBenchmark);
+    expect(applied.ldpComparisonPrefectureCount, 47);
+    expect(applied.totalLdpLocalMembers, 47 * 7);
   });
 }

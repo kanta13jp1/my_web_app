@@ -1412,6 +1412,60 @@ class AssetLiabilityWorkbook {
     );
   }
 
+  /// 支払原資が「設定はされているが、現金・預金の資産口座を指していない」支払い。
+  ///
+  /// 例: 原資が PayPay カード (creditCard) や、資産一覧に存在しない口座 ID
+  /// (`paypay_card` 等の請求名フォールバック) を指しているケース。
+  /// planner の無効化ガードは cardLoan しか見ないためこれらは非 null のまま残り、
+  /// [paymentSourceMissingRows] にも入らないので原資未設定レビュー・一括設定・
+  /// アラートのすべてから不可視になる。さらに口座別の見込み残高は
+  /// 「原資 ID == 口座 ID」で突き合わせるため、どの口座からも差し引かれない
+  /// (全体の資金繰りでは差し引かれるので口座別と全体で帳尻が食い違い、
+  /// 口座残高が実態より多く見える)。
+  ///
+  /// 判定は「現金・預金として資産一覧に載っている口座 ID の集合」に含まれるか
+  /// のみで行う。残高0の口座はそもそも資産一覧に載らない (スナップショットの
+  /// 0 円除外) ため、その ID を指す行もここで拾われる。これは正しい: 集計対象の
+  /// 口座が存在しない以上、その支払いはどの口座からも引かれていないため
+  /// (口座ショート警告は資産一覧にある口座しか見ないので、この穴は埋めない)。
+  ///
+  /// 支払済み (`paid`) の行は除外する。支払済みはどの口座の見込み残高からも
+  /// 引かれないのが正しい状態で、「残高が実際より多く見える」も成立しないため、
+  /// 警告を出すと誤報になる (月中に支払済みチェックを付けると必ず踏む)。
+  ///
+  /// 照合は生の ID で行う (per-account 集計も生 ID の一致で突き合わせるため)。
+  /// 空白混じりの ID は実際にどの口座とも一致せず引かれないので、拾うのが正しい。
+  List<AssetLiabilityDebtRow> get paymentSourceInvalidRows {
+    final cashLikeIds = <String>{
+      for (final account in accounts)
+        if (account.kind == AssetLiabilityAccountKind.cash ||
+            account.kind == AssetLiabilityAccountKind.deposit)
+          account.id,
+    };
+    return debtMasterRows
+        .where(
+          (row) =>
+              row.isDirectCashflowTarget &&
+              row.scheduledPaymentAmount > 0 &&
+              !row.paid &&
+              row.paymentSourceAccountId != null &&
+              row.paymentSourceAccountId!.trim().isNotEmpty &&
+              !cashLikeIds.contains(row.paymentSourceAccountId),
+        )
+        .toList();
+  }
+
+  bool get hasPaymentSourceInvalidRows {
+    return paymentSourceInvalidRows.isNotEmpty;
+  }
+
+  double get paymentSourceInvalidTotal {
+    return paymentSourceInvalidRows.fold<double>(
+      0,
+      (sum, row) => sum + row.scheduledPaymentAmount,
+    );
+  }
+
   double get monthlyScheduledPrincipalEstimateTotal {
     return debtMasterRows
         .where((row) => row.isDirectCashflowTarget)

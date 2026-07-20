@@ -68,13 +68,18 @@
 
   <link rel="preconnect" href="https://smmkxxavexumewbfaqpy.supabase.co" crossorigin>
   <link rel="dns-prefetch" href="//smmkxxavexumewbfaqpy.supabase.co">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" href="flutter_bootstrap.js" as="script">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@700&display=swap"
-    rel="stylesheet"
-  >
+  <!--
+    Google Fonts (Noto Sans JP / Noto Serif JP) のランタイム読み込みは廃止した。
+    - この CSS は日本語の unicode-range 分割により **458kB / 496 シャード宣言**
+      あり、しかも stylesheet はレンダーブロッキングでコールドロード毎に効く。
+    - 用途は Flutter 起動前の SEO シェル (:root と .seo-card h1) だけで、
+      アプリ本体はバンドル済み NotoSansJP を使う (google_fonts の
+      allowRuntimeFetching も false)。
+    - `Noto Serif JP` は要求していたが index.html のどこでも未使用だった。
+    シェルは下の system font stack で描画する (OS 標準の日本語フォントを使うため
+    追加ダウンロードゼロ / ローカルに Noto Sans JP があればそれを使う)。
+  -->
 
   <title>自分株式会社 | AIが今日の最優先タスクを整理</title>
   <link rel="manifest" href="manifest.json">
@@ -213,7 +218,9 @@
   <style>
     :root {
       color-scheme: light;
-      font-family: "Noto Sans JP", "Noto Sans", sans-serif;
+      font-family: system-ui, -apple-system, "Segoe UI",
+        "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI",
+        "Yu Gothic", Meiryo, "Noto Sans JP", "Noto Sans", sans-serif;
     }
 
     *,
@@ -259,7 +266,9 @@
 
     .seo-card h1 {
       margin: 0;
-      font-family: "Noto Sans JP", "Noto Sans", sans-serif;
+      font-family: system-ui, -apple-system, "Segoe UI",
+        "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI",
+        "Yu Gothic", Meiryo, "Noto Sans JP", "Noto Sans", sans-serif;
       font-size: 54px;
       line-height: 1.18;
       letter-spacing: 0;

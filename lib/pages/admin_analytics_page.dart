@@ -96,6 +96,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   // pending_approval 候補をここで承認→投稿する(UUID 手掘り+workflow dispatch
   // の運用ボトルネック解消)。X operator 権限が無い/取得失敗は空=panel 非表示。
   List<XPostCandidateSummary> _xCandidates = const [];
+  // R34: edge の total (limit 前の総数) を status 別に保持。空なら「N件以上」表示。
+  Map<String, int> _xCandidateTotals = const <String, int>{};
   final Set<String> _xCandidatePublishing = <String>{};
   bool _isLoading = true;
   WeeklyDigestSnapshot _weeklyDigest = const WeeklyDigestSnapshot.empty();
@@ -370,9 +372,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   /// window を埋め、古い承認待ちを黙って押し出す(レビュー F2)。
   /// X operator 権限が無いと edge が 403 を返すため、例外/非成功は空リストに
   /// degrade して panel ごと消す(ダッシュボードは必ず描画する)。
-  Future<List<XPostCandidateSummary>> _loadXCandidateQueue() async {
+  Future<XCandidateQueueSnapshot> _loadXCandidateQueue() async {
     const statuses = ['pending_approval', 'approved', 'publish_failed'];
-    final lists = await Future.wait(
+    final results = await Future.wait(
       statuses.map((status) async {
         try {
           final res = await _supabase.functions.invoke(
@@ -380,20 +382,43 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             body: {
               'action': 'x.candidate.list',
               'status': status,
-              'limit': 10,
+              // R32: ヘッダの「N件以上」判定と同じ定数を使う (両者が drift すると
+              // 上限到達を検出できず backlog を過小表示する)。
+              'limit': kXCandidateStatusFetchLimit,
             },
           );
           final data = res.data;
           if (data is Map && data['success'] == true) {
-            return parseXPostCandidates(data['candidates']);
+            // R34: edge の total (limit 前の総数) を拾う。返さない場合は null の
+            // まま = ヘッダは「N件以上」へ degrade。
+            final rawTotal = data['total'];
+            final total = rawTotal is num ? rawTotal.toInt() : null;
+            return (
+              status: status,
+              candidates: parseXPostCandidates(data['candidates']),
+              total: total,
+            );
           }
         } catch (error) {
           debugPrint('x.candidate.list($status) unavailable: $error');
         }
-        return const <XPostCandidateSummary>[];
+        return (
+          status: status,
+          candidates: const <XPostCandidateSummary>[],
+          total: null,
+        );
       }),
     );
-    return mergeCandidateSummaries(lists);
+    final totals = <String, int>{
+      for (final result in results)
+        if (result.total != null) result.status: result.total!,
+    };
+    return XCandidateQueueSnapshot(
+      candidates: mergeCandidateSummaries(
+        results.map((result) => result.candidates).toList(),
+      ),
+      totalsByStatus: totals,
+    );
   }
 
   /// R26: 候補を承認→投稿→確定する HITL フロー。無審査自動投稿はしない
@@ -515,7 +540,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       );
       final refreshed = await _loadXCandidateQueue();
       if (mounted) {
-        setState(() => _xCandidates = refreshed);
+        setState(() {
+          _xCandidates = refreshed.candidates;
+          _xCandidateTotals = refreshed.totalsByStatus;
+        });
       }
     } catch (error) {
       if (!mounted) return;
@@ -1840,7 +1868,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           _paidConversionMetrics = paidConversionMetrics;
           _xTodayStatus = xTodayStatus;
           _xPerformanceContext = xPerformanceContext;
-          _xCandidates = xCandidates;
+          _xCandidates = xCandidates.candidates;
+          _xCandidateTotals = xCandidates.totalsByStatus;
           _isLoading = false;
         });
       }
@@ -6531,7 +6560,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'X投稿候補キュー（${candidateQueueHeaderLabel(_xCandidates)}）',
+                      'X投稿候補キュー（${candidateQueueHeaderLabel(_xCandidates, totalsByStatus: _xCandidateTotals)}）',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,

@@ -225,13 +225,69 @@ List<XPostCandidateSummary> mergeCandidateSummaries(
   return merged;
 }
 
+/// R32: 候補キューは status ごとに [kXCandidateStatusFetchLimit] 件で取得する。
+/// 取得件数がこの上限に達している status は「本当は上限以上あるかもしれない」ため、
+/// 上限をそのまま総数として出すと backlog を過小表示する (実際 header は数日間
+/// 「承認待ち 10件」= 取得上限のまま張り付いていた)。取得窓を使い切った値は下限
+/// でしかないので「N件以上」と正直に出す (streakAtWindowCap と同じ規律 /
+/// [[feedback_postgrest_1000row_cap_silent_truncation]] の cap=総数 誤認防止)。
+const int kXCandidateStatusFetchLimit = 10;
+
 /// panel ヘッダの内訳ラベル。「承認待ち」に再試行行を混ぜて数えない
 /// (n=0 捏造を排した R17 以降のカウンタ誠実性規律 / レビュー F3)。
-String candidateQueueHeaderLabel(List<XPostCandidateSummary> candidates) {
+String candidateQueueHeaderLabel(
+  List<XPostCandidateSummary> candidates, {
+  int perStatusLimit = kXCandidateStatusFetchLimit,
+  Map<String, int> totalsByStatus = const <String, int>{},
+}) {
   final pending = candidates.where((c) => c.isPendingApproval).length;
   final retry = candidates.length - pending;
-  if (retry <= 0) return '承認待ち $pending件';
-  return '承認待ち $pending件・再試行 $retry件';
+  // 再試行は approved / publish_failed の2 status を束ねた数なので、
+  // どちらか一方でも取得上限に達していれば下限扱いにする。
+  final retryCapped = <String>['approved', 'publish_failed'].any(
+    (status) =>
+        candidates.where((c) => c.status == status).length >= perStatusLimit,
+  );
+
+  // R34: edge が limit 前の総数 (total) を返すならそれを断定表示する。
+  // 「10件以上」は正直だが backlog が 11 件なのか 200 件なのか分からず行動でき
+  // ないため、総数が取れるときは実数を出す。取れない (旧 edge / 取得失敗) 場合は
+  // 従来どおり取得上限到達で「N件以上」へ degrade する。
+  final pendingTotal = totalsByStatus['pending_approval'];
+  final approvedTotal = totalsByStatus['approved'];
+  final failedTotal = totalsByStatus['publish_failed'];
+  final retryTotal = (approvedTotal != null && failedTotal != null)
+      ? approvedTotal + failedTotal
+      : null;
+
+  final pendingLabel = pendingTotal != null
+      ? '承認待ち $pendingTotal件'
+      : (pending >= perStatusLimit ? '承認待ち $pending件以上' : '承認待ち $pending件');
+
+  final effectiveRetry = retryTotal ?? retry;
+  if (effectiveRetry <= 0) return pendingLabel;
+  final retryLabel = retryTotal != null
+      ? '再試行 $retryTotal件'
+      : (retryCapped ? '再試行 $retry件以上' : '再試行 $retry件');
+  return '$pendingLabel・$retryLabel';
+}
+
+/// R34: 候補キューの取得結果。`totalsByStatus` は edge の `total`
+/// (limit で切る前の総数) を status 別に保持する。edge が返さなかった status は
+/// 欠落し、ヘッダは従来の「N件以上」表示へ degrade する。
+class XCandidateQueueSnapshot {
+  final List<XPostCandidateSummary> candidates;
+  final Map<String, int> totalsByStatus;
+
+  const XCandidateQueueSnapshot({
+    required this.candidates,
+    required this.totalsByStatus,
+  });
+
+  static const XCandidateQueueSnapshot empty = XCandidateQueueSnapshot(
+    candidates: <XPostCandidateSummary>[],
+    totalsByStatus: <String, int>{},
+  );
 }
 
 /// 一覧カードの本文プレビュー(1行化+切り詰め)。

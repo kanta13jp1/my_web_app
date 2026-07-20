@@ -694,7 +694,7 @@ jobs:
           echo "prerendered vs-* pages:"; ls build/web/ | grep -c '^vs-' || true
 
       - name: Setup Node for Firebase CLI
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm

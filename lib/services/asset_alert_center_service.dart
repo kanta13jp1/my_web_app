@@ -101,6 +101,30 @@ class AssetAlertCenterService {
       );
     }
 
+    // 3.5 支払原資が資産口座を指していない (設定済みだが現金・預金でない)。
+    // 未設定と違い既存のレビュー・一括設定から不可視なうえ、口座別の見込み残高
+    // からも差し引かれないため口座残高が実態より多く見える。指定先の名前を
+    // 残して「何が指定されているか」を伝える (無設定に潰すと診断情報が消える)。
+    for (final row in workbook.paymentSourceInvalidRows) {
+      final specified = row.paymentSourceAccountName?.trim();
+      final specifiedNote =
+          (specified == null || specified.isEmpty) ? '' : '（指定: $specified）';
+      collected.add(
+        AssetAlert(
+          id: 'payment_source_invalid:${row.id}',
+          severity: AssetAlertSeverity.warning,
+          category: AssetAlertCategory.paymentSourceMissing,
+          title: '${row.name} の引落元が現金・預金口座として認識できません',
+          detail: '予定支払 ¥${_formatYen(row.scheduledPaymentAmount)} の引落元'
+              '$specifiedNoteが、現金・預金の口座として認識できません。'
+              'そのためこの支払いはどの口座の見込み残高からも差し引かれておらず、'
+              '口座残高が実際より多く見えています。'
+              '負債マスタの「支払原資」から引落元の口座を設定し直してください。',
+          accountId: row.id,
+        ),
+      );
+    }
+
     // 4. 異常検知 (外部注入 / 第2弾D)。
     collected.addAll(anomalyAlerts);
 

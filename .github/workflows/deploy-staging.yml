@@ -119,7 +119,7 @@ jobs:
           ls -la build/web
 
       - name: Setup Node for Firebase CLI
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
@@ -209,8 +209,10 @@ jobs:
       - name: Notify Slack on success
         if: needs.deploy.result == 'success'
         continue-on-error: true
-        uses: slackapi/slack-github-action@v3.0.5
+        uses: slackapi/slack-github-action@v4.0.0
         with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
           payload: |
             {
               "text": "✅ Staging deployment successful!",
@@ -224,14 +226,13 @@ jobs:
                 }
               ]
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
       - name: Notify Slack on failure
         if: needs.deploy.result == 'failure'
         continue-on-error: true
-        uses: slackapi/slack-github-action@v3.0.5
+        uses: slackapi/slack-github-action@v4.0.0
         with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
           payload: |
             {
               "text": "❌ Staging deployment failed!",
@@ -245,9 +246,6 @@ jobs:
                 }
               ]
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
       - name: Comment on commit
         if: needs.deploy.result == 'success'
         continue-on-error: true  # contents: read では失敗する場合があるため
