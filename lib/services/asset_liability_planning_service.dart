@@ -1827,12 +1827,16 @@ class AssetLiabilityPlanningService {
     ];
   }
 
+  /// 口座間移動の提案で、移動元に残しておく最低額。この額を割り込む提案は
+  /// しない (移動元を新たな残高不足にしないため)。
+  static const double _transferDonorReserve = 30000;
+
   List<AssetLiabilityTransferSuggestion> _buildTransferSuggestions({
     required List<AssetLiabilityAccountCashflowSummary> summaries,
     required List<AssetLiabilityCashflowRow> cashflowRows,
   }) {
     final donors = summaries
-        .where((summary) => summary.projectedBalance > 30000)
+        .where((summary) => summary.projectedBalance > _transferDonorReserve)
         .toList()
       ..sort((a, b) => b.projectedBalance.compareTo(a.projectedBalance));
     final shortages = summaries.where((summary) => summary.isShort).toList()
@@ -1840,27 +1844,37 @@ class AssetLiabilityPlanningService {
 
     final suggestions = <AssetLiabilityTransferSuggestion>[];
     for (final shortage in shortages) {
-      final donor = donors.firstWhere(
-        (summary) => summary.accountId != shortage.accountId,
-        orElse: () => const AssetLiabilityAccountCashflowSummary(
-          accountId: '',
-          accountName: '',
-          currentBalance: 0,
-          upcomingPayments: 0,
-          upcomingIncome: 0,
-          projectedBalance: 0,
-          riskLevel: AssetLiabilityCashRiskLevel.short,
-        ),
-      );
-      if (donor.accountId.isEmpty) {
-        continue;
+      // 移動元は「見込み残高に余裕がある」だけでは不十分で、**今この口座に
+      // 実際にいくらあるか**で上限を掛ける必要がある。projectedBalance は
+      // 未着金の収入 (給料/入金予定) を含むため、それだけで決めると
+      // 「残高が無いのに移動を提案する」実行不能な提案になる (ユーザー報告:
+      // じぶん銀行 現在¥18,918 に対し ¥50,041 の移動を提案していた)。
+      // さらに移動予約済み (pendingTransferOut) は既に他へ約束済みなので、
+      // 同じ資金を二重に当て込まないよう差し引く。
+      AssetLiabilityAccountCashflowSummary? donor;
+      var amount = 0.0;
+      for (final candidate in donors) {
+        if (candidate.accountId == shortage.accountId) {
+          continue;
+        }
+        final donorSurplus = candidate.projectedBalance - _transferDonorReserve;
+        if (donorSurplus <= 0) {
+          continue;
+        }
+        final movableNow =
+            candidate.currentBalance - candidate.pendingTransferOut;
+        if (movableNow <= 0) {
+          continue;
+        }
+        final feasible = min(min(shortage.shortfall, donorSurplus), movableNow);
+        if (feasible <= 0) {
+          continue;
+        }
+        donor = candidate;
+        amount = feasible;
+        break;
       }
-      final donorSurplus = donor.projectedBalance - 30000;
-      if (donorSurplus <= 0) {
-        continue;
-      }
-      final amount = min(shortage.shortfall, donorSurplus);
-      if (amount <= 0) {
+      if (donor == null || amount <= 0) {
         continue;
       }
       suggestions.add(

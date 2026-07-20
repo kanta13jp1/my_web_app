@@ -13581,7 +13581,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   Text(
                     '${suggestion.fromAccountName} → ${summary.accountName} '
                     '${_formatManagementYen(suggestion.amount)}'
-                    '${suggestion.neededBy == null ? '' : '（${DateFormat('M月d日').format(suggestion.neededBy!)}まで）'}',
+                    '${suggestion.neededBy == null ? '' : '（${DateFormat('M月d日').format(suggestion.neededBy!)}まで）'}'
+                    // 移動元の現在残高で上限を掛けるため、不足額の全額を
+                    // 賄えないことがある。full/partial を明示しないと
+                    // 「移動したのにまだ足りない」と誤解させる。
+                    '${suggestion.amount + 0.5 < summary.shortfall ? '（一部・移動後も${_formatManagementYen(summary.shortfall - suggestion.amount)}不足）' : ''}',
                     // 背景が固定の淡赤のため、ダークテーマの onSurface(白)だと
                     // 読めなくなる。文字色も固定の濃赤系にする。
                     style: const TextStyle(
