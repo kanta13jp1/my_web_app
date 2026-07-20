@@ -2612,9 +2612,15 @@ serve(async (req: Request) => {
           Math.min(100, Math.trunc(firstNumber(body.limit) ?? 50)),
         );
         const requestedStatus = firstString(body.status);
+        // R34: count:"exact" で「limit で切る前の総数」も返す。従来は limit 件しか
+        // 返さないため client 側は上限に達したかしか分からず、承認待ちが 11 件でも
+        // 200 件でも「10件以上」としか出せなかった (backlog の規模が掴めない)。
+        // source は idx_hub_data_source があり EF は service_role なので、count は
+        // x_post_candidate 部分集合への index scan で収まる (agent_memories のような
+        // 無索引全表走査にはならない)。
         let query = admin
           .from("hub_data")
-          .select("id, metadata, created_at")
+          .select("id, metadata, created_at", { count: "exact" })
           .eq("source", X_POST_CANDIDATE_SOURCE)
           .order("created_at", { ascending: false })
           .limit(limit);
@@ -2625,9 +2631,15 @@ serve(async (req: Request) => {
             requestedStatus,
           );
         }
-        const { data, error } = await query;
+        const { data, error, count } = await query;
         if (error) throw new Error(error.message);
-        return json({ success: true, candidates: data ?? [] });
+        return json({
+          success: true,
+          candidates: data ?? [],
+          // limit で切る前の総数。取得できないときは null (client は従来の
+          // 「N件以上」表示へ degrade する)。
+          total: typeof count === "number" ? count : null,
+        });
       }
 
       case "x.candidate.create": {
