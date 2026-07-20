@@ -2,7 +2,7 @@ name: tools-hub MCP Smoke
 
 on:
   schedule:
-    - cron: "22 */6 * * *" # every 6 hours at :22
+    - cron: "22 */12 * * *" # every 12 hours at :22 (2026-07-20 ci-audit: 6h→12h, -60 runs/月; health-monitor 2h毎に tools-hub をカバー済)
   workflow_dispatch:
     inputs:
       base_url:
