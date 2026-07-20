@@ -186,7 +186,14 @@ void main() {
       when(mockGoTrueClient.currentUser).thenReturn(mockUser);
       when(mockUser.id).thenReturn('test-user-id');
       SharedPreferences.setMockInitialValues({
-        'onboarding_progress_page_test-user-id': 1,
+        'activation_onboarding_draft_v1_test-user-id_stage': 1,
+        'activation_onboarding_draft_v1_test-user-id_intent': 'work',
+        'activation_onboarding_draft_v1_test-user-id_first_action':
+            '今日終える仕事を1つだけ選び、完了条件を書く',
+        'activation_onboarding_draft_v1_test-user-id_reason':
+            '優先順位を増やすより、完了条件を1つ固定します。',
+        'activation_onboarding_draft_v1_test-user-id_ten_minute_step':
+            '最初の10分だけ着手する',
       });
 
       // Act
@@ -199,8 +206,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.text('最強の経営布陣'), findsOneWidget);
-      expect(find.text('戻る'), findsOneWidget);
+      expect(find.text('あなた向けの最初の一手'), findsOneWidget);
+      expect(find.text('入力を直す'), findsOneWidget);
     });
 
     testWidgets('テーマ設定が反映されていること', (WidgetTester tester) async {

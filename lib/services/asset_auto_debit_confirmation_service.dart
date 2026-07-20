@@ -106,7 +106,14 @@ class AssetAutoDebitConfirmationService {
     final rows = workbook.cashflowRows
         .where(
           (row) =>
-              row.isPayment && row.overdue && row.paymentDate.isBefore(today),
+              row.isPayment &&
+              row.overdue &&
+              row.paymentDate.isBefore(today) &&
+              // 振替元 (支払原資) 未設定の行は除外する。残高が特定できず引落
+              // 成否を判定できない上、これらは「支払原資口座が未設定」バナーで
+              // 別途修正導線が出るため、確認待ちに重複表示すると同じ行が 2 箇所に
+              // 並ぶ。原資を設定すれば次回から確認待ちに (残高判定付きで) 現れる。
+              (row.paymentSourceAccountId?.trim().isNotEmpty ?? false),
         )
         .toList();
     rows.sort((a, b) => b.paymentAmount.compareTo(a.paymentAmount));

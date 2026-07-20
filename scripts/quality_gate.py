@@ -81,6 +81,10 @@ def base_commands() -> list[GateCommand]:
             [python, "scripts/check_pr_deterministic_ci_test.py"],
         ),
         GateCommand(
+            "quality gate resource bounds tests",
+            [python, "scripts/quality_gate_test.py"],
+        ),
+        GateCommand(
             "edge function import check",
             [python, "scripts/check_edge_function_imports.py"],
         ),
@@ -121,7 +125,11 @@ def full_commands(root: Path) -> list[GateCommand]:
             ["dart", "format", "--output=none", "--set-exit-if-changed", "."],
             "dart",
         ),
-        GateCommand("flutter vm tests", ["flutter", "test", "--coverage"], "flutter"),
+        GateCommand(
+            "flutter vm tests",
+            ["flutter", "test", "--coverage", "--concurrency=2"],
+            "flutter",
+        ),
     ]
     if include_browser_smoke():
         commands.append(

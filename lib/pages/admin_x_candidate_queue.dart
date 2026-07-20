@@ -225,13 +225,33 @@ List<XPostCandidateSummary> mergeCandidateSummaries(
   return merged;
 }
 
+/// R32: 候補キューは status ごとに [kXCandidateStatusFetchLimit] 件で取得する。
+/// 取得件数がこの上限に達している status は「本当は上限以上あるかもしれない」ため、
+/// 上限をそのまま総数として出すと backlog を過小表示する (実際 header は数日間
+/// 「承認待ち 10件」= 取得上限のまま張り付いていた)。取得窓を使い切った値は下限
+/// でしかないので「N件以上」と正直に出す (streakAtWindowCap と同じ規律 /
+/// [[feedback_postgrest_1000row_cap_silent_truncation]] の cap=総数 誤認防止)。
+const int kXCandidateStatusFetchLimit = 10;
+
 /// panel ヘッダの内訳ラベル。「承認待ち」に再試行行を混ぜて数えない
 /// (n=0 捏造を排した R17 以降のカウンタ誠実性規律 / レビュー F3)。
-String candidateQueueHeaderLabel(List<XPostCandidateSummary> candidates) {
+String candidateQueueHeaderLabel(
+  List<XPostCandidateSummary> candidates, {
+  int perStatusLimit = kXCandidateStatusFetchLimit,
+}) {
   final pending = candidates.where((c) => c.isPendingApproval).length;
   final retry = candidates.length - pending;
-  if (retry <= 0) return '承認待ち $pending件';
-  return '承認待ち $pending件・再試行 $retry件';
+  // 再試行は approved / publish_failed の2 status を束ねた数なので、
+  // どちらか一方でも取得上限に達していれば下限扱いにする。
+  final retryCapped = <String>['approved', 'publish_failed'].any(
+    (status) =>
+        candidates.where((c) => c.status == status).length >= perStatusLimit,
+  );
+  final pendingLabel =
+      pending >= perStatusLimit ? '承認待ち $pending件以上' : '承認待ち $pending件';
+  if (retry <= 0) return pendingLabel;
+  final retryLabel = retryCapped ? '再試行 $retry件以上' : '再試行 $retry件';
+  return '$pendingLabel・$retryLabel';
 }
 
 /// 一覧カードの本文プレビュー(1行化+切り詰め)。

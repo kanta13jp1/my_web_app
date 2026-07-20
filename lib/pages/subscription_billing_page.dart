@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../services/activation_revenue_experiment_service.dart';
+import '../services/activation_revenue_tracker.dart';
 import '../services/billing_service.dart';
 import '../services/growth_acquisition_service.dart';
-import '../widgets/paddle_approval_readiness_card.dart';
 
 class SubscriptionBillingPage extends StatefulWidget {
   const SubscriptionBillingPage({
@@ -11,11 +14,17 @@ class SubscriptionBillingPage extends StatefulWidget {
     this.service,
     this.initialUri,
     this.acquisitionService = const GrowthAcquisitionService(),
+    this.experimentService = const ActivationRevenueExperimentService(),
+    this.tracker = const SupabaseActivationRevenueEventTracker(),
+    this.assignment,
   });
 
   final BillingGateway? service;
   final Uri? initialUri;
   final GrowthAcquisitionService acquisitionService;
+  final ActivationRevenueExperimentService experimentService;
+  final ActivationRevenueEventTracker tracker;
+  final ActivationRevenueAssignment? assignment;
 
   @override
   State<SubscriptionBillingPage> createState() =>
@@ -24,18 +33,43 @@ class SubscriptionBillingPage extends StatefulWidget {
 
 class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
   late final BillingGateway _service;
+  late final Uri _sourceUri;
+  ActivationRevenueAssignment? _assignment;
   bool _isLoading = true;
   bool _isOpeningStripe = false;
   String? _errorMessage;
   BillingStatus? _status;
   _BillingReturnNotice? _returnNotice;
 
+  bool _enabled(String id) => _assignment?.enables(id) ?? true;
+
   @override
   void initState() {
     super.initState();
     _service = widget.service ?? BillingService();
-    _returnNotice = _BillingReturnNotice.fromUri(widget.initialUri ?? Uri.base);
-    _fetchBillingInfo();
+    _sourceUri = widget.initialUri ?? Uri.base;
+    _returnNotice = _BillingReturnNotice.fromUri(_sourceUri);
+    unawaited(_initialize());
+  }
+
+  Future<void> _initialize() async {
+    final assignment = widget.assignment ??
+        await widget.experimentService.resolve(uri: _sourceUri);
+    if (!mounted) return;
+    setState(() => _assignment = assignment);
+    unawaited(_record('billing_view'));
+    if (_returnNotice != null) unawaited(_record('checkout_return'));
+    await _fetchBillingInfo();
+  }
+
+  Future<void> _record(String stage) async {
+    final assignment = _assignment ?? widget.assignment;
+    if (assignment == null) return;
+    try {
+      await widget.tracker.record(assignment: assignment, stage: stage);
+    } catch (error) {
+      debugPrint('Activation revenue event failed: $error');
+    }
   }
 
   Future<void> _fetchBillingInfo() async {
@@ -48,7 +82,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
       if (mounted) setState(() => _status = status);
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = 'Failed to load billing status: $e');
+        setState(() => _errorMessage = 'プラン情報を読み込めませんでした: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -56,6 +90,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
   }
 
   Future<void> _openCheckout(String tier) async {
+    await _record('pro_checkout');
     await _openStripeSession(() {
       return widget.acquisitionService.loadLatestTouchpoint().then(
             (latestTouchpoint) => _service.createCheckoutSession(
@@ -70,13 +105,17 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
   }
 
   Future<void> _openSupporterCheckout() async {
+    await _record('supporter_checkout');
     await _openStripeSession(() {
-      return _service.createSupporterCheckoutSession(
-        returnUrl: _currentReturnUrl,
-        attribution: BillingSupporterAttribution.fromUri(
-          widget.initialUri ?? Uri.base,
-        ),
-      );
+      return widget.acquisitionService.loadLatestTouchpoint().then(
+            (latestTouchpoint) => _service.createSupporterCheckoutSession(
+              returnUrl: _currentReturnUrl,
+              attribution: BillingSupporterAttribution.fromUri(
+                _sourceUri,
+                fallbackTouchpoint: latestTouchpoint,
+              ),
+            ),
+          );
     });
   }
 
@@ -98,19 +137,28 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
       final url = (session as dynamic).url as String;
       final uri = Uri.parse(url);
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        throw BillingServiceException('Could not open Stripe URL');
+        throw BillingServiceException('Stripe決済画面を開けませんでした');
       }
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'Stripe session failed: $e');
+      if (mounted) setState(() => _errorMessage = '決済画面の準備に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isOpeningStripe = false);
     }
   }
 
   String get _currentReturnUrl {
-    final uri = Uri.base;
+    final uri = _sourceUri.hasScheme ? _sourceUri : Uri.base;
     if (uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https')) {
-      return uri.replace(path: '/subscription-billing', query: '').toString();
+      final query = Map<String, String>.from(uri.queryParameters)
+        ..remove('billing')
+        ..remove('offer');
+      return uri
+          .replace(
+            path: '/subscription-billing',
+            queryParameters: query.isEmpty ? null : query,
+            fragment: '',
+          )
+          .toString();
     }
     return 'https://my-web-app-b67f4.web.app/subscription-billing';
   }
@@ -124,12 +172,14 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
           aiQueryCount: 0,
           efCallCount: 0,
         );
+    final fromOnboarding = _sourceUri.queryParameters['entry'] == 'onboarding';
+    final valueFraming = _enabled('a10');
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Billing'),
+        title: const Text('プランと応援'),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: '更新',
             icon: const Icon(Icons.refresh),
             onPressed: _fetchBillingInfo,
           ),
@@ -138,47 +188,132 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_errorMessage != null) _ErrorBanner(_errorMessage!),
-                  if (_returnNotice != null) ...[
-                    _BillingReturnBanner(_returnNotice!),
-                    const SizedBox(height: 12),
-                  ],
-                  PaddleApprovalReadinessCard(
-                    compact: true,
-                    touchesRegulatedData: true,
-                    onOpenLegalPage: () {
-                      Navigator.of(context).pushNamed('/legal-compliance');
-                    },
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1080),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (_errorMessage != null) _ErrorBanner(_errorMessage!),
+                      if (_returnNotice != null) ...[
+                        _BillingReturnBanner(_returnNotice!),
+                        const SizedBox(height: 12),
+                      ],
+                      if (fromOnboarding) ...[
+                        const _OnboardingValueBanner(),
+                        const SizedBox(height: 16),
+                      ],
+                      const _BillingHero(),
+                      const SizedBox(height: 20),
+                      _CurrentPlanCard(
+                        status: status,
+                        onOpenPortal: _openPortal,
+                      ),
+                      const SizedBox(height: 16),
+                      _SupporterCheckoutCard(
+                        valueFraming: valueFraming,
+                        isBusy: _isOpeningStripe,
+                        onSupport: _openSupporterCheckout,
+                      ),
+                      const SizedBox(height: 16),
+                      _PlanGrid(
+                        valueFraming: valueFraming,
+                        currentTier: status.tier,
+                        isBusy: _isOpeningStripe,
+                        onContinueFree: () {
+                          Navigator.of(context).pushReplacementNamed('/home');
+                        },
+                        onUpgrade: _openCheckout,
+                      ),
+                      const SizedBox(height: 16),
+                      _UsageCard(status: status),
+                      const SizedBox(height: 16),
+                      const _InfoCard(
+                        icon: Icons.shield_outlined,
+                        title: '安心して選べます',
+                        message:
+                            '決済はStripe上で安全に行われます。100円応援は1回限り、Pro・Teamは契約管理画面からいつでも解約できます。',
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  _CurrentPlanCard(status: status, onOpenPortal: _openPortal),
-                  const SizedBox(height: 16),
-                  _SupporterCheckoutCard(
-                    isBusy: _isOpeningStripe,
-                    onSupport: _openSupporterCheckout,
-                  ),
-                  const SizedBox(height: 16),
-                  _PlanGrid(
-                    currentTier: status.tier,
-                    isBusy: _isOpeningStripe,
-                    onUpgrade: _openCheckout,
-                  ),
-                  const SizedBox(height: 16),
-                  _UsageCard(status: status),
-                  const SizedBox(height: 16),
-                  const _InfoCard(
-                    icon: Icons.verified_user_outlined,
-                    title: 'Production readiness',
-                    message:
-                        'Stripe Checkout is live. A completed supporter payment is recorded by webhook for first-yen revenue evidence.',
-                  ),
-                ],
+                ),
               ),
             ),
+    );
+  }
+}
+
+class _OnboardingValueBanner extends StatelessWidget {
+  const _OnboardingValueBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      key: const Key('billing_onboarding_value_banner'),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.task_alt),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              '最初の一手を作成できました。無料のまま続けることも、開発を応援することもできます。',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BillingHero extends StatelessWidget {
+  const _BillingHero();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '役に立ったら、続け方を選べます',
+          key: const Key('billing_value_headline'),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          '登録だけで無料機能を利用できます。応援は1回100円・自動更新なし、ProはAI利用量を増やしたい方向けです。',
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+        const SizedBox(height: 14),
+        const Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            Chip(
+              avatar: Icon(Icons.lock_outline, size: 18),
+              label: Text('Stripeの安全な決済'),
+            ),
+            Chip(
+              avatar: Icon(Icons.credit_card_off_outlined, size: 18),
+              label: Text('カード情報は当サイトに保存しません'),
+            ),
+            Chip(
+              avatar: Icon(Icons.restart_alt, size: 18),
+              label: Text('Proはいつでも解約可能'),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -210,24 +345,22 @@ class _BillingReturnNotice {
       kind == _BillingReturnKind.supporterSuccess;
 
   IconData get icon =>
-      isSuccess ? Icons.celebration_outlined : Icons.info_outline;
+      isSuccess ? Icons.check_circle_outline : Icons.info_outline;
 
   String get title => switch (kind) {
-        _BillingReturnKind.supporterSuccess => 'Support received',
-        _BillingReturnKind.supporterCancel => 'Support checkout canceled',
-        _BillingReturnKind.success => 'Checkout completed',
-        _BillingReturnKind.cancel => 'Checkout canceled',
+        _BillingReturnKind.supporterSuccess => '100円の応援を受け付けました',
+        _BillingReturnKind.supporterCancel => '応援の決済をキャンセルしました',
+        _BillingReturnKind.success => 'プランの決済を受け付けました',
+        _BillingReturnKind.cancel => 'プランの決済をキャンセルしました',
       };
 
   String get message => switch (kind) {
         _BillingReturnKind.supporterSuccess =>
-          'Stripe accepted the one-time support payment. The webhook will store the first revenue evidence shortly.',
+          'ありがとうございます。反映まで少し時間がかかる場合があります。',
         _BillingReturnKind.supporterCancel =>
-          'No payment was created. You can open the 100 JPY support checkout again anytime.',
-        _BillingReturnKind.success =>
-          'Stripe returned successfully. The latest billing status will be refreshed shortly.',
-        _BillingReturnKind.cancel =>
-          'No subscription payment was created. You can retry checkout anytime.',
+          '請求は発生していません。必要になったときに、いつでも再開できます。',
+        _BillingReturnKind.success => 'Stripeから戻りました。最新のプラン状態を確認しています。',
+        _BillingReturnKind.cancel => '請求は発生していません。無料プランはそのまま利用できます。',
       };
 }
 
@@ -313,14 +446,14 @@ class _CurrentPlanCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
-                    'Current plan',
+                    '現在のプラン',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: status.isPro ? onOpenPortal : null,
                   icon: const Icon(Icons.manage_accounts_outlined),
-                  label: const Text('Manage'),
+                  label: const Text('契約を管理'),
                 ),
               ],
             ),
@@ -329,16 +462,16 @@ class _CurrentPlanCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                Chip(label: Text(status.tier.toUpperCase())),
-                Chip(label: Text(status.status)),
+                Chip(label: Text(_tierLabel(status.tier))),
+                Chip(label: Text(_statusLabel(status.status))),
                 if (status.currentPeriodEnd != null)
                   Chip(
                     label: Text(
-                      'Renews ${_formatDate(status.currentPeriodEnd!)}',
+                      '次回更新 ${_formatDate(status.currentPeriodEnd!)}',
                     ),
                   ),
                 if (status.cancelAtPeriodEnd)
-                  const Chip(label: Text('Cancels at period end')),
+                  const Chip(label: Text('期間終了時に解約')),
               ],
             ),
           ],
@@ -349,8 +482,13 @@ class _CurrentPlanCard extends StatelessWidget {
 }
 
 class _SupporterCheckoutCard extends StatelessWidget {
-  const _SupporterCheckoutCard({required this.isBusy, required this.onSupport});
+  const _SupporterCheckoutCard({
+    required this.valueFraming,
+    required this.isBusy,
+    required this.onSupport,
+  });
 
+  final bool valueFraming;
   final bool isBusy;
   final VoidCallback onSupport;
 
@@ -358,6 +496,7 @@ class _SupporterCheckoutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Card(
+      key: const Key('billing_supporter_offer'),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final narrow = constraints.maxWidth < 560;
@@ -366,28 +505,33 @@ class _SupporterCheckoutCard extends StatelessWidget {
             children: [
               Icon(Icons.favorite_border, color: scheme.primary),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Founding Supporter',
-                      style: TextStyle(
+                      valueFraming ? '初期サポーター（1回100円）' : 'サポーター',
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 6),
-                    Text('One-time 100 JPY support for first revenue proof.'),
+                    const SizedBox(height: 6),
+                    Text(
+                      valueFraming
+                          ? 'このサービスが役に立ったと感じたら、開発継続を応援できます。自動更新はなく、無料機能はそのまま使えます。'
+                          : '1回100円の応援です。自動更新はありません。',
+                    ),
                   ],
                 ),
               ),
             ],
           );
           final button = FilledButton.icon(
+            key: const Key('billing_supporter_checkout_button'),
             onPressed: isBusy ? null : onSupport,
             icon: const Icon(Icons.volunteer_activism_outlined),
-            label: const Text('Support 100 JPY'),
+            label: const Text('100円で応援する'),
           );
           return Padding(
             padding: const EdgeInsets.all(16),
@@ -413,21 +557,31 @@ class _SupporterCheckoutCard extends StatelessWidget {
 
 class _PlanGrid extends StatelessWidget {
   const _PlanGrid({
+    required this.valueFraming,
     required this.currentTier,
     required this.isBusy,
+    required this.onContinueFree,
     required this.onUpgrade,
   });
 
+  final bool valueFraming;
   final String currentTier;
   final bool isBusy;
+  final VoidCallback onContinueFree;
   final Future<void> Function(String tier) onUpgrade;
 
   @override
   Widget build(BuildContext context) {
-    const plans = [
-      _Plan('free', 'Free', 'JPY 0', 'Basic AI usage for trial runs.'),
-      _Plan('pro', 'Pro', 'JPY 980/mo', 'More AI usage and priority features.'),
-      _Plan('team', 'Team', 'JPY 2,980/mo', 'Shared workspace and audit logs.'),
+    final plans = [
+      const _Plan('free', 'Free', '0円', '最初の一手、ノート、学習・資産管理の基本機能を試せます。'),
+      _Plan(
+        'pro',
+        'Pro',
+        '月額980円',
+        valueFraming ? 'AIの利用量を増やし、毎日の整理と振り返りを継続したい方向けです。' : 'AI利用量と優先機能が増えます。',
+        recommended: true,
+      ),
+      const _Plan('team', 'Team', '月額2,980円', '共有ワークスペースと監査ログを使うチーム向けです。'),
     ];
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -442,14 +596,16 @@ class _PlanGrid extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: columns == 1 ? 2.8 : 1.45,
+          childAspectRatio: columns == 1 ? 1.6 : 1.15,
           children: [
             for (final plan in plans)
               _PlanCard(
                 plan: plan,
                 isCurrent: currentTier == plan.tier,
                 isBusy: isBusy,
-                onUpgrade: () => onUpgrade(plan.tier),
+                onChoose: plan.tier == 'free'
+                    ? onContinueFree
+                    : () => onUpgrade(plan.tier),
               ),
           ],
         );
@@ -463,13 +619,13 @@ class _PlanCard extends StatelessWidget {
     required this.plan,
     required this.isCurrent,
     required this.isBusy,
-    required this.onUpgrade,
+    required this.onChoose,
   });
 
   final _Plan plan;
   final bool isCurrent;
   final bool isBusy;
-  final VoidCallback onUpgrade;
+  final VoidCallback onChoose;
 
   @override
   Widget build(BuildContext context) {
@@ -493,7 +649,10 @@ class _PlanCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (isCurrent) const Chip(label: Text('Current')),
+                if (plan.recommended)
+                  const Chip(label: Text('おすすめ'))
+                else if (isCurrent)
+                  const Chip(label: Text('利用中')),
               ],
             ),
             const SizedBox(height: 12),
@@ -504,8 +663,17 @@ class _PlanCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: isFree || isCurrent || isBusy ? null : onUpgrade,
-                child: Text(isCurrent ? 'Selected' : 'Choose ${plan.name}'),
+                key: plan.tier == 'pro'
+                    ? const Key('billing_pro_checkout_button')
+                    : null,
+                onPressed: isBusy || (isCurrent && !isFree) ? null : onChoose,
+                child: Text(
+                  isFree
+                      ? '無料で使い続ける'
+                      : isCurrent
+                          ? '利用中'
+                          : '${plan.name}を始める',
+                ),
               ),
             ),
           ],
@@ -533,7 +701,7 @@ class _UsageCard extends StatelessWidget {
                 Icon(Icons.speed_outlined),
                 SizedBox(width: 8),
                 Text(
-                  'Current period usage',
+                  '今月の利用状況',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -543,11 +711,8 @@ class _UsageCard extends StatelessWidget {
               spacing: 12,
               runSpacing: 12,
               children: [
-                _UsageChip(label: 'AI queries', value: status.aiQueryCount),
-                _UsageChip(
-                  label: 'Edge function calls',
-                  value: status.efCallCount,
-                ),
+                _UsageChip(label: 'AI利用', value: status.aiQueryCount),
+                _UsageChip(label: '処理実行', value: status.efCallCount),
               ],
             ),
           ],
@@ -614,16 +779,37 @@ class _InfoCard extends StatelessWidget {
 }
 
 class _Plan {
-  const _Plan(this.tier, this.name, this.price, this.description);
+  const _Plan(
+    this.tier,
+    this.name,
+    this.price,
+    this.description, {
+    this.recommended = false,
+  });
 
   final String tier;
   final String name;
   final String price;
   final String description;
+  final bool recommended;
 }
+
+String _tierLabel(String tier) => switch (tier) {
+      'pro' => 'Pro（月額980円）',
+      'team' => 'Team（月額2,980円）',
+      _ => 'Free（無料）',
+    };
+
+String _statusLabel(String status) => switch (status) {
+      'active' => '利用中',
+      'trialing' => '無料体験中',
+      'past_due' => '支払い確認が必要',
+      'canceled' => '解約済み',
+      _ => status,
+    };
 
 String _formatDate(DateTime value) {
   final month = value.month.toString().padLeft(2, '0');
   final day = value.day.toString().padLeft(2, '0');
-  return '${value.year}-$month-$day';
+  return '${value.year}/$month/$day';
 }

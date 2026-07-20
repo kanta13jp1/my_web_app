@@ -952,6 +952,32 @@
         "Monarch / Copilot Money / Cleo (= connected-account copilot 勢 / 7 月新規シグナルなし / signal 層で基準値作り継続)",
         "OpenCode (= coding tool 偏り (基準 b 逆行) のため signal 層留置)"
       ]
+    },
+    {
+      "date": "2026-07-19",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-07-17 OpenAI ChatGPT 採択 / 2 day 経過 / cooldown 残 5 day / 次回 unlock 2026-07-24). 本日 7-18→7-19 の主眼は、個人 B/S ドメインに narrative-layer の新規プレイヤー EdWealth『Ed』(2026-07-15 launch / GlobeNewswire 一次リリース裏取り) を捕捉し、7-24 unlock の採択候補を Visa と二本柱化したこと。Ed = agentic AI 家計コーチ / 『Financial Fitness』= 残高でなく『お金が望む生活のために働いているか』を 5 次元 (Control 月次を賄えるか / Safety ショック耐性 / Growth 資産形成 / Fluency 金融理解 / Peace 罪悪感なき支出) で計測 / Plaid 口座接続 + 書類スクショ upload + 自然言語 Q&A で cash flow・税・RSU・ETF・保険を横断 / $39.99 月 or $299.99 年 / US 中間層限定・edwealth.ai + App Store + Google Play / 創業 Allen Ng。含意 = 自社の『静的残高でなく B/S × 6 部署 KPI という経営ナラティブで計測』という差別化軸に、Ed は『静的残高でなく Financial Fitness という生活ナラティブで計測』の同型思想で正面から重なる (単なる家計簿より近い)。ただし英語・Plaid (US 機関)・US 限定ゆえ日本語金融文脈 moat は未接触。cooldown ゆえ本日採択せず 7-24 unlock の第 1 候補群 (Ed / Visa) に据える。既存 27 社は戦略級 delta なし = (a) dev-tool クラスタは Codex=GPT-5.6 (Sol/Terra/Luna) / Antigravity 2.0 + Gemini 3.5 Flash 等 同一 agentic blueprint 収斂で自社ナラティブと同方向 / (b) ChatGPT personal finance は Plus GA 6-25 から差分なし・ただし ChatGPT+Codex+Atlas の SuperApp 構想が別報道で再燃 → 監視継続 / (c) MoneyForward ME × AI トリガー未点火 (AI Cowork は法人専用) / (d) Lindy 7 月新シグナルなし。[AI-TOOL-VERIFY] = EdWealth の launch 日・5 次元・課金・プラットフォームは GlobeNewswire 一次 wire (Manila Times 転載) で裏取り済 / Visa は 8 月 pilot 据え置き + 消費者データ共有意欲 85% の追加データ点。",
+      "skipped_candidates": [
+        "EdWealth『Ed』(= 【新規 / 7-24 unlock 第 1 候補群】agentic AI 家計コーチ / Financial Fitness 5 次元計測 / 2026-07-15 launch / 基準 a = narrative 差別化軸に直接競合 + 基準 c = 30 日内リリース / 分岐点 = 日本語展開・会社 metaphor 接近の有無 / 現状 US 限定・英語・Plaid で日本語 moat 未接触ゆえ signal 層留置)",
+        "Visa AI Financial Assistant (= 第 1 候補群 / distribution-layer / 8 月 US 金融機関 pilot 据え置き + 消費者 85% がデータ共有意欲 / consumer 到達 or 日本の金融機関波及で 2026-07-24 unlock 時 昇格判断 / 基準 a + b)",
+        "Emergent『Wingman』(= $130M 調達で新ユニコーン 7-15 / personal AI agent だが対象は business worker 生産性 [スケジュール・to-do・議事録・メール] + 本体は vibe-coding/app builder で dev-tool クラスタ重複 / 基準 b 止まり・昇格根拠弱)",
+        "Motion (= named-employee 系 / 基準 c 不成立: Series C 2025-12 / 30 日内の新展開で再評価)",
+        "Monarch / Copilot Money / Cleo (= connected-account copilot 勢 / 7 月新規シグナルなし / signal 層で基準値作り継続)"
+      ]
+    },
+    {
+      "date": "2026-07-20",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-07-17 OpenAI ChatGPT 採択 / 3 day 経過 / cooldown 残 4 day / 次回 unlock 2026-07-24). 本日は個人 B/S 三ベクトル (Ed / Visa / ChatGPT) が揃って停滞し、代わりに自社の運用コスト構造側に戦略級 delta。(1) ★ Claude Fable 5 アクセス改定が本日 7-20 発効 = Max + Team Premium に恒久同梱だが weekly usage limits の 50%、Pro + Team Standard は同梱外で一回限り $100 credit 消化後は API 従量 ($10/M input・$50/M output)。同日 Claude Code の weekly rate limit +50% ブーストも終了するため Max 系の実効枠は二重縮小。6-15 課金分離に続く第 2 の運用コスト構造変化 = GHA cron 30+ / Schedule cron は programmatic pool 側ゆえ直接対象外だが、対話 Claude Code (Win Claude #132 fleet 本体) の weekly 枠が本日から縮む → [AI_FALLBACK_RUNBOOK] 振り分け閾値の引き直しが要る。[AI-TOOL-VERIFY] = 確度「高」・一次 URL 未取得: モデル実在は Anthropic newsroom (6-30 Redeploying Fable 5 / 7-02 cyber safeguards) + claude.com/pricing の Fable 系統掲載で一次確認済、改定内容は独立複数二次ソース (DAWN/TechTimes/Tech2/the420/newsbytes/Forbes) が公式ポストの同一文言を引用して収斂。ただし公式発信日が 7-18 と 7-19 でソース間に食い違い + claude.com/pricing にプラン別記載なし → 一次ピン留めは次サイクル持ち越し。なお一部記事は『Fable 5 という名称が公開モデル系統と不一致』として報道自体を疑問視していたが、上記一次記載により当該記事側の誤りと判定。(2) ★ Lovable 評価額協議が $12B 観察 → $13.2B で具体化 (TechCrunch 7-08 / $300M・Menlo リード見込み・前回 $6.6B の 2 倍 / ARR は 6 月に $500M) = 7-07/7-08 で『低確度観察』としていた Forbes 6-05 $12B 協議 + 『7月 $200M financing』報道を更新。⚠️ 方法論所見 = AI ファンディング系アグリゲータは同件を『$200M Series B @ $2.8B』と記載していたが、実際の Series B ($330M @ $6.6B / 2025-12 / TechCrunch + lovable.dev 公式) とも今回協議 ($300M @ $13.2B) とも不一致 = ラウンド名・金額・評価額の 3 点すべて誤記。[AI-TOOL-VERIFY] 実例として記録し『資金調達数値はアグリゲータを一次扱いしない』を明文ルール化提案。(3) 🟡 Cursor × Continue acqui-hire の後始末完了 = 既報 SpaceX × Anysphere $60B (6-16) と同日発表の sub-signal / Continue (OSS・GitHub 34K stars・任意 LLM 差し替え可能な vendor-neutral レイヤ) はプロダクト停止、最終リリース v2.0.0-vscode 6-19、cloud データ 7-15 以降削除、Apache 2.0 のままだが upstream 保守停止 → 中立 OSS レイヤは買収で消えうる前提で routing matrix の依存点棚卸しが要る。(4) 差分なし = Ed (7-15 launch から新展開なし / 日本語・会社 metaphor の分岐点いずれも未接触) / Visa (8 月 US pilot 据え置き・本日 investor.visa.com 一次確認 = 年間 3,000 億件超トランザクション網 + 会話 UI 内でカードロック/アラート設定・銀行はカスタム開発不要) / ChatGPT (Plus・Pro 6-25 GA から差分なし) / MoneyForward (ME の AI トリガー未点火 / 7-8 暗号資産分離は既報) / Lindy (複数メールアカウント同時管理が直近出荷とあるが出荷日特定できず弱シグナル) / Notion 3.6 + Slackbot MCP (既報) / dev-tool クラスタ (収斂継続). EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 7-24 unlock 第 1 候補群 = Ed / Visa 二本柱据え置き (本日両者とも分岐点に動きなし). https://techcrunch.com/2026/07/08/lovable-reportedly-in-talks-to-double-its-valuation-to-13-2b/",
+      "skipped_candidates": [
+        "EdWealth『Ed』(= 7-24 unlock 第 1 候補群 / agentic AI 家計コーチ / Financial Fitness 5 次元 / 2026-07-15 launch / 基準 a + c / 本日 delta なし = 日本語・日本市場展開の兆候なし・会社 metaphor 未接近ゆえ signal 層維持)",
+        "Visa AI Financial Assistant (= 7-24 unlock 第 1 候補群 / distribution-layer / 8 月 US pilot 据え置き / 本日 investor.visa.com 一次確認済 / consumer 到達・日本の金融機関波及が昇格分岐点 / 基準 a + b)",
+        "Emergent『Wingman』(= $130M 調達 7-15 / personal AI agent だが対象は business worker 生産性 + 本体は vibe-coding/app builder で dev-tool クラスタ重複 / 基準 b 止まり)",
+        "Motion (= named-employee 系 / 基準 c 不成立: Series C 2025-12 / 30 日内の新展開で再評価)",
+        "Monarch / Copilot Money / Cleo (= connected-account copilot 勢 / 7 月新規シグナルなし / signal 層で基準値作り継続)"
+      ]
     }
   ],
   "_schema_notes": {

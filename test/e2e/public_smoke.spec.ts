@@ -9,6 +9,7 @@ test.describe('public production smoke', () => {
 
       expect(response.ok()).toBeTruthy();
       const html = await response.text();
+      expect(html).toContain('id="seo-shell"');
       expect(html).toContain('id="seo-title"');
       expect(html).toMatch(
         /<p\b(?=[^>]*\bclass="seo-loading")(?=[^>]*\brole="status")[^>]*>/,
@@ -16,13 +17,15 @@ test.describe('public production smoke', () => {
     });
   }
 
-  test('/project-gantt exposes crawlable entry links while app boots', async ({
+  test('/project-gantt exposes crawlable entry content while app boots', async ({
     request,
   }) => {
     const response = await request.get('/project-gantt');
     expect(response.ok()).toBeTruthy();
     const html = await response.text();
 
+    expect(html).toContain('5分だけ無料で試す');
+    expect(html).toContain('WBSガントチャート');
     expect(html).toContain(
       'href="https://my-web-app-b67f4.web.app/?lp_intent=trial&amp;utm_source=seo_shell&amp;utm_medium=landing&amp;utm_campaign=first_user_growth"',
     );

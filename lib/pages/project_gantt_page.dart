@@ -471,18 +471,65 @@ int _compareWbsTaskDisplayKeeper(WbsTask a, WbsTask b) {
 }
 
 @visibleForTesting
+
+/// PostgREST の既定 max-rows (1000) を超える表を全件取得するための汎用ページャ。
+///
+/// `.select()` に range を付けないと PostgREST は先頭 1000 行で打ち切る。WBS の
+/// `wbs_tasks` は 3695 行あり、打ち切られた結果ページ側の「未完了 N 件」は
+/// 全体ではなく先頭 1000 行だけの集計になっていた (= タスクを完了させても
+/// 窓の外の未完了行が滑り込むため件数がほぼ動かない)。
+///
+/// [fetchPage] は `[from, to]` (両端含む) の 1 ページを返す。返却件数が
+/// [pageSize] 未満になったら最終ページとみなして停止する。[maxRows] は
+/// 想定外の増殖・無限ループに対する安全弁 (超過分は取得しない)。
+///
+/// 注意: 呼び出し側は **一意なタイエブレーカを含む安定した order** を指定すること。
+/// 非一意なキーだけで並べるとページ境界で行の重複・欠落が起こりうる。
+Future<List<Map<String, dynamic>>> fetchAllPagedRows({
+  required Future<List<Map<String, dynamic>>> Function(int from, int to)
+      fetchPage,
+  int pageSize = 1000,
+  int maxRows = 20000,
+}) async {
+  assert(pageSize > 0, 'pageSize must be positive');
+  final rows = <Map<String, dynamic>>[];
+  var from = 0;
+  while (from < maxRows) {
+    final remaining = maxRows - from;
+    final take = remaining < pageSize ? remaining : pageSize;
+    final page = await fetchPage(from, from + take - 1);
+    rows.addAll(page);
+    // 返却件数が要求未満なら最終ページ (空ページ含む)。
+    if (page.length < take) {
+      break;
+    }
+    from += page.length;
+  }
+  return rows;
+}
+
 List<WbsTask> dedupeWbsTasksForDisplay(Iterable<WbsTask> tasks) {
   final ordered = <WbsTask>[];
   final indexByKey = <String, int>{};
 
   for (final task in tasks) {
-    final issueNumber = task.linkedGithubIssueNumber;
+    // 正規化タイトルを第一キーにする。`_normalizeWbsTitleDuplicateKey` は
+    // `[Issue #N] ` プレフィックスを除去するため、同じ要望が
+    //   - `[Issue #3367] <タイトル>` (Issue 起票後のミラー行 / completed)
+    //   - `<タイトル>`             (起票前の WBS 素の行 / pending)
+    // の 2 行に分かれていても同一キーになり collapse できる。
+    //
+    // 以前は issue 番号があれば `issue:N` を優先していたため、この 2 行が
+    // `issue:3367` と `title:...` に割れて **完了済みの作業が未完了として
+    // 二重計上**されていた (実測 3695 行中 68 件が幽霊)。
+    // 別 Issue でもタイトルが異なればキーが異なるので分離は保たれる。
+    final titleKey = task.linkedDuplicateTitleKey;
     String? displayKey;
-    if (issueNumber != null) {
-      displayKey = 'issue:$issueNumber';
+    if (titleKey != null) {
+      displayKey = 'title:$titleKey';
     } else {
-      final titleKey = task.linkedDuplicateTitleKey;
-      if (titleKey != null) displayKey = 'title:$titleKey';
+      final issueNumber = task.linkedGithubIssueNumber;
+      if (issueNumber != null) displayKey = 'issue:$issueNumber';
     }
     if (displayKey == null) {
       ordered.add(task);
@@ -636,20 +683,28 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
     try {
       final mData =
           await _supabase.from('wbs_milestones').select().order('target_date');
-      final tData = await _supabase
-          .from('wbs_tasks')
-          .select()
-          .order('category_order')
-          .order('status');
+      // wbs_tasks は PostgREST の既定 max-rows (1000) を超えるため全ページ取得する。
+      // order には一意な id をタイエブレーカとして必ず含める (非一意キーのみだと
+      // ページ境界で行の重複・欠落が起こる)。
+      final tData = await fetchAllPagedRows(
+        fetchPage: (from, to) async {
+          final page = await _supabase
+              .from('wbs_tasks')
+              .select()
+              .order('category_order')
+              .order('status')
+              .order('id')
+              .range(from, to);
+          return (page as List).cast<Map<String, dynamic>>();
+        },
+      );
       if (mounted) {
         setState(() {
           _milestones = (mData as List)
               .map((e) => WbsMilestone.fromMap(e as Map<String, dynamic>))
               .toList();
           _tasks = dedupeWbsTasksForDisplay(
-            (tData as List).map(
-              (e) => WbsTask.fromMap(e as Map<String, dynamic>),
-            ),
+            tData.map(WbsTask.fromMap),
           )..sort(_compareWbsTasks);
         });
       }

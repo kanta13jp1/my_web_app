@@ -51,6 +51,16 @@ import {
   mcpRequestedScopes,
 } from "../_shared/mcp_my_web_app_tools.ts";
 import {
+  connectorsAvailableToUser,
+  MCP_FILE_CONTEXT_SOURCE,
+  type McpFileConnectorConfig,
+  normalizeExternalFileContent,
+  normalizeExternalFileSearchResults,
+  parseMcpFileConnectorConfigs,
+  publicMcpFileConnector,
+} from "../_shared/mcp_external_file.ts";
+import { callExternalMcpTool } from "../_shared/mcp_external_file_client.ts";
+import {
   createSupabaseJibunApiStore,
   handleJibunApiAction,
 } from "./jibun_api.ts";
@@ -80,6 +90,55 @@ class ToolsHubRequestError extends Error {
     super(message);
     this.name = "ToolsHubRequestError";
   }
+}
+
+function configuredMcpFileConnectors(): McpFileConnectorConfig[] {
+  try {
+    return parseMcpFileConnectorConfigs(
+      Deno.env.get("MCP_FILE_CONNECTORS_JSON") ?? "",
+      Deno.env.get("MCP_FILE_CONNECTOR_ALLOWED_HOSTS") ?? "",
+    );
+  } catch (error) {
+    console.error("MCP file connector configuration rejected", error);
+    throw new ToolsHubRequestError(503, "mcp_file_connector_unavailable");
+  }
+}
+
+function mcpFileConnectorForUser(
+  userId: string,
+  connectorId: unknown,
+): McpFileConnectorConfig {
+  const requestedId = String(connectorId ?? "").trim().toLowerCase();
+  if (!requestedId) {
+    throw new ToolsHubRequestError(400, "connector_id is required");
+  }
+  const connector = connectorsAvailableToUser(
+    configuredMcpFileConnectors(),
+    userId,
+  ).find((item) => item.id === requestedId);
+  if (!connector) {
+    throw new ToolsHubRequestError(404, "mcp_file_connector_not_found");
+  }
+  return connector;
+}
+
+async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(value),
+  );
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function externalMcpAuditContext(userId: string): McpAuthContext {
+  return {
+    client_id: `app-user:${userId}`,
+    subject: userId,
+    scopes: ["read"],
+    aud: [toolResourceUrn("external-file-search")],
+  };
 }
 
 function json(
@@ -9509,6 +9568,171 @@ ${reportText ? `> ${reportText}` : ""}`,
     if (!userId) return json({ error: "Unauthorized" }, 401);
 
     switch (action) {
+      case "mcp_file.connectors": {
+        const connectors = connectorsAvailableToUser(
+          configuredMcpFileConnectors(),
+          userId,
+        ).map(publicMcpFileConnector);
+        return json({
+          success: true,
+          connectors: connectors.map((connector) => ({
+            id: connector.id,
+            name: connector.name,
+            search_tool: connector.searchTool,
+            can_attach_context: connector.canAttachContext,
+          })),
+        });
+      }
+      case "mcp_file.search": {
+        const query = String(body.query ?? "").trim();
+        if (!query) {
+          throw new ToolsHubRequestError(400, "query is required");
+        }
+        const connector = mcpFileConnectorForUser(
+          userId,
+          body.connector_id,
+        );
+        const requestedLimit = Number(body.limit ?? 20);
+        const limit = Number.isFinite(requestedLimit)
+          ? Math.min(Math.max(Math.trunc(requestedLimit), 1), 20)
+          : 20;
+        let status = 502;
+        try {
+          const toolResult = await callExternalMcpTool(
+            connector,
+            connector.searchTool,
+            { query: query.slice(0, 500), limit, user_id: userId },
+          );
+          const normalized = normalizeExternalFileSearchResults(
+            toolResult,
+            connector,
+            userId,
+          );
+          status = 200;
+          return json({
+            success: true,
+            connector: publicMcpFileConnector(connector),
+            results: normalized.results.map((item) => ({
+              id: item.id,
+              title: item.title,
+              uri: item.uri,
+              mime_type: item.mimeType,
+              snippet: item.snippet,
+              modified_at: item.modifiedAt,
+              score: item.score,
+              connector_id: item.connectorId,
+              connector_name: item.connectorName,
+              context_eligible: item.contextEligible,
+            })),
+            denied_count: normalized.deniedCount,
+            unsafe_count: normalized.unsafeCount,
+          });
+        } catch (error) {
+          console.warn("MCP file search failed", {
+            connector: connector.id,
+            error: String(error),
+          });
+          throw new ToolsHubRequestError(502, "mcp_file_search_failed");
+        } finally {
+          await logMcpInvocation(
+            externalMcpAuditContext(userId),
+            `external.${connector.searchTool}`,
+            { connector_id: connector.id, query: query.slice(0, 500), limit },
+            status,
+            req,
+          );
+        }
+      }
+      case "mcp_file.attach_context": {
+        const connector = mcpFileConnectorForUser(
+          userId,
+          body.connector_id,
+        );
+        const expectedId = String(body.file_id ?? body.id ?? "").trim().slice(
+          0,
+          512,
+        );
+        const expectedUri = String(body.uri ?? "").trim().slice(0, 2048);
+        if (!expectedId || !expectedUri) {
+          throw new ToolsHubRequestError(400, "file_id and uri are required");
+        }
+        let status = 502;
+        try {
+          const toolResult = await callExternalMcpTool(
+            connector,
+            connector.fetchTool,
+            {
+              id: expectedId,
+              file_id: expectedId,
+              uri: expectedUri,
+              user_id: userId,
+            },
+          );
+          const file = normalizeExternalFileContent(
+            toolResult,
+            connector,
+            userId,
+            expectedId,
+            expectedUri,
+          );
+          const item = await addItem(admin, MCP_FILE_CONTEXT_SOURCE, userId, {
+            connector_id: connector.id,
+            connector_name: connector.name,
+            external_file_id: file.id,
+            title: file.title,
+            uri: file.uri,
+            mime_type: file.mimeType,
+            content: file.content,
+            content_sha256: await sha256Hex(file.content),
+            truncated: file.truncated,
+            security_status: "allowed",
+            attached_at: new Date().toISOString(),
+          });
+          status = 201;
+          return json({
+            success: true,
+            context: {
+              id: item.id,
+              title: file.title,
+              uri: file.uri,
+              connector_id: connector.id,
+              connector_name: connector.name,
+              truncated: file.truncated,
+            },
+          }, 201);
+        } catch (error) {
+          const message = String(error);
+          if (message.includes("external_file_access_denied")) {
+            status = 403;
+            throw new ToolsHubRequestError(403, "external_file_access_denied");
+          }
+          if (message.includes("external_file_not_found")) {
+            status = 404;
+            throw new ToolsHubRequestError(404, "external_file_not_found");
+          }
+          if (message.includes("external_file_content_unsafe")) {
+            status = 422;
+            throw new ToolsHubRequestError(422, "external_file_content_unsafe");
+          }
+          console.warn("MCP file context attach failed", {
+            connector: connector.id,
+            error: message,
+          });
+          throw new ToolsHubRequestError(502, "mcp_file_context_failed");
+        } finally {
+          await logMcpInvocation(
+            externalMcpAuditContext(userId),
+            `external.${connector.fetchTool}`,
+            {
+              connector_id: connector.id,
+              file_id: expectedId,
+              uri: expectedUri,
+            },
+            status,
+            req,
+          );
+        }
+      }
       // ── Bookmarks ───────────────────────────────────────────────────────────
       case "bookmark.list":
         return json({
@@ -10596,6 +10820,9 @@ ${reportText ? `> ${reportText}` : ""}`,
             "mcp.user_tasks.list",
             "mcp.notes.list",
             "mcp.notes.create",
+            "mcp_file.connectors",
+            "mcp_file.search",
+            "mcp_file.attach_context",
             "legal.harvey.complete",
             "legal-assistant.harvey.complete",
             "legal-assistant.review",

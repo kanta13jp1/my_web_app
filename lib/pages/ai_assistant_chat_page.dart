@@ -17,7 +17,14 @@ import '../services/generated_ui_sandbox_policy.dart';
 import '../widgets/generated_ui_sandbox_preview.dart';
 
 class AiAssistantChatPage extends StatefulWidget {
-  const AiAssistantChatPage({super.key});
+  const AiAssistantChatPage({
+    super.key,
+    this.initialContextIds = const <String>[],
+    this.initialContextTitles = const <String>[],
+  });
+
+  final List<String> initialContextIds;
+  final List<String> initialContextTitles;
 
   @override
   State<AiAssistantChatPage> createState() => _AiAssistantChatPageState();
@@ -38,6 +45,8 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
   bool _speechSupported = true;
   String _interimText = '';
   web.SpeechRecognition? _recognition;
+  late List<String> _contextIds;
+  late List<String> _contextTitles;
 
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
@@ -51,6 +60,10 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
   @override
   void initState() {
     super.initState();
+    _contextIds = widget.initialContextIds.take(5).toList(growable: false);
+    _contextTitles = widget.initialContextTitles
+        .take(_contextIds.length)
+        .toList(growable: false);
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -211,6 +224,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
           'message': displayText,
           'response_mode': _preferVideoResponse ? 'video' : 'text',
           'provider': _preferVideoResponse ? 'gemini' : _selectedAgentProvider,
+          if (_contextIds.isNotEmpty) 'context_file_ids': _contextIds,
           if (image != null) ...{
             'imageBase64': image.base64,
             'mimeType': image.mimeType,
@@ -842,6 +856,46 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (_contextIds.isNotEmpty) ...[
+              Row(
+                children: [
+                  const Icon(
+                    Icons.attach_file,
+                    color: Colors.white70,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _contextTitles.isEmpty
+                          ? '${_contextIds.length}件の外部ファイル'
+                          : _contextTitles.join(', '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () => setState(() {
+                              _contextIds = const <String>[];
+                              _contextTitles = const <String>[];
+                            }),
+                    tooltip: '外部ファイルを解除',
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.white54,
+                      size: 18,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+            ],
             if (_selectedImage != null) ...[
               _buildSelectedImagePreview(_selectedImage!),
               const SizedBox(height: 8),

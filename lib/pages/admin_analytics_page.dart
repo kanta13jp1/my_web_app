@@ -133,6 +133,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   int _comparisonSignups = 0;
   bool _comparisonCvrLoading = false;
 
+  // R29: 自動エラー報告 (error_reporter が hub_data へ無言送信する caught error)
+  // の可視化。管理者自身の直近報告を admin-hub errors.recent で取得する。
+  List<AutoErrorReportEntry> _autoErrorReports = const [];
+  bool _autoErrorReportsLoading = false;
+
   int _toInt(dynamic value) {
     if (value is int) return value;
     if (value is num) return value.toInt();
@@ -375,7 +380,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             body: {
               'action': 'x.candidate.list',
               'status': status,
-              'limit': 10,
+              // R32: ヘッダの「N件以上」判定と同じ定数を使う (両者が drift すると
+              // 上限到達を検出できず backlog を過小表示する)。
+              'limit': kXCandidateStatusFetchLimit,
             },
           );
           final data = res.data;
@@ -874,6 +881,34 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     _loadGrowthSummary();
     _loadComparisonCvr();
     _loadAppFeedbacks();
+    _loadRecentErrors();
+  }
+
+  /// R29: 自動エラー報告を admin-hub errors.recent で取得する。取得失敗や未認証は
+  /// 空へ degrade し、カードは「正常」表示 or 非表示になる (ダッシュボードは必ず描画)。
+  Future<void> _loadRecentErrors() async {
+    if (!mounted) return;
+    if (_supabase.auth.currentUser == null) return;
+    setState(() => _autoErrorReportsLoading = true);
+    try {
+      final res = await _supabase.functions.invoke(
+        'admin-hub',
+        body: const {'action': 'errors.recent', 'limit': 20},
+      );
+      final data = res.data;
+      final entries = data is Map && data['success'] == true
+          ? parseAutoErrorReports(data['errors'])
+          : const <AutoErrorReportEntry>[];
+      if (mounted) {
+        setState(() {
+          _autoErrorReports = entries;
+          _autoErrorReportsLoading = false;
+        });
+      }
+    } catch (error) {
+      debugPrint('errors.recent unavailable: $error');
+      if (mounted) setState(() => _autoErrorReportsLoading = false);
+    }
   }
 
   Future<void> _loadAppFeedbacks() async {
@@ -2228,6 +2263,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     _buildFeatureRequestsAdminCard(),
                     const SizedBox(height: 16),
                     _buildAutomationOpsCard(),
+                    const SizedBox(height: 16),
+                    _buildAutoErrorReportsCard(),
                     const SizedBox(height: 16),
                     const SelfDevinControlTowerCard(),
                     const SizedBox(height: 16),
@@ -4306,9 +4343,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                               BorderRadius.circular(6),
                                         ),
                                         child: Text(
-                                          isGoogle
-                                              ? 'Google'
-                                              : (isAnonymous ? '匿名' : 'Email'),
+                                          // R30: edge users.list は provider を
+                                          // 返さない → isGoogle は常に false で
+                                          // 全員 'Email' と誤表示していた。
+                                          // 判別不能なので中立の '登録済' にする。
+                                          isAnonymous ? '匿名' : '登録済',
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
@@ -5476,6 +5515,125 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
+  // R29: 自動エラー報告 (error_reporter が hub_data へ無言送信していた caught
+  // error) の可視化カード。0件なら「正常」を明示し、あれば直近を先頭行だけ出す。
+  Widget _buildAutoErrorReportsCard() {
+    final theme = Theme.of(context);
+    final count = _autoErrorReports.length;
+    final hasErrors = count > 0;
+    final accent =
+        hasErrors ? const Color(0xFFB45309) : const Color(0xFF0D9488);
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  hasErrors
+                      ? Icons.report_gmailerrorred
+                      : Icons.verified_outlined,
+                  color: accent,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    autoErrorReportsHealthLabel(count),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                      color: accent,
+                    ),
+                  ),
+                ),
+                if (_autoErrorReportsLoading)
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  IconButton(
+                    icon: const Icon(Icons.refresh, size: 20),
+                    tooltip: '再取得',
+                    onPressed: _loadRecentErrors,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              hasErrors
+                  ? 'アプリが自動で捕捉・記録した例外です (公開 Issue 化はされません)。'
+                      '本文は自分のセッション分のみ表示しています。'
+                  : 'アプリが捕捉した例外は記録されていません。',
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.5,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (hasErrors) ...[
+              const SizedBox(height: 10),
+              ..._autoErrorReports.take(8).map((entry) {
+                final when =
+                    formatAgeAwareDate(entry.createdAt, DateTime.now());
+                final line =
+                    entry.firstLine.isEmpty ? '(本文なし)' : entry.firstLine;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.chevron_right,
+                        size: 16,
+                        color: Color(0xFFB45309),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          line,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            height: 1.5,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        when,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              if (count > 8)
+                Text(
+                  'ほか ${count - 8}件',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildAutomationMetricChip({
     required String label,
     required String value,
@@ -5972,9 +6130,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
 
     final totalTouches = _comparisonTouches.values.fold(0, (a, b) => a + b);
-    final cvrPct = totalTouches > 0
-        ? (_comparisonSignups / totalTouches * 100).toStringAsFixed(1)
-        : '0.0';
+    // R30: 母数0で「0.0%」は計測した0%に見える捏造 → ダッシュボード共通の
+    // formatRatePercent(母数0=「—」)に揃える。到達0で登録>0の自己矛盾表示も回避。
+    final cvrLabel = formatRatePercent(_comparisonSignups, totalTouches);
 
     final sorted = _comparisonTouches.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -6031,7 +6189,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const Color(0xFF059669),
               ),
               const SizedBox(width: 16),
-              _cvrStat('CVR', '$cvrPct%', const Color(0xFFFF6B35)),
+              _cvrStat('CVR', cvrLabel, const Color(0xFFFF6B35)),
             ],
           ),
           const SizedBox(height: 12),
@@ -6653,7 +6811,20 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 height: 1.6,
               ),
             )
-          else if (_growthSummary != null) ...[
+          // R30: 期待するメトリクスキーが無いレスポンス(achievement.list は
+          // items のみ返す)では捏造ゼロを出さず、集計未接続を正直に示す。
+          else if (!growthSummaryHasMetrics(_growthSummary) &&
+              !_growthSummaryLoading)
+            const Text(
+              '成長サマリーの集計はまだ接続されていません。'
+              '各カード(登録目標・累計登録・比較CVR等)で実数をご確認ください。',
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF94A3B8),
+                height: 1.6,
+              ),
+            )
+          else if (growthSummaryHasMetrics(_growthSummary)) ...[
             Text(
               '期間: ${_growthSummary!['label'] ?? 'すべて'}',
               style: const TextStyle(

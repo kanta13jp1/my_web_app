@@ -28,6 +28,27 @@ void main() {
     expect(find.textContaining('達成率'), findsOneWidget);
   });
 
+  testWidgets(
+      'ElectionProgressChart clamps 達成率 to 100% and shows 達成 when over target',
+      (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ElectionProgressChart(
+            currentTotal: 720,
+            shortfall: -20,
+            target: 700,
+          ),
+        ),
+      ),
+    );
+
+    // 目標超過でも 100% を上限にクランプし、102.9% のような値を出さない
+    // (パイスライスの title は canvas 描画のため達成率 Text のみ検証)。
+    expect(find.textContaining('達成率 100.0%'), findsOneWidget);
+    expect(find.textContaining('102'), findsNothing);
+  });
+
   testWidgets('ElectionRegionalKpiChart renders prefecture labels and legends',
       (
     tester,

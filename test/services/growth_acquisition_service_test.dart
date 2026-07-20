@@ -19,10 +19,7 @@ void main() {
       GrowthAcquisitionService.signalForPagePath('/referral'),
       GrowthAcquisitionService.touchReferral,
     );
-    expect(
-      GrowthAcquisitionService.signalForPagePath('/unknown'),
-      isNull,
-    );
+    expect(GrowthAcquisitionService.signalForPagePath('/unknown'), isNull);
   });
 
   test('maps preview source types to import preview signals', () {
@@ -44,7 +41,7 @@ void main() {
     );
   });
 
-  test('maps first-user profile UTM to profile touch signal', () {
+  test('maps first-user X UTMs to durable campaign touch signals', () {
     final profileUri = Uri.parse(
       'https://my-web-app-b67f4.web.app/'
       '?utm_source=x&utm_medium=profile&utm_campaign=first_user_growth'
@@ -59,7 +56,10 @@ void main() {
       GrowthAcquisitionService.signalForIncomingUri(profileUri),
       GrowthAcquisitionService.touchProfile,
     );
-    expect(GrowthAcquisitionService.signalForIncomingUri(shareUri), isNull);
+    expect(
+      GrowthAcquisitionService.signalForIncomingUri(shareUri),
+      GrowthAcquisitionService.touchXFirstUserGrowth,
+    );
   });
 
   test('resolves signup submit signal from latest touchpoint', () {
@@ -74,6 +74,12 @@ void main() {
         GrowthAcquisitionService.touchImport,
       ),
       GrowthAcquisitionService.signupSubmitImport,
+    );
+    expect(
+      GrowthAcquisitionService.resolveSignupSubmitSignal(
+        GrowthAcquisitionService.touchXFirstUserGrowth,
+      ),
+      GrowthAcquisitionService.signupSubmitXFirstUserGrowth,
     );
     expect(
       GrowthAcquisitionService.resolveSignupSubmitSignal(
