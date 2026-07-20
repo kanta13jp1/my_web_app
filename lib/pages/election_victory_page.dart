@@ -4972,7 +4972,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ),
             ),
           ],
-          if (item.firstEndorsement case final endorsement?) ...[
+          // totalCount==0 のエントリはバッジも出さない。集計 getter 側と
+          // 条件を揃えないと「第1次公認 0人」バッジが出て未発表県が
+          // 発表済みに見える (data 側コメントの不変条件)。
+          if (item.firstEndorsement case final endorsement?
+              when endorsement.totalCount > 0) ...[
             const SizedBox(height: 8),
             _buildFirstEndorsementBadge(endorsement),
           ],
