@@ -337,4 +337,27 @@ void main() {
       contains('lp_exp_h09_treatment_sticky_cta'),
     );
   });
+
+  testWidgets('mobile H03 keeps the trial action above the sticky CTA', (
+    tester,
+  ) async {
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h03', LandingExperimentVariant.treatment),
+      size: const Size(393, 727),
+    );
+
+    final trialAction = find.byKey(
+      const Key('landing_h03_inline_trial_action'),
+    );
+    final stickyCta = find.byKey(
+      const Key('landing_h09_mobile_sticky_cta'),
+    );
+    expect(trialAction, findsOneWidget);
+    expect(stickyCta, findsOneWidget);
+    expect(
+      tester.getBottomRight(trialAction).dy,
+      lessThanOrEqualTo(tester.getTopLeft(stickyCta).dy),
+    );
+  });
 }

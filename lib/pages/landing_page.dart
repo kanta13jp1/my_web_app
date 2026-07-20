@@ -3516,6 +3516,7 @@ $input
   }
 
   Widget _buildTrialSection({bool heroMode = false}) {
+    final compactHero = heroMode && MediaQuery.sizeOf(context).width < 480;
     return KeyedSubtree(
       key: const Key('landing_trial_section'),
       child: Card(
@@ -3527,42 +3528,57 @@ $input
           key: Key(
             heroMode ? 'landing_h03_inline_trial' : 'landing_h03_lower_trial',
           ),
-          padding: EdgeInsets.all(heroMode ? 16 : 18),
+          padding: EdgeInsets.all(compactHero ? 10 : (heroMode ? 16 : 18)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 heroMode ? '30秒で試す: いま詰まっていることは？' : 'AIに「今日やる1件」を聞く',
-                style: const TextStyle(
-                  fontSize: 18,
+                style: TextStyle(
+                  fontSize: compactHero ? 16 : 18,
                   fontWeight: FontWeight.w800,
-                  height: 1.4,
+                  height: compactHero ? 1.3 : 1.4,
                 ),
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: compactHero ? 4 : 6),
               Text(
-                heroMode
-                    ? '登録はまだ不要です。1行書くか、下の例を押すと「今やる1件」を返します。'
-                    : 'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
-                style: const TextStyle(color: Color(0xFF64748B), height: 1.5),
+                compactHero
+                    ? '登録不要。例を押すか1行書くと「今やる1件」を返します。'
+                    : heroMode
+                        ? '登録はまだ不要です。1行書くか、下の例を押すと「今やる1件」を返します。'
+                        : 'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
+                style: TextStyle(
+                  color: const Color(0xFF64748B),
+                  fontSize: compactHero ? 12 : 14,
+                  height: compactHero ? 1.35 : 1.5,
+                ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: compactHero ? 6 : 12),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: compactHero ? 6 : 8,
+                runSpacing: compactHero ? 6 : 8,
                 children: [
                   ActionChip(
                     key: const Key('landing_trial_sample_priority'),
-                    avatar: const Icon(Icons.flash_on, size: 18),
-                    label: const Text('今日の最優先'),
+                    avatar: Icon(Icons.flash_on, size: compactHero ? 16 : 18),
+                    label: Text(compactHero ? '最優先' : '今日の最優先'),
+                    visualDensity: compactHero ? VisualDensity.compact : null,
+                    materialTapTargetSize:
+                        compactHero ? MaterialTapTargetSize.shrinkWrap : null,
                     onPressed: _isTrialLoading
                         ? null
                         : () => _runQuickTrialSample('今日の最優先タスクを1件に絞りたい'),
                   ),
                   ActionChip(
                     key: const Key('landing_trial_sample_plan'),
-                    avatar: const Icon(Icons.event_note, size: 18),
-                    label: const Text('今日の計画を立てる'),
+                    avatar: Icon(
+                      Icons.event_note,
+                      size: compactHero ? 16 : 18,
+                    ),
+                    label: Text(compactHero ? '計画' : '今日の計画を立てる'),
+                    visualDensity: compactHero ? VisualDensity.compact : null,
+                    materialTapTargetSize:
+                        compactHero ? MaterialTapTargetSize.shrinkWrap : null,
                     onPressed: _isTrialLoading
                         ? null
                         : () =>
@@ -3570,29 +3586,44 @@ $input
                   ),
                   ActionChip(
                     key: const Key('landing_trial_sample_procrastination'),
-                    avatar: const Icon(Icons.done_all, size: 18),
-                    label: const Text('先送り解消'),
+                    avatar: Icon(Icons.done_all, size: compactHero ? 16 : 18),
+                    label: Text(compactHero ? '先送り' : '先送り解消'),
+                    visualDensity: compactHero ? VisualDensity.compact : null,
+                    materialTapTargetSize:
+                        compactHero ? MaterialTapTargetSize.shrinkWrap : null,
                     onPressed: _isTrialLoading
                         ? null
                         : () => _runQuickTrialSample('今いちばん先送りしていることを片付けたい'),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: compactHero ? 8 : 14),
               TextField(
                 controller: _trialPromptController,
                 minLines: heroMode ? 1 : 2,
                 maxLines: heroMode ? 2 : 3,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: '例: 今日いちばん詰まっていることを簡単に書く',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.bolt),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.bolt),
+                  isDense: compactHero,
+                  contentPadding: compactHero
+                      ? const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        )
+                      : null,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: compactHero ? 8 : 12),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
+                  key: Key(
+                    heroMode
+                        ? 'landing_h03_inline_trial_action'
+                        : 'landing_h03_lower_trial_action',
+                  ),
                   onPressed: _isTrialLoading ? null : _runTrialActionPreview,
                   icon: const Icon(Icons.play_arrow),
                   label: _isTrialLoading
@@ -3602,6 +3633,11 @@ $input
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Text('今やる1件を試す'),
+                  style: compactHero
+                      ? FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(44),
+                        )
+                      : null,
                 ),
               ),
               if (_trialAction != null) ...[
@@ -4382,7 +4418,7 @@ $input
       key: const Key('landing_page_scaffold'),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 72,
+        toolbarHeight: screenWidth < 480 ? 56 : 72,
         elevation: 0,
         scrolledUnderElevation: 1,
         surfaceTintColor: Colors.transparent,
@@ -4464,7 +4500,7 @@ $input
           child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(
               horizontal: screenWidth < 640 ? 14 : 28,
-              vertical: 22,
+              vertical: screenWidth < 480 ? 12 : 22,
             ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1180),
@@ -4667,30 +4703,37 @@ class _WorkflowLandingHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final compactTrialHero = screenWidth < 480 && inlineTrial != null;
+
     return Container(
       key: const Key('landing_hero_section'),
       decoration: BoxDecoration(
         color: const Color(0xFFEAF4FB),
         borderRadius: BorderRadius.circular(8),
       ),
-      padding: const EdgeInsets.fromLTRB(22, 46, 22, 42),
+      padding: compactTrialHero
+          ? const EdgeInsets.fromLTRB(10, 12, 10, 16)
+          : const EdgeInsets.fromLTRB(22, 46, 22, 42),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Center(
-            child: Text(
-              '自分株式会社',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xFF172033),
-                fontSize: 42,
-                fontWeight: FontWeight.w800,
-                height: 1.16,
-                letterSpacing: 0,
+          if (!compactTrialHero) ...[
+            const Center(
+              child: Text(
+                '自分株式会社',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF172033),
+                  fontSize: 42,
+                  fontWeight: FontWeight.w800,
+                  height: 1.16,
+                  letterSpacing: 0,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 18),
+            const SizedBox(height: 18),
+          ],
           Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 820),
@@ -4704,16 +4747,16 @@ class _WorkflowLandingHero extends StatelessWidget {
                       : 'landing_h01_control_offer',
                 ),
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF102A43),
-                  fontSize: 28,
-                  height: 1.45,
+                style: TextStyle(
+                  color: const Color(0xFF102A43),
+                  fontSize: compactTrialHero ? 22 : 28,
+                  height: compactTrialHero ? 1.25 : 1.45,
                   fontWeight: FontWeight.w800,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: compactTrialHero ? 8 : 12),
           Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 720),
@@ -4722,17 +4765,17 @@ class _WorkflowLandingHero extends StatelessWidget {
                     ? '散らばった予定・メモ・資産・学習をまとめ、迷いを「今やる具体的な行動」に変えます。'
                     : '情報を一か所にまとめ、AIが今日の最優先アクションまで案内します。',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF475569),
-                  fontSize: 16,
-                  height: 1.7,
+                style: TextStyle(
+                  color: const Color(0xFF475569),
+                  fontSize: compactTrialHero ? 13 : 16,
+                  height: compactTrialHero ? 1.45 : 1.7,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
           ),
           if (inlineTrial != null) ...[
-            const SizedBox(height: 18),
+            SizedBox(height: compactTrialHero ? 10 : 18),
             Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 760),

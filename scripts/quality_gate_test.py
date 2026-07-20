@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 import unittest
 
-from quality_gate import full_commands
+from quality_gate import flutter_vm_test_concurrency, full_commands
 
 
 class QualityGateTest(unittest.TestCase):
@@ -16,8 +16,15 @@ class QualityGateTest(unittest.TestCase):
 
         self.assertEqual(
             command.args,
-            ["flutter", "test", "--coverage", "--concurrency=2"],
+            [
+                "flutter",
+                "test",
+                "--coverage",
+                f"--concurrency={flutter_vm_test_concurrency()}",
+            ],
         )
+        self.assertEqual(flutter_vm_test_concurrency("nt"), 1)
+        self.assertEqual(flutter_vm_test_concurrency("posix"), 2)
 
         workflow = (root / ".github" / "workflows" / "ci.yml").read_text(
             encoding="utf-8"
