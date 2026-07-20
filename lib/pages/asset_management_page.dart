@@ -1679,11 +1679,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   String _formatYen(num value) =>
-      '¥${NumberFormat('#,###').format(value.round())}';
+      '¥${NumberFormat('#,##0').format(value.round())}';
 
   String _formatSignedYen(num value) {
     final sign = value >= 0 ? '+' : '-';
-    return '$sign¥${NumberFormat('#,###').format(value.abs().round())}';
+    return '$sign¥${NumberFormat('#,##0').format(value.abs().round())}';
   }
 
   double _numberFromDynamic(Object? value) {

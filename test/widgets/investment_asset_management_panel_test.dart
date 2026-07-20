@@ -33,6 +33,13 @@ void main() {
         buyPriceJpy: 1000,
         currentPriceJpy: 1200,
       ),
+      _asset(
+        id: 'asset-2',
+        ticker: 'BTC',
+        quantity: 0.5,
+        buyPriceJpy: 9000000,
+        assetType: InvestmentAssetType.crypto,
+      ),
     ]);
 
     await _pumpPanel(tester, repository: repository, userId: 'user-1');
@@ -41,7 +48,49 @@ void main() {
     expect(find.text('¥2,400'), findsWidgets);
     expect(find.text('+¥400'), findsOne);
     expect(find.text('+20.0%'), findsOne);
+    expect(find.text('取得額（評価済）'), findsOne);
+    expect(find.text('¥2,000'), findsOne);
+    expect(find.text('¥4,502,000'), findsNothing);
+    expect(find.text('価格未取得'), findsOne);
+    expect(find.text('1件'), findsOne);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('retries after a repository load error', (tester) async {
+    final repository = _FakeInvestmentAssetRepository(const [])
+      ..fetchError = Exception('temporary load failure');
+
+    await _pumpPanel(tester, repository: repository, userId: 'user-1');
+
+    expect(find.byKey(const Key('investment_asset_load_error')), findsOne);
+    expect(repository.fetchCalls, 1);
+
+    repository.fetchError = null;
+    await tester.tap(find.byTooltip('再読み込み'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('investment_asset_empty')), findsOne);
+    expect(repository.fetchCalls, 2);
+  });
+
+  testWidgets('clears holdings when the user logs out', (tester) async {
+    final repository = _FakeInvestmentAssetRepository([
+      _asset(
+        id: 'asset-1',
+        ticker: 'AAPL',
+        quantity: 2,
+        buyPriceJpy: 1000,
+      ),
+    ]);
+
+    await _pumpPanel(tester, repository: repository, userId: 'user-1');
+    expect(find.text('AAPL'), findsOne);
+
+    await _pumpPanel(tester, repository: repository, userId: null);
+
+    expect(find.byKey(const Key('investment_asset_logged_out')), findsOne);
+    expect(find.text('AAPL'), findsNothing);
+    expect(repository.fetchCalls, 1);
   });
 
   testWidgets('adds, edits, and deletes an investment asset', (tester) async {
@@ -137,12 +186,13 @@ InvestmentAsset _asset({
   required String ticker,
   required double quantity,
   required double buyPriceJpy,
+  InvestmentAssetType assetType = InvestmentAssetType.stock,
   double? currentPriceJpy,
 }) {
   return InvestmentAsset(
     id: id,
     userId: 'user-1',
-    assetType: InvestmentAssetType.stock,
+    assetType: assetType,
     ticker: ticker,
     quantity: quantity,
     buyPriceJpy: buyPriceJpy,
@@ -165,10 +215,13 @@ class _FakeInvestmentAssetRepository implements InvestmentAssetRepository {
   int deleteCalls = 0;
   InvestmentAssetDraft? lastCreatedDraft;
   InvestmentAssetDraft? lastUpdatedDraft;
+  Exception? fetchError;
 
   @override
   Future<List<InvestmentAsset>> fetchByUser({required String userId}) async {
     fetchCalls++;
+    final error = fetchError;
+    if (error != null) throw error;
     return List<InvestmentAsset>.from(assets);
   }
 

@@ -296,7 +296,7 @@ class _InvestmentAssetManagementPanelState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildPortfolioSummary(theme, portfolio),
+        _buildPortfolioSummary(portfolio),
         const SizedBox(height: 12),
         for (var index = 0; index < portfolio.items.length; index++) ...[
           if (index > 0) const Divider(height: 20),
@@ -306,22 +306,29 @@ class _InvestmentAssetManagementPanelState
     );
   }
 
-  Widget _buildPortfolioSummary(
-    ThemeData theme,
-    InvestmentPortfolioValuation portfolio,
-  ) {
-    final pricedText = portfolio.pricedMarketValueJpy == 0 &&
-            portfolio.unpricedAssetCount == portfolio.items.length
-        ? '未取得'
-        : _yen(portfolio.pricedMarketValueJpy);
+  Widget _buildPortfolioSummary(InvestmentPortfolioValuation portfolio) {
+    final pricedCount = portfolio.items.length - portfolio.unpricedAssetCount;
+    final pricedText =
+        pricedCount == 0 ? '未取得' : _yen(portfolio.pricedMarketValueJpy);
+    final acquisitionLabel = portfolio.unpricedAssetCount > 0 && pricedCount > 0
+        ? '取得額（評価済）'
+        : '取得額';
+    final acquisitionValue = pricedCount > 0
+        ? portfolio.pricedAcquisitionCostJpy
+        : portfolio.totalAcquisitionCostJpy;
     return Wrap(
       key: const Key('investment_asset_portfolio_summary'),
       spacing: 20,
       runSpacing: 8,
       children: [
         _Metric(label: '評価額', value: pricedText),
-        _Metric(label: '取得額', value: _yen(portfolio.totalAcquisitionCostJpy)),
+        _Metric(label: acquisitionLabel, value: _yen(acquisitionValue)),
         _Metric(label: '銘柄数', value: '${portfolio.items.length}'),
+        if (portfolio.unpricedAssetCount > 0)
+          _Metric(
+            label: '価格未取得',
+            value: '${portfolio.unpricedAssetCount}件',
+          ),
       ],
     );
   }
