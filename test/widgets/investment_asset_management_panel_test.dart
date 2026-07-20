@@ -93,6 +93,38 @@ void main() {
     expect(repository.fetchCalls, 1);
   });
 
+  testWidgets('clears cached price when the asset type changes', (
+    tester,
+  ) async {
+    final repository = _FakeInvestmentAssetRepository([
+      _asset(
+        id: 'asset-1',
+        ticker: 'AAPL',
+        quantity: 2,
+        buyPriceJpy: 1000,
+        currentPriceJpy: 1200,
+      ),
+    ]);
+    await _pumpPanel(tester, repository: repository, userId: 'user-1');
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('investment_asset_edit_asset-1')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('investment_asset_type_field')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ETF').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('investment_asset_save')));
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCalls, 1);
+    expect(repository.lastUpdatedDraft?.assetType, InvestmentAssetType.etf);
+    expect(repository.lastUpdatedDraft?.normalizedTicker, 'AAPL');
+    expect(repository.lastUpdatedDraft?.currentPriceJpy, isNull);
+    expect(repository.lastUpdatedDraft?.lastPricedAt, isNull);
+  });
+
   testWidgets('adds, edits, and deletes an investment asset', (tester) async {
     final repository = _FakeInvestmentAssetRepository([
       _asset(

@@ -135,7 +135,9 @@ class _InvestmentAssetManagementPanelState
       _showMessage(
         asset == null ? '${saved.ticker}を追加しました。' : '${saved.ticker}を更新しました。',
       );
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint('Investment asset save failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
       if (!mounted) return;
       _showMessage('投資資産を保存できませんでした。時間をおいて再試行してください。');
     } finally {
@@ -180,7 +182,9 @@ class _InvestmentAssetManagementPanelState
         ];
       });
       _showMessage('${asset.ticker}を削除しました。');
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint('Investment asset delete failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
       if (!mounted) return;
       _showMessage('投資資産を削除できませんでした。時間をおいて再試行してください。');
     } finally {
