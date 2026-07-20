@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-19T22:10:30Z",
+  "generated_at": "2026-07-20T22:14:33Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -28,7 +28,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "242f25bffd7decc5918d1cb0e639bf4f50f1651d627d25e5bbd13c564854acaf",
@@ -78,7 +78,7 @@
           "latest_signal": "2.1.215 / July 19, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "a420573d0c64f1afdadf7ee4ef60068eb44177a83e7fb16a8aaa04afaa9fbf46",
+          "previous_hash": "242f25bffd7decc5918d1cb0e639bf4f50f1651d627d25e5bbd13c564854acaf",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -119,10 +119,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "5389ce017162904b5e02cdcfafb481657a8a25891fc1de77af0de46ea04df266",
+          "hash": "575285bccd2ab9fe25646ce2523888524405e4a305c394567990e0c48be8aa6d",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -476,18 +476,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-70d11cef4eb4",
+        "entry_id": "nf-03f16a5dcd71",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.11 / Jul 10, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Composer Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing... We also refined how Cursor's responses look in Slack. # Multi-repo environment support From Slack, Cursor can now start in a named multi-repo environment instead of a single default repository.",
+        "text": "Cursor changelog 3.11 / Jul 10, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing Resources ↓... We also refined how Cursor's responses look in Slack. # Multi-repo environment support From Slack, Cursor can now start in a named multi-repo environment instead of a single default repository.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "0ebba67d37dcf310d50764128ab3d7904dffad45cf005efd9b1a89c9708ca08e",
+          "hash": "f9df00e6529c8a410de26e8cff22a522566fe3041016c28c8d8ce2915250b53e",
           "keyword_groups": {
             "codex-runtime": [
               "subagents"
@@ -518,7 +518,7 @@
           "previous_hash": "0ebba67d37dcf310d50764128ab3d7904dffad45cf005efd9b1a89c9708ca08e",
           "slug": "cursor-changelog",
           "snippets": [
-            "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Composer Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing...",
+            "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing Resources ↓...",
             "We also refined how Cursor's responses look in Slack.",
             "# Multi-repo environment support From Slack, Cursor can now start in a named multi-repo environment instead of a single default repository."
           ],
@@ -527,7 +527,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-70d11cef4eb4",
+        "entry_id": "nf-03f16a5dcd71",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",

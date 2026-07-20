@@ -11,11 +11,9 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "242f25bffd7decc5918d1cb0e639bf4f50f1651d627d25e5bbd13c564854acaf",
+      "hash": "575285bccd2ab9fe25646ce2523888524405e4a305c394567990e0c48be8aa6d",
       "keyword_groups": {
         "codex-runtime": [
-          "model picker",
-          "computer use",
           "worktree",
           "subagents"
         ],
@@ -26,18 +24,12 @@
           "UserPromptSubmit",
           "PostToolUse",
           "Stop",
-          "StopFailure",
-          "ultrareview"
+          "StopFailure"
         ],
         "integration": [
           "MCP",
           "connector",
-          "Slack",
-          "Linear",
-          "GitHub",
-          "IDE extension",
-          "VSCode",
-          "Visual Studio Code"
+          "GitHub"
         ],
         "quality-cost": [
           "OpenTelemetry",
@@ -51,25 +43,66 @@
         "schedule": [
           "schedule",
           "cron",
-          "GitHub Actions",
           "workflow"
         ]
       },
-      "latest_signal": "2.1.215 / July 19, 2026",
-      "name": "Claude Code changelog",
+      "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
+      "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "a420573d0c64f1afdadf7ee4ef60068eb44177a83e7fb16a8aaa04afaa9fbf46",
-      "slug": "claude-code-changelog",
+      "previous_hash": "5389ce017162904b5e02cdcfafb481657a8a25891fc1de77af0de46ea04df266",
+      "slug": "claude-code-hooks",
       "snippets": [
-        "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
-        "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.215 July 19, 2026 Claude no longer runs the /verify and /code-review skills on its own; invoke them with /verify or /code-review when you want them ​ 2.1.214 July 18, 2026..."
+        "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
+        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
+        "Copy page Copy page For a quickstart guide with examples, see Automate actions with hooks ."
       ],
       "status": 200,
-      "url": "https://code.claude.com/docs/en/changelog"
+      "url": "https://code.claude.com/docs/en/hooks"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "f9df00e6529c8a410de26e8cff22a522566fe3041016c28c8d8ce2915250b53e",
+      "keyword_groups": {
+        "codex-runtime": [
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "Slack",
+          "GitHub"
+        ],
+        "quality-cost": [
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "workflow"
+        ]
+      },
+      "latest_signal": "3.11 / Jul 10, 2026",
+      "name": "Cursor changelog",
+      "owner": "Cursor",
+      "previous_hash": "0ebba67d37dcf310d50764128ab3d7904dffad45cf005efd9b1a89c9708ca08e",
+      "slug": "cursor-changelog",
+      "snippets": [
+        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing Resources ↓...",
+        "We also refined how Cursor's responses look in Slack.",
+        "# Multi-repo environment support From Slack, Cursor can now start in a named multi-repo environment instead of a single default repository."
+      ],
+      "status": 200,
+      "url": "https://cursor.com/changelog"
     }
   ],
-  "checked_at": "2026-07-19T22:10:28Z",
+  "checked_at": "2026-07-20T22:14:29Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -121,10 +154,10 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-07-18T22:08:40Z",
+  "previous_checked_at": "2026-07-19T22:10:28Z",
   "sources": [
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "242f25bffd7decc5918d1cb0e639bf4f50f1651d627d25e5bbd13c564854acaf",
@@ -174,7 +207,7 @@
       "latest_signal": "2.1.215 / July 19, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "a420573d0c64f1afdadf7ee4ef60068eb44177a83e7fb16a8aaa04afaa9fbf46",
+      "previous_hash": "242f25bffd7decc5918d1cb0e639bf4f50f1651d627d25e5bbd13c564854acaf",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -185,10 +218,10 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "5389ce017162904b5e02cdcfafb481657a8a25891fc1de77af0de46ea04df266",
+      "hash": "575285bccd2ab9fe25646ce2523888524405e4a305c394567990e0c48be8aa6d",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -414,10 +447,10 @@
       "url": "https://openai.com/codex/"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "0ebba67d37dcf310d50764128ab3d7904dffad45cf005efd9b1a89c9708ca08e",
+      "hash": "f9df00e6529c8a410de26e8cff22a522566fe3041016c28c8d8ce2915250b53e",
       "keyword_groups": {
         "codex-runtime": [
           "subagents"
@@ -448,7 +481,7 @@
       "previous_hash": "0ebba67d37dcf310d50764128ab3d7904dffad45cf005efd9b1a89c9708ca08e",
       "slug": "cursor-changelog",
       "snippets": [
-        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Composer Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing...",
+        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing Resources ↓...",
         "We also refined how Cursor's responses look in Slack.",
         "# Multi-repo environment support From Slack, Cursor can now start in a named multi-repo environment instead of a single default repository."
       ],
