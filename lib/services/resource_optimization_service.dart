@@ -2,15 +2,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/resource_optimization.dart';
 
-typedef ResourceOptimizerInvoker =
-    Future<Map<String, dynamic>> Function(Map<String, dynamic> body);
+typedef ResourceOptimizerInvoker = Future<Map<String, dynamic>> Function(
+    Map<String, dynamic> body);
 
 class ResourceOptimizationService {
   const ResourceOptimizationService({
     SupabaseClient? client,
     ResourceOptimizerInvoker? invoker,
-  }) : _client = client,
-       _invoker = invoker;
+  })  : _client = client,
+        _invoker = invoker;
 
   final SupabaseClient? _client;
   final ResourceOptimizerInvoker? _invoker;
@@ -27,7 +27,8 @@ class ResourceOptimizationService {
   Future<Map<String, dynamic>> _invoke(Map<String, dynamic> body) async {
     final invoker = _invoker;
     if (invoker != null) return invoker(body);
-    final response = await (_client ?? Supabase.instance.client).functions
+    final response = await (_client ?? Supabase.instance.client)
+        .functions
         .invoke('resource-optimizer', body: body);
     final data = response.data;
     if (data is Map<String, dynamic>) return data;
