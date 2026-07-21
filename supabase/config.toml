@@ -195,3 +195,8 @@ verify_jwt = false
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/mcp-well-known/index.ts"
+
+[functions.resource-optimizer]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/resource-optimizer/index.ts"
