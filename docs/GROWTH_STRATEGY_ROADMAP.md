@@ -33115,3 +33115,26 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
 - 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
 - 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 7日連続同一制約 / GHA コンテンツで補完継続 / Codex /import によりproject-scoped memories の所属が設計上の争点に浮上 / ユーザー数 58人 (前日比 +1) を確認
+
+## 2026-07-21 (Win Claude part342) — tracked 8 ファイル 0 byte 化インシデント対応
+
+**種別**: インシデント対応 (プロダクト変更なし / commit・push なし)
+
+**事象**: main repo (branch `codex/issue-1215-hitl` = foreign WIP) で tracked 8 ファイルが 0 byte 化。`.claude/settings.json` `.claude/commands/wrap-up.md` + workflows `ci.yml` `deploy-prod.yml` `deploy-staging.yml` `claude-session-hygiene-cron.yml` `horse-racing-update.yml` `memory-search-sync.yml`。commit されていれば CI/CD パイプライン全体と Claude の hooks/permissions 設定が消えていた。
+
+**対応**: `git checkout HEAD -- <8 paths>` で 8/8 復元。復元後 `git status` 空 (= clean) / staged なし / settings.json は JSON parse OK / 6 workflow すべて `name:` `jobs:` 健在を検証。Codex の WIP (変更 129・未追跡 131・削除 2) は無傷。
+
+**最大の収穫 — 自動レポートの復元コマンドが誤っていた**: infra-health-check の提示は `git checkout origin/main -- ...` だったが、実測 `git diff HEAD origin/main` = 105 insertions / 50 deletions。実行していれば **main の無関係な変更が Codex の WIP 差分として無言混入**していた。foreign WIP の復元 baseline は **HEAD** が正。
+
+**原因 (第一容疑は特定 / 因果は未証明)**: Windows タスク `JibunKK-InjectRulesAutoSync` (毎日 03:30) が main worktree で branch 無確認の `git pull origin main` を実行し、`2>&1 | Out-Null` で出力破棄・exit code 未記録。truncation (03:30:25.579〜.631 / path sort 順 / 52ms) はタスク実行窓の内側。**ただし git 側に working tree へ書いた痕跡なし** (HEAD reflog 06-27 以降空 / `ORIG_HEAD` 06-28 停止 / 07-21 03:30 に origin/main ref 更新なし) → 断定していない。除外済み: ディスク満杯 (空き 76.9GB) / `pre-compact-backup.ps1` / `sync_inject_rules.py` / 内容ベース選別 (107 workflow 中 6 件のみ・どの marker とも不一致) / 他 worktree (全 15 中 main repo のみ)。
+
+**残課題 (ユーザー判断により未修正)**:
+1. cron 未修正 — 毎日 03:30 に再発しうる。修正案は ①branch ガード ②git の出力と exit code のログ化 ③専用 clean worktree 化
+2. `.github/workflows/feature-releases-sync.yml` が untracked 0 byte 放置 (origin/main には実体あり) → `git add -A` で main の実ワークフローを潰す地雷
+
+### Philosophy Alignment (Win Claude part342)
+
+- 主要実施: 0 byte truncation インシデントの復元 (8 ファイル) + 原因調査 + 再発リスクの明示
+- 該当原則: 1 (CEO 感: 復元 baseline と cron 対処をユーザーが最終決定) / 6 (資本=時間: CI/CD 消失による将来の時間損失を未然に回避) / 7 (資産負債: CI/CD と Claude 設定を資産として復旧し、未修正 cron を負債として明示計上)
+- 整合性スコア: 3/9 ✅ — **ただしインシデント対応のため機能設計向けの判定基準 (3 以下 = 理念ずれ警告) は適用外**。スコアの低さは理念ずれではなく作業種別による非該当。
+- 懸念: 負債 (毎日 03:30 の再発リスク) が未解消のまま残存。次回セッションで cron 修正を最優先候補とする。
