@@ -73,6 +73,7 @@ import {
   type AnomalyDetectionDb,
   AnomalyDetectionError,
   handleDetectAnomaliesAction,
+  resolveScheduledAnomalyUserId,
 } from "./anomaly_detection.ts";
 import {
   handleMarketPriceAction,
@@ -4839,15 +4840,23 @@ serve(async (req: Request) => {
         return json({ success: true, ...result });
       }
 
+      case "asset.anomaly.detect.scheduled":
       case "asset.anomaly.detect":
       case "detect-anomalies": {
+        const anomalyUserId = action === "asset.anomaly.detect.scheduled"
+          ? resolveScheduledAnomalyUserId({
+            authorization: req.headers.get("Authorization") ?? "",
+            serviceRoleKey: SERVICE_ROLE_KEY,
+            requestedUserId: body.user_id,
+          })
+          : userId ?? "";
         const explanationEnabled =
           (Deno.env.get("ANOMALY_AI_EXPLANATION_ENABLED") ?? "")
             .toLowerCase() === "true";
         const result = await handleDetectAnomaliesAction({
           db: admin as unknown as AnomalyDetectionDb,
           body,
-          userId: userId ?? "",
+          userId: anomalyUserId,
           explanationEnabled,
           invokeProvider: async (request) => {
             const budget = await checkBudget("ef", "ai-hub");

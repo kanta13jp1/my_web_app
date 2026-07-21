@@ -14,6 +14,38 @@ export class AnomalyDetectionError extends Error {
   }
 }
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function resolveScheduledAnomalyUserId(options: {
+  authorization: string;
+  serviceRoleKey: string;
+  requestedUserId: unknown;
+}): string {
+  if (!options.serviceRoleKey) {
+    throw new AnomalyDetectionError(
+      "scheduled anomaly scan is not configured",
+      503,
+    );
+  }
+  if (options.authorization !== `Bearer ${options.serviceRoleKey}`) {
+    throw new AnomalyDetectionError(
+      "scheduled anomaly scan requires service role",
+      401,
+    );
+  }
+  if (
+    typeof options.requestedUserId !== "string" ||
+    !UUID_PATTERN.test(options.requestedUserId.trim())
+  ) {
+    throw new AnomalyDetectionError(
+      "scheduled anomaly scan requires a valid user_id",
+      400,
+    );
+  }
+  return options.requestedUserId.trim();
+}
+
 export type AnomalyProviderRequest = {
   provider: string;
   model?: string;

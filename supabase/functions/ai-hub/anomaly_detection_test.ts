@@ -5,6 +5,7 @@ import {
   type AnomalyExpenseRow,
   computeCategoryAnomalies,
   handleDetectAnomaliesAction,
+  resolveScheduledAnomalyUserId,
   resolveTargetMonth,
   severityFor,
 } from "./anomaly_detection.ts";
@@ -74,6 +75,38 @@ Deno.test("resolveTargetMonth defaults to previous complete month in JST", () =>
   assertEquals(resolveTargetMonth("2026-06-30T15:30:00Z"), "2026-06-01");
   // その直前 (JST でまだ 6/30) → 前の完了月は 5 月
   assertEquals(resolveTargetMonth("2026-06-30T14:30:00Z"), "2026-05-01");
+});
+
+Deno.test("scheduled scan accepts a service-role authenticated user id", () => {
+  assertEquals(
+    resolveScheduledAnomalyUserId({
+      authorization: "Bearer service-secret",
+      serviceRoleKey: "service-secret",
+      requestedUserId: "8d2cc7d2-34f1-4eca-9f6c-0f84c23163d0",
+    }),
+    "8d2cc7d2-34f1-4eca-9f6c-0f84c23163d0",
+  );
+});
+
+Deno.test("scheduled scan rejects non-service and invalid user ids", () => {
+  assertThrows(
+    () =>
+      resolveScheduledAnomalyUserId({
+        authorization: "Bearer user-token",
+        serviceRoleKey: "service-secret",
+        requestedUserId: "8d2cc7d2-34f1-4eca-9f6c-0f84c23163d0",
+      }),
+    "requires service role",
+  );
+  assertThrows(
+    () =>
+      resolveScheduledAnomalyUserId({
+        authorization: "Bearer service-secret",
+        serviceRoleKey: "service-secret",
+        requestedUserId: "not-a-user-id",
+      }),
+    "valid user_id",
+  );
 });
 
 Deno.test("severity tiers are deterministic", () => {

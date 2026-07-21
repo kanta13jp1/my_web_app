@@ -1,0 +1,125 @@
+name: Daily Anomaly Scan
+
+on:
+  schedule:
+    # 03:00 JST daily.
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+    inputs:
+      user_id:
+        description: "Optional single Supabase Auth user UUID."
+        required: false
+        default: ""
+      target_month:
+        description: "Optional target month (YYYY-MM). Defaults to previous complete JST month."
+        required: false
+        default: ""
+      confirm_all_users:
+        description: "Required for a manual all-user scan."
+        required: true
+        type: boolean
+        default: false
+      max_attempts:
+        description: "Attempts per user (1-5)."
+        required: true
+        default: "3"
+      workers:
+        description: "Parallel user scans (1-16)."
+        required: true
+        default: "4"
+  pull_request:
+    paths:
+      - ".github/workflows/daily-anomaly-scan.yml"
+      - "scripts/daily_anomaly_scan.py"
+      - "scripts/daily_anomaly_scan_test.py"
+      - "supabase/functions/ai-hub/anomaly_detection.ts"
+      - "supabase/functions/ai-hub/anomaly_detection_test.ts"
+      - "supabase/functions/ai-hub/index.ts"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-anomaly-scan-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'scheduled' }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate daily anomaly scheduler
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Run scheduler unit tests
+        run: python scripts/daily_anomaly_scan_test.py
+
+      - name: Run anomaly detection contract tests
+        run: deno test supabase/functions/ai-hub/anomaly_detection_test.ts
+
+  scan:
+    name: Scan eligible users
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD || 'https://smmkxxavexumewbfaqpy.supabase.co' }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      CRON_ENABLED: ${{ vars.DAILY_ANOMALY_SCAN_ENABLED || 'false' }}
+      USER_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.user_id || '' }}
+      TARGET_MONTH: ${{ github.event_name == 'workflow_dispatch' && inputs.target_month || '' }}
+      CONFIRM_ALL_USERS: ${{ github.event_name == 'workflow_dispatch' && inputs.confirm_all_users || 'false' }}
+      MAX_ATTEMPTS: ${{ github.event_name == 'workflow_dispatch' && inputs.max_attempts || '3' }}
+      WORKERS: ${{ github.event_name == 'workflow_dispatch' && inputs.workers || '4' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Run daily anomaly scan
+        env:
+          MANUAL_RUN: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
+        run: |
+          mkdir -p tmp/daily-anomaly-scan
+          set +e
+          python scripts/daily_anomaly_scan.py \
+            --supabase-url "$SUPABASE_URL" \
+            --cron-enabled "$CRON_ENABLED" \
+            --manual-run "$MANUAL_RUN" \
+            --confirm-all-users "$CONFIRM_ALL_USERS" \
+            --user-id "$USER_ID" \
+            --target-month "$TARGET_MONTH" \
+            --max-attempts "$MAX_ATTEMPTS" \
+            --workers "$WORKERS" \
+            --report tmp/daily-anomaly-scan/report.json \
+            --summary-md tmp/daily-anomaly-scan/summary.md
+          exit_code=$?
+          cat tmp/daily-anomaly-scan/summary.md >> "$GITHUB_STEP_SUMMARY"
+          exit "$exit_code"
+
+      - name: Upload scan report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: daily-anomaly-scan-${{ github.run_id }}
+          path: tmp/daily-anomaly-scan
+          if-no-files-found: ignore
+          retention-days: 14
