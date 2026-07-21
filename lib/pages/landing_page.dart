@@ -449,16 +449,15 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   Future<void> _runTrialActionPreview() async {
-    unawaited(_recordConversionStage('trial'));
-    unawaited(widget.adapter.recordTrialRun());
+    unawaited(_recordTrialStages());
     final input = _trialPromptController.text.trim();
+    final instantSuggestion = _buildTrialFallbackSuggestion(input);
+    setState(() {
+      _trialAction = instantSuggestion.$1;
+      _trialReason = instantSuggestion.$2;
+      _showSaveCtaPrompt = true;
+    });
     if (input.isEmpty) {
-      final fallback = _buildTrialFallbackSuggestion(input);
-      setState(() {
-        _trialAction = fallback.$1;
-        _trialReason = fallback.$2;
-        _showSaveCtaPrompt = true;
-      });
       return;
     }
 
@@ -499,9 +498,26 @@ $input
     }
   }
 
+  Future<void> _recordTrialStages() async {
+    try {
+      await widget.adapter.recordTrialRun();
+    } catch (error) {
+      debugPrint('Landing trial analytics failed: $error');
+    }
+    await _recordConversionStage('trial');
+  }
+
+  Future<void> _recordSaveStages() async {
+    try {
+      await widget.adapter.recordSaveCta();
+    } catch (error) {
+      debugPrint('Landing save analytics failed: $error');
+    }
+    await _recordConversionStage('save_cta');
+  }
+
   void _promptRegistrationForTrialSave() {
-    unawaited(_recordConversionStage('save_cta'));
-    unawaited(widget.adapter.recordSaveCta());
+    unawaited(_recordSaveStages());
     setState(() {
       _showSaveCtaPrompt = true;
       _isSignUp = true;
@@ -511,8 +527,7 @@ $input
   }
 
   Future<void> _saveTrialWithMagicLink() async {
-    unawaited(_recordConversionStage('save_cta'));
-    unawaited(widget.adapter.recordSaveCta());
+    unawaited(_recordSaveStages());
     setState(() {
       _showSaveCtaPrompt = true;
       _isSignUp = true;
@@ -3579,6 +3594,18 @@ $input
                 ),
               ),
               SizedBox(height: compactHero ? 6 : 12),
+              _buildTrialAnswerPreview(compact: compactHero),
+              SizedBox(height: compactHero ? 8 : 12),
+              Text(
+                'ほかの悩みを1タップで試す',
+                style: TextStyle(
+                  color: const Color(0xFF475569),
+                  fontSize: compactHero ? 11 : 12,
+                  fontWeight: FontWeight.w700,
+                  height: 1.4,
+                ),
+              ),
+              SizedBox(height: compactHero ? 5 : 7),
               Wrap(
                 spacing: compactHero ? 6 : 8,
                 runSpacing: compactHero ? 6 : 8,
@@ -3692,6 +3719,7 @@ $input
                       const SizedBox(height: 6),
                       Text(
                         _trialAction!,
+                        key: const Key('landing_trial_result_action'),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
@@ -3702,6 +3730,7 @@ $input
                         const SizedBox(height: 6),
                         Text(
                           _trialReason!,
+                          key: const Key('landing_trial_result_reason'),
                           style: const TextStyle(
                             color: Color(0xFF64748B),
                             height: 1.5,
@@ -3745,6 +3774,78 @@ $input
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTrialAnswerPreview({required bool compact}) {
+    const samplePrompt = '仕事が多すぎて、何から始めるか決められない';
+    return Container(
+      key: const Key('landing_h11_answer_preview'),
+      width: double.infinity,
+      padding: EdgeInsets.all(compact ? 10 : 12),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF6FAFE),
+        border: Border(left: BorderSide(color: Color(0xFF1F7AE0), width: 3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            '実際の回答例',
+            style: TextStyle(
+              color: Color(0xFF1D4ED8),
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '入力: 「$samplePrompt」',
+            style: TextStyle(
+              color: const Color(0xFF64748B),
+              fontSize: compact ? 11 : 12,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 7),
+          Text(
+            '今やる1件: 止まっている案件を1つ開く',
+            style: TextStyle(
+              color: const Color(0xFF172033),
+              fontSize: compact ? 13 : 14,
+              fontWeight: FontWeight.w800,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '最初の10分: 確認先を1人決め、連絡文の下書きを作る',
+            style: TextStyle(
+              color: const Color(0xFF475569),
+              fontSize: compact ? 11 : 12,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            key: const Key('landing_h11_answer_preview_action'),
+            onPressed: _isTrialLoading
+                ? null
+                : () => _runQuickTrialSample(samplePrompt),
+            icon: const Icon(Icons.bolt, size: 17),
+            label: const Text('この例で即試す'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF1F7AE0),
+              minimumSize: Size.fromHeight(compact ? 40 : 44),
+              side: const BorderSide(color: Color(0xFF93C5FD)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

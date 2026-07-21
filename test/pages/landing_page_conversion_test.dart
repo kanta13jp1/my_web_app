@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/landing_page.dart';
@@ -9,9 +11,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _LandingAdapter extends Fake implements LandingPageAdapter {
   int lpViews = 0;
+  int trialRuns = 0;
   int saveCtas = 0;
   final List<String> conversionEvents = <String>[];
   final List<String> magicLinkEmails = <String>[];
+  Completer<String>? trialResponse;
 
   @override
   Stream<AuthState> authStateChanges() => const Stream<AuthState>.empty();
@@ -27,7 +31,9 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   }
 
   @override
-  Future<void> recordTrialRun() async {}
+  Future<void> recordTrialRun() async {
+    trialRuns += 1;
+  }
 
   @override
   Future<void> recordSaveCta() async {
@@ -48,6 +54,10 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
 
   @override
   Future<String> improveTrialPrompt({required String prompt}) async {
+    final pendingResponse = trialResponse;
+    if (pendingResponse != null) {
+      return pendingResponse.future;
+    }
     return 'ACTION: 重要な案件を1件選ぶ\nREASON: 最初の判断を減らすため';
   }
 }
@@ -171,7 +181,15 @@ void main() {
       find.byKey(const Key('landing_h04_inline_email')),
       'first-user@example.com',
     );
-    await tester.tap(find.byKey(const Key('landing_h04_inline_magic_link')));
+    final magicLinkButton = find.byKey(
+      const Key('landing_h04_inline_magic_link'),
+    );
+    await Scrollable.ensureVisible(
+      tester.element(magicLinkButton),
+      alignment: 0.5,
+    );
+    await tester.pump();
+    await tester.tap(magicLinkButton);
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(adapter.saveCtas, 1);
@@ -198,6 +216,38 @@ void main() {
     );
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
+  });
+
+  testWidgets('H11 shows proof before interaction and instant value on tap', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.treatment),
+    );
+    adapter.trialResponse = Completer<String>();
+
+    expect(find.byKey(const Key('landing_h11_answer_preview')), findsOneWidget);
+    expect(find.textContaining('止まっている案件を1つ開く'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const Key('landing_h11_answer_preview_action')),
+    );
+    await tester.pump();
+
+    expect(adapter.trialRuns, 1);
+    expect(
+      find.byKey(const Key('landing_trial_result_action')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('10分だけ使って最重要を1件に絞る'), findsOneWidget);
+
+    adapter.trialResponse!.complete('ACTION: 確認先を1人決める\nREASON: 停滞を最短で解消するため');
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('確認先を1人決める'), findsOneWidget);
+    expect(adapter.conversionEvents, contains('lp_exp_h01_treatment_trial'));
   });
 
   testWidgets('all ten control conditions remove only their tested mechanism', (
