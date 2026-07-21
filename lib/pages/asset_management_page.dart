@@ -38,6 +38,7 @@ import 'package:my_web_app/services/asset_management_ai_analysis_history_service
 import 'package:my_web_app/services/asset_management_ai_summary_refresh.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
+import 'package:my_web_app/services/asset_management_egress_policy.dart';
 import 'package:my_web_app/services/asset_account_balance_history_store.dart';
 import 'package:my_web_app/services/asset_pref_mirror_prefetch.dart';
 import 'package:my_web_app/services/asset_debt_discipline_monitor.dart';
@@ -6182,15 +6183,60 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  Future<List<Map<String, dynamic>>> _fetchAssetHistoryRows(
+    String userId,
+  ) async {
+    try {
+      final rows = <Map<String, dynamic>>[];
+      for (var start = 0;; start += AssetManagementEgressPolicy.queryPageSize) {
+        final dynamic response = await _supabase.rpc(
+          'asset_management_recent_cfo_assets',
+          params: <String, Object?>{
+            'p_lookback_days':
+                AssetManagementEgressPolicy.assetHistoryLookbackDays,
+          },
+        ).range(
+          start,
+          start + AssetManagementEgressPolicy.queryPageSize - 1,
+        );
+        final page = (response as List)
+            .whereType<Map>()
+            .map((row) => Map<String, dynamic>.from(row))
+            .toList(growable: false);
+        rows.addAll(page);
+        if (page.length < AssetManagementEgressPolicy.queryPageSize) break;
+      }
+      return rows;
+    } catch (error) {
+      debugPrint(
+          'Bounded asset history RPC unavailable; using fallback: $error');
+      final rows = <Map<String, dynamic>>[];
+      for (var start = 0;; start += AssetManagementEgressPolicy.queryPageSize) {
+        final dynamic response = await _supabase
+            .from('cfo_assets')
+            .select('title,amount,created_at')
+            .eq('user_id', userId)
+            .order('created_at', ascending: true)
+            .range(
+              start,
+              start + AssetManagementEgressPolicy.queryPageSize - 1,
+            );
+        final page = (response as List)
+            .whereType<Map>()
+            .map((row) => Map<String, dynamic>.from(row))
+            .toList(growable: false);
+        rows.addAll(page);
+        if (page.length < AssetManagementEgressPolicy.queryPageSize) break;
+      }
+      return rows;
+    }
+  }
+
   Future<void> _loadDataFromSupabase() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
     try {
-      final data = await _supabase
-          .from('cfo_assets')
-          .select()
-          .eq('user_id', userId)
-          .order('created_at', ascending: true);
+      final data = await _fetchAssetHistoryRows(userId);
       final Map<String, Map<String, double>> loadedData = {};
       final Set<String> loadedTypes = {'現金'};
       for (var item in data) {
@@ -7024,8 +7070,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     .from('cfo_assets')
                     .delete()
                     .eq('user_id', userId)
-                    .eq('title', type)
-                    .select();
+                    .eq('title', type);
                 setState(() {
                   _setWatchlistEntries(watchlistEntries);
                   _assetTypes.remove(type);
@@ -7276,7 +7321,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _deleteSubscription(String id) async {
-    await _supabase.from('subscriptions').delete().eq('id', id).select();
+    await _supabase.from('subscriptions').delete().eq('id', id);
     _fetchSubscriptions();
     await _fetchTodayClosing();
   }
@@ -7545,11 +7590,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
     try {
-      final data = await _supabase
-          .from('wealth_struggles')
-          .select()
-          .eq('user_id', userId)
-          .order('occurred_at', ascending: false);
+      final data = <Map<String, dynamic>>[];
+      final cutoff = AssetManagementEgressPolicy.recentFlowCutoff(
+        DateTime.now(),
+      ).toIso8601String();
+      for (var start = 0;
+          start < AssetManagementEgressPolicy.maxRecentFlowRows;
+          start += AssetManagementEgressPolicy.queryPageSize) {
+        final pageSize = min(
+          AssetManagementEgressPolicy.queryPageSize,
+          AssetManagementEgressPolicy.maxRecentFlowRows - start,
+        );
+        final dynamic response = await _supabase
+            .from('wealth_struggles')
+            .select('id,action_type,amount,description,occurred_at')
+            .eq('user_id', userId)
+            .gte('occurred_at', cutoff)
+            .order('occurred_at', ascending: false)
+            .range(start, start + pageSize - 1);
+        final page = (response as List)
+            .whereType<Map>()
+            .map((row) => Map<String, dynamic>.from(row))
+            .toList(growable: false);
+        data.addAll(page);
+        if (page.length < pageSize) break;
+      }
 
       if (mounted) {
         setState(() {
@@ -8311,8 +8376,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .from('wealth_struggles')
           .delete()
           .eq('id', flowId)
-          .eq('user_id', userId)
-          .select();
+          .eq('user_id', userId);
 
       await _fetchRecentFlows();
       await _fetchTodayClosing();

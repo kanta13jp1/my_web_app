@@ -3,6 +3,7 @@ import 'package:my_web_app/models/asset_liability_persistence.dart';
 import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
+import 'package:my_web_app/services/asset_management_egress_policy.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 typedef AssetLiabilityUserIdProvider = String? Function();
@@ -2129,7 +2130,8 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
         .from(AssetLiabilitySupabaseTablePlan.monthlySnapshotsTable)
         .select('month_key,payload')
         .eq('user_id', userId)
-        .order('month_key');
+        .order('month_key', ascending: false)
+        .limit(AssetManagementEgressPolicy.maxMonthlySnapshots);
 
     final snapshots = <AssetLiabilityMonthlySnapshot>[];
     for (final item in response) {
