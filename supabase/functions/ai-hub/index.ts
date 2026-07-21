@@ -70,6 +70,11 @@ import {
   handleDisposableBalanceAction,
 } from "./disposable_balance.ts";
 import {
+  type AnomalyDetectionDb,
+  AnomalyDetectionError,
+  handleDetectAnomaliesAction,
+} from "./anomaly_detection.ts";
+import {
   handleMarketPriceAction,
   isMarketPriceLiveFetchEnabled,
   MarketPriceActionError,
@@ -3062,6 +3067,8 @@ serve(async (req: Request) => {
       "expense.weekly_coaching.generate",
       "asset.disposable_balance.compute",
       "compute-disposable-balance",
+      "asset.anomaly.detect",
+      "detect-anomalies",
       "voice.tts",
       "voice.stt",
       // 英語速読カリキュラム (実力測定 / AI 生成は要認証 / 教材閲覧は公開)
@@ -4832,6 +4839,34 @@ serve(async (req: Request) => {
         return json({ success: true, ...result });
       }
 
+      case "asset.anomaly.detect":
+      case "detect-anomalies": {
+        const explanationEnabled =
+          (Deno.env.get("ANOMALY_AI_EXPLANATION_ENABLED") ?? "")
+            .toLowerCase() === "true";
+        const result = await handleDetectAnomaliesAction({
+          db: admin as unknown as AnomalyDetectionDb,
+          body,
+          userId: userId ?? "",
+          explanationEnabled,
+          invokeProvider: async (request) => {
+            const budget = await checkBudget("ef", "ai-hub");
+            if (!budget.ok) {
+              return {
+                ok: false,
+                error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+              };
+            }
+            return await callSingleProvider(
+              request.provider,
+              request.messages,
+              request.model,
+            );
+          },
+        });
+        return json({ success: true, ...result });
+      }
+
       case "asset.market_price.fetch":
       case "asset.investment.market_price.fetch":
       case "ai_hub.fetch_market_price": {
@@ -6198,6 +6233,9 @@ serve(async (req: Request) => {
       return json({ error: err.message }, err.status);
     }
     if (err instanceof DisposableBalanceError) {
+      return json({ error: err.message }, err.status);
+    }
+    if (err instanceof AnomalyDetectionError) {
       return json({ error: err.message }, err.status);
     }
     if (err instanceof MarketPriceActionError) {
