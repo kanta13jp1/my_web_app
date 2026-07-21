@@ -66,6 +66,7 @@ import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_triage_guide_service.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
+import 'package:my_web_app/services/asset_account_shortfall_basis_service.dart';
 import 'package:my_web_app/services/asset_alert_center_service.dart';
 import 'package:my_web_app/services/asset_alert_dismissal_store.dart';
 import 'package:my_web_app/services/asset_cashflow_statement_service.dart';
@@ -408,6 +409,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _keyCardStatementReconciliation = GlobalKey();
   // 口座間移動の提案セクションへのスクロール用 (残高不足バナーからのジャンプ)。
   final _keyTransferSuggestionSection = GlobalKey();
+  final _keyIncomePlanSection = GlobalKey();
   // 負債コントロールレビュー (原資未設定一覧) へのスクロール用 (原資未設定バナーからのジャンプ)。
   final _keyDebtControlReviewSection = GlobalKey();
 
@@ -1226,6 +1228,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   void _jumpToDebtControlReviewSection() {
     _scrollTo(_keyDebtControlReviewSection);
+  }
+
+  /// 残高不足バナーから「収入予定」セクションへ飛ぶ。入金先未設定の収入予定が
+  /// 口座別資金繰りに反映されないことが不足表示の原因になり得るため、その場で
+  /// 設定を直せるようにする。
+  void _jumpToIncomePlanSection() {
+    _scrollTo(_keyIncomePlanSection);
   }
 
   List<String> _paymentSourceCandidates() {
@@ -13578,6 +13587,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 height: 1.5,
               ),
             ),
+            // 結論(不足額)だけでは「なぜ足りないのか / 設定が悪いのか」が判らず
+            // 対処できない。計算の根拠 (現在残高・引き落とし明細・入金予定) と
+            // 原因の見立て、設定修正への導線をその場に出す。
+            _buildAccountShortfallBasis(workbook, summary.accountId),
             if (suggestionsByAccountId[summary.accountId]
                 case final suggestion?)
               Wrap(
@@ -13656,6 +13669,114 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 label: const Text('口座間移動の提案へ移動'),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  /// 残高不足の「根拠」をその場に開示する。
+  ///
+  /// 見込み残高 = 現在残高 − 引き落とし予定 + この口座への入金予定 (±移動) で、
+  /// **入金予定は入金先口座がこの口座のものだけ**が数えられる。そのため収入予定の
+  /// 入金先が未設定だと、収入があるのに口座別では不足に見える。この盲点を
+  /// バナー内で名指しし、設定修正へ飛べるようにする。
+  Widget _buildAccountShortfallBasis(
+    AssetLiabilityWorkbook workbook,
+    String accountId,
+  ) {
+    final basis = const AssetAccountShortfallBasisService().buildBasis(
+      workbook: workbook,
+      accountId: accountId,
+    );
+    if (basis == null) {
+      return const SizedBox.shrink();
+    }
+    const detailStyle = TextStyle(
+      fontSize: 11,
+      color: Color(0xFF7F1D1D),
+      height: 1.5,
+    );
+    const shownPaymentLimit = 3;
+    final shownPayments = basis.paymentLines.take(shownPaymentLimit).toList();
+    final hiddenPaymentCount = basis.paymentLines.length - shownPayments.length;
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 2, top: 2, bottom: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '根拠: 現在残高 ${_formatManagementYen(basis.currentBalance)}'
+            ' − 引き落とし予定${basis.paymentLines.length}件 '
+            '${_formatManagementYen(basis.paymentTotal)}'
+            ' ＋ この口座への入金予定 ${_formatManagementYen(basis.incomeTotal)}'
+            '${basis.pendingTransferIn > 0 ? ' ＋ 移動入 ${_formatManagementYen(basis.pendingTransferIn)}' : ''}'
+            '${basis.pendingTransferOut > 0 ? ' − 移動出 ${_formatManagementYen(basis.pendingTransferOut)}' : ''}'
+            ' = ${_formatManagementYen(basis.projectedBalance)}',
+            style: detailStyle,
+          ),
+          for (final line in shownPayments)
+            Text(
+              '・${DateFormat('M月d日').format(line.date)} ${line.name} '
+              '${_formatManagementYen(line.amount)}',
+              style: detailStyle,
+            ),
+          if (hiddenPaymentCount > 0)
+            Text('・ほか$hiddenPaymentCount件', style: detailStyle),
+          // 原因の見立てと修正導線。入金先未設定は「設定だけで解消し得る」ため
+          // 最優先で名指しする。
+          if (basis.cause ==
+              AssetAccountShortfallCause.incomeDestinationUnassigned) ...[
+            Text(
+              '⚠ 入金先口座が未設定の収入予定が'
+              '${_formatManagementYen(basis.unassignedIncomeTotal)}あります'
+              '（${basis.unassignedIncomeNames.take(2).join('・')}'
+              '${basis.unassignedIncomeNames.length > 2 ? ' ほか' : ''}）。'
+              '未設定の収入は口座別の見込みに反映されません。'
+              '${basis.unassignedIncomeCouldCover ? 'この口座が入金先なら、設定するだけでこの不足は解消します。' : ''}',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF7F1D1D),
+                height: 1.5,
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: Key('asset_shortfall_fix_income_destination_$accountId'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFFB91C1C),
+                ),
+                onPressed: _jumpToIncomePlanSection,
+                icon: const Icon(Icons.tune, size: 16),
+                label: const Text('収入予定の入金先を設定'),
+              ),
+            ),
+          ] else if (basis.cause ==
+              AssetAccountShortfallCause.noIncomeForAccount) ...[
+            const Text(
+              'この口座への入金予定は登録されていません。'
+              '給料などの入金先がこの口座なら「収入予定」に登録すると見込みへ反映されます。',
+              style: detailStyle,
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: Key('asset_shortfall_add_income_$accountId'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFFB91C1C),
+                ),
+                onPressed: _jumpToIncomePlanSection,
+                icon: const Icon(Icons.add_circle_outline, size: 16),
+                label: const Text('収入予定を確認・登録'),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -24982,6 +25103,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final plans = workbook.incomePlans;
     final unassignedPlans = workbook.unassignedDestinationIncomePlans;
     return Container(
+      key: _keyIncomePlanSection,
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
