@@ -1,32 +1,30 @@
 # News Pattern Detector Report
 
-- Generated at: `2026-07-20T22:14:33Z`
+- Generated at: `2026-07-21T22:12:46Z`
 - Sources: `docs/ai-tool-watch/latest-report.json`
 - Entries scanned: `9`
 - Patterns: `4`
 - Issue candidates: `0`
 
 ## Patterns
-- **multi-source / agentic-workflows**: 5 entries, confidence=0.958, risk=review
+- **multi-source / agentic-workflows**: 5 entries, confidence=0.956, risk=review
   - Action: Hold for human review before creating issues or blog drafts.
   - Evidence: Claude Code changelog
   - Evidence: Claude Code hooks reference
   - Evidence: Claude Code GitHub Actions
-- **anthropic / agentic-workflows**: 3 entries, confidence=0.95, risk=review
+- **anthropic / agentic-workflows**: 3 entries, confidence=0.947, risk=review
   - Action: Hold for human review before creating issues or blog drafts.
   - Evidence: Claude Code changelog
   - Evidence: Claude Code hooks reference
   - Evidence: Claude Code GitHub Actions
-- **openai / mcp-integration**: 3 entries, confidence=0.89, risk=review
-  - Action: Hold for human review before creating issues or blog drafts.
+- **openai / ci-quality**: 2 entries, confidence=0.97, risk=normal
+  - Action: Route to CI/readiness gate owners if repeated failures or quality gates are affected.
   - Evidence: Codex changelog
   - Evidence: Codex use cases
-  - Evidence: Codex overview
-- **multi-source / mcp-integration**: 3 entries, confidence=0.89, risk=review
-  - Action: Hold for human review before creating issues or blog drafts.
+- **multi-source / ci-quality**: 2 entries, confidence=0.97, risk=normal
+  - Action: Route to CI/readiness gate owners if repeated failures or quality gates are affected.
   - Evidence: Codex changelog
   - Evidence: Codex use cases
-  - Evidence: Codex overview
 
 ## Filter Summary
 
@@ -39,8 +37,8 @@
     "drop": 0
   },
   "risk_flags": {
-    "sensational_language": 1,
-    "source_http_problem": 1
+    "source_http_problem": 1,
+    "unverified_language": 1
   }
 }
 ```
