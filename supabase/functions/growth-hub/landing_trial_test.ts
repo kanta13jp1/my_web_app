@@ -7,6 +7,7 @@ import {
   generateLandingTrialSuggestion,
   hashLandingTrialClient,
   LandingTrialInputError,
+  landingTrialQualityIssues,
   normalizeLandingTrialPrompt,
   parseLandingTrialSuggestion,
   resolveLandingTrialClientAddress,
@@ -49,6 +50,25 @@ Deno.test("landing trial response rejects incomplete output", () => {
   );
 });
 
+Deno.test("landing trial quality gate accepts a specific ten-minute step", () => {
+  assertEquals(
+    landingTrialQualityIssues("LPからユーザー登録されない", {
+      action: "登録ボタン直前に無料の成果を1文追記",
+      reason: "登録後の価値が見えない離脱要因を10分で減らせるため",
+    }),
+    [],
+  );
+});
+
+Deno.test("landing trial quality gate rejects generic advice", () => {
+  const issues = landingTrialQualityIssues("LPからユーザー登録されない", {
+    action: "タスクをリスト化する",
+    reason: "優先順位が明確になり着手しやすくなります",
+  });
+  assertEquals(issues.includes("generic_action"), true);
+  assertEquals(issues.includes("missing_prompt_anchor"), true);
+});
+
 Deno.test("landing trial client address prefers trusted proxy headers", () => {
   assertEquals(
     resolveLandingTrialClientAddress(
@@ -86,7 +106,7 @@ Deno.test("landing trial provider request is constrained server-side", async () 
             choices: [{
               message: {
                 content:
-                  '{"action":"止まっている案件を1つ開く","reason":"確認先を決めれば次の10分で前進できるため"}',
+                  '{"action":"優先順位に迷う仕事を1件開き次の操作を書く","reason":"仕事と次の動作を固定すると迷いを止めて10分で着手できるため"}',
               },
             }],
           }),
@@ -96,10 +116,45 @@ Deno.test("landing trial provider request is constrained server-side", async () 
     },
   });
 
-  assertEquals(suggestion.action, "止まっている案件を1つ開く");
+  assertEquals(suggestion.action, "優先順位に迷う仕事を1件開き次の操作を書く");
   assertEquals(requestBody.model, "gpt-4o-mini");
-  assertEquals(requestBody.max_tokens, 160);
+  assertEquals(requestBody.max_tokens, 180);
   const messages = requestBody.messages as Array<{ content: string }>;
   assertStringIncludes(messages[0].content, "untrusted data");
   assertStringIncludes(messages[1].content, "仕事が多すぎて");
+});
+
+Deno.test("landing trial retries one generic response and returns repaired output", async () => {
+  const requestBodies: Array<Record<string, unknown>> = [];
+  const responses = [
+    '{"action":"タスクをリスト化する","reason":"優先順位が明確になり着手しやすくなります"}',
+    '{"action":"登録ボタン直前に無料の成果を1文追記","reason":"登録後の価値が見えない離脱要因を10分で減らせるため"}',
+  ];
+  const suggestion = await generateLandingTrialSuggestion({
+    apiKey: "test-key",
+    prompt: "LPからユーザー登録されない",
+    fetchImpl: (_input, init) => {
+      requestBodies.push(
+        JSON.parse(String(init?.body)) as Record<string, unknown>,
+      );
+      const content = responses[requestBodies.length - 1];
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({ choices: [{ message: { content } }] }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    },
+  });
+
+  assertEquals(requestBodies.length, 2);
+  assertEquals(suggestion, {
+    action: "登録ボタン直前に無料の成果を1文追記",
+    reason: "登録後の価値が見えない離脱要因を10分で減らせるため",
+    qualityRetryUsed: true,
+  });
+  const repairMessages = requestBodies[1].messages as Array<{
+    content: string;
+  }>;
+  assertStringIncludes(repairMessages[2].content, "generic_action");
 });
