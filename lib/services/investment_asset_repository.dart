@@ -1,11 +1,16 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/investment_asset.dart';
+import '../models/investment_portfolio_history.dart';
 
 abstract class InvestmentAssetRepository {
   const InvestmentAssetRepository();
 
   Future<List<InvestmentAsset>> fetchByUser({required String userId});
+
+  Future<List<InvestmentPortfolioHistoryPoint>> fetchPortfolioHistory({
+    required String userId,
+  });
 
   Future<InvestmentAsset> create({
     required String userId,
@@ -26,6 +31,8 @@ class SupabaseInvestmentAssetRepository implements InvestmentAssetRepository {
       : _client = client ?? Supabase.instance.client;
 
   static const String tableName = 'investment_assets';
+  static const String historyTableName = 'investment_portfolio_history';
+  static const int _historyPageSize = 1000;
   static const String selectColumns =
       'id,user_id,asset_type,ticker,quantity,buy_price_jpy,buy_date,'
       'current_price_jpy,last_priced_at,created_at,updated_at';
@@ -46,6 +53,40 @@ class SupabaseInvestmentAssetRepository implements InvestmentAssetRepository {
         .whereType<Map>()
         .map((row) => InvestmentAsset.fromMap(row.cast<String, dynamic>()))
         .toList(growable: false);
+  }
+
+  @override
+  Future<List<InvestmentPortfolioHistoryPoint>> fetchPortfolioHistory({
+    required String userId,
+  }) async {
+    final normalizedUserId = _requiredId(userId, 'userId');
+    final points = <InvestmentPortfolioHistoryPoint>[];
+    var offset = 0;
+    while (true) {
+      final rows = await _client
+          .from(historyTableName)
+          .select(
+            'id,recorded_on,recorded_at,market_value_jpy,acquisition_cost_jpy,'
+            'priced_asset_count,unpriced_asset_count',
+          )
+          .eq('user_id', normalizedUserId)
+          .order('recorded_on', ascending: false)
+          .order('id', ascending: false)
+          .range(offset, offset + _historyPageSize - 1);
+      final page = rows as List;
+      points.addAll(
+        page.whereType<Map>().map(
+              (row) => InvestmentPortfolioHistoryPoint.fromMap(
+                row.cast<String, dynamic>(),
+              ),
+            ),
+      );
+      if (page.length < _historyPageSize) break;
+      offset += page.length;
+    }
+
+    points.sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+    return List<InvestmentPortfolioHistoryPoint>.unmodifiable(points);
   }
 
   @override
