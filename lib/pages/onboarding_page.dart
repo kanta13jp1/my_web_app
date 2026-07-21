@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/activation_revenue_experiment_service.dart';
 import '../services/activation_revenue_tracker.dart';
 import '../services/onboarding_activation_gateway.dart';
+import '../services/pending_landing_trial_service.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({
@@ -13,6 +14,7 @@ class OnboardingPage extends StatefulWidget {
     this.gateway = const SupabaseOnboardingActivationGateway(),
     this.tracker = const SupabaseActivationRevenueEventTracker(),
     this.experimentService = const ActivationRevenueExperimentService(),
+    this.pendingTrialService = const PendingLandingTrialService(),
     this.assignment,
     this.initialUri,
   });
@@ -20,6 +22,7 @@ class OnboardingPage extends StatefulWidget {
   final OnboardingActivationGateway gateway;
   final ActivationRevenueEventTracker tracker;
   final ActivationRevenueExperimentService experimentService;
+  final PendingLandingTrialService pendingTrialService;
   final ActivationRevenueAssignment? assignment;
   final Uri? initialUri;
 
@@ -37,6 +40,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   _ActivationIntent _intent = _ActivationIntent.work;
   int _stage = 0;
   bool _isLoading = false;
+  bool _restoredLandingTrial = false;
   String? _firstAction;
   String? _reason;
   String? _tenMinuteStep;
@@ -61,10 +65,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
         await widget.experimentService.resolve(
           uri: widget.initialUri ?? Uri.base,
         );
-    await _restoreDraft();
+    final restoredLandingTrial = await _restoreDraft();
     if (!mounted) return;
-    setState(() => _assignment = assignment);
+    setState(() {
+      _assignment = assignment;
+      _restoredLandingTrial = restoredLandingTrial;
+    });
     await _record('onboarding_view');
+    if (restoredLandingTrial) {
+      await _record('first_action_completed');
+    }
   }
 
   Future<void> _record(String stage) async {
@@ -82,9 +92,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
     return '${_draftKeyPrefix}_$userId';
   }
 
-  Future<void> _restoreDraft() async {
+  Future<bool> _restoreDraft() async {
     final prefs = await SharedPreferences.getInstance();
     final prefix = _draftKey;
+    final hasExistingDraft = const [
+      'intent',
+      'stage',
+      'challenge',
+      'name',
+      'first_action',
+      'reason',
+      'ten_minute_step',
+    ].any((suffix) => prefs.containsKey('${prefix}_$suffix'));
     final savedIntent = prefs.getString('${prefix}_intent');
     final savedStage = prefs.getInt('${prefix}_stage') ?? 0;
     final savedChallenge = prefs.getString('${prefix}_challenge') ?? '';
@@ -106,10 +125,35 @@ class _OnboardingPageState extends State<OnboardingPage> {
     if (_stage == 1 && _firstAction == null) {
       _buildFirstAction();
     }
+    if (hasExistingDraft) return false;
+
+    final userEmail = widget.gateway.currentUser()?.email;
+    final pending = await widget.pendingTrialService.loadForEmail(
+      userEmail,
+      preferences: prefs,
+    );
+    if (pending == null) return false;
+
+    _intent = _ActivationIntent.values.firstWhere(
+      (candidate) => candidate.name == pending.intent,
+      orElse: () => _ActivationIntent.work,
+    );
+    _stage = 1;
+    _challengeController.text = pending.prompt;
+    _firstAction = pending.action;
+    _reason = pending.reason;
+    _tenMinuteStep =
+        '「${pending.action}」に必要な画面か資料を1つ開き、10分だけ着手する';
+    await _saveDraft(preferences: prefs);
+    await widget.pendingTrialService.clearForEmail(
+      userEmail,
+      preferences: prefs,
+    );
+    return true;
   }
 
-  Future<void> _saveDraft() async {
-    final prefs = await SharedPreferences.getInstance();
+  Future<void> _saveDraft({SharedPreferences? preferences}) async {
+    final prefs = preferences ?? await SharedPreferences.getInstance();
     final prefix = _draftKey;
     await prefs.setString('${prefix}_intent', _intent.name);
     await prefs.setInt('${prefix}_stage', _stage);
@@ -456,6 +500,24 @@ class _OnboardingPageState extends State<OnboardingPage> {
       key: const ValueKey('activation_plan_stage'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (_restoredLandingTrial) ...[
+          Container(
+            key: const Key('pending_landing_trial_restored'),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.secondaryContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.sync_alt),
+                SizedBox(width: 10),
+                Expanded(child: Text('登録前に試した提案を、そのまま引き継ぎました。')),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+        ],
         Text(
           _enabled('a05') ? 'あなた向けの最初の一手' : '最初に行うこと',
           style: Theme.of(
