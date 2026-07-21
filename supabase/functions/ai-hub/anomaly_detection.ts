@@ -315,19 +315,17 @@ async function fetchExpenseRows(
   return rows;
 }
 
-export async function handleDetectAnomaliesAction(options: {
+/** 1 ユーザー分の検知 + 永続化 (単発 action と scan_all の共通コア)。 */
+async function scanUserForMonth(options: {
   db: AnomalyDetectionDb;
-  body: UnknownRecord;
   userId: string;
-  explanationEnabled?: boolean;
+  targetMonth: string;
+  nowIso: string;
+  dryRun: boolean;
+  explanationEnabled: boolean;
   invokeProvider?: AnomalyProviderInvoker;
-  nowIso?: string;
-}): Promise<DetectAnomaliesResult> {
-  if (!options.userId) {
-    throw new AnomalyDetectionError("login required", 401);
-  }
-  const nowIso = options.nowIso ?? new Date().toISOString();
-  const targetMonth = resolveTargetMonth(nowIso, options.body.target_month);
+}): Promise<{ outcome: AnomalyScanOutcome; warnings: string[] }> {
+  const targetMonth = options.targetMonth;
   const nextMonth = addMonths(targetMonth, 1);
   const windowStart = addMonths(targetMonth, -PRIOR_MONTHS);
   const warnings: string[] = [];
@@ -340,11 +338,11 @@ export async function handleDetectAnomaliesAction(options: {
   );
   const outcome = computeCategoryAnomalies({ rows, targetMonth });
 
-  const explanationEnabled = options.explanationEnabled === true;
-  if (explanationEnabled && options.invokeProvider) {
+  const invoke = options.invokeProvider;
+  if (options.explanationEnabled && invoke) {
     for (const anomaly of outcome.anomalies.slice(0, EXPLANATION_CAP)) {
       try {
-        const result = await options.invokeProvider({
+        const result = await invoke({
           provider: "gemini",
           messages: buildExplanationPrompt(anomaly, targetMonth),
         });
@@ -367,31 +365,59 @@ export async function handleDetectAnomaliesAction(options: {
     }
   }
 
-  for (const anomaly of outcome.anomalies) {
-    // 同一 (user, category, target_month) は upsert で更新のみ。
-    // dismissed_at は供給しない = ユーザーの既読/却下を再スキャンで復活させない。
-    const { error } = await options.db.from("anomaly_detections").upsert(
-      {
-        user_id: options.userId,
-        target_month: targetMonth,
-        category: anomaly.category,
-        expected: anomaly.expected,
-        actual: anomaly.actual,
-        delta: anomaly.delta,
-        severity: anomaly.severity,
-        ai_explanation: anomaly.ai_explanation,
-        detected_at: nowIso,
-      },
-      { onConflict: "user_id,category,target_month" },
-    );
-    if (error) {
-      throw new AnomalyDetectionError(
-        `anomaly_detections upsert failed: ${error.message ?? "unknown"}`,
-        500,
+  if (!options.dryRun) {
+    for (const anomaly of outcome.anomalies) {
+      // 同一 (user, category, target_month) は upsert で更新のみ。
+      // dismissed_at は供給しない = ユーザーの既読/却下を再スキャンで復活させない。
+      const { error } = await options.db.from("anomaly_detections").upsert(
+        {
+          user_id: options.userId,
+          target_month: targetMonth,
+          category: anomaly.category,
+          expected: anomaly.expected,
+          actual: anomaly.actual,
+          delta: anomaly.delta,
+          severity: anomaly.severity,
+          ai_explanation: anomaly.ai_explanation,
+          detected_at: options.nowIso,
+        },
+        { onConflict: "user_id,category,target_month" },
       );
+      if (error) {
+        throw new AnomalyDetectionError(
+          `anomaly_detections upsert failed: ${error.message ?? "unknown"}`,
+          500,
+        );
+      }
     }
   }
 
+  return { outcome, warnings };
+}
+
+export async function handleDetectAnomaliesAction(options: {
+  db: AnomalyDetectionDb;
+  body: UnknownRecord;
+  userId: string;
+  explanationEnabled?: boolean;
+  invokeProvider?: AnomalyProviderInvoker;
+  nowIso?: string;
+}): Promise<DetectAnomaliesResult> {
+  if (!options.userId) {
+    throw new AnomalyDetectionError("login required", 401);
+  }
+  const nowIso = options.nowIso ?? new Date().toISOString();
+  const targetMonth = resolveTargetMonth(nowIso, options.body.target_month);
+  const explanationEnabled = options.explanationEnabled === true;
+  const { outcome, warnings } = await scanUserForMonth({
+    db: options.db,
+    userId: options.userId,
+    targetMonth,
+    nowIso,
+    dryRun: options.body.dry_run === true,
+    explanationEnabled,
+    invokeProvider: options.invokeProvider,
+  });
   return {
     status: "ok",
     target_month: targetMonth,
@@ -400,5 +426,107 @@ export async function handleDetectAnomaliesAction(options: {
     skipped: outcome.skipped,
     explanation_enabled: explanationEnabled,
     warnings,
+  };
+}
+
+export type ScanAllResult = {
+  status: "ok";
+  target_month: string;
+  dry_run: boolean;
+  users_scanned: number;
+  users_failed: number;
+  anomalies_total: number;
+  skipped_total: number;
+  failures: { user_id: string; error: string }[];
+};
+
+const FAILURE_LIST_CAP = 10;
+
+/** 対象窓に支出記録がある = active user。paged select + client-side dedupe。 */
+async function fetchActiveUserIds(
+  db: AnomalyDetectionDb,
+  windowStart: string,
+  nextMonth: string,
+): Promise<string[]> {
+  const ids = new Set<string>();
+  for (let page = 0; page < 200; page++) {
+    const from = page * PAGE_SIZE;
+    const { data, error } = await db
+      .from("expense_classifications")
+      .select("user_id")
+      .neq("status", "rejected")
+      .gte("posted_at", windowStart)
+      .lt("posted_at", nextMonth)
+      .order("user_id", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) {
+      throw new AnomalyDetectionError(
+        `active user enumeration failed: ${error.message ?? "unknown"}`,
+        500,
+      );
+    }
+    const batch = (data ?? []) as UnknownRecord[];
+    for (const raw of batch) {
+      const id = String(raw.user_id ?? "");
+      if (id) ids.add(id);
+    }
+    if (batch.length < PAGE_SIZE) break;
+  }
+  return [...ids].sort();
+}
+
+/**
+ * 全 active user への日次スキャン (#2478 / daily-anomaly-scan.yml から
+ * service_role で呼ばれる)。LLM 説明はバッチではコスト制御のため常に OFF
+ * (単発 action 側の flag 経路のみ)。ユーザー単位で失敗を隔離して続行する。
+ */
+export async function handleScanAllAction(options: {
+  db: AnomalyDetectionDb;
+  body: UnknownRecord;
+  nowIso?: string;
+}): Promise<ScanAllResult> {
+  const nowIso = options.nowIso ?? new Date().toISOString();
+  const targetMonth = resolveTargetMonth(nowIso, options.body.target_month);
+  const dryRun = options.body.dry_run === true;
+  const windowStart = addMonths(targetMonth, -PRIOR_MONTHS);
+  const nextMonth = addMonths(targetMonth, 1);
+
+  const userIds = await fetchActiveUserIds(options.db, windowStart, nextMonth);
+  let anomaliesTotal = 0;
+  let skippedTotal = 0;
+  const failures: { user_id: string; error: string }[] = [];
+  let usersScanned = 0;
+
+  for (const userId of userIds) {
+    try {
+      const { outcome } = await scanUserForMonth({
+        db: options.db,
+        userId,
+        targetMonth,
+        nowIso,
+        dryRun,
+        explanationEnabled: false,
+      });
+      usersScanned += 1;
+      anomaliesTotal += outcome.anomalies.length;
+      skippedTotal += outcome.skipped.length;
+    } catch (err) {
+      failures.push({
+        user_id: userId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  return {
+    status: "ok",
+    target_month: targetMonth,
+    dry_run: dryRun,
+    users_scanned: usersScanned,
+    users_failed: failures.length,
+    anomalies_total: anomaliesTotal,
+    skipped_total: skippedTotal,
+    failures: failures.slice(0, FAILURE_LIST_CAP),
   };
 }

@@ -26,6 +26,7 @@ on:
       - "Edge Function UI Audit (UI導線チェック)"
       - "GitHub Issue Fix"
       - "Self Devin Schedule"
+      - "Daily Anomaly Scan (資産管理・毎日03:00 JST)"
       # Schedule: competitor / AI
       - "Competitor Monitoring (競合インテリジェンスレポート)"
       - "Competitor Discovery (週次自動候補発掘)"
