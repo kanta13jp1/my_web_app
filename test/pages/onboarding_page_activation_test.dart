@@ -4,6 +4,7 @@ import 'package:my_web_app/pages/onboarding_page.dart';
 import 'package:my_web_app/services/activation_revenue_experiment_service.dart';
 import 'package:my_web_app/services/activation_revenue_tracker.dart';
 import 'package:my_web_app/services/onboarding_activation_gateway.dart';
+import 'package:my_web_app/services/pending_landing_trial_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -76,6 +77,103 @@ void main() {
       ]),
     );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('restores the matching LP trial after Magic Link authentication',
+      (
+    tester,
+  ) async {
+    final pendingService = PendingLandingTrialService(
+      clock: () => DateTime.utc(2026, 7, 21, 1),
+    );
+    await pendingService.save(
+      email: 'activation@example.test',
+      intent: 'learning',
+      prompt: 'AI学習の優先順位を決めたい',
+      action: '教材を1つ選ぶ',
+      reason: '選択肢を減らすと着手しやすいため',
+    );
+    final tracker = _FakeTracker();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OnboardingPage(
+          gateway: _FakeOnboardingGateway(),
+          tracker: tracker,
+          pendingTrialService: pendingService,
+          assignment: _assignment('a08', ActivationRevenueVariant.treatment),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('pending_landing_trial_restored')),
+      findsOneWidget,
+    );
+    expect(find.text('教材を1つ選ぶ'), findsOneWidget);
+    expect(find.text('選択肢を減らすと着手しやすいため'), findsOneWidget);
+    expect(find.textContaining('10分だけ着手する'), findsOneWidget);
+    expect(
+      tracker.stages,
+      containsAllInOrder(['onboarding_view', 'first_action_completed']),
+    );
+
+    final prefs = await SharedPreferences.getInstance();
+    const prefix = 'activation_onboarding_draft_v1_activation-test-user';
+    expect(prefs.getInt('${prefix}_stage'), 1);
+    expect(prefs.getString('${prefix}_intent'), 'learning');
+    expect(prefs.getString('${prefix}_challenge'), 'AI学習の優先順位を決めたい');
+    expect(prefs.getString('${prefix}_first_action'), '教材を1つ選ぶ');
+    expect(
+      prefs.containsKey(PendingLandingTrialService.storageKey),
+      isFalse,
+    );
+  });
+
+  testWidgets('keeps an existing user draft instead of importing LP data', (
+    tester,
+  ) async {
+    final pendingService = PendingLandingTrialService(
+      clock: () => DateTime.utc(2026, 7, 21, 1),
+    );
+    await pendingService.save(
+      email: 'activation@example.test',
+      intent: 'money',
+      prompt: 'LPの入力',
+      action: 'LPの提案',
+      reason: 'LPの理由',
+    );
+    final prefs = await SharedPreferences.getInstance();
+    const prefix = 'activation_onboarding_draft_v1_activation-test-user';
+    await prefs.setString('${prefix}_intent', 'work');
+    await prefs.setInt('${prefix}_stage', 1);
+    await prefs.setString('${prefix}_challenge', '既存の入力');
+    await prefs.setString('${prefix}_first_action', '既存の提案');
+    await prefs.setString('${prefix}_reason', '既存の理由');
+    await prefs.setString('${prefix}_ten_minute_step', '既存の10分行動');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OnboardingPage(
+          gateway: _FakeOnboardingGateway(),
+          tracker: _FakeTracker(),
+          pendingTrialService: pendingService,
+          assignment: _assignment('a08', ActivationRevenueVariant.treatment),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('既存の提案'), findsOneWidget);
+    expect(
+      find.byKey(const Key('pending_landing_trial_restored')),
+      findsNothing,
+    );
+    expect(
+      await pendingService.loadForEmail('activation@example.test'),
+      isNotNull,
+    );
   });
 
   testWidgets('A03 treatment requires one challenge while control can skip it',
