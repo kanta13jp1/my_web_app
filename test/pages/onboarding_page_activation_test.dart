@@ -79,7 +79,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('restores the matching LP trial after Magic Link authentication', (
+  testWidgets('restores the matching LP trial after Magic Link authentication',
+      (
     tester,
   ) async {
     final pendingService = PendingLandingTrialService(
@@ -119,8 +120,7 @@ void main() {
     );
 
     final prefs = await SharedPreferences.getInstance();
-    const prefix =
-        'activation_onboarding_draft_v1_activation-test-user';
+    const prefix = 'activation_onboarding_draft_v1_activation-test-user';
     expect(prefs.getInt('${prefix}_stage'), 1);
     expect(prefs.getString('${prefix}_intent'), 'learning');
     expect(prefs.getString('${prefix}_challenge'), 'AI学習の優先順位を決めたい');
@@ -145,8 +145,7 @@ void main() {
       reason: 'LPの理由',
     );
     final prefs = await SharedPreferences.getInstance();
-    const prefix =
-        'activation_onboarding_draft_v1_activation-test-user';
+    const prefix = 'activation_onboarding_draft_v1_activation-test-user';
     await prefs.setString('${prefix}_intent', 'work');
     await prefs.setInt('${prefix}_stage', 1);
     await prefs.setString('${prefix}_challenge', '既存の入力');

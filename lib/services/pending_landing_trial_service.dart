@@ -20,14 +20,14 @@ class PendingLandingTrial {
   final DateTime createdAt;
 
   Map<String, Object> toJson() => <String, Object>{
-    'version': 1,
-    'email': email,
-    'intent': intent,
-    'prompt': prompt,
-    'action': action,
-    'reason': reason,
-    'created_at': createdAt.toUtc().toIso8601String(),
-  };
+        'version': 1,
+        'email': email,
+        'intent': intent,
+        'prompt': prompt,
+        'action': action,
+        'reason': reason,
+        'created_at': createdAt.toUtc().toIso8601String(),
+      };
 
   static PendingLandingTrial? fromJson(Object? value) {
     if (value is! Map) return null;

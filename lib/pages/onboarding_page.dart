@@ -142,8 +142,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     _challengeController.text = pending.prompt;
     _firstAction = pending.action;
     _reason = pending.reason;
-    _tenMinuteStep =
-        '「${pending.action}」に必要な画面か資料を1つ開き、10分だけ着手する';
+    _tenMinuteStep = '「${pending.action}」に必要な画面か資料を1つ開き、10分だけ着手する';
     await _saveDraft(preferences: prefs);
     await widget.pendingTrialService.clearForEmail(
       userEmail,
