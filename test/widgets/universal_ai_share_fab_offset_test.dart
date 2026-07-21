@@ -18,4 +18,26 @@ void main() {
     // home_page など toolbarHeight を広げたページでも干渉しないこと。
     expect(kAiShareFabTopOffset, greaterThan(74.0));
   });
+
+  test('LPのモバイル下部では登録CTAの上に退避する', () {
+    expect(
+      resolveAiShareFabBottomOffset(routePath: '/', screenWidth: 390),
+      kAiShareFabLandingBottomOffset,
+    );
+    expect(
+      kAiShareFabLandingBottomOffset,
+      greaterThan(kAiShareFabDefaultBottomOffset),
+    );
+  });
+
+  test('LP以外またはデスクトップでは既定位置を維持する', () {
+    expect(
+      resolveAiShareFabBottomOffset(routePath: '/notes', screenWidth: 390),
+      kAiShareFabDefaultBottomOffset,
+    );
+    expect(
+      resolveAiShareFabBottomOffset(routePath: '/', screenWidth: 1200),
+      kAiShareFabDefaultBottomOffset,
+    );
+  });
 }

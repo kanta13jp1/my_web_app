@@ -16,6 +16,8 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   final List<String> conversionEvents = <String>[];
   final List<String> magicLinkEmails = <String>[];
   Completer<String>? trialResponse;
+  Exception? trialError;
+  String? lastTrialPrompt;
 
   @override
   Stream<AuthState> authStateChanges() => const Stream<AuthState>.empty();
@@ -54,6 +56,11 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
 
   @override
   Future<String> improveTrialPrompt({required String prompt}) async {
+    lastTrialPrompt = prompt;
+    final error = trialError;
+    if (error != null) {
+      throw error;
+    }
     final pendingResponse = trialResponse;
     if (pendingResponse != null) {
       return pendingResponse.future;
@@ -247,7 +254,27 @@ void main() {
     await tester.pump();
 
     expect(find.text('確認先を1人決める'), findsOneWidget);
+    expect(adapter.lastTrialPrompt, '仕事が多すぎて、何から始めるか決められない');
     expect(adapter.conversionEvents, contains('lp_exp_h01_treatment_trial'));
+  });
+
+  testWidgets('trial provider failure keeps the useful instant result', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.treatment),
+    );
+    adapter.trialError = Exception('provider unavailable');
+
+    await tester.tap(
+      find.byKey(const Key('landing_h11_answer_preview_action')),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.textContaining('10分だけ使って最重要を1件に絞る'), findsOneWidget);
+    expect(find.textContaining('AI応答が不安定'), findsNothing);
   });
 
   testWidgets('all ten control conditions remove only their tested mechanism', (
@@ -395,6 +422,45 @@ void main() {
       adapter.conversionEvents,
       contains('lp_exp_h09_treatment_sticky_cta'),
     );
+  });
+
+  testWidgets('mobile trial result turns the sticky CTA into a save path', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h09', LandingExperimentVariant.treatment),
+      size: const Size(390, 844),
+    );
+
+    await tester.tap(
+      find.byKey(const Key('landing_h11_answer_preview_action')),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    final sticky = find.byKey(const Key('landing_h09_mobile_sticky_cta'));
+    final saveSticky = find.descendant(
+      of: sticky,
+      matching: find.text('この提案を保存'),
+    );
+    expect(saveSticky, findsOneWidget);
+    await tester.tap(saveSticky);
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump();
+
+    expect(adapter.saveCtas, 1);
+    expect(
+      adapter.conversionEvents,
+      containsAll(<String>[
+        'lp_exp_h09_treatment_sticky_cta',
+        'lp_exp_h09_treatment_save_cta',
+      ]),
+    );
+    final emailField = tester.widget<TextField>(
+      find.byKey(const Key('landing_h04_inline_email')),
+    );
+    expect(emailField.focusNode?.hasFocus, isTrue);
   });
 
   testWidgets('mobile H03 keeps the trial action above the sticky CTA', (

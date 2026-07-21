@@ -52,6 +52,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   final _passwordController = TextEditingController();
   final _trialPromptController = TextEditingController();
   final _emailFocusNode = FocusNode();
+  final _trialEmailFocusNode = FocusNode();
   final GlobalKey _trialSectionKey = GlobalKey();
   final GlobalKey _authSectionKey = GlobalKey();
   final GrowthAcquisitionService _acquisitionService =
@@ -198,6 +199,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     _passwordController.dispose();
     _trialPromptController.dispose();
     _emailFocusNode.dispose();
+    _trialEmailFocusNode.dispose();
     super.dispose();
   }
 
@@ -463,18 +465,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
     setState(() => _isTrialLoading = true);
     try {
-      final prompt = '''
-あなたは登録前LPの導線アシスタントです。
-ユーザーの入力を読み、今すぐ着手すべき最初の1件を日本語で返してください。
-出力は次の2行だけにしてください。
-ACTION: 20文字以内の具体的な行動
-REASON: 60文字以内の理由
-
-ユーザー入力:
-$input
-''';
-
-      final result = await widget.adapter.improveTrialPrompt(prompt: prompt);
+      final result = await widget.adapter.improveTrialPrompt(prompt: input);
       final parsed = _parseTrialAiResponse(result);
       if (!mounted) return;
       setState(() {
@@ -488,7 +479,7 @@ $input
       if (!mounted) return;
       setState(() {
         _trialAction = fallback.$1;
-        _trialReason = '${fallback.$2} AI応答が不安定だったため簡易提案を表示しています。';
+        _trialReason = fallback.$2;
         _showSaveCtaPrompt = true;
       });
     } finally {
@@ -591,6 +582,22 @@ $input
     });
   }
 
+  void _scrollToTrialMagicLink() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final captureContext = _trialEmailFocusNode.context;
+      if (!mounted || captureContext == null) return;
+      _trialEmailFocusNode.requestFocus();
+      unawaited(
+        Scrollable.ensureVisible(
+          captureContext,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOut,
+          alignment: 0.12,
+        ),
+      );
+    });
+  }
+
   void _handleHeroSignup() {
     unawaited(_recordConversionStage('hero_cta'));
     _scrollToAuthSection();
@@ -598,6 +605,15 @@ $input
 
   void _handleStickySignup() {
     unawaited(_recordConversionStage('sticky_cta'));
+    if (_trialAction != null && _hypothesisEnabled('h04')) {
+      unawaited(_recordSaveStages());
+      setState(() {
+        _showSaveCtaPrompt = true;
+        _isSignUp = true;
+      });
+      _scrollToTrialMagicLink();
+      return;
+    }
     _scrollToAuthSection();
   }
 
@@ -1060,6 +1076,7 @@ $input
     if (screenWidth >= 720 || !_hypothesisEnabled('h09')) {
       return null;
     }
+    final hasTrialResult = _trialAction != null && _hypothesisEnabled('h04');
     return SafeArea(
       top: false,
       child: Container(
@@ -1084,8 +1101,13 @@ $input
             ),
             FilledButton.icon(
               onPressed: _handleStickySignup,
-              icon: const Icon(Icons.arrow_forward, size: 17),
-              label: const Text('無料で始める'),
+              icon: Icon(
+                hasTrialResult
+                    ? Icons.bookmark_add_outlined
+                    : Icons.arrow_forward,
+                size: 17,
+              ),
+              label: Text(hasTrialResult ? 'この提案を保存' : '無料で始める'),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF1F7AE0),
                 foregroundColor: Colors.white,
@@ -3875,6 +3897,7 @@ $input
           TextField(
             key: const Key('landing_h04_inline_email'),
             controller: _trialEmailController,
+            focusNode: _trialEmailFocusNode,
             keyboardType: TextInputType.emailAddress,
             autofillHints: const [AutofillHints.email],
             onSubmitted: (_) {
