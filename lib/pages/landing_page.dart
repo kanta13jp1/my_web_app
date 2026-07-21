@@ -10,6 +10,7 @@ import '../services/growth_acquisition_service.dart';
 import '../services/growth_mission_service.dart';
 import '../services/landing_conversion_experiment_service.dart';
 import '../services/landing_page_adapter.dart';
+import '../services/pending_landing_trial_service.dart';
 import '../services/route_visibility_observer.dart';
 import '../widgets/live_growth_banner.dart';
 
@@ -19,6 +20,7 @@ class LandingPage extends StatefulWidget {
   final LandingPageAdapter adapter;
   final GrowthMissionService growthService;
   final LandingConversionExperimentService conversionExperimentService;
+  final PendingLandingTrialService pendingTrialService;
   final LandingExperimentAssignment? experimentAssignment;
 
   const LandingPage({
@@ -26,9 +28,12 @@ class LandingPage extends StatefulWidget {
     LandingPageAdapter? adapter,
     GrowthMissionService? growthService,
     LandingConversionExperimentService? conversionExperimentService,
+    PendingLandingTrialService? pendingTrialService,
     this.experimentAssignment,
   })  : adapter = adapter ?? const SupabaseLandingPageAdapter(),
         growthService = growthService ?? const GrowthMissionService(),
+        pendingTrialService =
+            pendingTrialService ?? const PendingLandingTrialService(),
         conversionExperimentService = conversionExperimentService ??
             const LandingConversionExperimentService();
 
@@ -512,7 +517,27 @@ $input
       _showSaveCtaPrompt = true;
       _isSignUp = true;
     });
-    await _sendMagicLink(emailOverride: _trialEmailController.text);
+    final email = _trialEmailController.text.trim();
+    final action = _trialAction?.trim() ?? '';
+    final reason = _trialReason?.trim() ?? '';
+    final prompt = _trialPromptController.text.trim();
+    if (email.isNotEmpty &&
+        prompt.isNotEmpty &&
+        action.isNotEmpty &&
+        reason.isNotEmpty) {
+      try {
+        await widget.pendingTrialService.save(
+          email: email,
+          intent: _selectedIntent.name,
+          prompt: prompt,
+          action: action,
+          reason: reason,
+        );
+      } catch (error) {
+        debugPrint('Pending landing trial save failed: $error');
+      }
+    }
+    await _sendMagicLink(emailOverride: email);
   }
 
   void _runQuickTrialSample(String prompt) {
