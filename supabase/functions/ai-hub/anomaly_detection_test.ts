@@ -5,6 +5,7 @@ import {
   type AnomalyExpenseRow,
   computeCategoryAnomalies,
   handleDetectAnomaliesAction,
+  handleScanAllAction,
   resolveTargetMonth,
   severityFor,
 } from "./anomaly_detection.ts";
@@ -323,4 +324,152 @@ Deno.test("provider failure downgrades to warning, detection still persists", as
   assertEquals(result.anomalies[0].ai_explanation, null);
   assertEquals(result.warnings.length, 1);
   assertEquals(db.upserts.length, 1);
+});
+
+// ---- scan_all (#2478) ----
+
+function urow(
+  user: string,
+  posted: string,
+  amount: number,
+  category: string,
+  status = "auto_confirmed",
+): Record<string, unknown> {
+  return { user_id: user, posted_at: posted, amount, category, status };
+}
+
+type RowPredicate = (r: Record<string, unknown>) => boolean;
+
+class FilteringFakeQuery implements AnomalyDbQuery {
+  private filters: RowPredicate[] = [];
+
+  constructor(
+    private readonly table: string,
+    private readonly db: FilteringFakeDb,
+  ) {}
+
+  select(): AnomalyDbQuery {
+    return this;
+  }
+  eq(column: string, value: string): AnomalyDbQuery {
+    this.filters.push((r) => String(r[column] ?? "") === value);
+    return this;
+  }
+  neq(column: string, value: string): AnomalyDbQuery {
+    this.filters.push((r) => String(r[column] ?? "") !== value);
+    return this;
+  }
+  gte(column: string, value: string): AnomalyDbQuery {
+    this.filters.push((r) => String(r[column] ?? "") >= value);
+    return this;
+  }
+  lt(column: string, value: string): AnomalyDbQuery {
+    this.filters.push((r) => String(r[column] ?? "") < value);
+    return this;
+  }
+  order(): AnomalyDbQuery {
+    return this;
+  }
+  range(from: number, to: number) {
+    const rows = this.db
+      .rowsFor(this.table)
+      .filter((r) => this.filters.every((f) => f(r)));
+    return Promise.resolve({ data: rows.slice(from, to + 1), error: null });
+  }
+  upsert(
+    value: Record<string, unknown>,
+    options?: { onConflict?: string },
+  ) {
+    if (this.db.failUpsertUserIds.has(String(value.user_id ?? ""))) {
+      return Promise.resolve({ error: { message: "forced upsert failure" } });
+    }
+    this.db.upserts.push({
+      table: this.table,
+      value,
+      onConflict: options?.onConflict ?? "",
+    });
+    return Promise.resolve({ error: null });
+  }
+}
+
+class FilteringFakeDb implements AnomalyDetectionDb {
+  upserts: Array<{
+    table: string;
+    value: Record<string, unknown>;
+    onConflict: string;
+  }> = [];
+  failUpsertUserIds = new Set<string>();
+
+  constructor(
+    private readonly rows: Record<string, Record<string, unknown>[]>,
+  ) {}
+
+  from(table: string): AnomalyDbQuery {
+    return new FilteringFakeQuery(table, this);
+  }
+
+  rowsFor(table: string) {
+    return this.rows[table] ?? [];
+  }
+}
+
+function twoUserRows(): Record<string, unknown>[] {
+  return [
+    urow("user-a", "2026-03-05", 30000, "food"),
+    urow("user-a", "2026-04-05", 30000, "food"),
+    urow("user-a", "2026-05-05", 30000, "food"),
+    urow("user-a", "2026-06-05", 60000, "food"),
+    urow("user-b", "2026-03-05", 30000, "food"),
+    urow("user-b", "2026-04-05", 30000, "food"),
+    urow("user-b", "2026-05-05", 30000, "food"),
+    urow("user-b", "2026-06-05", 30000, "food"),
+  ];
+}
+
+Deno.test("handleScanAllAction scans distinct users and aggregates", async () => {
+  const db = new FilteringFakeDb({ expense_classifications: twoUserRows() });
+  const result = await handleScanAllAction({
+    db,
+    body: { target_month: "2026-06" },
+    nowIso: "2026-07-22T03:00:00Z",
+  });
+  assertEquals(result.status, "ok");
+  assertEquals(result.target_month, "2026-06-01");
+  assertEquals(result.dry_run, false);
+  assertEquals(result.users_scanned, 2);
+  assertEquals(result.users_failed, 0);
+  assertEquals(result.anomalies_total, 1);
+  assertEquals(db.upserts.length, 1);
+  assertEquals(db.upserts[0].value.user_id, "user-a");
+});
+
+Deno.test("handleScanAllAction dry_run computes but persists nothing", async () => {
+  const db = new FilteringFakeDb({ expense_classifications: twoUserRows() });
+  const result = await handleScanAllAction({
+    db,
+    body: { target_month: "2026-06", dry_run: true },
+    nowIso: "2026-07-22T03:00:00Z",
+  });
+  assertEquals(result.dry_run, true);
+  assertEquals(result.anomalies_total, 1);
+  assertEquals(db.upserts.length, 0);
+});
+
+Deno.test("handleScanAllAction isolates per-user failures", async () => {
+  const rows = twoUserRows();
+  // user-b にも異常を持たせ、user-a の書込だけ失敗させて隔離を検証する。
+  rows[7] = urow("user-b", "2026-06-05", 60000, "food");
+  const db = new FilteringFakeDb({ expense_classifications: rows });
+  db.failUpsertUserIds.add("user-a");
+  const result = await handleScanAllAction({
+    db,
+    body: { target_month: "2026-06" },
+    nowIso: "2026-07-22T03:00:00Z",
+  });
+  assertEquals(result.users_scanned, 1);
+  assertEquals(result.users_failed, 1);
+  assertEquals(result.failures[0].user_id, "user-a");
+  assertEquals(result.anomalies_total, 1);
+  assertEquals(db.upserts.length, 1);
+  assertEquals(db.upserts[0].value.user_id, "user-b");
 });
