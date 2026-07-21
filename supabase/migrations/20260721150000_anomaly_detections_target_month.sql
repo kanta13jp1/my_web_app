@@ -1,14 +1,11 @@
 -- Issue #2477: detect_anomalies の冪等な月次スキャンには対象月の安定キーが必要。
 -- anomaly_detections は 20260721120000 で追加されたばかりで書き込みコードは
--- 本変更 (ai-hub detect_anomalies) が初のため、実質空テーブルへの追加列。
--- 念のため空でない場合にも耐えるよう backfill してから NOT NULL 化する。
+-- 本変更 (ai-hub detect_anomalies) が初 = 空テーブルへの追加列。
+-- (時間依存 UPDATE は migration replay guard 対象のため backfill は置かない。
+--  万一行が存在すれば SET NOT NULL が明示的に失敗する = 無言破損しない。)
 
 alter table public.anomaly_detections
   add column if not exists target_month date;
-
-update public.anomaly_detections
-  set target_month = date_trunc('month', detected_at)::date
-  where target_month is null;
 
 alter table public.anomaly_detections
   alter column target_month set not null;
