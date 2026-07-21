@@ -1817,9 +1817,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         final lastSaved = _autoSaveService.lastSavedTime;
         switch (state) {
           case SaveState.saved:
-            final suffix = lastSaved != null
-                ? '  最終保存 ${_formatTime(lastSaved)}'
-                : '';
+            final suffix =
+                lastSaved != null ? '  最終保存 ${_formatTime(lastSaved)}' : '';
             return Text(
               '保存済み$suffix',
               style: const TextStyle(
