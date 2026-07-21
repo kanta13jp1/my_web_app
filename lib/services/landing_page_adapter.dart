@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'landing_share_service.dart';
-import 'magi_system_settings_service.dart';
 
 class LandingPageAuthUnavailableException implements Exception {
   const LandingPageAuthUnavailableException();
@@ -91,12 +90,7 @@ abstract interface class LandingPageAdapter {
 }
 
 class SupabaseLandingPageAdapter implements LandingPageAdapter {
-  final MagiSystemSettingsService _magiSettingsService;
-
-  const SupabaseLandingPageAdapter({
-    MagiSystemSettingsService magiSettingsService =
-        const MagiSystemSettingsService(),
-  }) : _magiSettingsService = magiSettingsService;
+  const SupabaseLandingPageAdapter();
 
   SupabaseClient? get _supabaseClientOrNull {
     try {
@@ -200,20 +194,19 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
     }
 
     final response = await client.functions.invoke(
-      'ai-assistant',
-      body: await _magiSettingsService.buildAiAssistantPayload(
-        baseBody: <String, dynamic>{
-          'action': 'improve',
-          'content': prompt,
-        },
-      ),
+      'growth-hub',
+      body: <String, dynamic>{
+        'action': 'landing.trial',
+        'prompt': prompt,
+      },
     );
     final data = response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
-    final result = data['result'];
-    if (data['success'] == true && result is String) {
-      return result;
+    final action = data['action']?.toString().trim() ?? '';
+    final reason = data['reason']?.toString().trim() ?? '';
+    if (data['success'] == true && action.isNotEmpty && reason.isNotEmpty) {
+      return 'ACTION: $action\nREASON: $reason';
     }
 
     throw Exception(

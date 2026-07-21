@@ -77,6 +77,13 @@ import {
   type RoadmapPlan,
   selectShareableRoadmapPlans,
 } from "./roadmap_share_stats.ts";
+import {
+  DEFAULT_LANDING_TRIAL_MODEL,
+  generateLandingTrialSuggestion,
+  hashLandingTrialClient,
+  LandingTrialInputError,
+  normalizeLandingTrialPrompt,
+} from "./landing_trial.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -88,6 +95,10 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ??
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
+const LANDING_TRIAL_AI_MODEL = Deno.env.get("LANDING_TRIAL_AI_MODEL") ?? "";
+const LANDING_TRIAL_RATE_LIMIT_SALT =
+  Deno.env.get("LANDING_TRIAL_RATE_LIMIT_SALT") ?? SERVICE_ROLE_KEY;
 // x.post 近似重複ガードの調整用 env (未設定時は既定 0.9 / 直近 5 件)。
 const X_DUP_SIMILARITY_THRESHOLD = Deno.env.get("X_DUP_SIMILARITY_THRESHOLD") ??
   null;
@@ -1958,6 +1969,7 @@ serve(async (req: Request) => {
       "acquisition.signal",
       "acquisition.track",
       "acquisition.touchpoint_report",
+      "landing.trial",
       "signup.notify",
     ];
     let userId: string | null = null;
@@ -1967,6 +1979,81 @@ serve(async (req: Request) => {
     }
 
     switch (action) {
+      // ─── Landing AI trial (anonymous, hard-capped server-side) ──────────────
+      case "landing.trial": {
+        let prompt: string;
+        try {
+          prompt = normalizeLandingTrialPrompt(body.prompt);
+        } catch (error) {
+          if (error instanceof LandingTrialInputError) {
+            return json({
+              success: false,
+              error: error.message,
+              canUseInstantPreview: true,
+            }, 400);
+          }
+          throw error;
+        }
+
+        if (
+          !OPENAI_API_KEY || !SERVICE_ROLE_KEY ||
+          !LANDING_TRIAL_RATE_LIMIT_SALT
+        ) {
+          return json({
+            success: false,
+            error: "trial_ai_unavailable",
+            canUseInstantPreview: true,
+          }, 503);
+        }
+
+        const clientHash = await hashLandingTrialClient(
+          req.headers,
+          LANDING_TRIAL_RATE_LIMIT_SALT,
+        );
+        const { data: quotaData, error: quotaError } = await admin.rpc(
+          "claim_landing_trial_ai_quota",
+          { p_client_hash: clientHash },
+        );
+        if (quotaError) {
+          console.error("landing.trial quota claim failed", quotaError.code);
+          return json({
+            success: false,
+            error: "trial_ai_unavailable",
+            canUseInstantPreview: true,
+          }, 503);
+        }
+
+        const quota = (quotaData ?? {}) as Record<string, unknown>;
+        if (quota.allowed !== true) {
+          return json({
+            success: false,
+            error: "trial_quota_exhausted",
+            canUseInstantPreview: true,
+          }, 429);
+        }
+
+        try {
+          const suggestion = await generateLandingTrialSuggestion({
+            apiKey: OPENAI_API_KEY,
+            prompt,
+            model: LANDING_TRIAL_AI_MODEL,
+          });
+          return json({
+            success: true,
+            ...suggestion,
+            model: LANDING_TRIAL_AI_MODEL || DEFAULT_LANDING_TRIAL_MODEL,
+            remainingAttempts: quota.remaining_client,
+          });
+        } catch (error) {
+          console.error("landing.trial provider failed", errorMessage(error));
+          return json({
+            success: false,
+            error: "trial_ai_unavailable",
+            canUseInstantPreview: true,
+          }, 503);
+        }
+      }
+
       // ─── Acquisition ───────────────────────────────────────────────────────
       case "acquisition.get": {
         const items = await listItems(admin, "growth_signal", userId!);
