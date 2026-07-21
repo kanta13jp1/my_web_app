@@ -37,9 +37,8 @@ double _requiredDouble(Map<String, dynamic> row, String key) {
 
 int _requiredInt(Map<String, dynamic> row, String key) {
   final value = row[key];
-  final parsed = value is num
-      ? value.toInt()
-      : int.tryParse(value?.toString() ?? '');
+  final parsed =
+      value is num ? value.toInt() : int.tryParse(value?.toString() ?? '');
   if (parsed == null || parsed < 0) {
     throw FormatException('Missing or invalid $key in portfolio history row');
   }

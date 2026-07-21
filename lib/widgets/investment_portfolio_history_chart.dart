@@ -78,10 +78,10 @@ class InvestmentPortfolioHistoryChart extends StatelessWidget {
             ),
           )
         else ...[
-          Wrap(
+          const Wrap(
             spacing: 16,
             runSpacing: 6,
-            children: const [
+            children: [
               _Legend(color: _marketColor, label: '評価額'),
               _Legend(color: _costColor, label: '取得額', dashed: true),
             ],
