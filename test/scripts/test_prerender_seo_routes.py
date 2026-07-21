@@ -30,12 +30,16 @@ TEMPLATE = """<!DOCTYPE html>
   >
   <meta property="og:url" content="https://my-web-app-b67f4.web.app/">
   <meta property="og:type" content="website">
+  <meta property="og:image" content="https://example.com/home.png">
+  <meta property="og:image:alt" content="HOME IMAGE">
   <meta property="twitter:title" content="HOME TW TITLE">
   <meta
     property="twitter:description"
     content="HOME TW DESC"
   >
   <meta property="twitter:url" content="https://my-web-app-b67f4.web.app/">
+  <meta property="twitter:image" content="https://example.com/home.png">
+  <meta property="twitter:image:alt" content="HOME IMAGE">
   <title>ホーム | 自分株式会社</title>
 </head>
 <body>
@@ -216,6 +220,65 @@ class PublicRouteTest(unittest.TestCase):
         parsed = json.loads(vs[0].replace("\\u003c", "<"))
         self.assertEqual(parsed["@type"], "WebPage")
         self.assertEqual(parsed["url"], f"{BASE}/competitors")
+
+    def test_route_specific_social_image(self) -> None:
+        route = {
+            **PUBLIC_ROUTE,
+            "image": "/ai-university.png",
+            "image_alt": "AI大学の学習画面",
+        }
+        out = build_public_route_html(TEMPLATE, route, BASE)
+        self.assertIn(
+            '<meta property="og:image" '
+            'content="https://my-web-app-b67f4.web.app/ai-university.png">',
+            out,
+        )
+        self.assertIn(
+            '<meta property="twitter:image" '
+            'content="https://my-web-app-b67f4.web.app/ai-university.png">',
+            out,
+        )
+        self.assertIn(
+            '<meta property="og:image:alt" content="AI大学の学習画面">',
+            out,
+        )
+
+    def test_ai_university_config_uses_dedicated_social_image(self) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        routes = json.loads(
+            (repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        route = next(
+            item
+            for item in routes["routes"]
+            if item["path"] == "/ai-university"
+        )
+        index_html = (repo_root / "web" / "index.html").read_text(
+            encoding="utf-8"
+        )
+
+        out = build_public_route_html(index_html, route, BASE)
+        image_url = f"{BASE}/ogp-image-gen2-20260428.png"
+        homepage_image_url = f"{BASE}/lp-og-first-action-20260720.png"
+
+        self.assertRegex(
+            out,
+            rf'<meta\s+property="og:image"\s+content="{re.escape(image_url)}"\s*>',
+        )
+        self.assertRegex(
+            out,
+            rf'<meta\s+property="twitter:image"\s+'
+            rf'content="{re.escape(image_url)}"\s*>',
+        )
+        self.assertIsNone(
+            re.search(
+                rf'<meta\s+property="og:image"\s+'
+                rf'content="{re.escape(homepage_image_url)}"\s*>',
+                out,
+            )
+        )
 
 
 class SitemapTest(unittest.TestCase):
