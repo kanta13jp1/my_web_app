@@ -332,6 +332,33 @@ void main() {
     expect(find.textContaining('AI応答が不安定'), findsNothing);
   });
 
+  testWidgets('trial provider failure keeps a finance-specific result', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.treatment),
+    );
+    adapter.trialError = Exception('quality gate rejected response');
+
+    await tester.enterText(
+      find.byKey(const Key('landing_trial_prompt_input')),
+      '家計の固定費が高く、今月どの支出から見直すべきか決められません',
+    );
+    await tester.tap(
+      find.byKey(const Key('landing_h03_inline_trial_action')),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('先月の明細で最も高い固定費を1件特定'), findsOneWidget);
+    expect(find.textContaining('20分だけ動ける最小単位'), findsNothing);
+    expect(
+      adapter.conversionEvents,
+      contains('lp_exp_h01_treatment_trial_fallback'),
+    );
+  });
+
   testWidgets('all ten control conditions remove only their tested mechanism', (
     tester,
   ) async {

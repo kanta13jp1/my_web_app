@@ -476,6 +476,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       });
     } catch (e) {
       debugPrint('Trial preview failed: $e');
+      unawaited(_recordConversionStage('trial_fallback'));
       final fallback = _buildTrialFallbackSuggestion(input);
       if (!mounted) return;
       setState(() {
@@ -725,6 +726,53 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         text.contains('DM') ||
         text.contains('連絡')) {
       return ('未読の確認を1件だけ終える', '連絡系は放置コストが高いので、最初に1件だけ処理すると全体が進みます。');
+    }
+
+    if (RegExp(
+      r'支出|出費|家計|固定費|変動費|予算|浪費|お金|請求|明細|サブスク|収入|貯金|資産|借金|返済|税金|投資|削減',
+    ).hasMatch(text)) {
+      return (
+        '先月の明細で最も高い固定費を1件特定',
+        '最大の固定費を先に確認すると、削減効果を比較しやすくなるためです。',
+      );
+    }
+
+    if (RegExp(r'学習|勉強|英語|読書|復習|試験|資格|暗記|教材|授業').hasMatch(text)) {
+      return (
+        '今日復習する教材を1件開く',
+        '対象を1件に固定すると、短時間でも復習を完了しやすくなるためです。',
+      );
+    }
+
+    if (RegExp(
+      r'LP|ランディング|登録|サインアップ|フォーム|CTA|ボタン|申込|コンバージョン|離脱',
+      caseSensitive: false,
+    ).hasMatch(text)) {
+      return (
+        '登録ボタン直前の価値説明を1文見直す',
+        '登録後に得られる成果を明確にすると、迷った訪問者が判断しやすくなるためです。',
+      );
+    }
+
+    if (RegExp(r'健康|運動|睡眠|食事|体重|病院|服薬').hasMatch(text)) {
+      return (
+        '直近の健康記録を1件確認',
+        '最新の状態を1件確認すると、今日変える行動を具体化しやすくなるためです。',
+      );
+    }
+
+    if (RegExp(r'情報整理|ノート|メモ|資料|ファイル|知識|文書').hasMatch(text)) {
+      return (
+        '未整理のメモを1件開き用途を1行追記',
+        '用途を1行で固定すると、残すか行動に変えるかを判断しやすくなるためです。',
+      );
+    }
+
+    if (RegExp(r'予定|時間|先送り|後回し|着手|集中|習慣').hasMatch(text)) {
+      return (
+        '今日の予定から先送り中の1件を選ぶ',
+        '対象を1件に固定すると、使える時間をその行動に割り当てやすくなるためです。',
+      );
     }
 
     if (text.contains('考える') ||
@@ -3819,6 +3867,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               ),
               SizedBox(height: compactHero ? 8 : 14),
               TextField(
+                key: const Key('landing_trial_prompt_input'),
                 controller: _trialPromptController,
                 minLines: heroMode ? 1 : 2,
                 maxLines: heroMode ? 2 : 3,
