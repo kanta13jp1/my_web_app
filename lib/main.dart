@@ -12,6 +12,7 @@ import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/abstinence_guard_page.dart';
 import 'package:my_web_app/pages/self_touch_tracker_page.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
+import 'package:my_web_app/pages/autonomous_ops_console_page.dart';
 import 'package:my_web_app/pages/ai_company_builder_page.dart';
 import 'package:my_web_app/pages/ai_agent_page.dart';
 import 'package:my_web_app/pages/behavior_review_page.dart';
@@ -562,6 +563,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             return MaterialPageRoute(builder: (_) => const HomePage());
           case '/agents':
             return MaterialPageRoute(builder: (_) => AgentOrgPage());
+          case '/autonomous-ops':
+            return MaterialPageRoute(
+              builder: (_) => const AutonomousOpsConsolePage(),
+              settings: const RouteSettings(name: '/autonomous-ops'),
+            );
           case '/ai-company-builder':
             return MaterialPageRoute(
               builder: (_) => const AiCompanyBuilderPage(),
