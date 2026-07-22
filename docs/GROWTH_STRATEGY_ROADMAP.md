@@ -33079,3 +33079,39 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
 - 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
 - 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 6 日連続同一制約 / GHA コンテンツ + WebSearch で補完継続 / GitHub auto-review Issues: 0件 / Notion Agents iOS アプリ・GitHub Code Quality GA など主要競合の機能強化を記録
+
+## セッション記録: 日次レポート Schedule 実行 (2026-07-22 00:02 UTC / Claude Schedule)
+
+**実行内容**: 日次レポート Claude Schedule 補足・GHA 生成競合レポート確認・ロードマップ追記
+
+**制約**: Supabase 全エンドポイントがプロキシ policy により 403 (connect_rejected) — **7日連続同一制約** / GHA 生成済みコンテンツ + GitHub MCP で補完継続
+
+**メトリクス** (GHA daily-report.yml / 08:30 JST):
+- 総ユーザー数: **58人** (前日比 +1)
+- 本日の新規機能リクエスト: 0件
+- 未対応機能リクエスト: 131件
+- Workflow failure hygiene: Open 8件 / 平均回復 9.48h / root-cause: deno-lint=150
+
+**GitHub auto-review Issues**: なし (0件)
+
+**競合動向サマリー (GHA 競合レポート 2026-07-22)**:
+- **🔴🔴 Codex `/import` (7-21)**: Claude Code 設定・MCP・plugin・session・commands・project-scoped memories を移行対象に → `cross-instance-pr` 設計前提の消滅 / `memory/` の所属が初めて争点に
+- **🔴 Slack CLI v4.5.0 (7-21)**: Claude Code ユーザーに公式 Slack plugin を推奨 → 「Slack を agent fleet の制御面にする」段階へ進化
+- **🔴 MoneyForward AI Cowork**: 7-22 時点 GA 未達 (7月残り9日 / 自社「6部署×KPI」ナラティブ整備の猶予継続)
+- **🔴 ChatGPT SuperApp**: 7-9 実行済 (Atlas 廃止→ChatGPT Work 吸収 / Codex デスクトップ統合 / Atlas 停止 8-09 effective)
+- **🟠 Claude Code 2.1.217 (7-21)**: worktree 隔離 subagent の共有 checkout 脱出バグ含む — **自社環境 2.1.170 で 2日連続未更新** (最優先)
+
+**更新ドキュメント**:
+- `docs/daily-reports/2026-07-22.md`: Claude Schedule 実行記録セクション追記
+
+**AIアクション提案**:
+1. `cross-instance-pr` プロトコルを「正本規律が差別化」ナラティブへ転換 (Codex /import が状態共有の前提を消したため)
+2. MoneyForward AI Cowork GA watch (7-31 deadline / 出た場合は「6部署×KPI」緊急強化)
+3. Claude Code 2.1.170 → 2.1.217 更新 (worktree 脱出バグ / background session シンボリックリンク正規化 / 本環境全項目該当)
+
+### Philosophy Alignment (Schedule 2026-07-22 00:02 UTC)
+
+- 主要実施: GHA 生成済み日次・競合レポート確認 + 重大シグナル 4件 (Codex/Slack/MF/ChatGPT) 記録 + ロードマップ追記
+- 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
+- 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
+- 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 7日連続同一制約 / GHA コンテンツで補完継続 / Codex /import によりproject-scoped memories の所属が設計上の争点に浮上 / ユーザー数 58人 (前日比 +1) を確認
