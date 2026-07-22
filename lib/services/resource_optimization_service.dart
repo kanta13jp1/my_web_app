@@ -3,7 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/resource_optimization.dart';
 
 typedef ResourceOptimizerInvoker = Future<Map<String, dynamic>> Function(
-    Map<String, dynamic> body);
+  Map<String, dynamic> body,
+);
 
 class ResourceOptimizationService {
   const ResourceOptimizationService({
