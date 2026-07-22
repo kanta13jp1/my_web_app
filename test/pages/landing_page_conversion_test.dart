@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _LandingAdapter extends Fake implements LandingPageAdapter {
   int lpViews = 0;
+  int socialProofLoads = 0;
   int trialRuns = 0;
   int saveCtas = 0;
   final List<String> conversionEvents = <String>[];
@@ -19,6 +20,10 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   Completer<String>? trialResponse;
   Exception? trialError;
   String? lastTrialPrompt;
+  LandingSocialProofStats socialProofStats = const LandingSocialProofStats(
+    totalUsers: 38,
+    publicMemoCount: 12,
+  );
 
   @override
   Stream<AuthState> authStateChanges() => const Stream<AuthState>.empty();
@@ -26,6 +31,12 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   @override
   Future<void> recordLpView() async {
     lpViews += 1;
+  }
+
+  @override
+  Future<LandingSocialProofStats> loadSocialProofStats() async {
+    socialProofLoads += 1;
+    return socialProofStats;
   }
 
   @override
@@ -138,6 +149,22 @@ void main() {
       isTrue,
     );
     expect(LandingPage.analyticsEnabledForUri(null), isTrue);
+  });
+
+  testWidgets('H07 renders anonymous-safe public aggregate social proof', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h07', LandingExperimentVariant.treatment),
+    );
+    await tester.pumpAndSettle();
+
+    expect(adapter.socialProofLoads, 1);
+    expect(find.text('38'), findsOneWidget);
+    expect(find.text('登録ユーザー数'), findsOneWidget);
+    expect(find.text('12'), findsOneWidget);
+    expect(find.text('公開メモ数'), findsOneWidget);
   });
 
   testWidgets('QA mode preserves the trial but emits no LP analytics', (
