@@ -49,8 +49,10 @@ const GENERIC_ACTION_PATTERNS = [
   /まず.{0,4}(?:考え|確認|整理)する/,
 ];
 
+// Japanese action copy commonly uses a verbal noun as an imperative
+// (for example, "1件をメモ" or "固定費を1件特定").
 const ACTION_VERB_PATTERN =
-  /(?:開く|書く|追記|削除|比較|送る|予約|設定|計測|選ぶ|分ける|作る|試す|止める|決める|入力|登録|更新|調べる|並べる|閉じる|返信|共有|変更|追加|外す|読む|数える)/;
+  /(?:開く|書く|追記|削除|比較|送る|予約|設定|計測|選ぶ|分ける|作る|試す|止める|決める|入力|登録|更新|調べる|並べる|閉じる|返信|共有|変更|追加|外す|読む|数える|見直す|確認|メモ|記録|特定|絞る|洗い出す|印を付ける|チェック|分類|解約|停止)/;
 const COMPLETION_BOUNDARY_PATTERN =
   /(?:\d+|[一二三四五六七八九十]|ひとつ|1つ|一つ|1件|一件|一文|1行|一行|10分|今日|直前|最初|末尾)/;
 const CAUSAL_REASON_PATTERN =

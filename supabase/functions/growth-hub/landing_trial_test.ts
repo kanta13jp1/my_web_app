@@ -69,6 +69,19 @@ Deno.test("landing trial quality gate rejects generic advice", () => {
   assertEquals(issues.includes("missing_prompt_anchor"), true);
 });
 
+Deno.test("landing trial quality gate accepts Japanese verbal noun actions", () => {
+  assertEquals(
+    landingTrialQualityIssues(
+      "毎月の支出が増えていて、どこから見直すべきか分かりません",
+      {
+        action: "先月の支出で最も高い固定費を1件特定",
+        reason: "支出の最大項目を先に特定すると見直し効果が明確になるため",
+      },
+    ),
+    [],
+  );
+});
+
 Deno.test("landing trial client address prefers trusted proxy headers", () => {
   assertEquals(
     resolveLandingTrialClientAddress(
