@@ -41,6 +41,7 @@ jobs:
             --supabase-url "$SUPABASE_URL" \
             --json-report tmp/landing-experiment-report/report.json \
             --markdown-report tmp/landing-experiment-report/report.md \
+            --synthetic-view-offset h01:control:1 \
             --synthetic-view-offset h10:treatment:1
 
       - name: Publish job summary
