@@ -98,15 +98,23 @@ class LandingExperimentReportTest(unittest.TestCase):
         self.assertEqual(first["decision"], "treatment_wins")
         self.assertAlmostEqual(first["relative_signup_submit_lift"], 2.0)
 
-    def test_synthetic_offset_removes_qa_view_from_effective_sample(self) -> None:
+    def test_synthetic_offsets_remove_known_qa_views_from_effective_sample(self) -> None:
         rows = fixture_rows(views=100, control_submits=10, treatment_submits=10)
         for row in rows:
+            if row["hypothesis_id"] == "h01" and row["variant"] == "control":
+                row["unique_views"] = 101
             if row["hypothesis_id"] == "h10" and row["variant"] == "treatment":
                 row["unique_views"] = 101
         arms = validate_arm_rows(rows)
-        offsets = parse_synthetic_offsets(["h10:treatment:1"])
+        offsets = parse_synthetic_offsets(
+            ["h01:control:1", "h10:treatment:1"]
+        )
         report = build_report(arms, synthetic_offsets=offsets)
+        h01 = report["hypotheses"][0]
         h10 = report["hypotheses"][-1]
+        self.assertEqual(h01["control"]["unique_views"], 101)
+        self.assertEqual(h01["control"]["effective_unique_views"], 100)
+        self.assertEqual(h01["control"]["synthetic_view_offset"], 1)
         self.assertEqual(h10["treatment"]["unique_views"], 101)
         self.assertEqual(h10["treatment"]["effective_unique_views"], 100)
         self.assertEqual(h10["treatment"]["synthetic_view_offset"], 1)

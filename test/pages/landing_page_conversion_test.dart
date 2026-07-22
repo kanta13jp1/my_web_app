@@ -99,6 +99,7 @@ void main() {
     WidgetTester tester, {
     required LandingExperimentAssignment assignment,
     Size size = const Size(1200, 900),
+    bool? analyticsEnabled,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
@@ -114,6 +115,7 @@ void main() {
           ),
           adapter: adapter,
           experimentAssignment: assignment,
+          analyticsEnabled: analyticsEnabled,
         ),
       ),
     );
@@ -121,6 +123,43 @@ void main() {
     await tester.pump(const Duration(milliseconds: 350));
     return adapter;
   }
+
+  test('lp_qa query disables analytics only for explicit QA traffic', () {
+    expect(
+      LandingPage.analyticsEnabledForUri(
+        Uri.parse('https://example.com/?lp_qa=1'),
+      ),
+      isFalse,
+    );
+    expect(
+      LandingPage.analyticsEnabledForUri(
+        Uri.parse('https://example.com/?lp_qa=0'),
+      ),
+      isTrue,
+    );
+    expect(LandingPage.analyticsEnabledForUri(null), isTrue);
+  });
+
+  testWidgets('QA mode preserves the trial but emits no LP analytics', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.control),
+      analyticsEnabled: false,
+    );
+
+    expect(adapter.lpViews, 0);
+    expect(adapter.conversionEvents, isEmpty);
+
+    await tester.tap(find.byKey(const Key('landing_trial_sample_priority')));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(adapter.trialRuns, 0);
+    expect(adapter.conversionEvents, isEmpty);
+    expect(adapter.lastTrialPrompt, isNotEmpty);
+    expect(find.textContaining('重要'), findsWidgets);
+  });
 
   testWidgets('treatment renders the complete conversion-first journey', (
     tester,
