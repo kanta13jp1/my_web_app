@@ -76,19 +76,39 @@ const PROMPT_ANCHOR_STOPWORDS = new Set([
   "悩み",
 ]);
 
+const PROMPT_DOMAIN_PATTERNS = [
+  /(?:支出|出費|家計|固定費|変動費|予算|浪費|お金|請求|明細|サブスク|収入|貯金|資産|借金|返済|税金|投資|削減)/,
+  /(?:仕事|タスク|案件|締切|優先順位|会議|メール|返信|作業|プロジェクト|業務|顧客)/,
+  /(?:学習|勉強|英語|読書|復習|試験|資格|暗記|教材|授業)/,
+  /(?:LP|ランディング|登録|サインアップ|フォーム|CTA|ボタン|申込|コンバージョン|離脱)/i,
+  /(?:予定|時間|先送り|後回し|着手|集中|習慣)/,
+  /(?:情報整理|ノート|メモ|資料|ファイル|知識|文書)/,
+  /(?:健康|運動|睡眠|食事|体重|病院|服薬)/,
+];
+
 function promptAnchors(prompt: string): string[] {
   const compact = prompt
     .toLowerCase()
     .replace(/[\s\p{P}\p{S}]+/gu, "");
   const characters = Array.from(compact);
   const anchors = new Set<string>();
-  for (const width of [4, 3, 2]) {
+  for (const width of [4, 3]) {
     for (let index = 0; index <= characters.length - width; index += 1) {
       const value = characters.slice(index, index + width).join("");
       if (!PROMPT_ANCHOR_STOPWORDS.has(value)) anchors.add(value);
     }
   }
   return [...anchors];
+}
+
+function hasPromptRelevance(prompt: string, combined: string): boolean {
+  const matchingDomains = PROMPT_DOMAIN_PATTERNS.filter((pattern) =>
+    pattern.test(prompt)
+  );
+  if (matchingDomains.length > 0) {
+    return matchingDomains.some((pattern) => pattern.test(combined));
+  }
+  return promptAnchors(prompt).some((anchor) => combined.includes(anchor));
 }
 
 export function landingTrialQualityIssues(
@@ -113,7 +133,7 @@ export function landingTrialQualityIssues(
   if (!ACTION_VERB_PATTERN.test(suggestion.action)) {
     issues.push("missing_action_verb");
   }
-  if (!promptAnchors(prompt).some((anchor) => combined.includes(anchor))) {
+  if (!hasPromptRelevance(prompt, combined)) {
     issues.push("missing_prompt_anchor");
   }
   if (!CAUSAL_REASON_PATTERN.test(suggestion.reason)) {
@@ -208,10 +228,12 @@ export async function generateLandingTrialSuggestion(args: {
     "action must be one concrete step the user can finish in 10 minutes, at most 40 Japanese characters.",
     "Name the user's actual object or bottleneck and include an observable completion boundary such as one item, one sentence, or one setting.",
     "reason must connect that step to the user's stated bottleneck and explain the immediate benefit, at most 100 Japanese characters.",
+    "Keep the action and reason in the same concern domain as the input; incidental words such as 見直す do not make an unrelated work answer relevant to a household-spending concern.",
     "Never answer with contact forms, requests for more detail, generic task listing, generic prioritization, generic organizing, or generic research.",
     "Do not include URLs, markdown, sales copy, or claims about completing work you cannot perform.",
     'Good example for "LPから登録されない": {"action":"登録ボタン直前に無料で得る物を1文追記","reason":"登録後の価値が見えない離脱要因を10分で減らせるため"}',
     'Good example for "仕事が多く優先順位を決められない": {"action":"今日締切の仕事を1件開き次の操作を1行書く","reason":"対象と次の動作を固定すると迷いを止めて着手できるため"}',
+    'Good example for "毎月の支出をどこから見直すか分からない": {"action":"先月の明細で最大の固定費を1件特定","reason":"固定費の最大項目を先に決めると削減効果が見えるため"}',
   ].join(" ");
 
   const requestSuggestion = async (
