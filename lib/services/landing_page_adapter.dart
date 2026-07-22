@@ -86,7 +86,10 @@ abstract interface class LandingPageAdapter {
 
   Future<void> recordInboxOpen();
 
-  Future<void> recordConversionEvent({required String eventKey});
+  Future<void> recordConversionEvent({
+    required String eventKey,
+    required String visitorId,
+  });
 }
 
 class SupabaseLandingPageAdapter implements LandingPageAdapter {
@@ -291,10 +294,29 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
   }
 
   @override
-  Future<void> recordConversionEvent({required String eventKey}) {
-    return LandingShareService.recordFunnelEvent(
+  Future<void> recordConversionEvent({
+    required String eventKey,
+    required String visitorId,
+  }) async {
+    final client = _supabaseClientOrNull;
+    await LandingShareService.recordFunnelEvent(
       eventKey: eventKey,
-      client: _supabaseClientOrNull,
+      client: client,
     );
+    if (client == null) {
+      return;
+    }
+
+    try {
+      await client.rpc(
+        'record_landing_experiment_event',
+        params: <String, dynamic>{
+          'p_visitor_id': visitorId,
+          'p_event_key': eventKey,
+        },
+      );
+    } catch (error) {
+      debugPrint('Unique LP experiment event failed: $error');
+    }
   }
 }

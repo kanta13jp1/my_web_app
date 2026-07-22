@@ -74,6 +74,63 @@ void main() {
     expect(first.variant, LandingExperimentVariant.control);
   });
 
+  test('visitor identity is a stable persisted UUID v4', () async {
+    final prefs = await SharedPreferences.getInstance();
+    var generated = 0;
+    final first = await service.resolveVisitorId(
+      preferences: prefs,
+      generator: () {
+        generated += 1;
+        return '8c5f6a6e-1e06-4dbe-9b42-c0f68a41f208';
+      },
+    );
+    final second = await service.resolveVisitorId(
+      preferences: prefs,
+      generator: () {
+        generated += 1;
+        return '1065506c-d79b-4a9d-a6a6-a622ec87e171';
+      },
+    );
+
+    expect(first, '8c5f6a6e-1e06-4dbe-9b42-c0f68a41f208');
+    expect(second, first);
+    expect(generated, 1);
+    expect(
+      LandingConversionExperimentService.isValidVisitorId(first),
+      isTrue,
+    );
+  });
+
+  test('invalid stored visitor identity is replaced', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'landing_conversion_visitor_v1': 'not-a-uuid',
+    });
+    final prefs = await SharedPreferences.getInstance();
+
+    final visitorId = await service.resolveVisitorId(
+      preferences: prefs,
+      generator: () => '1065506c-d79b-4a9d-a6a6-a622ec87e171',
+    );
+
+    expect(visitorId, '1065506c-d79b-4a9d-a6a6-a622ec87e171');
+    expect(
+      prefs.getString('landing_conversion_visitor_v1'),
+      visitorId,
+    );
+  });
+
+  test('invalid generated visitor identity fails closed', () async {
+    final prefs = await SharedPreferences.getInstance();
+
+    expect(
+      () => service.resolveVisitorId(
+        preferences: prefs,
+        generator: () => 'predictable-visitor',
+      ),
+      throwsStateError,
+    );
+  });
+
   test(
     'query override supports deterministic QA without changing storage',
     () async {
