@@ -69,6 +69,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   bool _showPasswordAuth = false;
   bool _showSaveCtaPrompt = false;
   bool _showInboxShortcut = false;
+  bool _showAllUniqueFeatures = false;
   int _magicLinkCooldownSeconds = 0;
   int _achievementCount = 0;
   int _totalUsers = 0;
@@ -3142,95 +3143,120 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       ),
     ];
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFF8FAFF), Color(0xFFF0F4FF)],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '自分株式会社でしかできない134のこと',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1E293B),
-              height: 1.5,
+    Widget outcomeRow({
+      required Key key,
+      required IconData icon,
+      required Color color,
+      required String title,
+      required String description,
+    }) {
+      return Padding(
+        key: key,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 20, color: color),
             ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Notion・Evernote・MoneyForward・Google・LINE・Facebook の良いとこ取りに、AIと記憶ドリルをプラス。',
-            style: TextStyle(
-              fontSize: 13,
-              color: Color(0xFF64748B),
-              height: 1.6,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ...features.map((f) {
-            final (icon, colorHex, title, desc) = f;
-            final color = Color(int.parse(colorHex.replaceFirst('0x', '0xFF')));
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF172033),
+                      height: 1.45,
                     ),
-                    child: Icon(icon, size: 18, color: color),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E293B),
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          desc,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF64748B),
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
+                  const SizedBox(height: 3),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF526174),
+                      height: 1.55,
                     ),
                   ),
                 ],
               ),
-            );
-          }),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      key: const Key('landing_h15_outcome_section'),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '最初に、3つの成果から始める',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF172033),
+              height: 1.4,
+            ),
+          ),
           const SizedBox(height: 8),
+          const Text(
+            '134機能を覚える必要はありません。悩みを1文入力すると、登録前に10分で終わる最初の一手を返します。気に入った提案だけ無料で保存できます。',
+            style: TextStyle(
+              fontSize: 13,
+              color: Color(0xFF526174),
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 10),
+          outcomeRow(
+            key: const Key('landing_h15_outcome_work'),
+            icon: Icons.task_alt,
+            color: const Color(0xFF1F6FEB),
+            title: '仕事を1件に絞る',
+            description: '散らかったタスクから、今日動かす1件と次の一手を決めます。',
+          ),
+          const Divider(height: 1, color: Color(0xFFDDE4EE)),
+          outcomeRow(
+            key: const Key('landing_h15_outcome_money'),
+            icon: Icons.savings_outlined,
+            color: const Color(0xFF0B7A53),
+            title: '見直す支出を1件決める',
+            description: '家計の悩みから、最初に確認する固定費や明細を具体化します。',
+          ),
+          const Divider(height: 1, color: Color(0xFFDDE4EE)),
+          outcomeRow(
+            key: const Key('landing_h15_outcome_learning'),
+            icon: Icons.school_outlined,
+            color: const Color(0xFF9A5A00),
+            title: '今日の復習を1件決める',
+            description: '学びたい内容を、今日終えられる復習や練習に変えます。',
+          ),
+          const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
             height: 46,
             child: FilledButton.icon(
-              onPressed: () => Navigator.of(context).pushNamed('/billing'),
-              icon: const Icon(Icons.rocket_launch, size: 16),
+              key: const Key('landing_h15_try_without_signup'),
+              onPressed: () {
+                unawaited(_recordConversionStage('feature_outcome_trial'));
+                _scrollToTrialSection();
+              },
+              icon: const Icon(Icons.bolt, size: 18),
               label: const Text(
-                'Proプランを見る',
+                '登録なしで1件試す',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -3238,13 +3264,133 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
               ),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF3949AB),
+                backgroundColor: const Color(0xFF1F6FEB),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
             ),
           ),
+          const SizedBox(height: 8),
+          const Center(
+            child: Text(
+              'メール登録は、提案を保存するときだけ',
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+                height: 1.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              TextButton.icon(
+                key: const Key('landing_h15_feature_catalog_toggle'),
+                onPressed: () {
+                  final willShow = !_showAllUniqueFeatures;
+                  setState(() => _showAllUniqueFeatures = willShow);
+                  if (willShow) {
+                    unawaited(
+                      _recordConversionStage('feature_catalog_expand'),
+                    );
+                  }
+                },
+                icon: Icon(
+                  _showAllUniqueFeatures
+                      ? Icons.expand_less
+                      : Icons.expand_more,
+                  size: 18,
+                ),
+                label: Text(
+                  _showAllUniqueFeatures ? '3つの成果だけ見る' : '134機能をすべて見る',
+                ),
+              ),
+              TextButton.icon(
+                key: const Key('landing_h15_pricing_link'),
+                onPressed: () => Navigator.of(context).pushNamed('/billing'),
+                icon: const Icon(Icons.payments_outlined, size: 17),
+                label: const Text('料金を見る'),
+              ),
+            ],
+          ),
+          if (_showAllUniqueFeatures) ...[
+            const SizedBox(height: 16),
+            const Divider(height: 1, color: Color(0xFFDDE4EE)),
+            const SizedBox(height: 18),
+            const Text(
+              '必要になった機能を、あとから選べます',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF172033),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Notion・Evernote・MoneyForwardなどで分かれていた作業を、ひとつの場所につなげます。',
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Column(
+              key: const Key('landing_h15_feature_catalog'),
+              children: features.map((f) {
+                final (icon, colorHex, title, desc) = f;
+                final color = Color(int.parse(colorHex));
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(icon, size: 18, color: color),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1E293B),
+                                height: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              desc,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF64748B),
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
         ],
       ),
     );

@@ -115,10 +115,12 @@ class LandingConversionExperimentService {
     'signup_submit',
     'signup_complete',
     'sticky_cta',
+    'feature_outcome_trial',
+    'feature_catalog_expand',
   };
 
   static final RegExp _eventKeyPattern = RegExp(
-    r'^lp_exp_h(?:0[1-9]|10)_(?:control|treatment)_(?:view|hero_cta|intent|trial|save_cta|signup_submit|signup_complete|sticky_cta)$',
+    r'^lp_exp_h(?:0[1-9]|10)_(?:control|treatment)_(?:view|hero_cta|intent|trial|save_cta|signup_submit|signup_complete|sticky_cta|feature_outcome_trial|feature_catalog_expand)$',
   );
 
   const LandingConversionExperimentService();

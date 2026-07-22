@@ -225,6 +225,61 @@ void main() {
     await tester.pump();
   });
 
+  testWidgets(
+    'H15 starts with three outcomes and reveals the 134-feature catalog on demand',
+    (tester) async {
+      final adapter = await pumpLanding(
+        tester,
+        assignment: _assignment('h01', LandingExperimentVariant.treatment),
+      );
+
+      expect(find.text('最初に、3つの成果から始める'), findsOneWidget);
+      expect(find.byKey(const Key('landing_h15_outcome_work')), findsOneWidget);
+      expect(
+        find.byKey(const Key('landing_h15_outcome_money')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('landing_h15_outcome_learning')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('landing_h15_try_without_signup')),
+        findsOneWidget,
+      );
+      expect(find.text('競馬AI自動予想'), findsNothing);
+
+      final trialCta = find.byKey(const Key('landing_h15_try_without_signup'));
+      await Scrollable.ensureVisible(tester.element(trialCta), alignment: 0.7);
+      await tester.pump();
+      await tester.tap(trialCta);
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(
+        adapter.conversionEvents,
+        contains('lp_exp_h01_treatment_feature_outcome_trial'),
+      );
+
+      final toggle =
+          find.byKey(const Key('landing_h15_feature_catalog_toggle'));
+      await Scrollable.ensureVisible(tester.element(toggle), alignment: 0.7);
+      await tester.pump();
+      await tester.tap(toggle);
+      await tester.pump();
+
+      expect(find.text('競馬AI自動予想'), findsOneWidget);
+      expect(find.text('3つの成果だけ見る'), findsOneWidget);
+      expect(
+        adapter.conversionEvents,
+        contains('lp_exp_h01_treatment_feature_catalog_expand'),
+      );
+
+      await tester.tap(toggle);
+      await tester.pump();
+      expect(find.text('競馬AI自動予想'), findsNothing);
+      expect(find.text('134機能をすべて見る'), findsOneWidget);
+    },
+  );
+
   testWidgets('H11 shows proof before interaction and instant value on tap', (
     tester,
   ) async {

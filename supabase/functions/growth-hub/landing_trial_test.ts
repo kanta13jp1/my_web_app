@@ -82,6 +82,43 @@ Deno.test("landing trial quality gate accepts Japanese verbal noun actions", () 
   );
 });
 
+Deno.test("landing trial quality gate rejects an answer from another concern domain", () => {
+  const issues = landingTrialQualityIssues(
+    "毎月の支出が増えていて、どこから見直すべきか分かりません",
+    {
+      action: "今日締切の仕事を1件選ぶ",
+      reason: "優先順位を明確にすることで、着手しやすくなるため",
+    },
+  );
+
+  assertEquals(issues.includes("missing_prompt_anchor"), true);
+});
+
+Deno.test("landing trial quality gate ignores incidental phrase overlap across domains", () => {
+  const issues = landingTrialQualityIssues(
+    "毎月の支出が増えていて、どこから見直すべきか分かりません",
+    {
+      action: "今日締切の仕事を1件見直す",
+      reason: "仕事の優先順位を明確にすると着手しやすくなるため",
+    },
+  );
+
+  assertEquals(issues.includes("missing_prompt_anchor"), true);
+});
+
+Deno.test("landing trial quality gate accepts semantic matches within a concern domain", () => {
+  assertEquals(
+    landingTrialQualityIssues(
+      "家計の出費が増えていて、どこから削減すべきか分かりません",
+      {
+        action: "先月の明細で最大の固定費を1件特定",
+        reason: "固定費の最大項目を先に決めると削減効果が見えるため",
+      },
+    ),
+    [],
+  );
+});
+
 Deno.test("landing trial client address prefers trusted proxy headers", () => {
   assertEquals(
     resolveLandingTrialClientAddress(
