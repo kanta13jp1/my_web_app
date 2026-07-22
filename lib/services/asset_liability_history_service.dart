@@ -48,6 +48,7 @@ class AssetLiabilityHistoryService {
       monthlyPaymentDifferenceTotal: paymentDifferenceTotal,
       overduePaymentCount: overduePaymentCount,
       monthlyReceivedIncomeTotal: receivedIncomeTotal,
+      securitiesTotal: workbook.securitiesTotal,
     );
   }
 
