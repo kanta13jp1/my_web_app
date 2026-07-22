@@ -40,4 +40,19 @@ void main() {
       kAiShareFabDefaultBottomOffset,
     );
   });
+
+  test('anonymous landing hides only the universal share FAB', () {
+    expect(
+      shouldShowUniversalAiShareFab(routePath: '/', isLoggedIn: false),
+      isFalse,
+    );
+    expect(
+      shouldShowUniversalAiShareFab(routePath: '/', isLoggedIn: true),
+      isTrue,
+    );
+    expect(
+      shouldShowUniversalAiShareFab(routePath: '/notes', isLoggedIn: false),
+      isTrue,
+    );
+  });
 }

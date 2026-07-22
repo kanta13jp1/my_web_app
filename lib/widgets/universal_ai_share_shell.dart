@@ -98,6 +98,13 @@ const double kAiShareFabTopOffset = kToolbarHeight + 20;
 const double kAiShareFabDefaultBottomOffset = 20;
 const double kAiShareFabLandingBottomOffset = 88;
 
+bool shouldShowUniversalAiShareFab({
+  required String routePath,
+  required bool isLoggedIn,
+}) {
+  return routePath != '/' || isLoggedIn;
+}
+
 double resolveAiShareFabBottomOffset({
   required String routePath,
   required double screenWidth,
@@ -279,6 +286,13 @@ class _UniversalAiShareFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = _isLoggedIn;
+    if (!shouldShowUniversalAiShareFab(
+      routePath: page.routePath,
+      isLoggedIn: isLoggedIn,
+    )) {
+      return const SizedBox.shrink();
+    }
+
     final colorScheme = Theme.of(context).colorScheme;
     final backgroundColor = isLoggedIn
         ? colorScheme.primaryContainer
