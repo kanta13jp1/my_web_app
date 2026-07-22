@@ -83,6 +83,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   _LandingIntent _selectedIntent = _LandingIntent.work;
   LandingExperimentAssignment? _experimentAssignment;
   Future<LandingExperimentAssignment>? _experimentBootstrapFuture;
+  Future<String>? _experimentVisitorIdFuture;
   final Set<String> _recordedExperimentStages = <String>{};
 
   SupabaseClient? get _supabaseClientOrNull {
@@ -143,6 +144,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     return _experimentBootstrapFuture ??= _loadConversionExperiment();
   }
 
+  Future<String> _resolveExperimentVisitorId() {
+    return _experimentVisitorIdFuture ??=
+        widget.conversionExperimentService.resolveVisitorId();
+  }
+
   bool _hypothesisEnabled(String hypothesisId) {
     return _experimentAssignment?.enables(hypothesisId) ?? true;
   }
@@ -150,11 +156,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   Future<void> _recordConversionStage(String stage) async {
     try {
       final assignment = await _resolveExperimentAssignment();
+      final visitorId = await _resolveExperimentVisitorId();
       if (!_recordedExperimentStages.add(stage)) {
         return;
       }
       await widget.adapter.recordConversionEvent(
         eventKey: assignment.eventKey(stage),
+        visitorId: visitorId,
       );
     } catch (error) {
       debugPrint('LP conversion event failed ($stage): $error');

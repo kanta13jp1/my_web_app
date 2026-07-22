@@ -14,6 +14,7 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   int trialRuns = 0;
   int saveCtas = 0;
   final List<String> conversionEvents = <String>[];
+  final List<String> conversionVisitorIds = <String>[];
   final List<String> magicLinkEmails = <String>[];
   Completer<String>? trialResponse;
   Exception? trialError;
@@ -28,8 +29,12 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   }
 
   @override
-  Future<void> recordConversionEvent({required String eventKey}) async {
+  Future<void> recordConversionEvent({
+    required String eventKey,
+    required String visitorId,
+  }) async {
     conversionEvents.add(eventKey);
+    conversionVisitorIds.add(visitorId);
   }
 
   @override
@@ -154,6 +159,13 @@ void main() {
     );
     expect(adapter.lpViews, 1);
     expect(adapter.conversionEvents, contains('lp_exp_h01_treatment_view'));
+    expect(adapter.conversionVisitorIds, hasLength(1));
+    expect(
+      LandingConversionExperimentService.isValidVisitorId(
+        adapter.conversionVisitorIds.single,
+      ),
+      isTrue,
+    );
     expect(
       find.descendant(
         of: find.byKey(const Key('landing_hero_section')),
@@ -217,6 +229,7 @@ void main() {
         'lp_exp_h04_treatment_signup_submit',
       ]),
     );
+    expect(adapter.conversionVisitorIds.toSet(), hasLength(1));
     expect(
       find.byKey(const Key('landing_h04_inline_open_inbox')),
       findsOneWidget,

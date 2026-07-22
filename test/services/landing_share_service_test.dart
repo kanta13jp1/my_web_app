@@ -133,7 +133,10 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
   Future<void> recordTrialRun() async {}
 
   @override
-  Future<void> recordConversionEvent({required String eventKey}) async {
+  Future<void> recordConversionEvent({
+    required String eventKey,
+    required String visitorId,
+  }) async {
     conversionEvents.add(eventKey);
   }
 }
