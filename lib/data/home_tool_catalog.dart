@@ -372,8 +372,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'autonomous',
         'ops',
       ],
-      onOpen: (context) =>
-          _pushPage(context, const AutonomousOpsConsolePage()),
+      onOpen: (context) => _pushPage(context, const AutonomousOpsConsolePage()),
     ),
     HomeToolEntry(
       id: 'daily-habits',

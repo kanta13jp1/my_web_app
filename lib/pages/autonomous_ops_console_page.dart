@@ -70,7 +70,8 @@ class _OpsTask {
 
 // ── 活動ログ ────────────────────────────────────────────────
 class _Activity {
-  const _Activity({required this.text, required this.time, required this.color});
+  const _Activity(
+      {required this.text, required this.time, required this.color});
 
   final String text;
   final String time;
@@ -187,19 +188,36 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
     // 初期配置 (スクリーンショットに近い状態)。
     _addTask('経理', '請求書PDFの自動仕分け', 67000, _Lane.backlog);
     _addTask('マーケ', 'LP見出しのA/Bテスト集計', 63000, _Lane.backlog);
-    _addTask('分析', '翌月の需要予測モデル更新', 70000, _Lane.progress,
-        agent: _agents[2]);
-    _addTask('経理', '未入金アラートの送付準備', 45000, _Lane.progress,
-        agent: _agents[3]);
-    _addTask('開発', 'セキュリティパッチの適用確認', 31000, _Lane.progress,
-        agent: _agents[1]);
+    _addTask(
+      '分析',
+      '翌月の需要予測モデル更新',
+      70000,
+      _Lane.progress,
+      agent: _agents[2],
+    );
+    _addTask(
+      '経理',
+      '未入金アラートの送付準備',
+      45000,
+      _Lane.progress,
+      agent: _agents[3],
+    );
+    _addTask(
+      '開発',
+      'セキュリティパッチの適用確認',
+      31000,
+      _Lane.progress,
+      agent: _agents[1],
+    );
     _addTask('業務', '障害レポートの自動要約', 55000, _Lane.review, agent: _agents[4]);
     _addTask('マーケ', 'LP見出しのA/Bテスト集計', 136000, _Lane.done);
     _addTask('分析', '解約リスクスコアの再計算', 25000, _Lane.done);
     _addTask('マーケ', '競合価格の巡回モニタリング', 54000, _Lane.done);
 
-    _log('自律モード LEVEL 3 で稼働中 — 人間の承認は不要です',
-        const Color(0xFF9E9E9E));
+    _log(
+      '自律モード LEVEL 3 で稼働中 — 人間の承認は不要です',
+      const Color(0xFF9E9E9E),
+    );
   }
 
   _OpsTask _addTask(
@@ -263,13 +281,14 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
       final tpl = _templates[_rand.nextInt(_templates.length)];
       final value = (2 + _rand.nextInt(14)) * 10000 + _rand.nextInt(10) * 1000;
       _addTask(tpl[0], tpl[1], value, _Lane.backlog);
-      _log('新規タスク「${tpl[1]}」がバックログに追加',
-          const Color(0xFF9E9E9E));
+      _log(
+        '新規タスク「${tpl[1]}」がバックログに追加',
+        const Color(0xFF9E9E9E),
+      );
     }
 
     // KPI のゆらぎ。
-    _slaCompliance =
-        (98.6 + _rand.nextDouble() * 1.3).clamp(97.0, 99.9);
+    _slaCompliance = (98.6 + _rand.nextDouble() * 1.3).clamp(97.0, 99.9);
     _throughput = (36 + _rand.nextDouble() * 16);
     _throughputHistory.add(_throughput);
     if (_throughputHistory.length > 40) _throughputHistory.removeAt(0);
@@ -333,19 +352,22 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
       appBar: AppBar(
         backgroundColor: DesignTokens.background,
         elevation: 0,
-        title: Row(
+        title: const Row(
           children: [
-            const Icon(Icons.auto_awesome_motion,
-                color: DesignTokens.orange, size: 20),
-            const SizedBox(width: DesignTokens.space8),
-            const Text(
+            Icon(
+              Icons.auto_awesome_motion,
+              color: DesignTokens.orange,
+              size: 20,
+            ),
+            SizedBox(width: DesignTokens.space8),
+            Text(
               'OMOCHA WORKS',
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.5,
               ),
             ),
-            const SizedBox(width: DesignTokens.space8),
+            SizedBox(width: DesignTokens.space8),
             Flexible(
               child: Text(
                 '自律オペレーションコンソール',
@@ -503,7 +525,9 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
         Text(
           '$label ',
           style: const TextStyle(
-              fontSize: 11, color: DesignTokens.textTertiary),
+            fontSize: 11,
+            color: DesignTokens.textTertiary,
+          ),
         ),
         Text(
           value,
@@ -520,14 +544,34 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
 
   Widget _buildKpiRow(bool wide) {
     final cards = <Widget>[
-      _kpiCard('本日の完了タスク', '$_completedToday', '件', '+11%',
-          DesignTokens.orange),
-      _kpiCard('自動化された作業時間', _automatedHours.toStringAsFixed(1), 'h',
-          '+17%', DesignTokens.indigoLight),
-      _kpiCard('売上インパクト', _fmtYen(_revenueImpact), '', '+18%',
-          DesignTokens.green),
-      _kpiCard('SLA遵守率', _slaCompliance.toStringAsFixed(1), '%', '+0.3pt',
-          const Color(0xFF26C6DA)),
+      _kpiCard(
+        '本日の完了タスク',
+        '$_completedToday',
+        '件',
+        '+11%',
+        DesignTokens.orange,
+      ),
+      _kpiCard(
+        '自動化された作業時間',
+        _automatedHours.toStringAsFixed(1),
+        'h',
+        '+17%',
+        DesignTokens.indigoLight,
+      ),
+      _kpiCard(
+        '売上インパクト',
+        _fmtYen(_revenueImpact),
+        '',
+        '+18%',
+        DesignTokens.green,
+      ),
+      _kpiCard(
+        'SLA遵守率',
+        _slaCompliance.toStringAsFixed(1),
+        '%',
+        '+0.3pt',
+        const Color(0xFF26C6DA),
+      ),
     ];
     if (wide) {
       return Row(
@@ -552,7 +596,12 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
   }
 
   Widget _kpiCard(
-      String label, String value, String unit, String delta, Color color) {
+    String label,
+    String value,
+    String unit,
+    String delta,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space16),
       decoration: _cardDecoration,
@@ -570,7 +619,8 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
                   ),
                 ),
               ),
-              Icon(Icons.arrow_drop_up, size: 16, color: DesignTokens.green),
+              const Icon(Icons.arrow_drop_up,
+                  size: 16, color: DesignTokens.green),
               Text(
                 delta,
                 style: const TextStyle(
@@ -639,8 +689,11 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
                 ),
               ),
               const Spacer(),
-              _pill('${_agents.length} 稼働中', DesignTokens.green,
-                  filled: true),
+              _pill(
+                '${_agents.length} 稼働中',
+                DesignTokens.green,
+                filled: true,
+              ),
             ],
           ),
           const SizedBox(height: DesignTokens.space12),
@@ -653,9 +706,11 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
   Widget _agentTile(_OpsAgent agent) {
     // このエージェントが今どのタスクに着手しているか。
     final active = _tasks
-        .where((t) =>
-            t.agent == agent &&
-            (t.lane == _Lane.progress || t.lane == _Lane.review))
+        .where(
+          (t) =>
+              t.agent == agent &&
+              (t.lane == _Lane.progress || t.lane == _Lane.review),
+        )
         .toList();
     final statusText = active.isEmpty
         ? '待機中'
@@ -690,7 +745,9 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
                       color: DesignTokens.green,
                       shape: BoxShape.circle,
                       border: Border.all(
-                          color: DesignTokens.surface1, width: 1.5),
+                        color: DesignTokens.surface1,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -741,7 +798,7 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
   }
 
   Widget _buildBoard(bool wide) {
-    final lanes = _Lane.values;
+    const lanes = _Lane.values;
     if (wide) {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -778,7 +835,9 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(
-                horizontal: 4, vertical: DesignTokens.space4),
+              horizontal: 4,
+              vertical: DesignTokens.space4,
+            ),
             child: Row(
               children: [
                 Text(
@@ -812,8 +871,8 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
           ),
           const SizedBox(height: DesignTokens.space4),
           if (items.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: DesignTokens.space16),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: DesignTokens.space16),
               child: Text(
                 '—',
                 textAlign: TextAlign.center,
@@ -848,8 +907,7 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(
                   color: deptColor.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(4),
@@ -865,11 +923,17 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
               ),
               const Spacer(),
               if (lane == _Lane.done)
-                const Icon(Icons.check_circle,
-                    size: 14, color: DesignTokens.green),
+                const Icon(
+                  Icons.check_circle,
+                  size: 14,
+                  color: DesignTokens.green,
+                ),
               if (lane == _Lane.review)
-                const Icon(Icons.drag_indicator,
-                    size: 14, color: DesignTokens.indigoLight),
+                const Icon(
+                  Icons.drag_indicator,
+                  size: 14,
+                  color: DesignTokens.indigoLight,
+                ),
             ],
           ),
           const SizedBox(height: 6),
@@ -911,8 +975,7 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
             Align(
               alignment: Alignment.centerLeft,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
                   color: task.agent!.color.withValues(alpha: 0.16),
                   borderRadius:
@@ -941,9 +1004,9 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Text(
+              Text(
                 'アクティビティ',
                 style: TextStyle(
                   fontSize: 13,
@@ -951,9 +1014,9 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
                   color: DesignTokens.textPrimary,
                 ),
               ),
-              const Spacer(),
+              Spacer(),
               Icon(Icons.circle, size: 8, color: DesignTokens.red),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               Text(
                 'LIVE',
                 style: TextStyle(
@@ -1054,7 +1117,9 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
               Text(
                 label,
                 style: const TextStyle(
-                    fontSize: 12, color: DesignTokens.textSecondary),
+                  fontSize: 12,
+                  color: DesignTokens.textSecondary,
+                ),
               ),
               const Spacer(),
               Text(
