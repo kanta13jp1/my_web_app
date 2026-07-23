@@ -99,6 +99,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   // R34: edge の total (limit 前の総数) を status 別に保持。空なら「N件以上」表示。
   Map<String, int> _xCandidateTotals = const <String, int>{};
   final Set<String> _xCandidatePublishing = <String>{};
+  // #4080: 鮮度切れ一括却下の実行中フラグ (二重送信防止)。
+  bool _xCandidateRejecting = false;
   bool _isLoading = true;
   WeeklyDigestSnapshot _weeklyDigest = const WeeklyDigestSnapshot.empty();
   // R18: fetch 完了フラグ。empty() のままか、完了して空かを区別し、静かに失敗/空の
@@ -374,51 +376,124 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   /// degrade して panel ごと消す(ダッシュボードは必ず描画する)。
   Future<XCandidateQueueSnapshot> _loadXCandidateQueue() async {
     const statuses = ['pending_approval', 'approved', 'publish_failed'];
-    final results = await Future.wait(
-      statuses.map((status) async {
-        try {
-          final res = await _supabase.functions.invoke(
-            'growth-hub',
-            body: {
-              'action': 'x.candidate.list',
-              'status': status,
-              // R32: ヘッダの「N件以上」判定と同じ定数を使う (両者が drift すると
-              // 上限到達を検出できず backlog を過小表示する)。
-              'limit': kXCandidateStatusFetchLimit,
-            },
-          );
-          final data = res.data;
-          if (data is Map && data['success'] == true) {
+    // #4080: statuses[] を渡して 1 往復にまとめる (従来は status ごとに 3 往復
+    // + それぞれに CORS preflight)。edge 側は per-status limit を維持するので
+    // 上記 F2 の窓圧迫は起きない。
+    final byStatus = <String, XCandidateStatusPage>{};
+    try {
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.candidate.list',
+          'statuses': statuses,
+          // R32: ヘッダの「N件以上」判定と同じ定数を使う (両者が drift すると
+          // 上限到達を検出できず backlog を過小表示する)。
+          'limit': kXCandidateStatusFetchLimit,
+        },
+      );
+      final data = res.data;
+      if (data is Map && data['success'] == true && data['byStatus'] is Map) {
+        final raw = Map<String, dynamic>.from(data['byStatus'] as Map);
+        for (final status in statuses) {
+          final entry = raw[status];
+          if (entry is Map) {
             // R34: edge の total (limit 前の総数) を拾う。返さない場合は null の
             // まま = ヘッダは「N件以上」へ degrade。
-            final rawTotal = data['total'];
-            final total = rawTotal is num ? rawTotal.toInt() : null;
-            return (
-              status: status,
-              candidates: parseXPostCandidates(data['candidates']),
-              total: total,
+            final rawTotal = entry['total'];
+            byStatus[status] = XCandidateStatusPage(
+              candidates: parseXPostCandidates(entry['candidates']),
+              total: rawTotal is num ? rawTotal.toInt() : null,
             );
           }
-        } catch (error) {
-          debugPrint('x.candidate.list($status) unavailable: $error');
         }
-        return (
-          status: status,
-          candidates: const <XPostCandidateSummary>[],
-          total: null,
-        );
-      }),
-    );
+      }
+    } catch (error) {
+      debugPrint('x.candidate.list(batch) unavailable: $error');
+    }
     final totals = <String, int>{
-      for (final result in results)
-        if (result.total != null) result.status: result.total!,
+      for (final entry in byStatus.entries)
+        if (entry.value.total != null) entry.key: entry.value.total!,
     };
     return XCandidateQueueSnapshot(
-      candidates: mergeCandidateSummaries(
-        results.map((result) => result.candidates).toList(),
-      ),
+      candidates: mergeCandidateSummaries([
+        for (final status in statuses)
+          byStatus[status]?.candidates ?? const <XPostCandidateSummary>[],
+      ]),
       totalsByStatus: totals,
     );
+  }
+
+  /// #4080: 鮮度切れ候補をまとめて却下する。鮮度切れは「承認して投稿」が
+  /// 既に無効化されている(古いニュースの誤公開防止)ため、そのままだと
+  /// キューに残り続けて本当に見るべき候補を埋没させる。終端 status
+  /// 'rejected' へ落として一覧から外す。
+  Future<void> _rejectStaleXCandidates(
+    List<XPostCandidateSummary> staleCandidates,
+  ) async {
+    if (staleCandidates.isEmpty || _xCandidateRejecting) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('鮮度切れ候補をまとめて却下'),
+        content: Text(
+          '${staleCandidates.length}件を却下します。'
+          '却下した候補は投稿できなくなります(一覧からは消えます)。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('却下する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _xCandidateRejecting = true);
+    try {
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.candidate.reject',
+          'candidateIds': staleCandidates.map((c) => c.id).toList(),
+          'reason': 'freshness_expired',
+        },
+      );
+      final data = res.data;
+      final rejected = data is Map && data['rejected'] is List
+          ? (data['rejected'] as List).length
+          : 0;
+      final failures = data is Map && data['failures'] is List
+          ? (data['failures'] as List).length
+          : 0;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            failures > 0
+                ? '$rejected件を却下しました($failures件は失敗)'
+                : '$rejected件を却下しました',
+          ),
+        ),
+      );
+      final refreshed = await _loadXCandidateQueue();
+      if (mounted) {
+        setState(() {
+          _xCandidates = refreshed.candidates;
+          _xCandidateTotals = refreshed.totalsByStatus;
+        });
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('却下に失敗しました: $error')));
+    } finally {
+      if (mounted) setState(() => _xCandidateRejecting = false);
+    }
   }
 
   /// R26: 候補を承認→投稿→確定する HITL フロー。無審査自動投稿はしない
@@ -6539,6 +6614,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildXCandidateQueueSection() {
     if (_xCandidates.isEmpty) return const SizedBox.shrink();
     final theme = Theme.of(context);
+    // #4080: 鮮度切れ候補は「承認して投稿」が無効化済み = キューに滞留して
+    // 見るべき候補を埋没させる。まとめて終端 status へ落とせるようにする。
+    final now = DateTime.now();
+    final staleCandidates = _xCandidates
+        .where((candidate) => isCandidateExpired(candidate, now))
+        .toList(growable: false);
     return Padding(
       padding: const EdgeInsets.only(top: 16),
       child: Card(
@@ -6568,6 +6649,23 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     ),
                   ),
+                  if (staleCandidates.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: _xCandidateRejecting
+                          ? null
+                          : () => _rejectStaleXCandidates(staleCandidates),
+                      icon: _xCandidateRejecting
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.block, size: 16),
+                      label: Text('鮮度切れ${staleCandidates.length}件を却下'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFB91C1C),
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: 4),

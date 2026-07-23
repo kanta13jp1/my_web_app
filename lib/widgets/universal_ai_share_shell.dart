@@ -95,6 +95,25 @@ class UniversalAiShareRouteObserver extends NavigatorObserver {
 /// ボタンが押せなくなる (実機 build 4873/4877 で発生)。ツールバー高さぶん下げて
 /// アプリの chrome を塞がないようにする。bottom 配置は元から干渉しない。
 const double kAiShareFabTopOffset = kToolbarHeight + 20;
+const double kAiShareFabDefaultBottomOffset = 20;
+const double kAiShareFabLandingBottomOffset = 88;
+
+bool shouldShowUniversalAiShareFab({
+  required String routePath,
+  required bool isLoggedIn,
+}) {
+  return routePath != '/' || isLoggedIn;
+}
+
+double resolveAiShareFabBottomOffset({
+  required String routePath,
+  required double screenWidth,
+}) {
+  final isLandingMobile = routePath == '/' && screenWidth < 720;
+  return isLandingMobile
+      ? kAiShareFabLandingBottomOffset
+      : kAiShareFabDefaultBottomOffset;
+}
 
 class UniversalAiShareShell extends StatefulWidget {
   final Widget child;
@@ -192,6 +211,10 @@ class _UniversalAiShareShellState extends State<UniversalAiShareShell> {
                   navigatorKey: widget.navigatorKey,
                 ),
               ),
+              bottomOffset: resolveAiShareFabBottomOffset(
+                routePath: page.routePath,
+                screenWidth: MediaQuery.sizeOf(context).width,
+              ),
             );
           },
         );
@@ -199,16 +222,20 @@ class _UniversalAiShareShellState extends State<UniversalAiShareShell> {
     );
   }
 
-  Widget _positionedFab(AiShareButtonPosition position, Widget child) {
+  Widget _positionedFab(
+    AiShareButtonPosition position,
+    Widget child, {
+    required double bottomOffset,
+  }) {
     switch (position) {
       case AiShareButtonPosition.topLeft:
         return Positioned(left: 16, top: kAiShareFabTopOffset, child: child);
       case AiShareButtonPosition.topRight:
         return Positioned(right: 16, top: kAiShareFabTopOffset, child: child);
       case AiShareButtonPosition.bottomLeft:
-        return Positioned(left: 16, bottom: 20, child: child);
+        return Positioned(left: 16, bottom: bottomOffset, child: child);
       case AiShareButtonPosition.bottomRight:
-        return Positioned(right: 16, bottom: 20, child: child);
+        return Positioned(right: 16, bottom: bottomOffset, child: child);
     }
   }
 }
@@ -259,6 +286,13 @@ class _UniversalAiShareFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = _isLoggedIn;
+    if (!shouldShowUniversalAiShareFab(
+      routePath: page.routePath,
+      isLoggedIn: isLoggedIn,
+    )) {
+      return const SizedBox.shrink();
+    }
+
     final colorScheme = Theme.of(context).colorScheme;
     final backgroundColor = isLoggedIn
         ? colorScheme.primaryContainer

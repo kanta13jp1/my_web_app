@@ -33079,3 +33079,98 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
 - 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
 - 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 6 日連続同一制約 / GHA コンテンツ + WebSearch で補完継続 / GitHub auto-review Issues: 0件 / Notion Agents iOS アプリ・GitHub Code Quality GA など主要競合の機能強化を記録
+
+## セッション記録: 日次レポート Schedule 実行 (2026-07-22 00:02 UTC / Claude Schedule)
+
+**実行内容**: 日次レポート Claude Schedule 補足・GHA 生成競合レポート確認・ロードマップ追記
+
+**制約**: Supabase 全エンドポイントがプロキシ policy により 403 (connect_rejected) — **7日連続同一制約** / GHA 生成済みコンテンツ + GitHub MCP で補完継続
+
+**メトリクス** (GHA daily-report.yml / 08:30 JST):
+- 総ユーザー数: **58人** (前日比 +1)
+- 本日の新規機能リクエスト: 0件
+- 未対応機能リクエスト: 131件
+- Workflow failure hygiene: Open 8件 / 平均回復 9.48h / root-cause: deno-lint=150
+
+**GitHub auto-review Issues**: なし (0件)
+
+**競合動向サマリー (GHA 競合レポート 2026-07-22)**:
+- **🔴🔴 Codex `/import` (7-21)**: Claude Code 設定・MCP・plugin・session・commands・project-scoped memories を移行対象に → `cross-instance-pr` 設計前提の消滅 / `memory/` の所属が初めて争点に
+- **🔴 Slack CLI v4.5.0 (7-21)**: Claude Code ユーザーに公式 Slack plugin を推奨 → 「Slack を agent fleet の制御面にする」段階へ進化
+- **🔴 MoneyForward AI Cowork**: 7-22 時点 GA 未達 (7月残り9日 / 自社「6部署×KPI」ナラティブ整備の猶予継続)
+- **🔴 ChatGPT SuperApp**: 7-9 実行済 (Atlas 廃止→ChatGPT Work 吸収 / Codex デスクトップ統合 / Atlas 停止 8-09 effective)
+- **🟠 Claude Code 2.1.217 (7-21)**: worktree 隔離 subagent の共有 checkout 脱出バグ含む — **自社環境 2.1.170 で 2日連続未更新** (最優先)
+
+**更新ドキュメント**:
+- `docs/daily-reports/2026-07-22.md`: Claude Schedule 実行記録セクション追記
+
+**AIアクション提案**:
+1. `cross-instance-pr` プロトコルを「正本規律が差別化」ナラティブへ転換 (Codex /import が状態共有の前提を消したため)
+2. MoneyForward AI Cowork GA watch (7-31 deadline / 出た場合は「6部署×KPI」緊急強化)
+3. Claude Code 2.1.170 → 2.1.217 更新 (worktree 脱出バグ / background session シンボリックリンク正規化 / 本環境全項目該当)
+
+### Philosophy Alignment (Schedule 2026-07-22 00:02 UTC)
+
+- 主要実施: GHA 生成済み日次・競合レポート確認 + 重大シグナル 4件 (Codex/Slack/MF/ChatGPT) 記録 + ロードマップ追記
+- 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
+- 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
+- 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 7日連続同一制約 / GHA コンテンツで補完継続 / Codex /import によりproject-scoped memories の所属が設計上の争点に浮上 / ユーザー数 58人 (前日比 +1) を確認
+
+## 2026-07-21 (Win Claude part342) — tracked 8 ファイル 0 byte 化インシデント対応
+
+**種別**: インシデント対応 (プロダクト変更なし / commit・push なし)
+
+**事象**: main repo (branch `codex/issue-1215-hitl` = foreign WIP) で tracked 8 ファイルが 0 byte 化。`.claude/settings.json` `.claude/commands/wrap-up.md` + workflows `ci.yml` `deploy-prod.yml` `deploy-staging.yml` `claude-session-hygiene-cron.yml` `horse-racing-update.yml` `memory-search-sync.yml`。commit されていれば CI/CD パイプライン全体と Claude の hooks/permissions 設定が消えていた。
+
+**対応**: `git checkout HEAD -- <8 paths>` で 8/8 復元。復元後 `git status` 空 (= clean) / staged なし / settings.json は JSON parse OK / 6 workflow すべて `name:` `jobs:` 健在を検証。Codex の WIP (変更 129・未追跡 131・削除 2) は無傷。
+
+**最大の収穫 — 自動レポートの復元コマンドが誤っていた**: infra-health-check の提示は `git checkout origin/main -- ...` だったが、実測 `git diff HEAD origin/main` = 105 insertions / 50 deletions。実行していれば **main の無関係な変更が Codex の WIP 差分として無言混入**していた。foreign WIP の復元 baseline は **HEAD** が正。
+
+**原因 (第一容疑は特定 / 因果は未証明)**: Windows タスク `JibunKK-InjectRulesAutoSync` (毎日 03:30) が main worktree で branch 無確認の `git pull origin main` を実行し、`2>&1 | Out-Null` で出力破棄・exit code 未記録。truncation (03:30:25.579〜.631 / path sort 順 / 52ms) はタスク実行窓の内側。**ただし git 側に working tree へ書いた痕跡なし** (HEAD reflog 06-27 以降空 / `ORIG_HEAD` 06-28 停止 / 07-21 03:30 に origin/main ref 更新なし) → 断定していない。除外済み: ディスク満杯 (空き 76.9GB) / `pre-compact-backup.ps1` / `sync_inject_rules.py` / 内容ベース選別 (107 workflow 中 6 件のみ・どの marker とも不一致) / 他 worktree (全 15 中 main repo のみ)。
+
+**残課題 (ユーザー判断により未修正)**:
+1. cron 未修正 — 毎日 03:30 に再発しうる。修正案は ①branch ガード ②git の出力と exit code のログ化 ③専用 clean worktree 化
+2. `.github/workflows/feature-releases-sync.yml` が untracked 0 byte 放置 (origin/main には実体あり) → `git add -A` で main の実ワークフローを潰す地雷
+
+### Philosophy Alignment (Win Claude part342)
+
+- 主要実施: 0 byte truncation インシデントの復元 (8 ファイル) + 原因調査 + 再発リスクの明示
+- 該当原則: 1 (CEO 感: 復元 baseline と cron 対処をユーザーが最終決定) / 6 (資本=時間: CI/CD 消失による将来の時間損失を未然に回避) / 7 (資産負債: CI/CD と Claude 設定を資産として復旧し、未修正 cron を負債として明示計上)
+- 整合性スコア: 3/9 ✅ — **ただしインシデント対応のため機能設計向けの判定基準 (3 以下 = 理念ずれ警告) は適用外**。スコアの低さは理念ずれではなく作業種別による非該当。
+- 懸念: 負債 (毎日 03:30 の再発リスク) が未解消のまま残存。次回セッションで cron 修正を最優先候補とする。
+
+## セッション記録: 日次レポート Schedule 実行 (2026-07-23 00:02 UTC / Claude Schedule)
+
+**実行内容**: 日次レポート Claude Schedule 補足・WebSearch 競合インテリジェンス収集・ロードマップ追記
+
+**制約**: Supabase 全エンドポイントがプロキシ policy により 403 (connect_rejected) — **8日連続同一制約** / GHA 生成済みコンテンツ + GitHub MCP + WebSearch で補完継続
+
+**メトリクス** (GHA daily-report.yml / 08:30 JST):
+- 総ユーザー数: **59人** (前日比 +1)
+- 本日の新規機能リクエスト: 0件
+- 未対応機能リクエスト: 131件
+- 直近24h コミット数: 46件
+- Workflow failure hygiene: Open 7件 / 平均回復 9.47h / root-cause: deno-lint=150
+
+**GitHub auto-review Issues**: なし (0件)
+
+**競合動向サマリー (WebSearch 2026-07-23)**:
+- **🔴🔴 Notion 3.6 (7/1)**: Developer Platform 正式公開 (External Agents API α / Notion CLI / Agent SDK / Markdown API)。DB 操作トークン **91% 削減**。HTML blocks 追加 → Notion が「エージェントハブ」化を加速。自社差別化軸の再定義が急務
+- **🔴 GitHub Code Quality GA (7/20)**: 組織全体コード品質スコア API。**GitHub Models 7/30 完全廃止** → AI 大学コンテンツ要修正
+- **🟠 Slack**: AI agent 正式サポート (`slack create agent`) / 新 Block Kit ブロック群 (data-viz / carousel 等) — Slack が「agent fleet 制御面」へ本格移行
+
+**更新ドキュメント**:
+- `docs/daily-reports/2026-07-23.md`: Claude Schedule 実行ログ + 競合情報追記
+- `docs/competitor-reports/2026-07-23.md`: WebSearch 競合インテリジェンス 3社分追記
+
+**AIアクション提案**:
+1. Notion Developer Platform 対抗: 自社 EF を「6部署 AI 役割 API」として公開戦略立案 (正本規律 × CEO 感 の差別化軸維持)
+2. AI 大学の GitHub Models コンテンツ削除 or 代替提示へ更新 (廃止 7/30 deadline)
+3. Slack AI agent 対抗: 自社チャット統合の独自価値 (見栄ガード / 浪費トラッキング / 経営コックピット) を LP に明示
+
+### Philosophy Alignment (Schedule 2026-07-23 00:02 UTC)
+
+- 主要実施: GHA 生成済み日次・競合レポート確認 + WebSearch で Notion/GitHub/Slack 重大シグナル 3件収集 + ロードマップ追記
+- 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
+- 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
+- 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 8日連続同一制約 / ユーザー数 59人 (前日比 +1) 確認 / **Notion Developer Platform 公開**が最大脅威シグナル

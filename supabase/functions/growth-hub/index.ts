@@ -69,6 +69,7 @@ import {
   approveXPostCandidateMetadata,
   buildXPostCandidateMetadata,
   finalizeXPostCandidateMetadata,
+  rejectXPostCandidateMetadata,
   X_POST_CANDIDATE_SOURCE,
 } from "./x_post_candidate.ts";
 import {
@@ -77,6 +78,13 @@ import {
   type RoadmapPlan,
   selectShareableRoadmapPlans,
 } from "./roadmap_share_stats.ts";
+import {
+  DEFAULT_LANDING_TRIAL_MODEL,
+  generateLandingTrialSuggestion,
+  hashLandingTrialClient,
+  LandingTrialInputError,
+  normalizeLandingTrialPrompt,
+} from "./landing_trial.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -88,6 +96,10 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ??
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
+const LANDING_TRIAL_AI_MODEL = Deno.env.get("LANDING_TRIAL_AI_MODEL") ?? "";
+const LANDING_TRIAL_RATE_LIMIT_SALT =
+  Deno.env.get("LANDING_TRIAL_RATE_LIMIT_SALT") ?? SERVICE_ROLE_KEY;
 // x.post 近似重複ガードの調整用 env (未設定時は既定 0.9 / 直近 5 件)。
 const X_DUP_SIMILARITY_THRESHOLD = Deno.env.get("X_DUP_SIMILARITY_THRESHOLD") ??
   null;
@@ -1958,6 +1970,7 @@ serve(async (req: Request) => {
       "acquisition.signal",
       "acquisition.track",
       "acquisition.touchpoint_report",
+      "landing.trial",
       "signup.notify",
     ];
     let userId: string | null = null;
@@ -1967,6 +1980,81 @@ serve(async (req: Request) => {
     }
 
     switch (action) {
+      // ─── Landing AI trial (anonymous, hard-capped server-side) ──────────────
+      case "landing.trial": {
+        let prompt: string;
+        try {
+          prompt = normalizeLandingTrialPrompt(body.prompt);
+        } catch (error) {
+          if (error instanceof LandingTrialInputError) {
+            return json({
+              success: false,
+              error: error.message,
+              canUseInstantPreview: true,
+            }, 400);
+          }
+          throw error;
+        }
+
+        if (
+          !OPENAI_API_KEY || !SERVICE_ROLE_KEY ||
+          !LANDING_TRIAL_RATE_LIMIT_SALT
+        ) {
+          return json({
+            success: false,
+            error: "trial_ai_unavailable",
+            canUseInstantPreview: true,
+          }, 503);
+        }
+
+        const clientHash = await hashLandingTrialClient(
+          req.headers,
+          LANDING_TRIAL_RATE_LIMIT_SALT,
+        );
+        const { data: quotaData, error: quotaError } = await admin.rpc(
+          "claim_landing_trial_ai_quota",
+          { p_client_hash: clientHash },
+        );
+        if (quotaError) {
+          console.error("landing.trial quota claim failed", quotaError.code);
+          return json({
+            success: false,
+            error: "trial_ai_unavailable",
+            canUseInstantPreview: true,
+          }, 503);
+        }
+
+        const quota = (quotaData ?? {}) as Record<string, unknown>;
+        if (quota.allowed !== true) {
+          return json({
+            success: false,
+            error: "trial_quota_exhausted",
+            canUseInstantPreview: true,
+          }, 429);
+        }
+
+        try {
+          const suggestion = await generateLandingTrialSuggestion({
+            apiKey: OPENAI_API_KEY,
+            prompt,
+            model: LANDING_TRIAL_AI_MODEL,
+          });
+          return json({
+            success: true,
+            ...suggestion,
+            model: LANDING_TRIAL_AI_MODEL || DEFAULT_LANDING_TRIAL_MODEL,
+            remainingAttempts: quota.remaining_client,
+          });
+        } catch (error) {
+          console.error("landing.trial provider failed", errorMessage(error));
+          return json({
+            success: false,
+            error: "trial_ai_unavailable",
+            canUseInstantPreview: true,
+          }, 503);
+        }
+      }
+
       // ─── Acquisition ───────────────────────────────────────────────────────
       case "acquisition.get": {
         const items = await listItems(admin, "growth_signal", userId!);
@@ -2612,33 +2700,65 @@ serve(async (req: Request) => {
           Math.min(100, Math.trunc(firstNumber(body.limit) ?? 50)),
         );
         const requestedStatus = firstString(body.status);
+        // #4080: statuses[] を渡すと 1 リクエストで複数 status を返す
+        // (client は従来 3 status を 3 往復していた)。
+        // 🔑 **per-status limit は維持する** — 単一 IN() + 共有 limit にすると
+        // finalized 行が created_at 降順 window を埋めて古い承認待ちを黙って
+        // 押し出す F2 の窓圧迫が status 間で再発する。
+        const rawStatuses = Array.isArray(body.statuses)
+          ? (body.statuses as unknown[]).map((entry) => firstString(entry))
+            .filter(Boolean)
+          : [];
+        const batchStatuses = [...new Set(rawStatuses)].slice(0, 10);
+
         // R34: count:"exact" で「limit で切る前の総数」も返す。従来は limit 件しか
         // 返さないため client 側は上限に達したかしか分からず、承認待ちが 11 件でも
         // 200 件でも「10件以上」としか出せなかった (backlog の規模が掴めない)。
         // source は idx_hub_data_source があり EF は service_role なので、count は
         // x_post_candidate 部分集合への index scan で収まる (agent_memories のような
         // 無索引全表走査にはならない)。
-        let query = admin
-          .from("hub_data")
-          .select("id, metadata, created_at", { count: "exact" })
-          .eq("source", X_POST_CANDIDATE_SOURCE)
-          .order("created_at", { ascending: false })
-          .limit(limit);
-        if (requestedStatus) {
-          query = query.filter(
-            "metadata->>status",
-            "eq",
-            requestedStatus,
+        const runQuery = async (status: string) => {
+          let query = admin
+            .from("hub_data")
+            .select("id, metadata, created_at", { count: "exact" })
+            .eq("source", X_POST_CANDIDATE_SOURCE)
+            .order("created_at", { ascending: false })
+            .limit(limit);
+          if (status) {
+            query = query.filter("metadata->>status", "eq", status);
+          }
+          const { data, error, count } = await query;
+          if (error) throw new Error(error.message);
+          return {
+            candidates: data ?? [],
+            // limit で切る前の総数。取得できないときは null (client は従来の
+            // 「N件以上」表示へ degrade する)。
+            total: typeof count === "number" ? count : null,
+          };
+        };
+
+        if (batchStatuses.length > 0) {
+          const results = await Promise.all(
+            batchStatuses.map(async (status) => ({
+              status,
+              ...(await runQuery(status)),
+            })),
           );
+          const byStatus: Record<string, unknown> = {};
+          for (const result of results) {
+            byStatus[result.status] = {
+              candidates: result.candidates,
+              total: result.total,
+            };
+          }
+          return json({ success: true, byStatus });
         }
-        const { data, error, count } = await query;
-        if (error) throw new Error(error.message);
+
+        const single = await runQuery(requestedStatus);
         return json({
           success: true,
-          candidates: data ?? [],
-          // limit で切る前の総数。取得できないときは null (client は従来の
-          // 「N件以上」表示へ degrade する)。
-          total: typeof count === "number" ? count : null,
+          candidates: single.candidates,
+          total: single.total,
         });
       }
 
@@ -2832,6 +2952,94 @@ serve(async (req: Request) => {
           // the exact whitelisted payload reviewed by the operator.
           postPayload: { ...approved.postPayload, candidateId },
         });
+      }
+
+      case "x.candidate.reject": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        // 単体 (candidateId) と一括 (candidateIds[]) の両対応。UI の
+        // 「鮮度切れをまとめて却下」は後者を使う。
+        const rawIds = Array.isArray(body.candidateIds ?? body.candidate_ids)
+          ? (body.candidateIds ?? body.candidate_ids) as unknown[]
+          : [];
+        const singleId = firstString(body.candidateId, body.candidate_id);
+        const requestedIds = [
+          ...(singleId ? [singleId] : []),
+          ...rawIds.map((entry) => firstString(entry)),
+        ].filter(Boolean);
+        // 重複除去して順序は入力順を維持 (結果の突き合わせを容易にする)。
+        const candidateIds = [...new Set(requestedIds)];
+        if (candidateIds.length === 0) {
+          return json(
+            { success: false, error: "candidateId or candidateIds required" },
+            400,
+          );
+        }
+        if (candidateIds.some((id) => !isUuid(id))) {
+          return json(
+            { success: false, error: "all candidate ids must be uuid" },
+            400,
+          );
+        }
+        // 一括は 1 リクエストあたり 50 件で頭打ち (F2 window 圧迫と
+        // 長時間トランザクションを避ける)。超過は明示エラーで気付かせる。
+        if (candidateIds.length > 50) {
+          return json(
+            { success: false, error: "at most 50 candidate ids per request" },
+            400,
+          );
+        }
+        const rejectedBy = userId === "service_role"
+          ? firstString(body.rejectedBy, body.rejected_by, "service_role")
+          : userId!;
+        const reason = body.reason ?? body.rejectReason ?? body.reject_reason;
+
+        const rejected: string[] = [];
+        const unchanged: string[] = [];
+        const failures: { candidateId: string; error: string }[] = [];
+        for (const candidateId of candidateIds) {
+          try {
+            const { data: candidate, error: candidateError } = await admin
+              .from("hub_data")
+              .select("id, metadata, created_at")
+              .eq("id", candidateId)
+              .eq("source", X_POST_CANDIDATE_SOURCE)
+              .maybeSingle();
+            if (candidateError) throw new Error(candidateError.message);
+            if (!candidate) {
+              failures.push({ candidateId, error: "candidate not found" });
+              continue;
+            }
+            const result = rejectXPostCandidateMetadata(
+              asRecord(candidate.metadata),
+              { actorUserId: userId!, rejectedBy, reason },
+            );
+            if (!result.changed) {
+              // 既に終端 (rejected / rejected_duplicate) = 冪等 no-op。
+              unchanged.push(candidateId);
+              continue;
+            }
+            const { error: updateError } = await admin
+              .from("hub_data")
+              .update({ metadata: result.metadata })
+              .eq("id", candidateId)
+              .eq("source", X_POST_CANDIDATE_SOURCE);
+            if (updateError) throw new Error(updateError.message);
+            rejected.push(candidateId);
+          } catch (error) {
+            // 1 件の失敗で残りを巻き添えにしない (一括却下の途中終了防止)。
+            failures.push({ candidateId, error: errorMessage(error) });
+          }
+        }
+        return json({
+          success: failures.length === 0,
+          status: "rejected",
+          requested: candidateIds.length,
+          rejected,
+          unchanged,
+          failures,
+        }, failures.length > 0 && rejected.length === 0 ? 400 : 200);
       }
 
       case "x.candidate.finalize": {
