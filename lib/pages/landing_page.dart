@@ -278,6 +278,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     return GrowthAcquisitionService.isFirstUserGrowthUri(uri);
   }
 
+  bool get _usesHeroTrial {
+    return _isFirstUserGrowthTraffic || _hypothesisEnabled('h03');
+  }
+
   void _goToAuthenticatedEntry() {
     Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
   }
@@ -1201,7 +1205,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   Widget _buildConversionSequence() {
-    final trialFirst = _hypothesisEnabled('h03');
+    final trialFirst = _usesHeroTrial;
     return Column(
       key: Key(
         trialFirst
@@ -1266,13 +1270,19 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   Widget _buildHeroSection() {
-    final trialFirst = _hypothesisEnabled('h03');
+    final firstUserGrowthMode = _isFirstUserGrowthTraffic;
+    final trialFirst = _usesHeroTrial;
     return _WorkflowLandingHero(
       achievementCount: _achievementCount,
-      showFirstUserGrowthCta: _isFirstUserGrowthTraffic,
+      showFirstUserGrowthCta: firstUserGrowthMode,
       outcomeFirstMessage: _hypothesisEnabled('h01'),
       showRiskReversal: _hypothesisEnabled('h05'),
-      inlineTrial: trialFirst ? _buildTrialSection(heroMode: true) : null,
+      inlineTrial: trialFirst
+          ? _buildTrialSection(
+              heroMode: true,
+              firstUserGrowthMode: firstUserGrowthMode,
+            )
+          : null,
       onGetStarted: _handleHeroSignup,
       onWatchDemo: _scrollToTrialSection,
     );
@@ -3863,7 +3873,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     );
   }
 
-  Widget _buildTrialSection({bool heroMode = false}) {
+  Widget _buildTrialSection({
+    bool heroMode = false,
+    bool firstUserGrowthMode = false,
+  }) {
     final compactHero = heroMode && MediaQuery.sizeOf(context).width < 480;
     return KeyedSubtree(
       key: const Key('landing_trial_section'),
@@ -3881,7 +3894,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                heroMode ? '30秒で試す: いま詰まっていることは？' : 'AIに「今日やる1件」を聞く',
+                firstUserGrowthMode
+                    ? 'Xから来た方へ: まず1タップで結果を見る'
+                    : heroMode
+                        ? '30秒で試す: いま詰まっていることは？'
+                        : 'AIに「今日やる1件」を聞く',
                 style: TextStyle(
                   fontSize: compactHero ? 16 : 18,
                   fontWeight: FontWeight.w800,
@@ -3890,11 +3907,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               ),
               SizedBox(height: compactHero ? 4 : 6),
               Text(
-                compactHero
-                    ? '登録不要。例を押すか1行書くと「今やる1件」を返します。'
-                    : heroMode
-                        ? '登録はまだ不要です。1行書くか、下の例を押すと「今やる1件」を返します。'
-                        : 'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
+                firstUserGrowthMode
+                    ? '入力・登録・カードは不要です。下のボタンだけで「今やる1件」を確認し、役立った時だけ保存できます。'
+                    : compactHero
+                        ? '登録不要。例を押すか1行書くと「今やる1件」を返します。'
+                        : heroMode
+                            ? '登録はまだ不要です。1行書くか、下の例を押すと「今やる1件」を返します。'
+                            : 'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
                 style: TextStyle(
                   color: const Color(0xFF64748B),
                   fontSize: compactHero ? 12 : 14,
@@ -3902,10 +3921,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
               ),
               SizedBox(height: compactHero ? 6 : 12),
-              _buildTrialAnswerPreview(compact: compactHero),
+              _buildTrialAnswerPreview(
+                compact: compactHero,
+                firstUserGrowthMode: firstUserGrowthMode,
+              ),
               SizedBox(height: compactHero ? 8 : 12),
               Text(
-                'ほかの悩みを1タップで試す',
+                firstUserGrowthMode ? '別の悩みで試す' : 'ほかの悩みを1タップで試す',
                 style: TextStyle(
                   color: const Color(0xFF475569),
                   fontSize: compactHero ? 11 : 12,
@@ -4081,7 +4103,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     );
   }
 
-  Widget _buildTrialAnswerPreview({required bool compact}) {
+  Widget _buildTrialAnswerPreview({
+    required bool compact,
+    bool firstUserGrowthMode = false,
+  }) {
     const samplePrompt = '仕事が多すぎて、何から始めるか決められない';
     return Container(
       key: const Key('landing_h11_answer_preview'),
@@ -4132,22 +4157,59 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             ),
           ),
           const SizedBox(height: 8),
-          OutlinedButton.icon(
-            key: const Key('landing_h11_answer_preview_action'),
-            onPressed: _isTrialLoading
-                ? null
-                : () => _runQuickTrialSample(samplePrompt),
-            icon: const Icon(Icons.bolt, size: 17),
-            label: const Text('この例で即試す'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF1F7AE0),
-              minimumSize: Size.fromHeight(compact ? 40 : 44),
-              side: const BorderSide(color: Color(0xFF93C5FD)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+          if (firstUserGrowthMode)
+            FilledButton.icon(
+              key: const Key('first_user_growth_one_tap_trial'),
+              onPressed: _isTrialLoading
+                  ? null
+                  : () => _runQuickTrialSample(samplePrompt),
+              icon: const Icon(Icons.bolt, size: 17),
+              label: const Text('1タップで「今日やる1件」を出す'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF1F7AE0),
+                foregroundColor: Colors.white,
+                minimumSize: Size.fromHeight(compact ? 44 : 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+            )
+          else
+            OutlinedButton.icon(
+              key: const Key('landing_h11_answer_preview_action'),
+              onPressed: _isTrialLoading
+                  ? null
+                  : () => _runQuickTrialSample(samplePrompt),
+              icon: const Icon(Icons.bolt, size: 17),
+              label: const Text('この例で即試す'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF1F7AE0),
+                minimumSize: Size.fromHeight(compact ? 40 : 44),
+                side: const BorderSide(color: Color(0xFF93C5FD)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
               ),
             ),
-          ),
+          if (firstUserGrowthMode) ...[
+            const SizedBox(height: 8),
+            const Wrap(
+              key: Key('first_user_growth_trial_reassurance'),
+              alignment: WrapAlignment.center,
+              spacing: 14,
+              runSpacing: 6,
+              children: [
+                _TrustPoint(
+                  icon: Icons.visibility_outlined,
+                  label: '登録は結果を見てから',
+                ),
+                _TrustPoint(
+                  icon: Icons.credit_card_off_outlined,
+                  label: 'カード不要',
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

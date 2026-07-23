@@ -279,6 +279,108 @@ void main() {
     expect(find.byKey(const Key('landing_h03_auth_before_trial')), findsOne);
   });
 
+  testWidgets(
+    'first-user X traffic gets a one-tap trial before registration',
+    (tester) async {
+      final adapter = await pumpLanding(
+        tester,
+        assignment: _assignment('h03', LandingExperimentVariant.control),
+        landingUri: Uri.parse(
+          'https://example.com/?lp_intent=trial'
+          '&utm_source=x&utm_medium=organic'
+          '&utm_campaign=first_user_growth'
+          '&utm_content=outcome_first_a',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Xから来た方へ: まず1タップで結果を見る'),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('first_user_growth_one_tap_trial')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('first_user_growth_trial_reassurance')),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const Key('first_user_growth_one_tap_trial')),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(adapter.trialRuns, 1);
+      expect(
+        adapter.lastTrialPrompt,
+        '仕事が多すぎて、何から始めるか決められない',
+      );
+      expect(
+        adapter.conversionEvents,
+        contains('lp_exp_h03_control_trial'),
+      );
+      expect(
+        find.byKey(const Key('landing_trial_result_action')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('landing_h04_inline_magic_capture')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('first-user one-tap trial stays in the mobile first viewport', (
+    tester,
+  ) async {
+    const size = Size(390, 844);
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h03', LandingExperimentVariant.control),
+      size: size,
+      landingUri: Uri.parse(
+        'https://example.com/?lp_intent=trial'
+        '&utm_source=x&utm_medium=organic'
+        '&utm_campaign=first_user_growth',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final oneTapButton = find.byKey(
+      const Key('first_user_growth_one_tap_trial'),
+    );
+    expect(oneTapButton, findsOneWidget);
+    final buttonTop = tester.getTopLeft(oneTapButton).dy;
+    final buttonBottom = tester.getBottomLeft(oneTapButton).dy;
+    expect(buttonTop, greaterThanOrEqualTo(0));
+    expect(buttonBottom, lessThanOrEqualTo(size.height));
+  });
+
+  testWidgets('non-campaign traffic keeps the generic one-tap trial', (
+    tester,
+  ) async {
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.treatment),
+      landingUri: Uri.parse('https://example.com/?lp_intent=trial'),
+    );
+
+    expect(
+      find.byKey(const Key('first_user_growth_one_tap_trial')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('first_user_growth_trial_reassurance')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('landing_h11_answer_preview_action')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('H07 renders anonymous-safe public aggregate social proof', (
     tester,
   ) async {
