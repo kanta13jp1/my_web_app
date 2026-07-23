@@ -319,7 +319,10 @@ void main() {
       );
       expect(
         adapter.conversionEvents,
-        contains('lp_exp_h03_control_trial'),
+        containsAll(<String>[
+          'lp_exp_h03_control_hero_cta',
+          'lp_exp_h03_control_trial',
+        ]),
       );
       expect(
         find.byKey(const Key('landing_trial_result_action')),
@@ -400,6 +403,10 @@ void main() {
   testWidgets(
     'public social proof preloads under a deep link while LP analytics stay gated',
     (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(390, 844);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
       final adapter = _LandingAdapter();
       await tester.pumpWidget(
         MaterialApp(
@@ -433,6 +440,19 @@ void main() {
       expect(adapter.socialProofLoads, 1);
       expect(adapter.lpViews, 0);
       expect(adapter.conversionEvents, isEmpty);
+
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      navigator.pop();
+      await tester.pumpAndSettle();
+
+      expect(adapter.lpViews, 1);
+      expect(
+        adapter.conversionEvents,
+        containsAll(<String>[
+          'lp_exp_h07_treatment_view',
+          'lp_exp_h07_treatment_mobile_view',
+        ]),
+      );
     },
   );
 
@@ -666,7 +686,13 @@ void main() {
 
     expect(find.text('確認先を1人決める'), findsOneWidget);
     expect(adapter.lastTrialPrompt, '仕事が多すぎて、何から始めるか決められない');
-    expect(adapter.conversionEvents, contains('lp_exp_h01_treatment_trial'));
+    expect(
+      adapter.conversionEvents,
+      containsAll(<String>[
+        'lp_exp_h01_treatment_hero_cta',
+        'lp_exp_h01_treatment_trial',
+      ]),
+    );
   });
 
   testWidgets('trial provider failure keeps the useful instant result', (
@@ -856,7 +882,49 @@ void main() {
     await tester.pump(const Duration(milliseconds: 350));
     expect(
       adapter.conversionEvents,
-      contains('lp_exp_h09_treatment_sticky_cta'),
+      containsAll(<String>[
+        'lp_exp_h09_treatment_mobile_view',
+        'lp_exp_h09_treatment_sticky_cta',
+      ]),
+    );
+  });
+
+  testWidgets('mobile Magic Link submit records the mobile signup metric', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h09', LandingExperimentVariant.treatment),
+      size: const Size(390, 844),
+    );
+
+    await tester.tap(
+      find.byKey(const Key('landing_h11_answer_preview_action')),
+    );
+    await tester.pump();
+    await tester.pump();
+    await tester.enterText(
+      find.byKey(const Key('landing_h04_inline_email')),
+      'mobile-first-user@example.com',
+    );
+    final magicLinkButton = find.byKey(
+      const Key('landing_h04_inline_magic_link'),
+    );
+    await Scrollable.ensureVisible(
+      tester.element(magicLinkButton),
+      alignment: 0.5,
+    );
+    await tester.pump();
+    await tester.tap(magicLinkButton);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      adapter.conversionEvents,
+      containsAll(<String>[
+        'lp_exp_h09_treatment_mobile_view',
+        'lp_exp_h09_treatment_signup_submit',
+        'lp_exp_h09_treatment_mobile_signup_submit',
+      ]),
     );
   });
 
