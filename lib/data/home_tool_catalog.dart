@@ -9,6 +9,7 @@ import '../pages/abstinence_guard_page.dart';
 import '../pages/sobriety_campaign_page.dart';
 import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
+import '../pages/autonomous_ops_console_page.dart';
 import '../pages/agent_gpa_dashboard_page.dart';
 import '../pages/english_reading_curriculum_page.dart';
 import '../pages/ai_company_builder_page.dart';
@@ -353,6 +354,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       keywords: const <String>['朝会', 'ブリーフィング', '優先順位'],
       onOpen: openMorningBriefing ??
           (context) => _pushPage(context, const MorningBriefingPage()),
+    ),
+    HomeToolEntry(
+      id: 'autonomous-ops-console',
+      sectionId: 'growth',
+      title: '自律オペレーションコンソール',
+      subtitle: 'AIエージェントが自動でタスクをこなす様子を眺める',
+      icon: Icons.auto_awesome_motion,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        'OMOCHA WORKS',
+        '自律',
+        'オペレーション',
+        'エージェント',
+        'カンバン',
+        'ダッシュボード',
+        'autonomous',
+        'ops',
+      ],
+      onOpen: (context) => _pushPage(context, const AutonomousOpsConsolePage()),
     ),
     HomeToolEntry(
       id: 'daily-habits',
