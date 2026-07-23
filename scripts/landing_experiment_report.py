@@ -31,6 +31,11 @@ COUNT_FIELDS = (
     "unique_signup_submits",
     "unique_signup_completes",
     "non_anonymous_signup_completes",
+    "unique_hero_ctas",
+    "unique_intents",
+    "unique_mobile_views",
+    "unique_mobile_signup_submits",
+    "unique_sticky_ctas",
 )
 REPORT_SELECT = ",".join(
     (
@@ -48,6 +53,78 @@ class ReportContractError(ValueError):
 
 
 @dataclass(frozen=True)
+class MetricSpec:
+    key: str
+    label: str
+    numerator_field: str
+    denominator_field: str
+
+
+METRIC_SPECS = {
+    "h01": MetricSpec(
+        "hero_cta_rate",
+        "Hero CTA / view",
+        "unique_hero_ctas",
+        "effective_unique_views",
+    ),
+    "h02": MetricSpec(
+        "trial_start_rate",
+        "Trial / view",
+        "unique_trials",
+        "effective_unique_views",
+    ),
+    "h03": MetricSpec(
+        "signup_submit_rate",
+        "Signup submit / view",
+        "unique_signup_submits",
+        "effective_unique_views",
+    ),
+    "h04": MetricSpec(
+        "signup_submit_rate",
+        "Signup submit / view",
+        "unique_signup_submits",
+        "effective_unique_views",
+    ),
+    "h05": MetricSpec(
+        "hero_cta_rate",
+        "Hero CTA / view",
+        "unique_hero_ctas",
+        "effective_unique_views",
+    ),
+    "h06": MetricSpec(
+        "trial_start_rate",
+        "Trial / view",
+        "unique_trials",
+        "effective_unique_views",
+    ),
+    "h07": MetricSpec(
+        "signup_submit_rate",
+        "Signup submit / view",
+        "unique_signup_submits",
+        "effective_unique_views",
+    ),
+    "h08": MetricSpec(
+        "signup_completion_rate",
+        "Verified signup / signup submit",
+        "non_anonymous_signup_completes",
+        "unique_signup_submits",
+    ),
+    "h09": MetricSpec(
+        "mobile_signup_submit_rate",
+        "Mobile signup submit / mobile view",
+        "unique_mobile_signup_submits",
+        "unique_mobile_views",
+    ),
+    "h10": MetricSpec(
+        "trial_save_rate",
+        "Save CTA / trial",
+        "unique_save_ctas",
+        "unique_trials",
+    ),
+}
+
+
+@dataclass(frozen=True)
 class ArmStats:
     hypothesis_id: str
     variant: str
@@ -57,6 +134,11 @@ class ArmStats:
     unique_signup_submits: int
     unique_signup_completes: int
     non_anonymous_signup_completes: int
+    unique_hero_ctas: int
+    unique_intents: int
+    unique_mobile_views: int
+    unique_mobile_signup_submits: int
+    unique_sticky_ctas: int
     first_event_at: str | None = None
     last_event_at: str | None = None
 
@@ -103,17 +185,6 @@ def validate_arm_rows(rows: Any) -> dict[tuple[str, str], ArmStats]:
             field: _non_negative_int(row.get(field), field, key)
             for field in COUNT_FIELDS
         }
-        for success_field in (
-            "unique_trials",
-            "unique_save_ctas",
-            "unique_signup_submits",
-            "unique_signup_completes",
-            "non_anonymous_signup_completes",
-        ):
-            if counts[success_field] > counts["unique_views"]:
-                raise ReportContractError(
-                    f"{key}: {success_field} cannot exceed unique_views"
-                )
 
         parsed[key] = ArmStats(
             hypothesis_id=hypothesis_id,
@@ -180,22 +251,36 @@ def _arm_report(arm: ArmStats, synthetic_view_offset: int) -> dict[str, Any]:
         raise ReportContractError(
             f"{arm.hypothesis_id}/{arm.variant}: synthetic offset exceeds views"
         )
-    if arm.unique_signup_submits > effective_views:
-        raise ReportContractError(
-            f"{arm.hypothesis_id}/{arm.variant}: submits exceed effective views"
-        )
-    rate = (
-        arm.unique_signup_submits / effective_views
-        if effective_views > 0
-        else 0.0
-    )
-    lower, upper = wilson_interval(arm.unique_signup_submits, effective_views)
     return {
         **asdict(arm),
         "synthetic_view_offset": synthetic_view_offset,
         "effective_unique_views": effective_views,
-        "signup_submit_rate": rate,
-        "signup_submit_wilson_95": {"lower": lower, "upper": upper},
+    }
+
+
+def _with_primary_metric(
+    arm: dict[str, Any],
+    metric: MetricSpec,
+) -> dict[str, Any]:
+    successes = int(arm[metric.numerator_field])
+    denominator = int(arm[metric.denominator_field])
+    contract_valid = successes <= denominator
+    if denominator <= 0:
+        rate = 0.0
+        lower, upper = (0.0, 1.0)
+    elif contract_valid:
+        rate = successes / denominator
+        lower, upper = wilson_interval(successes, denominator)
+    else:
+        rate = None
+        lower, upper = (None, None)
+    return {
+        **arm,
+        "primary_metric_successes": successes,
+        "primary_metric_denominator": denominator,
+        "primary_metric_contract_valid": contract_valid,
+        "primary_rate": rate,
+        "primary_wilson_95": {"lower": lower, "upper": upper},
     }
 
 
@@ -204,7 +289,8 @@ def build_report(
     *,
     synthetic_offsets: dict[tuple[str, str], int] | None = None,
     minimum_views_per_arm: int = 100,
-    minimum_total_signup_submits: int = 10,
+    minimum_metric_denominator_per_arm: int = 20,
+    minimum_total_primary_successes: int = 10,
 ) -> dict[str, Any]:
     if set(arms) != expected_arms():
         raise ReportContractError("build_report requires all 20 validated arms")
@@ -223,38 +309,73 @@ def build_report(
     total_non_anonymous_completes = sum(
         arm.non_anonymous_signup_completes for arm in arms.values()
     )
-    submit_gate_ready = total_signup_submits >= minimum_total_signup_submits
+    global_submit_gate_ready = (
+        total_signup_submits >= minimum_total_primary_successes
+    )
 
     hypotheses: list[dict[str, Any]] = []
     for hypothesis_id in HYPOTHESES:
-        control = arm_reports[(hypothesis_id, "control")]
-        treatment = arm_reports[(hypothesis_id, "treatment")]
+        metric = METRIC_SPECS[hypothesis_id]
+        control = _with_primary_metric(
+            arm_reports[(hypothesis_id, "control")],
+            metric,
+        )
+        treatment = _with_primary_metric(
+            arm_reports[(hypothesis_id, "treatment")],
+            metric,
+        )
         views_ready = (
             control["effective_unique_views"] >= minimum_views_per_arm
             and treatment["effective_unique_views"] >= minimum_views_per_arm
         )
-        control_rate = float(control["signup_submit_rate"])
-        treatment_rate = float(treatment["signup_submit_rate"])
+        denominators_ready = (
+            control["primary_metric_denominator"]
+            >= minimum_metric_denominator_per_arm
+            and treatment["primary_metric_denominator"]
+            >= minimum_metric_denominator_per_arm
+        )
+        total_primary_successes = (
+            control["primary_metric_successes"]
+            + treatment["primary_metric_successes"]
+        )
+        primary_success_gate_ready = (
+            total_primary_successes >= minimum_total_primary_successes
+        )
+        metric_contract_valid = (
+            control["primary_metric_contract_valid"]
+            and treatment["primary_metric_contract_valid"]
+        )
+        control_rate = control["primary_rate"]
+        treatment_rate = treatment["primary_rate"]
         relative_lift = (
             (treatment_rate - control_rate) / control_rate
-            if control_rate > 0.0
+            if control_rate is not None
+            and treatment_rate is not None
+            and control_rate > 0.0
             else None
         )
 
-        if not views_ready or not submit_gate_ready:
-            decision = "insufficient_data"
-        elif relative_lift is None:
-            decision = "inconclusive"
+        if not metric_contract_valid:
+            decision = "invalid_funnel_data"
         elif (
-            relative_lift >= 0.20
-            and treatment["signup_submit_wilson_95"]["lower"]
-            > control["signup_submit_wilson_95"]["upper"]
+            not views_ready
+            or not denominators_ready
+            or not primary_success_gate_ready
+        ):
+            decision = "insufficient_data"
+        elif (
+            treatment_rate > control_rate
+            and (control_rate == 0.0 or relative_lift >= 0.20)
+            and treatment["primary_wilson_95"]["lower"]
+            > control["primary_wilson_95"]["upper"]
         ):
             decision = "treatment_wins"
         elif (
-            relative_lift <= -0.20
-            and control["signup_submit_wilson_95"]["lower"]
-            > treatment["signup_submit_wilson_95"]["upper"]
+            treatment_rate < control_rate
+            and relative_lift is not None
+            and relative_lift <= -0.20
+            and control["primary_wilson_95"]["lower"]
+            > treatment["primary_wilson_95"]["upper"]
         ):
             decision = "control_wins"
         else:
@@ -263,11 +384,15 @@ def build_report(
         hypotheses.append(
             {
                 "hypothesis_id": hypothesis_id,
+                "primary_metric": asdict(metric),
                 "control": control,
                 "treatment": treatment,
-                "relative_signup_submit_lift": relative_lift,
+                "relative_primary_lift": relative_lift,
                 "views_gate_ready": views_ready,
-                "global_signup_submit_gate_ready": submit_gate_ready,
+                "metric_denominator_gate_ready": denominators_ready,
+                "total_primary_successes": total_primary_successes,
+                "primary_success_gate_ready": primary_success_gate_ready,
+                "metric_contract_valid": metric_contract_valid,
                 "decision": decision,
             }
         )
@@ -287,11 +412,14 @@ def build_report(
         },
         "gates": {
             "minimum_views_per_arm": minimum_views_per_arm,
-            "minimum_total_signup_submits": minimum_total_signup_submits,
+            "minimum_metric_denominator_per_arm":
+                minimum_metric_denominator_per_arm,
+            "minimum_total_primary_successes":
+                minimum_total_primary_successes,
             "total_signup_submits": total_signup_submits,
             "total_signup_completes": total_signup_completes,
             "total_non_anonymous_signup_completes": total_non_anonymous_completes,
-            "global_signup_submit_gate_ready": submit_gate_ready,
+            "global_signup_submit_gate_ready": global_submit_gate_ready,
             "auth_and_performance_guardrail": "requires_separate_telemetry",
         },
         "hypotheses": hypotheses,
@@ -299,8 +427,11 @@ def build_report(
 
 
 def _format_rate(arm: dict[str, Any]) -> str:
-    rate = float(arm["signup_submit_rate"]) * 100.0
-    interval = arm["signup_submit_wilson_95"]
+    raw_rate = arm["primary_rate"]
+    if raw_rate is None:
+        return "invalid"
+    rate = float(raw_rate) * 100.0
+    interval = arm["primary_wilson_95"]
     lower = float(interval["lower"]) * 100.0
     upper = float(interval["upper"]) * 100.0
     return f"{rate:.2f}% ({lower:.2f}-{upper:.2f}%)"
@@ -319,30 +450,41 @@ def render_markdown(report: dict[str, Any]) -> str:
         "## Global gates",
         "",
         "- Signup submits: "
-        f"{gates['total_signup_submits']} / "
-        f"{gates['minimum_total_signup_submits']}",
+        f"{gates['total_signup_submits']}",
         f"- Signup completes: {gates['total_signup_completes']}",
         f"- Non-anonymous signup completes: {gates['total_non_anonymous_signup_completes']}",
-        f"- Submit gate ready: {str(gates['global_signup_submit_gate_ready']).lower()}",
+        "- Minimum views per arm: "
+        f"{gates['minimum_views_per_arm']}",
+        "- Minimum primary-metric denominator per arm: "
+        f"{gates['minimum_metric_denominator_per_arm']}",
+        "- Minimum primary successes per hypothesis: "
+        f"{gates['minimum_total_primary_successes']}",
         f"- Auth/performance guardrail: {gates['auth_and_performance_guardrail']}",
         "",
         "## Hypotheses",
         "",
-        "| Hypothesis | C views | T views | C submit CVR (Wilson 95%) | "
-        "T submit CVR (Wilson 95%) | Relative lift | Decision |",
-        "|---|---:|---:|---:|---:|---:|---|",
+        "| Hypothesis | Primary metric | C success/n | T success/n | "
+        "C rate (Wilson 95%) | T rate (Wilson 95%) | Lift | Decision |",
+        "|---|---|---:|---:|---:|---:|---:|---|",
     ]
     for hypothesis in report["hypotheses"]:
         control = hypothesis["control"]
         treatment = hypothesis["treatment"]
-        lift = hypothesis["relative_signup_submit_lift"]
+        lift = hypothesis["relative_primary_lift"]
         lift_text = "n/a" if lift is None else f"{float(lift) * 100.0:.2f}%"
         lines.append(
-            "| {hypothesis} | {control_views} | {treatment_views} | {control_rate} | "
-            "{treatment_rate} | {lift} | {decision} |".format(
+            "| {hypothesis} | {metric} | {control_counts} | {treatment_counts} | "
+            "{control_rate} | {treatment_rate} | {lift} | {decision} |".format(
                 hypothesis=hypothesis["hypothesis_id"].upper(),
-                control_views=control["effective_unique_views"],
-                treatment_views=treatment["effective_unique_views"],
+                metric=hypothesis["primary_metric"]["label"],
+                control_counts=(
+                    f"{control['primary_metric_successes']}/"
+                    f"{control['primary_metric_denominator']}"
+                ),
+                treatment_counts=(
+                    f"{treatment['primary_metric_successes']}/"
+                    f"{treatment['primary_metric_denominator']}"
+                ),
                 control_rate=_format_rate(control),
                 treatment_rate=_format_rate(treatment),
                 lift=lift_text,
@@ -352,8 +494,9 @@ def render_markdown(report: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "A winner is never declared before both arms reach the view gate "
-            "and the global submit gate is ready.",
+            "A winner is never declared before both arms reach the view and "
+            "primary-metric denominator gates, the hypothesis reaches its "
+            "primary-success gate, and the Wilson intervals separate.",
             "",
         ]
     )

@@ -236,6 +236,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       unawaited(widget.adapter.recordLpView());
     }
     unawaited(_recordConversionStage('view'));
+    if (MediaQuery.sizeOf(context).width < 720) {
+      unawaited(_recordConversionStage('mobile_view'));
+    }
     unawaited(_honorLandingIntent());
   }
 
@@ -379,7 +382,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         if (tracksSignup) {
           await _markSignupCompletionPending(email: email);
         }
-        unawaited(_recordConversionStage('signup_submit'));
+        unawaited(_recordSignupSubmitStages());
         unawaited(_acquisitionService.recordLandingSignupSubmit());
         final result = await widget.adapter.signUp(
           email: email,
@@ -426,7 +429,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       if (_analyticsEnabled) {
         await _markSignupCompletionPending();
       }
-      unawaited(_recordConversionStage('signup_submit'));
+      unawaited(_recordSignupSubmitStages());
       unawaited(_acquisitionService.recordLandingSignupSubmit());
       final launched = await widget.adapter.signInWithGoogle(
         redirectTo: _webRedirectUrl,
@@ -470,7 +473,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       if (_analyticsEnabled) {
         await _markSignupCompletionPending(email: email);
       }
-      unawaited(_recordConversionStage('signup_submit'));
+      unawaited(_recordSignupSubmitStages());
       unawaited(_acquisitionService.recordLandingSignupSubmit());
       await widget.adapter.sendMagicLink(
         email: email,
@@ -590,6 +593,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     await _recordConversionStage('trial');
   }
 
+  Future<void> _recordSignupSubmitStages() async {
+    await _recordConversionStage('signup_submit');
+    if (mounted && MediaQuery.sizeOf(context).width < 720) {
+      await _recordConversionStage('mobile_signup_submit');
+    }
+  }
+
   Future<void> _recordSaveStages() async {
     if (_analyticsEnabled) {
       try {
@@ -640,10 +650,21 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     await _sendMagicLink(emailOverride: email);
   }
 
-  void _runQuickTrialSample(String prompt) {
+  void _runQuickTrialSample(
+    String prompt, {
+    bool recordHeroCta = false,
+  }) {
+    if (recordHeroCta) {
+      unawaited(_recordConversionStage('hero_cta'));
+    }
     _trialPromptController
       ..text = prompt
       ..selection = TextSelection.collapsed(offset: prompt.length);
+    unawaited(_runTrialActionPreview());
+  }
+
+  void _runHeroTrialActionPreview() {
+    unawaited(_recordConversionStage('hero_cta'));
     unawaited(_runTrialActionPreview());
   }
 
@@ -3923,6 +3944,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               SizedBox(height: compactHero ? 6 : 12),
               _buildTrialAnswerPreview(
                 compact: compactHero,
+                heroMode: heroMode,
                 firstUserGrowthMode: firstUserGrowthMode,
               ),
               SizedBox(height: compactHero ? 8 : 12),
@@ -3949,7 +3971,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         compactHero ? MaterialTapTargetSize.shrinkWrap : null,
                     onPressed: _isTrialLoading
                         ? null
-                        : () => _runQuickTrialSample('今日の最優先タスクを1件に絞りたい'),
+                        : () => _runQuickTrialSample(
+                              '今日の最優先タスクを1件に絞りたい',
+                              recordHeroCta: heroMode,
+                            ),
                   ),
                   ActionChip(
                     key: const Key('landing_trial_sample_plan'),
@@ -3960,8 +3985,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         compactHero ? MaterialTapTargetSize.shrinkWrap : null,
                     onPressed: _isTrialLoading
                         ? null
-                        : () =>
-                            _runQuickTrialSample('今日1日の計画を立てて、最も重要なことに集中したい'),
+                        : () => _runQuickTrialSample(
+                              '今日1日の計画を立てて、最も重要なことに集中したい',
+                              recordHeroCta: heroMode,
+                            ),
                   ),
                   ActionChip(
                     key: const Key('landing_trial_sample_procrastination'),
@@ -3972,7 +3999,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         compactHero ? MaterialTapTargetSize.shrinkWrap : null,
                     onPressed: _isTrialLoading
                         ? null
-                        : () => _runQuickTrialSample('今いちばん先送りしていることを片付けたい'),
+                        : () => _runQuickTrialSample(
+                              '今いちばん先送りしていることを片付けたい',
+                              recordHeroCta: heroMode,
+                            ),
                   ),
                 ],
               ),
@@ -4001,7 +4031,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         ? 'landing_h03_inline_trial_action'
                         : 'landing_h03_lower_trial_action',
                   ),
-                  onPressed: _isTrialLoading ? null : _runTrialActionPreview,
+                  onPressed: _isTrialLoading
+                      ? null
+                      : heroMode
+                          ? _runHeroTrialActionPreview
+                          : _runTrialActionPreview,
                   icon: const Icon(Icons.play_arrow),
                   label: _isTrialLoading
                       ? const SizedBox(
@@ -4105,6 +4139,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
   Widget _buildTrialAnswerPreview({
     required bool compact,
+    required bool heroMode,
     bool firstUserGrowthMode = false,
   }) {
     const samplePrompt = '仕事が多すぎて、何から始めるか決められない';
@@ -4162,7 +4197,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               key: const Key('first_user_growth_one_tap_trial'),
               onPressed: _isTrialLoading
                   ? null
-                  : () => _runQuickTrialSample(samplePrompt),
+                  : () => _runQuickTrialSample(
+                        samplePrompt,
+                        recordHeroCta: heroMode,
+                      ),
               icon: const Icon(Icons.bolt, size: 17),
               label: const Text('1タップで「今日やる1件」を出す'),
               style: FilledButton.styleFrom(
@@ -4179,7 +4217,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               key: const Key('landing_h11_answer_preview_action'),
               onPressed: _isTrialLoading
                   ? null
-                  : () => _runQuickTrialSample(samplePrompt),
+                  : () => _runQuickTrialSample(
+                        samplePrompt,
+                        recordHeroCta: heroMode,
+                      ),
               icon: const Icon(Icons.bolt, size: 17),
               label: const Text('この例で即試す'),
               style: OutlinedButton.styleFrom(
