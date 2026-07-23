@@ -87,6 +87,21 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   }
 }
 
+class _DelayedExperimentService extends LandingConversionExperimentService {
+  final Future<LandingExperimentAssignment> assignment;
+
+  const _DelayedExperimentService(this.assignment);
+
+  @override
+  Future<LandingExperimentAssignment> resolve({
+    Uri? uri,
+    SharedPreferences? preferences,
+    int? deterministicBucket,
+  }) {
+    return assignment;
+  }
+}
+
 LandingConversionHypothesis _hypothesis(String id) {
   return LandingConversionExperimentService.hypotheses.firstWhere(
     (hypothesis) => hypothesis.id == id,
@@ -103,6 +118,16 @@ LandingExperimentAssignment _assignment(
   );
 }
 
+double _landingScrollOffset(WidgetTester tester) {
+  final pageScrollable = find
+      .descendant(
+        of: find.byType(SingleChildScrollView),
+        matching: find.byType(Scrollable),
+      )
+      .first;
+  return tester.state<ScrollableState>(pageScrollable).position.pixels;
+}
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -110,9 +135,11 @@ void main() {
 
   Future<_LandingAdapter> pumpLanding(
     WidgetTester tester, {
-    required LandingExperimentAssignment assignment,
+    LandingExperimentAssignment? assignment,
     Size size = const Size(1200, 900),
     bool? analyticsEnabled,
+    Uri? landingUri,
+    LandingConversionExperimentService? conversionExperimentService,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
@@ -124,11 +151,14 @@ void main() {
         routes: {'/privacy': (_) => const Scaffold(body: Text('privacy'))},
         home: LandingPage(
           key: ValueKey(
-            '${assignment.hypothesis.id}-${assignment.variant.name}-${size.width}',
+            '${assignment?.hypothesis.id ?? 'async'}-'
+            '${assignment?.variant.name ?? 'pending'}-${size.width}',
           ),
           adapter: adapter,
           experimentAssignment: assignment,
+          conversionExperimentService: conversionExperimentService,
           analyticsEnabled: analyticsEnabled,
+          landingUri: landingUri,
         ),
       ),
     );
@@ -151,6 +181,102 @@ void main() {
       isTrue,
     );
     expect(LandingPage.analyticsEnabledForUri(null), isTrue);
+  });
+
+  test('lp_intent focuses only the explicit trial campaign', () {
+    expect(
+      LandingPage.shouldFocusTrialForUri(
+        Uri.parse('https://example.com/?lp_intent=trial'),
+      ),
+      isTrue,
+    );
+    expect(
+      LandingPage.shouldFocusTrialForUri(
+        Uri.parse('https://example.com/?lp_intent=TRIAL'),
+      ),
+      isTrue,
+    );
+    expect(
+      LandingPage.shouldFocusTrialForUri(
+        Uri.parse('https://example.com/?lp_intent=signup'),
+      ),
+      isFalse,
+    );
+    expect(LandingPage.shouldFocusTrialForUri(null), isFalse);
+  });
+
+  testWidgets(
+    'lp_intent trial brings the promised trial into view for every H03 arm and viewport',
+    (tester) async {
+      for (final size in <Size>[const Size(1200, 900), const Size(390, 844)]) {
+        for (final variant in LandingExperimentVariant.values) {
+          final adapter = await pumpLanding(
+            tester,
+            assignment: _assignment('h03', variant),
+            size: size,
+            landingUri: Uri.parse(
+              'https://example.com/?lp_intent=trial&lp_qa=1',
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          final trialTop = tester
+              .getTopLeft(find.byKey(const Key('landing_trial_section')))
+              .dy;
+          expect(trialTop, lessThan(size.height));
+          expect(trialTop, greaterThanOrEqualTo(0));
+          expect(_landingScrollOffset(tester), greaterThan(0));
+          expect(adapter.lpViews, 0);
+          expect(adapter.conversionEvents, isEmpty);
+        }
+      }
+    },
+  );
+
+  testWidgets(
+    'lp_intent waits for an asynchronous H03 layout before focusing the trial',
+    (tester) async {
+      const size = Size(390, 844);
+      final assignment = Completer<LandingExperimentAssignment>();
+      await pumpLanding(
+        tester,
+        size: size,
+        analyticsEnabled: false,
+        landingUri: Uri.parse(
+          'https://example.com/?lp_intent=trial&lp_qa=1',
+        ),
+        conversionExperimentService: _DelayedExperimentService(
+          assignment.future,
+        ),
+      );
+
+      assignment.complete(
+        _assignment('h03', LandingExperimentVariant.control),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('landing_h03_auth_before_trial')), findsOne);
+      final trialTop =
+          tester.getTopLeft(find.byKey(const Key('landing_trial_section'))).dy;
+      expect(trialTop, inInclusiveRange(0, size.height));
+      expect(_landingScrollOffset(tester), greaterThan(0));
+    },
+  );
+
+  testWidgets('landing without lp_intent keeps the H03 control at the top', (
+    tester,
+  ) async {
+    const size = Size(390, 844);
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h03', LandingExperimentVariant.control),
+      size: size,
+      landingUri: Uri.parse('https://example.com/?lp_qa=1'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(_landingScrollOffset(tester), 0);
+    expect(find.byKey(const Key('landing_h03_auth_before_trial')), findsOne);
   });
 
   testWidgets('H07 renders anonymous-safe public aggregate social proof', (
@@ -386,8 +512,9 @@ void main() {
         contains('lp_exp_h01_treatment_feature_outcome_trial'),
       );
 
-      final toggle =
-          find.byKey(const Key('landing_h15_feature_catalog_toggle'));
+      final toggle = find.byKey(
+        const Key('landing_h15_feature_catalog_toggle'),
+      );
       await Scrollable.ensureVisible(tester.element(toggle), alignment: 0.7);
       await tester.pump();
       await tester.tap(toggle);
@@ -472,9 +599,7 @@ void main() {
       find.byKey(const Key('landing_trial_prompt_input')),
       '家計の固定費が高く、今月どの支出から見直すべきか決められません',
     );
-    await tester.tap(
-      find.byKey(const Key('landing_h03_inline_trial_action')),
-    );
+    await tester.tap(find.byKey(const Key('landing_h03_inline_trial_action')));
     await tester.pump();
     await tester.pump();
 
@@ -684,9 +809,7 @@ void main() {
     final trialAction = find.byKey(
       const Key('landing_h03_inline_trial_action'),
     );
-    final stickyCta = find.byKey(
-      const Key('landing_h09_mobile_sticky_cta'),
-    );
+    final stickyCta = find.byKey(const Key('landing_h09_mobile_sticky_cta'));
     expect(trialAction, findsOneWidget);
     expect(stickyCta, findsOneWidget);
     expect(

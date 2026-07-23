@@ -25,6 +25,7 @@ class LandingPage extends StatefulWidget {
   final PendingLandingTrialService pendingTrialService;
   final LandingExperimentAssignment? experimentAssignment;
   final bool? analyticsEnabled;
+  final Uri? landingUri;
 
   const LandingPage({
     super.key,
@@ -35,6 +36,7 @@ class LandingPage extends StatefulWidget {
     PendingLandingTrialService? pendingTrialService,
     this.experimentAssignment,
     this.analyticsEnabled,
+    this.landingUri,
   })  : adapter = adapter ?? const SupabaseLandingPageAdapter(),
         growthService = growthService ?? const GrowthMissionService(),
         pendingTrialService =
@@ -47,6 +49,11 @@ class LandingPage extends StatefulWidget {
   @visibleForTesting
   static bool analyticsEnabledForUri(Uri? uri) {
     return uri?.queryParameters['lp_qa'] != '1';
+  }
+
+  @visibleForTesting
+  static bool shouldFocusTrialForUri(Uri? uri) {
+    return uri?.queryParameters['lp_intent']?.trim().toLowerCase() == 'trial';
   }
 
   @override
@@ -96,13 +103,16 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   Future<LandingExperimentAssignment>? _experimentBootstrapFuture;
   Future<String>? _experimentVisitorIdFuture;
   final Set<String> _recordedExperimentStages = <String>{};
+  bool _landingIntentHandled = false;
+
+  Uri? get _landingUri => widget.landingUri ?? (kIsWeb ? Uri.base : null);
 
   bool get _analyticsEnabled {
     final override = widget.analyticsEnabled;
     if (override != null) {
       return override;
     }
-    return LandingPage.analyticsEnabledForUri(kIsWeb ? Uri.base : null);
+    return LandingPage.analyticsEnabledForUri(_landingUri);
   }
 
   SupabaseClient? get _supabaseClientOrNull {
@@ -152,7 +162,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
   Future<LandingExperimentAssignment> _loadConversionExperiment() async {
     final assignment = await widget.conversionExperimentService.resolve(
-      uri: kIsWeb ? Uri.base : null,
+      uri: _landingUri,
     );
     if (mounted && _experimentAssignment != assignment) {
       setState(() => _experimentAssignment = assignment);
@@ -226,6 +236,21 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       unawaited(widget.adapter.recordLpView());
     }
     unawaited(_recordConversionStage('view'));
+    unawaited(_honorLandingIntent());
+  }
+
+  Future<void> _honorLandingIntent() async {
+    if (_landingIntentHandled ||
+        !LandingPage.shouldFocusTrialForUri(_landingUri)) {
+      return;
+    }
+    _landingIntentHandled = true;
+
+    // The H03 assignment can move the trial below auth. Wait for that layout
+    // decision before honoring the campaign promise to start with the trial.
+    await _resolveExperimentAssignment();
+    if (!mounted) return;
+    _scheduleTrialSectionScroll();
   }
 
   @override
@@ -248,8 +273,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   bool get _isFirstUserGrowthTraffic {
-    if (!kIsWeb) return false;
-    return GrowthAcquisitionService.isFirstUserGrowthUri(Uri.base);
+    final uri = _landingUri;
+    if (uri == null) return false;
+    return GrowthAcquisitionService.isFirstUserGrowthUri(uri);
   }
 
   void _goToAuthenticatedEntry() {
@@ -618,16 +644,40 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   void _scrollToTrialSection() {
+    final currentContext = _trialSectionKey.currentContext;
+    if (currentContext != null) {
+      unawaited(
+        Scrollable.ensureVisible(
+          currentContext,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOut,
+          alignment: 0.08,
+        ),
+      );
+      return;
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final trialContext = _trialSectionKey.currentContext;
       if (!mounted || trialContext == null) return;
-      Scrollable.ensureVisible(
-        trialContext,
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeOut,
-        alignment: 0.08,
+      unawaited(
+        Scrollable.ensureVisible(
+          trialContext,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOut,
+          alignment: 0.08,
+        ),
       );
     });
+    WidgetsBinding.instance.scheduleFrame();
+  }
+
+  void _scheduleTrialSectionScroll() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _scrollToTrialSection();
+    });
+    WidgetsBinding.instance.scheduleFrame();
   }
 
   void _scrollToAuthSection() {
@@ -793,48 +843,30 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     if (RegExp(
       r'支出|出費|家計|固定費|変動費|予算|浪費|お金|請求|明細|サブスク|収入|貯金|資産|借金|返済|税金|投資|削減',
     ).hasMatch(text)) {
-      return (
-        '先月の明細で最も高い固定費を1件特定',
-        '最大の固定費を先に確認すると、削減効果を比較しやすくなるためです。',
-      );
+      return ('先月の明細で最も高い固定費を1件特定', '最大の固定費を先に確認すると、削減効果を比較しやすくなるためです。');
     }
 
     if (RegExp(r'学習|勉強|英語|読書|復習|試験|資格|暗記|教材|授業').hasMatch(text)) {
-      return (
-        '今日復習する教材を1件開く',
-        '対象を1件に固定すると、短時間でも復習を完了しやすくなるためです。',
-      );
+      return ('今日復習する教材を1件開く', '対象を1件に固定すると、短時間でも復習を完了しやすくなるためです。');
     }
 
     if (RegExp(
       r'LP|ランディング|登録|サインアップ|フォーム|CTA|ボタン|申込|コンバージョン|離脱',
       caseSensitive: false,
     ).hasMatch(text)) {
-      return (
-        '登録ボタン直前の価値説明を1文見直す',
-        '登録後に得られる成果を明確にすると、迷った訪問者が判断しやすくなるためです。',
-      );
+      return ('登録ボタン直前の価値説明を1文見直す', '登録後に得られる成果を明確にすると、迷った訪問者が判断しやすくなるためです。');
     }
 
     if (RegExp(r'健康|運動|睡眠|食事|体重|病院|服薬').hasMatch(text)) {
-      return (
-        '直近の健康記録を1件確認',
-        '最新の状態を1件確認すると、今日変える行動を具体化しやすくなるためです。',
-      );
+      return ('直近の健康記録を1件確認', '最新の状態を1件確認すると、今日変える行動を具体化しやすくなるためです。');
     }
 
     if (RegExp(r'情報整理|ノート|メモ|資料|ファイル|知識|文書').hasMatch(text)) {
-      return (
-        '未整理のメモを1件開き用途を1行追記',
-        '用途を1行で固定すると、残すか行動に変えるかを判断しやすくなるためです。',
-      );
+      return ('未整理のメモを1件開き用途を1行追記', '用途を1行で固定すると、残すか行動に変えるかを判断しやすくなるためです。');
     }
 
     if (RegExp(r'予定|時間|先送り|後回し|着手|集中|習慣').hasMatch(text)) {
-      return (
-        '今日の予定から先送り中の1件を選ぶ',
-        '対象を1件に固定すると、使える時間をその行動に割り当てやすくなるためです。',
-      );
+      return ('今日の予定から先送り中の1件を選ぶ', '対象を1件に固定すると、使える時間をその行動に割り当てやすくなるためです。');
     }
 
     if (text.contains('考える') ||
@@ -3404,9 +3436,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   final willShow = !_showAllUniqueFeatures;
                   setState(() => _showAllUniqueFeatures = willShow);
                   if (willShow) {
-                    unawaited(
-                      _recordConversionStage('feature_catalog_expand'),
-                    );
+                    unawaited(_recordConversionStage('feature_catalog_expand'));
                   }
                 },
                 icon: Icon(
@@ -3901,10 +3931,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   ),
                   ActionChip(
                     key: const Key('landing_trial_sample_plan'),
-                    avatar: Icon(
-                      Icons.event_note,
-                      size: compactHero ? 16 : 18,
-                    ),
+                    avatar: Icon(Icons.event_note, size: compactHero ? 16 : 18),
                     label: Text(compactHero ? '計画' : '今日の計画を立てる'),
                     visualDensity: compactHero ? VisualDensity.compact : null,
                     materialTapTargetSize:
@@ -3939,10 +3966,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   prefixIcon: const Icon(Icons.bolt),
                   isDense: compactHero,
                   contentPadding: compactHero
-                      ? const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        )
+                      ? const EdgeInsets.symmetric(horizontal: 12, vertical: 12)
                       : null,
                 ),
               ),
