@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/landing_page.dart';
 import 'package:my_web_app/services/landing_conversion_experiment_service.dart';
 import 'package:my_web_app/services/landing_page_adapter.dart';
+import 'package:my_web_app/services/landing_signup_completion_service.dart';
 import 'package:my_web_app/services/pending_landing_trial_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -279,6 +280,13 @@ void main() {
 
     expect(adapter.saveCtas, 1);
     expect(adapter.magicLinkEmails, ['first-user@example.com']);
+    final prefs = await SharedPreferences.getInstance();
+    final pendingSignup = prefs.getString(
+      LandingSignupCompletionService.storageKey,
+    );
+    expect(pendingSignup, isNotNull);
+    expect(pendingSignup, contains('lp_exp_h04_treatment_signup_complete'));
+    expect(pendingSignup, contains('first-user@example.com'));
     final pendingTrial = await const PendingLandingTrialService().loadForEmail(
       'first-user@example.com',
     );
