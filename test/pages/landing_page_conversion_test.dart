@@ -7,6 +7,7 @@ import 'package:my_web_app/services/landing_conversion_experiment_service.dart';
 import 'package:my_web_app/services/landing_page_adapter.dart';
 import 'package:my_web_app/services/landing_signup_completion_service.dart';
 import 'package:my_web_app/services/pending_landing_trial_service.dart';
+import 'package:my_web_app/services/route_visibility_observer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -167,6 +168,45 @@ void main() {
     expect(find.text('12'), findsOneWidget);
     expect(find.text('公開メモ数'), findsOneWidget);
   });
+
+  testWidgets(
+    'public social proof preloads under a deep link while LP analytics stay gated',
+    (tester) async {
+      final adapter = _LandingAdapter();
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorObservers: <NavigatorObserver>[
+            deepLinkVisibilityRouteObserver,
+          ],
+          initialRoute: '/privacy',
+          onGenerateRoute: (settings) {
+            if (settings.name == '/privacy') {
+              return MaterialPageRoute<void>(
+                settings: settings,
+                builder: (_) => const Scaffold(body: Text('privacy')),
+              );
+            }
+            return MaterialPageRoute<void>(
+              settings: settings,
+              builder: (_) => LandingPage(
+                adapter: adapter,
+                experimentAssignment: _assignment(
+                  'h07',
+                  LandingExperimentVariant.treatment,
+                ),
+              ),
+            );
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('privacy'), findsOneWidget);
+      expect(adapter.socialProofLoads, 1);
+      expect(adapter.lpViews, 0);
+      expect(adapter.conversionEvents, isEmpty);
+    },
+  );
 
   testWidgets('QA mode preserves the trial but emits no LP analytics', (
     tester,
