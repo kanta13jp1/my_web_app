@@ -22,6 +22,7 @@ class LandingPage extends StatefulWidget {
   final LandingConversionExperimentService conversionExperimentService;
   final PendingLandingTrialService pendingTrialService;
   final LandingExperimentAssignment? experimentAssignment;
+  final bool? analyticsEnabled;
 
   const LandingPage({
     super.key,
@@ -30,12 +31,18 @@ class LandingPage extends StatefulWidget {
     LandingConversionExperimentService? conversionExperimentService,
     PendingLandingTrialService? pendingTrialService,
     this.experimentAssignment,
+    this.analyticsEnabled,
   })  : adapter = adapter ?? const SupabaseLandingPageAdapter(),
         growthService = growthService ?? const GrowthMissionService(),
         pendingTrialService =
             pendingTrialService ?? const PendingLandingTrialService(),
         conversionExperimentService = conversionExperimentService ??
             const LandingConversionExperimentService();
+
+  @visibleForTesting
+  static bool analyticsEnabledForUri(Uri? uri) {
+    return uri?.queryParameters['lp_qa'] != '1';
+  }
 
   @override
   State<LandingPage> createState() => _LandingPageState();
@@ -85,6 +92,14 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   Future<LandingExperimentAssignment>? _experimentBootstrapFuture;
   Future<String>? _experimentVisitorIdFuture;
   final Set<String> _recordedExperimentStages = <String>{};
+
+  bool get _analyticsEnabled {
+    final override = widget.analyticsEnabled;
+    if (override != null) {
+      return override;
+    }
+    return LandingPage.analyticsEnabledForUri(kIsWeb ? Uri.base : null);
+  }
 
   SupabaseClient? get _supabaseClientOrNull {
     try {
@@ -154,6 +169,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   Future<void> _recordConversionStage(String stage) async {
+    if (!_analyticsEnabled) {
+      return;
+    }
     try {
       final assignment = await _resolveExperimentAssignment();
       final visitorId = await _resolveExperimentVisitorId();
@@ -194,7 +212,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     unawaited(_loadAchievementCount());
     unawaited(_loadSocialProofStats());
     // LP View 計測 (今日の登録ファネルの最上段)。失敗は adapter 側で握る。
-    unawaited(widget.adapter.recordLpView());
+    if (_analyticsEnabled) {
+      unawaited(widget.adapter.recordLpView());
+    }
     unawaited(_recordConversionStage('view'));
   }
 
@@ -303,28 +323,15 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   Future<void> _loadSocialProofStats() async {
-    final client = _supabaseClientOrNull;
-    if (client == null) return;
     try {
-      final results = await Future.wait<dynamic>([
-        client.from('user_profiles').select('id').count(CountOption.exact),
-        client
-            .from('public_memos')
-            .select('id')
-            .eq('is_public', true)
-            .count(CountOption.exact),
-      ]);
+      final stats = await widget.adapter.loadSocialProofStats();
       if (!mounted) return;
-      final r0 = results[0];
-      final r1 = results[1];
-      final userCount = r0 is PostgrestResponse ? r0.count : 0;
-      final memoCount = r1 is PostgrestResponse ? r1.count : 0;
       setState(() {
-        _totalUsers = userCount;
-        _publicMemoCount = memoCount;
+        _totalUsers = stats.totalUsers;
+        _publicMemoCount = stats.publicMemoCount;
       });
-    } catch (_) {
-      // Silently ignore
+    } catch (error) {
+      debugPrint('Landing social proof load failed: $error');
     }
   }
 
@@ -500,19 +507,23 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   Future<void> _recordTrialStages() async {
-    try {
-      await widget.adapter.recordTrialRun();
-    } catch (error) {
-      debugPrint('Landing trial analytics failed: $error');
+    if (_analyticsEnabled) {
+      try {
+        await widget.adapter.recordTrialRun();
+      } catch (error) {
+        debugPrint('Landing trial analytics failed: $error');
+      }
     }
     await _recordConversionStage('trial');
   }
 
   Future<void> _recordSaveStages() async {
-    try {
-      await widget.adapter.recordSaveCta();
-    } catch (error) {
-      debugPrint('Landing save analytics failed: $error');
+    if (_analyticsEnabled) {
+      try {
+        await widget.adapter.recordSaveCta();
+      } catch (error) {
+        debugPrint('Landing save analytics failed: $error');
+      }
     }
     await _recordConversionStage('save_cta');
   }
@@ -666,7 +677,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         inboxUri,
         mode: LaunchMode.platformDefault,
       );
-      if (launched) {
+      if (launched && _analyticsEnabled) {
         await widget.adapter.recordInboxOpen();
       }
       if (!launched) {
