@@ -117,9 +117,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
   // 可視化ゲート: 公開メモ等の deep link を直接開くと初期ルート展開で LP が
   // 不可視のまま下に積まれる。その状態で LP View を計上すると「見ていない LP」
-  // が今日の登録ファネル最上段に混入するため、可視になるまで計測・表示用
-  // fetch を遅延する。referral 取り込みは URL 依存 (Uri.base) なので従来どおり
-  // initState で即時に行う。
+  // が今日の登録ファネル最上段に混入するため、可視になるまで計測を遅延する。
+  // 社会的証明は公開集計で、初期ルート判定との競合で欠落させないため先読みする。
   bool _visibleBootstrapDone = false;
 
   @override
@@ -148,6 +147,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       }
     });
     unawaited(_bootstrapReferralInvite());
+    unawaited(_loadSocialProofStats());
   }
 
   Future<LandingExperimentAssignment> _loadConversionExperiment() async {
@@ -221,7 +221,6 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     if (_visibleBootstrapDone) return;
     _visibleBootstrapDone = true;
     unawaited(_loadAchievementCount());
-    unawaited(_loadSocialProofStats());
     // LP View 計測 (今日の登録ファネルの最上段)。失敗は adapter 側で握る。
     if (_analyticsEnabled) {
       unawaited(widget.adapter.recordLpView());
