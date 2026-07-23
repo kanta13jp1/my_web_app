@@ -70,8 +70,11 @@ class _OpsTask {
 
 // ── 活動ログ ────────────────────────────────────────────────
 class _Activity {
-  const _Activity(
-      {required this.text, required this.time, required this.color});
+  const _Activity({
+    required this.text,
+    required this.time,
+    required this.color,
+  });
 
   final String text;
   final String time;
@@ -619,8 +622,11 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
                   ),
                 ),
               ),
-              const Icon(Icons.arrow_drop_up,
-                  size: 16, color: DesignTokens.green),
+              const Icon(
+                Icons.arrow_drop_up,
+                size: 16,
+                color: DesignTokens.green,
+              ),
               Text(
                 delta,
                 style: const TextStyle(
