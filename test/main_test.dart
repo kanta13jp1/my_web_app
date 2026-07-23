@@ -322,7 +322,7 @@ void main() {
       expect(find.byType(LandingPage), findsAtLeastNWidgets(1));
     });
 
-    testWidgets('オンボーディング判定: DBエラー時は HomePage (false) となること',
+    testWidgets('オンボーディング判定: DBエラー時も初回価値導線を表示すること',
         (WidgetTester tester) async {
       // Arrange
       final mockSession = MockSession();
@@ -348,7 +348,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.byType(HomePage), findsOneWidget);
+      expect(find.byType(OnboardingPage), findsOneWidget);
+      expect(find.byType(HomePage), findsNothing);
     });
   });
 }

@@ -416,8 +416,11 @@ class _AuthenticatedHomePageState extends State<_AuthenticatedHomePage> {
       if (response == null) return true;
       final metadata = response['metadata'] as Map<String, dynamic>?;
       return metadata?['onboarding_completed'] != true;
-    } catch (e) {
-      return false;
+    } catch (error) {
+      debugPrint('Onboarding status check failed: $error');
+      // A temporary read failure must not drop a newly registered user into
+      // the full Home surface before they receive the first-value flow.
+      return true;
     }
   }
 

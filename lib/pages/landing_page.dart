@@ -323,28 +323,15 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   Future<void> _loadSocialProofStats() async {
-    final client = _supabaseClientOrNull;
-    if (client == null) return;
     try {
-      final results = await Future.wait<dynamic>([
-        client.from('user_profiles').select('id').count(CountOption.exact),
-        client
-            .from('public_memos')
-            .select('id')
-            .eq('is_public', true)
-            .count(CountOption.exact),
-      ]);
+      final stats = await widget.adapter.loadSocialProofStats();
       if (!mounted) return;
-      final r0 = results[0];
-      final r1 = results[1];
-      final userCount = r0 is PostgrestResponse ? r0.count : 0;
-      final memoCount = r1 is PostgrestResponse ? r1.count : 0;
       setState(() {
-        _totalUsers = userCount;
-        _publicMemoCount = memoCount;
+        _totalUsers = stats.totalUsers;
+        _publicMemoCount = stats.publicMemoCount;
       });
-    } catch (_) {
-      // Silently ignore
+    } catch (error) {
+      debugPrint('Landing social proof load failed: $error');
     }
   }
 
