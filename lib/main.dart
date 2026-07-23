@@ -310,6 +310,7 @@ import 'package:my_web_app/pages/health_check_page.dart';
 import 'package:my_web_app/dev/claude_design/importer_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:my_web_app/services/landing_signup_completion_service.dart';
 import 'package:my_web_app/services/notification_service.dart';
 import 'package:my_web_app/services/theme_service.dart';
 import 'package:my_web_app/widgets/global_header_clock_bar.dart';
@@ -396,7 +397,9 @@ Future<void> _configureStartupNotifications(
 }
 
 class _AuthenticatedHomePage extends StatefulWidget {
-  const _AuthenticatedHomePage();
+  const _AuthenticatedHomePage({required this.signupCompletionService});
+
+  final LandingSignupCompletionService signupCompletionService;
 
   @override
   State<_AuthenticatedHomePage> createState() => _AuthenticatedHomePageState();
@@ -407,8 +410,16 @@ class _AuthenticatedHomePageState extends State<_AuthenticatedHomePage> {
 
   Future<bool> _shouldShowOnboarding() async {
     try {
-      final userId = supabase.auth.currentUser?.id;
+      final user = supabase.auth.currentUser;
+      final userId = user?.id;
       if (userId == null) return false;
+      unawaited(
+        widget.signupCompletionService.completeIfPending(
+          signupUserId: userId,
+          signupEmail: user?.email,
+          accountCreatedAt: DateTime.tryParse(user?.createdAt ?? ''),
+        ),
+      );
       final response = await supabase
           .from('user_stats')
           .select('metadata')
@@ -455,7 +466,12 @@ String _initialRouteName() {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  const MyApp({
+    super.key,
+    this.signupCompletionService = const LandingSignupCompletionService(),
+  });
+
+  final LandingSignupCompletionService signupCompletionService;
 
   static final SentryNavigatorObserver? _sentryNavigatorObserver =
       ErrorReporter.instance.sentryEnabled ? SentryNavigatorObserver() : null;
@@ -557,11 +573,19 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           case '/':
             return MaterialPageRoute(
               builder: (_) => supabase.auth.currentSession != null
-                  ? const _AuthenticatedHomePage()
-                  : const LandingPage(),
+                  ? _AuthenticatedHomePage(
+                      signupCompletionService: widget.signupCompletionService,
+                    )
+                  : LandingPage(
+                      signupCompletionService: widget.signupCompletionService,
+                    ),
             );
           case '/login':
-            return MaterialPageRoute(builder: (_) => const LandingPage());
+            return MaterialPageRoute(
+              builder: (_) => LandingPage(
+                signupCompletionService: widget.signupCompletionService,
+              ),
+            );
           case '/home':
             return MaterialPageRoute(builder: (_) => const HomePage());
           case '/agents':
@@ -822,7 +846,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           case '/u':
             final userId = uri.queryParameters['id'] ?? '';
             if (userId.isEmpty) {
-              return MaterialPageRoute(builder: (_) => const LandingPage());
+              return MaterialPageRoute(
+                builder: (_) => LandingPage(
+                  signupCompletionService: widget.signupCompletionService,
+                ),
+              );
             }
             return MaterialPageRoute(
               builder: (_) => PublicProfilePage(userId: userId),
@@ -1723,7 +1751,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 settings: settings,
               );
             }
-            return MaterialPageRoute(builder: (_) => const LandingPage());
+            return MaterialPageRoute(
+              builder: (_) => LandingPage(
+                signupCompletionService: widget.signupCompletionService,
+              ),
+            );
         }
       },
     );

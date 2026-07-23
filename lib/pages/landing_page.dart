@@ -10,6 +10,7 @@ import '../services/growth_acquisition_service.dart';
 import '../services/growth_mission_service.dart';
 import '../services/landing_conversion_experiment_service.dart';
 import '../services/landing_page_adapter.dart';
+import '../services/landing_signup_completion_service.dart';
 import '../services/pending_landing_trial_service.dart';
 import '../services/route_visibility_observer.dart';
 import '../widgets/live_growth_banner.dart';
@@ -20,6 +21,7 @@ class LandingPage extends StatefulWidget {
   final LandingPageAdapter adapter;
   final GrowthMissionService growthService;
   final LandingConversionExperimentService conversionExperimentService;
+  final LandingSignupCompletionService signupCompletionService;
   final PendingLandingTrialService pendingTrialService;
   final LandingExperimentAssignment? experimentAssignment;
   final bool? analyticsEnabled;
@@ -29,6 +31,7 @@ class LandingPage extends StatefulWidget {
     LandingPageAdapter? adapter,
     GrowthMissionService? growthService,
     LandingConversionExperimentService? conversionExperimentService,
+    LandingSignupCompletionService? signupCompletionService,
     PendingLandingTrialService? pendingTrialService,
     this.experimentAssignment,
     this.analyticsEnabled,
@@ -36,6 +39,8 @@ class LandingPage extends StatefulWidget {
         growthService = growthService ?? const GrowthMissionService(),
         pendingTrialService =
             pendingTrialService ?? const PendingLandingTrialService(),
+        signupCompletionService =
+            signupCompletionService ?? const LandingSignupCompletionService(),
         conversionExperimentService = conversionExperimentService ??
             const LandingConversionExperimentService();
 
@@ -67,7 +72,6 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
   StreamSubscription<AuthState>? _authSubscription;
   Timer? _magicLinkCooldownTimer;
-  final Set<String> _signupNotificationUserIds = <String>{};
 
   bool _isLoading = false;
   bool _isTrialLoading = false;
@@ -130,8 +134,15 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     _authSubscription = widget.adapter.authStateChanges().listen((data) {
       if (!mounted) return;
       if (data.event == AuthChangeEvent.signedIn && data.session != null) {
-        unawaited(_recordConversionStage('signup_complete'));
-        unawaited(_notifySignupIfPossible(data.session?.user.id));
+        unawaited(
+          widget.signupCompletionService.completeIfPending(
+            signupUserId: data.session?.user.id,
+            signupEmail: data.session?.user.email,
+            accountCreatedAt: DateTime.tryParse(
+              data.session?.user.createdAt ?? '',
+            ),
+          ),
+        );
         unawaited(widget.growthService.applyPendingReferralIfPossible());
         _goToAuthenticatedEntry();
       }
@@ -246,17 +257,6 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
   }
 
-  Future<void> _notifySignupIfPossible(String? signupUserId) async {
-    final userId = signupUserId?.trim();
-    if (userId == null || userId.isEmpty) {
-      return;
-    }
-    if (!_signupNotificationUserIds.add(userId)) {
-      return;
-    }
-    await _acquisitionService.notifySignupSuccess(signupUserId: userId);
-  }
-
   Future<void> _bootstrapReferralInvite() async {
     await widget.growthService.capturePendingReferralFromUri();
     final pendingReferralCode =
@@ -344,8 +344,12 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     }
 
     setState(() => _isLoading = true);
+    final tracksSignup = _isSignUp && _analyticsEnabled;
     try {
       if (_isSignUp) {
+        if (tracksSignup) {
+          await _markSignupCompletionPending(email: email);
+        }
         unawaited(_recordConversionStage('signup_submit'));
         unawaited(_acquisitionService.recordLandingSignupSubmit());
         final result = await widget.adapter.signUp(
@@ -353,7 +357,6 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           password: password,
           emailRedirectTo: _webRedirectUrl,
         );
-        unawaited(_notifySignupIfPossible(result.user?.id));
         if (!mounted) return;
         if (result.session == null) {
           _showMessage('確認メールを送信しました。メール内のリンクから登録を完了してください。');
@@ -365,8 +368,14 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         );
       }
     } on LandingPageAuthUnavailableException {
+      if (tracksSignup) {
+        await widget.signupCompletionService.cancelPending(email: email);
+      }
       _showMessage('認証機能を初期化できませんでした。');
     } catch (error) {
+      if (tracksSignup) {
+        await widget.signupCompletionService.cancelPending(email: email);
+      }
       _showMessage(_resolveEmailAuthError(error));
     } finally {
       if (mounted) {
@@ -385,17 +394,29 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
     setState(() => _isLoading = true);
     try {
+      if (_analyticsEnabled) {
+        await _markSignupCompletionPending();
+      }
       unawaited(_recordConversionStage('signup_submit'));
       unawaited(_acquisitionService.recordLandingSignupSubmit());
       final launched = await widget.adapter.signInWithGoogle(
         redirectTo: _webRedirectUrl,
       );
       if (!launched) {
+        if (_analyticsEnabled) {
+          await widget.signupCompletionService.cancelPending();
+        }
         _showMessage('Googleログイン画面を開けませんでした。再読み込みしてから再実行してください。');
       }
     } on LandingPageAuthUnavailableException {
+      if (_analyticsEnabled) {
+        await widget.signupCompletionService.cancelPending();
+      }
       _showMessage('認証機能を初期化できませんでした。');
     } catch (error) {
+      if (_analyticsEnabled) {
+        await widget.signupCompletionService.cancelPending();
+      }
       _showMessage(_resolveGoogleAuthError(error));
     } finally {
       if (mounted) {
@@ -417,6 +438,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
     setState(() => _isLoading = true);
     try {
+      if (_analyticsEnabled) {
+        await _markSignupCompletionPending(email: email);
+      }
       unawaited(_recordConversionStage('signup_submit'));
       unawaited(_acquisitionService.recordLandingSignupSubmit());
       await widget.adapter.sendMagicLink(
@@ -433,8 +457,14 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       _startMagicLinkCooldown();
       _showMessage('Magic Link を送信しました。メール内のリンクからそのまま開始できます。');
     } on LandingPageAuthUnavailableException {
+      if (_analyticsEnabled) {
+        await widget.signupCompletionService.cancelPending(email: email);
+      }
       _showMessage('認証機能を初期化できませんでした。');
     } catch (error) {
+      if (_analyticsEnabled) {
+        await widget.signupCompletionService.cancelPending(email: email);
+      }
       if (mounted) {
         setState(() => _showInboxShortcut = false);
       }
@@ -443,6 +473,20 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _markSignupCompletionPending({String? email}) async {
+    try {
+      final assignment = await _resolveExperimentAssignment();
+      final visitorId = await _resolveExperimentVisitorId();
+      await widget.signupCompletionService.markPending(
+        email: email,
+        eventKey: assignment.eventKey('signup_complete'),
+        visitorId: visitorId,
+      );
+    } catch (error) {
+      debugPrint('Landing signup completion attribution failed: $error');
     }
   }
 

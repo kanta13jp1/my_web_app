@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_web_app/main.dart';
 import 'package:my_web_app/services/theme_service.dart';
+import 'package:my_web_app/services/landing_signup_completion_service.dart';
 import 'package:my_web_app/pages/home_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
 import 'package:my_web_app/pages/onboarding_page.dart';
@@ -43,6 +44,24 @@ class FakePostgrestTransformBuilder<T> extends Fake
     Function? onError,
   }) async {
     return onValue(_value);
+  }
+}
+
+class _SignupCompletionRecorder extends LandingSignupCompletionService {
+  _SignupCompletionRecorder();
+
+  final List<(String?, String?, DateTime?)> calls =
+      <(String?, String?, DateTime?)>[];
+
+  @override
+  Future<bool> completeIfPending({
+    required String? signupUserId,
+    String? signupEmail,
+    DateTime? accountCreatedAt,
+    SharedPreferences? preferences,
+  }) async {
+    calls.add((signupUserId, signupEmail, accountCreatedAt));
+    return true;
   }
 }
 
@@ -104,6 +123,9 @@ void main() {
       when(mockGoTrueClient.currentSession).thenReturn(mockSession);
       when(mockGoTrueClient.currentUser).thenReturn(mockUser);
       when(mockUser.id).thenReturn('test-user-id');
+      when(mockUser.email).thenReturn('new-user@example.com');
+      when(mockUser.createdAt).thenReturn('2026-07-23T01:00:02Z');
+      final signupCompletion = _SignupCompletionRecorder();
 
       // DB呼び出しのモック: user_stats が存在しない (null) -> オンボーディング表示
       final mockQueryBuilder = MockSupabaseQueryBuilder();
@@ -125,7 +147,7 @@ void main() {
       await tester.pumpWidget(
         ChangeNotifierProvider<ThemeService>.value(
           value: mockThemeService,
-          child: const MyApp(),
+          child: MyApp(signupCompletionService: signupCompletion),
         ),
       );
       // FutureBuilder の完了を待つ
@@ -136,6 +158,13 @@ void main() {
       // Assert
       expect(find.byType(OnboardingPage), findsOneWidget);
       expect(find.byType(HomePage), findsNothing);
+      expect(signupCompletion.calls, <(String?, String?, DateTime?)>[
+        (
+          'test-user-id',
+          'new-user@example.com',
+          DateTime.utc(2026, 7, 23, 1, 0, 2),
+        ),
+      ]);
     });
 
     testWidgets('ログイン済みでオンボーディング完了時は HomePage が表示されること',
