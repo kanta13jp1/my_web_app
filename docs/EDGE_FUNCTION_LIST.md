@@ -35,6 +35,7 @@
 | `get-admin-users` | 管理者用ユーザー一覧 |
 | `get-growth-roadmap-progress` | 進捗バーデータ (1900+ 競合 + 短中長期) |
 | `get-competitor-features` | 競合機能比較データ |
+| `autonomous-ops` | OMOCHA WORKS 自律オペレーションコンソール実データ (GitHub Actions run → カンバン/KPI 変換 / owner 限定 / 30s cache / `GH_ACTIONS_READ_TOKEN`)。詳細 [`AUTONOMOUS_OPS_CONSOLE.md`](AUTONOMOUS_OPS_CONSOLE.md) |
 
 ## SNS / 配信系
 
