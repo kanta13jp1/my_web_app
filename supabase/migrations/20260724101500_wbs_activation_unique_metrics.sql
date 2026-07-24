@@ -4,6 +4,37 @@
 -- nocheck: time-relative
 -- Replay-safe: the upsert always supplies a non-empty recovery_plan, and the
 -- dependency update changes no deadline or recovery-plan fields.
+UPDATE public.wbs_tasks
+SET
+  category = 'revenue / activation-to-paid',
+  category_icon = 'analytics',
+  category_order = 0,
+  description = 'Deduplicate activation events by authenticated user, expose service-role-only 20-arm aggregates, and generate strict daily A01-A10 decision reports.',
+  owner_instance = 'codex',
+  status = CASE
+    WHEN status = 'completed' THEN 'completed'
+    ELSE 'in_progress'
+  END,
+  progress = CASE
+    WHEN status = 'completed' THEN 100
+    ELSE 95
+  END,
+  start_date = DATE '2026-07-24',
+  end_date = DATE '2026-07-24',
+  milestone_code = 'first-yen-revenue',
+  priority = 'high',
+  ai_review_status = 'pending',
+  stale_threshold_hours = 24,
+  remaining_work = 'Merge and deploy issue #4323, run the production activation experiment report, and attach the aggregate evidence before completion.',
+  recovery_plan = 'If deployment fails, keep the daily app_analytics signal intact, inspect the activation_experiment_events migration, and rerun the aggregate report only after all 20 arms exist.',
+  github_issue_url = 'https://github.com/kanta13jp1/my_web_app/issues/4323',
+  github_issue_state = 'OPEN',
+  github_issue_synced_at = now(),
+  updated_at = now()
+WHERE github_issue_number = 4323
+  AND instance = 'codex'
+  AND status <> 'completed';
+
 INSERT INTO public.wbs_tasks (
   category,
   category_icon,
@@ -28,7 +59,7 @@ INSERT INTO public.wbs_tasks (
   github_issue_state,
   github_issue_synced_at
 )
-VALUES (
+SELECT
   'revenue / activation-to-paid',
   'analytics',
   0,
@@ -51,6 +82,11 @@ VALUES (
   'https://github.com/kanta13jp1/my_web_app/issues/4323',
   'OPEN',
   now()
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM public.wbs_tasks
+  WHERE github_issue_number = 4323
+    AND instance = 'codex'
 )
 ON CONFLICT (title, instance) DO UPDATE SET
   category = EXCLUDED.category,
@@ -81,17 +117,28 @@ ON CONFLICT (title, instance) DO UPDATE SET
   github_issue_synced_at = EXCLUDED.github_issue_synced_at,
   updated_at = now();
 
-UPDATE public.wbs_tasks
+WITH activation_task AS (
+  SELECT title
+  FROM public.wbs_tasks
+  WHERE github_issue_number = 4323
+    AND instance = 'codex'
+  ORDER BY
+    CASE WHEN status <> 'completed' THEN 0 ELSE 1 END,
+    updated_at DESC
+  LIMIT 1
+)
+UPDATE public.wbs_tasks AS payout_task
 SET
   depends_on_titles = CASE
-    WHEN '[revenue-p0][activation-analytics] Decide A01-A10 on unique users'
-      = ANY(COALESCE(depends_on_titles, ARRAY[]::text[]))
-      THEN depends_on_titles
+    WHEN activation_task.title
+      = ANY(COALESCE(payout_task.depends_on_titles, ARRAY[]::text[]))
+      THEN payout_task.depends_on_titles
     ELSE array_append(
-      COALESCE(depends_on_titles, ARRAY[]::text[]),
-      '[revenue-p0][activation-analytics] Decide A01-A10 on unique users'
+      COALESCE(payout_task.depends_on_titles, ARRAY[]::text[]),
+      activation_task.title
     )
   END,
   updated_at = now()
-WHERE title =
+FROM activation_task
+WHERE payout_task.title =
   '[revenue-p0][bank-payout] Verify one external payment and at least JPY 1 bank deposit';

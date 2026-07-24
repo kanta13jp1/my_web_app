@@ -173,5 +173,17 @@ void main() {
         ),
       );
     });
+
+    test('reuses an issue-synced WBS row before attempting insert', () {
+      final updateIndex = sql.indexOf('update public.wbs_tasks\nset');
+      final insertIndex = sql.indexOf('insert into public.wbs_tasks');
+
+      expect(updateIndex, greaterThanOrEqualTo(0));
+      expect(insertIndex, greaterThan(updateIndex));
+      expect(sql, contains('where github_issue_number = 4323'));
+      expect(sql, contains('where not exists ('));
+      expect(sql, contains('with activation_task as ('));
+      expect(sql, contains('from activation_task'));
+    });
   });
 }
