@@ -85,6 +85,13 @@ import {
   LandingTrialInputError,
   normalizeLandingTrialPrompt,
 } from "./landing_trial.ts";
+import {
+  buildFirstUserFunnelReport,
+  FIRST_USER_FUNNEL_STAGES,
+  type FirstUserAcquisitionEvent,
+  type FirstUserPayment,
+  type FirstUserXPost,
+} from "./first_user_funnel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -428,6 +435,12 @@ const TOUCHPOINT_DEFS = [
     signupSignal: "signup_submit_profile",
   },
   {
+    id: "x_first_user_growth",
+    label: "X first-user campaign",
+    touchSignal: "touch_x_first_user_growth",
+    signupSignal: "signup_submit_x_first_user_growth",
+  },
+  {
     id: "import",
     label: "Import",
     touchSignal: "touch_import",
@@ -498,6 +511,7 @@ const SUPPORTED_ACQUISITION_SIGNALS = new Set([
   "x_first_user_feedback_x_intent",
   "signup_submit_landing",
   "signup_submit_profile",
+  "signup_submit_x_first_user_growth",
   "signup_submit_import",
   "signup_submit_public_memo",
   "signup_submit_referral",
@@ -570,6 +584,78 @@ async function recordAcquisitionSignal(
     .eq("date", dateKey);
   if (error) throw new Error(error.message);
   return { success: true, signalKey, dateKey };
+}
+
+const firstUserFunnelStageSet = new Set<string>(FIRST_USER_FUNNEL_STAGES);
+const firstUserTokenPattern = /^[a-z0-9_-]{1,64}$/;
+
+async function recordFirstUserFunnelSignal(
+  admin: SupabaseClient,
+  actorUserId: string | null,
+  body: Record<string, unknown>,
+) {
+  const visitorId = firstString(body.visitorId, body.visitor_id).toLowerCase();
+  const stage = firstString(body.stage).toLowerCase();
+  const utmSource = firstString(
+    body.utmSource,
+    body.utm_source,
+  ).toLowerCase();
+  const utmMedium = firstString(
+    body.utmMedium,
+    body.utm_medium,
+  ).toLowerCase();
+  const utmCampaign = firstString(
+    body.utmCampaign,
+    body.utm_campaign,
+  ).toLowerCase();
+  const utmContent = firstString(
+    body.utmContent,
+    body.utm_content,
+  ).toLowerCase();
+
+  if (
+    !isUuid(visitorId) ||
+    !firstUserFunnelStageSet.has(stage) ||
+    utmSource !== "x" ||
+    utmCampaign !== "first_user_growth" ||
+    !firstUserTokenPattern.test(utmMedium) ||
+    !firstUserTokenPattern.test(utmContent)
+  ) {
+    return {
+      success: false,
+      error: "invalid first-user funnel signal",
+    };
+  }
+
+  const { data, error } = await admin
+    .from("first_user_acquisition_events")
+    .upsert({
+      visitor_id: visitorId,
+      auth_user_id: actorUserId && isUuid(actorUserId) ? actorUserId : null,
+      stage,
+      utm_source: utmSource,
+      utm_medium: utmMedium,
+      utm_campaign: utmCampaign,
+      utm_content: utmContent,
+    }, {
+      onConflict:
+        "visitor_id,utm_source,utm_medium,utm_campaign,utm_content,stage",
+      ignoreDuplicates: true,
+    })
+    .select("visitor_id")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return {
+    success: true,
+    duplicate: data === null,
+    stage,
+    attribution: {
+      utmSource,
+      utmMedium,
+      utmCampaign,
+      utmContent,
+    },
+  };
 }
 
 type XPostLogItem = {
@@ -1520,6 +1606,112 @@ async function buildRevenueFunnelReport(
   };
 }
 
+async function buildFirstUserAcquisitionReport(
+  admin: SupabaseClient,
+  userId: string,
+  rawUtmMedium: unknown,
+  rawUtmContent: unknown,
+  rawLimit: unknown,
+) {
+  const utmMedium = firstString(rawUtmMedium, "organic").toLowerCase();
+  const utmContent = firstString(rawUtmContent, "outcome_first_a")
+    .toLowerCase();
+  if (
+    !firstUserTokenPattern.test(utmMedium) ||
+    !firstUserTokenPattern.test(utmContent)
+  ) {
+    throw new Error("invalid first-user UTM");
+  }
+  const limit = Math.max(
+    10,
+    Math.min(100, Math.trunc(firstNumber(rawLimit) ?? 50)),
+  );
+  const logs = (await listXPostLogs(admin, userId, limit)) as XPostLogItem[];
+  const matchingLogs = logs.filter((item) => {
+    const metadata = asRecord(item.metadata);
+    const variants = [
+      metadata.utm_content,
+      metadata.utmContent,
+      metadata.variant,
+      metadata.selected_variant,
+    ].map((value) => firstString(value).toLowerCase());
+    return firstString(metadata.tweet_id) !== "" &&
+      variants.includes(utmContent);
+  });
+  const latestLog = matchingLogs[0] ?? null;
+  let post: FirstUserXPost | null = null;
+  if (latestLog) {
+    const normalized = await loadNormalizedXMetricWindows(
+      admin,
+      userId,
+      [latestLog],
+    );
+    const metadata = asRecord(latestLog.metadata);
+    const latestMetrics = asRecord(metadata.latest_metrics);
+    post = {
+      sourceLogId: latestLog.id,
+      tweetId: firstString(metadata.tweet_id),
+      postedAt: firstString(metadata.posted_at, latestLog.created_at),
+      latestImpressions: firstNumber(
+        latestMetrics.impressions,
+        metadata.impressions,
+      ),
+      latestUrlClicks: firstNumber(latestMetrics.url_clicks),
+      normalized: normalized[0] ?? null,
+    };
+  }
+
+  let eventQuery = admin
+    .from("first_user_acquisition_events")
+    .select("visitor_id,stage,first_occurred_at")
+    .eq("utm_source", "x")
+    .eq("utm_medium", utmMedium)
+    .eq("utm_campaign", "first_user_growth")
+    .eq("utm_content", utmContent)
+    .order("first_occurred_at", { ascending: true });
+  if (post?.postedAt) {
+    eventQuery = eventQuery.gte("first_occurred_at", post.postedAt);
+  }
+  const { data: eventData, error: eventError } = await eventQuery;
+  if (eventError) throw new Error(eventError.message);
+
+  let paymentQuery = admin
+    .from("hub_data")
+    .select("metadata,created_at")
+    .eq("source", "stripe_supporter_payment")
+    .filter("metadata->>payment_status", "eq", "paid")
+    .filter("metadata->>utm_source", "eq", "x")
+    .filter("metadata->>utm_medium", "eq", utmMedium)
+    .filter("metadata->>utm_campaign", "eq", "first_user_growth")
+    .filter("metadata->>utm_content", "eq", utmContent)
+    .order("created_at", { ascending: true });
+  if (post?.postedAt) {
+    paymentQuery = paymentQuery.gte("created_at", post.postedAt);
+  }
+  const { data: paymentData, error: paymentError } = await paymentQuery;
+  if (paymentError) throw new Error(paymentError.message);
+
+  const payments = (paymentData ?? []).map((row): FirstUserPayment => {
+    const metadata = asRecord(row.metadata);
+    return {
+      amountJpy: firstNumber(metadata.amount_jpy, metadata.amount_total) ?? 0,
+      createdAt: firstString(row.created_at),
+    };
+  });
+  const report = buildFirstUserFunnelReport({
+    utmMedium,
+    utmContent,
+    post,
+    events: (eventData ?? []) as FirstUserAcquisitionEvent[],
+    payments,
+  });
+  return {
+    ...report,
+    issue: 3883,
+    reportGeneratedAt: new Date().toISOString(),
+  };
+}
+
 async function buildAcquisitionTouchpointReport(
   admin: SupabaseClient,
   rawWindowDays: unknown,
@@ -1968,6 +2160,7 @@ serve(async (req: Request) => {
       "waitlist.notify",
       "acquisition.report",
       "acquisition.signal",
+      "acquisition.funnel_signal",
       "acquisition.track",
       "acquisition.touchpoint_report",
       "landing.trial",
@@ -2084,6 +2277,16 @@ serve(async (req: Request) => {
           admin,
           body.signalKey,
           body.dateKey,
+        );
+        return json(result, result.success ? 200 : 400);
+      }
+
+      case "acquisition.funnel_signal": {
+        const actorUserId = await getUserId(req);
+        const result = await recordFirstUserFunnelSignal(
+          admin,
+          actorUserId,
+          body,
         );
         return json(result, result.success ? 200 : 400);
       }
@@ -2562,6 +2765,21 @@ serve(async (req: Request) => {
         const scopeUserId = await xReadScopeUserId(admin, userId!);
         return json(
           await buildXPerformanceContext(admin, scopeUserId, body.limit),
+        );
+      }
+
+      case "x.first_user_funnel": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        return json(
+          await buildFirstUserAcquisitionReport(
+            admin,
+            "service_role",
+            body.utmMedium ?? body.utm_medium,
+            body.utmContent ?? body.utm_content,
+            body.limit,
+          ),
         );
       }
 

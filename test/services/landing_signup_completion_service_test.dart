@@ -26,6 +26,19 @@ class _RecordingAcquisitionService extends GrowthAcquisitionService {
   _RecordingAcquisitionService();
 
   final List<String> notifiedUserIds = <String>[];
+  final List<String> funnelStages = <String>[];
+
+  @override
+  Future<bool> recordFirstUserFunnelStage({
+    required String stage,
+    String? visitorId,
+    Uri? currentUri,
+    SharedPreferences? preferences,
+    DateTime? now,
+  }) async {
+    funnelStages.add('$stage:$visitorId');
+    return true;
+  }
 
   @override
   Future<void> notifySignupSuccess({required String? signupUserId}) async {
@@ -75,6 +88,9 @@ void main() {
 
       expect(adapter.eventKeys, <String>[eventKey]);
       expect(adapter.visitorIds, <String>[visitorId]);
+      expect(acquisitionService.funnelStages, <String>[
+        'signup_complete:$visitorId',
+      ]);
       expect(acquisitionService.notifiedUserIds, <String>['user-1']);
       final prefs = await SharedPreferences.getInstance();
       expect(
@@ -179,6 +195,9 @@ void main() {
         true,
       ]);
       expect(adapter.eventKeys, hasLength(1));
+      expect(acquisitionService.funnelStages, <String>[
+        'signup_complete:$visitorId',
+      ]);
       expect(acquisitionService.notifiedUserIds, <String>['user-4']);
     },
   );
