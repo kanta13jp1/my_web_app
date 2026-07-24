@@ -1141,6 +1141,22 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 ## セッション記録
 
+### daily-report Schedule — 2026-07-24 (Web版 Claude Schedule)
+
+**日次レポート生成・競合モニタリング補足**
+
+- **日次レポート確認**: `docs/daily-reports/2026-07-24.md` は GitHub Actions により生成済み (総ユーザー数 **59人** / 未対応機能リクエスト **131件** / 本日新規リクエスト 0件 / 直近 24h コミット 44件)
+- **Supabase API**: ネットワークプロキシポリシーにより `smmkxxavexumewbfaqpy.supabase.co` へのアクセスがブロック (既知の環境制約 / GHA 経由では正常稼働)
+- **X投稿**: viral-growth-engine および post-x-update ともにプロキシブロックにより未実施 (GHA 側記録 = ⚠️ 本日未投稿 — ワンボタン投稿推奨 JST 07-09/20-22)
+- **GitHub Issues (auto-review)**: 対象 Issue なし (0件)
+- **Schedule Health**: 直近 24h の Claude Schedule コミット 7件 (CS チェック 4件 / ブログ下書き 1件 / CI/CDコスト監査 1件 / 日次レポート 1件) — 異常なし
+- **競合モニタリング補足 (WebSearch)**:
+  - ✅ **Notion**: 3.6 (7-1) External Agents 5統合追加 + Interactive HTML Blocks + PPTX/XLSX/PDF 対応 / Agents iOS App (7-8) GA / Developer Platform (CLI/Agent SDK/External Agents API) — 自社 API v1 との差別化緊急度が上昇
+  - ✅ **Slack**: Block Kit 6新コンポーネント / Salesforce フル統合 / 一時チャンネル参加 / Status スケジュール / Slack Connect 自動承認 (7-28) — 7-24 窓内新規デルタなし
+  - ⚠️ **GitHub**: Code Quality GA (7-20/$10/committer) + Issue Fields GA (全ティア) + Copilot App+Canvas — 自社 GitHub Issue Fields 相当機能の差別化が縮小。GitHub Models 7-30 退役まで残り 6 日
+- **競合 `docs/competitor-reports/2026-07-24.md`**: 高品質レポート既存 (GHA 生成 / Tomo 採択 / MoneyForward AI Cowork 7-24 も GA せず) + Claude Schedule WebSearch 補足 (Notion/Slack/GitHub 3社) 追記済み
+- **次回アクション候補**: ①GitHub Models AI大学コンテンツ修正 (7-30 期限) ②MoneyForward AI Cowork GA 日次 watch (残り 6 日) ③Opus 5 / Codex 7-24 発表を翌日 7-25 窓で一次確認 ④自社 API v1 と Notion Developer Platform の差別化ポイント整理
+
 ### daily-report Schedule — 2026-07-08 (Web版 Claude Schedule)
 
 **日次レポート生成・競合モニタリング補足**
