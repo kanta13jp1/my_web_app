@@ -24,7 +24,7 @@ permissions:
 
 concurrency:
   group: tools-hub-mcp-smoke
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-07-24 ci-audit: スモークテスト(stateless HTTP probe)のためキャンセル安全 / 手動+schedule 重複時のキュー待機(最大8min)を回避
 
 jobs:
   smoke:
