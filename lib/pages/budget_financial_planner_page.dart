@@ -303,6 +303,7 @@ $breakdown
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
+                  settings: const RouteSettings(name: '/asset-management'),
                   builder: (_) => const AssetManagementPage(
                     initialFocus: AssetManagementInitialFocus.flow,
                     emphasizeMonthlyFlow: true,
