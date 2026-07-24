@@ -86,9 +86,8 @@ class OpsSnapshotDto {
     return OpsSnapshotDto(
       configured: configured,
       live: json['live'] == true,
-      tasks: _list(json['tasks'])
-          .map(OpsTaskDto.fromJson)
-          .toList(growable: false),
+      tasks:
+          _list(json['tasks']).map(OpsTaskDto.fromJson).toList(growable: false),
       activities: _list(json['activities'])
           .map(OpsActivityDto.fromJson)
           .toList(growable: false),
@@ -122,9 +121,8 @@ class OpsTaskDto {
   final String? agentId; // H | K | M | B | S
 
   factory OpsTaskDto.fromJson(Object? raw) {
-    final json = raw is Map
-        ? Map<String, dynamic>.from(raw)
-        : const <String, dynamic>{};
+    final json =
+        raw is Map ? Map<String, dynamic>.from(raw) : const <String, dynamic>{};
     return OpsTaskDto(
       code: _string(json['code']),
       dept: _string(json['dept']),
@@ -148,9 +146,8 @@ class OpsActivityDto {
   final String? agentId;
 
   factory OpsActivityDto.fromJson(Object? raw) {
-    final json = raw is Map
-        ? Map<String, dynamic>.from(raw)
-        : const <String, dynamic>{};
+    final json =
+        raw is Map ? Map<String, dynamic>.from(raw) : const <String, dynamic>{};
     return OpsActivityDto(
       text: _string(json['text']),
       time: _string(json['time']),
@@ -160,8 +157,7 @@ class OpsActivityDto {
 }
 
 // ── 防御的パースヘルパー ─────────────────────────────────────
-List<Object?> _list(Object? value) =>
-    value is List ? value : const <Object?>[];
+List<Object?> _list(Object? value) => value is List ? value : const <Object?>[];
 
 String _string(Object? value) => value is String ? value : '';
 

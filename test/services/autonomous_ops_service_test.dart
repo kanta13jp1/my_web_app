@@ -117,7 +117,8 @@ void main() {
     testWidgets('ログイン済みオーナー + live データ → 実データモード', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: AutonomousOpsConsolePage(service: _FakeOpsService(_liveSnapshot())),
+          home: AutonomousOpsConsolePage(
+              service: _FakeOpsService(_liveSnapshot())),
         ),
       );
       // 初回フェッチ (async) を解決させる。

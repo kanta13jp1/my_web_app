@@ -234,21 +234,29 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
   void _applySnapshot(OpsSnapshotDto dto) {
     _tasks
       ..clear()
-      ..addAll(dto.tasks.map((t) => _OpsTask(
+      ..addAll(
+        dto.tasks.map(
+          (t) => _OpsTask(
             code: t.code,
             dept: t.dept,
             title: t.title,
             valueYen: t.valueYen,
             lane: _laneFromString(t.lane),
             agent: _agentById(t.agentId),
-          )));
+          ),
+        ),
+      );
     _activities
       ..clear()
-      ..addAll(dto.activities.map((a) => _Activity(
+      ..addAll(
+        dto.activities.map(
+          (a) => _Activity(
             text: a.text,
             time: a.time,
             color: _agentById(a.agentId)?.color ?? DesignTokens.textSecondary,
-          )));
+          ),
+        ),
+      );
     _completedToday = dto.completedToday;
     _automatedHours = dto.automatedHours;
     _revenueImpact = dto.revenueImpact;

@@ -162,7 +162,9 @@ serve(async (req) => {
         error: error.userMessage,
       }, 502);
     }
-    const message = error instanceof Error ? error.message : "Unexpected error.";
+    const message = error instanceof Error
+      ? error.message
+      : "Unexpected error.";
     return jsonResponse({ ok: false, error: message }, 500);
   }
 });

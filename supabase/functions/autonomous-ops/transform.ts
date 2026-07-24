@@ -31,11 +31,63 @@ const AGENT_BY_ID: Record<AgentId, OpsAgentMeta> = Object.fromEntries(
 
 // キーワード → キャラ割り当てルール (先頭から順に評価し最初の一致を採用)。
 const AGENT_KEYWORDS: ReadonlyArray<readonly [AgentId, readonly string[]]> = [
-  ["K", ["lint", "format", "test", "review", "analyze", "codeql", "quality", "e2e", "coverage"]],
-  ["B", ["security", "audit", "scan", "health", "monitor", "cron", "schedule", "infra", "deploy-prod", "residual"]],
-  ["M", ["wiki", "report", "metric", "analytic", "digest", "compile", "ingest", "research", "crosscheck", "dashboard"]],
-  ["S", ["blog", "qiita", "dev.to", "devto", "docs", "note", "publish", "social", "competitor", "x-"]],
-  ["H", ["deploy", "build", "release", "ci", "firebase", "hosting", "pipeline", "auto"]],
+  ["K", [
+    "lint",
+    "format",
+    "test",
+    "review",
+    "analyze",
+    "codeql",
+    "quality",
+    "e2e",
+    "coverage",
+  ]],
+  ["B", [
+    "security",
+    "audit",
+    "scan",
+    "health",
+    "monitor",
+    "cron",
+    "schedule",
+    "infra",
+    "deploy-prod",
+    "residual",
+  ]],
+  ["M", [
+    "wiki",
+    "report",
+    "metric",
+    "analytic",
+    "digest",
+    "compile",
+    "ingest",
+    "research",
+    "crosscheck",
+    "dashboard",
+  ]],
+  ["S", [
+    "blog",
+    "qiita",
+    "dev.to",
+    "devto",
+    "docs",
+    "note",
+    "publish",
+    "social",
+    "competitor",
+    "x-",
+  ]],
+  ["H", [
+    "deploy",
+    "build",
+    "release",
+    "ci",
+    "firebase",
+    "hosting",
+    "pipeline",
+    "auto",
+  ]],
 ];
 
 /// ワークフロー名 / パスから担当キャラを決定的に割り当てる。
@@ -212,7 +264,9 @@ export function toActivity(run: GitHubRun): OpsActivity {
   const agentId = assignAgent(run.name ?? "", run.path ?? "");
   const ms = parseTime(run.updated_at) ?? parseTime(run.created_at) ?? 0;
   return {
-    text: `${AGENT_BY_ID[agentId].name} が「${runTitle(run)}」${conclusionVerb(run)}`,
+    text: `${AGENT_BY_ID[agentId].name} が「${runTitle(run)}」${
+      conclusionVerb(run)
+    }`,
     time: fmtClockUtc(ms),
     agentId,
   };
