@@ -1,6 +1,6 @@
 # News Pattern Detector Report
 
-- Generated at: `2026-07-23T22:16:12Z`
+- Generated at: `2026-07-24T22:28:43Z`
 - Sources: `docs/ai-tool-watch/latest-report.json`
 - Entries scanned: `9`
 - Patterns: `4`
@@ -17,12 +17,12 @@
   - Evidence: Claude Code changelog
   - Evidence: Claude Code hooks reference
   - Evidence: Claude Code GitHub Actions
-- **openai / ci-quality**: 2 entries, confidence=0.97, risk=normal
-  - Action: Route to CI/readiness gate owners if repeated failures or quality gates are affected.
+- **openai / ci-quality**: 2 entries, confidence=0.91, risk=review
+  - Action: Hold for human review before creating issues or blog drafts.
   - Evidence: Codex changelog
   - Evidence: Codex use cases
-- **multi-source / ci-quality**: 2 entries, confidence=0.97, risk=normal
-  - Action: Route to CI/readiness gate owners if repeated failures or quality gates are affected.
+- **multi-source / ci-quality**: 2 entries, confidence=0.91, risk=review
+  - Action: Hold for human review before creating issues or blog drafts.
   - Evidence: Codex changelog
   - Evidence: Codex use cases
 
@@ -37,6 +37,7 @@
     "drop": 0
   },
   "risk_flags": {
+    "sensational_language": 2,
     "source_http_problem": 1
   }
 }
