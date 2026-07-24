@@ -185,6 +185,15 @@ class LandingSignupCompletionService {
         eventKey: pending.eventKey,
         visitorId: pending.visitorId,
       );
+      try {
+        await _acquisitionService.recordFirstUserFunnelStage(
+          stage: 'signup_complete',
+          visitorId: pending.visitorId,
+        );
+      } catch (error, stackTrace) {
+        debugPrint('First-user signup completion signal failed: $error');
+        debugPrintStack(stackTrace: stackTrace);
+      }
       await _acquisitionService.notifySignupSuccess(signupUserId: signupUserId);
       await _removeIfCurrent(prefs, pending);
       return true;
