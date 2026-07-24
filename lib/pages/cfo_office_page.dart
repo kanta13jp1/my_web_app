@@ -80,7 +80,10 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
   Future<void> _openCostLedger() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const CfoCostLedgerPage()),
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/cfo-cost-ledger'),
+        builder: (_) => const CfoCostLedgerPage(),
+      ),
     );
     if (!mounted) {
       return;
@@ -122,6 +125,7 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
               'LifeGoals から目標値・実績値・進捗率・前月比を自動集計し、AI 達成アドバイスを確認します。',
               Icons.insights,
               const MonthlyKpiDashboardPage(),
+              '/monthly-kpi-dashboard',
             ),
             _buildMenuCard(
               context,
@@ -129,6 +133,7 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
               '月次予算の設定・カテゴリ別支出入力・AI節約アドバイス・将来シミュレーション。',
               Icons.account_balance_wallet,
               const BudgetFinancialPlannerPage(),
+              '/budget-financial-planner',
             ),
             _buildMenuCard(
               context,
@@ -136,6 +141,7 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
               '固定費・変動費・月次予算差分を構造化して記録します。',
               Icons.receipt_long,
               const CfoCostLedgerPage(),
+              '/cfo-cost-ledger',
             ),
             _buildMenuCard(
               context,
@@ -143,6 +149,7 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
               '資産推移、戦況記録、サブスク管理を統合した前線基地。',
               Icons.monetization_on,
               const AssetManagementPage(),
+              '/asset-management',
             ),
             _buildMenuCard(
               context,
@@ -150,6 +157,7 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
               'クレジットカードや銀行口座の連携状況を確認します。',
               Icons.account_balance,
               const PaymentChannelLedgerPage(),
+              '/payment-channel-ledger',
             ),
             _buildMenuCard(
               context,
@@ -157,6 +165,7 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
               '日次・週次・月次の収支状況を分析します。',
               Icons.summarize,
               const FinancialReportPage(),
+              '/financial-report',
             ),
           ],
         ),
@@ -164,12 +173,15 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
     );
   }
 
+  /// [routeName] は遷移先画面の URL。`RouteSettings.name` を付けないと
+  /// Flutter Web でブラウザの URL が更新されないため必須にしている。
   Widget _buildMenuCard(
     BuildContext context,
     String title,
     String subtitle,
     IconData icon,
     Widget? page,
+    String routeName,
   ) {
     return Card(
       elevation: 2,
@@ -190,7 +202,10 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
             ? () async {
                 await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => page),
+                  MaterialPageRoute(
+                    settings: RouteSettings(name: routeName),
+                    builder: (_) => page,
+                  ),
                 );
                 if (mounted && page is CfoCostLedgerPage) {
                   setState(() => _summaryReloadToken += 1);

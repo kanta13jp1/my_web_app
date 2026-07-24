@@ -181,7 +181,12 @@ docs/GROWTH_STRATEGY_ROADMAP.md
   void _openLandingPage() {
     Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (_) => const LandingPage()));
+    ).push(
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/'),
+        builder: (_) => const LandingPage(),
+      ),
+    );
   }
 
   Future<void> _handleDepartmentAction(String departmentId) async {
@@ -206,7 +211,12 @@ docs/GROWTH_STRATEGY_ROADMAP.md
       case 'procurement':
         await Navigator.of(
           context,
-        ).push(MaterialPageRoute(builder: (_) => const AdminAnalyticsPage()));
+        ).push(
+          MaterialPageRoute(
+            settings: const RouteSettings(name: '/admin'),
+            builder: (_) => const AdminAnalyticsPage(),
+          ),
+        );
         return;
       case 'hr':
       case 'business-planning':
@@ -746,6 +756,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                           onPressed: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
+                                settings: const RouteSettings(name: '/admin'),
                                 builder: (_) => const AdminAnalyticsPage(),
                               ),
                             );

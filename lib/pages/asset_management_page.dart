@@ -1198,7 +1198,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _openProfileSettingsForAssetManagement() async {
     await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const ProfileSettingsPage()),
+      MaterialPageRoute<void>(
+          settings: const RouteSettings(name: '/profile-settings'),
+          builder: (_) => const ProfileSettingsPage()),
     );
     if (!mounted) {
       return;
