@@ -213,6 +213,8 @@ class _AgentGpaBadgeState extends State<AgentGpaBadge> {
                       Navigator.of(context).pop();
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
+                          settings:
+                              const RouteSettings(name: '/agent-gpa-dashboard'),
                           builder: (_) => const AgentGpaDashboardPage(),
                         ),
                       );

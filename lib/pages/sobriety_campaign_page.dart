@@ -159,13 +159,6 @@ class _SobrietyCampaignPageState extends State<SobrietyCampaignPage> {
     final videos = _visible;
     return Scaffold(
       backgroundColor: Colors.black,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openComposer,
-        backgroundColor: DesignTokens.orange,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.videocam),
-        label: const Text('投稿'),
-      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -175,6 +168,7 @@ class _SobrietyCampaignPageState extends State<SobrietyCampaignPage> {
                 setState(() => _filter = c);
                 if (_pageController.hasClients) _pageController.jumpToPage(0);
               },
+              onPost: _openComposer,
             ),
             _DailyBanner(date: _today),
             Expanded(
@@ -217,10 +211,15 @@ class _SobrietyCampaignPageState extends State<SobrietyCampaignPage> {
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.filter, required this.onFilter});
+  const _TopBar({
+    required this.filter,
+    required this.onFilter,
+    required this.onPost,
+  });
 
   final CampaignCategory? filter;
   final ValueChanged<CampaignCategory?> onFilter;
+  final VoidCallback onPost;
 
   @override
   Widget build(BuildContext context) {
@@ -257,6 +256,17 @@ class _TopBar extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+          const SizedBox(width: DesignTokens.space8),
+          FilledButton.icon(
+            onPressed: onPost,
+            style: FilledButton.styleFrom(
+              backgroundColor: DesignTokens.orange,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+            ),
+            icon: const Icon(Icons.videocam, size: 18),
+            label: const Text('投稿'),
           ),
         ],
       ),
@@ -368,7 +378,8 @@ class _VideoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space12),
+      // 下部パディングでグローバル「AIシェア」ボタン等と行の重なりを避ける。
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 56),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -441,6 +452,28 @@ class _VideoCard extends StatelessWidget {
   }
 }
 
+/// Wikimedia Commons の実画像を表示する。読み込み中・取得失敗時は透明を返し、
+/// 背後の絵文字土台がそのまま見えるようにする (フレームが空にならない)。
+class _PrintImage extends StatelessWidget {
+  const _PrintImage({required this.file});
+
+  final String file;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.network(
+      _commonsImageUrl(file),
+      fit: BoxFit.cover,
+      gaplessPlayback: true,
+      loadingBuilder: (context, child, progress) {
+        if (progress == null) return child;
+        return const SizedBox.shrink();
+      },
+      errorBuilder: (context, error, stack) => const SizedBox.shrink(),
+    );
+  }
+}
+
 class _VideoFrame extends StatelessWidget {
   const _VideoFrame({required this.video, required this.onPlay});
 
@@ -469,23 +502,17 @@ class _VideoFrame extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // 実際の風刺画 (取得失敗時は下のグラデ + 絵文字にフォールバック)。
+            // 絵文字＋グラデは常に土台として描画。画像の読込中/失敗時に
+            // この土台が見えることで、フレームが空(茶色一色)にならない。
+            Center(
+              child: Text(
+                video.category.emoji,
+                style: const TextStyle(fontSize: 120),
+              ),
+            ),
+            // 実際の風刺画を上に重ねる (成功時のみ土台を覆う)。
             if (video.imageFile != null)
-              Positioned.fill(
-                child: Image.network(
-                  _commonsImageUrl(video.imageFile!),
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                ),
-              ),
-            // 画像が無いカードはカテゴリ絵文字を薄く背景に。
-            if (video.imageFile == null)
-              Center(
-                child: Text(
-                  video.category.emoji,
-                  style: const TextStyle(fontSize: 120),
-                ),
-              ),
+              Positioned.fill(child: _PrintImage(file: video.imageFile!)),
             // 下部グラデ + タイトル (スクショの黒帯テロップ再現)。
             Align(
               alignment: Alignment.bottomCenter,
@@ -611,7 +638,10 @@ class _CreatorRow extends StatelessWidget {
         CircleAvatar(
           radius: 20,
           backgroundColor: video.category.accent.withValues(alpha: 0.25),
-          child: Icon(video.category.icon, color: video.category.accent),
+          child: Text(
+            video.category.emoji,
+            style: const TextStyle(fontSize: 20),
+          ),
         ),
         const SizedBox(width: DesignTokens.space8),
         Expanded(

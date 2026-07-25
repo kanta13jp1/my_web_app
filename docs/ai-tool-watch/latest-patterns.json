@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-23T22:16:12Z",
+  "generated_at": "2026-07-24T22:28:43Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -13,24 +13,25 @@
       "drop": 0
     },
     "risk_flags": {
+      "sensational_language": 2,
       "source_http_problem": 1
     }
   },
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-9b1f4cc799b9",
+        "entry_id": "nf-7152b462ed4f",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.218 / July 22, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.218 July 22, 2026 Changed /code-review to run as a background subagent, so review work no longer fills your conversation and keeps stacked slash commands as its review...",
+        "text": "Claude Code changelog 2.1.219 / July 24, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.219 July 24, 2026 Added Claude Opus 5 ( claude-opus-5 ), now the default Opus model — 1M context, fast mode at 10 / 10/ 10/ 50 per Mtok Added...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "9b0e1435a90dc092822130cd43ea6d8970e9525d8da446094e523d26f8b8d25f",
+          "hash": "d8ef1a618b4dd9fb060fb841df2cc048e7606f01fd7c0a624bd157fadad3f0d1",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,7 +75,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.218 / July 22, 2026",
+          "latest_signal": "2.1.219 / July 24, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
           "previous_hash": "9b0e1435a90dc092822130cd43ea6d8970e9525d8da446094e523d26f8b8d25f",
@@ -82,14 +83,14 @@
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.218 July 22, 2026 Changed /code-review to run as a background subagent, so review work no longer fills your conversation and keeps stacked slash commands as its review..."
+            "​ 2.1.219 July 24, 2026 Added Claude Opus 5 ( claude-opus-5 ), now the default Opus model — 1M context, fast mode at 10 / 10/ 10/ 50 per Mtok Added..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-9b1f4cc799b9",
+        "entry_id": "nf-7152b462ed4f",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -118,7 +119,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "af79943f765755840f87043dd0c84e1dde739908059481e854d36a49b4993a7a",
+          "hash": "87cdbd0328b4fe4bf7b67c77e3bee919f7c95d5a610e4d6e5f1b0307a6070949",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -156,7 +157,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "d3053cfa09a63ddb05cea47c00885870fb61cd52ef093536a22ed3f50aaed8a9",
+          "previous_hash": "af79943f765755840f87043dd0c84e1dde739908059481e854d36a49b4993a7a",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -261,9 +262,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-49bc99881bfd",
+        "entry_id": "nf-e70f25422eb1",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-07-23 / ChatGPT Voice and multi-folder projects 26.715 Powered by GPT-Live, ChatGPT Voice lets you Codex changelog | ChatGPT Learn ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or... Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build... All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How...",
+        "text": "Codex changelog 2026-07-23 / ChatGPT Voice and multi-folder projects 26.715 Powered by GPT-Live, ChatGPT Voice lets you Codex changelog | ChatGPT Learn ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or... Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)... All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How...",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -272,7 +273,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "a6750cc2c0464a25ba98ff7169f4f81e6d77fab15ca81929d5bc691008c90d26",
+          "hash": "fb810611d766de35d1e0871c17a4a1f3002733db92d8a57cf7b59de3e313675f",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -319,11 +320,11 @@
           "latest_signal": "2026-07-23 / ChatGPT Voice and multi-folder projects 26.715 Powered by GPT-Live, ChatGPT Voice lets you",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "4c141d9524c84b0fc3a8b5682f9cdde9e59f499940e22291fddf88604207cc1e",
+          "previous_hash": "a6750cc2c0464a25ba98ff7169f4f81e6d77fab15ca81929d5bc691008c90d26",
           "slug": "codex-changelog",
           "snippets": [
             "Codex changelog | ChatGPT Learn ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or...",
-            "Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...",
+            "Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...",
             "All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How..."
           ],
           "status": 200,
@@ -331,27 +332,30 @@
         }
       },
       "filter": {
-        "entry_id": "nf-49bc99881bfd",
+        "entry_id": "nf-e70f25422eb1",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
-        "confidence": 0.97,
+        "confidence": 0.91,
         "verdict": "pass",
-        "risk_flags": [],
+        "risk_flags": [
+          "sensational_language"
+        ],
         "reasons": [
           "has source URL",
           "source domain is official or primary",
           "HTTP 200 reachable",
+          "sensational terms: kill",
           "has enough context for review"
         ]
       }
     },
     {
       "entry": {
-        "entry_id": "nf-eea62bbcf3aa",
+        "entry_id": "nf-4e347405358f",
         "title": "Codex use cases",
-        "text": "Codex use cases ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use... Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build... All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How...",
+        "text": "Codex use cases ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use... Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)... All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How...",
         "url": "https://developers.openai.com/codex/use-cases/",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -360,7 +364,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "eb5828063361e497c4165315226a50320023881d924da3d527c60e5ed9c58256",
+          "hash": "18fb32369b06bd03b69b6917a88aef1155888300a58b0dfd1c87d9c44bf176f8",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.4",
@@ -399,11 +403,11 @@
           "latest_signal": "ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "ca865d52c4bc8a523449ffb383c5abf2349d3d9c97bc32877d101424f37f85fb",
+          "previous_hash": "eb5828063361e497c4165315226a50320023881d924da3d527c60e5ed9c58256",
           "slug": "codex-use-cases",
           "snippets": [
             "ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use...",
-            "Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...",
+            "Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...",
             "All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How..."
           ],
           "status": 200,
@@ -411,18 +415,21 @@
         }
       },
       "filter": {
-        "entry_id": "nf-eea62bbcf3aa",
+        "entry_id": "nf-4e347405358f",
         "title": "Codex use cases",
         "url": "https://developers.openai.com/codex/use-cases/",
         "source": "Codex",
         "source_label": "ai-tool-watch",
-        "confidence": 0.97,
+        "confidence": 0.91,
         "verdict": "pass",
-        "risk_flags": [],
+        "risk_flags": [
+          "sensational_language"
+        ],
         "reasons": [
           "has source URL",
           "source domain is official or primary",
           "HTTP 200 reachable",
+          "sensational terms: kill",
           "has enough context for review"
         ]
       }
@@ -616,7 +623,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "5d1f83d0e57d47369afa4e81221d54861954ce9025db03ac7ea9d0e4ee839cd1",
@@ -654,7 +661,7 @@
           "latest_signal": "July 22, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "2b6a7316078b33327c311fbf0e335631871339ec5d101d5a4b46392cef7c4525",
+          "previous_hash": "5d1f83d0e57d47369afa4e81221d54861954ce9025db03ac7ea9d0e4ee839cd1",
           "slug": "devin-release-notes",
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
@@ -721,28 +728,32 @@
       "company": "openai",
       "topic": "ci-quality",
       "entry_count": 2,
-      "average_confidence": 0.97,
-      "risk_level": "normal",
-      "risk_flags": [],
+      "average_confidence": 0.91,
+      "risk_level": "review",
+      "risk_flags": [
+        "sensational_language"
+      ],
       "evidence_titles": [
         "Codex changelog",
         "Codex use cases"
       ],
-      "recommended_action": "Route to CI/readiness gate owners if repeated failures or quality gates are affected."
+      "recommended_action": "Hold for human review before creating issues or blog drafts."
     },
     {
       "id": "np-29adc87d673c",
       "company": "multi-source",
       "topic": "ci-quality",
       "entry_count": 2,
-      "average_confidence": 0.97,
-      "risk_level": "normal",
-      "risk_flags": [],
+      "average_confidence": 0.91,
+      "risk_level": "review",
+      "risk_flags": [
+        "sensational_language"
+      ],
       "evidence_titles": [
         "Codex changelog",
         "Codex use cases"
       ],
-      "recommended_action": "Route to CI/readiness gate owners if repeated failures or quality gates are affected."
+      "recommended_action": "Hold for human review before creating issues or blog drafts."
     }
   ],
   "issue_candidates": [

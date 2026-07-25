@@ -23,6 +23,7 @@ class LandingPage extends StatefulWidget {
   final LandingConversionExperimentService conversionExperimentService;
   final LandingSignupCompletionService signupCompletionService;
   final PendingLandingTrialService pendingTrialService;
+  final GrowthAcquisitionService acquisitionService;
   final LandingExperimentAssignment? experimentAssignment;
   final bool? analyticsEnabled;
   final Uri? landingUri;
@@ -34,6 +35,7 @@ class LandingPage extends StatefulWidget {
     LandingConversionExperimentService? conversionExperimentService,
     LandingSignupCompletionService? signupCompletionService,
     PendingLandingTrialService? pendingTrialService,
+    GrowthAcquisitionService? acquisitionService,
     this.experimentAssignment,
     this.analyticsEnabled,
     this.landingUri,
@@ -43,6 +45,8 @@ class LandingPage extends StatefulWidget {
             pendingTrialService ?? const PendingLandingTrialService(),
         signupCompletionService =
             signupCompletionService ?? const LandingSignupCompletionService(),
+        acquisitionService =
+            acquisitionService ?? const GrowthAcquisitionService(),
         conversionExperimentService = conversionExperimentService ??
             const LandingConversionExperimentService();
 
@@ -74,8 +78,6 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   final _trialEmailFocusNode = FocusNode();
   final GlobalKey _trialSectionKey = GlobalKey();
   final GlobalKey _authSectionKey = GlobalKey();
-  final GrowthAcquisitionService _acquisitionService =
-      const GrowthAcquisitionService();
 
   StreamSubscription<AuthState>? _authSubscription;
   Timer? _magicLinkCooldownTimer;
@@ -106,6 +108,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   bool _landingIntentHandled = false;
 
   Uri? get _landingUri => widget.landingUri ?? (kIsWeb ? Uri.base : null);
+  GrowthAcquisitionService get _acquisitionService => widget.acquisitionService;
 
   bool get _analyticsEnabled {
     final override = widget.analyticsEnabled;
@@ -193,9 +196,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     if (!_analyticsEnabled) {
       return;
     }
+    String? visitorId;
     try {
       final assignment = await _resolveExperimentAssignment();
-      final visitorId = await _resolveExperimentVisitorId();
+      visitorId = await _resolveExperimentVisitorId();
       if (!_recordedExperimentStages.add(stage)) {
         return;
       }
@@ -205,6 +209,19 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       );
     } catch (error) {
       debugPrint('LP conversion event failed ($stage): $error');
+    }
+    if (visitorId == null ||
+        !GrowthAcquisitionService.firstUserFunnelStages.contains(stage)) {
+      return;
+    }
+    try {
+      await _acquisitionService.recordFirstUserFunnelStage(
+        stage: stage,
+        visitorId: visitorId,
+        currentUri: _landingUri,
+      );
+    } catch (error) {
+      debugPrint('First-user LP funnel event failed ($stage): $error');
     }
   }
 

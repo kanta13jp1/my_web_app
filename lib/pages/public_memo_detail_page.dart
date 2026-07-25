@@ -224,6 +224,7 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
     }
     await Navigator.of(context).push(
       MaterialPageRoute(
+        settings: const RouteSettings(name: '/'),
         builder: (_) => const LandingPage(),
       ),
     );
