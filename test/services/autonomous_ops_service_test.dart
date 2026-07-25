@@ -118,7 +118,8 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: AutonomousOpsConsolePage(
-              service: _FakeOpsService(_liveSnapshot())),
+            service: _FakeOpsService(_liveSnapshot()),
+          ),
         ),
       );
       // 初回フェッチ (async) を解決させる。
