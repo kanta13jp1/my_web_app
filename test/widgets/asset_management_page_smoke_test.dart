@@ -1435,7 +1435,10 @@ void main() {
     ) async {
       // ファミペイ残高10万を月9万返済 → 繰越1万でリボ違反だが、脱却月額
       // (12ヶ月・約9千) より現状の返済が多い → 反映(減額)ボタンは出さない。
-      final now = DateTime.now();
+      // 資産データのキー日付は debugCalendarNow (ページの「今日」) と一致させる。
+      // DateTime.now() を使うと CI 実行日が給与サイクル境界にかかった際に
+      // dateKey とページの today がズレて判定が反転し、日付依存で落ちる。
+      final now = DateTime(2026, 7, 10);
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       // 支払予定額は給与サイクル月キーでネストされる。
       final monthKey =
