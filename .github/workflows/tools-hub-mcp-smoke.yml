@@ -131,7 +131,9 @@ jobs:
           fi
 
           STATUS="success"
-          if [ "$SMOKE_OUTCOME" != "success" ]; then
+          if [ "$SMOKE_OUTCOME" = "cancelled" ]; then
+            STATUS="skipped"  # cancel-in-progress: true によるキャンセルを失敗と区別
+          elif [ "$SMOKE_OUTCOME" != "success" ]; then
             STATUS="error"
           fi
 
