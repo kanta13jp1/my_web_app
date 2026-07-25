@@ -19,8 +19,15 @@ and the linked bank account shows a payout of at least 1 JPY.
 8. `supporter_checkout` or `pro_checkout`
 9. `checkout_return`
 
-Each event is stored as
-`activation_exp_<hypothesis>_<variant>_<stage>` in `app_analytics.source_details`.
+Each event keeps the bounded key
+`activation_exp_<hypothesis>_<variant>_<stage>`. The existing daily
+`app_analytics.source_details` counter remains as an operational signal, while
+`activation_experiment_events` records each authenticated, non-anonymous
+user/arm/stage at most once for experiment decisions. The raw ledger is denied
+to browser roles; only the service-role aggregate
+`activation_experiment_arm_stats` is used by reports. It stores no email, IP
+address, user agent, prompt, challenge, or other user-supplied content.
+
 Assignments persist in SharedPreferences. QA can force an arm with:
 
 ```text
@@ -56,6 +63,12 @@ decision at a time.
   idempotent `daily_todos` item so the Home calendar can resume it.
 - `SubscriptionBillingPage` presents Japanese value-based Free, 100 JPY, Pro,
   and Team choices and records checkout intent.
+- `record_activation_experiment_event` deduplicates every signed-in user,
+  hypothesis, variant, and stage. Anonymous sessions cannot write this ledger.
+- `activation_experiment_report.py` validates all 20 arms, calculates Wilson
+  95% intervals and relative lift, and emits aggregate-only JSON and Markdown.
+- `activation-experiment-report.yml` runs the decision report daily and on
+  demand with the service-role key kept out of pull-request workflows.
 - `schedule-hub` creates the supporter item as "AI仕事OS 初期サポーター" with
   one-time/no-renewal value copy in Stripe Checkout.
 - Widget tests cover a 390 px viewport, the complete first-value flow, A03
@@ -66,10 +79,13 @@ decision at a time.
 ## Validation gate
 
 Automated tests prove implementation, not market impact. Do not declare a
-hypothesis won until it has approximately 100 views per arm plus at least 20
-onboarding completions or 5 checkout starts. Prefer treatment only when the
-primary metric improves by at least 20% and the sample is not dominated by
-internal QA traffic.
+hypothesis won until both arms have at least 100 unique onboarding views and
+20 users in the primary-metric denominator. A01-A09 also require 20 total
+primary successes; A10 requires 5 total supporter-or-Pro checkout starts.
+Prefer an arm only when the primary metric differs by at least 20% and its
+Wilson 95% interval is fully separated from the other arm. Impossible funnels
+such as more unique checkout starters than billing viewers are reported as
+`invalid_funnel_data`, never as a winner.
 
 ## Revenue completion gate
 

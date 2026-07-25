@@ -171,6 +171,45 @@ void main() {
       );
     });
 
+    test('R34 edge の total があれば実数を断定表示する', () {
+      // 取得は上限 10 件でも、総数 37 が来れば「37件」と出す。
+      final pendingAtCap = List.generate(
+        kXCandidateStatusFetchLimit,
+        (i) => make(id: 'p$i'),
+      );
+      expect(
+        candidateQueueHeaderLabel(
+          pendingAtCap,
+          totalsByStatus: const {'pending_approval': 37},
+        ),
+        '承認待ち 37件',
+      );
+
+      // 再試行は approved + publish_failed の総数を合算して出す。
+      expect(
+        candidateQueueHeaderLabel(
+          [make(id: 'p'), make(id: 'r', status: 'publish_failed')],
+          totalsByStatus: const {
+            'pending_approval': 5,
+            'approved': 2,
+            'publish_failed': 9,
+          },
+        ),
+        '承認待ち 5件・再試行 11件',
+      );
+    });
+
+    test('R34 total が無い status は従来の「N件以上」へ degrade する', () {
+      final pendingAtCap = List.generate(
+        kXCandidateStatusFetchLimit,
+        (i) => make(id: 'p$i'),
+      );
+      expect(
+        candidateQueueHeaderLabel(pendingAtCap),
+        '承認待ち $kXCandidateStatusFetchLimit件以上',
+      );
+    });
+
     test('R32 取得上限に達した status は「N件以上」と下限表示にする', () {
       // pending が取得上限ちょうど = 本当はもっとあるかもしれない → 「以上」。
       final pendingAtCap = List.generate(

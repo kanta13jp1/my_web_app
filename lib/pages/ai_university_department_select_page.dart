@@ -191,6 +191,9 @@ class _AiUniversityDepartmentSelectPageState
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
+                              settings: const RouteSettings(
+                                name: '/ai-university-content',
+                              ),
                               builder: (_) => AiUniversityContentPage(
                                 facultyCode: widget.facultyCode,
                                 facultyName: widget.facultyName,

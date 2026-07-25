@@ -129,6 +129,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   final Map<String, String> _memberProfileErrors = <String, String>{};
   PublicMemo? _publishedSnapshotMemo;
   PublicMemo? _publishedKpiMemo;
+
+  /// KPI公開ノートを一度でも読みに行ったか。KPIノートIDは固定値なので、
+  /// 自動リフレッシュでの再取得を抑止する判定に使う (結果が null=未公開でも
+  /// 「試行済み」として扱い、毎回リトライして重複フェッチに戻るのを防ぐ)。
+  bool _kpiMemoLoadAttempted = false;
   bool _isLoading = true;
   bool _isRealityLoading = false;
   bool _isPublishingSnapshotMemo = false;
@@ -528,6 +533,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   Future<void> _loadPublishedKpiMemo() async {
+    _kpiMemoLoadAttempted = true;
     final memo = await _shareService.loadPublishedPlanDashboard();
     if (!mounted) {
       return;
@@ -590,10 +596,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       if (!mounted) {
         return;
       }
-      // 初期ロード直後の refresh がキャッシュと同一 snapshot を返すケースでは
-      // 公開ノートの再ロードを省略する (page load ごとの public_memos 二重
-      // フェッチ対策)。fetchedAt が変わったときだけ再取得する。
-      final snapshotChanged = _realitySnapshot?.fetchedAt != snapshot.fetchedAt;
+      // 公開ノートの再取得は「参照するノートIDが変わったとき」だけに絞る。
+      // snapshot ノートIDは日付のみから作られ (buildSyntheticNoteId)、
+      // KPIノートIDは固定定数なので、fetchedAt (時刻込み) を基準にすると
+      // EF 再取得のたびに必ず変化して同じIDを取り直してしまう
+      // (初回ロードで public_memos が 4 フェッチになる原因)。
+      final previousSnapshot = _realitySnapshot;
+      final snapshotNoteChanged = previousSnapshot == null ||
+          _shareService.buildSyntheticNoteId(previousSnapshot) !=
+              _shareService.buildSyntheticNoteId(snapshot);
       setState(() {
         if (syncedPlan != null) {
           _plan = syncedPlan;
@@ -604,15 +615,20 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         _realitySnapshot = snapshot;
         _realityHistory = history;
         _realityError = null;
-        if (snapshotChanged) {
+        if (snapshotNoteChanged) {
           _publishedSnapshotMemo = null;
-          _publishedKpiMemo = null;
         }
         _syncMemberSelection(snapshot);
         _syncScheduleSelection(snapshot);
       });
-      if (snapshotChanged) {
+      if (snapshotNoteChanged) {
         unawaited(_loadPublishedSnapshotMemo(snapshot));
+      }
+      // KPIノートIDは snapshot に依存しない固定値なので、自動リフレッシュでは
+      // 再取得しない (未公開でメモが null のときも「試行済み」で判定する。
+      // 結果 null を条件にすると毎回リトライして重複フェッチが戻る)。
+      // ユーザーが明示的に再取得したときだけ取り直す。
+      if (forceRefresh || !_kpiMemoLoadAttempted) {
         unawaited(_loadPublishedKpiMemo());
       }
       if (showSnackBar) {
@@ -4972,7 +4988,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ),
             ),
           ],
-          if (item.firstEndorsement case final endorsement?) ...[
+          // totalCount==0 のエントリはバッジも出さない。集計 getter 側と
+          // 条件を揃えないと「第1次公認 0人」バッジが出て未発表県が
+          // 発表済みに見える (data 側コメントの不変条件)。
+          if (item.firstEndorsement case final endorsement?
+              when endorsement.totalCount > 0) ...[
             const SizedBox(height: 8),
             _buildFirstEndorsementBadge(endorsement),
           ],

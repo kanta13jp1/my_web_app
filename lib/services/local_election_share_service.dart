@@ -3,6 +3,7 @@
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../data/dpj_prefecture_announced_targets.dart';
 import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
 import '../models/public_memo.dart';
@@ -419,10 +420,16 @@ class LocalElectionShareService {
   String buildPlanDashboardXShareBody({
     required LocalElectionPlanDashboard plan,
   }) {
+    // X は文字数制限があるため、第1次公認は発表がある場合だけ1行足す。
+    final hasFirstEndorsement = dpjFirstEndorsementTotal > 0;
     return [
       '統一地方選700 県連KPI一覧',
-      '全${plan.prefectures.length}県連のKGI、CSF、KPI、現職人数、候補者進捗、公認期限、立憲参考値を公開ノートにまとめました。',
+      '全${plan.prefectures.length}県連のKGI、CSF、KPI、現職人数、候補者進捗、公認期限、立憲・自民の参考値を公開ノートにまとめました。',
       '現職 ${plan.currentLocalMembers}人 / 700まで残り${plan.requiredNetIncrease}人',
+      if (hasFirstEndorsement)
+        '第1次公認 $dpjFirstEndorsementTotal人'
+            '(現職$dpjFirstEndorsementIncumbentTotal/'
+            '新人$dpjFirstEndorsementNewcomerTotal)',
       buildNextUnifiedLocalElectionCountdownLine(now: plan.updatedAt.toLocal()),
       '純増目標 ${plan.allocatedNetIncrease}人 / 新人 ${plan.totalNewCandidateTarget}人',
       '#統一地方選 #国民民主党',
@@ -762,6 +769,24 @@ class LocalElectionShareService {
           '議員在籍県数: ${prefectures.where((item) => item.currentMembers > 0).length}県')
       ..writeln('現職名簿件数: ${members.length}人');
 
+    // 画面に出している比較指標 (第1次公認 / 自民地力差) を共有本文にも載せる。
+    // 載せないと「ノート化」「X投稿」した先で最新の重要指標だけが欠落する。
+    if (dpjFirstEndorsementTotal > 0) {
+      buffer.writeln(
+        '第1次公認: $dpjFirstEndorsementTotal人'
+        '(現職$dpjFirstEndorsementIncumbentTotal / '
+        '新人$dpjFirstEndorsementNewcomerTotal) '
+        '※$dpjFirstEndorsementPrefectureCount'
+        '/${dpjPrefectureAnnouncedTargets.length}県が発表済み',
+      );
+    }
+    final ldpTotal = plan?.totalLdpLocalMembers ?? 0;
+    if (ldpTotal > 0) {
+      buffer.writeln(
+        '自民地方議員参考合計: $ldpTotal人(総務省 所属党派別人員調)',
+      );
+    }
+
     if (snapshot.aiSummary.trim().isNotEmpty) {
       buffer
         ..writeln()
@@ -938,7 +963,14 @@ class LocalElectionShareService {
       ..writeln('- 予定支援回数: ${plan.totalCloseRaceSupportRounds}回')
       ..writeln('- 公認内定済み県連: '
           '${plan.confirmedEndorsementCount}/${plan.prefectures.length}')
-      ..writeln('- 立憲地方議員参考合計: ${plan.totalCdpLocalMembers}人');
+      ..writeln('- 立憲地方議員参考合計: ${plan.totalCdpLocalMembers}人')
+      ..writeln('- 自民地方議員参考合計: ${plan.totalLdpLocalMembers}人'
+          '(総務省 所属党派別人員調)')
+      ..writeln('- 第1次公認: $dpjFirstEndorsementTotal人'
+          '(現職$dpjFirstEndorsementIncumbentTotal / '
+          '新人$dpjFirstEndorsementNewcomerTotal) '
+          '※$dpjFirstEndorsementPrefectureCount'
+          '/${dpjPrefectureAnnouncedTargets.length}県が発表済み');
 
     buffer
       ..writeln()
@@ -989,6 +1021,11 @@ class LocalElectionShareService {
       'totalCloseRaceSupportRounds': plan.totalCloseRaceSupportRounds,
       'confirmedEndorsementCount': plan.confirmedEndorsementCount,
       'totalCdpLocalMembers': plan.totalCdpLocalMembers,
+      'totalLdpLocalMembers': plan.totalLdpLocalMembers,
+      'firstEndorsementTotal': dpjFirstEndorsementTotal,
+      'firstEndorsementIncumbent': dpjFirstEndorsementIncumbentTotal,
+      'firstEndorsementNewcomer': dpjFirstEndorsementNewcomerTotal,
+      'firstEndorsementPrefectureCount': dpjFirstEndorsementPrefectureCount,
       'prefectures': plan.prefectures
           .map(
             (item) => <String, dynamic>{
@@ -1015,6 +1052,8 @@ class LocalElectionShareService {
               'closeRaceSupportRounds': item.closeRaceSupportRounds,
               'cdpLocalMembers': item.cdpLocalMembers,
               'cdpMemberGap': item.cdpMemberGap,
+              'ldpLocalMembers': item.ldpLocalMembers,
+              'ldpMemberGap': item.ldpMemberGap,
               'csfKpis': item.csfKpis.map((kpi) => kpi.toJson()).toList(),
             },
           )
@@ -1126,6 +1165,9 @@ class LocalElectionShareService {
       '支援${plan.closeRaceSupportRounds}回',
       if (cdpMembers > 0)
         '立憲参考$cdpMembers人(${_formatPrefectureKpiGap(cdpMembers - currentMembers)})',
+      if (plan.ldpLocalMembers > 0)
+        '自民参考${plan.ldpLocalMembers}人'
+            '(${_formatPrefectureKpiGap(plan.ldpMemberGap, rivalLabel: '自民')})',
       if (reality != null)
         '公式内訳 都道府県議${reality.prefecturalAssemblyMembers}/市区町村議${reality.municipalAssemblyMembers}',
     ];
@@ -1155,9 +1197,12 @@ class LocalElectionShareService {
     return '';
   }
 
-  String _formatPrefectureKpiGap(int gap) {
+  /// 地力差ラベル。比較相手の党名は呼び出し側が渡す。
+  /// (汎用名のまま '立憲+' を直書きすると、自民の差分に立憲ラベルが付いて
+  /// しまうため必ず [rivalLabel] を明示する)
+  String _formatPrefectureKpiGap(int gap, {String rivalLabel = '立憲'}) {
     if (gap > 0) {
-      return '立憲+$gap';
+      return '$rivalLabel+$gap';
     }
     if (gap < 0) {
       return '国民+${-gap}';

@@ -46,6 +46,11 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
     ],
   );
 
+  LandingSocialProofStats socialProofStats = const LandingSocialProofStats(
+    totalUsers: 38,
+    publicMemoCount: 12,
+  );
+
   @override
   Stream<AuthState> authStateChanges() => const Stream<AuthState>.empty();
 
@@ -59,6 +64,11 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
   Future<LandingPageViewStats> loadLpViewStats() async {
     loadLpViewStatsCallCount += 1;
     return lpViewStats;
+  }
+
+  @override
+  Future<LandingSocialProofStats> loadSocialProofStats() async {
+    return socialProofStats;
   }
 
   @override
@@ -133,7 +143,10 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
   Future<void> recordTrialRun() async {}
 
   @override
-  Future<void> recordConversionEvent({required String eventKey}) async {
+  Future<void> recordConversionEvent({
+    required String eventKey,
+    required String visitorId,
+  }) async {
     conversionEvents.add(eventKey);
   }
 }

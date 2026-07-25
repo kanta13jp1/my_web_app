@@ -45,6 +45,7 @@ import 'package:my_web_app/services/asset_debt_trend_analyzer.dart';
 import 'package:my_web_app/services/asset_advisory_briefing_service.dart';
 import 'package:my_web_app/services/advisory_briefing_share_service.dart';
 import 'package:my_web_app/services/household_tracker_share_service.dart';
+import 'package:my_web_app/services/investment_asset_repository.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
@@ -65,6 +66,7 @@ import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_triage_guide_service.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
+import 'package:my_web_app/services/asset_account_shortfall_basis_service.dart';
 import 'package:my_web_app/services/asset_alert_center_service.dart';
 import 'package:my_web_app/services/asset_alert_dismissal_store.dart';
 import 'package:my_web_app/services/asset_cashflow_statement_service.dart';
@@ -98,6 +100,7 @@ import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
 import 'package:my_web_app/widgets/asset_alert_center_card.dart';
 import 'package:my_web_app/widgets/asset_cashflow_statement_card.dart';
+import 'package:my_web_app/widgets/asset_dashboard_grid.dart';
 import 'package:my_web_app/widgets/asset_net_worth_panel_card.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
@@ -107,6 +110,7 @@ import 'package:my_web_app/widgets/subscription_duplicate_alert_card.dart';
 import 'package:my_web_app/widgets/subscription_fixed_cost_card.dart';
 import 'package:my_web_app/widgets/asset_recurring_transaction_suggestion_card.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
+import 'package:my_web_app/widgets/investment_asset_management_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -197,6 +201,7 @@ class AssetManagementPage extends StatefulWidget {
   final bool emphasizeMonthlyFlow;
   final AssetWatchlistService watchlistService;
   final AssetLiabilityRepository? assetLiabilityRepository;
+  final InvestmentAssetRepository? investmentAssetRepository;
   final String? entryLabel;
   final String? entryDescription;
 
@@ -312,6 +317,7 @@ class AssetManagementPage extends StatefulWidget {
     this.emphasizeMonthlyFlow = false,
     this.watchlistService = const AssetWatchlistService(),
     this.assetLiabilityRepository,
+    this.investmentAssetRepository,
     this.entryLabel,
     this.entryDescription,
     this.debugInitialAssetData,
@@ -403,6 +409,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _keyCardStatementReconciliation = GlobalKey();
   // 口座間移動の提案セクションへのスクロール用 (残高不足バナーからのジャンプ)。
   final _keyTransferSuggestionSection = GlobalKey();
+  final _keyIncomePlanSection = GlobalKey();
   // 負債コントロールレビュー (原資未設定一覧) へのスクロール用 (原資未設定バナーからのジャンプ)。
   final _keyDebtControlReviewSection = GlobalKey();
 
@@ -778,6 +785,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   // --- 返済計画用 ---
   late final AssetLiabilityRepository _assetLiabilityRepository;
+  late final InvestmentAssetRepository _investmentAssetRepository;
   final AssetLiabilityPlanningService _assetLiabilityPlanner =
       const AssetLiabilityPlanningService();
   final AssetLiabilityPaymentReminderService _assetLiabilityReminderService =
@@ -1039,6 +1047,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         AssetLiabilityRepositoryFactory.createDefault(
           supabaseClient: _supabase,
         );
+    _investmentAssetRepository = widget.investmentAssetRepository ??
+        SupabaseInvestmentAssetRepository(client: _supabase);
     unawaited(_loadMinimumSafetyBalance());
     // 起動時の asset_pref_mirror 個別読み取りを 1 回のバッチ取得へ集約する
     // (端末跨ぎ同期の多数 REST が ERR_INSUFFICIENT_RESOURCES を誘発するのを緩和)。
@@ -1048,7 +1058,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _bootPrefMirrorFuture = null;
     });
     _loadDataFromSupabase();
-    _loadAssetLiabilityMonthlyState();
+    unawaited(_loadAssetLiabilityBootState());
     _loadWatchlistEntries();
     _loadAssetManagementUserProfile();
     _loadPayslipFinanceData();
@@ -1057,10 +1067,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchMustTasks();
     _loadDisplayMode();
     _loadMainAccount();
-    unawaited(_loadSalaryDay());
     unawaited(_loadHouseholdTrackerPublishing());
     unawaited(_loadSalaryAmount());
-    unawaited(_loadSalaryResetMarker());
     unawaited(_loadRevolvingConfigs());
     unawaited(_loadCategoryBudgets());
     unawaited(_loadRecurringFixedCosts());
@@ -1190,7 +1198,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _openProfileSettingsForAssetManagement() async {
     await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const ProfileSettingsPage()),
+      MaterialPageRoute<void>(
+          settings: const RouteSettings(name: '/profile-settings'),
+          builder: (_) => const ProfileSettingsPage()),
     );
     if (!mounted) {
       return;
@@ -1220,6 +1230,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   void _jumpToDebtControlReviewSection() {
     _scrollTo(_keyDebtControlReviewSection);
+  }
+
+  /// 残高不足バナーから「収入予定」セクションへ飛ぶ。入金先未設定の収入予定が
+  /// 口座別資金繰りに反映されないことが不足表示の原因になり得るため、その場で
+  /// 設定を直せるようにする。
+  void _jumpToIncomePlanSection() {
+    _scrollTo(_keyIncomePlanSection);
   }
 
   List<String> _paymentSourceCandidates() {
@@ -1673,11 +1690,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   String _formatYen(num value) =>
-      '¥${NumberFormat('#,###').format(value.round())}';
+      '¥${NumberFormat('#,##0').format(value.round())}';
 
   String _formatSignedYen(num value) {
     final sign = value >= 0 ? '+' : '-';
-    return '$sign¥${NumberFormat('#,###').format(value.abs().round())}';
+    return '$sign¥${NumberFormat('#,##0').format(value.abs().round())}';
   }
 
   double _numberFromDynamic(Object? value) {
@@ -1900,8 +1917,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return Map<String, double>.from(snapshot);
   }
 
+  /// 起動時は給与サイクルの基準を確定してから月次stateを一度だけ読む。
+  Future<void> _loadAssetLiabilityBootState() async {
+    await Future.wait<void>(<Future<void>>[
+      _loadSalaryDay(),
+      _loadSalaryResetMarker(),
+    ]);
+    if (!mounted) {
+      return;
+    }
+    await _loadAssetLiabilityMonthlyState();
+  }
+
   /// 月次stateロードの入口。同一サイクル月のロードが進行中ならその Future を
-  /// 返して重複バッチ (各 7 往復) を抑える。対象月が異なる場合は新規に走らせる。
+  /// 返して重複バッチを抑える。対象月が異なる場合は新規に走らせる。
   Future<void> _loadAssetLiabilityMonthlyState() {
     final monthKey = _assetLiabilityStateMonthKey(_now);
     final inFlight = _assetLiabilityMonthlyStateInFlight;
@@ -1927,10 +1956,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final targetMonth = _assetLiabilityStateMonth(_now);
       final monthKey = _assetLiabilityStateMonthKey(_now);
       final state = await _assetLiabilityRepository.loadMonth(targetMonth);
-      final defaultSources =
-          await _assetLiabilityRepository.loadDefaultPaymentSources();
+      final defaultPaymentSettings =
+          await _assetLiabilityRepository.loadDefaultPaymentSettings();
+      final defaultSources = defaultPaymentSettings.paymentSourceAccountIds;
       final defaultCardBillingAccounts =
-          await _assetLiabilityRepository.loadDefaultCardBillingAccounts();
+          defaultPaymentSettings.cardBillingAccountIds;
       // #part295: ロード時もトゥームストーン済み支払日上書きを除外する
       // (pull とロードの順序に依らず「削除した上書き」を復活させない)。
       final loadedDebtOverrides =
@@ -8770,19 +8800,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildCashflowForecastCard(assetLiabilityWorkbook),
             ],
             if (_isSectionShown(
-              AssetManagementSectionId.cashflowStatement,
+              AssetManagementSectionId.monthlyDashboard,
             )) ...[
-              _buildCashflowStatementCard(assetLiabilityWorkbook),
-            ],
-            if (_isSectionShown(
-              AssetManagementSectionId.alertCenter,
-            )) ...[
-              _buildAssetAlertCenterCard(assetLiabilityWorkbook),
-            ],
-            if (_isSectionShown(
-              AssetManagementSectionId.netWorthPanel,
-            )) ...[
-              _buildAssetNetWorthPanelCard(assetLiabilityWorkbook),
+              _buildMonthlyDashboardGrid(assetLiabilityWorkbook),
             ],
             // 提案カード(定期取引/定期収入の自動検出)は給与内訳に相乗りせず専用
             // セクションへ。salaryBreakdown を隠しても提案だけ独立表示できる。
@@ -8957,9 +8977,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       // 同じなら同一サイクル月の同一データで、起動毎に7往復のフルバッチが余分に
       // 走るだけだった (兄弟の _restoreSalaryAmountFromMirror は同値なら早期
       // return しており、そちらに揃える)。
-      if (changed) {
-        unawaited(_loadAssetLiabilityMonthlyState());
-      }
     } catch (e) {
       debugPrint('salary day mirror restore failed: $e');
     }
@@ -9098,8 +9115,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _salaryResetMarkerStore.save(merged),
         'salary reset marker restore save',
       );
-      // 実効サイクルが変わるため月次stateを読み直す。
-      unawaited(_loadAssetLiabilityMonthlyState());
     } catch (e) {
       debugPrint('salary reset marker mirror restore failed: $e');
     }
@@ -13574,6 +13589,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 height: 1.5,
               ),
             ),
+            // 結論(不足額)だけでは「なぜ足りないのか / 設定が悪いのか」が判らず
+            // 対処できない。計算の根拠 (現在残高・引き落とし明細・入金予定) と
+            // 原因の見立て、設定修正への導線をその場に出す。
+            _buildAccountShortfallBasis(workbook, summary.accountId),
             if (suggestionsByAccountId[summary.accountId]
                 case final suggestion?)
               Wrap(
@@ -13584,7 +13603,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   Text(
                     '${suggestion.fromAccountName} → ${summary.accountName} '
                     '${_formatManagementYen(suggestion.amount)}'
-                    '${suggestion.neededBy == null ? '' : '（${DateFormat('M月d日').format(suggestion.neededBy!)}まで）'}',
+                    '${suggestion.neededBy == null ? '' : '（${DateFormat('M月d日').format(suggestion.neededBy!)}まで）'}'
+                    // 移動元の現在残高で上限を掛けるため、不足額の全額を
+                    // 賄えないことがある。full/partial を明示しないと
+                    // 「移動したのにまだ足りない」と誤解させる。
+                    '${suggestion.amount + 0.5 < summary.shortfall ? '（一部・移動後も${_formatManagementYen(summary.shortfall - suggestion.amount)}不足）' : ''}',
                     // 背景が固定の淡赤のため、ダークテーマの onSurface(白)だと
                     // 読めなくなる。文字色も固定の濃赤系にする。
                     style: const TextStyle(
@@ -13648,6 +13671,114 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 label: const Text('口座間移動の提案へ移動'),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  /// 残高不足の「根拠」をその場に開示する。
+  ///
+  /// 見込み残高 = 現在残高 − 引き落とし予定 + この口座への入金予定 (±移動) で、
+  /// **入金予定は入金先口座がこの口座のものだけ**が数えられる。そのため収入予定の
+  /// 入金先が未設定だと、収入があるのに口座別では不足に見える。この盲点を
+  /// バナー内で名指しし、設定修正へ飛べるようにする。
+  Widget _buildAccountShortfallBasis(
+    AssetLiabilityWorkbook workbook,
+    String accountId,
+  ) {
+    final basis = const AssetAccountShortfallBasisService().buildBasis(
+      workbook: workbook,
+      accountId: accountId,
+    );
+    if (basis == null) {
+      return const SizedBox.shrink();
+    }
+    const detailStyle = TextStyle(
+      fontSize: 11,
+      color: Color(0xFF7F1D1D),
+      height: 1.5,
+    );
+    const shownPaymentLimit = 3;
+    final shownPayments = basis.paymentLines.take(shownPaymentLimit).toList();
+    final hiddenPaymentCount = basis.paymentLines.length - shownPayments.length;
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 2, top: 2, bottom: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '根拠: 現在残高 ${_formatManagementYen(basis.currentBalance)}'
+            ' − 引き落とし予定${basis.paymentLines.length}件 '
+            '${_formatManagementYen(basis.paymentTotal)}'
+            ' ＋ この口座への入金予定 ${_formatManagementYen(basis.incomeTotal)}'
+            '${basis.pendingTransferIn > 0 ? ' ＋ 移動入 ${_formatManagementYen(basis.pendingTransferIn)}' : ''}'
+            '${basis.pendingTransferOut > 0 ? ' − 移動出 ${_formatManagementYen(basis.pendingTransferOut)}' : ''}'
+            ' = ${_formatManagementYen(basis.projectedBalance)}',
+            style: detailStyle,
+          ),
+          for (final line in shownPayments)
+            Text(
+              '・${DateFormat('M月d日').format(line.date)} ${line.name} '
+              '${_formatManagementYen(line.amount)}',
+              style: detailStyle,
+            ),
+          if (hiddenPaymentCount > 0)
+            Text('・ほか$hiddenPaymentCount件', style: detailStyle),
+          // 原因の見立てと修正導線。入金先未設定は「設定だけで解消し得る」ため
+          // 最優先で名指しする。
+          if (basis.cause ==
+              AssetAccountShortfallCause.incomeDestinationUnassigned) ...[
+            Text(
+              '⚠ 入金先口座が未設定の収入予定が'
+              '${_formatManagementYen(basis.unassignedIncomeTotal)}あります'
+              '（${basis.unassignedIncomeNames.take(2).join('・')}'
+              '${basis.unassignedIncomeNames.length > 2 ? ' ほか' : ''}）。'
+              '未設定の収入は口座別の見込みに反映されません。'
+              '${basis.unassignedIncomeCouldCover ? 'この口座が入金先なら、設定するだけでこの不足は解消します。' : ''}',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF7F1D1D),
+                height: 1.5,
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: Key('asset_shortfall_fix_income_destination_$accountId'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFFB91C1C),
+                ),
+                onPressed: _jumpToIncomePlanSection,
+                icon: const Icon(Icons.tune, size: 16),
+                label: const Text('収入予定の入金先を設定'),
+              ),
+            ),
+          ] else if (basis.cause ==
+              AssetAccountShortfallCause.noIncomeForAccount) ...[
+            const Text(
+              'この口座への入金予定は登録されていません。'
+              '給料などの入金先がこの口座なら「収入予定」に登録すると見込みへ反映されます。',
+              style: detailStyle,
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: Key('asset_shortfall_add_income_$accountId'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFFB91C1C),
+                ),
+                onPressed: _jumpToIncomePlanSection,
+                icon: const Icon(Icons.add_circle_outline, size: 16),
+                label: const Text('収入予定を確認・登録'),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -14342,7 +14473,68 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 月次キャッシュフローパネル (Issue #2474)。履歴スナップショット + ライブの当月から
   /// 「当月CF (月収 − 月支出)」「年初来累積CF」「直近12か月の黒字/赤字月数」を集計する。
   /// 金額計算は純サービス [AssetCashflowStatementService] で deterministic に行う。
-  Widget _buildCashflowStatementCard(AssetLiabilityWorkbook? workbook) {
+  /// 月次資産ダッシュボード (Issue #2472)。純資産 / キャッシュフロー / 投資 / アラートを
+  /// responsive な 2x2 グリッド (mobile 1 列) に並べる。
+  ///
+  /// 投資パネルは未登録状態でも追加導線を表示するため常に配列へ含める。
+  Widget _buildMonthlyDashboardGrid(AssetLiabilityWorkbook? workbook) {
+    final panels = <AssetDashboardPanel>[];
+
+    final netWorth = _assetNetWorthPanelChild(workbook);
+    if (netWorth != null) {
+      panels.add(
+        AssetDashboardPanel(
+          title: '純資産',
+          onOpenDetail: () => _scrollTo(_keyStock),
+          child: netWorth,
+        ),
+      );
+    }
+
+    final cashflow = _cashflowStatementPanelChild(workbook);
+    if (cashflow != null) {
+      panels.add(
+        AssetDashboardPanel(
+          title: 'キャッシュフロー',
+          onOpenDetail: () => _scrollTo(_keyFlow),
+          child: cashflow,
+        ),
+      );
+    }
+
+    panels.add(
+      AssetDashboardPanel(
+        title: '投資',
+        child: InvestmentAssetManagementPanel(
+          repository: _investmentAssetRepository,
+          userId: _supabase.auth.currentUser?.id,
+          currencyFormatter: (value) => _formatYen(value),
+        ),
+      ),
+    );
+
+    final alerts = _assetAlertCenterPanelChild(workbook);
+    if (alerts != null) {
+      panels.add(
+        AssetDashboardPanel(
+          title: 'アラート',
+          onOpenDetail: () => _scrollTo(_keyCalendar),
+          child: alerts,
+        ),
+      );
+    }
+
+    if (panels.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: AssetDashboardGrid(panels: panels),
+    );
+  }
+
+  /// キャッシュフローパネルの中身。データが無ければ null (グリッドから除外される)。
+  Widget? _cashflowStatementPanelChild(AssetLiabilityWorkbook? workbook) {
     // ライブの当月スナップショットを履歴サービスで生成し、未保存でも当月CFを反映する。
     AssetLiabilityMonthlySnapshot? currentMonthSnapshot;
     if (workbook != null) {
@@ -14360,21 +14552,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       asOf: DateTime.now(),
     );
     if (!statement.hasData) {
-      return const SizedBox.shrink();
+      return null;
     }
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: AssetCashflowStatementCard(
-        statement: statement,
-        currencyFormatter: _formatYen,
-      ),
+    return AssetCashflowStatementCard(
+      statement: statement,
+      currencyFormatter: _formatYen,
     );
   }
 
   /// 純資産パネル (Issue #2473)。履歴スナップショット + ライブの当月から
   /// 「純資産」「前月比 ±¥ / ±%」「直近6月スパークライン」を集計する。
   /// 金額・変化率は純サービス [AssetNetWorthPanelService] で deterministic に算出。
-  Widget _buildAssetNetWorthPanelCard(AssetLiabilityWorkbook? workbook) {
+  Widget? _assetNetWorthPanelChild(AssetLiabilityWorkbook? workbook) {
     AssetLiabilityMonthlySnapshot? currentMonthSnapshot;
     if (workbook != null) {
       final monthKey =
@@ -14390,14 +14579,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       currentMonthSnapshot: currentMonthSnapshot,
     );
     if (!panel.hasData) {
-      return const SizedBox.shrink();
+      return null;
     }
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: AssetNetWorthPanelCard(
-        panel: panel,
-        currencyFormatter: _formatYen,
-      ),
+    return AssetNetWorthPanelCard(
+      panel: panel,
+      currencyFormatter: _formatYen,
     );
   }
 
@@ -14430,9 +14616,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 統合アラートパネル (Issue #2475)。延滞・口座ショート・支払リマインダー(#2453)・
   /// 支払原資未設定を重要度別に集約する。異常検知 (第2弾D) は将来 anomalyAlerts で
   /// 注入する統合設計。金額・重要度判定は純サービスで deterministic に行う。
-  Widget _buildAssetAlertCenterCard(AssetLiabilityWorkbook? workbook) {
+  /// アラートパネルの中身。データが無ければ null (グリッドから除外される)。
+  Widget? _assetAlertCenterPanelChild(AssetLiabilityWorkbook? workbook) {
     if (workbook == null) {
-      return const SizedBox.shrink();
+      return null;
     }
     final center = _assetAlertCenterService.build(
       workbook: workbook,
@@ -14441,17 +14628,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     // 表示するアラートも dismiss 済みも無ければカードを出さない。
     if (!center.hasAlerts && center.dismissedCount == 0) {
-      return const SizedBox.shrink();
+      return null;
     }
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: AssetAlertCenterCard(
-        center: center,
-        onDismiss: _dismissAssetAlert,
-        onRestoreDismissed: center.dismissedCount > 0
-            ? () => unawaited(_restoreDismissedAssetAlerts())
-            : null,
-      ),
+    return AssetAlertCenterCard(
+      center: center,
+      onDismiss: _dismissAssetAlert,
+      onRestoreDismissed: center.dismissedCount > 0
+          ? () => unawaited(_restoreDismissedAssetAlerts())
+          : null,
     );
   }
 
@@ -24921,6 +25105,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final plans = workbook.incomePlans;
     final unassignedPlans = workbook.unassignedDestinationIncomePlans;
     return Container(
+      key: _keyIncomePlanSection,
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

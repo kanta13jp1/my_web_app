@@ -11,7 +11,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "a420573d0c64f1afdadf7ee4ef60068eb44177a83e7fb16a8aaa04afaa9fbf46",
+      "hash": "d8ef1a618b4dd9fb060fb841df2cc048e7606f01fd7c0a624bd157fadad3f0d1",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -55,15 +55,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.214 / July 18, 2026",
+      "latest_signal": "2.1.219 / July 24, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "04cd39bac5ae0a69f74d94c8a0662b28b7806127abc763823fa41fe7dc87b3fe",
+      "previous_hash": "9b0e1435a90dc092822130cd43ea6d8970e9525d8da446094e523d26f8b8d25f",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.214 July 18, 2026 Fixed single-segment dir/** allow rules like Edit(src/**) auto-approving writes to nested dir/ directories anywhere in the tree instead of only <cwd>/dir..."
+        "​ 2.1.219 July 24, 2026 Added Claude Opus 5 ( claude-opus-5 ), now the default Opus model — 1M context, fast mode at 10 / 10/ 10/ 50 per Mtok Added..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -72,7 +72,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "5389ce017162904b5e02cdcfafb481657a8a25891fc1de77af0de46ea04df266",
+      "hash": "87cdbd0328b4fe4bf7b67c77e3bee919f7c95d5a610e4d6e5f1b0307a6070949",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -110,7 +110,7 @@
       "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "616681544f062c2af42f1d6fc30d0952b6dc82de3a18cfb9779dd067e1991dc8",
+      "previous_hash": "af79943f765755840f87043dd0c84e1dde739908059481e854d36a49b4993a7a",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -124,7 +124,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "013523bc51529964bf3a0c9bd9425ac2093f7806f0cc4b2f0546d031a0ab4ee6",
+      "hash": "fb810611d766de35d1e0871c17a4a1f3002733db92d8a57cf7b59de3e313675f",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -168,15 +168,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-18 / Codex CLI 0.144.6 pre",
+      "latest_signal": "2026-07-23 / ChatGPT Voice and multi-folder projects 26.715 Powered by GPT-Live, ChatGPT Voice lets you",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "e5cd2677edc1f04d52e4a79793193678c50e033a470936134fab03c7620b58e5",
+      "previous_hash": "a6750cc2c0464a25ba98ff7169f4f81e6d77fab15ca81929d5bc691008c90d26",
       "slug": "codex-changelog",
       "snippets": [
         "Codex changelog | ChatGPT Learn ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or...",
-        "Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...",
-        "All posts Recent Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How Perplexity Brought Voice Search to..."
+        "Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...",
+        "All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How..."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
@@ -185,43 +185,57 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "3f7758f857bed0c704742a99fe63eb437295318d4a1383a691ec50a95dd593e0",
+      "hash": "18fb32369b06bd03b69b6917a88aef1155888300a58b0dfd1c87d9c44bf176f8",
       "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.4",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
         "hooks": [
+          "hook",
+          "hooks",
           "Stop"
         ],
         "integration": [
           "MCP",
+          "connector",
+          "Slack",
+          "Linear",
           "GitHub",
-          "IDE extension",
-          "VSCode"
+          "IDE extension"
         ],
         "quality-cost": [
           "cost",
-          "quota",
+          "rate limit",
+          "sandbox",
           "permission",
           "review",
           "CI"
         ],
         "schedule": [
+          "automation",
+          "schedule",
+          "GitHub Actions",
           "workflow"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
-      "name": "Gemini Code Assist release notes",
-      "owner": "Gemini Code Assist",
-      "previous_hash": "a32ade1b96a4aaee19711b1b6afed7863bca916233c294dd256fb1a24b5cc6df",
-      "slug": "gemini-code-assist-release-notes",
+      "latest_signal": "ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex",
+      "name": "Codex use cases",
+      "owner": "Codex",
+      "previous_hash": "eb5828063361e497c4165315226a50320023881d924da3d527c60e5ed9c58256",
+      "slug": "codex-use-cases",
       "snippets": [
-        "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",
-        "Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra...",
-        "April 13, 2026 VS Code Gemini Code Assist 2.77.3 Fixed Quota issues fixed in VS Code Various bug fixes related to quota issues."
+        "ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use...",
+        "Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...",
+        "All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How..."
       ],
       "status": 200,
-      "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
+      "url": "https://developers.openai.com/codex/use-cases/"
     }
   ],
-  "checked_at": "2026-07-18T22:08:40Z",
+  "checked_at": "2026-07-24T22:28:41Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -273,13 +287,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-07-17T22:07:58Z",
+  "previous_checked_at": "2026-07-23T22:16:09Z",
   "sources": [
     {
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "a420573d0c64f1afdadf7ee4ef60068eb44177a83e7fb16a8aaa04afaa9fbf46",
+      "hash": "d8ef1a618b4dd9fb060fb841df2cc048e7606f01fd7c0a624bd157fadad3f0d1",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -323,15 +337,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.214 / July 18, 2026",
+      "latest_signal": "2.1.219 / July 24, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "04cd39bac5ae0a69f74d94c8a0662b28b7806127abc763823fa41fe7dc87b3fe",
+      "previous_hash": "9b0e1435a90dc092822130cd43ea6d8970e9525d8da446094e523d26f8b8d25f",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.214 July 18, 2026 Fixed single-segment dir/** allow rules like Edit(src/**) auto-approving writes to nested dir/ directories anywhere in the tree instead of only <cwd>/dir..."
+        "​ 2.1.219 July 24, 2026 Added Claude Opus 5 ( claude-opus-5 ), now the default Opus model — 1M context, fast mode at 10 / 10/ 10/ 50 per Mtok Added..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -340,7 +354,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "5389ce017162904b5e02cdcfafb481657a8a25891fc1de77af0de46ea04df266",
+      "hash": "87cdbd0328b4fe4bf7b67c77e3bee919f7c95d5a610e4d6e5f1b0307a6070949",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -378,7 +392,7 @@
       "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "616681544f062c2af42f1d6fc30d0952b6dc82de3a18cfb9779dd067e1991dc8",
+      "previous_hash": "af79943f765755840f87043dd0c84e1dde739908059481e854d36a49b4993a7a",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -392,7 +406,7 @@
       "changed": false,
       "error": null,
       "first_seen": false,
-      "hash": "7fdf55012b8d33420d5efc836a4aff8e210da2946759e28e347c0780af66c3a8",
+      "hash": "a5545fd180009614613298fe94c3aa1fc9f83db6d3b478d0683f10f81f8c8e11",
       "keyword_groups": {
         "codex-runtime": [
           "computer use"
@@ -426,7 +440,7 @@
       "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume",
       "name": "Claude Code GitHub Actions",
       "owner": "Claude Code",
-      "previous_hash": "7fdf55012b8d33420d5efc836a4aff8e210da2946759e28e347c0780af66c3a8",
+      "previous_hash": "a5545fd180009614613298fe94c3aa1fc9f83db6d3b478d0683f10f81f8c8e11",
       "slug": "claude-code-github-actions",
       "snippets": [
         "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before...",
@@ -440,7 +454,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "013523bc51529964bf3a0c9bd9425ac2093f7806f0cc4b2f0546d031a0ab4ee6",
+      "hash": "fb810611d766de35d1e0871c17a4a1f3002733db92d8a57cf7b59de3e313675f",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -484,24 +498,24 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-18 / Codex CLI 0.144.6 pre",
+      "latest_signal": "2026-07-23 / ChatGPT Voice and multi-folder projects 26.715 Powered by GPT-Live, ChatGPT Voice lets you",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "e5cd2677edc1f04d52e4a79793193678c50e033a470936134fab03c7620b58e5",
+      "previous_hash": "a6750cc2c0464a25ba98ff7169f4f81e6d77fab15ca81929d5bc691008c90d26",
       "slug": "codex-changelog",
       "snippets": [
         "Codex changelog | ChatGPT Learn ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or...",
-        "Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...",
-        "All posts Recent Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How Perplexity Brought Voice Search to..."
+        "Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...",
+        "All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How..."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "7b0ed9e1f51103d91424cda85fd8f640fbe81958c1d9126c3e2bd98be2add8eb",
+      "hash": "18fb32369b06bd03b69b6917a88aef1155888300a58b0dfd1c87d9c44bf176f8",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.4",
@@ -540,12 +554,12 @@
       "latest_signal": "ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "7b0ed9e1f51103d91424cda85fd8f640fbe81958c1d9126c3e2bd98be2add8eb",
+      "previous_hash": "eb5828063361e497c4165315226a50320023881d924da3d527c60e5ed9c58256",
       "slug": "codex-use-cases",
       "snippets": [
         "ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use...",
-        "Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...",
-        "All posts Recent Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How Perplexity Brought Voice Search to..."
+        "Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...",
+        "All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How..."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/use-cases/"
@@ -569,7 +583,7 @@
       "changed": false,
       "error": null,
       "first_seen": false,
-      "hash": "0ebba67d37dcf310d50764128ab3d7904dffad45cf005efd9b1a89c9708ca08e",
+      "hash": "c4e5b6c4a0e793a343c068d9812c4ec807a58efe12ac935b80c47588407230b8",
       "keyword_groups": {
         "codex-runtime": [
           "subagents"
@@ -585,6 +599,7 @@
           "GitHub"
         ],
         "quality-cost": [
+          "cost",
           "review",
           "CI"
         ],
@@ -597,18 +612,18 @@
       "latest_signal": "3.11 / Jul 10, 2026",
       "name": "Cursor changelog",
       "owner": "Cursor",
-      "previous_hash": "0ebba67d37dcf310d50764128ab3d7904dffad45cf005efd9b1a89c9708ca08e",
+      "previous_hash": "c4e5b6c4a0e793a343c068d9812c4ec807a58efe12ac935b80c47588407230b8",
       "slug": "cursor-changelog",
       "snippets": [
-        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Composer Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing...",
-        "We also refined how Cursor's responses look in Slack.",
-        "# Multi-repo environment support From Slack, Cursor can now start in a named multi-repo environment instead of a single default repository."
+        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing Resources ↓...",
+        "Price-efficient models handle the rest.",
+        "Cost: Good quality, reaching the highest available intelligence while optimizing token spend."
       ],
       "status": 200,
       "url": "https://cursor.com/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "3f7758f857bed0c704742a99fe63eb437295318d4a1383a691ec50a95dd593e0",
@@ -636,7 +651,7 @@
       "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
-      "previous_hash": "a32ade1b96a4aaee19711b1b6afed7863bca916233c294dd256fb1a24b5cc6df",
+      "previous_hash": "3f7758f857bed0c704742a99fe63eb437295318d4a1383a691ec50a95dd593e0",
       "slug": "gemini-code-assist-release-notes",
       "snippets": [
         "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",
@@ -650,7 +665,7 @@
       "changed": false,
       "error": null,
       "first_seen": false,
-      "hash": "0988a919b106dd0839fb386330b00ba2ae97ce54315ec053f5bc79eb9a069b5f",
+      "hash": "5d1f83d0e57d47369afa4e81221d54861954ce9025db03ac7ea9d0e4ee839cd1",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -682,15 +697,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "July 15, 2026",
+      "latest_signal": "July 22, 2026",
       "name": "Devin release notes",
       "owner": "Devin",
-      "previous_hash": "0988a919b106dd0839fb386330b00ba2ae97ce54315ec053f5bc79eb9a069b5f",
+      "previous_hash": "5d1f83d0e57d47369afa4e81221d54861954ce9025db03ac7ea9d0e4ee839cd1",
       "slug": "devin-release-notes",
       "snippets": [
         "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
-        "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
-        "​ July 3, 2026 Diff Line Permalinks You can now share direct links to specific lines in a Devin Review diff via the URL hash — useful for pointing teammates to exact code..."
+        "Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools...",
+        "Automations Consumption Visibility A new Consumption tab on each automation shows the ACUs used by sessions the automation has started, so you can track the cost of your..."
       ],
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"

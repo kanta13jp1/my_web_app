@@ -37,6 +37,12 @@ def include_browser_smoke() -> bool:
     }
 
 
+def flutter_vm_test_concurrency(platform_name: str | None = None) -> int:
+    """Keep the long Windows VM suite on one stable test worker."""
+    resolved_platform = os.name if platform_name is None else platform_name
+    return 1 if resolved_platform == "nt" else 2
+
+
 def base_commands() -> list[GateCommand]:
     python = sys.executable
     return [
@@ -127,7 +133,12 @@ def full_commands(root: Path) -> list[GateCommand]:
         ),
         GateCommand(
             "flutter vm tests",
-            ["flutter", "test", "--coverage", "--concurrency=2"],
+            [
+                "flutter",
+                "test",
+                "--coverage",
+                f"--concurrency={flutter_vm_test_concurrency()}",
+            ],
             "flutter",
         ),
     ]

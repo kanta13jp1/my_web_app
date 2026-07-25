@@ -69,6 +69,7 @@ import {
   approveXPostCandidateMetadata,
   buildXPostCandidateMetadata,
   finalizeXPostCandidateMetadata,
+  rejectXPostCandidateMetadata,
   X_POST_CANDIDATE_SOURCE,
 } from "./x_post_candidate.ts";
 import {
@@ -77,6 +78,20 @@ import {
   type RoadmapPlan,
   selectShareableRoadmapPlans,
 } from "./roadmap_share_stats.ts";
+import {
+  DEFAULT_LANDING_TRIAL_MODEL,
+  generateLandingTrialSuggestion,
+  hashLandingTrialClient,
+  LandingTrialInputError,
+  normalizeLandingTrialPrompt,
+} from "./landing_trial.ts";
+import {
+  buildFirstUserFunnelReport,
+  FIRST_USER_FUNNEL_STAGES,
+  type FirstUserAcquisitionEvent,
+  type FirstUserPayment,
+  type FirstUserXPost,
+} from "./first_user_funnel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -88,6 +103,10 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ??
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
+const LANDING_TRIAL_AI_MODEL = Deno.env.get("LANDING_TRIAL_AI_MODEL") ?? "";
+const LANDING_TRIAL_RATE_LIMIT_SALT =
+  Deno.env.get("LANDING_TRIAL_RATE_LIMIT_SALT") ?? SERVICE_ROLE_KEY;
 // x.post 近似重複ガードの調整用 env (未設定時は既定 0.9 / 直近 5 件)。
 const X_DUP_SIMILARITY_THRESHOLD = Deno.env.get("X_DUP_SIMILARITY_THRESHOLD") ??
   null;
@@ -416,6 +435,12 @@ const TOUCHPOINT_DEFS = [
     signupSignal: "signup_submit_profile",
   },
   {
+    id: "x_first_user_growth",
+    label: "X first-user campaign",
+    touchSignal: "touch_x_first_user_growth",
+    signupSignal: "signup_submit_x_first_user_growth",
+  },
+  {
     id: "import",
     label: "Import",
     touchSignal: "touch_import",
@@ -486,6 +511,7 @@ const SUPPORTED_ACQUISITION_SIGNALS = new Set([
   "x_first_user_feedback_x_intent",
   "signup_submit_landing",
   "signup_submit_profile",
+  "signup_submit_x_first_user_growth",
   "signup_submit_import",
   "signup_submit_public_memo",
   "signup_submit_referral",
@@ -558,6 +584,78 @@ async function recordAcquisitionSignal(
     .eq("date", dateKey);
   if (error) throw new Error(error.message);
   return { success: true, signalKey, dateKey };
+}
+
+const firstUserFunnelStageSet = new Set<string>(FIRST_USER_FUNNEL_STAGES);
+const firstUserTokenPattern = /^[a-z0-9_-]{1,64}$/;
+
+async function recordFirstUserFunnelSignal(
+  admin: SupabaseClient,
+  actorUserId: string | null,
+  body: Record<string, unknown>,
+) {
+  const visitorId = firstString(body.visitorId, body.visitor_id).toLowerCase();
+  const stage = firstString(body.stage).toLowerCase();
+  const utmSource = firstString(
+    body.utmSource,
+    body.utm_source,
+  ).toLowerCase();
+  const utmMedium = firstString(
+    body.utmMedium,
+    body.utm_medium,
+  ).toLowerCase();
+  const utmCampaign = firstString(
+    body.utmCampaign,
+    body.utm_campaign,
+  ).toLowerCase();
+  const utmContent = firstString(
+    body.utmContent,
+    body.utm_content,
+  ).toLowerCase();
+
+  if (
+    !isUuid(visitorId) ||
+    !firstUserFunnelStageSet.has(stage) ||
+    utmSource !== "x" ||
+    utmCampaign !== "first_user_growth" ||
+    !firstUserTokenPattern.test(utmMedium) ||
+    !firstUserTokenPattern.test(utmContent)
+  ) {
+    return {
+      success: false,
+      error: "invalid first-user funnel signal",
+    };
+  }
+
+  const { data, error } = await admin
+    .from("first_user_acquisition_events")
+    .upsert({
+      visitor_id: visitorId,
+      auth_user_id: actorUserId && isUuid(actorUserId) ? actorUserId : null,
+      stage,
+      utm_source: utmSource,
+      utm_medium: utmMedium,
+      utm_campaign: utmCampaign,
+      utm_content: utmContent,
+    }, {
+      onConflict:
+        "visitor_id,utm_source,utm_medium,utm_campaign,utm_content,stage",
+      ignoreDuplicates: true,
+    })
+    .select("visitor_id")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return {
+    success: true,
+    duplicate: data === null,
+    stage,
+    attribution: {
+      utmSource,
+      utmMedium,
+      utmCampaign,
+      utmContent,
+    },
+  };
 }
 
 type XPostLogItem = {
@@ -1508,6 +1606,112 @@ async function buildRevenueFunnelReport(
   };
 }
 
+async function buildFirstUserAcquisitionReport(
+  admin: SupabaseClient,
+  userId: string,
+  rawUtmMedium: unknown,
+  rawUtmContent: unknown,
+  rawLimit: unknown,
+) {
+  const utmMedium = firstString(rawUtmMedium, "organic").toLowerCase();
+  const utmContent = firstString(rawUtmContent, "outcome_first_a")
+    .toLowerCase();
+  if (
+    !firstUserTokenPattern.test(utmMedium) ||
+    !firstUserTokenPattern.test(utmContent)
+  ) {
+    throw new Error("invalid first-user UTM");
+  }
+  const limit = Math.max(
+    10,
+    Math.min(100, Math.trunc(firstNumber(rawLimit) ?? 50)),
+  );
+  const logs = (await listXPostLogs(admin, userId, limit)) as XPostLogItem[];
+  const matchingLogs = logs.filter((item) => {
+    const metadata = asRecord(item.metadata);
+    const variants = [
+      metadata.utm_content,
+      metadata.utmContent,
+      metadata.variant,
+      metadata.selected_variant,
+    ].map((value) => firstString(value).toLowerCase());
+    return firstString(metadata.tweet_id) !== "" &&
+      variants.includes(utmContent);
+  });
+  const latestLog = matchingLogs[0] ?? null;
+  let post: FirstUserXPost | null = null;
+  if (latestLog) {
+    const normalized = await loadNormalizedXMetricWindows(
+      admin,
+      userId,
+      [latestLog],
+    );
+    const metadata = asRecord(latestLog.metadata);
+    const latestMetrics = asRecord(metadata.latest_metrics);
+    post = {
+      sourceLogId: latestLog.id,
+      tweetId: firstString(metadata.tweet_id),
+      postedAt: firstString(metadata.posted_at, latestLog.created_at),
+      latestImpressions: firstNumber(
+        latestMetrics.impressions,
+        metadata.impressions,
+      ),
+      latestUrlClicks: firstNumber(latestMetrics.url_clicks),
+      normalized: normalized[0] ?? null,
+    };
+  }
+
+  let eventQuery = admin
+    .from("first_user_acquisition_events")
+    .select("visitor_id,stage,first_occurred_at")
+    .eq("utm_source", "x")
+    .eq("utm_medium", utmMedium)
+    .eq("utm_campaign", "first_user_growth")
+    .eq("utm_content", utmContent)
+    .order("first_occurred_at", { ascending: true });
+  if (post?.postedAt) {
+    eventQuery = eventQuery.gte("first_occurred_at", post.postedAt);
+  }
+  const { data: eventData, error: eventError } = await eventQuery;
+  if (eventError) throw new Error(eventError.message);
+
+  let paymentQuery = admin
+    .from("hub_data")
+    .select("metadata,created_at")
+    .eq("source", "stripe_supporter_payment")
+    .filter("metadata->>payment_status", "eq", "paid")
+    .filter("metadata->>utm_source", "eq", "x")
+    .filter("metadata->>utm_medium", "eq", utmMedium)
+    .filter("metadata->>utm_campaign", "eq", "first_user_growth")
+    .filter("metadata->>utm_content", "eq", utmContent)
+    .order("created_at", { ascending: true });
+  if (post?.postedAt) {
+    paymentQuery = paymentQuery.gte("created_at", post.postedAt);
+  }
+  const { data: paymentData, error: paymentError } = await paymentQuery;
+  if (paymentError) throw new Error(paymentError.message);
+
+  const payments = (paymentData ?? []).map((row): FirstUserPayment => {
+    const metadata = asRecord(row.metadata);
+    return {
+      amountJpy: firstNumber(metadata.amount_jpy, metadata.amount_total) ?? 0,
+      createdAt: firstString(row.created_at),
+    };
+  });
+  const report = buildFirstUserFunnelReport({
+    utmMedium,
+    utmContent,
+    post,
+    events: (eventData ?? []) as FirstUserAcquisitionEvent[],
+    payments,
+  });
+  return {
+    ...report,
+    issue: 3883,
+    reportGeneratedAt: new Date().toISOString(),
+  };
+}
+
 async function buildAcquisitionTouchpointReport(
   admin: SupabaseClient,
   rawWindowDays: unknown,
@@ -1956,8 +2160,10 @@ serve(async (req: Request) => {
       "waitlist.notify",
       "acquisition.report",
       "acquisition.signal",
+      "acquisition.funnel_signal",
       "acquisition.track",
       "acquisition.touchpoint_report",
+      "landing.trial",
       "signup.notify",
     ];
     let userId: string | null = null;
@@ -1967,6 +2173,81 @@ serve(async (req: Request) => {
     }
 
     switch (action) {
+      // ─── Landing AI trial (anonymous, hard-capped server-side) ──────────────
+      case "landing.trial": {
+        let prompt: string;
+        try {
+          prompt = normalizeLandingTrialPrompt(body.prompt);
+        } catch (error) {
+          if (error instanceof LandingTrialInputError) {
+            return json({
+              success: false,
+              error: error.message,
+              canUseInstantPreview: true,
+            }, 400);
+          }
+          throw error;
+        }
+
+        if (
+          !OPENAI_API_KEY || !SERVICE_ROLE_KEY ||
+          !LANDING_TRIAL_RATE_LIMIT_SALT
+        ) {
+          return json({
+            success: false,
+            error: "trial_ai_unavailable",
+            canUseInstantPreview: true,
+          }, 503);
+        }
+
+        const clientHash = await hashLandingTrialClient(
+          req.headers,
+          LANDING_TRIAL_RATE_LIMIT_SALT,
+        );
+        const { data: quotaData, error: quotaError } = await admin.rpc(
+          "claim_landing_trial_ai_quota",
+          { p_client_hash: clientHash },
+        );
+        if (quotaError) {
+          console.error("landing.trial quota claim failed", quotaError.code);
+          return json({
+            success: false,
+            error: "trial_ai_unavailable",
+            canUseInstantPreview: true,
+          }, 503);
+        }
+
+        const quota = (quotaData ?? {}) as Record<string, unknown>;
+        if (quota.allowed !== true) {
+          return json({
+            success: false,
+            error: "trial_quota_exhausted",
+            canUseInstantPreview: true,
+          }, 429);
+        }
+
+        try {
+          const suggestion = await generateLandingTrialSuggestion({
+            apiKey: OPENAI_API_KEY,
+            prompt,
+            model: LANDING_TRIAL_AI_MODEL,
+          });
+          return json({
+            success: true,
+            ...suggestion,
+            model: LANDING_TRIAL_AI_MODEL || DEFAULT_LANDING_TRIAL_MODEL,
+            remainingAttempts: quota.remaining_client,
+          });
+        } catch (error) {
+          console.error("landing.trial provider failed", errorMessage(error));
+          return json({
+            success: false,
+            error: "trial_ai_unavailable",
+            canUseInstantPreview: true,
+          }, 503);
+        }
+      }
+
       // ─── Acquisition ───────────────────────────────────────────────────────
       case "acquisition.get": {
         const items = await listItems(admin, "growth_signal", userId!);
@@ -1996,6 +2277,16 @@ serve(async (req: Request) => {
           admin,
           body.signalKey,
           body.dateKey,
+        );
+        return json(result, result.success ? 200 : 400);
+      }
+
+      case "acquisition.funnel_signal": {
+        const actorUserId = await getUserId(req);
+        const result = await recordFirstUserFunnelSignal(
+          admin,
+          actorUserId,
+          body,
         );
         return json(result, result.success ? 200 : 400);
       }
@@ -2477,6 +2768,21 @@ serve(async (req: Request) => {
         );
       }
 
+      case "x.first_user_funnel": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        return json(
+          await buildFirstUserAcquisitionReport(
+            admin,
+            "service_role",
+            body.utmMedium ?? body.utm_medium,
+            body.utmContent ?? body.utm_content,
+            body.limit,
+          ),
+        );
+      }
+
       case "x.growth_data_report": {
         // R24: ポストA型の週次 build-in-public 実測レポートを合成する
         // (read-only / LLM 非使用 / 数値は全て x_post_log 実測)。実測 3 件
@@ -2612,22 +2918,66 @@ serve(async (req: Request) => {
           Math.min(100, Math.trunc(firstNumber(body.limit) ?? 50)),
         );
         const requestedStatus = firstString(body.status);
-        let query = admin
-          .from("hub_data")
-          .select("id, metadata, created_at")
-          .eq("source", X_POST_CANDIDATE_SOURCE)
-          .order("created_at", { ascending: false })
-          .limit(limit);
-        if (requestedStatus) {
-          query = query.filter(
-            "metadata->>status",
-            "eq",
-            requestedStatus,
+        // #4080: statuses[] を渡すと 1 リクエストで複数 status を返す
+        // (client は従来 3 status を 3 往復していた)。
+        // 🔑 **per-status limit は維持する** — 単一 IN() + 共有 limit にすると
+        // finalized 行が created_at 降順 window を埋めて古い承認待ちを黙って
+        // 押し出す F2 の窓圧迫が status 間で再発する。
+        const rawStatuses = Array.isArray(body.statuses)
+          ? (body.statuses as unknown[]).map((entry) => firstString(entry))
+            .filter(Boolean)
+          : [];
+        const batchStatuses = [...new Set(rawStatuses)].slice(0, 10);
+
+        // R34: count:"exact" で「limit で切る前の総数」も返す。従来は limit 件しか
+        // 返さないため client 側は上限に達したかしか分からず、承認待ちが 11 件でも
+        // 200 件でも「10件以上」としか出せなかった (backlog の規模が掴めない)。
+        // source は idx_hub_data_source があり EF は service_role なので、count は
+        // x_post_candidate 部分集合への index scan で収まる (agent_memories のような
+        // 無索引全表走査にはならない)。
+        const runQuery = async (status: string) => {
+          let query = admin
+            .from("hub_data")
+            .select("id, metadata, created_at", { count: "exact" })
+            .eq("source", X_POST_CANDIDATE_SOURCE)
+            .order("created_at", { ascending: false })
+            .limit(limit);
+          if (status) {
+            query = query.filter("metadata->>status", "eq", status);
+          }
+          const { data, error, count } = await query;
+          if (error) throw new Error(error.message);
+          return {
+            candidates: data ?? [],
+            // limit で切る前の総数。取得できないときは null (client は従来の
+            // 「N件以上」表示へ degrade する)。
+            total: typeof count === "number" ? count : null,
+          };
+        };
+
+        if (batchStatuses.length > 0) {
+          const results = await Promise.all(
+            batchStatuses.map(async (status) => ({
+              status,
+              ...(await runQuery(status)),
+            })),
           );
+          const byStatus: Record<string, unknown> = {};
+          for (const result of results) {
+            byStatus[result.status] = {
+              candidates: result.candidates,
+              total: result.total,
+            };
+          }
+          return json({ success: true, byStatus });
         }
-        const { data, error } = await query;
-        if (error) throw new Error(error.message);
-        return json({ success: true, candidates: data ?? [] });
+
+        const single = await runQuery(requestedStatus);
+        return json({
+          success: true,
+          candidates: single.candidates,
+          total: single.total,
+        });
       }
 
       case "x.candidate.create": {
@@ -2820,6 +3170,94 @@ serve(async (req: Request) => {
           // the exact whitelisted payload reviewed by the operator.
           postPayload: { ...approved.postPayload, candidateId },
         });
+      }
+
+      case "x.candidate.reject": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        // 単体 (candidateId) と一括 (candidateIds[]) の両対応。UI の
+        // 「鮮度切れをまとめて却下」は後者を使う。
+        const rawIds = Array.isArray(body.candidateIds ?? body.candidate_ids)
+          ? (body.candidateIds ?? body.candidate_ids) as unknown[]
+          : [];
+        const singleId = firstString(body.candidateId, body.candidate_id);
+        const requestedIds = [
+          ...(singleId ? [singleId] : []),
+          ...rawIds.map((entry) => firstString(entry)),
+        ].filter(Boolean);
+        // 重複除去して順序は入力順を維持 (結果の突き合わせを容易にする)。
+        const candidateIds = [...new Set(requestedIds)];
+        if (candidateIds.length === 0) {
+          return json(
+            { success: false, error: "candidateId or candidateIds required" },
+            400,
+          );
+        }
+        if (candidateIds.some((id) => !isUuid(id))) {
+          return json(
+            { success: false, error: "all candidate ids must be uuid" },
+            400,
+          );
+        }
+        // 一括は 1 リクエストあたり 50 件で頭打ち (F2 window 圧迫と
+        // 長時間トランザクションを避ける)。超過は明示エラーで気付かせる。
+        if (candidateIds.length > 50) {
+          return json(
+            { success: false, error: "at most 50 candidate ids per request" },
+            400,
+          );
+        }
+        const rejectedBy = userId === "service_role"
+          ? firstString(body.rejectedBy, body.rejected_by, "service_role")
+          : userId!;
+        const reason = body.reason ?? body.rejectReason ?? body.reject_reason;
+
+        const rejected: string[] = [];
+        const unchanged: string[] = [];
+        const failures: { candidateId: string; error: string }[] = [];
+        for (const candidateId of candidateIds) {
+          try {
+            const { data: candidate, error: candidateError } = await admin
+              .from("hub_data")
+              .select("id, metadata, created_at")
+              .eq("id", candidateId)
+              .eq("source", X_POST_CANDIDATE_SOURCE)
+              .maybeSingle();
+            if (candidateError) throw new Error(candidateError.message);
+            if (!candidate) {
+              failures.push({ candidateId, error: "candidate not found" });
+              continue;
+            }
+            const result = rejectXPostCandidateMetadata(
+              asRecord(candidate.metadata),
+              { actorUserId: userId!, rejectedBy, reason },
+            );
+            if (!result.changed) {
+              // 既に終端 (rejected / rejected_duplicate) = 冪等 no-op。
+              unchanged.push(candidateId);
+              continue;
+            }
+            const { error: updateError } = await admin
+              .from("hub_data")
+              .update({ metadata: result.metadata })
+              .eq("id", candidateId)
+              .eq("source", X_POST_CANDIDATE_SOURCE);
+            if (updateError) throw new Error(updateError.message);
+            rejected.push(candidateId);
+          } catch (error) {
+            // 1 件の失敗で残りを巻き添えにしない (一括却下の途中終了防止)。
+            failures.push({ candidateId, error: errorMessage(error) });
+          }
+        }
+        return json({
+          success: failures.length === 0,
+          status: "rejected",
+          requested: candidateIds.length,
+          rejected,
+          unchanged,
+          failures,
+        }, failures.length > 0 && rejected.length === 0 ? 400 : 200);
       }
 
       case "x.candidate.finalize": {
