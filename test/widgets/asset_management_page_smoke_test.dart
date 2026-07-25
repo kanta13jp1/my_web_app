@@ -1435,16 +1435,16 @@ void main() {
     ) async {
       // ファミペイ残高10万を月9万返済 → 繰越1万でリボ違反だが、脱却月額
       // (12ヶ月・約9千) より現状の返済が多い → 反映(減額)ボタンは出さない。
-      // 資産データのキー日付は debugCalendarNow (ページの「今日」) と一致させる。
-      // DateTime.now() を使うと CI 実行日が給与サイクル境界にかかった際に
-      // dateKey とページの today がズレて判定が反転し、日付依存で落ちる。
-      final now = DateTime(2026, 7, 10);
+      // ページは資産の当日キー(_todayDateKey)も給与サイクル月キー
+      // (_currentSalaryCycleKey は _now = DateTime.now() 基準)も実 now で読む。
+      // payment を固定日で保存すると CI 実行日が給料日(既定25日)の給与サイクル
+      // 境界を跨いだ際にキー不一致で payment が読まれず、脱却ボタンの表示判定が
+      // 反転して日付依存で落ちる。資産・payment 双方を実 now 基準に統一する。
+      final now = DateTime.now();
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       // 支払予定額は給与サイクル月キーでネストされる。
       final monthKey =
-          AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(
-        DateTime(2026, 7, 10),
-      );
+          AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(now);
       SharedPreferences.setMockInitialValues(<String, Object>{
         AssetLiabilityMonthlyStateStore.paymentPrefsKey: jsonEncode(
           <String, Map<String, double>>{
