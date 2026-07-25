@@ -1141,6 +1141,21 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 ## セッション記録
 
+### daily-report Schedule — 2026-07-25 (Web版 Claude Schedule)
+
+**日次レポート生成・競合モニタリング補足**
+
+- **日次レポート確認**: `docs/daily-reports/2026-07-25.md` は GitHub Actions により生成済み (総ユーザー数 **59人** / 未対応機能リクエスト **131件** / 本日新規リクエスト 0件 / 直近 24h コミット 32件)
+- **Supabase API**: ネットワークプロキシポリシーにより `smmkxxavexumewbfaqpy.supabase.co` へのアクセスがブロック (既知の環境制約 / GHA 経由では正常稼働)
+- **X投稿**: viral-growth-engine および post-x-update ともにプロキシブロックにより未実施 (GHA 側記録 = ⚠️ 本日未投稿 — ワンボタン投稿推奨 JST 07-09/20-22)
+- **GitHub Issues (auto-review)**: 対象 Issue なし (0件)
+- **Schedule Health**: 直近 24h の Claude Schedule コミット 6件 (CS チェック 4件 / CI/CDコスト監査 1件 / 競合レポート 1件) — 異常なし
+- **競合モニタリング補足 (WebSearch)**:
+  - ⚠️ **Notion**: HTML ブロック + Developer Platform (CLI/Agent SDK/External Agents API) + MCP 91% トークン削減 + Agents iOS GA — 自社 API v1 との差別化緊急度が上昇
+  - ⚡ **GitHub**: Code Quality GA (2026-07-20 / $10/committer) + Issue Fields 全ティア GA — 自社「構造化タスク管理」の差別化縮小
+  - 中 **Slack**: AI Today View (パーソナルエージェント) + エンタープライズサーチ + 音声入力 — AI ワークスペース OS 化継続
+- **主要アクション**: 競合変化を受け、自分API v1 の個人資産管理軸独自性のドキュメント整備 + ホーム画面改善加速を優先タスクに昇格
+
 ### daily-report Schedule — 2026-07-24 (Web版 Claude Schedule)
 
 **日次レポート生成・競合モニタリング補足**
