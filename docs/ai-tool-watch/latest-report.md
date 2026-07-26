@@ -1,13 +1,12 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-25T22:11:45Z`
-- Previous check: `2026-07-24T22:28:41Z`
-- Changed/new official sources: `2`
+- Checked at: `2026-07-26T22:14:32Z`
+- Previous check: `2026-07-25T22:11:45Z`
+- Changed/new official sources: `0`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.220 / July 25, 2026
-- `changed` Devin release notes: July 24, 2026
+- No official source hash changed since the previous check.
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
