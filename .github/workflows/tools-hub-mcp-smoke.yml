@@ -124,6 +124,7 @@ jobs:
         shell: bash
         env:
           SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+          JOB_CANCELLED: ${{ cancelled() }}
         run: |
           if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
             echo "::warning::SUPABASE_SERVICE_ROLE_KEY missing; skip schedule_task_runs record"
@@ -131,13 +132,13 @@ jobs:
           fi
 
           STATUS="success"
-          if [ "$SMOKE_OUTCOME" = "cancelled" ]; then
-            STATUS="skipped"  # cancel-in-progress: true によるキャンセルを失敗と区別
+          if [ "$JOB_CANCELLED" = "true" ]; then
+            STATUS="skipped"  # cancel-in-progress: true によるキャンセル (smoke到達前も含む)
           elif [ "$SMOKE_OUTCOME" != "success" ]; then
             STATUS="error"
           fi
 
-          SUMMARY="tools-hub MCP smoke ${SMOKE_OUTCOME}; target=${TOOLS_HUB_MCP_URL}; auth_token_configured=${{ secrets.TOOLS_HUB_MCP_BEARER_TOKEN != '' }}"
+          SUMMARY="tools-hub MCP smoke ${SMOKE_OUTCOME:-cancelled}; target=${TOOLS_HUB_MCP_URL}; auth_token_configured=${{ secrets.TOOLS_HUB_MCP_BEARER_TOKEN != '' }}"
           jq -n \
             --arg task_id "tools-hub-mcp-smoke" \
             --arg status "$STATUS" \
