@@ -71,6 +71,14 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Cache Flutter pub
+        uses: actions/cache@v6
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
       - name: Install dependencies
         run: flutter pub get
 
