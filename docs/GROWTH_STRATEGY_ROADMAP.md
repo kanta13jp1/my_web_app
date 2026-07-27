@@ -33241,3 +33241,30 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
 - 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
 - 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 11日連続同一制約 / ユーザー数 60人 (前日比 +1) / **Notion Developer Platform 公開**が最大脅威シグナル継続
+
+### セッション記録: Claude Schedule 2026-07-27 00:02 UTC
+
+**実施内容**:
+- GHA 生成済み日次レポート確認 (`docs/daily-reports/2026-07-27.md`: ユーザー60人 / 新規FR 0件 / 未対応131件 / WF failure 8件)
+- Supabase エンドポイント: プロキシ policy 403 (12日連続 / スケジュールタスク記録・バイラル広告投稿 スキップ)
+- GitHub auto-review Issues: 0件 (対応不要)
+- WebSearch 競合インテリジェンス収集 (Notion / Slack / GitHub)
+- `docs/competitor-reports/2026-07-27.md` に WebSearch 競合インテリジェンス 3社分を追記
+
+**競合動向サマリー (WebSearch 2026-07-27)**:
+- **🔴 Notion 3.6**: HTMLブロック (AI変換・インタラクティブ化) + Notion API 非同期処理 + MCP 改善。外部ツール/AI 連携が加速
+- **🟠 Slack**: Slackbot 個人 AI エージェント化 + Today View + MCP インテグレーション + Enterprise Search。2026年3月発表30機能が展開中
+- **🟡 GitHub**: Code Quality GA ($10/コミッター/月, 7/20) + Copilot に Gemini 3.6 Flash & Claude Opus 5 追加 + PR アーカイブ機能
+
+**AIアクション提案**:
+1. **Notion HTMLブロック対応**: ノートページにインタラクティブHTML埋め込み機能を追加し Notion 3.6 差別化を吸収
+2. **Today View 実装**: ホーム画面に「今日のブリーフィング」カード (カレンダー + タスク + 優先事項) を追加しSlack Today View に対抗
+3. **Copilot モデル拡充への対応**: AI大学に GitHub Copilot × Claude Opus 5 / Gemini 3.6 Flash 統合事例を掲載しコンテンツ訴求
+
+**更新ドキュメント**:
+- `docs/competitor-reports/2026-07-27.md`: WebSearch 競合インテリジェンス 3社分を static-template に追記
+
+**Philosophy Alignment (Schedule 2026-07-27 00:02 UTC)**:
+- 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
+- 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
+- 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 12日連続同一制約 / ユーザー数 60人 (前日比 ±0) / Notion HTMLブロック + Slack Today View が新たな差別化脅威として浮上
