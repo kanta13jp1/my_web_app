@@ -16,8 +16,7 @@ void main() {
       final questions = IqQuestionBank.standardTest();
 
       for (final category in IqCategory.values) {
-        final items =
-            questions.where((q) => q.category == category).toList();
+        final items = questions.where((q) => q.category == category).toList();
         expect(
           items.length,
           IqQuestionBank.questionsPerCategory,

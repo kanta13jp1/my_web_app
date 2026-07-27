@@ -95,7 +95,8 @@ void main() {
         'targets',
         'is_active',
       ]) {
-        expect(plans, contains(column), reason: 'iq_training_plans.$column が無い');
+        expect(plans, contains(column),
+            reason: 'iq_training_plans.$column が無い');
       }
 
       final sessions = _createTableBlock(sql, 'iq_training_sessions');
@@ -230,8 +231,7 @@ String _createTableBlock(String sql, String table) {
 /// 指定テーブルに対する CREATE POLICY 文をすべて返す。
 List<String> _policiesFor(String sql, String table) {
   final policies = <String>[];
-  for (final match
-      in RegExp(r'create policy[\s\S]*?;').allMatches(sql)) {
+  for (final match in RegExp(r'create policy[\s\S]*?;').allMatches(sql)) {
     final body = match.group(0)!;
     if (RegExp('\\son $table\\s').hasMatch(body)) {
       policies.add(body);

@@ -19,8 +19,9 @@ IqAnswerRecord _answer({
 }
 
 /// 5領域 × 難易度1..5 の完全な回答セットを作る。
-List<IqAnswerRecord> _fullSet(
-    {required bool Function(IqCategory, int) correct,}) {
+List<IqAnswerRecord> _fullSet({
+  required bool Function(IqCategory, int) correct,
+}) {
   return [
     for (final category in IqCategory.values)
       for (var d = 1; d <= 5; d++)
