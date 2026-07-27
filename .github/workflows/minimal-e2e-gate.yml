@@ -221,6 +221,15 @@ jobs:
         if: steps.docs_check.outputs.docs_only != 'true'
         run: npm ci
 
+      - name: Cache Playwright browsers
+        if: steps.docs_check.outputs.docs_only != 'true'
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-chromium-
+
       - name: Install Chromium
         if: steps.docs_check.outputs.docs_only != 'true'
         run: npx playwright install --with-deps chromium
