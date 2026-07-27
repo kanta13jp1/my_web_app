@@ -126,12 +126,20 @@ class GrowthAcquisitionService {
   static const String touchReferral = 'touch_referral';
   static const String touchComparison = 'touch_comparison';
 
+  /// R24: 公開データトラッカー (例 `/public/local-election-700`) への着地。
+  /// 実測 (X analytics 2026-04-27〜07-25 / 350 投稿) では、サイトへの URL
+  /// クリック 304 件のうち 286 件 (94%) がこの公開トラッカーへ着地していた。
+  /// これまで着地点にプロダクト導線も計測もなく、最大の流入がそのまま
+  /// 行き止まりになっていたため、専用のタッチポイントとして計上する。
+  static const String touchPublicTracker = 'touch_public_tracker';
+
   static const String importPreviewNotion = 'import_preview_notion';
   static const String importPreviewEvernote = 'import_preview_evernote';
   static const String importPreviewMarkdown = 'import_preview_markdown';
 
   static const String importSignupCta = 'import_signup_cta';
   static const String publicMemoSignupCta = 'public_memo_signup_cta';
+  static const String publicTrackerSignupCta = 'public_tracker_signup_cta';
 
   static const String signupSubmitLanding = 'signup_submit_landing';
   static const String signupSubmitProfile = 'signup_submit_profile';
@@ -141,6 +149,8 @@ class GrowthAcquisitionService {
   static const String signupSubmitPublicMemo = 'signup_submit_public_memo';
   static const String signupSubmitReferral = 'signup_submit_referral';
   static const String signupSubmitComparison = 'signup_submit_comparison';
+  static const String signupSubmitPublicTracker =
+      'signup_submit_public_tracker';
 
   static const String _latestTouchpointKey = 'growth_latest_touchpoint';
   static const String _latestTouchpointUpdatedAtKey =
@@ -195,6 +205,10 @@ class GrowthAcquisitionService {
       case '/public-memo':
       case '/public-memos':
         return touchPublicMemo;
+      // 公開トラッカーは UTM 無しの生 URL で共有されてきた実績があるため、
+      // ルートパスからも必ず計上する (UTM 付き着地は utm 側の判定が優先)。
+      case '/public/local-election-700':
+        return touchPublicTracker;
       case '/referral':
         return touchReferral;
       default:
@@ -247,6 +261,8 @@ class GrowthAcquisitionService {
         return signupSubmitReferral;
       case touchComparison:
         return signupSubmitComparison;
+      case touchPublicTracker:
+        return signupSubmitPublicTracker;
       default:
         return signupSubmitLanding;
     }
@@ -309,6 +325,12 @@ class GrowthAcquisitionService {
   Future<void> recordPublicMemoSignUpCta() async {
     await _persistLatestTouchpoint(touchPublicMemo);
     await _recordSignal(publicMemoSignupCta);
+  }
+
+  /// 公開トラッカーの着地ページに置いた「本体を試す」CTA の押下を記録する。
+  Future<void> recordPublicTrackerSignUpCta() async {
+    await _persistLatestTouchpoint(touchPublicTracker);
+    await _recordSignal(publicTrackerSignupCta);
   }
 
   Future<void> recordLandingSignupSubmit() async {

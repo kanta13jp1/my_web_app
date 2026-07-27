@@ -17,13 +17,16 @@ import '../services/local_election_plan_service.dart';
 import '../utils/web_image_downloader.dart';
 import '../services/local_election_reality_service.dart';
 import '../services/prefecture_election_news_service.dart';
+import '../services/growth_acquisition_service.dart';
 import '../services/local_election_share_service.dart';
 import '../services/public_memo_service.dart';
+import 'landing_page.dart';
 import '../widgets/election_japan_map.dart';
 import '../widgets/election_progress_chart.dart';
 import '../widgets/election_regional_kpi_chart.dart';
 import '../widgets/election_news_badge.dart';
 import '../widgets/election_x_post_composer_dialog.dart';
+import '../widgets/public_tracker_cta_card.dart';
 
 class ElectionVictoryPage extends StatefulWidget {
   final bool publicView;
@@ -748,9 +751,25 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
+  /// R24: 外部へ配る公開ダッシュボードURL。実測でサイト流入の 94% を占める
+  /// 経路なのに UTM が無く、着地を計測できていなかった。共有・コピー経路だけ
+  /// UTM を付ける (ページ内表示用の素の URL はそのまま)。
+  /// `utm_source=x` + `utm_campaign=first_user_growth` は
+  /// GrowthAcquisitionService.isFirstUserGrowthUri の判定条件に合わせる。
+  static String get _shareablePublicDashboardUrl => Uri.parse(
+        _publicLocalElectionDashboardUrl,
+      ).replace(
+        queryParameters: const <String, String>{
+          'utm_source': 'x',
+          'utm_medium': 'data_report',
+          'utm_campaign': 'first_user_growth',
+          'utm_content': 'local_election_700',
+        },
+      ).toString();
+
   Future<void> _copyPublicDashboardLink() async {
     await Clipboard.setData(
-      const ClipboardData(text: _publicLocalElectionDashboardUrl),
+      ClipboardData(text: _shareablePublicDashboardUrl),
     );
     if (!mounted) {
       return;
@@ -792,7 +811,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       final memo = await _shareService.publishPlanDashboard(
         plan: plan,
         snapshot: snapshot,
-        publicDashboardUrl: _publicLocalElectionDashboardUrl,
+        publicDashboardUrl: _shareablePublicDashboardUrl,
       );
       if (!mounted) {
         return memo;
@@ -924,7 +943,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final memo =
         _publishedKpiMemo ?? (canPublishMemo ? await _publishKpiMemo() : null);
     final publicUrl = memo == null
-        ? _publicLocalElectionDashboardUrl
+        ? _shareablePublicDashboardUrl
         : PublicMemoService.buildPublicMemoUrl(memo.id);
     final uri = _shareService.buildPlanDashboardXShareIntentUri(
       plan: plan,
@@ -1176,7 +1195,19 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         ],
       ),
       body: _isLoading || plan == null
-          ? const Center(child: CircularProgressIndicator())
+          // R24: 公開ビューは X からの着地点 (実測でサイト流入の 94%)。
+          // 読み込み中や取得失敗でスピナーだけを出すと、訪問者は「何のサイトか」
+          // を 1 文字も読めないまま離脱する。データを待たずに導線だけは見せる。
+          ? (_isPublicView
+              ? ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    _buildPublicTrackerCtaCard(),
+                    const SizedBox(height: 24),
+                    const Center(child: CircularProgressIndicator()),
+                  ],
+                )
+              : const Center(child: CircularProgressIndicator()))
           : RefreshIndicator(
               onRefresh: _refreshAll,
               child: ListView(
@@ -1185,6 +1216,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   if (_isPublicView) ...[
+                    _buildPublicTrackerCtaCard(),
+                    const SizedBox(height: 16),
                     _buildPublicViewNotice(),
                     const SizedBox(height: 16),
                   ],
@@ -1371,6 +1404,37 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPublicTrackerCtaCard() {
+    return PublicTrackerCtaCard(
+      headline: 'この集計は「自分株式会社」が毎日自動更新しています',
+      description: '公式ページを定期取得して、現職数・目標との差分・残り日数を自動で計算しています。'
+          '同じ仕組みを、家計や資産、仕事ログ、AIツールの定点観測にも使えるように作っている個人向けのダッシュボードです。',
+      onActionPressed: _openLandingPageFromPublicTracker,
+    );
+  }
+
+  Future<void> _openLandingPageFromPublicTracker() async {
+    // 計測は遷移を待たせない (fire-and-forget)。await すると、未ログインや
+    // ネットワーク不調で計測が失敗・遅延したときにボタンが無反応になる。
+    // 着地点最大の CTA なので、計測の失敗が導線を殺してはいけない。
+    unawaited(
+      const GrowthAcquisitionService()
+          .recordPublicTrackerSignUpCta()
+          .catchError((Object error) {
+        debugPrint('public tracker CTA signal failed: $error');
+      }),
+    );
+    if (!mounted) {
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/'),
+        builder: (_) => const LandingPage(),
       ),
     );
   }
