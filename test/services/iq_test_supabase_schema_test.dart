@@ -95,8 +95,11 @@ void main() {
         'targets',
         'is_active',
       ]) {
-        expect(plans, contains(column),
-            reason: 'iq_training_plans.$column が無い');
+        expect(
+          plans,
+          contains(column),
+          reason: 'iq_training_plans.$column が無い',
+        );
       }
 
       final sessions = _createTableBlock(sql, 'iq_training_sessions');
