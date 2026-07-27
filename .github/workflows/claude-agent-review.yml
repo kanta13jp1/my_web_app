@@ -359,9 +359,13 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const path = require('path');
             // Read findings from disk rather than a step output: no heredoc
-            // delimiter collisions and no 1MB GITHUB_OUTPUT ceiling.
-            const raw = fs.readFileSync('ultrareview.txt', 'utf8').trim();
+            // delimiter collisions and no 1MB GITHUB_OUTPUT ceiling. Resolve
+            // against the workspace so this never depends on the step's cwd.
+            const raw = fs
+              .readFileSync(path.join(process.env.GITHUB_WORKSPACE, 'ultrareview.txt'), 'utf8')
+              .trim();
             if (!raw) {
               core.setFailed('ultrareview produced no findings to post.');
               return;
