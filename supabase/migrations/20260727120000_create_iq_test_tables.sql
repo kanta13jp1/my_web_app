@@ -174,8 +174,15 @@ CREATE POLICY "Users can update their own iq answers"
 -- iq_training_plans: 本人のみ
 CREATE POLICY "Users can view their own iq training plans"
   ON iq_training_plans FOR SELECT USING (auth.uid() = user_id);
+-- user_id だけでなく source_test_id の所有者も検証する。
+-- 検証しないと他人のテストIDを指す計画を作れてしまい、
+-- 「どの測定値から作られた計画か」の追跡可能性が壊れる。
 CREATE POLICY "Users can insert their own iq training plans"
-  ON iq_training_plans FOR INSERT WITH CHECK (auth.uid() = user_id);
+  ON iq_training_plans FOR INSERT
+  WITH CHECK (
+    auth.uid() = user_id
+    AND source_test_id IN (SELECT id FROM iq_tests WHERE user_id = auth.uid())
+  );
 CREATE POLICY "Users can update their own iq training plans"
   ON iq_training_plans FOR UPDATE USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
@@ -185,8 +192,15 @@ CREATE POLICY "Users can delete their own iq training plans"
 -- iq_training_sessions: 本人のみ
 CREATE POLICY "Users can view their own iq training sessions"
   ON iq_training_sessions FOR SELECT USING (auth.uid() = user_id);
+-- user_id だけの検証では、他人の plan_id を指す行を自分名義で挿入できてしまう。
+-- 現在の読み出し経路 (user_id で絞る) では露出しないが、plan_id で集計する
+-- 処理を将来足したときに他人の計画へ混入する。所有者チェックを併せて課す。
 CREATE POLICY "Users can insert their own iq training sessions"
-  ON iq_training_sessions FOR INSERT WITH CHECK (auth.uid() = user_id);
+  ON iq_training_sessions FOR INSERT
+  WITH CHECK (
+    auth.uid() = user_id
+    AND plan_id IN (SELECT id FROM iq_training_plans WHERE user_id = auth.uid())
+  );
 CREATE POLICY "Users can delete their own iq training sessions"
   ON iq_training_sessions FOR DELETE USING (auth.uid() = user_id);
 

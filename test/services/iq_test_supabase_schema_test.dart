@@ -210,6 +210,42 @@ void main() {
       // 個人の認知スコアなので、問題テーブルのような公開読み取りは存在しないこと。
       expect(sql, isNot(contains('using (true)')));
     });
+
+    test('子テーブルの INSERT は親の所有者も検証する', () {
+      // user_id だけを見る WITH CHECK では、自分名義のまま他人の親IDを指す行を
+      // 挿入できてしまう。親テーブルへの所有者サブクエリが必要。
+      const parentRefs = {
+        'iq_training_plans': ['source_test_id', 'iq_tests'],
+        'iq_training_sessions': ['plan_id', 'iq_training_plans'],
+      };
+
+      for (final entry in parentRefs.entries) {
+        final child = entry.key;
+        final column = entry.value[0];
+        final parent = entry.value[1];
+
+        final inserts = _policiesFor(sql, child)
+            .where((p) => p.contains('for insert'))
+            .toList();
+        expect(inserts, isNotEmpty, reason: '$child の INSERT ポリシーが無い');
+
+        for (final policy in inserts) {
+          expect(
+            policy,
+            contains('auth.uid() = user_id'),
+            reason: '$child の INSERT に user_id チェックが無い:\n$policy',
+          );
+          expect(
+            policy.replaceAll(RegExp(r'\s+'), ' '),
+            contains(
+              '$column in (select id from $parent where user_id = auth.uid())',
+            ),
+            reason: '$child.$column の所有者チェックが無い '
+                '(他人の $parent を指す行を挿入できる):\n$policy',
+          );
+        }
+      }
+    });
   });
 }
 
