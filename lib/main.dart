@@ -94,6 +94,12 @@ import 'package:my_web_app/pages/template_marketplace_page.dart';
 import 'package:my_web_app/pages/referral_page.dart';
 import 'package:my_web_app/pages/kanban_board_page.dart';
 import 'package:my_web_app/pages/compatibility_check_page.dart';
+import 'package:my_web_app/models/iq_test.dart';
+import 'package:my_web_app/pages/iq_test_page.dart';
+import 'package:my_web_app/pages/iq_test_questions_page.dart';
+import 'package:my_web_app/pages/iq_test_result_page.dart';
+import 'package:my_web_app/pages/iq_training_drill_page.dart';
+import 'package:my_web_app/pages/iq_training_page.dart';
 import 'package:my_web_app/pages/personality_test_questions_page.dart';
 import 'package:my_web_app/pages/personality_test_result_page.dart';
 import 'package:my_web_app/pages/table_data_page.dart';
@@ -916,6 +922,44 @@ Route<dynamic> generateAppRoute(
       final resultTestId = settings.arguments as int? ?? 1;
       return MaterialPageRoute(
         builder: (_) => PersonalityTestResultPage(testId: resultTestId),
+      );
+    case '/iq-test':
+      return MaterialPageRoute(builder: (_) => const IqTestPage());
+    // 出題中のテストは testId と seed が無いと復元できない (再開もできない)。
+    // 直接 URL で開かれた場合はハブへ落とす。
+    case '/iq-test-questions':
+      final iqQuestionsArgs = settings.arguments as IqTestSessionArgs?;
+      if (iqQuestionsArgs == null) {
+        return MaterialPageRoute(builder: (_) => const IqTestPage());
+      }
+      return MaterialPageRoute(
+        builder: (_) => IqTestQuestionsPage(
+          testId: iqQuestionsArgs.testId,
+          questionSeed: iqQuestionsArgs.questionSeed,
+        ),
+      );
+    case '/iq-test-result':
+      final iqTestId = settings.arguments as int?;
+      if (iqTestId == null) {
+        return MaterialPageRoute(builder: (_) => const IqTestPage());
+      }
+      return MaterialPageRoute(
+        builder: (_) => IqTestResultPage(testId: iqTestId),
+      );
+    case '/iq-training':
+      return MaterialPageRoute(builder: (_) => const IqTrainingPage());
+    // ドリルは対象領域とレベルが引数。無ければプラン画面へ落とす。
+    case '/iq-training-drill':
+      final iqDrillArgs = settings.arguments as IqTrainingDrillArgs?;
+      if (iqDrillArgs == null) {
+        return MaterialPageRoute(builder: (_) => const IqTrainingPage());
+      }
+      return MaterialPageRoute(
+        builder: (_) => IqTrainingDrillPage(
+          planId: iqDrillArgs.planId,
+          category: iqDrillArgs.category,
+          level: iqDrillArgs.level,
+        ),
       );
     case '/enterprise':
       return MaterialPageRoute(builder: (_) => const EnterprisePage());
