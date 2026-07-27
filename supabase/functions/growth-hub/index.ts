@@ -26,6 +26,20 @@ import {
 } from "./x_duplicate_content.ts";
 import { pickBestVariant, pickConfidentVariant } from "./x_best_variant.ts";
 import {
+  buildAcquisitionRankingLine,
+  computeAcquisitionScore,
+} from "./x_acquisition_score.ts";
+import {
+  buildAccountAcquisitionLine,
+  buildAnalyticsImportMetadata,
+  parseXAnalyticsCsv,
+} from "./x_analytics_import.ts";
+import {
+  buildArchetypeTopicInteractionLine,
+  buildTopicLiftLine,
+  classifyPostTopic,
+} from "./x_topic_audience.ts";
+import {
   buildSignupSlackPayload,
   isRecentSignupCreatedAt,
   resolveSignupChannel,
@@ -517,6 +531,12 @@ const SUPPORTED_ACQUISITION_SIGNALS = new Set([
   "signup_submit_referral",
   "signup_submit_comparison",
   "signup_submit_guitar",
+  // R24: 公開データトラッカー (/public/local-election-700) の着地と CTA。
+  // 実測でサイトへの URL クリック 304 件中 286 件 (94%) がこの着地点だった。
+  // 許可リストに無いと EF が 400 を返し、クライアントが送っても計上されない。
+  "touch_public_tracker",
+  "public_tracker_signup_cta",
+  "signup_submit_public_tracker",
 ]);
 
 function formatDateKey(date: Date): string {
@@ -964,6 +984,16 @@ function buildXPerformanceContextFromLogs(
           firstString(metadata.text, latest.text),
           Array.isArray(metadata.reply_texts) ? metadata.reply_texts : [],
         ),
+        // R24: 「どの既存オーディエンスに乗ったか」の軸 (x_topic_audience.ts)。
+        // archetype と独立に測らないと、勝ち型の移植失敗を繰り返す。
+        topic: classifyPostTopic(
+          [
+            firstString(metadata.text, latest.text),
+            ...(Array.isArray(metadata.reply_texts)
+              ? metadata.reply_texts.map((entry: unknown) => String(entry))
+              : []),
+          ].join("\n"),
+        ),
         linkInReply: latest.link_in_reply === true ||
           metadata.link_in_reply === true,
         threadReplyCount: firstNumber(
@@ -1029,6 +1059,19 @@ function buildXPerformanceContextFromLogs(
         rankingBookmarkRate: sample?.bookmarkRate ?? null,
         rankingProfileClickRate: sample?.profileClickRate ?? null,
         rankingUrlClickRate: sample?.urlClickRate ?? null,
+        // R24: 学習ランキングの基準値。到達ではなく獲得(URL クリック最上位・
+        // impressions は上限キャップ付き補助項)で並べる (x_acquisition_score.ts)。
+        acquisitionScore: computeAcquisitionScore({
+          urlClicks: row.urlClicks,
+          profileClicks: row.profileClicks,
+          bookmarkCount: row.bookmarkCount,
+          replyCount: row.replyCount,
+          repostCount: row.repostCount,
+          likeCount: row.likeCount,
+          impressions: comparisonWindow
+            ? normalizedValue ?? row.impressions
+            : row.impressions,
+        }),
       };
     })
     .sort((left, right) =>
@@ -1051,8 +1094,16 @@ function buildXPerformanceContextFromLogs(
       (left.historicalBenchmarkImpressions ?? 0)
     );
 
-  const winners = learningRows.slice(0, 5);
-  const underperformers = learningRows.slice(-5).reverse();
+  // R24: 勝ち/負け exemplar は獲得スコア順で選ぶ。到達順のままだと
+  // 「122,978 imp / 0 クリック」の投稿が「500 imp / 3 クリック」を永久に
+  // 上回り、サイトへ 1 人も送っていない投稿を LLM に手本提示してしまう。
+  // 年齢コホート (learningRows) の絞り込みは従来どおり効かせる。
+  const acquisitionRanked = [...learningRows].sort((left, right) =>
+    right.acquisitionScore - left.acquisitionScore ||
+    (right.rankingImpressions ?? -1) - (left.rankingImpressions ?? -1)
+  );
+  const winners = acquisitionRanked.slice(0, 5);
+  const underperformers = acquisitionRanked.slice(-5).reverse();
   const byVariant = new Map<
     string,
     { variant: string; count: number; totalScore: number; maxScore: number }
@@ -1066,7 +1117,8 @@ function buildXPerformanceContextFromLogs(
       maxScore: 0,
     };
     current.count += 1;
-    const rankingScore = row.rankingImpressions ?? row.score;
+    // R24: 型ごとの優劣も獲得スコアで測る (到達平均ではない)。
+    const rankingScore = row.acquisitionScore;
     current.totalScore += rankingScore;
     current.maxScore = Math.max(current.maxScore, rankingScore);
     byVariant.set(key, current);
@@ -1090,12 +1142,11 @@ function buildXPerformanceContextFromLogs(
   // して LLM へ渡す。データが薄い間は行自体を出さない(=実質 default-off で、
   // 投稿が貯まるほど自動的に有効化される)。従来は top-1 variant と逸話的な
   // winner 行のみで、集計済みの variants ランキングが未提示だった。
+  // R24: 構造 lift の平均も獲得スコア基準へ統一する。到達平均のままだと
+  // 「メディアありは到達が高い」等の結論が、クリック 0 でも勝ちに見える。
   const avgScore = (list: typeof rows): number =>
     list.length === 0 ? 0 : Math.round(
-      list.reduce(
-        (sum, row) => sum + (row.rankingImpressions ?? row.score),
-        0,
-      ) / list.length,
+      list.reduce((sum, row) => sum + row.acquisitionScore, 0) / list.length,
     );
   const structuralLines: string[] = [];
   if (comparisonWindow) {
@@ -1109,7 +1160,7 @@ function buildXPerformanceContextFromLogs(
   const withoutMedia = learningRows.filter((r) => !r.hasMedia);
   if (withMedia.length >= 2 && withoutMedia.length >= 2) {
     structuralLines.push(
-      `Structural lift (media): avg score with media=${
+      `Structural lift (media): avg acquisition score with media=${
         avgScore(withMedia)
       } (n=${withMedia.length}) vs without=${
         avgScore(withoutMedia)
@@ -1123,7 +1174,7 @@ function buildXPerformanceContextFromLogs(
   const mediaLine = buildMediaLiftLine(
     learningRows,
     (row) => row.mediaType,
-    (row) => row.rankingImpressions ?? row.score,
+    (row) => row.acquisitionScore,
   );
   if (mediaLine) structuralLines.push(mediaLine);
   // R23: 内容アーキタイプ別 lift。実測(2026-07-12 同日3連投: データレポート型
@@ -1140,11 +1191,27 @@ function buildXPerformanceContextFromLogs(
     (row) => row.i72h ?? Number.NaN,
   );
   if (archetypeLine) structuralLines.push(archetypeLine);
+  // R24: topic 単独の lift と、archetype × topic の交互作用。
+  // 実測では同一の data_report 型が topic 違いで 122,978 → 58 まで落ちており、
+  // archetype 単独の結論だけを渡すと勝ち型の移植失敗を再生産する。
+  const topicLine = buildTopicLiftLine(
+    learningRows,
+    (row) => row.topic,
+    (row) => row.acquisitionScore,
+  );
+  if (topicLine) structuralLines.push(topicLine);
+  const interactionLine = buildArchetypeTopicInteractionLine(
+    learningRows,
+    (row) => row.archetype,
+    (row) => row.topic,
+    (row) => row.acquisitionScore,
+  );
+  if (interactionLine) structuralLines.push(interactionLine);
   const linkReply = learningRows.filter((r) => r.linkInReply);
   const linkLead = learningRows.filter((r) => !r.linkInReply);
   if (linkReply.length >= 2 && linkLead.length >= 2) {
     structuralLines.push(
-      `Structural lift (link placement): avg score link-in-reply=${
+      `Structural lift (link placement): avg acquisition score link-in-reply=${
         avgScore(linkReply)
       } (n=${linkReply.length}) vs link-in-lead=${
         avgScore(linkLead)
@@ -1174,7 +1241,7 @@ function buildXPerformanceContextFromLogs(
       buckets.sort((a, b) => avgScore(b[1]) - avgScore(a[1]));
       const [label, list] = buckets[0];
       structuralLines.push(
-        `Best thread length so far: ${label} (avg score ${
+        `Best thread length so far: ${label} (avg acquisition score ${
           avgScore(list)
         }, n=${list.length}).`,
       );
@@ -1225,7 +1292,7 @@ function buildXPerformanceContextFromLogs(
   }
   const distinctVariants = variants.filter((v) => v.variant !== "unknown");
   const rankingLine = distinctVariants.length >= 2
-    ? `Variant ranking (avg ${comparisonLabel} impressions, n): ${
+    ? `Variant ranking (avg acquisition score, n): ${
       distinctVariants.slice(0, 5).map((v) =>
         `${v.variant}=${v.averageScore} (n=${v.count})`
       ).join(", ")
@@ -1236,6 +1303,16 @@ function buildXPerformanceContextFromLogs(
   const ownDataLine = buildOwnDataFactsLine(
     learningRows,
     (row) => row.rankingImpressions,
+  );
+  // R24: 獲得ランキングと、到達 1 位 ≠ 獲得 1 位のときの乖離警告。
+  // 実測 (90 日 350 投稿) では URL クリックの 94% が単一シリーズに集中し、
+  // 到達上位の共感型 (57K/いいね 2.5K) のクリックは 0 だった。
+  const acquisitionLine = buildAcquisitionRankingLine(
+    learningRows,
+    (row) => row.acquisitionScore,
+    (row) => row.rankingImpressions ?? row.impressions,
+    (row) => row.text,
+    (row) => row.urlClicks,
   );
   const historicalBenchmarkLine = historicalBenchmarks.length === 0
     ? ""
@@ -1259,10 +1336,16 @@ function buildXPerformanceContextFromLogs(
       confidentBest
         ? `Target: 10K impressions. Current best variant: ${confidentBest.variant} (n=${confidentBest.count}).`
         : "Target: 10K impressions. No post-age comparable winner yet.",
-      `Ranking basis: ${comparisonLabel} impressions ` +
-      `(comparable n=${learningRows.length}; total measured n=${rows.length}).`,
+      // R24: 目的は「サイトへ 1 人送ること」。手本の選定基準は到達ではなく獲得。
+      `Ranking basis: acquisition score (url clicks weighted first, ` +
+      `impressions capped); age cohort = ${comparisonLabel} ` +
+      `(comparable n=${learningRows.length}; total measured n=${rows.length}). ` +
+      `Optimize for site visits and replies, not for raw reach.`,
+      ...(acquisitionLine ? [acquisitionLine] : []),
       ...winners.map((row, index) =>
-        `Winner ${index + 1}: variant=${row.variant}, impressions=${
+        `Winner ${
+          index + 1
+        }: acquisition=${row.acquisitionScore}, variant=${row.variant}, impressions=${
           row.impressions ?? "unknown"
         }, comparison=${row.rankingMetric}:${
           row.rankingImpressions ?? "unknown"
@@ -1287,7 +1370,7 @@ function buildXPerformanceContextFromLogs(
       ...underperformers.slice(0, 3).map((row, index) =>
         `Avoid ${
           index + 1
-        }: variant=${row.variant}, comparison=${row.rankingMetric}:${
+        }: acquisition=${row.acquisitionScore}, variant=${row.variant}, comparison=${row.rankingMetric}:${
           row.rankingImpressions ?? "unknown"
         }, score=${row.score}, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
       ),
@@ -1324,6 +1407,93 @@ function buildXPerformanceContextFromLogs(
       ? X_METRIC_LEARNING_SELECTION_RULE
       : "latest cumulative fallback because no normalized cohort has 3 posts",
     promptContext,
+  };
+}
+
+/// R24: X Analytics CSV をパースして x_post_log へ upsert する。
+/// 既に公式 X API で計測済みの行 (metric_provenance='x_api') は上書きしない
+/// — CSV は lifetime cumulative の観測値で、API の窓付き実測より弱いため。
+async function importXAnalyticsCsv(
+  admin: SupabaseClient,
+  userId: string,
+  options: { csv: string; exportRange: string; dryRun: boolean },
+) {
+  const rows = parseXAnalyticsCsv(options.csv);
+  if (rows.length === 0) {
+    return {
+      success: false,
+      imported: 0,
+      skipped: 0,
+      error: "No rows parsed. Expected the X Analytics content CSV export.",
+    };
+  }
+  const observedAt = new Date().toISOString();
+  const accountAcquisitionLine = buildAccountAcquisitionLine(rows);
+  if (options.dryRun) {
+    return {
+      success: true,
+      dryRun: true,
+      parsed: rows.length,
+      imported: 0,
+      skipped: 0,
+      accountAcquisitionLine,
+    };
+  }
+
+  const tweetIds = rows.map((row) => row.postId);
+  const { data: existingRows, error: existingError } = await admin
+    .from("hub_data")
+    .select("id, metadata")
+    .eq("source", "x_post_log")
+    .filter("metadata->>tweet_id", "in", `(${tweetIds.join(",")})`);
+  if (existingError) {
+    throw new Error(`x_analytics_import lookup: ${existingError.message}`);
+  }
+  const existingByTweetId = new Map(
+    (existingRows ?? []).map((
+      item: { id: string; metadata: unknown },
+    ) => [firstString(asRecord(item.metadata).tweet_id), item]),
+  );
+
+  let imported = 0;
+  let skipped = 0;
+  for (const row of rows) {
+    const metadata = buildAnalyticsImportMetadata(row, {
+      userId,
+      archetype: classifyPostArchetype(row.text),
+      observedAt,
+      exportRange: options.exportRange,
+    });
+    const existing = existingByTweetId.get(row.postId);
+    if (existing === undefined) {
+      const { error } = await admin
+        .from("hub_data")
+        .insert({ source: "x_post_log", metadata });
+      if (error) throw new Error(`x_analytics_import insert: ${error.message}`);
+      imported += 1;
+      continue;
+    }
+    const existingMetadata = asRecord(existing.metadata);
+    // 公式 API 実測が既にある行は、CSV の累積値で塗り潰さない。
+    if (firstString(existingMetadata.metric_provenance) === "x_api") {
+      skipped += 1;
+      continue;
+    }
+    const { error } = await admin
+      .from("hub_data")
+      .update({ metadata: { ...existingMetadata, ...metadata } })
+      .eq("id", existing.id)
+      .eq("source", "x_post_log");
+    if (error) throw new Error(`x_analytics_import update: ${error.message}`);
+    imported += 1;
+  }
+  return {
+    success: true,
+    parsed: rows.length,
+    imported,
+    skipped,
+    observedAt,
+    accountAcquisitionLine,
   };
 }
 
@@ -2752,6 +2922,22 @@ serve(async (req: Request) => {
               "Check X API read access. If impression fields are unavailable, public engagement metrics will be used when possible.",
           }, 502);
         }
+      }
+
+      // R24: X Analytics のコンテンツ CSV エクスポートをそのまま学習母集団へ
+      // 取り込む。アプリ経由の投稿しか見ていなかった学習ループに、アカウント
+      // 全体の実績 (= 実測でサイト流入の 99% を生んでいた手動投稿) を入れる。
+      case "x.analytics_import": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        return json(
+          await importXAnalyticsCsv(admin, userId!, {
+            csv: String(body.csv ?? ""),
+            exportRange: String(body.exportRange ?? body.export_range ?? ""),
+            dryRun: body.dryRun === true || body.dry_run === true,
+          }),
+        );
       }
 
       case "x.metrics_normalized": {

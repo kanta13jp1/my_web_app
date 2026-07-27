@@ -22,7 +22,22 @@ void main() {
       GrowthAcquisitionService.signalForPagePath('/referral'),
       GrowthAcquisitionService.touchReferral,
     );
+    // R24: サイト流入の 94% を占める公開トラッカーは、UTM 無しの生 URL で
+    // 共有されてきたためルートパスからも計上する。
+    expect(
+      GrowthAcquisitionService.signalForPagePath('/public/local-election-700'),
+      GrowthAcquisitionService.touchPublicTracker,
+    );
     expect(GrowthAcquisitionService.signalForPagePath('/unknown'), isNull);
+  });
+
+  test('public tracker touchpoint resolves its own signup submit signal', () {
+    expect(
+      GrowthAcquisitionService.resolveSignupSubmitSignal(
+        GrowthAcquisitionService.touchPublicTracker,
+      ),
+      GrowthAcquisitionService.signupSubmitPublicTracker,
+    );
   });
 
   test('maps preview source types to import preview signals', () {
