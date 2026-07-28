@@ -64,7 +64,8 @@ ShopProduct _product({bool purchasable = true}) => ShopProduct(
       priceJpy: 500,
       version: '1.0',
       fileSizeBytes: 37572177,
-      sha256: 'cc0e5caae732fa123d26ed62c1827a923c4ccd777823190ed714ba178e97ed93',
+      sha256:
+          'cc0e5caae732fa123d26ed62c1827a923c4ccd777823190ed714ba178e97ed93',
       isPurchasable: purchasable,
     );
 

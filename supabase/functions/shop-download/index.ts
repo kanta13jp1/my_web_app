@@ -33,7 +33,8 @@ const SIGNED_URL_TTL_SECONDS = 300;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -63,7 +64,8 @@ serve(async (req) => {
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    const { data: { user }, error: userError } = await userClient.auth
+      .getUser();
     if (userError || !user) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json().catch(() => ({}));
@@ -92,7 +94,9 @@ serve(async (req) => {
     // ---- 配信ファイルの所在 ----
     const { data: product, error: productError } = await admin
       .from("shop_products")
-      .select("id, storage_bucket, storage_path, version, file_size_bytes, sha256")
+      .select(
+        "id, storage_bucket, storage_path, version, file_size_bytes, sha256",
+      )
       .eq("id", productId)
       .maybeSingle();
     if (productError) throw new Error(productError.message);
@@ -121,13 +125,15 @@ serve(async (req) => {
     const expiresAt = new Date(Date.now() + SIGNED_URL_TTL_SECONDS * 1000);
 
     // ---- 監査ログ (失敗しても配信自体は止めない) ----
-    const { error: logError } = await admin.from("shop_download_events").insert({
-      purchase_id: purchase.id,
-      user_id: user.id,
-      product_id: productId,
-      expires_at: expiresAt.toISOString(),
-      user_agent: req.headers.get("User-Agent"),
-    });
+    const { error: logError } = await admin.from("shop_download_events").insert(
+      {
+        purchase_id: purchase.id,
+        user_id: user.id,
+        product_id: productId,
+        expires_at: expiresAt.toISOString(),
+        user_agent: req.headers.get("User-Agent"),
+      },
+    );
     if (logError) {
       console.error("[shop-download] audit log failed:", logError.message);
     }

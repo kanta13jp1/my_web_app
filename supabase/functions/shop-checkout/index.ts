@@ -27,7 +27,8 @@ const SITE_URL = Deno.env.get("SHOP_SITE_URL") ??
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -62,7 +63,8 @@ serve(async (req) => {
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    const { data: { user }, error: userError } = await userClient.auth
+      .getUser();
     if (userError || !user) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json().catch(() => ({}));
@@ -115,14 +117,17 @@ serve(async (req) => {
     form.set("metadata[shop_product_id]", productId);
     if (user.email) form.set("customer_email", user.email);
 
-    const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
-        "Content-Type": "application/x-www-form-urlencoded",
+    const response = await fetch(
+      "https://api.stripe.com/v1/checkout/sessions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: form.toString(),
       },
-      body: form.toString(),
-    });
+    );
     const session = await response.json().catch(() => ({}));
     if (!response.ok) {
       const message = asString(session?.error?.message) ||
