@@ -33297,3 +33297,40 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
 - 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
 - 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 12日連続同一制約 / ユーザー数 60人 (前日比 ±0) / Notion HTMLブロック + Slack Today View が新たな差別化脅威として浮上
+
+## 2026-07-28 (Win Claude part346) — 0 byte 化インシデントの訂正 + 恒久ガード + read-only 再設計
+
+**種別**: 前回 (part342) 記録の訂正 + 再発時の被害遮断 (プロダクト機能変更なし)
+
+### 訂正: cron は truncation については実質無罪
+
+2026-07-21 の記録は `JibunKK-InjectRulesAutoSync` (毎日 03:30) を「第一容疑」とし、MEMORY.md では ⏰ 期限つき項目として「毎日 03:30 再発しうる」と扱っていた。**この位置づけを訂正する。**
+
+追加調査で判明したこと:
+
+- **3 晩 (07-22/23/24) cron は発火し、truncation はゼロ**。毎晩同じ挙動なのに被害は 1 回だけ = cron 犯人説を弱める
+- **メカニズムが不在**: dirty tree では `git pull` は overwrite 拒否で abort しファイルに触れない / `post-merge`・`post-checkout`・`post-rewrite` hook は 1 つも存在しない / `sync_inject_rules.py --apply` は `write_text(HOME, ...)` のみで **repo 外にしか書かない** (repo 側へ書く `--reverse` は排他グループで cron からは呼ばれない)
+- **Defender は 07-21 に修復・検疫を一切していない** (Id 1116/1117/1015 = 0 件)
+- **プロセス帰属は誰も記録していなかった** (Object Access 監査 OFF・Sysmon 未導入) → **遡及的な証明は不可能**
+- 「pull が abort し続けて配布ルールが stale」も**外れ**だった: worktree 版 7588B と origin/main 版 7515B の差はちょうど 73 行分の CRLF で、内容は一致
+
+**結論**: truncation の原因は既存データでは証明できず、3 晩再発していない稀事象。原因追跡は前向き計装に一本化し、恒久防御は「拒否」側に置く方針へ転換した。
+
+### 実装したもの
+
+1. **CI guard** (PR #4368 / merged): `.github/workflows/` と `.claude/` の tracked ファイルが「main で非空 → PR head で 0 byte」になったら fail。この 2 つの木は**空でも無言で壊れる**唯一の領域 (0 byte の workflow は走らないだけ、0 byte の `.claude` 設定は hook が消えるだけ) で、他ツリーは build/実行が即失敗するため射程外。削除は許可 (retire は削除が正しい操作)。変更集合は three-dot・サイズ比較は base tip (merge-base だと `feature-releases-sync.yml` 型を取り逃す)
+2. **cron の read-only 再設計**: `sync_inject_rules.py` に `--from-ref` を追加し、canonical を作業ツリーでなく git ref から読む。cron 側は `git pull` を廃し `git fetch` + `--from-ref origin/main` へ。これで **cron は作業ツリーに触れる能力を完全に失う**。既定は従来通り作業ツリー読み (開発者のローカル編集を無視しないため)
+3. **一時的な forensic watcher** (`scripts/watch_protected_files.ps1`): 0 byte 化の瞬間に `Win32_Process` を全コマンドライン付きでダンプ。**repo には一切書かず**ログは repo 外。**捕獲 or 30 日で自己終了**。時刻非依存 (03:30 相関は n=1 で、その cron 自体が無罪になったため、時刻を鍵にするのは偶然に計器を合わせる行為)
+
+**cron を直す理由も変わった** — truncation の fix ではなく、「worktree がクリーンな晩に `git pull origin main` が成功し、**Codex の WIP branch に main を無断マージする**」という別の実在リスクへの対処である (git の定義通りの動作)。
+
+### 残る限界 (正直な記載)
+
+watcher が名指しできるのはスナップショット時点で**生存しているプロセス**のみ。数ミリ秒で exit する犯人なら時刻とファイル一覧しか取れない — それ自体が 4688 プロセス生成監査へエスカレーションすべき signal となる。
+
+### Philosophy Alignment (Win Claude part346)
+
+- 主要実施: 未証明の原因断定を訂正 + 恒久 CI guard + cron の read-only 化 + 期限つき計装
+- 該当原則: 1 (CEO 感: 射程・sunset・強制点をすべてユーザーが決定) / 6 (資本=時間: 沈黙する破壊を CI で止め将来の調査時間を回収) / 7 (資産負債: CI/CD と設定を守る資産を追加し、未証明の因果を負債として明示訂正)
+- 整合性スコア: 3/9 ✅ — インシデント対応・基盤整備のため機能設計向けの判定基準は適用外
+- 特記: **最大の教訓は前回と同じ形で自分に返ってきた** — 07-21 は「自動レポートが未検証の復元先を推奨していた」ことが最大の発見だったが、その記録自身が cron を「第一容疑」と書いていた。訂正しなければ同じ過ちの再生産になる

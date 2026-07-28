@@ -121,3 +121,45 @@ export function buildAcquisitionRankingLine<T>(
   );
   return parts.join(" ");
 }
+
+/// R24 fix: 獲得スコアの入力は**全項が同じ期間基準**でなければならない。
+///
+/// 初版は `impressions` だけ年齢正規化窓の値を渡し、`urlClicks` ほか 6 項は
+/// lifetime 累積を渡していた。`urlClicks` の重みは 1000、`impressions` 項は
+/// 上限 100 点なので、支配項に年齢バイアスが丸ごと残り、正規化した項では
+/// 原理的に埋め合わせられない。結果、3 ヶ月前の投稿 (lifetime 5 クリック) が
+/// 2 日前の投稿 (同一窓 4 クリック) を恒久的に上回り、
+/// 「Rank every post against one shared age window」という同ファイルの
+/// 不変条件に正面から反していた。
+///
+/// ここでは all-or-nothing で基準を選ぶ。窓のサンプルがあれば**全項**を窓から、
+/// 無ければ**全項**を累積から取る。項ごとのフォールバックは同じバグを再発させる
+/// ので行わない。
+export interface AcquisitionScoreBasis {
+  input: AcquisitionScoreInput;
+  /// "window" = 年齢を揃えた窓の値 / "cumulative" = lifetime 累積。
+  basis: "window" | "cumulative";
+}
+
+export function resolveAcquisitionScoreInput(
+  sample: AcquisitionScoreInput | null | undefined,
+  cumulative: AcquisitionScoreInput,
+): AcquisitionScoreBasis {
+  // 窓サンプルは impressions を必ず持つ (無い窓はそもそも作られない)。
+  // impressions が取れない sample は窓として不完全なので累積へ倒す。
+  if (sample && typeof sample.impressions === "number") {
+    return {
+      basis: "window",
+      input: {
+        urlClicks: sample.urlClicks ?? 0,
+        profileClicks: sample.profileClicks ?? 0,
+        bookmarkCount: sample.bookmarkCount ?? 0,
+        replyCount: sample.replyCount ?? 0,
+        repostCount: sample.repostCount ?? 0,
+        likeCount: sample.likeCount ?? 0,
+        impressions: sample.impressions,
+      },
+    };
+  }
+  return { basis: "cumulative", input: cumulative };
+}
