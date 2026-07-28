@@ -83,6 +83,7 @@ import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:my_web_app/services/asset_waste_training_snapshot_inputs.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
+import 'package:my_web_app/services/debt_progress_card_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
 import 'package:my_web_app/services/disposable_balance_asset_liability_adapter.dart';
 import 'package:my_web_app/services/disposable_balance_service.dart';
@@ -98,6 +99,7 @@ import 'package:my_web_app/services/waste_tracking_service.dart';
 import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
+import 'package:my_web_app/widgets/debt_progress_share_dialog.dart';
 import 'package:my_web_app/widgets/asset_alert_center_card.dart';
 import 'package:my_web_app/widgets/asset_cashflow_statement_card.dart';
 import 'package:my_web_app/widgets/asset_dashboard_grid.dart';
@@ -22302,6 +22304,37 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  /// 返済進捗カードのプレビューを開く。
+  ///
+  /// 🔴 ここでは投稿しない。カード画像と下書き文面を用意するだけで、
+  /// 公開するかどうかは必ず本人が決める (取り消し不能な個人情報のため)。
+  Future<void> _openDebtProgressShare() async {
+    final workbook = _buildCurrentAssetLiabilityWorkbook();
+    if (workbook == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('資産負債データを読み込めませんでした')));
+      return;
+    }
+    const service = DebtProgressCardService();
+    final data = service.build(
+      workbook: workbook,
+      priorBalancesByAccountId: _assetDebtTrendPriorBalances,
+    );
+    if (!mounted) return;
+    if (data == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('返済対象の負債がありません')));
+      return;
+    }
+    await showDialog<void>(
+      context: context,
+      builder: (_) => DebtProgressShareDialog(data: data, month: _now),
+    );
+  }
+
   Widget _buildAssetManagementMonthlyDebtTrendList(
     List<AssetDebtTrendInsight> insights,
   ) {
@@ -22338,6 +22371,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     height: 1.4,
                   ),
                 ),
+              ),
+              IconButton(
+                key: const Key('debt_progress_share_button'),
+                tooltip: '今月の返済報告カードを作る',
+                icon: Icon(Icons.ios_share, color: headerColor, size: 18),
+                onPressed: _openDebtProgressShare,
               ),
               if (_householdTrackerScheduleAllowed)
                 IconButton(
