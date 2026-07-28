@@ -29,6 +29,7 @@ import 'package:my_web_app/pages/local_smart_cleanup_page.dart';
 import 'package:my_web_app/pages/windows_app_install_page.dart';
 import 'package:my_web_app/pages/payment_reminder_page.dart';
 import 'package:my_web_app/pages/shopping_list_page.dart';
+import 'package:my_web_app/pages/hexciv_shop_page.dart';
 import 'package:my_web_app/pages/digest_queue_page.dart';
 import 'package:my_web_app/pages/gemini_university_v2_page.dart';
 import 'package:my_web_app/pages/growth_mission_page.dart';
@@ -511,6 +512,16 @@ Route<dynamic> generateAppRoute(
         builder: (_) => LandingPage(
           signupCompletionService: signupCompletionService,
         ),
+      );
+    // HexCiv ダウンロード版の商品ページ (2026-07-28 追加)。
+    // Stripe Checkout の success_url / cancel_url がこの URL に
+    // `?purchase=success` / `?purchase=canceled` を付けて戻ってくる。
+    case '/shop/hexciv':
+      return MaterialPageRoute(
+        builder: (_) => HexcivShopPage(
+          purchaseResult: Uri.base.queryParameters['purchase'],
+        ),
+        settings: settings,
       );
     case '/home':
       return MaterialPageRoute(builder: (_) => const HomePage());

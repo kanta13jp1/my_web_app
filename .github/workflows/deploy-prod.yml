@@ -599,6 +599,13 @@ jobs:
           deploy_function schedule-hub --no-verify-jwt
           deploy_function stripe-webhook --no-verify-jwt
 
+          # --- 買い切り販売 (2026-07-28 追加) ---
+          # ここへ足し忘れると migration だけ本番へ入り、購入ボタンが存在しない
+          # 関数を叩く半着地になる (CI は緑のまま通るので気づけない)。
+          # 認証は関数内で auth.getUser() により行う。
+          deploy_function shop-checkout --no-verify-jwt
+          deploy_function shop-download --no-verify-jwt
+
           # --- Mega-Hub (5本: 旧Tier2全統合) ---
           deploy_function tools-hub --no-verify-jwt
           deploy_function media-hub --no-verify-jwt

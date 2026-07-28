@@ -271,6 +271,7 @@ const List<String> kAllAppRoutes = <String>[
   '/settings',
   '/settings/ai-share-button',
   '/settings/theme',
+  '/shop/hexciv',
   '/shopping-list',
   '/site-guide-ai',
   '/sitemap-analytics',
