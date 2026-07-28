@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-26T22:14:35Z",
+  "generated_at": "2026-07-27T22:28:09Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -116,10 +116,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "87cdbd0328b4fe4bf7b67c77e3bee919f7c95d5a610e4d6e5f1b0307a6070949",
+          "hash": "08ea1c9df662d2718f3e2c9a0a6c71af41f9a47f3c6da14beb6083844f807e54",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -270,10 +270,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "fb810611d766de35d1e0871c17a4a1f3002733db92d8a57cf7b59de3e313675f",
+          "hash": "9078f462f0db21e6624895dbcda066ef189ad986a583ba2246d4abfe3989f8ce",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -288,7 +288,6 @@
             "hooks": [
               "hook",
               "hooks",
-              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -300,7 +299,6 @@
               "IDE extension"
             ],
             "quality-cost": [
-              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -361,10 +359,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "18fb32369b06bd03b69b6917a88aef1155888300a58b0dfd1c87d9c44bf176f8",
+          "hash": "62eff5c994f20548cd613fc92d78c4620219db912dea29ecae6acddf52e2bc79",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.4",
@@ -479,18 +477,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-b835a6d6e42c",
+        "entry_id": "nf-6cbca4e85f49",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.11 / Jul 10, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing Resources ↓... Price-efficient models handle the rest. Cost: Good quality, reaching the highest available intelligence while optimizing token spend.",
+        "text": "Cursor changelog 3.11 / Jul 10, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review... Price-efficient models handle the rest. Cost: Good quality, reaching the highest available intelligence while optimizing token spend.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "c4e5b6c4a0e793a343c068d9812c4ec807a58efe12ac935b80c47588407230b8",
+          "hash": "d1aee57d88bef194ab0a6057b1257fcb3a8d0f7226824494bfcdb2eac0e27e77",
           "keyword_groups": {
             "codex-runtime": [
               "subagents"
@@ -522,7 +520,7 @@
           "previous_hash": "c4e5b6c4a0e793a343c068d9812c4ec807a58efe12ac935b80c47588407230b8",
           "slug": "cursor-changelog",
           "snippets": [
-            "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing Resources ↓...",
+            "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...",
             "Price-efficient models handle the rest.",
             "Cost: Good quality, reaching the highest available intelligence while optimizing token spend."
           ],
@@ -531,7 +529,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-b835a6d6e42c",
+        "entry_id": "nf-6cbca4e85f49",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -557,10 +555,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "3f7758f857bed0c704742a99fe63eb437295318d4a1383a691ec50a95dd593e0",
+          "hash": "a7513a88ed2c096b719cc9346c81413d92d42394be154e295dc6299794c9c00c",
           "keyword_groups": {
             "hooks": [
               "Stop"

@@ -33242,6 +33242,35 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
 - 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 11日連続同一制約 / ユーザー数 60人 (前日比 +1) / **Notion Developer Platform 公開**が最大脅威シグナル継続
 
+### セッション記録: Claude Schedule 2026-07-28 00:02 UTC
+
+**実施内容**:
+- GHA 生成済み日次レポート確認 (`docs/daily-reports/2026-07-28.md`: ユーザー60人 / 新規FR 0件 / 未対応131件 / WF failure 8件)
+- Supabase エンドポイント: プロキシ policy 403 (13日連続 / daily-digest・viral-growth-engine・schedule_task_runs 記録 スキップ)
+- GitHub auto-review Issues: 0件 (対応不要)
+- WebSearch 競合インテリジェンス収集 (Notion / Slack / GitHub)
+- `docs/competitor-reports/2026-07-28.md` に WebSearch 追記セクションを追加 (GHA static-template に加筆)
+
+**競合動向サマリー (WebSearch 2026-07-28)**:
+- **🔴 GitHub MCP ステートレス化 — 本日施行**: MCP プロトコルが 2026-07-28 にステートレス移行。GitHub MCP Server は先行対応済み。自社セッションへの影響確認要
+- **🔴 GitHub Models 廃止 — 2026-07-30 (残り2日)**: 完全廃止。GitHub Copilot 経由のモデル利用へ移行
+- **🟠 Notion Developer Platform**: External Agents API (Alpha) / Notion CLI / Agent SDK / Markdown API を公開。Notion が developer ecosystem を拡張
+- **🟠 Notion Workers クレジットダッシュボード (7/24)**: Workers 使用量をクレジット一覧で管理可能に
+- **🟡 Slack AI Guardrails + 新 Block Kit ブロック群**: コンテンツ安全フィルタ / `slack create agent` コマンド追加
+
+**AIアクション提案**:
+1. **GitHub MCP stateless 動作確認**: 本日施行の MCP stateless 化が `mcp__github__*` ツール群に影響しないか確認し、異常あれば `AI_FALLBACK_RUNBOOK.md` に追記
+2. **GitHub Models 廃止 (7-30) 影響調査**: GHA ワークフロー内で GitHub Models を参照していないか grep 確認 (残り2日)
+3. **Notion Developer Platform 差別化整理**: External Agents API (Alpha) 仕様を `docs/competitor-reports/` に蓄積し、自社 API 設計との差別化ポイントを整理
+
+**更新ドキュメント**:
+- `docs/competitor-reports/2026-07-28.md`: WebSearch 追記セクションを加筆 (GitHub MCP stateless / GitHub Models廃止 / Notion Developer Platform)
+
+**Philosophy Alignment (Schedule 2026-07-28 00:02 UTC)**:
+- 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
+- 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
+- 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 13日連続 / GitHub MCP ステートレス化が本日施行 (自社直撃) / GitHub Models が7-30廃止予定
+
 ### セッション記録: Claude Schedule 2026-07-27 00:02 UTC
 
 **実施内容**:

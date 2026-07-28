@@ -6,8 +6,255 @@
     "quality-cost",
     "schedule"
   ],
-  "changed_sources": [],
-  "checked_at": "2026-07-26T22:14:32Z",
+  "changed_sources": [
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "08ea1c9df662d2718f3e2c9a0a6c71af41f9a47f3c6da14beb6083844f807e54",
+      "keyword_groups": {
+        "codex-runtime": [
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "GitHub"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
+      "name": "Claude Code hooks reference",
+      "owner": "Claude Code",
+      "previous_hash": "87cdbd0328b4fe4bf7b67c77e3bee919f7c95d5a610e4d6e5f1b0307a6070949",
+      "slug": "claude-code-hooks",
+      "snippets": [
+        "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
+        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
+        "Copy page Copy page For a quickstart guide with examples, see Automate actions with hooks ."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/hooks"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "9078f462f0db21e6624895dbcda066ef189ad986a583ba2246d4abfe3989f8ce",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.5",
+          "GPT-5.4",
+          "model picker",
+          "in-app browser",
+          "browser use",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "cost",
+          "quota",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "schedule",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2026-07-23 / ChatGPT Voice and multi-folder projects 26.715 Powered by GPT-Live, ChatGPT Voice lets you",
+      "name": "Codex changelog",
+      "owner": "Codex",
+      "previous_hash": "fb810611d766de35d1e0871c17a4a1f3002733db92d8a57cf7b59de3e313675f",
+      "slug": "codex-changelog",
+      "snippets": [
+        "Codex changelog | ChatGPT Learn ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or...",
+        "Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...",
+        "All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How..."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "62eff5c994f20548cd613fc92d78c4620219db912dea29ecae6acddf52e2bc79",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.4",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "schedule",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex",
+      "name": "Codex use cases",
+      "owner": "Codex",
+      "previous_hash": "18fb32369b06bd03b69b6917a88aef1155888300a58b0dfd1c87d9c44bf176f8",
+      "slug": "codex-use-cases",
+      "snippets": [
+        "ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use...",
+        "Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...",
+        "All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How..."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/use-cases/"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "d1aee57d88bef194ab0a6057b1257fcb3a8d0f7226824494bfcdb2eac0e27e77",
+      "keyword_groups": {
+        "codex-runtime": [
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "Slack",
+          "GitHub"
+        ],
+        "quality-cost": [
+          "cost",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "workflow"
+        ]
+      },
+      "latest_signal": "3.11 / Jul 10, 2026",
+      "name": "Cursor changelog",
+      "owner": "Cursor",
+      "previous_hash": "c4e5b6c4a0e793a343c068d9812c4ec807a58efe12ac935b80c47588407230b8",
+      "slug": "cursor-changelog",
+      "snippets": [
+        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...",
+        "Price-efficient models handle the rest.",
+        "Cost: Good quality, reaching the highest available intelligence while optimizing token spend."
+      ],
+      "status": 200,
+      "url": "https://cursor.com/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "a7513a88ed2c096b719cc9346c81413d92d42394be154e295dc6299794c9c00c",
+      "keyword_groups": {
+        "hooks": [
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "GitHub",
+          "IDE extension",
+          "VSCode"
+        ],
+        "quality-cost": [
+          "cost",
+          "quota",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "workflow"
+        ]
+      },
+      "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
+      "name": "Gemini Code Assist release notes",
+      "owner": "Gemini Code Assist",
+      "previous_hash": "3f7758f857bed0c704742a99fe63eb437295318d4a1383a691ec50a95dd593e0",
+      "slug": "gemini-code-assist-release-notes",
+      "snippets": [
+        "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",
+        "Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra...",
+        "April 13, 2026 VS Code Gemini Code Assist 2.77.3 Fixed Quota issues fixed in VS Code Various bug fixes related to quota issues."
+      ],
+      "status": 200,
+      "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
+    }
+  ],
+  "checked_at": "2026-07-27T22:28:06Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -59,7 +306,7 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-07-25T22:11:45Z",
+  "previous_checked_at": "2026-07-26T22:14:32Z",
   "sources": [
     {
       "changed": false,
@@ -123,10 +370,10 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "87cdbd0328b4fe4bf7b67c77e3bee919f7c95d5a610e4d6e5f1b0307a6070949",
+      "hash": "08ea1c9df662d2718f3e2c9a0a6c71af41f9a47f3c6da14beb6083844f807e54",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -223,10 +470,10 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "fb810611d766de35d1e0871c17a4a1f3002733db92d8a57cf7b59de3e313675f",
+      "hash": "9078f462f0db21e6624895dbcda066ef189ad986a583ba2246d4abfe3989f8ce",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -241,7 +488,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -253,7 +499,6 @@
           "IDE extension"
         ],
         "quality-cost": [
-          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -284,10 +529,10 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "18fb32369b06bd03b69b6917a88aef1155888300a58b0dfd1c87d9c44bf176f8",
+      "hash": "62eff5c994f20548cd613fc92d78c4620219db912dea29ecae6acddf52e2bc79",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.4",
@@ -352,10 +597,10 @@
       "url": "https://openai.com/codex/"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "c4e5b6c4a0e793a343c068d9812c4ec807a58efe12ac935b80c47588407230b8",
+      "hash": "d1aee57d88bef194ab0a6057b1257fcb3a8d0f7226824494bfcdb2eac0e27e77",
       "keyword_groups": {
         "codex-runtime": [
           "subagents"
@@ -387,7 +632,7 @@
       "previous_hash": "c4e5b6c4a0e793a343c068d9812c4ec807a58efe12ac935b80c47588407230b8",
       "slug": "cursor-changelog",
       "snippets": [
-        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing Resources ↓...",
+        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...",
         "Price-efficient models handle the rest.",
         "Cost: Good quality, reaching the highest available intelligence while optimizing token spend."
       ],
@@ -395,10 +640,10 @@
       "url": "https://cursor.com/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "3f7758f857bed0c704742a99fe63eb437295318d4a1383a691ec50a95dd593e0",
+      "hash": "a7513a88ed2c096b719cc9346c81413d92d42394be154e295dc6299794c9c00c",
       "keyword_groups": {
         "hooks": [
           "Stop"

@@ -1,12 +1,16 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-26T22:14:32Z`
-- Previous check: `2026-07-25T22:11:45Z`
-- Changed/new official sources: `0`
+- Checked at: `2026-07-27T22:28:06Z`
+- Previous check: `2026-07-26T22:14:32Z`
+- Changed/new official sources: `5`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- No official source hash changed since the previous check.
+- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
+- `changed` Codex changelog: 2026-07-23 / ChatGPT Voice and multi-folder projects 26.715 Powered by GPT-Live, ChatGPT Voice lets you
+- `changed` Codex use cases: ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex
+- `changed` Cursor changelog: 3.11 / Jul 10, 2026
+- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.87.0 / June 19, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -54,7 +58,7 @@
   - URL: https://cursor.com/changelog
   - Latest signal: 3.11 / Jul 10, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing Resources ↓...
+  - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...
   - Short signal: Price-efficient models handle the rest.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
