@@ -248,6 +248,53 @@ async function recordSupporterCheckout(
   if (error) throw new Error(error.message);
 }
 
+/**
+ * 買い切り商品の購入を記録する (2026-07-28 追加)。
+ *
+ * この関数が作る status='paid' の行が、そのままダウンロード権利になる
+ * (shop-download はこの行だけを見る)。
+ *
+ * 冪等性: Stripe は webhook を再送するため、同じ checkout session が複数回
+ * 届きうる。shop_purchases.stripe_checkout_session_id の unique 制約に
+ * onConflict で乗せることで、再送されても行が増えないようにする。
+ * 「支払いは1回なのに購入が2件」は売上集計と返金対応の両方を壊す。
+ *
+ * 未払いの扱い: payment_status が 'paid' 以外 (銀行振込など後日確定するもの) の
+ * ときは pending で作る。ここで無条件に paid にすると、入金前に配信されてしまう。
+ */
+async function recordShopPurchase(
+  admin: SupabaseClient,
+  session: Record<string, unknown>,
+  metadata: Record<string, unknown>,
+): Promise<void> {
+  const sessionId = asString(session.id);
+  const userId = asString(metadata.user_id);
+  const productId = asString(metadata.shop_product_id);
+  // どれか欠けると「誰の・何の」購入か確定できない。黙って捨てず記録に残す。
+  if (!sessionId || !userId || !productId) {
+    console.error(
+      "[stripe-webhook] shop purchase missing identity",
+      JSON.stringify({ sessionId, userId, productId }),
+    );
+    return;
+  }
+
+  const paid = asString(session.payment_status) === "paid";
+  const amount = Number(session.amount_total ?? 0);
+
+  const { error } = await admin.from("shop_purchases").upsert({
+    user_id: userId,
+    product_id: productId,
+    stripe_checkout_session_id: sessionId,
+    stripe_payment_intent_id: asString(session.payment_intent) || null,
+    amount_jpy: Number.isFinite(amount) ? amount : 0,
+    currency: asString(session.currency, "jpy"),
+    status: paid ? "paid" : "pending",
+    purchased_at: paid ? new Date().toISOString() : null,
+  }, { onConflict: "stripe_checkout_session_id" });
+  if (error) throw new Error(error.message);
+}
+
 async function handleCheckoutCompleted(
   admin: SupabaseClient,
   session: Record<string, unknown>,
@@ -258,6 +305,12 @@ async function handleCheckoutCompleted(
     asString(metadata.milestone_code) === "first-yen-revenue"
   ) {
     await recordSupporterCheckout(admin, session, metadata);
+    return;
+  }
+
+  // 買い切り商品 (2026-07-28 追加)。shop-checkout が metadata に載せた商品IDで判別する。
+  if (asString(metadata.shop_product_id)) {
+    await recordShopPurchase(admin, session, metadata);
     return;
   }
 
