@@ -28,6 +28,7 @@ import { pickBestVariant, pickConfidentVariant } from "./x_best_variant.ts";
 import {
   buildAcquisitionRankingLine,
   computeAcquisitionScore,
+  resolveAcquisitionScoreInput,
 } from "./x_acquisition_score.ts";
 import {
   buildAccountAcquisitionLine,
@@ -1061,17 +1062,24 @@ function buildXPerformanceContextFromLogs(
         rankingUrlClickRate: sample?.urlClickRate ?? null,
         // R24: 学習ランキングの基準値。到達ではなく獲得(URL クリック最上位・
         // impressions は上限キャップ付き補助項)で並べる (x_acquisition_score.ts)。
-        acquisitionScore: computeAcquisitionScore({
-          urlClicks: row.urlClicks,
-          profileClicks: row.profileClicks,
-          bookmarkCount: row.bookmarkCount,
-          replyCount: row.replyCount,
-          repostCount: row.repostCount,
-          likeCount: row.likeCount,
-          impressions: comparisonWindow
-            ? normalizedValue ?? row.impressions
-            : row.impressions,
-        }),
+        // R24 fix: 全項を同じ期間基準で渡す (all-or-nothing)。従来は
+        // impressions だけ窓の値・残り 6 項が lifetime 累積で、重み 1000 の
+        // urlClicks に年齢バイアスが丸ごと残っていた (上限 100 点の
+        // impressions 項では埋め合わせ不可能)。
+        acquisitionScore: computeAcquisitionScore(
+          resolveAcquisitionScoreInput(sample, {
+            urlClicks: row.urlClicks,
+            profileClicks: row.profileClicks,
+            bookmarkCount: row.bookmarkCount,
+            replyCount: row.replyCount,
+            repostCount: row.repostCount,
+            likeCount: row.likeCount,
+            impressions: row.impressions,
+          }).input,
+        ),
+        acquisitionBasis: resolveAcquisitionScoreInput(sample, {
+          impressions: row.impressions,
+        }).basis,
       };
     })
     .sort((left, right) =>
@@ -1338,7 +1346,11 @@ function buildXPerformanceContextFromLogs(
         : "Target: 10K impressions. No post-age comparable winner yet.",
       // R24: 目的は「サイトへ 1 人送ること」。手本の選定基準は到達ではなく獲得。
       `Ranking basis: acquisition score (url clicks weighted first, ` +
-      `impressions capped); age cohort = ${comparisonLabel} ` +
+      `impressions capped; every term read from the same period basis — ` +
+      `${
+        learningRows.filter((r) => r.acquisitionBasis === "window").length
+      }/${learningRows.length} rows scored on the age window, the rest on ` +
+      `lifetime cumulative); age cohort = ${comparisonLabel} ` +
       `(comparable n=${learningRows.length}; total measured n=${rows.length}). ` +
       `Optimize for site visits and replies, not for raw reach.`,
       ...(acquisitionLine ? [acquisitionLine] : []),
