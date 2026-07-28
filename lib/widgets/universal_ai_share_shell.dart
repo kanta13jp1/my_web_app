@@ -427,12 +427,19 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
       final slopWarning = composeSlopWarning(
         detectSlop(draft.text, draft.threadReplies.join('\n')),
       );
+      // R27: 年号は事実主張なのでスロップより優先して出す。プロンプトに
+      // 「never invent another year (e.g. never write 2024)」があるにも関わらず、
+      // 実際に `デイリーブリーフィング — 2024/07/05 朝` が出荷された実例がある。
+      final staleYearWarning = composeStaleYearWarning(
+        detectStaleYears('${draft.text}\n${draft.threadReplies.join('\n')}'),
+      );
       setState(() {
         _draft = draft;
         _textController.text = draft.text;
         _loadingDraft = false;
-        _statusMessage =
-            draft.fallbackUsed ? 'AI生成が不安定なため、安全な定型文を使っています' : slopWarning;
+        _statusMessage = draft.fallbackUsed
+            ? 'AI生成が不安定なため、安全な定型文を使っています'
+            : (staleYearWarning ?? slopWarning);
       });
     } catch (error) {
       if (_disposed || !mounted) return;
