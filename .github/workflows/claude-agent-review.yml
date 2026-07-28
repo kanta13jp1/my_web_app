@@ -322,14 +322,25 @@ jobs:
         id: ultrareview
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUM: ${{ steps.pr.outputs.number }}
         run: |
-          if [ -z "$ANTHROPIC_API_KEY" ]; then
-            echo "::error::ANTHROPIC_API_KEY is not configured — ultrareview cannot run."
+          # ultrareview is a cloud-hosted session, so it depends on what the
+          # credential is entitled to rather than on raw model access. Prefer a
+          # subscription token when one is configured, and drop the API key in
+          # that case so the precedence is unambiguous.
+          if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+            unset ANTHROPIC_API_KEY
+            AUTH="CLAUDE_CODE_OAUTH_TOKEN (subscription)"
+          elif [ -n "$ANTHROPIC_API_KEY" ]; then
+            AUTH="ANTHROPIC_API_KEY (API key)"
+          else
+            echo "::error::No Claude credential configured — set ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN."
             exit 1
           fi
+          echo "Auth: ${AUTH}"
 
           # `claude ultrareview <PR#>` is the real subcommand; there is no
           # --non-interactive flag (the CLI rejects it as an unknown option),
@@ -339,7 +350,13 @@ jobs:
           cat ultrareview.txt
 
           if [ "$status" -ne 0 ]; then
-            echo "::error::claude ultrareview exited ${status} for PR #${PR_NUM}."
+            if grep -qi "currently unavailable" ultrareview.txt; then
+              # Observed on every dispatch so far with API-key auth (3 runs
+              # across ~17h). Say what to check instead of just "exited 1".
+              echo "::error::ultrareview could not launch using ${AUTH}. It is a cloud-hosted session whose availability depends on the credential's entitlement. If only an API key is configured, add a CLAUDE_CODE_OAUTH_TOKEN repo secret from \`claude setup-token\` (requires a Claude subscription). If a subscription token is already in use, the service is likely temporarily unavailable — retry later."
+            else
+              echo "::error::claude ultrareview exited ${status} for PR #${PR_NUM} (auth: ${AUTH})."
+            fi
             exit "$status"
           fi
           if [ ! -s ultrareview.txt ]; then
