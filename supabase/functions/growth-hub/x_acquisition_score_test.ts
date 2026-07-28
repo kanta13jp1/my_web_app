@@ -8,6 +8,7 @@ import {
   IMPRESSION_CAP,
   IMPRESSION_MAX_POINTS,
   impressionTerm,
+  resolveAcquisitionScoreInput,
 } from "./x_acquisition_score.ts";
 
 // 実測サンプル (account_analytics_content 2026-04-27〜2026-07-25)。
@@ -127,4 +128,64 @@ Deno.test("buildAcquisitionRankingLine omits the warning when both winners agree
   assert(out !== null);
   assert(!out!.includes("Divergence warning"));
   assert(out!.includes("Click coverage: 2/2"));
+});
+
+// R24 fix: 期間基準の混在バグ (PR #4355 レビュー指摘) の回帰テスト。
+const CUMULATIVE = {
+  urlClicks: 5,
+  profileClicks: 40,
+  bookmarkCount: 2,
+  replyCount: 1,
+  repostCount: 3,
+  likeCount: 10,
+  impressions: 90000,
+};
+const WINDOW_SAMPLE = {
+  urlClicks: 4,
+  profileClicks: 6,
+  bookmarkCount: 0,
+  replyCount: 0,
+  repostCount: 1,
+  likeCount: 2,
+  impressions: 3000,
+};
+
+Deno.test("resolveAcquisitionScoreInput takes every term from the window when present", () => {
+  const resolved = resolveAcquisitionScoreInput(WINDOW_SAMPLE, CUMULATIVE);
+  assertEquals(resolved.basis, "window");
+  // 1 項でも累積が混ざったら、この等値は壊れる。
+  assertEquals(resolved.input, WINDOW_SAMPLE);
+});
+
+Deno.test("resolveAcquisitionScoreInput falls back wholly to cumulative", () => {
+  for (const sample of [null, undefined, { urlClicks: 4 }]) {
+    const resolved = resolveAcquisitionScoreInput(sample, CUMULATIVE);
+    assertEquals(resolved.basis, "cumulative");
+    assertEquals(resolved.input, CUMULATIVE);
+  }
+});
+
+Deno.test("窓の値で採点すると、古い投稿が新しい投稿を年齢だけで上回らない", () => {
+  // 3ヶ月前の投稿: lifetime 5 クリック。2日前の投稿: 同一窓 4 クリック。
+  const oldPostWindow = { ...WINDOW_SAMPLE, urlClicks: 1, impressions: 800 };
+  const freshWindow = { ...WINDOW_SAMPLE, urlClicks: 4, impressions: 3000 };
+
+  // 修正前の挙動 (累積 vs 窓の混在) を再現すると、古い投稿が勝ってしまう。
+  const mixedOld = computeAcquisitionScore({ ...CUMULATIVE, impressions: 800 });
+  const mixedFresh = computeAcquisitionScore(
+    resolveAcquisitionScoreInput(freshWindow, CUMULATIVE).input,
+  );
+  assert(
+    mixedOld > mixedFresh,
+    "混在時は古い投稿が勝つ (これが修正前のバグ)",
+  );
+
+  // 修正後: 両方とも窓基準なので、同じ窓のクリック数どおりに並ぶ。
+  const normalizedOld = computeAcquisitionScore(
+    resolveAcquisitionScoreInput(oldPostWindow, CUMULATIVE).input,
+  );
+  assert(
+    mixedFresh > normalizedOld,
+    `窓基準なら 4 クリックが 1 クリックを上回る (${mixedFresh} vs ${normalizedOld})`,
+  );
 });
