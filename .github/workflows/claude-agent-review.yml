@@ -342,6 +342,25 @@ jobs:
           fi
           echo "Auth: ${AUTH}"
 
+          # Pre-flight: prove the credential itself reaches the API before
+          # blaming ultrareview. "Ultrareview is currently unavailable." does not
+          # distinguish a bad credential from a genuinely unavailable feature,
+          # and `claude auth status` is useless here — it reports
+          # "loggedIn": true even for a completely invalid token.
+          #
+          # This probe is only meaningful in CI: on a developer machine the CLI
+          # silently falls back to the keychain session when the configured
+          # token is bad, so the call succeeds and proves nothing. A runner has
+          # no such fallback, so a failure here means the configured credential
+          # is bad.
+          if claude -p "Reply with exactly: OK" > auth_probe.txt 2>&1; then
+            echo "Credential check: OK ($(head -c 100 auth_probe.txt | tr -d '\n'))"
+          else
+            echo "::error::The configured Claude credential (${AUTH}) failed a minimal API call, so it cannot be used for ultrareview either. Re-issue it with \`claude setup-token\` and update the repo secret."
+            head -20 auth_probe.txt
+            exit 1
+          fi
+
           # `claude ultrareview <PR#>` is the real subcommand; there is no
           # --non-interactive flag (the CLI rejects it as an unknown option),
           # which is why the previous invocation could never have succeeded.
