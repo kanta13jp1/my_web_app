@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-24T22:28:43Z",
+  "generated_at": "2026-07-27T22:28:09Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -20,18 +20,18 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-7152b462ed4f",
+        "entry_id": "nf-817a777a34f4",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.219 / July 24, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.219 July 24, 2026 Added Claude Opus 5 ( claude-opus-5 ), now the default Opus model — 1M context, fast mode at 10 / 10/ 10/ 50 per Mtok Added...",
+        "text": "Claude Code changelog 2.1.220 / July 25, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.220 July 25, 2026 Bug fixes and reliability improvements ​ 2.1.219 July 24, 2026 Added Claude Opus 5 ( claude-opus-5 ), now the default Opus model — 1M context, fast mode...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
-          "hash": "d8ef1a618b4dd9fb060fb841df2cc048e7606f01fd7c0a624bd157fadad3f0d1",
+          "hash": "cd3805c012788e10c829872d14c7ea7a680a934c19ca71fad3bcb800d701ca95",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -75,22 +75,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.219 / July 24, 2026",
+          "latest_signal": "2.1.220 / July 25, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "9b0e1435a90dc092822130cd43ea6d8970e9525d8da446094e523d26f8b8d25f",
+          "previous_hash": "cd3805c012788e10c829872d14c7ea7a680a934c19ca71fad3bcb800d701ca95",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.219 July 24, 2026 Added Claude Opus 5 ( claude-opus-5 ), now the default Opus model — 1M context, fast mode at 10 / 10/ 10/ 50 per Mtok Added..."
+            "​ 2.1.220 July 25, 2026 Bug fixes and reliability improvements ​ 2.1.219 July 24, 2026 Added Claude Opus 5 ( claude-opus-5 ), now the default Opus model — 1M context, fast mode..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-7152b462ed4f",
+        "entry_id": "nf-817a777a34f4",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -119,7 +119,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "87cdbd0328b4fe4bf7b67c77e3bee919f7c95d5a610e4d6e5f1b0307a6070949",
+          "hash": "08ea1c9df662d2718f3e2c9a0a6c71af41f9a47f3c6da14beb6083844f807e54",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -157,7 +157,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "af79943f765755840f87043dd0c84e1dde739908059481e854d36a49b4993a7a",
+          "previous_hash": "87cdbd0328b4fe4bf7b67c77e3bee919f7c95d5a610e4d6e5f1b0307a6070949",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -273,7 +273,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "fb810611d766de35d1e0871c17a4a1f3002733db92d8a57cf7b59de3e313675f",
+          "hash": "9078f462f0db21e6624895dbcda066ef189ad986a583ba2246d4abfe3989f8ce",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -288,7 +288,6 @@
             "hooks": [
               "hook",
               "hooks",
-              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -300,7 +299,6 @@
               "IDE extension"
             ],
             "quality-cost": [
-              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -320,7 +318,7 @@
           "latest_signal": "2026-07-23 / ChatGPT Voice and multi-folder projects 26.715 Powered by GPT-Live, ChatGPT Voice lets you",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "a6750cc2c0464a25ba98ff7169f4f81e6d77fab15ca81929d5bc691008c90d26",
+          "previous_hash": "fb810611d766de35d1e0871c17a4a1f3002733db92d8a57cf7b59de3e313675f",
           "slug": "codex-changelog",
           "snippets": [
             "Codex changelog | ChatGPT Learn ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or...",
@@ -364,7 +362,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "18fb32369b06bd03b69b6917a88aef1155888300a58b0dfd1c87d9c44bf176f8",
+          "hash": "62eff5c994f20548cd613fc92d78c4620219db912dea29ecae6acddf52e2bc79",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.4",
@@ -403,7 +401,7 @@
           "latest_signal": "ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "eb5828063361e497c4165315226a50320023881d924da3d527c60e5ed9c58256",
+          "previous_hash": "18fb32369b06bd03b69b6917a88aef1155888300a58b0dfd1c87d9c44bf176f8",
           "slug": "codex-use-cases",
           "snippets": [
             "ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use...",
@@ -479,18 +477,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-b835a6d6e42c",
+        "entry_id": "nf-6cbca4e85f49",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.11 / Jul 10, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing Resources ↓... Price-efficient models handle the rest. Cost: Good quality, reaching the highest available intelligence while optimizing token spend.",
+        "text": "Cursor changelog 3.11 / Jul 10, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review... Price-efficient models handle the rest. Cost: Good quality, reaching the highest available intelligence while optimizing token spend.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "c4e5b6c4a0e793a343c068d9812c4ec807a58efe12ac935b80c47588407230b8",
+          "hash": "d1aee57d88bef194ab0a6057b1257fcb3a8d0f7226824494bfcdb2eac0e27e77",
           "keyword_groups": {
             "codex-runtime": [
               "subagents"
@@ -522,7 +520,7 @@
           "previous_hash": "c4e5b6c4a0e793a343c068d9812c4ec807a58efe12ac935b80c47588407230b8",
           "slug": "cursor-changelog",
           "snippets": [
-            "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing Resources ↓...",
+            "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...",
             "Price-efficient models handle the rest.",
             "Cost: Good quality, reaching the highest available intelligence while optimizing token spend."
           ],
@@ -531,7 +529,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-b835a6d6e42c",
+        "entry_id": "nf-6cbca4e85f49",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -557,10 +555,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "3f7758f857bed0c704742a99fe63eb437295318d4a1383a691ec50a95dd593e0",
+          "hash": "a7513a88ed2c096b719cc9346c81413d92d42394be154e295dc6299794c9c00c",
           "keyword_groups": {
             "hooks": [
               "Stop"
@@ -615,9 +613,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-6812cc57b0ad",
+        "entry_id": "nf-5e084ebcf14a",
         "title": "Devin release notes",
-        "text": "Devin release notes July 22, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines... Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools... Automations Consumption Visibility A new Consumption tab on each automation shows the ACUs used by sessions the automation has started, so you can track the cost of your...",
+        "text": "Devin release notes July 24, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines... Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools... Playbook Previews in the Message Box Hovering over a playbook macro in your message now shows a preview of its contents, with a button to copy the full text.",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
         "source_label": "ai-tool-watch",
@@ -626,9 +624,10 @@
           "changed": false,
           "error": null,
           "first_seen": false,
-          "hash": "5d1f83d0e57d47369afa4e81221d54861954ce9025db03ac7ea9d0e4ee839cd1",
+          "hash": "4a8e7df9eff3350965a418231cbbaa5066a01f7c69fd04f26a7a497d52ea14c5",
           "keyword_groups": {
             "codex-runtime": [
+              "model picker",
               "computer use",
               "subagents"
             ],
@@ -658,22 +657,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "July 22, 2026",
+          "latest_signal": "July 24, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "5d1f83d0e57d47369afa4e81221d54861954ce9025db03ac7ea9d0e4ee839cd1",
+          "previous_hash": "4a8e7df9eff3350965a418231cbbaa5066a01f7c69fd04f26a7a497d52ea14c5",
           "slug": "devin-release-notes",
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
             "Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools...",
-            "Automations Consumption Visibility A new Consumption tab on each automation shows the ACUs used by sessions the automation has started, so you can track the cost of your..."
+            "Playbook Previews in the Message Box Hovering over a playbook macro in your message now shows a preview of its contents, with a button to copy the full text."
           ],
           "status": 200,
           "url": "https://docs.devin.ai/release-notes"
         }
       },
       "filter": {
-        "entry_id": "nf-6812cc57b0ad",
+        "entry_id": "nf-5e084ebcf14a",
         "title": "Devin release notes",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",

@@ -33205,3 +33205,95 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
 - 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
 - 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 8日連続同一制約 / ユーザー数 59人 (前日比 +1) 確認 / **Notion Developer Platform 公開**が最大脅威シグナル
+
+## セッション記録: 日次レポート Schedule 実行 (2026-07-26 03:17 UTC / Claude Schedule)
+
+**実行内容**: 日次レポート Claude Schedule 補足・WebSearch 競合インテリジェンス収集・ロードマップ追記
+
+**制約**: Supabase 全エンドポイントがプロキシ policy により 403 (connect_rejected) — **11日連続同一制約** (2026-07-16 〜) / GHA 生成済みコンテンツ + GitHub MCP + WebSearch で補完継続
+
+**メトリクス** (GHA daily-report.yml / 08:31 JST):
+- 総ユーザー数: **60人** (前日比 +1)
+- 本日の新規機能リクエスト: 0件
+- 未対応機能リクエスト: 131件
+- X 投稿: ✅ 1件投稿済み (手動ワンボタン)
+- Workflow failure hygiene: Open 9件 / Tracked 200件 / 平均回復 9.59h / root-cause: deno-lint=152
+
+**GitHub auto-review Issues**: なし (0件)
+
+**競合動向サマリー (WebSearch 2026-07-26)**:
+- **🔴🔴 Notion 3.6 (7/1)**: Developer Platform 正式公開 (External Agents API α / Notion CLI / Agent SDK / Markdown API / HTML blocks / Opus 4.8+Grok 4.3+GLM 5.2 対応)。自社「6部署 AI 役割 API」公開戦略の立案が急務
+- **🔴 GitHub (7/20)**: Code Quality GA ($10/コミッター/月) + Issue Fields GA (全プラン / 40,000+ 組織採用)。自社テーブルデータビュー差別化訴求が急務
+- **🟠 Slack**: MCP サーバーアクセス制御強化 (Enterprise Grid / Enterprise+) + Slackbot Analytics (Business+) 追加
+
+**更新ドキュメント**:
+- `docs/daily-reports/2026-07-26.md`: GHA レポートに Claude Schedule 補足追記
+- `docs/competitor-reports/2026-07-26.md`: WebSearch 競合インテリジェンス 3社分追記
+
+**AIアクション提案**:
+1. Notion Developer Platform 対抗: 自社 Edge Functions を「6部署 AI 役割 API」として段階公開 (`/api/ceo` `/api/cfo` `/api/cmo`)
+2. テーブルデータビュー差別化: GitHub Issue Fields GA への対抗として `/table-data` の独自価値 (jsonb 動的スキーマ × AI 解析) を LP に明示
+3. MCP Server 統合設計: Slack MCP 強化を受け、自社アプリへの MCP Server 統合を設計し Claude Code との連携を強化
+
+### Philosophy Alignment (Schedule 2026-07-26 03:17 UTC)
+
+- 主要実施: GHA 生成済み日次・競合レポート確認 + WebSearch で Notion/GitHub/Slack 重大シグナル 3件収集 + ロードマップ追記
+- 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
+- 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
+- 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 11日連続同一制約 / ユーザー数 60人 (前日比 +1) / **Notion Developer Platform 公開**が最大脅威シグナル継続
+
+### セッション記録: Claude Schedule 2026-07-28 00:02 UTC
+
+**実施内容**:
+- GHA 生成済み日次レポート確認 (`docs/daily-reports/2026-07-28.md`: ユーザー60人 / 新規FR 0件 / 未対応131件 / WF failure 8件)
+- Supabase エンドポイント: プロキシ policy 403 (13日連続 / daily-digest・viral-growth-engine・schedule_task_runs 記録 スキップ)
+- GitHub auto-review Issues: 0件 (対応不要)
+- WebSearch 競合インテリジェンス収集 (Notion / Slack / GitHub)
+- `docs/competitor-reports/2026-07-28.md` に WebSearch 追記セクションを追加 (GHA static-template に加筆)
+
+**競合動向サマリー (WebSearch 2026-07-28)**:
+- **🔴 GitHub MCP ステートレス化 — 本日施行**: MCP プロトコルが 2026-07-28 にステートレス移行。GitHub MCP Server は先行対応済み。自社セッションへの影響確認要
+- **🔴 GitHub Models 廃止 — 2026-07-30 (残り2日)**: 完全廃止。GitHub Copilot 経由のモデル利用へ移行
+- **🟠 Notion Developer Platform**: External Agents API (Alpha) / Notion CLI / Agent SDK / Markdown API を公開。Notion が developer ecosystem を拡張
+- **🟠 Notion Workers クレジットダッシュボード (7/24)**: Workers 使用量をクレジット一覧で管理可能に
+- **🟡 Slack AI Guardrails + 新 Block Kit ブロック群**: コンテンツ安全フィルタ / `slack create agent` コマンド追加
+
+**AIアクション提案**:
+1. **GitHub MCP stateless 動作確認**: 本日施行の MCP stateless 化が `mcp__github__*` ツール群に影響しないか確認し、異常あれば `AI_FALLBACK_RUNBOOK.md` に追記
+2. **GitHub Models 廃止 (7-30) 影響調査**: GHA ワークフロー内で GitHub Models を参照していないか grep 確認 (残り2日)
+3. **Notion Developer Platform 差別化整理**: External Agents API (Alpha) 仕様を `docs/competitor-reports/` に蓄積し、自社 API 設計との差別化ポイントを整理
+
+**更新ドキュメント**:
+- `docs/competitor-reports/2026-07-28.md`: WebSearch 追記セクションを加筆 (GitHub MCP stateless / GitHub Models廃止 / Notion Developer Platform)
+
+**Philosophy Alignment (Schedule 2026-07-28 00:02 UTC)**:
+- 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
+- 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
+- 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 13日連続 / GitHub MCP ステートレス化が本日施行 (自社直撃) / GitHub Models が7-30廃止予定
+
+### セッション記録: Claude Schedule 2026-07-27 00:02 UTC
+
+**実施内容**:
+- GHA 生成済み日次レポート確認 (`docs/daily-reports/2026-07-27.md`: ユーザー60人 / 新規FR 0件 / 未対応131件 / WF failure 8件)
+- Supabase エンドポイント: プロキシ policy 403 (12日連続 / スケジュールタスク記録・バイラル広告投稿 スキップ)
+- GitHub auto-review Issues: 0件 (対応不要)
+- WebSearch 競合インテリジェンス収集 (Notion / Slack / GitHub)
+- `docs/competitor-reports/2026-07-27.md` に WebSearch 競合インテリジェンス 3社分を追記
+
+**競合動向サマリー (WebSearch 2026-07-27)**:
+- **🔴 Notion 3.6**: HTMLブロック (AI変換・インタラクティブ化) + Notion API 非同期処理 + MCP 改善。外部ツール/AI 連携が加速
+- **🟠 Slack**: Slackbot 個人 AI エージェント化 + Today View + MCP インテグレーション + Enterprise Search。2026年3月発表30機能が展開中
+- **🟡 GitHub**: Code Quality GA ($10/コミッター/月, 7/20) + Copilot に Gemini 3.6 Flash & Claude Opus 5 追加 + PR アーカイブ機能
+
+**AIアクション提案**:
+1. **Notion HTMLブロック対応**: ノートページにインタラクティブHTML埋め込み機能を追加し Notion 3.6 差別化を吸収
+2. **Today View 実装**: ホーム画面に「今日のブリーフィング」カード (カレンダー + タスク + 優先事項) を追加しSlack Today View に対抗
+3. **Copilot モデル拡充への対応**: AI大学に GitHub Copilot × Claude Opus 5 / Gemini 3.6 Flash 統合事例を掲載しコンテンツ訴求
+
+**更新ドキュメント**:
+- `docs/competitor-reports/2026-07-27.md`: WebSearch 競合インテリジェンス 3社分を static-template に追記
+
+**Philosophy Alignment (Schedule 2026-07-27 00:02 UTC)**:
+- 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
+- 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
+- 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 12日連続同一制約 / ユーザー数 60人 (前日比 ±0) / Notion HTMLブロック + Slack Today View が新たな差別化脅威として浮上

@@ -1,9 +1,9 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-07-24",
+    "date": "2026-07-27",
     "users": {
-      "total": 59
+      "total": 60
     },
     "featureRequests": {
       "newToday": 0,
@@ -55,6 +55,6 @@
       }
     ]
   },
-  "fetched_at": "2026-07-25T08:33:46+09:00",
-  "report_date": "2026-07-25"
+  "fetched_at": "2026-07-28T08:35:13+09:00",
+  "report_date": "2026-07-28"
 }

@@ -24,7 +24,7 @@ permissions:
 
 concurrency:
   group: tools-hub-mcp-smoke
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-07-24 ci-audit: スモークテスト(stateless HTTP probe)のためキャンセル安全 / 手動+schedule 重複時のキュー待機(最大8min)を回避
 
 jobs:
   smoke:
@@ -124,6 +124,7 @@ jobs:
         shell: bash
         env:
           SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+          JOB_CANCELLED: ${{ cancelled() }}
         run: |
           if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
             echo "::warning::SUPABASE_SERVICE_ROLE_KEY missing; skip schedule_task_runs record"
@@ -131,11 +132,13 @@ jobs:
           fi
 
           STATUS="success"
-          if [ "$SMOKE_OUTCOME" != "success" ]; then
+          if [ "$JOB_CANCELLED" = "true" ]; then
+            STATUS="skipped"  # cancel-in-progress: true によるキャンセル (smoke到達前も含む)
+          elif [ "$SMOKE_OUTCOME" != "success" ]; then
             STATUS="error"
           fi
 
-          SUMMARY="tools-hub MCP smoke ${SMOKE_OUTCOME}; target=${TOOLS_HUB_MCP_URL}; auth_token_configured=${{ secrets.TOOLS_HUB_MCP_BEARER_TOKEN != '' }}"
+          SUMMARY="tools-hub MCP smoke ${SMOKE_OUTCOME:-cancelled}; target=${TOOLS_HUB_MCP_URL}; auth_token_configured=${{ secrets.TOOLS_HUB_MCP_BEARER_TOKEN != '' }}"
           jq -n \
             --arg task_id "tools-hub-mcp-smoke" \
             --arg status "$STATUS" \
