@@ -152,8 +152,8 @@ void main() {
       ];
       final snapshot = buildBoardSnapshot(rows, kNow);
 
-      expect(
-          snapshot.cardsOf(BoardLane.notStarted), hasLength(notStartedLimit));
+      final shown = snapshot.cardsOf(BoardLane.notStarted);
+      expect(shown, hasLength(notStartedLimit));
       expect(snapshot.hiddenNotStarted, 5);
     });
 
