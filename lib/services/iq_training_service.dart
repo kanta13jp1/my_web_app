@@ -18,11 +18,18 @@ import '../models/iq_test.dart';
 /// 「弱点あり」と「弱点なし (均等)」を同じ空リストで表現すると
 /// 未評価と区別できなくなるため、理由を明示的に持たせる。
 enum IqPlanBasis {
-  /// 総合スコアを明確に下回る領域が見つかった。
+  /// 総合スコアを測定誤差を超えて下回る領域が見つかった。
   weakAreaDetected,
 
-  /// 領域差が小さく、弱点と言える領域がない。相対的な下位を底上げ対象にする。
-  balancedProfile,
+  /// 領域差が測定誤差の範囲内で、弱点を**判別できない**。
+  ///
+  /// 「差が無い」ではない。5問しかない領域スコアの標準誤差は約 18 IQ あるため、
+  /// 見かけの凸凹の多くはノイズで説明がつく。ここを「弱点あり」と言い切ると
+  /// 存在しない差に学習時間を割かせることになる。
+  withinMeasurementNoise,
+
+  /// 完答率が低く、そもそもスコアを信頼できない。
+  lowCompletion,
 }
 
 /// DB へ書く前の計画案。
@@ -40,13 +47,22 @@ class IqTrainingPlanDraft {
   String get basisMessageJa {
     switch (basis) {
       case IqPlanBasis.weakAreaDetected:
-        return '総合スコアを明確に下回る領域が見つかりました。'
+        return '総合スコアを測定誤差より大きく下回る領域が見つかりました。'
             'そこを重点的に鍛えるのが最も伸びしろが大きい配分です。';
-      case IqPlanBasis.balancedProfile:
-        return '領域ごとの差が小さく、はっきりした弱点はありません。'
-            '相対的に低い領域を底上げしつつ、全体の難度を上げていきます。';
+      case IqPlanBasis.withinMeasurementNoise:
+        return '領域ごとの差は測定誤差 (1領域あたり5問・誤差およそ±18) の範囲内で、'
+            'どこが弱点かを判別できません。'
+            '見かけ上いちばん低い領域から始めますが、これは暫定です。'
+            'トレーニングを重ねるほど実際の得意不得意がはっきりします。';
+      case IqPlanBasis.lowCompletion:
+        return '未回答が多く、スコアそのものを信頼できません。'
+            'まずは最後まで解ける状態で受け直すことをおすすめします。'
+            '暫定として見かけ上低い領域を対象にしています。';
     }
   }
+
+  /// この計画が確かな測定にもとづくか。UI は暫定であることを隠さない。
+  bool get isProvisional => basis != IqPlanBasis.weakAreaDetected;
 }
 
 class IqTrainingService {
@@ -102,12 +118,19 @@ class IqTrainingService {
     int maxTargets = 3,
   }) {
     final weak = result.weakAreas();
-    final basis = weak.isNotEmpty
-        ? IqPlanBasis.weakAreaDetected
-        : IqPlanBasis.balancedProfile;
+    final IqPlanBasis basis;
+    if (!result.isReliable) {
+      // 完答率が低い回は、弱点らしき差が出ていてもそれは未回答の影。
+      basis = IqPlanBasis.lowCompletion;
+    } else if (weak.isNotEmpty) {
+      basis = IqPlanBasis.weakAreaDetected;
+    } else {
+      basis = IqPlanBasis.withinMeasurementNoise;
+    }
 
-    // 弱点がない場合も学習対象は出す (相対的に低い順)。
-    final selected = weak.isNotEmpty
+    // 弱点を判別できない場合も学習対象は出す (見かけ上低い順)。
+    // ただし basis が weakAreaDetected でないことで暫定だと分かるようにする。
+    final selected = basis == IqPlanBasis.weakAreaDetected
         ? weak.take(maxTargets).toList()
         : (List<IqCategoryScore>.from(result.categoryScores)
               ..sort((a, b) => a.iq.compareTo(b.iq)))
@@ -132,8 +155,13 @@ class IqTrainingService {
 
   /// 直近セッションの実績から、その領域の現在レベルを求める。
   ///
-  /// 計画の開始レベルを起点に、セッションを古い順に適用していく。
-  /// 1回のブレで大きく振れないよう、直近 [window] 件だけを見る。
+  /// **直近 [window] 件を合算した正答率で1回だけ判定する。**
+  /// 旧実装はセッションごとに [nextLevel] を逐次適用しており、8問しかない
+  /// 1セッションのばらつきがそのままレベルの上下に化けていた
+  /// (真の実力 0.70 でも 44.9% の確率で誤ってレベルが動く実測)。
+  /// 合算すれば標本数が window 倍になり、同じ実力での誤判定が大きく減る。
+  ///
+  /// レベルが変わるのは1段ずつ。合算値が大きく外れていても一気に飛ばさない。
   static int currentLevelFor({
     required IqTrainingTarget target,
     required List<IqTrainingSession> sessions,
@@ -150,11 +178,33 @@ class IqTrainingService {
         ? relevant.sublist(relevant.length - window)
         : relevant;
 
-    var level = target.startLevel;
+    // 直近ウィンドウで実際に出題されたレベルを基準にする。
+    // 開始レベルを毎回の起点にすると、実績で上げた分が次回リセットされる。
+    final baseLevel = recent.last.level;
+
+    var correct = 0;
+    var total = 0;
     for (final session in recent) {
-      level = nextLevel(level, session.accuracy);
+      correct += session.correctCount;
+      total += session.questionCount;
     }
-    return level;
+    if (total == 0) return target.startLevel;
+
+    return nextLevel(baseLevel, correct / total);
+  }
+
+  /// 判定に使えるだけの試行数が溜まっているか。
+  ///
+  /// 合算してもなお標本が少ないうちは、レベルを動かす根拠が弱い。
+  static bool hasEnoughEvidenceForLevelChange(
+    List<IqTrainingSession> sessions,
+    IqCategory category, {
+    int minQuestions = 24,
+  }) {
+    final total = sessions
+        .where((s) => s.category == category)
+        .fold<int>(0, (sum, s) => sum + s.questionCount);
+    return total >= minQuestions;
   }
 
   // =====================================================================

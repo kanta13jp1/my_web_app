@@ -157,6 +157,48 @@ class IqQuestion {
   bool get hasMemoryPhase => memoryStimulus != null && revealSeconds != null;
 
   bool isCorrect(int selectedIndex) => selectedIndex == correctIndex;
+
+  /// 読み上げ用の問題文。図形は言葉に開く。
+  String get semanticPrompt =>
+      monospacePrompt ? describeGridText(prompt) : prompt;
+
+  /// 読み上げ用の選択肢。
+  String semanticOption(int index) =>
+      monospacePrompt ? describeGridText(options[index]) : options[index];
+}
+
+/// 等幅グリッド (■ / □) を含むテキストを読み上げ可能な説明へ開く。
+///
+/// スクリーンリーダーは ■ を「黒い四角」等としか読まないため、
+/// 空間問題は音声だけでは配置が復元できず解答不能になる。
+/// グリッド行だけを検出し「1行目: 塗り、空」の形に置き換える。
+/// グリッド以外の行はそのまま残す。
+String describeGridText(String text) {
+  final lines = text.split('\n');
+  final out = <String>[];
+  var rowNumber = 0;
+
+  for (final line in lines) {
+    final trimmed = line.trim();
+    final isGridRow =
+        trimmed.isNotEmpty && RegExp(r'^[■□\s]+$').hasMatch(trimmed);
+
+    if (!isGridRow) {
+      rowNumber = 0;
+      out.add(line);
+      continue;
+    }
+
+    rowNumber++;
+    final cells = trimmed
+        .split(RegExp(r'\s+'))
+        .where((c) => c.isNotEmpty)
+        .map((c) => c == '■' ? '塗り' : '空')
+        .join('、');
+    out.add('$rowNumber行目: $cells');
+  }
+
+  return out.join('\n');
 }
 
 /// 1問への回答。
@@ -266,7 +308,18 @@ class IqTestResult {
   final double weightedAccuracy;
   final int correctCount;
   final int questionCount;
+
+  /// 実際に着手した問題数 (未回答を除く)。
+  ///
+  /// [questionCount] だけでは「3問解いて時間切れ」と「25問解いて低得点」を
+  /// 区別できない。列を持たない古い結果では null になり [questionCount] に
+  /// フォールバックする。
+  final int? attemptedCount;
   final int durationSeconds;
+
+  /// 出題時の選択肢シャッフルに使ったシード。
+  /// これがあれば結果画面で当時と同一の問題・選択肢順を再構成できる。
+  final int? questionSeed;
   final List<IqCategoryScore> categoryScores;
 
   const IqTestResult({
@@ -282,6 +335,8 @@ class IqTestResult {
     required this.questionCount,
     required this.durationSeconds,
     required this.categoryScores,
+    this.attemptedCount,
+    this.questionSeed,
   });
 
   IqCategoryScore? scoreFor(IqCategory category) {
@@ -293,24 +348,35 @@ class IqTestResult {
 
   /// 総合値より明確に低い領域 = トレーニング対象。
   ///
-  /// 「最低の1つ」ではなく「総合を [gapThreshold] 以上下回るもの全部」を返す。
-  /// 全領域が均等なら空リスト = 弱点なし、を正しく表現できる。
-  List<IqCategoryScore> weakAreas({int gapThreshold = 5}) {
+  /// **測定誤差を上回る差だけ**を弱点とする。5問しかない領域スコアの標準誤差は
+  /// 約 18 IQ あり、旧実装の固定閾値 5 は誤差の 0.27 SE にすぎなかった
+  /// (= ノイズを弱点と呼んでいた)。全領域が誤差内なら空リストを返し、
+  /// 「差が無い」ではなく「差を判別できない」ことを呼び出し側で表現する。
+  List<IqCategoryScore> weakAreas({double sigmaThreshold = 1.0}) {
     final weak = categoryScores
-        .where((s) => s.iq <= totalIq - gapThreshold)
+        .where((s) => (totalIq - s.iq) > sigmaThreshold * s.standardError)
         .toList()
       ..sort((a, b) => a.iq.compareTo(b.iq));
     return weak;
   }
 
-  /// 相対的に強い領域。
-  List<IqCategoryScore> strongAreas({int gapThreshold = 5}) {
+  /// 相対的に強い領域。判定基準は [weakAreas] と対称。
+  List<IqCategoryScore> strongAreas({double sigmaThreshold = 1.0}) {
     final strong = categoryScores
-        .where((s) => s.iq >= totalIq + gapThreshold)
+        .where((s) => (s.iq - totalIq) > sigmaThreshold * s.standardError)
         .toList()
       ..sort((a, b) => b.iq.compareTo(a.iq));
     return strong;
   }
+
+  /// 完答率 0.0..1.0。不明な場合は 1.0 とみなす (旧データ互換)。
+  double get completionRate {
+    if (questionCount == 0) return 0;
+    return (attemptedCount ?? questionCount) / questionCount;
+  }
+
+  /// スコアを額面どおり読んでよいか。
+  bool get isReliable => completionRate >= 0.9;
 
   factory IqTestResult.fromJson(
     Map<String, dynamic> json, {
@@ -329,6 +395,8 @@ class IqTestResult {
       weightedAccuracy: (json['weighted_accuracy'] as num?)?.toDouble() ?? 0,
       correctCount: json['correct_count'] as int? ?? 0,
       questionCount: json['question_count'] as int? ?? 0,
+      attemptedCount: json['attempted_count'] as int?,
+      questionSeed: json['question_seed'] as int?,
       durationSeconds: json['duration_seconds'] as int? ?? 0,
       categoryScores: categoryScores,
     );

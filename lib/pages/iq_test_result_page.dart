@@ -5,11 +5,13 @@
 
 import 'package:flutter/material.dart';
 
+import '../data/iq_question_bank.dart';
 import '../models/iq_test.dart';
 import '../services/iq_scoring.dart';
 import '../services/iq_test_service.dart';
 import '../services/iq_training_service.dart';
 import '../theme/design_tokens.dart';
+import '../widgets/iq_review_list.dart';
 import '../widgets/iq_score_widgets.dart';
 import 'iq_training_page.dart';
 
@@ -40,6 +42,11 @@ class _IqTestResultPageState extends State<IqTestResultPage> {
   bool _isCreatingPlan = false;
   String? _error;
 
+  /// 振り返り用: 保存済み回答と、seed から復元した当時の問題。
+  List<IqAnswerRecord> _answers = const [];
+  Map<String, IqQuestion> _questionsByKey = const {};
+  bool _isLoadingReview = true;
+
   @override
   void initState() {
     super.initState();
@@ -49,6 +56,7 @@ class _IqTestResultPageState extends State<IqTestResultPage> {
     } else {
       _load();
     }
+    _loadReview();
   }
 
   Future<void> _load() async {
@@ -66,6 +74,34 @@ class _IqTestResultPageState extends State<IqTestResultPage> {
         _isLoading = false;
         _error = '結果の読み込みに失敗しました: $e';
       });
+    }
+  }
+
+  /// 振り返り用データを読み込む。
+  ///
+  /// 問題本体は DB に無いため、保存済みの question_seed で当時の出題を
+  /// 再構成して回答と突き合わせる。seed が無い古い記録では復元できないので
+  /// 振り返りセクション自体を出さない。
+  Future<void> _loadReview() async {
+    try {
+      final answers = await _testService.getAnswers(widget.testId);
+      final seed = _result?.questionSeed ??
+          (await _testService.getTestResult(widget.testId))?.questionSeed;
+
+      final questions = seed == null
+          ? <IqQuestion>[]
+          : IqQuestionBank.standardTest(seed: seed);
+
+      if (!mounted) return;
+      setState(() {
+        _answers = answers;
+        _questionsByKey = {for (final q in questions) q.key: q};
+        _isLoadingReview = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      // 振り返りが出せなくてもスコア表示は妨げない
+      setState(() => _isLoadingReview = false);
     }
   }
 
@@ -161,6 +197,33 @@ class _IqTestResultPageState extends State<IqTestResultPage> {
                 style: TextStyle(color: DesignTokens.amber, fontSize: 12),
               ),
             ),
+          // H4: 未回答が多い回は「実力が低い」のではなく「測れていない」。
+          // 同じ見た目で数値だけ出すと利用者が判断を誤る。
+          if (!result.isReliable)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: DesignTokens.space16),
+              padding: const EdgeInsets.all(DesignTokens.space12),
+              decoration: BoxDecoration(
+                color: DesignTokens.red.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
+                border: Border.all(
+                  color: DesignTokens.red.withValues(alpha: 0.4),
+                ),
+              ),
+              child: Text(
+                '着手できたのは ${result.attemptedCount ?? 0} / '
+                '${result.questionCount} 問 '
+                '(完答率 ${(result.completionRate * 100).round()}%) です。'
+                'この回のスコアは実力ではなく「測れていない」ことを表しています。'
+                '最後まで解ける状態で受け直してください。',
+                style: const TextStyle(
+                  color: DesignTokens.red,
+                  fontSize: 12,
+                  height: 1.6,
+                ),
+              ),
+            ),
           IqScoreDial(
             iq: result.totalIq,
             percentile: result.percentile,
@@ -197,6 +260,20 @@ class _IqTestResultPageState extends State<IqTestResultPage> {
             onPressed: _createPlanAndGo,
           ),
           const SizedBox(height: DesignTokens.space24),
+
+          if (!_isLoadingReview && _questionsByKey.isNotEmpty) ...[
+            const _SectionTitle(
+              title: '問題ごとの振り返り',
+              subtitle: '間違えた問題こそ伸びしろです。解説を読んでから学習に進んでください。',
+            ),
+            const SizedBox(height: DesignTokens.space12),
+            IqReviewList(
+              answers: _answers,
+              questionsByKey: _questionsByKey,
+            ),
+            const SizedBox(height: DesignTokens.space24),
+          ],
+
           const IqDisclaimerCard(),
           const SizedBox(height: DesignTokens.space32),
         ],
