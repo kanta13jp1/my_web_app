@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// アクセス制御・権限管理ページ
 /// ロール一覧・ユーザー権限・アクセスログ表示。
@@ -12,7 +13,13 @@ class AccessControlPage extends StatefulWidget {
 }
 
 class _AccessControlPageState extends State<AccessControlPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['roles', 'logs'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 

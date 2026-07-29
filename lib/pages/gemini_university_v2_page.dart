@@ -21,6 +21,7 @@ import '../services/theme_service.dart';
 import '../services/user_data_finetune_readiness_service.dart';
 import 'ai_university_ranking_page.dart';
 import 'api_playground_page.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // プロバイダーメタデータ
@@ -5699,7 +5700,16 @@ class AiUniversityPage extends StatefulWidget {
 }
 
 class _AiUniversityPageState extends State<AiUniversityPage>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, TabRouteUrlSync {
+  // タブ = AI プロバイダ。ID (openai / anthropic ...) をそのまま URL に使う。
+  // プロバイダ一覧は非同期ロード後に決まるので、TabController を作り直した
+  // 直後に rebindTabUrlSync() を呼んで同期を張り替える。
+  @override
+  List<String> get tabUrlSlugs => _providers;
+
+  @override
+  TabController? get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
 
   List<String> _providers = [];
@@ -6298,6 +6308,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           _error = null;
           _tabController = tc;
         });
+        rebindTabUrlSync();
       }
     } catch (e) {
       if (mounted) {
@@ -6309,6 +6320,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           _providers = providers;
           _tabController = TabController(length: providers.length, vsync: this);
         });
+        rebindTabUrlSync();
       }
     }
   }

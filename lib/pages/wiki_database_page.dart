@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// Wiki・データベースページ
 /// wiki-database Edge Function と連携して階層型Wikiを管理
@@ -12,7 +13,13 @@ class WikiDatabasePage extends StatefulWidget {
 }
 
 class _WikiDatabasePageState extends State<WikiDatabasePage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['pages', 'detail'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
   bool _isLoading = false;

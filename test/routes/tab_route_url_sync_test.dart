@@ -203,9 +203,17 @@ void main() {
       if (entity is! File || !entity.path.endsWith('.dart')) continue;
       final source = entity.readAsStringSync();
       if (!source.contains('TabRouteUrlSync')) continue;
+      if (_dynamicSlugPages.any(entity.path.replaceAll(r'\', '/').endsWith)) {
+        // タブが実行時に決まるページ。静的にスラッグ数を数えられないので、
+        // ここでは対象外にし、代わりに下の専用テストで契約を確認する。
+        continue;
+      }
 
+      // `=>` と `const` の間、`<String>[` の前後は dart format が行を折り返す
+      // ことがある (スラッグが多いページで必ず起きる)。空白・改行を許容しないと
+      // 「読めない」という偽の失敗になるため、区切りは \s* で受ける。
       final slugMatch = RegExp(
-        r'List<String> get tabUrlSlugs => const <String>\[([\s\S]*?)\];',
+        r'List<String>\s+get\s+tabUrlSlugs\s*=>\s*const\s*<String>\s*\[([\s\S]*?)\];',
       ).firstMatch(source);
       final lenMatch = RegExp(
         r'TabController\(\s*length:\s*(\d+)',
@@ -237,7 +245,44 @@ void main() {
     expect(checked, greaterThan(0), reason: '適用済みページを 1 つも検出できていない');
     expect(offenders, isEmpty, reason: 'タブとスラッグの不整合:\n${offenders.join('\n')}');
   });
+
+  // 動的スラッグのページは静的に数えられない代わりに、
+  // 「controller を作り直したら必ず張り替える」契約が守られているかを見る。
+  // これを忘れると古い controller に listener が残り、タブを切っても URL が
+  // 変わらない (= 対応したつもりで効いていない) 状態になる。
+  test('dynamic-slug pages rebind after recreating their TabController', () {
+    for (final rel in _dynamicSlugPages) {
+      final raw = File('lib/pages/${rel.split('/').last}').readAsStringSync();
+      // コメント中の `rebindTabUrlSync()` (使い方の説明) を実際の呼び出しと
+      // 数え間違えると、呼び出しを消しても緑のままになる。行コメントを落とす。
+      final source = raw
+          .split('\n')
+          .where((line) => !line.trimLeft().startsWith('//'))
+          .join('\n');
+      final assigns = RegExp(r'_tabController = ').allMatches(source).length;
+      final rebinds = RegExp(r'rebindTabUrlSync\(\)').allMatches(source).length;
+
+      expect(
+        assigns,
+        greaterThan(0),
+        reason: '$rel: TabController の代入が見つからない (このリストが古い可能性)',
+      );
+      expect(
+        rebinds,
+        greaterThanOrEqualTo(assigns),
+        reason: '$rel: TabController を $assigns 回作り直しているのに '
+            'rebindTabUrlSync() が $rebinds 回しかない。'
+            '張り替え漏れがあるとタブを切っても URL が変わらない。',
+      );
+    }
+  });
 }
+
+/// タブ数が実行時に決まるため、スラッグ数を静的に検証できないページ。
+/// (AI 大学はプロバイダ一覧を取得してからタブを作る)
+const List<String> _dynamicSlugPages = <String>[
+  'lib/pages/gemini_university_v2_page.dart',
+];
 
 class _TabProbe extends StatefulWidget {
   const _TabProbe();
