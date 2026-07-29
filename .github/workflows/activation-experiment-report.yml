@@ -7,7 +7,7 @@ on:
 
 concurrency:
   group: activation-experiment-report
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-07-29 ci-audit: 純粋分析WF / 手動+schedule重複時のキュー待機回避
 
 permissions:
   contents: read
