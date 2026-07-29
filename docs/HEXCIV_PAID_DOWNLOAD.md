@@ -51,6 +51,28 @@ RLS の方針は「**読みは本人分だけ・書きは service role だけ**�
 | `stripe-webhook` (拡張) | 購入行の作成 | `stripe_checkout_session_id` の unique + `onConflict` で**再送に対して冪等**。`payment_status` が paid でなければ `pending` で作る |
 | `shop-download` | 署名付きURL発行 | 権利確認 → 有効期限 **5分**の URL。販売停止 (`is_active=false`) でも**購入済みの人には配信する** |
 
+### Stripe API バージョン (2026-07-29)
+
+webhook endpoint は **2026-06-24.dahlia** で作り直した。元の 2020-03-02 では
+checkout session に `payment_status` が無く、`checkoutPaymentDecision()` が
+「paid でなければ履行しない」で必ず止まるため、**購入が一切記録されなかった**。
+
+注意すべきなのは、この EF には**2つの API バージョンが同時に流れ込む**こと。
+
+| 経路 | 適用されるバージョン |
+|---|---|
+| webhook event の payload | endpoint に固定した **2026-06-24.dahlia** |
+| `stripeGet()` の戻り値 | `Stripe-Version` ヘッダ未指定 = **アカウント既定バージョン** |
+
+`upsertSubscriptionFromStripe()` はこの両方から呼ばれるため、片方の形しか
+読まない実装はもう片方で静かに null を書き込む。差の吸収は
+`stripe_api_compat.ts` に集約してある (2025-03-31.basil で **削除** された
+2フィールド — `invoice.subscription` と `subscription.current_period_end`)。
+
+> アカウント既定バージョンを引き上げても、この層は無害に効き続ける。
+> 「旧形はもう来ないから」と fallback を消すと、既定バージョンが古いままの
+> `stripeGet()` 経路が先に壊れる。消す前に Workbench で既定バージョンを確認すること。
+
 ## 公開までに残っている手順
 
 以下は**こちら側では実行できない**、または本人の判断が要るもの。
