@@ -1129,10 +1129,11 @@ function buildXPerformanceContextFromLogs(
   // 返済報告カードの共有はクリップボードのみで x_post_log に残らないので、
   // ICP の実績は事実上「取り込んだ履歴」にしか存在しない。件数を数えて
   // 「1本も無い」と「あるが年齢比較できない」を区別して報告する。
-  const icpHistoricalCount = rows.filter((row) =>
-    row.learningCohort === "historical_benchmark" &&
-    normalizeTopicBucket(row.topic) === icpCohort.target
-  ).length;
+  const icpHistoricalCount =
+    rows.filter((row) =>
+      row.learningCohort === "historical_benchmark" &&
+      normalizeTopicBucket(row.topic) === icpCohort.target
+    ).length;
   const icpScopeLine = buildIcpScopeLine(icpCohort, icpHistoricalCount);
   const winners = icpCohort.sufficient ? icpCohort.rows.slice(0, 5) : [];
   const underperformers = icpCohort.sufficient
