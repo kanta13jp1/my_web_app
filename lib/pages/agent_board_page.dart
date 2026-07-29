@@ -88,8 +88,11 @@ class _AgentBoardPageState extends State<AgentBoardPage> {
         elevation: 0,
         title: const Row(
           children: [
-            Icon(Icons.view_kanban_outlined,
-                color: DesignTokens.orange, size: 20),
+            Icon(
+              Icons.view_kanban_outlined,
+              color: DesignTokens.orange,
+              size: 20,
+            ),
             SizedBox(width: DesignTokens.space8),
             Text(
               'AIエージェント ボード',
@@ -102,8 +105,11 @@ class _AgentBoardPageState extends State<AgentBoardPage> {
             IconButton(
               tooltip: '再読み込み',
               onPressed: _reload,
-              icon: const Icon(Icons.refresh,
-                  size: 20, color: DesignTokens.textSecondary),
+              icon: const Icon(
+                Icons.refresh,
+                size: 20,
+                color: DesignTokens.textSecondary,
+              ),
             ),
           const SizedBox(width: DesignTokens.space8),
         ],
@@ -128,8 +134,11 @@ class _AgentBoardPageState extends State<AgentBoardPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.lock_outline,
-                size: 40, color: DesignTokens.textTertiary),
+            const Icon(
+              Icons.lock_outline,
+              size: 40,
+              color: DesignTokens.textTertiary,
+            ),
             const SizedBox(height: DesignTokens.space16),
             const Text(
               'この機能はログインが必要です',
@@ -233,8 +242,10 @@ class _AgentBoardPageState extends State<AgentBoardPage> {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           _pill('$active エージェント稼働中', DesignTokens.green, filled: true),
-          _pill('${snapshot.totalTasks} タスク表示中',
-              DesignTokens.indigoLight),
+          _pill(
+            '${snapshot.totalTasks} タスク表示中',
+            DesignTokens.indigoLight,
+          ),
           _meta(
             '最終更新',
             _lastUpdatedAt == null ? '—' : formatElapsed(_lastUpdatedAt, _now),
@@ -469,9 +480,14 @@ class _AgentBoardPageState extends State<AgentBoardPage> {
             ),
             child: Row(
               children: [
-                Container(width: 6, height: 6,
-                    decoration: BoxDecoration(
-                        color: color, shape: BoxShape.circle)),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
                 const SizedBox(width: 6),
                 Text(
                   lane.label,
@@ -584,8 +600,7 @@ class _AgentBoardPageState extends State<AgentBoardPage> {
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.16),
                   borderRadius:
