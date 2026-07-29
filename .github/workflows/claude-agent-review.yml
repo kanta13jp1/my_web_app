@@ -33,9 +33,20 @@ concurrency:
   cancel-in-progress: true
 
 # Multi-provider AI PR review with automatic fallback:
-#   Primary:  Claude claude-sonnet-4-6 (ANTHROPIC_API_KEY)
+#   Primary:  Claude claude-sonnet-5 (ANTHROPIC_API_KEY)
 #   Fallback: Gemini 1.5 Flash free tier (GEMINI_API_KEY)
-#   Both absent/quota → skip gracefully, PRs are never blocked
+#   Both fail → skip gracefully with a ::warning::, PRs are never blocked
+#
+# Measured 2026-07-29: no PR had ever actually been reviewed. Both providers
+# rejected every request while the job reported success, and logging only status
+# codes hid why. With response bodies logged, both causes appeared at once:
+#   Claude HTTP 400 - "Your credit balance is too low to access the Anthropic
+#                      API"  -> account billing, NOT the model id
+#   Gemini HTTP 404 - "models/gemini-1.5-flash is not found for API version
+#                      v1beta"  -> genuinely retired
+# Neither is fixable in this file. The gemini-1.5-flash pin appears in 5
+# workflows and needs one consistent change to an id verified via ListModels.
+# Keep logging the bodies: the status codes alone pointed at the wrong cause.
 
 permissions:
   contents: read
@@ -129,7 +140,7 @@ jobs:
           if [ -n "$ANTHROPIC_API_KEY" ]; then
             echo "🤖 Claude API 試行中..."
             PAYLOAD=$(jq -cn --arg prompt "$REVIEW_PROMPT" '{
-              model: "claude-sonnet-4-6",
+              model: "claude-sonnet-5",
               max_tokens: 1500,
               messages: [{ role: "user", content: $prompt }]
             }')
@@ -147,10 +158,14 @@ jobs:
 
             if [ "$HTTP_CODE" = "200" ]; then
               REVIEW_TEXT=$(echo "$RESP_BODY" | jq -r '.content[0].text // ""')
-              USED_MODEL="claude-sonnet-4-6"
+              USED_MODEL="claude-sonnet-5"
               echo "✅ Claude レビュー成功"
             else
+              # Print the body. Logging only the status code is why a retired
+              # model id sat here undetected: every run showed "HTTP 400" with
+              # no indication of what was wrong.
               echo "⚠️ Claude API HTTP $HTTP_CODE — Gemini にフォールバック"
+              echo "$RESP_BODY" | head -c 500
             fi
           fi
 
@@ -177,13 +192,24 @@ jobs:
               echo "✅ Gemini レビュー成功"
             else
               echo "⚠️ Gemini API HTTP $GEMINI_CODE"
+              echo "$GEMINI_BODY" | head -c 500
             fi
           fi
 
           # ── No usable result → graceful skip ──────────────────────────────
+          # Still non-blocking, but no longer silent: the old message asserted
+          # "keys missing or quota exceeded" even when both keys were set and
+          # the real cause was a rejected model id, so every failure read as
+          # expected behaviour.
           if [ -z "$REVIEW_TEXT" ]; then
-            echo "AI レビュースキップ (API キー未設定 or 両プロバイダー quota 超過)" \
-              | tee -a "$GITHUB_STEP_SUMMARY"
+            REASON="不明"
+            if [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$GEMINI_API_KEY" ]; then
+              REASON="API キー未設定"
+            else
+              REASON="全プロバイダーが応答せず (上のログの HTTP コードと本文を確認)"
+            fi
+            echo "::warning::AI レビューは実行されませんでした — ${REASON}"
+            echo "AI レビュースキップ: ${REASON}" | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
