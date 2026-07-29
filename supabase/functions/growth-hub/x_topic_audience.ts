@@ -297,3 +297,47 @@ export function buildIcpScopeLine<T>(
   return `${base} No ICP post has been measured at all yet — write for the ` +
     `ICP first, then collect measurements.`;
 }
+
+/// R29: ICP コホートの「手本」を、取り込んだ履歴から供給する。
+///
+/// なぜ必要か: ICP (借金・リボ) の投稿は、返済報告カードの共有が HITL 厳守で
+/// クリップボード専用のため `x_post_log` に入らない。実績は CSV 取込の
+/// `historical_benchmark` 行にしか存在せず、それは lifetime cumulative なので
+/// 年齢正規化ランキング (winners) には載せられない。結果、ICP 向けに何本
+/// 投稿しても「手本ゼロ」のままだった。
+///
+/// ここでは順位付けと手本提示を分ける。**順位付けには使わない** (期間基準の
+/// 混在は #4367 で禁止した) が、**どのフックがこの受け手にクリックされたか**は
+/// 手本として渡す。ランキングの主張はせず、事実と出所を明示する。
+///
+/// 返すのは URL クリック降順の上位。クリック 0 件しか無いときは、
+/// 「この受け手ではまだ 1 クリックも出ていない」ことを事実として返す
+/// (沈黙すると「手本が無い」と「手本はあるが効いていない」が混ざる)。
+export function buildIcpHistoricalExemplarLine<T>(
+  rows: readonly T[],
+  urlClicksOf: (row: T) => number,
+  impressionsOf: (row: T) => number | null,
+  hookOf: (row: T) => string,
+  target: TopicBucket = ICP_TARGET_TOPIC,
+  limit = 3,
+): string | null {
+  if (rows.length === 0) return null;
+  const withClicks = rows.filter((row) => urlClicksOf(row) > 0);
+  if (withClicks.length === 0) {
+    return `ICP exemplars (topic=${target}, imported lifetime-cumulative, ` +
+      `n=${rows.length}): none of them produced a single url click. Do not ` +
+      `reuse their shape as a proven pattern — nothing about this audience ` +
+      `has converted yet. Treat the next post as a fresh test.`;
+  }
+  const top = [...withClicks]
+    .sort((left, right) => urlClicksOf(right) - urlClicksOf(left))
+    .slice(0, limit);
+  const parts = top.map((row) =>
+    `${urlClicksOf(row)} clicks / ${impressionsOf(row) ?? "unknown"} imp — ` +
+    `"${hookOf(row)}"`
+  );
+  return `ICP exemplars (topic=${target}, imported lifetime-cumulative, ` +
+    `${withClicks.length}/${rows.length} posts got >=1 click): ` +
+    `${parts.join(" | ")}. These are NOT age-normalized and are excluded ` +
+    `from the winner ranking — copy their structure, not their rank.`;
+}

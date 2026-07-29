@@ -4,6 +4,7 @@ import {
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   buildArchetypeTopicInteractionLine,
+  buildIcpHistoricalExemplarLine,
   buildIcpScopeLine,
   buildTopicLiftLine,
   classifyPostTopic,
@@ -210,4 +211,48 @@ Deno.test("buildIcpScopeLine: 十分なら履歴件数に関わらずスコー�
     buildIcpScopeLine(enough, 9).includes("scoped to topic=debt_recovery"),
   );
   assert(!buildIcpScopeLine(enough, 9).includes("imported historical"));
+});
+
+// R29: 取り込んだ ICP 履歴を「順位付けせず手本として」渡す。
+type Ex = { c: number; i: number | null; t: string };
+const exLine = (rows: Ex[]) =>
+  buildIcpHistoricalExemplarLine(
+    rows,
+    (r) => r.c,
+    (r) => r.i,
+    (r) => r.t,
+  );
+
+Deno.test("buildIcpHistoricalExemplarLine: 履歴が無ければ沈黙", () => {
+  assertEquals(exLine([]), null);
+});
+
+Deno.test("buildIcpHistoricalExemplarLine: 全件0クリックなら『効いていない』と言う", () => {
+  const line = exLine([
+    { c: 0, i: 120, t: "残債を減らした話" },
+    { c: 0, i: 80, t: "リボの利息を計算した" },
+  ]);
+  assert(line !== null);
+  // 「手本が無い」と「手本はあるが効いていない」を混ぜない。
+  assert(line!.includes("none of them produced a single url click"));
+  assert(line!.includes("fresh test"));
+  assert(!line!.includes("copy their structure"));
+});
+
+Deno.test("buildIcpHistoricalExemplarLine: クリック降順で手本を出す", () => {
+  const line = exLine([
+    { c: 1, i: 300, t: "低クリック" },
+    { c: 9, i: 4000, t: "高クリック" },
+    { c: 0, i: 50, t: "ゼロ" },
+    { c: 4, i: 900, t: "中クリック" },
+  ]);
+  assert(line !== null);
+  assert(line!.indexOf("高クリック") < line!.indexOf("中クリック"));
+  assert(!line!.includes("ゼロ"), "0クリックは手本にしない");
+  assert(line!.includes("2/4") === false);
+  assert(line!.includes("3/4 posts got >=1 click"));
+  // 順位の主張はしない = ランキングから除外されている旨を必ず添える。
+  assert(line!.includes("NOT age-normalized"));
+  assert(line!.includes("excluded"));
+  assert(line!.includes("copy their structure, not their rank"));
 });
