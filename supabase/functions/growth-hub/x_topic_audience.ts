@@ -263,18 +263,37 @@ export function selectIcpCohort<T>(
 /// x.performance_context に出す ICP スコープ行。コホートが薄いときは
 /// 「グローバルの勝者を手本にするな」と明示する (沈黙すると、他の行に残る
 /// グローバル最大が事実上の手本になってしまう)。
+///
+/// R28 fix: 「ICP の投稿が 1 本も無い」と「ICP の投稿はあるが投稿年齢を揃えた
+/// 比較ができない」は別の状態で、必要な次の一手も違う (前者は書け / 後者は
+/// アプリ経由で投稿して計測を貯めろ)。両者を同じ 0 件として報告していた。
+///
+/// 背景: CSV 取込の行は `learning_cohort='historical_benchmark'` になり、
+/// 年齢正規化ランキング (learningRows) から意図的に除外される。一方、返済
+/// 報告カードの共有はクリップボードのみで `x_post_log` に残らない。結果、
+/// ICP の実績は「取り込んだ履歴」にしか存在しえないのに、それが 1 件も
+/// 見えないまま「measurements first」とだけ言い続ける状態になっていた。
 export function buildIcpScopeLine<T>(
   selection: IcpCohortSelection<T>,
+  historicalCount = 0,
 ): string {
   if (selection.sufficient) {
     return `ICP cohort: winner selection is scoped to topic=${selection.target} ` +
       `(n=${selection.rows.length} of ${selection.totalCount} measured posts). ` +
       `Reach from other topics is not evidence for this audience.`;
   }
-  return `ICP cohort: topic=${selection.target} has only ` +
-    `${selection.rows.length}/${selection.totalCount} measured posts — ` +
-    `not enough to name a winner. Do NOT copy the highest-reach or ` +
+  const base = `ICP cohort: topic=${selection.target} has only ` +
+    `${selection.rows.length}/${selection.totalCount} post-age comparable ` +
+    `posts — not enough to name a winner. Do NOT copy the highest-reach or ` +
     `highest-acquisition post from another topic: those numbers come from a ` +
-    `different audience and do not transfer. Write for the ICP and collect ` +
-    `measurements first.`;
+    `different audience and do not transfer.`;
+  if (historicalCount > 0) {
+    return `${base} ${historicalCount} imported historical ICP post(s) exist ` +
+      `but are lifetime-cumulative, so they cannot be ranked against ` +
+      `age-normalized posts. Treat them as audience evidence only. To get a ` +
+      `comparable winner, post ICP content through the app so metrics are ` +
+      `logged from posting time.`;
+  }
+  return `${base} No ICP post has been measured at all yet — write for the ` +
+    `ICP first, then collect measurements.`;
 }
