@@ -32,6 +32,10 @@ class _FakeBoardService extends AgentBoardService {
 // 固定 now: 2026-07-26T12:00:00Z
 final DateTime kNow = DateTime.parse('2026-07-26T12:00:00Z');
 
+/// 固定 now でスナップショットを組む (呼び出しを短くするためのヘルパー)。
+BoardSnapshot snapOf(List<Map<String, dynamic>> rows) =>
+    buildBoardSnapshot(rows, kNow);
+
 Map<String, dynamic> row({
   String id = 't1',
   String title = 'タスク',
@@ -110,11 +114,11 @@ void main() {
 
   group('buildBoardSnapshot', () {
     test('未着手/進行中/ブロックは全件残る', () {
-      final snapshot = buildBoardSnapshot(<Map<String, dynamic>>[
+      final snapshot = snapOf(<Map<String, dynamic>>[
         row(id: 'a', status: 'not_started'),
         row(id: 'b', status: 'in_progress'),
         row(id: 'c', status: 'blocked'),
-      ], kNow);
+      ]);
 
       expect(snapshot.cardsOf(BoardLane.notStarted), hasLength(1));
       expect(snapshot.cardsOf(BoardLane.inProgress), hasLength(1));
@@ -123,7 +127,7 @@ void main() {
     });
 
     test('完了は直近24時間ぶんだけ残る', () {
-      final snapshot = buildBoardSnapshot(<Map<String, dynamic>>[
+      final snapshot = snapOf(<Map<String, dynamic>>[
         row(
           id: 'recent',
           status: 'completed',
@@ -134,7 +138,7 @@ void main() {
           status: 'completed',
           updatedAt: kNow.subtract(const Duration(hours: 30)),
         ),
-      ], kNow);
+      ]);
 
       final done = snapshot.cardsOf(BoardLane.completed);
       expect(done, hasLength(1));
@@ -154,11 +158,11 @@ void main() {
     });
 
     test('未着手は優先度順に並ぶ', () {
-      final snapshot = buildBoardSnapshot(<Map<String, dynamic>>[
+      final snapshot = snapOf(<Map<String, dynamic>>[
         row(id: 'low', status: 'not_started', priority: 'low'),
         row(id: 'critical', status: 'not_started', priority: 'critical'),
         row(id: 'medium', status: 'not_started', priority: 'medium'),
-      ], kNow);
+      ]);
 
       final ids =
           snapshot.cardsOf(BoardLane.notStarted).map((c) => c.id).toList();
@@ -166,7 +170,7 @@ void main() {
     });
 
     test('進行中は最近更新が上に来る', () {
-      final snapshot = buildBoardSnapshot(<Map<String, dynamic>>[
+      final snapshot = snapOf(<Map<String, dynamic>>[
         row(
           id: 'older',
           status: 'in_progress',
@@ -177,13 +181,13 @@ void main() {
           status: 'in_progress',
           updatedAt: kNow.subtract(const Duration(minutes: 5)),
         ),
-      ], kNow);
+      ]);
 
       expect(snapshot.cardsOf(BoardLane.inProgress).first.id, 'newer');
     });
 
     test('空入力でも壊れない', () {
-      final snapshot = buildBoardSnapshot(<Map<String, dynamic>>[], kNow);
+      final snapshot = snapOf(<Map<String, dynamic>>[]);
       expect(snapshot.totalTasks, 0);
       expect(snapshot.agents, isEmpty);
       expect(snapshot.hiddenNotStarted, 0);
@@ -192,12 +196,12 @@ void main() {
 
   group('summarizeAgents', () {
     test('実データに現れたエージェントだけを返し、稼働中を上にする', () {
-      final snapshot = buildBoardSnapshot(<Map<String, dynamic>>[
+      final snapshot = snapOf(<Map<String, dynamic>>[
         row(id: 'a', status: 'not_started', instance: 'gemini'),
         row(id: 'b', status: 'in_progress', instance: 'claude'),
         row(id: 'c', status: 'in_progress', instance: 'claude'),
         row(id: 'd', status: 'in_progress', instance: 'codex'),
-      ], kNow);
+      ]);
 
       final ids = snapshot.agents.map((a) => a.agentId).toList();
       // claude(進行中2) → codex(進行中1) → gemini(待機)
@@ -208,7 +212,7 @@ void main() {
     });
 
     test('現在のタスク名は進行中で最も新しいものになる', () {
-      final snapshot = buildBoardSnapshot(<Map<String, dynamic>>[
+      final snapshot = snapOf(<Map<String, dynamic>>[
         row(
           id: 'x',
           title: '古い作業',
@@ -223,7 +227,7 @@ void main() {
           instance: 'claude',
           updatedAt: kNow.subtract(const Duration(minutes: 1)),
         ),
-      ], kNow);
+      ]);
 
       expect(snapshot.agents.single.currentTaskTitle, '最新の作業');
     });

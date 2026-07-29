@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 /// `wbs_tasks` の行を「4 列カンバン + エージェント一覧」の表示状態へ変換する。
 /// ここはネットワーク・時刻に依存しない (now は引数で受け取る) ため、単体
 /// テストで決定的に検証できる。
-library;
 
 /// カンバンの列 (= wbs_tasks.status をそのまま採用。読み替えはしない)。
 enum BoardLane { notStarted, inProgress, blocked, completed }
