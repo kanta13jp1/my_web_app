@@ -235,6 +235,52 @@ void main() {
     });
   });
 
+  group('DebtProgressCardService.buildPostPayload', () {
+    DebtProgressCardData card() => const DebtProgressCardData(
+          totalDebt: 1234567,
+          monthlyPayment: 45000,
+          payoffMonths: 38,
+          estimatedInterest: 234567,
+          monthOverMonthDelta: -50000,
+          debtCount: 3,
+        );
+
+    test('sends the edited text verbatim instead of regenerating the draft',
+        () {
+      // 🔴 これが崩れると本人が直した内容が捨てられ、意図しない文が公開される。
+      final payload = service.buildPostPayload(
+        card(),
+        month: DateTime(2026, 7, 1),
+        text: '手で直した本文',
+      );
+
+      expect(payload['text'], '手で直した本文');
+      expect(payload['action'], 'x.post');
+    });
+
+    test('falls back to the draft only when no text is supplied', () {
+      final payload = service.buildPostPayload(
+        card(),
+        month: DateTime(2026, 7, 1),
+      );
+
+      expect(payload['text'], contains('2026年7月の返済報告'));
+    });
+
+    test('keeps the acquisition URL in the main post, not the reply', () {
+      // リプライへ逃がすと流入が落ちることが実測済み (part346)。
+      final payload = service.buildPostPayload(
+        card(),
+        month: DateTime(2026, 7, 1),
+        text: 'x',
+      );
+
+      expect(payload['linkInReply'], false);
+      expect(payload['source'], 'debt_progress_card');
+      expect(payload['route'], '/asset-management');
+    });
+  });
+
   group('DebtProgressCardData.payoffLabel', () {
     test('formats months, years and mixed spans', () {
       DebtProgressCardData card(int? months) => DebtProgressCardData(

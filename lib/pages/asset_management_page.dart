@@ -8752,6 +8752,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           // 負債トレンドカードにしか無く投稿手段が見つからなかった。検出0件
           // でも「アラート: なし+給料日カウントダウン」の正直なスコアボードを
           // 投稿できる(金額は一切含まない)。
+          // 返済報告カード = 実数字を出す当事者向けの投稿。匿名トラッカー
+          // (右隣) は件数を幅表示するだけなので別物として並べる。
+          IconButton(
+            key: const Key('debt_progress_share_appbar_button'),
+            tooltip: '今月の返済報告カードを作る（実額を公開）',
+            icon: const Icon(Icons.receipt_long),
+            onPressed: _openDebtProgressShare,
+          ),
           if (_householdTrackerScheduleAllowed)
             IconButton(
               tooltip: '家計トラッカーをXへ投稿（計測対象・金額非公開）',
