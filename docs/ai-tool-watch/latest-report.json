@@ -11,7 +11,59 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "55a68070ee455ecd939f3bc9ea97575bf59b7f2c60e395feac7db1353fe20212",
+      "hash": "ccf1d043f0d7308687b4c1f7d02323c9b866bb9c555ded4905d1bce587d8a40a",
+      "keyword_groups": {
+        "codex-runtime": [
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "GitHub"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
+      "name": "Claude Code hooks reference",
+      "owner": "Claude Code",
+      "previous_hash": "08ea1c9df662d2718f3e2c9a0a6c71af41f9a47f3c6da14beb6083844f807e54",
+      "slug": "claude-code-hooks",
+      "snippets": [
+        "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
+        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
+        "Copy page Copy page For a quickstart guide with examples, see Automate actions with hooks ."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/hooks"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "b6a5c9261274a08a80b7b7992e3983c486c7c8ef695cdb0ba2d3558b314062ad",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -26,7 +78,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -55,10 +106,10 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-27 / ChatGPT for iOS 1.2026.202 Improvements and bug fixes Voice conversations now use your sele",
+      "latest_signal": "2026-07-29 / Sign in with ChatGPT",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "9078f462f0db21e6624895dbcda066ef189ad986a583ba2246d4abfe3989f8ce",
+      "previous_hash": "55a68070ee455ecd939f3bc9ea97575bf59b7f2c60e395feac7db1353fe20212",
       "slug": "codex-changelog",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -72,7 +123,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "ec79bcd65e7cabb9d2a5786624d06667a2ee0f2cb96e11169f4e8b0347cea01e",
+      "hash": "27c9b253114b649f96051a906c2874b46a11793e8d439ef6b17bdb6ea5153633",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.4",
@@ -111,7 +162,7 @@
       "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "62eff5c994f20548cd613fc92d78c4620219db912dea29ecae6acddf52e2bc79",
+      "previous_hash": "ec79bcd65e7cabb9d2a5786624d06667a2ee0f2cb96e11169f4e8b0347cea01e",
       "slug": "codex-use-cases",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -125,7 +176,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "3cf88a4cffe80752cd7d91363ab87b39b5a48a778acf04c034752d3139a0fa54",
+      "hash": "70d69c3a9016f203c71da2423468d2d749cb023a20ce074251fe90bccbe3645a",
       "keyword_groups": {
         "codex-runtime": [
           "subagents"
@@ -154,68 +205,18 @@
       "latest_signal": "3.11 / Jul 10, 2026",
       "name": "Cursor changelog",
       "owner": "Cursor",
-      "previous_hash": "d1aee57d88bef194ab0a6057b1257fcb3a8d0f7226824494bfcdb2eac0e27e77",
+      "previous_hash": "3cf88a4cffe80752cd7d91363ab87b39b5a48a778acf04c034752d3139a0fa54",
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...",
-        "Plugins, MCP servers, hooks, and skills to extend Cursor across your workflows.",
-        "Local pricing at ₹649 per month, tax inclusive, billed in INR with UPI or card."
+        "New to both iPhone and iPad: an inbox to stay organized, and a review experience that covers the full PR.",
+        "Create, review, and merge from anywhere."
       ],
       "status": 200,
       "url": "https://cursor.com/changelog"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "0ef814097e44863a31524eb86c88ca1eefb2eaee011113f21816e154a35b724d",
-      "keyword_groups": {
-        "codex-runtime": [
-          "model picker",
-          "computer use",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "Stop"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub"
-        ],
-        "quality-cost": [
-          "cost",
-          "quota",
-          "rate limit",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "schedule",
-          "workflow"
-        ]
-      },
-      "latest_signal": "July 24, 2026",
-      "name": "Devin release notes",
-      "owner": "Devin",
-      "previous_hash": "4a8e7df9eff3350965a418231cbbaa5066a01f7c69fd04f26a7a497d52ea14c5",
-      "slug": "devin-release-notes",
-      "snippets": [
-        "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
-        "Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools...",
-        "Playbook Previews in the Message Box Hovering over a playbook macro in your message now shows a preview of its contents, with a button to copy the full text."
-      ],
-      "status": 200,
-      "url": "https://docs.devin.ai/release-notes"
     }
   ],
-  "checked_at": "2026-07-28T22:17:45Z",
+  "checked_at": "2026-07-29T22:14:40Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -267,7 +268,7 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-07-27T22:28:06Z",
+  "previous_checked_at": "2026-07-28T22:17:45Z",
   "sources": [
     {
       "changed": false,
@@ -331,10 +332,10 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "08ea1c9df662d2718f3e2c9a0a6c71af41f9a47f3c6da14beb6083844f807e54",
+      "hash": "ccf1d043f0d7308687b4c1f7d02323c9b866bb9c555ded4905d1bce587d8a40a",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -434,7 +435,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "55a68070ee455ecd939f3bc9ea97575bf59b7f2c60e395feac7db1353fe20212",
+      "hash": "b6a5c9261274a08a80b7b7992e3983c486c7c8ef695cdb0ba2d3558b314062ad",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -449,7 +450,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -478,10 +478,10 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-27 / ChatGPT for iOS 1.2026.202 Improvements and bug fixes Voice conversations now use your sele",
+      "latest_signal": "2026-07-29 / Sign in with ChatGPT",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "9078f462f0db21e6624895dbcda066ef189ad986a583ba2246d4abfe3989f8ce",
+      "previous_hash": "55a68070ee455ecd939f3bc9ea97575bf59b7f2c60e395feac7db1353fe20212",
       "slug": "codex-changelog",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -495,7 +495,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "ec79bcd65e7cabb9d2a5786624d06667a2ee0f2cb96e11169f4e8b0347cea01e",
+      "hash": "27c9b253114b649f96051a906c2874b46a11793e8d439ef6b17bdb6ea5153633",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.4",
@@ -534,7 +534,7 @@
       "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "62eff5c994f20548cd613fc92d78c4620219db912dea29ecae6acddf52e2bc79",
+      "previous_hash": "ec79bcd65e7cabb9d2a5786624d06667a2ee0f2cb96e11169f4e8b0347cea01e",
       "slug": "codex-use-cases",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -563,7 +563,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "3cf88a4cffe80752cd7d91363ab87b39b5a48a778acf04c034752d3139a0fa54",
+      "hash": "70d69c3a9016f203c71da2423468d2d749cb023a20ce074251fe90bccbe3645a",
       "keyword_groups": {
         "codex-runtime": [
           "subagents"
@@ -592,12 +592,12 @@
       "latest_signal": "3.11 / Jul 10, 2026",
       "name": "Cursor changelog",
       "owner": "Cursor",
-      "previous_hash": "d1aee57d88bef194ab0a6057b1257fcb3a8d0f7226824494bfcdb2eac0e27e77",
+      "previous_hash": "3cf88a4cffe80752cd7d91363ab87b39b5a48a778acf04c034752d3139a0fa54",
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...",
-        "Plugins, MCP servers, hooks, and skills to extend Cursor across your workflows.",
-        "Local pricing at ₹649 per month, tax inclusive, billed in INR with UPI or card."
+        "New to both iPhone and iPad: an inbox to stay organized, and a review experience that covers the full PR.",
+        "Create, review, and merge from anywhere."
       ],
       "status": 200,
       "url": "https://cursor.com/changelog"
@@ -642,7 +642,7 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "0ef814097e44863a31524eb86c88ca1eefb2eaee011113f21816e154a35b724d",
@@ -681,7 +681,7 @@
       "latest_signal": "July 24, 2026",
       "name": "Devin release notes",
       "owner": "Devin",
-      "previous_hash": "4a8e7df9eff3350965a418231cbbaa5066a01f7c69fd04f26a7a497d52ea14c5",
+      "previous_hash": "0ef814097e44863a31524eb86c88ca1eefb2eaee011113f21816e154a35b724d",
       "slug": "devin-release-notes",
       "snippets": [
         "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",

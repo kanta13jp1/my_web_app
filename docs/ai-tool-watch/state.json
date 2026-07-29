@@ -1,7 +1,7 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-07-28T22:17:45Z",
+      "checked_at": "2026-07-29T22:14:40Z",
       "hash": "cd3805c012788e10c829872d14c7ea7a680a934c19ca71fad3bcb800d701ca95",
       "keyword_groups": {
         "codex-runtime": [
@@ -52,7 +52,7 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-07-28T22:17:45Z",
+      "checked_at": "2026-07-29T22:14:40Z",
       "hash": "a5545fd180009614613298fe94c3aa1fc9f83db6d3b478d0683f10f81f8c8e11",
       "keyword_groups": {
         "codex-runtime": [
@@ -90,8 +90,8 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-07-28T22:17:45Z",
-      "hash": "08ea1c9df662d2718f3e2c9a0a6c71af41f9a47f3c6da14beb6083844f807e54",
+      "checked_at": "2026-07-29T22:14:40Z",
+      "hash": "ccf1d043f0d7308687b4c1f7d02323c9b866bb9c555ded4905d1bce587d8a40a",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -132,8 +132,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-07-28T22:17:45Z",
-      "hash": "55a68070ee455ecd939f3bc9ea97575bf59b7f2c60e395feac7db1353fe20212",
+      "checked_at": "2026-07-29T22:14:40Z",
+      "hash": "b6a5c9261274a08a80b7b7992e3983c486c7c8ef695cdb0ba2d3558b314062ad",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -148,7 +148,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -177,13 +176,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-27 / ChatGPT for iOS 1.2026.202 Improvements and bug fixes Voice conversations now use your sele",
+      "latest_signal": "2026-07-29 / Sign in with ChatGPT",
       "name": "Codex changelog",
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-07-28T22:17:45Z",
+      "checked_at": "2026-07-29T22:14:40Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -192,8 +191,8 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-07-28T22:17:45Z",
-      "hash": "ec79bcd65e7cabb9d2a5786624d06667a2ee0f2cb96e11169f4e8b0347cea01e",
+      "checked_at": "2026-07-29T22:14:40Z",
+      "hash": "27c9b253114b649f96051a906c2874b46a11793e8d439ef6b17bdb6ea5153633",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.4",
@@ -235,8 +234,8 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-07-28T22:17:45Z",
-      "hash": "3cf88a4cffe80752cd7d91363ab87b39b5a48a778acf04c034752d3139a0fa54",
+      "checked_at": "2026-07-29T22:14:40Z",
+      "hash": "70d69c3a9016f203c71da2423468d2d749cb023a20ce074251fe90bccbe3645a",
       "keyword_groups": {
         "codex-runtime": [
           "subagents"
@@ -268,7 +267,7 @@
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-07-28T22:17:45Z",
+      "checked_at": "2026-07-29T22:14:40Z",
       "hash": "0ef814097e44863a31524eb86c88ca1eefb2eaee011113f21816e154a35b724d",
       "keyword_groups": {
         "codex-runtime": [
@@ -308,7 +307,7 @@
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-07-28T22:17:45Z",
+      "checked_at": "2026-07-29T22:14:40Z",
       "hash": "a7513a88ed2c096b719cc9346c81413d92d42394be154e295dc6299794c9c00c",
       "keyword_groups": {
         "hooks": [
@@ -337,5 +336,5 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-07-28T22:17:45Z"
+  "updated_at": "2026-07-29T22:14:40Z"
 }

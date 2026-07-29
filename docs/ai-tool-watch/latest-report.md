@@ -1,15 +1,15 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-28T22:17:45Z`
-- Previous check: `2026-07-27T22:28:06Z`
+- Checked at: `2026-07-29T22:14:40Z`
+- Previous check: `2026-07-28T22:17:45Z`
 - Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Codex changelog: 2026-07-27 / ChatGPT for iOS 1.2026.202 Improvements and bug fixes Voice conversations now use your sele
+- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
+- `changed` Codex changelog: 2026-07-29 / Sign in with ChatGPT
 - `changed` Codex use cases: ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of
 - `changed` Cursor changelog: 3.11 / Jul 10, 2026
-- `changed` Devin release notes: July 24, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -39,7 +39,7 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-07-27 / ChatGPT for iOS 1.2026.202 Improvements and bug fixes Voice conversations now use your sele
+  - Latest signal: 2026-07-29 / Sign in with ChatGPT
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...
   - Short signal: Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...
@@ -58,7 +58,7 @@
   - Latest signal: 3.11 / Jul 10, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...
-  - Short signal: Plugins, MCP servers, hooks, and skills to extend Cursor across your workflows.
+  - Short signal: New to both iPhone and iPad: an inbox to stay organized, and a review experience that covers the full PR.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
   - Latest signal: VS Code Gemini Code Assist 2.87.0 / June 19, 2026
