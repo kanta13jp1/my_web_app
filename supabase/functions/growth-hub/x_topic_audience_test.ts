@@ -173,3 +173,41 @@ Deno.test("buildIcpScopeLine: 薄いときは他トピックの勝者を真似�
   assert(ok.includes("scoped to topic=debt_recovery"));
   assert(!ok.includes("Do NOT copy"));
 });
+
+// R28 fix: 「ICP投稿が1本も無い」と「あるが年齢比較できない」の区別。
+// CSV 取込行は historical_benchmark で learningRows から除外されるため、
+// 前者としてしか報告されず、次の一手を誤らせていた。
+Deno.test("buildIcpScopeLine: 取り込み履歴が無いときは『まず書け』", () => {
+  const line = buildIcpScopeLine(
+    selectIcpCohort([{ topic: "japan_politics" }], (r) => r.topic),
+    0,
+  );
+  assert(line.includes("No ICP post has been measured at all yet"));
+  assert(line.includes("write for the"));
+  assert(!line.includes("imported historical"));
+});
+
+Deno.test("buildIcpScopeLine: 取り込み履歴があるときは別の次の一手を出す", () => {
+  const line = buildIcpScopeLine(
+    selectIcpCohort([{ topic: "japan_politics" }], (r) => r.topic),
+    7,
+  );
+  assert(line.includes("7 imported historical ICP post(s) exist"));
+  // lifetime cumulative なので年齢正規化ランキングには載せられない、と明示。
+  assert(line.includes("lifetime-cumulative"));
+  assert(line.includes("audience evidence only"));
+  // 次の一手は「書け」ではなく「アプリ経由で投稿して計測を貯めろ」。
+  assert(line.includes("post ICP content through the app"));
+  assert(!line.includes("No ICP post has been measured at all yet"));
+});
+
+Deno.test("buildIcpScopeLine: 十分なら履歴件数に関わらずスコープ宣言のまま", () => {
+  const enough = selectIcpCohort(
+    [{ topic: "debt_recovery" }, { topic: "debt_recovery" }],
+    (r) => r.topic,
+  );
+  assert(
+    buildIcpScopeLine(enough, 9).includes("scoped to topic=debt_recovery"),
+  );
+  assert(!buildIcpScopeLine(enough, 9).includes("imported historical"));
+});
