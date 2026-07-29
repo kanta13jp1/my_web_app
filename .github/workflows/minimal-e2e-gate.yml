@@ -51,9 +51,13 @@ jobs:
       - name: Collect changed files
         run: |
           mkdir -p .ci-logs
+          # Three-dot (base...head) diffs from the MERGE BASE = only this PR's
+          # changes. Two separate args is a two-dot diff against the base *tip*,
+          # so files that landed on main after the branch point get attributed
+          # here, turning docs-only PRs into "application code changed".
+          # fetch-depth: 0 above guarantees the merge base is present.
           git diff --name-only \
-            "${{ github.event.pull_request.base.sha }}" \
-            "${{ github.event.pull_request.head.sha }}" \
+            "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" \
             > .ci-logs/changed-files.txt
 
       - name: Skip if docs-only change
@@ -187,9 +191,11 @@ jobs:
         id: docs_check
         if: github.event_name == 'pull_request'
         run: |
+          # Three-dot: see the note on the same diff in the gate job above.
+          # A two-dot diff here made the docs-only exemption drop out whenever
+          # unrelated code landed on main after the branch point.
           git diff --name-only \
-            "${{ github.event.pull_request.base.sha }}" \
-            "${{ github.event.pull_request.head.sha }}" \
+            "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" \
             > /tmp/e2e-changed-files.txt
           DOCS_ONLY=true
           while IFS= read -r f; do
