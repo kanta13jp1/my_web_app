@@ -4,9 +4,12 @@ import {
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   buildArchetypeTopicInteractionLine,
+  buildIcpScopeLine,
   buildTopicLiftLine,
   classifyPostTopic,
+  ICP_TARGET_TOPIC,
   normalizeTopicBucket,
+  selectIcpCohort,
 } from "./x_topic_audience.ts";
 
 // 実測 3 コホートの縮約サンプル (同一 data_report 型・topic 違い)。
@@ -103,4 +106,70 @@ Deno.test("buildArchetypeTopicInteractionLine is silent without a split archetyp
     ),
     null,
   );
+});
+
+// R28: 楔 (借金・リボ払い) の ICP コホートへスコープする回帰テスト。
+Deno.test("classifyPostTopic: 借金・リボは household_finance でなく debt_recovery", () => {
+  assertEquals(
+    classifyPostTopic("リボ払いの残債を今月2万円繰り上げ返済しました"),
+    "debt_recovery",
+  );
+  assertEquals(classifyPostTopic("完済まであと18ヶ月"), "debt_recovery");
+  // 借金語が無い一般家計は従来どおり household_finance。
+  assertEquals(
+    classifyPostTopic("今月の家計の支出を見直して節約しました"),
+    "household_finance",
+  );
+  // 政治アンカーは引き続き最優先 (実測でリーチを支配するため)。
+  assertEquals(
+    classifyPostTopic("国民民主党 地方議員集計 返済"),
+    "japan_politics",
+  );
+});
+
+Deno.test("selectIcpCohort: 対象トピックだけを切り出す", () => {
+  const rows = [
+    { topic: "japan_politics" },
+    { topic: "debt_recovery" },
+    { topic: "debt_recovery" },
+    { topic: "ai_tech" },
+  ];
+  const sel = selectIcpCohort(rows, (r) => r.topic);
+  assertEquals(sel.target, ICP_TARGET_TOPIC);
+  assertEquals(sel.rows.length, 2);
+  assertEquals(sel.totalCount, 4);
+  assert(sel.sufficient);
+});
+
+Deno.test("selectIcpCohort: 薄いコホートは sufficient=false (グローバルへ落ちない)", () => {
+  const rows = [
+    { topic: "japan_politics" },
+    { topic: "japan_politics" },
+    { topic: "debt_recovery" },
+  ];
+  const sel = selectIcpCohort(rows, (r) => r.topic);
+  assertEquals(sel.rows.length, 1);
+  assert(!sel.sufficient, "1 件で勝者を名乗ってはいけない");
+  // 空でも同じ (グローバル最大へフォールバックしない)。
+  const empty = selectIcpCohort([{ topic: "japan_politics" }], (r) => r.topic);
+  assertEquals(empty.rows.length, 0);
+  assert(!empty.sufficient);
+});
+
+Deno.test("buildIcpScopeLine: 薄いときは他トピックの勝者を真似るなと明示する", () => {
+  const thin = buildIcpScopeLine(
+    selectIcpCohort([{ topic: "japan_politics" }], (r) => r.topic),
+  );
+  assert(thin.includes("not enough to name a winner"));
+  assert(thin.includes("Do NOT copy"));
+  assert(thin.includes("different audience"));
+
+  const ok = buildIcpScopeLine(
+    selectIcpCohort(
+      [{ topic: "debt_recovery" }, { topic: "debt_recovery" }],
+      (r) => r.topic,
+    ),
+  );
+  assert(ok.includes("scoped to topic=debt_recovery"));
+  assert(!ok.includes("Do NOT copy"));
 });

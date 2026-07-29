@@ -49,6 +49,39 @@
 - **EF-CAP-50**: deploy-prod の EF 数は 50 本以下に維持. 超過時は hub 統合優先
 - **deny-by-default** (AI_DEV_PRINCIPLES.md #2): EF 新 action は明示許可リストでホワイトリスト管理
 - **trace_id + 5 秒超検出** (AI_DEV_PRINCIPLES.md #3): 各 step に trace_id
+- **認証情報の env 名は連鎖で受ける**: 手順書とコードで名前が食い違うため、
+  `Deno.env.get("A") ?? Deno.env.get("B")` の形で複数名を許容する
+  (実例: `GITHUB_PAT ?? GITHUB_TOKEN ?? GH_TOKEN` / `FAL_KEY ?? FAL_API_KEY`)
+
+### env 名ズレの監査手順
+
+EF secret の未設定は**サイレント劣化**を起こす。多くの EF は「キーが無ければ機能を
+落として続行」する設計なので、**呼び出し自体は成功したまま結果だけ静かに欠ける**。
+2026-07-25 の実障害では、値は 2026-04-18 から `FAL_API_KEY` として存在したのに
+コードが `FAL_KEY` しか読まず、AIシェアの動画が丸一日欠落していた
+(X 投稿は成功し続けていたため気づけなかった)。
+
+**注意**: docs の「✅ 設定済」は **GitHub Actions secret** を指していることがある。
+これは Supabase EF secret とは**別ストア**で、片方の設定は他方を一切保証しない。
+
+```bash
+supabase secrets list --project-ref smmkxxavexumewbfaqpy
+```
+
+`secrets list` は**値ではなく名前と SHA256 ダイジェスト**を返すので、秘密を晒さずに
+監査できる。使い方は 2 つ:
+
+1. **同一値が別名で登録されていないか** — ダイジェストが一致する 2 名前があれば、
+   同じキーが二重管理されている (今回 `FAL_KEY` と `FAL_API_KEY` が
+   `103feae23d7db9…` で一致し、名前ズレだと値を見ずに確定できた)
+2. **コードが読む名前が実在するか** — EF の `Deno.env.get("...")` を抽出して
+   上のリストと突き合わせる。アルファベット順なので、隣接エントリを見れば
+   不在を確定できる (`FAL_API_KEY` の次が `FISH_AUDIO_API_KEY` → `FAL_KEY` は不在)
+
+修正後の検証は**エラー文言の変化**で見る。`not configured` から
+provider 側の応答 (残高不足など) に変われば、キーは到達して認証は通っている。
+「まだ動かない」は「直っていない」を意味しない — 段階の違うブロッカーへ
+進んだだけのことがある。
 
 ## 関連
 

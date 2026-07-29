@@ -37,8 +37,10 @@ import {
 } from "./x_analytics_import.ts";
 import {
   buildArchetypeTopicInteractionLine,
+  buildIcpScopeLine,
   buildTopicLiftLine,
   classifyPostTopic,
+  selectIcpCohort,
 } from "./x_topic_audience.ts";
 import {
   buildSignupSlackPayload,
@@ -1110,13 +1112,29 @@ function buildXPerformanceContextFromLogs(
     right.acquisitionScore - left.acquisitionScore ||
     (right.rankingImpressions ?? -1) - (left.rankingImpressions ?? -1)
   );
-  const winners = acquisitionRanked.slice(0, 5);
-  const underperformers = acquisitionRanked.slice(-5).reverse();
+  // R28: 勝ち exemplar と勝ち型は ICP トピックのコホート内で選ぶ。実測では
+  // URL クリックの 94% が japan_politics の定点観測シリーズから出ており、
+  // 素朴に最大値を取ると学習ループが「政治の集計レポートを再生産せよ」と
+  // 指示する。2026-07-28 の戦略確定で楔は「借金・リボ払いからの生活再建」に
+  // 絞られており、その受け手は楔の客ではない。
+  // コホートが薄いときはグローバルへ落ちず、勝者を宣言しない (落とすと
+  // 政治シリーズが復活し、このスコープの意味が消える)。
+  const icpCohort = selectIcpCohort(
+    acquisitionRanked,
+    (row) => row.topic,
+  );
+  const icpScopeLine = buildIcpScopeLine(icpCohort);
+  const winners = icpCohort.sufficient ? icpCohort.rows.slice(0, 5) : [];
+  const underperformers = icpCohort.sufficient
+    ? icpCohort.rows.slice(-5).reverse()
+    : [];
   const byVariant = new Map<
     string,
     { variant: string; count: number; totalScore: number; maxScore: number }
   >();
-  for (const row of learningRows) {
+  // R28: 勝ち型 (variant) も ICP コホート内で数える。グローバルで数えると
+  // 政治シリーズの variant が「勝ち型」として昇格してしまう。
+  for (const row of (icpCohort.sufficient ? icpCohort.rows : [])) {
     const key = row.variant || "unknown";
     const current = byVariant.get(key) ?? {
       variant: key,
@@ -1354,6 +1372,7 @@ function buildXPerformanceContextFromLogs(
       `(comparable n=${learningRows.length}; total measured n=${rows.length}). ` +
       `Optimize for site visits and replies, not for raw reach.`,
       ...(acquisitionLine ? [acquisitionLine] : []),
+      icpScopeLine,
       ...winners.map((row, index) =>
         `Winner ${
           index + 1

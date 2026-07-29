@@ -33242,6 +33242,35 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
 - 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 11日連続同一制約 / ユーザー数 60人 (前日比 +1) / **Notion Developer Platform 公開**が最大脅威シグナル継続
 
+### セッション記録: Claude Schedule 2026-07-29 00:02 UTC
+
+**実施内容**:
+- GHA 生成済み日次レポート確認 (`docs/daily-reports/2026-07-29.md`: ユーザー60人 / 新規FR 0件 / 未対応131件 / WF failure hygiene 7件 open)
+- Supabase エンドポイント: プロキシ policy 空応答 (13日連続 / daily-digest・viral-growth-engine・post-x-update・schedule_task_runs 記録 スキップ)
+- GitHub auto-review Issues: 0件 (対応不要)
+- WebSearch 競合インテリジェンス収集 (Notion / Slack / GitHub)
+- `docs/daily-reports/2026-07-29.md` に Claude Schedule 補足セクション追記
+- `docs/competitor-reports/2026-07-29.md` に WebSearch 競合インテリジェンス 3社分を追記 (GHA static-template を上書き強化)
+
+**競合動向サマリー (WebSearch 2026-07-29)**:
+- **🔴 Notion 3.6 (7/1)**: エージェント機能強化 (組織図 AI 生成・クイズ自動作成・カレンダー管理) + Microsoft Office 完全互換 (PPTX/XLSX/DOCX 読み書き) + AI モデル選択肢拡大 (Opus 4.8 / Grok 4.3 / GLM 5.2)
+- **🟠 Slack MCP GA**: Slackbot MCP クライアントが 20+ パートナー (Atlassian/Notion/Zoom/Linear/Canva) と接続。AI Guardrails 導入。Slack が「AI オーケストレーション ハブ」へ転換
+- **🟡 GitHub Code Quality GA (7/20)**: CodeQL + AI 検出 + Copilot Autofix の統合有償製品。Copilot モバイルエージェント (iOS/Android) から CI 修正 PR をワンタップ作成。Claude Opus 5 を Copilot に統合
+
+**AIアクション提案**:
+1. **Notion Office エクスポート差別化**: XLSX/DOCX インポートは実装済みだが、エージェントによる Office エクスポート EF を追加し「Notion 完全代替」のユースケースを完結させる
+2. **自分株式会社 MCP Server 公開**: Slack MCP GA 対抗として自社 MCP サーバーを公開し、Slack/Linear/Canva との連携起点を確保。AI大学で比較コンテンツを展開
+3. **モバイルエージェント体験強化**: GitHub Copilot モバイルエージェント対抗として「スマホ → 資産管理 + AI タスク実行 → 通知」フローを最適化し、個人ユースケースでの差別化を訴求
+
+**更新ドキュメント**:
+- `docs/daily-reports/2026-07-29.md`: Claude Schedule 補足セクション (X投稿ステータス / AI提案 / スケジュールヘルス) 追記
+- `docs/competitor-reports/2026-07-29.md`: WebSearch 競合インテリジェンス 3社分 (Notion 3.6 / Slack MCP GA / GitHub Code Quality GA)
+
+**Philosophy Alignment (Schedule 2026-07-29 00:02 UTC)**:
+- 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
+- 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
+- 特記: Supabase 全エンドポイントがプロキシ policy により空応答 — 13日連続 / **Notion 3.6 の Microsoft Office 完全互換**が最大脅威シグナル (XLSX/DOCX エクスポート未対応が差別化ギャップ) / Slack MCP GA でエコシステム競争が本格化
+
 ### セッション記録: Claude Schedule 2026-07-28 00:02 UTC
 
 **実施内容**:
