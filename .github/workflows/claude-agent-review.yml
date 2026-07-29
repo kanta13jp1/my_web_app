@@ -281,9 +281,14 @@ jobs:
       - name: Collect changed files
         run: |
           mkdir -p .ci-logs
+          # Three-dot (base...head) diffs from the MERGE BASE, i.e. only what this
+          # PR changed. Two separate args (base head) is a two-dot diff against the
+          # base *tip*, so every file that landed on main after the branch point
+          # gets attributed to this PR. #4248 measured 1 real file reported as 97,
+          # which dragged unrelated PRs into the high-risk path patterns.
+          # fetch-depth: 0 above guarantees the merge base is present.
           git diff --name-only \
-            "${{ github.event.pull_request.base.sha }}" \
-            "${{ github.event.pull_request.head.sha }}" \
+            "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" \
             > .ci-logs/high-risk-changed-files.txt
 
       - name: Check high-risk ultrareview contract
