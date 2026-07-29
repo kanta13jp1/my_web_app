@@ -2,6 +2,12 @@
 
 > Win版#132 part 133 (2026-05-05): 旧 CLAUDE.md L427-447 を移行 (= Karpathy 80 行 KPI 達成).
 > 主要 EF のみ. 全件は `supabase/functions/` ディレクトリ参照.
+>
+> **2026-07-29 実在照合**: 本ファイルが EF として載せていた 8 本が既にディレクトリ非存在
+> だったため、[統合済み旧 EF の hub action 対応表](#統合済み旧-ef-の-hub-action-対応表)
+> へ移設した。**この表に載っている名前は EF ではない — `/functions/v1/<名前>` を叩くと 404 になる。**
+> 照合時点の実在 EF は 25 本 (`git ls-tree --name-only origin/main supabase/functions/`
+> から `_shared` / `deno.json` / `deno.lock` を除いた数)。
 
 ## 主要 hub EF (= 多 action 統合)
 
@@ -20,10 +26,11 @@
 
 | Function | 用途 |
 | --- | --- |
-| `get-support-tickets` | 未返信チケット + FAQ 一覧 (Schedule 用) |
-| `reply-support-request` | チケット返信・エスカレーション |
-| `notify-feature-request` | 機能リクエスト更新通知メール |
 | `health-check` | インフラヘルスチェック |
+
+サポートチケットと機能リクエスト通知は EF 単体ではなく hub action に統合済み
+(= `admin-hub` `support.list` / `support.reply`, `core-hub` `notify.feature_request`)。
+下の[対応表](#統合済み旧-ef-の-hub-action-対応表)を参照。
 
 ## ホーム / dashboard 系
 
@@ -31,17 +38,56 @@
 | --- | --- |
 | `get-home-dashboard` | ホーム画面統合データ |
 | `growth-weekly-digest` | 週次グロース指標 |
-| `development-achievements` | 開発実績一覧 |
-| `get-admin-users` | 管理者用ユーザー一覧 |
-| `get-growth-roadmap-progress` | 進捗バーデータ (1900+ 競合 + 短中長期) |
-| `get-competitor-features` | 競合機能比較データ |
 | `autonomous-ops` | OMOCHA WORKS 自律オペレーションコンソール実データ (GitHub Actions run → カンバン/KPI 変換 / owner 限定 / 30s cache / `GH_ACTIONS_READ_TOKEN`)。詳細 [`AUTONOMOUS_OPS_CONSOLE.md`](AUTONOMOUS_OPS_CONSOLE.md) |
 
-## SNS / 配信系
+## 買い切り販売系 EF (= 2026-07-28 追加)
 
 | Function | 用途 |
 | --- | --- |
-| `post-x-update` | X (Twitter) 自動投稿 (`@kanta13jp1`) |
+| `shop-checkout` | 買い切り商品の Stripe Checkout セッション作成 (関数内 `auth.getUser()` で認証) |
+| `shop-download` | 購入済みユーザーへの成果物ダウンロード URL 発行 |
+
+> この 2 本は `deploy-prod.yml` の明示リストに載っている。新規 EF をそこへ足し忘れると
+> migration だけ本番へ入り CI は緑のまま半着地する ([`AI_DEV_PRINCIPLES.md`](AI_DEV_PRINCIPLES.md))。
+
+## 統合済み旧 EF の hub action 対応表
+
+EF-CAP-50 に従い hub へ吸収された EF。**左列は EF 名ではなく履歴上の名前**で、
+`supabase/functions/<左列>` は存在しない。呼び出しは右の hub + action で行う。
+action 名は旧 EF 名とは異なり、hub 内はドット区切りに統一されている。
+
+| 旧 EF 名 | 現 hub | action | 実装 |
+| --- | --- | --- | --- |
+| `get-support-tickets` | `admin-hub` | `support.list` | 未クローズの `hub_data` (source=`support_ticket`) を最大 50 件 |
+| `reply-support-request` | `admin-hub` | `support.reply` | `reply` / `new_status` でチケット更新 (既定 `resolved`) |
+| `notify-feature-request` | `core-hub` | `notify.feature_request` | 機能リクエスト更新通知メール (Resend / `RESEND_API_KEY`) |
+| `development-achievements` | `core-hub` | `achievements.list` / `achievements.add` | 旧 EF の GET / ADD にそれぞれ対応 (`development_achievements` テーブル) |
+| `get-admin-users` | `admin-hub` | `users.list` | `auth.admin.listUsers` (1 ページ 100 件) |
+| `get-growth-roadmap-progress` | `growth-hub` | `roadmap.progress` | 進捗バーデータ (短中長期) |
+| `get-competitor-features` | `admin-hub` | `competitor.list` | `competitor_features` テーブル |
+| `post-x-update` | `schedule-hub` | `x.post` | X (Twitter) 自動投稿 (`@kanta13jp1`) / `dryRun` 対応。媒体付きは `x.post_with_media` |
+
+> ⚠️ `scripts/audit_hub_migration_completeness.py` の `HUB_ACTIONS` は **hub の割り当ては
+> 正しいが action 名が旧 EF 名のまま**で、`hub_guidance()` は実在しない action を案内する
+> (例: `core-hub` に `development-achievements` という action は無い)。同表に
+> `reply-support-request` の項目自体が欠落している。**正は上表**。
+
+### 🔴 未修正: 消えた EF を今も叩いている呼び出し元 (2026-07-29 時点)
+
+上表の移設は完了しているが、以下は**旧 EF 名のまま実行される経路**が残っている。
+いずれも失敗が握り潰されるため CI もダッシュボードも緑のままになる。
+
+| 呼び出し元 | 叩いている名前 | 症状 |
+| --- | --- | --- |
+| `.github/workflows/cs-check.yml` Step 5 | `/functions/v1/development-achievements` | Supabase 死活 probe が常に 404。判定は `>=500` / `000` / `403` のみなので **404 は健全と見なされ dead-green** |
+| `supabase/functions/guitar-recording-studio/index.ts` | `/functions/v1/post-x-update` | 録音公開時の X 投稿が 404。`console.warn` で握り潰され呼び出し側は成功扱い |
+| `lib/pages/viral_ad_generator_page.dart` `_postToX()` | `post-x-update` / `x-media-post` | 両分岐とも消えた EF。`invoke(endpoint, ...)` と**変数経由**のため後述の監査が検出できない |
+
+**なぜ既存ガードで捕まらないか** — `audit_hub_migration_completeness.py` は
+(1) 走査対象が `lib/` と `scripts/` のみで `.github/` と `supabase/functions/` を見ない、
+(2) `invoke()` の検出が**文字列リテラル前提**の正規表現なので変数経由の呼び出しを素通りする。
+新しい stale 参照を足さないためには、この 2 つの穴を塞ぐか、`git grep` で
+`functions/v1/<名前>` と `invoke(` の両方を人手で確認する。
 
 ## 設計原則
 
