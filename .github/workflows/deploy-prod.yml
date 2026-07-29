@@ -605,6 +605,9 @@ jobs:
           # 認証は関数内で auth.getUser() により行う。
           deploy_function shop-checkout --no-verify-jwt
           deploy_function shop-download --no-verify-jwt
+          # 販売 funnel の計測 (2026-07-29 追加)。未ログインの閲覧者も数えるため
+          # 認証は要求せず、書き込める内容を列挙値に限定して守っている。
+          deploy_function shop-funnel --no-verify-jwt
 
           # --- Mega-Hub (5本: 旧Tier2全統合) ---
           deploy_function tools-hub --no-verify-jwt

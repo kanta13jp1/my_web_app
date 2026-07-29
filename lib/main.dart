@@ -30,6 +30,7 @@ import 'package:my_web_app/pages/windows_app_install_page.dart';
 import 'package:my_web_app/pages/payment_reminder_page.dart';
 import 'package:my_web_app/pages/shopping_list_page.dart';
 import 'package:my_web_app/pages/hexciv_shop_page.dart';
+import 'package:my_web_app/services/shop_funnel_service.dart';
 import 'package:my_web_app/pages/digest_queue_page.dart';
 import 'package:my_web_app/pages/gemini_university_v2_page.dart';
 import 'package:my_web_app/pages/growth_mission_page.dart';
@@ -520,6 +521,9 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => HexcivShopPage(
           purchaseResult: Uri.base.queryParameters['purchase'],
+          // 計測 (2026-07-29 追加)。閲覧・購入ボタン押下・Checkout 到達を数える。
+          // ここを渡し忘れると計測だけが黙って止まるので、route に直書きする。
+          funnel: ShopFunnelService(),
         ),
         settings: settings,
       );
