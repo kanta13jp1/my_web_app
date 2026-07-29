@@ -829,6 +829,14 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       null,
       'Stripe → Supabase サーバーサイド専用 (UIなし / 請求管理は /billing)',
     ),
+    // 追加 (cs-check 自動連携 2026-07-26)
+    _FnDef(
+      'autonomous-ops',
+      '自律運用エンジン (スケジュール実行・自動タスク管理)',
+      true,
+      '/autonomous-ops-console',
+      '自律運用コンソールページ > タスク実行状況・スケジュール確認',
+    ),
     // 追加 (cs-check 自動連携 2026-05-09)
     _FnDef(
       'mcp-well-known',
@@ -836,6 +844,21 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       false,
       null,
       'MCP クライアント向け Well-Known エンドポイント (UIなし / サーバーサイド専用)',
+    ),
+    // 追加 (cs-check 自動連携 2026-07-29)
+    _FnDef(
+      'shop-checkout',
+      'Stripe Checkout セッション作成 (HexCiv 購入フロー)',
+      true,
+      '/shop/hexciv',
+      'HexCiv ショップページ > 購入ボタン → Stripe Checkout へ遷移',
+    ),
+    _FnDef(
+      'shop-download',
+      '購入済みコンテンツ署名付きURL発行 (HexCiv ダウンロード)',
+      true,
+      '/shop/hexciv',
+      'HexCiv ショップページ > 購入済み状態でダウンロードボタンを押す',
     ),
   ];
 

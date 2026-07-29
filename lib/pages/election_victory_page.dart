@@ -17,13 +17,16 @@ import '../services/local_election_plan_service.dart';
 import '../utils/web_image_downloader.dart';
 import '../services/local_election_reality_service.dart';
 import '../services/prefecture_election_news_service.dart';
+import '../services/growth_acquisition_service.dart';
 import '../services/local_election_share_service.dart';
 import '../services/public_memo_service.dart';
+import 'landing_page.dart';
 import '../widgets/election_japan_map.dart';
 import '../widgets/election_progress_chart.dart';
 import '../widgets/election_regional_kpi_chart.dart';
 import '../widgets/election_news_badge.dart';
 import '../widgets/election_x_post_composer_dialog.dart';
+import '../widgets/public_tracker_cta_card.dart';
 
 class ElectionVictoryPage extends StatefulWidget {
   final bool publicView;
@@ -129,6 +132,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   final Map<String, String> _memberProfileErrors = <String, String>{};
   PublicMemo? _publishedSnapshotMemo;
   PublicMemo? _publishedKpiMemo;
+
+  /// KPI公開ノートを一度でも読みに行ったか。KPIノートIDは固定値なので、
+  /// 自動リフレッシュでの再取得を抑止する判定に使う (結果が null=未公開でも
+  /// 「試行済み」として扱い、毎回リトライして重複フェッチに戻るのを防ぐ)。
+  bool _kpiMemoLoadAttempted = false;
   bool _isLoading = true;
   bool _isRealityLoading = false;
   bool _isPublishingSnapshotMemo = false;
@@ -528,6 +536,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   Future<void> _loadPublishedKpiMemo() async {
+    _kpiMemoLoadAttempted = true;
     final memo = await _shareService.loadPublishedPlanDashboard();
     if (!mounted) {
       return;
@@ -590,10 +599,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       if (!mounted) {
         return;
       }
-      // 初期ロード直後の refresh がキャッシュと同一 snapshot を返すケースでは
-      // 公開ノートの再ロードを省略する (page load ごとの public_memos 二重
-      // フェッチ対策)。fetchedAt が変わったときだけ再取得する。
-      final snapshotChanged = _realitySnapshot?.fetchedAt != snapshot.fetchedAt;
+      // 公開ノートの再取得は「参照するノートIDが変わったとき」だけに絞る。
+      // snapshot ノートIDは日付のみから作られ (buildSyntheticNoteId)、
+      // KPIノートIDは固定定数なので、fetchedAt (時刻込み) を基準にすると
+      // EF 再取得のたびに必ず変化して同じIDを取り直してしまう
+      // (初回ロードで public_memos が 4 フェッチになる原因)。
+      final previousSnapshot = _realitySnapshot;
+      final snapshotNoteChanged = previousSnapshot == null ||
+          _shareService.buildSyntheticNoteId(previousSnapshot) !=
+              _shareService.buildSyntheticNoteId(snapshot);
       setState(() {
         if (syncedPlan != null) {
           _plan = syncedPlan;
@@ -604,15 +618,20 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         _realitySnapshot = snapshot;
         _realityHistory = history;
         _realityError = null;
-        if (snapshotChanged) {
+        if (snapshotNoteChanged) {
           _publishedSnapshotMemo = null;
-          _publishedKpiMemo = null;
         }
         _syncMemberSelection(snapshot);
         _syncScheduleSelection(snapshot);
       });
-      if (snapshotChanged) {
+      if (snapshotNoteChanged) {
         unawaited(_loadPublishedSnapshotMemo(snapshot));
+      }
+      // KPIノートIDは snapshot に依存しない固定値なので、自動リフレッシュでは
+      // 再取得しない (未公開でメモが null のときも「試行済み」で判定する。
+      // 結果 null を条件にすると毎回リトライして重複フェッチが戻る)。
+      // ユーザーが明示的に再取得したときだけ取り直す。
+      if (forceRefresh || !_kpiMemoLoadAttempted) {
         unawaited(_loadPublishedKpiMemo());
       }
       if (showSnackBar) {
@@ -732,9 +751,25 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
+  /// R24: 外部へ配る公開ダッシュボードURL。実測でサイト流入の 94% を占める
+  /// 経路なのに UTM が無く、着地を計測できていなかった。共有・コピー経路だけ
+  /// UTM を付ける (ページ内表示用の素の URL はそのまま)。
+  /// `utm_source=x` + `utm_campaign=first_user_growth` は
+  /// GrowthAcquisitionService.isFirstUserGrowthUri の判定条件に合わせる。
+  static String get _shareablePublicDashboardUrl => Uri.parse(
+        _publicLocalElectionDashboardUrl,
+      ).replace(
+        queryParameters: const <String, String>{
+          'utm_source': 'x',
+          'utm_medium': 'data_report',
+          'utm_campaign': 'first_user_growth',
+          'utm_content': 'local_election_700',
+        },
+      ).toString();
+
   Future<void> _copyPublicDashboardLink() async {
     await Clipboard.setData(
-      const ClipboardData(text: _publicLocalElectionDashboardUrl),
+      ClipboardData(text: _shareablePublicDashboardUrl),
     );
     if (!mounted) {
       return;
@@ -776,7 +811,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       final memo = await _shareService.publishPlanDashboard(
         plan: plan,
         snapshot: snapshot,
-        publicDashboardUrl: _publicLocalElectionDashboardUrl,
+        publicDashboardUrl: _shareablePublicDashboardUrl,
       );
       if (!mounted) {
         return memo;
@@ -908,7 +943,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final memo =
         _publishedKpiMemo ?? (canPublishMemo ? await _publishKpiMemo() : null);
     final publicUrl = memo == null
-        ? _publicLocalElectionDashboardUrl
+        ? _shareablePublicDashboardUrl
         : PublicMemoService.buildPublicMemoUrl(memo.id);
     final uri = _shareService.buildPlanDashboardXShareIntentUri(
       plan: plan,
@@ -1160,7 +1195,19 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         ],
       ),
       body: _isLoading || plan == null
-          ? const Center(child: CircularProgressIndicator())
+          // R24: 公開ビューは X からの着地点 (実測でサイト流入の 94%)。
+          // 読み込み中や取得失敗でスピナーだけを出すと、訪問者は「何のサイトか」
+          // を 1 文字も読めないまま離脱する。データを待たずに導線だけは見せる。
+          ? (_isPublicView
+              ? ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    _buildPublicTrackerCtaCard(),
+                    const SizedBox(height: 24),
+                    const Center(child: CircularProgressIndicator()),
+                  ],
+                )
+              : const Center(child: CircularProgressIndicator()))
           : RefreshIndicator(
               onRefresh: _refreshAll,
               child: ListView(
@@ -1169,6 +1216,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   if (_isPublicView) ...[
+                    _buildPublicTrackerCtaCard(),
+                    const SizedBox(height: 16),
                     _buildPublicViewNotice(),
                     const SizedBox(height: 16),
                   ],
@@ -1355,6 +1404,37 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPublicTrackerCtaCard() {
+    return PublicTrackerCtaCard(
+      headline: 'この集計は「自分株式会社」が毎日自動更新しています',
+      description: '公式ページを定期取得して、現職数・目標との差分・残り日数を自動で計算しています。'
+          '同じ仕組みを、家計や資産、仕事ログ、AIツールの定点観測にも使えるように作っている個人向けのダッシュボードです。',
+      onActionPressed: _openLandingPageFromPublicTracker,
+    );
+  }
+
+  Future<void> _openLandingPageFromPublicTracker() async {
+    // 計測は遷移を待たせない (fire-and-forget)。await すると、未ログインや
+    // ネットワーク不調で計測が失敗・遅延したときにボタンが無反応になる。
+    // 着地点最大の CTA なので、計測の失敗が導線を殺してはいけない。
+    unawaited(
+      const GrowthAcquisitionService()
+          .recordPublicTrackerSignUpCta()
+          .catchError((Object error) {
+        debugPrint('public tracker CTA signal failed: $error');
+      }),
+    );
+    if (!mounted) {
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/'),
+        builder: (_) => const LandingPage(),
       ),
     );
   }

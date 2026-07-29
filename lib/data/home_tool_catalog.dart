@@ -9,6 +9,7 @@ import '../pages/abstinence_guard_page.dart';
 import '../pages/sobriety_campaign_page.dart';
 import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
+import '../pages/autonomous_ops_console_page.dart';
 import '../pages/agent_gpa_dashboard_page.dart';
 import '../pages/english_reading_curriculum_page.dart';
 import '../pages/ai_company_builder_page.dart';
@@ -68,6 +69,8 @@ import '../pages/thought_anchor_page.dart';
 import '../pages/thought_capture_page.dart';
 import '../pages/wardrobe_page.dart';
 import '../pages/personality_test_questions_page.dart';
+import '../pages/iq_test_page.dart';
+import '../pages/iq_training_page.dart';
 import '../pages/wip_limit_page.dart';
 import '../pages/ai_suggest_tags_page.dart';
 import '../pages/analyze_reality_page.dart';
@@ -353,6 +356,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       keywords: const <String>['朝会', 'ブリーフィング', '優先順位'],
       onOpen: openMorningBriefing ??
           (context) => _pushPage(context, const MorningBriefingPage()),
+    ),
+    HomeToolEntry(
+      id: 'autonomous-ops-console',
+      sectionId: 'growth',
+      title: '自律オペレーションコンソール',
+      subtitle: 'AIエージェントが自動でタスクをこなす様子を眺める',
+      icon: Icons.auto_awesome_motion,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        'OMOCHA WORKS',
+        '自律',
+        'オペレーション',
+        'エージェント',
+        'カンバン',
+        'ダッシュボード',
+        'autonomous',
+        'ops',
+      ],
+      onOpen: (context) => _pushPage(context, const AutonomousOpsConsolePage()),
     ),
     HomeToolEntry(
       id: 'daily-habits',
@@ -957,6 +979,26 @@ List<HomeToolEntry> buildHomeToolCatalog({
       keywords: const <String>['性格診断', 'MBTI', '16タイプ', '自己分析'],
       onOpen: (context) =>
           _pushPage(context, const PersonalityTestQuestionsPage(testId: 1)),
+    ),
+    HomeToolEntry(
+      id: 'iq-test',
+      sectionId: 'knowledge',
+      title: 'IQテスト (5領域)',
+      subtitle: '論理・数的・空間・記憶・言語を測って弱点を出す',
+      icon: Icons.psychology_outlined,
+      color: const Color(0xFF3D5AFE),
+      keywords: const <String>['IQ', 'IQテスト', '知能', '認知', '診断', '知能テスト'],
+      onOpen: (context) => _pushPage(context, const IqTestPage()),
+    ),
+    HomeToolEntry(
+      id: 'iq-training',
+      sectionId: 'knowledge',
+      title: 'IQトレーニング',
+      subtitle: 'テストの領域別スコアに合わせた難度で鍛える',
+      icon: Icons.fitness_center_outlined,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>['IQ', 'トレーニング', '脳トレ', '学習', '認知', '訓練'],
+      onOpen: (context) => _pushPage(context, const IqTrainingPage()),
     ),
     HomeToolEntry(
       id: 'templates',

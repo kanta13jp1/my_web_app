@@ -228,8 +228,10 @@ $shareUrl
       return;
     }
 
+    var shareCountRecorded = false;
     try {
       await client.rpc('increment_share_count');
+      shareCountRecorded = true;
     } catch (error) {
       debugPrint('Share count rpc failed: $error');
     }
@@ -238,7 +240,7 @@ $shareUrl
       client: client,
       sourceKey: _shareActionKeys[channel]!,
       now: now,
-      fallbackShareCount: 1,
+      fallbackShareCount: shareCountRecorded ? 0 : 1,
     );
   }
 
@@ -253,6 +255,20 @@ $shareUrl
     }
 
     final dateKey = _formatDate(now ?? DateTime.now());
+    try {
+      await client.rpc(
+        'increment_app_analytics_source_detail',
+        params: <String, dynamic>{
+          'p_source_key': sourceKey,
+          'p_event_date': dateKey,
+          'p_share_increment': fallbackShareCount,
+        },
+      );
+      return;
+    } catch (error) {
+      debugPrint('Atomic funnel analytics rpc failed: $error');
+    }
+
     final currentRow = await _fetchAnalyticsRow(
       client: client,
       dateKey: dateKey,

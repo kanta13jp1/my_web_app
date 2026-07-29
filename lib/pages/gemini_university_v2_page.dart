@@ -6603,6 +6603,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
+                settings: const RouteSettings(name: '/ai-university-ranking'),
                 builder: (_) => const AiUniversityRankingPage(),
               ),
             ),
@@ -6612,7 +6613,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             tooltip: 'API実験室',
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const ApiPlaygroundPage()),
+              MaterialPageRoute(
+                settings: const RouteSettings(name: '/api-playground'),
+                builder: (_) => const ApiPlaygroundPage(),
+              ),
             ),
           ),
           IconButton(

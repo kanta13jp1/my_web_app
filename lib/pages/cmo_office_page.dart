@@ -129,6 +129,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
     await Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: '/feedback'),
         builder: (context) => const FeedbackPage(),
       ),
     );
@@ -201,6 +202,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                     () => Navigator.push(
                       context,
                       MaterialPageRoute(
+                        settings: const RouteSettings(name: '/admin'),
                         builder: (context) => const AdminAnalyticsPage(),
                       ),
                     ),

@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/investment_asset.dart';
+import '../models/investment_portfolio_history.dart';
 import '../services/investment_asset_repository.dart';
+import '../services/investment_portfolio_history_service.dart';
 import '../services/investment_valuation_service.dart';
+import 'investment_portfolio_history_chart.dart';
 
 /// 投資資産の登録・一覧・編集・削除をまとめたダッシュボードパネル。
 class InvestmentAssetManagementPanel extends StatefulWidget {
@@ -14,13 +17,17 @@ class InvestmentAssetManagementPanel extends StatefulWidget {
     required this.repository,
     required this.userId,
     this.valuationService = const InvestmentValuationService(),
+    this.historyService = const InvestmentPortfolioHistoryService(),
     this.currencyFormatter,
+    this.now,
   });
 
   final InvestmentAssetRepository repository;
   final String? userId;
   final InvestmentValuationService valuationService;
+  final InvestmentPortfolioHistoryService historyService;
   final String Function(double value)? currencyFormatter;
+  final DateTime Function()? now;
 
   @override
   State<InvestmentAssetManagementPanel> createState() =>
@@ -42,10 +49,16 @@ class _InvestmentAssetManagementPanelState
   final NumberFormat _quantityFormat = NumberFormat('#,##0.########');
 
   List<InvestmentAsset> _assets = const <InvestmentAsset>[];
+  List<InvestmentPortfolioHistoryPoint> _history =
+      const <InvestmentPortfolioHistoryPoint>[];
   Object? _loadError;
+  Object? _historyLoadError;
   bool _loading = false;
+  bool _historyLoading = false;
   bool _saving = false;
   int _loadSequence = 0;
+  int _historyLoadSequence = 0;
+  InvestmentHistoryPeriod _historyPeriod = InvestmentHistoryPeriod.oneYear;
 
   String? get _normalizedUserId {
     final value = widget.userId?.trim();
@@ -56,6 +69,7 @@ class _InvestmentAssetManagementPanelState
   void initState() {
     super.initState();
     _loading = _normalizedUserId != null;
+    _historyLoading = _normalizedUserId != null;
     unawaited(_load(showLoading: false));
   }
 
@@ -72,11 +86,15 @@ class _InvestmentAssetManagementPanelState
     final sequence = ++_loadSequence;
     final userId = _normalizedUserId;
     if (userId == null) {
+      _historyLoadSequence++;
       if (!mounted) return;
       setState(() {
         _assets = const <InvestmentAsset>[];
+        _history = const <InvestmentPortfolioHistoryPoint>[];
         _loadError = null;
+        _historyLoadError = null;
         _loading = false;
+        _historyLoading = false;
       });
       return;
     }
@@ -85,6 +103,8 @@ class _InvestmentAssetManagementPanelState
       setState(() {
         _loading = true;
         _loadError = null;
+        _historyLoading = true;
+        _historyLoadError = null;
       });
     }
     try {
@@ -95,11 +115,44 @@ class _InvestmentAssetManagementPanelState
         _loadError = null;
         _loading = false;
       });
+      await _loadHistory(userId, parentSequence: sequence);
     } catch (error) {
       if (!mounted || sequence != _loadSequence) return;
       setState(() {
         _loadError = error;
         _loading = false;
+        _historyLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadHistory(String userId, {int? parentSequence}) async {
+    final sequence = ++_historyLoadSequence;
+    if (mounted) {
+      setState(() {
+        _historyLoading = true;
+        _historyLoadError = null;
+      });
+    }
+    try {
+      final history = await widget.repository.fetchPortfolioHistory(
+        userId: userId,
+      );
+      if (!mounted ||
+          sequence != _historyLoadSequence ||
+          (parentSequence != null && parentSequence != _loadSequence)) {
+        return;
+      }
+      setState(() {
+        _history = history;
+        _historyLoadError = null;
+        _historyLoading = false;
+      });
+    } catch (error) {
+      if (!mounted || sequence != _historyLoadSequence) return;
+      setState(() {
+        _historyLoadError = error;
+        _historyLoading = false;
       });
     }
   }
@@ -132,6 +185,7 @@ class _InvestmentAssetManagementPanelState
         ];
         _assets = _sorted(next);
       });
+      unawaited(_loadHistory(userId));
       _showMessage(
         asset == null ? '${saved.ticker}を追加しました。' : '${saved.ticker}を更新しました。',
       );
@@ -181,6 +235,7 @@ class _InvestmentAssetManagementPanelState
             if (current.id != asset.id) current,
         ];
       });
+      unawaited(_loadHistory(userId));
       _showMessage('${asset.ticker}を削除しました。');
     } catch (error, stackTrace) {
       debugPrint('Investment asset delete failed: $error');
@@ -301,12 +356,52 @@ class _InvestmentAssetManagementPanelState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildPortfolioSummary(portfolio),
+        const SizedBox(height: 20),
+        _buildHistory(theme),
         const SizedBox(height: 12),
         for (var index = 0; index < portfolio.items.length; index++) ...[
           if (index > 0) const Divider(height: 20),
           _buildAssetRow(theme, portfolio.items[index]),
         ],
       ],
+    );
+  }
+
+  Widget _buildHistory(ThemeData theme) {
+    if (_historyLoading) {
+      return const SizedBox(
+        key: Key('investment_history_loading'),
+        height: 96,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_historyLoadError != null) {
+      return Row(
+        key: const Key('investment_history_load_error'),
+        children: [
+          const Expanded(child: Text('投資資産の推移を読み込めませんでした。')),
+          IconButton(
+            tooltip: '推移を再読み込み',
+            onPressed: () {
+              final userId = _normalizedUserId;
+              if (userId != null) unawaited(_loadHistory(userId));
+            },
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      );
+    }
+
+    final points = widget.historyService.selectForChart(
+      _history,
+      period: _historyPeriod,
+      now: widget.now?.call() ?? DateTime.now(),
+    );
+    return InvestmentPortfolioHistoryChart(
+      points: points,
+      period: _historyPeriod,
+      onPeriodChanged: (period) => setState(() => _historyPeriod = period),
+      currencyFormatter: widget.currencyFormatter,
     );
   }
 
