@@ -4,6 +4,7 @@ import 'package:my_web_app/services/debt_progress_card_service.dart';
 import 'package:my_web_app/services/note_card_service.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/debt_progress_card.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// 返済進捗カードの共有ダイアログ。
 ///
@@ -29,6 +30,7 @@ class _DebtProgressShareDialogState extends State<DebtProgressShareDialog> {
   final GlobalKey _repaintKey = GlobalKey();
   late final TextEditingController _textController;
   bool _saving = false;
+  bool _posting = false;
 
   @override
   void initState() {
@@ -99,7 +101,7 @@ class _DebtProgressShareDialogState extends State<DebtProgressShareDialog> {
           icon: const Icon(Icons.copy, size: 16),
           label: const Text('文面をコピー'),
         ),
-        FilledButton.icon(
+        TextButton.icon(
           onPressed: _saving ? null : _downloadCard,
           icon: _saving
               ? const SizedBox(
@@ -108,10 +110,91 @@ class _DebtProgressShareDialogState extends State<DebtProgressShareDialog> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.download, size: 16),
-          label: const Text('カード画像を保存'),
+          label: const Text('画像を保存'),
+        ),
+        FilledButton.icon(
+          onPressed: _posting ? null : _postToX,
+          icon: _posting
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.send, size: 16),
+          label: const Text('Xへ投稿する'),
         ),
       ],
     );
+  }
+
+  /// 編集後の文面をそのまま X へ投稿する。
+  ///
+  /// 🔴 画像は添付されない (EF は現状テキスト投稿のみ)。画像も出したい場合は
+  /// 「画像を保存」で落として手動添付する。ここで下書きを再生成せず
+  /// `_textController.text` を送るのが要点 — 再生成すると本人の編集が
+  /// 捨てられ、意図しない内容が公開される。
+  Future<void> _postToX() async {
+    final text = _textController.text.trim();
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('投稿文が空です')));
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('この内容でXへ投稿します'),
+        content: SingleChildScrollView(child: SelectableText(text)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('やめる'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('投稿する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _posting = true);
+    try {
+      const service = DebtProgressCardService();
+      final res = await Supabase.instance.client.functions.invoke(
+        'growth-hub',
+        body: service.buildPostPayload(
+          widget.data,
+          month: widget.month,
+          text: text,
+        ),
+      );
+      if (!mounted) return;
+      final data = res.data is Map
+          ? Map<String, dynamic>.from(res.data as Map)
+          : <String, dynamic>{};
+      final posted = data['posted'] == true;
+      final tweetId = data['tweetId']?.toString() ?? '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            posted
+                ? '返済報告を投稿しました'
+                    '${tweetId.isNotEmpty ? ' https://x.com/i/status/$tweetId' : ''}'
+                : '投稿に失敗しました: ${data['error'] ?? data['code'] ?? '不明'}',
+          ),
+        ),
+      );
+      if (posted) Navigator.of(context).pop();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('投稿に失敗しました: $error')));
+    } finally {
+      if (mounted) setState(() => _posting = false);
+    }
   }
 
   Future<void> _copyText() async {
