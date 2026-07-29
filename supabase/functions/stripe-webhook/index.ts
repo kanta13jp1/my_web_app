@@ -5,6 +5,10 @@ import {
   processStripeWebhookEventOnce,
 } from "./event_processing.ts";
 import { activateReferralForPaidCheckout } from "./referral_activation.ts";
+import {
+  invoiceSubscriptionId,
+  subscriptionCurrentPeriodEnd,
+} from "./stripe_api_compat.ts";
 
 // .trim(): Supabase secret に紛れ込んだ前後の空白/改行を吸収 (署名検証や
 // Stripe API 呼び出しがコピペ事故で失敗しないよう防御)。
@@ -176,7 +180,9 @@ async function upsertSubscriptionFromStripe(
     stripe_subscription_id: asString(subscription.id) || null,
     tier: normalizeTier(metadata.tier),
     status: normalizeStatus(subscription.status),
-    current_period_end: currentPeriodEnd(subscription.current_period_end),
+    current_period_end: currentPeriodEnd(
+      subscriptionCurrentPeriodEnd(subscription),
+    ),
     cancel_at_period_end: subscription.cancel_at_period_end === true,
     metadata: {
       stripe_event_source: "stripe-webhook",
@@ -349,7 +355,7 @@ async function markPastDue(
   admin: SupabaseClient,
   invoice: Record<string, unknown>,
 ): Promise<void> {
-  const subscriptionId = asString(invoice.subscription);
+  const subscriptionId = invoiceSubscriptionId(invoice);
   const customerId = asString(invoice.customer);
   let userId = "";
   if (customerId) userId = await userIdForCustomer(admin, customerId);
