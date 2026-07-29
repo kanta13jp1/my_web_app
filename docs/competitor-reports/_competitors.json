@@ -1067,6 +1067,21 @@
         "Notion 3.6 / Slack Today ビュー (= 既存 competitor の更新であり新規社ではない / かつ自社 07-27 自動レポートが新規として提示していた既報 = 27 日前・60 日前)",
         "OpenCode (= coding tool 偏り [基準 b 逆行] のため signal 層留置)"
       ]
+    },
+    {
+      "date": "2026-07-29",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-07-24 Tomo 採択 / 5 day 経過 / cooldown 残 2 day / 次回 unlock 2026-07-31). 28 社 / cap 50. 窓は 1 日 (前回 Claude 正式 report = 7-28) のため、本日は昨日立てたアクション項目の実検証に主眼を置いた。新規 7 シグナル = (1) ★★ GHA competitor-monitoring.yml の AI 生成経路が 20 日間 dead-green と判明 = 昨日の ★★2「GHA 自動レポートが fake-recency を出稿」は症状であって原因ではなかった。run 30406229595 の実ログ verbatim で primary (Gemini) 失敗 → Claude fallback 失敗 → static-template 分岐、かつ conclusion=success (直近 8 run 全て success)。model ヘッダ全走査で GHA 経路の最終成功は 2026-07-09 (claude-sonnet-4-6)。原因の切り分け = secret 欠落は否 (GEMINI_API_KEY / ANTHROPIC_API_KEY 両方存在) / primary は gemini-1.5-flash pin で Gemini 1.5 系は全面 shutdown 済 (廃止表にすら不掲載) = 確定的に死 / fallback の claude-sonnet-4-6 は Active (retirement 2027-02-17 以降) = model ID は無罪で失敗原因は未確定 (key/クレジット/レート) → プローブ 1 回が必要。⚠️ 当初「両方 model ID 陳腐化」と読みかけたが一次で Claude 側 Active を確認して訂正 = 確認しなければ誤った修正 (model ID 差し替え) を指示していた。同 pin は claude-agent-review.yml / wbs-ai-review.yml にもあり計 3 workflow。付随して static-template が可用性表を 2 回出力している (99 行 = 49 行 × 2) ことも判明 = 20 日間誰も読んでいなかった傍証。secret 名は存在するが向き先モデルが消滅している型で、ogp-image-refresh (secret 0 件) とは別クラス) / (2) ★★ GitHub Actions が悪意ある可能性のある workflow を承認保留する機能を 7-28 施行 = public repo に自動適用・write 権限者の認証済 web セッション承認が必要。自社は PUBLIC + 107 workflow + 5 daily cron の実測で該当 → 無人 cron が保留されると沈黙停止。feedback_pr_ci_not_triggered_diagnose の action_required 診断に第 3 の原因が加わった。⚠️ 実際に保留された事実は未確認 =「起こりうる」であって「起きた」ではない) / (3) ★ fake-recency 2 件を検索要約側で検出・一次で訂正 =「Gemini 2.5 Pro/3 Flash が Copilot から 7-31 廃止」は発表 7-02 (発効 7-31) / 「GitHub MCP が 7-28 stateless 対応」は発表 7-23 (発効 7-28)。発表日 ≠ 発効日。昨日は自社生成物側、本日は外部要約側で同じ根が再現。なお自社 Gemini 利用は generativelanguage 直叩きで Copilot 経由でないため Copilot 側廃止の影響なし — ただしその確認 grep が (1) の本丸を露出させた) / (4) ★ MCP 仕様 2026-07-28 正式版 = stateless core + per-request capability negotiation + Tasks/Apps/Skills 拡張 + 「tool annotations は untrusted 扱い」明文化 = MCP-AUTH-27 と同方向で独自規律が標準要件へ降りた。自己観測で mcp__github__* 正常動作を確認し昨日の追記アクションをクローズ) / (5) ★ Grok 4.5 が GitHub Copilot に (7-28 / 500K context / effort 3 段 / usage-based billing) = frontier モデルの Copilot 集約継続で「どのモデルを使うか」の差別化はさらに弱化 → 7-23 の結論 (差別化は git log で後から監査できる証跡性) を補強) / (6) MoneyForward AI Cowork は残り 2 日で未 GA (リリース一覧最新 7-24 のまま変化なし / 7-31 が最終確認点) / (7) GitHub Models 7-30 廃止は grep 0 件で自社影響ゼロ確定 = 昨日のアクション #2 クローズ。7-31 unlock の意思決定を本日確定 = 昨日「その場の勢いで決めない」と事前合意した条件 (Kubera 4 サイクル連続 基準 c 未成立) が成立したため、EdWealth『Ed』採択 + 退役 trigger 2026-08-30 同時設定 を推奨。Kubera は「構造的に窓内シグナルを出さない社」バケットへ移し、日付付き一次が出た時点で第 1 復帰させる。",
+      "skipped_candidates": [
+        "EdWealth『Ed』(= 🔺 第 2 → 第 1 昇格 / 7-31 採択推奨 / 7-15 GlobeNewswire は 7-31 時点で 16 日 = 窓内で基準 c 成立 / ただし本日ヒット 9 媒体 [tradingview/manilatimes/globenewswire/tipranks/investing/benzinga/swacenews/wingerdaily/xbeedaily] は全て同一ワイヤの再配信 = 14 日連続デルタゼロ / 基準 b (カテゴリ新規性) は personal finance coaching が MoneyForward 隣接で弱い点を正直に劣ると明記 / 採択は Tomo 同様 退役 trigger 2026-08-30 の同時設定が条件)",
+        "Kubera (= 🔻 第 1 →「構造的非発信」バケットへ移動 / 基準 a 直撃 [個人 B/S そのもの] だが基準 c は 4 サイクル連続未成立 / 本日も 7 月の一次は取得できず、返るのは wallethacks・cryptoadventure・wallstreetzen・thecfoclub・G2 等のレビュー記事とアグリゲータのみ / 判明した最新の実機能更新は 2025-08 の CSV/PDF/スクショ AI インポート + Kubera GPT + API 経由 ChatGPT/Claude/Gemini 接続 = 11 ヶ月前 / 日付を持つ一次が出た時点で第 1 復帰。待ちのコストはゼロ)",
+        "Bluwhale (= signal 層据え置き継続 / 本日変化なし / 基準 a 最強だが launch 2026-06-12 は窓外・$10M Series A は 2025-10-22 で 9 ヶ月前)",
+        "Visa AI Financial Assistant (= 第 3 維持 / 8 月 US pilot 待ちで構造的に昇格材料が出ない / 本日変化なし)",
+        "Tomo (= 7-24 採択済 = 対象外 / 本日も新規シグナルゼロ / 退役 trigger 2026-08-23 まで残り 25 日 / App Store 更新履歴の実チェックは次サイクルへ持ち越し)",
+        "Grok 4.5 / MCP 2026-07-28 spec / GitHub Actions 承認保留 (= いずれも既存 competitor [xAI Grok Build / GitHub Copilot] の更新ないしプロトコル・基盤側の変更であり新規社ではない)",
+        "OpenCode (= coding tool 偏り [基準 b 逆行] のため signal 層留置 / 本日変化なし)"
+      ]
     }
   ],
   "_schema_notes": {
