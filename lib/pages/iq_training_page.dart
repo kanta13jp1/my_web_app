@@ -26,6 +26,10 @@ class _IqTrainingPageState extends State<IqTrainingPage> {
 
   IqTrainingPlan? _plan;
   List<IqTrainingSession> _sessions = [];
+
+  /// 最新の完了テストID。プランの元になったテストより新しければ、
+  /// プランは古い測定値に基づいたままなので作り直しを促す。
+  int? _latestTestId;
   bool _isLoading = true;
   String? _error;
 
@@ -54,10 +58,15 @@ class _IqTrainingPageState extends State<IqTrainingPage> {
       }
 
       final sessions = await _service.getSessions(plan.id);
+      // プランが最新の測定に追随しているかを判定するため、
+      // 最新テストの ID も取る。ここを見ないと、再テストで弱点が変わっても
+      // 古い領域を鍛え続けていることにユーザーが気づけない。
+      final latest = await _testService.getLatestResult();
       if (!mounted) return;
       setState(() {
         _plan = plan;
         _sessions = sessions;
+        _latestTestId = latest?.id;
         _isLoading = false;
       });
     } catch (e) {
@@ -255,6 +264,9 @@ class _IqTrainingPageState extends State<IqTrainingPage> {
             totalSessions: totalSessions,
             readyForRetest: readyForRetest,
             remainingForRetest: remaining,
+            isStale:
+                _latestTestId != null && _latestTestId! > plan.sourceTestId,
+            onRegenerate: _regenerateFromLatestTest,
           ),
           const SizedBox(height: DesignTokens.space24),
           const Text(
@@ -307,11 +319,17 @@ class _PlanHeader extends StatelessWidget {
   final bool readyForRetest;
   final int remainingForRetest;
 
+  /// プランより新しいテスト結果が存在するか。
+  final bool isStale;
+  final VoidCallback onRegenerate;
+
   const _PlanHeader({
     required this.plan,
     required this.totalSessions,
     required this.readyForRetest,
     required this.remainingForRetest,
+    required this.isStale,
+    required this.onRegenerate,
   });
 
   @override
@@ -398,6 +416,66 @@ class _PlanHeader extends StatelessWidget {
               ],
             ),
           ),
+          // このプランより新しいテスト結果があるなら、鍛えている領域が
+          // 現在の弱点と食い違っている可能性がある。黙って古い配分を
+          // 続けさせず、作り直しの導線をその場に出す。
+          if (isStale) ...[
+            const SizedBox(height: DesignTokens.space12),
+            Container(
+              padding: const EdgeInsets.all(DesignTokens.space12),
+              decoration: BoxDecoration(
+                color: DesignTokens.amber.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+                border: Border.all(
+                  color: DesignTokens.amber.withValues(alpha: 0.4),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(
+                        Icons.update,
+                        size: 16,
+                        color: DesignTokens.amber,
+                      ),
+                      SizedBox(width: DesignTokens.space8),
+                      Expanded(
+                        child: Text(
+                          'このプランより新しいテスト結果があります。'
+                          '弱点が変わっている場合、今の配分は最新の測定と'
+                          'ずれています。',
+                          style: TextStyle(
+                            color: DesignTokens.amber,
+                            fontSize: 11,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: DesignTokens.space8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: onRegenerate,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: DesignTokens.amber,
+                        side: BorderSide(
+                          color: DesignTokens.amber.withValues(alpha: 0.5),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: DesignTokens.space8,
+                        ),
+                      ),
+                      child: const Text('最新の結果でプランを作り直す'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
