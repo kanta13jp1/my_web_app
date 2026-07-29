@@ -287,7 +287,8 @@ void main() {
       expect(find.text('進行中'), findsOneWidget);
       expect(find.text('ブロック'), findsOneWidget);
       expect(find.text('完了'), findsOneWidget);
-      expect(find.text('カンバン実装'), findsOneWidget);
+      // タイトルはカードと、エージェント一覧の「現在のタスク名」の 2 箇所に出る。
+      expect(find.text('カンバン実装'), findsNWidgets(2));
       expect(find.text('Claude Code'), findsWidgets);
     });
   });
