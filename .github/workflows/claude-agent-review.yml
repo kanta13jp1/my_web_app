@@ -64,18 +64,32 @@ jobs:
           HEAD_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
 
           if [ -n "$BASE_SHA" ]; then
-            git diff "${BASE_SHA}...${HEAD_SHA}" -- \
-              '*.dart' '*.ts' '*.yaml' '*.sql' '*.json' \
-              | head -n 400 > pr_diff.txt
+            RANGE="${BASE_SHA}...${HEAD_SHA}"
           else
-            git diff HEAD~1...HEAD -- \
-              '*.dart' '*.ts' '*.yaml' '*.sql' '*.json' \
-              | head -n 400 > pr_diff.txt
+            RANGE="HEAD~1...HEAD"
           fi
+
+          # These must match the extensions the repo actually uses. The list
+          # previously carried '*.yaml' (4 files) while omitting '*.yml' (124,
+          # including all 117 workflows) and '*.py' (218), so workflow and
+          # script changes were never reviewed — the job just reported
+          # "Diff extracted: 0 lines" and passed.
+          git diff "$RANGE" -- \
+            '*.dart' '*.ts' '*.yml' '*.yaml' '*.sql' '*.json' '*.py' '*.ps1' \
+            | head -n 400 > pr_diff.txt
 
           LINES=$(wc -l < pr_diff.txt | tr -d ' ')
           echo "lines=$LINES" >> $GITHUB_OUTPUT
           echo "Diff extracted: ${LINES} lines"
+
+          # An allowlist drifts silently. If files changed but none matched,
+          # say so and name the extensions, so the next drift is visible
+          # instead of looking like "nothing to review".
+          CHANGED=$(git diff --name-only "$RANGE" | wc -l | tr -d ' ')
+          if [ "$LINES" -eq 0 ] && [ "$CHANGED" -gt 0 ]; then
+            EXTS=$(git diff --name-only "$RANGE" | sed -n 's/.*\.//p' | sort -u | tr '\n' ' ')
+            echo "::warning::AI review skipped: ${CHANGED} changed file(s), none matching the reviewed extensions (saw: ${EXTS})"
+          fi
 
       - name: AI Review (Claude primary / Gemini fallback)
         id: review
