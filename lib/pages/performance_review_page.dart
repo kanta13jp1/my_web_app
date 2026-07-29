@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// パフォーマンスレビューページ
 /// performance-review Edge Function と連携して評価・フィードバックを管理
@@ -11,7 +12,13 @@ class PerformanceReviewPage extends StatefulWidget {
 }
 
 class _PerformanceReviewPageState extends State<PerformanceReviewPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['new', 'history'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _errorMessage;

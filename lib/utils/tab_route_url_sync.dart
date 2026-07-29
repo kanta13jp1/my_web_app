@@ -65,33 +65,60 @@ mixin TabRouteUrlSync<T extends StatefulWidget> on State<T> {
   List<String> get tabUrlSlugs;
 
   /// URL と同期する `TabController`。
-  TabController get tabUrlController;
+  ///
+  /// まだ用意できていない場合 (タブ数が非同期ロード後に決まるページ) は null を
+  /// 返してよい。その間は同期を行わず、用意できた時点で [rebindTabUrlSync] を
+  /// 呼べば同期が始まる。
+  TabController? get tabUrlController;
 
-  bool _tabUrlBound = false;
   String? _tabUrlRouteName;
   int? _lastAnnouncedTabIndex;
+
+  /// 現在 listener を張っている controller。作り直しを検知して張り替えるために
+  /// 「束縛済みフラグ」ではなく実体を持つ (フラグだと古い controller に listener が
+  /// 残り、新しい方は同期されない)。
+  TabController? _boundController;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_tabUrlBound) return;
-    _tabUrlBound = true;
+    _tabUrlRouteName ??= ModalRoute.of(context)?.settings.name;
+    _bindTabUrl();
+  }
 
-    _tabUrlRouteName = ModalRoute.of(context)?.settings.name;
+  /// `TabController` を作り直したページは、新しい controller を作った直後に
+  /// これを呼ぶ。古い listener を外して張り替え、URL からのタブ復元をやり直す。
+  ///
+  /// 例: プロバイダ一覧を取得してから `TabController(length: providers.length)` を
+  /// 作る AI 大学のようなページ。
+  void rebindTabUrlSync() {
+    _tabUrlRouteName ??= ModalRoute.of(context)?.settings.name;
+    _bindTabUrl();
+  }
+
+  void _bindTabUrl() {
+    final controller = tabUrlController;
+    if (controller == null || identical(controller, _boundController)) return;
+
+    _boundController?.removeListener(_announceTabUrl);
+    _boundController = controller;
+
     final initial = tabIndexFromRouteName(
       routeName: _tabUrlRouteName,
       slugs: tabUrlSlugs,
     );
-    if (initial != null && initial != tabUrlController.index) {
-      tabUrlController.index = initial;
+    if (initial != null && initial != controller.index) {
+      controller.index = initial;
     }
-    _lastAnnouncedTabIndex = tabUrlController.index;
-    tabUrlController.addListener(_announceTabUrl);
+    _lastAnnouncedTabIndex = controller.index;
+    controller.addListener(_announceTabUrl);
   }
 
   void _announceTabUrl() {
     if (!mounted) return;
-    final index = tabUrlController.index;
+    final controller = _boundController;
+    if (controller == null) return;
+    final index = controller.index;
     // TabController の listener はアニメーション中に何度も発火するため、
     // 実際に index が変わった 1 回だけ URL を更新する。
     if (index == _lastAnnouncedTabIndex) return;
@@ -116,9 +143,9 @@ mixin TabRouteUrlSync<T extends StatefulWidget> on State<T> {
 
   @override
   void dispose() {
-    if (_tabUrlBound) {
-      tabUrlController.removeListener(_announceTabUrl);
-    }
+    // 張り替え後は必ず最後に束縛した controller から外す (作り直し前の
+    // controller は既に _bindTabUrl で外してある)。
+    _boundController?.removeListener(_announceTabUrl);
     super.dispose();
   }
 }
