@@ -45,6 +45,10 @@ class _IqTestResultPageState extends State<IqTestResultPage> {
   /// 振り返り用: 保存済み回答と、seed から復元した当時の問題。
   List<IqAnswerRecord> _answers = const [];
   Map<String, IqQuestion> _questionsByKey = const {};
+
+  /// 復元した選択肢の並びが当時と一致しているか。
+  /// false のときは selectedIndex から「選んだ選択肢」を復元できない。
+  bool _optionOrderIsTrustworthy = true;
   bool _isLoadingReview = true;
 
   @override
@@ -53,10 +57,15 @@ class _IqTestResultPageState extends State<IqTestResultPage> {
     if (widget.initialResult != null) {
       _result = widget.initialResult;
       _isLoading = false;
+      _loadReview();
     } else {
-      _load();
+      // 結果の取得を待ってから振り返りを読む。
+      // 並行に走らせると _loadReview 側で _result がまだ null になり、
+      // 同じ行をもう一度取りに行っていた (毎回2回フェッチ)。
+      _load().then((_) {
+        if (mounted) _loadReview();
+      });
     }
-    _loadReview();
   }
 
   Future<void> _load() async {
@@ -85,17 +94,36 @@ class _IqTestResultPageState extends State<IqTestResultPage> {
   Future<void> _loadReview() async {
     try {
       final answers = await _testService.getAnswers(widget.testId);
-      final seed = _result?.questionSeed ??
-          (await _testService.getTestResult(widget.testId))?.questionSeed;
+      final seed = _result?.questionSeed;
 
-      final questions = seed == null
+      // seed から当時の出題を復元する。選択肢の並びまで一致して初めて
+      // 「あなたが選んだ選択肢」を index から復元できる。
+      final reconstructed = seed == null
           ? <IqQuestion>[]
           : IqQuestionBank.standardTest(seed: seed);
+      final byKey = {for (final q in reconstructed) q.key: q};
+
+      // 復元集合が回答キーを網羅しているか。
+      // seed の意味を変えた修正 (出題そのものも seed で選ぶ) の前に受けた回は
+      // 復元が一致しないため、放置すると該当問題が振り返りから静かに消える。
+      final answeredKeys = answers.map((a) => a.questionKey).toSet();
+      final reconstructionMatches =
+          answeredKeys.isNotEmpty && answeredKeys.every(byKey.containsKey);
+
+      // 一致しない場合は正本 (全プール) から引いて問題自体は必ず表示する。
+      // ただし選択肢の並びは復元できないので index 由来の表示は使わせない。
+      final resolved = reconstructionMatches
+          ? byKey
+          : {
+              for (final q in IqQuestionBank.allQuestions)
+                if (answeredKeys.contains(q.key)) q.key: q,
+            };
 
       if (!mounted) return;
       setState(() {
         _answers = answers;
-        _questionsByKey = {for (final q in questions) q.key: q};
+        _questionsByKey = resolved;
+        _optionOrderIsTrustworthy = reconstructionMatches;
         _isLoadingReview = false;
       });
     } catch (e) {
@@ -270,6 +298,7 @@ class _IqTestResultPageState extends State<IqTestResultPage> {
             IqReviewList(
               answers: _answers,
               questionsByKey: _questionsByKey,
+              optionOrderIsTrustworthy: _optionOrderIsTrustworthy,
             ),
             const SizedBox(height: DesignTokens.space24),
           ],

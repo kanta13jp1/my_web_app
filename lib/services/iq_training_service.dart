@@ -174,13 +174,18 @@ class IqTrainingService {
 
     if (relevant.isEmpty) return target.startLevel;
 
-    final recent = relevant.length > window
-        ? relevant.sublist(relevant.length - window)
-        : relevant;
-
     // 直近ウィンドウで実際に出題されたレベルを基準にする。
     // 開始レベルを毎回の起点にすると、実績で上げた分が次回リセットされる。
-    final baseLevel = recent.last.level;
+    final baseLevel = relevant.last.level;
+
+    // **同じレベルで解いた試行だけを合算する。**
+    // レベル1の満点とレベル5の全滅を平均すると 0.5 になり、
+    // 「どちらの難易度も適正」という誤った結論が出る (実際はどちらも不適正)。
+    // 難易度が違う試行は別の母集団なので混ぜてはいけない。
+    final sameLevel = relevant.where((s) => s.level == baseLevel).toList();
+    final recent = sameLevel.length > window
+        ? sameLevel.sublist(sameLevel.length - window)
+        : sameLevel;
 
     var correct = 0;
     var total = 0;
@@ -188,23 +193,33 @@ class IqTrainingService {
       correct += session.correctCount;
       total += session.questionCount;
     }
-    if (total == 0) return target.startLevel;
+
+    // **標本が足りないうちはレベルを動かさない。**
+    // 合算方式の狙いは標本を増やすことなのに、最小標本を課さないと
+    // 1セッション8問で昇格してしまい、逐次適用と同じノイズに戻る。
+    if (total < minQuestionsForLevelChange) return baseLevel;
 
     return nextLevel(baseLevel, correct / total);
   }
 
+  /// レベルを動かすのに必要な最小試行数 (同一レベルでの合算)。
+  ///
+  /// 8問 × 3セッション。真の実力 0.70 での誤判定率が実用域に収まる下限。
+  static const int minQuestionsForLevelChange = 24;
+
   /// 判定に使えるだけの試行数が溜まっているか。
   ///
-  /// 合算してもなお標本が少ないうちは、レベルを動かす根拠が弱い。
+  /// UI が「あと何回で難度が見直されるか」を出すために使う。
   static bool hasEnoughEvidenceForLevelChange(
     List<IqTrainingSession> sessions,
     IqCategory category, {
-    int minQuestions = 24,
+    int? minQuestions,
   }) {
+    final threshold = minQuestions ?? minQuestionsForLevelChange;
     final total = sessions
         .where((s) => s.category == category)
         .fold<int>(0, (sum, s) => sum + s.questionCount);
-    return total >= minQuestions;
+    return total >= threshold;
   }
 
   // =====================================================================

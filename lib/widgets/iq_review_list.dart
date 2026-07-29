@@ -13,10 +13,16 @@ class IqReviewList extends StatefulWidget {
   final List<IqAnswerRecord> answers;
   final Map<String, IqQuestion> questionsByKey;
 
+  /// 復元した選択肢の並びが受験時と一致しているか。
+  /// false のときは「あなたが選んだ選択肢」を出さない
+  /// (index の指す先が当時と違うため、誤った選択肢を提示してしまう)。
+  final bool optionOrderIsTrustworthy;
+
   const IqReviewList({
     super.key,
     required this.answers,
     required this.questionsByKey,
+    this.optionOrderIsTrustworthy = true,
   });
 
   @override
@@ -81,6 +87,7 @@ class _IqReviewListState extends State<IqReviewList> {
               child: _ReviewCard(
                 question: widget.questionsByKey[a.questionKey]!,
                 answer: a,
+                showSelectedOption: widget.optionOrderIsTrustworthy,
               ),
             ),
           ),
@@ -92,8 +99,13 @@ class _IqReviewListState extends State<IqReviewList> {
 class _ReviewCard extends StatelessWidget {
   final IqQuestion question;
   final IqAnswerRecord answer;
+  final bool showSelectedOption;
 
-  const _ReviewCard({required this.question, required this.answer});
+  const _ReviewCard({
+    required this.question,
+    required this.answer,
+    required this.showSelectedOption,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -179,7 +191,7 @@ class _ReviewCard extends StatelessWidget {
             color: DesignTokens.green,
             monospace: question.monospacePrompt,
           ),
-          if (!answer.isCorrect && !unanswered) ...[
+          if (!answer.isCorrect && !unanswered && showSelectedOption) ...[
             const SizedBox(height: DesignTokens.space4),
             _AnswerRow(
               label: 'あなた',
