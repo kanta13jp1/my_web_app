@@ -17,9 +17,15 @@
 export type TopicBucket =
   | "japan_politics"
   | "ai_tech"
+  | "debt_recovery"
   | "household_finance"
   | "product"
   | "general";
+
+/// R28: 楔 (2026-07-28 の戦略確定) の ICP トピック。到達だけを見ると
+/// japan_politics が常に勝つが、その受け手は楔の客ではない。勝ち型の選定は
+/// このコホート内で行う (下の [selectIcpCohort])。
+export const ICP_TARGET_TOPIC: TopicBucket = "debt_recovery";
 
 /// 既存オーディエンスを持つ固有名詞アンカー。ここに載る語が本文にあると、
 /// その語のフォロワー/検索面に乗る (= 自力のフォロワー数を超えて配信される)。
@@ -55,6 +61,24 @@ const AI_TECH_ANCHORS = [
   "supabase",
   "ai",
 ];
+/// 借金・リボ払いからの生活再建 (楔の ICP)。家計一般より狭く、当事者コミュニティ
+/// の語彙に寄せる。分類のみに使う語であり、助言や法律判断には一切用いない
+/// (非弁行為の一線を越えないため、債務整理系の語も「その話題である」ことの
+/// 検出だけに使う)。
+const DEBT_RECOVERY_ANCHORS = [
+  "リボ",
+  "借金",
+  "返済",
+  "完済",
+  "残債",
+  "滞納",
+  "延滞",
+  "多重債務",
+  "自転車操業",
+  "任意整理",
+  "債務整理",
+  "繰り上げ",
+];
 const FINANCE_ANCHORS = [
   "家計",
   "資産",
@@ -81,8 +105,8 @@ function hits(haystack: string, needles: readonly string[]): number {
 export function normalizeTopicBucket(raw: string): TopicBucket {
   const v = (raw ?? "").toLowerCase().trim();
   if (
-    v === "japan_politics" || v === "ai_tech" || v === "household_finance" ||
-    v === "product" || v === "general"
+    v === "japan_politics" || v === "ai_tech" || v === "debt_recovery" ||
+    v === "household_finance" || v === "product" || v === "general"
   ) {
     return v;
   }
@@ -95,10 +119,14 @@ export function normalizeTopicBucket(raw: string): TopicBucket {
 export function classifyPostTopic(text: string): TopicBucket {
   const body = (text ?? "").toLowerCase();
   const politics = hits(text ?? "", POLITICS_ANCHORS);
+  const debt = hits(text ?? "", DEBT_RECOVERY_ANCHORS);
   const finance = hits(text ?? "", FINANCE_ANCHORS);
   const aiTech = hits(body, AI_TECH_ANCHORS);
   const product = hits(body, PRODUCT_ANCHORS);
   if (politics >= 1) return "japan_politics";
+  // 借金・リボは家計一般より狭いので先に判定する (「返済」「残債」を
+  // household_finance に吸わせると ICP コホートが永久に空になる)。
+  if (debt >= 1) return "debt_recovery";
   if (finance >= 1 && finance >= aiTech) return "household_finance";
   if (aiTech >= 1) return "ai_tech";
   if (product >= 1) return "product";
@@ -125,6 +153,7 @@ export function buildTopicLiftLine<T>(
       list.reduce((sum, row) => sum + scoreOf(row), 0) / list.length,
     );
   const order: TopicBucket[] = [
+    "debt_recovery",
     "japan_politics",
     "ai_tech",
     "household_finance",
@@ -191,4 +220,61 @@ export function buildArchetypeTopicInteractionLine<T>(
   return `Archetype x topic interaction: ${described.join("; ")}. ` +
     `The same archetype does not transfer across topics — do not reuse a ` +
     `winning format on a topic where it has not been measured.`;
+}
+
+/// R28: 勝ち型の選定を ICP トピックのコホート内に閉じる。
+///
+/// なぜ必要か: 実測 (2026-04-27〜07-25 / 350 投稿) では URL クリックの 94% が
+/// japan_politics の定点観測シリーズから出ている。到達・獲得ともグローバル最大
+/// なので、素朴に最大値を取ると学習ループは「政治の集計レポートを再生産せよ」と
+/// 指示する。だが 2026-07-28 の戦略確定で楔は「借金・リボ払いからの生活再建」に
+/// 絞られており、その受け手は楔の客ではない。数字が大きいことと、客に届いている
+/// ことは別問題。
+///
+/// 重要: サンプルが足りないとき **グローバル最大へ黙って落ちない**。落ちると
+/// 政治シリーズが勝者として復活し、この関数の意味が消える。足りなければ
+/// `sufficient: false` を返し、呼び出し側は「勝者を宣言しない」を選ぶ。
+export interface IcpCohortSelection<T> {
+  rows: readonly T[];
+  sufficient: boolean;
+  target: TopicBucket;
+  totalCount: number;
+}
+
+/// ICP コホートを切り出す。既定の最小サンプルは 2 (他の lift 行と同じ基準)。
+export function selectIcpCohort<T>(
+  rows: readonly T[],
+  topicOf: (row: T) => string,
+  options: { target?: TopicBucket; minSamples?: number } = {},
+): IcpCohortSelection<T> {
+  const target = options.target ?? ICP_TARGET_TOPIC;
+  const minSamples = options.minSamples ?? 2;
+  const scoped = rows.filter((row) =>
+    normalizeTopicBucket(topicOf(row)) === target
+  );
+  return {
+    rows: scoped,
+    sufficient: scoped.length >= minSamples,
+    target,
+    totalCount: rows.length,
+  };
+}
+
+/// x.performance_context に出す ICP スコープ行。コホートが薄いときは
+/// 「グローバルの勝者を手本にするな」と明示する (沈黙すると、他の行に残る
+/// グローバル最大が事実上の手本になってしまう)。
+export function buildIcpScopeLine<T>(
+  selection: IcpCohortSelection<T>,
+): string {
+  if (selection.sufficient) {
+    return `ICP cohort: winner selection is scoped to topic=${selection.target} ` +
+      `(n=${selection.rows.length} of ${selection.totalCount} measured posts). ` +
+      `Reach from other topics is not evidence for this audience.`;
+  }
+  return `ICP cohort: topic=${selection.target} has only ` +
+    `${selection.rows.length}/${selection.totalCount} measured posts — ` +
+    `not enough to name a winner. Do NOT copy the highest-reach or ` +
+    `highest-acquisition post from another topic: those numbers come from a ` +
+    `different audience and do not transfer. Write for the ICP and collect ` +
+    `measurements first.`;
 }
