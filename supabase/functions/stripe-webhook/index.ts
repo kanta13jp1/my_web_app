@@ -299,6 +299,43 @@ async function recordShopPurchase(
     purchased_at: paid ? new Date().toISOString() : null,
   }, { onConflict: "stripe_checkout_session_id" });
   if (error) throw new Error(error.message);
+
+  // funnel の最終段 (2026-07-29 追加)。入金を確認したここでだけ書く。
+  // クライアントの「買えました」を信じると、金銭の絡む段だけ検証できない
+  // 数字になるため。記録の失敗で購入処理を巻き戻さない (計測は本体ではない)。
+  if (paid) await recordPurchaseFunnelStage(admin, metadata);
+}
+
+/**
+ * 購入完了を funnel へ記録する (2026-07-29 追加)。
+ *
+ * visitor_id は shop-checkout が Stripe の metadata に載せて運んでいる。
+ * 無い場合 (metadata を持たない古いセッション等) は**何もしない**。
+ * 適当な値で埋めると、閲覧から購入までの経路が繋がっていない行が混ざり、
+ * 到達人数の集計が壊れる。
+ */
+async function recordPurchaseFunnelStage(
+  admin: SupabaseClient,
+  metadata: Record<string, unknown>,
+): Promise<void> {
+  const visitorId = asString(metadata.shop_visitor_id);
+  const productId = asString(metadata.shop_product_id);
+  if (!visitorId || !productId) return;
+
+  const source = asString(metadata.shop_source) || "direct";
+  const { error } = await admin.from("shop_funnel_events").upsert({
+    visitor_id: visitorId,
+    product_id: productId,
+    stage: "purchase_complete",
+    source,
+    auth_user_id: asString(metadata.user_id) || null,
+  }, {
+    onConflict: "visitor_id,product_id,source,stage",
+    ignoreDuplicates: true,
+  });
+  if (error) {
+    console.error("[stripe-webhook] funnel record failed:", error.message);
+  }
 }
 
 async function handleCheckoutCompleted(
