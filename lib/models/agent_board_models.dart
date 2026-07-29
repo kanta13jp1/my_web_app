@@ -261,8 +261,9 @@ BoardSnapshot buildBoardSnapshot(
   });
 
   final notStarted = lanes[BoardLane.notStarted]!;
-  final hidden =
-      notStarted.length > notStartedLimit ? notStarted.length - notStartedLimit : 0;
+  final hidden = notStarted.length > notStartedLimit
+      ? notStarted.length - notStartedLimit
+      : 0;
   if (hidden > 0) {
     lanes[BoardLane.notStarted] = notStarted.take(notStartedLimit).toList();
   }
