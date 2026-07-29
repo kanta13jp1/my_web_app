@@ -7,6 +7,7 @@ import 'asset_management_page.dart';
 import '../models/budget_entry.dart';
 import '../models/kgi_csf_kpi.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// 予算・財務プランナーページ (MoneyForward / Amazon Rufus 競合)
 /// budget-financial-planner Edge Function + ai-assistant Edge Function と連携
@@ -22,7 +23,19 @@ class BudgetFinancialPlannerPage extends StatefulWidget {
 }
 
 class _BudgetFinancialPlannerPageState extends State<BudgetFinancialPlannerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  // タブ: 概要 / 予算 / AI節約 / シミュレーション
+  @override
+  List<String> get tabUrlSlugs => const <String>[
+        'overview',
+        'budget',
+        'ai-savings',
+        'simulation',
+      ];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late TabController _tabController;
 
