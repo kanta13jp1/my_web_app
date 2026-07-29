@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/elearning_course.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// eラーニングコース管理ページ
 /// コース一覧・学習進捗・クイズ・証明書。
@@ -15,7 +16,14 @@ class ElearningCourseManagerPage extends StatefulWidget {
 }
 
 class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['courses', 'learning', 'certificates'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 

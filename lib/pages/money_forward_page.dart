@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'asset_management_page.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// MoneyForward 連携ページ
 /// moneyforward-sync Edge Function と連携して家計簿・資産データを取り込む
@@ -13,7 +14,13 @@ class MoneyForwardPage extends StatefulWidget {
 }
 
 class _MoneyForwardPageState extends State<MoneyForwardPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['accounts', 'transactions'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
 
   bool _isLoading = false;
