@@ -102,6 +102,33 @@ class DebtProgressCardService {
     return lines.join('\n');
   }
 
+  /// X への投稿ペイロードを組み立てる。
+  ///
+  /// 🔴 [text] には**ユーザーが編集した後の文面**を渡すこと。ここで
+  /// 下書きを再生成すると、本人が直した内容が捨てられて意図しない文が
+  /// 公開される (HITL が形骸化する)。
+  Map<String, dynamic> buildPostPayload(
+    DebtProgressCardData card, {
+    required DateTime month,
+    String? text,
+  }) {
+    return <String, dynamic>{
+      'action': 'x.post',
+      'text': text ?? buildDraftText(card, month: month),
+      'source': 'debt_progress_card',
+      'variant': 'debt_progress_report',
+      'utmContent': 'debt_progress_card',
+      'route': '/asset-management',
+      'promptProfile': 'debt_progress_report_v1',
+      'contentKind': 'data_report',
+      'contentArchetype': 'data_report',
+      'experimentKey': 'x_first_user_growth_10k',
+      // 🔴 URL は本文に残す。リプライへ逃がすと流入が落ちることが実測済み
+      // ([[session_20260728_part346_x_acquisition_rerank]])。
+      'linkInReply': false,
+    };
+  }
+
   String _deltaSuffix(double? delta) {
     if (delta == null) return '';
     if (delta == 0) return '(前月比 ±0円)';
