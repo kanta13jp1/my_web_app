@@ -192,6 +192,13 @@
       "category": "consumer AI / personal finance (個人B/S ダッシュボード) + Work OS (workspace agents) / 個人B/S + 6部署 direct competitor",
       "added": "discovery",
       "added_date": "2026-07-17"
+    },
+    {
+      "name": "Tomo",
+      "url": "https://tomo.ai",
+      "category": "personal AI life coach / iMessage-native multi-domain life agent + generative companion micro-apps (savings/budgeting/fitness) / 人生統合カテゴリ (coding 偏り是正) / 監視=App Store 更新履歴 + BusinessWire(BCV portfolio) / 退役trigger=2026-08-23 までに新規シグナル 0 なら退役",
+      "added": "discovery",
+      "added_date": "2026-07-24"
     }
   ],
   "discovery_history": [
@@ -1028,6 +1035,21 @@
         "OpenAI Presence / ChatGPT for small business (= 既存 competitor 『OpenAI ChatGPT』[7-17 採択] の配下であり新規社ではない / ⚠️ 一次 openai.com 403 で二次依拠)",
         "Salesforce Agentforce Operations / Microsoft MAI-Code-1-Flash / Monarch / Copilot Money / Lindy / Motion / Cleo / Emergent Wingman (= 本日の 1 日窓では個別確認せず 7-22 の状態を据え置き / 『変化なし』と断定していない)",
         "OpenCode (= coding tool 偏り [基準 b 逆行] のため signal 層留置)"
+      ]
+    },
+    {
+      "date": "2026-07-24",
+      "name": "Tomo",
+      "category": "personal AI life coach / iMessage-native multi-domain life agent + generative companion micro-apps",
+      "reason": "unlock 日 (= 2026-07-17 OpenAI ChatGPT 採択から 7 日 / cooldown 明け初日) に 7 サイクル連続 第 1 候補 Tomo を採択 (Lovable 5-17 / Bolt.new 5-24 の『解禁日初日採択』pattern 踏襲). 採択理由 = 基準 b (= 未カバーの人生統合カテゴリ) が最強 — 27 社中 13 社が AI dev tool に偏っており、iMessage ネイティブで貯蓄/予算/フィットネス等の generative micro-app を本人に合わせて生成する Tomo は『個人の生活全体を AI が department 的に運営する』軸で 6 部署 + 個人 B/S ナラティブの隣接カテゴリを新規に開く. 基準 a 中 (= 生成 UI で budgeting/savings tracker を作る = B/S 隣接) / 基準 c 弱 (= 一次は BusinessWire 2026-06-25 の一点のみ・本日で 29 日 = 30 日窓の縁 / companion app 『just launched』は 6-25 wire に既出の fake-recency と 7-23 に確定済 = 窓内デルタはゼロ). ⚠️ 既知の構造弱点 = tomo.ai に blog も changelog も存在せず + 『Tomo』は TomoCredit/TomoIQ・Tomo Mortgage 等と名寄せ衝突が激しい (本日検索も TomoIQ を混入) → 7-23 report の採択条件に従い監視チャネルを **App Store 更新履歴 (companion app) + BusinessWire 発行元追跡 (Bain Capital Ventures portfolio)** に確定し、かつ **採択後 30 日 (2026-08-23) までに新規シグナルゼロなら退役** を trigger として同時設定 (= 『追加したが追えない社』で cap を消費するリスクの緩和). 28 社 / cap 50. https://www.businesswire.com/news/home/20260625645270/en/",
+      "skipped_candidates": [
+        "Kubera (= 第 2 維持 / 基準 a 直撃 [個人 B/S そのもの] だが基準 c 未成立 [help.kubera.com の 'Last updated July 17' は最終更新日 ≠ 発表日] + 名寄せ衝突 [Kubera Gold Corp./Capital/Health] / 日付を持つチャネルがヘルプセンターのみ)",
+        "EdWealth『Ed』(= 第 3 維持 / fallback 最有力 = 7-15 GlobeNewswire が 30 日窓内で基準 c は Tomo より新しく監視チャネル [GlobeNewswire + edwealth site] も明確 / だが基準 b [カテゴリ新規性] が Tomo に劣後 = personal finance coaching は MoneyForward 隣接で既カバー寄り / 9 日連続デルタゼロ)",
+        "★ Bluwhale (= 本日 discovery scan の新規 / 'AI-native financial operating system' + AI Agent Store [autonomous financial agents marketplace] = 基準 a 最強 [個人 B/S 集約 + agent department marketplace = 自社中核軸に最も近い] / ⚠️ 一次 launch 6-12 = 42 日で 30 日窓外・かつ savings/liquidity/investments を real-time で execute = 送金・取引執行を行う crypto/DeFi 寄りで risk model が別カテゴリ → 未評価のまま同日採択は hasty / signal 層へ登録し次サイクル精査)",
+        "PNC Mobile Banking app (= 7-7 / agentic dev system + embedded gen AI だが銀行の自社アプリで直接競合ではない)",
+        "Pleo (= 6-11 / autonomous spend management = B2B 経費 / 軸遠い)",
+        "Visa AI Financial Assistant (= 第 4 維持 / 8 月 US pilot 待ちで構造的に材料が出ない)",
+        "却下 = Claude Opus 5『7-23 debut』(= prediction market/BigGo/TestingCatalog の期待報道のみ・anthropic.com/news に該当なし [最新 7-22] = 発効せず) + OpenAI Codex『tomorrow is feeling codexy』(= Tibo Sottiaux の teaser のみ・未出荷 / npm published は依然 0.145.0 stable) = いずれも hype であって event ではない (fake-recency 型)"
       ]
     }
   ],

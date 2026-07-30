@@ -167,6 +167,9 @@ class _AiUniversityFacultySelectPageState
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
+                      settings: const RouteSettings(
+                        name: '/ai-university-department',
+                      ),
                       builder: (_) => AiUniversityDepartmentSelectPage(
                         facultyCode: f['faculty_code'] as String,
                         facultyName: f['name_ja'] as String? ?? '',

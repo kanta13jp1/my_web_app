@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _migrationPath =
     'supabase/migrations/20260722211500_create_landing_experiment_events.sql';
+const _primaryMetricsMigrationPath =
+    'supabase/migrations/20260723150000_landing_experiment_primary_metrics.sql';
 
 void main() {
   group('landing experiment event schema', () {
@@ -134,6 +136,77 @@ void main() {
         sql,
         contains(
           'create or replace function public.increment_app_analytics_source_detail',
+        ),
+      );
+    });
+  });
+
+  group('landing experiment primary metrics migration', () {
+    late final String sql;
+
+    setUpAll(() {
+      sql = File(
+        _primaryMetricsMigrationPath,
+      ).readAsStringSync().replaceAll('\r\n', '\n').toLowerCase();
+    });
+
+    test('adds deduplicated mobile funnel stages to both validators', () {
+      expect(sql, contains("'mobile_view'"));
+      expect(sql, contains("'mobile_signup_submit'"));
+      expect(
+        sql,
+        contains(
+          'view|mobile_view|hero_cta|intent|trial|trial_fallback|save_cta|signup_submit|mobile_signup_submit|signup_complete',
+        ),
+      );
+      expect(
+        sql,
+        isNot(
+          contains(
+            'primary key (visitor_id, hypothesis_id, variant, stage)',
+          ),
+        ),
+        reason: 'the existing deduplication key must not be recreated',
+      );
+    });
+
+    test('exposes every hypothesis primary numerator and denominator', () {
+      for (final aggregate in <String>[
+        'as unique_views',
+        'as unique_hero_ctas',
+        'as unique_trials',
+        'as unique_save_ctas',
+        'as unique_signup_submits',
+        'as non_anonymous_signup_completes',
+        'as unique_mobile_views',
+        'as unique_mobile_signup_submits',
+      ]) {
+        expect(sql, contains(aggregate));
+      }
+      expect(sql, contains('with (security_invoker = true)'));
+      expect(
+        sql,
+        contains(
+          'grant select on table public.landing_experiment_arm_stats to service_role',
+        ),
+      );
+    });
+
+    test('keeps raw events inaccessible to browser roles', () {
+      expect(
+        sql,
+        isNot(
+          contains(
+            'grant select on table public.landing_experiment_events to anon',
+          ),
+        ),
+      );
+      expect(
+        sql,
+        isNot(
+          contains(
+            'grant select on table public.landing_experiment_events to authenticated',
+          ),
         ),
       );
     });

@@ -236,6 +236,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       unawaited(widget.adapter.recordLpView());
     }
     unawaited(_recordConversionStage('view'));
+    if (MediaQuery.sizeOf(context).width < 720) {
+      unawaited(_recordConversionStage('mobile_view'));
+    }
     unawaited(_honorLandingIntent());
   }
 
@@ -276,6 +279,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     final uri = _landingUri;
     if (uri == null) return false;
     return GrowthAcquisitionService.isFirstUserGrowthUri(uri);
+  }
+
+  bool get _usesHeroTrial {
+    return _isFirstUserGrowthTraffic || _hypothesisEnabled('h03');
   }
 
   void _goToAuthenticatedEntry() {
@@ -375,7 +382,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         if (tracksSignup) {
           await _markSignupCompletionPending(email: email);
         }
-        unawaited(_recordConversionStage('signup_submit'));
+        unawaited(_recordSignupSubmitStages());
         unawaited(_acquisitionService.recordLandingSignupSubmit());
         final result = await widget.adapter.signUp(
           email: email,
@@ -422,7 +429,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       if (_analyticsEnabled) {
         await _markSignupCompletionPending();
       }
-      unawaited(_recordConversionStage('signup_submit'));
+      unawaited(_recordSignupSubmitStages());
       unawaited(_acquisitionService.recordLandingSignupSubmit());
       final launched = await widget.adapter.signInWithGoogle(
         redirectTo: _webRedirectUrl,
@@ -466,7 +473,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       if (_analyticsEnabled) {
         await _markSignupCompletionPending(email: email);
       }
-      unawaited(_recordConversionStage('signup_submit'));
+      unawaited(_recordSignupSubmitStages());
       unawaited(_acquisitionService.recordLandingSignupSubmit());
       await widget.adapter.sendMagicLink(
         email: email,
@@ -586,6 +593,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     await _recordConversionStage('trial');
   }
 
+  Future<void> _recordSignupSubmitStages() async {
+    await _recordConversionStage('signup_submit');
+    if (mounted && MediaQuery.sizeOf(context).width < 720) {
+      await _recordConversionStage('mobile_signup_submit');
+    }
+  }
+
   Future<void> _recordSaveStages() async {
     if (_analyticsEnabled) {
       try {
@@ -636,10 +650,21 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     await _sendMagicLink(emailOverride: email);
   }
 
-  void _runQuickTrialSample(String prompt) {
+  void _runQuickTrialSample(
+    String prompt, {
+    bool recordHeroCta = false,
+  }) {
+    if (recordHeroCta) {
+      unawaited(_recordConversionStage('hero_cta'));
+    }
     _trialPromptController
       ..text = prompt
       ..selection = TextSelection.collapsed(offset: prompt.length);
+    unawaited(_runTrialActionPreview());
+  }
+
+  void _runHeroTrialActionPreview() {
+    unawaited(_recordConversionStage('hero_cta'));
     unawaited(_runTrialActionPreview());
   }
 
@@ -1201,7 +1226,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   Widget _buildConversionSequence() {
-    final trialFirst = _hypothesisEnabled('h03');
+    final trialFirst = _usesHeroTrial;
     return Column(
       key: Key(
         trialFirst
@@ -1266,13 +1291,19 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   Widget _buildHeroSection() {
-    final trialFirst = _hypothesisEnabled('h03');
+    final firstUserGrowthMode = _isFirstUserGrowthTraffic;
+    final trialFirst = _usesHeroTrial;
     return _WorkflowLandingHero(
       achievementCount: _achievementCount,
-      showFirstUserGrowthCta: _isFirstUserGrowthTraffic,
+      showFirstUserGrowthCta: firstUserGrowthMode,
       outcomeFirstMessage: _hypothesisEnabled('h01'),
       showRiskReversal: _hypothesisEnabled('h05'),
-      inlineTrial: trialFirst ? _buildTrialSection(heroMode: true) : null,
+      inlineTrial: trialFirst
+          ? _buildTrialSection(
+              heroMode: true,
+              firstUserGrowthMode: firstUserGrowthMode,
+            )
+          : null,
       onGetStarted: _handleHeroSignup,
       onWatchDemo: _scrollToTrialSection,
     );
@@ -3863,7 +3894,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     );
   }
 
-  Widget _buildTrialSection({bool heroMode = false}) {
+  Widget _buildTrialSection({
+    bool heroMode = false,
+    bool firstUserGrowthMode = false,
+  }) {
     final compactHero = heroMode && MediaQuery.sizeOf(context).width < 480;
     return KeyedSubtree(
       key: const Key('landing_trial_section'),
@@ -3881,7 +3915,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                heroMode ? '30秒で試す: いま詰まっていることは？' : 'AIに「今日やる1件」を聞く',
+                firstUserGrowthMode
+                    ? 'Xから来た方へ: まず1タップで結果を見る'
+                    : heroMode
+                        ? '30秒で試す: いま詰まっていることは？'
+                        : 'AIに「今日やる1件」を聞く',
                 style: TextStyle(
                   fontSize: compactHero ? 16 : 18,
                   fontWeight: FontWeight.w800,
@@ -3890,11 +3928,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               ),
               SizedBox(height: compactHero ? 4 : 6),
               Text(
-                compactHero
-                    ? '登録不要。例を押すか1行書くと「今やる1件」を返します。'
-                    : heroMode
-                        ? '登録はまだ不要です。1行書くか、下の例を押すと「今やる1件」を返します。'
-                        : 'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
+                firstUserGrowthMode
+                    ? '入力・登録・カードは不要です。下のボタンだけで「今やる1件」を確認し、役立った時だけ保存できます。'
+                    : compactHero
+                        ? '登録不要。例を押すか1行書くと「今やる1件」を返します。'
+                        : heroMode
+                            ? '登録はまだ不要です。1行書くか、下の例を押すと「今やる1件」を返します。'
+                            : 'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
                 style: TextStyle(
                   color: const Color(0xFF64748B),
                   fontSize: compactHero ? 12 : 14,
@@ -3902,10 +3942,14 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
               ),
               SizedBox(height: compactHero ? 6 : 12),
-              _buildTrialAnswerPreview(compact: compactHero),
+              _buildTrialAnswerPreview(
+                compact: compactHero,
+                heroMode: heroMode,
+                firstUserGrowthMode: firstUserGrowthMode,
+              ),
               SizedBox(height: compactHero ? 8 : 12),
               Text(
-                'ほかの悩みを1タップで試す',
+                firstUserGrowthMode ? '別の悩みで試す' : 'ほかの悩みを1タップで試す',
                 style: TextStyle(
                   color: const Color(0xFF475569),
                   fontSize: compactHero ? 11 : 12,
@@ -3927,7 +3971,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         compactHero ? MaterialTapTargetSize.shrinkWrap : null,
                     onPressed: _isTrialLoading
                         ? null
-                        : () => _runQuickTrialSample('今日の最優先タスクを1件に絞りたい'),
+                        : () => _runQuickTrialSample(
+                              '今日の最優先タスクを1件に絞りたい',
+                              recordHeroCta: heroMode,
+                            ),
                   ),
                   ActionChip(
                     key: const Key('landing_trial_sample_plan'),
@@ -3938,8 +3985,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         compactHero ? MaterialTapTargetSize.shrinkWrap : null,
                     onPressed: _isTrialLoading
                         ? null
-                        : () =>
-                            _runQuickTrialSample('今日1日の計画を立てて、最も重要なことに集中したい'),
+                        : () => _runQuickTrialSample(
+                              '今日1日の計画を立てて、最も重要なことに集中したい',
+                              recordHeroCta: heroMode,
+                            ),
                   ),
                   ActionChip(
                     key: const Key('landing_trial_sample_procrastination'),
@@ -3950,7 +3999,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         compactHero ? MaterialTapTargetSize.shrinkWrap : null,
                     onPressed: _isTrialLoading
                         ? null
-                        : () => _runQuickTrialSample('今いちばん先送りしていることを片付けたい'),
+                        : () => _runQuickTrialSample(
+                              '今いちばん先送りしていることを片付けたい',
+                              recordHeroCta: heroMode,
+                            ),
                   ),
                 ],
               ),
@@ -3979,7 +4031,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         ? 'landing_h03_inline_trial_action'
                         : 'landing_h03_lower_trial_action',
                   ),
-                  onPressed: _isTrialLoading ? null : _runTrialActionPreview,
+                  onPressed: _isTrialLoading
+                      ? null
+                      : heroMode
+                          ? _runHeroTrialActionPreview
+                          : _runTrialActionPreview,
                   icon: const Icon(Icons.play_arrow),
                   label: _isTrialLoading
                       ? const SizedBox(
@@ -4081,7 +4137,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     );
   }
 
-  Widget _buildTrialAnswerPreview({required bool compact}) {
+  Widget _buildTrialAnswerPreview({
+    required bool compact,
+    required bool heroMode,
+    bool firstUserGrowthMode = false,
+  }) {
     const samplePrompt = '仕事が多すぎて、何から始めるか決められない';
     return Container(
       key: const Key('landing_h11_answer_preview'),
@@ -4132,22 +4192,65 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             ),
           ),
           const SizedBox(height: 8),
-          OutlinedButton.icon(
-            key: const Key('landing_h11_answer_preview_action'),
-            onPressed: _isTrialLoading
-                ? null
-                : () => _runQuickTrialSample(samplePrompt),
-            icon: const Icon(Icons.bolt, size: 17),
-            label: const Text('この例で即試す'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF1F7AE0),
-              minimumSize: Size.fromHeight(compact ? 40 : 44),
-              side: const BorderSide(color: Color(0xFF93C5FD)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+          if (firstUserGrowthMode)
+            FilledButton.icon(
+              key: const Key('first_user_growth_one_tap_trial'),
+              onPressed: _isTrialLoading
+                  ? null
+                  : () => _runQuickTrialSample(
+                        samplePrompt,
+                        recordHeroCta: heroMode,
+                      ),
+              icon: const Icon(Icons.bolt, size: 17),
+              label: const Text('1タップで「今日やる1件」を出す'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF1F7AE0),
+                foregroundColor: Colors.white,
+                minimumSize: Size.fromHeight(compact ? 44 : 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+            )
+          else
+            OutlinedButton.icon(
+              key: const Key('landing_h11_answer_preview_action'),
+              onPressed: _isTrialLoading
+                  ? null
+                  : () => _runQuickTrialSample(
+                        samplePrompt,
+                        recordHeroCta: heroMode,
+                      ),
+              icon: const Icon(Icons.bolt, size: 17),
+              label: const Text('この例で即試す'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF1F7AE0),
+                minimumSize: Size.fromHeight(compact ? 40 : 44),
+                side: const BorderSide(color: Color(0xFF93C5FD)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
               ),
             ),
-          ),
+          if (firstUserGrowthMode) ...[
+            const SizedBox(height: 8),
+            const Wrap(
+              key: Key('first_user_growth_trial_reassurance'),
+              alignment: WrapAlignment.center,
+              spacing: 14,
+              runSpacing: 6,
+              children: [
+                _TrustPoint(
+                  icon: Icons.visibility_outlined,
+                  label: '登録は結果を見てから',
+                ),
+                _TrustPoint(
+                  icon: Icons.credit_card_off_outlined,
+                  label: 'カード不要',
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

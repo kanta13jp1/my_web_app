@@ -241,6 +241,7 @@ class _ImportPageState extends State<ImportPage> {
     }
     Navigator.of(context).push(
       MaterialPageRoute(
+        settings: const RouteSettings(name: '/'),
         builder: (_) => const LandingPage(),
       ),
     );

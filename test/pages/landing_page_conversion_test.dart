@@ -279,6 +279,111 @@ void main() {
     expect(find.byKey(const Key('landing_h03_auth_before_trial')), findsOne);
   });
 
+  testWidgets(
+    'first-user X traffic gets a one-tap trial before registration',
+    (tester) async {
+      final adapter = await pumpLanding(
+        tester,
+        assignment: _assignment('h03', LandingExperimentVariant.control),
+        landingUri: Uri.parse(
+          'https://example.com/?lp_intent=trial'
+          '&utm_source=x&utm_medium=organic'
+          '&utm_campaign=first_user_growth'
+          '&utm_content=outcome_first_a',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Xから来た方へ: まず1タップで結果を見る'),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('first_user_growth_one_tap_trial')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('first_user_growth_trial_reassurance')),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const Key('first_user_growth_one_tap_trial')),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(adapter.trialRuns, 1);
+      expect(
+        adapter.lastTrialPrompt,
+        '仕事が多すぎて、何から始めるか決められない',
+      );
+      expect(
+        adapter.conversionEvents,
+        containsAll(<String>[
+          'lp_exp_h03_control_hero_cta',
+          'lp_exp_h03_control_trial',
+        ]),
+      );
+      expect(
+        find.byKey(const Key('landing_trial_result_action')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('landing_h04_inline_magic_capture')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('first-user one-tap trial stays in the mobile first viewport', (
+    tester,
+  ) async {
+    const size = Size(390, 844);
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h03', LandingExperimentVariant.control),
+      size: size,
+      landingUri: Uri.parse(
+        'https://example.com/?lp_intent=trial'
+        '&utm_source=x&utm_medium=organic'
+        '&utm_campaign=first_user_growth',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final oneTapButton = find.byKey(
+      const Key('first_user_growth_one_tap_trial'),
+    );
+    expect(oneTapButton, findsOneWidget);
+    final buttonTop = tester.getTopLeft(oneTapButton).dy;
+    final buttonBottom = tester.getBottomLeft(oneTapButton).dy;
+    expect(buttonTop, greaterThanOrEqualTo(0));
+    expect(buttonBottom, lessThanOrEqualTo(size.height));
+  });
+
+  testWidgets('non-campaign traffic keeps the generic one-tap trial', (
+    tester,
+  ) async {
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.treatment),
+      landingUri: Uri.parse('https://example.com/?lp_intent=trial'),
+    );
+
+    expect(
+      find.byKey(const Key('first_user_growth_one_tap_trial')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('first_user_growth_trial_reassurance')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('landing_h11_answer_preview_action')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('H07 renders anonymous-safe public aggregate social proof', (
     tester,
   ) async {
@@ -298,6 +403,10 @@ void main() {
   testWidgets(
     'public social proof preloads under a deep link while LP analytics stay gated',
     (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(390, 844);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
       final adapter = _LandingAdapter();
       await tester.pumpWidget(
         MaterialApp(
@@ -331,6 +440,19 @@ void main() {
       expect(adapter.socialProofLoads, 1);
       expect(adapter.lpViews, 0);
       expect(adapter.conversionEvents, isEmpty);
+
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      navigator.pop();
+      await tester.pumpAndSettle();
+
+      expect(adapter.lpViews, 1);
+      expect(
+        adapter.conversionEvents,
+        containsAll(<String>[
+          'lp_exp_h07_treatment_view',
+          'lp_exp_h07_treatment_mobile_view',
+        ]),
+      );
     },
   );
 
@@ -564,7 +686,13 @@ void main() {
 
     expect(find.text('確認先を1人決める'), findsOneWidget);
     expect(adapter.lastTrialPrompt, '仕事が多すぎて、何から始めるか決められない');
-    expect(adapter.conversionEvents, contains('lp_exp_h01_treatment_trial'));
+    expect(
+      adapter.conversionEvents,
+      containsAll(<String>[
+        'lp_exp_h01_treatment_hero_cta',
+        'lp_exp_h01_treatment_trial',
+      ]),
+    );
   });
 
   testWidgets('trial provider failure keeps the useful instant result', (
@@ -754,7 +882,49 @@ void main() {
     await tester.pump(const Duration(milliseconds: 350));
     expect(
       adapter.conversionEvents,
-      contains('lp_exp_h09_treatment_sticky_cta'),
+      containsAll(<String>[
+        'lp_exp_h09_treatment_mobile_view',
+        'lp_exp_h09_treatment_sticky_cta',
+      ]),
+    );
+  });
+
+  testWidgets('mobile Magic Link submit records the mobile signup metric', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h09', LandingExperimentVariant.treatment),
+      size: const Size(390, 844),
+    );
+
+    await tester.tap(
+      find.byKey(const Key('landing_h11_answer_preview_action')),
+    );
+    await tester.pump();
+    await tester.pump();
+    await tester.enterText(
+      find.byKey(const Key('landing_h04_inline_email')),
+      'mobile-first-user@example.com',
+    );
+    final magicLinkButton = find.byKey(
+      const Key('landing_h04_inline_magic_link'),
+    );
+    await Scrollable.ensureVisible(
+      tester.element(magicLinkButton),
+      alignment: 0.5,
+    );
+    await tester.pump();
+    await tester.tap(magicLinkButton);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      adapter.conversionEvents,
+      containsAll(<String>[
+        'lp_exp_h09_treatment_mobile_view',
+        'lp_exp_h09_treatment_signup_submit',
+        'lp_exp_h09_treatment_mobile_signup_submit',
+      ]),
     );
   });
 

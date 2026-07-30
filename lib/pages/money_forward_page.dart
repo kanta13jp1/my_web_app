@@ -160,6 +160,7 @@ class _MoneyForwardPageState extends State<MoneyForwardPage>
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
+                  settings: const RouteSettings(name: '/asset-management'),
                   builder: (_) => const AssetManagementPage(
                     initialFocus: AssetManagementInitialFocus.assets,
                     entryLabel: 'MoneyForward連携',

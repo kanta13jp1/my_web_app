@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-22T22:16:54Z",
+  "generated_at": "2026-07-23T22:16:12Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -27,7 +27,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "9b0e1435a90dc092822130cd43ea6d8970e9525d8da446094e523d26f8b8d25f",
@@ -77,7 +77,7 @@
           "latest_signal": "2.1.218 / July 22, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "f2d2edbb961285972d92f9014a22cfca33a2aa8cbfd4adddf622d4db3b790156",
+          "previous_hash": "9b0e1435a90dc092822130cd43ea6d8970e9525d8da446094e523d26f8b8d25f",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -115,10 +115,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "d3053cfa09a63ddb05cea47c00885870fb61cd52ef093536a22ed3f50aaed8a9",
+          "hash": "af79943f765755840f87043dd0c84e1dde739908059481e854d36a49b4993a7a",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -194,7 +194,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "a5545fd180009614613298fe94c3aa1fc9f83db6d3b478d0683f10f81f8c8e11",
@@ -231,7 +231,7 @@
           "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume",
           "name": "Claude Code GitHub Actions",
           "owner": "Claude Code",
-          "previous_hash": "7fdf55012b8d33420d5efc836a4aff8e210da2946759e28e347c0780af66c3a8",
+          "previous_hash": "a5545fd180009614613298fe94c3aa1fc9f83db6d3b478d0683f10f81f8c8e11",
           "slug": "claude-code-github-actions",
           "snippets": [
             "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before...",
@@ -261,9 +261,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-ea1c48ce84df",
+        "entry_id": "nf-49bc99881bfd",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-07-20 / ChatGPT for iOS 1.2026.195 New features Added support for rendering Mermaid diagrams inline Codex changelog | ChatGPT Learn ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or... Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build... All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How...",
+        "text": "Codex changelog 2026-07-23 / ChatGPT Voice and multi-folder projects 26.715 Powered by GPT-Live, ChatGPT Voice lets you Codex changelog | ChatGPT Learn ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or... Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build... All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How...",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -272,7 +272,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "4c141d9524c84b0fc3a8b5682f9cdde9e59f499940e22291fddf88604207cc1e",
+          "hash": "a6750cc2c0464a25ba98ff7169f4f81e6d77fab15ca81929d5bc691008c90d26",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -287,6 +287,7 @@
             "hooks": [
               "hook",
               "hooks",
+              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -298,6 +299,7 @@
               "IDE extension"
             ],
             "quality-cost": [
+              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -314,10 +316,10 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-07-20 / ChatGPT for iOS 1.2026.195 New features Added support for rendering Mermaid diagrams inline",
+          "latest_signal": "2026-07-23 / ChatGPT Voice and multi-folder projects 26.715 Powered by GPT-Live, ChatGPT Voice lets you",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "a708d56f573216a29d1008e85e4e54e4eaa2fb995eb380416c0c3bc4593f5e00",
+          "previous_hash": "4c141d9524c84b0fc3a8b5682f9cdde9e59f499940e22291fddf88604207cc1e",
           "slug": "codex-changelog",
           "snippets": [
             "Codex changelog | ChatGPT Learn ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or...",
@@ -329,7 +331,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-ea1c48ce84df",
+        "entry_id": "nf-49bc99881bfd",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -358,7 +360,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "ca865d52c4bc8a523449ffb383c5abf2349d3d9c97bc32877d101424f37f85fb",
+          "hash": "eb5828063361e497c4165315226a50320023881d924da3d527c60e5ed9c58256",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.4",
@@ -397,7 +399,7 @@
           "latest_signal": "ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "d050687fda14fa96e1b654eb79cb5de8c7c1844d71b01cd1bdb0c954288d17ee",
+          "previous_hash": "ca865d52c4bc8a523449ffb383c5abf2349d3d9c97bc32877d101424f37f85fb",
           "slug": "codex-use-cases",
           "snippets": [
             "ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use...",
@@ -478,7 +480,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "c4e5b6c4a0e793a343c068d9812c4ec807a58efe12ac935b80c47588407230b8",
@@ -510,7 +512,7 @@
           "latest_signal": "3.11 / Jul 10, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "f9df00e6529c8a410de26e8cff22a522566fe3041016c28c8d8ce2915250b53e",
+          "previous_hash": "c4e5b6c4a0e793a343c068d9812c4ec807a58efe12ac935b80c47588407230b8",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing Resources ↓...",
@@ -606,18 +608,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-7c3815bebc31",
+        "entry_id": "nf-6812cc57b0ad",
         "title": "Devin release notes",
-        "text": "Devin release notes July 17, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines... Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools... Enterprise-Grade Plugin Governance Admins can configure required, optional, and forbidden plugins in Settings → Marketplace, and organizations inherit enterprise-managed plugin...",
+        "text": "Devin release notes July 22, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines... Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools... Automations Consumption Visibility A new Consumption tab on each automation shows the ACUs used by sessions the automation has started, so you can track the cost of your...",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "2b6a7316078b33327c311fbf0e335631871339ec5d101d5a4b46392cef7c4525",
+          "hash": "5d1f83d0e57d47369afa4e81221d54861954ce9025db03ac7ea9d0e4ee839cd1",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -649,7 +651,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "July 17, 2026",
+          "latest_signal": "July 22, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
           "previous_hash": "2b6a7316078b33327c311fbf0e335631871339ec5d101d5a4b46392cef7c4525",
@@ -657,14 +659,14 @@
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
             "Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools...",
-            "Enterprise-Grade Plugin Governance Admins can configure required, optional, and forbidden plugins in Settings → Marketplace, and organizations inherit enterprise-managed plugin..."
+            "Automations Consumption Visibility A new Consumption tab on each automation shows the ACUs used by sessions the automation has started, so you can track the cost of your..."
           ],
           "status": 200,
           "url": "https://docs.devin.ai/release-notes"
         }
       },
       "filter": {
-        "entry_id": "nf-7c3815bebc31",
+        "entry_id": "nf-6812cc57b0ad",
         "title": "Devin release notes",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
