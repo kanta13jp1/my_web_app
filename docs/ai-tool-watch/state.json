@@ -1,8 +1,8 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-07-22T22:16:51Z",
-      "hash": "9b0e1435a90dc092822130cd43ea6d8970e9525d8da446094e523d26f8b8d25f",
+      "checked_at": "2026-07-29T22:14:40Z",
+      "hash": "cd3805c012788e10c829872d14c7ea7a680a934c19ca71fad3bcb800d701ca95",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -46,13 +46,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.218 / July 22, 2026",
+      "latest_signal": "2.1.220 / July 25, 2026",
       "name": "Claude Code changelog",
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-07-22T22:16:51Z",
+      "checked_at": "2026-07-29T22:14:40Z",
       "hash": "a5545fd180009614613298fe94c3aa1fc9f83db6d3b478d0683f10f81f8c8e11",
       "keyword_groups": {
         "codex-runtime": [
@@ -90,8 +90,8 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-07-22T22:16:51Z",
-      "hash": "d3053cfa09a63ddb05cea47c00885870fb61cd52ef093536a22ed3f50aaed8a9",
+      "checked_at": "2026-07-29T22:14:40Z",
+      "hash": "ccf1d043f0d7308687b4c1f7d02323c9b866bb9c555ded4905d1bce587d8a40a",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -132,8 +132,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-07-22T22:16:51Z",
-      "hash": "4c141d9524c84b0fc3a8b5682f9cdde9e59f499940e22291fddf88604207cc1e",
+      "checked_at": "2026-07-29T22:14:40Z",
+      "hash": "b6a5c9261274a08a80b7b7992e3983c486c7c8ef695cdb0ba2d3558b314062ad",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -159,6 +159,7 @@
           "IDE extension"
         ],
         "quality-cost": [
+          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -175,13 +176,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-20 / ChatGPT for iOS 1.2026.195 New features Added support for rendering Mermaid diagrams inline",
+      "latest_signal": "2026-07-29 / Sign in with ChatGPT",
       "name": "Codex changelog",
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-07-22T22:16:51Z",
+      "checked_at": "2026-07-29T22:14:40Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -190,8 +191,8 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-07-22T22:16:51Z",
-      "hash": "ca865d52c4bc8a523449ffb383c5abf2349d3d9c97bc32877d101424f37f85fb",
+      "checked_at": "2026-07-29T22:14:40Z",
+      "hash": "27c9b253114b649f96051a906c2874b46a11793e8d439ef6b17bdb6ea5153633",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.4",
@@ -227,14 +228,14 @@
           "workflow"
         ]
       },
-      "latest_signal": "ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex",
+      "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
       "name": "Codex use cases",
       "status": 200,
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-07-22T22:16:51Z",
-      "hash": "c4e5b6c4a0e793a343c068d9812c4ec807a58efe12ac935b80c47588407230b8",
+      "checked_at": "2026-07-29T22:14:40Z",
+      "hash": "70d69c3a9016f203c71da2423468d2d749cb023a20ce074251fe90bccbe3645a",
       "keyword_groups": {
         "codex-runtime": [
           "subagents"
@@ -266,10 +267,11 @@
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-07-22T22:16:51Z",
-      "hash": "2b6a7316078b33327c311fbf0e335631871339ec5d101d5a4b46392cef7c4525",
+      "checked_at": "2026-07-29T22:14:40Z",
+      "hash": "0ef814097e44863a31524eb86c88ca1eefb2eaee011113f21816e154a35b724d",
       "keyword_groups": {
         "codex-runtime": [
+          "model picker",
           "computer use",
           "subagents"
         ],
@@ -299,14 +301,14 @@
           "workflow"
         ]
       },
-      "latest_signal": "July 17, 2026",
+      "latest_signal": "July 24, 2026",
       "name": "Devin release notes",
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-07-22T22:16:51Z",
-      "hash": "3f7758f857bed0c704742a99fe63eb437295318d4a1383a691ec50a95dd593e0",
+      "checked_at": "2026-07-29T22:14:40Z",
+      "hash": "a7513a88ed2c096b719cc9346c81413d92d42394be154e295dc6299794c9c00c",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -334,5 +336,5 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-07-22T22:16:51Z"
+  "updated_at": "2026-07-29T22:14:40Z"
 }

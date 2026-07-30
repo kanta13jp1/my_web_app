@@ -1,15 +1,14 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-22T22:16:51Z`
-- Previous check: `2026-07-21T22:12:43Z`
-- Changed/new official sources: `5`
+- Checked at: `2026-07-29T22:14:40Z`
+- Previous check: `2026-07-28T22:17:45Z`
+- Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.218 / July 22, 2026
-- `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume
-- `changed` Codex changelog: 2026-07-20 / ChatGPT for iOS 1.2026.195 New features Added support for rendering Mermaid diagrams inline
-- `changed` Codex use cases: ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex
+- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
+- `changed` Codex changelog: 2026-07-29 / Sign in with ChatGPT
+- `changed` Codex use cases: ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of
 - `changed` Cursor changelog: 3.11 / Jul 10, 2026
 
 ## Recommended Actions
@@ -22,7 +21,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.218 / July 22, 2026
+  - Latest signal: 2.1.220 / July 25, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .
@@ -40,16 +39,16 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-07-20 / ChatGPT for iOS 1.2026.195 New features Added support for rendering Mermaid diagrams inline
+  - Latest signal: 2026-07-29 / Sign in with ChatGPT
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: Codex changelog | ChatGPT Learn ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or...
-  - Short signal: Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...
+  - Short signal: ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...
+  - Short signal: Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
-  - Latest signal: ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex
+  - Latest signal: ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use...
-  - Short signal: Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...
+  - Short signal: ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...
+  - Short signal: Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...
 - **Codex overview** (HTTP 403)
   - URL: https://openai.com/codex/
   - Latest signal: No title detected
@@ -58,8 +57,8 @@
   - URL: https://cursor.com/changelog
   - Latest signal: 3.11 / Jul 10, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing Resources ↓...
-  - Short signal: Price-efficient models handle the rest.
+  - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...
+  - Short signal: New to both iPhone and iPad: an inbox to stay organized, and a review experience that covers the full PR.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
   - Latest signal: VS Code Gemini Code Assist 2.87.0 / June 19, 2026
@@ -68,7 +67,7 @@
   - Short signal: Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra...
 - **Devin release notes** (HTTP 200)
   - URL: https://docs.devin.ai/release-notes
-  - Latest signal: July 17, 2026
+  - Latest signal: July 24, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...
   - Short signal: Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools...

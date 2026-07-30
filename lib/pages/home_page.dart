@@ -36,9 +36,6 @@ import 'emergency_meeting_page.dart';
 import 'admin_analytics_page.dart';
 import 'cfo_office_page.dart';
 import 'asset_management_page.dart';
-import 'election_strategy_page.dart';
-import 'election_victory_page.dart';
-import 'settings_page.dart';
 import 'stock_tasks_page.dart';
 import 'mindless_task_page.dart';
 import '../widgets/collapsible_home_section.dart';
@@ -62,7 +59,6 @@ import '../widgets/thought_interrupt_quick_widget.dart';
 import 'ai_secretary_page.dart';
 import 'work_menu_page.dart';
 import '../data/home_tool_catalog.dart';
-import 'profile_settings_page.dart';
 import '../widgets/home_tier/recent_features_list.dart';
 import '../widgets/home_tier/system_fixed_features_list.dart';
 import '../widgets/home_tier/user_pinned_features_list.dart';
@@ -2088,12 +2084,12 @@ abstinence_slip_details: $slipDetailsText
     } else if (command.type == _HomeActionType.criticalTasks) {
       buttonLabel = '必須タスクへ';
       onPressed = () {
-        _nav(context, const MindlessTaskPage());
+        _nav(context, const MindlessTaskPage(), '/mindless-task');
       };
     } else if (command.type == _HomeActionType.stockReview) {
       buttonLabel = '週末ストックへ';
       onPressed = () {
-        _nav(context, const StockTasksPage());
+        _nav(context, const StockTasksPage(), '/stock-tasks');
       };
     } else if (command.type == _HomeActionType.beatYesterdayGoal) {
       buttonLabel = 'タスク一覧へ';
@@ -2512,7 +2508,7 @@ abstinence_slip_details: $slipDetailsText
       color = const Color(0xFFE53935);
       icon = Icons.lock_clock;
       onPressed = () {
-        _nav(context, const MindlessTaskPage());
+        _nav(context, const MindlessTaskPage(), '/mindless-task');
       };
     } else if (!snapshot.morningBriefingDone) {
       title = '朝の固定を先に終える';
@@ -4261,7 +4257,11 @@ abstinence_slip_details: $slipDetailsText
                           FilledButton.tonalIcon(
                             onPressed: () {
                               Navigator.pop(context);
-                              _nav(parentContext, const MindlessTaskPage());
+                              _nav(
+                                parentContext,
+                                const MindlessTaskPage(),
+                                '/mindless-task',
+                              );
                             },
                             icon: const Icon(Icons.lock_clock, size: 18),
                             label: Text(
@@ -4418,6 +4418,7 @@ abstinence_slip_details: $slipDetailsText
                       initialFocus: AssetManagementInitialFocus.flow,
                       emphasizeMonthlyFlow: true,
                     ),
+                    '/asset-management',
                   );
                 },
                 icon: const Icon(Icons.open_in_new, size: 18),
@@ -6029,24 +6030,18 @@ abstinence_slip_details: $slipDetailsText
     );
   }
 
-  void _nav(BuildContext context, Widget page) {
-    final routeName = _homeRouteNameForPage(page);
+  /// [routeName] は遷移先画面の URL。以前は page の型から route 名を引く表を
+  /// 持っていたが、表に無い画面が黙って null になり (例: 管理者ダッシュボード)
+  /// 画面だけ切り替わって URL が `/` のままになっていた。呼び出し側に必ず
+  /// 書かせることで、載せ忘れがコンパイルエラーになるようにしている。
+  void _nav(BuildContext context, Widget page, String routeName) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        settings: routeName == null ? null : RouteSettings(name: routeName),
+        settings: RouteSettings(name: routeName),
         builder: (context) => page,
       ),
     );
-  }
-
-  String? _homeRouteNameForPage(Widget page) {
-    if (page is ProfileSettingsPage) return '/profile-settings';
-    if (page is SettingsPage) return '/settings';
-    if (page is EmergencyMeetingPage) return '/emergency-meeting';
-    if (page is ElectionStrategyPage) return '/election-strategy';
-    if (page is ElectionVictoryPage) return '/local-election-700';
-    return null;
   }
 
   List<Widget> _buildCuratedHomeSections({
@@ -7608,7 +7603,11 @@ abstinence_slip_details: $slipDetailsText
                     ],
                   ),
                   actionLabel: '役員会議へ',
-                  onTap: () => _nav(context, const EmergencyMeetingPage()),
+                  onTap: () => _nav(
+                    context,
+                    const EmergencyMeetingPage(),
+                    '/emergency-meeting',
+                  ),
                 ),
               ),
               SizedBox(
@@ -7669,7 +7668,11 @@ abstinence_slip_details: $slipDetailsText
                     ],
                   ),
                   actionLabel: '収支を見る',
-                  onTap: () => _nav(context, const AssetManagementPage()),
+                  onTap: () => _nav(
+                    context,
+                    const AssetManagementPage(),
+                    '/asset-management',
+                  ),
                 ),
               ),
               SizedBox(
@@ -7733,7 +7736,8 @@ abstinence_slip_details: $slipDetailsText
                       ? _buildLpSparkline(marketing.lpSeries, isDark)
                       : null,
                   actionLabel: '分析を見る',
-                  onTap: () => _nav(context, const AdminAnalyticsPage()),
+                  onTap: () =>
+                      _nav(context, const AdminAnalyticsPage(), '/admin'),
                 ),
               ),
               SizedBox(
@@ -8267,7 +8271,8 @@ abstinence_slip_details: $slipDetailsText
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
-                  onPressed: () => _nav(context, const CfoOfficePage()),
+                  onPressed: () =>
+                      _nav(context, const CfoOfficePage(), '/cfo-office'),
                   icon: const Icon(Icons.arrow_circle_right, size: 18),
                   label: const Text('詳細(資産内訳)を見る'),
                 ),

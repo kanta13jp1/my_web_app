@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../widgets/meal_nutrition_tracker.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 const _accentOrange = Color(0xFFFF6B35);
 const _accentIndigo = Color(0xFF3D5AFE);
@@ -50,7 +51,20 @@ class RecipeMealPlannerPage extends StatefulWidget {
 }
 
 class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  // タブ: レシピ / 週間プラン / 買い物リスト / 食事ログ / 栄養ログ
+  @override
+  List<String> get tabUrlSlugs => const <String>[
+        'recipes',
+        'weekly-plan',
+        'shopping-list',
+        'meal-log',
+        'nutrition-log',
+      ];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   late final SupabaseClient _supabase;
   late final TabController _tabController;
 

@@ -847,25 +847,32 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
-  Widget _buildAcquisitionTargetPage(String? channelKey) {
+  /// 遷移先ページと、その画面に対応する URL (= route 名) を必ず対で返す。
+  /// route を添えないと Flutter Web でブラウザの URL が更新されない。
+  ({Widget page, String route}) _buildAcquisitionTarget(String? channelKey) {
     switch (channelKey) {
-      case 'x_share':
-      case 'facebook':
-        return CmoPage(
-          initialChannel: channelKey,
-          autoGenerateOnOpen: true,
-        );
       case 'line':
-        return const AISecretaryPage(
-          initialStrategyType: 'now',
-          autoRunOnOpen: true,
+        return (
+          page: const AISecretaryPage(
+            initialStrategyType: 'now',
+            autoRunOnOpen: true,
+          ),
+          route: '/ai-secretary',
         );
       case 'qr_scan':
-        return const NoteListPage(prioritizeShareCandidates: true);
+        return (
+          page: const NoteListPage(prioritizeShareCandidates: true),
+          route: '/notes',
+        );
+      case 'x_share':
+      case 'facebook':
       default:
-        return CmoPage(
-          initialChannel: channelKey,
-          autoGenerateOnOpen: true,
+        return (
+          page: CmoPage(
+            initialChannel: channelKey,
+            autoGenerateOnOpen: true,
+          ),
+          route: '/cmo',
         );
     }
   }
@@ -885,16 +892,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       }
       return;
     }
-    final targetPage = isAcquisitionAction
-        ? _buildAcquisitionTargetPage(priorityChannelKey)
-        : const AISecretaryPage(
-            initialStrategyType: 'now',
-            autoRunOnOpen: true,
+    final target = isAcquisitionAction
+        ? _buildAcquisitionTarget(priorityChannelKey)
+        : (
+            page: const AISecretaryPage(
+              initialStrategyType: 'now',
+              autoRunOnOpen: true,
+            ),
+            route: '/ai-secretary',
           );
 
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => targetPage),
+      MaterialPageRoute(
+        settings: RouteSettings(name: target.route),
+        builder: (_) => target.page,
+      ),
     );
 
     final hint = isAcquisitionAction
@@ -2171,6 +2184,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
+                            settings:
+                                const RouteSettings(name: '/quota-dashboard'),
                             builder: (_) => const QuotaDashboardPage(),
                           ),
                         ),
@@ -2206,6 +2221,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
+                            settings:
+                                const RouteSettings(name: '/blog-management'),
                             builder: (_) => const BlogManagementPage(),
                           ),
                         ),
@@ -7148,7 +7165,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const FeedbackListPage()),
+                  MaterialPageRoute(
+                    settings: const RouteSettings(name: '/admin-feedback'),
+                    builder: (_) => const FeedbackListPage(),
+                  ),
                 ),
               ),
             ),
