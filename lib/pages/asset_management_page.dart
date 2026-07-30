@@ -63,6 +63,8 @@ import 'package:my_web_app/services/asset_salary_deposit_detector.dart';
 import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
+import 'package:my_web_app/models/daily_todo.dart';
+import 'package:my_web_app/services/daily_todo_store.dart';
 import 'package:my_web_app/services/asset_triage_guide_service.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
@@ -417,6 +419,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _keyFlow = GlobalKey();
   final _keySubs = GlobalKey();
   final _keyMust = GlobalKey();
+  final _keyDailyTodo = GlobalKey();
   // 将来CF予測カードの「支払日を見直す」からマネーカレンダーへスクロールする。
   final _keyCalendar = GlobalKey();
   // 将来CF予測の安全余裕(見込み残高がこれを下回る時期に注意表示)。
@@ -448,8 +451,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 何度も 1 分超のプレミアム生成 (直列 4 プロバイダ) が走る。この時間内は
   /// 同日最新の保存済み分析を再利用し、即時反映したい場合のみ手動の
   /// 「AI要約を更新」(force) を使う。
-  static const Duration _assetManagementAiSummaryAutoRefreshCooldown =
-      Duration(minutes: 60);
+  static const Duration _assetManagementAiSummaryAutoRefreshCooldown = Duration(
+    minutes: 60,
+  );
 
   /// 直近の AI 要約「生成試行」時刻を端末に残す pref キー (基準日|ISO)。
   /// 成功分析は履歴テーブルに保存され再利用できるが、ai-hub の 500 等で失敗した
@@ -875,6 +879,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 月をまたいだ負債トレンド(リボ複利・残高増加)判定のための口座別残高履歴。
   final AssetAccountBalanceHistoryStore _assetBalanceHistoryStore =
       const AssetAccountBalanceHistoryStore();
+  // 「今日やること」ToDo(登録+完了チェック+日々の完遂ログ)。
+  // やらずに寝たタスクは翌日の借金という思想で、繰り越し日数と実績を細木数子AIへ渡す。
+  final DailyTodoStore _dailyTodoStore = const DailyTodoStore();
+  List<DailyTodoTask> _dailyTodos = <DailyTodoTask>[];
+  List<DailyTodoCompletionLogEntry> _dailyTodoLog =
+      <DailyTodoCompletionLogEntry>[];
+  bool _isLoadingDailyTodos = false;
   // 前月末の口座別残高(accountId -> 残高絶対値)。非同期ロードでキャッシュ。
   Map<String, double> _assetDebtTrendPriorBalances = const <String, double>{};
   // 上記キャッシュが対象としている月キー(月跨ぎでの取り違え防止)。
@@ -1087,6 +1098,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchRecentFlows();
     _fetchSubscriptions();
     _fetchMustTasks();
+    unawaited(_loadDailyTodos());
     _loadDisplayMode();
     _loadMainAccount();
     unawaited(_loadHouseholdTrackerPublishing());
@@ -1221,8 +1233,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _openProfileSettingsForAssetManagement() async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-          settings: const RouteSettings(name: '/profile-settings'),
-          builder: (_) => const ProfileSettingsPage()),
+        settings: const RouteSettings(name: '/profile-settings'),
+        builder: (_) => const ProfileSettingsPage(),
+      ),
     );
     if (!mounted) {
       return;
@@ -1299,8 +1312,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // に留まり、支払済みチェック等の月次stateを保持する(暦の給料日では切り替えない)。
     // マーカー未設定(初回)は当日サイクルを採用。load/save/sync すべてこの実効月を
     // 共有するため、ウィンドウ中の編集も前サイクルへ対称に書かれる(非対称消失なし)。
-    final dateCycleKey =
-        AssetLiabilityMonthlyStateStore.formatMonthKey(dateCycle);
+    final dateCycleKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+      dateCycle,
+    );
     if (!AssetSalaryResetMarkerStore.isResetPending(
       dateCycleKey: dateCycleKey,
       ackedCycleKey: _ackedResetCycleKey,
@@ -1541,8 +1555,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if ((flow['action_type']?.toString() ?? '') != 'conquer') {
         continue;
       }
-      final occurredAt =
-          DateTime.tryParse(flow['occurred_at']?.toString() ?? '')?.toLocal();
+      final occurredAt = DateTime.tryParse(
+        flow['occurred_at']?.toString() ?? '',
+      )?.toLocal();
       if (occurredAt == null) {
         continue;
       }
@@ -4198,8 +4213,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     var selectedDate = existing?.date ?? _now;
     var received = existing?.received ?? false;
-    final destinationOptions =
-        incomeDestinationAccountOptions(workbook.accounts);
+    final destinationOptions = incomeDestinationAccountOptions(
+      workbook.accounts,
+    );
     // 候補に無い入金先IDは保持しない (Dropdown の value 整合を保つ)。
     final destinationIds = destinationOptions.map((a) => a.id).toSet();
     var selectedDestinationId =
@@ -4349,8 +4365,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final dayController = TextEditingController(
       text: initial == null ? '' : initial.dayOfMonth.toString(),
     );
-    final destinationOptions =
-        incomeDestinationAccountOptions(workbook.accounts);
+    final destinationOptions = incomeDestinationAccountOptions(
+      workbook.accounts,
+    );
     // 候補に無い入金先IDは保持しない(Dropdown の値整合を保つ)。
     final destinationIds = destinationOptions.map((a) => a.id).toSet();
     var selectedDestinationId =
@@ -6766,9 +6783,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     if (amounts.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('同額で記録できる未更新口座はありません')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('同額で記録できる未更新口座はありません')));
       return;
     }
 
@@ -6809,8 +6826,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ]);
 
       setState(() {
-        final todayMap =
-            _assetData.putIfAbsent(today, () => <String, double>{});
+        final todayMap = _assetData.putIfAbsent(
+          today,
+          () => <String, double>{},
+        );
         amounts.forEach((type, amount) => todayMap[type] = amount);
         _updateLastUpdatedDates();
         _sortAssetTypes();
@@ -8314,6 +8333,421 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  // ===== 「今日やること」ToDo =====
+  //
+  // 思想: やらずに寝たタスクは翌日の借金。未完了で予定日を過ぎたタスクは
+  // 「繰り越し(借金)」として日数付きで重く表示し、完遂ログは細木数子AIへ渡す。
+  // 永続化はローカル(SharedPreferences)+ asset_pref_mirror(pref_key='daily_todo')の
+  // 軽量ミラーで、DBマイグレーション不要・端末跨ぎ同期。
+
+  static const String _dailyTodoMirrorKey = 'daily_todo';
+
+  Future<void> _loadDailyTodos() async {
+    if (mounted) {
+      setState(() => _isLoadingDailyTodos = true);
+    }
+    try {
+      final snapshot = await _dailyTodoStore.load();
+      if (mounted) {
+        setState(() {
+          _dailyTodos = _orderedDailyTodos(snapshot.tasks);
+          _dailyTodoLog = snapshot.log;
+          _isLoadingDailyTodos = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoadingDailyTodos = false);
+      }
+    }
+    // ローカル反映後に他端末のミラーを取り込む(空でも実行してリモートを拾う)。
+    unawaited(_restoreDailyTodosFromMirror());
+  }
+
+  /// 予定日の古い順→未完了を先に、という並びに整える(繰り越し借金を上へ)。
+  List<DailyTodoTask> _orderedDailyTodos(List<DailyTodoTask> tasks) {
+    final ordered = List<DailyTodoTask>.from(tasks);
+    ordered.sort((a, b) {
+      if (a.completed != b.completed) {
+        return a.completed ? 1 : -1;
+      }
+      final byDate = a.plannedDate.compareTo(b.plannedDate);
+      if (byDate != 0) {
+        return byDate;
+      }
+      return a.title.compareTo(b.title);
+    });
+    return ordered;
+  }
+
+  /// ローカルへ保存し、ミラーへ退避する(端末跨ぎ同期)。
+  Future<void> _persistDailyTodos() async {
+    await _dailyTodoStore.save(
+      tasks: _dailyTodos,
+      log: _dailyTodoLog,
+      updatedAt: _now,
+    );
+    unawaited(_mirrorDailyTodos());
+  }
+
+  Future<void> _mirrorDailyTodos() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final value = await _dailyTodoStore.encodeMirror();
+      if (value == null) {
+        return;
+      }
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _dailyTodoMirrorKey,
+        'value': value,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('daily todo mirror upsert failed: $e');
+    }
+  }
+
+  Future<void> _restoreDailyTodosFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', _dailyTodoMirrorKey);
+      if (rows.isEmpty) {
+        return;
+      }
+      final result = await _dailyTodoStore.mergeRemote(rows.first['value']);
+      if (!result.changed || !mounted) {
+        return;
+      }
+      setState(() {
+        _dailyTodos = _orderedDailyTodos(result.snapshot.tasks);
+        _dailyTodoLog = result.snapshot.log;
+      });
+    } catch (e) {
+      debugPrint('daily todo mirror restore failed: $e');
+    }
+  }
+
+  Future<void> _addDailyTodo() async {
+    final titleController = TextEditingController();
+    var plannedDate = DateTime(_now.year, _now.month, _now.day);
+    final added = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('今日やることを追加'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: 'やること (例: 請求書の確認・30分運動)',
+                  ),
+                  onSubmitted: (_) => Navigator.pop(context, true),
+                ),
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: plannedDate,
+                      firstDate: DateTime(_now.year - 1),
+                      lastDate: DateTime(_now.year + 2),
+                    );
+                    if (date != null) {
+                      setDialogState(() => plannedDate = date);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '予定日: ${DateFormat('yyyy/MM/dd').format(plannedDate)}',
+                        ),
+                        Icon(
+                          Icons.calendar_today,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('追加'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    if (added != true) {
+      return;
+    }
+    final title = titleController.text.trim();
+    if (title.isEmpty) {
+      return;
+    }
+    final task = DailyTodoTask(
+      id: 'todo_${DateTime.now().microsecondsSinceEpoch}',
+      title: title,
+      plannedDate: plannedDate,
+    );
+    setState(() {
+      _dailyTodos = _orderedDailyTodos(<DailyTodoTask>[..._dailyTodos, task]);
+    });
+    await _persistDailyTodos();
+  }
+
+  Future<void> _toggleDailyTodo(DailyTodoTask task, bool completed) async {
+    final now = DateTime.now();
+    final previousCompletedAt = task.completedAt;
+    final updated = task.copyWith(
+      completed: completed,
+      completedAt: completed ? now : null,
+    );
+    final nextLog = List<DailyTodoCompletionLogEntry>.from(_dailyTodoLog);
+    if (completed) {
+      nextLog.add(
+        DailyTodoCompletionLogEntry(
+          dateKey: dailyTodoDateKey(now),
+          title: task.title,
+          completedAt: now,
+        ),
+      );
+    } else if (previousCompletedAt != null) {
+      // 完了取り消しは、その完了で積んだログ行だけ取り除く(実績の捏造/残留を防ぐ)。
+      final removeDateKey = dailyTodoDateKey(previousCompletedAt);
+      nextLog.removeWhere(
+        (entry) => entry.title == task.title && entry.dateKey == removeDateKey,
+      );
+    }
+    setState(() {
+      _dailyTodos = _orderedDailyTodos(
+        _dailyTodos
+            .map((t) => t.id == task.id ? updated : t)
+            .toList(growable: false),
+      );
+      _dailyTodoLog = nextLog;
+    });
+    await _persistDailyTodos();
+  }
+
+  Future<void> _deleteDailyTodo(DailyTodoTask task) async {
+    setState(() {
+      _dailyTodos =
+          _dailyTodos.where((t) => t.id != task.id).toList(growable: false);
+    });
+    await _persistDailyTodos();
+  }
+
+  /// 現在のタスク・完遂ログから細木数子AI/UI用の要約を算出する。
+  DailyTodoDigest _currentDailyTodoDigest() {
+    return DailyTodoDigest.fromState(
+      tasks: _dailyTodos,
+      log: _dailyTodoLog,
+      now: _now,
+    );
+  }
+
+  // 「今日やること」カード。やらずに寝たタスクは翌日の借金、という思想を
+  // 繰り越し日数で可視化し、こなした実績は細木数子AIの行動アドバイス材料にする。
+  Widget _buildDailyTodoCard() {
+    final digest = _currentDailyTodoDigest();
+    final today = DateTime(_now.year, _now.month, _now.day);
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.event_available, color: Color(0xFF4F46E5)),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '今日やること',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Text(
+              'やらずに寝たタスクは、明日への借金。今日のうちにチェックを入れて片づけよ。'
+              '日々こなした実績は細木数子AIの行動アドバイスに使われる。',
+              style: TextStyle(
+                fontSize: 11,
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildDailyTodoSummaryChips(digest),
+            const SizedBox(height: 8),
+            if (_isLoadingDailyTodos)
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_dailyTodos.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  'まだ登録がありません。まず今日やることを1つ登録して、'
+                  'やり切ってから寝ましょう。',
+                  style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _dailyTodos.length,
+                itemBuilder: (context, index) =>
+                    _buildDailyTodoRow(_dailyTodos[index], today),
+              ),
+            TextButton.icon(
+              onPressed: _addDailyTodo,
+              icon: const Icon(Icons.add),
+              label: const Text('今日やることを追加'),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF4F46E5),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDailyTodoSummaryChips(DailyTodoDigest digest) {
+    Widget chip(String label, Color color) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withValues(alpha: 0.4)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: color,
+            height: 1.4,
+          ),
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        chip(
+          '本日 ${digest.todayCompleted}/${digest.todayTotal} 完了',
+          const Color(0xFF0D9488),
+        ),
+        if (digest.carriedOverCount > 0)
+          chip(
+            '繰り越し(借金) ${digest.carriedOverCount}件・最長${digest.maxCarryOverDays}日',
+            const Color(0xFFB91C1C),
+          )
+        else
+          chip('繰り越しの借金なし', const Color(0xFF0D9488)),
+        if (digest.activeStreakDays > 0)
+          chip('連続${digest.activeStreakDays}日実行中', const Color(0xFFFF6B35)),
+        chip('直近7日 ${digest.completedLast7Days}件完了', const Color(0xFF4F46E5)),
+      ],
+    );
+  }
+
+  Widget _buildDailyTodoRow(DailyTodoTask task, DateTime today) {
+    final isCarriedOver = task.isCarriedOverAsOf(today);
+    final carryDays = task.carryOverDaysAsOf(today);
+    final String subtitle;
+    final Color subtitleColor;
+    if (task.completed) {
+      final at = task.completedAt;
+      subtitle = at == null
+          ? '完了'
+          : '完了: ${DateFormat('M/d HH:mm').format(at.toLocal())}';
+      subtitleColor = const Color(0xFF0D9488);
+    } else if (isCarriedOver) {
+      subtitle = '$carryDays日前から繰り越し(借金) '
+          '・予定日 ${DateFormat('M/d').format(task.plannedDate)}';
+      subtitleColor = const Color(0xFFB91C1C);
+    } else if (task.isForToday(today)) {
+      subtitle = '今日やること';
+      subtitleColor = const Color(0xFF9CA3AF);
+    } else {
+      subtitle = '予定日 ${DateFormat('yyyy/M/d').format(task.plannedDate)}';
+      subtitleColor = const Color(0xFF9CA3AF);
+    }
+    return CheckboxListTile(
+      value: task.completed,
+      onChanged: (value) => _toggleDailyTodo(task, value ?? false),
+      title: Text(
+        task.title,
+        style: TextStyle(
+          decoration: task.completed ? TextDecoration.lineThrough : null,
+          height: 1.5,
+          fontWeight: isCarriedOver ? FontWeight.w600 : FontWeight.normal,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(color: subtitleColor, fontSize: 12, height: 1.5),
+      ),
+      secondary: IconButton(
+        icon: const Icon(Icons.delete_outline, size: 20),
+        color: const Color(0xFF9CA3AF),
+        tooltip: '削除',
+        onPressed: () => _deleteDailyTodo(task),
+      ),
+      controlAffinity: ListTileControlAffinity.leading,
+      contentPadding: EdgeInsets.zero,
+      dense: true,
+    );
+  }
+
   Future<void> _fetchMustTasks() async {
     setState(() => _isLoadingTasks = true);
     try {
@@ -8980,9 +9414,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(height: 16),
               _buildCashflowForecastCard(assetLiabilityWorkbook),
             ],
-            if (_isSectionShown(
-              AssetManagementSectionId.monthlyDashboard,
-            )) ...[
+            if (_isSectionShown(AssetManagementSectionId.monthlyDashboard)) ...[
               _sectionAnchor(AssetManagementSectionId.monthlyDashboard),
               _buildMonthlyDashboardGrid(assetLiabilityWorkbook),
             ],
@@ -9405,8 +9837,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         if (_isIncomeActionType(flow['action_type']?.toString() ?? ''))
           SalaryDepositFlowObservation(
             amount: ((flow['amount'] as num?)?.toDouble() ?? 0).abs(),
-            occurredAt: DateTime.tryParse(flow['occurred_at']?.toString() ?? '')
-                    ?.toLocal() ??
+            occurredAt: DateTime.tryParse(
+                  flow['occurred_at']?.toString() ?? '',
+                )?.toLocal() ??
                 _now,
           ),
     ];
@@ -10466,7 +10899,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 登録済みサブスクを「経由ソース × 請求先カード」で集計し、カード名ラベルへ解決する。
   /// 同じ Apple経由でも請求先カードが分かれる場合に、各カードの集約請求と突き合わせる。
   Map<String, List<GatewayCardBreakdownLine>> _subscriptionGatewayCardBreakdown(
-      List<AssetLiabilityAccount> accounts) {
+    List<AssetLiabilityAccount> accounts,
+  ) {
     final accountNames = <String, String>{
       for (final account in accounts) account.id: account.name,
     };
@@ -12799,8 +13233,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (rows.isEmpty) {
         return;
       }
-      final changed =
-          await _assetBalanceHistoryStore.mergeRemote(rows.first['value']);
+      final changed = await _assetBalanceHistoryStore.mergeRemote(
+        rows.first['value'],
+      );
       if (!changed || !mounted) {
         return;
       }
@@ -13618,8 +14053,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     setState(() {
       final start = _calendarCycleStart;
       // start.day = 給料日 (clamp 1-28) なので月加算で日あふれしない。
-      _calendarCycleAnchor =
-          DateTime(start.year, start.month + delta, start.day);
+      _calendarCycleAnchor = DateTime(
+        start.year,
+        start.month + delta,
+        start.day,
+      );
       _calendarSelectedDate = null;
     });
   }
@@ -14243,9 +14681,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     Expanded(
                       child: OutlinedButton(
                         key: const Key(
-                            'asset_payment_source_bulk_apply_monthly'),
-                        onPressed: () => Navigator.of(sheetContext)
-                            .pop(_PaymentSourceSaveScope.monthlyOverride),
+                          'asset_payment_source_bulk_apply_monthly',
+                        ),
+                        onPressed: () => Navigator.of(
+                          sheetContext,
+                        ).pop(_PaymentSourceSaveScope.monthlyOverride),
                         child: const Text('今月だけ設定'),
                       ),
                     ),
@@ -14253,9 +14693,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     Expanded(
                       child: FilledButton(
                         key: const Key(
-                            'asset_payment_source_bulk_apply_default'),
-                        onPressed: () => Navigator.of(sheetContext)
-                            .pop(_PaymentSourceSaveScope.defaultSetting),
+                          'asset_payment_source_bulk_apply_default',
+                        ),
+                        onPressed: () => Navigator.of(
+                          sheetContext,
+                        ).pop(_PaymentSourceSaveScope.defaultSetting),
                         child: const Text('毎月の既定にする'),
                       ),
                     ),
@@ -14306,9 +14748,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_saveAssetLiabilityMonthlyState());
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${plan.assignments.length}件の支払いに原資口座を設定しました。'),
-        ),
+        SnackBar(content: Text('${plan.assignments.length}件の支払いに原資口座を設定しました。')),
       );
     }
   }
@@ -14375,9 +14815,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: OutlinedButton.icon(
-                    onPressed: () => unawaited(
-                      _confirmAllAutoDebitsWithoutWarning(entries),
-                    ),
+                    onPressed: () =>
+                        unawaited(_confirmAllAutoDebitsWithoutWarning(entries)),
                     icon: const Icon(Icons.done_all, size: 16),
                     label: Text(
                       '警告のない'
@@ -14738,8 +15177,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // ライブの当月スナップショットを履歴サービスで生成し、未保存でも当月CFを反映する。
     AssetLiabilityMonthlySnapshot? currentMonthSnapshot;
     if (workbook != null) {
-      final monthKey =
-          AssetLiabilityMonthlyStateStore.formatMonthKey(DateTime.now());
+      final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+        DateTime.now(),
+      );
       currentMonthSnapshot = _assetLiabilityHistoryService.buildSnapshot(
         monthKey: monthKey,
         workbook: workbook,
@@ -14766,8 +15206,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget? _assetNetWorthPanelChild(AssetLiabilityWorkbook? workbook) {
     AssetLiabilityMonthlySnapshot? currentMonthSnapshot;
     if (workbook != null) {
-      final monthKey =
-          AssetLiabilityMonthlyStateStore.formatMonthKey(DateTime.now());
+      final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+        DateTime.now(),
+      );
       currentMonthSnapshot = _assetLiabilityHistoryService.buildSnapshot(
         monthKey: monthKey,
         workbook: workbook,
@@ -14781,10 +15222,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!panel.hasData) {
       return null;
     }
-    return AssetNetWorthPanelCard(
-      panel: panel,
-      currencyFormatter: _formatYen,
-    );
+    return AssetNetWorthPanelCard(panel: panel, currencyFormatter: _formatYen);
   }
 
   /// dismiss 済みアラート id をローカルから読み込む (Issue #2475)。
@@ -14880,8 +15318,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               inflow.date.isBefore(cycleEndExclusive),
         ),
     ];
-    final monthSubscriptions =
-        _subscriptionsForRange(cycleStart, cycleEndExclusive);
+    final monthSubscriptions = _subscriptionsForRange(
+      cycleStart,
+      cycleEndExclusive,
+    );
     final debtInputs = <AssetCalendarDebtInput>[
       for (final row in debtRows)
         AssetCalendarDebtInput(
@@ -15093,9 +15533,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       children: [
                         ElevatedButton.icon(
                           key: const Key('asset_salary_inflow_register'),
-                          onPressed: () => _registerSalaryInflowRule(
-                            salarySuggestionAmount,
-                          ),
+                          onPressed: () =>
+                              _registerSalaryInflowRule(salarySuggestionAmount),
                           icon: const Icon(Icons.repeat, size: 16),
                           label: Text(
                             '給料 ${_formatYen(salarySuggestionAmount)} を毎月$_salaryDay日に登録',
@@ -19113,8 +19552,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 判定(リボ複利・残高増加)に供給する。残高が変わったときだけ再記録し、
   /// 前月残高が更新されたときだけ setState で再描画する。
   void _scheduleAssetDebtTrendHistorySync(AssetLiabilityWorkbook workbook) {
-    final monthKey =
-        AssetAccountBalanceHistoryStore.formatMonthKey(workbook.baseDate);
+    final monthKey = AssetAccountBalanceHistoryStore.formatMonthKey(
+      workbook.baseDate,
+    );
     final balances = <String, double>{
       for (final row in workbook.debtMasterRows)
         if (row.balance < 0) row.id: row.balance.abs(),
@@ -19145,8 +19585,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     String signature,
   ) async {
     try {
-      final prior =
-          await _assetBalanceHistoryStore.priorMonthBalances(baseDate);
+      final prior = await _assetBalanceHistoryStore.priorMonthBalances(
+        baseDate,
+      );
       await _assetBalanceHistoryStore.recordMonth(baseDate, balances);
       // 記録した最新履歴を端末跨ぎミラーへ退避（ログイン時のみ実効）。
       unawaited(_mirrorAssetBalanceHistory());
@@ -19174,8 +19615,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     _scheduleAssetLiabilityStateIdMigration(workbook);
     _scheduleAssetDebtTrendHistorySync(workbook);
-    final currentMonthKey =
-        AssetAccountBalanceHistoryStore.formatMonthKey(workbook.baseDate);
+    final currentMonthKey = AssetAccountBalanceHistoryStore.formatMonthKey(
+      workbook.baseDate,
+    );
     // キャッシュ済み前月残高が当月のものでない間は渡さない(取り違え防止)。
     final priorMonthAccountBalances =
         _assetDebtTrendPriorBalancesMonth == currentMonthKey
@@ -19187,6 +19629,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       mainAccountId: _assetManagementMainAccountId,
       minimumSafetyBalance: _minimumSafetyBalance,
       priorMonthAccountBalances: priorMonthAccountBalances,
+      dailyTodoDigest: _currentDailyTodoDigest(),
     );
     final warningColor = workbook.cashAfterScheduledPayments < 0
         ? const Color(0xFFB91C1C)
@@ -19227,6 +19670,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildAssetLiabilitySyncPanel(),
             const SizedBox(height: 12),
             _buildAssetManagementAiAssistantSection(insightReport),
+            const SizedBox(height: 12),
+            Container(key: _keyDailyTodo, child: _buildDailyTodoCard()),
             const SizedBox(height: 12),
             _buildDrinkChallengeCard(workbook),
             const SizedBox(height: 12),
@@ -20798,8 +21243,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 省く。キャッシュ未ロード or 基準日変化時のみ実フェッチする。
   Future<AssetManagementAiAnalysisHistoryEntry?>
       _latestAssetManagementAiAnalysisForBaseDate(DateTime baseDate) async {
-    final baseKey =
-        AssetManagementAiAnalysisHistoryService.reportBaseDateKey(baseDate);
+    final baseKey = AssetManagementAiAnalysisHistoryService.reportBaseDateKey(
+      baseDate,
+    );
     if (_assetManagementLatestForBaseDateCacheLoaded &&
         _assetManagementLatestForBaseDateCacheKey == baseKey) {
       return _assetManagementLatestForBaseDateCache;
@@ -20850,13 +21296,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  Future<void> _recordAssetManagementAiSummaryAttempt(
-    DateTime baseDate,
-  ) async {
+  Future<void> _recordAssetManagementAiSummaryAttempt(DateTime baseDate) async {
     try {
       final store = await SharedPreferences.getInstance();
-      final baseKey =
-          AssetManagementAiAnalysisHistoryService.reportBaseDateKey(baseDate);
+      final baseKey = AssetManagementAiAnalysisHistoryService.reportBaseDateKey(
+        baseDate,
+      );
       await store.setString(
         _assetManagementAiSummaryLastAttemptPrefKey,
         '$baseKey|${DateTime.now().toIso8601String()}',
@@ -21523,10 +21968,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               height: 1.4,
             ),
           ),
-          buildStage(
-            '今日やること（${plan.todaySteps.length}つだけ）',
-            plan.todaySteps,
-          ),
+          buildStage('今日やること（${plan.todaySteps.length}つだけ）', plan.todaySteps),
           if (plan.todaySteps.isNotEmpty) ...[
             const SizedBox(height: 6),
             const Text(
@@ -21582,9 +22024,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// 「借金しない宣言」の遵守状況（達成は緑で称賛、違反は赤で具体指摘）を描画する。
-  Widget _buildAssetManagementDisciplineCard(
-    AssetDebtDisciplineReport report,
-  ) {
+  Widget _buildAssetManagementDisciplineCard(AssetDebtDisciplineReport report) {
     final compliant = report.isCompliant;
     final headerColor =
         compliant ? const Color(0xFF0D9488) : const Color(0xFFB91C1C);
@@ -22070,10 +22510,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
@@ -22118,9 +22555,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }) async {
     if (_advisoryBriefingPosting) return;
     if (!_householdTrackerScheduleAllowed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('X API投稿は管理者のみ実行できます')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('X API投稿は管理者のみ実行できます')));
       return;
     }
     final snapshot = advisoryBriefingSnapshotFrom(
@@ -22172,8 +22609,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('投稿に失敗しました: $error')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('投稿に失敗しました: $error')));
     } finally {
       if (mounted) setState(() => _advisoryBriefingPosting = false);
     }
@@ -22252,17 +22690,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (queuedUserId == null) {
       return Future<void>.error(StateError('ログインが必要です'));
     }
-    final queued = _householdTrackerMirrorWriteQueue.then<void>(
-      (_) {
-        if (_supabase.auth.currentUser?.id != queuedUserId) {
-          throw StateError('ユーザーが切り替わったため同期を中止しました');
-        }
-        return _saveHouseholdTrackerPublishMirror(
-          snapshot,
-          userId: queuedUserId,
-        );
-      },
-    );
+    final queued = _householdTrackerMirrorWriteQueue.then<void>((_) {
+      if (_supabase.auth.currentUser?.id != queuedUserId) {
+        throw StateError('ユーザーが切り替わったため同期を中止しました');
+      }
+      return _saveHouseholdTrackerPublishMirror(snapshot, userId: queuedUserId);
+    });
     _householdTrackerMirrorWriteQueue = queued.then<void>(
       (_) {},
       onError: (Object _, StackTrace __) {},
@@ -22295,14 +22728,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (_householdTrackerSnapshotSyncSignature == signature) return;
     _householdTrackerSnapshotSyncSignature = signature;
     unawaited(
-      _queueHouseholdTrackerPublishMirror(snapshot).catchError(
-        (Object error) {
-          if (_householdTrackerSnapshotSyncSignature == signature) {
-            _householdTrackerSnapshotSyncSignature = null;
-          }
-          debugPrint('household tracker snapshot sync failed: $error');
-        },
-      ),
+      _queueHouseholdTrackerPublishMirror(snapshot).catchError((Object error) {
+        if (_householdTrackerSnapshotSyncSignature == signature) {
+          _householdTrackerSnapshotSyncSignature = null;
+        }
+        debugPrint('household tracker snapshot sync failed: $error');
+      }),
     );
   }
 
@@ -22311,9 +22742,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) async {
     if (_householdTrackerScheduleSaving) return;
     if (!_householdTrackerScheduleAllowed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('週次投稿の設定は管理者のみ変更できます')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('週次投稿の設定は管理者のみ変更できます')));
       return;
     }
     if (!_salaryDayConfigured) {
@@ -22372,10 +22803,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         // 最新snapshotを先に保存し、成功後にだけ投稿同意を有効化する。
         await _queueHouseholdTrackerPublishMirror(snapshot);
       }
-      await _saveHouseholdTrackerPublishConsent(
-        nextEnabled,
-        userId: userId,
-      );
+      await _saveHouseholdTrackerPublishConsent(nextEnabled, userId: userId);
       if (!mounted) return;
       setState(() {
         _householdTrackerAutoPostEnabled = nextEnabled;
@@ -22383,16 +22811,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            nextEnabled ? '匿名家計トラッカーの週次投稿を有効にしました' : '週次投稿を停止しました',
-          ),
+          content: Text(nextEnabled ? '匿名家計トラッカーの週次投稿を有効にしました' : '週次投稿を停止しました'),
         ),
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('週次投稿の設定を保存できませんでした: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('週次投稿の設定を保存できませんでした: $error')));
     } finally {
       if (mounted) setState(() => _householdTrackerScheduleSaving = false);
     }
@@ -22409,8 +22835,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
       return;
     }
-    final currentMonthKey =
-        AssetAccountBalanceHistoryStore.formatMonthKey(workbook.baseDate);
+    final currentMonthKey = AssetAccountBalanceHistoryStore.formatMonthKey(
+      workbook.baseDate,
+    );
     // キャッシュ済み前月残高が当月のものでない間は渡さない(取り違え防止)。
     final priorMonthAccountBalances =
         _assetDebtTrendPriorBalancesMonth == currentMonthKey
@@ -22434,9 +22861,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) async {
     if (_householdTrackerPosting) return;
     if (!_householdTrackerScheduleAllowed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('X API投稿は管理者のみ実行できます')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('X API投稿は管理者のみ実行できます')));
       return;
     }
     if (!_salaryDayConfigured) {
@@ -22495,8 +22922,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('投稿に失敗しました: $error')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('投稿に失敗しました: $error')));
     } finally {
       if (mounted) setState(() => _householdTrackerPosting = false);
     }
@@ -24046,8 +24474,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 照合グループのホストは shoppingDebt も正当（planning service の
     // isCardBillingHostKind と同じ集合）。creditCard 限定だと解消アクション
     // からの選択がサイレントに別カードへフォールバックし誤取込を招く。
-    final cardOptions =
-        _cardBillingAccountOptions(workbook, includeShoppingDebt: true);
+    final cardOptions = _cardBillingAccountOptions(
+      workbook,
+      includeShoppingDebt: true,
+    );
     final selected = _selectedCardStatementBillingAccountId;
     final validSelected = selected != null &&
         cardOptions.any((account) => account.id == selected);
@@ -27143,17 +27573,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     setState(() {
       _highlightedDebtCardId = accountId;
     });
-    _debtCardHighlightTimer = Timer(
-      const Duration(milliseconds: 2600),
-      () {
-        if (!mounted) {
-          return;
-        }
-        setState(() {
-          _highlightedDebtCardId = null;
-        });
-      },
-    );
+    _debtCardHighlightTimer = Timer(const Duration(milliseconds: 2600), () {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _highlightedDebtCardId = null;
+      });
+    });
   }
 
   /// 削除した支払日上書きのトゥームストーン (#part293: MirrorTombstoneStore 3例目)。
@@ -31278,10 +31705,7 @@ class _PaymentCheckGuideDialogState extends State<_PaymentCheckGuideDialog> {
 /// [active] が true の間だけ枠が明滅する。false のときは子をそのまま描画するが、
 /// レイアウトのずれを避けるため常に幅 2px の枠 (非アクティブ時は透明) を確保する。
 class _DebtPaidCheckboxHighlight extends StatefulWidget {
-  const _DebtPaidCheckboxHighlight({
-    required this.active,
-    required this.child,
-  });
+  const _DebtPaidCheckboxHighlight({required this.active, required this.child});
 
   final bool active;
   final Widget child;
