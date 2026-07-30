@@ -21,7 +21,7 @@ abstract interface class IntegrationRegistryServiceContract {
 class SupabaseIntegrationRegistryService
     implements IntegrationRegistryServiceContract {
   const SupabaseIntegrationRegistryService({SupabaseClient? client})
-    : _clientOverride = client;
+      : _clientOverride = client;
 
   static const String referenceApiAction = 'api.integrations.snapshot';
 
