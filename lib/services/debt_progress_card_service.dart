@@ -102,19 +102,63 @@ class DebtProgressCardService {
     return lines.join('\n');
   }
 
+  /// カード画像を置く Storage 上のパス。
+  ///
+  /// 🔴 先頭セグメントは **必ず userId**。`debt-progress-cards` の RLS は
+  /// `(storage.foldername(name))[1] = auth.uid()` で他人のフォルダへの
+  /// 書き込みを弾いているため、ここが崩れると保存自体が失敗する。
+  ///
+  /// 同月に作り直しても衝突しないよう [uniqueSuffix] を末尾に付ける
+  /// (upsert にすると「投稿済みの画像が後から差し替わる」事故が起きる)。
+  String buildCardStoragePath({
+    required String userId,
+    required DateTime month,
+    required String uniqueSuffix,
+  }) {
+    final ym = '${month.year}${month.month.toString().padLeft(2, '0')}';
+    return '$userId/debt_progress_${ym}_$uniqueSuffix.png';
+  }
+
+  /// 画像の代替テキスト (X の alt)。
+  ///
+  /// 🔒 カードに描かれているのと同じ範囲だけを書く。alt は画像より機械可読な
+  /// ので、ここに余分な情報を足すと開示範囲が静かに広がる。
+  String buildCardAltText(DebtProgressCardData card,
+      {required DateTime month}) {
+    final parts = <String>[
+      '${month.year}年${month.month}月の返済報告カード',
+      '残債 ${_yen(card.totalDebt)}',
+      '今月の返済 ${_yen(card.monthlyPayment)}',
+    ];
+    final payoff = card.payoffLabel;
+    parts.add(payoff == null ? '現在の返済額では完済しない見込み' : '完済まであと$payoff');
+    return parts.join(' / ');
+  }
+
   /// X への投稿ペイロードを組み立てる。
   ///
   /// 🔴 [text] には**ユーザーが編集した後の文面**を渡すこと。ここで
   /// 下書きを再生成すると、本人が直した内容が捨てられて意図しない文が
   /// 公開される (HITL が形骸化する)。
+  ///
+  /// [mediaUrl] を渡すと画像付き投稿になる。null/空なら**テキストのみ**で
+  /// 投稿する — 画像のアップロードに失敗しても投稿自体は成立させたい
+  /// (数字が伝われば報告として機能するため)。
   Map<String, dynamic> buildPostPayload(
     DebtProgressCardData card, {
     required DateTime month,
     String? text,
+    String? mediaUrl,
   }) {
+    final resolvedMedia = (mediaUrl ?? '').trim();
     return <String, dynamic>{
       'action': 'x.post',
       'text': text ?? buildDraftText(card, month: month),
+      if (resolvedMedia.isNotEmpty) ...<String, dynamic>{
+        'mediaUrl': resolvedMedia,
+        'mediaType': 'image',
+        'mediaAlt': buildCardAltText(card, month: month),
+      },
       'source': 'debt_progress_card',
       'variant': 'debt_progress_report',
       'utmContent': 'debt_progress_card',
