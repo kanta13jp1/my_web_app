@@ -79,8 +79,13 @@ class IqScoreDial extends StatelessWidget {
               color: DesignTokens.indigo.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(DesignTokens.radiusCircle),
             ),
+            // 実在の規準集団と比べた順位ではなく、仮定した正規分布上の位置。
+            // 「上位X%」と言い切ると存在しない比較対象を含意してしまう。
+            // さらに信頼区間の幅を考えると小数第1位に意味は無い
+            // (IQ110 の CI 内でパーセンタイルは 4%〜66% まで動く) ため
+            // 整数の概数で示す。
             child: Text(
-              '上位 ${(100 - percentile).toStringAsFixed(1)}%',
+              '仮定分布上では上位 ${(100 - percentile).round()}% 前後',
               style: const TextStyle(
                 color: DesignTokens.indigoLight,
                 fontSize: 13,
