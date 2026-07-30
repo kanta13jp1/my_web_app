@@ -19,8 +19,14 @@
 | `growth-hub` | グロース指標 / share track / command analyze (= part 112 EF 移行) |
 | `admin-hub` | 競合可用性チェック (`competitor.check`) ほか管理者向け統合 |
 | `ai-hub` | AI 機能統合 (= ai-assistant / daily-judgment / ai-writing-assistant / customer-feedback) |
-| `enterprise-hub` | A/B テスト / アクセス制御 / その他企業機能統合 |
+| `enterprise-hub` | A/B テスト / アクセス制御 / その他企業機能統合 (= 旧 42 本 / HR・analytics・CI・AI-writing・CRM 等) |
+| `app-hub` | アプリ基盤統合 (= 旧 17 本 / subscription・billing・email・gamification・calendar・kanban・chat・team-task・file-storage・expense・time-tracker・automation-workflows・webhook・api-rate-limiter 等) |
+| `media-hub` | メディア統合 (= 旧 18 本 / video・audio・whiteboard・esign 等 + music-collaboration) |
+| `social-commerce-hub` | SNS / EC 統合 (= 旧 26 本 / SNS・EC・payment・loyalty 等) |
+| `lifestyle-hub` | ライフスタイル統合 (= 旧 29 本 / health・travel・IoT・notification 等) |
 | `memory-search-hub` | BM25 + vector search (= 4 actions / part 115 PS#5 実装) |
+
+> 旧 EF 本数は `deploy-prod.yml` 末尾の「Hub対応表」コメントより。`tools-hub` は 30 本。
 
 ## サポート系 EF
 
@@ -68,26 +74,48 @@ action 名は旧 EF 名とは異なり、hub 内はドット区切りに統一�
 | `post-x-update` | `schedule-hub` | `x.post` | X (Twitter) 自動投稿 (`@kanta13jp1`) / `dryRun` 対応。媒体付きは `x.post_with_media` |
 
 > ⚠️ `scripts/audit_hub_migration_completeness.py` の `HUB_ACTIONS` は **hub の割り当ては
-> 正しいが action 名が旧 EF 名のまま**で、`hub_guidance()` は実在しない action を案内する
-> (例: `core-hub` に `development-achievements` という action は無い)。同表に
-> `reply-support-request` の項目自体が欠落している。**正は上表**。
+> 正しいが action 名が旧 EF 名のまま**で、`hub_guidance()` が実在しない action を案内して
+> いた (例: `core-hub` に `development-achievements` という action は無い)。
+> `reply-support-request` は項目自体が欠落していた。#4404 で、実装を読んで確認できた
+> ものだけを `VERIFIED_ACTIONS` に置き、未確認は推測を出さず「hub の switch を見ろ」と
+> 案内する形に修正済み。**正は上表**。
 
-### 🔴 未修正: 消えた EF を今も叩いている呼び出し元 (2026-07-29 時点)
+### 消えた EF を叩いていた呼び出し元 5 件 (2026-07-29 / 修正 PR あり)
 
-上表の移設は完了しているが、以下は**旧 EF 名のまま実行される経路**が残っている。
-いずれも失敗が握り潰されるため CI もダッシュボードも緑のままになる。
+上表の移設は完了していたが、**旧 EF 名のまま実行される経路が 5 件残っていた**。
+いずれも失敗が握り潰される作りで、CI もダッシュボードも緑のままだった
+(本番 HTTP で 404 を実測)。
 
-| 呼び出し元 | 叩いている名前 | 症状 |
-| --- | --- | --- |
-| `.github/workflows/cs-check.yml` Step 5 | `/functions/v1/development-achievements` | Supabase 死活 probe が常に 404。判定は `>=500` / `000` / `403` のみなので **404 は健全と見なされ dead-green** |
-| `supabase/functions/guitar-recording-studio/index.ts` | `/functions/v1/post-x-update` | 録音公開時の X 投稿が 404。`console.warn` で握り潰され呼び出し側は成功扱い |
-| `lib/pages/viral_ad_generator_page.dart` `_postToX()` | `post-x-update` / `x-media-post` | 両分岐とも消えた EF。`invoke(endpoint, ...)` と**変数経由**のため後述の監査が検出できない |
+| 呼び出し元 | 叩いていた名前 | 症状 | 修正 |
+| --- | --- | --- | --- |
+| `.github/workflows/cs-check.yml` Step 5 | `/functions/v1/development-achievements` | Supabase 死活 probe が常に 404。判定は `>=500` / `000` / `403` のみなので **404 は健全と見なされ dead-green** | #4388 |
+| `.github/workflows/feedback-issue-resolved.yml` | `/functions/v1/issue-auto-resolver` | Issue 解決記録が 404。`\|\| true` で無音 | #4388 |
+| `.github/workflows/blog-publish.yml` Step 6 | `/functions/v1/schedule_task_runs` | **EF ですらなくテーブル名** (`/rest/v1/` が正)。他 10 workflow は正しく、ここだけ誤り。`-o /dev/null` + `\|\| true` で完全に無音 = 一度も記録されていない | #4388 |
+| `lib/pages/viral_ad_generator_page.dart` `_postToX()` | `post-x-update` / `x-media-post` | 両分岐とも消えた EF。加えて `success` を見ておらず失敗でも「投稿完了」と表示 | #4388 |
+| `supabase/functions/guitar-recording-studio/index.ts` | `/functions/v1/post-x-update` | 録音公開時の X 投稿が 404。`console.warn` で握り潰され呼び出し側は成功扱い | #4404 |
 
-**なぜ既存ガードで捕まらないか** — `audit_hub_migration_completeness.py` は
-(1) 走査対象が `lib/` と `scripts/` のみで `.github/` と `supabase/functions/` を見ない、
-(2) `invoke()` の検出が**文字列リテラル前提**の正規表現なので変数経由の呼び出しを素通りする。
-新しい stale 参照を足さないためには、この 2 つの穴を塞ぐか、`git grep` で
-`functions/v1/<名前>` と `invoke(` の両方を人手で確認する。
+**probe 先を替えるだけでは直らない** — `health-check` は `status: "unhealthy"` でも
+**HTTP 200 をハードコードで返す**。status コードだけ見る実装のままだと probe 先を
+変えても dead-green が続くので、body の `status` と失敗した check 名まで読む必要がある。
+
+**なぜ既存ガードで捕まらなかったか** — `audit_hub_migration_completeness.py`
+(= `stale-ef-completeness-check.yml` の CI ゲート) には穴が 3 つあった。
+上表 5 件のうち **1 件も検出できていなかった**。
+
+1. **走査範囲** — `lib/` と `scripts/` のみで `.github/` と `supabase/functions/` を
+   見ない。表の 1・2・3・5 は原理的に検出不可能。走査拡張子にも `.yml` が無かった。
+2. **リテラル前提** — `invoke()` 検出が文字列リテラル前提で、
+   `endpoint = '...'` → `invoke(endpoint, ...)` の**変数経由**を素通り (表の 4)。
+3. **`DEAD_LIST` 自体が不完全** — `development-achievements` /
+   `notify-feature-request` / `personal-dashboard` / `system-status` /
+   `app-analytics-dashboard` が未掲載。**これが表 1 を見逃した直接の原因**。
+
+#4404 で 3 つとも塞いだ。検出基準は「`DEAD_LIST` に載っているか」ではなく
+**「`supabase/functions/` にディレクトリが実在するか」**= ファイルシステムの実態に
+変えたので、手で維持する一覧の更新漏れがそのまま検出漏れにならない。
+
+> 手で確認する場合は `git grep` で `functions/v1/<名前>` と `invoke(` の両方を見る。
+> **`invoke(` はリテラルだけでなく変数経由も追う**こと。
 
 ## 設計原則
 
