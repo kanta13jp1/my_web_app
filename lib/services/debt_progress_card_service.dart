@@ -123,8 +123,10 @@ class DebtProgressCardService {
   ///
   /// 🔒 カードに描かれているのと同じ範囲だけを書く。alt は画像より機械可読な
   /// ので、ここに余分な情報を足すと開示範囲が静かに広がる。
-  String buildCardAltText(DebtProgressCardData card,
-      {required DateTime month}) {
+  String buildCardAltText(
+    DebtProgressCardData card, {
+    required DateTime month,
+  }) {
     final parts = <String>[
       '${month.year}年${month.month}月の返済報告カード',
       '残債 ${_yen(card.totalDebt)}',
