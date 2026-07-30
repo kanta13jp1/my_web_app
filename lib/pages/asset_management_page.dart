@@ -130,6 +130,21 @@ enum AssetManagementInitialFocus {
 
 enum AssetDebtPlannerMode { ask, code }
 
+/// セクション検索の1件 (カード名/項目名 + 飛び先アクション)。
+class _AssetSectionSearchEntry {
+  const _AssetSectionSearchEntry({
+    required this.label,
+    required this.sublabel,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final String sublabel;
+  final IconData icon;
+  final VoidCallback onTap;
+}
+
 enum _AssetTrendWindow { oneMonth, threeMonths, sixMonths, all }
 
 enum _CardBillingSaveScope { defaultSetting, monthlyOverride }
@@ -414,6 +429,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _keyIncomePlanSection = GlobalKey();
   // 負債コントロールレビュー (原資未設定一覧) へのスクロール用 (原資未設定バナーからのジャンプ)。
   final _keyDebtControlReviewSection = GlobalKey();
+  // セクション検索(アプリバーの🔍)からの各カードへのジャンプ用アンカー。
+  // 縦長ページで目的のカードを探すのが大変なため、名前で検索して飛べるようにする
+  // (Flutter Web は CanvasKit 描画で DOM にテキストが無く、ブラウザ検索が効かない)。
+  final Map<AssetManagementSectionId, GlobalKey> _sectionAnchorKeys =
+      <AssetManagementSectionId, GlobalKey>{};
 
   Timer? _deadlineTimer;
   DateTime _now = DateTime.now();
@@ -5627,6 +5647,146 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  GlobalKey _sectionAnchorKey(AssetManagementSectionId id) {
+    return _sectionAnchorKeys.putIfAbsent(id, () => GlobalKey());
+  }
+
+  /// セクション先頭に置く高さ0のアンカー。検索からここへ ensureVisible する。
+  Widget _sectionAnchor(AssetManagementSectionId id) {
+    return SizedBox(key: _sectionAnchorKey(id), height: 0);
+  }
+
+  /// カード名・項目名で検索して該当カードへ飛ぶボトムシートを開く。
+  void _openSectionSearch() {
+    final rootContext = context;
+    showModalBottomSheet<void>(
+      context: rootContext,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        var query = '';
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final entries = _sectionSearchEntries(query);
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      prefixIcon: Icon(Icons.search),
+                      hintText: 'カード名・項目名で検索 (例: 定期固定費, Pontaパス)',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    onChanged: (value) => setSheetState(() => query = value),
+                  ),
+                  const SizedBox(height: 8),
+                  Flexible(
+                    child: entries.isEmpty
+                        ? const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 24),
+                            child: Text(
+                              '一致するカード・項目がありません。'
+                              '表示設定で隠しているカードは検索に出ません。',
+                              style: TextStyle(color: Color(0xFF64748B)),
+                            ),
+                          )
+                        : ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: entries.length,
+                            itemBuilder: (context, index) {
+                              final entry = entries[index];
+                              return ListTile(
+                                dense: true,
+                                leading: Icon(entry.icon, size: 20),
+                                title: Text(entry.label),
+                                subtitle: Text(entry.sublabel),
+                                onTap: () {
+                                  Navigator.of(sheetContext).pop();
+                                  WidgetsBinding.instance.addPostFrameCallback(
+                                    (_) => entry.onTap(),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// 検索クエリに一致するジャンプ候補 (セクション + 登録項目) を返す。
+  /// クエリ空なら表示中の全セクションを一覧にする (ジャンプメニュー兼用)。
+  List<_AssetSectionSearchEntry> _sectionSearchEntries(String query) {
+    final q = query.trim().toLowerCase();
+    bool matches(String text) => q.isEmpty || text.toLowerCase().contains(q);
+
+    final entries = <_AssetSectionSearchEntry>[];
+
+    // 1) セクション (表示中のみ)。
+    for (final id in AssetManagementSectionId.values) {
+      if (!_isSectionShown(id)) continue;
+      if (!matches(id.label)) continue;
+      entries.add(
+        _AssetSectionSearchEntry(
+          label: id.label,
+          sublabel: 'セクション',
+          icon: Icons.view_agenda_outlined,
+          onTap: () => _scrollTo(_sectionAnchorKey(id)),
+        ),
+      );
+    }
+
+    // 2) 定期固定費 / サブスク (Pontaパス 等)。該当カードのセクションへ飛ぶ。
+    for (final cost in _recurringFixedCosts) {
+      if (!matches(cost.name)) continue;
+      final isSubscription =
+          cost.category == AssetRecurringFixedCostCategory.subscription;
+      final sectionId = isSubscription
+          ? AssetManagementSectionId.subscriptionFixedCost
+          : AssetManagementSectionId.recurringFixedCost;
+      entries.add(
+        _AssetSectionSearchEntry(
+          label: cost.name,
+          sublabel: isSubscription ? 'サブスク → カードへ移動' : '定期固定費 → カードへ移動',
+          icon: Icons.subscriptions_outlined,
+          onTap: () => _scrollTo(_sectionAnchorKey(sectionId)),
+        ),
+      );
+    }
+
+    // 3) 負債マスタの各行 (行単位でハイライト付きジャンプ)。
+    final workbook = _buildCurrentAssetLiabilityWorkbook();
+    if (workbook != null) {
+      for (final row in workbook.debtMasterRows) {
+        if (!matches(row.name)) continue;
+        entries.add(
+          _AssetSectionSearchEntry(
+            label: row.name,
+            sublabel: '負債マスタ → 行へ移動',
+            icon: Icons.account_balance_outlined,
+            onTap: () => _jumpToDebtMasterCard(row.id),
+          ),
+        );
+      }
+    }
+
+    return entries;
+  }
+
   Future<void> _autoCheckFromData() async {
     final todayStr = _dateOnly(DateTime.now());
 
@@ -8748,6 +8908,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,
         actions: [
+          // カード/項目をカード名や項目名で検索して飛ぶ。縦長ページで目的の
+          // カードを探すのが大変で、Flutter Web は CanvasKit 描画のため
+          // ブラウザ検索(Ctrl+F)が効かない。
+          IconButton(
+            key: const Key('asset_section_search_appbar_button'),
+            tooltip: 'カード・項目を検索して移動',
+            icon: const Icon(Icons.search),
+            onPressed: _openSectionSearch,
+          ),
           // R24d: 家計トラッカー投稿の常設入口。従来は AI 分析レポート内の
           // 負債トレンドカードにしか無く投稿手段が見つからなかった。検出0件
           // でも「アラート: なし+給料日カウントダウン」の正直なスコアボードを
@@ -8798,10 +8967,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildDisplayModeSwitcher(),
             const SizedBox(height: 12),
             if (_isSectionShown(AssetManagementSectionId.monthlyFlow)) ...[
+              _sectionAnchor(AssetManagementSectionId.monthlyFlow),
               _buildMonthlyFlowFirstCard(),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(AssetManagementSectionId.calendar)) ...[
+              _sectionAnchor(AssetManagementSectionId.calendar),
               KeyedSubtree(
                 key: _keyCalendar,
                 child: _buildAssetCalendarCard(assetLiabilityWorkbook),
@@ -8812,17 +8983,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             if (_isSectionShown(
               AssetManagementSectionId.monthlyDashboard,
             )) ...[
+              _sectionAnchor(AssetManagementSectionId.monthlyDashboard),
               _buildMonthlyDashboardGrid(assetLiabilityWorkbook),
             ],
             // 提案カード(定期取引/定期収入の自動検出)は給与内訳に相乗りせず専用
             // セクションへ。salaryBreakdown を隠しても提案だけ独立表示できる。
             if (_isSectionShown(AssetManagementSectionId.proposals)) ...[
+              _sectionAnchor(AssetManagementSectionId.proposals),
               _buildRecurringTransactionSuggestionCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
               _buildRecurringIncomeSuggestionCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(AssetManagementSectionId.salaryBreakdown)) ...[
+              _sectionAnchor(AssetManagementSectionId.salaryBreakdown),
               _buildSalarySpendingBreakdownCard(),
               const SizedBox(height: 16),
               _buildCategoryBudgetCard(),
@@ -8830,12 +9004,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             if (_isSectionShown(
               AssetManagementSectionId.recurringFixedCost,
             )) ...[
+              _sectionAnchor(AssetManagementSectionId.recurringFixedCost),
               _buildRecurringFixedCostCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(
               AssetManagementSectionId.subscriptionFixedCost,
             )) ...[
+              _sectionAnchor(AssetManagementSectionId.subscriptionFixedCost),
               SubscriptionDuplicateAlertCard(
                 groups: _detectSubscriptionDuplicates(),
                 onIgnore: _ignoreDuplicateGroup,
@@ -8846,38 +9022,47 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             if (_isSectionShown(
               AssetManagementSectionId.subscriptionAudit,
             )) ...[
+              _sectionAnchor(AssetManagementSectionId.subscriptionAudit),
               _buildSubscriptionAuditCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
+              _sectionAnchor(AssetManagementSectionId.disposable),
               _buildDisposableBalanceCard(),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(AssetManagementSectionId.quickActions)) ...[
+              _sectionAnchor(AssetManagementSectionId.quickActions),
               _buildMonthlyFlowPrimaryActionBar(),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(AssetManagementSectionId.wasteAi)) ...[
+              _sectionAnchor(AssetManagementSectionId.wasteAi),
               _buildWasteTrainingAiCard(),
               const SizedBox(height: 24),
             ],
             if (_isSectionShown(AssetManagementSectionId.deadlines)) ...[
+              _sectionAnchor(AssetManagementSectionId.deadlines),
               _buildDeadlineChecklistCard(), // 締切チェックリスト
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(AssetManagementSectionId.threeMonth)) ...[
+              _sectionAnchor(AssetManagementSectionId.threeMonth),
               _buildThreeMonthOverviewCard(), // 3ヶ月俯瞰
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(AssetManagementSectionId.debtPlanner)) ...[
+              _sectionAnchor(AssetManagementSectionId.debtPlanner),
               _buildDebtPlannerCard(assetLiabilityWorkbook), // 借金返済プラン
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(AssetManagementSectionId.workbookBoard)) ...[
+              _sectionAnchor(AssetManagementSectionId.workbookBoard),
               _buildAssetLiabilityWorkbookBoard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(AssetManagementSectionId.assetLiability)) ...[
+              _sectionAnchor(AssetManagementSectionId.assetLiability),
               Container(
                 key: _keyStock,
                 child: _buildAssetLiabilityCard(),
@@ -8885,19 +9070,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(height: 24),
             ],
             if (_isSectionShown(AssetManagementSectionId.flow)) ...[
+              _sectionAnchor(AssetManagementSectionId.flow),
               Container(key: _keyFlow, child: _buildFlowCard()), // ④収支
               const SizedBox(height: 24),
             ],
             if (_isSectionShown(AssetManagementSectionId.subscriptions)) ...[
+              _sectionAnchor(AssetManagementSectionId.subscriptions),
               Container(key: _keySubs, child: _buildSubscriptionCard()), // ③固定費
               const SizedBox(height: 24),
             ],
             if (_isSectionShown(AssetManagementSectionId.mustTasks)) ...[
+              _sectionAnchor(AssetManagementSectionId.mustTasks),
               Container(key: _keyMust, child: _buildMustTasksCard()), // ⑤必須タスク
               const SizedBox(height: 24),
             ],
-            if (_isSectionShown(AssetManagementSectionId.chart))
+            if (_isSectionShown(AssetManagementSectionId.chart)) ...[
+              _sectionAnchor(AssetManagementSectionId.chart),
               _buildChartCard(), // グラフ
+            ],
           ],
         ),
       ),
