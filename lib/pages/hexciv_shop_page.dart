@@ -391,9 +391,7 @@ class _HexcivShopPageState extends State<HexcivShopPage> {
           Text(
             shot.labelJa,
             style: TextStyle(
-              color: active
-                  ? DesignTokens.orange
-                  : DesignTokens.textSecondary,
+              color: active ? DesignTokens.orange : DesignTokens.textSecondary,
               fontSize: 12,
               fontWeight: active ? FontWeight.bold : FontWeight.normal,
             ),
