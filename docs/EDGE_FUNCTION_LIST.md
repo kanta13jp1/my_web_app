@@ -83,6 +83,36 @@ provider 側の応答 (残高不足など) に変われば、キーは到達し�
 「まだ動かない」は「直っていない」を意味しない — 段階の違うブロッカーへ
 進んだだけのことがある。
 
+### 「読まれているが未登録」= 障害とは限らない
+
+上の差分は**候補**であって障害リストではない。**意図的にオフの任意機能**と
+**設定したつもりで壊れている機能**は差分だけでは区別できず、以下 3 点を
+揃えて初めて判定できる (2026-07-29 に認証情報 12 件を判定して確立)。
+
+| # | 確認事項 | 外すとどう間違えるか |
+| --- | --- | --- |
+| (a) | **未設定時の分岐** — 全停止 / 既定値で縮退 / 完全に無害 | 縮退設計済みを障害と誤検知する。`AIRTABLE_API_KEY` 未設定は `configured:false` → Supabase competitors へ自動フォールバック = 無害 |
+| (b) | **その action の呼び出し元が実在するか** | allowlist に名前があるだけで**永久に実行されない** action を「壊れている」と数える。判定は `git grep '<action名>' -- lib scripts .github supabase/migrations` |
+| (c) | **同時に必要な他の env** | ゲートしている変数を見落とす。`VIRAL_VIDEO_PROVIDER_API_KEY` は `VIRAL_VIDEO_PROVIDER_URL` が空の時点で fetch 自体が走らないので単独登録は無意味 |
+
+落とし穴:
+
+- **別名 action に注意**。UI が呼ぶのは `legal-assistant.harvey.complete` なので
+  `legal.harvey` だけを grep すると呼び出し元ゼロと誤判定する。(b) は
+  **EF 側の `case` 全部**を候補に grep する。
+- **語幹が近い = 名前ズレ ではない**。`SLACK_BOT_TOKEN` (Bot OAuth トークン) と
+  登録済 `SLACK_WEBHOOK_URL` (Incoming Webhook URL)、`X_BEARER_TOKEN` (OAuth 2.0) と
+  登録済 `X_API_KEY`/`X_ACCESS_TOKEN` (OAuth 1.0a) は**別の認証方式**で代替不可。
+  ダイジェスト一致 (上の使い方 1) が取れない限り名前ズレと断定しない。
+- **UI 導線の有無まで見る**。資格情報が無いのに UI にボタン/選択肢が実在する場合、
+  鍵を足すのではなく**導線を隠す**のが正しい修正のことがある。
+- **未設定時に 200 を返す経路は latent dead green**。`core-hub:discord.notify` は
+  未設定時 `skipped` かつ HTTP 200 (現状 呼び出し元ゼロで実害なし / 将来 cron から
+  呼ぶと「成功したのに届かない」に化ける)。
+- **鍵を足しても直らないことがある**。`LINE_NOTIFY_TOKEN` が叩く `notify-api.line.me` は
+  **2025-03-31 に LINE Notify 自体がサービス終了**し 2025-04-01 以降 全 API が利用不可
+  ([公式告知](https://notify-bot.line.me/closing-announce) / 代替は Messaging API)。
+
 ## 関連
 
 - [`docs/DIRECTORY_STRUCTURE.md`](DIRECTORY_STRUCTURE.md) — リポジトリ全体構成
