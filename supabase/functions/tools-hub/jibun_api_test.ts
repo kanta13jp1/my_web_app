@@ -210,6 +210,7 @@ class FakeJibunApiStore implements JibunApiStore {
   auditLog: AuditLogRow[] = [];
   notes: NoteRow[] = [];
   webhooks: WebhookRow[] = [];
+  integrationRows: Record<string, unknown>[] = [];
   rateLimitCounts: Record<string, number> = {};
   nextId = 1;
 
@@ -451,6 +452,16 @@ class FakeJibunApiStore implements JibunApiStore {
     return Promise.resolve(
       [{ title: "達成", description: "テスト", completed_at: "2026-07-12" }]
         .slice(0, limit),
+    );
+  }
+  listIntegrationRegistry(
+    userId: string,
+  ): Promise<Record<string, unknown>[]> {
+    return Promise.resolve(
+      this.integrationRows.filter((row) => {
+        const metadata = row.metadata as Record<string, unknown> | undefined;
+        return metadata?.user_id === userId;
+      }),
     );
   }
 }
@@ -930,6 +941,84 @@ Deno.test("worker invoke rate limit (10/min) returns 429", async () => {
   assertEquals(response!.status, 429);
 });
 
+Deno.test("api.integrations.snapshot returns latest user-owned definitions", async () => {
+  const store = new FakeJibunApiStore();
+  store.integrationRows = [
+    {
+      id: "system-1",
+      source: "integration_registry_system",
+      metadata: {
+        user_id: "user-1",
+        system_key: "billing",
+        name: "Billing old",
+        version: 1,
+      },
+      created_at: "2026-07-22T00:00:00Z",
+    },
+    {
+      id: "system-2",
+      source: "integration_registry_system",
+      metadata: {
+        user_id: "user-1",
+        system_key: "billing",
+        name: "Billing",
+        version: 2,
+      },
+      created_at: "2026-07-23T00:00:00Z",
+    },
+    {
+      id: "mapping-1",
+      source: "integration_registry_mapping",
+      metadata: {
+        user_id: "user-1",
+        mapping_key: "account-codes",
+        name: "Account codes",
+        version: 1,
+        entries: [{ old_code: "100", new_code: "A100" }],
+      },
+      created_at: "2026-07-23T00:00:00Z",
+    },
+    {
+      id: "other-user",
+      source: "integration_registry_system",
+      metadata: {
+        user_id: "user-2",
+        system_key: "private",
+        name: "Private",
+        version: 1,
+      },
+      created_at: "2026-07-23T00:00:00Z",
+    },
+  ];
+
+  const key = await issueKey(store, "user-1", ["integrations.read"]);
+  const response = await handleJibunApiAction({
+    req: makeRequest({ bearer: key }),
+    action: "api.integrations.snapshot",
+    body: {},
+    store,
+    getUserId: () => Promise.resolve(null),
+  });
+  assertEquals(response!.status, 200);
+  const data = await response!.json();
+  assertEquals(data.systems.length, 1);
+  assertEquals(data.systems[0].version, 2);
+  assertEquals(data.systems[0].name, "Billing");
+  assertEquals(data.systems[0].user_id, undefined);
+  assertEquals(data.mappings.length, 1);
+  assertEquals(data.counts.mappings, 1);
+
+  const deniedKey = await issueKey(store, "user-1", ["notes.read"]);
+  const denied = await handleJibunApiAction({
+    req: makeRequest({ bearer: deniedKey }),
+    action: "api.integrations.snapshot",
+    body: {},
+    store,
+    getUserId: () => Promise.resolve(null),
+  });
+  assertEquals(denied!.status, 403);
+});
+
 Deno.test("unknown api.* endpoint returns 404 with catalog", async () => {
   const store = new FakeJibunApiStore();
   const key = await issueKey(store, "user-1", ["notes.read"]);
@@ -963,6 +1052,7 @@ Deno.test("scope catalog is stable (docs contract)", () => {
     "notes.write",
     "tasks.read",
     "achievements.read",
+    "integrations.read",
     "workers.invoke",
   ]);
 });

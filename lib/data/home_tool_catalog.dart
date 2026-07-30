@@ -42,6 +42,7 @@ import '../pages/gemini_university_v2_page.dart';
 import '../pages/growth_mission_page.dart';
 import '../pages/home_insights_page.dart';
 import '../pages/import_page.dart';
+import '../pages/integration_registry_page.dart';
 import '../pages/kanban_board_page.dart';
 import '../pages/life_goals_page.dart';
 import '../pages/local_smart_cleanup_page.dart';
@@ -2571,6 +2572,26 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'ウェブクリップ',
       ],
       onOpen: (context) => _pushPage(context, const BookmarkSyncPage()),
+    ),
+    HomeToolEntry(
+      id: 'integration-registry',
+      sectionId: 'office',
+      title: 'Integration Registry',
+      subtitle:
+          'Versioned system interfaces, code mappings, dependency impact, and reference API',
+      icon: Icons.account_tree_outlined,
+      color: const Color(0xFF00796B),
+      keywords: const <String>[
+        'integration',
+        'interface',
+        'mapping',
+        'dependency',
+        'impact',
+        'API',
+        'CSV',
+        'version',
+      ],
+      onOpen: (context) => _pushPage(context, const IntegrationRegistryPage()),
     ),
     HomeToolEntry(
       id: 'jibun-api',

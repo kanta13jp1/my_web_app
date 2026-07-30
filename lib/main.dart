@@ -36,6 +36,7 @@ import 'package:my_web_app/pages/user_manual_page.dart';
 import 'package:my_web_app/pages/home_page.dart';
 import 'package:my_web_app/services/route_visibility_observer.dart';
 import 'package:my_web_app/pages/import_page.dart';
+import 'package:my_web_app/pages/integration_registry_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
 import 'package:my_web_app/pages/memory_drill_page.dart';
 import 'package:my_web_app/pages/memory_search_hub_page.dart';
@@ -1507,6 +1508,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             );
           case '/bookmark-sync':
             return MaterialPageRoute(builder: (_) => const BookmarkSyncPage());
+          case '/integration-registry':
+            return MaterialPageRoute(
+              builder: (_) => const IntegrationRegistryPage(),
+              settings: const RouteSettings(name: '/integration-registry'),
+            );
           case '/jibun-api':
             return MaterialPageRoute(
               builder: (_) => const JibunApiPage(),
