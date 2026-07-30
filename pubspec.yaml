@@ -105,6 +105,10 @@ flutter:
   assets:
     - web/assets/fonts/
     - assets/legal/
+    # HexCiv 商品ページのスクリーンショット (2026-07-29 追加)。
+    # Flutter Web ではアセットは必要になった時点で取得されるため、
+    # 商品ページを開かない利用者の初期読み込みは重くならない。
+    - assets/shop/
     - assets/sounds/
     - assets/data/
     - docs/

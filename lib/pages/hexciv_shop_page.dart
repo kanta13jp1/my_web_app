@@ -38,13 +38,51 @@ class HexcivShopPage extends StatefulWidget {
   State<HexcivShopPage> createState() => _HexcivShopPageState();
 }
 
+/// ギャラリー1枚ぶんの情報 (2026-07-29 追加)。
+///
+/// `Assets/Editor/GameplayScreenshot.cs`(HexCiv リポジトリ) が同じターン数で
+/// 焼いた絵に対応する。撮り直したらここのラベルも合わせること。
+class _Screenshot {
+  const _Screenshot({
+    required this.asset,
+    required this.labelJa,
+    required this.captionJa,
+  });
+
+  final String asset;
+  final String labelJa;
+  final String captionJa;
+}
+
 class _HexcivShopPageState extends State<HexcivShopPage> {
+  /// 並べる順序が「育っていく」説明そのものになっている。
+  static const List<_Screenshot> _shots = [
+    _Screenshot(
+      asset: 'assets/shop/hexciv_turn30.png',
+      labelJa: 'ターン30',
+      captionJa: '序盤。4つの文明がそれぞれ都市を1〜3個持つだけで、地図の大半は未開のまま。',
+    ),
+    _Screenshot(
+      asset: 'assets/shop/hexciv_turn80.png',
+      labelJa: 'ターン80',
+      captionJa: '中盤。国境が接し始め、都市と部隊が増えて版図の差が見えてくる。',
+    ),
+    _Screenshot(
+      asset: 'assets/shop/hexciv_turn150.png',
+      labelJa: 'ターン150',
+      captionJa: '終盤。大陸をまたぐ版図と多数の部隊。序盤の地図と見比べると育ち方が分かる。',
+    ),
+  ];
+
   late final ShopGateway _service = widget.service ?? ShopService();
 
   bool _loading = true;
   String? _loadError;
   ShopProduct? _product;
   bool _purchased = false;
+
+  /// ギャラリーで大きく表示している枚数の添字。
+  int _selectedShot = 0;
 
   /// 購入・ダウンロードの実行中。二重押しを防ぐ。
   bool _working = false;
@@ -236,6 +274,11 @@ class _HexcivShopPageState extends State<HexcivShopPage> {
         ],
         _productCard(product),
         const SizedBox(height: 24),
+        // スクリーンショット (2026-07-29 追加)。購入ボタンより**上**に置く。
+        // ゲームは見た目を見ないと買う判断ができないため、判断材料を
+        // 決断より先に出す。
+        _screenshotGallery(),
+        const SizedBox(height: 24),
         _actionArea(product),
         if (_actionError != null) ...[
           const SizedBox(height: 16),
@@ -249,6 +292,114 @@ class _HexcivShopPageState extends State<HexcivShopPage> {
         const SizedBox(height: 32),
         _specs(product),
       ],
+    );
+  }
+
+  /// スクリーンショット (2026-07-29 追加)。
+  ///
+  /// 並べる順序が説明そのものになっている。ターン30→150 と進むにつれて
+  /// 版図と都市が増えるので、**3枚並べるだけで「育っていくのを見る」という
+  /// このゲームの価値が伝わる**。単に綺麗な1枚を出すより強い。
+  Widget _screenshotGallery() {
+    final selected = _shots[_selectedShot];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Image.asset(
+              selected.asset,
+              fit: BoxFit.cover,
+              // 読み込み中に高さが 0 へ潰れると、下のボタンが飛び跳ねる。
+              // 枠を先に確保しておく (AspectRatio がその役目)。
+              errorBuilder: (context, error, stack) => Container(
+                color: DesignTokens.surface2,
+                alignment: Alignment.center,
+                child: const Text(
+                  '画像を読み込めませんでした',
+                  style: TextStyle(color: DesignTokens.textSecondary),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          selected.captionJa,
+          style: const TextStyle(
+            color: DesignTokens.textSecondary,
+            fontSize: 13,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            for (var i = 0; i < _shots.length; i++) ...[
+              if (i > 0) const SizedBox(width: 10),
+              Expanded(child: _shotThumbnail(i)),
+            ],
+          ],
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          '同じ世界(seed 42)がターンを追って育っていく様子です。'
+          'AI同士の観戦でもこの変化を眺められます。',
+          style: TextStyle(
+            color: DesignTokens.textSecondary,
+            fontSize: 12,
+            height: 1.6,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _shotThumbnail(int index) {
+    final shot = _shots[index];
+    final active = index == _selectedShot;
+    return InkWell(
+      onTap: () => setState(() => _selectedShot = index),
+      borderRadius: BorderRadius.circular(8),
+      child: Column(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              // 選択中を枠で示す。押せることが分かる最小の手掛かり。
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: active ? DesignTokens.orange : DesignTokens.divider,
+                  width: active ? 2 : 1,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Image.asset(
+                  shot.asset,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stack) =>
+                      Container(color: DesignTokens.surface2),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            shot.labelJa,
+            style: TextStyle(
+              color: active
+                  ? DesignTokens.orange
+                  : DesignTokens.textSecondary,
+              fontSize: 12,
+              fontWeight: active ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

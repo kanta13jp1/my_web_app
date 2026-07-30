@@ -128,6 +128,10 @@ void main() {
       expect(find.text('¥500 で購入'), findsOneWidget);
       expect(find.text('ダウンロード'), findsNothing);
 
+      // ギャラリーが入って購入ボタンは初期表示の外にある (意図どおり: 判断材料を
+      // 決断より上に置いている)。押す前に可視化する。
+      await tester.ensureVisible(find.text('¥500 で購入'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('¥500 で購入'));
       await tester.pump();
       expect(gateway.startCheckoutCalls, 1);
@@ -175,6 +179,50 @@ void main() {
 
       expect(find.text('商品情報を読み込めませんでした'), findsOneWidget);
       expect(find.text('再試行'), findsOneWidget);
+    });
+
+    testWidgets('スクリーンショットを3枚出し、購入ボタンより上に置く', (tester) async {
+      // ゲームは見た目を見ないと買う判断ができない。判断材料が決断より
+      // 下にあると、多くの人は見ないまま離脱する。
+      await _pump(tester, _FakeGateway(product: _product(), signedIn: true));
+
+      expect(find.text('ターン30'), findsOneWidget);
+      expect(find.text('ターン80'), findsOneWidget);
+      expect(find.text('ターン150'), findsOneWidget);
+
+      final galleryY = tester.getTopLeft(find.text('ターン30')).dy;
+      final buttonY = tester.getTopLeft(find.text('¥500 で購入')).dy;
+      expect(
+        galleryY,
+        lessThan(buttonY),
+        reason: '判断材料 (画面) は決断 (購入ボタン) より上に置く',
+      );
+    });
+
+    testWidgets('サムネイルを押すと大きく出す絵が切り替わる', (tester) async {
+      await _pump(tester, _FakeGateway(product: _product(), signedIn: true));
+
+      // 初期はターン30 の説明が出ている
+      expect(find.textContaining('序盤。'), findsOneWidget);
+      expect(find.textContaining('終盤。'), findsNothing);
+
+      // 既定のテストビューポート(800x600)ではサムネイルが画面外にあるため、
+      // 先に可視化する。warnIfMissed を切って誤魔化すと、押せていないのに
+      // 通るテストになってしまう。
+      await tester.ensureVisible(find.text('ターン150'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ターン150'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('終盤。'), findsOneWidget);
+      expect(find.textContaining('序盤。'), findsNothing);
+    });
+
+    testWidgets('準備中のときはギャラリーも出さない', (tester) async {
+      // 買えない商品の画面を見せる意味はない。
+      await _pump(tester, _FakeGateway(product: null));
+
+      expect(find.text('ターン30'), findsNothing);
     });
 
     testWidgets('製品情報に SHA256 と容量を出す', (tester) async {
