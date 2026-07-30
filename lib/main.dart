@@ -13,6 +13,7 @@ import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/abstinence_guard_page.dart';
 import 'package:my_web_app/pages/self_touch_tracker_page.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
+import 'package:my_web_app/pages/agent_board_page.dart';
 import 'package:my_web_app/pages/autonomous_ops_console_page.dart';
 import 'package:my_web_app/pages/ai_company_builder_page.dart';
 import 'package:my_web_app/pages/ai_agent_page.dart';
@@ -29,6 +30,8 @@ import 'package:my_web_app/pages/local_smart_cleanup_page.dart';
 import 'package:my_web_app/pages/windows_app_install_page.dart';
 import 'package:my_web_app/pages/payment_reminder_page.dart';
 import 'package:my_web_app/pages/shopping_list_page.dart';
+import 'package:my_web_app/pages/hexciv_shop_page.dart';
+import 'package:my_web_app/services/shop_funnel_service.dart';
 import 'package:my_web_app/pages/digest_queue_page.dart';
 import 'package:my_web_app/pages/gemini_university_v2_page.dart';
 import 'package:my_web_app/pages/growth_mission_page.dart';
@@ -95,6 +98,12 @@ import 'package:my_web_app/pages/template_marketplace_page.dart';
 import 'package:my_web_app/pages/referral_page.dart';
 import 'package:my_web_app/pages/kanban_board_page.dart';
 import 'package:my_web_app/pages/compatibility_check_page.dart';
+import 'package:my_web_app/models/iq_test.dart';
+import 'package:my_web_app/pages/iq_test_page.dart';
+import 'package:my_web_app/pages/iq_test_questions_page.dart';
+import 'package:my_web_app/pages/iq_test_result_page.dart';
+import 'package:my_web_app/pages/iq_training_drill_page.dart';
+import 'package:my_web_app/pages/iq_training_page.dart';
 import 'package:my_web_app/pages/personality_test_questions_page.dart';
 import 'package:my_web_app/pages/personality_test_result_page.dart';
 import 'package:my_web_app/pages/table_data_page.dart';
@@ -507,6 +516,19 @@ Route<dynamic> generateAppRoute(
           signupCompletionService: signupCompletionService,
         ),
       );
+    // HexCiv ダウンロード版の商品ページ (2026-07-28 追加)。
+    // Stripe Checkout の success_url / cancel_url がこの URL に
+    // `?purchase=success` / `?purchase=canceled` を付けて戻ってくる。
+    case '/shop/hexciv':
+      return MaterialPageRoute(
+        builder: (_) => HexcivShopPage(
+          purchaseResult: Uri.base.queryParameters['purchase'],
+          // 計測 (2026-07-29 追加)。閲覧・購入ボタン押下・Checkout 到達を数える。
+          // ここを渡し忘れると計測だけが黙って止まるので、route に直書きする。
+          funnel: ShopFunnelService(),
+        ),
+        settings: settings,
+      );
     case '/home':
       return MaterialPageRoute(builder: (_) => const HomePage());
     case '/agents':
@@ -518,6 +540,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const AutonomousOpsConsolePage(),
         settings: settings,
+      );
+    case '/agent-board':
+      return MaterialPageRoute(
+        builder: (_) => const AgentBoardPage(),
+        settings: const RouteSettings(name: '/agent-board'),
       );
     case '/ai-company-builder':
       return MaterialPageRoute(
@@ -917,6 +944,44 @@ Route<dynamic> generateAppRoute(
       final resultTestId = settings.arguments as int? ?? 1;
       return MaterialPageRoute(
         builder: (_) => PersonalityTestResultPage(testId: resultTestId),
+      );
+    case '/iq-test':
+      return MaterialPageRoute(builder: (_) => const IqTestPage());
+    // 出題中のテストは testId と seed が無いと復元できない (再開もできない)。
+    // 直接 URL で開かれた場合はハブへ落とす。
+    case '/iq-test-questions':
+      final iqQuestionsArgs = settings.arguments as IqTestSessionArgs?;
+      if (iqQuestionsArgs == null) {
+        return MaterialPageRoute(builder: (_) => const IqTestPage());
+      }
+      return MaterialPageRoute(
+        builder: (_) => IqTestQuestionsPage(
+          testId: iqQuestionsArgs.testId,
+          questionSeed: iqQuestionsArgs.questionSeed,
+        ),
+      );
+    case '/iq-test-result':
+      final iqTestId = settings.arguments as int?;
+      if (iqTestId == null) {
+        return MaterialPageRoute(builder: (_) => const IqTestPage());
+      }
+      return MaterialPageRoute(
+        builder: (_) => IqTestResultPage(testId: iqTestId),
+      );
+    case '/iq-training':
+      return MaterialPageRoute(builder: (_) => const IqTrainingPage());
+    // ドリルは対象領域とレベルが引数。無ければプラン画面へ落とす。
+    case '/iq-training-drill':
+      final iqDrillArgs = settings.arguments as IqTrainingDrillArgs?;
+      if (iqDrillArgs == null) {
+        return MaterialPageRoute(builder: (_) => const IqTrainingPage());
+      }
+      return MaterialPageRoute(
+        builder: (_) => IqTrainingDrillPage(
+          planId: iqDrillArgs.planId,
+          category: iqDrillArgs.category,
+          level: iqDrillArgs.level,
+        ),
       );
     case '/enterprise':
       return MaterialPageRoute(builder: (_) => const EnterprisePage());

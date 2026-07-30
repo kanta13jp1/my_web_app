@@ -588,6 +588,7 @@ jobs:
           deploy_function ai-assistant --no-verify-jwt
           deploy_function growth-weekly-digest --no-verify-jwt
           deploy_function guitar-recording-studio --no-verify-jwt
+          deploy_function autonomous-ops --no-verify-jwt
 
           # --- Macro-Hub (6本: 旧Tier1全統合) ---
           deploy_function core-hub --no-verify-jwt
@@ -597,6 +598,16 @@ jobs:
           deploy_function app-hub --no-verify-jwt
           deploy_function schedule-hub --no-verify-jwt
           deploy_function stripe-webhook --no-verify-jwt
+
+          # --- 買い切り販売 (2026-07-28 追加) ---
+          # ここへ足し忘れると migration だけ本番へ入り、購入ボタンが存在しない
+          # 関数を叩く半着地になる (CI は緑のまま通るので気づけない)。
+          # 認証は関数内で auth.getUser() により行う。
+          deploy_function shop-checkout --no-verify-jwt
+          deploy_function shop-download --no-verify-jwt
+          # 販売 funnel の計測 (2026-07-29 追加)。未ログインの閲覧者も数えるため
+          # 認証は要求せず、書き込める内容を列挙値に限定して守っている。
+          deploy_function shop-funnel --no-verify-jwt
 
           # --- Mega-Hub (5本: 旧Tier2全統合) ---
           deploy_function tools-hub --no-verify-jwt
@@ -613,7 +624,7 @@ jobs:
           deploy_function memory-search-hub --no-verify-jwt
           deploy_function mcp-well-known --no-verify-jwt
 
-          # Total: 22 functions deployed (ハードキャップ50本に対し22本 — 余裕28本)
+          # Total: 23 functions deployed (ハードキャップ50本に対し23本 — 余裕27本)
           # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
           #
           # Hub対応表:

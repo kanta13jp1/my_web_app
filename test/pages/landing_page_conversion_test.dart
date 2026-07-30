@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/landing_page.dart';
+import 'package:my_web_app/services/growth_acquisition_service.dart';
 import 'package:my_web_app/services/landing_conversion_experiment_service.dart';
 import 'package:my_web_app/services/landing_page_adapter.dart';
 import 'package:my_web_app/services/landing_signup_completion_service.dart';
@@ -102,6 +103,24 @@ class _DelayedExperimentService extends LandingConversionExperimentService {
   }
 }
 
+class _RecordingAcquisitionService extends GrowthAcquisitionService {
+  _RecordingAcquisitionService();
+
+  final List<String> stages = <String>[];
+
+  @override
+  Future<bool> recordFirstUserFunnelStage({
+    required String stage,
+    String? visitorId,
+    Uri? currentUri,
+    SharedPreferences? preferences,
+    DateTime? now,
+  }) async {
+    stages.add(stage);
+    return true;
+  }
+}
+
 LandingConversionHypothesis _hypothesis(String id) {
   return LandingConversionExperimentService.hypotheses.firstWhere(
     (hypothesis) => hypothesis.id == id,
@@ -140,6 +159,7 @@ void main() {
     bool? analyticsEnabled,
     Uri? landingUri,
     LandingConversionExperimentService? conversionExperimentService,
+    GrowthAcquisitionService? acquisitionService,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
@@ -157,6 +177,7 @@ void main() {
           adapter: adapter,
           experimentAssignment: assignment,
           conversionExperimentService: conversionExperimentService,
+          acquisitionService: acquisitionService,
           analyticsEnabled: analyticsEnabled,
           landingUri: landingUri,
         ),
@@ -282,6 +303,7 @@ void main() {
   testWidgets(
     'first-user X traffic gets a one-tap trial before registration',
     (tester) async {
+      final acquisition = _RecordingAcquisitionService();
       final adapter = await pumpLanding(
         tester,
         assignment: _assignment('h03', LandingExperimentVariant.control),
@@ -291,6 +313,7 @@ void main() {
           '&utm_campaign=first_user_growth'
           '&utm_content=outcome_first_a',
         ),
+        acquisitionService: acquisition,
       );
       await tester.pumpAndSettle();
 
@@ -306,6 +329,7 @@ void main() {
         find.byKey(const Key('first_user_growth_trial_reassurance')),
         findsOneWidget,
       );
+      expect(acquisition.stages, contains('view'));
 
       await tester.tap(
         find.byKey(const Key('first_user_growth_one_tap_trial')),
@@ -313,6 +337,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       expect(adapter.trialRuns, 1);
+      expect(acquisition.stages, contains('trial'));
       expect(
         adapter.lastTrialPrompt,
         '仕事が多すぎて、何から始めるか決められない',

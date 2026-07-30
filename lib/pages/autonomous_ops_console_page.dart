@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../services/autonomous_ops_service.dart';
 import '../theme/design_tokens.dart';
 
 /// OMOCHA WORKS — 自律オペレーションコンソール。
@@ -15,7 +16,12 @@ import '../theme/design_tokens.dart';
 /// リアルタイムに変化する。見ているだけで「何かが進んでいる」感覚を得る、
 /// という体験そのものが本機能の価値 (= IMBUE パターンの AI 体験設計)。
 class AutonomousOpsConsolePage extends StatefulWidget {
-  const AutonomousOpsConsolePage({super.key});
+  const AutonomousOpsConsolePage({super.key, this.service});
+
+  /// 実データ取得サービス (テスト時に差し替え可能)。
+  /// null の場合、ログイン済みオーナーなら実データ、それ以外は
+  /// シミュレーション表示になる。
+  final AutonomousOpsService? service;
 
   @override
   State<AutonomousOpsConsolePage> createState() =>
@@ -86,8 +92,16 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
   final math.Random _rand = math.Random(20260722);
 
   Timer? _clock; // 1 秒ごとの時計・稼働時間
-  Timer? _engine; // タスク遷移エンジン
+  Timer? _engine; // タスク遷移エンジン (シミュレーション / 実データ間の動き)
+  Timer? _poll; // 実データポーリング (~20 秒)
   bool _paused = false;
+
+  late final AutonomousOpsService _service;
+
+  // 実データモード: true=GitHub Actions 実データ表示 / false=シミュレーション。
+  bool _realMode = false;
+  // オーナーだが GH_ACTIONS_READ_TOKEN 未設定 (構成ヒント表示用)。
+  bool _ownerUnconfigured = false;
 
   int _seconds = 15 * 3600 + 51 * 60 + 22; // 壁時計 (15:51:22 起点)
   int _uptimeSeconds = 127 * 86400 + 4 * 3600 + 12 * 60 + 54; // 連続稼働
@@ -162,14 +176,27 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
   @override
   void initState() {
     super.initState();
+    _service = widget.service ?? AutonomousOpsService();
     _seedBoard();
     _startTimers();
+    // ログイン済みオーナーなら実データ取得を試みる (失敗時はシミュレーション継続)。
+    if (_service.isSignedIn) {
+      _pollOnce();
+      _poll = Timer.periodic(
+        const Duration(seconds: 20),
+        (_) {
+          if (_paused || !mounted) return;
+          _pollOnce();
+        },
+      );
+    }
   }
 
   @override
   void dispose() {
     _clock?.cancel();
     _engine?.cancel();
+    _poll?.cancel();
     super.dispose();
   }
 
@@ -186,6 +213,77 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
       setState(_advanceBoard);
     });
   }
+
+  /// 実データを 1 回取得し、live なら実データモードへ切り替える。
+  Future<void> _pollOnce() async {
+    final dto = await _service.fetch();
+    if (!mounted || dto == null) return;
+    setState(() {
+      if (dto.live) {
+        _applySnapshot(dto);
+        _realMode = true;
+        _ownerUnconfigured = false;
+      } else {
+        // オーナーだがトークン未構成 → シミュレーション継続 + ヒント表示。
+        _ownerUnconfigured = !dto.configured;
+      }
+    });
+  }
+
+  /// 実データスナップショットを盤面へ反映する。
+  void _applySnapshot(OpsSnapshotDto dto) {
+    _tasks
+      ..clear()
+      ..addAll(
+        dto.tasks.map(
+          (t) => _OpsTask(
+            code: t.code,
+            dept: t.dept,
+            title: t.title,
+            valueYen: t.valueYen,
+            lane: _laneFromString(t.lane),
+            agent: _agentById(t.agentId),
+          ),
+        ),
+      );
+    _activities
+      ..clear()
+      ..addAll(
+        dto.activities.map(
+          (a) => _Activity(
+            text: a.text,
+            time: a.time,
+            color: _agentById(a.agentId)?.color ?? DesignTokens.textSecondary,
+          ),
+        ),
+      );
+    _completedToday = dto.completedToday;
+    _automatedHours = dto.automatedHours;
+    _revenueImpact = dto.revenueImpact;
+    _slaCompliance = dto.slaCompliance;
+    if (dto.throughput > 0) _throughput = dto.throughput;
+    if (dto.throughputHistory.isNotEmpty) {
+      _throughputHistory
+        ..clear()
+        ..addAll(dto.throughputHistory);
+    }
+  }
+
+  _OpsAgent? _agentById(String? id) {
+    if (id == null) return null;
+    for (final a in _agents) {
+      if (a.initial == id) return a;
+    }
+    return null;
+  }
+
+  _Lane _laneFromString(String lane) => switch (lane) {
+        'backlog' => _Lane.backlog,
+        'progress' => _Lane.progress,
+        'review' => _Lane.review,
+        'done' => _Lane.done,
+        _ => _Lane.backlog,
+      };
 
   void _seedBoard() {
     // 初期配置 (スクリーンショットに近い状態)。
@@ -248,7 +346,14 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
   _OpsAgent _randomAgent() => _agents[_rand.nextInt(_agents.length)];
 
   /// エンジン 1 tick: いずれかの列を 1 手進め、KPI と活動ログを更新する。
+  ///
+  /// 実データモードでは盤面はポーリングで更新されるため、ここでは
+  /// スパークラインの"動き"だけを継続させ、実タスクは変更しない。
   void _advanceBoard() {
+    if (_realMode) {
+      _jitterThroughput();
+      return;
+    }
     final review = _lane(_Lane.review);
     final progress = _lane(_Lane.progress);
     final backlog = _lane(_Lane.backlog);
@@ -292,7 +397,19 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
 
     // KPI のゆらぎ。
     _slaCompliance = (98.6 + _rand.nextDouble() * 1.3).clamp(97.0, 99.9);
-    _throughput = (36 + _rand.nextDouble() * 16);
+    _jitterThroughput();
+  }
+
+  /// スパークラインを少しだけ動かす (フェッチ間 / シミュレーション共通)。
+  void _jitterThroughput() {
+    if (_realMode) {
+      // 実データの直近値の周りで軽く揺らし、"生きてる感"を維持する。
+      final base = _throughput <= 0 ? 1.0 : _throughput;
+      _throughput = (base + (_rand.nextDouble() - 0.5) * base * 0.15)
+          .clamp(0, double.infinity);
+    } else {
+      _throughput = 36 + _rand.nextDouble() * 16;
+    }
     _throughputHistory.add(_throughput);
     if (_throughputHistory.length > 40) _throughputHistory.removeAt(0);
   }
@@ -342,6 +459,7 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
         'マーケ' => DesignTokens.orange,
         '分析' => const Color(0xFF26C6DA),
         '開発' => DesignTokens.indigoLight,
+        '品質' => DesignTokens.indigo,
         'インフラ' => DesignTokens.amber,
         '業務' => const Color(0xFFEC407A),
         _ => DesignTokens.textSecondary,
@@ -475,7 +593,12 @@ class _AutonomousOpsConsolePageState extends State<AutonomousOpsConsolePage> {
         children: [
           _pill('production', DesignTokens.green, filled: true),
           _pill('Q3 スプリント S2', DesignTokens.indigoLight),
-          _pill('同期済み', DesignTokens.textSecondary),
+          if (_realMode)
+            _pill('実データ · GitHub Actions', DesignTokens.green, filled: true)
+          else if (_ownerUnconfigured)
+            _pill('シミュレーション · トークン未設定', DesignTokens.amber)
+          else
+            _pill('シミュレーション', DesignTokens.textSecondary),
           _metaText('連続稼働', _fmtUptime()),
           _metaText('現在時刻', _fmtClock(_seconds)),
           Row(
