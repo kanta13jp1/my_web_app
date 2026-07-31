@@ -1441,6 +1441,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Future<void> _openRelatedNote(NoteSearchResult note) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/note-editor'),
         builder: (_) => NoteEditorPage(
           noteId: note.id,
           supabaseClient: _supabase,
