@@ -168,10 +168,48 @@ void main() {
 
       final draft = IqTrainingService.buildPlanDraft(result);
 
-      // 「弱点なし」と「未評価」を取り違えないことがこの機能の要
-      expect(draft.basis, IqPlanBasis.balancedProfile);
+      // 「弱点あり」「判別できない」「未評価」を取り違えないことがこの機能の要。
+      // 差ゼロは「弱点なし」ではなく「差を判別できない」と表現する。
+      expect(draft.basis, IqPlanBasis.withinMeasurementNoise);
       expect(draft.targets, isNotEmpty);
-      expect(draft.basisMessageJa, contains('弱点はありません'));
+      expect(draft.basisMessageJa, contains('判別できません'));
+      expect(draft.isProvisional, isTrue);
+    });
+
+    test('見かけの差が測定誤差の範囲内なら弱点と呼ばない', () {
+      // SE=5 の領域で 4 ポイント差 = ノイズ。旧実装の固定閾値5でも
+      // 拾わないが、SE が大きい実データ (5問で約18) では旧実装が誤検出した。
+      final result = _result(
+        totalIq: 100,
+        categoryIqs: {
+          IqCategory.logic: 104,
+          IqCategory.numerical: 96,
+          IqCategory.spatial: 100,
+        },
+      );
+
+      final draft = IqTrainingService.buildPlanDraft(result);
+      expect(draft.basis, IqPlanBasis.withinMeasurementNoise);
+      expect(result.weakAreas(), isEmpty);
+    });
+
+    test('誤差を超える差があれば弱点として検出する', () {
+      // SE=5 に対し 20 ポイント差 = 4 SE
+      final result = _result(
+        totalIq: 100,
+        categoryIqs: {
+          IqCategory.logic: 105,
+          IqCategory.spatial: 80,
+        },
+      );
+
+      final draft = IqTrainingService.buildPlanDraft(result);
+      expect(draft.basis, IqPlanBasis.weakAreaDetected);
+      expect(draft.isProvisional, isFalse);
+      expect(
+        draft.targets.map((t) => t.category),
+        contains(IqCategory.spatial),
+      );
     });
 
     test('開始レベルは領域別IQから決まる', () {
@@ -223,30 +261,81 @@ void main() {
       );
     });
 
-    test('高正答率が続けばレベルが上がる', () {
+    test('高正答率が続けばレベルが上がる (ただし一度に1段だけ)', () {
       final sessions = [
         for (var i = 0; i < 3; i++)
           _session(
             category: IqCategory.spatial,
             correct: 8,
             total: 8,
+            level: 3,
             completedAt: DateTime(2026, 7, 20 + i),
           ),
       ];
 
+      // 直近ウィンドウを合算して1回だけ判定するので、3連続満点でも +1 段。
+      // 次のセッションが level 4 で記録されれば、そこからまた1段上がる。
+      // 逐次適用していた旧実装は 1 セッションのばらつきがそのまま段数に化けていた。
       expect(
         IqTrainingService.currentLevelFor(target: target, sessions: sessions),
-        5,
+        4,
       );
     });
 
-    test('低正答率が続けば下限で止まる', () {
+    test('合算判定は1セッションのブレでレベルを動かさない', () {
+      // 直近5回のうち1回だけ崩れても、合算では適正帯に留まる。
+      // 逐次適用の旧実装ではこの1回で即降格していた。
+      final sessions = [
+        for (var i = 0; i < 4; i++)
+          _session(
+            category: IqCategory.spatial,
+            correct: 6,
+            total: 8,
+            level: 3,
+            completedAt: DateTime(2026, 7, 20 + i),
+          ),
+        _session(
+          category: IqCategory.spatial,
+          correct: 2,
+          total: 8,
+          level: 3,
+          completedAt: DateTime(2026, 7, 25),
+        ),
+      ];
+
+      // 合算 = (6*4+2)/40 = 0.65 → 適正帯なので据え置き
+      expect(
+        IqTrainingService.currentLevelFor(target: target, sessions: sessions),
+        3,
+      );
+    });
+
+    test('低正答率が続けば下がる (こちらも一度に1段だけ)', () {
       final sessions = [
         for (var i = 0; i < 4; i++)
           _session(
             category: IqCategory.spatial,
             correct: 1,
             total: 8,
+            level: 3,
+            completedAt: DateTime(2026, 7, 20 + i),
+          ),
+      ];
+
+      expect(
+        IqTrainingService.currentLevelFor(target: target, sessions: sessions),
+        2,
+      );
+    });
+
+    test('レベル1で崩れ続けても下限を割らない', () {
+      final sessions = [
+        for (var i = 0; i < 4; i++)
+          _session(
+            category: IqCategory.spatial,
+            correct: 0,
+            total: 8,
+            level: 1,
             completedAt: DateTime(2026, 7, 20 + i),
           ),
       ];
@@ -298,7 +387,8 @@ void main() {
         sessions: sessions,
         window: 5,
       );
-      expect(level, 1);
+      // 直近5件 (すべて 1/8) だけが効く。記録レベル3から1段下げて2。
+      expect(level, 2);
     });
 
     test('順序が前後して渡されても時系列順に適用する', () {

@@ -9,6 +9,7 @@ import '../pages/abstinence_guard_page.dart';
 import '../pages/sobriety_campaign_page.dart';
 import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
+import '../pages/agent_board_page.dart';
 import '../pages/autonomous_ops_console_page.dart';
 import '../pages/agent_gpa_dashboard_page.dart';
 import '../pages/english_reading_curriculum_page.dart';
@@ -375,6 +376,27 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'ops',
       ],
       onOpen: (context) => _pushPage(context, const AutonomousOpsConsolePage()),
+    ),
+    HomeToolEntry(
+      id: 'agent-board',
+      sectionId: 'growth',
+      title: 'AIエージェント ボード',
+      subtitle: 'Claude Code / Codex がWBSタスクを進める様子を眺める',
+      icon: Icons.view_kanban_outlined,
+      color: const Color(0xFF3D5AFE),
+      keywords: const <String>[
+        'エージェント',
+        'ボード',
+        'カンバン',
+        'WBS',
+        'claude',
+        'codex',
+        'gemini',
+        'agent',
+        'board',
+        'kanban',
+      ],
+      onOpen: (context) => _pushPage(context, const AgentBoardPage()),
     ),
     HomeToolEntry(
       id: 'daily-habits',

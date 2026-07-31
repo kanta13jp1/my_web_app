@@ -36,7 +36,7 @@ function asRecord(value: unknown): Record<string, unknown> | null {
  * Stripe の参照フィールドは expand 指定で文字列 ID から object に化けるため、
  * 文字列だけを想定すると展開されていた場合に黙って空文字になる。
  */
-function referenceId(value: unknown): string {
+export function referenceId(value: unknown): string {
   if (typeof value === "string") return value.trim();
   const id = asRecord(value)?.id;
   return typeof id === "string" ? id.trim() : "";

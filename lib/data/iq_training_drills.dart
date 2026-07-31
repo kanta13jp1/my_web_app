@@ -26,6 +26,7 @@ class IqDrillGenerator {
     final random = math.Random(seed);
     final clampedLevel = level.clamp(1, 5);
     final questions = <IqQuestion>[];
+    final session = _SessionDraw(random);
 
     for (var i = 0; i < count; i++) {
       questions.add(
@@ -34,6 +35,7 @@ class IqDrillGenerator {
           level: clampedLevel,
           index: i,
           random: random,
+          session: session,
         ),
       );
     }
@@ -45,18 +47,19 @@ class IqDrillGenerator {
     required int level,
     required int index,
     required math.Random random,
+    required _SessionDraw session,
   }) {
     switch (category) {
       case IqCategory.numerical:
         return _numerical(level, index, random);
       case IqCategory.logic:
-        return _logic(level, index, random);
+        return _logic(level, index, random, session);
       case IqCategory.spatial:
         return _spatial(level, index, random);
       case IqCategory.memory:
         return _memory(level, index, random);
       case IqCategory.verbal:
-        return _verbal(level, index, random);
+        return _verbal(level, index, random, session);
     }
   }
 
@@ -203,6 +206,8 @@ class IqDrillGenerator {
     ['りんご', '果物', '食べ物'],
     ['正方形', '四角形', '図形'],
     ['ピアノ', '楽器', '道具'],
+    ['カブトムシ', '昆虫', '動物'],
+    ['ひまわり', '植物', '生物'],
   ];
 
   static const List<String> _logicNames = [
@@ -213,14 +218,19 @@ class IqDrillGenerator {
     'E',
   ];
 
-  static IqQuestion _logic(int level, int index, math.Random random) {
+  static IqQuestion _logic(
+    int level,
+    int index,
+    math.Random random,
+    _SessionDraw session,
+  ) {
     switch (level) {
       case 1:
-        return _logicSyllogism(level, index, random);
+        return _logicSyllogism(level, index, random, session);
       case 2:
         return _logicOrdering(level, index, random, itemCount: 3);
       case 3:
-        return _logicContrapositive(level, index, random);
+        return _logicContrapositive(level, index, random, session);
       case 4:
         return _logicOrdering(level, index, random, itemCount: 4);
       default:
@@ -228,8 +238,16 @@ class IqDrillGenerator {
     }
   }
 
-  static IqQuestion _logicSyllogism(int level, int index, math.Random random) {
-    final triple = _logicCategories[random.nextInt(_logicCategories.length)];
+  static IqQuestion _logicSyllogism(
+    int level,
+    int index,
+    math.Random random,
+    _SessionDraw session,
+  ) {
+    final triple = _logicCategories[session.next(
+      'logicCategories',
+      _logicCategories.length,
+    )];
     final specific = triple[0];
     final middle = triple[1];
     final broad = triple[2];
@@ -291,14 +309,19 @@ class IqDrillGenerator {
     int level,
     int index,
     math.Random random,
+    _SessionDraw session,
   ) {
     const pairs = [
       ['雨が降る', '試合は中止になる'],
       ['電源が入っている', 'ランプが点く'],
       ['会員である', '割引が受けられる'],
       ['締切に間に合う', 'ボーナスが出る'],
+      ['試験に合格する', '資格が取れる'],
+      ['気温が下がる', '水が凍る'],
+      ['鍵をかける', '安全になる'],
+      ['雨が続く', '川が増水する'],
     ];
-    final pair = pairs[random.nextInt(pairs.length)];
+    final pair = pairs[session.next('logicConditionals', pairs.length)];
     final p = pair[0];
     final q = pair[1];
 
@@ -699,6 +722,8 @@ class IqDrillGenerator {
     ['具体', '抽象', '実体', '具現', '個別'],
     ['集中', '分散', '凝縮', '密集', '専念'],
     ['促進', '抑制', '推進', '助長', '加速'],
+    ['拡大', '縮小', '拡張', '増大', '巨大'],
+    ['原因', '結果', '要因', '起因', '動機'],
   ];
 
   /// [A, B, C, 正解, 誤答1, 誤答2, 誤答3, 関係の説明]
@@ -709,6 +734,8 @@ class IqDrillGenerator {
     ['寒い', '暖房', '暗い', '照明', '電気', '夜', '眠気', '状態とそれを解消する手段'],
     ['種', '花', '卵', 'ひな', '鳥', '巣', '殻', '初期状態とそこから育つもの'],
     ['温度計', '温度', '時計', '時刻', '針', '数字', '時間割', '計測器とそれが測る量'],
+    ['画家', '絵筆', '大工', 'のこぎり', '木材', '家', '設計図', '職業とその職業が使う道具'],
+    ['雨', '傘', '日差し', '帽子', '夏', '日焼け', '雲', '事象とそれを防ぐ道具'],
   ];
 
   /// [仲間はずれ, 同種1, 同種2, 同種3, 理由]
@@ -718,33 +745,146 @@ class IqDrillGenerator {
     ['トマト', 'にんじん', 'だいこん', 'ごぼう', 'トマトだけが果菜で、他は根菜'],
     ['銅', '木材', '鉄', 'アルミ', '木材だけが金属でない'],
     ['ピアノ', 'バイオリン', 'チェロ', 'ギター', 'ピアノだけが弦を指で弾かない (打弦楽器)'],
+    ['コウモリ', 'ワシ', 'ハト', 'ツバメ', 'コウモリだけが哺乳類で、他は鳥類'],
+    ['砂', '金', '銀', '銅', '砂だけが金属でない'],
+    ['トランペット', 'バイオリン', 'チェロ', 'ビオラ', 'トランペットだけが金管楽器で、他は弦楽器'],
   ];
 
-  static IqQuestion _verbal(int level, int index, math.Random random) {
+  static IqQuestion _verbal(
+    int level,
+    int index,
+    math.Random random,
+    _SessionDraw session,
+  ) {
     switch (level) {
       case 1:
-        return _verbalSynonym(level, index, random, pool: _synonymPool);
+        return _verbalSynonym(
+          level,
+          index,
+          random,
+          session,
+          pool: _synonymPool,
+        );
       case 2:
-        return _verbalAntonym(level, index, random);
+        return _verbalAntonym(level, index, random, session);
       case 3:
-        return _verbalAnalogy(level, index, random);
+        return _verbalAnalogy(level, index, random, session);
       case 4:
-        return _verbalOddOneOut(level, index, random);
+        return _verbalOddOneOut(level, index, random, session);
       default:
-        // レベル5は類推と仲間はずれを混ぜ、関係の抽象度が高いものを出す。
-        return random.nextBool()
-            ? _verbalAnalogy(level, index, random)
-            : _verbalOddOneOut(level, index, random);
+        // レベル5は「文の構造どうしを対応させる」課題。
+        // 以前は L3/L4 の生成器を混ぜていただけで、difficulty ラベルが 5 に
+        // なるだけで実際には難しくなっていなかった (第3ラウンド T3 で実測)。
+        return _verbalSentenceRelation(level, index, random, session);
     }
+  }
+
+  /// [文, 構造, 同構造の文, 別構造1, 別構造2, 別構造3]
+  ///
+  /// L5 専用。語と語ではなく **文と文の論理構造** を対応させる課題で、
+  /// L3 (類推) / L4 (仲間はずれ) より一段抽象度が高い。
+  static const List<List<String>> _sentenceRelationPool = [
+    [
+      '彼は寡黙だが、いざという時には誰よりも雄弁だ',
+      '逆接による対比',
+      '彼は小柄だが、力は誰にも負けない',
+      '彼は勤勉で、成績も良い',
+      '彼は疲れたので、早く寝た',
+      '彼は医者であり、作家でもある',
+    ],
+    [
+      '雨が降ったので、試合は中止になった',
+      '原因と結果',
+      '寝坊したので、電車に乗り遅れた',
+      '彼は静かだが、芯は強い',
+      '彼は教師でもあり、詩人でもある',
+      '早く行けば、席が取れる',
+    ],
+    [
+      '練習を続ければ、必ず上達する',
+      '条件と帰結',
+      '早起きすれば、朝日が見られる',
+      '彼女は優しく、そして厳しい',
+      '道が混んだので、遅刻した',
+      '彼は無口だが、よく笑う',
+    ],
+    [
+      '彼女は歌も上手いし、踊りも上手い',
+      '並列の列挙',
+      'この店は安いし、味も良い',
+      '彼は若いが、経験は豊富だ',
+      '風が強いので、電車が止まった',
+      '準備すれば、失敗は減る',
+    ],
+    [
+      '小さな店だが、味は一流だ',
+      '逆接による対比',
+      '古い家だが、住み心地は良い',
+      '雪が降ったので、道が凍った',
+      '彼は速く走り、高く跳ぶ',
+      '練習すれば、上達する',
+    ],
+    [
+      '道が凍ったので、転んでしまった',
+      '原因と結果',
+      '風邪をひいたので、仕事を休んだ',
+      '安いけれど、質は高い',
+      '彼は歌い、そして踊る',
+      '走れば、間に合う',
+    ],
+    [
+      'よく眠れば、頭が冴える',
+      '条件と帰結',
+      '毎日書けば、文章は上達する',
+      '彼は寡黙だが、優しい',
+      '雨なので、試合は中止だ',
+      '彼は速く、そして正確だ',
+    ],
+    [
+      'この本は面白いし、ためになる',
+      '並列の列挙',
+      'あの人は明るいし、頼りになる',
+      '静かだが、存在感がある',
+      '遅れたので、謝った',
+      '努力すれば、報われる',
+    ],
+  ];
+
+  static IqQuestion _verbalSentenceRelation(
+    int level,
+    int index,
+    math.Random random,
+    _SessionDraw session,
+  ) {
+    final row = _sentenceRelationPool[session.next(
+      'sentenceRelation',
+      _sentenceRelationPool.length,
+    )];
+    final source = row[0];
+    final relation = row[1];
+    final answer = row[2];
+    final options = row.sublist(2).toList()..shuffle(random);
+
+    return IqQuestion(
+      key: _key(IqCategory.verbal, level, index),
+      category: IqCategory.verbal,
+      difficulty: level,
+      prompt: '「$source」\nこの文と最も近い構造を持つのはどれか。',
+      options: options,
+      correctIndex: options.indexOf(answer),
+      explanation: '元の文の構造は「$relation」。正解は「$answer」。'
+          '語の意味ではなく、節と節のつながり方を見る。',
+    );
   }
 
   static IqQuestion _verbalSynonym(
     int level,
     int index,
-    math.Random random, {
+    math.Random random,
+    _SessionDraw session, {
     required List<List<String>> pool,
   }) {
-    final row = pool[random.nextInt(pool.length)];
+    final row = pool[session.next('synonym', pool.length)];
     final word = row[0];
     final answer = row[1];
     final options = row.sublist(1).toList()..shuffle(random);
@@ -761,8 +901,13 @@ class IqDrillGenerator {
     );
   }
 
-  static IqQuestion _verbalAntonym(int level, int index, math.Random random) {
-    final row = _antonymPool[random.nextInt(_antonymPool.length)];
+  static IqQuestion _verbalAntonym(
+    int level,
+    int index,
+    math.Random random,
+    _SessionDraw session,
+  ) {
+    final row = _antonymPool[session.next('antonym', _antonymPool.length)];
     final word = row[0];
     final answer = row[1];
     final options = row.sublist(1).toList()..shuffle(random);
@@ -779,8 +924,13 @@ class IqDrillGenerator {
     );
   }
 
-  static IqQuestion _verbalAnalogy(int level, int index, math.Random random) {
-    final row = _analogyPool[random.nextInt(_analogyPool.length)];
+  static IqQuestion _verbalAnalogy(
+    int level,
+    int index,
+    math.Random random,
+    _SessionDraw session,
+  ) {
+    final row = _analogyPool[session.next('analogy', _analogyPool.length)];
     final a = row[0];
     final b = row[1];
     final c = row[2];
@@ -804,8 +954,10 @@ class IqDrillGenerator {
     int level,
     int index,
     math.Random random,
+    _SessionDraw session,
   ) {
-    final row = _oddOneOutPool[random.nextInt(_oddOneOutPool.length)];
+    final row =
+        _oddOneOutPool[session.next('oddOneOut', _oddOneOutPool.length)];
     final answer = row[0];
     final reason = row[4];
     final options = row.sublist(0, 4).toList()..shuffle(random);
@@ -820,5 +972,35 @@ class IqDrillGenerator {
       explanation: '正解は「$answer」。$reason。'
           '共通点で止めず、もう一段細かい軸を探すのが仲間はずれ問題のコツ。',
     );
+  }
+}
+
+/// 1セッション内で同じ出題プール行を使い回さないための抽選器。
+///
+/// 出題プールは 5〜8 行しかないのに 1 セッションは 8 問あるため、
+/// 毎回 `random.nextInt(pool.length)` を引くと同一セッション内で同じ問題が
+/// 何度も出る (実測: 語彙L1 は 30/30 セッションで重複し、最大 4 問が重複)。
+/// 同じ問題を続けて解かされるのは学習としても測定としても無意味なので、
+/// プールごとに順列を作って先頭から配り、尽きたら並べ替えて配り直す。
+class _SessionDraw {
+  final math.Random _random;
+
+  /// プール識別子 -> まだ配っていない添字の並び。
+  final Map<String, List<int>> _remaining = {};
+
+  _SessionDraw(this._random);
+
+  /// [poolSize] 件のプールから、セッション内で重複しない添字を1つ返す。
+  ///
+  /// プールを配り切った場合のみ最初から配り直す (8問 > プール件数のとき)。
+  int next(String poolId, int poolSize) {
+    if (poolSize <= 0) return 0;
+
+    var queue = _remaining[poolId];
+    if (queue == null || queue.isEmpty) {
+      queue = List<int>.generate(poolSize, (i) => i)..shuffle(_random);
+      _remaining[poolId] = queue;
+    }
+    return queue.removeLast();
   }
 }

@@ -26,7 +26,8 @@ class IqTestQuestionsPage extends StatefulWidget {
   State<IqTestQuestionsPage> createState() => _IqTestQuestionsPageState();
 }
 
-class _IqTestQuestionsPageState extends State<IqTestQuestionsPage> {
+class _IqTestQuestionsPageState extends State<IqTestQuestionsPage>
+    with WidgetsBindingObserver {
   final IqTestService _service = IqTestService();
 
   late final List<IqQuestion> _questions;
@@ -55,12 +56,31 @@ class _IqTestQuestionsPageState extends State<IqTestQuestionsPage> {
     _remainingSeconds = IqQuestionBank.timeLimit.inSeconds;
     _testStartedAt = DateTime.now();
     _questionStartedAt = DateTime.now();
+    WidgetsBinding.instance.addObserver(this);
     _startGlobalTimer();
     _prepareQuestion();
   }
 
+  /// アプリが背面に回ったら記憶課題の提示を止める。
+  ///
+  /// 提示タイマーは実時間で進むため、タブを隠している間もカウントが進み、
+  /// 戻ってきたときには刺激が消えている = 見ていないのに解答を迫られる。
+  /// 背面では一時停止し、復帰時に残り時間から再開する。
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (!_isRevealing) return;
+
+    if (state == AppLifecycleState.resumed) {
+      _resumeRevealCountdown();
+    } else {
+      _revealTimer?.cancel();
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _revealTimer?.cancel();
     _globalTimer?.cancel();
     super.dispose();
@@ -94,6 +114,15 @@ class _IqTestQuestionsPageState extends State<IqTestQuestionsPage> {
       _revealRemaining = _current.revealSeconds!;
     });
 
+    _resumeRevealCountdown();
+  }
+
+  /// 残り [_revealRemaining] 秒からカウントダウンを（再）開始する。
+  ///
+  /// 初回開始と背面復帰の両方から呼ぶ。残り時間を状態に持たせているので、
+  /// 中断しても見せていない分は減らない。
+  void _resumeRevealCountdown() {
+    _revealTimer?.cancel();
     _revealTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
       setState(() => _revealRemaining--);
@@ -405,8 +434,11 @@ class _IqTestQuestionsPageState extends State<IqTestQuestionsPage> {
               borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
               border: Border.all(color: DesignTokens.divider),
             ),
+            // 図形問題は ■□ のままでは読み上げで配置が伝わらないため、
+            // 音声には言葉へ開いた説明を渡す。
             child: Text(
               question.prompt,
+              semanticsLabel: question.semanticPrompt,
               style: TextStyle(
                 color: DesignTokens.textOnDark,
                 fontSize: 16,
@@ -422,6 +454,7 @@ class _IqTestQuestionsPageState extends State<IqTestQuestionsPage> {
               child: _OptionButton(
                 label: String.fromCharCode(65 + i),
                 text: question.options[i],
+                semanticText: question.semanticOption(i),
                 monospace: question.monospacePrompt,
                 enabled: !_isSubmitting,
                 onTap: () => _answer(i),
@@ -488,6 +521,9 @@ class _DifficultyChip extends StatelessWidget {
 class _OptionButton extends StatelessWidget {
   final String label;
   final String text;
+
+  /// 読み上げ用の代替テキスト。図形選択肢を言葉に開いたもの。
+  final String semanticText;
   final bool monospace;
   final bool enabled;
   final VoidCallback onTap;
@@ -495,6 +531,7 @@ class _OptionButton extends StatelessWidget {
   const _OptionButton({
     required this.label,
     required this.text,
+    required this.semanticText,
     required this.monospace,
     required this.enabled,
     required this.onTap,
@@ -539,6 +576,7 @@ class _OptionButton extends StatelessWidget {
               Expanded(
                 child: Text(
                   text,
+                  semanticsLabel: semanticText,
                   style: TextStyle(
                     color: DesignTokens.textPrimary,
                     fontSize: 15,

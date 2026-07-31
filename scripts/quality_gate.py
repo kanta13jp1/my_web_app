@@ -51,6 +51,10 @@ def base_commands() -> list[GateCommand]:
             [python, "scripts/check_minimal_e2e_gate_test.py"],
         ),
         GateCommand(
+            "dependabot pub policy tests",
+            [python, "scripts/check_dependabot_pub_policy_test.py"],
+        ),
+        GateCommand(
             "high-risk ultrareview gate tests",
             [python, "scripts/check_high_risk_ultrareview_gate_test.py"],
         ),

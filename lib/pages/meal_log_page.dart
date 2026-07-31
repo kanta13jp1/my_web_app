@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// 食事ログ MVP — 1タップ記録 + 栄養バランスサマリ (#1665/#1744)
 /// meal.log / meal.today / meal.list actions on lifestyle-hub EF (Codex#2担当).
@@ -11,7 +12,13 @@ class MealLogPage extends StatefulWidget {
 }
 
 class _MealLogPageState extends State<MealLogPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['log', 'summary'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 

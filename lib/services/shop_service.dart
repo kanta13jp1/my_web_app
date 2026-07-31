@@ -25,7 +25,13 @@ abstract interface class ShopGateway {
 
   Future<bool> hasPurchased(String productId);
 
-  Future<CheckoutStart> startCheckout(String productId);
+  /// [visitorId] と [source] は funnel の最終段をサーバ側で記録するために
+  /// Stripe の metadata へ載せる。省略しても購入自体は成立する。
+  Future<CheckoutStart> startCheckout(
+    String productId, {
+    String? visitorId,
+    String? source,
+  });
 
   Future<DownloadTicket> requestDownloadUrl(String productId);
 }
@@ -82,10 +88,20 @@ class ShopService implements ShopGateway {
   /// 既に購入済みの場合、EF は課金せずに `already_purchased` を返す。
   /// 買い直しではなく再ダウンロードへ誘導したいため、二重課金させない。
   @override
-  Future<CheckoutStart> startCheckout(String productId) async {
+  Future<CheckoutStart> startCheckout(
+    String productId, {
+    String? visitorId,
+    String? source,
+  }) async {
     final response = await _client.functions.invoke(
       'shop-checkout',
-      body: {'product_id': productId},
+      body: {
+        'product_id': productId,
+        // funnel の最終段を webhook 側で書くために持ち回す。
+        // 無くても購入は成立する (計測が欠けるだけ)。
+        if (visitorId != null && visitorId.isNotEmpty) 'visitor_id': visitorId,
+        if (source != null && source.isNotEmpty) 'source': source,
+      },
     );
     final data = _asMap(response.data);
     if (data == null) {
