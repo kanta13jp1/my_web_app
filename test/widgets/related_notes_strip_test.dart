@@ -71,4 +71,35 @@ void main() {
     await tester.tap(find.byKey(const Key('related_notes_retry')));
     expect(retried, isTrue);
   });
+
+  testWidgets('uses a compact row when editor height is constrained', (
+    WidgetTester tester,
+  ) async {
+    const note = NoteSearchResult(
+      id: 'compact',
+      title: 'Compact related note',
+      content: 'This content stays available from the compact row.',
+      score: 0.88,
+      matchReason: 'hybrid',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RelatedNotesStrip(
+            notes: const <NoteSearchResult>[note],
+            isLoading: false,
+            compact: true,
+            onNoteTap: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.getSize(find.byKey(const Key('related_notes_strip'))).height,
+      76,
+    );
+    expect(find.text('Compact related note'), findsOneWidget);
+  });
 }

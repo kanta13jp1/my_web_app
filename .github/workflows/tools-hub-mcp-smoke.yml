@@ -124,7 +124,6 @@ jobs:
         shell: bash
         env:
           SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
-          JOB_CANCELLED: ${{ cancelled() }}
         run: |
           if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
             echo "::warning::SUPABASE_SERVICE_ROLE_KEY missing; skip schedule_task_runs record"
@@ -132,7 +131,7 @@ jobs:
           fi
 
           STATUS="success"
-          if [ "$JOB_CANCELLED" = "true" ]; then
+          if [ -z "$SMOKE_OUTCOME" ] || [ "$SMOKE_OUTCOME" = "cancelled" ]; then
             STATUS="skipped"  # cancel-in-progress: true によるキャンセル (smoke到達前も含む)
           elif [ "$SMOKE_OUTCOME" != "success" ]; then
             STATUS="error"

@@ -10,6 +10,7 @@ class RelatedNotesStrip extends StatelessWidget {
     required this.onNoteTap,
     this.hasError = false,
     this.onRetry,
+    this.compact = false,
   });
 
   final List<NoteSearchResult> notes;
@@ -17,47 +18,73 @@ class RelatedNotesStrip extends StatelessWidget {
   final bool hasError;
   final ValueChanged<NoteSearchResult> onNoteTap;
   final VoidCallback? onRetry;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
       key: const Key('related_notes_strip'),
-      height: 148,
+      height: compact ? 76 : 148,
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
         border: Border(
           top: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.auto_awesome_outlined,
-                size: 16,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 6),
-              Text('関連するメモ', style: theme.textTheme.titleSmall),
-              if (isLoading) ...[
-                const SizedBox(width: 10),
-                const SizedBox(
-                  key: Key('related_notes_loading'),
-                  width: 12,
-                  height: 12,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+      padding: compact
+          ? const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
+          : const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      child: compact
+          ? Row(
+              children: [
+                Icon(
+                  Icons.auto_awesome_outlined,
+                  size: 16,
+                  color: theme.colorScheme.primary,
                 ),
+                const SizedBox(width: 6),
+                Text('関連メモ', style: theme.textTheme.labelLarge),
+                if (isLoading) ...[
+                  const SizedBox(width: 8),
+                  const SizedBox(
+                    key: Key('related_notes_loading'),
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ],
+                const SizedBox(width: 12),
+                Expanded(child: _buildContent(context)),
               ],
-            ],
-          ),
-          const SizedBox(height: 8),
-          Expanded(child: _buildContent(context)),
-        ],
-      ),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.auto_awesome_outlined,
+                      size: 16,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text('関連するメモ', style: theme.textTheme.titleSmall),
+                    if (isLoading) ...[
+                      const SizedBox(width: 10),
+                      const SizedBox(
+                        key: Key('related_notes_loading'),
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Expanded(child: _buildContent(context)),
+              ],
+            ),
     );
   }
 
@@ -97,7 +124,7 @@ class RelatedNotesStrip extends StatelessWidget {
       itemBuilder: (context, index) {
         final note = notes[index];
         return SizedBox(
-          width: 224,
+          width: compact ? 180 : 224,
           child: Material(
             color: theme.colorScheme.surface,
             shape: RoundedRectangleBorder(
@@ -109,27 +136,44 @@ class RelatedNotesStrip extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
               onTap: () => onNoteTap(note),
               child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      note.title.trim().isEmpty ? '無題のメモ' : note.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelLarge,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      note.content.trim().isEmpty ? '本文なし' : note.content,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                padding: compact
+                    ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
+                    : const EdgeInsets.all(10),
+                child: compact
+                    ? Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              note.title.trim().isEmpty ? '無題のメモ' : note.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelMedium,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.chevron_right, size: 16),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            note.title.trim().isEmpty ? '無題のメモ' : note.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelLarge,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            note.content.trim().isEmpty ? '本文なし' : note.content,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
               ),
             ),
           ),
