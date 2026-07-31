@@ -1,7 +1,7 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-07-30T22:28:22Z",
+      "checked_at": "2026-07-31T22:16:24Z",
       "hash": "cd3805c012788e10c829872d14c7ea7a680a934c19ca71fad3bcb800d701ca95",
       "keyword_groups": {
         "codex-runtime": [
@@ -52,7 +52,7 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-07-30T22:28:22Z",
+      "checked_at": "2026-07-31T22:16:24Z",
       "hash": "a5545fd180009614613298fe94c3aa1fc9f83db6d3b478d0683f10f81f8c8e11",
       "keyword_groups": {
         "codex-runtime": [
@@ -90,7 +90,7 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-07-30T22:28:22Z",
+      "checked_at": "2026-07-31T22:16:24Z",
       "hash": "ccf1d043f0d7308687b4c1f7d02323c9b866bb9c555ded4905d1bce587d8a40a",
       "keyword_groups": {
         "codex-runtime": [
@@ -132,8 +132,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-07-30T22:28:22Z",
-      "hash": "2e1daca679792bededbc94f9b51facb444e11f416d7b48807a7bf8195bbd52c0",
+      "checked_at": "2026-07-31T22:16:24Z",
+      "hash": "0c75d26c77ea70b2277659ade866df69453159068fa1077f5f87087a9f30e9c9",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -159,7 +159,6 @@
           "IDE extension"
         ],
         "quality-cost": [
-          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -176,13 +175,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-30 / Browser upgrades, multi-repository review, and image editing 26.727 The latest ChatGPT desk",
+      "latest_signal": "2026-07-31 / GPT-5.4 and GPT-5.4 mini retire from Codex on August 31 On August 31, 2026, GPT-5.4 and GPT",
       "name": "Codex changelog",
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-07-30T22:28:22Z",
+      "checked_at": "2026-07-31T22:16:24Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -191,8 +190,8 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-07-30T22:28:22Z",
-      "hash": "6f33db1e9b589488628b09e7da17c92d858dbddc9dae723af1e68dcd34b3613f",
+      "checked_at": "2026-07-31T22:16:24Z",
+      "hash": "1dea5355700b2af3803572e204ad45d115daa312bf8c8c38014954f1985a34e8",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.4",
@@ -234,8 +233,8 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-07-30T22:28:22Z",
-      "hash": "70d69c3a9016f203c71da2423468d2d749cb023a20ce074251fe90bccbe3645a",
+      "checked_at": "2026-07-31T22:16:24Z",
+      "hash": "f034a7002852bb03e0b31c30ee15073efbf48566b1cf9059fe357b85b11698c5",
       "keyword_groups": {
         "codex-runtime": [
           "subagents"
@@ -267,8 +266,8 @@
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-07-30T22:28:22Z",
-      "hash": "4e1694ec20ecdde154cfa94c822c315dad5c8a7b29115f08126a1b6d8f1ac9c7",
+      "checked_at": "2026-07-31T22:16:24Z",
+      "hash": "aee8af93371c241694b8bd9bf2371b035796a434e9d3745e9c2f38aaa0af2d2d",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -277,6 +276,7 @@
         ],
         "hooks": [
           "hook",
+          "hooks",
           "Stop"
         ],
         "integration": [
@@ -301,13 +301,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "July 29, 2026",
+      "latest_signal": "July 31, 2026",
       "name": "Devin release notes",
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-07-30T22:28:22Z",
+      "checked_at": "2026-07-31T22:16:24Z",
       "hash": "a7513a88ed2c096b719cc9346c81413d92d42394be154e295dc6299794c9c00c",
       "keyword_groups": {
         "hooks": [
@@ -336,5 +336,5 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-07-30T22:28:22Z"
+  "updated_at": "2026-07-31T22:16:24Z"
 }
