@@ -103,6 +103,10 @@ def base_commands() -> list[GateCommand]:
             [python, "scripts/check_github_actions_node_runtime.py"],
         ),
         GateCommand(
+            "github actions status-function placement",
+            [python, "scripts/check_github_actions_status_functions.py"],
+        ),
+        GateCommand(
             "wbs sync timeout resilience",
             [python, "scripts/check_wbs_sync_timeout_resilience.py"],
         ),
