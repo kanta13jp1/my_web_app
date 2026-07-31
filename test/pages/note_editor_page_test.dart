@@ -12,7 +12,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// 記録用の Fake Supabase。`notes` への update / insert を全件記録し、
 /// 「本当に PATCH が飛んだか」をテストから検証できるようにする。
 class _RecordingSupabaseClient extends Fake implements SupabaseClient {
-  _RecordingSupabaseClient({required this.noteRow, this.failSelect = false});
+  _RecordingSupabaseClient({
+    required this.noteRow,
+    this.failSelect = false,
+    this.updateGate,
+  });
 
   @override
   final _FakeGoTrueClient auth = _FakeGoTrueClient();
@@ -21,6 +25,7 @@ class _RecordingSupabaseClient extends Fake implements SupabaseClient {
 
   /// true にすると `_loadNote` の select が失敗する (= サーバー基準値が無い状態)。
   final bool failSelect;
+  final Completer<void>? updateGate;
   final List<Map<String, dynamic>> updates = <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> inserts = <Map<String, dynamic>>[];
 
@@ -71,7 +76,10 @@ class _FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
     if (table == 'notes') {
       client.updates.add(Map<String, dynamic>.from(values));
     }
-    return _FakeMutationBuilder(idValue: client.noteRow['id']);
+    return _FakeMutationBuilder(
+      idValue: client.noteRow['id'],
+      waitFor: client.updateGate?.future,
+    );
   }
 
   @override
@@ -151,9 +159,10 @@ class _FakeSelectBuilder extends Fake
 /// `.update(...)` / `.insert(...)` の戻り値。
 class _FakeMutationBuilder extends Fake
     implements PostgrestFilterBuilder<dynamic> {
-  _FakeMutationBuilder({required this.idValue});
+  _FakeMutationBuilder({required this.idValue, this.waitFor});
 
   final Object? idValue;
+  final Future<void>? waitFor;
 
   @override
   _FakeMutationBuilder eq(String column, Object value) => this;
@@ -175,7 +184,9 @@ class _FakeMutationBuilder extends Fake
     FutureOr<U> Function(dynamic value) onValue, {
     Function? onError,
   }) {
-    return Future<dynamic>.value(null).then(onValue, onError: onError);
+    return (waitFor ?? Future<void>.value())
+        .then<dynamic>((_) => null)
+        .then(onValue, onError: onError);
   }
 
   @override
@@ -395,6 +406,46 @@ void main() {
       expect(DateTime.parse(updatedAt).isUtc, isTrue);
     });
 
+    testWidgets('保存の待機中に追加入力すると最終内容が続けて保存される', (tester) async {
+      final updateGate = Completer<void>();
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(),
+        updateGate: updateGate,
+      );
+      await _pumpPage(tester, client);
+      client.updates.clear();
+
+      await tester.enterText(
+        find.byKey(const Key('note_editor_content_field')),
+        '最初の保存内容',
+      );
+      await tester.pump(const Duration(seconds: 3));
+      expect(client.updates, hasLength(1));
+
+      await tester.enterText(
+        find.byKey(const Key('note_editor_content_field')),
+        '保存中に追加した最終内容',
+      );
+      await tester.pump();
+
+      updateGate.complete();
+      await tester.pump();
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(
+        prefs.getString('note_editor_draft_429'),
+        isNotNull,
+        reason: '保存中に追加された内容の下書きを先行リクエストが削除している',
+      );
+
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      expect(client.updates, hasLength(2));
+      expect(client.updates.last['content'], '保存中に追加した最終内容');
+      expect(prefs.getString('note_editor_draft_429'), isNull);
+    });
+
     testWidgets('デバウンス中にエディタを閉じても編集がサーバーに送られる', (tester) async {
       final client = await _pumpEditor(tester);
 
@@ -435,6 +486,38 @@ void main() {
 
       expect(find.text('未送信の下書きがあります'), findsOneWidget);
       expect(_contentController(tester).text, isNot('古いローカル本文'));
+    });
+
+    testWidgets('競合ダイアログを選択せず閉じても下書きを保持する', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'note_editor_draft_429': jsonEncode(<String, dynamic>{
+          'title': '古いローカル下書き',
+          'content': '消してはいけないローカル本文',
+          'reminder_date': null,
+          'is_favorite': false,
+          'saved_at': '2026-07-19T00:00:00.000Z',
+        }),
+      });
+
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow()..['updated_at'] = '2026-07-19T12:00:00.000Z',
+      );
+      await _pumpPage(tester, client);
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+      await tester.tapAt(const Offset(4, 4));
+      await tester.pump();
+      expect(find.byType(AlertDialog), findsOneWidget);
+
+      Navigator.of(tester.element(find.byType(AlertDialog))).pop();
+      await tester.pumpAndSettle();
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(
+        prefs.getString('note_editor_draft_429'),
+        isNotNull,
+        reason: '明示的な選択なしに競合ダイアログを閉じると下書きが削除される',
+      );
     });
 
     testWidgets('復元した下書きは入力を待たずサーバーへ送られる', (tester) async {
@@ -482,6 +565,10 @@ void main() {
         failSelect: true,
       );
       await _pumpPage(tester, client);
+      await tester.enterText(
+        find.byKey(const Key('note_editor_content_field')),
+        '読み込み失敗後の入力',
+      );
       await tester.pump(const Duration(seconds: 3));
       await tester.pumpAndSettle();
 

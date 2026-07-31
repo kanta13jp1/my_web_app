@@ -346,6 +346,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       if (!mounted) return;
       final restore = await showDialog<bool>(
         context: context,
+        barrierDismissible: false,
         builder: (ctx) => AlertDialog(
           title: const Text('未送信の下書きがあります'),
           content: const Text(
@@ -364,7 +365,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           ],
         ),
       );
-      if (restore != true) {
+      if (restore == null) {
+        return;
+      }
+      if (!restore) {
         await _clearDraftFromLocal();
         return;
       }
@@ -402,11 +406,16 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   /// サーバーに保存済みの内容を記録し、無変更 PATCH を弾けるようにする。
-  void _markStatePersisted() {
-    _persistedTitle = _titleController.text.trim();
-    _persistedContent = _contentController.text.trim();
-    _persistedReminderIso = _reminderDate?.toUtc().toIso8601String();
-    _persistedIsFavorite = _isFavorite;
+  void _markStatePersisted({
+    required String title,
+    required String content,
+    required String? reminderIso,
+    required bool isFavorite,
+  }) {
+    _persistedTitle = title;
+    _persistedContent = content;
+    _persistedReminderIso = reminderIso;
+    _persistedIsFavorite = isFavorite;
   }
 
   /// サーバー側の内容を一度でも取得できているか。取得できていない状態で
@@ -415,11 +424,16 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       _currentNoteId == null || _persistedTitle != null;
 
   /// 現在の編集内容がサーバー保存済みの内容と一致するか。
-  bool _matchesPersistedState(String title, String content) {
+  bool _matchesPersistedState({
+    required String title,
+    required String content,
+    required String? reminderIso,
+    required bool isFavorite,
+  }) {
     return _persistedTitle == title &&
         _persistedContent == content &&
-        _persistedReminderIso == _reminderDate?.toUtc().toIso8601String() &&
-        _persistedIsFavorite == _isFavorite;
+        _persistedReminderIso == reminderIso &&
+        _persistedIsFavorite == isFavorite;
   }
 
   void _detachTextListeners() {
@@ -449,8 +463,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     // つつサーバーには届かず、次に何か入力するまで反映されなかった。
     final matchesServer = _currentNoteId != null &&
         _matchesPersistedState(
-          _titleController.text.trim(),
-          _contentController.text.trim(),
+          title: _titleController.text.trim(),
+          content: _contentController.text.trim(),
+          reminderIso: _reminderDate?.toUtc().toIso8601String(),
+          isFavorite: _isFavorite,
         );
 
     if (matchesServer || (_currentNoteId == null && !hasAnyInput)) {
@@ -1340,7 +1356,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 )?.toLocal();
           _isFavorite = _boolFromValue(data['is_favorite']);
         });
-        _markStatePersisted();
+        _markStatePersisted(
+          title: _titleController.text.trim(),
+          content: _contentController.text.trim(),
+          reminderIso: _reminderDate?.toUtc().toIso8601String(),
+          isFavorite: _isFavorite,
+        );
         _syncObservedText();
       }
     } catch (e) {
@@ -1357,8 +1378,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Future<void> _saveNoteWithoutClosing() async {
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
+    final reminderIso = _reminderDate?.toUtc().toIso8601String();
+    final isFavorite = _isFavorite;
 
     if (!_hasPersistableState && _currentNoteId == null) {
+      return;
+    }
+
+    if (_currentNoteId != null && !_hasServerBaseline) {
       return;
     }
 
@@ -1367,15 +1394,20 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
     if (_currentNoteId != null) {
       // 保存済みの内容と完全一致するなら PATCH を送らない。
-      if (_matchesPersistedState(title, content)) {
+      if (_matchesPersistedState(
+        title: title,
+        content: content,
+        reminderIso: reminderIso,
+        isFavorite: isFavorite,
+      )) {
         _autoSaveService.markAsSaved();
         return;
       }
       await _supabase.from('notes').update({
         'title': title,
         'content': content,
-        'reminder_date': _reminderDate?.toUtc().toIso8601String(),
-        'is_favorite': _isFavorite,
+        'reminder_date': reminderIso,
+        'is_favorite': isFavorite,
         // timestamptz 列にはオフセット付きで渡す。ローカル時刻のまま送ると
         // サーバー側で UTC と解釈され JST 環境では 9 時間ずれる。
         'updated_at': DateTime.now().toUtc().toIso8601String(),
@@ -1387,8 +1419,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             'user_id': user.id,
             'title': title,
             'content': content,
-            'reminder_date': _reminderDate?.toUtc().toIso8601String(),
-            'is_favorite': _isFavorite,
+            'reminder_date': reminderIso,
+            'is_favorite': isFavorite,
             'is_archived': false,
             'is_pinned': false,
           })
@@ -1405,9 +1437,25 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       }
     }
 
-    _markStatePersisted();
-    _autoSaveService.markAsSaved();
-    await _clearDraftFromLocal();
+    _markStatePersisted(
+      title: title,
+      content: content,
+      reminderIso: reminderIso,
+      isFavorite: isFavorite,
+    );
+
+    final currentMatchesSavedRequest = _matchesPersistedState(
+      title: _titleController.text.trim(),
+      content: _contentController.text.trim(),
+      reminderIso: _reminderDate?.toUtc().toIso8601String(),
+      isFavorite: _isFavorite,
+    );
+    if (currentMatchesSavedRequest) {
+      _autoSaveService.markAsSaved();
+      await _clearDraftFromLocal();
+    } else {
+      _autoSaveService.markAsModified();
+    }
   }
 
   Future<void> _saveManually() async {
@@ -2330,14 +2378,22 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   /// タイマーが破棄され未保存の編集がサーバーに届かない。破棄前に確定値を
   /// 取り出して投げ切る (State には触れないので dispose 後も安全)。
   void _flushPendingSaveOnExit() {
-    if (_autoSaveService.saveState != SaveState.modified) return;
     final noteId = _currentNoteId;
     if (noteId == null) return; // 新規メモはローカル下書きで復元される
     if (!_hasServerBaseline) return; // 読み込み失敗時は空内容で潰さない
 
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
-    if (_matchesPersistedState(title, content)) return;
+    final reminderIso = _reminderDate?.toUtc().toIso8601String();
+    final isFavorite = _isFavorite;
+    if (_matchesPersistedState(
+      title: title,
+      content: content,
+      reminderIso: reminderIso,
+      isFavorite: isFavorite,
+    )) {
+      return;
+    }
 
     unawaited(
       _supabase
@@ -2345,8 +2401,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           .update({
             'title': title,
             'content': content,
-            'reminder_date': _reminderDate?.toUtc().toIso8601String(),
-            'is_favorite': _isFavorite,
+            'reminder_date': reminderIso,
+            'is_favorite': isFavorite,
             'updated_at': DateTime.now().toUtc().toIso8601String(),
           })
           .eq('id', noteId)
