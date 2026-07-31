@@ -107,6 +107,10 @@ def base_commands() -> list[GateCommand]:
             [python, "scripts/check_github_actions_status_functions.py"],
         ),
         GateCommand(
+            "github actions PowerShell splatting",
+            [python, "scripts/check_github_actions_powershell_splatting.py"],
+        ),
+        GateCommand(
             "wbs sync timeout resilience",
             [python, "scripts/check_wbs_sync_timeout_resilience.py"],
         ),
