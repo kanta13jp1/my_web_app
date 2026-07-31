@@ -1,30 +1,14 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-07-17",
+    "date": "2026-07-30",
     "users": {
-      "total": 51
+      "total": 61
     },
     "featureRequests": {
-      "newToday": 3,
-      "openCount": 122,
-      "newTodayList": [
-        {
-          "id": "f2d75ef6-1685-49cf-a5b3-ca1115327463",
-          "title": "[資産管理] 「借金しない宣言」違反項目ごとの具体的な解消目標期間と返済額提示",
-          "created_at": "2026-07-17T10:06:28.983601+00:00"
-        },
-        {
-          "id": "d8f608f5-c0ac-41ec-bdd8-33f4e3f91809",
-          "title": "[資産管理] カード請求内訳と請求確定額の照合支援強化",
-          "created_at": "2026-07-17T02:12:56.231734+00:00"
-        },
-        {
-          "id": "1403d467-0eb1-4cd4-8a95-55cfcfbdcc8c",
-          "title": "[資産管理] 支払原資口座の残高不足を先読みして自動警告する機能",
-          "created_at": "2026-07-17T02:12:54.703591+00:00"
-        }
-      ],
+      "newToday": 0,
+      "openCount": 131,
+      "newTodayList": [],
       "topOpen": [
         {
           "title": "不具合報告: Loading from existing service worker.",
@@ -71,6 +55,6 @@
       }
     ]
   },
-  "fetched_at": "2026-07-18T08:25:12+09:00",
-  "report_date": "2026-07-18"
+  "fetched_at": "2026-07-31T08:33:42+09:00",
+  "report_date": "2026-07-31"
 }

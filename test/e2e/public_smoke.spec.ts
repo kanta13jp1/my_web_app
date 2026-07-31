@@ -4,31 +4,31 @@ const publicRoutes = ['/', '/project-gantt', '/referral'];
 
 test.describe('public production smoke', () => {
   for (const route of publicRoutes) {
-    test(`${route} returns the public Flutter shell`, async ({ page }) => {
-      const response = await page.goto(route, { waitUntil: 'domcontentloaded' });
+    test(`${route} returns the public Flutter shell`, async ({ request }) => {
+      const response = await request.get(route);
 
-      expect(response?.ok()).toBeTruthy();
-      await expect(page.locator('body')).toContainText('自分株式会社');
-      // クロール用のプリブート SEO シェルが配信されていることを検証する。
-      // (#4122 で 'Loading application' プレースホルダは #seo-shell 構造へ刷新。
-      //  Flutter 起動後は live DOM が置換され消えるため、配信 HTML 本文で確認する。)
-      const servedHtml = (await response?.text()) ?? '';
-      expect(servedHtml).toContain('seo-shell');
+      expect(response.ok()).toBeTruthy();
+      const html = await response.text();
+      expect(html).toContain('id="seo-shell"');
+      expect(html).toContain('id="seo-title"');
+      expect(html).toMatch(
+        /<p\b(?=[^>]*\bclass="seo-loading")(?=[^>]*\brole="status")[^>]*>/,
+      );
     });
   }
 
   test('/project-gantt exposes crawlable entry content while app boots', async ({
-    page,
+    request,
   }) => {
-    // クロール用の導線は Flutter 起動前の配信 HTML に含まれる。起動後は live DOM が
-    // 置換されるため、配信 HTML 本文で主要導線とルート固有キーワードを検証する。
-    // (#4122 でシェルの CTA は '5分だけ無料で試す' 等へ刷新された。)
-    const response = await page.goto('/project-gantt', {
-      waitUntil: 'domcontentloaded',
-    });
+    const response = await request.get('/project-gantt');
+    expect(response.ok()).toBeTruthy();
+    const html = await response.text();
 
-    const servedHtml = (await response?.text()) ?? '';
-    expect(servedHtml).toContain('5分だけ無料で試す');
-    expect(servedHtml).toContain('WBSガントチャート');
+    expect(html).toContain('5分だけ無料で試す');
+    expect(html).toContain('WBSガントチャート');
+    expect(html).toContain(
+      'href="https://my-web-app-b67f4.web.app/?lp_intent=trial&amp;utm_source=seo_shell&amp;utm_medium=landing&amp;utm_campaign=first_user_growth"',
+    );
+    expect(html).toContain('href="#seo-how"');
   });
 });

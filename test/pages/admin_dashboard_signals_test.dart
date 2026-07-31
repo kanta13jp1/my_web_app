@@ -503,4 +503,66 @@ void main() {
       expect(line, contains('製品紹介型 実測不足 (1件・計測中1件)'));
     });
   });
+  group('R29 auto error report helpers (可視化カード)', () {
+    test('autoErrorPreviewLine: firstLine 優先', () {
+      expect(
+        autoErrorPreviewLine(
+          {'firstLine': 'Null check operator', 'message': 'x'},
+        ),
+        'Null check operator',
+      );
+    });
+
+    test('autoErrorPreviewLine: firstLine 空なら message から復元 (ヘッダ除外)', () {
+      expect(
+        autoErrorPreviewLine({
+          'message': '[自動エラー報告]\nRangeError: bad index\n#0 foo',
+        }),
+        'RangeError: bad index',
+      );
+      expect(autoErrorPreviewLine({'message': '[自動エラー報告]'}), '');
+      expect(autoErrorPreviewLine({}), '');
+    });
+
+    test('parseAutoErrorReports: 行を写像・非Mapは無視', () {
+      final entries = parseAutoErrorReports([
+        {
+          'id': 'a1',
+          'firstLine': 'boom',
+          'createdAt': '2026-07-18T09:00:00Z',
+        },
+        'not-a-map',
+        {'id': 2, 'message': '[自動エラー報告]\nsecond'},
+      ]);
+      expect(entries.length, 2);
+      expect(entries[0].id, 'a1');
+      expect(entries[0].firstLine, 'boom');
+      expect(entries[1].id, '2');
+      expect(entries[1].firstLine, 'second');
+      expect(parseAutoErrorReports(null), isEmpty);
+    });
+
+    test('autoErrorReportsHealthLabel: 0件は正常表記', () {
+      expect(autoErrorReportsHealthLabel(0), '自動エラー報告なし（正常）');
+      expect(autoErrorReportsHealthLabel(3), '自動エラー報告 3件');
+    });
+  });
+  group('R30 growthSummaryHasMetrics (捏造ゼロ防止)', () {
+    test('metric キーがあれば true', () {
+      expect(growthSummaryHasMetrics({'newUsers': 3, 'label': '今日'}), isTrue);
+      expect(growthSummaryHasMetrics({'totalUsersEver': 44}), isTrue);
+    });
+
+    test('achievement.list の {success, items} は false (集計未接続)', () {
+      expect(
+        growthSummaryHasMetrics({'success': true, 'items': <dynamic>[]}),
+        isFalse,
+      );
+    });
+
+    test('null / 空は false', () {
+      expect(growthSummaryHasMetrics(null), isFalse);
+      expect(growthSummaryHasMetrics(<String, dynamic>{}), isFalse);
+    });
+  });
 }

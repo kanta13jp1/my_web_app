@@ -120,11 +120,24 @@ class AssetLiabilityPlanningService {
   static const int anthropicAcomShoppingPaymentDay = 26;
   static const double anthropicAcomShoppingPaymentAmount = 40000;
   static const String smbcOtsukaBranchAccountId = 'smbc_otsuka_branch';
-  static const String jibunBankAccountId = 'jibun_bank_card_loan';
+
+  /// じぶん銀行 (預金 = 資産)。振替元/請求先/主口座になり得る cash-like 口座。
+  static const String jibunBankAccountId = 'jibun_bank';
+
+  /// じぶん銀行カードローン / じぶんローン (現金借入 = カードローン負債)。
+  /// かつては [jibunBankAccountId] と同一 ID に潰れており、じぶん銀行(預金)を
+  /// 振替元に選んでも保存 ID がこのカードローンを指して「原資未設定」に倒れる
+  /// バグの原因だった (#part341)。両者は別 ID に分離する。
+  static const String jibunBankCardLoanAccountId = 'jibun_bank_card_loan';
+  // 旧・固定額(¥80,000)の組み込み資金移動タスクの ID。かつては毎ビルドで
+  // 三井住友大塚→じぶん銀行の ¥80,000 移動を自動注入していたが、これは不足額と
+  // 無関係の固定値で、給料の入金先がじぶん銀行のとき「給料入金 + 移動入金」の
+  // 二重計上になり、逆に三井住友を ¥80,000 減らして幻の不足→逆方向の提案を
+  // 生んでいた (ユーザー報告)。自動注入は撤去し、資金移動は不足額に上限が
+  // 掛かる動的提案 (_buildTransferSuggestions) に一本化した。ID 定数は、過去に
+  // 「完了」で退避された永続タスクを組み込み扱いと認識するためだけに残す。
   static const String auPayCardFundingTransferTaskId =
       'transfer_smbc_otsuka_to_jibun_aupay_card_funding';
-  static const int auPayCardFundingTransferDay = 26;
-  static const double auPayCardFundingTransferAmount = 80000;
 
   /// ハードコードされた既定固定費 (家賃/KDDI/水道/ガス) のデータ駆動定義。
   /// `buildWorkbook(includeDefaultFixedPayments: true)` で当月該当かつ未計上の
@@ -237,6 +250,14 @@ class AssetLiabilityPlanningService {
       baseDate: baseDate,
       salaryDay: salaryDay,
     );
+    // 実際に注入されたサブスク区分の固定費口座 ID (dedup / 当月該当を反映済み)。
+    // トリアージの「生命線を優先確保」から除外する。名前の再解決ではなく実注入
+    // 口座 ID を使うことで、組み込み生命線 ID (rent/gas_bill 等) との部分一致衝突で
+    // 本物の生命線を過剰除外する事故を避ける。
+    final subscriptionFixedCostAccountIds = <String>{
+      for (final injected in injectedFixedCosts)
+        if (injected.isSubscription) injected.account.id,
+    };
     if (injectedFixedCosts.isNotEmpty) {
       accounts
         ..addAll(injectedFixedCosts.map((injected) => injected.account))
@@ -257,14 +278,8 @@ class AssetLiabilityPlanningService {
       incomePlans: incomePlans,
       accountsById: accountsById,
     );
-    final effectiveTransferTasks = _withDefaultAuPayCardFundingTransfer(
-      transferTasks: transferTasks,
-      accounts: accounts,
-      baseDate: baseDate,
-      salaryDay: salaryDay,
-    );
     final resolvedTransferTasks = _resolveTransferTasks(
-      transferTasks: effectiveTransferTasks,
+      transferTasks: transferTasks,
       accounts: accounts,
       accountsById: accountsById,
     );
@@ -277,8 +292,10 @@ class AssetLiabilityPlanningService {
         if (injected.sourceAccountId != null &&
             injected.sourceAccountId!.isNotEmpty)
           injected.account.id: injected.sourceAccountId!,
-      ...defaultPaymentSourceAccountIds,
-      ...paymentSourceAccountIds,
+      for (final e in defaultPaymentSourceAccountIds.entries)
+        e.key: _migrateCollidedJibunSourceId(e.value, accountsById),
+      for (final e in paymentSourceAccountIds.entries)
+        e.key: _migrateCollidedJibunSourceId(e.value, accountsById),
     };
 
     final positiveAssetTotal = accounts.fold<double>(
@@ -438,6 +455,7 @@ class AssetLiabilityPlanningService {
           liabilityTotal == 0 ? 0 : topFourDebtTotal / liabilityTotal.abs(),
       manualPaymentCount: manualPaymentCount,
       estimatedPaymentCount: estimatedPaymentCount,
+      subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds,
     );
   }
 
@@ -1694,45 +1712,6 @@ class AssetLiabilityPlanningService {
     return result;
   }
 
-  List<AssetLiabilityTransferTask> _withDefaultAuPayCardFundingTransfer({
-    required List<AssetLiabilityTransferTask> transferTasks,
-    required List<AssetLiabilityAccount> accounts,
-    required DateTime baseDate,
-    int? salaryDay,
-  }) {
-    if (transferTasks.any(
-      (task) => task.id == auPayCardFundingTransferTaskId,
-    )) {
-      return transferTasks;
-    }
-
-    final fromAccount = _findCashLikeAccountById(
-      accounts,
-      smbcOtsukaBranchAccountId,
-    );
-    final toAccount = _findCashLikeAccountById(accounts, jibunBankAccountId);
-    if (fromAccount == null || toAccount == null) {
-      return transferTasks;
-    }
-
-    return <AssetLiabilityTransferTask>[
-      ...transferTasks,
-      AssetLiabilityTransferTask(
-        id: auPayCardFundingTransferTaskId,
-        fromAccountId: fromAccount.id,
-        fromAccountName: fromAccount.name,
-        toAccountId: toAccount.id,
-        toAccountName: toAccount.name,
-        amount: auPayCardFundingTransferAmount,
-        dueDate: _resolveCyclePaymentDate(
-          baseDate,
-          salaryDay,
-          auPayCardFundingTransferDay,
-        ),
-      ),
-    ];
-  }
-
   AssetLiabilityAccount? _findCashLikeAccountById(
     List<AssetLiabilityAccount> accounts,
     String accountId,
@@ -1808,12 +1787,16 @@ class AssetLiabilityPlanningService {
     ];
   }
 
+  /// 口座間移動の提案で、移動元に残しておく最低額。この額を割り込む提案は
+  /// しない (移動元を新たな残高不足にしないため)。
+  static const double _transferDonorReserve = 30000;
+
   List<AssetLiabilityTransferSuggestion> _buildTransferSuggestions({
     required List<AssetLiabilityAccountCashflowSummary> summaries,
     required List<AssetLiabilityCashflowRow> cashflowRows,
   }) {
     final donors = summaries
-        .where((summary) => summary.projectedBalance > 30000)
+        .where((summary) => summary.projectedBalance > _transferDonorReserve)
         .toList()
       ..sort((a, b) => b.projectedBalance.compareTo(a.projectedBalance));
     final shortages = summaries.where((summary) => summary.isShort).toList()
@@ -1821,27 +1804,37 @@ class AssetLiabilityPlanningService {
 
     final suggestions = <AssetLiabilityTransferSuggestion>[];
     for (final shortage in shortages) {
-      final donor = donors.firstWhere(
-        (summary) => summary.accountId != shortage.accountId,
-        orElse: () => const AssetLiabilityAccountCashflowSummary(
-          accountId: '',
-          accountName: '',
-          currentBalance: 0,
-          upcomingPayments: 0,
-          upcomingIncome: 0,
-          projectedBalance: 0,
-          riskLevel: AssetLiabilityCashRiskLevel.short,
-        ),
-      );
-      if (donor.accountId.isEmpty) {
-        continue;
+      // 移動元は「見込み残高に余裕がある」だけでは不十分で、**今この口座に
+      // 実際にいくらあるか**で上限を掛ける必要がある。projectedBalance は
+      // 未着金の収入 (給料/入金予定) を含むため、それだけで決めると
+      // 「残高が無いのに移動を提案する」実行不能な提案になる (ユーザー報告:
+      // じぶん銀行 現在¥18,918 に対し ¥50,041 の移動を提案していた)。
+      // さらに移動予約済み (pendingTransferOut) は既に他へ約束済みなので、
+      // 同じ資金を二重に当て込まないよう差し引く。
+      AssetLiabilityAccountCashflowSummary? donor;
+      var amount = 0.0;
+      for (final candidate in donors) {
+        if (candidate.accountId == shortage.accountId) {
+          continue;
+        }
+        final donorSurplus = candidate.projectedBalance - _transferDonorReserve;
+        if (donorSurplus <= 0) {
+          continue;
+        }
+        final movableNow =
+            candidate.currentBalance - candidate.pendingTransferOut;
+        if (movableNow <= 0) {
+          continue;
+        }
+        final feasible = min(min(shortage.shortfall, donorSurplus), movableNow);
+        if (feasible <= 0) {
+          continue;
+        }
+        donor = candidate;
+        amount = feasible;
+        break;
       }
-      final donorSurplus = donor.projectedBalance - 30000;
-      if (donorSurplus <= 0) {
-        continue;
-      }
-      final amount = min(shortage.shortfall, donorSurplus);
-      if (amount <= 0) {
+      if (donor == null || amount <= 0) {
         continue;
       }
       suggestions.add(
@@ -1891,6 +1884,23 @@ class AssetLiabilityPlanningService {
     return b.balance.abs().compareTo(a.balance.abs());
   }
 
+  /// 旧 ID 衝突の移行: じぶん銀行(預金)がカードローンと同一 ID だった名残で、
+  /// 振替元に旧衝突 ID (= 現在のカードローン ID) が保存されている場合、預金口座が
+  /// 存在すればそちらへ読み替える。カードローンは支払原資になり得ないため、
+  /// 保存値がカードローン ID を指すのは「じぶん銀行(預金)を選んだつもり」の
+  /// 名残と解釈できる (#part341)。預金が無ければ元の値のまま
+  /// (round-2 の cardLoan→未設定 正規化に委ねる)。
+  String _migrateCollidedJibunSourceId(
+    String sourceAccountId,
+    Map<String, AssetLiabilityAccount> accountsById,
+  ) {
+    if (sourceAccountId == jibunBankCardLoanAccountId &&
+        accountsById.containsKey(jibunBankAccountId)) {
+      return jibunBankAccountId;
+    }
+    return sourceAccountId;
+  }
+
   String _accountIdForName(String name) {
     final key = _normalize(name);
 
@@ -1904,7 +1914,13 @@ class AssetLiabilityPlanningService {
       return 'mobit';
     }
     if (_containsAny(key, const <String>['じぶん', 'jibun'])) {
-      return 'jibun_bank_card_loan';
+      // 「じぶん銀行」(預金) と「じぶん銀行カードローン/じぶんローン」(現金借入) は
+      // 別口座。ローン語を含むものだけカードローン ID、それ以外は預金 ID にする。
+      // 同一 ID だと accountsById で片方に潰れ、預金を振替元に選べない (#part341)。
+      if (_containsAny(key, const <String>['ローン', 'loan'])) {
+        return jibunBankCardLoanAccountId;
+      }
+      return jibunBankAccountId;
     }
     if (_containsAny(key, const <String>[
           'smbcカードローン',
@@ -1963,8 +1979,12 @@ class AssetLiabilityPlanningService {
   /// 当月に該当する周期 (毎月/隔月) かつ金額>0 で、まだ同名/同IDの口座が無いものだけ
   /// を返す。`_liability` 経由で既定固定費 (水道/ガス) と同じ全額支払いの utility 負債
   /// として作る。振替元は呼び出し側で `effectivePaymentSourceAccountIds` に反映する。
-  List<({AssetLiabilityAccount account, String? sourceAccountId})>
-      _buildRecurringFixedCostInjections({
+  List<
+      ({
+        AssetLiabilityAccount account,
+        String? sourceAccountId,
+        bool isSubscription
+      })> _buildRecurringFixedCostInjections({
     required List<AssetRecurringFixedCost> recurringFixedCosts,
     required List<AssetLiabilityAccount> existingAccounts,
     required DateTime baseDate,
@@ -1973,14 +1993,18 @@ class AssetLiabilityPlanningService {
     if (recurringFixedCosts.isEmpty) {
       return const <({
         AssetLiabilityAccount account,
-        String? sourceAccountId
+        String? sourceAccountId,
+        bool isSubscription
       })>[];
     }
     final takenIds = existingAccounts.map((account) => account.id).toSet();
     final takenNames =
         existingAccounts.map((account) => _normalize(account.name)).toSet();
-    final result =
-        <({AssetLiabilityAccount account, String? sourceAccountId})>[];
+    final result = <({
+      AssetLiabilityAccount account,
+      String? sourceAccountId,
+      bool isSubscription
+    })>[];
     for (final cost in recurringFixedCosts) {
       if (cost.amount <= 0 ||
           !cost.appliesToMonth(
@@ -2004,7 +2028,14 @@ class AssetLiabilityPlanningService {
       }
       takenIds.add(account.id);
       takenNames.add(_normalize(account.name));
-      result.add((account: account, sourceAccountId: cost.sourceAccountId));
+      result.add(
+        (
+          account: account,
+          sourceAccountId: cost.sourceAccountId,
+          isSubscription:
+              cost.category == AssetRecurringFixedCostCategory.subscription,
+        ),
+      );
     }
     return result;
   }

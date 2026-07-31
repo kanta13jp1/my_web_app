@@ -11,6 +11,7 @@ import {
   normalizeTaskBudgetTokens,
   runTaskBudgetAssistant,
 } from "../_shared/task_budget_assistant.ts";
+import { mapAutoErrorReports } from "./auto_error_reports.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -123,6 +124,30 @@ serve(async (req: Request) => {
           status: "open",
         });
         return json({ success: true, item });
+      }
+
+      // ---- 自動エラー報告 (error_reporter) の可視化 ----
+      // error_reporter が hub_data へ無言で送っている caught error を
+      // 管理ダッシュボードで見えるようにする読み取り専用 action。
+      // admin-hub に role ゲートが無いため、他ユーザーの stack を晒さないよう
+      // 呼び出し元(=管理者)自身の報告のみ返す (metadata.user_id 一致)。
+      // 全ユーザー横断は admin ロール導入後に広げること。
+      case "errors.recent": {
+        const limit = Math.min(
+          Math.max(Number(body.limit) || 20, 1),
+          50,
+        );
+        const { data, error } = await admin
+          .from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("source", "user_feedback")
+          .filter("metadata->>source", "eq", "auto_error_report")
+          .filter("metadata->>user_id", "eq", effectiveUserId)
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        if (error) return json({ error: error.message }, 400);
+        const errors = mapAutoErrorReports(data ?? []);
+        return json({ success: true, errors, count: errors.length });
       }
 
       case "support.reply": {

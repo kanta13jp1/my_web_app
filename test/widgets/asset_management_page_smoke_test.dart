@@ -1087,6 +1087,66 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets('bulk payment-source assign clears all missing sources', (
+      tester,
+    ) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      await tester.binding.setSurfaceSize(const Size(1200, 3200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // 預金1口座 + 原資未設定の負債2件 → 一括設定ボタンが出る。
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '三井住友銀行大塚支店': 500000,
+                'モビット': -300000,
+                'アコムカードローン': -200000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      final bulkButton = find.byKey(
+        const Key('asset_payment_source_bulk_assign'),
+      );
+      expect(bulkButton, findsOneWidget);
+
+      await tester.ensureVisible(bulkButton);
+      await tester.tap(bulkButton);
+      // モーダルボトムシートの表示アニメーション (有限) を確実に完了させる。
+      // ページに常駐アニメーションがあり pumpAndSettle はタイムアウトするため固定 pump。
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // プレビューシート → 「今月だけ設定」で確定。
+      final applyMonthly = find.byKey(
+        const Key('asset_payment_source_bulk_apply_monthly'),
+      );
+      expect(applyMonthly, findsOneWidget);
+      await tester.tap(applyMonthly);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // 適用が実行されたことを SnackBar で確認。
+      expect(find.textContaining('原資口座を設定しました'), findsOneWidget);
+      // 適用後は全件原資が設定され、一括設定ボタンが消える。
+      expect(
+        find.byKey(const Key('asset_payment_source_bulk_assign')),
+        findsNothing,
+      );
+
+      // SnackBar の自動消滅タイマー (既定4秒) を drain してから unmount しないと、
+      // 保留タイマーが後続テストの FakeAsync zone へ漏れて "did not complete" になる。
+      await tester.pump(const Duration(seconds: 5));
+      await _unmount(tester);
+    });
+
     testWidgets('shortfall warning appears and clears via expected inflow', (
       tester,
     ) async {
@@ -1375,13 +1435,16 @@ void main() {
     ) async {
       // ファミペイ残高10万を月9万返済 → 繰越1万でリボ違反だが、脱却月額
       // (12ヶ月・約9千) より現状の返済が多い → 反映(減額)ボタンは出さない。
+      // ページは資産の当日キー(_todayDateKey)も給与サイクル月キー
+      // (_currentSalaryCycleKey は _now = DateTime.now() 基準)も実 now で読む。
+      // payment を固定日で保存すると CI 実行日が給料日(既定25日)の給与サイクル
+      // 境界を跨いだ際にキー不一致で payment が読まれず、脱却ボタンの表示判定が
+      // 反転して日付依存で落ちる。資産・payment 双方を実 now 基準に統一する。
       final now = DateTime.now();
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       // 支払予定額は給与サイクル月キーでネストされる。
       final monthKey =
-          AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(
-        DateTime(2026, 7, 10),
-      );
+          AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(now);
       SharedPreferences.setMockInitialValues(<String, Object>{
         AssetLiabilityMonthlyStateStore.paymentPrefsKey: jsonEncode(
           <String, Map<String, double>>{

@@ -24,7 +24,10 @@ class NoteSearchCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => const AiSearchPage()),
+          MaterialPageRoute<void>(
+            settings: const RouteSettings(name: '/ai-search'),
+            builder: (_) => const AiSearchPage(),
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

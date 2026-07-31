@@ -164,6 +164,7 @@ class _EdgeLlmPlaygroundPageState extends State<EdgeLlmPlaygroundPage> {
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
+                settings: const RouteSettings(name: '/offline-secure-mode'),
                 builder: (_) => const OfflineSecureModeSettingsPage(),
               ),
             ),

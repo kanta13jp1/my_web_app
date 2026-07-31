@@ -31,6 +31,10 @@ enum AssetManagementSectionId {
   subscriptions,
   mustTasks,
   chart,
+  cashflowStatement,
+  alertCenter,
+  netWorthPanel,
+  monthlyDashboard,
 }
 
 /// セクション単位の表示上書き。auto はティア×モードの既定に従う。
@@ -109,6 +113,14 @@ extension AssetManagementSectionIdMeta on AssetManagementSectionId {
         return '必須タスク(⑤)';
       case AssetManagementSectionId.chart:
         return 'グラフ';
+      case AssetManagementSectionId.cashflowStatement:
+        return '月次キャッシュフロー';
+      case AssetManagementSectionId.alertCenter:
+        return 'アラートセンター';
+      case AssetManagementSectionId.netWorthPanel:
+        return '純資産パネル';
+      case AssetManagementSectionId.monthlyDashboard:
+        return '月次資産ダッシュボード';
     }
   }
 
@@ -135,6 +147,11 @@ extension AssetManagementSectionIdMeta on AssetManagementSectionId {
         return AssetManagementSectionTier.standard;
       case AssetManagementSectionId.wasteAi:
       case AssetManagementSectionId.chart:
+      // 新規パネルは段階的 rollout のため full モード限定 (= OFF by default)。
+      case AssetManagementSectionId.cashflowStatement:
+      case AssetManagementSectionId.alertCenter:
+      case AssetManagementSectionId.netWorthPanel:
+      case AssetManagementSectionId.monthlyDashboard:
         return AssetManagementSectionTier.full;
     }
   }

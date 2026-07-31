@@ -37,12 +37,22 @@ def include_browser_smoke() -> bool:
     }
 
 
+def flutter_vm_test_concurrency(platform_name: str | None = None) -> int:
+    """Keep the long Windows VM suite on one stable test worker."""
+    resolved_platform = os.name if platform_name is None else platform_name
+    return 1 if resolved_platform == "nt" else 2
+
+
 def base_commands() -> list[GateCommand]:
     python = sys.executable
     return [
         GateCommand(
             "minimal e2e gate tests",
             [python, "scripts/check_minimal_e2e_gate_test.py"],
+        ),
+        GateCommand(
+            "dependabot pub policy tests",
+            [python, "scripts/check_dependabot_pub_policy_test.py"],
         ),
         GateCommand(
             "high-risk ultrareview gate tests",
@@ -79,6 +89,10 @@ def base_commands() -> list[GateCommand]:
         GateCommand(
             "deterministic PR CI gate tests",
             [python, "scripts/check_pr_deterministic_ci_test.py"],
+        ),
+        GateCommand(
+            "quality gate resource bounds tests",
+            [python, "scripts/quality_gate_test.py"],
         ),
         GateCommand(
             "edge function import check",
@@ -121,7 +135,16 @@ def full_commands(root: Path) -> list[GateCommand]:
             ["dart", "format", "--output=none", "--set-exit-if-changed", "."],
             "dart",
         ),
-        GateCommand("flutter vm tests", ["flutter", "test", "--coverage"], "flutter"),
+        GateCommand(
+            "flutter vm tests",
+            [
+                "flutter",
+                "test",
+                "--coverage",
+                f"--concurrency={flutter_vm_test_concurrency()}",
+            ],
+            "flutter",
+        ),
     ]
     if include_browser_smoke():
         commands.append(

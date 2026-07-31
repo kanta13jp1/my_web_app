@@ -8,10 +8,13 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:my_web_app/data/home_tool_catalog.dart';
 import 'package:my_web_app/utils/feature_route_labels.dart';
+import 'package:my_web_app/utils/route_url_sync.dart';
 import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/abstinence_guard_page.dart';
 import 'package:my_web_app/pages/self_touch_tracker_page.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
+import 'package:my_web_app/pages/agent_board_page.dart';
+import 'package:my_web_app/pages/autonomous_ops_console_page.dart';
 import 'package:my_web_app/pages/ai_company_builder_page.dart';
 import 'package:my_web_app/pages/ai_agent_page.dart';
 import 'package:my_web_app/pages/behavior_review_page.dart';
@@ -27,6 +30,8 @@ import 'package:my_web_app/pages/local_smart_cleanup_page.dart';
 import 'package:my_web_app/pages/windows_app_install_page.dart';
 import 'package:my_web_app/pages/payment_reminder_page.dart';
 import 'package:my_web_app/pages/shopping_list_page.dart';
+import 'package:my_web_app/pages/hexciv_shop_page.dart';
+import 'package:my_web_app/services/shop_funnel_service.dart';
 import 'package:my_web_app/pages/digest_queue_page.dart';
 import 'package:my_web_app/pages/gemini_university_v2_page.dart';
 import 'package:my_web_app/pages/growth_mission_page.dart';
@@ -92,6 +97,12 @@ import 'package:my_web_app/pages/template_marketplace_page.dart';
 import 'package:my_web_app/pages/referral_page.dart';
 import 'package:my_web_app/pages/kanban_board_page.dart';
 import 'package:my_web_app/pages/compatibility_check_page.dart';
+import 'package:my_web_app/models/iq_test.dart';
+import 'package:my_web_app/pages/iq_test_page.dart';
+import 'package:my_web_app/pages/iq_test_questions_page.dart';
+import 'package:my_web_app/pages/iq_test_result_page.dart';
+import 'package:my_web_app/pages/iq_training_drill_page.dart';
+import 'package:my_web_app/pages/iq_training_page.dart';
 import 'package:my_web_app/pages/personality_test_questions_page.dart';
 import 'package:my_web_app/pages/personality_test_result_page.dart';
 import 'package:my_web_app/pages/table_data_page.dart';
@@ -161,6 +172,7 @@ import 'package:my_web_app/pages/mcp_file_search_page.dart';
 import 'package:my_web_app/pages/semantic_search_page.dart';
 import 'package:my_web_app/pages/smart_inbox_triage_page.dart';
 import 'package:my_web_app/pages/social_feed_page.dart';
+import 'package:my_web_app/pages/sobriety_campaign_page.dart';
 import 'package:my_web_app/pages/family_sharing_manager_page.dart';
 import 'package:my_web_app/pages/gift_registry_page.dart';
 import 'package:my_web_app/pages/mindmap_diagram_page.dart';
@@ -300,14 +312,22 @@ import 'package:my_web_app/pages/ab_testing_manager_page.dart';
 import 'package:my_web_app/pages/habit_tracker_page.dart';
 import 'package:my_web_app/pages/agent_department_manager_page.dart';
 import 'package:my_web_app/pages/agent_performance_monitor_page.dart';
+import 'package:my_web_app/pages/ai_share_button_settings_page.dart';
 import 'package:my_web_app/pages/app_analytics_dashboard_page.dart';
+import 'package:my_web_app/pages/cfo_cost_ledger_page.dart';
+import 'package:my_web_app/pages/compatibility_result_page.dart';
 import 'package:my_web_app/pages/leave_management_page.dart';
 import 'package:my_web_app/pages/performance_review_page.dart';
 import 'package:my_web_app/pages/pomodoro_timer_page.dart';
 import 'package:my_web_app/pages/health_check_page.dart';
+import 'package:my_web_app/pages/horseracing_race_detail_page.dart';
+import 'package:my_web_app/pages/monthly_kpi_dashboard_page.dart';
+import 'package:my_web_app/pages/offline_secure_mode_settings_page.dart';
+import 'package:my_web_app/pages/people_help_page.dart';
 import 'package:my_web_app/dev/claude_design/importer_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:my_web_app/services/landing_signup_completion_service.dart';
 import 'package:my_web_app/services/notification_service.dart';
 import 'package:my_web_app/services/theme_service.dart';
 import 'package:my_web_app/widgets/global_header_clock_bar.dart';
@@ -394,7 +414,9 @@ Future<void> _configureStartupNotifications(
 }
 
 class _AuthenticatedHomePage extends StatefulWidget {
-  const _AuthenticatedHomePage();
+  const _AuthenticatedHomePage({required this.signupCompletionService});
+
+  final LandingSignupCompletionService signupCompletionService;
 
   @override
   State<_AuthenticatedHomePage> createState() => _AuthenticatedHomePageState();
@@ -405,8 +427,16 @@ class _AuthenticatedHomePageState extends State<_AuthenticatedHomePage> {
 
   Future<bool> _shouldShowOnboarding() async {
     try {
-      final userId = supabase.auth.currentUser?.id;
+      final user = supabase.auth.currentUser;
+      final userId = user?.id;
       if (userId == null) return false;
+      unawaited(
+        widget.signupCompletionService.completeIfPending(
+          signupUserId: userId,
+          signupEmail: user?.email,
+          accountCreatedAt: DateTime.tryParse(user?.createdAt ?? ''),
+        ),
+      );
       final response = await supabase
           .from('user_stats')
           .select('metadata')
@@ -415,8 +445,11 @@ class _AuthenticatedHomePageState extends State<_AuthenticatedHomePage> {
       if (response == null) return true;
       final metadata = response['metadata'] as Map<String, dynamic>?;
       return metadata?['onboarding_completed'] != true;
-    } catch (e) {
-      return false;
+    } catch (error) {
+      debugPrint('Onboarding status check failed: $error');
+      // A temporary read failure must not drop a newly registered user into
+      // the full Home surface before they receive the first-value flow.
+      return true;
     }
   }
 
@@ -449,8 +482,1325 @@ String _initialRouteName() {
   return Navigator.defaultRouteName;
 }
 
+/// アプリ全ての named route を生成する単一エントリポイント。
+///
+/// 出口は必ず [ensureRouteAnnouncesUrl] に通す (下の `onGenerateRoute` 参照)。
+/// そのため各 case は `settings:` を書かなくてもブラウザ URL が更新される。
+/// 例外は「表示する画面と違う URL を名乗りたい」case だけで、そこは明示的に
+/// `settings:` を渡す (wrapper は名前付き route をそのまま尊重する)。
+Route<dynamic> generateAppRoute(
+  RouteSettings settings, {
+  required LandingSignupCompletionService signupCompletionService,
+}) {
+  final uri = Uri.parse(settings.name ?? '/');
+  // 全ての named route 遷移を利用履歴に記録する単一チョークポイント。
+  // 主要導線の直叩き pushNamed が記録されず、最近使った / よく使われる
+  // 機能が「サイト案内AI」しか並ばなかった機能不全 (#3279) を解消する。
+  recordFeatureRouteNavigation(settings.name);
+
+  switch (uri.path) {
+    case '/':
+      return MaterialPageRoute(
+        builder: (_) => supabase.auth.currentSession != null
+            ? _AuthenticatedHomePage(
+                signupCompletionService: signupCompletionService,
+              )
+            : LandingPage(
+                signupCompletionService: signupCompletionService,
+              ),
+      );
+    case '/login':
+      return MaterialPageRoute(
+        builder: (_) => LandingPage(
+          signupCompletionService: signupCompletionService,
+        ),
+      );
+    // HexCiv ダウンロード版の商品ページ (2026-07-28 追加)。
+    // Stripe Checkout の success_url / cancel_url がこの URL に
+    // `?purchase=success` / `?purchase=canceled` を付けて戻ってくる。
+    case '/shop/hexciv':
+      return MaterialPageRoute(
+        builder: (_) => HexcivShopPage(
+          purchaseResult: Uri.base.queryParameters['purchase'],
+          // 計測 (2026-07-29 追加)。閲覧・購入ボタン押下・Checkout 到達を数える。
+          // ここを渡し忘れると計測だけが黙って止まるので、route に直書きする。
+          funnel: ShopFunnelService(),
+        ),
+        settings: settings,
+      );
+    case '/home':
+      return MaterialPageRoute(builder: (_) => const HomePage());
+    case '/agents':
+      return MaterialPageRoute(builder: (_) => AgentOrgPage());
+    // ホームカタログ (home_tool_catalog.dart) は `/autonomous-ops-console` で
+    // 開くため、その URL でもリロード/共有が復元できるよう別名も登録する。
+    case '/autonomous-ops':
+    case '/autonomous-ops-console':
+      return MaterialPageRoute(
+        builder: (_) => const AutonomousOpsConsolePage(),
+        settings: settings,
+      );
+    case '/agent-board':
+      return MaterialPageRoute(
+        builder: (_) => const AgentBoardPage(),
+        settings: const RouteSettings(name: '/agent-board'),
+      );
+    case '/ai-company-builder':
+      return MaterialPageRoute(
+        builder: (_) => const AiCompanyBuilderPage(),
+      );
+    case '/my-ai-agent':
+      return MaterialPageRoute(builder: (_) => const AiAgentPage());
+    case '/ai-university-ranking':
+      return MaterialPageRoute(
+        builder: (_) => const AiUniversityRankingPage(),
+      );
+    case '/ai-university-voice':
+      return MaterialPageRoute(
+        builder: (_) => const AiUniversityVoicePage(),
+      );
+    case '/ai-university-video':
+      final args = settings.arguments as Map<String, dynamic>?;
+      return MaterialPageRoute(
+        builder: (_) => AiUniversityVideoPage(
+          initialProvider: args?['provider'] as String?,
+          initialCategory: args?['category'] as String?,
+        ),
+      );
+    case '/ai-university':
+    case '/gemini-university':
+      final args = settings.arguments as Map<String, dynamic>?;
+      return MaterialPageRoute(
+        builder: (_) => AiUniversityPage(
+          initialProviderId: args?['provider'] as String?,
+        ),
+      );
+    case '/danshari':
+      return MaterialPageRoute(builder: (_) => const DanshariPage());
+    case '/memory-drill':
+      return MaterialPageRoute(builder: (_) => const MemoryDrillPage());
+    case '/digest-queue':
+      return MaterialPageRoute(builder: (_) => const DigestQueuePage());
+    case '/growth-mission':
+      return MaterialPageRoute(
+        builder: (_) => const GrowthMissionPage(),
+        settings: const RouteSettings(name: '/growth-mission'),
+      );
+    case '/referral':
+      return MaterialPageRoute(
+        builder: (_) => const ReferralPage(),
+        settings: RouteSettings(name: settings.name),
+      );
+    case '/import':
+      return MaterialPageRoute(builder: (_) => const ImportPage());
+    case '/public-memos':
+      return MaterialPageRoute(
+        builder: (_) => const PublicMemoDirectoryPage(),
+      );
+    case '/public-memo':
+      final memoId = int.tryParse(uri.queryParameters['id'] ?? '');
+      if (memoId == null) {
+        return MaterialPageRoute(
+          builder: (_) => const PublicMemoDirectoryPage(),
+        );
+      }
+      return MaterialPageRoute(
+        builder: (_) => PublicMemoDetailPage(memoId: memoId),
+        settings: RouteSettings(name: settings.name),
+      );
+    case '/user-manual':
+      return MaterialPageRoute(builder: (_) => const UserManualPage());
+    case '/site-guide-ai':
+      final argumentQuestion =
+          settings.arguments is String ? settings.arguments as String : null;
+      final queryQuestion = uri.queryParameters['q'];
+      final initialQuestion = argumentQuestion ?? queryQuestion;
+      final sectionNamesById = <String, String>{
+        for (final section in homeToolSections) section.id: section.title,
+        'ai': 'AI',
+      };
+      final toolCatalog = buildHomeToolCatalog().map((entry) {
+        return SiteGuideActionEntry(
+          item: SiteGuideCatalogItem(
+            id: entry.id,
+            sectionId: entry.sectionId,
+            sectionTitle: sectionNamesById[entry.sectionId] ?? entry.sectionId,
+            title: entry.title,
+            subtitle: entry.subtitle,
+            keywords: entry.keywords,
+          ),
+          onOpen: entry.onOpen,
+        );
+      }).toList();
+      return MaterialPageRoute(
+        builder: (_) => SiteGuideChatPage(
+          initialQuestion: initialQuestion,
+          toolCatalog: toolCatalog,
+        ),
+        settings: RouteSettings(
+          name: settings.name,
+          arguments: initialQuestion,
+        ),
+      );
+    case '/edge-llm-playground':
+      return MaterialPageRoute(
+        builder: (_) => const EdgeLlmPlaygroundPage(),
+        settings: settings,
+      );
+    case '/philosophy':
+      return MaterialPageRoute(
+        builder: (_) => const PhilosophyPage(),
+        settings: settings,
+      );
+    case '/privacy':
+      return MaterialPageRoute(
+        builder: (_) => const PrivacyPolicyPage(),
+        settings: const RouteSettings(name: '/privacy'),
+      );
+    case '/tokusho':
+      return MaterialPageRoute(
+        builder: (_) => const LegalDocumentPage(
+          assetPath: 'assets/legal/tokushoho.md',
+          appBarTitle: '特定商取引法に基づく表記',
+          heading: 'Commercial Transaction Act',
+        ),
+        settings: const RouteSettings(name: '/tokusho'),
+      );
+    case '/terms':
+      return MaterialPageRoute(
+        builder: (_) => const LegalDocumentPage(
+          assetPath: 'assets/legal/terms.md',
+          appBarTitle: '利用規約',
+          heading: 'Terms of Service',
+        ),
+        settings: const RouteSettings(name: '/terms'),
+      );
+    case '/ai-dev-principles':
+      return MaterialPageRoute(
+        builder: (_) => const AiDevPrinciplesPage(),
+        settings: settings,
+      );
+    case '/behavior-review':
+      return MaterialPageRoute(builder: (_) => BehaviorReviewPage());
+    case '/reality-check':
+      return MaterialPageRoute(builder: (_) => const RealityCheckPage());
+    case '/thought-anchor':
+      return MaterialPageRoute(builder: (_) => const ThoughtAnchorPage());
+    case '/morning-briefing':
+      return MaterialPageRoute(
+        builder: (_) => const MorningBriefingPage(),
+      );
+    case '/note-editor':
+      return MaterialPageRoute(builder: (_) => const NoteEditorPage());
+    case '/blog':
+      return MaterialPageRoute(builder: (_) => const BlogPage());
+    case '/blog/compose':
+      return MaterialPageRoute(
+        builder: (_) => const BlogComposePage(),
+        settings: settings,
+      );
+    case '/blog/post':
+      return MaterialPageRoute(
+        builder: (_) => const PublicBlogPostPage(),
+        settings: settings,
+      );
+    case '/tech-blog-tracker':
+      return MaterialPageRoute(
+        builder: (_) => const TechBlogTrackerPage(),
+      );
+    case '/ai-search':
+      return MaterialPageRoute(builder: (_) => const AiSearchPage());
+    case '/election-dashboard':
+      return MaterialPageRoute(
+        builder: (_) => const ElectionManagementDashboard(),
+        settings: const RouteSettings(name: '/election-dashboard'),
+      );
+    case '/local-election-700':
+      return MaterialPageRoute(
+        builder: (_) => ElectionVictoryPage(
+          publicView: supabase.auth.currentSession == null,
+        ),
+        settings: RouteSettings(name: settings.name),
+      );
+    case '/local-election-schedule':
+      return MaterialPageRoute(
+        builder: (_) => const ElectionVictoryPage(),
+        settings: const RouteSettings(name: '/local-election-schedule'),
+      );
+    case '/public/local-election-700':
+      return MaterialPageRoute(
+        builder: (_) => const ElectionVictoryPage(publicView: true),
+        settings: const RouteSettings(name: '/public/local-election-700'),
+      );
+    case '/home-insights':
+      return MaterialPageRoute(
+        builder: (_) => const HomeInsightsPage(),
+        settings: const RouteSettings(name: '/home-insights'),
+      );
+    case '/work-menu':
+      return MaterialPageRoute(
+        builder: (_) => const WorkMenuPage(),
+        settings: const RouteSettings(name: '/work-menu'),
+      );
+    case '/email-cleanup':
+      return MaterialPageRoute(builder: (_) => const EmailCleanupPage());
+    case '/local-smart-cleanup':
+      return MaterialPageRoute(
+        builder: (_) => const LocalSmartCleanupPage(),
+      );
+    case '/windows-app':
+      return MaterialPageRoute(
+        builder: (_) => const WindowsAppInstallPage(),
+      );
+    case '/payment-reminders':
+      return MaterialPageRoute(
+        builder: (_) => const PaymentReminderPage(),
+      );
+    case '/shopping-list':
+      return MaterialPageRoute(builder: (_) => const ShoppingListPage());
+    case '/daily-habits':
+      return MaterialPageRoute(builder: (_) => const DailyHabitsPage());
+    case '/self-touch-tracker':
+      return MaterialPageRoute(
+        builder: (_) => SelfTouchTrackerPage(
+          quickLogOnOpen: uri.queryParameters['action'] == 'quick_log',
+        ),
+        settings: RouteSettings(name: settings.name),
+      );
+    case '/abstinence-guard':
+      return MaterialPageRoute(
+        builder: (_) => const AbstinenceGuardPage(),
+      );
+    case '/my-struggle':
+      return MaterialPageRoute(builder: (_) => const MyStrugglePage());
+    case '/prison-mode':
+      return MaterialPageRoute(builder: (_) => const PrisonModePage());
+    case '/bookmark-folders':
+      return MaterialPageRoute(
+        builder: (_) => const BookmarkFoldersPage(),
+      );
+    case '/behavior-log':
+      return MaterialPageRoute(builder: (_) => const BehaviorLogPage());
+    case '/wip-limit':
+      return MaterialPageRoute(builder: (_) => const WipLimitPage());
+    case '/feature-requests':
+      return MaterialPageRoute(
+        builder: (_) => const FeatureRequestsPage(),
+      );
+    case '/profile-settings':
+      return MaterialPageRoute(
+        builder: (_) => const ProfileSettingsPage(),
+      );
+    case '/u':
+      final userId = uri.queryParameters['id'] ?? '';
+      if (userId.isEmpty) {
+        return MaterialPageRoute(
+          builder: (_) => LandingPage(
+            signupCompletionService: signupCompletionService,
+          ),
+        );
+      }
+      return MaterialPageRoute(
+        builder: (_) => PublicProfilePage(userId: userId),
+        settings: RouteSettings(name: settings.name),
+      );
+    case '/vs-notion':
+    case '/vs-evernote':
+    case '/vs-moneyforward':
+    case '/vs-slack':
+    case '/vs-chatwork':
+    case '/vs-x':
+    case '/vs-animaworks':
+    case '/vs-claude-code':
+    case '/vs-codex':
+    case '/vs-netkeiba':
+    case '/vs-openclaw':
+    case '/vs-claude-cowork':
+    case '/vs-jobcan':
+    case '/vs-amazon':
+    case '/vs-google':
+    case '/vs-discord':
+    case '/vs-microsoft':
+    case '/vs-line':
+    case '/vs-facebook':
+    case '/vs-liven':
+    case '/vs-github':
+      return MaterialPageRoute(
+        builder: (_) => ComparisonPage(
+          competitorKey: uri.path.replaceFirst('/vs-', ''),
+        ),
+      );
+    case '/competitors':
+      return MaterialPageRoute(
+        builder: (_) => const CompetitorBrowsePage(),
+        settings: const RouteSettings(name: '/competitors'),
+      );
+    case '/activity-feed':
+      return MaterialPageRoute(builder: (_) => const ActivityFeedPage());
+    case '/rewards':
+      return MaterialPageRoute(builder: (_) => const RewardsPage());
+    case '/life-goals':
+      return MaterialPageRoute(builder: (_) => const LifeGoalsPage());
+    case '/thought-capture':
+      return MaterialPageRoute(
+        builder: (_) => const ThoughtCapturePage(),
+      );
+    case '/decision-check':
+      return MaterialPageRoute(builder: (_) => const DecisionCheckPage());
+    case '/eval-approval':
+      return MaterialPageRoute(builder: (_) => const EvalApprovalPage());
+    case '/purchase-log':
+      return MaterialPageRoute(builder: (_) => const PurchaseLogPage());
+    case '/price-tracker':
+      return MaterialPageRoute(builder: (_) => const PriceTrackerPage());
+    case '/ai-observability':
+      return MaterialPageRoute(
+        builder: (_) => const AiObservabilityPage(),
+      );
+    case '/ai-router-cost-dashboard':
+      return MaterialPageRoute(
+        builder: (_) => const AiRouterCostDashboardPage(),
+      );
+    case '/task-budget-assistant':
+      return MaterialPageRoute(
+        builder: (_) => const TaskBudgetAssistantPage(),
+      );
+    case '/agent-gpa-dashboard':
+      return MaterialPageRoute(
+        builder: (_) => const AgentGpaDashboardPage(),
+      );
+    case '/conveni-store':
+      return MaterialPageRoute(builder: (_) => const ConveniStorePage());
+    case '/edge-functions':
+      return MaterialPageRoute(
+        builder: (_) => const EdgeFunctionStatusPage(),
+      );
+    case '/admin':
+      return MaterialPageRoute(
+        builder: (_) => const AdminAnalyticsPage(),
+      );
+    case '/templates':
+      return MaterialPageRoute(
+        builder: (_) => const TemplateMarketplacePage(),
+      );
+    case '/kanban':
+      return MaterialPageRoute(builder: (_) => const KanbanBoardPage());
+    case '/table-data':
+      return MaterialPageRoute(builder: (_) => const TableDataPage());
+    case '/ai-suggest-tags':
+      return MaterialPageRoute(builder: (_) => const AiSuggestTagsPage());
+    case '/analyze-reality':
+      return MaterialPageRoute(
+        builder: (_) => const AnalyzeRealityPage(),
+      );
+    case '/support-tickets':
+      return MaterialPageRoute(
+        builder: (_) => const SupportTicketsPage(),
+      );
+    case '/growth-achievement-summary':
+      return MaterialPageRoute(
+        builder: (_) => const GrowthAchievementSummaryPage(),
+      );
+    case '/growth-acquisition':
+      return MaterialPageRoute(
+        builder: (_) => const GrowthAcquisitionPage(),
+      );
+    case '/growth-acquisition-report':
+      return MaterialPageRoute(
+        builder: (_) => const GrowthAcquisitionReportPage(),
+      );
+    case '/growth-command-center':
+      return MaterialPageRoute(
+        builder: (_) => const GrowthCommandCenterPage(),
+      );
+    case '/growth-share-signal':
+      return MaterialPageRoute(
+        builder: (_) => const GrowthShareSignalPage(),
+      );
+    case '/growth-weekly-digest':
+      return MaterialPageRoute(
+        builder: (_) => const GrowthWeeklyDigestPage(),
+      );
+    case '/memo-reactions':
+      return MaterialPageRoute(builder: (_) => const MemoReactionsPage());
+    case '/note-comments':
+      return MaterialPageRoute(builder: (_) => const NoteCommentsPage());
+    case '/growth-acquisition-signal':
+      return MaterialPageRoute(
+        builder: (_) => const GrowthAcquisitionSignalPage(),
+      );
+    case '/compatibility':
+      final myType = settings.arguments as String? ?? '';
+      return MaterialPageRoute(
+        builder: (_) => CompatibilityCheckPage(myType: myType),
+      );
+    case '/personality-test':
+      final testId = settings.arguments as int? ?? 1;
+      return MaterialPageRoute(
+        builder: (_) => PersonalityTestQuestionsPage(testId: testId),
+      );
+    case '/personality-test-result':
+      final resultTestId = settings.arguments as int? ?? 1;
+      return MaterialPageRoute(
+        builder: (_) => PersonalityTestResultPage(testId: resultTestId),
+      );
+    case '/iq-test':
+      return MaterialPageRoute(builder: (_) => const IqTestPage());
+    // 出題中のテストは testId と seed が無いと復元できない (再開もできない)。
+    // 直接 URL で開かれた場合はハブへ落とす。
+    case '/iq-test-questions':
+      final iqQuestionsArgs = settings.arguments as IqTestSessionArgs?;
+      if (iqQuestionsArgs == null) {
+        return MaterialPageRoute(builder: (_) => const IqTestPage());
+      }
+      return MaterialPageRoute(
+        builder: (_) => IqTestQuestionsPage(
+          testId: iqQuestionsArgs.testId,
+          questionSeed: iqQuestionsArgs.questionSeed,
+        ),
+      );
+    case '/iq-test-result':
+      final iqTestId = settings.arguments as int?;
+      if (iqTestId == null) {
+        return MaterialPageRoute(builder: (_) => const IqTestPage());
+      }
+      return MaterialPageRoute(
+        builder: (_) => IqTestResultPage(testId: iqTestId),
+      );
+    case '/iq-training':
+      return MaterialPageRoute(builder: (_) => const IqTrainingPage());
+    // ドリルは対象領域とレベルが引数。無ければプラン画面へ落とす。
+    case '/iq-training-drill':
+      final iqDrillArgs = settings.arguments as IqTrainingDrillArgs?;
+      if (iqDrillArgs == null) {
+        return MaterialPageRoute(builder: (_) => const IqTrainingPage());
+      }
+      return MaterialPageRoute(
+        builder: (_) => IqTrainingDrillPage(
+          planId: iqDrillArgs.planId,
+          category: iqDrillArgs.category,
+          level: iqDrillArgs.level,
+        ),
+      );
+    case '/enterprise':
+      return MaterialPageRoute(builder: (_) => const EnterprisePage());
+    case '/corporate-bank-account-cost':
+      return MaterialPageRoute(
+        builder: (_) => const CorporateBankAccountSimulatorPage(),
+      );
+    case '/ai-secretary':
+      return MaterialPageRoute(builder: (_) => const AISecretaryPage());
+    case '/team-workspace':
+      return MaterialPageRoute(builder: (_) => const TeamWorkspacePage());
+    case '/embedding-lab':
+      return MaterialPageRoute(builder: (_) => const EmbeddingLabPage());
+    case '/settings':
+      return MaterialPageRoute(builder: (_) => const SettingsPage());
+    case '/settings/theme':
+      return MaterialPageRoute(builder: (_) => const ThemeSelectorPage());
+    case '/stats':
+      return MaterialPageRoute(builder: (_) => const StatsPage());
+    case '/health':
+      return MaterialPageRoute(builder: (_) => const HealthPage());
+    case '/mental-check':
+      return MaterialPageRoute(builder: (_) => const MentalCheckPage());
+    case '/feedback':
+      return MaterialPageRoute(builder: (_) => const FeedbackPage());
+    case '/admin-feedback':
+      return MaterialPageRoute(builder: (_) => const FeedbackListPage());
+    case '/quota-dashboard':
+      return MaterialPageRoute(
+        builder: (_) => const QuotaDashboardPage(),
+      );
+    case '/admin/maintenance':
+      return MaterialPageRoute(
+        builder: (_) => const MaintenanceManagementPage(),
+      );
+    case '/maintenance':
+      return MaterialPageRoute(
+        builder: (_) => const MaintenanceModePage(),
+      );
+    case '/blog-management':
+      return MaterialPageRoute(
+        builder: (_) => const BlogManagementPage(),
+      );
+    case '/admin/blog/new':
+      return MaterialPageRoute(
+        builder: (_) => const BlogDraftEditorPage(),
+      );
+    case '/admin/blog/edit':
+      final postId = settings.arguments as String?;
+      return MaterialPageRoute(
+        builder: (_) => BlogDraftEditorPage(postId: postId),
+      );
+    case '/ai-assistant-chat':
+      final arguments = settings.arguments is Map
+          ? Map<String, dynamic>.from(settings.arguments! as Map)
+          : const <String, dynamic>{};
+      final contextIds = (arguments['context_file_ids'] as List?)
+              ?.map((item) => item.toString())
+              .toList(growable: false) ??
+          const <String>[];
+      final contextTitles = (arguments['context_titles'] as List?)
+              ?.map((item) => item.toString())
+              .toList(growable: false) ??
+          const <String>[];
+      return MaterialPageRoute(
+        builder: (_) => AiAssistantChatPage(
+          initialContextIds: contextIds,
+          initialContextTitles: contextTitles,
+        ),
+      );
+    case '/categories':
+      return MaterialPageRoute(builder: (_) => const CategoriesPage());
+    case '/medical-notes':
+      return MaterialPageRoute(builder: (_) => const MedicalNotesPage());
+    case '/api-playground':
+      return MaterialPageRoute(builder: (_) => const ApiPlaygroundPage());
+    case '/financial-report':
+      return MaterialPageRoute(
+        builder: (_) => const FinancialReportPage(),
+      );
+    case '/payment-channel-ledger':
+      return MaterialPageRoute(
+        builder: (_) => const PaymentChannelLedgerPage(),
+      );
+    case '/emergency-meeting':
+      return MaterialPageRoute(
+        builder: (_) => const EmergencyMeetingPage(),
+      );
+    case '/ai-status':
+      return MaterialPageRoute(builder: (_) => const AiStatusPage());
+    case '/ai-provider-status':
+      return MaterialPageRoute(
+        builder: (_) => const AiProviderStatusPage(),
+      );
+    case '/note-list':
+    case '/notes':
+      // Win版#110: feature_releases から「ノート」deep link
+      return MaterialPageRoute(
+        builder: (_) => const NoteListPage(),
+        settings: settings,
+      );
+    case '/asset-management':
+      return MaterialPageRoute(
+        builder: (_) => const AssetManagementPage(),
+      );
+    case '/cfo-office':
+      return MaterialPageRoute(builder: (_) => const CfoOfficePage());
+    case '/cho-office':
+      return MaterialPageRoute(builder: (_) => const ChoOfficePage());
+    case '/chro-office':
+      return MaterialPageRoute(builder: (_) => const ChroOfficePage());
+    case '/cmo-office':
+      return MaterialPageRoute(builder: (_) => const CmoOfficePage());
+    case '/cmo':
+      return MaterialPageRoute(builder: (_) => const CmoPage());
+    case '/election-strategy':
+      return MaterialPageRoute(
+        builder: (_) => const ElectionStrategyPage(),
+      );
+    case '/mind-map':
+      return MaterialPageRoute(builder: (_) => const MindMapPage());
+    case '/mindless-task':
+      return MaterialPageRoute(builder: (_) => const MindlessTaskPage());
+    case '/real-world-danshari':
+      return MaterialPageRoute(
+        builder: (_) => RealWorldDanshariPage(supabaseClient: supabase),
+      );
+    case '/stock-tasks':
+      return MaterialPageRoute(builder: (_) => const StockTasksPage());
+    case '/wardrobe':
+      return MaterialPageRoute(builder: (_) => const WardrobePage());
+    case '/knowledge-base':
+      return MaterialPageRoute(builder: (_) => const KnowledgeBasePage());
+    case '/semantic-search':
+      return MaterialPageRoute(
+        builder: (_) => const SemanticSearchPage(),
+      );
+    case '/mcp-file-search':
+      return MaterialPageRoute(builder: (_) => const McpFileSearchPage());
+    case '/social-feed':
+      return MaterialPageRoute(builder: (_) => const SocialFeedPage());
+    case '/sobriety-campaign':
+      return MaterialPageRoute(
+        builder: (_) => const SobrietyCampaignPage(),
+      );
+    case '/notifications':
+      return MaterialPageRoute(builder: (_) => const NotificationsPage());
+    case '/meeting-manager':
+      return MaterialPageRoute(
+        builder: (_) => const MeetingManagerPage(),
+      );
+    case '/news-rss':
+      return MaterialPageRoute(
+        builder: (_) => const NewsRssAggregatorPage(),
+      );
+    case '/market-intelligence':
+      return MaterialPageRoute(
+        builder: (_) => const MarketIntelligencePage(),
+      );
+    case '/smart-inbox':
+      return MaterialPageRoute(
+        builder: (_) => const SmartInboxTriagePage(),
+      );
+    case '/carbon-footprint':
+      return MaterialPageRoute(
+        builder: (_) => const CarbonFootprintTrackerPage(),
+      );
+    case '/donation':
+      return MaterialPageRoute(
+        builder: (_) => const DonationCrowdfundingPage(),
+      );
+    case '/emergency-contacts':
+      return MaterialPageRoute(
+        builder: (_) => const EmergencyContactsPage(),
+      );
+    case '/family-sharing':
+      return MaterialPageRoute(
+        builder: (_) => const FamilySharingManagerPage(),
+      );
+    case '/gift-registry':
+      return MaterialPageRoute(builder: (_) => const GiftRegistryPage());
+    case '/mindmap':
+      return MaterialPageRoute(
+        builder: (_) => const MindmapDiagramPage(),
+      );
+    case '/auction-marketplace':
+      return MaterialPageRoute(
+        builder: (_) => const AuctionMarketplacePage(),
+      );
+    case '/qr-code-generator':
+      return MaterialPageRoute(
+        builder: (_) => const QrCodeGeneratorPage(),
+      );
+    case '/parking-reservation':
+      return MaterialPageRoute(
+        builder: (_) => const ParkingReservationPage(),
+      );
+    case '/referral-program':
+      return MaterialPageRoute(
+        builder: (_) => const ReferralProgramPage(),
+      );
+    case '/analytics-export':
+      return MaterialPageRoute(
+        builder: (_) => const AnalyticsExportPage(),
+      );
+    case '/workflow-templates':
+      return MaterialPageRoute(
+        builder: (_) => const WorkflowTemplatesPage(),
+      );
+    case '/customer-feedback':
+      return MaterialPageRoute(
+        builder: (_) => const CustomerFeedbackPage(),
+      );
+    case '/address-book':
+      return MaterialPageRoute(builder: (_) => const AddressBookPage());
+    case '/subscription-billing':
+      return MaterialPageRoute(
+        builder: (_) => SubscriptionBillingPage(initialUri: uri),
+      );
+    case '/billing':
+      return MaterialPageRoute(
+        builder: (_) => SubscriptionBillingPage(initialUri: uri),
+      );
+    case '/appointment-scheduler':
+      return MaterialPageRoute(
+        builder: (_) => const AppointmentSchedulerPage(),
+      );
+    case '/budget-financial-planner':
+      return MaterialPageRoute(
+        builder: (_) => const BudgetFinancialPlannerPage(),
+      );
+    case '/feature-flags':
+      return MaterialPageRoute(builder: (_) => const FeatureFlagsPage());
+    case '/workflow-automation':
+      return MaterialPageRoute(
+        builder: (_) => const WorkflowAutomationPage(),
+      );
+    case '/social-scheduler':
+      return MaterialPageRoute(
+        builder: (_) => const SocialMediaSchedulerPage(),
+      );
+    case '/video-meeting':
+      return MaterialPageRoute(builder: (_) => const VideoMeetingPage());
+    case '/krisp-audio-quality':
+      return MaterialPageRoute(
+        builder: (_) => const KrispAudioQualityPage(),
+      );
+    case '/gantt-timeline':
+      return MaterialPageRoute(builder: (_) => const GanttTimelinePage());
+    case '/ai-image-generator':
+      return MaterialPageRoute(
+        builder: (_) => const AiImageGeneratorPage(),
+      );
+    case '/viral-ad-campaign':
+      return MaterialPageRoute(
+        builder: (_) => const ViralAdCampaignPage(),
+      );
+    case '/virtual-pet':
+      return MaterialPageRoute(builder: (_) => const VirtualPetPage());
+    case '/affiliate-marketing':
+      return MaterialPageRoute(
+        builder: (_) => const AffiliateMarketingPage(),
+      );
+    case '/calendar-events':
+      return MaterialPageRoute(
+        builder: (_) => const CalendarEventsPage(),
+      );
+    case '/expense-tracker':
+      return MaterialPageRoute(
+        builder: (_) => const ExpenseTrackerPage(),
+      );
+    case '/reading-list':
+      return MaterialPageRoute(builder: (_) => const ReadingListPage());
+    case '/ar-navigation':
+      return MaterialPageRoute(builder: (_) => const ArNavigationPage());
+    case '/dns-domain-manager':
+      return MaterialPageRoute(
+        builder: (_) => const DnsDomainManagerPage(),
+      );
+    case '/focus-timer':
+      return MaterialPageRoute(builder: (_) => const FocusTimerPage());
+    case '/digital-wallet':
+      return MaterialPageRoute(builder: (_) => const DigitalWalletPage());
+    case '/loyalty-points':
+      return MaterialPageRoute(builder: (_) => const LoyaltyPointsPage());
+    case '/viral-ad-generator':
+      return MaterialPageRoute(
+        builder: (_) => const ViralAdGeneratorPage(),
+      );
+    case '/growth-automation':
+      return MaterialPageRoute(
+        builder: (_) => const GrowthAutomationControllerPage(),
+      );
+    case '/landing-ab-test':
+      return MaterialPageRoute(builder: (_) => const LandingAbTestPage());
+    case '/video-ad-generator':
+      return MaterialPageRoute(
+        builder: (_) => const VideoAdGeneratorPage(),
+      );
+    case '/viral-video-generator':
+      return MaterialPageRoute(
+        builder: (_) => const ViralVideoGeneratorPage(),
+      );
+    case '/youtube-stats':
+      return MaterialPageRoute(builder: (_) => const YoutubeStatsPage());
+    case '/audio-effects-processor':
+      return MaterialPageRoute(
+        builder: (_) => const AudioEffectsProcessorPage(),
+      );
+    case '/guitar-recording-studio':
+      return MaterialPageRoute(
+        builder: (_) => const GuitarRecordingStudioPage(),
+      );
+    case '/public-guitar-gallery':
+      return MaterialPageRoute(
+        builder: (_) => const PublicGuitarGalleryPage(),
+      );
+    case '/music-collaboration':
+      return MaterialPageRoute(
+        builder: (_) => const MusicCollaborationPage(),
+      );
+    case '/form-builder':
+      return MaterialPageRoute(builder: (_) => const FormBuilderPage());
+    case '/event-ticketing':
+      return MaterialPageRoute(
+        builder: (_) => const EventTicketingPage(),
+      );
+    case '/music-playlist-manager':
+      return MaterialPageRoute(
+        builder: (_) => const MusicPlaylistManagerPage(),
+      );
+    case '/fitness-health-tracker':
+      return MaterialPageRoute(
+        builder: (_) => const FitnessHealthTrackerPage(),
+      );
+    case '/virtual-organization':
+      return MaterialPageRoute(
+        builder: (_) => const VirtualOrganizationPage(),
+      );
+    case '/ai-writing-assistant':
+      return MaterialPageRoute(
+        builder: (_) => const AiWritingAssistantPage(),
+      );
+    case '/wiki-database':
+      return MaterialPageRoute(builder: (_) => const WikiDatabasePage());
+    case '/time-tracker':
+      return MaterialPageRoute(builder: (_) => const TimeTrackerPage());
+    case '/voice-memo':
+      return MaterialPageRoute(
+        builder: (_) => const VoiceMemoTranscriberPage(),
+      );
+    case '/crm-pipeline':
+      return MaterialPageRoute(
+        builder: (_) => const CrmSalesPipelinePage(),
+      );
+    case '/horse-racing':
+    case '/horse-racing/today':
+    case '/horse-racing/predictions':
+      return MaterialPageRoute(
+        builder: (_) => const HorseRacingPredictorPage(),
+        settings: RouteSettings(name: settings.name),
+      );
+    case '/horse-racing/history':
+    case '/horse-racing/prediction-history':
+      return MaterialPageRoute(
+        builder: (_) => const HorseRacingPredictorPage(initialTabIndex: 1),
+        settings: RouteSettings(name: settings.name),
+      );
+    case '/horse-racing/analysis':
+    case '/horse-racing/accuracy':
+    case '/horse-racing-analysis':
+    case '/horse-racing-analytics':
+      return MaterialPageRoute(
+        builder: (_) => const HorseRacingPredictorPage(initialTabIndex: 2),
+        settings: RouteSettings(name: settings.name),
+      );
+    case '/horse-racing/bets':
+    case '/horse-racing/tickets':
+    case '/horse-racing-bets':
+      return MaterialPageRoute(
+        builder: (_) => const HorseRacingPredictorPage(initialTabIndex: 3),
+        settings: RouteSettings(name: settings.name),
+      );
+    case '/horse-provider-leaderboard':
+      return MaterialPageRoute(
+        builder: (_) => const HorseProviderLeaderboardPage(),
+      );
+    case '/travel-itinerary':
+      return MaterialPageRoute(
+        builder: (_) => const TravelItineraryPlannerPage(),
+      );
+    case '/travel-planner':
+      return MaterialPageRoute(
+        builder: (_) => const TravelItineraryPage(),
+      );
+    case '/virtual-whiteboard':
+      return MaterialPageRoute(
+        builder: (_) => const VirtualWhiteboardPage(),
+      );
+    case '/meal-log':
+      return MaterialPageRoute(builder: (_) => const MealLogPage());
+    case '/life-goals-kpi':
+      return MaterialPageRoute(builder: (_) => const LifeGoalsKpiPage());
+    case '/recipe-meal-planner':
+      return MaterialPageRoute(
+        builder: (_) => const RecipeMealPlannerPage(),
+      );
+    case '/language-learning':
+      return MaterialPageRoute(
+        builder: (_) => const LanguageLearningPage(),
+      );
+    case '/spreadsheet-database':
+      return MaterialPageRoute(
+        builder: (_) => const SpreadsheetDatabasePage(),
+      );
+    case '/changelog':
+      return MaterialPageRoute(
+        builder: (_) => const ChangelogManagerPage(),
+      );
+    case '/release-notes':
+      return MaterialPageRoute(builder: (_) => const ReleaseNotesPage());
+    case '/pet-care':
+      return MaterialPageRoute(
+        builder: (_) => const PetCareManagerPage(),
+      );
+    case '/photo-gallery':
+      return MaterialPageRoute(
+        builder: (_) => const PhotoGalleryManagerPage(),
+      );
+    case '/elearning':
+      return MaterialPageRoute(
+        builder: (_) => const ElearningCourseManagerPage(),
+      );
+    case '/document-esignature':
+      return MaterialPageRoute(
+        builder: (_) => const DocumentEsignaturePage(),
+      );
+    case '/vehicle-fleet':
+      return MaterialPageRoute(
+        builder: (_) => const VehicleFleetManagerPage(),
+      );
+    case '/recruitment':
+      return MaterialPageRoute(
+        builder: (_) => const RecruitmentJobBoardPage(),
+      );
+    case '/habit-gamification':
+      return MaterialPageRoute(
+        builder: (_) => const HabitGamificationPage(),
+      );
+    case '/focus-capture':
+      return MaterialPageRoute(
+        builder: (_) => const FocusCaptureGamePage(),
+      );
+    case '/code-playground':
+      return MaterialPageRoute(
+        builder: (_) => const CodePlaygroundPage(),
+      );
+    case '/real-estate':
+      return MaterialPageRoute(
+        builder: (_) => const RealEstateTrackerPage(),
+      );
+    case '/home-iot':
+      return MaterialPageRoute(
+        builder: (_) => const HomeIotManagerPage(),
+      );
+    case '/legal-compliance':
+      return MaterialPageRoute(
+        builder: (_) => const LegalComplianceManagerPage(),
+      );
+    case '/email-templates':
+      return MaterialPageRoute(
+        builder: (_) => const EmailTemplateBuilderPage(),
+      );
+    case '/two-factor-auth':
+      return MaterialPageRoute(builder: (_) => const TwoFactorAuthPage());
+    case '/inventory-barcode':
+      return MaterialPageRoute(
+        builder: (_) => const InventoryBarcodePage(),
+      );
+    case '/password-vault':
+      return MaterialPageRoute(builder: (_) => const PasswordVaultPage());
+    case '/podcast-manager':
+      return MaterialPageRoute(
+        builder: (_) => const PodcastManagerPage(),
+      );
+    case '/screen-recorder':
+      return MaterialPageRoute(
+        builder: (_) => const ScreenRecorderPage(),
+      );
+    case '/sitemap-analytics':
+      return MaterialPageRoute(
+        builder: (_) => const SitemapAnalyticsPage(),
+      );
+    case '/access-control':
+      return MaterialPageRoute(builder: (_) => const AccessControlPage());
+    case '/personal-dashboard':
+      return MaterialPageRoute(
+        builder: (_) => const PersonalDashboardPage(),
+      );
+    case '/my-skills':
+      return MaterialPageRoute(builder: (_) => const MySkillsPage());
+    case '/goal-tracker':
+      return MaterialPageRoute(builder: (_) => const GoalTrackerPage());
+    case '/career-monthly-kpi':
+      return MaterialPageRoute(
+        builder: (_) => const CareerMonthlyKpiPage(),
+      );
+    case '/bookmark-sync':
+      return MaterialPageRoute(builder: (_) => const BookmarkSyncPage());
+    case '/jibun-api':
+      return MaterialPageRoute(
+        builder: (_) => const JibunApiPage(),
+        settings: RouteSettings(name: settings.name),
+      );
+    case '/ui-design-status':
+      return MaterialPageRoute(
+        builder: (_) => const UiDesignStatusPage(),
+        settings: const RouteSettings(name: '/ui-design-status'),
+      );
+    case '/ai-summarizer':
+      return MaterialPageRoute(
+        builder: (_) => const AiSummarizerPage(),
+        settings: const RouteSettings(name: '/ai-summarizer'),
+      );
+    case '/revenue-forecaster':
+      return MaterialPageRoute(
+        builder: (_) => const RevenueForecasterPage(),
+        settings: const RouteSettings(name: '/revenue-forecaster'),
+      );
+    case '/weather-widget':
+      return MaterialPageRoute(
+        builder: (_) => const WeatherWidgetPage(),
+        settings: const RouteSettings(name: '/weather-widget'),
+      );
+    case '/google-calendar-sync':
+      return MaterialPageRoute(
+        builder: (_) => const GoogleCalendarSyncPage(),
+      );
+    case '/money-forward':
+      return MaterialPageRoute(builder: (_) => const MoneyForwardPage());
+    case '/weekly-slip-report':
+      return MaterialPageRoute(
+        builder: (_) => const WeeklySlipReportPage(),
+      );
+    case '/discord-notifications':
+      return MaterialPageRoute(
+        builder: (_) => const DiscordNotificationPage(),
+      );
+    case '/line-notifications':
+      return MaterialPageRoute(
+        builder: (_) => const LineNotificationPage(),
+      );
+    case '/github-pr':
+      return MaterialPageRoute(builder: (_) => const GithubPrPage());
+    case '/slack-notifications':
+      return MaterialPageRoute(
+        builder: (_) => const SlackNotificationPage(),
+      );
+    case '/team-chat':
+      return MaterialPageRoute(builder: (_) => const TeamChatPage());
+    case '/health-coach':
+      return MaterialPageRoute(builder: (_) => const HealthCoachPage());
+    case '/thought-interrupt-diagnosis':
+      return MaterialPageRoute(
+        builder: (_) => const ThoughtInterruptDiagnosisPage(),
+      );
+    case '/mental-health-tracker':
+      return MaterialPageRoute(
+        builder: (_) => const MentalHealthTrackerPage(),
+      );
+    case '/freelance-manager':
+      return MaterialPageRoute(
+        builder: (_) => const FreelanceManagerPage(),
+      );
+    case '/ai-presentation-builder':
+      return MaterialPageRoute(
+        builder: (_) => const AiPresentationBuilderPage(),
+      );
+    case '/tome-deck-studio':
+      return MaterialPageRoute(
+        builder: (_) => const TomeDeckStudioPage(),
+      );
+    case '/data-backup':
+      return MaterialPageRoute(builder: (_) => const DataBackupPage());
+    case '/content-calendar':
+      return MaterialPageRoute(
+        builder: (_) => const ContentCalendarPage(),
+      );
+    case '/home-budget-planner':
+      return MaterialPageRoute(
+        builder: (_) => const HomeBudgetPlannerPage(),
+      );
+    case '/brain-dump':
+      return MaterialPageRoute(builder: (_) => const BrainDumpPage());
+    case '/project-gantt':
+      return MaterialPageRoute(builder: (_) => const ProjectGanttPage());
+    case '/user-tasks':
+      return MaterialPageRoute(
+        settings: const RouteSettings(name: '/user-tasks'),
+        builder: (_) => const UserTasksPage(),
+      );
+    case '/wbs-user-tasks':
+      return MaterialPageRoute(
+        settings: const RouteSettings(name: '/wbs-user-tasks'),
+        builder: (_) => const UserTasksPage(),
+      );
+    case '/business-card-manager':
+      return MaterialPageRoute(
+        builder: (_) => const BusinessCardManagerPage(),
+      );
+    case '/family-calendar':
+      return MaterialPageRoute(
+        builder: (_) => const FamilyCalendarPage(),
+      );
+    case '/app-hub':
+      return MaterialPageRoute(builder: (_) => const AppHubPage());
+    case '/agent-hub':
+      return MaterialPageRoute(builder: (_) => const AgentHubPage());
+    case '/admin-notifications':
+      return MaterialPageRoute(
+        builder: (_) => const AdminNotificationHubPage(),
+      );
+    case '/competitor-feature-sync':
+      return MaterialPageRoute(
+        builder: (_) => const CompetitorFeatureSyncPage(),
+      );
+    case '/daily-judgment':
+      return MaterialPageRoute(builder: (_) => const DailyJudgmentPage());
+    case '/ai-university-content':
+      return MaterialPageRoute(
+        builder: (_) => const AiUniversityContentPage(),
+      );
+    case '/ai-university-faculty':
+      return MaterialPageRoute(
+        builder: (_) => const AiUniversityFacultySelectPage(),
+      );
+    case '/ai-university-department':
+      final args = settings.arguments as Map<String, dynamic>?;
+      return MaterialPageRoute(
+        builder: (_) => AiUniversityDepartmentSelectPage(
+          facultyCode: args?['faculty_code'] as String? ?? '',
+          facultyName: args?['faculty_name'] as String? ?? '',
+          facultyEmoji: args?['faculty_emoji'] as String? ?? '🎓',
+        ),
+      );
+    case '/development-achievements':
+      return MaterialPageRoute(
+        builder: (_) => const DevelopmentAchievementsPage(),
+      );
+    case '/invoice-generator':
+      return MaterialPageRoute(
+        builder: (_) => const InvoiceGeneratorPage(),
+      );
+    case '/poll-survey':
+      return MaterialPageRoute(builder: (_) => const PollSurveyPage());
+    case '/notification-digest':
+      return MaterialPageRoute(
+        builder: (_) => const NotificationDigestPage(),
+      );
+    case '/ai-university-badges':
+      return MaterialPageRoute(
+        builder: (_) => const AiUniversityBadgesPage(),
+      );
+    case '/ai-university-streaks':
+      return MaterialPageRoute(
+        builder: (_) => const AiUniversityStreaksPage(),
+      );
+    case '/english-reading-curriculum':
+      return MaterialPageRoute(
+        builder: (_) => const EnglishReadingCurriculumPage(),
+      );
+    case '/english-reading-practice':
+      final args = settings.arguments as Map<String, dynamic>?;
+      return MaterialPageRoute(
+        builder: (_) => EnglishReadingPracticePage(
+          lessonCode: args?['lesson_code'] as String?,
+          mode: args?['mode'] as String? ?? 'measure',
+        ),
+      );
+    case '/english-reading-dashboard':
+      return MaterialPageRoute(
+        builder: (_) => const EnglishReadingDashboardPage(),
+      );
+    case '/ai-workflow-automation':
+      return MaterialPageRoute(
+        builder: (_) => const AiWorkflowAutomationPage(),
+      );
+    case '/ab-testing-manager':
+      return MaterialPageRoute(
+        builder: (_) => const AbTestingManagerPage(),
+      );
+    case '/habit-tracker':
+      return MaterialPageRoute(builder: (_) => const HabitTrackerPage());
+    case '/social-media-scheduler':
+      return MaterialPageRoute(
+        builder: (_) => const SocialMediaSchedulerPage(),
+      );
+    case '/agent-department-manager':
+      return MaterialPageRoute(
+        builder: (_) => const AgentDepartmentManagerPage(),
+      );
+    case '/agent-performance-monitor':
+      return MaterialPageRoute(
+        builder: (_) => const AgentPerformanceMonitorPage(),
+      );
+    case '/app-analytics-dashboard':
+      return MaterialPageRoute(
+        builder: (_) => const AppAnalyticsDashboardPage(),
+      );
+    case '/deployment-monitoring':
+      return MaterialPageRoute(
+        builder: (_) => const DeploymentMonitoringSetupPage(),
+      );
+    case '/one-in-two-out':
+    case '/one-in-two-out-assist':
+      return MaterialPageRoute(
+        builder: (_) => const OneInTwoOutAssistPage(),
+        settings: RouteSettings(name: settings.name),
+      );
+    case '/dev/claude-design-importer':
+      return MaterialPageRoute(
+        builder: (_) => const ClaudeDesignImporterPage(),
+      );
+    case '/leave-management':
+      return MaterialPageRoute(
+        builder: (_) => const LeaveManagementPage(),
+      );
+    case '/performance-review':
+      return MaterialPageRoute(
+        builder: (_) => const PerformanceReviewPage(),
+      );
+    case '/pomodoro-timer':
+      return MaterialPageRoute(builder: (_) => const PomodoroTimerPage());
+    case '/health-check':
+      return MaterialPageRoute(builder: (_) => const HealthCheckPage());
+    case '/memory-search':
+      return MaterialPageRoute(
+        builder: (_) => const MemorySearchHubPage(),
+      );
+    case '/knowledge-graph':
+      return MaterialPageRoute(
+        builder: (_) => const KnowledgeGraphPage(),
+        settings: const RouteSettings(name: '/knowledge-graph'),
+      );
+    case '/settings/ai-share-button':
+      return MaterialPageRoute(
+        builder: (_) => const AiShareButtonSettingsPage(),
+      );
+    case '/offline-secure-mode':
+      return MaterialPageRoute(
+        builder: (_) => const OfflineSecureModeSettingsPage(),
+      );
+    case '/cfo-cost-ledger':
+      return MaterialPageRoute(
+        builder: (_) => const CfoCostLedgerPage(),
+      );
+    case '/monthly-kpi-dashboard':
+      return MaterialPageRoute(
+        builder: (_) => const MonthlyKpiDashboardPage(),
+      );
+    case '/people-help':
+      return MaterialPageRoute(
+        builder: (_) => const PeopleHelpPage(),
+      );
+    case compatibilityResultRoutePath:
+      // 診断結果は 2 つの型だけで再現できるので query に載せ、リロードや
+      // 共有リンクからでも同じ画面に復元する。型が欠けていれば結果を描け
+      // ないため診断入口へ落とし、URL もそちらに合わせる。
+      final myType = uri.queryParameters[compatibilityResultMyTypeParam] ?? '';
+      final partnerType =
+          uri.queryParameters[compatibilityResultPartnerTypeParam] ?? '';
+      if (myType.isEmpty || partnerType.isEmpty) {
+        return MaterialPageRoute(
+          settings: const RouteSettings(name: '/compatibility'),
+          builder: (_) => CompatibilityCheckPage(myType: myType),
+        );
+      }
+      return MaterialPageRoute(
+        builder: (_) => CompatibilityResultPage(
+          myType: myType,
+          partnerType: partnerType,
+        ),
+      );
+    case '/horse-racing/race':
+      // 出走表は race マップ全体が必要で URL だけでは復元できない。直リンク/
+      // リロード時は復元元の予想一覧へ落とし、URL もそちらに合わせる。
+      final race = settings.arguments as Map<String, dynamic>?;
+      if (race == null) {
+        return MaterialPageRoute(
+          settings: const RouteSettings(name: '/horse-racing/predictions'),
+          builder: (_) => const HorseRacingPredictorPage(),
+        );
+      }
+      return MaterialPageRoute(
+        builder: (_) => HorseracingRaceDetailPage(race: race),
+      );
+    default:
+      if (uri.path.startsWith('/vs-')) {
+        return MaterialPageRoute(
+          builder: (_) => ComparisonPage(
+            competitorKey: uri.path.replaceFirst('/vs-', ''),
+          ),
+          settings: settings,
+        );
+      }
+      return MaterialPageRoute(
+        builder: (_) => LandingPage(
+          signupCompletionService: signupCompletionService,
+        ),
+      );
+  }
+}
+
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  const MyApp({
+    super.key,
+    this.signupCompletionService = const LandingSignupCompletionService(),
+  });
+
+  final LandingSignupCompletionService signupCompletionService;
 
   static final SentryNavigatorObserver? _sentryNavigatorObserver =
       ErrorReporter.instance.sentryEnabled ? SentryNavigatorObserver() : null;
@@ -541,1177 +1891,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         if (MyApp._sentryNavigatorObserver != null)
           MyApp._sentryNavigatorObserver!,
       ],
-      onGenerateRoute: (settings) {
-        final uri = Uri.parse(settings.name ?? '/');
-        // 全ての named route 遷移を利用履歴に記録する単一チョークポイント。
-        // 主要導線の直叩き pushNamed が記録されず、最近使った / よく使われる
-        // 機能が「サイト案内AI」しか並ばなかった機能不全 (#3279) を解消する。
-        recordFeatureRouteNavigation(settings.name);
-
-        switch (uri.path) {
-          case '/':
-            return MaterialPageRoute(
-              builder: (_) => supabase.auth.currentSession != null
-                  ? const _AuthenticatedHomePage()
-                  : const LandingPage(),
-            );
-          case '/login':
-            return MaterialPageRoute(builder: (_) => const LandingPage());
-          case '/home':
-            return MaterialPageRoute(builder: (_) => const HomePage());
-          case '/agents':
-            return MaterialPageRoute(builder: (_) => AgentOrgPage());
-          case '/ai-company-builder':
-            return MaterialPageRoute(
-              builder: (_) => const AiCompanyBuilderPage(),
-            );
-          case '/my-ai-agent':
-            return MaterialPageRoute(builder: (_) => const AiAgentPage());
-          case '/ai-university-ranking':
-            return MaterialPageRoute(
-              builder: (_) => const AiUniversityRankingPage(),
-            );
-          case '/ai-university-voice':
-            return MaterialPageRoute(
-              builder: (_) => const AiUniversityVoicePage(),
-            );
-          case '/ai-university-video':
-            final args = settings.arguments as Map<String, dynamic>?;
-            return MaterialPageRoute(
-              builder: (_) => AiUniversityVideoPage(
-                initialProvider: args?['provider'] as String?,
-                initialCategory: args?['category'] as String?,
-              ),
-            );
-          case '/ai-university':
-          case '/gemini-university':
-            final args = settings.arguments as Map<String, dynamic>?;
-            return MaterialPageRoute(
-              builder: (_) => AiUniversityPage(
-                initialProviderId: args?['provider'] as String?,
-              ),
-            );
-          case '/danshari':
-            return MaterialPageRoute(builder: (_) => const DanshariPage());
-          case '/memory-drill':
-            return MaterialPageRoute(builder: (_) => const MemoryDrillPage());
-          case '/digest-queue':
-            return MaterialPageRoute(builder: (_) => const DigestQueuePage());
-          case '/growth-mission':
-            return MaterialPageRoute(
-              builder: (_) => const GrowthMissionPage(),
-              settings: const RouteSettings(name: '/growth-mission'),
-            );
-          case '/referral':
-            return MaterialPageRoute(
-              builder: (_) => const ReferralPage(),
-              settings: RouteSettings(name: settings.name),
-            );
-          case '/import':
-            return MaterialPageRoute(builder: (_) => const ImportPage());
-          case '/public-memos':
-            return MaterialPageRoute(
-              builder: (_) => const PublicMemoDirectoryPage(),
-            );
-          case '/public-memo':
-            final memoId = int.tryParse(uri.queryParameters['id'] ?? '');
-            if (memoId == null) {
-              return MaterialPageRoute(
-                builder: (_) => const PublicMemoDirectoryPage(),
-              );
-            }
-            return MaterialPageRoute(
-              builder: (_) => PublicMemoDetailPage(memoId: memoId),
-              settings: RouteSettings(name: settings.name),
-            );
-          case '/user-manual':
-            return MaterialPageRoute(builder: (_) => const UserManualPage());
-          case '/site-guide-ai':
-            final argumentQuestion = settings.arguments is String
-                ? settings.arguments as String
-                : null;
-            final queryQuestion = uri.queryParameters['q'];
-            final initialQuestion = argumentQuestion ?? queryQuestion;
-            final sectionNamesById = <String, String>{
-              for (final section in homeToolSections) section.id: section.title,
-              'ai': 'AI',
-            };
-            final toolCatalog = buildHomeToolCatalog().map((entry) {
-              return SiteGuideActionEntry(
-                item: SiteGuideCatalogItem(
-                  id: entry.id,
-                  sectionId: entry.sectionId,
-                  sectionTitle:
-                      sectionNamesById[entry.sectionId] ?? entry.sectionId,
-                  title: entry.title,
-                  subtitle: entry.subtitle,
-                  keywords: entry.keywords,
-                ),
-                onOpen: entry.onOpen,
-              );
-            }).toList();
-            return MaterialPageRoute(
-              builder: (_) => SiteGuideChatPage(
-                initialQuestion: initialQuestion,
-                toolCatalog: toolCatalog,
-              ),
-              settings: RouteSettings(
-                name: settings.name,
-                arguments: initialQuestion,
-              ),
-            );
-          case '/edge-llm-playground':
-            return MaterialPageRoute(
-              builder: (_) => const EdgeLlmPlaygroundPage(),
-              settings: settings,
-            );
-          case '/philosophy':
-            return MaterialPageRoute(
-              builder: (_) => const PhilosophyPage(),
-              settings: settings,
-            );
-          case '/privacy':
-            return MaterialPageRoute(
-              builder: (_) => const PrivacyPolicyPage(),
-              settings: const RouteSettings(name: '/privacy'),
-            );
-          case '/tokusho':
-            return MaterialPageRoute(
-              builder: (_) => const LegalDocumentPage(
-                assetPath: 'assets/legal/tokushoho.md',
-                appBarTitle: '特定商取引法に基づく表記',
-                heading: 'Commercial Transaction Act',
-              ),
-              settings: const RouteSettings(name: '/tokusho'),
-            );
-          case '/terms':
-            return MaterialPageRoute(
-              builder: (_) => const LegalDocumentPage(
-                assetPath: 'assets/legal/terms.md',
-                appBarTitle: '利用規約',
-                heading: 'Terms of Service',
-              ),
-              settings: const RouteSettings(name: '/terms'),
-            );
-          case '/ai-dev-principles':
-            return MaterialPageRoute(
-              builder: (_) => const AiDevPrinciplesPage(),
-              settings: settings,
-            );
-          case '/behavior-review':
-            return MaterialPageRoute(builder: (_) => BehaviorReviewPage());
-          case '/reality-check':
-            return MaterialPageRoute(builder: (_) => const RealityCheckPage());
-          case '/thought-anchor':
-            return MaterialPageRoute(builder: (_) => const ThoughtAnchorPage());
-          case '/morning-briefing':
-            return MaterialPageRoute(
-              builder: (_) => const MorningBriefingPage(),
-            );
-          case '/note-editor':
-            return MaterialPageRoute(builder: (_) => const NoteEditorPage());
-          case '/blog':
-            return MaterialPageRoute(builder: (_) => const BlogPage());
-          case '/blog/compose':
-            return MaterialPageRoute(
-              builder: (_) => const BlogComposePage(),
-              settings: settings,
-            );
-          case '/blog/post':
-            return MaterialPageRoute(
-              builder: (_) => const PublicBlogPostPage(),
-              settings: settings,
-            );
-          case '/tech-blog-tracker':
-            return MaterialPageRoute(
-              builder: (_) => const TechBlogTrackerPage(),
-            );
-          case '/ai-search':
-            return MaterialPageRoute(builder: (_) => const AiSearchPage());
-          case '/election-dashboard':
-            return MaterialPageRoute(
-              builder: (_) => const ElectionManagementDashboard(),
-              settings: const RouteSettings(name: '/election-dashboard'),
-            );
-          case '/local-election-700':
-            return MaterialPageRoute(
-              builder: (_) => ElectionVictoryPage(
-                publicView: supabase.auth.currentSession == null,
-              ),
-              settings: RouteSettings(name: settings.name),
-            );
-          case '/local-election-schedule':
-            return MaterialPageRoute(
-              builder: (_) => const ElectionVictoryPage(),
-              settings: const RouteSettings(name: '/local-election-schedule'),
-            );
-          case '/public/local-election-700':
-            return MaterialPageRoute(
-              builder: (_) => const ElectionVictoryPage(publicView: true),
-              settings: const RouteSettings(name: '/public/local-election-700'),
-            );
-          case '/home-insights':
-            return MaterialPageRoute(
-              builder: (_) => const HomeInsightsPage(),
-              settings: const RouteSettings(name: '/home-insights'),
-            );
-          case '/work-menu':
-            return MaterialPageRoute(
-              builder: (_) => const WorkMenuPage(),
-              settings: const RouteSettings(name: '/work-menu'),
-            );
-          case '/email-cleanup':
-            return MaterialPageRoute(builder: (_) => const EmailCleanupPage());
-          case '/local-smart-cleanup':
-            return MaterialPageRoute(
-              builder: (_) => const LocalSmartCleanupPage(),
-            );
-          case '/windows-app':
-            return MaterialPageRoute(
-              builder: (_) => const WindowsAppInstallPage(),
-            );
-          case '/payment-reminders':
-            return MaterialPageRoute(
-              builder: (_) => const PaymentReminderPage(),
-            );
-          case '/shopping-list':
-            return MaterialPageRoute(builder: (_) => const ShoppingListPage());
-          case '/daily-habits':
-            return MaterialPageRoute(builder: (_) => const DailyHabitsPage());
-          case '/self-touch-tracker':
-            return MaterialPageRoute(
-              builder: (_) => SelfTouchTrackerPage(
-                quickLogOnOpen: uri.queryParameters['action'] == 'quick_log',
-              ),
-              settings: RouteSettings(name: settings.name),
-            );
-          case '/abstinence-guard':
-            return MaterialPageRoute(
-              builder: (_) => const AbstinenceGuardPage(),
-            );
-          case '/my-struggle':
-            return MaterialPageRoute(builder: (_) => const MyStrugglePage());
-          case '/prison-mode':
-            return MaterialPageRoute(builder: (_) => const PrisonModePage());
-          case '/bookmark-folders':
-            return MaterialPageRoute(
-              builder: (_) => const BookmarkFoldersPage(),
-            );
-          case '/behavior-log':
-            return MaterialPageRoute(builder: (_) => const BehaviorLogPage());
-          case '/wip-limit':
-            return MaterialPageRoute(builder: (_) => const WipLimitPage());
-          case '/feature-requests':
-            return MaterialPageRoute(
-              builder: (_) => const FeatureRequestsPage(),
-            );
-          case '/profile-settings':
-            return MaterialPageRoute(
-              builder: (_) => const ProfileSettingsPage(),
-            );
-          case '/u':
-            final userId = uri.queryParameters['id'] ?? '';
-            if (userId.isEmpty) {
-              return MaterialPageRoute(builder: (_) => const LandingPage());
-            }
-            return MaterialPageRoute(
-              builder: (_) => PublicProfilePage(userId: userId),
-              settings: RouteSettings(name: settings.name),
-            );
-          case '/vs-notion':
-          case '/vs-evernote':
-          case '/vs-moneyforward':
-          case '/vs-slack':
-          case '/vs-chatwork':
-          case '/vs-x':
-          case '/vs-animaworks':
-          case '/vs-claude-code':
-          case '/vs-codex':
-          case '/vs-netkeiba':
-          case '/vs-openclaw':
-          case '/vs-claude-cowork':
-          case '/vs-jobcan':
-          case '/vs-amazon':
-          case '/vs-google':
-          case '/vs-discord':
-          case '/vs-microsoft':
-          case '/vs-line':
-          case '/vs-facebook':
-          case '/vs-liven':
-          case '/vs-github':
-            return MaterialPageRoute(
-              builder: (_) => ComparisonPage(
-                competitorKey: uri.path.replaceFirst('/vs-', ''),
-              ),
-            );
-          case '/competitors':
-            return MaterialPageRoute(
-              builder: (_) => const CompetitorBrowsePage(),
-              settings: const RouteSettings(name: '/competitors'),
-            );
-          case '/activity-feed':
-            return MaterialPageRoute(builder: (_) => const ActivityFeedPage());
-          case '/rewards':
-            return MaterialPageRoute(builder: (_) => const RewardsPage());
-          case '/life-goals':
-            return MaterialPageRoute(builder: (_) => const LifeGoalsPage());
-          case '/thought-capture':
-            return MaterialPageRoute(
-              builder: (_) => const ThoughtCapturePage(),
-            );
-          case '/decision-check':
-            return MaterialPageRoute(builder: (_) => const DecisionCheckPage());
-          case '/eval-approval':
-            return MaterialPageRoute(builder: (_) => const EvalApprovalPage());
-          case '/purchase-log':
-            return MaterialPageRoute(builder: (_) => const PurchaseLogPage());
-          case '/price-tracker':
-            return MaterialPageRoute(builder: (_) => const PriceTrackerPage());
-          case '/ai-observability':
-            return MaterialPageRoute(
-              builder: (_) => const AiObservabilityPage(),
-            );
-          case '/ai-router-cost-dashboard':
-            return MaterialPageRoute(
-              builder: (_) => const AiRouterCostDashboardPage(),
-            );
-          case '/task-budget-assistant':
-            return MaterialPageRoute(
-              builder: (_) => const TaskBudgetAssistantPage(),
-            );
-          case '/agent-gpa-dashboard':
-            return MaterialPageRoute(
-              builder: (_) => const AgentGpaDashboardPage(),
-            );
-          case '/conveni-store':
-            return MaterialPageRoute(builder: (_) => const ConveniStorePage());
-          case '/edge-functions':
-            return MaterialPageRoute(
-              builder: (_) => const EdgeFunctionStatusPage(),
-            );
-          case '/admin':
-            return MaterialPageRoute(
-              builder: (_) => const AdminAnalyticsPage(),
-            );
-          case '/templates':
-            return MaterialPageRoute(
-              builder: (_) => const TemplateMarketplacePage(),
-            );
-          case '/kanban':
-            return MaterialPageRoute(builder: (_) => const KanbanBoardPage());
-          case '/table-data':
-            return MaterialPageRoute(builder: (_) => const TableDataPage());
-          case '/ai-suggest-tags':
-            return MaterialPageRoute(builder: (_) => const AiSuggestTagsPage());
-          case '/analyze-reality':
-            return MaterialPageRoute(
-              builder: (_) => const AnalyzeRealityPage(),
-            );
-          case '/support-tickets':
-            return MaterialPageRoute(
-              builder: (_) => const SupportTicketsPage(),
-            );
-          case '/growth-achievement-summary':
-            return MaterialPageRoute(
-              builder: (_) => const GrowthAchievementSummaryPage(),
-            );
-          case '/growth-acquisition':
-            return MaterialPageRoute(
-              builder: (_) => const GrowthAcquisitionPage(),
-            );
-          case '/growth-acquisition-report':
-            return MaterialPageRoute(
-              builder: (_) => const GrowthAcquisitionReportPage(),
-            );
-          case '/growth-command-center':
-            return MaterialPageRoute(
-              builder: (_) => const GrowthCommandCenterPage(),
-            );
-          case '/growth-share-signal':
-            return MaterialPageRoute(
-              builder: (_) => const GrowthShareSignalPage(),
-            );
-          case '/growth-weekly-digest':
-            return MaterialPageRoute(
-              builder: (_) => const GrowthWeeklyDigestPage(),
-            );
-          case '/memo-reactions':
-            return MaterialPageRoute(builder: (_) => const MemoReactionsPage());
-          case '/note-comments':
-            return MaterialPageRoute(builder: (_) => const NoteCommentsPage());
-          case '/growth-acquisition-signal':
-            return MaterialPageRoute(
-              builder: (_) => const GrowthAcquisitionSignalPage(),
-            );
-          case '/compatibility':
-            final myType = settings.arguments as String? ?? '';
-            return MaterialPageRoute(
-              builder: (_) => CompatibilityCheckPage(myType: myType),
-            );
-          case '/personality-test':
-            final testId = settings.arguments as int? ?? 1;
-            return MaterialPageRoute(
-              builder: (_) => PersonalityTestQuestionsPage(testId: testId),
-            );
-          case '/personality-test-result':
-            final resultTestId = settings.arguments as int? ?? 1;
-            return MaterialPageRoute(
-              builder: (_) => PersonalityTestResultPage(testId: resultTestId),
-            );
-          case '/enterprise':
-            return MaterialPageRoute(builder: (_) => const EnterprisePage());
-          case '/corporate-bank-account-cost':
-            return MaterialPageRoute(
-              builder: (_) => const CorporateBankAccountSimulatorPage(),
-            );
-          case '/ai-secretary':
-            return MaterialPageRoute(builder: (_) => const AISecretaryPage());
-          case '/team-workspace':
-            return MaterialPageRoute(builder: (_) => const TeamWorkspacePage());
-          case '/embedding-lab':
-            return MaterialPageRoute(builder: (_) => const EmbeddingLabPage());
-          case '/settings':
-            return MaterialPageRoute(builder: (_) => const SettingsPage());
-          case '/settings/theme':
-            return MaterialPageRoute(builder: (_) => const ThemeSelectorPage());
-          case '/stats':
-            return MaterialPageRoute(builder: (_) => const StatsPage());
-          case '/health':
-            return MaterialPageRoute(builder: (_) => const HealthPage());
-          case '/mental-check':
-            return MaterialPageRoute(builder: (_) => const MentalCheckPage());
-          case '/feedback':
-            return MaterialPageRoute(builder: (_) => const FeedbackPage());
-          case '/admin-feedback':
-            return MaterialPageRoute(builder: (_) => const FeedbackListPage());
-          case '/quota-dashboard':
-            return MaterialPageRoute(
-              builder: (_) => const QuotaDashboardPage(),
-            );
-          case '/admin/maintenance':
-            return MaterialPageRoute(
-              builder: (_) => const MaintenanceManagementPage(),
-            );
-          case '/maintenance':
-            return MaterialPageRoute(
-              builder: (_) => const MaintenanceModePage(),
-            );
-          case '/blog-management':
-            return MaterialPageRoute(
-              builder: (_) => const BlogManagementPage(),
-            );
-          case '/admin/blog/new':
-            return MaterialPageRoute(
-              builder: (_) => const BlogDraftEditorPage(),
-            );
-          case '/admin/blog/edit':
-            final postId = settings.arguments as String?;
-            return MaterialPageRoute(
-              builder: (_) => BlogDraftEditorPage(postId: postId),
-            );
-          case '/ai-assistant-chat':
-            final arguments = settings.arguments is Map
-                ? Map<String, dynamic>.from(settings.arguments! as Map)
-                : const <String, dynamic>{};
-            final contextIds = (arguments['context_file_ids'] as List?)
-                    ?.map((item) => item.toString())
-                    .toList(growable: false) ??
-                const <String>[];
-            final contextTitles = (arguments['context_titles'] as List?)
-                    ?.map((item) => item.toString())
-                    .toList(growable: false) ??
-                const <String>[];
-            return MaterialPageRoute(
-              builder: (_) => AiAssistantChatPage(
-                initialContextIds: contextIds,
-                initialContextTitles: contextTitles,
-              ),
-            );
-          case '/categories':
-            return MaterialPageRoute(builder: (_) => const CategoriesPage());
-          case '/medical-notes':
-            return MaterialPageRoute(builder: (_) => const MedicalNotesPage());
-          case '/api-playground':
-            return MaterialPageRoute(builder: (_) => const ApiPlaygroundPage());
-          case '/financial-report':
-            return MaterialPageRoute(
-              builder: (_) => const FinancialReportPage(),
-            );
-          case '/payment-channel-ledger':
-            return MaterialPageRoute(
-              builder: (_) => const PaymentChannelLedgerPage(),
-            );
-          case '/emergency-meeting':
-            return MaterialPageRoute(
-              builder: (_) => const EmergencyMeetingPage(),
-            );
-          case '/ai-status':
-            return MaterialPageRoute(builder: (_) => const AiStatusPage());
-          case '/ai-provider-status':
-            return MaterialPageRoute(
-              builder: (_) => const AiProviderStatusPage(),
-            );
-          case '/note-list':
-          case '/notes':
-            // Win版#110: feature_releases から「ノート」deep link
-            return MaterialPageRoute(
-              builder: (_) => const NoteListPage(),
-              settings: settings,
-            );
-          case '/asset-management':
-            return MaterialPageRoute(
-              builder: (_) => const AssetManagementPage(),
-            );
-          case '/cfo-office':
-            return MaterialPageRoute(builder: (_) => const CfoOfficePage());
-          case '/cho-office':
-            return MaterialPageRoute(builder: (_) => const ChoOfficePage());
-          case '/chro-office':
-            return MaterialPageRoute(builder: (_) => const ChroOfficePage());
-          case '/cmo-office':
-            return MaterialPageRoute(builder: (_) => const CmoOfficePage());
-          case '/cmo':
-            return MaterialPageRoute(builder: (_) => const CmoPage());
-          case '/election-strategy':
-            return MaterialPageRoute(
-              builder: (_) => const ElectionStrategyPage(),
-            );
-          case '/mind-map':
-            return MaterialPageRoute(builder: (_) => const MindMapPage());
-          case '/mindless-task':
-            return MaterialPageRoute(builder: (_) => const MindlessTaskPage());
-          case '/real-world-danshari':
-            return MaterialPageRoute(
-              builder: (_) => RealWorldDanshariPage(supabaseClient: supabase),
-            );
-          case '/stock-tasks':
-            return MaterialPageRoute(builder: (_) => const StockTasksPage());
-          case '/wardrobe':
-            return MaterialPageRoute(builder: (_) => const WardrobePage());
-          case '/knowledge-base':
-            return MaterialPageRoute(builder: (_) => const KnowledgeBasePage());
-          case '/semantic-search':
-            return MaterialPageRoute(
-              builder: (_) => const SemanticSearchPage(),
-            );
-          case '/mcp-file-search':
-            return MaterialPageRoute(builder: (_) => const McpFileSearchPage());
-          case '/social-feed':
-            return MaterialPageRoute(builder: (_) => const SocialFeedPage());
-          case '/notifications':
-            return MaterialPageRoute(builder: (_) => const NotificationsPage());
-          case '/meeting-manager':
-            return MaterialPageRoute(
-              builder: (_) => const MeetingManagerPage(),
-            );
-          case '/news-rss':
-            return MaterialPageRoute(
-              builder: (_) => const NewsRssAggregatorPage(),
-            );
-          case '/market-intelligence':
-            return MaterialPageRoute(
-              builder: (_) => const MarketIntelligencePage(),
-            );
-          case '/smart-inbox':
-            return MaterialPageRoute(
-              builder: (_) => const SmartInboxTriagePage(),
-            );
-          case '/carbon-footprint':
-            return MaterialPageRoute(
-              builder: (_) => const CarbonFootprintTrackerPage(),
-            );
-          case '/donation':
-            return MaterialPageRoute(
-              builder: (_) => const DonationCrowdfundingPage(),
-            );
-          case '/emergency-contacts':
-            return MaterialPageRoute(
-              builder: (_) => const EmergencyContactsPage(),
-            );
-          case '/family-sharing':
-            return MaterialPageRoute(
-              builder: (_) => const FamilySharingManagerPage(),
-            );
-          case '/gift-registry':
-            return MaterialPageRoute(builder: (_) => const GiftRegistryPage());
-          case '/mindmap':
-            return MaterialPageRoute(
-              builder: (_) => const MindmapDiagramPage(),
-            );
-          case '/auction-marketplace':
-            return MaterialPageRoute(
-              builder: (_) => const AuctionMarketplacePage(),
-            );
-          case '/qr-code-generator':
-            return MaterialPageRoute(
-              builder: (_) => const QrCodeGeneratorPage(),
-            );
-          case '/parking-reservation':
-            return MaterialPageRoute(
-              builder: (_) => const ParkingReservationPage(),
-            );
-          case '/referral-program':
-            return MaterialPageRoute(
-              builder: (_) => const ReferralProgramPage(),
-            );
-          case '/analytics-export':
-            return MaterialPageRoute(
-              builder: (_) => const AnalyticsExportPage(),
-            );
-          case '/workflow-templates':
-            return MaterialPageRoute(
-              builder: (_) => const WorkflowTemplatesPage(),
-            );
-          case '/customer-feedback':
-            return MaterialPageRoute(
-              builder: (_) => const CustomerFeedbackPage(),
-            );
-          case '/address-book':
-            return MaterialPageRoute(builder: (_) => const AddressBookPage());
-          case '/subscription-billing':
-            return MaterialPageRoute(
-              builder: (_) => const SubscriptionBillingPage(),
-            );
-          case '/billing':
-            return MaterialPageRoute(
-              builder: (_) => const SubscriptionBillingPage(),
-            );
-          case '/appointment-scheduler':
-            return MaterialPageRoute(
-              builder: (_) => const AppointmentSchedulerPage(),
-            );
-          case '/budget-financial-planner':
-            return MaterialPageRoute(
-              builder: (_) => const BudgetFinancialPlannerPage(),
-            );
-          case '/feature-flags':
-            return MaterialPageRoute(builder: (_) => const FeatureFlagsPage());
-          case '/workflow-automation':
-            return MaterialPageRoute(
-              builder: (_) => const WorkflowAutomationPage(),
-            );
-          case '/social-scheduler':
-            return MaterialPageRoute(
-              builder: (_) => const SocialMediaSchedulerPage(),
-            );
-          case '/video-meeting':
-            return MaterialPageRoute(builder: (_) => const VideoMeetingPage());
-          case '/krisp-audio-quality':
-            return MaterialPageRoute(
-              builder: (_) => const KrispAudioQualityPage(),
-            );
-          case '/gantt-timeline':
-            return MaterialPageRoute(builder: (_) => const GanttTimelinePage());
-          case '/ai-image-generator':
-            return MaterialPageRoute(
-              builder: (_) => const AiImageGeneratorPage(),
-            );
-          case '/viral-ad-campaign':
-            return MaterialPageRoute(
-              builder: (_) => const ViralAdCampaignPage(),
-            );
-          case '/virtual-pet':
-            return MaterialPageRoute(builder: (_) => const VirtualPetPage());
-          case '/affiliate-marketing':
-            return MaterialPageRoute(
-              builder: (_) => const AffiliateMarketingPage(),
-            );
-          case '/calendar-events':
-            return MaterialPageRoute(
-              builder: (_) => const CalendarEventsPage(),
-            );
-          case '/expense-tracker':
-            return MaterialPageRoute(
-              builder: (_) => const ExpenseTrackerPage(),
-            );
-          case '/reading-list':
-            return MaterialPageRoute(builder: (_) => const ReadingListPage());
-          case '/ar-navigation':
-            return MaterialPageRoute(builder: (_) => const ArNavigationPage());
-          case '/dns-domain-manager':
-            return MaterialPageRoute(
-              builder: (_) => const DnsDomainManagerPage(),
-            );
-          case '/focus-timer':
-            return MaterialPageRoute(builder: (_) => const FocusTimerPage());
-          case '/digital-wallet':
-            return MaterialPageRoute(builder: (_) => const DigitalWalletPage());
-          case '/loyalty-points':
-            return MaterialPageRoute(builder: (_) => const LoyaltyPointsPage());
-          case '/viral-ad-generator':
-            return MaterialPageRoute(
-              builder: (_) => const ViralAdGeneratorPage(),
-            );
-          case '/growth-automation':
-            return MaterialPageRoute(
-              builder: (_) => const GrowthAutomationControllerPage(),
-            );
-          case '/landing-ab-test':
-            return MaterialPageRoute(builder: (_) => const LandingAbTestPage());
-          case '/video-ad-generator':
-            return MaterialPageRoute(
-              builder: (_) => const VideoAdGeneratorPage(),
-            );
-          case '/viral-video-generator':
-            return MaterialPageRoute(
-              builder: (_) => const ViralVideoGeneratorPage(),
-            );
-          case '/youtube-stats':
-            return MaterialPageRoute(builder: (_) => const YoutubeStatsPage());
-          case '/audio-effects-processor':
-            return MaterialPageRoute(
-              builder: (_) => const AudioEffectsProcessorPage(),
-            );
-          case '/guitar-recording-studio':
-            return MaterialPageRoute(
-              builder: (_) => const GuitarRecordingStudioPage(),
-            );
-          case '/public-guitar-gallery':
-            return MaterialPageRoute(
-              builder: (_) => const PublicGuitarGalleryPage(),
-            );
-          case '/music-collaboration':
-            return MaterialPageRoute(
-              builder: (_) => const MusicCollaborationPage(),
-            );
-          case '/form-builder':
-            return MaterialPageRoute(builder: (_) => const FormBuilderPage());
-          case '/event-ticketing':
-            return MaterialPageRoute(
-              builder: (_) => const EventTicketingPage(),
-            );
-          case '/music-playlist-manager':
-            return MaterialPageRoute(
-              builder: (_) => const MusicPlaylistManagerPage(),
-            );
-          case '/fitness-health-tracker':
-            return MaterialPageRoute(
-              builder: (_) => const FitnessHealthTrackerPage(),
-            );
-          case '/virtual-organization':
-            return MaterialPageRoute(
-              builder: (_) => const VirtualOrganizationPage(),
-            );
-          case '/ai-writing-assistant':
-            return MaterialPageRoute(
-              builder: (_) => const AiWritingAssistantPage(),
-            );
-          case '/wiki-database':
-            return MaterialPageRoute(builder: (_) => const WikiDatabasePage());
-          case '/time-tracker':
-            return MaterialPageRoute(builder: (_) => const TimeTrackerPage());
-          case '/voice-memo':
-            return MaterialPageRoute(
-              builder: (_) => const VoiceMemoTranscriberPage(),
-            );
-          case '/crm-pipeline':
-            return MaterialPageRoute(
-              builder: (_) => const CrmSalesPipelinePage(),
-            );
-          case '/horse-racing':
-          case '/horse-racing/today':
-          case '/horse-racing/predictions':
-            return MaterialPageRoute(
-              builder: (_) => const HorseRacingPredictorPage(),
-              settings: RouteSettings(name: settings.name),
-            );
-          case '/horse-racing/history':
-          case '/horse-racing/prediction-history':
-            return MaterialPageRoute(
-              builder: (_) =>
-                  const HorseRacingPredictorPage(initialTabIndex: 1),
-              settings: RouteSettings(name: settings.name),
-            );
-          case '/horse-racing/analysis':
-          case '/horse-racing/accuracy':
-          case '/horse-racing-analysis':
-          case '/horse-racing-analytics':
-            return MaterialPageRoute(
-              builder: (_) =>
-                  const HorseRacingPredictorPage(initialTabIndex: 2),
-              settings: RouteSettings(name: settings.name),
-            );
-          case '/horse-racing/bets':
-          case '/horse-racing/tickets':
-          case '/horse-racing-bets':
-            return MaterialPageRoute(
-              builder: (_) =>
-                  const HorseRacingPredictorPage(initialTabIndex: 3),
-              settings: RouteSettings(name: settings.name),
-            );
-          case '/horse-provider-leaderboard':
-            return MaterialPageRoute(
-              builder: (_) => const HorseProviderLeaderboardPage(),
-            );
-          case '/travel-itinerary':
-            return MaterialPageRoute(
-              builder: (_) => const TravelItineraryPlannerPage(),
-            );
-          case '/travel-planner':
-            return MaterialPageRoute(
-              builder: (_) => const TravelItineraryPage(),
-            );
-          case '/virtual-whiteboard':
-            return MaterialPageRoute(
-              builder: (_) => const VirtualWhiteboardPage(),
-            );
-          case '/meal-log':
-            return MaterialPageRoute(builder: (_) => const MealLogPage());
-          case '/life-goals-kpi':
-            return MaterialPageRoute(builder: (_) => const LifeGoalsKpiPage());
-          case '/recipe-meal-planner':
-            return MaterialPageRoute(
-              builder: (_) => const RecipeMealPlannerPage(),
-            );
-          case '/language-learning':
-            return MaterialPageRoute(
-              builder: (_) => const LanguageLearningPage(),
-            );
-          case '/spreadsheet-database':
-            return MaterialPageRoute(
-              builder: (_) => const SpreadsheetDatabasePage(),
-            );
-          case '/changelog':
-            return MaterialPageRoute(
-              builder: (_) => const ChangelogManagerPage(),
-            );
-          case '/release-notes':
-            return MaterialPageRoute(builder: (_) => const ReleaseNotesPage());
-          case '/pet-care':
-            return MaterialPageRoute(
-              builder: (_) => const PetCareManagerPage(),
-            );
-          case '/photo-gallery':
-            return MaterialPageRoute(
-              builder: (_) => const PhotoGalleryManagerPage(),
-            );
-          case '/elearning':
-            return MaterialPageRoute(
-              builder: (_) => const ElearningCourseManagerPage(),
-            );
-          case '/document-esignature':
-            return MaterialPageRoute(
-              builder: (_) => const DocumentEsignaturePage(),
-            );
-          case '/vehicle-fleet':
-            return MaterialPageRoute(
-              builder: (_) => const VehicleFleetManagerPage(),
-            );
-          case '/recruitment':
-            return MaterialPageRoute(
-              builder: (_) => const RecruitmentJobBoardPage(),
-            );
-          case '/habit-gamification':
-            return MaterialPageRoute(
-              builder: (_) => const HabitGamificationPage(),
-            );
-          case '/focus-capture':
-            return MaterialPageRoute(
-              builder: (_) => const FocusCaptureGamePage(),
-            );
-          case '/code-playground':
-            return MaterialPageRoute(
-              builder: (_) => const CodePlaygroundPage(),
-            );
-          case '/real-estate':
-            return MaterialPageRoute(
-              builder: (_) => const RealEstateTrackerPage(),
-            );
-          case '/home-iot':
-            return MaterialPageRoute(
-              builder: (_) => const HomeIotManagerPage(),
-            );
-          case '/legal-compliance':
-            return MaterialPageRoute(
-              builder: (_) => const LegalComplianceManagerPage(),
-            );
-          case '/email-templates':
-            return MaterialPageRoute(
-              builder: (_) => const EmailTemplateBuilderPage(),
-            );
-          case '/two-factor-auth':
-            return MaterialPageRoute(builder: (_) => const TwoFactorAuthPage());
-          case '/inventory-barcode':
-            return MaterialPageRoute(
-              builder: (_) => const InventoryBarcodePage(),
-            );
-          case '/password-vault':
-            return MaterialPageRoute(builder: (_) => const PasswordVaultPage());
-          case '/podcast-manager':
-            return MaterialPageRoute(
-              builder: (_) => const PodcastManagerPage(),
-            );
-          case '/screen-recorder':
-            return MaterialPageRoute(
-              builder: (_) => const ScreenRecorderPage(),
-            );
-          case '/sitemap-analytics':
-            return MaterialPageRoute(
-              builder: (_) => const SitemapAnalyticsPage(),
-            );
-          case '/access-control':
-            return MaterialPageRoute(builder: (_) => const AccessControlPage());
-          case '/personal-dashboard':
-            return MaterialPageRoute(
-              builder: (_) => const PersonalDashboardPage(),
-            );
-          case '/my-skills':
-            return MaterialPageRoute(builder: (_) => const MySkillsPage());
-          case '/goal-tracker':
-            return MaterialPageRoute(builder: (_) => const GoalTrackerPage());
-          case '/career-monthly-kpi':
-            return MaterialPageRoute(
-              builder: (_) => const CareerMonthlyKpiPage(),
-            );
-          case '/bookmark-sync':
-            return MaterialPageRoute(builder: (_) => const BookmarkSyncPage());
-          case '/jibun-api':
-            return MaterialPageRoute(
-              builder: (_) => const JibunApiPage(),
-              settings: RouteSettings(name: settings.name),
-            );
-          case '/ui-design-status':
-            return MaterialPageRoute(
-              builder: (_) => const UiDesignStatusPage(),
-              settings: const RouteSettings(name: '/ui-design-status'),
-            );
-          case '/ai-summarizer':
-            return MaterialPageRoute(
-              builder: (_) => const AiSummarizerPage(),
-              settings: const RouteSettings(name: '/ai-summarizer'),
-            );
-          case '/revenue-forecaster':
-            return MaterialPageRoute(
-              builder: (_) => const RevenueForecasterPage(),
-              settings: const RouteSettings(name: '/revenue-forecaster'),
-            );
-          case '/weather-widget':
-            return MaterialPageRoute(
-              builder: (_) => const WeatherWidgetPage(),
-              settings: const RouteSettings(name: '/weather-widget'),
-            );
-          case '/google-calendar-sync':
-            return MaterialPageRoute(
-              builder: (_) => const GoogleCalendarSyncPage(),
-            );
-          case '/money-forward':
-            return MaterialPageRoute(builder: (_) => const MoneyForwardPage());
-          case '/weekly-slip-report':
-            return MaterialPageRoute(
-              builder: (_) => const WeeklySlipReportPage(),
-            );
-          case '/discord-notifications':
-            return MaterialPageRoute(
-              builder: (_) => const DiscordNotificationPage(),
-            );
-          case '/line-notifications':
-            return MaterialPageRoute(
-              builder: (_) => const LineNotificationPage(),
-            );
-          case '/github-pr':
-            return MaterialPageRoute(builder: (_) => const GithubPrPage());
-          case '/slack-notifications':
-            return MaterialPageRoute(
-              builder: (_) => const SlackNotificationPage(),
-            );
-          case '/team-chat':
-            return MaterialPageRoute(builder: (_) => const TeamChatPage());
-          case '/health-coach':
-            return MaterialPageRoute(builder: (_) => const HealthCoachPage());
-          case '/thought-interrupt-diagnosis':
-            return MaterialPageRoute(
-              builder: (_) => const ThoughtInterruptDiagnosisPage(),
-            );
-          case '/mental-health-tracker':
-            return MaterialPageRoute(
-              builder: (_) => const MentalHealthTrackerPage(),
-            );
-          case '/freelance-manager':
-            return MaterialPageRoute(
-              builder: (_) => const FreelanceManagerPage(),
-            );
-          case '/ai-presentation-builder':
-            return MaterialPageRoute(
-              builder: (_) => const AiPresentationBuilderPage(),
-            );
-          case '/tome-deck-studio':
-            return MaterialPageRoute(
-              builder: (_) => const TomeDeckStudioPage(),
-            );
-          case '/data-backup':
-            return MaterialPageRoute(builder: (_) => const DataBackupPage());
-          case '/content-calendar':
-            return MaterialPageRoute(
-              builder: (_) => const ContentCalendarPage(),
-            );
-          case '/home-budget-planner':
-            return MaterialPageRoute(
-              builder: (_) => const HomeBudgetPlannerPage(),
-            );
-          case '/brain-dump':
-            return MaterialPageRoute(builder: (_) => const BrainDumpPage());
-          case '/project-gantt':
-            return MaterialPageRoute(builder: (_) => const ProjectGanttPage());
-          case '/user-tasks':
-            return MaterialPageRoute(
-              settings: const RouteSettings(name: '/user-tasks'),
-              builder: (_) => const UserTasksPage(),
-            );
-          case '/wbs-user-tasks':
-            return MaterialPageRoute(
-              settings: const RouteSettings(name: '/wbs-user-tasks'),
-              builder: (_) => const UserTasksPage(),
-            );
-          case '/business-card-manager':
-            return MaterialPageRoute(
-              builder: (_) => const BusinessCardManagerPage(),
-            );
-          case '/family-calendar':
-            return MaterialPageRoute(
-              builder: (_) => const FamilyCalendarPage(),
-            );
-          case '/app-hub':
-            return MaterialPageRoute(builder: (_) => const AppHubPage());
-          case '/agent-hub':
-            return MaterialPageRoute(builder: (_) => const AgentHubPage());
-          case '/admin-notifications':
-            return MaterialPageRoute(
-              builder: (_) => const AdminNotificationHubPage(),
-            );
-          case '/competitor-feature-sync':
-            return MaterialPageRoute(
-              builder: (_) => const CompetitorFeatureSyncPage(),
-            );
-          case '/daily-judgment':
-            return MaterialPageRoute(builder: (_) => const DailyJudgmentPage());
-          case '/ai-university-content':
-            return MaterialPageRoute(
-              builder: (_) => const AiUniversityContentPage(),
-            );
-          case '/ai-university-faculty':
-            return MaterialPageRoute(
-              builder: (_) => const AiUniversityFacultySelectPage(),
-            );
-          case '/ai-university-department':
-            final args = settings.arguments as Map<String, dynamic>?;
-            return MaterialPageRoute(
-              builder: (_) => AiUniversityDepartmentSelectPage(
-                facultyCode: args?['faculty_code'] as String? ?? '',
-                facultyName: args?['faculty_name'] as String? ?? '',
-                facultyEmoji: args?['faculty_emoji'] as String? ?? '🎓',
-              ),
-            );
-          case '/development-achievements':
-            return MaterialPageRoute(
-              builder: (_) => const DevelopmentAchievementsPage(),
-            );
-          case '/invoice-generator':
-            return MaterialPageRoute(
-              builder: (_) => const InvoiceGeneratorPage(),
-            );
-          case '/poll-survey':
-            return MaterialPageRoute(builder: (_) => const PollSurveyPage());
-          case '/notification-digest':
-            return MaterialPageRoute(
-              builder: (_) => const NotificationDigestPage(),
-            );
-          case '/ai-university-badges':
-            return MaterialPageRoute(
-              builder: (_) => const AiUniversityBadgesPage(),
-            );
-          case '/ai-university-streaks':
-            return MaterialPageRoute(
-              builder: (_) => const AiUniversityStreaksPage(),
-            );
-          case '/english-reading-curriculum':
-            return MaterialPageRoute(
-              builder: (_) => const EnglishReadingCurriculumPage(),
-            );
-          case '/english-reading-practice':
-            final args = settings.arguments as Map<String, dynamic>?;
-            return MaterialPageRoute(
-              builder: (_) => EnglishReadingPracticePage(
-                lessonCode: args?['lesson_code'] as String?,
-                mode: args?['mode'] as String? ?? 'measure',
-              ),
-            );
-          case '/english-reading-dashboard':
-            return MaterialPageRoute(
-              builder: (_) => const EnglishReadingDashboardPage(),
-            );
-          case '/ai-workflow-automation':
-            return MaterialPageRoute(
-              builder: (_) => const AiWorkflowAutomationPage(),
-            );
-          case '/ab-testing-manager':
-            return MaterialPageRoute(
-              builder: (_) => const AbTestingManagerPage(),
-            );
-          case '/habit-tracker':
-            return MaterialPageRoute(builder: (_) => const HabitTrackerPage());
-          case '/social-media-scheduler':
-            return MaterialPageRoute(
-              builder: (_) => const SocialMediaSchedulerPage(),
-            );
-          case '/agent-department-manager':
-            return MaterialPageRoute(
-              builder: (_) => const AgentDepartmentManagerPage(),
-            );
-          case '/agent-performance-monitor':
-            return MaterialPageRoute(
-              builder: (_) => const AgentPerformanceMonitorPage(),
-            );
-          case '/app-analytics-dashboard':
-            return MaterialPageRoute(
-              builder: (_) => const AppAnalyticsDashboardPage(),
-            );
-          case '/deployment-monitoring':
-            return MaterialPageRoute(
-              builder: (_) => const DeploymentMonitoringSetupPage(),
-            );
-          case '/one-in-two-out':
-          case '/one-in-two-out-assist':
-            return MaterialPageRoute(
-              builder: (_) => const OneInTwoOutAssistPage(),
-              settings: RouteSettings(name: settings.name),
-            );
-          case '/dev/claude-design-importer':
-            return MaterialPageRoute(
-              builder: (_) => const ClaudeDesignImporterPage(),
-            );
-          case '/leave-management':
-            return MaterialPageRoute(
-              builder: (_) => const LeaveManagementPage(),
-            );
-          case '/performance-review':
-            return MaterialPageRoute(
-              builder: (_) => const PerformanceReviewPage(),
-            );
-          case '/pomodoro-timer':
-            return MaterialPageRoute(builder: (_) => const PomodoroTimerPage());
-          case '/health-check':
-            return MaterialPageRoute(builder: (_) => const HealthCheckPage());
-          case '/memory-search':
-            return MaterialPageRoute(
-              builder: (_) => const MemorySearchHubPage(),
-            );
-          case '/knowledge-graph':
-            return MaterialPageRoute(
-              builder: (_) => const KnowledgeGraphPage(),
-              settings: const RouteSettings(name: '/knowledge-graph'),
-            );
-          default:
-            if (uri.path.startsWith('/vs-')) {
-              return MaterialPageRoute(
-                builder: (_) => ComparisonPage(
-                  competitorKey: uri.path.replaceFirst('/vs-', ''),
-                ),
-                settings: settings,
-              );
-            }
-            return MaterialPageRoute(builder: (_) => const LandingPage());
-        }
-      },
+      onGenerateRoute: (settings) => ensureRouteAnnouncesUrl(
+        generateAppRoute(
+          settings,
+          signupCompletionService: widget.signupCompletionService,
+        ),
+        settings,
+      ),
     );
   }
 }

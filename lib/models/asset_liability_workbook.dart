@@ -283,6 +283,17 @@ enum AssetRecurringFixedCostCategory {
   subscription,
 }
 
+/// 定期固定費の入力通貨。既定は円 (jpy)。ドル建て (usd) の場合は毎月の為替で
+/// 円換算額が変動するため、原資の USD 額を保持し、最新レートで円へ materialize する。
+enum AssetRecurringFixedCostCurrency {
+  /// 円建て (既定)。[AssetRecurringFixedCost.amount] がそのまま月額。
+  jpy,
+
+  /// ドル建て。[AssetRecurringFixedCost.usdAmount] が原資で、[amount] は
+  /// 最新レートで換算した円額 (レート未取得時は前回換算値を据え置く)。
+  usd,
+}
+
 /// サブスクの請求経路 (どこ経由で課金されるか)。
 ///
 /// 例: ChatGPT Pro は Apple App Store のサブスクとして課金され、Apple ID の支払い方法
@@ -337,6 +348,15 @@ class AssetRecurringFixedCost {
   /// 突き合わせ表示に使い、資金繰りの計上額には影響しない。
   final AssetSubscriptionBillingGateway billingGateway;
 
+  /// 入力通貨。既定は円 (jpy)。ドル建て (usd) のサブスク (Claude/Notion 等) は
+  /// 毎月の為替で円額が変わるため usd を指定し、[usdAmount] に原資の USD 額を持つ。
+  final AssetRecurringFixedCostCurrency currency;
+
+  /// ドル建て時の原資 (USD 額)。[currency] == usd のときのみ意味を持つ。
+  /// 円換算額 [amount] は「最新レートで再計算した値」を都度保存するため、
+  /// レート未取得時でも前回値で計上でき、レート更新時に自動で追随する。
+  final double? usdAmount;
+
   const AssetRecurringFixedCost({
     required this.id,
     required this.name,
@@ -346,7 +366,22 @@ class AssetRecurringFixedCost {
     this.sourceAccountId,
     this.category = AssetRecurringFixedCostCategory.utility,
     this.billingGateway = AssetSubscriptionBillingGateway.direct,
+    this.currency = AssetRecurringFixedCostCurrency.jpy,
+    this.usdAmount,
   });
+
+  /// ドル建てか。
+  bool get isUsd => currency == AssetRecurringFixedCostCurrency.usd;
+
+  /// 指定レート (1 USD = [usdJpyRate] 円) で円換算した月額を返す。
+  /// ドル建てかつ原資・レートが有効なときのみ再計算し、それ以外は現行の
+  /// [amount] を据え置く (レート未取得時に 0 円へ落ちないようにする)。
+  double resolveJpyAmount(double? usdJpyRate) {
+    if (!isUsd || usdAmount == null || usdJpyRate == null || usdJpyRate <= 0) {
+      return amount;
+    }
+    return (usdAmount! * usdJpyRate).roundToDouble();
+  }
 
   /// 指定した月 (1-12) にこの固定費が発生するか (隔月は偶数/奇数月のみ計上)。
   bool appliesToMonth(int month) {
@@ -370,6 +405,9 @@ class AssetRecurringFixedCost {
     bool clearSourceAccountId = false,
     AssetRecurringFixedCostCategory? category,
     AssetSubscriptionBillingGateway? billingGateway,
+    AssetRecurringFixedCostCurrency? currency,
+    double? usdAmount,
+    bool clearUsdAmount = false,
   }) {
     return AssetRecurringFixedCost(
       id: id ?? this.id,
@@ -382,6 +420,8 @@ class AssetRecurringFixedCost {
           : (sourceAccountId ?? this.sourceAccountId),
       category: category ?? this.category,
       billingGateway: billingGateway ?? this.billingGateway,
+      currency: currency ?? this.currency,
+      usdAmount: clearUsdAmount ? null : (usdAmount ?? this.usdAmount),
     );
   }
 
@@ -399,6 +439,10 @@ class AssetRecurringFixedCost {
         'category': category.name,
       if (billingGateway != AssetSubscriptionBillingGateway.direct)
         'billingGateway': billingGateway.name,
+      // 通貨は既定 (jpy) のとき出力しない (既存ペイロードと互換を保つ)。
+      if (currency != AssetRecurringFixedCostCurrency.jpy)
+        'currency': currency.name,
+      if (usdAmount != null) 'usdAmount': usdAmount,
     };
   }
 
@@ -441,6 +485,13 @@ class AssetRecurringFixedCost {
       (value) => value.name == gatewayName,
       orElse: () => AssetSubscriptionBillingGateway.direct,
     );
+    final currencyName = json['currency']?.toString();
+    final currency = AssetRecurringFixedCostCurrency.values.firstWhere(
+      (value) => value.name == currencyName,
+      orElse: () => AssetRecurringFixedCostCurrency.jpy,
+    );
+    final usdAmount = (json['usdAmount'] as num?)?.toDouble() ??
+        double.tryParse(json['usdAmount']?.toString() ?? '');
     return AssetRecurringFixedCost(
       id: trimmedId,
       name: name,
@@ -451,6 +502,8 @@ class AssetRecurringFixedCost {
           rawSource == null || rawSource.isEmpty ? null : rawSource,
       category: category,
       billingGateway: billingGateway,
+      currency: currency,
+      usdAmount: usdAmount != null && usdAmount > 0 ? usdAmount : null,
     );
   }
 }
@@ -833,6 +886,24 @@ class AssetLiabilityMonthlySnapshot {
   final double monthlyPaymentDifferenceTotal;
   final int overduePaymentCount;
 
+  /// その月末時点の証券 (securities 口座) 評価額合計。
+  ///
+  /// 従来スナップショットに保存されておらず、旧データ / Supabase 同期分は
+  /// null (= 未追跡) になる。投資評価額の時系列グラフ (#2469) は
+  /// 「未追跡」と「評価額 0 円」を区別する必要があるため nullable のままにし、
+  /// null の月はグラフの点として描かない (0 円へ落とすと保有していたはずの
+  /// 資産が消えたように見えるため)。
+  final double? securitiesTotal;
+
+  /// その月に受領済み (received=true) となった収入の合計。
+  ///
+  /// 収入は従来スナップショットに保存されておらず、旧データ / Supabase 同期分は
+  /// null (= 未追跡) になる。キャッシュフロー計算では null を「0 円の収入」と
+  /// 誤認すると全月が赤字に倒れるため、null の月は月次CF・黒字赤字カウントから
+  /// 除外する (= [AssetCashflowStatementService])。非 null の 0 は「収入 0 円」を
+  /// 意味し、追跡済みとして扱う。
+  final double? monthlyReceivedIncomeTotal;
+
   const AssetLiabilityMonthlySnapshot({
     required this.monthKey,
     required this.savedAt,
@@ -846,6 +917,8 @@ class AssetLiabilityMonthlySnapshot {
     this.monthlyActualPaymentTotal = 0,
     this.monthlyPaymentDifferenceTotal = 0,
     required this.overduePaymentCount,
+    this.monthlyReceivedIncomeTotal,
+    this.securitiesTotal,
   });
 }
 
@@ -1238,6 +1311,13 @@ class AssetLiabilityWorkbook {
   final int manualPaymentCount;
   final int estimatedPaymentCount;
 
+  /// サブスク区分 (AssetRecurringFixedCostCategory.subscription) として登録された
+  /// 定期固定費の口座 ID 集合。資金繰り上は utility 負債として計上され
+  /// fullPaymentEstimate=true になるため、家賃・光熱費などの「生命線」と
+  /// 区別できない。トリアージで「生命線を優先確保」から除外するために保持する
+  /// (サブスクは解約候補であって優先支払い対象ではない)。
+  final Set<String> subscriptionFixedCostAccountIds;
+
   const AssetLiabilityWorkbook({
     required this.baseDate,
     required this.accounts,
@@ -1268,6 +1348,7 @@ class AssetLiabilityWorkbook {
     required this.topFourDebtShare,
     required this.manualPaymentCount,
     required this.estimatedPaymentCount,
+    this.subscriptionFixedCostAccountIds = const <String>{},
   });
 
   List<AssetLiabilityCashflowRow> get overdueCashflowRows {
@@ -1336,6 +1417,60 @@ class AssetLiabilityWorkbook {
 
   double get paymentSourceMissingTotal {
     return paymentSourceMissingRows.fold<double>(
+      0,
+      (sum, row) => sum + row.scheduledPaymentAmount,
+    );
+  }
+
+  /// 支払原資が「設定はされているが、現金・預金の資産口座を指していない」支払い。
+  ///
+  /// 例: 原資が PayPay カード (creditCard) や、資産一覧に存在しない口座 ID
+  /// (`paypay_card` 等の請求名フォールバック) を指しているケース。
+  /// planner の無効化ガードは cardLoan しか見ないためこれらは非 null のまま残り、
+  /// [paymentSourceMissingRows] にも入らないので原資未設定レビュー・一括設定・
+  /// アラートのすべてから不可視になる。さらに口座別の見込み残高は
+  /// 「原資 ID == 口座 ID」で突き合わせるため、どの口座からも差し引かれない
+  /// (全体の資金繰りでは差し引かれるので口座別と全体で帳尻が食い違い、
+  /// 口座残高が実態より多く見える)。
+  ///
+  /// 判定は「現金・預金として資産一覧に載っている口座 ID の集合」に含まれるか
+  /// のみで行う。残高0の口座はそもそも資産一覧に載らない (スナップショットの
+  /// 0 円除外) ため、その ID を指す行もここで拾われる。これは正しい: 集計対象の
+  /// 口座が存在しない以上、その支払いはどの口座からも引かれていないため
+  /// (口座ショート警告は資産一覧にある口座しか見ないので、この穴は埋めない)。
+  ///
+  /// 支払済み (`paid`) の行は除外する。支払済みはどの口座の見込み残高からも
+  /// 引かれないのが正しい状態で、「残高が実際より多く見える」も成立しないため、
+  /// 警告を出すと誤報になる (月中に支払済みチェックを付けると必ず踏む)。
+  ///
+  /// 照合は生の ID で行う (per-account 集計も生 ID の一致で突き合わせるため)。
+  /// 空白混じりの ID は実際にどの口座とも一致せず引かれないので、拾うのが正しい。
+  List<AssetLiabilityDebtRow> get paymentSourceInvalidRows {
+    final cashLikeIds = <String>{
+      for (final account in accounts)
+        if (account.kind == AssetLiabilityAccountKind.cash ||
+            account.kind == AssetLiabilityAccountKind.deposit)
+          account.id,
+    };
+    return debtMasterRows
+        .where(
+          (row) =>
+              row.isDirectCashflowTarget &&
+              row.scheduledPaymentAmount > 0 &&
+              !row.paid &&
+              row.paymentSourceAccountId != null &&
+              row.paymentSourceAccountId!.trim().isNotEmpty &&
+              !cashLikeIds.contains(row.paymentSourceAccountId),
+        )
+        .toList();
+  }
+
+  bool get hasPaymentSourceInvalidRows {
+    return paymentSourceInvalidRows.isNotEmpty;
+  }
+
+  double get paymentSourceInvalidTotal {
+    return paymentSourceInvalidRows.fold<double>(
       0,
       (sum, row) => sum + row.scheduledPaymentAmount,
     );

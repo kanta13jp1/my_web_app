@@ -401,3 +401,84 @@ String? archetypeLiftSummaryLine(List<ArchetypeLiftEntry> entries) {
   });
   return '型別実測（投稿72時間後・imp）: ${parts.join(' / ')}';
 }
+
+// R29: error_reporter が hub_data へ無言で送っている caught error
+// (auto_error_report) を /admin で可視化するカードの純ロジック。edge の
+// admin-hub errors.recent が {id, message, firstLine, createdAt} を返す。
+
+class AutoErrorReportEntry {
+  final String id;
+  final String firstLine;
+  final String createdAt;
+
+  const AutoErrorReportEntry({
+    required this.id,
+    required this.firstLine,
+    required this.createdAt,
+  });
+}
+
+const String _autoErrorHeader = '[自動エラー報告]';
+
+/// message から表示用の先頭意味行を抽出する (edge の extractAutoErrorFirstLine
+/// と同じ規律)。firstLine が edge から来ていればそれを優先し、無ければ message
+/// から復元する (後方互換・防御)。
+String autoErrorPreviewLine(Map<String, dynamic> row) {
+  final firstLine = (row['firstLine'] ?? '').toString().trim();
+  if (firstLine.isNotEmpty) return firstLine;
+  final message = (row['message'] ?? '').toString();
+  final lines = message
+      .split('\n')
+      .map((line) => line.trim())
+      .where((line) => line.isNotEmpty)
+      .toList();
+  final meaningful = lines.firstWhere(
+    (line) => line != _autoErrorHeader,
+    orElse: () => '',
+  );
+  return meaningful.length > 140
+      ? '${meaningful.substring(0, 138)}…'
+      : meaningful;
+}
+
+/// errors.recent のレスポンス行を表示用エントリへ写像する。
+List<AutoErrorReportEntry> parseAutoErrorReports(dynamic rawErrors) {
+  if (rawErrors is! List) return const [];
+  final entries = <AutoErrorReportEntry>[];
+  for (final row in rawErrors) {
+    if (row is! Map) continue;
+    final map = Map<String, dynamic>.from(row);
+    entries.add(
+      AutoErrorReportEntry(
+        id: (map['id'] ?? '').toString(),
+        firstLine: autoErrorPreviewLine(map),
+        createdAt: (map['createdAt'] ?? map['created_at'] ?? '').toString(),
+      ),
+    );
+  }
+  return entries;
+}
+
+/// カードのヘッダラベル。0件は「異常なし」を明示し、誤って警戒させない。
+String autoErrorReportsHealthLabel(int count) {
+  if (count <= 0) return '自動エラー報告なし（正常）';
+  return '自動エラー報告 $count件';
+}
+
+// R30: 成長実績サマリーカードは growth-hub `achievement.list` を呼ぶが、この
+// action は {success, items:[]} を返すだけで newUsers/totalUsersEver/
+// acquisitionSignals/referralsCompleted/importPreviews を一切返さない。カードは
+// それらのキーを `?? 0` で読むため、実データがあっても常に「0人/0件」を捏造表示
+// していた。集計 action が未実装なので、期待キーが無いレスポンスを「集計未接続」
+// として扱い、捏造ゼロを出さないためのガード。
+bool growthSummaryHasMetrics(Map<String, dynamic>? summary) {
+  if (summary == null) return false;
+  const metricKeys = [
+    'newUsers',
+    'totalUsersEver',
+    'acquisitionSignals',
+    'referralsCompleted',
+    'importPreviews',
+  ];
+  return metricKeys.any(summary.containsKey);
+}

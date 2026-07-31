@@ -26,6 +26,13 @@ class AssetLiabilityHistoryService {
     final overduePaymentCount = workbook.cashflowRows
         .where((row) => row.isPayment && row.overdue)
         .length;
+    // その月に受領済みとなった収入合計。income plan の received=true 分を集計する。
+    // 現金収支 (income − expense) の income 側を月次スナップショットに保存し、
+    // 過去月のキャッシュフローパネルを再構成できるようにする (Issue #2474)。
+    final receivedIncomeTotal = workbook.incomePlans.fold<double>(
+      0,
+      (sum, plan) => plan.received ? sum + plan.amount : sum,
+    );
 
     return AssetLiabilityMonthlySnapshot(
       monthKey: monthKey,
@@ -40,6 +47,8 @@ class AssetLiabilityHistoryService {
       monthlyActualPaymentTotal: workbook.monthlyActualPaymentTotal,
       monthlyPaymentDifferenceTotal: paymentDifferenceTotal,
       overduePaymentCount: overduePaymentCount,
+      monthlyReceivedIncomeTotal: receivedIncomeTotal,
+      securitiesTotal: workbook.securitiesTotal,
     );
   }
 

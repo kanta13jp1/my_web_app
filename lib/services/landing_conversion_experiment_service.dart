@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 enum LandingExperimentVariant { control, treatment }
 
@@ -52,6 +53,7 @@ class LandingConversionExperimentService {
   static const String _hypothesisPreferenceKey =
       'landing_conversion_hypothesis_v1';
   static const String _variantPreferenceKey = 'landing_conversion_variant_v1';
+  static const String _visitorPreferenceKey = 'landing_conversion_visitor_v1';
 
   static const List<LandingConversionHypothesis> hypotheses = [
     LandingConversionHypothesis(
@@ -108,20 +110,46 @@ class LandingConversionExperimentService {
 
   static const Set<String> supportedStages = {
     'view',
+    'mobile_view',
     'hero_cta',
     'intent',
     'trial',
+    'trial_fallback',
     'save_cta',
     'signup_submit',
+    'mobile_signup_submit',
     'signup_complete',
     'sticky_cta',
+    'feature_outcome_trial',
+    'feature_catalog_expand',
   };
 
   static final RegExp _eventKeyPattern = RegExp(
-    r'^lp_exp_h(?:0[1-9]|10)_(?:control|treatment)_(?:view|hero_cta|intent|trial|save_cta|signup_submit|signup_complete|sticky_cta)$',
+    r'^lp_exp_h(?:0[1-9]|10)_(?:control|treatment)_(?:view|mobile_view|hero_cta|intent|trial|trial_fallback|save_cta|signup_submit|mobile_signup_submit|signup_complete|sticky_cta|feature_outcome_trial|feature_catalog_expand)$',
+  );
+  static final RegExp _visitorIdPattern = RegExp(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
   );
 
   const LandingConversionExperimentService();
+
+  Future<String> resolveVisitorId({
+    SharedPreferences? preferences,
+    String Function()? generator,
+  }) async {
+    final prefs = preferences ?? await SharedPreferences.getInstance();
+    final stored = prefs.getString(_visitorPreferenceKey)?.trim().toLowerCase();
+    if (stored != null && isValidVisitorId(stored)) {
+      return stored;
+    }
+
+    final visitorId = (generator?.call() ?? const Uuid().v4()).toLowerCase();
+    if (!isValidVisitorId(visitorId)) {
+      throw StateError('LP visitor ID generator returned an invalid UUID v4');
+    }
+    await prefs.setString(_visitorPreferenceKey, visitorId);
+    return visitorId;
+  }
 
   Future<LandingExperimentAssignment> resolve({
     Uri? uri,
@@ -155,6 +183,10 @@ class LandingConversionExperimentService {
 
   static bool isExperimentEventKey(String eventKey) {
     return _eventKeyPattern.hasMatch(eventKey);
+  }
+
+  static bool isValidVisitorId(String visitorId) {
+    return _visitorIdPattern.hasMatch(visitorId.trim().toLowerCase());
   }
 
   LandingExperimentAssignment? _resolveOverride(Uri? uri) {

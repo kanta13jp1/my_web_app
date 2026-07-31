@@ -65,6 +65,8 @@ Future<AssetRecurringFixedCost?> showRecurringFixedCostEditor(
       AssetRecurringFixedCostCategory.utility,
   AssetSubscriptionBillingGateway gateway =
       AssetSubscriptionBillingGateway.direct,
+  double? usdJpyRate,
+  DateTime? usdJpyRateAsOf,
 }) {
   return showDialog<AssetRecurringFixedCost>(
     context: context,
@@ -74,6 +76,8 @@ Future<AssetRecurringFixedCost?> showRecurringFixedCostEditor(
       sourceAccounts: sourceAccounts,
       category: category,
       gateway: gateway,
+      usdJpyRate: usdJpyRate,
+      usdJpyRateAsOf: usdJpyRateAsOf,
     ),
   );
 }
@@ -88,6 +92,8 @@ class RecurringFixedCostEditorDialog extends StatefulWidget {
     this.sourceAccounts = const <RecurringFixedCostSourceOption>[],
     this.category = AssetRecurringFixedCostCategory.utility,
     this.gateway = AssetSubscriptionBillingGateway.direct,
+    this.usdJpyRate,
+    this.usdJpyRateAsOf,
   });
 
   final AssetRecurringFixedCost? existing;
@@ -104,6 +110,13 @@ class RecurringFixedCostEditorDialog extends StatefulWidget {
   /// [existing]/[prefill] が経路を持つ場合はそちらを優先する。
   final AssetSubscriptionBillingGateway gateway;
 
+  /// 最新の USD/JPY レート (1 ドル = ◯円)。ドル建て入力の円換算プレビューと
+  /// 保存時の円額 materialize に使う。null のときはレート未取得。
+  final double? usdJpyRate;
+
+  /// [usdJpyRate] の基準日 (表示用)。
+  final DateTime? usdJpyRateAsOf;
+
   @override
   State<RecurringFixedCostEditorDialog> createState() =>
       _RecurringFixedCostEditorDialogState();
@@ -118,6 +131,7 @@ class _RecurringFixedCostEditorDialogState
   late AssetRecurringFixedCostCadence _cadence;
   late AssetRecurringFixedCostCategory _category;
   late AssetSubscriptionBillingGateway _gateway;
+  late AssetRecurringFixedCostCurrency _currency;
   String? _sourceAccountId;
 
   @override
@@ -128,9 +142,15 @@ class _RecurringFixedCostEditorDialogState
     // 区分は initial が持つ値を最優先し、無ければ呼び出し側が指定した既定を使う。
     _category = initial?.category ?? widget.category;
     _gateway = initial?.billingGateway ?? widget.gateway;
+    _currency = initial?.currency ?? AssetRecurringFixedCostCurrency.jpy;
     _nameController = TextEditingController(text: initial?.name ?? '');
+    // ドル建てなら金額欄には USD の原資額を、円建てなら円額を初期表示する。
     _amountController = TextEditingController(
-      text: initial == null ? '' : initial.amount.toStringAsFixed(0),
+      text: initial == null
+          ? ''
+          : (initial.isUsd && initial.usdAmount != null
+              ? _trimAmount(initial.usdAmount!)
+              : initial.amount.toStringAsFixed(0)),
     );
     _dayController = TextEditingController(
       text: initial == null ? '' : initial.paymentDay.toString(),
@@ -140,6 +160,16 @@ class _RecurringFixedCostEditorDialogState
     final ids = widget.sourceAccounts.map((option) => option.id).toSet();
     final source = initial?.sourceAccountId;
     _sourceAccountId = source != null && ids.contains(source) ? source : null;
+  }
+
+  bool get _isUsd => _currency == AssetRecurringFixedCostCurrency.usd;
+
+  /// USD 額は小数点以下を許容するため、整数なら小数を省いて表示する。
+  static String _trimAmount(double value) {
+    if (value == value.roundToDouble()) {
+      return value.toStringAsFixed(0);
+    }
+    return value.toString();
   }
 
   @override
@@ -156,10 +186,25 @@ class _RecurringFixedCostEditorDialogState
     }
     final id =
         widget.existing?.id ?? 'fc_${DateTime.now().microsecondsSinceEpoch}';
+    final entered = double.parse(_amountController.text.trim());
+    final double amountJpy;
+    final double? usdAmount;
+    if (_isUsd) {
+      usdAmount = entered;
+      // レートがあれば円へ materialize。無ければ既存の円額 (編集時) か 0 を暫定値に
+      // 置き、ロード時のレート反映で自動的に正しい円額へ更新される。
+      final rate = widget.usdJpyRate;
+      amountJpy = (rate != null && rate > 0)
+          ? (entered * rate).roundToDouble()
+          : (widget.existing?.amount ?? 0);
+    } else {
+      usdAmount = null;
+      amountJpy = entered;
+    }
     final cost = AssetRecurringFixedCost(
       id: id,
       name: _nameController.text.trim(),
-      amount: double.parse(_amountController.text.trim()),
+      amount: amountJpy,
       paymentDay: int.parse(_dayController.text.trim()),
       cadence: _cadence,
       sourceAccountId: _sourceAccountId,
@@ -168,8 +213,70 @@ class _RecurringFixedCostEditorDialogState
       billingGateway: _category == AssetRecurringFixedCostCategory.subscription
           ? _gateway
           : AssetSubscriptionBillingGateway.direct,
+      currency: _currency,
+      usdAmount: usdAmount,
     );
     Navigator.of(context).pop(cost);
+  }
+
+  String _formatYen(double value) {
+    final rounded = value.round();
+    final digits = rounded.abs().toString();
+    final buffer = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) {
+        buffer.write(',');
+      }
+      buffer.write(digits[i]);
+    }
+    return '${rounded < 0 ? '-' : ''}¥$buffer';
+  }
+
+  /// ドル建て入力欄の下に「≈ ¥X (1ドル=¥Y, MM/DD時点)」の換算プレビューを出す。
+  /// レート未取得時は取得中/据え置きの案内にする。
+  Widget _buildUsdConversionHint() {
+    final rate = widget.usdJpyRate;
+    final usd = double.tryParse(_amountController.text.trim());
+    final theme = Theme.of(context);
+    final style = theme.textTheme.bodySmall?.copyWith(
+      color: const Color(0xFF0D9488),
+      fontWeight: FontWeight.w700,
+    );
+    final Widget child;
+    if (rate == null || rate <= 0) {
+      child = Text(
+        '為替レート取得中… 保存後、最新レートで自動換算します。',
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: const Color(0xFF64748B),
+        ),
+      );
+    } else if (usd == null || usd <= 0) {
+      child = Text(
+        '1ドル=${_formatYen(rate)}${_rateAsOfSuffix()} で円換算します。',
+        style: style,
+      );
+    } else {
+      child = Text(
+        '≈ ${_formatYen(usd * rate)}'
+        '(1ドル=${_formatYen(rate)}${_rateAsOfSuffix()})',
+        style: style,
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Align(alignment: Alignment.centerLeft, child: child),
+    );
+  }
+
+  String _rateAsOfSuffix() {
+    final asOf = widget.usdJpyRateAsOf;
+    if (asOf == null) {
+      return '';
+    }
+    final local = asOf.toLocal();
+    final mm = local.month.toString().padLeft(2, '0');
+    final dd = local.day.toString().padLeft(2, '0');
+    return ' / $mm/$dd時点';
   }
 
   static String categoryLabel(AssetRecurringFixedCostCategory category) {
@@ -235,22 +342,55 @@ class _RecurringFixedCostEditorDialogState
                     ? '名称を入力してください'
                     : null,
               ),
+              const SizedBox(height: 8),
+              // 通貨トグル。ドル建て (Claude/Notion 等) は毎月の為替で円額が
+              // 変わるため、USD 原資を保持し最新レートで円換算する。
+              SegmentedButton<AssetRecurringFixedCostCurrency>(
+                segments: const [
+                  ButtonSegment(
+                    value: AssetRecurringFixedCostCurrency.jpy,
+                    label: Text('円'),
+                    icon: Icon(Icons.currency_yen, size: 16),
+                  ),
+                  ButtonSegment(
+                    value: AssetRecurringFixedCostCurrency.usd,
+                    label: Text('USD'),
+                    icon: Icon(Icons.attach_money, size: 16),
+                  ),
+                ],
+                selected: {_currency},
+                onSelectionChanged: (selection) {
+                  setState(() => _currency = selection.first);
+                },
+              ),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _amountController,
-                decoration: const InputDecoration(
-                  labelText: '月額 (円)',
-                  hintText: '例: 8000',
+                decoration: InputDecoration(
+                  labelText: _isUsd ? '月額 (USD)' : '月額 (円)',
+                  hintText: _isUsd ? '例: 20' : '例: 8000',
+                  prefixText: _isUsd ? r'$ ' : null,
                 ),
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                keyboardType: TextInputType.numberWithOptions(
+                  decimal: _isUsd,
+                ),
+                inputFormatters: _isUsd
+                    ? [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'[0-9.]'),
+                        ),
+                      ]
+                    : [FilteringTextInputFormatter.digitsOnly],
+                onChanged: (_) => setState(() {}),
                 validator: (value) {
                   final amount = double.tryParse((value ?? '').trim());
                   if (amount == null || amount <= 0) {
-                    return '1円以上の金額を入力してください';
+                    return _isUsd ? '0より大きい金額を入力してください' : '1円以上の金額を入力してください';
                   }
                   return null;
                 },
               ),
+              if (_isUsd) _buildUsdConversionHint(),
               TextFormField(
                 controller: _dayController,
                 decoration: const InputDecoration(

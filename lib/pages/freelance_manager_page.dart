@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// フリーランス管理ページ
 /// 案件・請求書・契約・稼働時間・確定申告を一元管理。freee 対抗。
@@ -11,7 +12,13 @@ class FreelanceManagerPage extends StatefulWidget {
 }
 
 class _FreelanceManagerPageState extends State<FreelanceManagerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['projects', 'invoices'];
+
+  @override
+  TabController get tabUrlController => _tabCtrl;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabCtrl;
 

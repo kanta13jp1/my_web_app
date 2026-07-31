@@ -1,0 +1,57 @@
+name: Activation Experiment Report
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 0 * * *"
+
+concurrency:
+  group: activation-experiment-report
+  cancel-in-progress: true  # 2026-07-29 ci-audit: 純粋分析WF / 手動+schedule重複時のキュー待機回避
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    name: Build aggregate activation-to-paid report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD || 'https://smmkxxavexumewbfaqpy.supabase.co' }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Require report credentials
+        shell: bash
+        run: |
+          test -n "${SUPABASE_SERVICE_ROLE_KEY:-}" || {
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is required."
+            exit 1
+          }
+
+      - name: Build decision report
+        shell: bash
+        run: |
+          mkdir -p tmp/activation-experiment-report
+          python3 scripts/activation_experiment_report.py \
+            --supabase-url "$SUPABASE_URL" \
+            --json-report tmp/activation-experiment-report/report.json \
+            --markdown-report tmp/activation-experiment-report/report.md
+
+      - name: Publish job summary
+        if: always() && hashFiles('tmp/activation-experiment-report/report.md') != ''
+        shell: bash
+        run: cat tmp/activation-experiment-report/report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload aggregate report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: activation-experiment-report
+          path: tmp/activation-experiment-report/
+          if-no-files-found: error
+          retention-days: 30

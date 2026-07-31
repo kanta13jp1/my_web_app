@@ -1165,7 +1165,12 @@ $inviteUrl
         throw Exception(data['error']?.toString() ?? 'Weekly digest failed.');
       }
 
-      return WeeklyDigestSnapshot.fromJson(data);
+      // R30: edge は {success, digest:{currentWeek,...}} と nested で返す。
+      // 兄弟の command-center brief (data['brief']) は unwrap しているのに
+      // ここだけ top-level を渡していたため fromJson が全キー null →
+      // currentWeekStart='' → カードが常に「計測待ち」を表示していた
+      // (成功レスポンス+実データでも空表示)。digest を unwrap する。
+      return WeeklyDigestSnapshot.fromJson(_toMapValue(data['digest']));
     } catch (error) {
       debugPrint('Weekly digest fallback: $error');
       return const WeeklyDigestSnapshot.empty();

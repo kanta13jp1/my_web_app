@@ -1447,6 +1447,7 @@ class _NoteListPageState extends State<NoteListPage> {
     await Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: '/note-editor'),
         builder: (_) => NoteEditorPage(
           noteId: noteId,
           supabaseClient: _supabase,

@@ -96,7 +96,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   // pending_approval 候補をここで承認→投稿する(UUID 手掘り+workflow dispatch
   // の運用ボトルネック解消)。X operator 権限が無い/取得失敗は空=panel 非表示。
   List<XPostCandidateSummary> _xCandidates = const [];
+  // R34: edge の total (limit 前の総数) を status 別に保持。空なら「N件以上」表示。
+  Map<String, int> _xCandidateTotals = const <String, int>{};
   final Set<String> _xCandidatePublishing = <String>{};
+  // #4080: 鮮度切れ一括却下の実行中フラグ (二重送信防止)。
+  bool _xCandidateRejecting = false;
   bool _isLoading = true;
   WeeklyDigestSnapshot _weeklyDigest = const WeeklyDigestSnapshot.empty();
   // R18: fetch 完了フラグ。empty() のままか、完了して空かを区別し、静かに失敗/空の
@@ -132,6 +136,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Map<String, int> _comparisonTouches = {};
   int _comparisonSignups = 0;
   bool _comparisonCvrLoading = false;
+
+  // R29: 自動エラー報告 (error_reporter が hub_data へ無言送信する caught error)
+  // の可視化。管理者自身の直近報告を admin-hub errors.recent で取得する。
+  List<AutoErrorReportEntry> _autoErrorReports = const [];
+  bool _autoErrorReportsLoading = false;
 
   int _toInt(dynamic value) {
     if (value is int) return value;
@@ -365,30 +374,126 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   /// window を埋め、古い承認待ちを黙って押し出す(レビュー F2)。
   /// X operator 権限が無いと edge が 403 を返すため、例外/非成功は空リストに
   /// degrade して panel ごと消す(ダッシュボードは必ず描画する)。
-  Future<List<XPostCandidateSummary>> _loadXCandidateQueue() async {
+  Future<XCandidateQueueSnapshot> _loadXCandidateQueue() async {
     const statuses = ['pending_approval', 'approved', 'publish_failed'];
-    final lists = await Future.wait(
-      statuses.map((status) async {
-        try {
-          final res = await _supabase.functions.invoke(
-            'growth-hub',
-            body: {
-              'action': 'x.candidate.list',
-              'status': status,
-              'limit': 10,
-            },
-          );
-          final data = res.data;
-          if (data is Map && data['success'] == true) {
-            return parseXPostCandidates(data['candidates']);
+    // #4080: statuses[] を渡して 1 往復にまとめる (従来は status ごとに 3 往復
+    // + それぞれに CORS preflight)。edge 側は per-status limit を維持するので
+    // 上記 F2 の窓圧迫は起きない。
+    final byStatus = <String, XCandidateStatusPage>{};
+    try {
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.candidate.list',
+          'statuses': statuses,
+          // R32: ヘッダの「N件以上」判定と同じ定数を使う (両者が drift すると
+          // 上限到達を検出できず backlog を過小表示する)。
+          'limit': kXCandidateStatusFetchLimit,
+        },
+      );
+      final data = res.data;
+      if (data is Map && data['success'] == true && data['byStatus'] is Map) {
+        final raw = Map<String, dynamic>.from(data['byStatus'] as Map);
+        for (final status in statuses) {
+          final entry = raw[status];
+          if (entry is Map) {
+            // R34: edge の total (limit 前の総数) を拾う。返さない場合は null の
+            // まま = ヘッダは「N件以上」へ degrade。
+            final rawTotal = entry['total'];
+            byStatus[status] = XCandidateStatusPage(
+              candidates: parseXPostCandidates(entry['candidates']),
+              total: rawTotal is num ? rawTotal.toInt() : null,
+            );
           }
-        } catch (error) {
-          debugPrint('x.candidate.list($status) unavailable: $error');
         }
-        return const <XPostCandidateSummary>[];
-      }),
+      }
+    } catch (error) {
+      debugPrint('x.candidate.list(batch) unavailable: $error');
+    }
+    final totals = <String, int>{
+      for (final entry in byStatus.entries)
+        if (entry.value.total != null) entry.key: entry.value.total!,
+    };
+    return XCandidateQueueSnapshot(
+      candidates: mergeCandidateSummaries([
+        for (final status in statuses)
+          byStatus[status]?.candidates ?? const <XPostCandidateSummary>[],
+      ]),
+      totalsByStatus: totals,
     );
-    return mergeCandidateSummaries(lists);
+  }
+
+  /// #4080: 鮮度切れ候補をまとめて却下する。鮮度切れは「承認して投稿」が
+  /// 既に無効化されている(古いニュースの誤公開防止)ため、そのままだと
+  /// キューに残り続けて本当に見るべき候補を埋没させる。終端 status
+  /// 'rejected' へ落として一覧から外す。
+  Future<void> _rejectStaleXCandidates(
+    List<XPostCandidateSummary> staleCandidates,
+  ) async {
+    if (staleCandidates.isEmpty || _xCandidateRejecting) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('鮮度切れ候補をまとめて却下'),
+        content: Text(
+          '${staleCandidates.length}件を却下します。'
+          '却下した候補は投稿できなくなります(一覧からは消えます)。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('却下する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _xCandidateRejecting = true);
+    try {
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.candidate.reject',
+          'candidateIds': staleCandidates.map((c) => c.id).toList(),
+          'reason': 'freshness_expired',
+        },
+      );
+      final data = res.data;
+      final rejected = data is Map && data['rejected'] is List
+          ? (data['rejected'] as List).length
+          : 0;
+      final failures = data is Map && data['failures'] is List
+          ? (data['failures'] as List).length
+          : 0;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            failures > 0
+                ? '$rejected件を却下しました($failures件は失敗)'
+                : '$rejected件を却下しました',
+          ),
+        ),
+      );
+      final refreshed = await _loadXCandidateQueue();
+      if (mounted) {
+        setState(() {
+          _xCandidates = refreshed.candidates;
+          _xCandidateTotals = refreshed.totalsByStatus;
+        });
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('却下に失敗しました: $error')));
+    } finally {
+      if (mounted) setState(() => _xCandidateRejecting = false);
+    }
   }
 
   /// R26: 候補を承認→投稿→確定する HITL フロー。無審査自動投稿はしない
@@ -510,7 +615,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       );
       final refreshed = await _loadXCandidateQueue();
       if (mounted) {
-        setState(() => _xCandidates = refreshed);
+        setState(() {
+          _xCandidates = refreshed.candidates;
+          _xCandidateTotals = refreshed.totalsByStatus;
+        });
       }
     } catch (error) {
       if (!mounted) return;
@@ -739,25 +847,32 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
-  Widget _buildAcquisitionTargetPage(String? channelKey) {
+  /// 遷移先ページと、その画面に対応する URL (= route 名) を必ず対で返す。
+  /// route を添えないと Flutter Web でブラウザの URL が更新されない。
+  ({Widget page, String route}) _buildAcquisitionTarget(String? channelKey) {
     switch (channelKey) {
-      case 'x_share':
-      case 'facebook':
-        return CmoPage(
-          initialChannel: channelKey,
-          autoGenerateOnOpen: true,
-        );
       case 'line':
-        return const AISecretaryPage(
-          initialStrategyType: 'now',
-          autoRunOnOpen: true,
+        return (
+          page: const AISecretaryPage(
+            initialStrategyType: 'now',
+            autoRunOnOpen: true,
+          ),
+          route: '/ai-secretary',
         );
       case 'qr_scan':
-        return const NoteListPage(prioritizeShareCandidates: true);
+        return (
+          page: const NoteListPage(prioritizeShareCandidates: true),
+          route: '/notes',
+        );
+      case 'x_share':
+      case 'facebook':
       default:
-        return CmoPage(
-          initialChannel: channelKey,
-          autoGenerateOnOpen: true,
+        return (
+          page: CmoPage(
+            initialChannel: channelKey,
+            autoGenerateOnOpen: true,
+          ),
+          route: '/cmo',
         );
     }
   }
@@ -777,16 +892,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       }
       return;
     }
-    final targetPage = isAcquisitionAction
-        ? _buildAcquisitionTargetPage(priorityChannelKey)
-        : const AISecretaryPage(
-            initialStrategyType: 'now',
-            autoRunOnOpen: true,
+    final target = isAcquisitionAction
+        ? _buildAcquisitionTarget(priorityChannelKey)
+        : (
+            page: const AISecretaryPage(
+              initialStrategyType: 'now',
+              autoRunOnOpen: true,
+            ),
+            route: '/ai-secretary',
           );
 
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => targetPage),
+      MaterialPageRoute(
+        settings: RouteSettings(name: target.route),
+        builder: (_) => target.page,
+      ),
     );
 
     final hint = isAcquisitionAction
@@ -874,6 +995,34 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     _loadGrowthSummary();
     _loadComparisonCvr();
     _loadAppFeedbacks();
+    _loadRecentErrors();
+  }
+
+  /// R29: 自動エラー報告を admin-hub errors.recent で取得する。取得失敗や未認証は
+  /// 空へ degrade し、カードは「正常」表示 or 非表示になる (ダッシュボードは必ず描画)。
+  Future<void> _loadRecentErrors() async {
+    if (!mounted) return;
+    if (_supabase.auth.currentUser == null) return;
+    setState(() => _autoErrorReportsLoading = true);
+    try {
+      final res = await _supabase.functions.invoke(
+        'admin-hub',
+        body: const {'action': 'errors.recent', 'limit': 20},
+      );
+      final data = res.data;
+      final entries = data is Map && data['success'] == true
+          ? parseAutoErrorReports(data['errors'])
+          : const <AutoErrorReportEntry>[];
+      if (mounted) {
+        setState(() {
+          _autoErrorReports = entries;
+          _autoErrorReportsLoading = false;
+        });
+      }
+    } catch (error) {
+      debugPrint('errors.recent unavailable: $error');
+      if (mounted) setState(() => _autoErrorReportsLoading = false);
+    }
   }
 
   Future<void> _loadAppFeedbacks() async {
@@ -1807,7 +1956,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           _paidConversionMetrics = paidConversionMetrics;
           _xTodayStatus = xTodayStatus;
           _xPerformanceContext = xPerformanceContext;
-          _xCandidates = xCandidates;
+          _xCandidates = xCandidates.candidates;
+          _xCandidateTotals = xCandidates.totalsByStatus;
           _isLoading = false;
         });
       }
@@ -2034,6 +2184,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
+                            settings:
+                                const RouteSettings(name: '/quota-dashboard'),
                             builder: (_) => const QuotaDashboardPage(),
                           ),
                         ),
@@ -2069,6 +2221,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
+                            settings:
+                                const RouteSettings(name: '/blog-management'),
                             builder: (_) => const BlogManagementPage(),
                           ),
                         ),
@@ -2228,6 +2382,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     _buildFeatureRequestsAdminCard(),
                     const SizedBox(height: 16),
                     _buildAutomationOpsCard(),
+                    const SizedBox(height: 16),
+                    _buildAutoErrorReportsCard(),
                     const SizedBox(height: 16),
                     const SelfDevinControlTowerCard(),
                     const SizedBox(height: 16),
@@ -4306,9 +4462,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                               BorderRadius.circular(6),
                                         ),
                                         child: Text(
-                                          isGoogle
-                                              ? 'Google'
-                                              : (isAnonymous ? '匿名' : 'Email'),
+                                          // R30: edge users.list は provider を
+                                          // 返さない → isGoogle は常に false で
+                                          // 全員 'Email' と誤表示していた。
+                                          // 判別不能なので中立の '登録済' にする。
+                                          isAnonymous ? '匿名' : '登録済',
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
@@ -5476,6 +5634,125 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
+  // R29: 自動エラー報告 (error_reporter が hub_data へ無言送信していた caught
+  // error) の可視化カード。0件なら「正常」を明示し、あれば直近を先頭行だけ出す。
+  Widget _buildAutoErrorReportsCard() {
+    final theme = Theme.of(context);
+    final count = _autoErrorReports.length;
+    final hasErrors = count > 0;
+    final accent =
+        hasErrors ? const Color(0xFFB45309) : const Color(0xFF0D9488);
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  hasErrors
+                      ? Icons.report_gmailerrorred
+                      : Icons.verified_outlined,
+                  color: accent,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    autoErrorReportsHealthLabel(count),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                      color: accent,
+                    ),
+                  ),
+                ),
+                if (_autoErrorReportsLoading)
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  IconButton(
+                    icon: const Icon(Icons.refresh, size: 20),
+                    tooltip: '再取得',
+                    onPressed: _loadRecentErrors,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              hasErrors
+                  ? 'アプリが自動で捕捉・記録した例外です (公開 Issue 化はされません)。'
+                      '本文は自分のセッション分のみ表示しています。'
+                  : 'アプリが捕捉した例外は記録されていません。',
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.5,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (hasErrors) ...[
+              const SizedBox(height: 10),
+              ..._autoErrorReports.take(8).map((entry) {
+                final when =
+                    formatAgeAwareDate(entry.createdAt, DateTime.now());
+                final line =
+                    entry.firstLine.isEmpty ? '(本文なし)' : entry.firstLine;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.chevron_right,
+                        size: 16,
+                        color: Color(0xFFB45309),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          line,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            height: 1.5,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        when,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              if (count > 8)
+                Text(
+                  'ほか ${count - 8}件',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildAutomationMetricChip({
     required String label,
     required String value,
@@ -5972,9 +6249,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
 
     final totalTouches = _comparisonTouches.values.fold(0, (a, b) => a + b);
-    final cvrPct = totalTouches > 0
-        ? (_comparisonSignups / totalTouches * 100).toStringAsFixed(1)
-        : '0.0';
+    // R30: 母数0で「0.0%」は計測した0%に見える捏造 → ダッシュボード共通の
+    // formatRatePercent(母数0=「—」)に揃える。到達0で登録>0の自己矛盾表示も回避。
+    final cvrLabel = formatRatePercent(_comparisonSignups, totalTouches);
 
     final sorted = _comparisonTouches.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -6031,7 +6308,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const Color(0xFF059669),
               ),
               const SizedBox(width: 16),
-              _cvrStat('CVR', '$cvrPct%', const Color(0xFFFF6B35)),
+              _cvrStat('CVR', cvrLabel, const Color(0xFFFF6B35)),
             ],
           ),
           const SizedBox(height: 12),
@@ -6354,6 +6631,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildXCandidateQueueSection() {
     if (_xCandidates.isEmpty) return const SizedBox.shrink();
     final theme = Theme.of(context);
+    // #4080: 鮮度切れ候補は「承認して投稿」が無効化済み = キューに滞留して
+    // 見るべき候補を埋没させる。まとめて終端 status へ落とせるようにする。
+    final now = DateTime.now();
+    final staleCandidates = _xCandidates
+        .where((candidate) => isCandidateExpired(candidate, now))
+        .toList(growable: false);
     return Padding(
       padding: const EdgeInsets.only(top: 16),
       child: Card(
@@ -6375,7 +6658,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'X投稿候補キュー（${candidateQueueHeaderLabel(_xCandidates)}）',
+                      'X投稿候補キュー（${candidateQueueHeaderLabel(_xCandidates, totalsByStatus: _xCandidateTotals)}）',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
@@ -6383,6 +6666,23 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     ),
                   ),
+                  if (staleCandidates.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: _xCandidateRejecting
+                          ? null
+                          : () => _rejectStaleXCandidates(staleCandidates),
+                      icon: _xCandidateRejecting
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.block, size: 16),
+                      label: Text('鮮度切れ${staleCandidates.length}件を却下'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFB91C1C),
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -6653,7 +6953,20 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 height: 1.6,
               ),
             )
-          else if (_growthSummary != null) ...[
+          // R30: 期待するメトリクスキーが無いレスポンス(achievement.list は
+          // items のみ返す)では捏造ゼロを出さず、集計未接続を正直に示す。
+          else if (!growthSummaryHasMetrics(_growthSummary) &&
+              !_growthSummaryLoading)
+            const Text(
+              '成長サマリーの集計はまだ接続されていません。'
+              '各カード(登録目標・累計登録・比較CVR等)で実数をご確認ください。',
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF94A3B8),
+                height: 1.6,
+              ),
+            )
+          else if (growthSummaryHasMetrics(_growthSummary)) ...[
             Text(
               '期間: ${_growthSummary!['label'] ?? 'すべて'}',
               style: const TextStyle(
@@ -6852,7 +7165,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const FeedbackListPage()),
+                  MaterialPageRoute(
+                    settings: const RouteSettings(name: '/admin-feedback'),
+                    builder: (_) => const FeedbackListPage(),
+                  ),
                 ),
               ),
             ),

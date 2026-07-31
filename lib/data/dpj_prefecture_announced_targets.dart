@@ -27,6 +27,58 @@ enum DpjAnnouncedTargetKind {
   unconfirmed,
 }
 
+/// 県連が発表した第1次公認(公認内定)候補予定者の実績値。
+///
+/// これは「擁立目標」とは別物で、実際に党/県連が第1次として公認を決定した
+/// 候補予定者の人数。目標に対する進捗として表示する。数値は必ず県連公式発表・
+/// 報道で裏づけを取り、[sourceUrl] に出典を残す(捏造・推測値は入れない)。
+class DpjFirstEndorsement {
+  /// 第1次公認 候補予定者の総数。
+  final int totalCount;
+
+  /// うち現職。
+  final int incumbentCount;
+
+  /// うち新人。
+  final int newcomerCount;
+
+  /// うち元職(いれば)。
+  final int formerCount;
+
+  /// 発表・基準日 (ISO yyyy-MM-dd)。
+  final String asOf;
+
+  /// 出典URL(県連発表ページ・報道)。
+  final String sourceUrl;
+
+  /// 内訳の補足(選挙別など)。
+  final String note;
+
+  const DpjFirstEndorsement({
+    required this.totalCount,
+    this.incumbentCount = 0,
+    this.newcomerCount = 0,
+    this.formerCount = 0,
+    required this.asOf,
+    required this.sourceUrl,
+    this.note = '',
+  });
+
+  /// 現職/新人/元の内訳が1つでも入力されているか。
+  bool get hasBreakdown =>
+      incumbentCount > 0 || newcomerCount > 0 || formerCount > 0;
+
+  /// 「現職11 / 新人19」形式の内訳ラベル(未入力の区分は省く)。
+  String get breakdownLabel {
+    final parts = <String>[
+      if (incumbentCount > 0) '現職$incumbentCount',
+      if (newcomerCount > 0) '新人$newcomerCount',
+      if (formerCount > 0) '元$formerCount',
+    ];
+    return parts.join(' / ');
+  }
+}
+
 class DpjPrefectureAnnouncedTarget {
   final String prefecture;
   final int minCount;
@@ -37,6 +89,9 @@ class DpjPrefectureAnnouncedTarget {
   final bool verified;
   final String note;
 
+  /// 県連が発表した第1次公認の実績(あれば)。
+  final DpjFirstEndorsement? firstEndorsement;
+
   const DpjPrefectureAnnouncedTarget({
     required this.prefecture,
     required this.minCount,
@@ -44,6 +99,7 @@ class DpjPrefectureAnnouncedTarget {
     required this.kind,
     this.verified = false,
     this.note = '',
+    this.firstEndorsement,
   }) : maxCount = maxCount ?? minCount;
 
   bool get isRange => maxCount > minCount;
@@ -112,8 +168,16 @@ const List<DpjPrefectureAnnouncedTarget> dpjPrefectureAnnouncedTargets =
     minCount: 50,
     kind: DpjAnnouncedTargetKind.candidateFielding,
     verified: true,
-    note: '50人以上の候補者擁立目標(当選50人の目標ではない)。'
-        '2026年6月25日時点で第1次公認30人(現職11・新人19)。',
+    note: '50人以上の候補者擁立目標(当選50人の目標ではない)。',
+    firstEndorsement: DpjFirstEndorsement(
+      totalCount: 30,
+      incumbentCount: 11,
+      newcomerCount: 19,
+      asOf: '2026-06-25',
+      sourceUrl: 'https://kokumin-kanagawa.jp/candidate/',
+      note: '県議 新人7 / 横浜市議 現職6・新人5 / 川崎市議 現職3・新人2 / '
+          '相模原市議 現職1 / その他 現職1・新人5',
+    ),
   ),
   DpjPrefectureAnnouncedTarget(
     prefecture: '山梨',
@@ -245,3 +309,56 @@ int get dpjAnnouncedTargetVerifiedCount =>
 int get dpjAnnouncedTargetUnconfirmedCount => dpjPrefectureAnnouncedTargets
     .where((item) => item.kind == DpjAnnouncedTargetKind.unconfirmed)
     .length;
+
+/// 国民民主党公式の「地方自治体各級選挙 公認・推薦予定候補者一覧」。
+/// 第1次公認の最新値はここが正本。県連の発表に合わせて手動で構造化し
+/// 反映する(このページの自動巡回対象ではない)。
+const String dpjLocalElectionOfficialListUrl =
+    'https://new-kokumin.jp/local-election-list';
+
+/// 上記公式一覧の最終確認時点(手動更新のたびに合わせる)。
+const String dpjLocalElectionOfficialListAsOf = '2026-07-08';
+
+/// 第1次公認を発表済みの都道府県(発表順ではなく掲載順)。
+///
+/// `totalCount == 0` のエントリは「発表済み」と数えない。数えると
+/// 「公認合計 0人」「第1次公認 0人」バッジが出て発表済みに見えてしまう。
+List<DpjPrefectureAnnouncedTarget> get dpjPrefecturesWithFirstEndorsement =>
+    dpjPrefectureAnnouncedTargets
+        .where((item) => (item.firstEndorsement?.totalCount ?? 0) > 0)
+        .toList();
+
+/// 第1次公認を発表済みの都道府県数。
+int get dpjFirstEndorsementPrefectureCount =>
+    dpjPrefecturesWithFirstEndorsement.length;
+
+/// 全国の第1次公認 合計人数。
+int get dpjFirstEndorsementTotal => dpjPrefectureAnnouncedTargets.fold<int>(
+      0,
+      (sum, item) => sum + (item.firstEndorsement?.totalCount ?? 0),
+    );
+
+/// 全国の第1次公認 うち現職合計。
+int get dpjFirstEndorsementIncumbentTotal =>
+    dpjPrefectureAnnouncedTargets.fold<int>(
+      0,
+      (sum, item) => sum + (item.firstEndorsement?.incumbentCount ?? 0),
+    );
+
+/// 全国の第1次公認 うち新人合計。
+int get dpjFirstEndorsementNewcomerTotal =>
+    dpjPrefectureAnnouncedTargets.fold<int>(
+      0,
+      (sum, item) => sum + (item.firstEndorsement?.newcomerCount ?? 0),
+    );
+
+/// 全国の第1次公認 うち元職合計。
+///
+/// 県別バッジは [DpjFirstEndorsement.breakdownLabel] で元職も出すため、
+/// サマリー側にも同じ区分を用意しないと 現職+新人 が総数に届かず
+/// 「チップの合計が公認合計と合わない」状態になる。
+int get dpjFirstEndorsementFormerTotal =>
+    dpjPrefectureAnnouncedTargets.fold<int>(
+      0,
+      (sum, item) => sum + (item.firstEndorsement?.formerCount ?? 0),
+    );

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'activation_revenue_experiment_service.dart';
 import 'app_share_service.dart';
 import 'landing_conversion_experiment_service.dart';
 
@@ -157,11 +158,7 @@ $shareUrl
     await store.setInt(perChannelKey, channelCount);
     await store.setString(_lastChannelKey, channel);
 
-    await _recordShareAnalytics(
-      client: client,
-      channel: channel,
-      now: now,
-    );
+    await _recordShareAnalytics(client: client, channel: channel, now: now);
 
     return _readSnapshot(store);
   }
@@ -198,11 +195,7 @@ $shareUrl
         'Unsupported funnel event',
       );
     }
-    await _incrementSourceDetail(
-      client: client,
-      sourceKey: eventKey,
-      now: now,
-    );
+    await _incrementSourceDetail(client: client, sourceKey: eventKey, now: now);
   }
 
   static String? resolveIncomingSource(Map<String, String> queryParameters) {
@@ -235,8 +228,10 @@ $shareUrl
       return;
     }
 
+    var shareCountRecorded = false;
     try {
       await client.rpc('increment_share_count');
+      shareCountRecorded = true;
     } catch (error) {
       debugPrint('Share count rpc failed: $error');
     }
@@ -245,7 +240,7 @@ $shareUrl
       client: client,
       sourceKey: _shareActionKeys[channel]!,
       now: now,
-      fallbackShareCount: 1,
+      fallbackShareCount: shareCountRecorded ? 0 : 1,
     );
   }
 
@@ -260,8 +255,24 @@ $shareUrl
     }
 
     final dateKey = _formatDate(now ?? DateTime.now());
-    final currentRow =
-        await _fetchAnalyticsRow(client: client, dateKey: dateKey);
+    try {
+      await client.rpc(
+        'increment_app_analytics_source_detail',
+        params: <String, dynamic>{
+          'p_source_key': sourceKey,
+          'p_event_date': dateKey,
+          'p_share_increment': fallbackShareCount,
+        },
+      );
+      return;
+    } catch (error) {
+      debugPrint('Atomic funnel analytics rpc failed: $error');
+    }
+
+    final currentRow = await _fetchAnalyticsRow(
+      client: client,
+      dateKey: dateKey,
+    );
     final sourceDetails = _normalizeSourceDetails(currentRow?['source_details'])
       ..update(sourceKey, (count) => count + 1, ifAbsent: () => 1);
 
@@ -277,9 +288,12 @@ $shareUrl
         return;
       }
 
-      await client.from('app_analytics').update(<String, dynamic>{
-        'source_details': sourceDetails,
-      }).eq('date', dateKey);
+      await client
+          .from('app_analytics')
+          .update(<String, dynamic>{'source_details': sourceDetails}).eq(
+        'date',
+        dateKey,
+      );
     } catch (error) {
       debugPrint('Share analytics update failed: $error');
     }
@@ -377,8 +391,9 @@ $shareUrl
         return true;
       default:
         return LandingConversionExperimentService.isExperimentEventKey(
-          eventKey,
-        );
+              eventKey,
+            ) ||
+            ActivationRevenueExperimentService.isExperimentEventKey(eventKey);
     }
   }
 }

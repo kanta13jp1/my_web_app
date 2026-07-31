@@ -211,6 +211,11 @@ function daysBetween(base: Date, dateText: string): number {
   return Math.floor((target.getTime() - base.getTime()) / 86400000);
 }
 
+function shiftIsoDate(dateText: string, days: number): string {
+  const date = new Date(`${dateText}T00:00:00.000Z`);
+  return formatIsoDate(addDays(date, days));
+}
+
 function githubIssueNumberFromTask(task: WbsTaskRecord): number | null {
   const raw = task.github_issue_number;
   if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) {
@@ -327,17 +332,33 @@ export function buildWbsReschedulePlan(
   const scheduledIds = new Set<string>();
   let pinnedEndOffsetExclusive = 0;
 
-  for (const task of open) {
+  const pinnedTasks = open.flatMap((task) => {
     const issueNumber = githubIssueNumberFromTask(task);
-    if (!issueNumber) continue;
-    const pinned = ASSET_MANAGEMENT_PINNED_ISSUE_SCHEDULE[issueNumber];
-    if (!pinned) continue;
+    const pinned = issueNumber
+      ? ASSET_MANAGEMENT_PINNED_ISSUE_SCHEDULE[issueNumber]
+      : undefined;
+    return issueNumber && pinned ? [{ task, issueNumber, pinned }] : [];
+  });
+  const earliestPinnedStart = pinnedTasks.reduce<string | null>(
+    (earliest, { pinned }) =>
+      earliest === null || pinned.start_date < earliest
+        ? pinned.start_date
+        : earliest,
+    null,
+  );
+  const pinnedShiftDays = earliestPinnedStart === null
+    ? 0
+    : Math.max(0, -daysBetween(today, earliestPinnedStart));
+
+  for (const { task, issueNumber, pinned } of pinnedTasks) {
     const id = String(task.id);
+    const startDate = shiftIsoDate(pinned.start_date, pinnedShiftDays);
+    const endDate = shiftIsoDate(pinned.end_date, pinnedShiftDays);
     scheduledIds.add(id);
     updates.push({
       id,
-      start_date: pinned.start_date,
-      end_date: pinned.end_date,
+      start_date: startDate,
+      end_date: endDate,
       tier: "pinned",
       stagger_days: 0,
       github_issue_number: issueNumber,
@@ -345,7 +366,7 @@ export function buildWbsReschedulePlan(
     });
     pinnedEndOffsetExclusive = Math.max(
       pinnedEndOffsetExclusive,
-      daysBetween(today, pinned.end_date) + 1,
+      daysBetween(today, endDate) + 1,
     );
   }
 

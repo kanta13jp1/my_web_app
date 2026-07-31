@@ -343,6 +343,7 @@ async function stripePostForm(
     headers: {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "Stripe-Version": "2026-06-24.dahlia",
     },
     body: new URLSearchParams(params),
   });
@@ -1745,9 +1746,10 @@ serve(async (req: Request) => {
           success_url: withBillingParam(returnUrl, "supporter_success"),
           cancel_url: withBillingParam(returnUrl, "supporter_cancel"),
           "line_items[0][price_data][currency]": "jpy",
-          "line_items[0][price_data][product_data][name]": "Founding Supporter",
+          "line_items[0][price_data][product_data][name]":
+            "AI仕事OS 初期サポーター",
           "line_items[0][price_data][product_data][description]":
-            "One-time support for the first revenue proof.",
+            "役に立ったと感じた方のための、1回100円・自動更新なしの開発応援です。",
           "line_items[0][price_data][unit_amount]": String(amountJpy),
           "line_items[0][quantity]": "1",
           "metadata[offer]": "founding_supporter",
@@ -3971,6 +3973,80 @@ serve(async (req: Request) => {
           updated,
           failed,
           errors: errors.slice(0, 10),
+        });
+      }
+
+      // ─── Notion Wiki Index Mirror (Karpathy Compile → Notion) ──────────────
+      // wiki_compile.py が生成した docs/INDEX.md を Notion へ自動ミラー。
+      // 親ページ: NOTION_WIKI_PAGE_ID (未設定時は NOTION_ROADMAP_PAGE_ID にフォールバック)
+      // 子ページ "Wiki Index (auto)" を find-or-create して全文置換。
+      case "notion.sync_wiki_index": {
+        const token = Deno.env.get("NOTION_API_TOKEN");
+        const pageId = normalizeNotionId(
+          Deno.env.get("NOTION_WIKI_PAGE_ID") ??
+            Deno.env.get("NOTION_ROADMAP_PAGE_ID"),
+        );
+        if (!token || !pageId) {
+          return json(
+            {
+              success: false,
+              error: "notion_not_configured",
+              missing: !token
+                ? "NOTION_API_TOKEN"
+                : "NOTION_WIKI_PAGE_ID (or NOTION_ROADMAP_PAGE_ID)",
+            },
+            503,
+          );
+        }
+
+        const rawContent = String(body.content ?? "");
+        if (!rawContent.trim()) {
+          return json({ success: false, error: "content required" }, 400);
+        }
+        const maxChars = clampNumber(body.max_chars, 24000, 1000, 60000);
+        const delayMs = clampNumber(body.delay_ms, 800, 400, 2500);
+        const mirrorTitle = asString(body.title, "Wiki Index (auto)");
+        const sourcePath = asString(body.source_path, "docs/INDEX.md");
+        const content = rawContent.length <= maxChars
+          ? rawContent
+          : rawContent.slice(0, maxChars);
+        const syncedAt = new Date().toISOString();
+        const childPage = await findOrCreateNotionChildPage(
+          token,
+          pageId,
+          mirrorTitle,
+        );
+        const chunks = chunkText(content, 1800, 80);
+        const blocks: Array<Record<string, unknown>> = [
+          {
+            object: "block",
+            type: "heading_2",
+            heading_2: { rich_text: notionRichText(mirrorTitle) },
+          },
+          notionParagraph(
+            `Synced at ${syncedAt}. Source: ${sourcePath}. ` +
+              `Chars: ${content.length}/${rawContent.length}.`,
+          ),
+          ...chunks.map(notionCodeBlock),
+        ];
+
+        const result = await replaceNotionPageChildren(
+          token,
+          childPage.pageId,
+          blocks,
+          delayMs,
+        );
+
+        return json({
+          success: true,
+          page_id: childPage.pageId,
+          child_page_created: childPage.created,
+          source_path: sourcePath,
+          source_chars: rawContent.length,
+          synced_chars: content.length,
+          chunks: chunks.length,
+          archived_blocks: result.archived,
+          appended_blocks: result.appended,
         });
       }
 
