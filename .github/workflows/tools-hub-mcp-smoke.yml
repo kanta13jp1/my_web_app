@@ -90,17 +90,19 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          $args = @("-BaseUrl", $env:TOOLS_HUB_MCP_URL)
+          $smokeParams = @{
+            BaseUrl = $env:TOOLS_HUB_MCP_URL
+          }
 
           if (-not [string]::IsNullOrWhiteSpace($env:REGISTRATION_REDIRECT_URI)) {
-            $args += @("-RegistrationRedirectUri", $env:REGISTRATION_REDIRECT_URI)
+            $smokeParams.RegistrationRedirectUri = $env:REGISTRATION_REDIRECT_URI
           }
 
           if ($env:ENABLE_WRITE_CONFIRMATION_PROBE -eq "true") {
-            $args += "-EnableWriteConfirmationProbe"
+            $smokeParams.EnableWriteConfirmationProbe = $true
           }
 
-          ./scripts/tools_hub_mcp_smoke.ps1 @args
+          ./scripts/tools_hub_mcp_smoke.ps1 @smokeParams
 
       - name: Job summary
         if: always()
