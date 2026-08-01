@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-31T22:16:27Z",
+  "generated_at": "2026-08-01T22:12:39Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -273,7 +273,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "0c75d26c77ea70b2277659ade866df69453159068fa1077f5f87087a9f30e9c9",
+          "hash": "a61ec1bc52a2dd2b251cdc21aab5c390294594fe7af34728275e058169f6946c",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -299,6 +299,7 @@
               "IDE extension"
             ],
             "quality-cost": [
+              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -318,7 +319,7 @@
           "latest_signal": "2026-07-31 / GPT-5.4 and GPT-5.4 mini retire from Codex on August 31 On August 31, 2026, GPT-5.4 and GPT",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "2e1daca679792bededbc94f9b51facb444e11f416d7b48807a7bf8195bbd52c0",
+          "previous_hash": "0c75d26c77ea70b2277659ade866df69453159068fa1077f5f87087a9f30e9c9",
           "slug": "codex-changelog",
           "snippets": [
             "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -359,7 +360,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "1dea5355700b2af3803572e204ad45d115daa312bf8c8c38014954f1985a34e8",
@@ -401,7 +402,7 @@
           "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "6f33db1e9b589488628b09e7da17c92d858dbddc9dae723af1e68dcd34b3613f",
+          "previous_hash": "1dea5355700b2af3803572e204ad45d115daa312bf8c8c38014954f1985a34e8",
           "slug": "codex-use-cases",
           "snippets": [
             "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -485,7 +486,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "f034a7002852bb03e0b31c30ee15073efbf48566b1cf9059fe357b85b11698c5",
@@ -517,7 +518,7 @@
           "latest_signal": "3.11 / Jul 10, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "70d69c3a9016f203c71da2423468d2d749cb023a20ce074251fe90bccbe3645a",
+          "previous_hash": "f034a7002852bb03e0b31c30ee15073efbf48566b1cf9059fe357b85b11698c5",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...",
@@ -621,7 +622,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "aee8af93371c241694b8bd9bf2371b035796a434e9d3745e9c2f38aaa0af2d2d",
@@ -661,7 +662,7 @@
           "latest_signal": "July 31, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "4e1694ec20ecdde154cfa94c822c315dad5c8a7b29115f08126a1b6d8f1ac9c7",
+          "previous_hash": "aee8af93371c241694b8bd9bf2371b035796a434e9d3745e9c2f38aaa0af2d2d",
           "slug": "devin-release-notes",
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",

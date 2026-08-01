@@ -11,7 +11,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "0c75d26c77ea70b2277659ade866df69453159068fa1077f5f87087a9f30e9c9",
+      "hash": "a61ec1bc52a2dd2b251cdc21aab5c390294594fe7af34728275e058169f6946c",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -37,6 +37,7 @@
           "IDE extension"
         ],
         "quality-cost": [
+          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -56,7 +57,7 @@
       "latest_signal": "2026-07-31 / GPT-5.4 and GPT-5.4 mini retire from Codex on August 31 On August 31, 2026, GPT-5.4 and GPT",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "2e1daca679792bededbc94f9b51facb444e11f416d7b48807a7bf8195bbd52c0",
+      "previous_hash": "0c75d26c77ea70b2277659ade866df69453159068fa1077f5f87087a9f30e9c9",
       "slug": "codex-changelog",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -65,156 +66,9 @@
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "1dea5355700b2af3803572e204ad45d115daa312bf8c8c38014954f1985a34e8",
-      "keyword_groups": {
-        "codex-runtime": [
-          "GPT-5.4",
-          "computer use",
-          "worktree",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks",
-          "Stop"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub",
-          "IDE extension"
-        ],
-        "quality-cost": [
-          "cost",
-          "rate limit",
-          "sandbox",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "schedule",
-          "GitHub Actions",
-          "workflow"
-        ]
-      },
-      "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
-      "name": "Codex use cases",
-      "owner": "Codex",
-      "previous_hash": "6f33db1e9b589488628b09e7da17c92d858dbddc9dae723af1e68dcd34b3613f",
-      "slug": "codex-use-cases",
-      "snippets": [
-        "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
-        "Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...",
-        "All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How..."
-      ],
-      "status": 200,
-      "url": "https://developers.openai.com/codex/use-cases/"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "f034a7002852bb03e0b31c30ee15073efbf48566b1cf9059fe357b85b11698c5",
-      "keyword_groups": {
-        "codex-runtime": [
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks",
-          "Stop"
-        ],
-        "integration": [
-          "MCP",
-          "Slack",
-          "GitHub"
-        ],
-        "quality-cost": [
-          "cost",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "workflow"
-        ]
-      },
-      "latest_signal": "3.11 / Jul 10, 2026",
-      "name": "Cursor changelog",
-      "owner": "Cursor",
-      "previous_hash": "70d69c3a9016f203c71da2423468d2d749cb023a20ce074251fe90bccbe3645a",
-      "slug": "cursor-changelog",
-      "snippets": [
-        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...",
-        "New to both iPhone and iPad: an inbox to stay organized, and a review experience that covers the full PR.",
-        "Create, review, and merge from anywhere."
-      ],
-      "status": 200,
-      "url": "https://cursor.com/changelog"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "aee8af93371c241694b8bd9bf2371b035796a434e9d3745e9c2f38aaa0af2d2d",
-      "keyword_groups": {
-        "codex-runtime": [
-          "model picker",
-          "computer use",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks",
-          "Stop"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub"
-        ],
-        "quality-cost": [
-          "cost",
-          "quota",
-          "rate limit",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "schedule",
-          "workflow"
-        ]
-      },
-      "latest_signal": "July 31, 2026",
-      "name": "Devin release notes",
-      "owner": "Devin",
-      "previous_hash": "4e1694ec20ecdde154cfa94c822c315dad5c8a7b29115f08126a1b6d8f1ac9c7",
-      "slug": "devin-release-notes",
-      "snippets": [
-        "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
-        "Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Stacked PRs Devin...",
-        "Slack Access Defaults Devin’s Slack channel access is now configurable for all accounts, including a default of all public channels plus direct messages and an account-level..."
-      ],
-      "status": 200,
-      "url": "https://docs.devin.ai/release-notes"
     }
   ],
-  "checked_at": "2026-07-31T22:16:24Z",
+  "checked_at": "2026-08-01T22:12:35Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -266,7 +120,7 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-07-30T22:28:22Z",
+  "previous_checked_at": "2026-07-31T22:16:24Z",
   "sources": [
     {
       "changed": false,
@@ -433,7 +287,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "0c75d26c77ea70b2277659ade866df69453159068fa1077f5f87087a9f30e9c9",
+      "hash": "a61ec1bc52a2dd2b251cdc21aab5c390294594fe7af34728275e058169f6946c",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -459,6 +313,7 @@
           "IDE extension"
         ],
         "quality-cost": [
+          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -478,7 +333,7 @@
       "latest_signal": "2026-07-31 / GPT-5.4 and GPT-5.4 mini retire from Codex on August 31 On August 31, 2026, GPT-5.4 and GPT",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "2e1daca679792bededbc94f9b51facb444e11f416d7b48807a7bf8195bbd52c0",
+      "previous_hash": "0c75d26c77ea70b2277659ade866df69453159068fa1077f5f87087a9f30e9c9",
       "slug": "codex-changelog",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -489,7 +344,7 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "1dea5355700b2af3803572e204ad45d115daa312bf8c8c38014954f1985a34e8",
@@ -531,7 +386,7 @@
       "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "6f33db1e9b589488628b09e7da17c92d858dbddc9dae723af1e68dcd34b3613f",
+      "previous_hash": "1dea5355700b2af3803572e204ad45d115daa312bf8c8c38014954f1985a34e8",
       "slug": "codex-use-cases",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -557,7 +412,7 @@
       "url": "https://openai.com/codex/"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "f034a7002852bb03e0b31c30ee15073efbf48566b1cf9059fe357b85b11698c5",
@@ -589,7 +444,7 @@
       "latest_signal": "3.11 / Jul 10, 2026",
       "name": "Cursor changelog",
       "owner": "Cursor",
-      "previous_hash": "70d69c3a9016f203c71da2423468d2d749cb023a20ce074251fe90bccbe3645a",
+      "previous_hash": "f034a7002852bb03e0b31c30ee15073efbf48566b1cf9059fe357b85b11698c5",
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...",
@@ -639,7 +494,7 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "aee8af93371c241694b8bd9bf2371b035796a434e9d3745e9c2f38aaa0af2d2d",
@@ -679,7 +534,7 @@
       "latest_signal": "July 31, 2026",
       "name": "Devin release notes",
       "owner": "Devin",
-      "previous_hash": "4e1694ec20ecdde154cfa94c822c315dad5c8a7b29115f08126a1b6d8f1ac9c7",
+      "previous_hash": "aee8af93371c241694b8bd9bf2371b035796a434e9d3745e9c2f38aaa0af2d2d",
       "slug": "devin-release-notes",
       "snippets": [
         "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",

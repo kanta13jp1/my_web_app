@@ -1,15 +1,12 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-31T22:16:24Z`
-- Previous check: `2026-07-30T22:28:22Z`
-- Changed/new official sources: `4`
+- Checked at: `2026-08-01T22:12:35Z`
+- Previous check: `2026-07-31T22:16:24Z`
+- Changed/new official sources: `1`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
 - `changed` Codex changelog: 2026-07-31 / GPT-5.4 and GPT-5.4 mini retire from Codex on August 31 On August 31, 2026, GPT-5.4 and GPT
-- `changed` Codex use cases: ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of
-- `changed` Cursor changelog: 3.11 / Jul 10, 2026
-- `changed` Devin release notes: July 31, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
