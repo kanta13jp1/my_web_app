@@ -11,7 +11,59 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "2e1daca679792bededbc94f9b51facb444e11f416d7b48807a7bf8195bbd52c0",
+      "hash": "d9601bd1332a3bdb9525d21a96f0ee66f890d1a4fcc9c6510ab36a3cd2592b72",
+      "keyword_groups": {
+        "codex-runtime": [
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "GitHub"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
+      "name": "Claude Code hooks reference",
+      "owner": "Claude Code",
+      "previous_hash": "ccf1d043f0d7308687b4c1f7d02323c9b866bb9c555ded4905d1bce587d8a40a",
+      "slug": "claude-code-hooks",
+      "snippets": [
+        "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
+        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
+        "Copy page Copy page For a quickstart guide with examples, see Automate actions with hooks ."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/hooks"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "0c75d26c77ea70b2277659ade866df69453159068fa1077f5f87087a9f30e9c9",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -37,7 +89,6 @@
           "IDE extension"
         ],
         "quality-cost": [
-          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -54,10 +105,10 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-30 / Browser upgrades, multi-repository review, and image editing 26.727 The latest ChatGPT desk",
+      "latest_signal": "2026-07-31 / GPT-5.4 and GPT-5.4 mini retire from Codex on August 31 On August 31, 2026, GPT-5.4 and GPT",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "b6a5c9261274a08a80b7b7992e3983c486c7c8ef695cdb0ba2d3558b314062ad",
+      "previous_hash": "a61ec1bc52a2dd2b251cdc21aab5c390294594fe7af34728275e058169f6946c",
       "slug": "codex-changelog",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -66,112 +117,9 @@
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "6f33db1e9b589488628b09e7da17c92d858dbddc9dae723af1e68dcd34b3613f",
-      "keyword_groups": {
-        "codex-runtime": [
-          "GPT-5.4",
-          "computer use",
-          "worktree",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks",
-          "Stop"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub",
-          "IDE extension"
-        ],
-        "quality-cost": [
-          "cost",
-          "rate limit",
-          "sandbox",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "schedule",
-          "GitHub Actions",
-          "workflow"
-        ]
-      },
-      "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
-      "name": "Codex use cases",
-      "owner": "Codex",
-      "previous_hash": "27c9b253114b649f96051a906c2874b46a11793e8d439ef6b17bdb6ea5153633",
-      "slug": "codex-use-cases",
-      "snippets": [
-        "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
-        "Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...",
-        "All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How..."
-      ],
-      "status": 200,
-      "url": "https://developers.openai.com/codex/use-cases/"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "4e1694ec20ecdde154cfa94c822c315dad5c8a7b29115f08126a1b6d8f1ac9c7",
-      "keyword_groups": {
-        "codex-runtime": [
-          "model picker",
-          "computer use",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "Stop"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub"
-        ],
-        "quality-cost": [
-          "cost",
-          "quota",
-          "rate limit",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "schedule",
-          "workflow"
-        ]
-      },
-      "latest_signal": "July 29, 2026",
-      "name": "Devin release notes",
-      "owner": "Devin",
-      "previous_hash": "0ef814097e44863a31524eb86c88ca1eefb2eaee011113f21816e154a35b724d",
-      "slug": "devin-release-notes",
-      "snippets": [
-        "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
-        "Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Stacked PRs Devin...",
-        "Link Preview Cards in Chat Links shared in your messages and in Devin’s replies now render as rich preview cards."
-      ],
-      "status": 200,
-      "url": "https://docs.devin.ai/release-notes"
     }
   ],
-  "checked_at": "2026-07-30T22:28:22Z",
+  "checked_at": "2026-08-02T22:11:53Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -223,7 +171,7 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-07-29T22:14:40Z",
+  "previous_checked_at": "2026-08-01T22:12:35Z",
   "sources": [
     {
       "changed": false,
@@ -287,10 +235,10 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "ccf1d043f0d7308687b4c1f7d02323c9b866bb9c555ded4905d1bce587d8a40a",
+      "hash": "d9601bd1332a3bdb9525d21a96f0ee66f890d1a4fcc9c6510ab36a3cd2592b72",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -390,7 +338,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "2e1daca679792bededbc94f9b51facb444e11f416d7b48807a7bf8195bbd52c0",
+      "hash": "0c75d26c77ea70b2277659ade866df69453159068fa1077f5f87087a9f30e9c9",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -416,7 +364,6 @@
           "IDE extension"
         ],
         "quality-cost": [
-          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -433,10 +380,10 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-30 / Browser upgrades, multi-repository review, and image editing 26.727 The latest ChatGPT desk",
+      "latest_signal": "2026-07-31 / GPT-5.4 and GPT-5.4 mini retire from Codex on August 31 On August 31, 2026, GPT-5.4 and GPT",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "b6a5c9261274a08a80b7b7992e3983c486c7c8ef695cdb0ba2d3558b314062ad",
+      "previous_hash": "a61ec1bc52a2dd2b251cdc21aab5c390294594fe7af34728275e058169f6946c",
       "slug": "codex-changelog",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -447,10 +394,10 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
-      "hash": "6f33db1e9b589488628b09e7da17c92d858dbddc9dae723af1e68dcd34b3613f",
+      "hash": "1dea5355700b2af3803572e204ad45d115daa312bf8c8c38014954f1985a34e8",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.4",
@@ -489,7 +436,7 @@
       "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "27c9b253114b649f96051a906c2874b46a11793e8d439ef6b17bdb6ea5153633",
+      "previous_hash": "1dea5355700b2af3803572e204ad45d115daa312bf8c8c38014954f1985a34e8",
       "slug": "codex-use-cases",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -518,7 +465,7 @@
       "changed": false,
       "error": null,
       "first_seen": false,
-      "hash": "70d69c3a9016f203c71da2423468d2d749cb023a20ce074251fe90bccbe3645a",
+      "hash": "f034a7002852bb03e0b31c30ee15073efbf48566b1cf9059fe357b85b11698c5",
       "keyword_groups": {
         "codex-runtime": [
           "subagents"
@@ -547,7 +494,7 @@
       "latest_signal": "3.11 / Jul 10, 2026",
       "name": "Cursor changelog",
       "owner": "Cursor",
-      "previous_hash": "70d69c3a9016f203c71da2423468d2d749cb023a20ce074251fe90bccbe3645a",
+      "previous_hash": "f034a7002852bb03e0b31c30ee15073efbf48566b1cf9059fe357b85b11698c5",
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...",
@@ -597,10 +544,10 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
-      "hash": "4e1694ec20ecdde154cfa94c822c315dad5c8a7b29115f08126a1b6d8f1ac9c7",
+      "hash": "aee8af93371c241694b8bd9bf2371b035796a434e9d3745e9c2f38aaa0af2d2d",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -609,6 +556,7 @@
         ],
         "hooks": [
           "hook",
+          "hooks",
           "Stop"
         ],
         "integration": [
@@ -633,15 +581,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "July 29, 2026",
+      "latest_signal": "July 31, 2026",
       "name": "Devin release notes",
       "owner": "Devin",
-      "previous_hash": "0ef814097e44863a31524eb86c88ca1eefb2eaee011113f21816e154a35b724d",
+      "previous_hash": "aee8af93371c241694b8bd9bf2371b035796a434e9d3745e9c2f38aaa0af2d2d",
       "slug": "devin-release-notes",
       "snippets": [
         "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
         "Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Stacked PRs Devin...",
-        "Link Preview Cards in Chat Links shared in your messages and in Devin’s replies now render as rich preview cards."
+        "Slack Access Defaults Devin’s Slack channel access is now configurable for all accounts, including a default of all public channels plus direct messages and an account-level..."
       ],
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
