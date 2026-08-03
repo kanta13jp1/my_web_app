@@ -36,9 +36,6 @@ import 'emergency_meeting_page.dart';
 import 'admin_analytics_page.dart';
 import 'cfo_office_page.dart';
 import 'asset_management_page.dart';
-import 'election_strategy_page.dart';
-import 'election_victory_page.dart';
-import 'settings_page.dart';
 import 'stock_tasks_page.dart';
 import 'mindless_task_page.dart';
 import '../widgets/collapsible_home_section.dart';
@@ -62,7 +59,6 @@ import '../widgets/thought_interrupt_quick_widget.dart';
 import 'ai_secretary_page.dart';
 import 'work_menu_page.dart';
 import '../data/home_tool_catalog.dart';
-import 'profile_settings_page.dart';
 import '../widgets/home_tier/recent_features_list.dart';
 import '../widgets/home_tier/system_fixed_features_list.dart';
 import '../widgets/home_tier/user_pinned_features_list.dart';
@@ -70,6 +66,7 @@ import '../widgets/home_tier/new_features_list.dart';
 import '../widgets/home_tier/ai_recommended_features_list.dart';
 import '../widgets/home_tier/popular_features_list.dart';
 import '../utils/feature_tap_logger.dart';
+import '../services/route_visibility_observer.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime Function()? nowProvider;
@@ -85,7 +82,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with RouteAware {
   static const bool _showLegacyHomeSections = false;
 
   // ✅ 改善ポイント:
@@ -145,18 +142,49 @@ class _HomePageState extends State<HomePage> {
   Map<String, dynamic>? _featureRequestAttachmentAnalysis;
   Map<String, dynamic>? _lastFeatureRequestSubmission;
 
+  // 可視化ゲート: 不可視のまま下に積まれている間は home 系 fetch を一切
+  // 開始しない (late Future 群も未初期化のまま build を空にする)。
+  bool _homeSignalsStarted = false;
+
   @override
   void initState() {
     super.initState();
     final today = _startOfDay(_now());
     _calendarMonthAnchor = DateTime(today.year, today.month, 1);
     _selectedCalendarDate = today;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      deepLinkVisibilityRouteObserver.subscribe(this, route);
+    }
+    // route が取れない (テスト直 pump 等) 場合は従来どおり即ロードする。
+    if (route == null || route.isCurrent) {
+      _startHomeSignalsOnce();
+    }
+  }
+
+  @override
+  void didPopNext() {
+    // 上のルート (/admin 等) が pop されホームが初めて可視になった。
+    if (!_homeSignalsStarted) {
+      setState(_startHomeSignalsOnce);
+    }
+  }
+
+  void _startHomeSignalsOnce() {
+    if (_homeSignalsStarted) return;
+    _homeSignalsStarted = true;
     _reloadHomeSignals();
     _fetchNotifUnreadCount();
   }
 
   @override
   void dispose() {
+    deepLinkVisibilityRouteObserver.unsubscribe(this);
     _featureRequestTitleController.dispose();
     _featureRequestDescriptionController.dispose();
     _featureRequestOutcomeController.dispose();
@@ -2056,12 +2084,12 @@ abstinence_slip_details: $slipDetailsText
     } else if (command.type == _HomeActionType.criticalTasks) {
       buttonLabel = '必須タスクへ';
       onPressed = () {
-        _nav(context, const MindlessTaskPage());
+        _nav(context, const MindlessTaskPage(), '/mindless-task');
       };
     } else if (command.type == _HomeActionType.stockReview) {
       buttonLabel = '週末ストックへ';
       onPressed = () {
-        _nav(context, const StockTasksPage());
+        _nav(context, const StockTasksPage(), '/stock-tasks');
       };
     } else if (command.type == _HomeActionType.beatYesterdayGoal) {
       buttonLabel = 'タスク一覧へ';
@@ -2480,7 +2508,7 @@ abstinence_slip_details: $slipDetailsText
       color = const Color(0xFFE53935);
       icon = Icons.lock_clock;
       onPressed = () {
-        _nav(context, const MindlessTaskPage());
+        _nav(context, const MindlessTaskPage(), '/mindless-task');
       };
     } else if (!snapshot.morningBriefingDone) {
       title = '朝の固定を先に終える';
@@ -4229,7 +4257,11 @@ abstinence_slip_details: $slipDetailsText
                           FilledButton.tonalIcon(
                             onPressed: () {
                               Navigator.pop(context);
-                              _nav(parentContext, const MindlessTaskPage());
+                              _nav(
+                                parentContext,
+                                const MindlessTaskPage(),
+                                '/mindless-task',
+                              );
                             },
                             icon: const Icon(Icons.lock_clock, size: 18),
                             label: Text(
@@ -4386,6 +4418,7 @@ abstinence_slip_details: $slipDetailsText
                       initialFocus: AssetManagementInitialFocus.flow,
                       emphasizeMonthlyFlow: true,
                     ),
+                    '/asset-management',
                   );
                 },
                 icon: const Icon(Icons.open_in_new, size: 18),
@@ -5213,6 +5246,12 @@ abstinence_slip_details: $slipDetailsText
 
   @override
   Widget build(BuildContext context) {
+    // 可視化ゲート: /admin 等の deep link で不可視のまま下に積まれている間は
+    // 何も build しない。子 widget (ai-hub/app-hub を叩く curated sections 等) の
+    // initState も走らないため、admin 表示時の無関係な fetch/upsert がゼロになる。
+    if (!_homeSignalsStarted) {
+      return const Scaffold(body: SizedBox.shrink());
+    }
     final themeService = Provider.of<ThemeService>(context);
     final isDark = themeService.isDarkMode;
     final primaryColor = themeService.primaryColor;
@@ -5578,6 +5617,8 @@ abstinence_slip_details: $slipDetailsText
                                 key: const Key('home_section_ceo_office'),
                               ),
                               _buildCeoCard(context),
+                              const SizedBox(height: 12),
+                              _buildEvalApprovalCard(context),
                               const SizedBox(height: 12),
                               // AI 秘書カード
                               Card(
@@ -5989,24 +6030,18 @@ abstinence_slip_details: $slipDetailsText
     );
   }
 
-  void _nav(BuildContext context, Widget page) {
-    final routeName = _homeRouteNameForPage(page);
+  /// [routeName] は遷移先画面の URL。以前は page の型から route 名を引く表を
+  /// 持っていたが、表に無い画面が黙って null になり (例: 管理者ダッシュボード)
+  /// 画面だけ切り替わって URL が `/` のままになっていた。呼び出し側に必ず
+  /// 書かせることで、載せ忘れがコンパイルエラーになるようにしている。
+  void _nav(BuildContext context, Widget page, String routeName) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        settings: routeName == null ? null : RouteSettings(name: routeName),
+        settings: RouteSettings(name: routeName),
         builder: (context) => page,
       ),
     );
-  }
-
-  String? _homeRouteNameForPage(Widget page) {
-    if (page is ProfileSettingsPage) return '/profile-settings';
-    if (page is SettingsPage) return '/settings';
-    if (page is EmergencyMeetingPage) return '/emergency-meeting';
-    if (page is ElectionStrategyPage) return '/election-strategy';
-    if (page is ElectionVictoryPage) return '/local-election-700';
-    return null;
   }
 
   List<Widget> _buildCuratedHomeSections({
@@ -6289,6 +6324,43 @@ abstinence_slip_details: $slipDetailsText
         subtitle: const Text('CEOとして全AI役員を招集し、直面している課題を解決します。'),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () => Navigator.of(context).pushNamed('/emergency-meeting'),
+      ),
+    );
+  }
+
+  Widget _buildEvalApprovalCard(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            Icons.fact_check_outlined,
+            color: colorScheme.onPrimaryContainer,
+          ),
+        ),
+        title: const Text(
+          'CEO Eval',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: const Text('AI役員から届いた選択肢を承認・否認'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => _runTrackedAction(
+          'eval-approval',
+          () => Navigator.of(context).pushNamed('/eval-approval'),
+        ),
       ),
     );
   }
@@ -7531,7 +7603,11 @@ abstinence_slip_details: $slipDetailsText
                     ],
                   ),
                   actionLabel: '役員会議へ',
-                  onTap: () => _nav(context, const EmergencyMeetingPage()),
+                  onTap: () => _nav(
+                    context,
+                    const EmergencyMeetingPage(),
+                    '/emergency-meeting',
+                  ),
                 ),
               ),
               SizedBox(
@@ -7592,7 +7668,11 @@ abstinence_slip_details: $slipDetailsText
                     ],
                   ),
                   actionLabel: '収支を見る',
-                  onTap: () => _nav(context, const AssetManagementPage()),
+                  onTap: () => _nav(
+                    context,
+                    const AssetManagementPage(),
+                    '/asset-management',
+                  ),
                 ),
               ),
               SizedBox(
@@ -7656,7 +7736,8 @@ abstinence_slip_details: $slipDetailsText
                       ? _buildLpSparkline(marketing.lpSeries, isDark)
                       : null,
                   actionLabel: '分析を見る',
-                  onTap: () => _nav(context, const AdminAnalyticsPage()),
+                  onTap: () =>
+                      _nav(context, const AdminAnalyticsPage(), '/admin'),
                 ),
               ),
               SizedBox(
@@ -8190,7 +8271,8 @@ abstinence_slip_details: $slipDetailsText
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
-                  onPressed: () => _nav(context, const CfoOfficePage()),
+                  onPressed: () =>
+                      _nav(context, const CfoOfficePage(), '/cfo-office'),
                   icon: const Icon(Icons.arrow_circle_right, size: 18),
                   label: const Text('詳細(資産内訳)を見る'),
                 ),

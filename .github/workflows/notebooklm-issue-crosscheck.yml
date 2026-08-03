@@ -26,7 +26,7 @@ permissions:
 
 concurrency:
   group: notebooklm-issue-crosscheck
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-07-27 ci-audit: daily cron + dispatch 重複時のキュー積み防止
 
 jobs:
   crosscheck:
@@ -40,7 +40,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 5
 
@@ -48,6 +48,19 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+
+      - name: Select weekly pip cache key
+        id: pip_cache_period
+        shell: bash
+        run: echo "period=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pip (notebooklm-py)
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-notebooklm-py-${{ steps.pip_cache_period.outputs.period }}
+          restore-keys: |
+            ${{ runner.os }}-pip-notebooklm-py-
 
       - name: Install notebooklm-py
         run: pip install --quiet notebooklm-py

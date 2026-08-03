@@ -553,6 +553,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
+                settings:
+                    const RouteSettings(name: '/horse-provider-leaderboard'),
                 builder: (_) => const HorseProviderLeaderboardPage(),
               ),
             ),
@@ -1393,6 +1395,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
+                      settings: const RouteSettings(name: '/horse-racing/race'),
                       builder: (_) => HorseracingRaceDetailPage(race: race),
                     ),
                   ),

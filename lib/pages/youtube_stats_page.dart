@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// YouTube 動画統計インポート・管理ページ (/youtube-stats)
 ///
@@ -18,7 +19,13 @@ class YoutubeStatsPage extends StatefulWidget {
 }
 
 class _YoutubeStatsPageState extends State<YoutubeStatsPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['import', 'stats'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   late TabController _tabController;
   bool _importing = false;
   String? _importResult;

@@ -892,6 +892,173 @@ void main() {
       );
     });
 
+    test('明細照合の差分に対して修正アクションを提案する', () {
+      // 設定内訳(KDDI 5764) ≠ 請求額(20000) かつ明細未取込 →
+      // 「内訳を修正する」「明細を取り込む」の両アクションが出る。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'KDDI': -5764,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+          'paypay_card': 20000,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+        },
+      );
+
+      final group = workbook.cardStatementReconciliation.groups.singleWhere(
+        (group) => group.billingAccountId == 'paypay_card',
+      );
+      expect(group.hasFixActions, isTrue);
+      expect(group.hasConfiguredMismatchFix, isTrue);
+
+      final importFix = group.fixActions.singleWhere(
+        (action) =>
+            action.kind ==
+            AssetLiabilityCardStatementFixActionKind.importStatement,
+      );
+      expect(
+        importFix.title,
+        AssetLiabilityPlanningService.cardStatementFixImportLabel,
+      );
+
+      final breakdownFix = group.fixActions.singleWhere(
+        (action) =>
+            action.kind ==
+            AssetLiabilityCardStatementFixActionKind.adjustConfiguredBreakdown,
+      );
+      expect(
+        breakdownFix.title,
+        AssetLiabilityPlanningService.cardStatementFixAdjustBreakdownLabel,
+      );
+      // 差分金額 = 設定内訳 5764 − 請求額 20000 = -14236 が案内文に入る。
+      expect(breakdownFix.amount, 5764 - 20000);
+      expect(breakdownFix.description, contains('-14,236円'));
+    });
+
+    test('取込明細と請求額の差分は取込明細確認アクションを提案する', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'KDDI': -5764,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+          'paypay_card': 20000,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+        },
+        cardStatementLines: const <AssetLiabilityCardStatementLine>[
+          AssetLiabilityCardStatementLine(
+            id: 'line_kddi',
+            billingAccountId: 'paypay_card',
+            billingAccountName: 'PayPay',
+            postedAt: null,
+            description: 'KDDI',
+            amount: 5764,
+          ),
+        ],
+      );
+
+      final group = workbook.cardStatementReconciliation.groups.singleWhere(
+        (group) => group.billingAccountId == 'paypay_card',
+      );
+      final reviewFix = group.fixActions.singleWhere(
+        (action) =>
+            action.kind ==
+            AssetLiabilityCardStatementFixActionKind.reviewStatementLines,
+      );
+      expect(reviewFix.amount, 5764 - 20000);
+      // 明細取込済みなので取り込みアクションは出ない。
+      expect(
+        group.fixActions.any(
+          (action) =>
+              action.kind ==
+              AssetLiabilityCardStatementFixActionKind.importStatement,
+        ),
+        isFalse,
+      );
+    });
+
+    test('請求先カード口座が無いホストには請求先再設定アクションのみ出す', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{'cash': 50000, 'KDDI': -5764},
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'missing_card',
+        },
+      );
+
+      final group = workbook.cardStatementReconciliation.groups.singleWhere(
+        (group) => group.billingAccountId == 'missing_card',
+      );
+      expect(
+        group.alerts,
+        contains(
+          AssetLiabilityPlanningService.cardStatementBillingAccountMissingAlert,
+        ),
+      );
+      final kinds =
+          group.fixActions.map((action) => action.kind).toList(growable: false);
+      expect(
+        kinds,
+        contains(
+          AssetLiabilityCardStatementFixActionKind.assignBillingAccount,
+        ),
+      );
+      // 請求額がプレースホルダ0のため、取り込み・内訳修正は提案しない。
+      expect(
+        kinds,
+        isNot(
+          contains(AssetLiabilityCardStatementFixActionKind.importStatement),
+        ),
+      );
+      expect(
+        kinds,
+        isNot(
+          contains(
+            AssetLiabilityCardStatementFixActionKind.adjustConfiguredBreakdown,
+          ),
+        ),
+      );
+    });
+
+    test('リボ払いカードには修正アクションを出さない', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'auPayカード': -530163,
+          'au': -32152,
+        },
+        baseDate: DateTime(2026, 6, 1),
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            creditLimit: 500000,
+          ),
+        },
+        cardBillingAccountIds: const <String, String>{'au': 'aupay_card'},
+      );
+
+      final group = workbook.cardStatementReconciliation.groups.singleWhere(
+        (group) => group.billingAccountId == 'aupay_card',
+      );
+      // リボ払いは請求額 ≠ 内訳/明細合計が正常のため修正アクション対象外。
+      expect(group.fixActions, isEmpty);
+      expect(group.hasConfiguredMismatchFix, isFalse);
+    });
+
     test(
       'marks monthly and default setting sources in card billing review',
       () {
@@ -1195,6 +1362,104 @@ void main() {
       expect(workbook.transferSuggestions.single.toAccountId, 'custom_bank');
     });
 
+    test('caps the transfer suggestion by the donor current balance', () {
+      // ユーザー報告: 「じぶん銀行の残高より多い額を移動提案に出さないで」。
+      // 移動元の projectedBalance は未着金の収入を含むため、それだけで決めると
+      // 実際には無い残高の移動を提案してしまう。現在残高で上限を掛ける。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          // 移動元: 今は 18,918 しかないが、給料 80,000 の入金予定がある。
+          'cash': 18918,
+          'bank': 10000,
+          'mobit': -100000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 60041},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'custom_bank'},
+        incomePlans: <AssetLiabilityIncomePlan>[
+          AssetLiabilityIncomePlan(
+            id: 'income_cash_salary',
+            date: DateTime(2026, 5, 25),
+            name: 'Salary',
+            amount: 80000,
+            destinationAccountId: 'custom_cash',
+            destinationAccountName: null,
+            received: false,
+          ),
+        ],
+      );
+
+      final donor = workbook.accountCashflowSummaries.firstWhere(
+        (summary) => summary.accountId == 'custom_cash',
+      );
+      final shortage = workbook.accountCashflowSummaries.firstWhere(
+        (summary) => summary.accountId == 'custom_bank',
+      );
+
+      // 見込みは膨らむが、今動かせるのは現在残高まで。
+      expect(donor.currentBalance, 18918);
+      expect(donor.projectedBalance, 98918);
+      expect(shortage.shortfall, 50041);
+
+      final suggestion = workbook.transferSuggestions.single;
+      expect(suggestion.fromAccountId, 'custom_cash');
+      expect(suggestion.toAccountId, 'custom_bank');
+      // 修正前は min(不足額, 見込み余剰) = 50,041 を提案していた (実行不能)。
+      expect(suggestion.amount, 18918);
+    });
+
+    test('excludes already-reserved transfers from the movable amount', () {
+      // 移動予約済み (未完了の移動タスク) の資金は既に他へ約束済みなので、
+      // 同じ現金を二重に当て込まないよう移動可能額から差し引く。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 60000,
+          'bank': 10000,
+          'mobit': -100000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 60041},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'custom_bank'},
+        incomePlans: <AssetLiabilityIncomePlan>[
+          // 未着金の収入。見込みは膨らむが今は動かせない。
+          AssetLiabilityIncomePlan(
+            id: 'income_cash_salary',
+            date: DateTime(2026, 5, 25),
+            name: 'Salary',
+            amount: 100000,
+            destinationAccountId: 'custom_cash',
+            destinationAccountName: null,
+            received: false,
+          ),
+        ],
+        transferTasks: <AssetLiabilityTransferTask>[
+          AssetLiabilityTransferTask(
+            id: 'transfer_reserved',
+            fromAccountId: 'custom_cash',
+            fromAccountName: 'cash',
+            toAccountId: 'custom_other',
+            toAccountName: 'other',
+            amount: 40000,
+            dueDate: DateTime(2026, 5, 20),
+          ),
+        ],
+      );
+
+      final donor = workbook.accountCashflowSummaries.firstWhere(
+        (summary) => summary.accountId == 'custom_cash',
+      );
+      expect(donor.currentBalance, 60000);
+      expect(donor.pendingTransferOut, 40000);
+      // 見込みは 60,000 + 100,000(未着金) - 40,000(予約) = 120,000 と潤沢。
+      expect(donor.projectedBalance, 120000);
+
+      // だが今動かせるのは 60,000 - 40,000(予約済み) = 20,000 まで。
+      // 見込みだけで判断すると不足額 50,041 を提案してしまう。
+      final suggestion = workbook.transferSuggestions.single;
+      expect(suggestion.fromAccountId, 'custom_cash');
+      expect(suggestion.amount, 20000);
+    });
+
     test('applies pending transfer tasks to account-level cashflow', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{
@@ -1273,7 +1538,14 @@ void main() {
       expect(bankSummary.projectedBalance, -10000);
     });
 
-    test('adds monthly auPay card funding transfer to Jibun bank', () {
+    test('no longer injects a hardcoded auPay funding transfer', () {
+      // The old code auto-injected a fixed 80,000 transfer (SMBC Otsuka ->
+      // Jibun bank) on every build. It was unrelated to any shortfall and,
+      // when the salary lands in Jibun bank, double-counted (income + transfer
+      // -in) and drained SMBC by 80,000, creating a phantom shortfall and a
+      // reverse suggestion. It is removed; funding is now handled by the
+      // shortfall-capped dynamic suggestions. With no user transfer task there
+      // must be no transfer and no phantom transfer in/out.
       const smbcOtsukaName =
           '\u4e09\u4e95\u4f4f\u53cb\u9280\u884c\u5927\u585a\u652f\u5e97';
       const jibunBankName = '\u3058\u3076\u3093\u9280\u884c';
@@ -1294,11 +1566,6 @@ void main() {
         },
       );
 
-      final transfer = workbook.transferTasks.singleWhere(
-        (task) =>
-            task.id ==
-            AssetLiabilityPlanningService.auPayCardFundingTransferTaskId,
-      );
       final smbcSummary = workbook.accountCashflowSummaries.singleWhere(
         (summary) =>
             summary.accountId ==
@@ -1310,72 +1577,20 @@ void main() {
             AssetLiabilityPlanningService.jibunBankAccountId,
       );
 
+      // No hardcoded built-in transfer task exists anymore.
       expect(
-        transfer.fromAccountId,
-        AssetLiabilityPlanningService.smbcOtsukaBranchAccountId,
+        workbook.transferTasks.where(
+          (task) =>
+              task.id ==
+              AssetLiabilityPlanningService.auPayCardFundingTransferTaskId,
+        ),
+        isEmpty,
       );
-      expect(
-        transfer.toAccountId,
-        AssetLiabilityPlanningService.jibunBankAccountId,
-      );
-      expect(
-        transfer.amount,
-        AssetLiabilityPlanningService.auPayCardFundingTransferAmount,
-      );
-      expect(transfer.dueDate, DateTime(2026, 5, 26));
-      expect(smbcSummary.pendingTransferOut, 80000);
-      expect(smbcSummary.projectedBalance, 120000);
-      expect(jibunSummary.upcomingPayments, 80000);
-      expect(jibunSummary.pendingTransferIn, 80000);
-      expect(jibunSummary.projectedBalance, 10000);
-    });
-
-    test('does not duplicate completed built-in auPay funding transfer', () {
-      const smbcOtsukaName =
-          '\u4e09\u4e95\u4f4f\u53cb\u9280\u884c\u5927\u585a\u652f\u5e97';
-      const jibunBankName = '\u3058\u3076\u3093\u9280\u884c';
-      final workbook = service.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          smbcOtsukaName: 200000,
-          jibunBankName: 10000,
-        },
-        baseDate: DateTime(2026, 5, 1),
-        transferTasks: <AssetLiabilityTransferTask>[
-          AssetLiabilityTransferTask(
-            id: AssetLiabilityPlanningService.auPayCardFundingTransferTaskId,
-            fromAccountId:
-                AssetLiabilityPlanningService.smbcOtsukaBranchAccountId,
-            fromAccountName: smbcOtsukaName,
-            toAccountId: AssetLiabilityPlanningService.jibunBankAccountId,
-            toAccountName: jibunBankName,
-            amount:
-                AssetLiabilityPlanningService.auPayCardFundingTransferAmount,
-            dueDate: DateTime(2026, 5, 26),
-            completed: true,
-            completedAt: DateTime(2026, 5, 26, 8),
-          ),
-        ],
-      );
-
-      final transfer = workbook.transferTasks.singleWhere(
-        (task) =>
-            task.id ==
-            AssetLiabilityPlanningService.auPayCardFundingTransferTaskId,
-      );
-      final smbcSummary = workbook.accountCashflowSummaries.singleWhere(
-        (summary) =>
-            summary.accountId ==
-            AssetLiabilityPlanningService.smbcOtsukaBranchAccountId,
-      );
-      final jibunSummary = workbook.accountCashflowSummaries.singleWhere(
-        (summary) =>
-            summary.accountId ==
-            AssetLiabilityPlanningService.jibunBankAccountId,
-      );
-
-      expect(transfer.completed, isTrue);
+      // And no phantom transfer in/out is applied to the accounts.
       expect(smbcSummary.pendingTransferOut, 0);
       expect(jibunSummary.pendingTransferIn, 0);
+      // SMBC keeps its full projected balance (no 80,000 drain).
+      expect(smbcSummary.projectedBalance, 200000);
     });
 
     test('does not double count completed transfer tasks', () {
@@ -1933,6 +2148,110 @@ void main() {
         (row) => row.name == 'モビット',
       );
       expect(otherMobit.paymentSourceAccountId, 'smbc_otsuka');
+    });
+
+    test('treats a cardLoan payment source as unset', () {
+      // 振替元がカードローン (現金借入 = mobit) を指す設定は不正扱いで未設定に
+      // 正規化する。cardLoan はどのセレクタにも候補として出ないのに legacy 移行の
+      // 名前衝突で保存され得る。非 null のままだと「原資未設定」レビューに出ず、
+      // 現金系口座の見込み残高からも静かに消えるため。
+      final loanSourced = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 12),
+        paymentSourceAccountIds: <String, String>{
+          AssetLiabilityPlanningService.acomShoppingAccountId: 'mobit',
+        },
+      );
+      final acom = loanSourced.debtMasterRows.firstWhere(
+        (row) => row.name == 'アコムショッピング',
+      );
+      expect(acom.paymentSourceAccountId, isNull);
+      expect(acom.paymentSourceAccountName, isNull);
+      // 未設定へ倒れることで原資未設定レビュー (修正導線) の対象になる。
+      expect(
+        loanSourced.paymentSourceMissingRows.any(
+          (row) => row.name == 'アコムショッピング',
+        ),
+        isTrue,
+      );
+    });
+
+    test('じぶん銀行(預金)とじぶん銀行カードローンを別IDに分離する', () {
+      // 名前に「じぶん」を含むだけで同一IDに潰れると、預金を振替元に選べない。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'じぶん銀行': 18918,
+          'じぶん銀行カードローン': -994562,
+        },
+        baseDate: DateTime(2026, 5, 12),
+      );
+      final deposit = workbook.accounts.firstWhere(
+        (account) => account.name == 'じぶん銀行',
+      );
+      final loan = workbook.accounts.firstWhere(
+        (account) => account.name == 'じぶん銀行カードローン',
+      );
+      expect(deposit.id, AssetLiabilityPlanningService.jibunBankAccountId);
+      expect(deposit.kind, AssetLiabilityAccountKind.deposit);
+      expect(
+        loan.id,
+        AssetLiabilityPlanningService.jibunBankCardLoanAccountId,
+      );
+      expect(loan.kind, AssetLiabilityAccountKind.cardLoan);
+      expect(deposit.id, isNot(loan.id));
+    });
+
+    test('じぶん銀行を振替元に選ぶと原資未設定に倒れない', () {
+      // 預金じぶん銀行を auPayカードの振替元に設定 → 未設定へ倒れず正しく解決。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'じぶん銀行': 18918,
+          'auPayカード': -36926,
+        },
+        baseDate: DateTime(2026, 5, 12),
+        paymentSourceAccountIds: <String, String>{
+          AssetLiabilityPlanningService.auPayCardAccountId:
+              AssetLiabilityPlanningService.jibunBankAccountId,
+        },
+      );
+      final aupay = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'auPayカード',
+      );
+      expect(
+        aupay.paymentSourceAccountId,
+        AssetLiabilityPlanningService.jibunBankAccountId,
+      );
+      expect(aupay.paymentSourceAccountName, 'じぶん銀行');
+      expect(
+        workbook.paymentSourceMissingRows.any(
+          (row) => row.name == 'auPayカード',
+        ),
+        isFalse,
+      );
+    });
+
+    test('旧衝突ID(カードローンID)の振替元をじぶん銀行(預金)へ移行する', () {
+      // 衝突していた頃に保存された振替元 = カードローンID。預金が存在すれば
+      // 預金へ読み替えて既存設定を自動回復する。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'じぶん銀行': 18918,
+          'auPayカード': -36926,
+        },
+        baseDate: DateTime(2026, 5, 12),
+        paymentSourceAccountIds: <String, String>{
+          AssetLiabilityPlanningService.auPayCardAccountId:
+              AssetLiabilityPlanningService.jibunBankCardLoanAccountId,
+        },
+      );
+      final aupay = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'auPayカード',
+      );
+      expect(
+        aupay.paymentSourceAccountId,
+        AssetLiabilityPlanningService.jibunBankAccountId,
+      );
+      expect(aupay.paymentSourceAccountName, 'じぶん銀行');
     });
   });
 }

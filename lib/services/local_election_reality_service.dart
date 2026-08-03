@@ -160,7 +160,6 @@ class LocalElectionRealityService {
 
   Future<LocalElectionRealitySnapshot> fetchLatestSnapshot({
     bool includeAiSummary = true,
-    bool includeCdpBenchmarks = true,
     SharedPreferences? prefs,
     bool forceRefresh = false,
   }) async {
@@ -192,7 +191,6 @@ class LocalElectionRealityService {
         _fetchLatestSnapshotFromEdgeFunction(
       client: client,
       includeAiSummary: includeAiSummary,
-      includeCdpBenchmarks: includeCdpBenchmarks,
     ).then(_rejectSuspiciousSnapshot);
     _latestSnapshotInFlight = request;
 
@@ -271,13 +269,11 @@ class LocalElectionRealityService {
   Future<LocalElectionRealitySnapshot> _fetchLatestSnapshotFromEdgeFunction({
     required SupabaseClient client,
     required bool includeAiSummary,
-    required bool includeCdpBenchmarks,
   }) async {
     final response = await client.functions.invoke(
       'local-election-intelligence',
       body: <String, dynamic>{
         'includeAiSummary': includeAiSummary,
-        'includeCdpBenchmarks': includeCdpBenchmarks,
       },
     ).timeout(_edgeFunctionTimeout);
     final data = _toMap(response.data);

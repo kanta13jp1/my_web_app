@@ -5,7 +5,7 @@ name: AI大学 学習リマインダー (毎日09:00 JST)
 
 on:
   schedule:
-    - cron: "0 0 * * *"  # 毎日 00:00 UTC = 09:00 JST
+    - cron: "19 0 * * *"  # 毎日 00:19 UTC = 09:19 JST (2026-07-17 ci-audit: 00:00 UTC 8本集中を分散)
   workflow_dispatch:
     inputs:
       dry_run:

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/loyalty_points_summary.dart';
+
 /// ロイヤルティポイントページ
-/// loyalty-points Edge Function と連携してポイント残高・履歴を管理
+/// social-commerce-hub Edge Function (loyalty.balance) と連携して
+/// ポイント残高・履歴を管理する。
 class LoyaltyPointsPage extends StatefulWidget {
   const LoyaltyPointsPage({super.key});
 
@@ -13,8 +16,9 @@ class LoyaltyPointsPage extends StatefulWidget {
 class _LoyaltyPointsPageState extends State<LoyaltyPointsPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
+  bool _isSignedIn = true;
   String? _errorMessage;
-  List<Map<String, dynamic>> _history = [];
+  LoyaltyPointsSummary _summary = LoyaltyPointsSummary.empty;
 
   @override
   void initState() {
@@ -24,11 +28,15 @@ class _LoyaltyPointsPageState extends State<LoyaltyPointsPage> {
 
   Future<void> _fetchHistory() async {
     if (_supabase.auth.currentUser == null) {
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _isSignedIn = false;
+      });
       return;
     }
     setState(() {
       _isLoading = true;
+      _isSignedIn = true;
       _errorMessage = null;
     });
     try {
@@ -36,17 +44,8 @@ class _LoyaltyPointsPageState extends State<LoyaltyPointsPage> {
         'social-commerce-hub',
         body: {'action': 'loyalty.balance'},
       );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['history'] is List) {
-        setState(
-          () =>
-              _history = (data['history'] as List).cast<Map<String, dynamic>>(),
-        );
-      } else if (data is List) {
-        setState(() => _history = data.cast<Map<String, dynamic>>());
-      } else {
-        setState(() => _history = []);
-      }
+      final summary = LoyaltyPointsSummary.fromResponse(response.data);
+      if (mounted) setState(() => _summary = summary);
     } catch (e) {
       if (mounted) {
         setState(() => _errorMessage = 'ポイント履歴の取得に失敗しました: $e');
@@ -68,76 +67,7 @@ class _LoyaltyPointsPageState extends State<LoyaltyPointsPage> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: Color(0xFFE53935),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _errorMessage!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFFE53935),
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _fetchHistory,
-                        child: const Text('再試行'),
-                      ),
-                    ],
-                  ),
-                )
-              : _history.isEmpty
-                  ? const Center(child: Text('ポイント履歴はありません'))
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _history.length,
-                      itemBuilder: (context, index) {
-                        final item = _history[index];
-                        final description = item['description']?.toString() ??
-                            'ポイント ${index + 1}';
-                        final points = item['points']?.toString() ?? '0';
-                        final type = item['type']?.toString() ?? 'earn';
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          child: ListTile(
-                            leading: const Icon(
-                              Icons.stars,
-                              color: Color(0xFFFFC107),
-                            ),
-                            title: Text(
-                              description,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                height: 1.5,
-                              ),
-                            ),
-                            subtitle:
-                                Text(item['created_at']?.toString() ?? ''),
-                            trailing: Text(
-                              '${type == 'earn' ? '+' : '-'}$points pt',
-                              style: TextStyle(
-                                color: type == 'earn'
-                                    ? const Color(0xFF4CAF50)
-                                    : const Color(0xFFE53935),
-                                fontWeight: FontWeight.bold,
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+      body: _buildBody(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -146,6 +76,145 @@ class _LoyaltyPointsPageState extends State<LoyaltyPointsPage> {
         },
         icon: const Icon(Icons.redeem),
         label: const Text('交換'),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (!_isSignedIn) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'ログインするとポイント残高と履歴が表示されます',
+            textAlign: TextAlign.center,
+            style: TextStyle(height: 1.5),
+          ),
+        ),
+      );
+    }
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFFE53935), height: 1.5),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchHistory,
+              child: const Text('再試行'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _fetchHistory,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildBalanceCard(),
+          const SizedBox(height: 20),
+          const Text(
+            '獲得・利用履歴',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 8),
+          if (_summary.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(child: Text('ポイント履歴はありません')),
+            )
+          else
+            ..._summary.entries.map(_buildHistoryTile),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBalanceCard() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFFF8F00), Color(0xFFFFC107)],
+          ),
+        ),
+        child: Column(
+          children: [
+            const Text(
+              '現在のポイント残高',
+              style: TextStyle(color: Colors.white, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  formatLoyaltyPoints(_summary.balance),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Text(
+                  'pt',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHistoryTile(LoyaltyPointEntry entry) {
+    final createdAt = formatLoyaltyTimestamp(entry.createdAt);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: Icon(
+          entry.isEarn ? Icons.stars : Icons.redeem,
+          color:
+              entry.isEarn ? const Color(0xFFFFC107) : const Color(0xFF757575),
+        ),
+        title: Text(
+          entry.reason,
+          style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+        ),
+        subtitle: createdAt.isEmpty ? null : Text(createdAt),
+        trailing: Text(
+          '${entry.isEarn ? '+' : '-'}${formatLoyaltyPoints(entry.amount.abs())} pt',
+          style: TextStyle(
+            color: entry.isEarn
+                ? const Color(0xFF4CAF50)
+                : const Color(0xFFE53935),
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
+        ),
       ),
     );
   }

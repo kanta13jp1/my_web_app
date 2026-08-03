@@ -13,8 +13,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart' as web;
 
+import '../services/generated_ui_sandbox_policy.dart';
+import '../widgets/generated_ui_sandbox_preview.dart';
+
 class AiAssistantChatPage extends StatefulWidget {
-  const AiAssistantChatPage({super.key});
+  const AiAssistantChatPage({
+    super.key,
+    this.initialContextIds = const <String>[],
+    this.initialContextTitles = const <String>[],
+  });
+
+  final List<String> initialContextIds;
+  final List<String> initialContextTitles;
 
   @override
   State<AiAssistantChatPage> createState() => _AiAssistantChatPageState();
@@ -35,6 +45,8 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
   bool _speechSupported = true;
   String _interimText = '';
   web.SpeechRecognition? _recognition;
+  late List<String> _contextIds;
+  late List<String> _contextTitles;
 
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
@@ -48,6 +60,10 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
   @override
   void initState() {
     super.initState();
+    _contextIds = widget.initialContextIds.take(5).toList(growable: false);
+    _contextTitles = widget.initialContextTitles
+        .take(_contextIds.length)
+        .toList(growable: false);
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -208,6 +224,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
           'message': displayText,
           'response_mode': _preferVideoResponse ? 'video' : 'text',
           'provider': _preferVideoResponse ? 'gemini' : _selectedAgentProvider,
+          if (_contextIds.isNotEmpty) 'context_file_ids': _contextIds,
           if (image != null) ...{
             'imageBase64': image.base64,
             'mimeType': image.mimeType,
@@ -378,8 +395,11 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
               const SizedBox(width: 8),
               ScaleTransition(
                 scale: _pulseAnim,
-                child:
-                    const Icon(Icons.mic, color: Color(0xFFE53935), size: 16),
+                child: const Icon(
+                  Icons.mic,
+                  color: Color(0xFFE53935),
+                  size: 16,
+                ),
               ),
             ],
           ],
@@ -470,6 +490,12 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
   }
 
   Widget _buildMessageBubble(_ChatMessage message, {required bool isUser}) {
+    final sandboxCandidate = isUser
+        ? null
+        : GeneratedUiSandboxPolicy.extractFirstPreviewCandidate(
+            message.content,
+          );
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -701,6 +727,10 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                         ],
                       ),
                     ),
+                  if (sandboxCandidate != null) ...[
+                    _buildSandboxCandidatePanel(sandboxCandidate),
+                    const SizedBox(height: 8),
+                  ],
                   Text(
                     message.content,
                     style: TextStyle(
@@ -721,6 +751,65 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
               backgroundColor: Color(0xFF2A2A2A), // surface3
               child: Icon(Icons.person, size: 18, color: _orange),
             ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSandboxCandidatePanel(GeneratedUiSandboxCandidate candidate) {
+    final allowed = candidate.isPreviewAllowed;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: allowed
+            ? const Color(0xFF064E3B).withAlpha(82)
+            : const Color(0xFF7F1D1D).withAlpha(96),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: allowed ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                allowed ? Icons.security_outlined : Icons.block_outlined,
+                size: 16,
+                color:
+                    allowed ? const Color(0xFF86EFAC) : const Color(0xFFFCA5A5),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  allowed ? 'AI UI sandbox preview' : 'AI UI preview blocked',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            allowed
+                ? 'Runs in an opaque-origin iframe with no Supabase/Auth, storage, form, or network access.'
+                : 'Preview was not rendered because the HTML requested a forbidden capability: ${candidate.rejectionReasons.join(', ')}.',
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+          if (allowed) ...[
+            const SizedBox(height: 10),
+            GeneratedUiSandboxPreview(htmlFragment: candidate.html),
           ],
         ],
       ),
@@ -767,6 +856,46 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (_contextIds.isNotEmpty) ...[
+              Row(
+                children: [
+                  const Icon(
+                    Icons.attach_file,
+                    color: Colors.white70,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _contextTitles.isEmpty
+                          ? '${_contextIds.length}件の外部ファイル'
+                          : _contextTitles.join(', '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () => setState(() {
+                              _contextIds = const <String>[];
+                              _contextTitles = const <String>[];
+                            }),
+                    tooltip: '外部ファイルを解除',
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.white54,
+                      size: 18,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+            ],
             if (_selectedImage != null) ...[
               _buildSelectedImagePreview(_selectedImage!),
               const SizedBox(height: 8),
@@ -800,14 +929,16 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                               () => _selectedAgentProvider = selection.first,
                             ),
                     style: ButtonStyle(
-                      foregroundColor:
-                          WidgetStateProperty.resolveWith((states) {
+                      foregroundColor: WidgetStateProperty.resolveWith((
+                        states,
+                      ) {
                         return states.contains(WidgetState.selected)
                             ? Colors.white
                             : Colors.white70;
                       }),
-                      backgroundColor:
-                          WidgetStateProperty.resolveWith((states) {
+                      backgroundColor: WidgetStateProperty.resolveWith((
+                        states,
+                      ) {
                         return states.contains(WidgetState.selected)
                             ? _orange.withAlpha(52)
                             : Colors.white10;
@@ -889,8 +1020,10 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                       hintText: _selectedImage == null
                           ? 'メッセージを入力...'
                           : '画像について質問...',
-                      hintStyle:
-                          const TextStyle(color: Colors.white38, height: 1.5),
+                      hintStyle: const TextStyle(
+                        color: Colors.white38,
+                        height: 1.5,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
                         borderSide: const BorderSide(color: Colors.white12),
@@ -901,8 +1034,10 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
-                        borderSide:
-                            const BorderSide(color: _orange, width: 1.5),
+                        borderSide: const BorderSide(
+                          color: _orange,
+                          width: 1.5,
+                        ),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -1079,8 +1214,11 @@ class _TypingDotsState extends State<_TypingDots>
       builder: (_, __) {
         return Text(
           '●' * _dotCount.value,
-          style:
-              const TextStyle(color: Colors.white54, fontSize: 14, height: 1.5),
+          style: const TextStyle(
+            color: Colors.white54,
+            fontSize: 14,
+            height: 1.5,
+          ),
         );
       },
     );

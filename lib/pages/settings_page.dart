@@ -28,7 +28,10 @@ class SettingsPage extends StatelessWidget {
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const ProfileSettingsPage()),
+              MaterialPageRoute(
+                settings: const RouteSettings(name: '/profile-settings'),
+                builder: (_) => const ProfileSettingsPage(),
+              ),
             ),
           ),
           const Divider(),
@@ -48,7 +51,10 @@ class SettingsPage extends StatelessWidget {
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const ThemeSelectorPage()),
+              MaterialPageRoute(
+                settings: const RouteSettings(name: '/settings/theme'),
+                builder: (_) => const ThemeSelectorPage(),
+              ),
             ),
           ),
           ListTile(
@@ -59,6 +65,8 @@ class SettingsPage extends StatelessWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
+                settings:
+                    const RouteSettings(name: '/settings/ai-share-button'),
                 builder: (_) => const AiShareButtonSettingsPage(),
               ),
             ),
@@ -69,7 +77,10 @@ class SettingsPage extends StatelessWidget {
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const AssetManagementPage()),
+              MaterialPageRoute(
+                settings: const RouteSettings(name: '/asset-management'),
+                builder: (_) => const AssetManagementPage(),
+              ),
             ),
           ),
           ListTile(
@@ -78,7 +89,10 @@ class SettingsPage extends StatelessWidget {
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const FinancialReportPage()),
+              MaterialPageRoute(
+                settings: const RouteSettings(name: '/financial-report'),
+                builder: (_) => const FinancialReportPage(),
+              ),
             ),
           ),
           ListTile(
@@ -89,6 +103,7 @@ class SettingsPage extends StatelessWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
+                settings: const RouteSettings(name: '/offline-secure-mode'),
                 builder: (_) => const OfflineSecureModeSettingsPage(),
               ),
             ),
@@ -100,7 +115,10 @@ class SettingsPage extends StatelessWidget {
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const FeedbackPage()),
+              MaterialPageRoute(
+                settings: const RouteSettings(name: '/feedback'),
+                builder: (_) => const FeedbackPage(),
+              ),
             ),
           ),
           ListTile(
@@ -109,7 +127,10 @@ class SettingsPage extends StatelessWidget {
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const AdminAnalyticsPage()),
+              MaterialPageRoute(
+                settings: const RouteSettings(name: '/admin'),
+                builder: (_) => const AdminAnalyticsPage(),
+              ),
             ),
           ),
           const Divider(),

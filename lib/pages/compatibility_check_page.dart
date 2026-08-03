@@ -47,6 +47,12 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
+        settings: RouteSettings(
+          name: compatibilityResultRoute(
+            myType: widget.myType,
+            partnerType: _selectedPartnerType!,
+          ),
+        ),
         builder: (context) => CompatibilityResultPage(
           myType: widget.myType,
           partnerType: _selectedPartnerType!,
@@ -326,6 +332,12 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
+              settings: RouteSettings(
+                name: compatibilityResultRoute(
+                  myType: widget.myType,
+                  partnerType: type,
+                ),
+              ),
               builder: (context) => CompatibilityResultPage(
                 myType: widget.myType,
                 partnerType: type,

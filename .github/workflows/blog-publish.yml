@@ -14,9 +14,11 @@ on:
         required: false
         default: ''
       platforms:
-        description: '投稿先プラットフォーム (qiita, devto, 両方: qiita,devto)'
+        # ⚠️ 2026-07-12: Qiita アカウント利用停止につき既定から qiita を除外。
+        # 停止解除まで qiita を指定しないこと。
+        description: '投稿先プラットフォーム (通常は devto のみ / qiita は停止中)'
         required: false
-        default: 'qiita,devto'
+        default: 'devto'
       dry_run:
         description: 'ドライラン (true=投稿しない, false=実投稿)'
         required: false
@@ -26,7 +28,7 @@ on:
     - cron: '0 12 * * *'  # 毎日 12:00 UTC = 21:00 JST
 
 concurrency:
-  group: blog-publish-${{ github.run_id }}
+  group: blog-publish
   cancel-in-progress: false
 
 permissions:
@@ -45,7 +47,7 @@ jobs:
     steps:
       # ── Step 1: コード取得 ────────────────────────────────────────────────
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # ── Step 1.5: 自動スケジュール実行時 — 未投稿ドラフト自動選択 ──────
       - name: Resolve publish draft
@@ -146,7 +148,13 @@ jobs:
               pid = p["id"]
               title = p["title"]
               print(f"[trace={trace}] Publishing DB post: {pid} — {title}")
-              payload = json.dumps({"action": "blog.publish_post", "id": pid}).encode()
+              # Scheduled ready-post publishing is dev.to-only while Qiita is suspended.
+              # schedule-hub intersects this allowlist with the stored targets.
+              payload = json.dumps({
+                  "action": "blog.publish_post",
+                  "id": pid,
+                  "platforms": ["devto"],
+              }).encode()
               req = urllib.request.Request(
                   f"{url}/functions/v1/schedule-hub",
                   data=payload,
@@ -272,9 +280,10 @@ jobs:
           DRAFT_PATH="$DRAFT_PATH_VAR"
           TITLE="$ARTICLE_TITLE"
           # Scheduled実行の場合は自動投稿 (dry_run=false), 手動実行の場合は入力値を使用
+          # 2026-07-12: Qiita アカウント利用停止につき schedule は devto のみ
           if [ "${{ github.event_name }}" = "schedule" ]; then
             DRY_RUN="false"
-            PLATFORMS="qiita,devto"
+            PLATFORMS="devto"
           else
             DRY_RUN="${{ github.event.inputs.dry_run }}"
             PLATFORMS="${{ github.event.inputs.platforms }}"
@@ -327,10 +336,10 @@ jobs:
           TITLE="$ARTICLE_TITLE"
           TAGS="$TAGS_VAR"
           
-          # Scheduled実行の場合は自動投稿 (dry_run=false, platforms=qiita,devto)
+          # 2026-07-12: Qiita アカウント利用停止につき schedule は devto のみ
           if [ "${{ github.event_name }}" = "schedule" ]; then
             DRY_RUN="false"
-            PLATFORMS="qiita,devto"
+            PLATFORMS="devto"
           else
             DRY_RUN="${{ github.event.inputs.dry_run }}"
             PLATFORMS="${{ github.event.inputs.platforms }}"
@@ -347,9 +356,11 @@ jobs:
 
           QIITA_URL=""
           DEVTO_URL=""
+          PUBLISH_ATTEMPTED="false"
 
           # Qiita: 日本語コンテンツ
           if echo "$PLATFORMS" | grep -q "qiita"; then
+            PUBLISH_ATTEMPTED="true"
             echo "📤 Qiita に日本語記事を投稿..."
             POST_ID="${{ steps.register.outputs.post_id }}"
             PAYLOAD=$(jq -n \
@@ -376,6 +387,7 @@ jobs:
           # dev.to: 英語コンテンツ (draft_path_en が指定されている場合のみ)
           if echo "$PLATFORMS" | grep -q "devto"; then
             if [ -n "$DRAFT_PATH_EN" ] && [ -f "$DRAFT_PATH_EN" ]; then
+              PUBLISH_ATTEMPTED="true"
               echo "📤 dev.to に英語記事を投稿..."
               CONTENT_EN=$(cat "$DRAFT_PATH_EN")
               # 英語ドラフトのタイトルを抽出
@@ -416,9 +428,20 @@ jobs:
           echo "qiita_url=$QIITA_URL" >> $GITHUB_OUTPUT
           echo "devto_url=$DEVTO_URL" >> $GITHUB_OUTPUT
 
+          # Fail closed: only when a publish was actually attempted (not skipped)
+          # and no platform URL was produced. Skipping (e.g. no English draft for
+          # scheduled devto-only runs) exits 0 to avoid spurious workflow-failure issues.
+          if [ "$PUBLISH_ATTEMPTED" = "true" ] && [ -z "$QIITA_URL" ] && [ -z "$DEVTO_URL" ]; then
+            echo "::error::No platform publish succeeded; leaving the draft unpublished"
+            exit 1
+          fi
+
       # ── Step 4.5: blog_posts.status を 'posted' に更新 (UI反映) ────────
       - name: Step 4.5 - Update blog_posts status
-        if: steps.auto_select.outputs.has_draft == 'true' && github.event.inputs.dry_run != 'true'
+        if: >-
+          steps.auto_select.outputs.has_draft == 'true' &&
+          github.event.inputs.dry_run != 'true' &&
+          (steps.publish.outputs.qiita_url != '' || steps.publish.outputs.devto_url != '')
         continue-on-error: true
         env:
           SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
@@ -445,7 +468,10 @@ jobs:
       # Branch-protection safe: always push a status branch, then auto-merge when BLOG_PAT can.
       # If auto-merge fails, the branch/PR remains as the manual fallback.
       - name: Step 5 - Mark draft as published
-        if: steps.auto_select.outputs.has_draft == 'true' && github.event.inputs.dry_run != 'true'
+        if: >-
+          steps.auto_select.outputs.has_draft == 'true' &&
+          github.event.inputs.dry_run != 'true' &&
+          (steps.publish.outputs.qiita_url != '' || steps.publish.outputs.devto_url != '')
         env:
           GH_TOKEN: ${{ secrets.BLOG_PAT || secrets.GH_PAT_BLOG_MERGE || secrets.BYPASS_RULES || github.token }}
           BLOG_PAT: ${{ secrets.BLOG_PAT }}
@@ -468,6 +494,11 @@ jobs:
         run: |
           DRY_RUN="${{ github.event.inputs.dry_run }}"
           STATUS="success"
+          if [ "${{ steps.auto_select.outputs.has_draft }}" = "true" ] && \
+             [ "$DRY_RUN" != "true" ] && \
+             [ -z "$QIITA_URL" ] && [ -z "$DEVTO_URL" ]; then
+            STATUS="failure"
+          fi
           SUMMARY="blog-publish: $ARTICLE_TITLE | dry_run=$DRY_RUN | qiita=$QIITA_URL | devto=$DEVTO_URL"
           curl -s -o /dev/null \
             -X POST \

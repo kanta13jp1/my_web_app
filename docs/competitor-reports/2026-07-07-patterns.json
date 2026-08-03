@@ -1,0 +1,1535 @@
+{
+  "generated_at": "2026-07-06T23:04:05Z",
+  "source_files": [
+    "docs/competitor-reports/2026-07-07.md"
+  ],
+  "min_confidence": 0.5,
+  "entries_total": 50,
+  "filter_summary": {
+    "total": 50,
+    "by_verdict": {
+      "pass": 0,
+      "review": 50,
+      "drop": 0
+    },
+    "risk_flags": {
+      "missing_source_url": 50,
+      "unverified_language": 2
+    }
+  },
+  "entries": [
+    {
+      "entry": {
+        "entry_id": "nf-978ac8447a18",
+        "title": "エグゼクティブサマリー（新シグナルのみ）",
+        "text": "エグゼクティブサマリー（新シグナルのみ）",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "エグゼクティブサマリー（新シグナルのみ）"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-978ac8447a18",
+        "title": "エグゼクティブサマリー（新シグナルのみ）",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-68a8b6d881f6",
+        "title": "#",
+        "text": "# # シグナル 重要度 自社差別化軸への含意",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "#",
+          "url": "",
+          "status": "",
+          "summary": "# シグナル 重要度 自社差別化軸への含意"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-68a8b6d881f6",
+        "title": "#",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1b297d7afd4c",
+        "title": "1",
+        "text": "1 1 **【本日実行】Anthropic Fable 5 が本日 7/7 で subscription 含有終了→従量 credit（$10/$50）へ転換。公式 *\"Redeploying Fable 5\"* は「恒久離脱ではない・容量回復次第 subscription へ復帰予定・新 usage limit + safeguard 付き」と明言。** 🟠 昨日フラグの **当日確定**。自社は Opus 4.8 稼働で Fable 5 非依存だが、[[project_20260615_anthropic_billing_split_model_retire]]（Anthropic 課金分離）の *実行日* に相当＝Claude 依存 cron の予算・overflow billing 影響を **本日直後に確認**。Fable 5 従量化が誤って cron に混入しない設定確認も。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "1",
+          "url": "",
+          "status": "",
+          "summary": "1 **【本日実行】Anthropic Fable 5 が本日 7/7 で subscription 含有終了→従量 credit（$10/$50）へ転換。公式 *\"Redeploying Fable 5\"* は「恒久離脱ではない・容量回復次第 subscription へ復帰予定・新 usage limit + safeguard 付き」と明言。** 🟠 昨日フラグの **当日確定**。自社は Opus 4.8 稼働で Fable 5 非依存だが、[[project_20260615_anthropic_billing_split_model_retire]]（Anthropic 課金分離）の *実行日* に相当＝Claude 依存 cron の予算・overflow billing 影響を **本日直後に確認**。Fable 5 従量化が誤って cron に混入しない設定確認も。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1b297d7afd4c",
+        "title": "1",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-959d4c939706",
+        "title": "2",
+        "text": "2 2 **White House 主導の *frontier model 自主基準* が「week of July 7」に発表される可能性。Anthropic が合意したフレームが他ラボの雛形となり、8/1 の自主基準発表へ。Google は Gemini 3.5 Pro 投入前に協議中。** 🟠 **新シグナル（規制レイヤー）**。GPT-5.6 の「約20の政府審査済パートナー限定」提供の背景＝安全審査ゲートが *業界標準化* へ。自社 `AI_FALLBACK_RUNBOOK` の「数週間内 GA」観察は、ベンダー供給側に **規制ゲート**が乗る前提で継続が妥当。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "2",
+          "url": "",
+          "status": "",
+          "summary": "2 **White House 主導の *frontier model 自主基準* が「week of July 7」に発表される可能性。Anthropic が合意したフレームが他ラボの雛形となり、8/1 の自主基準発表へ。Google は Gemini 3.5 Pro 投入前に協議中。** 🟠 **新シグナル（規制レイヤー）**。GPT-5.6 の「約20の政府審査済パートナー限定」提供の背景＝安全審査ゲートが *業界標準化* へ。自社 `AI_FALLBACK_RUNBOOK` の「数週間内 GA」観察は、ベンダー供給側に **規制ゲート**が乗る前提で継続が妥当。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-959d4c939706",
+        "title": "2",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d12b3d6b470c",
+        "title": "3",
+        "text": "3 3 **OpenAI GPT-5.6 Sol を *Cerebras 上で最大 750 tokens/sec*（7月）で提供開始＝推論速度の frontier 化。GA は依然「coming weeks」で firm date なし。** 🟢 07-06 の「提供状況変化なし」に *速度パートナーシップ* の新レイヤーを追加。fallback matrix のティア（Sol/Terra/Luna）に **推論速度**という新軸。自社 cron の latency 敏感タスクでは将来の選択肢だが、限定プレビュー継続ゆえ観察フェーズ維持。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "3",
+          "url": "",
+          "status": "",
+          "summary": "3 **OpenAI GPT-5.6 Sol を *Cerebras 上で最大 750 tokens/sec*（7月）で提供開始＝推論速度の frontier 化。GA は依然「coming weeks」で firm date なし。** 🟢 07-06 の「提供状況変化なし」に *速度パートナーシップ* の新レイヤーを追加。fallback matrix のティア（Sol/Terra/Luna）に **推論速度**という新軸。自社 cron の latency 敏感タスクでは将来の選択肢だが、限定プレビュー継続ゆえ観察フェーズ維持。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d12b3d6b470c",
+        "title": "3",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c64359e22b06",
+        "title": "4",
+        "text": "4 4 **Google Gemini 3.5 Pro が 6 月から遅延し *~7/17 が leak target*。Antigravity / LMArena テスターが long-horizon multi-step タスクの弱点を指摘。Google は時価総額 ~$225B 減 + talent exodus 報道。** 🟠 採択済 discovery #25（Google Jules / Antigravity）の続報。**自社 L1 lane（Antigravity+Gemini 探索）の実効投入時期が ~7/17 へ後ろ倒し**。Deep Think / 2M-token context は魅力だが、agentic 長時間タスクの弱点は L1 探索の期待値調整材料。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "4",
+          "url": "",
+          "status": "",
+          "summary": "4 **Google Gemini 3.5 Pro が 6 月から遅延し *~7/17 が leak target*。Antigravity / LMArena テスターが long-horizon multi-step タスクの弱点を指摘。Google は時価総額 ~$225B 減 + talent exodus 報道。** 🟠 採択済 discovery #25（Google Jules / Antigravity）の続報。**自社 L1 lane（Antigravity+Gemini 探索）の実効投入時期が ~7/17 へ後ろ倒し**。Deep Think / 2M-token context は魅力だが、agentic 長時間タスクの弱点は L1 探索の期待値調整材料。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c64359e22b06",
+        "title": "4",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.36,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "unverified_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "unverified terms: leak",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-21c26c830bbc",
+        "title": "5",
+        "text": "5 5 **MoneyForward AI Cowork が *本月（7月）ローンチ月*。新詳細＝「業務提案」エージェント（\"今すべきタスク\"を察知・提案）/「社内 AI ヘルプデスク」/「定型業務のメニュー化」+ ガバナンス（ガードレール・人による下書き承認・権限管理・AI 監査ログ）。6 バックオフィス業務対象・2030 年 AI ARR 150 億円目標。** 🟠 **最大の B/S 中核脅威が本番化フェーズへ**。「業務提案」＝自社の *proactive task suggestion* と正面競合。ただし MF は経理・労務の *バックオフィス特化*＝自社の差別化「6部署×B/S の **個人向け統合ドメインモデル**」（家計・資産・キャリアを跨ぐ）で棲み分け。go-live 実確認を継続。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "5",
+          "url": "",
+          "status": "",
+          "summary": "5 **MoneyForward AI Cowork が *本月（7月）ローンチ月*。新詳細＝「業務提案」エージェント（\"今すべきタスク\"を察知・提案）/「社内 AI ヘルプデスク」/「定型業務のメニュー化」+ ガバナンス（ガードレール・人による下書き承認・権限管理・AI 監査ログ）。6 バックオフィス業務対象・2030 年 AI ARR 150 億円目標。** 🟠 **最大の B/S 中核脅威が本番化フェーズへ**。「業務提案」＝自社の *proactive task suggestion* と正面競合。ただし MF は経理・労務の *バックオフィス特化*＝自社の差別化「6部署×B/S の **個人向け統合ドメインモデル**」（家計・資産・キャリアを跨ぐ）で棲み分け。go-live 実確認を継続。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-21c26c830bbc",
+        "title": "5",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-837ed570e083",
+        "title": "詳細セクション（重大シグナル深掘り）",
+        "text": "詳細セクション（重大シグナル深掘り）",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "詳細セクション（重大シグナル深掘り）"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-837ed570e083",
+        "title": "詳細セクション（重大シグナル深掘り）",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ae39e4bfea59",
+        "title": "事実（`[AI-TOOL-VERIFY]` / Anthropic 公式 + 複数大手）**: **本日 2026-07-07** で Fable 5 は Pro/Max/Team/select Enterprise の **subscri",
+        "text": "事実（`[AI-TOOL-VERIFY]` / Anthropic 公式 + 複数大手）**: **本日 2026-07-07** で Fable 5 は Pro/Max/Team/select Enterprise の **subscription 含有（週次上限の 50% まで）が終了**し、**7/8 以降は従量 credit**（$10/1M 入力・$50/1M 出力＝Opus 4.8 の $5/$25 の *ちょうど2倍*・現行価格表で最高額モデル）へ移行。Settings → Usage で有効化・上限設定。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "事実（`[AI-TOOL-VERIFY]` / Anthropic 公式 + 複数大手）**: **本日 2026-07-07** で Fable 5 は Pro/Max/Team/select Enterprise の **subscription 含有（週次上限の 50% まで）が終了**し、**7/8 以降は従量 credit**（$10/1M 入力・$50/1M 出力＝Opus 4.8 の $5/$25 の *ちょうど2倍*・現行価格表で最高額モデル）へ移行。Settings → Usage で有効化・上限設定。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ae39e4bfea59",
+        "title": "事実（`[AI-TOOL-VERIFY]` / Anthropic 公式 + 複数大手）**: **本日 2026-07-07** で Fable 5 は Pro/Max/Team/select Enterprise の **subscri",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d1e1e6c0e4ee",
+        "title": "公式 \"Redeploying Fable 5\"**: Anthropic は Fable 5 が **恒久的に subscription を離れるわけではない**とし、「**容量が許し次第、標準 subscription の一部として復帰",
+        "text": "公式 \"Redeploying Fable 5\"**: Anthropic は Fable 5 が **恒久的に subscription を離れるわけではない**とし、「**容量が許し次第、標準 subscription の一部として復帰させることを目指す**」と明言。**新しい usage limit + safeguard** 付きで再展開。提供面は Claude.ai / Claude Code / Claude Cowork / Claude Platform。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "公式 \"Redeploying Fable 5\"**: Anthropic は Fable 5 が **恒久的に subscription を離れるわけではない**とし、「**容量が許し次第、標準 subscription の一部として復帰させることを目指す**」と明言。**新しい usage limit + safeguard** 付きで再展開。提供面は Claude.ai / Claude Code / Claude Cowork / Claude Platform。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d1e1e6c0e4ee",
+        "title": "公式 \"Redeploying Fable 5\"**: Anthropic は Fable 5 が **恒久的に subscription を離れるわけではない**とし、「**容量が許し次第、標準 subscription の一部として復帰",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-30aa38a96887",
+        "title": "自社への含意**: 自社は **Opus 4.8 上で稼働**＝Fable 5 非依存。ただし本日は [[project_20260615_anthropic_billing_split_model_retire]]（programmati",
+        "text": "自社への含意**: 自社は **Opus 4.8 上で稼働**＝Fable 5 非依存。ただし本日は [[project_20260615_anthropic_billing_split_model_retire]]（programmatic Claude の Credit Pool 分離 + 旧モデル退役）の *実行日* に相当。**(a)** 自社の GHA / Schedule cron（一部 Claude 依存）の予算・overflow billing 影響を **本日〜7/9 に確認**。**(b)** Fable 5 の従量化（$10/$50）が **誤って cron 経路に混入しない**よう Settings → Usage の上限設定を点検。**(c)** Sonnet 5 の Opus 近接×$2/$10 導入価格（〜8/31）は cron コスト最適化の *現実的選択肢*（`PROMPT_CACHING_OPUS47_COST_GUIDE` 延長）として引き続き memo。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社への含意**: 自社は **Opus 4.8 上で稼働**＝Fable 5 非依存。ただし本日は [[project_20260615_anthropic_billing_split_model_retire]]（programmatic Claude の Credit Pool 分離 + 旧モデル退役）の *実行日* に相当。**(a)** 自社の GHA / Schedule cron（一部 Claude 依存）の予算・overflow billing 影響を **本日〜7/9 に確認**。**(b)** Fable 5 の従量化（$10/$50）が **誤って cron 経路に混入しない**よう Settings → Usage の上限設定を点検。**(c)** Sonnet 5 の Opus 近接×$2/$10 導入価格（〜8/31）は cron コスト最適化の *現実的選択肢*（`PROMPT_CACHING_OPUS47_COST_GUIDE` 延長）として引き続き memo。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-30aa38a96887",
+        "title": "自社への含意**: 自社は **Opus 4.8 上で稼働**＝Fable 5 非依存。ただし本日は [[project_20260615_anthropic_billing_split_model_retire]]（programmati",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d43c810ae636",
+        "title": "事実（`[AI-TOOL-VERIFY]` 済 / 報道ベース）**: White House が frontier model リリースの **自主基準（voluntary standards）**を AI 各社と最終調整中で、**「we",
+        "text": "事実（`[AI-TOOL-VERIFY]` 済 / 報道ベース）**: White House が frontier model リリースの **自主基準（voluntary standards）**を AI 各社と最終調整中で、**「week of July 7」に発表**される可能性。**Anthropic が合意したフレーム**が他ラボへ求められる雛形となり、**8/1 の自主基準発表**へつながる見込み。**Google は Gemini 3.5 Pro 等の先進コーディングモデル投入前に協議中**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "事実（`[AI-TOOL-VERIFY]` 済 / 報道ベース）**: White House が frontier model リリースの **自主基準（voluntary standards）**を AI 各社と最終調整中で、**「week of July 7」に発表**される可能性。**Anthropic が合意したフレーム**が他ラボへ求められる雛形となり、**8/1 の自主基準発表**へつながる見込み。**Google は Gemini 3.5 Pro 等の先進コーディングモデル投入前に協議中**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d43c810ae636",
+        "title": "事実（`[AI-TOOL-VERIFY]` 済 / 報道ベース）**: White House が frontier model リリースの **自主基準（voluntary standards）**を AI 各社と最終調整中で、**「we",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ddd9b26e4f63",
+        "title": "背景との接続**: GPT-5.6 の「**約20の政府審査済パートナー限定**プレビュー」（6/2 行政命令の 30 日能力評価ゲート）と同一の *安全審査レイヤー* が、業界横断の **自主基準へ標準化**する流れ。",
+        "text": "背景との接続**: GPT-5.6 の「**約20の政府審査済パートナー限定**プレビュー」（6/2 行政命令の 30 日能力評価ゲート）と同一の *安全審査レイヤー* が、業界横断の **自主基準へ標準化**する流れ。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "背景との接続**: GPT-5.6 の「**約20の政府審査済パートナー限定**プレビュー」（6/2 行政命令の 30 日能力評価ゲート）と同一の *安全審査レイヤー* が、業界横断の **自主基準へ標準化**する流れ。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ddd9b26e4f63",
+        "title": "背景との接続**: GPT-5.6 の「**約20の政府審査済パートナー限定**プレビュー」（6/2 行政命令の 30 日能力評価ゲート）と同一の *安全審査レイヤー* が、業界横断の **自主基準へ標準化**する流れ。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-97005d929a70",
+        "title": "自社への含意**: 直接の製品競合ではないが、**ベンダー供給側に規制ゲートが常設化**する構造変化。自社 `AI_FALLBACK_RUNBOOK`・`DEV_PROCESS_MULTI_AI` の「数週間内 GA」観察は、モデル GA ",
+        "text": "自社への含意**: 直接の製品競合ではないが、**ベンダー供給側に規制ゲートが常設化**する構造変化。自社 `AI_FALLBACK_RUNBOOK`・`DEV_PROCESS_MULTI_AI` の「数週間内 GA」観察は、モデル GA が **審査ゲート通過に律速される**前提で継続。fallback ポートフォリオ（Claude / Codex / Gemini / Copilot）の *GA タイミング不確実性* を織り込む。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社への含意**: 直接の製品競合ではないが、**ベンダー供給側に規制ゲートが常設化**する構造変化。自社 `AI_FALLBACK_RUNBOOK`・`DEV_PROCESS_MULTI_AI` の「数週間内 GA」観察は、モデル GA が **審査ゲート通過に律速される**前提で継続。fallback ポートフォリオ（Claude / Codex / Gemini / Copilot）の *GA タイミング不確実性* を織り込む。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-97005d929a70",
+        "title": "自社への含意**: 直接の製品競合ではないが、**ベンダー供給側に規制ゲートが常設化**する構造変化。自社 `AI_FALLBACK_RUNBOOK`・`DEV_PROCESS_MULTI_AI` の「数週間内 GA」観察は、モデル GA ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d7c2f470e726",
+        "title": "事実**: OpenAI は **GPT-5.6 Sol を Cerebras 上で最大 750 tokens/sec**（7月）で提供開始し「frontier intelligence を前例のない速度で」と告知。GA は依然 **「co",
+        "text": "事実**: OpenAI は **GPT-5.6 Sol を Cerebras 上で最大 750 tokens/sec**（7月）で提供開始し「frontier intelligence を前例のない速度で」と告知。GA は依然 **「coming weeks」で firm date なし**・ChatGPT 未提供・価格据置（Sol $5/$30・Terra $2.5/$15・Luna $1/$6 per 1M）。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "事実**: OpenAI は **GPT-5.6 Sol を Cerebras 上で最大 750 tokens/sec**（7月）で提供開始し「frontier intelligence を前例のない速度で」と告知。GA は依然 **「coming weeks」で firm date なし**・ChatGPT 未提供・価格据置（Sol $5/$30・Terra $2.5/$15・Luna $1/$6 per 1M）。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d7c2f470e726",
+        "title": "事実**: OpenAI は **GPT-5.6 Sol を Cerebras 上で最大 750 tokens/sec**（7月）で提供開始し「frontier intelligence を前例のない速度で」と告知。GA は依然 **「co",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d02290f9b0df",
+        "title": "自社への含意**: 07-06 の「提供状況変化なし」に **推論速度パートナーシップ**の新レイヤー。fallback matrix のティア（Sol/Terra/Luna）に *スループット* という新軸が加わる。自社 cron の l",
+        "text": "自社への含意**: 07-06 の「提供状況変化なし」に **推論速度パートナーシップ**の新レイヤー。fallback matrix のティア（Sol/Terra/Luna）に *スループット* という新軸が加わる。自社 cron の latency 敏感タスク（例: X-share 生成のポーリング予算）では将来の選択肢だが、**限定プレビュー継続**ゆえ観察フェーズ維持。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社への含意**: 07-06 の「提供状況変化なし」に **推論速度パートナーシップ**の新レイヤー。fallback matrix のティア（Sol/Terra/Luna）に *スループット* という新軸が加わる。自社 cron の latency 敏感タスク（例: X-share 生成のポーリング予算）では将来の選択肢だが、**限定プレビュー継続**ゆえ観察フェーズ維持。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d02290f9b0df",
+        "title": "自社への含意**: 07-06 の「提供状況変化なし」に **推論速度パートナーシップ**の新レイヤー。fallback matrix のティア（Sol/Terra/Luna）に *スループット* という新軸が加わる。自社 cron の l",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9ad8624e5696",
+        "title": "事実**: Gemini 3.5 Pro は **6 月ターゲットを逃し 7 月 GA へ**。leak は **7/17 target**。late June 時点で **Vertex AI enterprise preview + An",
+        "text": "事実**: Gemini 3.5 Pro は **6 月ターゲットを逃し 7 月 GA へ**。leak は **7/17 target**。late June 時点で **Vertex AI enterprise preview + Antigravity + LMArena** の限定テスターのみアクセス可で、**long / complex multi-step タスクの扱いにギャップ**が指摘され GA を後ろ倒し。2M-token context + Deep Think 推論モード。Google は **時価総額 ~$225B 減 + talent exodus** 報道。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "事実**: Gemini 3.5 Pro は **6 月ターゲットを逃し 7 月 GA へ**。leak は **7/17 target**。late June 時点で **Vertex AI enterprise preview + Antigravity + LMArena** の限定テスターのみアクセス可で、**long / complex multi-step タスクの扱いにギャップ**が指摘され GA を後ろ倒し。2M-token context + Deep Think 推論モード。Google は **時価総額 ~$225B 減 + talent exodus** 報道。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9ad8624e5696",
+        "title": "事実**: Gemini 3.5 Pro は **6 月ターゲットを逃し 7 月 GA へ**。leak は **7/17 target**。late June 時点で **Vertex AI enterprise preview + An",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.36,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "unverified_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "unverified terms: leak",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-63402e6ddfed",
+        "title": "自社への含意**: 採択済 discovery #25（Google Jules / Antigravity）の続報。**自社 L1 lane（Antigravity+Gemini 探索）の実効投入時期が ~7/17 へ**。agentic",
+        "text": "自社への含意**: 採択済 discovery #25（Google Jules / Antigravity）の続報。**自社 L1 lane（Antigravity+Gemini 探索）の実効投入時期が ~7/17 へ**。agentic 長時間タスクの弱点指摘は、L1 探索レーンの期待値を「探索・アイデア出し」に留め、実装は L2/L3（Codex/Claude）に寄せる現行運用の妥当性を裏付け。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社への含意**: 採択済 discovery #25（Google Jules / Antigravity）の続報。**自社 L1 lane（Antigravity+Gemini 探索）の実効投入時期が ~7/17 へ**。agentic 長時間タスクの弱点指摘は、L1 探索レーンの期待値を「探索・アイデア出し」に留め、実装は L2/L3（Codex/Claude）に寄せる現行運用の妥当性を裏付け。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-63402e6ddfed",
+        "title": "自社への含意**: 採択済 discovery #25（Google Jules / Antigravity）の続報。**自社 L1 lane（Antigravity+Gemini 探索）の実効投入時期が ~7/17 へ**。agentic",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ad4784328f49",
+        "title": "事実**: バックオフィス業務を自律遂行する AI サービス。**2026 年 7 月提供開始予定**（4/7 先行受付開始）。新詳細＝**「定型業務のメニュー化」**（頻度の高い業務をメニュー選択で開始）/ **「業務提案」**（\"今すべ",
+        "text": "事実**: バックオフィス業務を自律遂行する AI サービス。**2026 年 7 月提供開始予定**（4/7 先行受付開始）。新詳細＝**「定型業務のメニュー化」**（頻度の高い業務をメニュー選択で開始）/ **「業務提案」**（\"今すべきタスク\" をエージェントが察知・提案）/ **「社内 AI ヘルプデスク」**。ガバナンス＝**ガードレール・AI 下書きの人による確認/承認・権限管理・AI 監査ログ**。「マネーフォワード クラウド」連携が標準。**6 つのバックオフィス業務**対象・**2030 年 AI ARR 150 億円**目標。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "事実**: バックオフィス業務を自律遂行する AI サービス。**2026 年 7 月提供開始予定**（4/7 先行受付開始）。新詳細＝**「定型業務のメニュー化」**（頻度の高い業務をメニュー選択で開始）/ **「業務提案」**（\"今すべきタスク\" をエージェントが察知・提案）/ **「社内 AI ヘルプデスク」**。ガバナンス＝**ガードレール・AI 下書きの人による確認/承認・権限管理・AI 監査ログ**。「マネーフォワード クラウド」連携が標準。**6 つのバックオフィス業務**対象・**2030 年 AI ARR 150 億円**目標。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ad4784328f49",
+        "title": "事実**: バックオフィス業務を自律遂行する AI サービス。**2026 年 7 月提供開始予定**（4/7 先行受付開始）。新詳細＝**「定型業務のメニュー化」**（頻度の高い業務をメニュー選択で開始）/ **「業務提案」**（\"今すべ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5a9c91acf988",
+        "title": "自社への含意**: **最大の B/S 中核脅威が本番化フェーズへ**。特に **「業務提案」**（proactive task suggestion）は自社の給料日サイクル提案・アクション提示と *機能思想が正面競合*。ただし MF は ",
+        "text": "自社への含意**: **最大の B/S 中核脅威が本番化フェーズへ**。特に **「業務提案」**（proactive task suggestion）は自社の給料日サイクル提案・アクション提示と *機能思想が正面競合*。ただし MF は **法人の経理・労務バックオフィス特化**＝自社の「6部署×B/S の **個人向け統合ドメインモデル**」（家計・資産・キャリア・投資を跨ぐ）とは対象ドメインで棲み分け。**go-live の実確認**（実プロダクトへのアクセス可否・料金）を次 run で継続。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社への含意**: **最大の B/S 中核脅威が本番化フェーズへ**。特に **「業務提案」**（proactive task suggestion）は自社の給料日サイクル提案・アクション提示と *機能思想が正面競合*。ただし MF は **法人の経理・労務バックオフィス特化**＝自社の「6部署×B/S の **個人向け統合ドメインモデル**」（家計・資産・キャリア・投資を跨ぐ）とは対象ドメインで棲み分け。**go-live の実確認**（実プロダクトへのアクセス可否・料金）を次 run で継続。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5a9c91acf988",
+        "title": "自社への含意**: **最大の B/S 中核脅威が本番化フェーズへ**。特に **「業務提案」**（proactive task suggestion）は自社の給料日サイクル提案・アクション提示と *機能思想が正面競合*。ただし MF は ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-270fe81bdf29",
+        "title": "検証ノート（`[AI-TOOL-VERIFY]` — 07-06 追加の M&A クエリ 初適用）",
+        "text": "検証ノート（`[AI-TOOL-VERIFY]` — 07-06 追加の M&A クエリ 初適用）",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "検証ノート（`[AI-TOOL-VERIFY]` — 07-06 追加の M&A クエリ 初適用）"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-270fe81bdf29",
+        "title": "検証ノート（`[AI-TOOL-VERIFY]` — 07-06 追加の M&A クエリ 初適用）",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2ebf74382b65",
+        "title": "07-06 レポートのアクション提案②に基づき、日次スキャンに **「主要競合の M&A / 資金調達」明示クエリ**を初適用。",
+        "text": "07-06 レポートのアクション提案②に基づき、日次スキャンに **「主要競合の M&A / 資金調達」明示クエリ**を初適用。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "07-06 レポートのアクション提案②に基づき、日次スキャンに **「主要競合の M&A / 資金調達」明示クエリ**を初適用。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2ebf74382b65",
+        "title": "07-06 レポートのアクション提案②に基づき、日次スキャンに **「主要競合の M&A / 資金調達」明示クエリ**を初適用。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0aafad82be3c",
+        "title": "重要な誤計上を回避**: 「Cognition（Devin）が Windsurf を買収」は検索要約が新規イベントとして提示したが、一次ソース（TechCrunch / Cognition 公式）で **2025-07-14 の旧イベント*",
+        "text": "重要な誤計上を回避**: 「Cognition（Devin）が Windsurf を買収」は検索要約が新規イベントとして提示したが、一次ソース（TechCrunch / Cognition 公式）で **2025-07-14 の旧イベント**と確認＝**本日 delta ではない**ため **除外**。日付混同を検証で捕捉した好例。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "重要な誤計上を回避**: 「Cognition（Devin）が Windsurf を買収」は検索要約が新規イベントとして提示したが、一次ソース（TechCrunch / Cognition 公式）で **2025-07-14 の旧イベント**と確認＝**本日 delta ではない**ため **除外**。日付混同を検証で捕捉した好例。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0aafad82be3c",
+        "title": "重要な誤計上を回避**: 「Cognition（Devin）が Windsurf を買収」は検索要約が新規イベントとして提示したが、一次ソース（TechCrunch / Cognition 公式）で **2025-07-14 の旧イベント*",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d8417846434b",
+        "title": "低確度で観察のみ**: Lovable の $12B 評価での調達協議（Forbes 6-05）/ Replit の $250M ラウンド（\"this summer\"）は firm な 7 月 delta として未確定＝**観察のみ**（採",
+        "text": "低確度で観察のみ**: Lovable の $12B 評価での調達協議（Forbes 6-05）/ Replit の $250M ラウンド（\"this summer\"）は firm な 7 月 delta として未確定＝**観察のみ**（採択・報告本文への計上は見送り）。M&A クエリは有用だが **要約の日付を一次ソースで裏取り**する運用を定着。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "低確度で観察のみ**: Lovable の $12B 評価での調達協議（Forbes 6-05）/ Replit の $250M ラウンド（\"this summer\"）は firm な 7 月 delta として未確定＝**観察のみ**（採択・報告本文への計上は見送り）。M&A クエリは有用だが **要約の日付を一次ソースで裏取り**する運用を定着。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d8417846434b",
+        "title": "低確度で観察のみ**: Lovable の $12B 評価での調達協議（Forbes 6-05）/ Replit の $250M ラウンド（\"this summer\"）は firm な 7 月 delta として未確定＝**観察のみ**（採",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ae6c1b557411",
+        "title": "（参考）低デルタ",
+        "text": "（参考）低デルタ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "（参考）低デルタ"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ae6c1b557411",
+        "title": "（参考）低デルタ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-40f716e73e09",
+        "title": "Notion**: **3.6（7/1）が最新**で 7/7 時点の新規リリースなし。Workers（ホスト型ランタイム）/ External Agents（Claude・Cursor）/ multi-agent workflows / 話",
+        "text": "Notion**: **3.6（7/1）が最新**で 7/7 時点の新規リリースなし。Workers（ホスト型ランタイム）/ External Agents（Claude・Cursor）/ multi-agent workflows / 話者識別 / Opus 4.8・Grok 4.3・GLM 5.2 混載は 07-05/06 既報。低デルタ。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Notion**: **3.6（7/1）が最新**で 7/7 時点の新規リリースなし。Workers（ホスト型ランタイム）/ External Agents（Claude・Cursor）/ multi-agent workflows / 話者識別 / Opus 4.8・Grok 4.3・GLM 5.2 混載は 07-05/06 既報。低デルタ。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-40f716e73e09",
+        "title": "Notion**: **3.6（7/1）が最新**で 7/7 時点の新規リリースなし。Workers（ホスト型ランタイム）/ External Agents（Claude・Cursor）/ multi-agent workflows / 話",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c07d9be18149",
+        "title": "OpenCode（次回 discovery 第1候補）**: **v1.17.12（6-30）** が最新＝**Claude Sonnet 5 の adaptive thinking 対応** + MCP OAuth 改善（refresh-",
+        "text": "OpenCode（次回 discovery 第1候補）**: **v1.17.12（6-30）** が最新＝**Claude Sonnet 5 の adaptive thinking 対応** + MCP OAuth 改善（refresh-token scope 要求・OAuth 後の再接続・エラー表示改善）。160K+ stars・7.5M MAU・75+ プロバイダ・OpenCode Zen（従量）。**解禁 2026-07-09** の第1候補として pre-scan 継続。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "OpenCode（次回 discovery 第1候補）**: **v1.17.12（6-30）** が最新＝**Claude Sonnet 5 の adaptive thinking 対応** + MCP OAuth 改善（refresh-token scope 要求・OAuth 後の再接続・エラー表示改善）。160K+ stars・7.5M MAU・75+ プロバイダ・OpenCode Zen（従量）。**解禁 2026-07-09** の第1候補として pre-scan 継続。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c07d9be18149",
+        "title": "OpenCode（次回 discovery 第1候補）**: **v1.17.12（6-30）** が最新＝**Claude Sonnet 5 の adaptive thinking 対応** + MCP OAuth 改善（refresh-",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ef744c7916a2",
+        "title": "Cursor / SpaceX**: SpaceX×Cursor $60B 買収は 07-06 で遡及計上済。7/7 時点の新規続報なし。frontier 3極化（Anthropic / OpenAI / SpaceX+xAI）の構図は継続",
+        "text": "Cursor / SpaceX**: SpaceX×Cursor $60B 買収は 07-06 で遡及計上済。7/7 時点の新規続報なし。frontier 3極化（Anthropic / OpenAI / SpaceX+xAI）の構図は継続監視。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Cursor / SpaceX**: SpaceX×Cursor $60B 買収は 07-06 で遡及計上済。7/7 時点の新規続報なし。frontier 3極化（Anthropic / OpenAI / SpaceX+xAI）の構図は継続監視。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ef744c7916a2",
+        "title": "Cursor / SpaceX**: SpaceX×Cursor $60B 買収は 07-06 で遡及計上済。7/7 時点の新規続報なし。frontier 3極化（Anthropic / OpenAI / SpaceX+xAI）の構図は継続",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7a58b20801a4",
+        "title": "クロスカット・テーマ（2026-07 の潮流）",
+        "text": "クロスカット・テーマ（2026-07 の潮流）",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "クロスカット・テーマ（2026-07 の潮流）"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7a58b20801a4",
+        "title": "クロスカット・テーマ（2026-07 の潮流）",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "text": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "アクション提案"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-da928b63e523",
+        "title": "discovery セクション（本日 = SKIP：cooldown）",
+        "text": "discovery セクション（本日 = SKIP：cooldown）",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "discovery セクション（本日 = SKIP：cooldown）"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-da928b63e523",
+        "title": "discovery セクション（本日 = SKIP：cooldown）",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-865f3ddd8438",
+        "title": "判定: SKIP**。7/02 の Google Jules / Antigravity 採択の **7-day cooldown** 中（次回解禁 **2026-07-09**）。連日採択で偏りを防ぐ運用ルールに従い本 run は新規追加",
+        "text": "判定: SKIP**。7/02 の Google Jules / Antigravity 採択の **7-day cooldown** 中（次回解禁 **2026-07-09**）。連日採択で偏りを防ぐ運用ルールに従い本 run は新規追加を見送り。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "判定: SKIP**。7/02 の Google Jules / Antigravity 採択の **7-day cooldown** 中（次回解禁 **2026-07-09**）。連日採択で偏りを防ぐ運用ルールに従い本 run は新規追加を見送り。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-865f3ddd8438",
+        "title": "判定: SKIP**。7/02 の Google Jules / Antigravity 採択の **7-day cooldown** 中（次回解禁 **2026-07-09**）。連日採択で偏りを防ぐ運用ルールに従い本 run は新規追加",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-008e157f9a2a",
+        "title": "cap 状況**: **25 / 50 社**（未到達 / discovery 継続フェーズ）。",
+        "text": "cap 状況**: **25 / 50 社**（未到達 / discovery 継続フェーズ）。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "cap 状況**: **25 / 50 社**（未到達 / discovery 継続フェーズ）。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-008e157f9a2a",
+        "title": "cap 状況**: **25 / 50 社**（未到達 / discovery 継続フェーズ）。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-06c40021235e",
+        "title": "discovery_history**: `{date: 2026-07-07, name: null, category: \"skip\", reason: \"cooldown / 7-day since 2026-07-02 ... / ",
+        "text": "discovery_history**: `{date: 2026-07-07, name: null, category: \"skip\", reason: \"cooldown / 7-day since 2026-07-02 ... / next unlock 2026-07-09 (OpenCode 第1候補)\", skipped: true}` を追記済。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "discovery_history**: `{date: 2026-07-07, name: null, category: \"skip\", reason: \"cooldown / 7-day since 2026-07-02 ... / next unlock 2026-07-09 (OpenCode 第1候補)\", skipped: true}` を追記済。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-06c40021235e",
+        "title": "discovery_history**: `{date: 2026-07-07, name: null, category: \"skip\", reason: \"cooldown / 7-day since 2026-07-02 ... / ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-58fc9495c854",
+        "title": "次回（7/09 解禁）第1候補 = OpenCode**（v1.17.12・6-30・Claude Sonnet 5 adaptive thinking・160K+ stars・7.5M MAU・75+ プロバイダ・OpenCode Zen",
+        "text": "次回（7/09 解禁）第1候補 = OpenCode**（v1.17.12・6-30・Claude Sonnet 5 adaptive thinking・160K+ stars・7.5M MAU・75+ プロバイダ・OpenCode Zen 従量）。次点 = **OpenAI GPT-5.6 Sol**（Codex 既収載ベンダー・Cerebras 750 tok/s・限定プレビュー観察）・**Microsoft Copilot / MAI-Code**（既収載ベンダー）・**Glean**（enterprise search→agent）・**Warp**（terminal-native・観察）。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "次回（7/09 解禁）第1候補 = OpenCode**（v1.17.12・6-30・Claude Sonnet 5 adaptive thinking・160K+ stars・7.5M MAU・75+ プロバイダ・OpenCode Zen 従量）。次点 = **OpenAI GPT-5.6 Sol**（Codex 既収載ベンダー・Cerebras 750 tok/s・限定プレビュー観察）・**Microsoft Copilot / MAI-Code**（既収載ベンダー）・**Glean**（enterprise search→agent）・**Warp**（terminal-native・観察）。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-58fc9495c854",
+        "title": "次回（7/09 解禁）第1候補 = OpenCode**（v1.17.12・6-30・Claude Sonnet 5 adaptive thinking・160K+ stars・7.5M MAU・75+ プロバイダ・OpenCode Zen",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "text": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ソース"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-210a09b0b9bf",
+        "title": "[Redeploying Claude Fable 5 — Anthropic](https://www.anthropic.com/news/redeploying-fable-5)",
+        "text": "[Redeploying Claude Fable 5 — Anthropic](https://www.anthropic.com/news/redeploying-fable-5)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Redeploying Claude Fable 5 — Anthropic](https://www.anthropic.com/news/redeploying-fable-5)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-210a09b0b9bf",
+        "title": "[Redeploying Claude Fable 5 — Anthropic](https://www.anthropic.com/news/redeploying-fable-5)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8e640eb4818a",
+        "title": "[Claude Fable 5 isn't permanently leaving subscriptions, Anthropic says — BleepingComputer](https://www.bleepingcomputer",
+        "text": "[Claude Fable 5 isn't permanently leaving subscriptions, Anthropic says — BleepingComputer](https://www.bleepingcomputer.com/news/artificial-intelligence/claude-fable-5-isnt-permanently-leaving-subscriptions-anthropic-says/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Claude Fable 5 isn't permanently leaving subscriptions, Anthropic says — BleepingComputer](https://www.bleepingcomputer.com/news/artificial-intelligence/claude-fable-5-isnt-permanently-leaving-subscriptions-anthropic-says/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8e640eb4818a",
+        "title": "[Claude Fable 5 isn't permanently leaving subscriptions, Anthropic says — BleepingComputer](https://www.bleepingcomputer",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-76fc3d85b94a",
+        "title": "[Claude Fable 5 Pricing: The July 7 Usage-Credits Switch — Digital Applied](https://www.digitalapplied.com/blog/claude-f",
+        "text": "[Claude Fable 5 Pricing: The July 7 Usage-Credits Switch — Digital Applied](https://www.digitalapplied.com/blog/claude-fable-5-usage-credits-july-7-pricing-guide-2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Claude Fable 5 Pricing: The July 7 Usage-Credits Switch — Digital Applied](https://www.digitalapplied.com/blog/claude-fable-5-usage-credits-july-7-pricing-guide-2026)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-76fc3d85b94a",
+        "title": "[Claude Fable 5 Pricing: The July 7 Usage-Credits Switch — Digital Applied](https://www.digitalapplied.com/blog/claude-f",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-643080b4f8f8",
+        "title": "[Fable 5 Subscription Ends Tomorrow: Per-Token Costs and Who Gets Hit Hardest — TechTimes](https://www.techtimes.com/art",
+        "text": "[Fable 5 Subscription Ends Tomorrow: Per-Token Costs and Who Gets Hit Hardest — TechTimes](https://www.techtimes.com/articles/319767/20260706/fable-5-subscription-ends-tomorrow-per-token-costs-who-gets-hit-hardest.htm)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Fable 5 Subscription Ends Tomorrow: Per-Token Costs and Who Gets Hit Hardest — TechTimes](https://www.techtimes.com/articles/319767/20260706/fable-5-subscription-ends-tomorrow-per-token-costs-who-gets-hit-hardest.htm)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-643080b4f8f8",
+        "title": "[Fable 5 Subscription Ends Tomorrow: Per-Token Costs and Who Gets Hit Hardest — TechTimes](https://www.techtimes.com/art",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0c46c640704f",
+        "title": "[Previewing GPT-5.6 Sol: a next-generation model — OpenAI](https://openai.com/index/previewing-gpt-5-6-sol/)",
+        "text": "[Previewing GPT-5.6 Sol: a next-generation model — OpenAI](https://openai.com/index/previewing-gpt-5-6-sol/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Previewing GPT-5.6 Sol: a next-generation model — OpenAI](https://openai.com/index/previewing-gpt-5-6-sol/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0c46c640704f",
+        "title": "[Previewing GPT-5.6 Sol: a next-generation model — OpenAI](https://openai.com/index/previewing-gpt-5-6-sol/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-deaa717da292",
+        "title": "[A preview of GPT-5.6 Sol, Terra, and Luna — OpenAI Help Center](https://help.openai.com/en/articles/20001325-a-preview-",
+        "text": "[A preview of GPT-5.6 Sol, Terra, and Luna — OpenAI Help Center](https://help.openai.com/en/articles/20001325-a-preview-of-gpt-56-sol-terra-and-luna)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[A preview of GPT-5.6 Sol, Terra, and Luna — OpenAI Help Center](https://help.openai.com/en/articles/20001325-a-preview-of-gpt-56-sol-terra-and-luna)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-deaa717da292",
+        "title": "[A preview of GPT-5.6 Sol, Terra, and Luna — OpenAI Help Center](https://help.openai.com/en/articles/20001325-a-preview-",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-db81c709f03c",
+        "title": "[Google Delays Gemini 3.5 Pro to July 2026 — Neuriflux](https://neuriflux.com/en/blog/gemini-3-5-pro-delayed-july-2026)",
+        "text": "[Google Delays Gemini 3.5 Pro to July 2026 — Neuriflux](https://neuriflux.com/en/blog/gemini-3-5-pro-delayed-july-2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Google Delays Gemini 3.5 Pro to July 2026 — Neuriflux](https://neuriflux.com/en/blog/gemini-3-5-pro-delayed-july-2026)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-db81c709f03c",
+        "title": "[Google Delays Gemini 3.5 Pro to July 2026 — Neuriflux](https://neuriflux.com/en/blog/gemini-3-5-pro-delayed-july-2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-80eaa369f88e",
+        "title": "[Google delays Gemini 3.5 Pro to July as talent exodus deepens — Startup Fortune](https://startupfortune.com/google-dela",
+        "text": "[Google delays Gemini 3.5 Pro to July as talent exodus deepens — Startup Fortune](https://startupfortune.com/google-delays-gemini-35-pro-to-july-as-talent-exodus-deepens-the-pressure-on-its-ai-ambitions/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Google delays Gemini 3.5 Pro to July as talent exodus deepens — Startup Fortune](https://startupfortune.com/google-delays-gemini-35-pro-to-july-as-talent-exodus-deepens-the-pressure-on-its-ai-ambitions/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-80eaa369f88e",
+        "title": "[Google delays Gemini 3.5 Pro to July as talent exodus deepens — Startup Fortune](https://startupfortune.com/google-dela",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-50ff46405f87",
+        "title": "[I/O 2026 developer highlights: Antigravity, Gemini API, AI Studio — Google Blog](https://blog.google/innovation-and-ai/",
+        "text": "[I/O 2026 developer highlights: Antigravity, Gemini API, AI Studio — Google Blog](https://blog.google/innovation-and-ai/technology/developers-tools/google-io-2026-developer-highlights/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[I/O 2026 developer highlights: Antigravity, Gemini API, AI Studio — Google Blog](https://blog.google/innovation-and-ai/technology/developers-tools/google-io-2026-developer-highlights/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-50ff46405f87",
+        "title": "[I/O 2026 developer highlights: Antigravity, Gemini API, AI Studio — Google Blog](https://blog.google/innovation-and-ai/",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a5cdcaea0ac3",
+        "title": "[バックオフィス業務を自律的に遂行する AI サービス『マネーフォワード AI Cowork』を 2026 年 7 月より提供開始予定 — マネーフォワード](https://corp.moneyforward.com/news/relea",
+        "text": "[バックオフィス業務を自律的に遂行する AI サービス『マネーフォワード AI Cowork』を 2026 年 7 月より提供開始予定 — マネーフォワード](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[バックオフィス業務を自律的に遂行する AI サービス『マネーフォワード AI Cowork』を 2026 年 7 月より提供開始予定 — マネーフォワード](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a5cdcaea0ac3",
+        "title": "[バックオフィス業務を自律的に遂行する AI サービス『マネーフォワード AI Cowork』を 2026 年 7 月より提供開始予定 — マネーフォワード](https://corp.moneyforward.com/news/relea",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-cb13d976cf2a",
+        "title": "[マネーフォワード「2030 年までに AI で 150 億円」。AI Cowork 発表 — Business Insider Japan](https://www.businessinsider.jp/article/2604-mone",
+        "text": "[マネーフォワード「2030 年までに AI で 150 億円」。AI Cowork 発表 — Business Insider Japan](https://www.businessinsider.jp/article/2604-moneyforward-ai-cowork-launch/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[マネーフォワード「2030 年までに AI で 150 億円」。AI Cowork 発表 — Business Insider Japan](https://www.businessinsider.jp/article/2604-moneyforward-ai-cowork-launch/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-cb13d976cf2a",
+        "title": "[マネーフォワード「2030 年までに AI で 150 億円」。AI Cowork 発表 — Business Insider Japan](https://www.businessinsider.jp/article/2604-mone",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-552c96433207",
+        "title": "[Notion 3.6: External Agents, HTML blocks, and more (July 1, 2026)](https://www.notion.com/releases/2026-07-01)",
+        "text": "[Notion 3.6: External Agents, HTML blocks, and more (July 1, 2026)](https://www.notion.com/releases/2026-07-01)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Notion 3.6: External Agents, HTML blocks, and more (July 1, 2026)](https://www.notion.com/releases/2026-07-01)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-552c96433207",
+        "title": "[Notion 3.6: External Agents, HTML blocks, and more (July 1, 2026)](https://www.notion.com/releases/2026-07-01)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-11b3e9d01a15",
+        "title": "[Releases · anomalyco/opencode (v1.17.12)](https://github.com/anomalyco/opencode/releases)",
+        "text": "[Releases · anomalyco/opencode (v1.17.12)](https://github.com/anomalyco/opencode/releases)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Releases · anomalyco/opencode (v1.17.12)](https://github.com/anomalyco/opencode/releases)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-11b3e9d01a15",
+        "title": "[Releases · anomalyco/opencode (v1.17.12)](https://github.com/anomalyco/opencode/releases)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-531752f7a52f",
+        "title": "[Cognition's acquisition of Windsurf（一次ソース確認: 2025-07-14 の旧イベント / 本 run では除外）— TechCrunch](https://techcrunch.com/2025/0",
+        "text": "[Cognition's acquisition of Windsurf（一次ソース確認: 2025-07-14 の旧イベント / 本 run では除外）— TechCrunch](https://techcrunch.com/2025/07/14/cognition-maker-of-the-ai-coding-agent-devin-acquires-windsurf/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Cognition's acquisition of Windsurf（一次ソース確認: 2025-07-14 の旧イベント / 本 run では除外）— TechCrunch](https://techcrunch.com/2025/07/14/cognition-maker-of-the-ai-coding-agent-devin-acquires-windsurf/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-531752f7a52f",
+        "title": "[Cognition's acquisition of Windsurf（一次ソース確認: 2025-07-14 の旧イベント / 本 run では除外）— TechCrunch](https://techcrunch.com/2025/0",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    }
+  ],
+  "patterns": [],
+  "issue_candidates": []
+}

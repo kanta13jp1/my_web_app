@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/donation_project.dart';
+
 /// 寄付・クラウドファンディングページ
 /// donation-crowdfunding Edge Function と連携して寄付プロジェクトを管理
 class DonationCrowdfundingPage extends StatefulWidget {
@@ -15,7 +17,7 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _errorMessage;
-  List<Map<String, dynamic>> _projects = [];
+  List<DonationProject> _projects = [];
 
   @override
   void initState() {
@@ -37,17 +39,9 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
         'lifestyle-hub',
         body: {'action': 'donation.list'},
       );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['projects'] is List) {
-        setState(
-          () => _projects =
-              (data['projects'] as List).cast<Map<String, dynamic>>(),
-        );
-      } else if (data is List) {
-        setState(() => _projects = data.cast<Map<String, dynamic>>());
-      } else {
-        setState(() => _projects = []);
-      }
+      setState(
+        () => _projects = DonationProject.listFromResponse(response.data),
+      );
     } catch (e) {
       if (mounted) {
         setState(() => _errorMessage = 'データ取得に失敗しました: $e');
@@ -100,11 +94,9 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
                       itemCount: _projects.length,
                       itemBuilder: (context, index) {
                         final project = _projects[index];
-                        final goal =
-                            (project['goal_amount'] as num?)?.toDouble() ?? 0;
-                        final raised =
-                            (project['raised_amount'] as num?)?.toDouble() ?? 0;
-                        final progress = goal > 0 ? raised / goal : 0.0;
+                        final goal = project.goalAmount.toDouble();
+                        final raised = project.raisedAmount.toDouble();
+                        final progress = project.progress;
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           child: Padding(
@@ -113,7 +105,9 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  project['title']?.toString() ?? 'タイトル不明',
+                                  project.title.isNotEmpty
+                                      ? project.title
+                                      : 'タイトル不明',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
@@ -121,7 +115,7 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                Text(project['description']?.toString() ?? ''),
+                                Text(project.description),
                                 const SizedBox(height: 8),
                                 LinearProgressIndicator(
                                   value: progress.clamp(0.0, 1.0),

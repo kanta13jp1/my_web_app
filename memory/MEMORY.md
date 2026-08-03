@@ -3,6 +3,24 @@
 Master Brain のローカル索引。各ファイルは `memory/` 配下に置き、日付 + スコープで命名。
 NotebookLM Master Brain (jibun-master-brain ノートブック) にも同内容を蓄積する。
 
+## 2026-07-11 (WEB版 — SEO 監査 H7 完了 + 監査 doc 化)
+
+- `feedback_success_20260711_web_seo_h7.md` — 既存 SSR 再利用 / 高リスク path の独立ヘルパー抽出 test 化 / 実測 honest pushback (H8 Skip) / 会話監査の doc 正本化。
+- `feedback_correction_20260711_web_seo_h7.md` — WEB版制約: AskUserQuestion/send_later 不通→テキスト確認 / Supabase 403→smoke cron 依存 / actions_list 巨大→file 抽出 / squash 後 branch 作り直し。
+- `project_20260711_web_seo_h7.md` — blog.publish_post(blog_posts) vs blog.auto_publish(hub_data) の canonical 可否差異 / #3925/#3927/#3941 / H8 font 技術根拠 / WBS-SYNC skip 理由。
+
+<!-- wrap-up 20260711
+未完了: 0 件 (SEO H7 = #3925/#3927/#3941 全マージ済)
+残タスク (自動 / 要操作なし): task#12 blog SSR 本番検証 → 日次 smoke cron (06:07 JST) が自動確認
+
+次回優先候補 (Step 6 参照):
+- 🟡 blog.public.view の live smoke に「list→実 id→view 200」チェーンを追加 (view 単体の回帰保証)
+- 🟡 auto_publish 記事の blog_posts 化 (hub_data 由来記事も canonical 集約可能に / H7 残)
+- 🟢 CWV 非破壊改善: 初回 JS/フォント遅延ロード (H8 Skip の代替アプローチ)
+- 🟢 独自ドメイン移行の設計メモ (H6 保留分 / 影響範囲・手順・リスクの洗い出しのみ)
+-->
+
+
 ## 2026-05-18 lint index hydration
 
 These entries are lightweight anchors for repo-managed memory notes so
@@ -15,6 +33,9 @@ memory from true orphan files.
 - [[feedback_correction_20260421_dart_zombie_accumulation]]
 - [[feedback_success_20260419_wrapup_hook]]
 - [[feedback_success_20260420_design_token_batch_template]]
+- [[feedback_success_20260711_web_seo_h7]]
+- [[feedback_correction_20260711_web_seo_h7]]
+- [[project_20260711_web_seo_h7]]
 - [[project_20260417_win_opus47]]
 - [[project_20260417_win_web_disabled]]
 - [[project_20260419_ps5]]

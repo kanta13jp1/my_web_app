@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/inventory_item_summary.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
+
 /// 在庫バーコード管理ページ
 /// 商品一覧・在庫数・入出庫記録。
-/// inventory-barcode Edge Function と連携。
+/// social-commerce-hub Edge Function (inventory.list) と連携。
 class InventoryBarcodePage extends StatefulWidget {
   const InventoryBarcodePage({super.key});
 
@@ -12,13 +15,19 @@ class InventoryBarcodePage extends StatefulWidget {
 }
 
 class _InventoryBarcodePageState extends State<InventoryBarcodePage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['items', 'movements'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 
   bool _isLoading = false;
   String? _errorMessage;
-  List<Map<String, dynamic>> _items = [];
+  List<InventoryItemSummary> _items = [];
   List<Map<String, dynamic>> _movements = [];
 
   @override
@@ -49,7 +58,7 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
         body: {'action': 'inventory.list'},
       );
       setState(() {
-        _items = _toList(iRes.data, 'items');
+        _items = parseInventoryItems(iRes.data);
         _movements = [];
       });
     } catch (e) {
@@ -58,16 +67,6 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  List<Map<String, dynamic>> _toList(dynamic data, String key) {
-    if (data is Map<String, dynamic>) {
-      final list = data[key];
-      if (list is List) {
-        return list.map((e) => e as Map<String, dynamic>).toList();
-      }
-    }
-    return [];
   }
 
   @override
@@ -139,41 +138,44 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
       itemCount: _items.length,
       itemBuilder: (ctx, i) {
         final item = _items[i];
-        final name = item['name'] as String? ?? '商品 ${i + 1}';
-        final sku = item['sku'] as String? ?? '';
-        final qty = item['quantity'] as int? ?? 0;
-        final min = item['minQuantity'] as int? ?? 0;
-        final low = qty <= min;
+        final name = item.name.isEmpty ? '商品 ${i + 1}' : item.name;
+        final alert = item.isOutOfStock || item.isLowStock;
+        final subtitleParts = [
+          if (item.sku.isNotEmpty) 'SKU: ${item.sku}',
+          if (item.category.isNotEmpty) item.category,
+        ];
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
         return Card(
           margin: const EdgeInsets.only(bottom: 6),
-          color: low
+          color: alert
               ? (isDark ? const Color(0xFF3A1010) : const Color(0xFFFFEBEE))
               : null,
           child: ListTile(
             leading: Icon(
               Icons.qr_code,
-              color: low ? const Color(0xFFE53935) : const Color(0xFF9CA3AF),
+              color: alert ? const Color(0xFFE53935) : const Color(0xFF9CA3AF),
             ),
             title: Text(name),
-            subtitle: sku.isNotEmpty ? Text('SKU: $sku') : null,
+            subtitle: subtitleParts.isNotEmpty
+                ? Text(subtitleParts.join(' · '))
+                : null,
             trailing: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '$qty 個',
+                  '${item.quantity} 個',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: low ? const Color(0xFFE53935) : null,
+                    color: alert ? const Color(0xFFE53935) : null,
                     fontSize: 16,
                     height: 1.5,
                   ),
                 ),
-                if (low)
-                  const Text(
-                    '在庫不足',
-                    style: TextStyle(
+                if (item.isOutOfStock || item.isLowStock)
+                  Text(
+                    item.isOutOfStock ? '在庫切れ' : '在庫不足',
+                    style: const TextStyle(
                       fontSize: 10,
                       color: Color(0xFFE53935),
                       height: 1.5,
