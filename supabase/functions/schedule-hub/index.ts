@@ -32,6 +32,7 @@ import {
   summarizePlatformFailures,
 } from "./upstream_error.ts";
 import { requiredAuthLevel } from "./action_auth.ts";
+import { summarizeStripeAccountReadiness } from "./stripe_account_readiness.ts";
 import {
   billingAllowedHosts,
   resolveBillingReturnUrl,
@@ -346,6 +347,30 @@ async function stripePostForm(
       "Stripe-Version": "2026-06-24.dahlia",
     },
     body: new URLSearchParams(params),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const err = asRecord(data.error) ?? {};
+    throw new Error(
+      asString(err.message) || `Stripe API failed: ${response.status}`,
+    );
+  }
+  return asRecord(data) ?? {};
+}
+
+async function stripeGet(
+  path: string,
+): Promise<Record<string, unknown>> {
+  const key = stripeSecretKey();
+  if (!key) {
+    throw new Error("STRIPE_SECRET_KEY not configured");
+  }
+  const response = await fetch(`https://api.stripe.com/v1${path}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Stripe-Version": "2026-06-24.dahlia",
+    },
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -1672,6 +1697,16 @@ serve(async (req: Request) => {
     }
 
     switch (action) {
+      case "billing.get_stripe_account_readiness": {
+        const key = stripeSecretKey();
+        const account = await stripeGet("/account");
+        return json({
+          success: true,
+          checked_at: new Date().toISOString(),
+          account: summarizeStripeAccountReadiness(account, key),
+        });
+      }
+
       case "billing.status": {
         const billing = await getBillingSubscription(admin, userId!);
         const periodStart = currentBillingPeriodStart();

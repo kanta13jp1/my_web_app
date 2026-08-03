@@ -36,6 +36,7 @@ export const PUBLIC_ACTIONS: readonly string[] = [
 //   (app_notifications insert / handler 内 service-role チェックも維持)
 // anon key・ログイン user JWT では 401 (匿名 signup JWT でも通せない)。
 export const SERVICE_ROLE_ONLY_ACTIONS: readonly string[] = [
+  "billing.get_stripe_account_readiness",
   "blog.auto_publish",
   "blog.create",
   "blog.backfill_from_apis",
