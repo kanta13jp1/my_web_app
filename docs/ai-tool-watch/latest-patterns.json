@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-01T22:12:39Z",
+  "generated_at": "2026-08-02T22:11:55Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -116,10 +116,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "ccf1d043f0d7308687b4c1f7d02323c9b866bb9c555ded4905d1bce587d8a40a",
+          "hash": "d9601bd1332a3bdb9525d21a96f0ee66f890d1a4fcc9c6510ab36a3cd2592b72",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -273,7 +273,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "a61ec1bc52a2dd2b251cdc21aab5c390294594fe7af34728275e058169f6946c",
+          "hash": "0c75d26c77ea70b2277659ade866df69453159068fa1077f5f87087a9f30e9c9",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -299,7 +299,6 @@
               "IDE extension"
             ],
             "quality-cost": [
-              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -319,7 +318,7 @@
           "latest_signal": "2026-07-31 / GPT-5.4 and GPT-5.4 mini retire from Codex on August 31 On August 31, 2026, GPT-5.4 and GPT",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "0c75d26c77ea70b2277659ade866df69453159068fa1077f5f87087a9f30e9c9",
+          "previous_hash": "a61ec1bc52a2dd2b251cdc21aab5c390294594fe7af34728275e058169f6946c",
           "slug": "codex-changelog",
           "snippets": [
             "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",

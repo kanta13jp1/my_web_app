@@ -1,11 +1,12 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-08-01T22:12:35Z`
-- Previous check: `2026-07-31T22:16:24Z`
-- Changed/new official sources: `1`
+- Checked at: `2026-08-02T22:11:53Z`
+- Previous check: `2026-08-01T22:12:35Z`
+- Changed/new official sources: `2`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
+- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
 - `changed` Codex changelog: 2026-07-31 / GPT-5.4 and GPT-5.4 mini retire from Codex on August 31 On August 31, 2026, GPT-5.4 and GPT
 
 ## Recommended Actions
