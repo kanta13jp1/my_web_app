@@ -4,19 +4,20 @@
 > **蜿ら・**: 繧ｵ繧､繝井ｸ翫・ `/project-gantt` 繝壹・繧ｸ縺ｧ繝ｪ繧｢繝ｫ繧ｿ繧､繝遒ｺ隱榊庄閭ｽ  
 > **DB**: `wbs_milestones` + `wbs_tasks` 繝・・繝悶Ν (migration 20260417180000 / 20260417190000 / 20260417200000)
 
-## 収益化P0 現在地 (2026-07-31)
+## 収益化P0 現在地 (2026-08-05)
 
 - ゴールは未達。完了条件は、知人ではない外部ユーザーの実決済、Stripe Payout、銀行口座への1円以上の着金を同じ証跡で確認すること。
 - LP仮説A01-A10は各2案、合計20 armを実装・本番検証済み。ユニークユーザー集計も稼働しているが、外部流入が0のため判定は全て`insufficient_data`。仮説を「勝ち」とは扱わない。
 - X Hook Aの24時間結果は13 impressions、1 engagement、0 clicks、0 LP views、0 signups、0 payments。LPの追加改修より先に、入口のHookを1変数だけ変える必要がある。
 - X Hook BはIssue [#4343](https://github.com/kanta13jp1/my_web_app/issues/4343) と候補ID `6203a344-55bd-44a0-b4ba-ab191f6fb9a2` まで準備済み。公開には所有者の明示承認が必要で、未承認のため未投稿。
 - Stripeは100円のlive Checkout生成とWebhook secret設定まで確認済み。ただし現在の`charges_enabled` / `payouts_enabled`は機械証跡がなく、銀行着金へ進めるか断定できない。
+- 2026-07-29にHexCivの500円live決済、処理済み`checkout.session.completed`、ダウンロードURL発行2回を本番DBで確認した。ただし購入者は`user_profiles.is_admin=true`かつ`role=admin`のため自己購入であり、外部ユーザー売上・1人目獲得・銀行着金ゴールには数えない。決済/Webhook/商品配信経路の動作確認証跡としてのみ扱い、現時点の適格な外部決済額は0円。
 - 今回の最優先実装は、`billing.get_stripe_account_readiness` と手動workflow `Stripe Account Readiness`。サービスロール経由でStripe secretを外へ出さず、live決済可否・Payout可否・未完了要件だけを伏字済みJSONへ記録する。
 - クリティカルパス:
   1. Stripe readiness workflowで`charges_enabled=true`かつ`payouts_enabled=true`を確認
   2. 明示承認後にHook Bを1回だけ公開し、3h/24hの固定ファネルを計測
   3. 外部ユーザー1人のsignupとfirst actionをUTMで確認
-  4. Founding Supporter 100円決済とpaid Webhookを確認
+  4. 管理者・知人を除外した外部ユーザーのFounding Supporter 100円決済とpaid Webhookを確認
   5. Stripe Payoutと伏字済み銀行明細の1円以上着金を照合
 - 禁止事項: 自己決済や知人決済を獲得証跡に数えない。自動DM・自動follow・無関係なトレンド便乗・架空ニュース・承認前X投稿を行わない。
 - WBS反映: migration `20260731120000_wbs_revenue_current_gate.sql`。既存Issue #3639 / #4343と銀行着金タスクへ集約し、重複タスクを増やさない。

@@ -1,6 +1,9 @@
 -- Reconcile the revenue WBS with the proven July funnel state.
 -- The bank-deposit goal remains open. Hook B still needs explicit owner
 -- approval, and Stripe charge/payout readiness needs fresh machine evidence.
+-- A JPY 500 live HexCiv purchase on 2026-07-29 proved the checkout, webhook,
+-- and download path, but the purchaser is an administrator. It is therefore
+-- self-test evidence only and must not count as external-user revenue.
 -- nocheck: time-relative
 
 UPDATE public.wbs_milestones
@@ -138,8 +141,8 @@ SET
       ORDER BY dependency
     )
   ),
-  remaining_work = 'Fresh evidence required: Stripe charges_enabled=true and payouts_enabled=true, exact approval and publication of Hook B, one unrelated external signup and first action, one paid JPY supporter webhook, one Stripe payout, and a matching bank deposit of at least JPY 1.',
-  recovery_plan = 'Run the strict Stripe readiness workflow first. Publish Hook B only after exact owner approval. If traffic arrives without signup, inspect the selected landing arm; if checkout succeeds without revenue evidence, inspect stripe_webhook_events and hub_data before retrying.',
+  remaining_work = 'Fresh evidence required: Stripe charges_enabled=true and payouts_enabled=true, exact approval and publication of Hook B, one unrelated external signup and first action, one paid external-user JPY webhook, one Stripe payout, and a matching bank deposit of at least JPY 1. Exclude the 2026-07-29 JPY 500 HexCiv purchase because its purchaser is_admin=true and role=admin; it proves only the checkout, webhook, and download path.',
+  recovery_plan = 'Run the strict Stripe readiness workflow first. Publish Hook B only after exact owner approval. If traffic arrives without signup, inspect the selected landing arm. For every paid record, verify the purchaser is neither admin nor an acquaintance before counting revenue; then inspect Stripe payout status and a redacted bank statement.',
   end_date = DATE '2026-08-07',
   updated_at = now()
 WHERE payout_task.title =
