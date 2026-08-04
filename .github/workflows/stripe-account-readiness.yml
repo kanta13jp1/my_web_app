@@ -23,7 +23,6 @@ concurrency:
 
 env:
   SCHEDULE_HUB_URL: https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub
-  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
 jobs:
   readiness:
@@ -35,6 +34,7 @@ jobs:
       - name: Request redacted Stripe account status
         id: request
         env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           REQUIRE_CHARGES: ${{ inputs.require_charges_enabled }}
           REQUIRE_PAYOUTS: ${{ inputs.require_payouts_enabled }}
         run: |
