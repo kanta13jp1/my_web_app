@@ -50,7 +50,7 @@
 
 ## Checklist
 
-- [ ] Reproduction is clear
-- [ ] Smallest safe fix is implemented
+- [x] Reproduction is clear
+- [x] Smallest safe fix is implemented
 - [ ] Analyze/tests/CI are checked
 - [ ] PR notes explain the change and the remaining risk
