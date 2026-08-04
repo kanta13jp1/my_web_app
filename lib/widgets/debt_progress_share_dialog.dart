@@ -27,6 +27,9 @@ class DebtProgressShareDialog extends StatefulWidget {
 }
 
 class _DebtProgressShareDialogState extends State<DebtProgressShareDialog> {
+  /// 返済カード専用の公開バケット (RLS で書き込みは所有者フォルダのみ)。
+  static const String _cardBucket = 'debt-progress-cards';
+
   final GlobalKey _repaintKey = GlobalKey();
   late final TextEditingController _textController;
   bool _saving = false;
@@ -127,12 +130,11 @@ class _DebtProgressShareDialogState extends State<DebtProgressShareDialog> {
     );
   }
 
-  /// 編集後の文面をそのまま X へ投稿する。
+  /// 編集後の文面とカード画像を X へ投稿する。
   ///
-  /// 🔴 画像は添付されない (EF は現状テキスト投稿のみ)。画像も出したい場合は
-  /// 「画像を保存」で落として手動添付する。ここで下書きを再生成せず
-  /// `_textController.text` を送るのが要点 — 再生成すると本人の編集が
-  /// 捨てられ、意図しない内容が公開される。
+  /// 🔴 ここで下書きを再生成せず `_textController.text` を送るのが要点 —
+  /// 再生成すると本人の編集が捨てられ、意図しない内容が公開される。
+  /// 画像は付けば添付し、失敗したらテキストのみで投稿する。
   Future<void> _postToX() async {
     final text = _textController.text.trim();
     if (text.isEmpty) {
@@ -162,12 +164,17 @@ class _DebtProgressShareDialogState extends State<DebtProgressShareDialog> {
     setState(() => _posting = true);
     try {
       const service = DebtProgressCardService();
+      // 画像は「付けば嬉しい」もの。アップロードに失敗しても投稿は続行する
+      // (数字が伝われば報告として機能する)。
+      final mediaUrl = await _uploadCardImage();
+      if (!mounted) return;
       final res = await Supabase.instance.client.functions.invoke(
         'growth-hub',
         body: service.buildPostPayload(
           widget.data,
           month: widget.month,
           text: text,
+          mediaUrl: mediaUrl,
         ),
       );
       if (!mounted) return;
@@ -194,6 +201,41 @@ class _DebtProgressShareDialogState extends State<DebtProgressShareDialog> {
       ).showSnackBar(SnackBar(content: Text('投稿に失敗しました: $error')));
     } finally {
       if (mounted) setState(() => _posting = false);
+    }
+  }
+
+  /// カードを PNG 化して公開バケットへ上げ、公開 URL を返す。
+  ///
+  /// 失敗したら null を返して**投稿は続行**する (画像なしのテキスト投稿)。
+  /// ここで例外を投げると、画像の都合で報告そのものが出せなくなる。
+  Future<String?> _uploadCardImage() async {
+    try {
+      final client = Supabase.instance.client;
+      final userId = client.auth.currentUser?.id;
+      if (userId == null) return null;
+      // 描画完了を待ってからキャプチャする (未確定フレームだと空画像になる)。
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      final bytes = await NoteCardService.captureWidgetSimple(_repaintKey);
+      if (bytes == null) return null;
+      const service = DebtProgressCardService();
+      final path = service.buildCardStoragePath(
+        userId: userId,
+        month: widget.month,
+        // 同月に作り直しても衝突させない (upsert だと投稿済み画像が差し替わる)。
+        uniqueSuffix: DateTime.now().millisecondsSinceEpoch.toString(),
+      );
+      await client.storage.from(_cardBucket).uploadBinary(
+            path,
+            bytes,
+            fileOptions: const FileOptions(
+              contentType: 'image/png',
+              upsert: false,
+            ),
+          );
+      return client.storage.from(_cardBucket).getPublicUrl(path);
+    } catch (error) {
+      debugPrint('debt progress card image upload failed: $error');
+      return null;
     }
   }
 

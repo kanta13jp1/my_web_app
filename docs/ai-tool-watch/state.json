@@ -1,7 +1,7 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-07-29T22:14:40Z",
+      "checked_at": "2026-08-03T22:18:47Z",
       "hash": "cd3805c012788e10c829872d14c7ea7a680a934c19ca71fad3bcb800d701ca95",
       "keyword_groups": {
         "codex-runtime": [
@@ -52,7 +52,7 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-07-29T22:14:40Z",
+      "checked_at": "2026-08-03T22:18:47Z",
       "hash": "a5545fd180009614613298fe94c3aa1fc9f83db6d3b478d0683f10f81f8c8e11",
       "keyword_groups": {
         "codex-runtime": [
@@ -90,8 +90,8 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-07-29T22:14:40Z",
-      "hash": "ccf1d043f0d7308687b4c1f7d02323c9b866bb9c555ded4905d1bce587d8a40a",
+      "checked_at": "2026-08-03T22:18:47Z",
+      "hash": "d9601bd1332a3bdb9525d21a96f0ee66f890d1a4fcc9c6510ab36a3cd2592b72",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -132,8 +132,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-07-29T22:14:40Z",
-      "hash": "b6a5c9261274a08a80b7b7992e3983c486c7c8ef695cdb0ba2d3558b314062ad",
+      "checked_at": "2026-08-03T22:18:47Z",
+      "hash": "e9c85c7621e39b81b57bf66be9f553138455be376a745e9552e0491f9ff45142",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -176,13 +176,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-29 / Sign in with ChatGPT",
+      "latest_signal": "2026-07-31 / GPT-5.4 and GPT-5.4 mini retire from Codex on August 31 On August 31, 2026, GPT-5.4 and GPT",
       "name": "Codex changelog",
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-07-29T22:14:40Z",
+      "checked_at": "2026-08-03T22:18:47Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -191,8 +191,8 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-07-29T22:14:40Z",
-      "hash": "27c9b253114b649f96051a906c2874b46a11793e8d439ef6b17bdb6ea5153633",
+      "checked_at": "2026-08-03T22:18:47Z",
+      "hash": "84a07740242a52db5a6b3482825570b6926aac43cf917cc63071d346f8c54e9c",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.4",
@@ -234,21 +234,16 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-07-29T22:14:40Z",
-      "hash": "70d69c3a9016f203c71da2423468d2d749cb023a20ce074251fe90bccbe3645a",
+      "checked_at": "2026-08-03T22:18:47Z",
+      "hash": "665ffcbd537c96796840de3187e925673d46b9cc171a18fcfc8c13c845d4b657",
       "keyword_groups": {
-        "codex-runtime": [
-          "subagents"
-        ],
         "hooks": [
           "hook",
-          "hooks",
-          "Stop"
+          "hooks"
         ],
         "integration": [
           "MCP",
-          "Slack",
-          "GitHub"
+          "Slack"
         ],
         "quality-cost": [
           "cost",
@@ -258,17 +253,18 @@
         "schedule": [
           "automation",
           "automations",
+          "schedule",
           "workflow"
         ]
       },
-      "latest_signal": "3.11 / Jul 10, 2026",
+      "latest_signal": "New in Cursor",
       "name": "Cursor changelog",
       "status": 200,
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-07-29T22:14:40Z",
-      "hash": "0ef814097e44863a31524eb86c88ca1eefb2eaee011113f21816e154a35b724d",
+      "checked_at": "2026-08-03T22:18:47Z",
+      "hash": "aee8af93371c241694b8bd9bf2371b035796a434e9d3745e9c2f38aaa0af2d2d",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -277,6 +273,7 @@
         ],
         "hooks": [
           "hook",
+          "hooks",
           "Stop"
         ],
         "integration": [
@@ -301,14 +298,14 @@
           "workflow"
         ]
       },
-      "latest_signal": "July 24, 2026",
+      "latest_signal": "July 31, 2026",
       "name": "Devin release notes",
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-07-29T22:14:40Z",
-      "hash": "a7513a88ed2c096b719cc9346c81413d92d42394be154e295dc6299794c9c00c",
+      "checked_at": "2026-08-03T22:18:47Z",
+      "hash": "cd6e9ff8949d7c5fe4015a5b039261c21f1ecea5e73d18a972feed159ca159a1",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -330,11 +327,11 @@
           "workflow"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
+      "latest_signal": "VS Code Gemini Code Assist 2.92.0 / July 20, 2026",
       "name": "Gemini Code Assist release notes",
       "status": 200,
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-07-29T22:14:40Z"
+  "updated_at": "2026-08-03T22:18:47Z"
 }

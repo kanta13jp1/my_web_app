@@ -1,15 +1,15 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-29T22:14:40Z`
-- Previous check: `2026-07-28T22:17:45Z`
+- Checked at: `2026-08-03T22:18:47Z`
+- Previous check: `2026-08-02T22:11:53Z`
 - Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
-- `changed` Codex changelog: 2026-07-29 / Sign in with ChatGPT
+- `changed` Codex changelog: 2026-07-31 / GPT-5.4 and GPT-5.4 mini retire from Codex on August 31 On August 31, 2026, GPT-5.4 and GPT
 - `changed` Codex use cases: ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of
-- `changed` Cursor changelog: 3.11 / Jul 10, 2026
+- `changed` Cursor changelog: New in Cursor
+- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.92.0 / July 20, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -39,7 +39,7 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-07-29 / Sign in with ChatGPT
+  - Latest signal: 2026-07-31 / GPT-5.4 and GPT-5.4 mini retire from Codex on August 31 On August 31, 2026, GPT-5.4 and GPT
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...
   - Short signal: Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...
@@ -55,22 +55,22 @@
   - Keyword groups: none
 - **Cursor changelog** (HTTP 200)
   - URL: https://cursor.com/changelog
-  - Latest signal: 3.11 / Jul 10, 2026
-  - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
+  - Latest signal: New in Cursor
+  - Keyword groups: hooks, schedule, integration, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...
-  - Short signal: New to both iPhone and iPad: an inbox to stay organized, and a review experience that covers the full PR.
+  - Short signal: Install plugins to connect: Google Drive: search files and folders, open and download content, create and organize files Gmail: search and read mail, draft and send messages,...
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
-  - Latest signal: VS Code Gemini Code Assist 2.87.0 / June 19, 2026
+  - Latest signal: VS Code Gemini Code Assist 2.92.0 / July 20, 2026
   - Keyword groups: hooks, schedule, integration, quality-cost
   - Short signal: Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...
   - Short signal: Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra...
 - **Devin release notes** (HTTP 200)
   - URL: https://docs.devin.ai/release-notes
-  - Latest signal: July 24, 2026
+  - Latest signal: July 31, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...
-  - Short signal: Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools...
+  - Short signal: Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Stacked PRs Devin...
 
 ## NotebookLM Harness Mapping
 - Source notebook: `Codex vs Claude Code: The Ultimate AI Development Synergy` (`bc58b50b-5fc4-4840-9a62-b397d6d3b65a`)

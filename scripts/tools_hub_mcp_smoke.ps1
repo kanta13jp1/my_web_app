@@ -88,6 +88,14 @@ function Get-ResponseText {
   if ($null -eq $Response) {
     return ""
   }
+
+  if ($Response.GetType().FullName -eq "System.Net.Http.HttpResponseMessage") {
+    if ($null -eq $Response.Content) {
+      return ""
+    }
+    return $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+  }
+
   $stream = $Response.GetResponseStream()
   if ($null -eq $stream) {
     return ""
@@ -156,6 +164,13 @@ function Get-SmokeHeader {
   )
   if ($null -eq $Headers) {
     return ""
+  }
+
+  if ($null -ne $Headers.PSObject.Methods["TryGetValues"]) {
+    $headerValues = $null
+    if ($Headers.TryGetValues($Name, [ref]$headerValues)) {
+      return (@($headerValues) -join ", ")
+    }
   }
 
   $value = $null
@@ -304,6 +319,10 @@ function Assert-McpAuditLog {
   }
 
   Fail $Message
+}
+
+if ($MyInvocation.InvocationName -eq ".") {
+  return
 }
 
 if ([string]::IsNullOrWhiteSpace($BaseUrl)) {
