@@ -1,3 +1,4 @@
+-- nocheck: time-relative -- This backfill only updates Inbox metadata on public.notes.
 alter table public.notes
   add column if not exists capture_status text,
   add column if not exists capture_source text,
