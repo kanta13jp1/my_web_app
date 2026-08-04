@@ -180,9 +180,8 @@ Map<String, dynamic> _noteRow({
     'tags': captureStatus == 'inbox' ? <String>['inbox'] : <String>[],
     'capture_status': captureStatus,
     'capture_source': captureStatus == 'inbox' ? 'quick_inbox' : 'editor',
-    'inbox_saved_at': captureStatus == 'inbox'
-        ? '2026-03-18T09:00:00.000Z'
-        : null,
+    'inbox_saved_at':
+        captureStatus == 'inbox' ? '2026-03-18T09:00:00.000Z' : null,
   };
 }
 

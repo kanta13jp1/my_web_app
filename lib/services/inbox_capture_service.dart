@@ -42,7 +42,7 @@ Map<String, dynamic> buildInboxNoteInsert({
 
 class InboxCaptureService {
   InboxCaptureService(this._supabase, {DateTime Function()? now})
-    : _now = now ?? DateTime.now;
+      : _now = now ?? DateTime.now;
 
   final SupabaseClient _supabase;
   final DateTime Function() _now;

@@ -915,11 +915,11 @@ class _NoteListPageState extends State<NoteListPage> {
                     ? Icons.alarm
                     : isInbox
                         ? Icons.inbox_outlined
-                    : isPinned
-                        ? Icons.push_pin
-                        : isFavorite
-                            ? Icons.star
-                            : Icons.description,
+                        : isPinned
+                            ? Icons.push_pin
+                            : isFavorite
+                                ? Icons.star
+                                : Icons.description,
             color: fallbackAccentColor,
             size: 20,
           ),
@@ -1194,8 +1194,8 @@ class _NoteListPageState extends State<NoteListPage> {
             .where((note) => !shareCandidateIds.contains(_noteId(note)))
             .toList()
         : reminderExcludedNotes;
-    final hasAnyEntries =
-        (!_showInboxOnly && _draftEntries.isNotEmpty) || visibleNotes.isNotEmpty;
+    final hasAnyEntries = (!_showInboxOnly && _draftEntries.isNotEmpty) ||
+        visibleNotes.isNotEmpty;
     final pageTitle = _showInboxOnly
         ? 'CKO OFFICE (Inbox)'
         : (_showFavoritesOnly ? 'CKO OFFICE (お気に入り)' : 'CKO OFFICE (メモ一覧)');

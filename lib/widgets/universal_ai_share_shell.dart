@@ -340,10 +340,11 @@ class _UniversalAiShareFab extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLoggedIn = _isLoggedIn;
     final showInbox = isLoggedIn;
-    final showShareAction = showShare && shouldShowUniversalAiShareFab(
-      routePath: page.routePath,
-      isLoggedIn: isLoggedIn,
-    );
+    final showShareAction = showShare &&
+        shouldShowUniversalAiShareFab(
+          routePath: page.routePath,
+          isLoggedIn: isLoggedIn,
+        );
     if (!showInbox && !showShareAction) {
       return const SizedBox.shrink();
     }
@@ -391,8 +392,7 @@ class _UniversalAiShareFab extends StatelessWidget {
               child: InkWell(
                 onTap: _openShareDialog,
                 child: Padding(
-                  padding:
-                      const EdgeInsetsDirectional.fromSTEB(16, 12, 12, 12),
+                  padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 12, 12),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
