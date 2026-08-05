@@ -11,7 +11,68 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "d9601bd1332a3bdb9525d21a96f0ee66f890d1a4fcc9c6510ab36a3cd2592b72",
+      "hash": "7813e5d7058e99d49895c37ef088c63ec06af042b1288c7c816fd72f48a2f478",
+      "keyword_groups": {
+        "codex-runtime": [
+          "model picker",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure",
+          "ultrareview"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension",
+          "VSCode",
+          "Visual Studio Code"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2.1.221 / August 4, 2026",
+      "name": "Claude Code changelog",
+      "owner": "Claude Code",
+      "previous_hash": "cd3805c012788e10c829872d14c7ea7a680a934c19ca71fad3bcb800d701ca95",
+      "slug": "claude-code-changelog",
+      "snippets": [
+        "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
+        "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
+        "​ 2.1.221 August 4, 2026 [VSCode] Added Focus view: a chat-menu toggle that hides tool activity behind an expandable per-turn summary with a live running-tool indicator, toggled..."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "7716b6c04a98413d8475278f770ed64054a4d956eb9fc1da7c34588c3562126c",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -29,7 +90,8 @@
         "integration": [
           "MCP",
           "connector",
-          "GitHub"
+          "GitHub",
+          "IDE extension"
         ],
         "quality-cost": [
           "OpenTelemetry",
@@ -49,7 +111,7 @@
       "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "ccf1d043f0d7308687b4c1f7d02323c9b866bb9c555ded4905d1bce587d8a40a",
+      "previous_hash": "d9601bd1332a3bdb9525d21a96f0ee66f890d1a4fcc9c6510ab36a3cd2592b72",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -63,7 +125,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "0c75d26c77ea70b2277659ade866df69453159068fa1077f5f87087a9f30e9c9",
+      "hash": "06220ad2f05f2bf3ca9e06f6094eba788948f00776179ce660be88fc07521703",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -108,7 +170,7 @@
       "latest_signal": "2026-07-31 / GPT-5.4 and GPT-5.4 mini retire from Codex on August 31 On August 31, 2026, GPT-5.4 and GPT",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "a61ec1bc52a2dd2b251cdc21aab5c390294594fe7af34728275e058169f6946c",
+      "previous_hash": "e9c85c7621e39b81b57bf66be9f553138455be376a745e9552e0491f9ff45142",
       "slug": "codex-changelog",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -117,9 +179,101 @@
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "e252e07b550ac8d7ffe18f603cb26734ab6ffbd31dfc97db71a422a300a86429",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.4",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "schedule",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
+      "name": "Codex use cases",
+      "owner": "Codex",
+      "previous_hash": "84a07740242a52db5a6b3482825570b6926aac43cf917cc63071d346f8c54e9c",
+      "slug": "codex-use-cases",
+      "snippets": [
+        "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
+        "Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...",
+        "All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How..."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/use-cases/"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "a23bd552769066e3de658abf11d3553627ae135cd177078cd4c9cbac3f466ae3",
+      "keyword_groups": {
+        "hooks": [
+          "hook",
+          "hooks"
+        ],
+        "integration": [
+          "MCP",
+          "Slack"
+        ],
+        "quality-cost": [
+          "cost",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "schedule",
+          "workflow"
+        ]
+      },
+      "latest_signal": "New in Cursor",
+      "name": "Cursor changelog",
+      "owner": "Cursor",
+      "previous_hash": "665ffcbd537c96796840de3187e925673d46b9cc171a18fcfc8c13c845d4b657",
+      "slug": "cursor-changelog",
+      "snippets": [
+        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...",
+        "Install plugins to connect: Google Drive : search files and folders, open and download content, create and organize files Gmail : search and read mail, draft and send messages,...",
+        "New to both iPhone and iPad: an inbox to stay organized, and a review experience that covers the full PR."
+      ],
+      "status": 200,
+      "url": "https://cursor.com/changelog"
     }
   ],
-  "checked_at": "2026-08-02T22:11:53Z",
+  "checked_at": "2026-08-04T22:29:49Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -171,13 +325,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-08-01T22:12:35Z",
+  "previous_checked_at": "2026-08-03T22:18:47Z",
   "sources": [
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "cd3805c012788e10c829872d14c7ea7a680a934c19ca71fad3bcb800d701ca95",
+      "hash": "7813e5d7058e99d49895c37ef088c63ec06af042b1288c7c816fd72f48a2f478",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -221,7 +375,7 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.220 / July 25, 2026",
+      "latest_signal": "2.1.221 / August 4, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
       "previous_hash": "cd3805c012788e10c829872d14c7ea7a680a934c19ca71fad3bcb800d701ca95",
@@ -229,7 +383,7 @@
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.220 July 25, 2026 Bug fixes and reliability improvements ​ 2.1.219 July 24, 2026 Added Claude Opus 5 ( claude-opus-5 ), now the default Opus model — 1M context, fast mode..."
+        "​ 2.1.221 August 4, 2026 [VSCode] Added Focus view: a chat-menu toggle that hides tool activity behind an expandable per-turn summary with a live running-tool indicator, toggled..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -238,7 +392,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "d9601bd1332a3bdb9525d21a96f0ee66f890d1a4fcc9c6510ab36a3cd2592b72",
+      "hash": "7716b6c04a98413d8475278f770ed64054a4d956eb9fc1da7c34588c3562126c",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -256,7 +410,8 @@
         "integration": [
           "MCP",
           "connector",
-          "GitHub"
+          "GitHub",
+          "IDE extension"
         ],
         "quality-cost": [
           "OpenTelemetry",
@@ -276,7 +431,7 @@
       "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "ccf1d043f0d7308687b4c1f7d02323c9b866bb9c555ded4905d1bce587d8a40a",
+      "previous_hash": "d9601bd1332a3bdb9525d21a96f0ee66f890d1a4fcc9c6510ab36a3cd2592b72",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -338,7 +493,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "0c75d26c77ea70b2277659ade866df69453159068fa1077f5f87087a9f30e9c9",
+      "hash": "06220ad2f05f2bf3ca9e06f6094eba788948f00776179ce660be88fc07521703",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -383,7 +538,7 @@
       "latest_signal": "2026-07-31 / GPT-5.4 and GPT-5.4 mini retire from Codex on August 31 On August 31, 2026, GPT-5.4 and GPT",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "a61ec1bc52a2dd2b251cdc21aab5c390294594fe7af34728275e058169f6946c",
+      "previous_hash": "e9c85c7621e39b81b57bf66be9f553138455be376a745e9552e0491f9ff45142",
       "slug": "codex-changelog",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -394,10 +549,10 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "1dea5355700b2af3803572e204ad45d115daa312bf8c8c38014954f1985a34e8",
+      "hash": "e252e07b550ac8d7ffe18f603cb26734ab6ffbd31dfc97db71a422a300a86429",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.4",
@@ -436,7 +591,7 @@
       "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "1dea5355700b2af3803572e204ad45d115daa312bf8c8c38014954f1985a34e8",
+      "previous_hash": "84a07740242a52db5a6b3482825570b6926aac43cf917cc63071d346f8c54e9c",
       "slug": "codex-use-cases",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -462,23 +617,18 @@
       "url": "https://openai.com/codex/"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "f034a7002852bb03e0b31c30ee15073efbf48566b1cf9059fe357b85b11698c5",
+      "hash": "a23bd552769066e3de658abf11d3553627ae135cd177078cd4c9cbac3f466ae3",
       "keyword_groups": {
-        "codex-runtime": [
-          "subagents"
-        ],
         "hooks": [
           "hook",
-          "hooks",
-          "Stop"
+          "hooks"
         ],
         "integration": [
           "MCP",
-          "Slack",
-          "GitHub"
+          "Slack"
         ],
         "quality-cost": [
           "cost",
@@ -488,18 +638,19 @@
         "schedule": [
           "automation",
           "automations",
+          "schedule",
           "workflow"
         ]
       },
-      "latest_signal": "3.11 / Jul 10, 2026",
+      "latest_signal": "New in Cursor",
       "name": "Cursor changelog",
       "owner": "Cursor",
-      "previous_hash": "f034a7002852bb03e0b31c30ee15073efbf48566b1cf9059fe357b85b11698c5",
+      "previous_hash": "665ffcbd537c96796840de3187e925673d46b9cc171a18fcfc8c13c845d4b657",
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...",
-        "New to both iPhone and iPad: an inbox to stay organized, and a review experience that covers the full PR.",
-        "Create, review, and merge from anywhere."
+        "Install plugins to connect: Google Drive : search files and folders, open and download content, create and organize files Gmail : search and read mail, draft and send messages,...",
+        "New to both iPhone and iPad: an inbox to stay organized, and a review experience that covers the full PR."
       ],
       "status": 200,
       "url": "https://cursor.com/changelog"
@@ -508,7 +659,7 @@
       "changed": false,
       "error": null,
       "first_seen": false,
-      "hash": "a7513a88ed2c096b719cc9346c81413d92d42394be154e295dc6299794c9c00c",
+      "hash": "cd6e9ff8949d7c5fe4015a5b039261c21f1ecea5e73d18a972feed159ca159a1",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -530,10 +681,10 @@
           "workflow"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
+      "latest_signal": "VS Code Gemini Code Assist 2.92.0 / July 20, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
-      "previous_hash": "a7513a88ed2c096b719cc9346c81413d92d42394be154e295dc6299794c9c00c",
+      "previous_hash": "cd6e9ff8949d7c5fe4015a5b039261c21f1ecea5e73d18a972feed159ca159a1",
       "slug": "gemini-code-assist-release-notes",
       "snippets": [
         "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",

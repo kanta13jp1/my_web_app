@@ -1,6 +1,6 @@
 # 自分株式会社 — User Tasks Snapshot
 
-_Generated: 2026/8/3 (JST)_
+_Generated: 2026/8/4 (JST)_
 _Active user tasks: 86_
 
 ## 概要
@@ -19,7 +19,7 @@ NotebookLM に source として追加し、「具体的手順」「詰まりポ�
 - **progress**: 55%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2026-09-01
+- **deadline**: 2026-09-02
 
 **説明**:
 
@@ -34,7 +34,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2492 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-10-24
+- **deadline**: 2026-10-27
 
 **説明**:
 
@@ -49,7 +49,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2604 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-10-29
+- **deadline**: 2026-10-31
 
 **説明**:
 
@@ -64,26 +64,11 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2712 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-11-06
+- **deadline**: 2026-11-09
 
 **説明**:
 
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2815 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T03:34:00Z
-
----
-
-### 🟡 ⏳ 会計ソフト導入 (freee or マネフォ)
-
-- **id**: `8faaec7c-6f22-4fef-bb4c-9721981e5bb6`
-- **category**: business-finance
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-11-12
-
-**説明**:
-
-freee / MoneyForward Cloud 比較 → 契約
 
 ---
 
@@ -94,11 +79,26 @@ freee / MoneyForward Cloud 比較 → 契約
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-11-12
+- **deadline**: 2026-11-13
 
 **説明**:
 
 弁理士経由で日本商標出願 → 米国 + EU 展開検討
+
+---
+
+### 🟡 ⏳ 会計ソフト導入 (freee or マネフォ)
+
+- **id**: `8faaec7c-6f22-4fef-bb4c-9721981e5bb6`
+- **category**: business-finance
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-11-13
+
+**説明**:
+
+freee / MoneyForward Cloud 比較 → 契約
 
 ---
 
@@ -109,7 +109,7 @@ freee / MoneyForward Cloud 比較 → 契約
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-11-15
+- **deadline**: 2026-11-16
 
 **説明**:
 
@@ -124,7 +124,7 @@ freee / MoneyForward Cloud 比較 → 契約
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-11-17
+- **deadline**: 2026-11-18
 
 **説明**:
 
@@ -139,7 +139,7 @@ Tokyo 1 等地 / 登記住所 / 郵便受取
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-12-04
+- **deadline**: 2026-12-06
 
 **説明**:
 
@@ -154,7 +154,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2601 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-01-08
+- **deadline**: 2027-01-11
 
 **説明**:
 
@@ -169,7 +169,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2705 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-01-09
+- **deadline**: 2027-01-12
 
 **説明**:
 
@@ -184,7 +184,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1321 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-02-18
+- **deadline**: 2027-02-21
 
 **説明**:
 
@@ -199,7 +199,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2925 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-02-28
+- **deadline**: 2027-03-03
 
 **説明**:
 
@@ -214,7 +214,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/4218 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-03-09
+- **deadline**: 2027-03-12
 
 **説明**:
 
@@ -229,7 +229,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2593 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-03-12
+- **deadline**: 2027-03-15
 
 **説明**:
 
@@ -244,7 +244,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1289 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-04-06
+- **deadline**: 2027-04-09
 
 **説明**:
 
@@ -259,7 +259,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1926 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-04-11
+- **deadline**: 2027-04-14
 
 **説明**:
 
@@ -274,7 +274,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3291 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-04-24
+- **deadline**: 2027-04-27
 
 **説明**:
 
@@ -289,7 +289,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3147 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-04-26
+- **deadline**: 2027-04-29
 
 **説明**:
 
@@ -304,7 +304,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3443 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-04-27
+- **deadline**: 2027-04-30
 
 **説明**:
 
@@ -319,7 +319,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2735 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-05-05
+- **deadline**: 2027-05-08
 
 **説明**:
 
@@ -334,7 +334,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2703 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-05-12
+- **deadline**: 2027-05-15
 
 **説明**:
 
@@ -349,7 +349,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1288 / Author: kan
 - **progress**: 20%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2027-05-15
+- **deadline**: 2027-05-18
 
 **説明**:
 
@@ -364,7 +364,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/4073 / Author: kan
 - **progress**: 20%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2027-05-23
+- **deadline**: 2027-05-26
 
 **説明**:
 
@@ -379,7 +379,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2880 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-05-29
+- **deadline**: 2027-06-01
 
 **説明**:
 
@@ -394,7 +394,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/4153 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-05-31
+- **deadline**: 2027-06-03
 
 **説明**:
 
@@ -409,7 +409,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3349 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-06-01
+- **deadline**: 2027-06-04
 
 **説明**:
 
@@ -424,7 +424,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1322 / Author: kan
 - **progress**: 20%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2027-06-12
+- **deadline**: 2027-06-15
 
 **説明**:
 
@@ -439,7 +439,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1840 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-06-22
+- **deadline**: 2027-06-25
 
 **説明**:
 
@@ -454,7 +454,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2743 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-07-05
+- **deadline**: 2027-07-08
 
 **説明**:
 
@@ -469,7 +469,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2737 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-07-09
+- **deadline**: 2027-07-12
 
 **説明**:
 
@@ -484,7 +484,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3329 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-07-12
+- **deadline**: 2027-07-15
 
 **説明**:
 
@@ -499,7 +499,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2659 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-07-13
+- **deadline**: 2027-07-16
 
 **説明**:
 
@@ -514,7 +514,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1894 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-07-18
+- **deadline**: 2027-07-21
 
 **説明**:
 
@@ -529,7 +529,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/4143 / Author: kan
 - **progress**: 20%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2027-07-25
+- **deadline**: 2027-07-28
 
 **説明**:
 
@@ -544,7 +544,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1239 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-09-01
+- **deadline**: 2027-09-04
 
 **説明**:
 
@@ -559,7 +559,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3326 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-09-03
+- **deadline**: 2027-09-06
 
 **説明**:
 
@@ -574,7 +574,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/4185 / Author: kan
 - **progress**: 20%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2027-11-25
+- **deadline**: 2027-11-28
 
 **説明**:
 
@@ -597,7 +597,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2941
 - **progress**: 20%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2027-11-25
+- **deadline**: 2027-11-28
 
 **説明**:
 
@@ -620,7 +620,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2939
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2026-11-16
+- **deadline**: 2026-11-17
 
 **説明**:
 
@@ -635,7 +635,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2939
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-10-18
+- **deadline**: 2027-10-21
 
 **説明**:
 
@@ -650,7 +650,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/4096 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-10-31
+- **deadline**: 2027-11-03
 
 **説明**:
 
@@ -665,7 +665,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2235 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-11-01
+- **deadline**: 2027-11-04
 
 **説明**:
 
@@ -680,7 +680,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1731 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-11-08
+- **deadline**: 2027-11-11
 
 **説明**:
 
@@ -695,7 +695,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1728 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-11-28
+- **deadline**: 2027-12-01
 
 **説明**:
 
@@ -734,7 +734,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3343
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-11-29
+- **deadline**: 2027-12-02
 
 **説明**:
 
@@ -774,7 +774,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/4185
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-12-03
+- **deadline**: 2027-12-06
 
 **説明**:
 
@@ -817,7 +817,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3357
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-12-04
+- **deadline**: 2027-12-07
 
 **説明**:
 
@@ -855,7 +855,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3595
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-12-05
+- **deadline**: 2027-12-08
 
 **説明**:
 
@@ -898,7 +898,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3349
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-12-07
+- **deadline**: 2027-12-10
 
 **説明**:
 
@@ -943,7 +943,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3354
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-12-09
+- **deadline**: 2027-12-12
 
 **説明**:
 
@@ -988,7 +988,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3291
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-12-09
+- **deadline**: 2027-12-12
 
 **説明**:
 
@@ -1031,7 +1031,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3443
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-12-11
+- **deadline**: 2027-12-14
 
 **説明**:
 
@@ -1071,7 +1071,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3326
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-12-17
+- **deadline**: 2027-12-20
 
 **説明**:
 
@@ -1111,7 +1111,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3383
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-12-18
+- **deadline**: 2027-12-21
 
 **説明**:
 
@@ -1154,7 +1154,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3328
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-12-19
+- **deadline**: 2027-12-22
 
 **説明**:
 
@@ -1195,7 +1195,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3384
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-12-25
+- **deadline**: 2027-12-28
 
 **説明**:
 
@@ -1236,7 +1236,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3329
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-12-27
+- **deadline**: 2027-12-30
 
 **説明**:
 
@@ -1277,7 +1277,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/4218
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-12-30
+- **deadline**: 2028-01-02
 
 **説明**:
 
@@ -1319,7 +1319,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3585
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-12-30
+- **deadline**: 2028-01-02
 
 **説明**:
 
@@ -1357,7 +1357,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3325
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2028-01-02
+- **deadline**: 2028-01-05
 
 **説明**:
 
@@ -1398,7 +1398,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3318
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2028-01-04
+- **deadline**: 2028-01-07
 
 **説明**:
 
@@ -1443,7 +1443,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/4073
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-09-18
+- **deadline**: 2026-09-19
 
 **説明**:
 
@@ -1451,18 +1451,22 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/4073
 
 ---
 
-### 🔴 ⏳ [Issue #4121] [P0][first-user] LP登録率を10仮説で改善し最初の外部ユーザー1人を獲得
+### 🔴 🔧 [Issue #4121] [P0][first-user] LP登録率を10仮説で改善し最初の外部ユーザー1人を獲得
 
 - **id**: `53ec9d57-bb20-4cd1-b497-07a7ad81f8a9`
 - **category**: GitHub Issue / Bug
 - **progress**: 0%
-- **status**: pending
+- **status**: in_progress
 - **priority**: high
-- **deadline**: 2026-09-21
+- **deadline**: 2026-09-23
 
 **説明**:
 
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/4121 / Author: kanta13jp1 / Labels: 追加要望, priority:critical, growth, acquisition, first-user / GitHub updated: 2026-07-23T18:59:32Z
+
+**直近 1 報告**:
+
+- _2026/8/3 13:07:10_ — progress=0% status=in_progress
 
 ---
 
@@ -1473,7 +1477,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/4121 / Author: kan
 - **progress**: 60%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2026-09-26
+- **deadline**: 2026-09-27
 
 **説明**:
 
@@ -1488,7 +1492,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/4121 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-10-09
+- **deadline**: 2026-10-10
 
 **説明**:
 
@@ -1503,7 +1507,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/4121 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-10-09
+- **deadline**: 2026-10-10
 
 **説明**:
 
@@ -1518,7 +1522,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/4121 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-10-10
+- **deadline**: 2026-10-11
 
 **説明**:
 
@@ -1533,7 +1537,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/4121 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-10-11
+- **deadline**: 2026-10-12
 
 **説明**:
 
@@ -1548,7 +1552,7 @@ VC 30 社 / Angel 20 名 / 接点経路の整理
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-10-18
+- **deadline**: 2026-10-19
 
 **説明**:
 
@@ -1563,26 +1567,11 @@ VC 30 社 / Angel 20 名 / 接点経路の整理
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-10-18
-
-**説明**:
-
-I の部 / II の部 / 申請書一式
-
----
-
-### 🔴 ⏳ 上場審査対応
-
-- **id**: `c52e8b2e-2390-45a9-8368-761f14a568d1`
-- **category**: business-ipo
-- **progress**: 0%
-- **status**: pending
-- **priority**: high
 - **deadline**: 2026-10-19
 
 **説明**:
 
-東証ヒアリング 5 回 / 質疑応答資料
+I の部 / II の部 / 申請書一式
 
 ---
 
@@ -1593,11 +1582,26 @@ I の部 / II の部 / 申請書一式
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-10-19
+- **deadline**: 2026-10-20
 
 **説明**:
 
 EY / KPMG / PwC / Deloitte / 太陽 / トーマツ
+
+---
+
+### 🔴 ⏳ 上場審査対応
+
+- **id**: `c52e8b2e-2390-45a9-8368-761f14a568d1`
+- **category**: business-ipo
+- **progress**: 0%
+- **status**: pending
+- **priority**: high
+- **deadline**: 2026-10-20
+
+**説明**:
+
+東証ヒアリング 5 回 / 質疑応答資料
 
 ---
 
@@ -1608,7 +1612,7 @@ EY / KPMG / PwC / Deloitte / 太陽 / トーマツ
 - **progress**: 90%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-11-13
+- **deadline**: 2027-11-16
 
 **説明**:
 
@@ -1623,7 +1627,7 @@ Rewrite the X profile for @kanta13jp1 so profile visitors immediately understand
 - **progress**: 90%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-11-15
+- **deadline**: 2027-11-18
 
 **説明**:
 
@@ -1638,7 +1642,7 @@ Rewrite the X profile for @kanta13jp1 so profile visitors immediately understand
 - **progress**: 90%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-11-15
+- **deadline**: 2027-11-18
 
 **説明**:
 
@@ -1653,26 +1657,11 @@ Once Stripe identity review and payout pause are clear, ask the first interested
 - **progress**: 90%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-11-16
+- **deadline**: 2027-11-19
 
 **説明**:
 
 Stripe account-status task for the representative identity document must move to 完了, and payout pause/risk must clear before buyer outreach or bank-credit verification can honestly proceed.
-
----
-
-### 🔴 🔧 [追加要望][収益化P0][X集客] Xアナリティクスで勝ち投稿を増幅
-
-- **id**: `7d89a9ca-51ea-42fb-b097-24b02a6e6cb9`
-- **category**: 追加要望 / x-first-user-growth
-- **progress**: 90%
-- **status**: in_progress
-- **priority**: high
-- **deadline**: 2027-11-17
-
-**説明**:
-
-Use X Analytics / post activity to identify which posts drive impressions and engagement, then rewrite the top performer into 3 variants. X Business documentation says analytics show what works and help optimize future campaigns.
 
 ---
 
@@ -1683,11 +1672,26 @@ Use X Analytics / post activity to identify which posts drive impressions and en
 - **progress**: 90%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-11-17
+- **deadline**: 2027-11-20
 
 **説明**:
 
 Define the first-user persona and create a concrete list of at least 10 people to contact directly. This is not a vague marketing plan; it is a named target list for the first real user/supporter candidate.
+
+---
+
+### 🔴 🔧 [追加要望][収益化P0][X集客] Xアナリティクスで勝ち投稿を増幅
+
+- **id**: `7d89a9ca-51ea-42fb-b097-24b02a6e6cb9`
+- **category**: 追加要望 / x-first-user-growth
+- **progress**: 90%
+- **status**: in_progress
+- **priority**: high
+- **deadline**: 2027-11-20
+
+**説明**:
+
+Use X Analytics / post activity to identify which posts drive impressions and engagement, then rewrite the top performer into 3 variants. X Business documentation says analytics show what works and help optimize future campaigns.
 
 ---
 
@@ -1698,7 +1702,7 @@ Define the first-user persona and create a concrete list of at least 10 people t
 - **progress**: 90%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-11-19
+- **deadline**: 2027-11-22
 
 **説明**:
 
@@ -1713,7 +1717,7 @@ Use X replies to earn impressions without relying on acquaintances. Reply to 30 
 - **progress**: 90%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-11-20
+- **deadline**: 2027-11-23
 
 **説明**:
 
@@ -1728,7 +1732,7 @@ Run a 7-day X content sprint: 1 build-in-public post, 1 problem/lesson post, 1 s
 - **progress**: 90%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-11-20
+- **deadline**: 2027-11-23
 
 **説明**:
 
@@ -1743,7 +1747,7 @@ Publish one Daily Briefing style X post/thread per day for 7 days using timely t
 - **progress**: 95%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-11-21
+- **deadline**: 2027-11-24
 
 **説明**:
 
@@ -1758,7 +1762,7 @@ Stripe live mode、本人確認/事業者情報、銀行口座、live Product/Pr
 - **progress**: 90%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-11-21
+- **deadline**: 2027-11-24
 
 **説明**:
 
@@ -1773,7 +1777,7 @@ Publish one honest build-in-public post or X post that drives people to /subscri
 - **progress**: 90%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-11-23
+- **deadline**: 2027-11-26
 
 **説明**:
 
@@ -1788,7 +1792,7 @@ Create and pin one post that explains the site in plain language, asks for one r
 - **progress**: 90%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-11-23
+- **deadline**: 2027-11-26
 
 **説明**:
 
