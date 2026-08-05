@@ -84,6 +84,33 @@ VALUES
     'https://github.com/kanta13jp1/my_web_app/issues/4343',
     'OPEN',
     now()
+  ),
+  (
+    'revenue / first-yen-funnel',
+    'verified_user',
+    0,
+    '[revenue-p0][payment-evidence] Exclude admin and unclassified supporter payments',
+    'Classify optional authenticated buyers on the server, copy the classification through Stripe metadata and the signed webhook, and count only measured first_user_growth payments from signed-in non-admin users in PII-free revenue evidence.',
+    'codex',
+    'codex',
+    'in_progress',
+    90,
+    DATE '2026-08-05',
+    DATE '2026-08-05',
+    'first-yen-revenue',
+    'high',
+    'pending',
+    24,
+    'Merge and deploy schedule-hub, stripe-webhook, and growth-hub. Then verify a paid authenticated_non_admin supporter record joins the X signup and first-action ledger while admin_self and anonymous_unclassified records remain excluded.',
+    'Keep anonymous checkout available, but never count anonymous, admin, legacy unclassified, or non-first_user_growth payments as the external-buyer proof. Use the PII-free evidence SQL instead of exposing email, UUID, or full Stripe identifiers.',
+    ARRAY[
+      '[revenue-p0][stripe-account] Automate live charge and payout readiness evidence',
+      '[revenue-p0][acquisition] Publish approved Hook B and measure the 3h/24h funnel'
+    ]::text[],
+    3639,
+    'https://github.com/kanta13jp1/my_web_app/issues/3639',
+    'OPEN',
+    now()
   )
 ON CONFLICT (title, instance) DO UPDATE SET
   category = EXCLUDED.category,
@@ -135,14 +162,15 @@ SET
         COALESCE(payout_task.depends_on_titles, ARRAY[]::text[]) ||
         ARRAY[
           '[revenue-p0][stripe-account] Automate live charge and payout readiness evidence',
-          '[revenue-p0][acquisition] Publish approved Hook B and measure the 3h/24h funnel'
+          '[revenue-p0][acquisition] Publish approved Hook B and measure the 3h/24h funnel',
+          '[revenue-p0][payment-evidence] Exclude admin and unclassified supporter payments'
         ]::text[]
       ) AS dependencies(dependency)
       ORDER BY dependency
     )
   ),
-  remaining_work = 'Fresh evidence required: Stripe charges_enabled=true and payouts_enabled=true, exact approval and publication of Hook B, one unrelated external signup and first action, one paid external-user JPY webhook, one Stripe payout, and a matching bank deposit of at least JPY 1. Exclude the 2026-07-29 JPY 500 HexCiv purchase because its purchaser is_admin=true and role=admin; it proves only the checkout, webhook, and download path.',
-  recovery_plan = 'Run the strict Stripe readiness workflow first. Publish Hook B only after exact owner approval. If traffic arrives without signup, inspect the selected landing arm. For every paid record, verify the purchaser is neither admin nor an acquaintance before counting revenue; then inspect Stripe payout status and a redacted bank statement.',
+  remaining_work = 'Fresh evidence required: Stripe charges_enabled=true and payouts_enabled=true, exact approval and publication of Hook B, one unrelated external signup and first action, one paid authenticated_non_admin first_user_growth webhook, one Stripe payout, and a matching bank deposit of at least JPY 1. Exclude the 2026-07-29 JPY 500 HexCiv purchase because its purchaser is_admin=true and role=admin; it proves only the checkout, webhook, and download path.',
+  recovery_plan = 'Run the strict Stripe readiness workflow first. Publish Hook B only after exact owner approval. If traffic arrives without signup, inspect the selected landing arm. Count only a signed-in non-admin payment joined to the measured X signup and first action; manually confirm the buyer is not an acquaintance, then inspect Stripe payout status and a redacted bank statement.',
   end_date = DATE '2026-08-07',
   updated_at = now()
 WHERE payout_task.title =

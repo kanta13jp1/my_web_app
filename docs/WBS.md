@@ -13,14 +13,15 @@
 - Stripeは100円のlive Checkout生成とWebhook secret設定まで確認済み。ただし現在の`charges_enabled` / `payouts_enabled`は機械証跡がなく、銀行着金へ進めるか断定できない。
 - 2026-07-29にHexCivの500円live決済、処理済み`checkout.session.completed`、ダウンロードURL発行2回を本番DBで確認した。ただし購入者は`user_profiles.is_admin=true`かつ`role=admin`のため自己購入であり、外部ユーザー売上・1人目獲得・銀行着金ゴールには数えない。決済/Webhook/商品配信経路の動作確認証跡としてのみ扱い、現時点の適格な外部決済額は0円。
 - 今回の最優先実装は、`billing.get_stripe_account_readiness` と手動workflow `Stripe Account Readiness`。サービスロール経由でStripe secretを外へ出さず、live決済可否・Payout可否・未完了要件だけを伏字済みJSONへ記録する。
+- 支援Checkoutの購入者分類を追加する。任意のログインJWTをサーバー側で検証し、`admin_self` / `authenticated_non_admin` / `anonymous_unclassified` をStripe metadataへ付与する。署名済みWebhookと`revenue.funnel_report`は管理者・匿名・旧形式の未分類決済を外部売上から除外し、PIIなしSQLでのみ集計する。
 - クリティカルパス:
   1. Stripe readiness workflowで`charges_enabled=true`かつ`payouts_enabled=true`を確認
   2. 明示承認後にHook Bを1回だけ公開し、3h/24hの固定ファネルを計測
   3. 外部ユーザー1人のsignupとfirst actionをUTMで確認
-  4. 管理者・知人を除外した外部ユーザーのFounding Supporter 100円決済とpaid Webhookを確認
+  4. X計測URLからsignupとfirst actionまで到達した、ログイン済み非管理者のFounding Supporter 100円決済とpaid Webhookを確認。匿名・自己購入・未分類の決済は除外する
   5. Stripe Payoutと伏字済み銀行明細の1円以上着金を照合
 - 禁止事項: 自己決済や知人決済を獲得証跡に数えない。自動DM・自動follow・無関係なトレンド便乗・架空ニュース・承認前X投稿を行わない。
-- WBS反映: migration `20260731120000_wbs_revenue_current_gate.sql`。既存Issue #3639 / #4343と銀行着金タスクへ集約し、重複タスクを増やさない。
+- WBS反映: migration `20260731120000_wbs_revenue_current_gate.sql`。Stripe readiness、支援購入者分類、Hook B計測を既存Issue #3639 / #4343と銀行着金タスクへ集約し、重複Issueを増やさない。
 
 ## 収益化P0メモ (2026-06-27)
 
