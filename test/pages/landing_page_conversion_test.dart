@@ -626,6 +626,50 @@ void main() {
   });
 
   testWidgets(
+    'trial result reveals the inline save path without forcing keyboard focus',
+    (tester) async {
+      for (final size in <Size>[
+        const Size(1200, 720),
+        const Size(390, 844),
+      ]) {
+        await pumpLanding(
+          tester,
+          assignment: _assignment('h04', LandingExperimentVariant.treatment),
+          size: size,
+        );
+
+        final trialButton = find.byKey(
+          const Key('landing_trial_sample_priority'),
+        );
+        await Scrollable.ensureVisible(
+          tester.element(trialButton),
+          alignment: 0.5,
+        );
+        await tester.pump();
+        await tester.tap(trialButton);
+        await tester.pumpAndSettle();
+
+        final email = find.byKey(const Key('landing_h04_inline_email'));
+        final saveButton = find.byKey(
+          const Key('landing_h04_inline_magic_link'),
+        );
+        expect(tester.getTopLeft(email).dy, greaterThanOrEqualTo(0));
+        expect(
+          tester.getBottomRight(saveButton).dy,
+          lessThanOrEqualTo(size.height),
+        );
+        expect(
+          tester.widget<TextField>(email).focusNode?.hasFocus,
+          isFalse,
+        );
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump();
+      }
+    },
+  );
+
+  testWidgets(
     'H15 starts with three outcomes and reveals the 134-feature catalog on demand',
     (tester) async {
       final adapter = await pumpLanding(
