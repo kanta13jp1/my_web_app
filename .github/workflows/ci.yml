@@ -70,7 +70,7 @@ jobs:
         run: flutter --version
 
       - name: Cache Flutter pub
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
@@ -89,8 +89,9 @@ jobs:
 
       - name: Setup Deno
         shell: bash
-        run: |
-          set -euo pipefail
+        env:
+          DENO_VERSION: v2.9.1
+        run: bash scripts/ci/install_deno_from_github.sh
           # deno.land は一時的な 5xx を返すことがあり、素の curl|sh だと main の
           # deploy-prod ごと fail する (2026-06-10 run 27293741687 = 503 → exit 22 /
           # Issue #3215)。deploy-prod.yml の deploy_function と同じ retry+backoff
@@ -98,23 +99,6 @@ jobs:
           # curl --retry が rewind できず、切断時に途中までのスクリプトが sh に
           # 流れる危険があるため。installer 内部の DL 失敗は外側 loop が拾う。
           # 持続障害 (3 回 fail) は rerun に委ねる。
-          installer="$(mktemp)"
-          trap 'rm -f "$installer"' EXIT
-          for attempt in 1 2 3; do
-            if curl -fsSL --retry 3 --retry-delay 5 --retry-all-errors \
-                 -o "$installer" https://deno.land/install.sh \
-               && sh "$installer"; then
-              break
-            fi
-            if [ "$attempt" -eq 3 ]; then
-              echo "::error::Deno install failed after ${attempt} attempts (deno.land transient error)"
-              exit 1
-            fi
-            echo "::warning::Deno install attempt ${attempt} failed; retrying in $((attempt * 20))s"
-            sleep $((attempt * 20))
-          done
-          echo "$HOME/.deno/bin" >> "$GITHUB_PATH"
-          "$HOME/.deno/bin/deno" --version
 
       - name: Check Edge Function imports
         run: python scripts/check_edge_function_imports.py
@@ -164,6 +148,12 @@ jobs:
             echo "⚠️ deno test: *.test.ts が見つかりません — スキップ"
           fi
         # 74テスト安定稼働中 (2026-04-12 PR#317) — continue-on-error 廃止
+
+      - name: Caption transcoder unit tests
+        # services/caption-transcoder (Cloud Run ffmpeg 字幕焼き込み) の純関数
+        # テスト。ubuntu-latest は node 20 プリインストールなので数秒で完走し、
+        # SRT リスケール等の回帰を EF 側の変更と同一 PR でブロックできる。
+        run: node services/caption-transcoder/test.js
 
       - name: Check Edge Function deploy count (ハードキャップ50本以下)
         run: |
@@ -249,6 +239,19 @@ jobs:
         run: python scripts/check_github_actions_python_inline.py
         continue-on-error: false
 
+      - name: Check GitHub Actions status-function placement
+        run: python scripts/check_github_actions_status_functions.py
+        continue-on-error: false
+
+      - name: Check GitHub Actions PowerShell splatting
+        run: python scripts/check_github_actions_powershell_splatting.py
+        continue-on-error: false
+
+      - name: Test tools-hub MCP smoke response compatibility
+        shell: pwsh
+        run: ./test/scripts/tools_hub_mcp_smoke_response_test.ps1
+        continue-on-error: false
+
       - name: Check duplicate dispose statements
         # part 280 実例 (二重 dispose → dispose 中断 → defunct setState) の再発防止。
         # part 286: timeout でハング検知 + --max-seconds で線形時間 (正規表現の
@@ -286,7 +289,8 @@ jobs:
 
       - name: Run VM tests
         id: flutter_test
-        run: flutter test --coverage
+        # Keep coverage while bounding Dart VM workers on Windows-sized runners.
+        run: flutter test --coverage --concurrency=2
         continue-on-error: false  # VSCode S21: 9 test files @TestOn('browser') 追加で VM contamination 完全解消
 
       - name: Run web import smoke tests

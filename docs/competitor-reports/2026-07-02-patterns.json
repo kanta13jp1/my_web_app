@@ -1,0 +1,1570 @@
+{
+  "generated_at": "2026-07-01T22:30:30Z",
+  "source_files": [
+    "docs/competitor-reports/2026-07-02.md"
+  ],
+  "min_confidence": 0.5,
+  "entries_total": 51,
+  "filter_summary": {
+    "total": 51,
+    "by_verdict": {
+      "pass": 0,
+      "review": 51,
+      "drop": 0
+    },
+    "risk_flags": {
+      "missing_source_url": 51,
+      "sensational_language": 2
+    }
+  },
+  "entries": [
+    {
+      "entry": {
+        "entry_id": "nf-978ac8447a18",
+        "title": "エグゼクティブサマリー（新シグナルのみ）",
+        "text": "エグゼクティブサマリー（新シグナルのみ）",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "エグゼクティブサマリー（新シグナルのみ）"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-978ac8447a18",
+        "title": "エグゼクティブサマリー（新シグナルのみ）",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-68a8b6d881f6",
+        "title": "#",
+        "text": "# # シグナル 重要度 自社差別化軸への含意",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "#",
+          "url": "",
+          "status": "",
+          "summary": "# シグナル 重要度 自社差別化軸への含意"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-68a8b6d881f6",
+        "title": "#",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b1758c48ac48",
+        "title": "1",
+        "text": "1 1 **MoneyForward AI Cowork — 7月 GA 月に突入（T-0）** 🔴🔴 B/S 中核への最大脅威が「T-1month」→「GA 月」へ。経理/HR/法務を **マルチエージェント並列協調**（請求書発行・支払依頼・消込・キャッシュフロー予測を並列自律）で完遂。非対称防衛＝「AI が同僚」に対し「**自分が CEO・AI が 6 部署**」を今月中に sharpen 必須。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "1",
+          "url": "",
+          "status": "",
+          "summary": "1 **MoneyForward AI Cowork — 7月 GA 月に突入（T-0）** 🔴🔴 B/S 中核への最大脅威が「T-1month」→「GA 月」へ。経理/HR/法務を **マルチエージェント並列協調**（請求書発行・支払依頼・消込・キャッシュフロー予測を並列自律）で完遂。非対称防衛＝「AI が同僚」に対し「**自分が CEO・AI が 6 部署**」を今月中に sharpen 必須。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b1758c48ac48",
+        "title": "1",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9994cd962041",
+        "title": "2",
+        "text": "2 2 **Anthropic — Claude Sonnet 5 が Claude Code の default に（1M ctx / $2・$10 promo 〜8/31 / v2.1.197）＋ Claude Fable 5 が 7/1 グローバル GA（輸出規制解除）** 🔴🔴 競合というより **Win Claude #132 fleet の直接 toolchain シグナル**。Sonnet 5 default + Fable 5 解禁 + 週次上限 +50%（〜7/13）で自社の主要開発基盤が更新。model picker / `/model` の棚卸し対象。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "2",
+          "url": "",
+          "status": "",
+          "summary": "2 **Anthropic — Claude Sonnet 5 が Claude Code の default に（1M ctx / $2・$10 promo 〜8/31 / v2.1.197）＋ Claude Fable 5 が 7/1 グローバル GA（輸出規制解除）** 🔴🔴 競合というより **Win Claude #132 fleet の直接 toolchain シグナル**。Sonnet 5 default + Fable 5 解禁 + 週次上限 +50%（〜7/13）で自社の主要開発基盤が更新。model picker / `/model` の棚卸し対象。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9994cd962041",
+        "title": "2",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-afe7336d0bb6",
+        "title": "3",
+        "text": "3 3 **OpenAI GPT-5.6 Sol プレビュー（7月）＝ max reasoning effort ＋ ultra mode ＋ agentic workflows（Terra / Luna 同時）** 🔴 OpenAI Codex（既収載）のモデル層更新。長期プランニング・エージェント workflow 強化で AI dev tool frontier が再加速。Codex 経由で自社 `cross-instance-pr` peer の性能が上振れ。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "3",
+          "url": "",
+          "status": "",
+          "summary": "3 **OpenAI GPT-5.6 Sol プレビュー（7月）＝ max reasoning effort ＋ ultra mode ＋ agentic workflows（Terra / Luna 同時）** 🔴 OpenAI Codex（既収載）のモデル層更新。長期プランニング・エージェント workflow 強化で AI dev tool frontier が再加速。Codex 経由で自社 `cross-instance-pr` peer の性能が上振れ。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-afe7336d0bb6",
+        "title": "3",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ba507706b961",
+        "title": "4",
+        "text": "4 4 **Google Jules / Antigravity（本日 discovery 採択）＝ Antigravity CLI（Go 製）が 6/18 Gemini CLI を完全置換＋Jules 2M ctx＋CI/CD 自動 fix loop** 🔴 **競合かつ自社 toolchain**。自社 L1 lane（Antigravity+Gemini 探索）＋`AI_FALLBACK_RUNBOOK` の Gemini Code Assist fallback 経路が直撃。詳細は discovery セクション。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "4",
+          "url": "",
+          "status": "",
+          "summary": "4 **Google Jules / Antigravity（本日 discovery 採択）＝ Antigravity CLI（Go 製）が 6/18 Gemini CLI を完全置換＋Jules 2M ctx＋CI/CD 自動 fix loop** 🔴 **競合かつ自社 toolchain**。自社 L1 lane（Antigravity+Gemini 探索）＋`AI_FALLBACK_RUNBOOK` の Gemini Code Assist fallback 経路が直撃。詳細は discovery セクション。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ba507706b961",
+        "title": "4",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ce328ce386c3",
+        "title": "5",
+        "text": "5 5 **Cursor 3「Build in Parallel」＋ Composer 2.5 / GitHub Copilot usage-based billing（6/1）＋ Copilot Max $100/mo（20,000 credits）** 🟠 並列 orchestration の commoditize 継続（xAI Grok Build / Antigravity / Devin Command Center に横並び）。自社 narrative『並列できる → 並列を**監査可能に統治**する』を継続強化。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "5",
+          "url": "",
+          "status": "",
+          "summary": "5 **Cursor 3「Build in Parallel」＋ Composer 2.5 / GitHub Copilot usage-based billing（6/1）＋ Copilot Max $100/mo（20,000 credits）** 🟠 並列 orchestration の commoditize 継続（xAI Grok Build / Antigravity / Devin Command Center に横並び）。自社 narrative『並列できる → 並列を**監査可能に統治**する』を継続強化。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ce328ce386c3",
+        "title": "5",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f99309d1357e",
+        "title": "6",
+        "text": "6 6 **Notion — Codex で音声入力を web 実装（“ship the next day”）／ OpenCode 160K stars・7.5M MAU・827 releases** 🟠 super-app orchestration hub 化＋OSS coding agent の圧が継続。OpenCode は model-agnostic 75+ プロバイダで自社 AI 振り分け matrix に近接（次回 discovery 第1候補）。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "6",
+          "url": "",
+          "status": "",
+          "summary": "6 **Notion — Codex で音声入力を web 実装（“ship the next day”）／ OpenCode 160K stars・7.5M MAU・827 releases** 🟠 super-app orchestration hub 化＋OSS coding agent の圧が継続。OpenCode は model-agnostic 75+ プロバイダで自社 AI 振り分け matrix に近接（次回 discovery 第1候補）。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f99309d1357e",
+        "title": "6",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-837ed570e083",
+        "title": "詳細セクション（重大シグナル深掘り）",
+        "text": "詳細セクション（重大シグナル深掘り）",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "詳細セクション（重大シグナル深掘り）"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-837ed570e083",
+        "title": "詳細セクション（重大シグナル深掘り）",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-61fefbec420d",
+        "title": "6/26 時点で「T-1month」だったが、**2026 年 7 月が GA 月**に到達（4/7 先行受付開始済）。自然言語対話で AI が「同僚（Coworker）」として経理・HR・法務のバックオフィス業務を自律代行し、**Mone",
+        "text": "6/26 時点で「T-1month」だったが、**2026 年 7 月が GA 月**に到達（4/7 先行受付開始済）。自然言語対話で AI が「同僚（Coworker）」として経理・HR・法務のバックオフィス業務を自律代行し、**Money Forward Cloud 製品ラインに標準統合**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "6/26 時点で「T-1month」だったが、**2026 年 7 月が GA 月**に到達（4/7 先行受付開始済）。自然言語対話で AI が「同僚（Coworker）」として経理・HR・法務のバックオフィス業務を自律代行し、**Money Forward Cloud 製品ラインに標準統合**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-61fefbec420d",
+        "title": "6/26 時点で「T-1month」だったが、**2026 年 7 月が GA 月**に到達（4/7 先行受付開始済）。自然言語対話で AI が「同僚（Coworker）」として経理・HR・法務のバックオフィス業務を自律代行し、**Mone",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5826b29a8501",
+        "title": "今回の delta で明確化した最重要点 = **マルチエージェント並列協調**。「請求書発行・支払依頼・消込（reconciliation）・キャッシュフロー予測」を担う複数 AI エージェントが**並列かつ自律**にタスクを完遂まで駆動",
+        "text": "今回の delta で明確化した最重要点 = **マルチエージェント並列協調**。「請求書発行・支払依頼・消込（reconciliation）・キャッシュフロー予測」を担う複数 AI エージェントが**並列かつ自律**にタスクを完遂まで駆動する設計。従来の「人が SaaS/AI を使って業務」→「**AI に任せて完了させる**」への転換を製品思想として明言。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "今回の delta で明確化した最重要点 = **マルチエージェント並列協調**。「請求書発行・支払依頼・消込（reconciliation）・キャッシュフロー予測」を担う複数 AI エージェントが**並列かつ自律**にタスクを完遂まで駆動する設計。従来の「人が SaaS/AI を使って業務」→「**AI に任せて完了させる**」への転換を製品思想として明言。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5826b29a8501",
+        "title": "今回の delta で明確化した最重要点 = **マルチエージェント並列協調**。「請求書発行・支払依頼・消込（reconciliation）・キャッシュフロー予測」を担う複数 AI エージェントが**並列かつ自律**にタスクを完遂まで駆動",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b2b080013d7d",
+        "title": "自社への含意**: 自社の「6 部署＋B/S 統合 lifestyle CEO ダッシュボード」と最大 overlap。GA 月ゆえ **今月が narrative 防衛の山場**。非対称防衛＝「AI が同僚」（MoneyForward の",
+        "text": "自社への含意**: 自社の「6 部署＋B/S 統合 lifestyle CEO ダッシュボード」と最大 overlap。GA 月ゆえ **今月が narrative 防衛の山場**。非対称防衛＝「AI が同僚」（MoneyForward の水平型 back-office 代行）に対し、「**自分が CEO で、AI が自分の 6 部署（人事/財務/広報/…）を回す個人単位の経営ダッシュボード**」へ sharpen。キャッシュフロー予測は自社資産管理（給料日サイクル・負債トレンド）と直接競合領域。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社への含意**: 自社の「6 部署＋B/S 統合 lifestyle CEO ダッシュボード」と最大 overlap。GA 月ゆえ **今月が narrative 防衛の山場**。非対称防衛＝「AI が同僚」（MoneyForward の水平型 back-office 代行）に対し、「**自分が CEO で、AI が自分の 6 部署（人事/財務/広報/…）を回す個人単位の経営ダッシュボード**」へ sharpen。キャッシュフロー予測は自社資産管理（給料日サイクル・負債トレンド）と直接競合領域。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b2b080013d7d",
+        "title": "自社への含意**: 自社の「6 部署＋B/S 統合 lifestyle CEO ダッシュボード」と最大 overlap。GA 月ゆえ **今月が narrative 防衛の山場**。非対称防衛＝「AI が同僚」（MoneyForward の",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-04695cb8e032",
+        "title": "Claude Sonnet 5 が Claude Code の default モデル化**（native 1M-token context / $2・$10 per Mtok の promo 価格 〜8/31 / v2.1.197 以降で",
+        "text": "Claude Sonnet 5 が Claude Code の default モデル化**（native 1M-token context / $2・$10 per Mtok の promo 価格 〜8/31 / v2.1.197 以降で利用可）。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Claude Sonnet 5 が Claude Code の default モデル化**（native 1M-token context / $2・$10 per Mtok の promo 価格 〜8/31 / v2.1.197 以降で利用可）。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-04695cb8e032",
+        "title": "Claude Sonnet 5 が Claude Code の default モデル化**（native 1M-token context / $2・$10 per Mtok の promo 価格 〜8/31 / v2.1.197 以降で",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-01bd06d792de",
+        "title": "Claude Fable 5 が 7/1 よりグローバル GA**（一時的に制限していた輸出規制の解除に伴い、Claude Platform / Claude.ai / Claude Code / Claude Cowork で提供）。",
+        "text": "Claude Fable 5 が 7/1 よりグローバル GA**（一時的に制限していた輸出規制の解除に伴い、Claude Platform / Claude.ai / Claude Code / Claude Cowork で提供）。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Claude Fable 5 が 7/1 よりグローバル GA**（一時的に制限していた輸出規制の解除に伴い、Claude Platform / Claude.ai / Claude Code / Claude Cowork で提供）。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-01bd06d792de",
+        "title": "Claude Fable 5 が 7/1 よりグローバル GA**（一時的に制限していた輸出規制の解除に伴い、Claude Platform / Claude.ai / Claude Code / Claude Cowork で提供）。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0f5c4096f175",
+        "title": "Claude Code 週次上限 +50%（〜7/13）**＝「anti-Codex」施策と報道。加えて fullscreen マウスクリック制御・voice dictation 修正・plugin matching・background ",
+        "text": "Claude Code 週次上限 +50%（〜7/13）**＝「anti-Codex」施策と報道。加えて fullscreen マウスクリック制御・voice dictation 修正・plugin matching・background agent 信頼性・auto-mode 制御・shell/MCP handling・transcript / OpenTelemetry ログ強化。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Claude Code 週次上限 +50%（〜7/13）**＝「anti-Codex」施策と報道。加えて fullscreen マウスクリック制御・voice dictation 修正・plugin matching・background agent 信頼性・auto-mode 制御・shell/MCP handling・transcript / OpenTelemetry ログ強化。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0f5c4096f175",
+        "title": "Claude Code 週次上限 +50%（〜7/13）**＝「anti-Codex」施策と報道。加えて fullscreen マウスクリック制御・voice dictation 修正・plugin matching・background ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-615255236cb3",
+        "title": "自社への含意**: これは競合脅威というより **Win Claude #132 fleet + `.claude/skills` 運用の直接 toolchain 更新**。CLAUDE.md の「`/model` picker を優先」方",
+        "text": "自社への含意**: これは競合脅威というより **Win Claude #132 fleet + `.claude/skills` 運用の直接 toolchain 更新**。CLAUDE.md の「`/model` picker を優先」方針に照らし、Sonnet 5 default 化と Fable 5 解禁を model 選択の棚卸しに反映（コスト: promo 期の 1M ctx を prompt caching と併用＝`PROMPT_CACHING_OPUS47_COST_GUIDE` の延長線）。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社への含意**: これは競合脅威というより **Win Claude #132 fleet + `.claude/skills` 運用の直接 toolchain 更新**。CLAUDE.md の「`/model` picker を優先」方針に照らし、Sonnet 5 default 化と Fable 5 解禁を model 選択の棚卸しに反映（コスト: promo 期の 1M ctx を prompt caching と併用＝`PROMPT_CACHING_OPUS47_COST_GUIDE` の延長線）。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-615255236cb3",
+        "title": "自社への含意**: これは競合脅威というより **Win Claude #132 fleet + `.claude/skills` 運用の直接 toolchain 更新**。CLAUDE.md の「`/model` picker を優先」方",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.37,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: kill",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-44e38c9393b9",
+        "title": "7月に **GPT-5.6 Sol** をプレビュー（開発者・エンタープライズ向け flagship）。**Terra / Luna** と同時発表。コーディング・科学的推論・**長期プランニング（long-horizon planning",
+        "text": "7月に **GPT-5.6 Sol** をプレビュー（開発者・エンタープライズ向け flagship）。**Terra / Luna** と同時発表。コーディング・科学的推論・**長期プランニング（long-horizon planning）・エージェント workflow** を強化し、**max reasoning effort ＋ ultra mode** を新設。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "7月に **GPT-5.6 Sol** をプレビュー（開発者・エンタープライズ向け flagship）。**Terra / Luna** と同時発表。コーディング・科学的推論・**長期プランニング（long-horizon planning）・エージェント workflow** を強化し、**max reasoning effort ＋ ultra mode** を新設。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-44e38c9393b9",
+        "title": "7月に **GPT-5.6 Sol** をプレビュー（開発者・エンタープライズ向け flagship）。**Terra / Luna** と同時発表。コーディング・科学的推論・**長期プランニング（long-horizon planning",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7d31752dc2d3",
+        "title": "自社への含意**: OpenAI Codex（`_competitors.json` 既収載 / `cross-instance-pr` peer）のモデル層が底上げ。自社の quota fallback chain（`AI_FALLBAC",
+        "text": "自社への含意**: OpenAI Codex（`_competitors.json` 既収載 / `cross-instance-pr` peer）のモデル層が底上げ。自社の quota fallback chain（`AI_FALLBACK_RUNBOOK`）で Codex CLI を継続活用する前提が強化される一方、AI dev tool frontier の再加速で「並列オーケストレーション commoditize」がモデル性能面でも進行。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社への含意**: OpenAI Codex（`_competitors.json` 既収載 / `cross-instance-pr` peer）のモデル層が底上げ。自社の quota fallback chain（`AI_FALLBACK_RUNBOOK`）で Codex CLI を継続活用する前提が強化される一方、AI dev tool frontier の再加速で「並列オーケストレーション commoditize」がモデル性能面でも進行。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7d31752dc2d3",
+        "title": "自社への含意**: OpenAI Codex（`_competitors.json` 既収載 / `cross-instance-pr` peer）のモデル層が底上げ。自社の quota fallback chain（`AI_FALLBAC",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-41b2e0e1f399",
+        "title": "Cursor 3** が「**Build in Parallel**」＋ **Composer 2.5** を投入し、multi-agent 並列テーゼを深化。",
+        "text": "Cursor 3** が「**Build in Parallel**」＋ **Composer 2.5** を投入し、multi-agent 並列テーゼを深化。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Cursor 3** が「**Build in Parallel**」＋ **Composer 2.5** を投入し、multi-agent 並列テーゼを深化。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-41b2e0e1f399",
+        "title": "Cursor 3** が「**Build in Parallel**」＋ **Composer 2.5** を投入し、multi-agent 並列テーゼを深化。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d05c30270e32",
+        "title": "GitHub Copilot** は 6/1 に **usage-based billing（GitHub AI Credits）** へ移行。**Copilot Max ＝ $100/mo で 20,000 credits（≒$200 相",
+        "text": "GitHub Copilot** は 6/1 に **usage-based billing（GitHub AI Credits）** へ移行。**Copilot Max ＝ $100/mo で 20,000 credits（≒$200 相当）**、Pro は 1,500 credits（1,000 base + 500 flex）、Pro+ は 7,000 credits をバンドル。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "GitHub Copilot** は 6/1 に **usage-based billing（GitHub AI Credits）** へ移行。**Copilot Max ＝ $100/mo で 20,000 credits（≒$200 相当）**、Pro は 1,500 credits（1,000 base + 500 flex）、Pro+ は 7,000 credits をバンドル。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d05c30270e32",
+        "title": "GitHub Copilot** は 6/1 に **usage-based billing（GitHub AI Credits）** へ移行。**Copilot Max ＝ $100/mo で 20,000 credits（≒$200 相",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-adfa481499de",
+        "title": "自社への含意**: 各社が「並列できる」を標準化。自社は 2 instance fleet（Win Claude + Win Codex）＋`cross-instance-pr` md ＋ git log audit trail で「**監",
+        "text": "自社への含意**: 各社が「並列できる」を標準化。自社は 2 instance fleet（Win Claude + Win Codex）＋`cross-instance-pr` md ＋ git log audit trail で「**監査可能な並列統治**」（`[SUBAGENT-GUARD]` deny-by-default / worktree-isolation / GHA cron audit trail）を差別化資産化する narrative を継続。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社への含意**: 各社が「並列できる」を標準化。自社は 2 instance fleet（Win Claude + Win Codex）＋`cross-instance-pr` md ＋ git log audit trail で「**監査可能な並列統治**」（`[SUBAGENT-GUARD]` deny-by-default / worktree-isolation / GHA cron audit trail）を差別化資産化する narrative を継続。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-adfa481499de",
+        "title": "自社への含意**: 各社が「並列できる」を標準化。自社は 2 instance fleet（Win Claude + Win Codex）＋`cross-instance-pr` md ＋ git log audit trail で「**監",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d6cb8166bb05",
+        "title": "Notion** が音声入力の web 実装を **Codex** で実現（Notion の codebase 規約に沿った first cut を翌日 ship）＝「AI agent が Notion 自体の開発を回す」ドッグフーディング",
+        "text": "Notion** が音声入力の web 実装を **Codex** で実現（Notion の codebase 規約に沿った first cut を翌日 ship）＝「AI agent が Notion 自体の開発を回す」ドッグフーディング事例。super-app orchestration hub 化の継続シグナル。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Notion** が音声入力の web 実装を **Codex** で実現（Notion の codebase 規約に沿った first cut を翌日 ship）＝「AI agent が Notion 自体の開発を回す」ドッグフーディング事例。super-app orchestration hub 化の継続シグナル。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d6cb8166bb05",
+        "title": "Notion** が音声入力の web 実装を **Codex** で実現（Notion の codebase 規約に沿った first cut を翌日 ship）＝「AI agent が Notion 自体の開発を回す」ドッグフーディング",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e8a54e4dbf5d",
+        "title": "OpenCode** は **160,000 GitHub stars・月間 7.5M developers・827 releases（v1.17.10 が 6/24）** で OSS coding agent #1。model-agnos",
+        "text": "OpenCode** は **160,000 GitHub stars・月間 7.5M developers・827 releases（v1.17.10 が 6/24）** で OSS coding agent #1。model-agnostic 75+ プロバイダ＋terminal-native＋データ主権が自社 AI 振り分け matrix に近接 → **次回 discovery 第1候補**として継続監視。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "OpenCode** は **160,000 GitHub stars・月間 7.5M developers・827 releases（v1.17.10 が 6/24）** で OSS coding agent #1。model-agnostic 75+ プロバイダ＋terminal-native＋データ主権が自社 AI 振り分け matrix に近接 → **次回 discovery 第1候補**として継続監視。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e8a54e4dbf5d",
+        "title": "OpenCode** は **160,000 GitHub stars・月間 7.5M developers・827 releases（v1.17.10 が 6/24）** で OSS coding agent #1。model-agnos",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0d1ec9f3f103",
+        "title": "discovery セクション（本日 = 採択：Google Jules / Antigravity）",
+        "text": "discovery セクション（本日 = 採択：Google Jules / Antigravity）",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "discovery セクション（本日 = 採択：Google Jules / Antigravity）"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0d1ec9f3f103",
+        "title": "discovery セクション（本日 = 採択：Google Jules / Antigravity）",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8195e1031194",
+        "title": "判定: 採択**。2026-06-23 Salesforce Agentforce Operations 採択の 7-day cooldown（次回解禁 **6/30**）が明け、6/27–7/01 は GHA static-templat",
+        "text": "判定: 採択**。2026-06-23 Salesforce Agentforce Operations 採択の 7-day cooldown（次回解禁 **6/30**）が明け、6/27–7/01 は GHA static-template のみで Claude run が無かったため、**本 run（7/02）が解禁後初の Claude discovery**。6/26 report で明示的に「**6/30 採択 第1候補 = Google Jules / Antigravity**」と pre-designate 済（Lovable 5/17・Bolt.new 5/24・Qoder 6/09・MAI-Code 6/16・Salesforce 6/23 の解禁日近接採択 pattern を継承）。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "判定: 採択**。2026-06-23 Salesforce Agentforce Operations 採択の 7-day cooldown（次回解禁 **6/30**）が明け、6/27–7/01 は GHA static-template のみで Claude run が無かったため、**本 run（7/02）が解禁後初の Claude discovery**。6/26 report で明示的に「**6/30 採択 第1候補 = Google Jules / Antigravity**」と pre-designate 済（Lovable 5/17・Bolt.new 5/24・Qoder 6/09・MAI-Code 6/16・Salesforce 6/23 の解禁日近接採択 pattern を継承）。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8195e1031194",
+        "title": "判定: 採択**。2026-06-23 Salesforce Agentforce Operations 採択の 7-day cooldown（次回解禁 **6/30**）が明け、6/27–7/01 は GHA static-templat",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a3f87b7448d4",
+        "title": "cap 状況**: 24 → **25 / 50 社**（未到達 / discovery 継続フェーズ）。",
+        "text": "cap 状況**: 24 → **25 / 50 社**（未到達 / discovery 継続フェーズ）。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "cap 状況**: 24 → **25 / 50 社**（未到達 / discovery 継続フェーズ）。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a3f87b7448d4",
+        "title": "cap 状況**: 24 → **25 / 50 社**（未到達 / discovery 継続フェーズ）。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-07c6a9e1aae3",
+        "title": "重複チェック**: Google は CLAUDE.md の seed 21 競合には含まれるが `_competitors.json`（監視対象）には**未収載** = novel。既存 25 社に Antigravity/Jules エ",
+        "text": "重複チェック**: Google は CLAUDE.md の seed 21 競合には含まれるが `_competitors.json`（監視対象）には**未収載** = novel。既存 25 社に Antigravity/Jules エントリ無しを確認。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "重複チェック**: Google は CLAUDE.md の seed 21 競合には含まれるが `_competitors.json`（監視対象）には**未収載** = novel。既存 25 社に Antigravity/Jules エントリ無しを確認。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-07c6a9e1aae3",
+        "title": "重複チェック**: Google は CLAUDE.md の seed 21 競合には含まれるが `_competitors.json`（監視対象）には**未収載** = novel。既存 25 社に Antigravity/Jules エ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f7069f37efed",
+        "title": "採択根拠（基準 a + c を同時充足）**:",
+        "text": "採択根拠（基準 a + c を同時充足）**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "採択根拠（基準 a + c を同時充足）**:"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f7069f37efed",
+        "title": "採択根拠（基準 a + c を同時充足）**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-14fc2cc6661c",
+        "title": "基準 a（差別化軸に直接競合）**: 並列 multi-agent orchestration が自社の 2-instance fleet ＋ subagent orchestration 軸と正面。**Antigravity 2.0** ",
+        "text": "基準 a（差別化軸に直接競合）**: 並列 multi-agent orchestration が自社の 2-instance fleet ＋ subagent orchestration 軸と正面。**Antigravity 2.0** = dynamic subagents ＋ scheduled background tasks ＋ Go 製 Antigravity CLI ＋ public SDK ＋ managed execution ＋ Gemini 3.5 Flash。**Jules** = cloud VM で 2M token context ＋ CI/CD fail 時に error 自動取得→fix→re-push の自律 loop ＋ Jules Tools CLI。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "基準 a（差別化軸に直接競合）**: 並列 multi-agent orchestration が自社の 2-instance fleet ＋ subagent orchestration 軸と正面。**Antigravity 2.0** = dynamic subagents ＋ scheduled background tasks ＋ Go 製 Antigravity CLI ＋ public SDK ＋ managed execution ＋ Gemini 3.5 Flash。**Jules** = cloud VM で 2M token context ＋ CI/CD fail 時に error 自動取得→fix→re-push の自律 loop ＋ Jules Tools CLI。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-14fc2cc6661c",
+        "title": "基準 a（差別化軸に直接競合）**: 並列 multi-agent orchestration が自社の 2-instance fleet ＋ subagent orchestration 軸と正面。**Antigravity 2.0** ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c671c5fb42ba",
+        "title": "基準 c（過去 30 日重大リリース）**: **6/18 に Antigravity CLI が全員開放**され Gemini CLI を**完全置換**（Agent Skills / Hooks / Subagents / Extens",
+        "text": "基準 c（過去 30 日重大リリース）**: **6/18 に Antigravity CLI が全員開放**され Gemini CLI を**完全置換**（Agent Skills / Hooks / Subagents / Extensions→plugins を継承、terminal sandboxing ＋ credential masking ＋ hardened Git policies）。同時に Gemini CLI / Gemini Code Assist IDE の個人・Pro・Ultra 提供を停止。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "基準 c（過去 30 日重大リリース）**: **6/18 に Antigravity CLI が全員開放**され Gemini CLI を**完全置換**（Agent Skills / Hooks / Subagents / Extensions→plugins を継承、terminal sandboxing ＋ credential masking ＋ hardened Git policies）。同時に Gemini CLI / Gemini Code Assist IDE の個人・Pro・Ultra 提供を停止。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c671c5fb42ba",
+        "title": "基準 c（過去 30 日重大リリース）**: **6/18 に Antigravity CLI が全員開放**され Gemini CLI を**完全置換**（Agent Skills / Hooks / Subagents / Extens",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.37,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: kill",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-601b705e44cd",
+        "title": "二重の含意（採択価値が最も高い理由）**: 稀有な「**競合かつ自社 toolchain**」候補。自社 `AI_DRIVEN_DEV_OPERATING_MODEL` の **L1 lane（Antigravity+Gemini 探索）*",
+        "text": "二重の含意（採択価値が最も高い理由）**: 稀有な「**競合かつ自社 toolchain**」候補。自社 `AI_DRIVEN_DEV_OPERATING_MODEL` の **L1 lane（Antigravity+Gemini 探索）** ＋ `AI_FALLBACK_RUNBOOK` の **Gemini Code Assist fallback 経路**が 6/18 transition で直撃 → 監視追加が runbook 棚卸しトリガーを兼ねる。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "二重の含意（採択価値が最も高い理由）**: 稀有な「**競合かつ自社 toolchain**」候補。自社 `AI_DRIVEN_DEV_OPERATING_MODEL` の **L1 lane（Antigravity+Gemini 探索）** ＋ `AI_FALLBACK_RUNBOOK` の **Gemini Code Assist fallback 経路**が 6/18 transition で直撃 → 監視追加が runbook 棚卸しトリガーを兼ねる。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-601b705e44cd",
+        "title": "二重の含意（採択価値が最も高い理由）**: 稀有な「**競合かつ自社 toolchain**」候補。自社 `AI_DRIVEN_DEV_OPERATING_MODEL` の **L1 lane（Antigravity+Gemini 探索）*",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8ba1e74337b3",
+        "title": "初回スキャン結果**: Antigravity CLI（Go）は前身より高速・応答性向上、native voice command 追加、scheduled tasks で「単発ツール → 常駐自動化パイプライン」化。Jules は pub",
+        "text": "初回スキャン結果**: Antigravity CLI（Go）は前身より高速・応答性向上、native voice command 追加、scheduled tasks で「単発ツール → 常駐自動化パイプライン」化。Jules は public beta を経て 2M ctx（I/O 2026）＋ 自律 CI/CD fix ＋ Jules API（`developers.google.com/jules/api`）＋ Jules Tools CLI で「非同期・cloud-native」路線を明確化。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "初回スキャン結果**: Antigravity CLI（Go）は前身より高速・応答性向上、native voice command 追加、scheduled tasks で「単発ツール → 常駐自動化パイプライン」化。Jules は public beta を経て 2M ctx（I/O 2026）＋ 自律 CI/CD fix ＋ Jules API（`developers.google.com/jules/api`）＋ Jules Tools CLI で「非同期・cloud-native」路線を明確化。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8ba1e74337b3",
+        "title": "初回スキャン結果**: Antigravity CLI（Go）は前身より高速・応答性向上、native voice command 追加、scheduled tasks で「単発ツール → 常駐自動化パイプライン」化。Jules は pub",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e4737770714a",
+        "title": "次点（skipped_candidates）**: OpenCode（次回第1候補へ継続）/ OpenAI GPT-5.6 Sol（同一ベンダー Codex 既収載）/ Microsoft Copilot Cowork（同一ベンダー MAI",
+        "text": "次点（skipped_candidates）**: OpenCode（次回第1候補へ継続）/ OpenAI GPT-5.6 Sol（同一ベンダー Codex 既収載）/ Microsoft Copilot Cowork（同一ベンダー MAI-Code 既収載）/ Glean（enterprise search→agent）/ Harvey（法務 vertical・軸遠い）/ Warp（terminal-native・観察）/ Sierra（CX 特化・軸遠い）。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "次点（skipped_candidates）**: OpenCode（次回第1候補へ継続）/ OpenAI GPT-5.6 Sol（同一ベンダー Codex 既収載）/ Microsoft Copilot Cowork（同一ベンダー MAI-Code 既収載）/ Glean（enterprise search→agent）/ Harvey（法務 vertical・軸遠い）/ Warp（terminal-native・観察）/ Sierra（CX 特化・軸遠い）。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e4737770714a",
+        "title": "次点（skipped_candidates）**: OpenCode（次回第1候補へ継続）/ OpenAI GPT-5.6 Sol（同一ベンダー Codex 既収載）/ Microsoft Copilot Cowork（同一ベンダー MAI",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "text": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "アクション提案"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "text": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ソース"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-959fac97ee3b",
+        "title": "[Money Forward to Launch “Money Forward AI Cowork” in July 2026 — corp.moneyforward.com](https://corp.moneyforward.com/e",
+        "text": "[Money Forward to Launch “Money Forward AI Cowork” in July 2026 — corp.moneyforward.com](https://corp.moneyforward.com/en/news/release/service/20260407-mf-press-1/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Money Forward to Launch “Money Forward AI Cowork” in July 2026 — corp.moneyforward.com](https://corp.moneyforward.com/en/news/release/service/20260407-mf-press-1/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-959fac97ee3b",
+        "title": "[Money Forward to Launch “Money Forward AI Cowork” in July 2026 — corp.moneyforward.com](https://corp.moneyforward.com/e",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e00116a21513",
+        "title": "[Copilot Cowork is now generally available — Microsoft 365 Blog](https://www.microsoft.com/en-us/microsoft-365/blog/2026",
+        "text": "[Copilot Cowork is now generally available — Microsoft 365 Blog](https://www.microsoft.com/en-us/microsoft-365/blog/2026/06/16/copilot-cowork-is-now-generally-available/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Copilot Cowork is now generally available — Microsoft 365 Blog](https://www.microsoft.com/en-us/microsoft-365/blog/2026/06/16/copilot-cowork-is-now-generally-available/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e00116a21513",
+        "title": "[Copilot Cowork is now generally available — Microsoft 365 Blog](https://www.microsoft.com/en-us/microsoft-365/blog/2026",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f25a4fd16e38",
+        "title": "[Anthropic / Claude Code Updates — Releasebot (July 2026)](https://releasebot.io/updates/anthropic/claude-code)",
+        "text": "[Anthropic / Claude Code Updates — Releasebot (July 2026)](https://releasebot.io/updates/anthropic/claude-code)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Anthropic / Claude Code Updates — Releasebot (July 2026)](https://releasebot.io/updates/anthropic/claude-code)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f25a4fd16e38",
+        "title": "[Anthropic / Claude Code Updates — Releasebot (July 2026)](https://releasebot.io/updates/anthropic/claude-code)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1de0a2e2dc24",
+        "title": "[Code with Claude 2026: New Agent Features — MindStudio](https://www.mindstudio.ai/blog/code-with-claude-2026-new-agent-",
+        "text": "[Code with Claude 2026: New Agent Features — MindStudio](https://www.mindstudio.ai/blog/code-with-claude-2026-new-agent-features)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Code with Claude 2026: New Agent Features — MindStudio](https://www.mindstudio.ai/blog/code-with-claude-2026-new-agent-features)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1de0a2e2dc24",
+        "title": "[Code with Claude 2026: New Agent Features — MindStudio](https://www.mindstudio.ai/blog/code-with-claude-2026-new-agent-",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-25ea3dd6b772",
+        "title": "[Claude Code Increases Weekly Limits by 50% Through July 13, 2026](https://pasqualepillitteri.it/en/news/2494/claude-cod",
+        "text": "[Claude Code Increases Weekly Limits by 50% Through July 13, 2026](https://pasqualepillitteri.it/en/news/2494/claude-code-weekly-limits-50-percent-anti-codex-anthropic-2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Claude Code Increases Weekly Limits by 50% Through July 13, 2026](https://pasqualepillitteri.it/en/news/2494/claude-code-weekly-limits-50-percent-anti-codex-anthropic-2026)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-25ea3dd6b772",
+        "title": "[Claude Code Increases Weekly Limits by 50% Through July 13, 2026](https://pasqualepillitteri.it/en/news/2494/claude-cod",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-fdc841d4c53a",
+        "title": "[OpenAI Release Notes — Releasebot (July 2026)](https://releasebot.io/updates/openai)",
+        "text": "[OpenAI Release Notes — Releasebot (July 2026)](https://releasebot.io/updates/openai)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[OpenAI Release Notes — Releasebot (July 2026)](https://releasebot.io/updates/openai)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-fdc841d4c53a",
+        "title": "[OpenAI Release Notes — Releasebot (July 2026)](https://releasebot.io/updates/openai)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-70192fa708f5",
+        "title": "[An important update: Transitioning Gemini CLI to Antigravity CLI — Google Developers Blog](https://developers.googleblo",
+        "text": "[An important update: Transitioning Gemini CLI to Antigravity CLI — Google Developers Blog](https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[An important update: Transitioning Gemini CLI to Antigravity CLI — Google Developers Blog](https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-70192fa708f5",
+        "title": "[An important update: Transitioning Gemini CLI to Antigravity CLI — Google Developers Blog](https://developers.googleblo",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-abf845bc70cc",
+        "title": "[Google launches Antigravity 2.0 with an updated desktop app and CLI tool at I/O 2026 — TechCrunch](https://techcrunch.c",
+        "text": "[Google launches Antigravity 2.0 with an updated desktop app and CLI tool at I/O 2026 — TechCrunch](https://techcrunch.com/2026/05/19/google-launches-antigravity-2-0-with-an-updated-desktop-app-and-cli-tool-at-io-2026/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Google launches Antigravity 2.0 with an updated desktop app and CLI tool at I/O 2026 — TechCrunch](https://techcrunch.com/2026/05/19/google-launches-antigravity-2-0-with-an-updated-desktop-app-and-cli-tool-at-io-2026/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-abf845bc70cc",
+        "title": "[Google launches Antigravity 2.0 with an updated desktop app and CLI tool at I/O 2026 — TechCrunch](https://techcrunch.c",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9c5420ec5c72",
+        "title": "[Jules: Google’s autonomous AI coding agent — blog.google](https://blog.google/innovation-and-ai/models-and-research/goo",
+        "text": "[Jules: Google’s autonomous AI coding agent — blog.google](https://blog.google/innovation-and-ai/models-and-research/google-labs/jules/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Jules: Google’s autonomous AI coding agent — blog.google](https://blog.google/innovation-and-ai/models-and-research/google-labs/jules/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9c5420ec5c72",
+        "title": "[Jules: Google’s autonomous AI coding agent — blog.google](https://blog.google/innovation-and-ai/models-and-research/goo",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2161243a5b5b",
+        "title": "[Meet Jules Tools: A Command Line Companion — Google Developers Blog](https://developers.googleblog.com/en/meet-jules-to",
+        "text": "[Meet Jules Tools: A Command Line Companion — Google Developers Blog](https://developers.googleblog.com/en/meet-jules-tools-a-command-line-companion-for-googles-async-coding-agent/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Meet Jules Tools: A Command Line Companion — Google Developers Blog](https://developers.googleblog.com/en/meet-jules-tools-a-command-line-companion-for-googles-async-coding-agent/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2161243a5b5b",
+        "title": "[Meet Jules Tools: A Command Line Companion — Google Developers Blog](https://developers.googleblog.com/en/meet-jules-to",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-870db3a0dd74",
+        "title": "[AI Coding Agents 2026 comparison (Cursor / Windsurf / Copilot / Kiro) — Lushbinary](https://lushbinary.com/blog/ai-codi",
+        "text": "[AI Coding Agents 2026 comparison (Cursor / Windsurf / Copilot / Kiro) — Lushbinary](https://lushbinary.com/blog/ai-coding-agents-comparison-cursor-windsurf-claude-copilot-kiro-2026/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[AI Coding Agents 2026 comparison (Cursor / Windsurf / Copilot / Kiro) — Lushbinary](https://lushbinary.com/blog/ai-coding-agents-comparison-cursor-windsurf-claude-copilot-kiro-2026/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-870db3a0dd74",
+        "title": "[AI Coding Agents 2026 comparison (Cursor / Windsurf / Copilot / Kiro) — Lushbinary](https://lushbinary.com/blog/ai-codi",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-cbbf39479f1d",
+        "title": "[AI Coding Tools Pricing: The June 2026 Reality Check — Developers Digest](https://www.developersdigest.tech/blog/ai-cod",
+        "text": "[AI Coding Tools Pricing: The June 2026 Reality Check — Developers Digest](https://www.developersdigest.tech/blog/ai-coding-tools-pricing-june-2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[AI Coding Tools Pricing: The June 2026 Reality Check — Developers Digest](https://www.developersdigest.tech/blog/ai-coding-tools-pricing-june-2026)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-cbbf39479f1d",
+        "title": "[AI Coding Tools Pricing: The June 2026 Reality Check — Developers Digest](https://www.developersdigest.tech/blog/ai-cod",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-997d3e3311da",
+        "title": "[Salesforce Launches Agentforce Operations to End Back-Office Bottlenecks — Salesforce](https://www.salesforce.com/news/",
+        "text": "[Salesforce Launches Agentforce Operations to End Back-Office Bottlenecks — Salesforce](https://www.salesforce.com/news/stories/agentforce-operations-announcement/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Salesforce Launches Agentforce Operations to End Back-Office Bottlenecks — Salesforce](https://www.salesforce.com/news/stories/agentforce-operations-announcement/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-997d3e3311da",
+        "title": "[Salesforce Launches Agentforce Operations to End Back-Office Bottlenecks — Salesforce](https://www.salesforce.com/news/",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f9953a9ec54b",
+        "title": "[OpenCode Developer Guide (160K Stars) — Developers Digest](https://www.developersdigest.tech/blog/opencode-developer-gu",
+        "text": "[OpenCode Developer Guide (160K Stars) — Developers Digest](https://www.developersdigest.tech/blog/opencode-developer-guide-2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[OpenCode Developer Guide (160K Stars) — Developers Digest](https://www.developersdigest.tech/blog/opencode-developer-guide-2026)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f9953a9ec54b",
+        "title": "[OpenCode Developer Guide (160K Stars) — Developers Digest](https://www.developersdigest.tech/blog/opencode-developer-gu",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9eef73482f94",
+        "title": "[What Codex unlocks for Notion — OpenAI](https://openai.com/index/notion/)",
+        "text": "[What Codex unlocks for Notion — OpenAI](https://openai.com/index/notion/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[What Codex unlocks for Notion — OpenAI](https://openai.com/index/notion/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9eef73482f94",
+        "title": "[What Codex unlocks for Notion — OpenAI](https://openai.com/index/notion/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-da6d9214ccd9",
+        "title": "[Vertical AI Agents Are Eating Horizontal SaaS in 2026 — SaaS Mag](https://www.saasmag.com/vertical-ai-agents-eating-hor",
+        "text": "[Vertical AI Agents Are Eating Horizontal SaaS in 2026 — SaaS Mag](https://www.saasmag.com/vertical-ai-agents-eating-horizontal-saas/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Vertical AI Agents Are Eating Horizontal SaaS in 2026 — SaaS Mag](https://www.saasmag.com/vertical-ai-agents-eating-horizontal-saas/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-da6d9214ccd9",
+        "title": "[Vertical AI Agents Are Eating Horizontal SaaS in 2026 — SaaS Mag](https://www.saasmag.com/vertical-ai-agents-eating-hor",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    }
+  ],
+  "patterns": [],
+  "issue_candidates": []
+}

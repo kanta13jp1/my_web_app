@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/event_ticketing_summary.dart';
+
 /// イベントチケット管理ページ
 /// event-ticketing Edge Function と連携してイベントとチケットを管理する
 class EventTicketingPage extends StatefulWidget {
@@ -14,7 +16,7 @@ class _EventTicketingPageState extends State<EventTicketingPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _errorMessage;
-  List<Map<String, dynamic>> _events = [];
+  List<EventTicketingSummary> _events = [];
   final _titleController = TextEditingController();
   final _dateController = TextEditingController();
 
@@ -103,16 +105,9 @@ class _EventTicketingPageState extends State<EventTicketingPage> {
         'social-commerce-hub',
         body: {'action': 'event.list'},
       );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['events'] is List) {
-        setState(
-          () => _events = (data['events'] as List).cast<Map<String, dynamic>>(),
-        );
-      } else if (data is List) {
-        setState(() => _events = data.cast<Map<String, dynamic>>());
-      } else {
-        setState(() => _events = []);
-      }
+      setState(
+        () => _events = EventTicketingSummary.listFromResponse(response.data),
+      );
     } catch (e) {
       if (mounted) {
         setState(() => _errorMessage = 'イベント一覧の取得に失敗しました: $e');
@@ -165,11 +160,12 @@ class _EventTicketingPageState extends State<EventTicketingPage> {
                         return ListTile(
                           leading: const Icon(Icons.event),
                           title: Text(
-                            event['title']?.toString() ?? 'イベント ${index + 1}',
+                            event.title.isNotEmpty
+                                ? event.title
+                                : 'イベント ${index + 1}',
                           ),
-                          subtitle: Text(event['date']?.toString() ?? ''),
-                          trailing:
-                              Text('残 ${event['tickets_remaining'] ?? 0}枚'),
+                          subtitle: Text(event.date),
+                          trailing: Text(event.remainingLabel),
                         );
                       },
                     ),

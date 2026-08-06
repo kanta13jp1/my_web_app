@@ -1,0 +1,143 @@
+name: X Household Tracker Post
+
+# 匿名家計スナップショットの週次投稿。
+# 数値は管理者が明示 opt-in した asset_pref_mirror の allowlist 値だけを使い、
+# growth-hub が本文を再構築する。8日より古いスナップショットは投稿しない。
+
+on:
+  schedule:
+    # Every Wednesday 12:17 UTC (= 21:17 JST)。daily briefing / Sunday data
+    # report と重ねず、同一アカウントの burst 投稿を避ける。
+    - cron: "17 12 * * 3"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Compose and log without posting"
+        type: boolean
+        default: true
+
+concurrency:
+  group: x-household-tracker-post
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - name: Validate secrets
+        shell: bash
+        run: |
+          test -n "${SUPABASE_SERVICE_ROLE_KEY}" || {
+            echo "SUPABASE_SERVICE_ROLE_KEY is required."
+            exit 1
+          }
+
+      - name: Resolve run mode
+        id: mode
+        shell: bash
+        run: |
+          dry_run="${{ github.event.inputs.dry_run }}"
+          if [ -z "${dry_run}" ]; then dry_run="false"; fi
+          echo "dry_run=${dry_run}" >> "${GITHUB_OUTPUT}"
+
+      - name: Compose privacy-safe household scoreboard
+        id: compose
+        shell: bash
+        run: |
+          http_code=$(curl --silent --show-error \
+            --output /tmp/household_report.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data '{"action":"x.household_tracker_report","maxAgeDays":8}')
+          jq . /tmp/household_report.json || cat /tmp/household_report.json
+          if [ "${http_code}" != "200" ]; then
+            echo "::error::household tracker compose returned HTTP ${http_code}"
+            exit 1
+          fi
+          available=$(jq -r '.available // false' /tmp/household_report.json)
+          echo "available=${available}" >> "${GITHUB_OUTPUT}"
+          if [ "${available}" != "true" ]; then
+            reason=$(jq -r '.reason // "unknown"' /tmp/household_report.json)
+            echo "::notice::Household tracker skipped safely: ${reason}"
+          fi
+
+      - name: Post household tracker through growth-hub x.post
+        if: steps.compose.outputs.available == 'true'
+        shell: bash
+        env:
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(
+            fs.readFileSync('/tmp/household_report.json', 'utf8'),
+          );
+          const payload = {
+            action: 'x.post',
+            text: report.text,
+            source: 'x-household-tracker-post.yml',
+            route: 'growth/household-tracker',
+            experimentKey: 'x_first_user_growth_10k',
+            variant: 'household_tracker',
+            utmContent: 'household_tracker',
+            promptProfile: 'household_tracker_scoreboard_v2',
+            contentKind: 'data_report',
+            contentArchetype: 'data_report',
+            linkInReply: false,
+            ownerUserId: report.ownerUserId,
+            dryRun: process.env.DRY_RUN === 'true',
+          };
+          fs.writeFileSync(
+            '/tmp/household_post_payload.json',
+            JSON.stringify(payload),
+          );
+          console.log(JSON.stringify({
+            lead: payload.text.split('\n')[0],
+            ownerBound: Boolean(payload.ownerUserId),
+            dryRun: payload.dryRun,
+          }, null, 2));
+          NODE
+          http_code=$(curl --silent --show-error \
+            --output /tmp/household_post_result.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data @/tmp/household_post_payload.json)
+          jq . /tmp/household_post_result.json || \
+            cat /tmp/household_post_result.json
+          code=$(jq -r '.code // empty' /tmp/household_post_result.json)
+          if [ "${http_code}" = "409" ] && \
+             [ "${code}" = "household_consent_revoked" ]; then
+            echo "::notice::Household tracker stopped after consent re-check."
+            exit 0
+          fi
+          if [ "${http_code}" != "200" ]; then
+            echo "::error::x.post returned HTTP ${http_code}"
+            exit 1
+          fi
+          if [ "${code}" = "duplicate_content" ]; then
+            echo "::notice::No material household change; duplicate skipped."
+            exit 0
+          fi
+          success=$(jq -r '.success // false' /tmp/household_post_result.json)
+          posted=$(jq -r '.posted // false' /tmp/household_post_result.json)
+          if [ "${success}" != "true" ]; then
+            echo "::error::x.post reported failure"
+            exit 1
+          fi
+          if [ "${DRY_RUN}" != "true" ] && [ "${posted}" != "true" ]; then
+            echo "::error::Scheduled household tracker did not post"
+            exit 1
+          fi

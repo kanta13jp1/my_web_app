@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -46,7 +46,8 @@ jobs:
 
       - name: Verify past posts
         env:
-          QIITA_ACCESS_TOKEN: ${{ secrets.QIITA_ACCESS_TOKEN }}
+          # QIITA_ACCESS_TOKEN は渡さない (2026-07-12 アカウント利用停止 →
+          # script 側の「not set → skipping Qiita」ガードで接触ゼロにする)
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

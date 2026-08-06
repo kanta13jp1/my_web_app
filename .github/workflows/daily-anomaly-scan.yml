@@ -1,0 +1,100 @@
+name: Daily Anomaly Scan (資産管理・毎日03:00 JST)
+
+# Issue #2478 [資産管理][第2弾D]: 全 active user のカテゴリ別支出を
+# ai-hub asset.anomaly.scan_all (service_role 限定 / #2477) で日次スキャンする。
+# 対象月は EF 既定 = JST の前の完了月 (当月は集計途中のため対象にしない)。
+# 段階的 rollout: schedule 実行は repo variable ANOMALY_SCAN_CRON_ENABLED=true
+# を設定するまで no-op (monthly-asset-report と同じ規約)。
+
+on:
+  schedule:
+    - cron: "0 18 * * *" # 18:00 UTC = 03:00 JST
+  workflow_dispatch:
+    inputs:
+      target_month:
+        description: "Optional target month (YYYY-MM). Defaults to the previous JST month."
+        required: false
+        default: ""
+      dry_run:
+        description: "true=検知のみ(DB書込なし)"
+        required: false
+        default: "true"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-anomaly-scan
+  cancel-in-progress: true  # 2026-07-30 ci-audit: scan は冪等 (staged rollout gate / idempotent API) / 手動+schedule 重複時のキュー積み防止
+
+jobs:
+  scan:
+    name: Scan all active users
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD || 'https://smmkxxavexumewbfaqpy.supabase.co' }}
+      CRON_ENABLED: ${{ github.event_name == 'workflow_dispatch' && 'true' || vars.ANOMALY_SCAN_CRON_ENABLED || 'false' }}
+      TARGET_MONTH: ${{ github.event_name == 'workflow_dispatch' && inputs.target_month || '' }}
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+
+    steps:
+      - name: Gate scheduled runs until rollout variable is set
+        if: env.CRON_ENABLED != 'true'
+        run: |
+          echo "ANOMALY_SCAN_CRON_ENABLED != true → skip (staged rollout, #2478)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Call asset.anomaly.scan_all (retry x3)
+        if: env.CRON_ENABLED == 'true'
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg action "asset.anomaly.scan_all" \
+            --arg target_month "$TARGET_MONTH" \
+            --argjson dry_run "$([ "$DRY_RUN" = "true" ] && echo true || echo false)" \
+            '{action: $action, dry_run: $dry_run}
+             + (if $target_month != "" then {target_month: $target_month} else {} end)')
+
+          ATTEMPTS=3
+          for i in $(seq 1 $ATTEMPTS); do
+            echo "attempt $i/$ATTEMPTS"
+            set +e
+            RESPONSE=$(curl -s -w "\n%{http_code}" \
+              -X POST \
+              -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD" \
+              "$SUPABASE_URL/functions/v1/ai-hub" \
+              --max-time 120)
+            CURL_EXIT=$?
+            set -e
+            HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+            BODY=$(echo "$RESPONSE" | head -n -1)
+            echo "HTTP: $HTTP_CODE (curl exit $CURL_EXIT)"
+            echo "$BODY" | jq . || echo "$BODY"
+
+            if [ "$CURL_EXIT" -eq 0 ] && [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+              {
+                echo "## Daily Anomaly Scan"
+                echo "- target_month: $(echo "$BODY" | jq -r '.target_month // "?"')"
+                echo "- dry_run: $(echo "$BODY" | jq -r '.dry_run // false')"
+                echo "- users_scanned: $(echo "$BODY" | jq -r '.users_scanned // 0')"
+                echo "- users_failed: $(echo "$BODY" | jq -r '.users_failed // 0')"
+                echo "- anomalies_total: $(echo "$BODY" | jq -r '.anomalies_total // 0')"
+              } >> "$GITHUB_STEP_SUMMARY"
+              FAILED=$(echo "$BODY" | jq -r '.users_failed // 0')
+              if [ "$FAILED" -gt 0 ]; then
+                echo "::warning::users_failed=$FAILED (see EF response failures[])"
+              fi
+              exit 0
+            fi
+
+            # 4xx は設定/認可の問題 = リトライしても直らないので即 fail
+            if [ "$CURL_EXIT" -eq 0 ] && [ "$HTTP_CODE" -ge 400 ] && [ "$HTTP_CODE" -lt 500 ]; then
+              echo "::error::HTTP $HTTP_CODE (non-retriable)"
+              exit 1
+            fi
+            [ "$i" -lt "$ATTEMPTS" ] && sleep 30
+          done
+          echo "::error::scan failed after $ATTEMPTS attempts"
+          exit 1

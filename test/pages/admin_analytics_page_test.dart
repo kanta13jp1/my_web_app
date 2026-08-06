@@ -279,7 +279,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.textContaining('登録率 体験未実行', findRichText: true),
+      find.textContaining('診断 体験未実行', findRichText: true),
       findsOneWidget,
     );
     expect(find.text('今やる単独改善アクション'), findsOneWidget);

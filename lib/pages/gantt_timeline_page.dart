@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// ガントチャート・タイムラインページ
 /// gantt-timeline-manager Edge Function と連携
@@ -12,7 +13,14 @@ class GanttTimelinePage extends StatefulWidget {
 }
 
 class _GanttTimelinePageState extends State<GanttTimelinePage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['projects', 'timeline', 'critical-path'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late TabController _tabController;
 

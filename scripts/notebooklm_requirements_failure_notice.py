@@ -9,12 +9,23 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
 
 UTC = dt.timezone.utc
 NOTICE_MARKER = "<!-- notebooklm-requirements-failure-notice -->"
+RETRYABLE_GH_ERROR_FRAGMENTS = (
+    "http 500",
+    "http 502",
+    "http 503",
+    "http 504",
+    "connection reset",
+    "connection refused",
+    "timed out",
+    "timeout",
+)
 
 
 def now_iso() -> str:
@@ -85,22 +96,40 @@ so repeated scheduled failures do not create duplicate Issue comments.
 """
 
 
-def run_gh(args: list[str], *, input_text: str | None = None) -> str:
+def is_retryable_gh_error(message: str) -> bool:
+    normalized = message.strip().lower()
+    return any(fragment in normalized for fragment in RETRYABLE_GH_ERROR_FRAGMENTS)
+
+
+def run_gh(
+    args: list[str],
+    *,
+    input_text: str | None = None,
+    max_attempts: int = 3,
+    sleep_seconds: float = 1.0,
+) -> str:
     env = {**os.environ, "PYTHONUTF8": "1"}
-    proc = subprocess.run(
-        ["gh", *args],
-        input=input_text,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        env=env,
-        check=False,
-    )
-    if proc.returncode != 0:
-        raise RuntimeError(proc.stderr.strip() or proc.stdout.strip() or "gh failed")
-    return proc.stdout
+    attempts = max(1, max_attempts)
+    last_message = "gh failed"
+    for attempt in range(attempts):
+        proc = subprocess.run(
+            ["gh", *args],
+            input=input_text,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+            check=False,
+        )
+        if proc.returncode == 0:
+            return proc.stdout
+        last_message = proc.stderr.strip() or proc.stdout.strip() or "gh failed"
+        if attempt + 1 >= attempts or not is_retryable_gh_error(last_message):
+            break
+        time.sleep(sleep_seconds * (2**attempt))
+    raise RuntimeError(last_message)
 
 
 def find_notice_comment(comments: list[dict[str, Any]]) -> int | None:

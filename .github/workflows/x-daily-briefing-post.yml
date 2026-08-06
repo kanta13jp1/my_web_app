@@ -1,0 +1,659 @@
+name: X Candidate Draft & Approval
+
+on:
+  schedule:
+    # Every day 22:00 UTC (= 07:00 JST)
+    - cron: "0 22 * * *"
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "Create a candidate or publish an already reviewed candidate"
+        type: choice
+        options:
+          - create_draft
+          - publish_approved_draft
+        default: create_draft
+      candidate_id:
+        description: "Existing x_post_candidate UUID (publish operation only)"
+        type: string
+        required: false
+      expected_candidate_type:
+        description: "Optional reviewed candidate_type assertion before publish"
+        type: string
+        required: false
+      expected_source_kind:
+        description: "Optional reviewed source_kind assertion before publish"
+        type: string
+        required: false
+      confirm_publish:
+        description: "I reviewed this candidate and explicitly approve publishing it"
+        type: boolean
+        default: false
+      dry_run:
+        description: "Preview only; do not save a candidate or publish"
+        type: boolean
+        default: true
+      force:
+        description: "Create another candidate even if today's post already exists"
+        type: boolean
+        default: false
+
+concurrency:
+  group: x-daily-briefing-post
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SOURCE: x-daily-briefing-post.yml
+      EXPERIMENT_KEY: x_first_user_growth_10k
+      VARIANT: daily_briefing
+      TARGET_URL: https://my-web-app-b67f4.web.app/?utm_source=x&utm_medium=daily_briefing&utm_campaign=first_user_growth&utm_content=daily_briefing
+    steps:
+      - name: Validate secrets
+        shell: bash
+        run: |
+          test -n "${SUPABASE_SERVICE_ROLE_KEY}" || {
+            echo "SUPABASE_SERVICE_ROLE_KEY is required."
+            exit 1
+          }
+
+      - name: Resolve run mode
+        id: mode
+        shell: bash
+        run: |
+          event_name="${EVENT_NAME}"
+          operation="${INPUT_OPERATION}"
+          candidate_id="${INPUT_CANDIDATE_ID}"
+          confirm_publish="${INPUT_CONFIRM_PUBLISH}"
+          dry_run="${INPUT_DRY_RUN}"
+          force="${INPUT_FORCE}"
+          if [ -z "${operation}" ]; then
+            operation="create_draft"
+          fi
+          if [ -z "${confirm_publish}" ]; then
+            confirm_publish="false"
+          fi
+          if [ -z "${dry_run}" ]; then
+            dry_run="false"
+          fi
+          if [ -z "${force}" ]; then
+            force="false"
+          fi
+          publish_requested="false"
+          if [ "${operation}" = "publish_approved_draft" ]; then
+            if [ "${event_name}" != "workflow_dispatch" ]; then
+              echo "::error::Publishing is only available from workflow_dispatch."
+              exit 1
+            fi
+            if [ "${confirm_publish}" != "true" ]; then
+              echo "::error::confirm_publish=true is required to publish."
+              exit 1
+            fi
+            if [ "${dry_run}" = "true" ]; then
+              echo "::error::Set dry_run=false after reviewing the stored candidate."
+              exit 1
+            fi
+            if ! [[ "${candidate_id}" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+              echo "::error::A valid candidate_id is required to publish."
+              exit 1
+            fi
+            publish_requested="true"
+          elif [ "${operation}" != "create_draft" ]; then
+            echo "::error::Unsupported operation: ${operation}"
+            exit 1
+          fi
+          echo "operation=${operation}" >> "${GITHUB_OUTPUT}"
+          echo "candidate_id=${candidate_id}" >> "${GITHUB_OUTPUT}"
+          echo "publish_requested=${publish_requested}" >> "${GITHUB_OUTPUT}"
+          echo "dry_run=${dry_run}" >> "${GITHUB_OUTPUT}"
+          echo "force=${force}" >> "${GITHUB_OUTPUT}"
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_OPERATION: ${{ github.event.inputs.operation }}
+          INPUT_CANDIDATE_ID: ${{ github.event.inputs.candidate_id }}
+          INPUT_CONFIRM_PUBLISH: ${{ github.event.inputs.confirm_publish }}
+          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run }}
+          INPUT_FORCE: ${{ github.event.inputs.force }}
+
+      - name: Resolve JST day
+        id: day
+        shell: bash
+        run: |
+          node <<'NODE' >> "${GITHUB_OUTPUT}"
+          const now = new Date();
+          const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+          const year = jst.getUTCFullYear();
+          const month = jst.getUTCMonth();
+          const day = jst.getUTCDate();
+          const startUtc = new Date(Date.UTC(year, month, day) - 9 * 60 * 60 * 1000);
+          const label = `${year}/${month + 1}/${day}`;
+          console.log(`jst_label=${label}`);
+          console.log(`jst_start_utc=${startUtc.toISOString()}`);
+          NODE
+
+      - name: Check existing post for today
+        id: duplicate
+        if: steps.mode.outputs.operation == 'create_draft'
+        shell: bash
+        run: |
+          http_code=$(curl --get --silent --show-error --output /tmp/x_daily_existing.json --write-out "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/hub_data" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --data-urlencode "source=eq.x_post_log" \
+            --data-urlencode "created_at=gte.${{ steps.day.outputs.jst_start_utc }}" \
+            --data-urlencode "metadata->>source=eq.${SOURCE}" \
+            --data-urlencode "metadata->>status=eq.posted" \
+            --data-urlencode "select=id" \
+            --data-urlencode "limit=1")
+          if [ "${http_code}" != "200" ]; then
+            echo "::warning::Duplicate guard returned HTTP ${http_code}; continuing so growth-hub duplicate guard can decide."
+            echo "already_posted=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          count=$(jq 'length' /tmp/x_daily_existing.json)
+          if [ "${count}" -gt 0 ]; then
+            echo "already_posted=true" >> "${GITHUB_OUTPUT}"
+            echo "Daily briefing already posted for ${{ steps.day.outputs.jst_label }}."
+          else
+            echo "already_posted=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Fetch trend context
+        if: steps.mode.outputs.operation == 'create_draft' && (steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true')
+        shell: bash
+        run: |
+          http_code=$(curl --silent --show-error --output /tmp/x_trends.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data '{"action":"x.trends","woeid":23424856,"limit":6}')
+          if [ "${http_code}" != "200" ]; then
+            echo "::warning::x.trends returned HTTP ${http_code}; using evergreen fallback topics."
+            printf '{"success":false,"trends":[],"source":"workflow_fallback"}' > /tmp/x_trends.json
+          fi
+          cat /tmp/x_trends.json
+
+      - name: Fetch performance context
+        if: steps.mode.outputs.operation == 'create_draft' && (steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true')
+        shell: bash
+        run: |
+          http_code=$(curl --silent --show-error --output /tmp/x_performance_context.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data '{"action":"x.performance_context","limit":80}')
+          if [ "${http_code}" != "200" ]; then
+            echo "::warning::x.performance_context returned HTTP ${http_code}; rotating default A/B variants."
+            printf '{"success":false,"rows":[],"bestVariant":null,"promptContext":"No measured X performance context available."}' > /tmp/x_performance_context.json
+          fi
+          cat /tmp/x_performance_context.json
+
+      - name: Build daily briefing payload
+        if: steps.mode.outputs.operation == 'create_draft' && (steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true')
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+
+          const raw = JSON.parse(fs.readFileSync('/tmp/x_trends.json', 'utf8'));
+          const performance = JSON.parse(fs.readFileSync('/tmp/x_performance_context.json', 'utf8'));
+          const fallbackTopics = [
+            'AI仕事術',
+            '情報整理',
+            '個人開発',
+            '政治経済',
+            '学習ログ',
+            '資産管理',
+          ];
+
+          const clean = (value) => String(value ?? '')
+            .replace(/\s+/g, ' ')
+            .replace(/^#/, '')
+            .trim();
+
+          const names = Array.isArray(raw.trends)
+            ? raw.trends
+              .map((trend) => {
+                if (typeof trend === 'string') return trend;
+                return trend?.name ?? trend?.title ?? trend?.query ?? trend?.topic ?? '';
+              })
+              .map(clean)
+              .filter(Boolean)
+            : [];
+          const trendSourceUrls = Array.isArray(raw.trends)
+            ? [...new Set(raw.trends
+              .map((trend) => typeof trend === 'object' && trend !== null
+                ? String(trend.url ?? trend.sourceUrl ?? trend.source_url ?? '').trim()
+                : '')
+              .filter((url) => /^https:\/\//i.test(url)))]
+              .slice(0, 19)
+            : [];
+
+          const topics = [...new Set([...names, ...fallbackTopics])].slice(0, 5);
+          const jstLabel = process.env.JST_LABEL;
+          const targetUrl = process.env.TARGET_URL;
+          const experimentVariants = [
+            'daily_briefing_v2_deep',
+            'daily_briefing_v2_question',
+            'daily_briefing_v2_numbers',
+          ];
+          const rows = Array.isArray(performance.rows) ? performance.rows : [];
+          const promptContext = clean(performance.promptContext).slice(0, 900);
+          const bestVariant = clean(performance.bestVariant);
+          const hasStableWinner =
+            rows.length >= 6 &&
+            experimentVariants.includes(bestVariant) &&
+            !bestVariant.endsWith('_fallback');
+          const daySeed = Number(String(jstLabel).replace(/\D/g, '')) || 0;
+          const selectedVariant = hasStableWinner
+            ? bestVariant
+            : experimentVariants[daySeed % experimentVariants.length];
+          const targetUrlWithVariant = (() => {
+            try {
+              const url = new URL(targetUrl);
+              url.searchParams.set('utm_content', selectedVariant);
+              return url.toString();
+            } catch (_error) {
+              const separator = targetUrl.includes('?') ? '&' : '?';
+              return `${targetUrl}${separator}utm_content=${encodeURIComponent(selectedVariant)}`;
+            }
+          })();
+
+          const limitText = (value, max) => {
+            const text = clean(value);
+            return text.length <= max ? text : `${text.slice(0, max - 1)}…`;
+          };
+
+          const categoryFor = (topic) => {
+            if (/政治|選挙|国会|政権|首相|税|財政|補正|与党|野党/.test(topic)) {
+              return '日本政治';
+            }
+            if (/米国|中国|欧州|イラン|ロシア|ウクライナ|原油|ホルムズ|国際|安全保障/.test(topic)) {
+              return '国際情勢';
+            }
+            if (/日経|株|市場|円|金利|決算|投資|Apple|Broadcom|LayerX|CEO|予算/.test(topic)) {
+              return '経済・市場';
+            }
+            if (/学校|教育|学習|大学|人材|小中|高校/.test(topic)) {
+              return '教育・人材';
+            }
+            if (/障害|復旧|インフラ|通信|クラウド|ファイル|セキュリティ/.test(topic)) {
+              return 'インフラ・運用';
+            }
+            if (/AI|OpenAI|Claude|GPT|Meta|ロボット|開発|OSS|GitHub|画像|動画|モデル/.test(topic)) {
+              return 'AI・テック';
+            }
+            return '情報整理';
+          };
+
+          const whyFor = (category) => ({
+            '日本政治': '制度変更は家計、事業、投資判断の前提を動かします。賛否より先に、誰の負担と選択肢が変わるかを見る必要があります。',
+            '国際情勢': '地政学ニュースはエネルギー、為替、供給網に遅れて効きます。遠い話題に見えても、生活コストや企業収益に波及します。',
+            '経済・市場': '企業投資や市場の動きは、個人の仕事選び、予算配分、資産管理にもつながります。数字の裏にある意思決定が重要です。',
+            '教育・人材': '情報活用が基礎力になるほど、子どもの教育だけでなく、大人の学び直しと仕事ログの残し方も変わります。',
+            'インフラ・運用': '便利なサービスほど、止まった瞬間に業務全体が止まります。復旧後も、どこに何を置くかの設計が問われます。',
+            'AI・テック': 'モデル名より重要なのは、何を任せ、何を人間が検証し、どう運用ログとして残すかです。仕事の型そのものが変わります。',
+            '情報整理': 'ニュースを読むだけでは行動に変わりません。仕事、学習、投資、生活のどの判断材料かに分けると使える情報になります。',
+          }[category]);
+
+          const outlookFor = (category) => ({
+            '日本政治': '今週は財源、制度設計、市場反応の3点を見ると流れを追いやすいです。',
+            '国際情勢': '次の焦点は当事国の発言より、原油、為替、物流コストに出る変化です。',
+            '経済・市場': '決算、投資額、為替、金利のどれが主因かを分けると短期の反応を読みやすくなります。',
+            '教育・人材': '実施時期、学校現場の負担、企業側が求める基礎スキルの変化に注目です。',
+            'インフラ・運用': '再発防止策、代替手段、ログ管理が整うかを見ると実務への影響が見えます。',
+            'AI・テック': '明日見るべきは性能比較より、料金、権限管理、レビュー品質、実務導入のしやすさです。',
+            '情報整理': '保存する前に、何を決めるための情報かを一文で書けるかが分かれ目です。',
+          }[category]);
+
+          const briefingItem = (index, topic) => {
+            const category = categoryFor(topic);
+            const headline = limitText(topic, 64);
+            return [
+              `${index}. 【${category}】${headline}`,
+              `見出し：${headline}`,
+              `なぜ重要か：${whyFor(category)}`,
+              `見通し：${outlookFor(category)}`,
+            ].join('\n\n');
+          };
+
+          const categorySummary = [...new Set(topics.map(categoryFor))].slice(0, 4).join(' / ');
+          const leadByVariant = {
+            daily_briefing_v2_deep: [
+              `デイリーブリーフィング — ${jstLabel} 朝`,
+              '今日の5本を、仕事で使う判断材料に圧縮します。',
+              `1本目は「${limitText(topics[0], 38)}」。`,
+              'どれを深掘りしますか？',
+            ],
+            daily_briefing_v2_question: [
+              `今日の問い — ${jstLabel} 朝`,
+              'AI時代の情報整理で難しいのは、ニュースを読む量ではなく、何を判断材料として残すかです。',
+              `今朝は「${limitText(topics[0], 34)}」から考えます。`,
+              'あなたなら、どの論点を仕事に持ち帰りますか？',
+            ],
+            daily_briefing_v2_numbers: [
+              `朝の判断材料 — ${jstLabel}`,
+              `今日拾った論点は ${topics.length} 本。カテゴリは ${categorySummary} です。`,
+              `最初の焦点は「${limitText(topics[0], 34)}」。`,
+              '数字・制度・実務影響に分けて整理します。',
+            ],
+          };
+          const lead = (leadByVariant[selectedVariant] ?? leadByVariant.daily_briefing_v2_deep).join('\n');
+
+          const categoryOptions = [...new Set(topics.map(categoryFor))]
+            .filter((category) => category !== '情報整理')
+            .slice(0, 3);
+          const pollOptions = [...categoryOptions, '情報整理']
+            .slice(0, 4);
+          while (pollOptions.length < 4) {
+            const next = ['AI仕事術', '政治経済', '開発メモ', '学習ログ']
+              .find((option) => !pollOptions.includes(option));
+            pollOptions.push(next ?? '仕事ログ');
+          }
+
+          const replies = [
+            ...topics.slice(0, 5).map((topic, index) =>
+              briefingItem(index + 1, topic)
+            ),
+            [
+              '今日の問い：',
+              'AI時代の情報整理で一番困っているのはどれですか？',
+              'A. ニュースが多すぎる',
+              'B. 仕事ログが散らかる',
+              'C. 学習メモが続かない',
+              'D. AIに何を任せるか迷う',
+              '返信で教えてください。明日の改善材料にします。',
+            ].join('\n'),
+            [
+              selectedVariant === 'daily_briefing_v2_question'
+                ? '返信で出た迷いを、次の改善テーマにします。'
+                : 'この形式で、毎朝の情報整理をAI仕事OSとして試作中です。',
+              '5分だけ触って、役に立った点と迷った点を教えてください。',
+              targetUrlWithVariant,
+            ].join('\n'),
+          ];
+
+          const postPayload = {
+            text: lead,
+            replyTexts: replies,
+            poll: {
+              options: pollOptions,
+              durationMinutes: 1440,
+            },
+            source: process.env.SOURCE,
+            route: 'growth/daily-briefing',
+            experimentKey: process.env.EXPERIMENT_KEY,
+            variant: selectedVariant,
+            utmContent: selectedVariant,
+            promptProfile: 'workflow_daily_briefing_v3_performance_context',
+            contentKind: 'daily_briefing_thread',
+            contentArchetype: 'news_briefing',
+            linkInReply: true,
+          };
+          const baseCandidateKey = `daily-briefing:${String(jstLabel).replace(/\D/g, '-')}`;
+          const candidateKey = process.env.FORCE === 'true'
+            ? `${baseCandidateKey}:${process.env.GITHUB_RUN_ID}:${process.env.GITHUB_RUN_ATTEMPT}`
+            : baseCandidateKey;
+          const payload = {
+            action: 'x.candidate.create',
+            candidateKey,
+            candidateType: 'daily_briefing_thread',
+            sourceKind: 'trend_daily_briefing',
+            sourceUrls: [...trendSourceUrls, targetUrlWithVariant],
+            createdBy: `github-actions:${process.env.SOURCE}`,
+            postPayload,
+            context: {
+              workflow: process.env.SOURCE,
+              workflow_run_id: process.env.GITHUB_RUN_ID,
+              workflow_run_attempt: process.env.GITHUB_RUN_ATTEMPT,
+              event: process.env.GITHUB_EVENT_NAME,
+              actor: process.env.GITHUB_ACTOR,
+              ref: process.env.GITHUB_REF,
+              sha: process.env.GITHUB_SHA,
+              jst_day: jstLabel,
+              topics,
+              trend_source: raw.source ?? 'unknown',
+              selected_variant: selectedVariant,
+              performance_rows: rows.length,
+              best_variant: bestVariant || '',
+              target_url: targetUrlWithVariant,
+            },
+            dryRun: process.env.DRY_RUN === 'true',
+          };
+
+          fs.writeFileSync('/tmp/x_daily_candidate_request.json', JSON.stringify(payload, null, 2));
+          console.log(JSON.stringify({
+            candidateKey,
+            text: postPayload.text,
+            replyCount: postPayload.replyTexts.length,
+            dryRun: payload.dryRun,
+            topics,
+            trendSource: raw.source ?? null,
+            selectedVariant,
+            performanceRows: rows.length,
+            bestVariant: bestVariant || null,
+            promptContext: promptContext || null,
+            targetUrl: targetUrlWithVariant,
+          }, null, 2));
+          NODE
+        env:
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+          FORCE: ${{ steps.mode.outputs.force }}
+          JST_LABEL: ${{ steps.day.outputs.jst_label }}
+
+      - name: Save approval-pending candidate
+        id: save_candidate
+        if: steps.mode.outputs.operation == 'create_draft' && (steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true')
+        shell: bash
+        run: |
+          http_code=$(curl --silent --show-error --output /tmp/x_daily_candidate_response.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data @/tmp/x_daily_candidate_request.json)
+          response=$(cat /tmp/x_daily_candidate_response.json)
+          echo "HTTP ${http_code}"
+          echo "${response}"
+          success=$(jq -r '.success // false' /tmp/x_daily_candidate_response.json)
+          candidate_id=$(jq -r '.candidateId // ""' /tmp/x_daily_candidate_response.json)
+          candidate_created=$(jq -r '.candidateCreated // false' /tmp/x_daily_candidate_response.json)
+          candidate_status=$(jq -r '.status // ""' /tmp/x_daily_candidate_response.json)
+          echo "success=${success}" >> "${GITHUB_OUTPUT}"
+          echo "candidate_id=${candidate_id}" >> "${GITHUB_OUTPUT}"
+          echo "candidate_created=${candidate_created}" >> "${GITHUB_OUTPUT}"
+          echo "candidate_status=${candidate_status}" >> "${GITHUB_OUTPUT}"
+
+          if [ "${http_code}" != "200" ]; then
+            echo "::error::growth-hub returned HTTP ${http_code}"
+            exit 1
+          fi
+          if [ "${success}" != "true" ]; then
+            echo "::error::growth-hub returned success=false"
+            exit 1
+          fi
+          if [ "${{ steps.mode.outputs.dry_run }}" != "true" ] && [ -z "${candidate_id}" ]; then
+            echo "::error::Candidate persistence returned no candidateId."
+            exit 1
+          fi
+
+      - name: Approve selected candidate
+        id: approve
+        if: steps.mode.outputs.publish_requested == 'true'
+        shell: bash
+        run: |
+          jq -n \
+            --arg candidateId "${CANDIDATE_ID}" \
+            --arg expectedCandidateType "${EXPECTED_CANDIDATE_TYPE}" \
+            --arg expectedSourceKind "${EXPECTED_SOURCE_KIND}" \
+            --arg approvedBy "github:${GITHUB_ACTOR}" \
+            --arg runId "${GITHUB_RUN_ID}" \
+            --arg runAttempt "${GITHUB_RUN_ATTEMPT}" \
+            --arg event "${GITHUB_EVENT_NAME}" \
+            --arg actor "${GITHUB_ACTOR}" \
+            --arg ref "${GITHUB_REF}" \
+            --arg sha "${GITHUB_SHA}" \
+            '{
+              action: "x.candidate.approve",
+              candidateId: $candidateId,
+              expectedCandidateType: $expectedCandidateType,
+              expectedSourceKind: $expectedSourceKind,
+              approvedBy: $approvedBy,
+              approvalChannel: "github_actions_workflow_dispatch",
+              approvalContext: {
+                workflow: "x-daily-briefing-post.yml",
+                workflow_run_id: $runId,
+                workflow_run_attempt: $runAttempt,
+                event: $event,
+                actor: $actor,
+                ref: $ref,
+                sha: $sha
+              }
+            }' > /tmp/x_daily_approval_request.json
+
+          http_code=$(curl --silent --show-error --output /tmp/x_daily_approval_response.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data @/tmp/x_daily_approval_request.json)
+          cat /tmp/x_daily_approval_response.json
+          success=$(jq -r '.success // false' /tmp/x_daily_approval_response.json)
+          echo "success=${success}" >> "${GITHUB_OUTPUT}"
+          if [ "${http_code}" != "200" ] || [ "${success}" != "true" ]; then
+            echo "::error::Candidate approval failed (HTTP ${http_code})."
+            exit 1
+          fi
+          jq -e '.postPayload | select(.action == "x.post")' \
+            /tmp/x_daily_approval_response.json > /tmp/x_daily_payload.json
+        env:
+          CANDIDATE_ID: ${{ steps.mode.outputs.candidate_id }}
+          EXPECTED_CANDIDATE_TYPE: ${{ github.event.inputs.expected_candidate_type }}
+          EXPECTED_SOURCE_KIND: ${{ github.event.inputs.expected_source_kind }}
+
+      - name: Post explicitly approved X candidate
+        id: post
+        if: steps.mode.outputs.publish_requested == 'true'
+        shell: bash
+        run: |
+          http_code=$(curl --silent --show-error --output /tmp/x_daily_post_response.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data @/tmp/x_daily_payload.json)
+          cat /tmp/x_daily_post_response.json
+          posted=$(jq -r '.posted // false' /tmp/x_daily_post_response.json)
+          success=$(jq -r '.success // false' /tmp/x_daily_post_response.json)
+          tweet_id=$(jq -r '.tweetId // ""' /tmp/x_daily_post_response.json)
+          echo "http_code=${http_code}" >> "${GITHUB_OUTPUT}"
+          echo "posted=${posted}" >> "${GITHUB_OUTPUT}"
+          echo "success=${success}" >> "${GITHUB_OUTPUT}"
+          echo "tweet_id=${tweet_id}" >> "${GITHUB_OUTPUT}"
+
+      - name: Finalize candidate audit record
+        id: finalize
+        if: always() && steps.mode.outputs.publish_requested == 'true' && steps.approve.outputs.success == 'true'
+        shell: bash
+        run: |
+          if ! jq empty /tmp/x_daily_post_response.json >/dev/null 2>&1; then
+            printf '{"success":false,"posted":false,"code":"workflow_post_response_missing","error":"No valid x.post response was captured."}' > /tmp/x_daily_post_response.json
+          fi
+          jq -n \
+            --arg candidateId "${{ steps.mode.outputs.candidate_id }}" \
+            --slurpfile result /tmp/x_daily_post_response.json \
+            '{action:"x.candidate.finalize", candidateId:$candidateId, result:$result[0]}' \
+            > /tmp/x_daily_finalize_request.json
+          http_code=$(curl --silent --show-error --output /tmp/x_daily_finalize_response.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data @/tmp/x_daily_finalize_request.json)
+          cat /tmp/x_daily_finalize_response.json
+          success=$(jq -r '.success // false' /tmp/x_daily_finalize_response.json)
+          status=$(jq -r '.status // ""' /tmp/x_daily_finalize_response.json)
+          echo "success=${success}" >> "${GITHUB_OUTPUT}"
+          echo "status=${status}" >> "${GITHUB_OUTPUT}"
+          if [ "${http_code}" != "200" ] || [ "${success}" != "true" ]; then
+            echo "::error::Candidate audit finalization failed (HTTP ${http_code})."
+            exit 1
+          fi
+
+      - name: Validate approved publish result
+        if: always() && steps.mode.outputs.publish_requested == 'true'
+        shell: bash
+        run: |
+          test "${{ steps.approve.outputs.success }}" = "true" || {
+            echo "::error::Candidate was not approved."
+            exit 1
+          }
+          test "${{ steps.post.outputs.http_code }}" = "200" || {
+            echo "::error::x.post returned HTTP ${{ steps.post.outputs.http_code }}."
+            exit 1
+          }
+          test "${{ steps.post.outputs.success }}" = "true" || {
+            echo "::error::x.post returned success=false."
+            exit 1
+          }
+          test "${{ steps.post.outputs.posted }}" = "true" || {
+            echo "::error::The approved candidate was not posted."
+            exit 1
+          }
+          test "${{ steps.finalize.outputs.success }}" = "true" || {
+            echo "::error::The candidate audit record was not finalized."
+            exit 1
+          }
+
+      - name: Write summary
+        if: always()
+        shell: bash
+        run: |
+          selected_variant="${VARIANT}"
+          candidate_id="${{ steps.mode.outputs.candidate_id }}"
+          candidate_status="${{ steps.finalize.outputs.status }}"
+          if [ -f /tmp/x_daily_candidate_request.json ]; then
+            selected_variant=$(jq -r '.postPayload.variant // env.VARIANT' /tmp/x_daily_candidate_request.json)
+          fi
+          if [ -f /tmp/x_daily_payload.json ]; then
+            selected_variant=$(jq -r '.variant // env.VARIANT' /tmp/x_daily_payload.json)
+          fi
+          if [ -n "${{ steps.save_candidate.outputs.candidate_id }}" ]; then
+            candidate_id="${{ steps.save_candidate.outputs.candidate_id }}"
+          fi
+          if [ -z "${candidate_status}" ]; then
+            candidate_status="${{ steps.save_candidate.outputs.candidate_status }}"
+          fi
+          {
+            echo "## X Candidate Draft & Approval"
+            echo ""
+            echo "- JST day: ${{ steps.day.outputs.jst_label }}"
+            echo "- Operation: ${{ steps.mode.outputs.operation }}"
+            echo "- Dry run: ${{ steps.mode.outputs.dry_run }}"
+            echo "- Force: ${{ steps.mode.outputs.force }}"
+            echo "- Existing posted today: ${{ steps.duplicate.outputs.already_posted }}"
+            echo "- Candidate ID: ${candidate_id}"
+            echo "- Candidate status: ${candidate_status}"
+            echo "- Candidate created: ${{ steps.save_candidate.outputs.candidate_created }}"
+            echo "- Posted: ${{ steps.post.outputs.posted }}"
+            echo "- Tweet ID: ${{ steps.post.outputs.tweet_id }}"
+            echo "- Source: ${SOURCE}"
+            echo "- Variant: ${selected_variant}"
+          } >> "${GITHUB_STEP_SUMMARY}"

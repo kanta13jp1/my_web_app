@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'landing_share_service.dart';
-import 'magi_system_settings_service.dart';
 
 class LandingPageAuthUnavailableException implements Exception {
   const LandingPageAuthUnavailableException();
@@ -38,6 +37,20 @@ class LandingPageViewStats {
         series = const <LandingPageViewPoint>[];
 }
 
+class LandingSocialProofStats {
+  final int totalUsers;
+  final int publicMemoCount;
+
+  const LandingSocialProofStats({
+    required this.totalUsers,
+    required this.publicMemoCount,
+  });
+
+  const LandingSocialProofStats.empty()
+      : totalUsers = 0,
+        publicMemoCount = 0;
+}
+
 abstract interface class LandingPageAdapter {
   Stream<AuthState> authStateChanges();
 
@@ -48,6 +61,15 @@ abstract interface class LandingPageAdapter {
   });
 
   Future<LandingPageViewStats> loadLpViewStats();
+
+  Future<LandingSocialProofStats> loadSocialProofStats();
+
+  /// LP 表示を1回記録する (LP View カウンタ + 流入元帰属)。
+  ///
+  /// 2026-03-28 の LP 改修 (7b92a33d6) で loadLpViewStats ごと呼び出しが
+  /// 消えて以来カウンタが凍結していたため、書き込みを読み出しから分離して
+  /// LandingPage の initState から明示的に呼ぶ。
+  Future<void> recordLpView();
 
   Future<String> improveTrialPrompt({
     required String prompt,
@@ -79,15 +101,15 @@ abstract interface class LandingPageAdapter {
   Future<void> recordSaveCta();
 
   Future<void> recordInboxOpen();
+
+  Future<void> recordConversionEvent({
+    required String eventKey,
+    required String visitorId,
+  });
 }
 
 class SupabaseLandingPageAdapter implements LandingPageAdapter {
-  final MagiSystemSettingsService _magiSettingsService;
-
-  const SupabaseLandingPageAdapter({
-    MagiSystemSettingsService magiSettingsService =
-        const MagiSystemSettingsService(),
-  }) : _magiSettingsService = magiSettingsService;
+  const SupabaseLandingPageAdapter();
 
   SupabaseClient? get _supabaseClientOrNull {
     try {
@@ -130,6 +152,21 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
   }
 
   @override
+  Future<void> recordLpView() async {
+    final client = _supabaseClientOrNull;
+    if (client == null) {
+      return;
+    }
+    try {
+      await client.rpc('increment_lp_view');
+      await LandingShareService.recordIncomingShareVisit(client: client);
+    } catch (error) {
+      // 計測失敗で LP 表示自体を妨げない。
+      debugPrint('LP view record failed: $error');
+    }
+  }
+
+  @override
   Future<LandingPageViewStats> loadLpViewStats() async {
     final client = _supabaseClientOrNull;
     if (client == null) {
@@ -137,8 +174,6 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
     }
 
     try {
-      await client.rpc('increment_lp_view');
-      await LandingShareService.recordIncomingShareVisit(client: client);
       final dynamic raw = await client.rpc('get_lp_view_stats');
       final data =
           raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
@@ -169,6 +204,59 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
   }
 
   @override
+  Future<LandingSocialProofStats> loadSocialProofStats() async {
+    final client = _supabaseClientOrNull;
+    if (client == null) {
+      return const LandingSocialProofStats.empty();
+    }
+
+    var totalUsers = 0;
+    var publicMemoCount = 0;
+
+    try {
+      final row = await client
+          .from('site_statistics')
+          .select('total_users')
+          .order('stat_date', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      totalUsers = (row?['total_users'] as num?)?.toInt() ?? 0;
+    } catch (error) {
+      debugPrint('Public site statistics load failed: $error');
+    }
+
+    if (totalUsers <= 0) {
+      try {
+        final row = await client
+            .from('growth_metrics')
+            .select('total_users')
+            .order('metric_date', ascending: false)
+            .limit(1)
+            .maybeSingle();
+        totalUsers = (row?['total_users'] as num?)?.toInt() ?? 0;
+      } catch (error) {
+        debugPrint('Public growth metrics fallback failed: $error');
+      }
+    }
+
+    try {
+      final response = await client
+          .from('public_memos')
+          .select('id')
+          .eq('is_public', true)
+          .count(CountOption.exact);
+      publicMemoCount = response.count;
+    } catch (error) {
+      debugPrint('Public memo count load failed: $error');
+    }
+
+    return LandingSocialProofStats(
+      totalUsers: totalUsers < 0 ? 0 : totalUsers,
+      publicMemoCount: publicMemoCount < 0 ? 0 : publicMemoCount,
+    );
+  }
+
+  @override
   Future<String> improveTrialPrompt({
     required String prompt,
   }) async {
@@ -178,20 +266,19 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
     }
 
     final response = await client.functions.invoke(
-      'ai-assistant',
-      body: await _magiSettingsService.buildAiAssistantPayload(
-        baseBody: <String, dynamic>{
-          'action': 'improve',
-          'content': prompt,
-        },
-      ),
+      'growth-hub',
+      body: <String, dynamic>{
+        'action': 'landing.trial',
+        'prompt': prompt,
+      },
     );
     final data = response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
-    final result = data['result'];
-    if (data['success'] == true && result is String) {
-      return result;
+    final action = data['action']?.toString().trim() ?? '';
+    final reason = data['reason']?.toString().trim() ?? '';
+    if (data['success'] == true && action.isNotEmpty && reason.isNotEmpty) {
+      return 'ACTION: $action\nREASON: $reason';
     }
 
     throw Exception(
@@ -273,5 +360,32 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
       eventKey: LandingShareService.funnelInboxOpen,
       client: _supabaseClientOrNull,
     );
+  }
+
+  @override
+  Future<void> recordConversionEvent({
+    required String eventKey,
+    required String visitorId,
+  }) async {
+    final client = _supabaseClientOrNull;
+    await LandingShareService.recordFunnelEvent(
+      eventKey: eventKey,
+      client: client,
+    );
+    if (client == null) {
+      return;
+    }
+
+    try {
+      await client.rpc(
+        'record_landing_experiment_event',
+        params: <String, dynamic>{
+          'p_visitor_id': visitorId,
+          'p_event_key': eventKey,
+        },
+      );
+    } catch (error) {
+      debugPrint('Unique LP experiment event failed: $error');
+    }
   }
 }

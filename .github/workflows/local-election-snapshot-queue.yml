@@ -1,0 +1,81 @@
+name: Local Election Snapshot Queue
+
+# Fetches official local-election data and creates review candidates only.
+# This workflow never calls x.post; publishing remains behind growth-hub's
+# x.candidate approval/finalization actions.
+on:
+  schedule:
+    # Daily at 05:35 JST. A daily baseline gives useful diffs without tying
+    # collection to the public posting cadence.
+    - cron: "35 20 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: local-election-snapshot-queue
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot-and-queue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+    steps:
+      - name: Validate service-role secret
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_SERVICE_ROLE_KEY:-}" || {
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is required."
+            exit 1
+          }
+
+      - name: Save snapshot and queue significant diffs
+        shell: bash
+        run: |
+          set -euo pipefail
+          response_file="${RUNNER_TEMP}/local-election-snapshot.json"
+
+          if ! curl --fail-with-body --silent --show-error \
+            --max-time 600 \
+            --retry 2 \
+            --retry-delay 10 \
+            --retry-all-errors \
+            --request POST \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data '{"action":"snapshotAndQueue","includeAiSummary":false}' \
+            --output "${response_file}" \
+            "${SUPABASE_URL}/functions/v1/local-election-intelligence"; then
+            if jq -e . "${response_file}" >/dev/null 2>&1; then
+              jq '{success, error}' "${response_file}"
+            fi
+            exit 1
+          fi
+
+          jq -e '.success == true and (.persistence | type == "object")' \
+            "${response_file}" >/dev/null
+          jq '{
+            success,
+            persistence: {
+              dataset: .persistence.dataset,
+              datasetVersion: .persistence.datasetVersion,
+              snapshotHash: .persistence.snapshotHash,
+              previousSnapshotId: .persistence.previousSnapshotId,
+              previousSnapshotHash: .persistence.previousSnapshotHash,
+              baselineCreated: .persistence.baselineCreated,
+              snapshotCreated: .persistence.snapshotCreated,
+              deduplicated: .persistence.deduplicated,
+              significantKinds: .persistence.significantKinds,
+              candidateCount: .persistence.candidateCount,
+              candidatesCreated: .persistence.candidatesCreated,
+              snapshotId: .persistence.snapshotId,
+              candidateIds: .persistence.candidateIds
+            }
+          }' "${response_file}"

@@ -14,12 +14,14 @@ void main() {
       await store.load(prefs: prefs),
       AssetSalaryDayStore.defaultSalaryDay,
     );
+    expect(await store.isConfigured(prefs: prefs), isFalse);
   });
 
   test('save then load round-trips a valid day', () async {
     final prefs = await SharedPreferences.getInstance();
     await store.save(15, prefs: prefs);
     expect(await store.load(prefs: prefs), 15);
+    expect(await store.isConfigured(prefs: prefs), isTrue);
   });
 
   test('save clamps out-of-range days to 1..28', () async {

@@ -4,7 +4,7 @@ on:
   issues:
     types: [opened, edited, closed, reopened, labeled, unlabeled]
   schedule:
-    - cron: "25 */4 * * *"  # 4h safety net; issue events handle real-time sync
+    - cron: "25 */6 * * *"  # 6h safety net; issue events handle real-time sync (2026-07-03 ci-audit: 4h→6h, 690min/月削減)
   workflow_dispatch:
     inputs:
       recent_only:

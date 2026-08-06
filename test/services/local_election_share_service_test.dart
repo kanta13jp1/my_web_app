@@ -184,6 +184,7 @@ void main() {
           prefectureOfficerSourceUrl:
               'https://www.new-kokumin.tokyo/2025/10/yakuin2025/',
           cdpLocalMembers: 83,
+          ldpLocalMembers: 362,
         ),
         LocalElectionPrefecturePlan(
           prefecture: '香川県',
@@ -199,6 +200,7 @@ void main() {
           announcedCandidateCount: 3,
           confirmedCandidateCount: 2,
           cdpLocalMembers: 20,
+          ldpLocalMembers: 112,
           endorsementConfirmed: true,
         ),
       ],
@@ -316,6 +318,83 @@ void main() {
     expect(shareText, contains('https://example.com/public-memo?id=10'));
   });
 
+  test('buildXPostLongText carries the full post-A tally within the cap', () {
+    // R24: API 投稿(growth-hub x.post)経路の本文。集計ノート全文=実測 3.2K
+    // のポストA構造がそのまま入り、末尾に公開ノート URL が付く。
+    final snapshot = buildSnapshot();
+    final text = service.buildXPostLongText(
+      snapshot: snapshot,
+      members: snapshot.members,
+      publicUrl: 'https://example.com/public-memo?id=10',
+    );
+
+    expect(text, contains('国民民主党 地方議員集計 2026/03/28'));
+    expect(text, contains('取得日時:'));
+    expect(text, contains('公式地方議員数: 333人'));
+    expect(text, contains('700まで残り: 367人'));
+    expect(text, contains('現職地方議員名簿'));
+    expect(text, contains('全都道府県の内訳と現職名簿の公開ノート:'));
+    expect(text, contains('https://example.com/public-memo?id=10'));
+    // 上限は X 実測の加重文字数(CJK=2)で守る(code unit 数ではない)。
+    expect(
+      LocalElectionShareService.xWeightedLength(text),
+      lessThanOrEqualTo(24000),
+    );
+  });
+
+  test('xWeightedLength doubles CJK per twitter-text weighting', () {
+    expect(LocalElectionShareService.xWeightedLength('abc'), 3);
+    expect(LocalElectionShareService.xWeightedLength('あいう'), 6);
+    expect(LocalElectionShareService.xWeightedLength('a議員1人'), 8);
+  });
+
+  test(
+      'buildXPostLongText truncates at a roster section boundary when over cap',
+      () {
+    final snapshot = buildSnapshot();
+    final full = service.buildXPostLongText(
+      snapshot: snapshot,
+      members: snapshot.members,
+      publicUrl: '',
+    );
+    final fullWeighted = LocalElectionShareService.xWeightedLength(full);
+    final capped = service.buildXPostLongText(
+      snapshot: snapshot,
+      members: snapshot.members,
+      publicUrl: 'https://example.com/public-memo?id=10',
+      maxWeightedChars: fullWeighted - 50,
+    );
+
+    expect(
+      LocalElectionShareService.xWeightedLength(capped),
+      lessThanOrEqualTo(fullWeighted - 50),
+    );
+    expect(capped, contains('(文字数上限のため名簿の続きは公開ノートへ)'));
+    expect(capped, contains('https://example.com/public-memo?id=10'));
+    // 冒頭のデータレポート骨格は必ず残る。
+    expect(capped, contains('公式地方議員数: 333人'));
+  });
+
+  test('buildXPostLongText omits the note-link cue when no public URL exists',
+      () {
+    final snapshot = buildSnapshot();
+    final full = service.buildXPostLongText(
+      snapshot: snapshot,
+      members: snapshot.members,
+      publicUrl: '',
+    );
+    final capped = service.buildXPostLongText(
+      snapshot: snapshot,
+      members: snapshot.members,
+      publicUrl: '',
+      maxWeightedChars: LocalElectionShareService.xWeightedLength(full) - 50,
+    );
+
+    // URL の無い投稿に「続きは公開ノートへ」というリンク無し誘導を残さない。
+    expect(capped, isNot(contains('公開ノートへ')));
+    expect(capped, contains('(文字数上限のため名簿は途中まで)'));
+  });
+
   test('buildXShareIntentUri separates the body text and shared URL', () {
     final snapshot = buildSnapshot();
     final uri = service.buildXShareIntentUri(
@@ -416,6 +495,42 @@ void main() {
       uri.queryParameters['text'],
       isNot(contains('https://example.com/public/local-election-700')),
     );
+  });
+
+  test('公開ノートに自民参考値と第1次公認が載る (共有面の欠落防止)', () {
+    final plan = buildPlan();
+    final draft = service.buildPlanDashboardDraft(
+      plan: plan,
+      snapshot: buildSnapshot(),
+      publicDashboardUrl: 'https://example.com/public/local-election-700',
+    );
+
+    // 全国サマリー: 立憲だけでなく自民と第1次公認も出す。
+    expect(draft.content, contains('自民地方議員参考合計: 474人'));
+    expect(draft.content, contains('第1次公認:'));
+    expect(draft.content, contains('県が発表済み'));
+    // 県別行: 自民参考と地力差 (ラベルは自民であって立憲ではない)。
+    expect(draft.content, contains('自民参考362人'));
+    expect(draft.content, contains('自民+319'));
+    // metadata にも機械可読で載る。
+    expect(draft.metadata['totalLdpLocalMembers'], 474);
+    expect(draft.metadata['firstEndorsementTotal'], isA<int>());
+    final prefectures = draft.metadata['prefectures'] as List<dynamic>;
+    final tokyo =
+        Map<String, dynamic>.from(prefectures.first as Map<dynamic, dynamic>);
+    expect(tokyo['ldpLocalMembers'], 362);
+    expect(tokyo['ldpMemberGap'], 319);
+  });
+
+  test('地力差ラベルは比較相手の党名を取り違えない', () {
+    final plan = buildPlan();
+    final draft = service.buildPlanDashboardDraft(
+      plan: plan,
+      snapshot: buildSnapshot(),
+      publicDashboardUrl: 'https://example.com/public/local-election-700',
+    );
+    // 自民の差分行に立憲ラベルが混入しない (汎用ヘルパの党名直書き対策)。
+    expect(draft.content, isNot(contains('自民参考362人(立憲')));
   });
 
   test('buildPlanDashboardDraft creates a public note for all prefecture KPIs',
@@ -526,5 +641,24 @@ void main() {
     expect(weekends[0], DateTime(2026, 4, 11));
     expect(weekends[1], DateTime(2026, 4, 18));
     expect(weekends[2], DateTime(2026, 4, 25));
+  });
+
+  test('unified election 2027 provisional dates stay statute-consistent', () {
+    final firstVote =
+        LocalElectionShareService.nextUnifiedLocalElectionFirstHalfTargetDate;
+    final firstAnnouncement = LocalElectionShareService
+        .nextUnifiedLocalElectionFirstHalfAnnouncementDate;
+    final secondVote =
+        LocalElectionShareService.nextUnifiedLocalElectionSecondHalfTargetDate;
+    final secondAnnouncement = LocalElectionShareService
+        .nextUnifiedLocalElectionSecondHalfAnnouncementDate;
+
+    // 投票日は日曜、第二次は第一次の2週間後。
+    expect(firstVote.weekday, DateTime.sunday);
+    expect(secondVote.weekday, DateTime.sunday);
+    expect(secondVote.difference(firstVote).inDays, 14);
+    // 告示日数ルール: 前半=知事選17日前 / 後半=市区議・市区長7日前 (2023実績と同じ)。
+    expect(firstVote.difference(firstAnnouncement).inDays, 17);
+    expect(secondVote.difference(secondAnnouncement).inDays, 7);
   });
 }

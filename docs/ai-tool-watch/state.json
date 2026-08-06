@@ -1,8 +1,8 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-06-29T21:46:14Z",
-      "hash": "58a4789f088ef00e6ba522f5c1ef28e8bbfb63476c9c0f77be23d3210b639253",
+      "checked_at": "2026-08-05T22:28:44Z",
+      "hash": "3cf867932f87c12ee7fb7796e365a660b26550cbd6db3d6a8dfccf4816166165",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -46,14 +46,14 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.195 / June 26, 2026",
+      "latest_signal": "2.1.222 / August 4, 2026",
       "name": "Claude Code changelog",
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-06-29T21:46:14Z",
-      "hash": "6f4b44b973055668e7f82f48b51d27194fbb818c325987fce637bf7a2879fedc",
+      "checked_at": "2026-08-05T22:28:44Z",
+      "hash": "01fd009f8d4f44eac7228e81be5eb13e0b788f5e4330885367e55b87dc1e8e63",
       "keyword_groups": {
         "codex-runtime": [
           "computer use"
@@ -90,8 +90,8 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-06-29T21:46:14Z",
-      "hash": "19951e52382be07303687536fc99106864249a4ed1b72e323840d0ed82b1ebeb",
+      "checked_at": "2026-08-05T22:28:44Z",
+      "hash": "f3722406b1538df9f7247ed166bd35bc6ebbd98ac17d105beef15321b60ebc01",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -109,12 +109,14 @@
         "integration": [
           "MCP",
           "connector",
-          "GitHub"
+          "GitHub",
+          "IDE extension"
         ],
         "quality-cost": [
           "OpenTelemetry",
           "cost",
           "rate limit",
+          "sandbox",
           "permission",
           "review",
           "CI"
@@ -131,8 +133,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-06-29T21:46:14Z",
-      "hash": "24e0394f01b4333ae256f81180cf8ecdae66900fe12e100ee4f43124addd8aed",
+      "checked_at": "2026-08-05T22:28:44Z",
+      "hash": "0995c8dd39493f7358f3a3bcc81e6c9fee6a773458c9e68df541d24f3ba6ba6f",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -174,13 +176,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-06-25 / Codex Remote reaches general availability Codex Remote has reached general availability. Us",
+      "latest_signal": "2026-08-05 / Codex CLI 0.146.1 pre",
       "name": "Codex changelog",
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-06-29T21:46:14Z",
+      "checked_at": "2026-08-05T22:28:44Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -189,20 +191,19 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-06-29T21:46:14Z",
-      "hash": "5b4a2cfd145e7bb23781fcf11d9ebaa9fd14218ca6e53e8989b1e94359c4e67f",
+      "checked_at": "2026-08-05T22:28:44Z",
+      "hash": "d9c0c88b18e7a633ca8692b366e54df0379a44086193cf22391cd9b062f5a46e",
       "keyword_groups": {
         "codex-runtime": [
-          "GPT-5.5",
           "GPT-5.4",
-          "in-app browser",
           "computer use",
           "worktree",
           "subagents"
         ],
         "hooks": [
           "hook",
-          "hooks"
+          "hooks",
+          "Stop"
         ],
         "integration": [
           "MCP",
@@ -222,32 +223,27 @@
         ],
         "schedule": [
           "automation",
-          "automations",
+          "schedule",
           "GitHub Actions",
           "workflow"
         ]
       },
-      "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
+      "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
       "name": "Codex use cases",
       "status": 200,
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-06-29T21:46:14Z",
-      "hash": "570c5c6fd2ce3cf2324a7950db0767e7f2b973134987a4d4b47f17373920e3ab",
+      "checked_at": "2026-08-05T22:28:44Z",
+      "hash": "a23bd552769066e3de658abf11d3553627ae135cd177078cd4c9cbac3f466ae3",
       "keyword_groups": {
-        "codex-runtime": [
-          "computer use",
-          "subagents"
-        ],
         "hooks": [
           "hook",
           "hooks"
         ],
         "integration": [
           "MCP",
-          "Slack",
-          "GitHub"
+          "Slack"
         ],
         "quality-cost": [
           "cost",
@@ -257,25 +253,27 @@
         "schedule": [
           "automation",
           "automations",
-          "GitHub Actions",
+          "schedule",
           "workflow"
         ]
       },
-      "latest_signal": "3.9 / Jun 22, 2026",
+      "latest_signal": "New in Cursor",
       "name": "Cursor changelog",
       "status": 200,
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-06-29T21:46:14Z",
-      "hash": "d49ffd1ae09307811630db7e77a35ad62c283962257026de549468fbb884e382",
+      "checked_at": "2026-08-05T22:28:44Z",
+      "hash": "aee8af93371c241694b8bd9bf2371b035796a434e9d3745e9c2f38aaa0af2d2d",
       "keyword_groups": {
         "codex-runtime": [
+          "model picker",
           "computer use",
           "subagents"
         ],
         "hooks": [
           "hook",
+          "hooks",
           "Stop"
         ],
         "integration": [
@@ -300,14 +298,14 @@
           "workflow"
         ]
       },
-      "latest_signal": "June 26, 2026",
+      "latest_signal": "July 31, 2026",
       "name": "Devin release notes",
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-06-29T21:46:14Z",
-      "hash": "39d0b161e75b795d7ef492799d59b6735efa443635b33401b500bb53c3cf3435",
+      "checked_at": "2026-08-05T22:28:44Z",
+      "hash": "cd6e9ff8949d7c5fe4015a5b039261c21f1ecea5e73d18a972feed159ca159a1",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -329,11 +327,11 @@
           "workflow"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
+      "latest_signal": "VS Code Gemini Code Assist 2.92.0 / July 20, 2026",
       "name": "Gemini Code Assist release notes",
       "status": 200,
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-06-29T21:46:14Z"
+  "updated_at": "2026-08-05T22:28:44Z"
 }

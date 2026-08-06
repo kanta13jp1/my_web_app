@@ -14,6 +14,8 @@ void main() {
 
     expect(preferences.visible, isTrue);
     expect(preferences.position, AiShareButtonPosition.bottomRight);
+    // 動画エンジンの既定は従来動作(Hedra プレゼンター動画)を維持する。
+    expect(preferences.videoEngine, AiShareVideoEngine.presenter);
   });
 
   test('persists visibility and selected position', () async {
@@ -43,5 +45,29 @@ void main() {
 
     expect(preferences.visible, isFalse);
     expect(preferences.position, AiShareButtonPosition.bottomRight);
+  });
+
+  test('persists selected video engine', () async {
+    const service = AiShareButtonPreferencesService();
+
+    await service.saveVideoEngine(AiShareVideoEngine.cinematic);
+
+    final preferences = await service.loadPreferences();
+
+    expect(preferences.videoEngine, AiShareVideoEngine.cinematic);
+    // 他の設定は既定のまま保たれる。
+    expect(preferences.visible, isTrue);
+    expect(preferences.position, AiShareButtonPosition.bottomRight);
+  });
+
+  test('falls back to presenter when stored video engine is unknown', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'ai_share_video_engine_v1': 'hologram',
+    });
+    const service = AiShareButtonPreferencesService();
+
+    final preferences = await service.loadPreferences();
+
+    expect(preferences.videoEngine, AiShareVideoEngine.presenter);
   });
 }

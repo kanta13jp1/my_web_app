@@ -1,0 +1,22 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-07-06T12:12:01Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 / チケット: 0件(http200) / Issue修正: 0件 / workflow-failure修復: 0件(WEB版制約) / Schedule健全性: 正常",
+  "issues_detected": [
+    {
+      "number": 3830,
+      "title": "[Schedule監視] infra-health-check stale schedule",
+      "severity": "high",
+      "action": "skip-web-cannot-trigger-workflow"
+    },
+    {
+      "number": 3828,
+      "title": "[workflow-failure] CI dependabot deno-lint",
+      "severity": "medium",
+      "action": "skip-web-dart-deno-edit-prohibited"
+    }
+  ],
+  "notes": "ticket-cache.json: 2026-05-01以降更新なし / flutter-analyze-cache.json: 2026-04-11以降更新なし"
+}
