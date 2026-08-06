@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-04T22:29:51Z",
+  "generated_at": "2026-08-05T22:28:47Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -20,9 +20,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-c95552cc4cc7",
+        "entry_id": "nf-04bd4b657206",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.221 / August 4, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.221 August 4, 2026 [VSCode] Added Focus view: a chat-menu toggle that hides tool activity behind an expandable per-turn summary with a live running-tool indicator, toggled...",
+        "text": "Claude Code changelog 2.1.222 / August 4, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.222 August 4, 2026 Fixed worktree-isolated sessions and their subagents being able to run destructive git commands against the main checkout; isolation now applies to file...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -31,7 +31,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "7813e5d7058e99d49895c37ef088c63ec06af042b1288c7c816fd72f48a2f478",
+          "hash": "3cf867932f87c12ee7fb7796e365a660b26550cbd6db3d6a8dfccf4816166165",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -75,22 +75,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.221 / August 4, 2026",
+          "latest_signal": "2.1.222 / August 4, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "cd3805c012788e10c829872d14c7ea7a680a934c19ca71fad3bcb800d701ca95",
+          "previous_hash": "7813e5d7058e99d49895c37ef088c63ec06af042b1288c7c816fd72f48a2f478",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.221 August 4, 2026 [VSCode] Added Focus view: a chat-menu toggle that hides tool activity behind an expandable per-turn summary with a live running-tool indicator, toggled..."
+            "​ 2.1.222 August 4, 2026 Fixed worktree-isolated sessions and their subagents being able to run destructive git commands against the main checkout; isolation now applies to file..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-c95552cc4cc7",
+        "entry_id": "nf-04bd4b657206",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -119,7 +119,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "7716b6c04a98413d8475278f770ed64054a4d956eb9fc1da7c34588c3562126c",
+          "hash": "f3722406b1538df9f7247ed166bd35bc6ebbd98ac17d105beef15321b60ebc01",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -158,7 +158,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "d9601bd1332a3bdb9525d21a96f0ee66f890d1a4fcc9c6510ab36a3cd2592b72",
+          "previous_hash": "7716b6c04a98413d8475278f770ed64054a4d956eb9fc1da7c34588c3562126c",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -196,10 +196,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "a5545fd180009614613298fe94c3aa1fc9f83db6d3b478d0683f10f81f8c8e11",
+          "hash": "01fd009f8d4f44eac7228e81be5eb13e0b788f5e4330885367e55b87dc1e8e63",
           "keyword_groups": {
             "codex-runtime": [
               "computer use"
@@ -263,9 +263,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-350ead310722",
+        "entry_id": "nf-57ad20a15f6e",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-07-31 / GPT-5.4 and GPT-5.4 mini retire from Codex on August 31 On August 31, 2026, GPT-5.4 and GPT ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources... Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)... All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How...",
+        "text": "Codex changelog 2026-08-05 / Codex CLI 0.146.1 pre ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources... Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)... All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How...",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -274,7 +274,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "06220ad2f05f2bf3ca9e06f6094eba788948f00776179ce660be88fc07521703",
+          "hash": "0995c8dd39493f7358f3a3bcc81e6c9fee6a773458c9e68df541d24f3ba6ba6f",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -316,10 +316,10 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-07-31 / GPT-5.4 and GPT-5.4 mini retire from Codex on August 31 On August 31, 2026, GPT-5.4 and GPT",
+          "latest_signal": "2026-08-05 / Codex CLI 0.146.1 pre",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "e9c85c7621e39b81b57bf66be9f553138455be376a745e9552e0491f9ff45142",
+          "previous_hash": "06220ad2f05f2bf3ca9e06f6094eba788948f00776179ce660be88fc07521703",
           "slug": "codex-changelog",
           "snippets": [
             "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -331,7 +331,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-350ead310722",
+        "entry_id": "nf-57ad20a15f6e",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -363,7 +363,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "e252e07b550ac8d7ffe18f603cb26734ab6ffbd31dfc97db71a422a300a86429",
+          "hash": "d9c0c88b18e7a633ca8692b366e54df0379a44086193cf22391cd9b062f5a46e",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.4",
@@ -402,7 +402,7 @@
           "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "84a07740242a52db5a6b3482825570b6926aac43cf917cc63071d346f8c54e9c",
+          "previous_hash": "e252e07b550ac8d7ffe18f603cb26734ab6ffbd31dfc97db71a422a300a86429",
           "slug": "codex-use-cases",
           "snippets": [
             "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -486,7 +486,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "a23bd552769066e3de658abf11d3553627ae135cd177078cd4c9cbac3f466ae3",
@@ -514,7 +514,7 @@
           "latest_signal": "New in Cursor",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "665ffcbd537c96796840de3187e925673d46b9cc171a18fcfc8c13c845d4b657",
+          "previous_hash": "a23bd552769066e3de658abf11d3553627ae135cd177078cd4c9cbac3f466ae3",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...",
