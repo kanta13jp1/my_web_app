@@ -127,6 +127,11 @@ class NoteSearchResult {
     required this.content,
     required this.score,
     required this.matchReason,
+    this.createdAt,
+    this.updatedAt,
+    this.isPinned,
+    this.isFavorite,
+    this.reminderDate,
   });
 
   factory NoteSearchResult.fromJson(Map<String, dynamic> json) {
@@ -137,6 +142,11 @@ class NoteSearchResult {
       content: json['content']?.toString() ?? '',
       score: rawScore is num ? rawScore.toDouble() : 0,
       matchReason: json['match_reason']?.toString() ?? 'text',
+      createdAt: json['created_at']?.toString(),
+      updatedAt: json['updated_at']?.toString(),
+      isPinned: json['is_pinned'] as bool?,
+      isFavorite: json['is_favorite'] as bool?,
+      reminderDate: json['reminder_date']?.toString(),
     );
   }
 
@@ -145,6 +155,24 @@ class NoteSearchResult {
   final String content;
   final double score;
   final String matchReason;
+  final String? createdAt;
+  final String? updatedAt;
+  final bool? isPinned;
+  final bool? isFavorite;
+  final String? reminderDate;
+
+  Map<String, dynamic> toNoteRow({Map<String, dynamic>? localNote}) {
+    return <String, dynamic>{
+      ...?localNote,
+      'id': id,
+      'title': title,
+      'content': content,
+      'created_at': createdAt ?? localNote?['created_at'] ?? updatedAt,
+      'is_pinned': isPinned ?? localNote?['is_pinned'] ?? false,
+      'is_favorite': isFavorite ?? localNote?['is_favorite'] ?? false,
+      'reminder_date': reminderDate ?? localNote?['reminder_date'],
+    };
+  }
 }
 
 Map<String, dynamic> _asMap(Object? value) {

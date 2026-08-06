@@ -2714,6 +2714,14 @@ type NoteSearchIndexRow = {
   match_reason: string | null;
 };
 
+type NoteSearchMetadataRow = {
+  id: number;
+  created_at: string | null;
+  is_pinned: boolean | null;
+  is_favorite: boolean | null;
+  reminder_date: string | null;
+};
+
 function buildNoteSearchText(
   title: string | null | undefined,
   content: string | null | undefined,
@@ -2771,18 +2779,31 @@ async function embedTextsWithGemini(
   const data = await response.json() as {
     embeddings?: Array<{ values?: number[] }>;
   };
-  return (data.embeddings ?? []).map((item) => item.values ?? []);
+  const vectors = (data.embeddings ?? []).map((item) => item.values ?? []);
+  if (
+    vectors.length !== texts.length ||
+    vectors.some((vector) => vector.length !== 768)
+  ) {
+    throw new Error(
+      `Gemini embedding returned invalid dimensions: ${
+        vectors.map((vector) => vector.length).join(",")
+      }`,
+    );
+  }
+  return vectors;
 }
 
-async function syncNoteSearchIndex(
+async function syncNoteSearchIndexNote(
   admin: SupabaseClient,
   userId: string,
+  noteId: number,
 ): Promise<void> {
-  const { error } = await admin.rpc("sync_note_search_index_text", {
+  const { error } = await admin.rpc("sync_note_search_index_note", {
     p_user_id: userId,
+    p_note_id: noteId,
   });
   if (error) {
-    throw new Error(`sync_note_search_index_text failed: ${error.message}`);
+    throw new Error(`sync_note_search_index_note failed: ${error.message}`);
   }
 }
 
@@ -2803,7 +2824,7 @@ async function embedPendingNoteSearchRows(
       .is("embedding", null)
       .order("note_updated_at", { ascending: false })
       .limit(limit)
-    : await baseQuery.eq("note_id", noteId).limit(1);
+    : await baseQuery.eq("note_id", noteId).is("embedding", null).limit(1);
   if (error) throw new Error(`note_search_index load failed: ${error.message}`);
 
   const rows = (data ?? []) as Array<{
@@ -2888,6 +2909,23 @@ async function fallbackTextSearch(
     combined_rank: null,
     match_reason: "text_fallback",
   }));
+}
+
+async function loadNoteSearchMetadata(
+  admin: SupabaseClient,
+  userId: string,
+  noteIds: number[],
+): Promise<Map<number, NoteSearchMetadataRow>> {
+  if (noteIds.length === 0) return new Map();
+  const { data, error } = await admin
+    .from("notes")
+    .select("id, created_at, is_pinned, is_favorite, reminder_date")
+    .eq("user_id", userId)
+    .in("id", noteIds);
+  if (error) throw new Error(`note search metadata failed: ${error.message}`);
+  return new Map(
+    ((data ?? []) as NoteSearchMetadataRow[]).map((row) => [row.id, row]),
+  );
 }
 
 async function invokeAiAssistant(
@@ -3262,7 +3300,7 @@ serve(async (req: Request) => {
         if (!ownedNote) return json({ error: "Note not found" }, 404);
 
         try {
-          await syncNoteSearchIndex(admin, userId);
+          await syncNoteSearchIndexNote(admin, userId, noteId);
         } catch (error) {
           return json({ error: asString(error) || "Index sync failed" }, 500);
         }
@@ -3309,29 +3347,31 @@ serve(async (req: Request) => {
 
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
 
-        try {
-          await syncNoteSearchIndex(admin, userId);
-        } catch (error) {
-          console.warn("search.query sync failed", error);
-        }
-
         let queryEmbedding: number[] | null = null;
         let searchMode = "text_fallback";
 
         if (geminiKey) {
-          try {
-            await embedPendingNoteSearchRows(admin, userId, geminiKey);
-            const embeddings = await embedTextsWithGemini(
+          const [pendingResult, queryResult] = await Promise.allSettled([
+            embedPendingNoteSearchRows(admin, userId, geminiKey),
+            embedTextsWithGemini(
               [truncateForEmbedding(query, 1200)],
               geminiKey,
               "RETRIEVAL_QUERY",
+            ),
+          ]);
+          if (pendingResult.status === "rejected") {
+            console.warn(
+              "search.query pending embedding failed",
+              pendingResult.reason,
             );
-            queryEmbedding = embeddings[0] ?? null;
+          }
+          if (queryResult.status === "fulfilled") {
+            queryEmbedding = queryResult.value[0] ?? null;
             if (queryEmbedding && queryEmbedding.length > 0) {
               searchMode = "ai";
             }
-          } catch (error) {
-            console.warn("search.query embedding failed", error);
+          } else {
+            console.warn("search.query embedding failed", queryResult.reason);
           }
         }
 
@@ -3352,20 +3392,38 @@ serve(async (req: Request) => {
           searchMode = "text_fallback";
         }
 
-        const results = rows.map((row) => ({
-          id: row.note_id,
-          title: row.title ?? "",
-          content: row.content ?? "",
-          tags: row.tags ?? [],
-          category_id: row.category_id,
-          updated_at: row.note_updated_at,
-          search_score: row.combined_rank ?? row.text_rank ?? row.vector_rank ??
-            0,
-          search_text_rank: row.text_rank ?? 0,
-          search_vector_rank: row.vector_rank ?? 0,
-          match_reason: row.match_reason ??
-            (queryEmbedding == null ? "text" : "hybrid"),
-        }));
+        let metadata = new Map<number, NoteSearchMetadataRow>();
+        try {
+          metadata = await loadNoteSearchMetadata(
+            admin,
+            userId,
+            rows.map((row) => row.note_id),
+          );
+        } catch (error) {
+          console.warn("search.query metadata load failed", error);
+        }
+
+        const results = rows.map((row) => {
+          const noteMetadata = metadata.get(row.note_id);
+          return {
+            id: row.note_id,
+            title: row.title ?? "",
+            content: row.content ?? "",
+            tags: row.tags ?? [],
+            category_id: row.category_id,
+            created_at: noteMetadata?.created_at ?? null,
+            updated_at: row.note_updated_at,
+            is_pinned: noteMetadata?.is_pinned ?? false,
+            is_favorite: noteMetadata?.is_favorite ?? false,
+            reminder_date: noteMetadata?.reminder_date ?? null,
+            search_score: row.combined_rank ?? row.text_rank ??
+              row.vector_rank ?? 0,
+            search_text_rank: row.text_rank ?? 0,
+            search_vector_rank: row.vector_rank ?? 0,
+            match_reason: row.match_reason ??
+              (queryEmbedding == null ? "text" : "hybrid"),
+          };
+        });
 
         const explanation = searchMode == "ai"
           ? "Supabase pgvector + text similarity hybrid search"

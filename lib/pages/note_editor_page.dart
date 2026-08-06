@@ -1439,7 +1439,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   Future<void> _openRelatedNote(NoteSearchResult note) async {
-    await Navigator.of(context).push(
+    await Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         settings: const RouteSettings(name: '/note-editor'),
         builder: (_) => NoteEditorPage(
@@ -1535,7 +1535,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     } else {
       _autoSaveService.markAsModified();
     }
-    unawaited(_indexAndRefreshRelatedNotes());
   }
 
   Future<void> _saveManually() async {
@@ -1551,6 +1550,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     try {
       await _autoSaveService.saveImmediately(_saveNoteWithoutClosing);
       await _saveVersionSnapshot();
+      unawaited(_indexAndRefreshRelatedNotes());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('手動保存しました')),

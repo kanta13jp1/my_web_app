@@ -17,6 +17,10 @@ void main() {
               'id': 42,
               'title': 'Project decision',
               'content': 'Use the second option.',
+              'created_at': '2026-04-01T12:30:00.000Z',
+              'is_pinned': true,
+              'is_favorite': true,
+              'reminder_date': '2026-04-08T09:00:00.000Z',
               'search_score': 0.91,
               'match_reason': 'vector',
             },
@@ -36,6 +40,12 @@ void main() {
       expect(response.results.single.id, '42');
       expect(response.results.single.score, 0.91);
       expect(response.results.single.matchReason, 'vector');
+      expect(response.results.single.isPinned, isTrue);
+      expect(response.results.single.isFavorite, isTrue);
+      expect(
+        response.results.single.toNoteRow(),
+        containsPair('created_at', '2026-04-01T12:30:00.000Z'),
+      );
     },
   );
 

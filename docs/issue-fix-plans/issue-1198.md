@@ -52,7 +52,7 @@
 
 - [x] Reproduction is clear
 - [x] Smallest safe fix is implemented
-- [ ] Analyze/tests/CI are checked
+- [x] Analyze/tests/CI are checked
 - [x] PR notes explain the change and the remaining risk
 
 ## Implementation Status
@@ -63,6 +63,9 @@
   refreshed after saves.
 - Added targeted `search.index_note` indexing so a saved memo refreshes its
   768-dimensional Gemini embedding without blocking the save UI.
+- Follow-up review fixes page through every local memo, render remote semantic
+  hits even when they are outside the loaded page, keep the text index current
+  with a row trigger, and avoid full-account reindexing on autosave/search.
 - Local validation completed: focused Flutter tests, Dart analysis, Deno lint,
   and Deno type-check. Chrome execution of the browser-only note-list test is
   left for CI because the local Chrome run exceeded five minutes without test

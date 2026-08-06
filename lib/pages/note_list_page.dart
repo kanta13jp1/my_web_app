@@ -58,6 +58,7 @@ class _NoteListPageState extends State<NoteListPage> {
   late final PublicMemoService _publicMemoService;
   late final NoteSemanticSearchDataSource _semanticSearchService;
   static const String _draftKeyPrefix = 'note_editor_draft_';
+  static const int _notesPageSize = 500;
   bool _isLoading = true;
   bool _showFavoritesOnly = false;
   List<Map<String, dynamic>> _notes = [];
@@ -108,6 +109,7 @@ class _NoteListPageState extends State<NoteListPage> {
     setState(() {
       _searchQuery = query;
       _semanticSearchResults = const <NoteSearchResult>[];
+      _semanticSearchMode = 'text_fallback';
       _semanticSearchError = null;
       _semanticSearchCompleted = false;
       _isSemanticSearching = query.isNotEmpty;
@@ -131,6 +133,7 @@ class _NoteListPageState extends State<NoteListPage> {
     setState(() {
       _searchQuery = query;
       _semanticSearchResults = const <NoteSearchResult>[];
+      _semanticSearchMode = 'text_fallback';
       _semanticSearchError = null;
       _semanticSearchCompleted = false;
       _isSemanticSearching = true;
@@ -169,17 +172,22 @@ class _NoteListPageState extends State<NoteListPage> {
   List<Map<String, dynamic>> _visibleNotesForSearch(
     List<Map<String, dynamic>> notes,
   ) {
-    if (_searchQuery.isEmpty) return notes;
+    final locallyFiltered = _showFavoritesOnly
+        ? notes.where(_isFavorite).toList(growable: false)
+        : notes;
+    if (_searchQuery.isEmpty) return locallyFiltered;
     if (!_semanticSearchCompleted || _semanticSearchError != null) {
-      return notes.where(_matchesSearch).toList();
+      return locallyFiltered.where(_matchesSearch).toList();
     }
 
     final notesById = <String, Map<String, dynamic>>{
       for (final note in notes) _noteId(note): note,
     };
     return _semanticSearchResults
-        .map((result) => notesById[result.id])
-        .whereType<Map<String, dynamic>>()
+        .map(
+          (result) => result.toNoteRow(localNote: notesById[result.id]),
+        )
+        .where((note) => !_showFavoritesOnly || _isFavorite(note))
         .toList(growable: false);
   }
 
@@ -211,17 +219,7 @@ class _NoteListPageState extends State<NoteListPage> {
         return;
       }
 
-      final data = await _supabase
-          .from('notes')
-          .select(
-            'id, title, content, created_at, is_pinned, is_favorite, reminder_date',
-          )
-          .eq('user_id', userId)
-          .eq('is_archived', false)
-          .order('is_pinned', ascending: false)
-          .order('is_favorite', ascending: false)
-          .order('created_at', ascending: false);
-      final notes = List<Map<String, dynamic>>.from(data);
+      final notes = await _fetchAllNotes(userId);
       final results = await Future.wait<dynamic>([
         _loadDraftEntries(notes),
         _loadPublishedNoteIds(userId),
@@ -247,6 +245,28 @@ class _NoteListPageState extends State<NoteListPage> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchAllNotes(String userId) async {
+    final notes = <Map<String, dynamic>>[];
+    for (var from = 0;; from += _notesPageSize) {
+      final data = await _supabase
+          .from('notes')
+          .select(
+            'id, title, content, created_at, is_pinned, is_favorite, reminder_date',
+          )
+          .eq('user_id', userId)
+          .eq('is_archived', false)
+          .order('is_pinned', ascending: false)
+          .order('is_favorite', ascending: false)
+          .order('created_at', ascending: false)
+          .order('id', ascending: false)
+          .range(from, from + _notesPageSize - 1);
+      final page = List<Map<String, dynamic>>.from(data);
+      notes.addAll(page);
+      if (page.length < _notesPageSize) break;
+    }
+    return notes;
   }
 
   Future<Set<String>> _loadPublishedNoteIds(String userId) async {
@@ -1163,10 +1183,7 @@ class _NoteListPageState extends State<NoteListPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Win版#108: お気に入り → 検索 の順でフィルタ適用
-    final favoritesFiltered =
-        _showFavoritesOnly ? _notes.where(_isFavorite).toList() : _notes;
-    final visibleNotes = _visibleNotesForSearch(favoritesFiltered);
+    final visibleNotes = _visibleNotesForSearch(_notes);
     final reminderEntries = _reminderEntries(visibleNotes);
     final reminderIds =
         reminderEntries.map(_noteId).where((id) => id.isNotEmpty).toSet();
