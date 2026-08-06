@@ -4,6 +4,7 @@ import {
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   redactStripeAccountId,
+  redactStripeRequirementReference,
   stripeModeFromSecretKey,
   summarizeStripeAccountReadiness,
 } from "./stripe_account_readiness.ts";
@@ -17,6 +18,19 @@ Deno.test("stripe mode recognizes live and restricted live keys", () => {
 
 Deno.test("account id is redacted", () => {
   assertEquals(redactStripeAccountId("acct_123456789"), "acct_...6789");
+});
+
+Deno.test("Stripe object ids are redacted inside requirement references", () => {
+  assertEquals(
+    redactStripeRequirementReference(
+      "person_123456789.verification.document",
+    ),
+    "person_...6789.verification.document",
+  );
+  assertEquals(
+    redactStripeRequirementReference("external_account"),
+    "external_account",
+  );
 });
 
 Deno.test("live enabled account is ready for payment and payout", () => {
@@ -54,8 +68,13 @@ Deno.test("pending verification blocks the bank-payout gate", () => {
         disabled_reason: null,
         currently_due: [],
         past_due: [],
-        pending_verification: ["representative.verification.document"],
-        errors: [],
+        pending_verification: [
+          "person_123456789.verification.document",
+        ],
+        errors: [{
+          code: "verification_failed",
+          requirement: "ba_987654321.account",
+        }],
       },
     },
     "sk_live_example",
@@ -64,6 +83,15 @@ Deno.test("pending verification blocks the bank-payout gate", () => {
   assertEquals(summary.stage, "verification_pending");
   assertEquals(summary.ready_for_external_payment, true);
   assertFalse(summary.ready_for_bank_payout);
+  assertEquals(summary.requirements.pending_verification, [
+    "person_...6789.verification.document",
+  ]);
+  assertEquals(summary.requirements.errors, [{
+    code: "verification_failed",
+    requirement: "ba_...4321.account",
+  }]);
+  assertFalse(JSON.stringify(summary).includes("person_123456789"));
+  assertFalse(JSON.stringify(summary).includes("ba_987654321"));
 });
 
 Deno.test("past-due requirements take the action-required stage", () => {

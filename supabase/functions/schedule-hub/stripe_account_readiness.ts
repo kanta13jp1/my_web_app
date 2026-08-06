@@ -53,6 +53,9 @@ function deadlineIso(value: unknown): string {
   return new Date(value * 1000).toISOString();
 }
 
+const STRIPE_OBJECT_ID_PATTERN =
+  /\b(?:acct|person|cus|pm|pi|seti|src|tok|card|ba|ch|py|po|tr|bt|txn|evt|file|link|req)_[A-Za-z0-9]+\b/g;
+
 export function stripeModeFromSecretKey(secretKey: string): StripeMode {
   const normalized = secretKey.trim();
   if (normalized.startsWith("sk_live_") || normalized.startsWith("rk_live_")) {
@@ -64,11 +67,28 @@ export function stripeModeFromSecretKey(secretKey: string): StripeMode {
   return "unknown";
 }
 
-export function redactStripeAccountId(accountId: unknown): string {
-  const normalized = asString(accountId);
+export function redactStripeIdentifier(identifier: unknown): string {
+  const normalized = asString(identifier);
   if (!normalized) return "";
+  const separator = normalized.indexOf("_");
+  const prefix = separator >= 0
+    ? normalized.slice(0, separator + 1)
+    : normalized.slice(0, Math.min(5, normalized.length));
   const suffix = normalized.slice(-4);
-  return `${normalized.slice(0, Math.min(5, normalized.length))}...${suffix}`;
+  return `${prefix}...${suffix}`;
+}
+
+export function redactStripeAccountId(accountId: unknown): string {
+  return redactStripeIdentifier(accountId);
+}
+
+export function redactStripeRequirementReference(
+  requirement: unknown,
+): string {
+  return asString(requirement).replace(
+    STRIPE_OBJECT_ID_PATTERN,
+    (identifier) => redactStripeIdentifier(identifier),
+  );
 }
 
 export function summarizeStripeAccountReadiness(
@@ -77,17 +97,21 @@ export function summarizeStripeAccountReadiness(
 ): StripeAccountReadinessSummary {
   const mode = stripeModeFromSecretKey(secretKey);
   const requirements = asRecord(account.requirements);
-  const currentlyDue = asStringArray(requirements.currently_due);
-  const pastDue = asStringArray(requirements.past_due);
+  const currentlyDue = asStringArray(requirements.currently_due).map(
+    redactStripeRequirementReference,
+  );
+  const pastDue = asStringArray(requirements.past_due).map(
+    redactStripeRequirementReference,
+  );
   const pendingVerification = asStringArray(
     requirements.pending_verification,
-  );
+  ).map(redactStripeRequirementReference);
   const requirementErrors = Array.isArray(requirements.errors)
     ? requirements.errors.map((value) => {
       const error = asRecord(value);
       return {
         code: asString(error.code),
-        requirement: asString(error.requirement),
+        requirement: redactStripeRequirementReference(error.requirement),
       };
     })
     : [];
