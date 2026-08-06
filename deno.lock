@@ -1,13 +1,11 @@
 {
   "version": "5",
   "specifiers": {
-    "npm:@playwright/test@^1.61.1": "1.61.1",
-    "npm:@supabase/supabase-js@2": "2.105.1",
-    "npm:lefthook@^2.1.10": "2.1.10"
+    "npm:@supabase/supabase-js@2": "2.105.1"
   },
   "npm": {
-    "@playwright/test@1.61.1": {
-      "integrity": "sha512-8nKv6+0RJSL9FE4jYOEGXnPeM/Hg12qZpmqzZjRh3qM0Y7c3z1mrOTfFLids72RDQYVh9WpLEfR5WdpNX4fkig==",
+    "@playwright/test@1.59.1": {
+      "integrity": "sha512-PG6q63nQg5c9rIi4/Z5lR5IVF7yU5MqmKaPOe0HSc0O2cX1fPi96sUQu5j7eo4gKCkB2AnNGoWt7y4/Xx3Kcqg==",
       "dependencies": [
         "playwright"
       ],
@@ -80,79 +78,12 @@
     "iceberg-js@0.8.1": {
       "integrity": "sha512-1dhVQZXhcHje7798IVM+xoo/1ZdVfzOMIc8/rgVSijRK38EDqOJoGula9N/8ZI5RD8QTxNQtK/Gozpr+qUqRRA=="
     },
-    "lefthook-darwin-arm64@2.1.10": {
-      "integrity": "sha512-nw+X8wRNDoUUV6WSteyKBbcLySq+fsmZt5WV/s50ZJpysmsDKJOUMln6SllNfP+60dzUahAO7REco/2633BsLg==",
-      "os": ["darwin"],
-      "cpu": ["arm64"]
-    },
-    "lefthook-darwin-x64@2.1.10": {
-      "integrity": "sha512-KQ/bHmvpkFdHMn4pZnUdTf+GuSC+aBBgBTxZT4GW+6cSf+qbErKZBhK7cH6BmILsvx43+VzEArvHYY7YOfRFOQ==",
-      "os": ["darwin"],
-      "cpu": ["x64"]
-    },
-    "lefthook-freebsd-arm64@2.1.10": {
-      "integrity": "sha512-8su6DwydP7+pv7kG0zCtjphqsw4ouOnfexRUErapy5GTxYBoUOhYz3RSHTSWNRsK6W4jva7FPUh2Lp5/PSn30w==",
-      "os": ["freebsd"],
-      "cpu": ["arm64"]
-    },
-    "lefthook-freebsd-x64@2.1.10": {
-      "integrity": "sha512-GeAJEFxko3Lk+AsnS3NleAFrpyMLFUKOlgJvPKuU0xHwVEI/z+ZoCcmuO0BX+4CS0NLbZhC/YQAvBASqDvvVdQ==",
-      "os": ["freebsd"],
-      "cpu": ["x64"]
-    },
-    "lefthook-linux-arm64@2.1.10": {
-      "integrity": "sha512-1sHTCmpTWjVMs+yKPBLRNT1kuuIr1yjietlk7rCB6wFPVOS6Ph3o2zPFH2AvW1UymHlqwyHXzBr9EtDpQ7j1mQ==",
-      "os": ["linux"],
-      "cpu": ["arm64"]
-    },
-    "lefthook-linux-x64@2.1.10": {
-      "integrity": "sha512-z/VlRB3bh6mBvW3r1rwnJ5vP8z+Krx5gJzkZ4veDXh+6FlRTx8wtd3g3fllOv/yZMxkgmL3fQoFXv05Esa7vBQ==",
-      "os": ["linux"],
-      "cpu": ["x64"]
-    },
-    "lefthook-openbsd-arm64@2.1.10": {
-      "integrity": "sha512-430zL8sSIKw5P0YXGG6PB+eAhHa06n0PXuaERaAQE4Ss3odfqwnl5Mq9hQmkEnOS1EGiQEKkd0UHv/i4PtMNIQ==",
-      "os": ["openbsd"],
-      "cpu": ["arm64"]
-    },
-    "lefthook-openbsd-x64@2.1.10": {
-      "integrity": "sha512-bgkO8PphGZVDhQgCJ524aYYPI5491pVmCiLPGjBIo1AvOSlIyw4N1Y+1C3QfqwEmechzw+Aq16SNc8pqv6UuXg==",
-      "os": ["openbsd"],
-      "cpu": ["x64"]
-    },
-    "lefthook-windows-arm64@2.1.10": {
-      "integrity": "sha512-5Q6etF0Fla2DDA4ilDySrdNgiR5+W7cJZwnZ69Je3kvWCaWm4wnkuc8FEdjp3kiL2x3ZXipdI00f5vpO8aWmog==",
-      "os": ["win32"],
-      "cpu": ["arm64"]
-    },
-    "lefthook-windows-x64@2.1.10": {
-      "integrity": "sha512-c/XH8YZtylG4XaxzqFfXluvq2LXq2W/p54Bnzn3+Z7E5X2Fk3JlFJAibulMbIt2+w8T7UI/r97ok5GqE4kGaeA==",
-      "os": ["win32"],
-      "cpu": ["x64"]
-    },
-    "lefthook@2.1.10": {
-      "integrity": "sha512-K7mM4WoqMwqfXYK11EHy+lSH1uW8XHni3Yn/bSqyerPkUPygGdf3xn18JoV5HyA06xuQL3ofGAOjG01QX9oJ4w==",
-      "optionalDependencies": [
-        "lefthook-darwin-arm64",
-        "lefthook-darwin-x64",
-        "lefthook-freebsd-arm64",
-        "lefthook-freebsd-x64",
-        "lefthook-linux-arm64",
-        "lefthook-linux-x64",
-        "lefthook-openbsd-arm64",
-        "lefthook-openbsd-x64",
-        "lefthook-windows-arm64",
-        "lefthook-windows-x64"
-      ],
-      "scripts": true,
+    "playwright-core@1.59.1": {
+      "integrity": "sha512-HBV/RJg81z5BiiZ9yPzIiClYV/QMsDCKUyogwH9p3MCP6IYjUFu/MActgYAvK0oWyV9NlwM3GLBjADyWgydVyg==",
       "bin": true
     },
-    "playwright-core@1.61.1": {
-      "integrity": "sha512-h7Qlt6m4REp25qvIdvbDtVmD4LqVXfpRxhORv9L0jzETM05p4fuPJ3dKyuSXQxDSbXnmS79HAgi9589lGSpLkg==",
-      "bin": true
-    },
-    "playwright@1.61.1": {
-      "integrity": "sha512-DWnY5o3YbLWK4GovuAVwpqL+1VwGNdUGrRr++8j8PtQQzvAVZUIMjKQ90fY689sEJZJBbZVw1rXaOKSTitkzPQ==",
+    "playwright@1.59.1": {
+      "integrity": "sha512-C8oWjPR3F81yljW9o5OxcWzfh6avkVwDD2VYdwIGqTkl+OGFISgypqzfu7dOe4QNLL2aqcWBmI3PMtLIK233lw==",
       "dependencies": [
         "playwright-core"
       ],
@@ -429,8 +360,8 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
-        "npm:@playwright/test@^1.61.1",
-        "npm:lefthook@^2.1.10"
+        "npm:@playwright/test@^1.60.0",
+        "npm:lefthook@^2.1.9"
       ]
     }
   }
