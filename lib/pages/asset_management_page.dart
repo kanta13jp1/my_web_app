@@ -2,9 +2,6 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:js_interop'
-    // ignore: uri_does_not_exist
-    if (dart.library.io) 'package:my_web_app/utils/js_interop_vm_stub.dart';
 import 'dart:math'; // ← ★この1行を追加してください！
 
 import 'package:file_picker/file_picker.dart';
@@ -85,6 +82,7 @@ import 'package:my_web_app/services/asset_unknown_expense_rule_service.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:my_web_app/services/asset_waste_training_snapshot_inputs.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
+import 'package:my_web_app/services/csv_bytes_decoder.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_progress_card_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
@@ -7711,7 +7709,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         throw Exception('CSVデータを読み込めませんでした');
       }
 
-      final text = _decodeSmbcCsvBytes(bytes);
+      final text = const CsvBytesDecoder().decode(
+        bytes,
+        looksValid: SmbcCsvImportService.looksLikeCsv,
+        formatName: '三井住友銀行CSV',
+      );
       final parsed = const SmbcCsvImportService().parse(text);
       if (parsed.transactions.isEmpty) {
         throw Exception('登録できる三井住友銀行の入出金明細が見つかりませんでした');
@@ -7838,32 +7840,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debugPrint('Expense classification failed: $e');
     }
   }
-
-  String _decodeSmbcCsvBytes(Uint8List bytes) {
-    try {
-      final text = utf8.decode(bytes);
-      if (_looksLikeSmbcCsv(text)) return text;
-    } catch (_) {
-      // SMBC exports are commonly CP932/Shift_JIS. Fall through to TextDecoder.
-    }
-
-    try {
-      final text = web.TextDecoder('shift_jis').decode(bytes.toJS);
-      if (_looksLikeSmbcCsv(text)) return text;
-    } catch (e) {
-      debugPrint('Shift_JIS decode failed: $e');
-    }
-
-    final malformed = utf8.decode(bytes, allowMalformed: true);
-    if (_looksLikeSmbcCsv(malformed)) return malformed;
-    throw const FormatException('三井住友銀行CSVの列名を判定できませんでした');
-  }
-
-  bool _looksLikeSmbcCsv(String text) =>
-      text.contains('年月日') &&
-      text.contains('お引出し') &&
-      text.contains('お預入れ') &&
-      text.contains('お取り扱い内容');
 
   String _flowSourceForAssetType(String assetType) {
     final normalized = assetType.trim().isEmpty ? '口座' : assetType.trim();
