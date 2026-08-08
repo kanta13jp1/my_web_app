@@ -311,13 +311,13 @@ int get dpjAnnouncedTargetUnconfirmedCount => dpjPrefectureAnnouncedTargets
     .length;
 
 /// 国民民主党公式の「地方自治体各級選挙 公認・推薦予定候補者一覧」。
-/// 第1次公認の最新値はここが正本。県連の発表に合わせて手動で構造化し
-/// 反映する(このページの自動巡回対象ではない)。
+/// 公認予定候補の最新値はここが正本。公式一覧の更新に合わせて
+/// `dpj_official_endorsements.dart` へ反映する。
 const String dpjLocalElectionOfficialListUrl =
     'https://new-kokumin.jp/local-election-list';
 
 /// 上記公式一覧の最終確認時点(手動更新のたびに合わせる)。
-const String dpjLocalElectionOfficialListAsOf = '2026-07-08';
+const String dpjLocalElectionOfficialListAsOf = '2026-08-05';
 
 /// 第1次公認を発表済みの都道府県(発表順ではなく掲載順)。
 ///

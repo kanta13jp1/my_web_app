@@ -7,7 +7,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../data/dpj_official_endorsements.dart' as official_data;
 import '../data/dpj_prefecture_announced_targets.dart';
+import '../data/dpj_prefecture_announced_targets.dart' as targets_data;
+import '../models/election_intelligence.dart';
 import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
 import '../models/public_memo.dart';
@@ -27,6 +30,8 @@ import '../widgets/election_regional_kpi_chart.dart';
 import '../widgets/election_news_badge.dart';
 import '../widgets/election_x_post_composer_dialog.dart';
 import '../widgets/public_tracker_cta_card.dart';
+
+typedef DpjOfficialEndorsement = official_data.DpjOfficialEndorsement;
 
 class ElectionVictoryPage extends StatefulWidget {
   final bool publicView;
@@ -150,6 +155,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   Map<String, int> _cdpLocalMemberBenchmark = const <String, int>{};
   LocalElectionLdpBenchmark _ldpBenchmark = LocalElectionLdpBenchmark.empty;
   String _selectedRegion = _allLabel;
+  ElectionModeId _selectedElectionMode = ElectionModeId.local;
   String _selectedMemberPrefecture = _allLabel;
   String _selectedMemberAssemblyCategory = _allAssemblyCategories;
   int _visibleMemberCount = _memberPageSize;
@@ -162,6 +168,86 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   // キーに派生データをメモ化する。
   LocalElectionRealitySnapshot? _derivedCacheSnapshot;
   List<LocalElectionScheduleEntry>? _sortedSchedulesAscCache;
+
+  ElectionIntelligenceSnapshot get _electionIntelligence =>
+      _realitySnapshot?.electionIntelligence ??
+      const ElectionIntelligenceSnapshot.localFallback();
+
+  OfficialEndorsementSnapshot? get _liveOfficialEndorsements {
+    final value = _electionIntelligence.officialEndorsements;
+    return value.hasData ? value : null;
+  }
+
+  List<DpjOfficialEndorsement> get _officialEndorsements {
+    final live = _liveOfficialEndorsements;
+    if (live == null || live.prefectures.isEmpty) {
+      return official_data.dpjOfficialEndorsements;
+    }
+    return live.prefectures
+        .map(
+          (item) => DpjOfficialEndorsement(
+            item.prefecture,
+            totalCount: item.totalCount,
+            incumbentCount: item.incumbentCount,
+            newcomerCount: item.newcomerCount,
+            formerCount: item.formerCount,
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  int get _officialEndorsementTotal =>
+      _liveOfficialEndorsements?.totalCount ??
+      official_data.dpjOfficialEndorsementTotal;
+  int get _officialEndorsementIncumbentTotal =>
+      _liveOfficialEndorsements?.incumbentCount ??
+      official_data.dpjOfficialEndorsementIncumbentTotal;
+  int get _officialEndorsementNewcomerTotal =>
+      _liveOfficialEndorsements?.newcomerCount ??
+      official_data.dpjOfficialEndorsementNewcomerTotal;
+  int get _officialEndorsementFormerTotal =>
+      _liveOfficialEndorsements?.formerCount ??
+      official_data.dpjOfficialEndorsementFormerTotal;
+  int get _officialEndorsementPrefectureCount =>
+      _liveOfficialEndorsements?.prefectureCount ??
+      official_data.dpjOfficialEndorsementPrefectureCount;
+  int get _officialRecommendationCount =>
+      _liveOfficialEndorsements?.recommendationCount ??
+      official_data.dpjOfficialRecommendationEntryCount;
+  String get _officialEndorsementAsOf =>
+      _liveOfficialEndorsements?.sourceAsOf ??
+      targets_data.dpjLocalElectionOfficialListAsOf;
+  String get _officialEndorsementSourceUrl =>
+      _liveOfficialEndorsements?.sourceUrl ??
+      targets_data.dpjLocalElectionOfficialListUrl;
+
+  DpjOfficialEndorsement? _officialEndorsementFor(String prefecture) {
+    final normalized = prefecture.replaceFirst(RegExp(r'[都府県]$'), '');
+    for (final item in _officialEndorsements) {
+      if (item.prefecture == normalized) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  // Compatibility names keep existing dashboard sections and share affordances
+  // on the live snapshot while the generated asset remains the offline fallback.
+  List<DpjOfficialEndorsement> get dpjOfficialEndorsements =>
+      _officialEndorsements;
+  int get dpjOfficialEndorsementTotal => _officialEndorsementTotal;
+  int get dpjOfficialEndorsementIncumbentTotal =>
+      _officialEndorsementIncumbentTotal;
+  int get dpjOfficialEndorsementNewcomerTotal =>
+      _officialEndorsementNewcomerTotal;
+  int get dpjOfficialEndorsementFormerTotal => _officialEndorsementFormerTotal;
+  int get dpjOfficialEndorsementPrefectureCount =>
+      _officialEndorsementPrefectureCount;
+  int get dpjOfficialRecommendationEntryCount => _officialRecommendationCount;
+  String get dpjLocalElectionOfficialListAsOf => _officialEndorsementAsOf;
+  String get dpjLocalElectionOfficialListUrl => _officialEndorsementSourceUrl;
+  DpjOfficialEndorsement? dpjOfficialEndorsementFor(String prefecture) =>
+      _officialEndorsementFor(prefecture);
   List<LocalElectionScheduleEntry>? _sortedSchedulesDescCache;
   Map<DateTime, List<LocalElectionScheduleEntry>>? _scheduleEventMapCache;
   List<Map<String, dynamic>>? _pastResultsCacheGeminiRef;
@@ -231,7 +317,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final cachedSnapshot = results[1] as LocalElectionRealitySnapshot?;
     final cachedHistory = results[2] as List<LocalElectionRealityHistoryPoint>;
 
-    if (cachedSnapshot != null && cachedSnapshot.hasData) {
+    if (cachedSnapshot != null &&
+        cachedSnapshot.hasData &&
+        cachedSnapshot.electionIntelligence.selectedMode ==
+            ElectionModeId.local) {
       plan = await _syncPlanWithSnapshot(
         plan,
         cachedSnapshot,
@@ -245,6 +334,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     setState(() {
       _plan = plan;
       _realitySnapshot = cachedSnapshot;
+      _selectedElectionMode =
+          cachedSnapshot?.electionIntelligence.selectedMode ??
+              ElectionModeId.local;
       _realityHistory = cachedHistory;
       _publishedSnapshotMemo = null;
       _publishedKpiMemo = null;
@@ -281,7 +373,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         .withCdpLocalMembers(_cdpLocalMemberBenchmark)
         .withLdpLocalMembers(_ldpBenchmark.membersByPrefecture);
     final snapshot = _realitySnapshot;
-    if (snapshot != null && snapshot.hasData) {
+    if (snapshot != null &&
+        snapshot.hasData &&
+        snapshot.electionIntelligence.selectedMode == ElectionModeId.local) {
       plan = await _syncPlanWithSnapshot(
         plan,
         snapshot,
@@ -586,10 +680,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       final snapshot = await _realityService.fetchLatestSnapshot(
         includeAiSummary: false,
         forceRefresh: forceRefresh,
+        mode: _selectedElectionMode,
       );
       final history = await _realityService.loadSnapshotHistory();
       LocalElectionPlanDashboard? syncedPlan;
-      if (_plan != null && snapshot.hasData) {
+      if (_plan != null &&
+          snapshot.hasData &&
+          snapshot.electionIntelligence.selectedMode == ElectionModeId.local) {
         syncedPlan = await _syncPlanWithSnapshot(
           _plan!,
           snapshot,
@@ -616,6 +713,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           }
         }
         _realitySnapshot = snapshot;
+        _selectedElectionMode = snapshot.electionIntelligence.selectedMode;
         _realityHistory = history;
         _realityError = null;
         if (snapshotNoteChanged) {
@@ -652,6 +750,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       final message = _describeRealityError(error);
       setState(() {
         _realityError = message;
+        _selectedElectionMode =
+            _realitySnapshot?.electionIntelligence.selectedMode ??
+                ElectionModeId.local;
       });
       if (showSnackBar) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1221,6 +1322,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     _buildPublicViewNotice(),
                     const SizedBox(height: 16),
                   ],
+                  _buildElectionModeCard(),
+                  const SizedBox(height: 16),
                   _buildHeroCard(plan),
                   const SizedBox(height: 16),
                   _buildAnnouncedTargetSection(),
@@ -1264,6 +1367,122 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildElectionModeCard() {
+    final theme = Theme.of(context);
+    final intelligence = _electionIntelligence;
+    final modes = intelligence.modes.isEmpty
+        ? const ElectionIntelligenceSnapshot.localFallback().modes
+        : intelligence.modes;
+    final selectedMode = _selectedElectionMode;
+    final selectedOption = modes.firstWhere(
+      (mode) => mode.id == selectedMode,
+      orElse: () => const ElectionModeOption.localFallback(),
+    );
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.swap_horiz_rounded),
+                const SizedBox(width: 8),
+                Text(
+                  '選挙モード',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final mode in modes)
+                  ChoiceChip(
+                    selected: mode.id == selectedMode,
+                    avatar: mode.isActive
+                        ? null
+                        : const Icon(Icons.lock_clock_outlined, size: 16),
+                    label: Text(
+                      mode.isActive ? mode.label : '${mode.label}（準備中）',
+                    ),
+                    onSelected: mode.isActive
+                        ? (selected) {
+                            if (!selected || mode.id == selectedMode) {
+                              return;
+                            }
+                            setState(() {
+                              _selectedElectionMode = mode.id;
+                            });
+                            unawaited(
+                              _refreshRealityData(
+                                showSnackBar: true,
+                                forceRefresh: true,
+                              ),
+                            );
+                          }
+                        : null,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              selectedOption.description,
+              style: theme.textTheme.bodySmall,
+            ),
+            if (intelligence.goals.isNotEmpty ||
+                intelligence.achievements.isNotEmpty) ...[
+              const Divider(height: 24),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final goal in intelligence.goals)
+                    ActionChip(
+                      avatar: Icon(
+                        goal.isVerified
+                            ? Icons.verified_outlined
+                            : Icons.warning_amber_rounded,
+                        size: 17,
+                        color: goal.isVerified
+                            ? const Color(0xFF0F766E)
+                            : const Color(0xFFB45309),
+                      ),
+                      label: Text(
+                        goal.currentValue != null && goal.targetValue != null
+                            ? '${goal.title}: ${_formatInt(goal.currentValue!)} / ${_formatInt(goal.targetValue!)}${goal.unit}'
+                            : goal.title,
+                      ),
+                      onPressed: goal.sourceUrl.isEmpty
+                          ? null
+                          : () => _openUrl(goal.sourceUrl),
+                    ),
+                  for (final achievement in intelligence.achievements)
+                    if (achievement.value != null)
+                      Chip(
+                        avatar: const Icon(
+                          Icons.emoji_events_outlined,
+                          size: 17,
+                          color: Color(0xFF7C3AED),
+                        ),
+                        label: Text(
+                          '${achievement.title}: ${_formatInt(achievement.value!)}${achievement.unit}',
+                        ),
+                      ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -4850,9 +5069,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               color: const Color(0xFFB45309),
               icon: Icons.warning_amber_rounded,
             ),
-            if (dpjFirstEndorsementPrefectureCount > 0) ...[
+            if (dpjOfficialEndorsementPrefectureCount > 0) ...[
               const SizedBox(height: 12),
-              _buildFirstEndorsementSummary(),
+              _buildOfficialEndorsementSummary(),
             ],
             const SizedBox(height: 12),
             Align(
@@ -4895,14 +5114,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
-  // 第1次公認(県連が実際に公認を決めた候補予定者)の全国サマリー。
-  // 「擁立目標」とは別の実績値で、目標に対する進捗として示す。
-  // 数値は県連公式発表・報道を出典に手動で構造化し、更新元は党公式一覧。
-  Widget _buildFirstEndorsementSummary() {
+  // 党公式一覧の「公認」掲載行を集計した全国サマリー。
+  // 「擁立目標」とは別の実績値で、「推薦」は含めない。
+  Widget _buildOfficialEndorsementSummary() {
     const accent = Color(0xFF2563EB);
-    final incumbent = dpjFirstEndorsementIncumbentTotal;
-    final newcomer = dpjFirstEndorsementNewcomerTotal;
-    final former = dpjFirstEndorsementFormerTotal;
+    final incumbent = dpjOfficialEndorsementIncumbentTotal;
+    final newcomer = dpjOfficialEndorsementNewcomerTotal;
+    final former = dpjOfficialEndorsementFormerTotal;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -4920,7 +5138,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '第1次公認の発表状況',
+                  '公認予定候補の掲載状況',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: accent,
@@ -4935,45 +5153,70 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             runSpacing: 8,
             children: [
               _buildMiniStatChip(
-                '公認合計',
-                dpjFirstEndorsementTotal,
+                '公認掲載',
+                dpjOfficialEndorsementTotal,
                 color: accent,
+                suffix: '件',
               ),
               if (incumbent > 0)
                 _buildMiniStatChip(
                   '現職',
                   incumbent,
                   color: const Color(0xFF0F766E),
+                  suffix: '件',
                 ),
               if (newcomer > 0)
                 _buildMiniStatChip(
                   '新人',
                   newcomer,
                   color: const Color(0xFF7C3AED),
+                  suffix: '件',
                 ),
               if (former > 0)
                 _buildMiniStatChip(
                   '元職',
                   former,
                   color: const Color(0xFFB45309),
+                  suffix: '件',
                 ),
-              // 分母 (掲載県数) を併記しないと「発表済み1県」が全国1県だけ
-              // なのか掲載中の一部なのか読めないため /N を添える。
               _buildMiniStatChip(
-                '発表済み',
-                dpjFirstEndorsementPrefectureCount,
-                suffix: '/${dpjPrefectureAnnouncedTargets.length}県',
+                '掲載地域',
+                dpjOfficialEndorsementPrefectureCount,
+                suffix: '/47都道府県',
                 color: const Color(0xFF64748B),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            '県連が第1次として公認を決めた候補予定者の実績です(擁立目標とは別)。'
-            '数値は県連公式発表・報道を出典に確認できたものだけを掲載しています。',
+            '党公式一覧で「公認」と明記された掲載行を集計しています(擁立目標とは別)。'
+            '推薦$dpjOfficialRecommendationEntryCount件は含めず、公式表の表記を独自補正していません。',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
+          Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: const EdgeInsets.only(bottom: 8),
+              dense: true,
+              title: const Text('都道府県別の公認掲載件数'),
+              subtitle: Text('$dpjOfficialEndorsementPrefectureCount都道府県'),
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final item in dpjOfficialEndorsements)
+                        _buildOfficialEndorsementPrefectureChip(item),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
           Align(
             alignment: Alignment.centerLeft,
             child: OutlinedButton.icon(
@@ -4990,7 +5233,33 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
-  /// ISO 日付 (yyyy-MM-dd) を表示用に整形する。第1次公認の党公式一覧、
+  Widget _buildOfficialEndorsementPrefectureChip(
+    DpjOfficialEndorsement endorsement,
+  ) {
+    const color = Color(0xFF1D4ED8);
+    final breakdown =
+        endorsement.hasBreakdown ? ' (${endorsement.breakdownLabel})' : '';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Text(
+        '${endorsement.prefecture} ${_formatInt(endorsement.totalCount)}件'
+        '$breakdown',
+        style: const TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          height: 1.3,
+        ),
+      ),
+    );
+  }
+
+  /// ISO 日付 (yyyy-MM-dd) を表示用に整形する。公認予定候補の党公式一覧、
   /// 自民ベンチマークの総務省統計など「基準日」表示で共用する。
   String _formatAsOfDate(String iso) {
     final parsed = DateTime.tryParse(iso);
@@ -5002,6 +5271,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   Widget _buildAnnouncedTargetPill(DpjPrefectureAnnouncedTarget item) {
     final color = _announcedTargetKindColor(item.kind);
+    final officialEndorsement = dpjOfficialEndorsementFor(item.prefecture);
 
     return Container(
       constraints: const BoxConstraints(minWidth: 148, maxWidth: 320),
@@ -5052,26 +5322,25 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ),
             ),
           ],
-          // totalCount==0 のエントリはバッジも出さない。集計 getter 側と
-          // 条件を揃えないと「第1次公認 0人」バッジが出て未発表県が
-          // 発表済みに見える (data 側コメントの不変条件)。
-          if (item.firstEndorsement case final endorsement?
+          if (officialEndorsement case final endorsement?
               when endorsement.totalCount > 0) ...[
             const SizedBox(height: 8),
-            _buildFirstEndorsementBadge(endorsement),
+            _buildOfficialEndorsementBadge(endorsement),
           ],
         ],
       ),
     );
   }
 
-  // 県別ピル内の第1次公認バッジ。出典タップで県連発表ページを開く。
-  Widget _buildFirstEndorsementBadge(DpjFirstEndorsement endorsement) {
+  // 県別目標ピル内の公認掲載バッジ。出典タップで党公式一覧を開く。
+  Widget _buildOfficialEndorsementBadge(
+    DpjOfficialEndorsement endorsement,
+  ) {
     const badgeColor = Color(0xFF1D4ED8);
     final breakdown =
         endorsement.hasBreakdown ? ' (${endorsement.breakdownLabel})' : '';
-    final hasSource = endorsement.sourceUrl.isNotEmpty;
-    final label = '第1次公認 ${_formatInt(endorsement.totalCount)}人$breakdown';
+    final hasSource = dpjLocalElectionOfficialListUrl.isNotEmpty;
+    final label = '公認掲載 ${_formatInt(endorsement.totalCount)}件$breakdown';
     // 出典を開く操作なので、タップ領域を Material 最小 48px 以上に広げ、
     // スクリーンリーダー向けに link であることと出典先を読み上げさせる。
     return Semantics(
@@ -5081,7 +5350,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 48),
         child: InkWell(
-          onTap: hasSource ? () => _openUrl(endorsement.sourceUrl) : null,
+          onTap: hasSource
+              ? () => _openUrl(dpjLocalElectionOfficialListUrl)
+              : null,
           borderRadius: BorderRadius.circular(999),
           child: Center(
             widthFactor: 1,
