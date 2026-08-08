@@ -3072,6 +3072,8 @@ serve(async (req: Request) => {
       "detect-anomalies",
       "voice.tts",
       "voice.stt",
+      "voice.cartesia_session.start",
+      "voice.cartesia_session.finish",
       // 英語速読カリキュラム (実力測定 / AI 生成は要認証 / 教材閲覧は公開)
       "english_reading.submit_attempt",
       "english_reading.ability",
@@ -5868,6 +5870,171 @@ serve(async (req: Request) => {
           };
         }
         return json({ success: true, providers: result });
+      }
+
+      case "voice.cartesia_session.start": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const cartesiaKey = Deno.env.get("CARTESIA_API_KEY") ?? "";
+        const voiceId = Deno.env.get("CARTESIA_VOICE_ID") ?? "";
+        if (!cartesiaKey || !voiceId) {
+          return json({
+            success: false,
+            available: false,
+            reason: !cartesiaKey
+              ? "CARTESIA_API_KEY not configured"
+              : "CARTESIA_VOICE_ID not configured",
+          });
+        }
+
+        const issuedSince = new Date();
+        issuedSince.setUTCHours(0, 0, 0, 0);
+        const { count: issuedToday, error: countError } = await admin
+          .from("hub_data")
+          .select("id", { count: "exact", head: true })
+          .eq("source", "cartesia_voice_token_issuance")
+          .filter("metadata->>user_id", "eq", userId)
+          .gte("created_at", issuedSince.toISOString());
+        if (countError) {
+          return json({ error: countError.message }, 500);
+        }
+        if ((issuedToday ?? 0) >= 12) {
+          return json({
+            success: false,
+            available: false,
+            reason: "Daily Cartesia voice session limit reached",
+          }, 429);
+        }
+
+        const apiVersion = "2026-03-01";
+        const maxSessionSeconds = 300;
+        const tokenResponse = await fetchWithProviderTimeout(
+          "https://api.cartesia.ai/access-token",
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${cartesiaKey}`,
+              "Cartesia-Version": apiVersion,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              grants: { tts: true },
+              expires_in: maxSessionSeconds + 30,
+            }),
+          },
+        );
+        if (!tokenResponse.ok) {
+          const providerError = (await tokenResponse.text()).slice(0, 500);
+          return json({
+            success: false,
+            available: false,
+            reason:
+              `Cartesia access token failed (${tokenResponse.status}): ${providerError}`,
+          }, 502);
+        }
+        const tokenPayload = await tokenResponse.json() as {
+          token?: string;
+        };
+        const accessToken = String(tokenPayload.token ?? "");
+        if (!accessToken) {
+          return json({
+            success: false,
+            available: false,
+            reason: "Cartesia access token response was empty",
+          }, 502);
+        }
+
+        await addItem(admin, "cartesia_voice_token_issuance", userId, {
+          grants: ["tts"],
+          expires_in: maxSessionSeconds + 30,
+          model_id: "sonic-3-2026-01-12",
+        });
+        return json({
+          success: true,
+          available: true,
+          access_token: accessToken,
+          websocket_url: "wss://api.cartesia.ai/tts/websocket",
+          api_version: apiVersion,
+          model_id: "sonic-3-2026-01-12",
+          voice_id: voiceId,
+          max_session_seconds: maxSessionSeconds,
+        });
+      }
+
+      case "voice.cartesia_session.finish": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const sessionId = String(body.session_id ?? "").trim().slice(0, 80);
+        if (!sessionId) return json({ error: "session_id required" }, 400);
+
+        const { data: existing } = await admin.from("hub_data")
+          .select("id")
+          .eq("source", "support_ticket")
+          .filter("metadata->>user_id", "eq", userId)
+          .filter("metadata->>voice_session_id", "eq", sessionId)
+          .maybeSingle();
+        if (existing?.id) {
+          return json({
+            success: true,
+            ticket_id: existing.id,
+            duplicate: true,
+          });
+        }
+
+        const rawTranscript = Array.isArray(body.transcript)
+          ? body.transcript
+          : [];
+        const transcript: Array<Record<string, string>> = [];
+        let totalCharacters = 0;
+        for (const rawEntry of rawTranscript.slice(0, 80)) {
+          if (!rawEntry || typeof rawEntry !== "object") continue;
+          const entry = rawEntry as Record<string, unknown>;
+          const role = String(entry.role ?? "");
+          if (role !== "user" && role !== "assistant") continue;
+          const text = String(entry.text ?? "").trim().slice(0, 2000);
+          if (!text || totalCharacters + text.length > 16000) continue;
+          totalCharacters += text.length;
+          transcript.push({
+            role,
+            text,
+            recorded_at: String(entry.recorded_at ?? "").slice(0, 40),
+          });
+        }
+        if (transcript.length === 0) {
+          return json({ error: "transcript required" }, 400);
+        }
+        const durationSeconds = Math.max(
+          0,
+          Math.min(300, Math.floor(Number(body.duration_seconds) || 0)),
+        );
+        const assistantCharacterCount = transcript
+          .filter((entry) => entry.role === "assistant")
+          .reduce((sum, entry) => sum + entry.text.length, 0);
+        const message = transcript.map((entry) =>
+          `${entry.role === "user" ? "User" : "AI"}: ${entry.text}`
+        ).join("\n\n");
+        const ticket = await addItem(admin, "support_ticket", userId, {
+          title: `Voice support session ${new Date().toISOString()}`,
+          message,
+          status: "open",
+          channel: "cartesia_voice",
+          provider: "cartesia",
+          model_id: "sonic-3-2026-01-12",
+          voice_session_id: sessionId,
+          duration_seconds: durationSeconds,
+          assistant_character_count: assistantCharacterCount,
+          reported_assistant_character_count: Math.max(
+            0,
+            Math.floor(Number(body.assistant_character_count) || 0),
+          ),
+          transcript,
+        });
+        return json({
+          success: true,
+          ticket_id: ticket.id,
+          usage: {
+            duration_seconds: durationSeconds,
+            assistant_character_count: assistantCharacterCount,
+          },
+        });
       }
 
       case "voice.tts": {

@@ -6,6 +6,8 @@ import 'package:uuid/uuid.dart';
 
 import '../models/site_guide_catalog_item.dart';
 import '../services/ai_hub_chat_service.dart';
+import '../services/cartesia_voice_client.dart';
+import '../services/cartesia_voice_session_service.dart';
 import '../services/home_tool_usage_service.dart';
 import '../services/site_guide_chat_service.dart';
 import '../widgets/ai_response_observability_panel.dart';
@@ -27,6 +29,9 @@ class SiteGuideChatPage extends StatefulWidget {
   final SiteGuideChatService? service;
   final List<SiteGuideActionEntry>? toolCatalog;
   final VoidCallback? onOpenUserManual;
+  final CartesiaVoiceSessionService? voiceSessionService;
+  final CartesiaVoiceClient? voiceClient;
+  final bool Function()? isAuthenticated;
 
   const SiteGuideChatPage({
     super.key,
@@ -34,6 +39,9 @@ class SiteGuideChatPage extends StatefulWidget {
     this.service,
     this.toolCatalog,
     this.onOpenUserManual,
+    this.voiceSessionService,
+    this.voiceClient,
+    this.isAuthenticated,
   });
 
   @override
@@ -50,14 +58,31 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
   ];
 
   late final SiteGuideChatService _service;
+  late final CartesiaVoiceSessionService _voiceSessionService;
+  late final CartesiaVoiceClient _voiceClient;
   late final List<SiteGuideActionEntry> _toolCatalog;
   late final Map<String, SiteGuideActionEntry> _toolMap;
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<_SiteGuideMessage> _messages = <_SiteGuideMessage>[];
   final String _sessionId = const Uuid().v4();
+  final List<CartesiaVoiceTranscriptEntry> _voiceTranscript =
+      <CartesiaVoiceTranscriptEntry>[];
 
   bool _isSending = false;
+  bool _isVoiceStarting = false;
+  bool _isVoiceActive = false;
+  bool _isVoiceFinishing = false;
+  String _voiceStatus = 'idle';
+  String? _voiceError;
+  String? _voiceSessionId;
+  String? _voiceTicketId;
+  DateTime? _voiceStartedAt;
+  Timer? _voiceTimer;
+  int _voiceElapsedSeconds = 0;
+  int _voiceMaxSeconds = 300;
+  int _voiceAssistantCharacters = 0;
+  CartesiaVoiceStyle? _lastVoiceStyle;
 
   @override
   void initState() {
@@ -67,6 +92,9 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
         SiteGuideChatService(
           catalog: _toolCatalog.map((tool) => tool.item).toList(),
         );
+    _voiceSessionService =
+        widget.voiceSessionService ?? CartesiaVoiceSessionService();
+    _voiceClient = widget.voiceClient ?? createCartesiaVoiceClient();
     _toolMap = <String, SiteGuideActionEntry>{
       for (final tool in _toolCatalog) tool.item.id: tool,
     };
@@ -81,6 +109,26 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
 
   @override
   void dispose() {
+    _voiceTimer?.cancel();
+    final startedAt = _voiceStartedAt;
+    final voiceSessionId = _voiceSessionId;
+    final transcript = List<CartesiaVoiceTranscriptEntry>.from(
+      _voiceTranscript,
+    );
+    unawaited(_voiceClient.stop());
+    if (startedAt != null &&
+        voiceSessionId != null &&
+        transcript.isNotEmpty &&
+        _voiceTicketId == null) {
+      unawaited(
+        _voiceSessionService.finishSession(
+          sessionId: voiceSessionId,
+          duration: DateTime.now().difference(startedAt),
+          assistantCharacterCount: _voiceAssistantCharacters,
+          transcript: transcript,
+        ),
+      );
+    }
     _inputController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -95,7 +143,8 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
     if (normalized.isEmpty || _isSending) return;
     final bool isAnon;
     try {
-      isAnon = Supabase.instance.client.auth.currentUser == null;
+      isAnon = !(widget.isAuthenticated?.call() ??
+          (Supabase.instance.client.auth.currentUser != null));
     } catch (_) {
       return;
     }
@@ -110,6 +159,15 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
 
     setState(() {
       _messages.add(_SiteGuideMessage.user(normalized));
+      if (_isVoiceActive) {
+        _voiceTranscript.add(
+          CartesiaVoiceTranscriptEntry(
+            role: 'user',
+            text: normalized,
+            recordedAt: DateTime.now(),
+          ),
+        );
+      }
       _inputController.clear();
       _isSending = true;
     });
@@ -131,9 +189,136 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
           observability: answer.observability,
         ),
       );
+      if (_isVoiceActive) {
+        _voiceTranscript.add(
+          CartesiaVoiceTranscriptEntry(
+            role: 'assistant',
+            text: answer.text,
+            recordedAt: DateTime.now(),
+          ),
+        );
+        _voiceAssistantCharacters += answer.text.length;
+        _lastVoiceStyle = CartesiaVoiceStyle.infer(answer.text);
+      }
       _isSending = false;
     });
+    final voiceStyle = _lastVoiceStyle;
+    if (_isVoiceActive && voiceStyle != null) {
+      unawaited(_voiceClient.speak(answer.text, voiceStyle));
+    }
     _scrollToBottom();
+  }
+
+  Future<void> _toggleVoiceSession() async {
+    if (_isVoiceActive || _isVoiceStarting) {
+      await _endVoiceSession();
+      return;
+    }
+    if (!_voiceClient.isSupported) {
+      setState(() {
+        _voiceError = 'このブラウザは音声通話に対応していません。';
+      });
+      return;
+    }
+    setState(() {
+      _isVoiceStarting = true;
+      _voiceError = null;
+      _voiceTicketId = null;
+      _voiceStatus = 'connecting';
+    });
+    try {
+      final config = await _voiceSessionService.createSession();
+      final voiceSessionId = const Uuid().v4();
+      await _voiceClient.start(
+        config: config,
+        onTranscript: (transcript) {
+          if (!mounted || !_isVoiceActive) return;
+          unawaited(_sendQuestion(transcript));
+        },
+        onStatus: (status) {
+          if (mounted) setState(() => _voiceStatus = status);
+        },
+        onError: (message) {
+          if (mounted) setState(() => _voiceError = message);
+        },
+      );
+      if (!mounted) {
+        await _voiceClient.stop();
+        return;
+      }
+      setState(() {
+        _isVoiceStarting = false;
+        _isVoiceActive = true;
+        _voiceSessionId = voiceSessionId;
+        _voiceStartedAt = DateTime.now();
+        _voiceMaxSeconds = config.maxSessionSeconds;
+        _voiceElapsedSeconds = 0;
+        _voiceAssistantCharacters = 0;
+        _voiceTranscript.clear();
+        _lastVoiceStyle = null;
+        _voiceStatus = 'listening';
+      });
+      _voiceTimer?.cancel();
+      _voiceTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted || !_isVoiceActive) return;
+        final startedAt = _voiceStartedAt;
+        if (startedAt == null) return;
+        final elapsed = DateTime.now().difference(startedAt).inSeconds;
+        setState(() => _voiceElapsedSeconds = elapsed);
+        if (elapsed >= _voiceMaxSeconds) {
+          unawaited(_endVoiceSession());
+        }
+      });
+    } catch (error) {
+      await _voiceClient.stop();
+      if (!mounted) return;
+      setState(() {
+        _isVoiceStarting = false;
+        _isVoiceActive = false;
+        _voiceStatus = 'idle';
+        _voiceError = error.toString();
+      });
+    }
+  }
+
+  Future<void> _endVoiceSession() async {
+    if (_isVoiceFinishing) return;
+    final startedAt = _voiceStartedAt;
+    final voiceSessionId = _voiceSessionId;
+    final transcript = List<CartesiaVoiceTranscriptEntry>.from(
+      _voiceTranscript,
+    );
+    setState(() {
+      _isVoiceStarting = false;
+      _isVoiceActive = false;
+      _isVoiceFinishing = true;
+      _voiceStatus = 'saving';
+    });
+    _voiceTimer?.cancel();
+    await _voiceClient.stop();
+    String? ticketId;
+    String? syncError;
+    if (startedAt != null && voiceSessionId != null && transcript.isNotEmpty) {
+      try {
+        ticketId = await _voiceSessionService.finishSession(
+          sessionId: voiceSessionId,
+          duration: DateTime.now().difference(startedAt),
+          assistantCharacterCount: _voiceAssistantCharacters,
+          transcript: transcript,
+        );
+      } catch (error) {
+        syncError = '通話記録の保存に失敗しました: $error';
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _isVoiceFinishing = false;
+      _voiceStatus = 'idle';
+      _voiceTicketId = ticketId;
+      _voiceError = syncError;
+      _voiceStartedAt = null;
+      _voiceSessionId = null;
+    });
   }
 
   void _scrollToBottom() {
@@ -289,6 +474,8 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
               ),
             ),
             const SizedBox(height: 12),
+            _buildVoiceControls(isDark),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -305,13 +492,136 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
     );
   }
 
+  Widget _buildVoiceControls(bool isDark) {
+    final isBusy = _isVoiceStarting || _isVoiceFinishing;
+    final elapsedMinutes = (_voiceElapsedSeconds ~/ 60).toString();
+    final elapsedSeconds =
+        (_voiceElapsedSeconds % 60).toString().padLeft(2, '0');
+    final progress = _voiceMaxSeconds <= 0
+        ? 0.0
+        : (_voiceElapsedSeconds / _voiceMaxSeconds).clamp(0.0, 1.0);
+    final muted = isDark ? Colors.white70 : const Color(0xFF475569);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            key: const Key('site_guide_voice_toggle'),
+            onPressed: isBusy ? null : _toggleVoiceSession,
+            style: FilledButton.styleFrom(
+              backgroundColor: _isVoiceActive
+                  ? const Color(0xFFB91C1C)
+                  : const Color(0xFF0F766E),
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(48),
+            ),
+            icon: isBusy
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Icon(
+                    _isVoiceActive ? Icons.call_end : Icons.phone_in_talk,
+                  ),
+            label: Text(
+              _isVoiceActive
+                  ? '音声通話を終了'
+                  : _isVoiceStarting
+                      ? '接続中'
+                      : _isVoiceFinishing
+                          ? '通話記録を保存中'
+                          : 'Cartesia 音声通話を開始',
+            ),
+          ),
+        ),
+        if (_isVoiceActive || isBusy) ...[
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Icon(
+                _voiceStatus == 'speaking' ? Icons.graphic_eq : Icons.mic_none,
+                size: 18,
+                color: const Color(0xFF0F766E),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '${_voiceStatusLabel()}  $elapsedMinutes:$elapsedSeconds  '
+                  '$_voiceAssistantCharacters 文字',
+                  style: TextStyle(
+                    color: muted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (_lastVoiceStyle != null)
+                Text(
+                  '${_lastVoiceStyle!.emotion} '
+                  '${_lastVoiceStyle!.speed.toStringAsFixed(2)}x',
+                  style: TextStyle(color: muted, fontSize: 11),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          LinearProgressIndicator(
+            value: progress,
+            minHeight: 3,
+            color: const Color(0xFF0F766E),
+            backgroundColor: const Color(0xFF0F766E).withValues(alpha: 0.12),
+          ),
+        ],
+        if (_voiceError != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _voiceError!,
+            key: const Key('site_guide_voice_error'),
+            style: const TextStyle(
+              color: Color(0xFFB91C1C),
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+        ] else if (_voiceTicketId != null) ...[
+          const SizedBox(height: 8),
+          const Text(
+            '通話記録をサポートチケットへ保存しました。',
+            key: Key('site_guide_voice_saved'),
+            style: TextStyle(
+              color: Color(0xFF047857),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _voiceStatusLabel() {
+    return switch (_voiceStatus) {
+      'connected' => '接続済み',
+      'listening' => '聞き取り中',
+      'thinking' => '回答を準備中',
+      'speaking' => 'AIが応答中',
+      'saving' => '保存中',
+      _ => '待機中',
+    };
+  }
+
   Widget _buildEmptyState(bool isDark) {
     final color = isDark ? Colors.white70 : const Color(0xFF334155);
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.chat_bubble_outline,

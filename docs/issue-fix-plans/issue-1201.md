@@ -51,7 +51,19 @@ Cartesia公式のPythonクライアントのWebSocket接続を利用し、バッ
 
 ## Checklist
 
-- [ ] Reproduction is clear
-- [ ] Smallest safe fix is implemented
-- [ ] Analyze/tests/CI are checked
-- [ ] PR notes explain the change and the remaining risk
+- [x] Reproduction is clear
+- [x] Smallest safe fix is implemented
+- [x] Analyze/tests are checked; CI will run on the updated draft PR
+- [x] PR notes explain the change and the remaining risk
+
+## Implementation Status
+
+- Site Guide AI now exposes browser start/end controls for a Cartesia voice
+  session, with elapsed-time and generated-character monitoring.
+- AI Hub creates a TTS-only access token that expires after the bounded
+  five-minute session; the account API key never leaves the backend.
+- The browser streams Sonic 3 PCM audio over one WebSocket and pauses speech
+  recognition during playback to avoid feedback loops.
+- Emotion, speed, and laughter controls are derived for each assistant turn.
+- Ending a call writes the bounded text transcript and usage data to the
+  existing `support_ticket` source with session-id deduplication.
