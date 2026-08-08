@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-07T21:57:06Z",
+  "generated_at": "2026-08-08T21:47:38Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -20,9 +20,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-9cde78b912e3",
+        "entry_id": "nf-4886def50078",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.224 / August 7, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.224 August 7, 2026 Added self-hosted environments: claude self-hosted-runner turns your own machines or containers into a place Claude Code web, mobile, and desktop...",
+        "text": "Claude Code changelog 2.1.226 / August 8, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.226 August 8, 2026 Bug fixes and reliability improvements ​ 2.1.225 August 8, 2026 Added gateway spend-limit support to Claude Code’s usage warning; the limit-reached...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -31,7 +31,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "f4ebf4c07071aaee2c9d0c4a32dcdbc1029c3452517cbca2fcc3f67d4077ffb9",
+          "hash": "7e17945d59eff4ba90cc42b4fd77c9ee3d6f7173818874135a7cb4a1178d40a5",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -75,22 +75,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.224 / August 7, 2026",
+          "latest_signal": "2.1.226 / August 8, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "6ceb45aa0274ca5f73c715edb1a164d13de1b7ebb0a675eb20938ad0b4e58d6a",
+          "previous_hash": "f4ebf4c07071aaee2c9d0c4a32dcdbc1029c3452517cbca2fcc3f67d4077ffb9",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.224 August 7, 2026 Added self-hosted environments: claude self-hosted-runner turns your own machines or containers into a place Claude Code web, mobile, and desktop..."
+            "​ 2.1.226 August 8, 2026 Bug fixes and reliability improvements ​ 2.1.225 August 8, 2026 Added gateway spend-limit support to Claude Code’s usage warning; the limit-reached..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-9cde78b912e3",
+        "entry_id": "nf-4886def50078",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -116,7 +116,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "5a924f9a0790833cfeba54a374954e87f9ff437c7b941234ac4ca238087e03cb",
@@ -158,7 +158,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "c032b2cd13b660fa9eae057324c8af2ad95edff6bf0ba3f2cba94577f6c3d593",
+          "previous_hash": "5a924f9a0790833cfeba54a374954e87f9ff437c7b941234ac4ca238087e03cb",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -271,7 +271,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "3973609a2544add4191e51fd3126d3e82e992e9179d2892a2952949bc9c1b1b3",
@@ -320,7 +320,7 @@
           "latest_signal": "2026-08-07 / Codex CLI 0.147.0 pre",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "936996273643500c8c52b8ddfca2433bae76d79f6bf7c1bb4016cf2b44f1b894",
+          "previous_hash": "3973609a2544add4191e51fd3126d3e82e992e9179d2892a2952949bc9c1b1b3",
           "slug": "codex-changelog",
           "snippets": [
             "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -361,7 +361,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "f6d18bc18ccedd8d17d6fb956082dafa1e80116f092b6c28f5102305e05221af",
@@ -403,7 +403,7 @@
           "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "27c8e43b8148251d2a6a0effbbe53404a49247b474a88368163116b7d22ba581",
+          "previous_hash": "f6d18bc18ccedd8d17d6fb956082dafa1e80116f092b6c28f5102305e05221af",
           "slug": "codex-use-cases",
           "snippets": [
             "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -611,18 +611,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-4cf18346fa91",
+        "entry_id": "nf-aeacddf716b9",
         "title": "Devin release notes",
-        "text": "Devin release notes August 5, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines... Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Stacked PRs Devin... Linear Reconnect Action The Linear connection manage menu now includes a Reconnect action.",
+        "text": "Devin release notes August 7, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines... Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Stacked PRs Devin... Automations API and Terraform Provider The automations API has been promoted from beta to the production v3 API spec, sessions can now be filtered by automation_id , and a...",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "b1a20ac3437c2cd2bf3e77d9ab96b2af7bc3d4b83a4dc442b2c677e859f1fa31",
+          "hash": "6ede3f497bb664bdb01f1454286973a8e4ac5dc7e5338cf23b98d0ff3e4d8018",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -656,7 +656,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "August 5, 2026",
+          "latest_signal": "August 7, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
           "previous_hash": "b1a20ac3437c2cd2bf3e77d9ab96b2af7bc3d4b83a4dc442b2c677e859f1fa31",
@@ -664,14 +664,14 @@
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
             "Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Stacked PRs Devin...",
-            "Linear Reconnect Action The Linear connection manage menu now includes a Reconnect action."
+            "Automations API and Terraform Provider The automations API has been promoted from beta to the production v3 API spec, sessions can now be filtered by automation_id , and a..."
           ],
           "status": 200,
           "url": "https://docs.devin.ai/release-notes"
         }
       },
       "filter": {
-        "entry_id": "nf-4cf18346fa91",
+        "entry_id": "nf-aeacddf716b9",
         "title": "Devin release notes",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",

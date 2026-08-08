@@ -1,8 +1,8 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-08-07T21:57:04Z",
-      "hash": "f4ebf4c07071aaee2c9d0c4a32dcdbc1029c3452517cbca2fcc3f67d4077ffb9",
+      "checked_at": "2026-08-08T21:47:36Z",
+      "hash": "7e17945d59eff4ba90cc42b4fd77c9ee3d6f7173818874135a7cb4a1178d40a5",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -46,13 +46,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.224 / August 7, 2026",
+      "latest_signal": "2.1.226 / August 8, 2026",
       "name": "Claude Code changelog",
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-08-07T21:57:04Z",
+      "checked_at": "2026-08-08T21:47:36Z",
       "hash": "16169570e6d5b7464fa84bf9a60ba6e09af666e83cf5973d556f37ea81c414a8",
       "keyword_groups": {
         "codex-runtime": [
@@ -90,7 +90,7 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-08-07T21:57:04Z",
+      "checked_at": "2026-08-08T21:47:36Z",
       "hash": "5a924f9a0790833cfeba54a374954e87f9ff437c7b941234ac4ca238087e03cb",
       "keyword_groups": {
         "codex-runtime": [
@@ -133,7 +133,7 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-08-07T21:57:04Z",
+      "checked_at": "2026-08-08T21:47:36Z",
       "hash": "3973609a2544add4191e51fd3126d3e82e992e9179d2892a2952949bc9c1b1b3",
       "keyword_groups": {
         "codex-runtime": [
@@ -183,7 +183,7 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-08-07T21:57:04Z",
+      "checked_at": "2026-08-08T21:47:36Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -192,7 +192,7 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-08-07T21:57:04Z",
+      "checked_at": "2026-08-08T21:47:36Z",
       "hash": "f6d18bc18ccedd8d17d6fb956082dafa1e80116f092b6c28f5102305e05221af",
       "keyword_groups": {
         "codex-runtime": [
@@ -235,7 +235,7 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-08-07T21:57:04Z",
+      "checked_at": "2026-08-08T21:47:36Z",
       "hash": "a23bd552769066e3de658abf11d3553627ae135cd177078cd4c9cbac3f466ae3",
       "keyword_groups": {
         "hooks": [
@@ -264,8 +264,8 @@
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-08-07T21:57:04Z",
-      "hash": "b1a20ac3437c2cd2bf3e77d9ab96b2af7bc3d4b83a4dc442b2c677e859f1fa31",
+      "checked_at": "2026-08-08T21:47:36Z",
+      "hash": "6ede3f497bb664bdb01f1454286973a8e4ac5dc7e5338cf23b98d0ff3e4d8018",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -299,13 +299,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "August 5, 2026",
+      "latest_signal": "August 7, 2026",
       "name": "Devin release notes",
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-08-07T21:57:04Z",
+      "checked_at": "2026-08-08T21:47:36Z",
       "hash": "cd6e9ff8949d7c5fe4015a5b039261c21f1ecea5e73d18a972feed159ca159a1",
       "keyword_groups": {
         "hooks": [
@@ -334,5 +334,5 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-08-07T21:57:04Z"
+  "updated_at": "2026-08-08T21:47:36Z"
 }
