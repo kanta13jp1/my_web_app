@@ -69,6 +69,7 @@
   <link rel="preconnect" href="https://smmkxxavexumewbfaqpy.supabase.co" crossorigin>
   <link rel="dns-prefetch" href="//smmkxxavexumewbfaqpy.supabase.co">
   <link rel="preload" href="flutter_bootstrap.js" as="script">
+  <link rel="preload" href="main.dart.js" as="script" fetchpriority="high">
   <!--
     Google Fonts (Noto Sans JP / Noto Serif JP) のランタイム読み込みは廃止した。
     - この CSS は日本語の unicode-range 分割により **458kB / 496 シャード宣言**
@@ -465,7 +466,7 @@
         <span>✓ データは本人だけに表示</span>
       </div>
       <nav class="seo-links" aria-label="体験を始める">
-        <a class="primary" href="https://my-web-app-b67f4.web.app/?lp_intent=trial&amp;utm_source=seo_shell&amp;utm_medium=landing&amp;utm_campaign=first_user_growth">5分だけ無料で試す</a>
+        <a id="seo-trial-cta" class="primary" href="/?lp_intent=trial&amp;utm_source=seo_shell&amp;utm_medium=landing&amp;utm_campaign=first_user_growth">5分だけ無料で試す</a>
         <a class="secondary" href="#seo-how">使い方を見る</a>
       </nav>
       <p class="seo-note">基本機能は無料。いつでも停止できます。</p>
@@ -489,7 +490,7 @@
           <p>役立つと分かってから無料登録し、提案を残せます。</p>
         </article>
       </section>
-      <p class="seo-loading" role="status">無料体験を準備しています...</p>
+      <p id="seo-loading-status" class="seo-loading" role="status" aria-live="polite">無料体験を準備しています...</p>
       <nav class="seo-links" aria-label="運営者情報" style="margin-top:20px">
         <a class="secondary" href="https://my-web-app-b67f4.web.app/philosophy">経営哲学</a>
         <a class="secondary" href="https://my-web-app-b67f4.web.app/tokusho">特定商取引法に基づく表記</a>
@@ -503,6 +504,44 @@
     </main>
   </div>
   <script>
+    // The SEO shell is interactive before Flutter's first frame. On the root
+    // landing page, keep the in-flight app download instead of reloading the
+    // same 4MB+ bundle just to add lp_intent=trial to the URL.
+    (function preserveLandingTrialBoot() {
+      var trialCta = document.getElementById('seo-trial-cta');
+      var loadingStatus = document.getElementById('seo-loading-status');
+      if (!trialCta) return;
+
+      trialCta.addEventListener('click', function(event) {
+        var target = new URL(trialCta.href, window.location.href);
+        var isPlainPrimaryClick =
+          event.button === 0 &&
+          !event.altKey &&
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !event.shiftKey;
+        var isRootHandoff =
+          window.location.pathname === '/' &&
+          target.origin === window.location.origin &&
+          target.pathname === '/';
+
+        if (!isPlainPrimaryClick || !isRootHandoff) return;
+
+        event.preventDefault();
+        window.history.replaceState(
+          window.history.state,
+          '',
+          target.pathname + target.search + target.hash
+        );
+        trialCta.textContent = '無料体験を読み込んでいます...';
+        trialCta.setAttribute('aria-busy', 'true');
+        if (loadingStatus) {
+          loadingStatus.textContent =
+            '入力画面へ自動で切り替わります。この画面のままお待ちください。';
+        }
+      });
+    })();
+
     // -----------------------------------------------------------------------
     // SEO shell: dynamic meta tags for public memo pages
     // When the URL is /public-memo?id=XXX, fetch memo metadata from the
