@@ -11,8 +11,10 @@ void main() {
     test('uses bounded query windows and result limits', () {
       expect(AssetManagementEgressPolicy.assetHistoryLookbackDays, 400);
       expect(AssetManagementEgressPolicy.queryPageSize, 500);
+      expect(AssetManagementEgressPolicy.maxAssetHistoryRows, 10000);
       expect(AssetManagementEgressPolicy.recentFlowMonthWindow, 24);
       expect(AssetManagementEgressPolicy.maxRecentFlowRows, 2000);
+      expect(AssetManagementEgressPolicy.maxImportDedupRows, 10000);
       expect(AssetManagementEgressPolicy.maxMonthlySnapshots, 120);
     });
 
@@ -21,7 +23,53 @@ void main() {
         AssetManagementEgressPolicy.recentFlowCutoff(
           DateTime.utc(2026, 7, 21, 12),
         ),
-        DateTime.utc(2024, 8),
+        DateTime(2024, 8).toUtc(),
+      );
+    });
+
+    test('falls back only for missing RPC error codes', () {
+      expect(
+        AssetManagementEgressPolicy.isMissingAssetHistoryRpcCode('PGRST202'),
+        isTrue,
+      );
+      expect(
+        AssetManagementEgressPolicy.isMissingAssetHistoryRpcCode('42883'),
+        isTrue,
+      );
+      expect(
+        AssetManagementEgressPolicy.isMissingAssetHistoryRpcCode('PGRST301'),
+        isFalse,
+      );
+    });
+
+    test('reuses the first page and returns every bounded row once', () async {
+      final requestedRanges = <(int, int)>[];
+      final rows = await AssetManagementEgressPolicy.fetchBoundedPages<int>(
+        maxRows: 5,
+        pageSize: 2,
+        firstPage: const <int>[0, 1],
+        fetchPage: (from, to) async {
+          requestedRanges.add((from, to));
+          return <int>[
+            for (var value = from; value <= to && value < 5; value++) value,
+          ];
+        },
+      );
+
+      expect(rows, <int>[0, 1, 2, 3, 4]);
+      expect(requestedRanges, <(int, int)>[(2, 3), (4, 5)]);
+    });
+
+    test('rejects an overflowing result instead of returning partial data', () {
+      expect(
+        () => AssetManagementEgressPolicy.fetchBoundedPages<int>(
+          maxRows: 3,
+          pageSize: 2,
+          fetchPage: (from, to) async => <int>[
+            for (var value = from; value <= to; value++) value,
+          ],
+        ),
+        throwsA(isA<StateError>()),
       );
     });
   });
@@ -39,7 +87,7 @@ void main() {
       expect(
         sql,
         contains(
-          'returns table (\n  title text,\n  amount numeric,\n  created_at timestamp with time zone',
+          'returns table (\n  id bigint,\n  title text,\n  amount numeric,\n  created_at timestamp with time zone',
         ),
       );
       expect(sql, contains('from public.cfo_assets as asset'));

@@ -6186,50 +6186,65 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<List<Map<String, dynamic>>> _fetchAssetHistoryRows(
     String userId,
   ) async {
+    late final List<Map<String, dynamic>> firstPage;
     try {
-      final rows = <Map<String, dynamic>>[];
-      for (var start = 0;; start += AssetManagementEgressPolicy.queryPageSize) {
-        final dynamic response = await _supabase.rpc(
+      firstPage = await _fetchAssetHistoryRpcPage(
+        0,
+        AssetManagementEgressPolicy.queryPageSize - 1,
+      );
+    } on PostgrestException catch (error) {
+      if (!AssetManagementEgressPolicy.isMissingAssetHistoryRpcCode(
+        error.code,
+      )) {
+        rethrow;
+      }
+      debugPrint(
+        'Bounded asset history RPC is not deployed; using fallback: $error',
+      );
+      return AssetManagementEgressPolicy.fetchBoundedPages(
+        maxRows: AssetManagementEgressPolicy.maxAssetHistoryRows,
+        fetchPage: (from, to) async {
+          final dynamic response = await _supabase
+              .from('cfo_assets')
+              .select('id,title,amount,created_at')
+              .eq('user_id', userId)
+              .order('created_at', ascending: true)
+              .order('id', ascending: true)
+              .range(from, to);
+          return (response as List)
+              .whereType<Map>()
+              .map((row) => Map<String, dynamic>.from(row))
+              .toList(growable: false);
+        },
+      );
+    }
+
+    return AssetManagementEgressPolicy.fetchBoundedPages(
+      maxRows: AssetManagementEgressPolicy.maxAssetHistoryRows,
+      firstPage: firstPage,
+      fetchPage: _fetchAssetHistoryRpcPage,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchAssetHistoryRpcPage(
+    int from,
+    int to,
+  ) async {
+    final dynamic response = await _supabase
+        .rpc(
           'asset_management_recent_cfo_assets',
           params: <String, Object?>{
             'p_lookback_days':
                 AssetManagementEgressPolicy.assetHistoryLookbackDays,
           },
-        ).range(
-          start,
-          start + AssetManagementEgressPolicy.queryPageSize - 1,
-        );
-        final page = (response as List)
-            .whereType<Map>()
-            .map((row) => Map<String, dynamic>.from(row))
-            .toList(growable: false);
-        rows.addAll(page);
-        if (page.length < AssetManagementEgressPolicy.queryPageSize) break;
-      }
-      return rows;
-    } catch (error) {
-      debugPrint(
-          'Bounded asset history RPC unavailable; using fallback: $error');
-      final rows = <Map<String, dynamic>>[];
-      for (var start = 0;; start += AssetManagementEgressPolicy.queryPageSize) {
-        final dynamic response = await _supabase
-            .from('cfo_assets')
-            .select('title,amount,created_at')
-            .eq('user_id', userId)
-            .order('created_at', ascending: true)
-            .range(
-              start,
-              start + AssetManagementEgressPolicy.queryPageSize - 1,
-            );
-        final page = (response as List)
-            .whereType<Map>()
-            .map((row) => Map<String, dynamic>.from(row))
-            .toList(growable: false);
-        rows.addAll(page);
-        if (page.length < AssetManagementEgressPolicy.queryPageSize) break;
-      }
-      return rows;
-    }
+        )
+        .order('created_at', ascending: true)
+        .order('id', ascending: true)
+        .range(from, to);
+    return (response as List)
+        .whereType<Map>()
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList(growable: false);
   }
 
   Future<void> _loadDataFromSupabase() async {
@@ -7590,31 +7605,26 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
     try {
-      final data = <Map<String, dynamic>>[];
       final cutoff = AssetManagementEgressPolicy.recentFlowCutoff(
         DateTime.now(),
       ).toIso8601String();
-      for (var start = 0;
-          start < AssetManagementEgressPolicy.maxRecentFlowRows;
-          start += AssetManagementEgressPolicy.queryPageSize) {
-        final pageSize = min(
-          AssetManagementEgressPolicy.queryPageSize,
-          AssetManagementEgressPolicy.maxRecentFlowRows - start,
-        );
-        final dynamic response = await _supabase
-            .from('wealth_struggles')
-            .select('id,action_type,amount,description,occurred_at')
-            .eq('user_id', userId)
-            .gte('occurred_at', cutoff)
-            .order('occurred_at', ascending: false)
-            .range(start, start + pageSize - 1);
-        final page = (response as List)
-            .whereType<Map>()
-            .map((row) => Map<String, dynamic>.from(row))
-            .toList(growable: false);
-        data.addAll(page);
-        if (page.length < pageSize) break;
-      }
+      final data = await AssetManagementEgressPolicy.fetchBoundedPages(
+        maxRows: AssetManagementEgressPolicy.maxRecentFlowRows,
+        fetchPage: (from, to) async {
+          final dynamic response = await _supabase
+              .from('wealth_struggles')
+              .select('id,action_type,amount,description,occurred_at')
+              .eq('user_id', userId)
+              .gte('occurred_at', cutoff)
+              .order('occurred_at', ascending: false)
+              .order('id', ascending: false)
+              .range(from, to);
+          return (response as List)
+              .whereType<Map>()
+              .map((row) => Map<String, dynamic>.from(row))
+              .toList(growable: false);
+        },
+      );
 
       if (mounted) {
         setState(() {
@@ -7632,6 +7642,52 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (e) {
       debugPrint('Error fetching flows: $e');
     }
+  }
+
+  Future<Set<String>> _fetchSmbcImportKeys({
+    required String userId,
+    required DateTime firstTransactionDate,
+    required DateTime lastTransactionDate,
+  }) async {
+    final start = DateTime(
+      firstTransactionDate.year,
+      firstTransactionDate.month,
+      firstTransactionDate.day,
+    ).toUtc();
+    final end = DateTime(
+      lastTransactionDate.year,
+      lastTransactionDate.month,
+      lastTransactionDate.day + 1,
+    ).toUtc();
+    final rows = await AssetManagementEgressPolicy.fetchBoundedPages(
+      maxRows: AssetManagementEgressPolicy.maxImportDedupRows,
+      fetchPage: (from, to) async {
+        final dynamic response = await _supabase
+            .from('wealth_struggles')
+            .select('id,description,occurred_at')
+            .eq('user_id', userId)
+            .gte('occurred_at', start.toIso8601String())
+            .lt('occurred_at', end.toIso8601String())
+            .like('description', '%[import:smbc:%]')
+            .order('occurred_at', ascending: true)
+            .order('id', ascending: true)
+            .range(from, to);
+        return (response as List)
+            .whereType<Map>()
+            .map((row) => Map<String, dynamic>.from(row))
+            .toList(growable: false);
+      },
+    );
+    final keys = <String>{};
+    for (final row in rows) {
+      final key = _extractSmbcImportKey(
+        row['description']?.toString() ?? '',
+      );
+      if (key != null) {
+        keys.add(key);
+      }
+    }
+    return keys;
   }
 
   Future<void> _pickAndImportSmbcCsv() async {
@@ -7661,15 +7717,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         throw Exception('登録できる三井住友銀行の入出金明細が見つかりませんでした');
       }
 
-      final knownImportKeys = <String>{};
-      for (final flow in _recentFlows) {
-        final key = _extractSmbcImportKey(
-          flow['description']?.toString() ?? '',
-        );
-        if (key != null) {
-          knownImportKeys.add(key);
+      var firstTransactionDate = parsed.transactions.first.date;
+      var lastTransactionDate = firstTransactionDate;
+      for (final transaction in parsed.transactions.skip(1)) {
+        if (transaction.date.isBefore(firstTransactionDate)) {
+          firstTransactionDate = transaction.date;
+        }
+        if (transaction.date.isAfter(lastTransactionDate)) {
+          lastTransactionDate = transaction.date;
         }
       }
+      final knownImportKeys = await _fetchSmbcImportKeys(
+        userId: userId,
+        firstTransactionDate: firstTransactionDate,
+        lastTransactionDate: lastTransactionDate,
+      );
       final records = <Map<String, dynamic>>[];
       final classificationExpenses = <Map<String, dynamic>>[];
       var duplicateCount = 0;

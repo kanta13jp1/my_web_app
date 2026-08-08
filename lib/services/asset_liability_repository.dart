@@ -1550,6 +1550,9 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   AssetLiabilitySyncPreviewResult _buildSyncPreview(
     _AssetLiabilitySyncData data,
   ) {
+    final comparableLocalSnapshots = _latestMonthlySnapshots(
+      data.localSnapshots,
+    );
     final items = <AssetLiabilitySyncPreviewItem>[
       AssetLiabilitySyncPreviewItem(
         target: AssetLiabilitySyncTarget.monthlyState,
@@ -1600,13 +1603,16 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       ),
       AssetLiabilitySyncPreviewItem(
         target: AssetLiabilitySyncTarget.monthlySnapshots,
-        localHasData: data.localSnapshots.isNotEmpty,
+        localHasData: comparableLocalSnapshots.isNotEmpty,
         remoteHasData: data.remoteSnapshots?.isNotEmpty ?? false,
-        localCount: data.localSnapshots.length,
+        localCount: comparableLocalSnapshots.length,
         remoteCount: data.remoteSnapshots?.length ?? 0,
-        dataMatches: data.localSnapshots.isNotEmpty &&
+        dataMatches: comparableLocalSnapshots.isNotEmpty &&
             (data.remoteSnapshots?.isNotEmpty ?? false) &&
-            _monthlySnapshotsEqual(data.localSnapshots, data.remoteSnapshots!),
+            _monthlySnapshotsEqual(
+              comparableLocalSnapshots,
+              data.remoteSnapshots!,
+            ),
       ),
     ];
     return AssetLiabilitySyncPreviewResult.ready(items: items);
@@ -1853,6 +1859,18 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       }
     }
     return true;
+  }
+
+  List<AssetLiabilityMonthlySnapshot> _latestMonthlySnapshots(
+    List<AssetLiabilityMonthlySnapshot> snapshots,
+  ) {
+    final sorted = List<AssetLiabilityMonthlySnapshot>.from(snapshots)
+      ..sort((left, right) => left.monthKey.compareTo(right.monthKey));
+    const maxSnapshots = AssetManagementEgressPolicy.maxMonthlySnapshots;
+    if (sorted.length <= maxSnapshots) {
+      return sorted;
+    }
+    return sorted.sublist(sorted.length - maxSnapshots);
   }
 
   String? _userIdOrNull() {

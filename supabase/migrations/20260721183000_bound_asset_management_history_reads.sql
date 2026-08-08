@@ -4,6 +4,7 @@ CREATE OR REPLACE FUNCTION public.asset_management_recent_cfo_assets(
   p_lookback_days integer DEFAULT 400
 )
 RETURNS TABLE (
+  id bigint,
   title text,
   amount numeric,
   created_at timestamp with time zone
@@ -40,7 +41,11 @@ AS $function$
       asset.created_at DESC NULLS LAST,
       asset.id DESC
   )
-  SELECT result_rows.title, result_rows.amount, result_rows.created_at
+  SELECT
+    result_rows.id,
+    result_rows.title,
+    result_rows.amount,
+    result_rows.created_at
   FROM (
     SELECT * FROM recent_rows
     UNION ALL
