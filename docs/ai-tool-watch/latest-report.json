@@ -6,121 +6,8 @@
     "quality-cost",
     "schedule"
   ],
-  "changed_sources": [
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "7e17945d59eff4ba90cc42b4fd77c9ee3d6f7173818874135a7cb4a1178d40a5",
-      "keyword_groups": {
-        "codex-runtime": [
-          "model picker",
-          "computer use",
-          "worktree",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks",
-          "SessionStart",
-          "UserPromptSubmit",
-          "PostToolUse",
-          "Stop",
-          "StopFailure",
-          "ultrareview"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub",
-          "IDE extension",
-          "VSCode",
-          "Visual Studio Code"
-        ],
-        "quality-cost": [
-          "OpenTelemetry",
-          "cost",
-          "rate limit",
-          "sandbox",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "schedule",
-          "cron",
-          "GitHub Actions",
-          "workflow"
-        ]
-      },
-      "latest_signal": "2.1.226 / August 8, 2026",
-      "name": "Claude Code changelog",
-      "owner": "Claude Code",
-      "previous_hash": "f4ebf4c07071aaee2c9d0c4a32dcdbc1029c3452517cbca2fcc3f67d4077ffb9",
-      "slug": "claude-code-changelog",
-      "snippets": [
-        "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
-        "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.226 August 8, 2026 Bug fixes and reliability improvements ​ 2.1.225 August 8, 2026 Added gateway spend-limit support to Claude Code’s usage warning; the limit-reached..."
-      ],
-      "status": 200,
-      "url": "https://code.claude.com/docs/en/changelog"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "6ede3f497bb664bdb01f1454286973a8e4ac5dc7e5338cf23b98d0ff3e4d8018",
-      "keyword_groups": {
-        "codex-runtime": [
-          "model picker",
-          "computer use",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks",
-          "Stop"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub"
-        ],
-        "quality-cost": [
-          "cost",
-          "quota",
-          "rate limit",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "schedule",
-          "workflow"
-        ]
-      },
-      "latest_signal": "August 7, 2026",
-      "name": "Devin release notes",
-      "owner": "Devin",
-      "previous_hash": "b1a20ac3437c2cd2bf3e77d9ab96b2af7bc3d4b83a4dc442b2c677e859f1fa31",
-      "slug": "devin-release-notes",
-      "snippets": [
-        "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
-        "Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Stacked PRs Devin...",
-        "Automations API and Terraform Provider The automations API has been promoted from beta to the production v3 API spec, sessions can now be filtered by automation_id , and a..."
-      ],
-      "status": 200,
-      "url": "https://docs.devin.ai/release-notes"
-    }
-  ],
-  "checked_at": "2026-08-08T21:47:36Z",
+  "changed_sources": [],
+  "checked_at": "2026-08-09T21:49:30Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -172,10 +59,10 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-08-07T21:57:04Z",
+  "previous_checked_at": "2026-08-08T21:47:36Z",
   "sources": [
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "7e17945d59eff4ba90cc42b4fd77c9ee3d6f7173818874135a7cb4a1178d40a5",
@@ -225,7 +112,7 @@
       "latest_signal": "2.1.226 / August 8, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "f4ebf4c07071aaee2c9d0c4a32dcdbc1029c3452517cbca2fcc3f67d4077ffb9",
+      "previous_hash": "7e17945d59eff4ba90cc42b4fd77c9ee3d6f7173818874135a7cb4a1178d40a5",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -543,7 +430,7 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "6ede3f497bb664bdb01f1454286973a8e4ac5dc7e5338cf23b98d0ff3e4d8018",
@@ -583,7 +470,7 @@
       "latest_signal": "August 7, 2026",
       "name": "Devin release notes",
       "owner": "Devin",
-      "previous_hash": "b1a20ac3437c2cd2bf3e77d9ab96b2af7bc3d4b83a4dc442b2c677e859f1fa31",
+      "previous_hash": "6ede3f497bb664bdb01f1454286973a8e4ac5dc7e5338cf23b98d0ff3e4d8018",
       "slug": "devin-release-notes",
       "snippets": [
         "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",

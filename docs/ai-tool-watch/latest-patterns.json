@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-08T21:47:38Z",
+  "generated_at": "2026-08-09T21:49:33Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -28,7 +28,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "7e17945d59eff4ba90cc42b4fd77c9ee3d6f7173818874135a7cb4a1178d40a5",
@@ -78,7 +78,7 @@
           "latest_signal": "2.1.226 / August 8, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "f4ebf4c07071aaee2c9d0c4a32dcdbc1029c3452517cbca2fcc3f67d4077ffb9",
+          "previous_hash": "7e17945d59eff4ba90cc42b4fd77c9ee3d6f7173818874135a7cb4a1178d40a5",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -619,7 +619,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "6ede3f497bb664bdb01f1454286973a8e4ac5dc7e5338cf23b98d0ff3e4d8018",
@@ -659,7 +659,7 @@
           "latest_signal": "August 7, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "b1a20ac3437c2cd2bf3e77d9ab96b2af7bc3d4b83a4dc442b2c677e859f1fa31",
+          "previous_hash": "6ede3f497bb664bdb01f1454286973a8e4ac5dc7e5338cf23b98d0ff3e4d8018",
           "slug": "devin-release-notes",
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
