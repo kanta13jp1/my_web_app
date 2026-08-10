@@ -56,6 +56,37 @@ class KokuminLocalEndorsementUpdaterTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "fell from 100 to 60"):
             updater.validate_snapshot(current, previous=previous)
 
+    def test_renders_dart_fallback_from_the_canonical_snapshot(self):
+        snapshot = {
+            "sourceUrl": "https://new-kokumin.jp/local-election-list",
+            "sourceAsOf": "2026-08-10",
+            "sourceDocumentSha256": "abc123",
+            "officialEndorsements": {
+                "totalCount": 1,
+                "incumbentCount": 0,
+                "newcomerCount": 1,
+                "formerCount": 0,
+                "prefectureCount": 1,
+            },
+            "recommendations": {"totalCount": 9},
+            "prefectures": [
+                {
+                    "prefecture": "佐賀",
+                    "totalCount": 1,
+                    "incumbentCount": 0,
+                    "newcomerCount": 1,
+                    "formerCount": 0,
+                }
+            ],
+        }
+
+        rendered = updater.render_dart_fallback(snapshot)
+
+        self.assertIn("dpjOfficialEndorsementSourceAsOf = '2026-08-10'", rendered)
+        self.assertIn("prefecture: '佐賀'", rendered)
+        self.assertIn("const int dpjOfficialEndorsementTotal = 1;", rendered)
+        self.assertIn("RegExp(r'[都府県]$')", rendered)
+
 
 if __name__ == "__main__":
     unittest.main()

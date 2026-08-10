@@ -1,14 +1,26 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/data/dpj_official_endorsements.dart';
-import 'package:my_web_app/data/dpj_prefecture_announced_targets.dart';
 
 void main() {
-  test('党公式の公認掲載は32都道府県で重複なく構造化されている', () {
-    expect(dpjOfficialEndorsements, hasLength(32));
+  test('党公式の公認掲載は33都道府県で重複なく構造化されている', () {
+    expect(dpjOfficialEndorsements, hasLength(33));
     final prefectures =
         dpjOfficialEndorsements.map((item) => item.prefecture).toSet();
-    expect(prefectures, hasLength(32));
-    expect(dpjOfficialEndorsementPrefectureCount, 32);
+    expect(prefectures, hasLength(33));
+    expect(dpjOfficialEndorsementPrefectureCount, 33);
+  });
+
+  test('8月10日更新で佐賀が追加され高知の掲載が2件になっている', () {
+    final saga = dpjOfficialEndorsementFor('佐賀県');
+    expect(saga, isNotNull);
+    expect(saga!.totalCount, 1);
+    expect(saga.newcomerCount, 1);
+
+    final kochi = dpjOfficialEndorsementFor('高知県');
+    expect(kochi, isNotNull);
+    expect(kochi!.totalCount, 2);
+    expect(kochi.newcomerCount, 1);
+    expect(kochi.formerCount, 1);
   });
 
   test('神奈川の最新公認掲載は39件で現職・新人の内訳を持つ', () {
@@ -48,7 +60,10 @@ void main() {
   });
 
   test('党公式一覧の基準日と推薦除外件数が最新値になっている', () {
-    expect(dpjLocalElectionOfficialListAsOf, '2026-08-05');
+    expect(dpjOfficialEndorsementSourceUrl, startsWith('https://'));
+    expect(dpjOfficialEndorsementSourceUrl, contains('new-kokumin.jp'));
+    expect(dpjOfficialEndorsementSourceAsOf, '2026-08-10');
+    expect(DateTime.tryParse(dpjOfficialEndorsementSourceAsOf), isNotNull);
     expect(dpjOfficialRecommendationEntryCount, 9);
   });
 }

@@ -3,8 +3,7 @@
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../data/dpj_official_endorsements.dart';
-import '../data/dpj_prefecture_announced_targets.dart';
+import '../data/repositories/official_endorsement_repository.dart';
 import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
 import '../models/public_memo.dart';
@@ -100,29 +99,22 @@ class LocalElectionShareService {
   final SupabaseClient _supabase;
   final LocalElectionMemoPublisher? _publishMemo;
   final LocalElectionMemoLoader? _loadMemo;
+  final OfficialEndorsementRepository _officialEndorsementRepository;
   final DateFormat _dateOnlyFormat = DateFormat('yyyy/MM/dd', 'ja_JP');
 
   _OfficialEndorsementTotals _officialEndorsementTotals(
     LocalElectionRealitySnapshot? snapshot,
   ) {
-    final live = snapshot?.electionIntelligence.officialEndorsements;
-    if (live != null && live.hasData) {
-      return (
-        total: live.totalCount,
-        incumbent: live.incumbentCount,
-        newcomer: live.newcomerCount,
-        former: live.formerCount,
-        prefectures: live.prefectureCount,
-        asOf: live.sourceAsOf,
-      );
-    }
+    final resolved = _officialEndorsementRepository.resolve(
+      snapshot?.electionIntelligence,
+    );
     return (
-      total: dpjOfficialEndorsementTotal,
-      incumbent: dpjOfficialEndorsementIncumbentTotal,
-      newcomer: dpjOfficialEndorsementNewcomerTotal,
-      former: dpjOfficialEndorsementFormerTotal,
-      prefectures: dpjOfficialEndorsementPrefectureCount,
-      asOf: dpjLocalElectionOfficialListAsOf,
+      total: resolved.totalCount,
+      incumbent: resolved.incumbentCount,
+      newcomer: resolved.newcomerCount,
+      former: resolved.formerCount,
+      prefectures: resolved.prefectureCount,
+      asOf: resolved.sourceAsOf,
     );
   }
 
@@ -130,8 +122,11 @@ class LocalElectionShareService {
     this._supabase, {
     LocalElectionMemoPublisher? publishMemo,
     LocalElectionMemoLoader? loadMemo,
+    OfficialEndorsementRepository officialEndorsementRepository =
+        const OfficialEndorsementRepository(),
   })  : _publishMemo = publishMemo,
-        _loadMemo = loadMemo;
+        _loadMemo = loadMemo,
+        _officialEndorsementRepository = officialEndorsementRepository;
 
   Future<PublicMemo?> publishSnapshot({
     required LocalElectionRealitySnapshot snapshot,
@@ -455,16 +450,17 @@ class LocalElectionShareService {
     required LocalElectionPlanDashboard plan,
   }) {
     // X は文字数制限があるため、公認予定候補は掲載がある場合だけ1行足す。
-    final hasOfficialEndorsement = dpjOfficialEndorsementTotal > 0;
+    final endorsements = _officialEndorsementRepository.fallbackSnapshot;
+    final hasOfficialEndorsement = endorsements.hasData;
     return [
       '統一地方選700 県連KPI一覧',
       '全${plan.prefectures.length}県連のKGI、CSF、KPI、現職人数、候補者進捗、公認期限、立憲・自民の参考値を公開ノートにまとめました。',
       '現職 ${plan.currentLocalMembers}人 / 700まで残り${plan.requiredNetIncrease}人',
       if (hasOfficialEndorsement)
-        '公認予定候補 $dpjOfficialEndorsementTotal件'
-            '(現職$dpjOfficialEndorsementIncumbentTotal/'
-            '新人$dpjOfficialEndorsementNewcomerTotal/'
-            '元職$dpjOfficialEndorsementFormerTotal)',
+        '公認予定候補 ${endorsements.totalCount}件'
+            '(現職${endorsements.incumbentCount}/'
+            '新人${endorsements.newcomerCount}/'
+            '元職${endorsements.formerCount})',
       buildNextUnifiedLocalElectionCountdownLine(now: plan.updatedAt.toLocal()),
       '純増目標 ${plan.allocatedNetIncrease}人 / 新人 ${plan.totalNewCandidateTarget}人',
       '#統一地方選 #国民民主党',

@@ -7,9 +7,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../data/dpj_official_endorsements.dart' as official_data;
+import '../data/repositories/official_endorsement_repository.dart';
 import '../data/dpj_prefecture_announced_targets.dart';
-import '../data/dpj_prefecture_announced_targets.dart' as targets_data;
 import '../models/election_intelligence.dart';
 import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
@@ -23,6 +22,7 @@ import '../services/prefecture_election_news_service.dart';
 import '../services/growth_acquisition_service.dart';
 import '../services/local_election_share_service.dart';
 import '../services/public_memo_service.dart';
+import '../ui/features/election_victory/view_models/official_endorsement_view_model.dart';
 import 'landing_page.dart';
 import '../widgets/election_japan_map.dart';
 import '../widgets/election_progress_chart.dart';
@@ -30,8 +30,6 @@ import '../widgets/election_regional_kpi_chart.dart';
 import '../widgets/election_news_badge.dart';
 import '../widgets/election_x_post_composer_dialog.dart';
 import '../widgets/public_tracker_cta_card.dart';
-
-typedef DpjOfficialEndorsement = official_data.DpjOfficialEndorsement;
 
 class ElectionVictoryPage extends StatefulWidget {
   final bool publicView;
@@ -108,6 +106,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   final LocalElectionPlanService _service = const LocalElectionPlanService();
   final LocalElectionRealityService _realityService =
       const LocalElectionRealityService();
+  late final OfficialEndorsementViewModel _officialEndorsementViewModel =
+      OfficialEndorsementViewModel(
+    repository: const OfficialEndorsementRepository(),
+  );
   final PrefectureElectionNewsService _newsService =
       const PrefectureElectionNewsService();
   final ScrollController _scrollController = ScrollController();
@@ -173,81 +175,31 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       _realitySnapshot?.electionIntelligence ??
       const ElectionIntelligenceSnapshot.localFallback();
 
-  OfficialEndorsementSnapshot? get _liveOfficialEndorsements {
-    final value = _electionIntelligence.officialEndorsements;
-    return value.hasData ? value : null;
-  }
-
-  List<DpjOfficialEndorsement> get _officialEndorsements {
-    final live = _liveOfficialEndorsements;
-    if (live == null || live.prefectures.isEmpty) {
-      return official_data.dpjOfficialEndorsements;
-    }
-    return live.prefectures
-        .map(
-          (item) => DpjOfficialEndorsement(
-            item.prefecture,
-            totalCount: item.totalCount,
-            incumbentCount: item.incumbentCount,
-            newcomerCount: item.newcomerCount,
-            formerCount: item.formerCount,
-          ),
-        )
-        .toList(growable: false);
-  }
-
-  int get _officialEndorsementTotal =>
-      _liveOfficialEndorsements?.totalCount ??
-      official_data.dpjOfficialEndorsementTotal;
-  int get _officialEndorsementIncumbentTotal =>
-      _liveOfficialEndorsements?.incumbentCount ??
-      official_data.dpjOfficialEndorsementIncumbentTotal;
-  int get _officialEndorsementNewcomerTotal =>
-      _liveOfficialEndorsements?.newcomerCount ??
-      official_data.dpjOfficialEndorsementNewcomerTotal;
-  int get _officialEndorsementFormerTotal =>
-      _liveOfficialEndorsements?.formerCount ??
-      official_data.dpjOfficialEndorsementFormerTotal;
-  int get _officialEndorsementPrefectureCount =>
-      _liveOfficialEndorsements?.prefectureCount ??
-      official_data.dpjOfficialEndorsementPrefectureCount;
-  int get _officialRecommendationCount =>
-      _liveOfficialEndorsements?.recommendationCount ??
-      official_data.dpjOfficialRecommendationEntryCount;
-  String get _officialEndorsementAsOf =>
-      _liveOfficialEndorsements?.sourceAsOf ??
-      targets_data.dpjLocalElectionOfficialListAsOf;
-  String get _officialEndorsementSourceUrl =>
-      _liveOfficialEndorsements?.sourceUrl ??
-      targets_data.dpjLocalElectionOfficialListUrl;
-
-  DpjOfficialEndorsement? _officialEndorsementFor(String prefecture) {
-    final normalized = prefecture.replaceFirst(RegExp(r'[都府県]$'), '');
-    for (final item in _officialEndorsements) {
-      if (item.prefecture == normalized) {
-        return item;
-      }
-    }
-    return null;
-  }
+  OfficialEndorsementSnapshot get _officialEndorsements =>
+      _officialEndorsementViewModel.snapshot;
 
   // Compatibility names keep existing dashboard sections and share affordances
-  // on the live snapshot while the generated asset remains the offline fallback.
-  List<DpjOfficialEndorsement> get dpjOfficialEndorsements =>
-      _officialEndorsements;
-  int get dpjOfficialEndorsementTotal => _officialEndorsementTotal;
+  // on the repository-resolved snapshot.
+  List<OfficialEndorsementPrefecture> get dpjOfficialEndorsements =>
+      _officialEndorsements.prefectures;
+  int get dpjOfficialEndorsementTotal => _officialEndorsements.totalCount;
   int get dpjOfficialEndorsementIncumbentTotal =>
-      _officialEndorsementIncumbentTotal;
+      _officialEndorsements.incumbentCount;
   int get dpjOfficialEndorsementNewcomerTotal =>
-      _officialEndorsementNewcomerTotal;
-  int get dpjOfficialEndorsementFormerTotal => _officialEndorsementFormerTotal;
+      _officialEndorsements.newcomerCount;
+  int get dpjOfficialEndorsementFormerTotal =>
+      _officialEndorsements.formerCount;
   int get dpjOfficialEndorsementPrefectureCount =>
-      _officialEndorsementPrefectureCount;
-  int get dpjOfficialRecommendationEntryCount => _officialRecommendationCount;
-  String get dpjLocalElectionOfficialListAsOf => _officialEndorsementAsOf;
-  String get dpjLocalElectionOfficialListUrl => _officialEndorsementSourceUrl;
-  DpjOfficialEndorsement? dpjOfficialEndorsementFor(String prefecture) =>
-      _officialEndorsementFor(prefecture);
+      _officialEndorsements.prefectureCount;
+  int get dpjOfficialRecommendationEntryCount =>
+      _officialEndorsements.recommendationCount;
+  String get dpjLocalElectionOfficialListAsOf =>
+      _officialEndorsements.sourceAsOf;
+  String get dpjLocalElectionOfficialListUrl => _officialEndorsements.sourceUrl;
+  OfficialEndorsementPrefecture? dpjOfficialEndorsementFor(
+    String prefecture,
+  ) =>
+      _officialEndorsementViewModel.forPrefecture(prefecture);
   List<LocalElectionScheduleEntry>? _sortedSchedulesDescCache;
   Map<DateTime, List<LocalElectionScheduleEntry>>? _scheduleEventMapCache;
   List<Map<String, dynamic>>? _pastResultsCacheGeminiRef;
@@ -293,6 +245,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   @override
   void dispose() {
+    _officialEndorsementViewModel.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -331,6 +284,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       }
     }
 
+    _officialEndorsementViewModel.updateFromIntelligence(
+      cachedSnapshot?.electionIntelligence,
+    );
     setState(() {
       _plan = plan;
       _realitySnapshot = cachedSnapshot;
@@ -705,6 +661,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       final snapshotNoteChanged = previousSnapshot == null ||
           _shareService.buildSyntheticNoteId(previousSnapshot) !=
               _shareService.buildSyntheticNoteId(snapshot);
+      _officialEndorsementViewModel.updateFromIntelligence(
+        snapshot.electionIntelligence,
+      );
       setState(() {
         if (syncedPlan != null) {
           _plan = syncedPlan;
@@ -5117,6 +5076,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   // 党公式一覧の「公認」掲載行を集計した全国サマリー。
   // 「擁立目標」とは別の実績値で、「推薦」は含めない。
   Widget _buildOfficialEndorsementSummary() {
+    return ListenableBuilder(
+      listenable: _officialEndorsementViewModel,
+      builder: (context, _) => _buildOfficialEndorsementSummaryContent(),
+    );
+  }
+
+  Widget _buildOfficialEndorsementSummaryContent() {
     const accent = Color(0xFF2563EB);
     final incumbent = dpjOfficialEndorsementIncumbentTotal;
     final newcomer = dpjOfficialEndorsementNewcomerTotal;
@@ -5234,7 +5200,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   Widget _buildOfficialEndorsementPrefectureChip(
-    DpjOfficialEndorsement endorsement,
+    OfficialEndorsementPrefecture endorsement,
   ) {
     const color = Color(0xFF1D4ED8);
     final breakdown =
@@ -5334,7 +5300,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   // 県別目標ピル内の公認掲載バッジ。出典タップで党公式一覧を開く。
   Widget _buildOfficialEndorsementBadge(
-    DpjOfficialEndorsement endorsement,
+    OfficialEndorsementPrefecture endorsement,
   ) {
     const badgeColor = Color(0xFF1D4ED8);
     final breakdown =

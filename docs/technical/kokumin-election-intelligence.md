@@ -10,8 +10,9 @@ active today; the two national modes are registered without invented targets.
    local-election PDF every six hours.
 2. `scripts/update_kokumin_local_endorsements.py` extracts endorsement counts,
    checks the 現/元/新 totals, applies parser-collapse and large-drop gates, and
-   updates `assets/data/kokumin_local_endorsements.json` only on a meaningful
-   source change.
+   generates both `assets/data/kokumin_local_endorsements.json` and the Flutter
+   offline fallback `lib/data/dpj_official_endorsements.dart` from the same
+   canonical snapshot.
 3. `local-election-snapshot-queue.yml` invokes the Edge Function every six
    hours. The function loads the generated endorsement asset and
    `kokumin_election_modes.json`, then re-fetches each official goal source and
@@ -19,8 +20,10 @@ active today; the two national modes are registered without invented targets.
 4. Complete snapshots are content-addressed and stored in history. Goal,
    achievement, endorsement, member, candidate, and schedule changes create
    separate human-approval post candidates; nothing is auto-published.
-5. Flutter reads the same `electionIntelligence` payload. Live values win over
-   bundled fallback data in the dashboard, public memo, and metadata.
+5. Flutter reads the same `electionIntelligence` payload. The official
+   endorsement repository resolves live values or the generated fallback as a
+   single source of truth; a `ChangeNotifier` ViewModel exposes that snapshot
+   to the dashboard, while sharing and metadata use the same repository.
 
 If a required asset or official goal source cannot be fetched or validated,
 the public endpoint may return its last-known fallback, but persistence is
