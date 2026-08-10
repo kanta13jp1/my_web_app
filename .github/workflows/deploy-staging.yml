@@ -135,8 +135,8 @@ jobs:
         run: >
           flutter build web --release --pwa-strategy=none
           --dart-define=ENVIRONMENT=staging
-          --dart-define=SUPABASE_URL=$SUPABASE_URL
-          --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+          --dart-define="SUPABASE_URL=$SUPABASE_URL"
+          --dart-define="SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
           --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true
           --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true
           --dart-define=ASSET_MANAGEMENT_AI_SUMMARY_ENABLED=true
