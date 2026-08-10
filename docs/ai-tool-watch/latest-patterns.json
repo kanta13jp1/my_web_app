@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-09T21:49:33Z",
+  "generated_at": "2026-08-10T21:59:54Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -263,18 +263,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-66ad04b12511",
+        "entry_id": "nf-dd6f74214325",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-08-07 / Codex CLI 0.147.0 pre ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources... Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)... All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How...",
+        "text": "Codex changelog 2026-08-10 / Introducing Daybreak Blue and Daybreak Red Daybreak now offers two access tiers for approve ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources... Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)... All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How...",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "3973609a2544add4191e51fd3126d3e82e992e9179d2892a2952949bc9c1b1b3",
+          "hash": "cc9df9aa27783ad9b60c72d95b61b2e8c23bf534643149adfb1d7c06bd553a9d",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -317,7 +317,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-08-07 / Codex CLI 0.147.0 pre",
+          "latest_signal": "2026-08-10 / Introducing Daybreak Blue and Daybreak Red Daybreak now offers two access tiers for approve",
           "name": "Codex changelog",
           "owner": "Codex",
           "previous_hash": "3973609a2544add4191e51fd3126d3e82e992e9179d2892a2952949bc9c1b1b3",
@@ -332,7 +332,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-66ad04b12511",
+        "entry_id": "nf-dd6f74214325",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -361,10 +361,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "f6d18bc18ccedd8d17d6fb956082dafa1e80116f092b6c28f5102305e05221af",
+          "hash": "6fd0858421374b81a1a30c27ab6ebaffe3b777f27218f0f5a47ec380b32e2a43",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.4",

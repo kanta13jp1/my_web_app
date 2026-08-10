@@ -1,12 +1,13 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-08-09T21:49:30Z`
-- Previous check: `2026-08-08T21:47:36Z`
-- Changed/new official sources: `0`
+- Checked at: `2026-08-10T21:59:46Z`
+- Previous check: `2026-08-09T21:49:30Z`
+- Changed/new official sources: `2`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- No official source hash changed since the previous check.
+- `changed` Codex changelog: 2026-08-10 / Introducing Daybreak Blue and Daybreak Red Daybreak now offers two access tiers for approve
+- `changed` Codex use cases: ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -36,7 +37,7 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-08-07 / Codex CLI 0.147.0 pre
+  - Latest signal: 2026-08-10 / Introducing Daybreak Blue and Daybreak Red Daybreak now offers two access tiers for approve
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...
   - Short signal: Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...
