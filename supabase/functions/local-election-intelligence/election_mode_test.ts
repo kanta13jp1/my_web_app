@@ -161,5 +161,5 @@ Deno.test("generated endorsement asset passes the shared validator", () => {
   assertEquals(snapshot.newcomerCount, 106);
   assertEquals(snapshot.formerCount, 9);
   assertEquals(snapshot.recommendationCount, 9);
-  assertEquals(snapshot.prefectureCount, 32);
+  assertEquals(snapshot.prefectureCount, 33);
 });
