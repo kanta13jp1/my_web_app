@@ -1,8 +1,8 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-08-10T21:59:46Z",
-      "hash": "7e17945d59eff4ba90cc42b4fd77c9ee3d6f7173818874135a7cb4a1178d40a5",
+      "checked_at": "2026-08-11T22:06:46Z",
+      "hash": "ff2122497f3f8c318cf3c6ee0269e7c04d18c75e04f3ed4169f0f69c66312d67",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -46,13 +46,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.226 / August 8, 2026",
+      "latest_signal": "2.1.227 / August 10, 2026",
       "name": "Claude Code changelog",
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-08-10T21:59:46Z",
+      "checked_at": "2026-08-11T22:06:46Z",
       "hash": "16169570e6d5b7464fa84bf9a60ba6e09af666e83cf5973d556f37ea81c414a8",
       "keyword_groups": {
         "codex-runtime": [
@@ -90,8 +90,8 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-08-10T21:59:46Z",
-      "hash": "5a924f9a0790833cfeba54a374954e87f9ff437c7b941234ac4ca238087e03cb",
+      "checked_at": "2026-08-11T22:06:46Z",
+      "hash": "ca1c07ba5ab60e0743c39e9a99623c24207793a31f891de6acf21430e52e4a2f",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -133,8 +133,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-08-10T21:59:46Z",
-      "hash": "cc9df9aa27783ad9b60c72d95b61b2e8c23bf534643149adfb1d7c06bd553a9d",
+      "checked_at": "2026-08-11T22:06:46Z",
+      "hash": "21c6a3fca411ce7bc195547d16412f905affabc6a9df0cd41dcd76dbc23a93e8",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -183,7 +183,7 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-08-10T21:59:46Z",
+      "checked_at": "2026-08-11T22:06:46Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -192,8 +192,8 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-08-10T21:59:46Z",
-      "hash": "6fd0858421374b81a1a30c27ab6ebaffe3b777f27218f0f5a47ec380b32e2a43",
+      "checked_at": "2026-08-11T22:06:46Z",
+      "hash": "eb3b996dd2e4ce5b67d73ab254315dfb779bbaee454848ffe724fea017b7a622",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.4",
@@ -235,7 +235,7 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-08-10T21:59:46Z",
+      "checked_at": "2026-08-11T22:06:46Z",
       "hash": "a23bd552769066e3de658abf11d3553627ae135cd177078cd4c9cbac3f466ae3",
       "keyword_groups": {
         "hooks": [
@@ -264,7 +264,7 @@
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-08-10T21:59:46Z",
+      "checked_at": "2026-08-11T22:06:46Z",
       "hash": "6ede3f497bb664bdb01f1454286973a8e4ac5dc7e5338cf23b98d0ff3e4d8018",
       "keyword_groups": {
         "codex-runtime": [
@@ -305,8 +305,8 @@
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-08-10T21:59:46Z",
-      "hash": "cd6e9ff8949d7c5fe4015a5b039261c21f1ecea5e73d18a972feed159ca159a1",
+      "checked_at": "2026-08-11T22:06:46Z",
+      "hash": "26aadac92b37e4dba989ec21d669ed9e59ae4ee05b67a6ffff38a4ceeb4c903d",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -328,11 +328,11 @@
           "workflow"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.92.0 / July 20, 2026",
+      "latest_signal": "VS Code Gemini Code Assist 2.95.0 / August 10, 2026",
       "name": "Gemini Code Assist release notes",
       "status": 200,
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-08-10T21:59:46Z"
+  "updated_at": "2026-08-11T22:06:46Z"
 }

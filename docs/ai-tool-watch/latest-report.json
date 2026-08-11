@@ -11,7 +11,121 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "cc9df9aa27783ad9b60c72d95b61b2e8c23bf534643149adfb1d7c06bd553a9d",
+      "hash": "ff2122497f3f8c318cf3c6ee0269e7c04d18c75e04f3ed4169f0f69c66312d67",
+      "keyword_groups": {
+        "codex-runtime": [
+          "model picker",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure",
+          "ultrareview"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension",
+          "VSCode",
+          "Visual Studio Code"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2.1.227 / August 10, 2026",
+      "name": "Claude Code changelog",
+      "owner": "Claude Code",
+      "previous_hash": "7e17945d59eff4ba90cc42b4fd77c9ee3d6f7173818874135a7cb4a1178d40a5",
+      "slug": "claude-code-changelog",
+      "snippets": [
+        "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
+        "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
+        "​ 2.1.227 August 10, 2026 Fixed feature flags being evaluated without the user’s subscription tier when a session started with an expired login token, which could wrongly prompt..."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "ca1c07ba5ab60e0743c39e9a99623c24207793a31f891de6acf21430e52e4a2f",
+      "keyword_groups": {
+        "codex-runtime": [
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
+      "name": "Claude Code hooks reference",
+      "owner": "Claude Code",
+      "previous_hash": "5a924f9a0790833cfeba54a374954e87f9ff437c7b941234ac4ca238087e03cb",
+      "slug": "claude-code-hooks",
+      "snippets": [
+        "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
+        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
+        "Copy page Copy page For a quickstart guide with examples, see Automate actions with hooks ."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/hooks"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "21c6a3fca411ce7bc195547d16412f905affabc6a9df0cd41dcd76dbc23a93e8",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -57,7 +171,7 @@
       "latest_signal": "2026-08-10 / Introducing Daybreak Blue and Daybreak Red Daybreak now offers two access tiers for approve",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "3973609a2544add4191e51fd3126d3e82e992e9179d2892a2952949bc9c1b1b3",
+      "previous_hash": "cc9df9aa27783ad9b60c72d95b61b2e8c23bf534643149adfb1d7c06bd553a9d",
       "slug": "codex-changelog",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -71,7 +185,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "6fd0858421374b81a1a30c27ab6ebaffe3b777f27218f0f5a47ec380b32e2a43",
+      "hash": "eb3b996dd2e4ce5b67d73ab254315dfb779bbaee454848ffe724fea017b7a622",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.4",
@@ -110,7 +224,7 @@
       "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "f6d18bc18ccedd8d17d6fb956082dafa1e80116f092b6c28f5102305e05221af",
+      "previous_hash": "6fd0858421374b81a1a30c27ab6ebaffe3b777f27218f0f5a47ec380b32e2a43",
       "slug": "codex-use-cases",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -119,9 +233,48 @@
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/use-cases/"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "26aadac92b37e4dba989ec21d669ed9e59ae4ee05b67a6ffff38a4ceeb4c903d",
+      "keyword_groups": {
+        "hooks": [
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "GitHub",
+          "IDE extension",
+          "VSCode"
+        ],
+        "quality-cost": [
+          "cost",
+          "quota",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "workflow"
+        ]
+      },
+      "latest_signal": "VS Code Gemini Code Assist 2.95.0 / August 10, 2026",
+      "name": "Gemini Code Assist release notes",
+      "owner": "Gemini Code Assist",
+      "previous_hash": "cd6e9ff8949d7c5fe4015a5b039261c21f1ecea5e73d18a972feed159ca159a1",
+      "slug": "gemini-code-assist-release-notes",
+      "snippets": [
+        "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",
+        "Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra...",
+        "April 13, 2026 VS Code Gemini Code Assist 2.77.3 Fixed Quota issues fixed in VS Code Various bug fixes related to quota issues."
+      ],
+      "status": 200,
+      "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   ],
-  "checked_at": "2026-08-10T21:59:46Z",
+  "checked_at": "2026-08-11T22:06:46Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -173,13 +326,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-08-09T21:49:30Z",
+  "previous_checked_at": "2026-08-10T21:59:46Z",
   "sources": [
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "7e17945d59eff4ba90cc42b4fd77c9ee3d6f7173818874135a7cb4a1178d40a5",
+      "hash": "ff2122497f3f8c318cf3c6ee0269e7c04d18c75e04f3ed4169f0f69c66312d67",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -223,7 +376,7 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.226 / August 8, 2026",
+      "latest_signal": "2.1.227 / August 10, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
       "previous_hash": "7e17945d59eff4ba90cc42b4fd77c9ee3d6f7173818874135a7cb4a1178d40a5",
@@ -231,16 +384,16 @@
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.226 August 8, 2026 Bug fixes and reliability improvements ​ 2.1.225 August 8, 2026 Added gateway spend-limit support to Claude Code’s usage warning; the limit-reached..."
+        "​ 2.1.227 August 10, 2026 Fixed feature flags being evaluated without the user’s subscription tier when a session started with an expired login token, which could wrongly prompt..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "5a924f9a0790833cfeba54a374954e87f9ff437c7b941234ac4ca238087e03cb",
+      "hash": "ca1c07ba5ab60e0743c39e9a99623c24207793a31f891de6acf21430e52e4a2f",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -341,7 +494,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "cc9df9aa27783ad9b60c72d95b61b2e8c23bf534643149adfb1d7c06bd553a9d",
+      "hash": "21c6a3fca411ce7bc195547d16412f905affabc6a9df0cd41dcd76dbc23a93e8",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -387,7 +540,7 @@
       "latest_signal": "2026-08-10 / Introducing Daybreak Blue and Daybreak Red Daybreak now offers two access tiers for approve",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "3973609a2544add4191e51fd3126d3e82e992e9179d2892a2952949bc9c1b1b3",
+      "previous_hash": "cc9df9aa27783ad9b60c72d95b61b2e8c23bf534643149adfb1d7c06bd553a9d",
       "slug": "codex-changelog",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -401,7 +554,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "6fd0858421374b81a1a30c27ab6ebaffe3b777f27218f0f5a47ec380b32e2a43",
+      "hash": "eb3b996dd2e4ce5b67d73ab254315dfb779bbaee454848ffe724fea017b7a622",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.4",
@@ -440,7 +593,7 @@
       "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "f6d18bc18ccedd8d17d6fb956082dafa1e80116f092b6c28f5102305e05221af",
+      "previous_hash": "6fd0858421374b81a1a30c27ab6ebaffe3b777f27218f0f5a47ec380b32e2a43",
       "slug": "codex-use-cases",
       "snippets": [
         "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -505,10 +658,10 @@
       "url": "https://cursor.com/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "cd6e9ff8949d7c5fe4015a5b039261c21f1ecea5e73d18a972feed159ca159a1",
+      "hash": "26aadac92b37e4dba989ec21d669ed9e59ae4ee05b67a6ffff38a4ceeb4c903d",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -530,7 +683,7 @@
           "workflow"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.92.0 / July 20, 2026",
+      "latest_signal": "VS Code Gemini Code Assist 2.95.0 / August 10, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
       "previous_hash": "cd6e9ff8949d7c5fe4015a5b039261c21f1ecea5e73d18a972feed159ca159a1",
