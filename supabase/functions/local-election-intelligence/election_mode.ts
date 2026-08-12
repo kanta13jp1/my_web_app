@@ -425,14 +425,14 @@ export function fallbackElectionModeRegistry(): ElectionModeRegistry {
 export function fallbackOfficialEndorsementSnapshot(): OfficialEndorsementSnapshot {
   return {
     sourceUrl: "https://new-kokumin.jp/local-election-list",
-    sourceAsOf: "2026-08-05",
+    sourceAsOf: "2026-08-12",
     sourceDocumentSha256: "",
-    totalCount: 217,
+    totalCount: 218,
     incumbentCount: 102,
-    newcomerCount: 106,
+    newcomerCount: 107,
     formerCount: 9,
     recommendationCount: 9,
-    prefectureCount: 32,
+    prefectureCount: 33,
     prefectures: [],
   };
 }
