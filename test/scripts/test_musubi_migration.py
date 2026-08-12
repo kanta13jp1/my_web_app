@@ -9,6 +9,12 @@ MIGRATION = (
     / "migrations"
     / "20260810090000_create_musubi_social_platform.sql"
 )
+CONSENT_MIGRATION = (
+    Path(__file__).parents[2]
+    / "supabase"
+    / "migrations"
+    / "20260813090000_enforce_musubi_research_consent.sql"
+)
 
 
 class MusubiMigrationTest(unittest.TestCase):
@@ -64,6 +70,17 @@ class MusubiMigrationTest(unittest.TestCase):
         self.assertIn("consent_to_research boolean not null", self.normalized)
         self.assertIn("and consent_to_research", self.normalized)
         self.assertIn("musubi_feedback_delete_own", self.normalized)
+
+    def test_research_events_require_active_versioned_consent(self):
+        sql = re.sub(
+            r"\s+", " ", CONSENT_MIGRATION.read_text(encoding="utf-8").lower()
+        )
+        self.assertIn("consent_version text not null", sql)
+        self.assertIn("musubi_events_insert_with_active_consent", sql)
+        self.assertIn("exists ( select 1", sql)
+        self.assertIn("feedback.consent_to_research", sql)
+        self.assertIn("feedback.consent_version = musubi_research_events.consent_version", sql)
+        self.assertIn("musubi_events_delete_own", sql)
 
 
 if __name__ == "__main__":

@@ -114,6 +114,19 @@ python scripts/musubi_load_test.py --scenario mixed --requests 50 --concurrency 
 - UI defect: 右下のUniversal AI Share FABがMUSUBIのDM送信アイコンを覆うことを実機で確認。`/musubi` と `/social-feed` ではFABを下端88 pxへ退避する修正と回帰テストを追加した。
 - Production DB、Production site、実ユーザーには書き込んでいない。
 
+## 2026-08-13 research-consent hardening record
+
+第1コホート募集前のprivacy gateとして、研究データの保存境界と撤回を再検証した。
+
+- Consent version: `2026-08-13-v1`。第1コホート識別子は `first-user-2026-08`。
+- App boundary: 永続化済みの有効な同意がない場合、起動イベントを含む研究操作イベントを保存しない。
+- DB boundary: `musubi_research_events` のINSERTは、同じuser、cohort、consent versionの有効な研究同意が存在するときだけ許可する。
+- Withdrawal: 同意を先に無効化して新規イベントを止め、回答と全操作イベントを削除する。
+- Local migration: Supabase公式Postgres 17の隔離DBへMUSUBI基礎migrationと `20260813090000_enforce_musubi_research_consent.sql` を適用した。
+- Local DB lint: `supabase db lint --local --schema public --level warning --fail-on error` はexit 0、`No schema errors found`。
+- RLS behavior: 同意前INSERT拒否、同一versionの同意後INSERT許可、version不一致拒否、撤回後INSERT拒否、撤回後の回答・イベント件数0を確認した。
+- Repository baseline: 通常の `supabase start` は既知のbaseline欠落（`user_stats`）で停止するため、隔離DBではMUSUBIに必要な既存admin判定だけをfalse固定スタブとして用意した。Productionやstagingへはこのスタブを適用していない。
+
 ## First cohort recruitment handoff
 
 ### Recommended allocation
@@ -145,9 +158,10 @@ python scripts/musubi_load_test.py --scenario mixed --requests 50 --concurrency 
 ```text
 ご協力ありがとうございます。MUSUBI第1コホートは7日間、1日10〜20分が上限です。
 
-保存対象: テスト用プロフィール、投稿、DM、操作イベント、同意した場合の1〜5評価。
-保存しないもの: パスワード、JWT、個人DM本文のCI成果物、同意前の研究回答。
-撤回: いつでもこの連絡先へ「撤回」と返信してください。以後の研究利用を止め、対象データを削除します。
+保存対象: テスト用プロフィール、投稿、DM、アプリ内で研究同意した後の操作イベントと1〜5評価。
+保存しないもの: パスワード、JWT、個人DM本文のCI成果物、研究同意前の回答・操作イベント。
+研究同意文: 2026-08-13-v1。
+撤回: いつでもこの連絡先へ「撤回」と返信するか、アプリ内の研究参加取り消しを実行してください。以後の研究利用を止め、研究回答と操作イベントを削除します。
 
 上記に同意する場合は「同意します」と返信してください。確認後にstaging URL、専用アカウント、Day 0手順を個別送付します。
 ```
@@ -157,6 +171,8 @@ python scripts/musubi_load_test.py --scenario mixed --requests 50 --concurrency 
 1. 使用するXアカウント、Slack workspace/channel、個別メール候補を人間が指定する。
 2. 上の公開文をXとSlackへ投稿する。外部送信前に宛先とアカウントを再確認する。
 3. 応募者へprivate onboarding copyを送り、明示的な同意返信を得る。
-4. 同意済み5名で開始し、8名で締め切る。氏名ではなくcohort idで管理する。
-5. staging URLと各自の専用テストアカウントを個別送信し、共有アカウントを使わせない。
-6. Day 7に継続／削除を確認し、撤回者の研究データとstaging accessを削除する。
+4. staging URLを個別送信し、各参加者が本人のメールで登録する。パスワード、Magic Link、JWT、共有アカウントを運営者から配布しない。
+5. 初回ログイン後、MUSUBI Safetyの7-day check-inで同意文 `2026-08-13-v1` を確認し、研究参加checkboxを選んで最初の回答を送信してもらう。このアプリ内操作が完了するまでは研究イベントを保存しない。
+6. アプリ内同意済み5名で開始し、8名で締め切る。氏名ではなく `first-user-2026-08-01` のようなcohort participant idで管理する。
+7. 撤回連絡を受けたら、まず本人にアプリ内の「研究参加を取り消して研究データを削除」を実行してもらい、運営者は完了時刻だけを記録する。実行できない場合は管理者がuser idを確認して回答・イベントを削除する。
+8. Day 7に継続／削除を確認し、撤回者の研究データ削除とstaging access無効化を確認する。

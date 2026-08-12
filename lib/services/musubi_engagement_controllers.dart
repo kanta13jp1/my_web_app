@@ -242,6 +242,7 @@ class MusubiResearchController extends ChangeNotifier {
   int _trust = 3;
   int _belonging = 3;
   bool _consent = false;
+  MusubiResearchConsent? _activeConsent;
   bool _isSubmitting = false;
   String? _notice;
 
@@ -249,8 +250,21 @@ class MusubiResearchController extends ChangeNotifier {
   int get trust => _trust;
   int get belonging => _belonging;
   bool get consent => _consent;
+  bool get hasActiveConsent => _activeConsent != null;
+  MusubiResearchConsent? get activeConsent => _activeConsent;
   bool get isSubmitting => _isSubmitting;
   String? get notice => _notice;
+
+  Future<void> initialize() async {
+    try {
+      _activeConsent = await _repository.loadConsent();
+      _consent = _activeConsent != null;
+    } catch (_) {
+      _notice = '研究同意の状態を確認できませんでした。操作イベントは保存しません。';
+    } finally {
+      notifyListeners();
+    }
+  }
 
   void setFatigue(int value) {
     _fatigue = value.clamp(1, 5);
@@ -291,6 +305,12 @@ class MusubiResearchController extends ChangeNotifier {
           comment: comment.trim(),
         ),
       );
+      _activeConsent = MusubiResearchConsent(
+        cohort: musubiFirstUserCohort,
+        consentVersion: musubiResearchConsentVersion,
+        consentedAt: DateTime.now(),
+      );
+      _consent = true;
       _notice = '回答を保存しました。いつでも研究参加を取り消せます。';
       return true;
     } catch (_) {
@@ -303,14 +323,22 @@ class MusubiResearchController extends ChangeNotifier {
   }
 
   Future<void> withdraw() async {
+    _activeConsent = null;
+    _consent = false;
     _isSubmitting = true;
     _notice = null;
     notifyListeners();
     try {
-      await _repository.withdrawFeedback();
-      _consent = false;
-      _notice = '研究参加を取り消し、保存済みの回答を削除しました。';
+      await _repository.withdrawResearchData();
+      _notice = '研究参加を取り消し、保存済みの回答と操作イベントを削除しました。';
     } catch (_) {
+      try {
+        _activeConsent = await _repository.loadConsent();
+        _consent = _activeConsent != null;
+      } catch (_) {
+        _activeConsent = null;
+        _consent = false;
+      }
       _notice = '取り消し処理を完了できませんでした。';
     } finally {
       _isSubmitting = false;
@@ -321,9 +349,16 @@ class MusubiResearchController extends ChangeNotifier {
   Future<void> record(
     String name, [
     Map<String, Object?> properties = const {},
-  ]) {
+  ]) async {
+    final activeConsent = _activeConsent;
+    if (activeConsent == null) return;
     return _repository.recordEvent(
-      MusubiResearchEvent(name: name, properties: properties),
+      MusubiResearchEvent(
+        name: name,
+        properties: properties,
+        cohort: activeConsent.cohort,
+        consentVersion: activeConsent.consentVersion,
+      ),
     );
   }
 }

@@ -64,6 +64,18 @@ void main() {
     expect(find.byKey(const Key('musubi_safety_view')), findsOneWidget);
     expect(find.text('スパム'), findsOneWidget);
     expect(find.byKey(const Key('musubi_research_panel')), findsOneWidget);
+    expect(find.textContaining('未同意：回答・操作イベントは保存されません'), findsOneWidget);
+
+    final consent = find.byKey(const Key('musubi_research_consent'));
+    await tester.ensureVisible(consent);
+    await tester.tap(consent);
+    final submit = find.byKey(const Key('musubi_research_submit'));
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('研究同意済み：2026-08-13-v1'), findsOneWidget);
+    expect(tester.widget<CheckboxListTile>(consent).onChanged, isNull);
     expect(tester.takeException(), isNull);
   });
 }

@@ -31,8 +31,9 @@ abstract interface class MusubiTrustRepository {
 }
 
 abstract interface class MusubiResearchRepository {
+  Future<MusubiResearchConsent?> loadConsent();
   Future<void> submitFeedback(MusubiResearchFeedback feedback);
-  Future<void> withdrawFeedback();
+  Future<void> withdrawResearchData();
   Future<void> recordEvent(MusubiResearchEvent event);
 }
 
@@ -206,6 +207,20 @@ class SupabaseMusubiResearchRepository implements MusubiResearchRepository {
   final PreviewMusubiEngagementRepository _preview;
 
   @override
+  Future<MusubiResearchConsent?> loadConsent() async {
+    if (!_service.isAuthenticated) return _preview.loadConsent();
+    final row = await _service.fetchLatestResearchConsent();
+    if (row == null) return null;
+    return MusubiResearchConsent(
+      cohort: row['cohort']?.toString() ?? musubiFirstUserCohort,
+      consentVersion:
+          row['consent_version']?.toString() ?? musubiResearchConsentVersion,
+      consentedAt: DateTime.tryParse(row['consented_at']?.toString() ?? '') ??
+          DateTime.now(),
+    );
+  }
+
+  @override
   Future<void> submitFeedback(MusubiResearchFeedback feedback) async {
     if (!_service.isAuthenticated) return _preview.submitFeedback(feedback);
     await _service.insertResearchFeedback(<String, dynamic>{
@@ -216,13 +231,14 @@ class SupabaseMusubiResearchRepository implements MusubiResearchRepository {
       'belonging_score': feedback.belonging,
       'comment': feedback.comment,
       'consent_to_research': feedback.consentToResearch,
+      'consent_version': feedback.consentVersion,
     });
   }
 
   @override
-  Future<void> withdrawFeedback() async {
-    if (!_service.isAuthenticated) return _preview.withdrawFeedback();
-    await _service.deleteResearchFeedback();
+  Future<void> withdrawResearchData() async {
+    if (!_service.isAuthenticated) return _preview.withdrawResearchData();
+    await _service.deleteResearchData();
   }
 
   @override
@@ -232,6 +248,8 @@ class SupabaseMusubiResearchRepository implements MusubiResearchRepository {
       'user_id': _service.currentUserId,
       'event_name': event.name,
       'properties': event.properties,
+      'cohort': event.cohort,
+      'consent_version': event.consentVersion,
     });
   }
 }
@@ -336,7 +354,10 @@ class PreviewMusubiEngagementRepository
   Future<void> submitFeedback(MusubiResearchFeedback feedback) async {}
 
   @override
-  Future<void> withdrawFeedback() async {}
+  Future<MusubiResearchConsent?> loadConsent() async => null;
+
+  @override
+  Future<void> withdrawResearchData() async {}
 
   @override
   Future<void> recordEvent(MusubiResearchEvent event) async {}

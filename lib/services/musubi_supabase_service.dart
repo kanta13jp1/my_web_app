@@ -203,13 +203,29 @@ class MusubiSupabaseService {
     await _client.from('musubi_research_feedback').insert(payload);
   }
 
-  Future<void> deleteResearchFeedback() async {
+  Future<Map<String, dynamic>?> fetchLatestResearchConsent() async {
+    final userId = currentUserId;
+    if (userId == null) return null;
+    final response = await _client
+        .from('musubi_research_feedback')
+        .select('cohort,consent_version,consented_at')
+        .eq('user_id', userId)
+        .eq('consent_to_research', true)
+        .order('consented_at', ascending: false)
+        .limit(1)
+        .maybeSingle();
+    if (response == null) return null;
+    return Map<String, dynamic>.from(response);
+  }
+
+  Future<void> deleteResearchData() async {
     final userId = currentUserId;
     if (userId == null) return;
     await _client
         .from('musubi_research_feedback')
         .delete()
         .eq('user_id', userId);
+    await _client.from('musubi_research_events').delete().eq('user_id', userId);
   }
 
   Future<void> insertResearchEvent(Map<String, dynamic> payload) async {

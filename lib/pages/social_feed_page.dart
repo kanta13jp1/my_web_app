@@ -88,8 +88,9 @@ class _MusubiSocialPageState extends State<MusubiSocialPage> {
       _discoveryController.initialize(),
       _messagesController.initialize(),
       _trustController.initialize(),
-      _researchController.record('musubi.opened'),
+      _researchController.initialize(),
     ]);
+    await _researchController.record('musubi.opened');
   }
 
   @override

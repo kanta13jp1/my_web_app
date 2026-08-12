@@ -646,6 +646,18 @@ class _MusubiResearchPanelState extends State<MusubiResearchPanel> {
               height: 1.55,
             ),
           ),
+          const SizedBox(height: 4),
+          Text(
+            widget.controller.hasActiveConsent
+                ? '研究同意済み：${widget.controller.activeConsent!.consentVersion}'
+                : '未同意：回答・操作イベントは保存されません（同意文 $musubiResearchConsentVersion）',
+            style: TextStyle(
+              color: widget.controller.hasActiveConsent
+                  ? DesignTokens.green
+                  : DesignTokens.textTertiary,
+              fontSize: 9,
+            ),
+          ),
           const SizedBox(height: DesignTokens.space12),
           _ResearchScale(
             label: '利用後の疲労感（低いほど良い）',
@@ -676,7 +688,9 @@ class _MusubiResearchPanelState extends State<MusubiResearchPanel> {
           CheckboxListTile(
             key: const Key('musubi_research_consent'),
             value: widget.controller.consent,
-            onChanged: (value) => widget.controller.setConsent(value ?? false),
+            onChanged: widget.controller.hasActiveConsent
+                ? null
+                : (value) => widget.controller.setConsent(value ?? false),
             controlAffinity: ListTileControlAffinity.leading,
             contentPadding: EdgeInsets.zero,
             title: const Text(
@@ -684,7 +698,7 @@ class _MusubiResearchPanelState extends State<MusubiResearchPanel> {
               style: TextStyle(color: DesignTokens.textOnDark, fontSize: 11),
             ),
             subtitle: const Text(
-              '参加は任意です。回答は削除でき、広告目的には利用しません。',
+              '参加は任意です。回答と操作イベントは撤回時に削除し、広告目的には利用しません。',
               style: TextStyle(color: DesignTokens.textTertiary, fontSize: 9),
             ),
           ),
@@ -711,7 +725,7 @@ class _MusubiResearchPanelState extends State<MusubiResearchPanel> {
                 ? null
                 : widget.controller.withdraw,
             icon: const Icon(Icons.delete_outline_rounded, size: 17),
-            label: const Text('研究参加を取り消して回答を削除'),
+            label: const Text('研究参加を取り消して研究データを削除'),
           ),
         ],
       ),

@@ -87,6 +87,10 @@ void main() {
       final repository = _RecordingResearchRepository();
       final controller = MusubiResearchController(repository: repository);
 
+      await controller.initialize();
+      await controller.record('musubi.opened');
+      expect(repository.events, isEmpty);
+
       expect(await controller.submit('まだ同意していない'), isFalse);
       expect(repository.feedback, isNull);
 
@@ -98,10 +102,50 @@ void main() {
       expect(repository.feedback?.fatigue, 2);
       expect(repository.feedback?.trust, 5);
       expect(repository.feedback?.consentToResearch, isTrue);
+      expect(repository.feedback?.cohort, musubiFirstUserCohort);
+      expect(
+        repository.feedback?.consentVersion,
+        musubiResearchConsentVersion,
+      );
+      expect(controller.hasActiveConsent, isTrue);
+
+      await controller.record('musubi.destination.opened');
+      expect(repository.events, hasLength(1));
+      expect(repository.events.single.cohort, musubiFirstUserCohort);
 
       await controller.withdraw();
       expect(repository.withdrawn, isTrue);
       expect(controller.consent, isFalse);
+      expect(controller.hasActiveConsent, isFalse);
+      expect(repository.events, isEmpty);
+
+      await controller.record('musubi.opened');
+      expect(repository.events, isEmpty);
+    });
+
+    test('withdrawal stops new events before remote deletion completes',
+        () async {
+      final deletionGate = Completer<void>();
+      final repository = _RecordingResearchRepository(
+        persistedConsent: MusubiResearchConsent(
+          cohort: musubiFirstUserCohort,
+          consentVersion: musubiResearchConsentVersion,
+          consentedAt: DateTime(2026, 8, 13),
+        ),
+        deletionGate: deletionGate,
+      );
+      final controller = MusubiResearchController(repository: repository);
+
+      await controller.initialize();
+      expect(controller.hasActiveConsent, isTrue);
+
+      final withdrawal = controller.withdraw();
+      await controller.record('musubi.withdrawal.race');
+      expect(repository.events, isEmpty);
+
+      deletionGate.complete();
+      await withdrawal;
+      expect(controller.hasActiveConsent, isFalse);
     });
   });
 }
@@ -135,9 +179,16 @@ class _FakeRealtimeRepository implements MusubiRealtimeRepository {
 }
 
 class _RecordingResearchRepository implements MusubiResearchRepository {
+  _RecordingResearchRepository({this.persistedConsent, this.deletionGate});
+
   MusubiResearchFeedback? feedback;
+  final MusubiResearchConsent? persistedConsent;
+  final Completer<void>? deletionGate;
   bool withdrawn = false;
   final List<MusubiResearchEvent> events = <MusubiResearchEvent>[];
+
+  @override
+  Future<MusubiResearchConsent?> loadConsent() async => persistedConsent;
 
   @override
   Future<void> recordEvent(MusubiResearchEvent event) async {
@@ -150,8 +201,10 @@ class _RecordingResearchRepository implements MusubiResearchRepository {
   }
 
   @override
-  Future<void> withdrawFeedback() async {
+  Future<void> withdrawResearchData() async {
+    await deletionGate?.future;
     withdrawn = true;
     feedback = null;
+    events.clear();
   }
 }

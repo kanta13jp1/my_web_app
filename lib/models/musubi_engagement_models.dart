@@ -1,5 +1,8 @@
 enum MusubiRealtimeState { preview, connecting, connected, degraded }
 
+const String musubiFirstUserCohort = 'first-user-2026-08';
+const String musubiResearchConsentVersion = '2026-08-13-v1';
+
 enum MusubiSearchKind { post, person, community }
 
 class MusubiSearchResult {
@@ -134,7 +137,8 @@ class MusubiResearchFeedback {
     required this.belonging,
     required this.consentToResearch,
     this.comment = '',
-    this.cohort = 'mvp-1',
+    this.cohort = musubiFirstUserCohort,
+    this.consentVersion = musubiResearchConsentVersion,
   });
 
   final int fatigue;
@@ -143,14 +147,31 @@ class MusubiResearchFeedback {
   final bool consentToResearch;
   final String comment;
   final String cohort;
+  final String consentVersion;
+}
+
+class MusubiResearchConsent {
+  const MusubiResearchConsent({
+    required this.cohort,
+    required this.consentVersion,
+    required this.consentedAt,
+  });
+
+  final String cohort;
+  final String consentVersion;
+  final DateTime consentedAt;
 }
 
 class MusubiResearchEvent {
   const MusubiResearchEvent({
     required this.name,
     this.properties = const <String, Object?>{},
+    this.cohort = musubiFirstUserCohort,
+    this.consentVersion = musubiResearchConsentVersion,
   });
 
   final String name;
   final Map<String, Object?> properties;
+  final String cohort;
+  final String consentVersion;
 }
