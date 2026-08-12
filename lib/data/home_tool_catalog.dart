@@ -1675,8 +1675,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'リフ',
         'コード',
       ],
-      onOpen: (context) =>
-          _pushPage(context, const BeatlesGuitarTabsFeature()),
+      onOpen: (context) => _pushPage(context, const BeatlesGuitarTabsFeature()),
     ),
     HomeToolEntry(
       id: 'public-guitar-gallery',
