@@ -97,5 +97,66 @@ python scripts/musubi_load_test.py --scenario mixed --requests 50 --concurrency 
 - 2026-08-10、東京リージョンに隔離project `atbqcmbtfypllnhqhqup` (`my-web-app-staging`) を作成。Production project `smmkxxavexumewbfaqpy` とは異なることを確認した。
 - GitHub repository secretsのstaging project id、URL、anon key、DB passwordを更新し、staging専用service-role keyを追加した。秘密値はrunbook、ログ、成果物へ保存していない。
 - staging workflowはProductionとの同一projectを拒否し、全migration履歴の一括repairを廃止。staging専用bootstrapとMUSUBI migrationだけを適用後、DB lintを必須実行する。
-- migration適用、Firebase staging channel再作成、専用JWT負荷試験、2ブラウザー製品検証は、検証済みcommitをpushしてworkflowを実行した後に記録する。
+- GitHub Actions run `31368856394` でmigration、linked DB lint、Flutter build、Firebase staging channel deployが成功した。
+- Staging URL: `https://my-web-app-b67f4--staging-ji7q5u7u.web.app`。
 - Production DB、既存ユーザー、公開募集チャネルへの変更は実施していない。
+
+## 2026-08-12 external staging validation record
+
+専用テストユーザーA/B/Cだけを使用した。JWT、password、anon key、service-role key、DM本文の原文は保存しない。
+
+- Load stage 1: 50 requests / concurrency 5、失敗0件、error rate 0%、p95 548.34 ms。
+- Load stage 2: 200 requests / concurrency 10、失敗0件、error rate 0%、p95 222 ms。単発の最大10秒outlierは継続監視対象とする。
+- Realtime browser products: ChromeとCodex In-app BrowserでA/Bを別sessionとして接続し、両方で `LIVE` を確認。
+- Public post Realtime: BのUIから保存した一意markerをChrome Aが1,410 msで受信。staging DB行とBのauthor idを確認し、2秒gateを通過した。
+- DM participant Realtime: BのUIから送信した一意markerをChrome Aが862 msで受信。staging DB行を確認し、2秒gateを通過した。
+- DM RLS API: 参加者BのSELECTは3件、非参加者CのSELECTは0件、CのINSERTはHTTP 403。
+- UI defect: 右下のUniversal AI Share FABがMUSUBIのDM送信アイコンを覆うことを実機で確認。`/musubi` と `/social-feed` ではFABを下端88 pxへ退避する修正と回帰テストを追加した。
+- Production DB、Production site、実ユーザーには書き込んでいない。
+
+## First cohort recruitment handoff
+
+### Recommended allocation
+
+5〜8名を次の順で集め、8名に達したら募集を止める。
+
+1. 既存Slackコミュニティのプロダクト検証チャンネル: 3名。
+2. 運営者のXアカウント: 2〜3名。
+3. 既存ユーザーまたは知人への個別メール: 不足分0〜2名。
+
+公開投稿にはstaging URLを載せない。同意確認後、対象者へ個別にURLとテスト手順を送る。
+
+### Public recruitment copy
+
+```text
+【先行テスター5〜8名募集】
+人と文脈を主役にした新しいSNS「MUSUBI」の7日間テストに協力いただける方を募集します。
+
+・1日10〜20分程度
+・投稿、検索、DM、通報導線を試す
+・利用後に疲労感／信頼感／居場所感を各1〜5で回答
+・最終日に30分の振り返り
+
+広告最適化ではなく、安心してつながれる体験を検証します。参加は任意で、途中撤回とデータ削除が可能です。興味のある方は「参加希望」とDMしてください。定員8名です。
+```
+
+### Private onboarding copy
+
+```text
+ご協力ありがとうございます。MUSUBI第1コホートは7日間、1日10〜20分が上限です。
+
+保存対象: テスト用プロフィール、投稿、DM、操作イベント、同意した場合の1〜5評価。
+保存しないもの: パスワード、JWT、個人DM本文のCI成果物、同意前の研究回答。
+撤回: いつでもこの連絡先へ「撤回」と返信してください。以後の研究利用を止め、対象データを削除します。
+
+上記に同意する場合は「同意します」と返信してください。確認後にstaging URL、専用アカウント、Day 0手順を個別送付します。
+```
+
+### Manual steps
+
+1. 使用するXアカウント、Slack workspace/channel、個別メール候補を人間が指定する。
+2. 上の公開文をXとSlackへ投稿する。外部送信前に宛先とアカウントを再確認する。
+3. 応募者へprivate onboarding copyを送り、明示的な同意返信を得る。
+4. 同意済み5名で開始し、8名で締め切る。氏名ではなくcohort idで管理する。
+5. staging URLと各自の専用テストアカウントを個別送信し、共有アカウントを使わせない。
+6. Day 7に継続／削除を確認し、撤回者の研究データとstaging accessを削除する。
