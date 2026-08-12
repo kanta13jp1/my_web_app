@@ -38,7 +38,41 @@ class LocalGuitarTabRepository implements GuitarTabRepository {
           ),
         ),
       ),
+      practiceSteps: List<GuitarPracticeStep>.unmodifiable(
+        model.practiceSteps.map(
+          (step) => GuitarPracticeStep(
+            id: step.id,
+            title: step.title,
+            goal: step.goal,
+            cue: step.cue,
+            minutes: step.minutes,
+            recommendedBpm: step.recommendedBpm,
+          ),
+        ),
+      ),
+      resources: List<GuitarLessonResource>.unmodifiable(
+        model.resources.map(
+          (resource) => GuitarLessonResource(
+            id: resource.id,
+            title: resource.title,
+            provider: resource.provider,
+            description: resource.description,
+            actionLabel: resource.actionLabel,
+            url: Uri.parse(resource.url),
+            kind: _parseResourceKind(resource.kind),
+          ),
+        ),
+      ),
     );
+  }
+
+  GuitarLessonResourceKind _parseResourceKind(String raw) {
+    return switch (raw) {
+      'pdfGuide' => GuitarLessonResourceKind.pdfGuide,
+      'interactiveScore' => GuitarLessonResourceKind.interactiveScore,
+      'videoLesson' => GuitarLessonResourceKind.videoLesson,
+      _ => throw FormatException('Unknown guitar lesson resource kind: $raw'),
+    };
   }
 
   GuitarTabDifficulty _parseDifficulty(String raw) {
