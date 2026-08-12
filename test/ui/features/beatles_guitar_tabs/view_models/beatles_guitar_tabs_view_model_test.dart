@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/data/repositories/guitar_tab_repository.dart';
 import 'package:my_web_app/data/services/guitar_tab_catalog_service.dart';
+import 'package:my_web_app/data/services/guitar_lesson_link_service.dart';
 import 'package:my_web_app/domain/models/guitar_tab_song.dart';
 import 'package:my_web_app/ui/features/beatles_guitar_tabs/view_models/beatles_guitar_tabs_view_model.dart';
 
@@ -13,6 +14,7 @@ void main() {
         repository: const LocalGuitarTabRepository(
           catalogService: GuitarTabCatalogService(),
         ),
+        linkService: _FakeGuitarLessonLinkService(),
       );
     });
 
@@ -24,7 +26,8 @@ void main() {
       expect(viewModel.status, BeatlesGuitarTabsStatus.ready);
       expect(viewModel.songs, hasLength(4));
       expect(viewModel.selectedSong?.title, 'Blackbird');
-      expect(viewModel.practiceBpm, 72);
+      expect(viewModel.practiceBpm, 60);
+      expect(viewModel.selectedPracticeStep?.id, 'separate');
     });
 
     test(
@@ -62,9 +65,42 @@ void main() {
       },
     );
 
+    test('selects a practice step and adopts its starting tempo', () async {
+      await viewModel.load();
+
+      viewModel.selectPracticeStep('tempo');
+
+      expect(viewModel.selectedPracticeStep?.title, '原速へ橋渡し');
+      expect(viewModel.practiceBpm, 84);
+
+      viewModel.setPracticeBpm(90);
+      viewModel.resetPracticeBpm();
+      expect(viewModel.practiceBpm, 84);
+    });
+
+    test('opens only a resource belonging to the selected song', () async {
+      final links = _FakeGuitarLessonLinkService();
+      final linkedViewModel = BeatlesGuitarTabsViewModel(
+        repository: const LocalGuitarTabRepository(
+          catalogService: GuitarTabCatalogService(),
+        ),
+        linkService: links,
+      );
+      addTearDown(linkedViewModel.dispose);
+      await linkedViewModel.load();
+
+      expect(await linkedViewModel.openResource('musescore'), isTrue);
+      expect(
+        links.opened.single,
+        Uri.parse('https://ja.musescore.com/user/6375061/scores/7758575'),
+      );
+      expect(await linkedViewModel.openResource('unknown'), isFalse);
+    });
+
     test('exposes a retryable failure state', () async {
       final failed = BeatlesGuitarTabsViewModel(
         repository: const _FailingGuitarTabRepository(),
+        linkService: _FakeGuitarLessonLinkService(),
       );
       addTearDown(failed.dispose);
 
@@ -75,6 +111,16 @@ void main() {
       expect(failed.songs, isEmpty);
     });
   });
+}
+
+class _FakeGuitarLessonLinkService implements GuitarLessonLinkService {
+  final List<Uri> opened = <Uri>[];
+
+  @override
+  Future<bool> openExternal(Uri uri) async {
+    opened.add(uri);
+    return true;
+  }
 }
 
 class _FailingGuitarTabRepository implements GuitarTabRepository {

@@ -15,14 +15,28 @@ void main() {
       expect(songs, hasLength(4));
       expect(songs.first.title, 'Blackbird');
       expect(songs.first.difficulty, GuitarTabDifficulty.intermediate);
-      expect(songs.first.sections.single.lines, hasLength(6));
+      expect(songs.first.sections, hasLength(3));
+      expect(songs.first.practiceSteps, hasLength(3));
+      expect(songs.first.resources, hasLength(3));
+      expect(
+        songs.first.resources.first.url,
+        Uri.parse('https://suwa-ep.info/s/download/bb2.pdf'),
+      );
       expect(() => songs.add(songs.first), throwsUnsupportedError);
       expect(
         () => songs.first.techniques.add('mutated'),
         throwsUnsupportedError,
       );
       expect(
-        () => songs.first.sections.single.lines.add('mutated'),
+        () => songs.first.sections.first.lines.add('mutated'),
+        throwsUnsupportedError,
+      );
+      expect(
+        () => songs.first.practiceSteps.add(songs.first.practiceSteps.first),
+        throwsUnsupportedError,
+      );
+      expect(
+        () => songs.first.resources.add(songs.first.resources.first),
         throwsUnsupportedError,
       );
     });

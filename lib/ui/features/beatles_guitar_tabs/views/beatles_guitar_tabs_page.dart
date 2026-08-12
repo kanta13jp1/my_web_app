@@ -22,8 +22,11 @@ class BeatlesGuitarTabsPage extends StatelessWidget {
         foregroundColor: DesignTokens.textPrimary,
         elevation: 0,
         title: const Text(
-          'Beatles Guitar Lab',
-          style: TextStyle(fontWeight: FontWeight.w700),
+          'Blackbird Guitar Studio',
+          style: TextStyle(
+            color: DesignTokens.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       body: SafeArea(
@@ -116,7 +119,12 @@ class _CompactLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       key: const Key('beatles_tabs_compact_layout'),
-      padding: const EdgeInsets.all(DesignTokens.space16),
+      padding: const EdgeInsets.fromLTRB(
+        DesignTokens.space16,
+        DesignTokens.space16,
+        DesignTokens.space16,
+        96,
+      ),
       children: <Widget>[
         const _HeroPanel(),
         const SizedBox(height: DesignTokens.space16),
@@ -160,7 +168,7 @@ class _HeroPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  '名曲の奏法を、短い練習から',
+                  'Blackbirdを、指からほどく。',
                   style: TextStyle(
                     color: DesignTokens.textPrimary,
                     fontSize: 24,
@@ -171,12 +179,25 @@ class _HeroPanel extends StatelessWidget {
                 ),
                 SizedBox(height: DesignTokens.space8),
                 Text(
-                  'Beatlesの代表曲を題材に、フィンガースタイル、リフ、コードチェンジを段階的に練習できます。',
+                  '3つの短いオリジナル練習で、親指の独立、音のつながり、ポジション移動を順番に整えます。',
                   style: TextStyle(
                     color: DesignTokens.textSecondary,
                     fontSize: 14,
                     height: 1.7,
                   ),
+                ),
+                SizedBox(height: DesignTokens.space12),
+                Wrap(
+                  spacing: DesignTokens.space8,
+                  runSpacing: DesignTokens.space8,
+                  children: <Widget>[
+                    _HeroBadge(icon: Icons.timer_outlined, label: '20分メニュー'),
+                    _HeroBadge(icon: Icons.speed, label: '60 → 92 BPM'),
+                    _HeroBadge(
+                      icon: Icons.pan_tool_alt_outlined,
+                      label: '3フィンガー',
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -200,6 +221,42 @@ class _HeroIcon extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
       ),
       child: const Icon(Icons.music_note, color: DesignTokens.orange, size: 30),
+    );
+  }
+}
+
+class _HeroBadge extends StatelessWidget {
+  const _HeroBadge({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: DesignTokens.indigo.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+        border: Border.all(
+          color: DesignTokens.indigoLight.withValues(alpha: 0.28),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 13, color: DesignTokens.indigoLight),
+          const SizedBox(width: DesignTokens.space4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: DesignTokens.textSecondary,
+              fontSize: 11,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -496,13 +553,21 @@ class _SongDetail extends StatelessWidget {
       ),
       const SizedBox(height: DesignTokens.space20),
       const _RightsNotice(),
+      if (song.practiceSteps.isNotEmpty) ...<Widget>[
+        const SizedBox(height: DesignTokens.space24),
+        _PracticeRoadmap(viewModel: viewModel, song: song),
+      ],
       const SizedBox(height: DesignTokens.space20),
-      _TempoControl(viewModel: viewModel, song: song),
+      _TempoControl(viewModel: viewModel),
       const SizedBox(height: DesignTokens.space24),
       for (var index = 0; index < song.sections.length; index++) ...<Widget>[
         GuitarTabStaff(section: song.sections[index]),
         if (index != song.sections.length - 1)
           const SizedBox(height: DesignTokens.space16),
+      ],
+      if (song.resources.isNotEmpty) ...<Widget>[
+        const SizedBox(height: DesignTokens.space24),
+        _LearningResources(viewModel: viewModel, resources: song.resources),
       ],
       const SizedBox(height: DesignTokens.space24),
       const _PracticeTip(),
@@ -511,12 +576,17 @@ class _SongDetail extends StatelessWidget {
     if (scrollable) {
       return ListView(
         key: const Key('beatles_song_detail_scroll'),
-        padding: const EdgeInsets.all(DesignTokens.space24),
+        padding: const EdgeInsets.fromLTRB(
+          DesignTokens.space24,
+          DesignTokens.space24,
+          DesignTokens.space24,
+          96,
+        ),
         children: <Widget>[
           Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 620),
+              constraints: const BoxConstraints(maxWidth: 860),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: children,
@@ -533,11 +603,387 @@ class _SongDetail extends StatelessWidget {
   }
 }
 
-class _TempoControl extends StatelessWidget {
-  const _TempoControl({required this.viewModel, required this.song});
+class _PracticeRoadmap extends StatelessWidget {
+  const _PracticeRoadmap({required this.viewModel, required this.song});
 
   final BeatlesGuitarTabsViewModel viewModel;
   final GuitarTabSong song;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        const _SectionHeading(
+          eyebrow: '20 MINUTE ROUTINE',
+          title: '今日の3ステップ',
+          description: 'カードを選ぶと、そのステップの開始テンポに切り替わります。',
+        ),
+        const SizedBox(height: DesignTokens.space16),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const gap = DesignTokens.space12;
+            final columns = constraints.maxWidth >= 760
+                ? 3
+                : constraints.maxWidth >= 520
+                    ? 2
+                    : 1;
+            final cardWidth =
+                (constraints.maxWidth - gap * (columns - 1)) / columns;
+            return Wrap(
+              spacing: gap,
+              runSpacing: gap,
+              children: <Widget>[
+                for (var index = 0; index < song.practiceSteps.length; index++)
+                  SizedBox(
+                    width: cardWidth,
+                    child: _PracticeStepCard(
+                      index: index,
+                      step: song.practiceSteps[index],
+                      selected: viewModel.selectedPracticeStep?.id ==
+                          song.practiceSteps[index].id,
+                      onTap: () => viewModel.selectPracticeStep(
+                        song.practiceSteps[index].id,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _PracticeStepCard extends StatelessWidget {
+  const _PracticeStepCard({
+    required this.index,
+    required this.step,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final int index;
+  final GuitarPracticeStep step;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? const Color(0xFF2A211E) : DesignTokens.surface2,
+      borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
+      child: InkWell(
+        key: Key('blackbird_practice_step_${step.id}'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 188),
+          padding: const EdgeInsets.all(DesignTokens.space16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
+            border: Border.all(
+              color: selected ? DesignTokens.orange : DesignTokens.divider,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Container(
+                    width: 28,
+                    height: 28,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? DesignTokens.orange
+                          : DesignTokens.surface3,
+                      borderRadius: BorderRadius.circular(
+                        DesignTokens.radiusSmall,
+                      ),
+                    ),
+                    child: Text(
+                      '${index + 1}',
+                      style: TextStyle(
+                        color: selected
+                            ? DesignTokens.textPrimary
+                            : DesignTokens.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${step.minutes}分  •  ${step.recommendedBpm} BPM',
+                    style: TextStyle(
+                      color: selected
+                          ? DesignTokens.orangeLight
+                          : DesignTokens.textTertiary,
+                      fontSize: 11,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: DesignTokens.space12),
+              Text(
+                step.title,
+                style: const TextStyle(
+                  color: DesignTokens.textPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: DesignTokens.space8),
+              Text(
+                step.goal,
+                style: const TextStyle(
+                  color: DesignTokens.textSecondary,
+                  fontSize: 12,
+                  height: 1.6,
+                ),
+              ),
+              const SizedBox(height: DesignTokens.space8),
+              Text(
+                step.cue,
+                style: const TextStyle(
+                  color: DesignTokens.textTertiary,
+                  fontSize: 11,
+                  height: 1.6,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LearningResources extends StatelessWidget {
+  const _LearningResources({required this.viewModel, required this.resources});
+
+  final BeatlesGuitarTabsViewModel viewModel;
+  final List<GuitarLessonResource> resources;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        const _SectionHeading(
+          eyebrow: 'EXTERNAL REFERENCES',
+          title: '参考資料で深掘りする',
+          description: '原曲の譜面・再生・動画は、提供元の利用条件を確認して外部サイトでご覧ください。',
+        ),
+        const SizedBox(height: DesignTokens.space16),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const gap = DesignTokens.space12;
+            final columns = constraints.maxWidth >= 760
+                ? 3
+                : constraints.maxWidth >= 520
+                    ? 2
+                    : 1;
+            final cardWidth =
+                (constraints.maxWidth - gap * (columns - 1)) / columns;
+            return Wrap(
+              spacing: gap,
+              runSpacing: gap,
+              children: <Widget>[
+                for (final resource in resources)
+                  SizedBox(
+                    width: cardWidth,
+                    child: _ResourceCard(
+                      resource: resource,
+                      onOpen: () => _openResource(context, resource),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openResource(
+    BuildContext context,
+    GuitarLessonResource resource,
+  ) async {
+    final opened = await viewModel.openResource(resource.id);
+    if (!context.mounted || opened) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('外部サイトを開けませんでした。時間をおいて再度お試しください。'),
+        backgroundColor: DesignTokens.red,
+      ),
+    );
+  }
+}
+
+class _ResourceCard extends StatelessWidget {
+  const _ResourceCard({required this.resource, required this.onOpen});
+
+  final GuitarLessonResource resource;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, label) = switch (resource.kind) {
+      GuitarLessonResourceKind.pdfGuide => (
+          Icons.picture_as_pdf_outlined,
+          'PDF',
+        ),
+      GuitarLessonResourceKind.interactiveScore => (
+          Icons.queue_music_outlined,
+          'SCORE',
+        ),
+      GuitarLessonResourceKind.videoLesson => (
+          Icons.ondemand_video_outlined,
+          'VIDEO',
+        ),
+    };
+
+    return Container(
+      constraints: const BoxConstraints(minHeight: 236),
+      padding: const EdgeInsets.all(DesignTokens.space16),
+      decoration: BoxDecoration(
+        color: DesignTokens.surface2,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
+        border: Border.all(color: DesignTokens.indigo.withValues(alpha: 0.32)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(icon, color: DesignTokens.indigoLight, size: 24),
+              const Spacer(),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: DesignTokens.indigoLight,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: DesignTokens.space16),
+          Text(
+            resource.title,
+            style: const TextStyle(
+              color: DesignTokens.textPrimary,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space4),
+          Text(
+            resource.provider,
+            style: const TextStyle(
+              color: DesignTokens.orangeLight,
+              fontSize: 11,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space8),
+          Text(
+            resource.description,
+            style: const TextStyle(
+              color: DesignTokens.textSecondary,
+              fontSize: 12,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              key: Key('blackbird_resource_${resource.id}'),
+              onPressed: onOpen,
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: Text(resource.actionLabel),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: DesignTokens.orange,
+                side: const BorderSide(color: DesignTokens.orange),
+                minimumSize: const Size(48, 44),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                    DesignTokens.radiusMedium,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHeading extends StatelessWidget {
+  const _SectionHeading({
+    required this.eyebrow,
+    required this.title,
+    required this.description,
+  });
+
+  final String eyebrow;
+  final String title;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          eyebrow,
+          style: const TextStyle(
+            color: DesignTokens.orange,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: DesignTokens.space4),
+        Text(
+          title,
+          style: const TextStyle(
+            color: DesignTokens.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            height: 1.4,
+            letterSpacing: 0.72,
+          ),
+        ),
+        const SizedBox(height: DesignTokens.space4),
+        Text(
+          description,
+          style: const TextStyle(
+            color: DesignTokens.textSecondary,
+            fontSize: 12,
+            height: 1.7,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TempoControl extends StatelessWidget {
+  const _TempoControl({required this.viewModel});
+
+  final BeatlesGuitarTabsViewModel viewModel;
 
   @override
   Widget build(BuildContext context) {
@@ -590,11 +1036,12 @@ class _TempoControl extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton.icon(
-              onPressed: viewModel.practiceBpm == song.practiceBpm
-                  ? null
-                  : viewModel.resetPracticeBpm,
+              onPressed:
+                  viewModel.practiceBpm == viewModel.recommendedPracticeBpm
+                      ? null
+                      : viewModel.resetPracticeBpm,
               icon: const Icon(Icons.restart_alt, size: 18),
-              label: Text('推奨 ${song.practiceBpm} BPM に戻す'),
+              label: Text('推奨 ${viewModel.recommendedPracticeBpm} BPM に戻す'),
               style: TextButton.styleFrom(
                 foregroundColor: DesignTokens.orange,
                 disabledForegroundColor: DesignTokens.textDisabled,
