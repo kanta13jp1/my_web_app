@@ -10,7 +10,7 @@ void main() {
     expect(dpjOfficialEndorsementPrefectureCount, 33);
   });
 
-  test('8月10日更新で佐賀が追加され高知の掲載が2件になっている', () {
+  test('8月12日更新で佐賀が追加され高知の掲載が2件になっている', () {
     final saga = dpjOfficialEndorsementFor('佐賀県');
     expect(saga, isNotNull);
     expect(saga!.totalCount, 1);
@@ -34,9 +34,9 @@ void main() {
   });
 
   test('公認掲載の全国集計は現元新の内訳と一致する', () {
-    expect(dpjOfficialEndorsementTotal, 217);
+    expect(dpjOfficialEndorsementTotal, 218);
     expect(dpjOfficialEndorsementIncumbentTotal, 102);
-    expect(dpjOfficialEndorsementNewcomerTotal, 106);
+    expect(dpjOfficialEndorsementNewcomerTotal, 107);
     expect(dpjOfficialEndorsementFormerTotal, 9);
     expect(
       dpjOfficialEndorsementIncumbentTotal +
@@ -62,7 +62,7 @@ void main() {
   test('党公式一覧の基準日と推薦除外件数が最新値になっている', () {
     expect(dpjOfficialEndorsementSourceUrl, startsWith('https://'));
     expect(dpjOfficialEndorsementSourceUrl, contains('new-kokumin.jp'));
-    expect(dpjOfficialEndorsementSourceAsOf, '2026-08-10');
+    expect(dpjOfficialEndorsementSourceAsOf, '2026-08-12');
     expect(DateTime.tryParse(dpjOfficialEndorsementSourceAsOf), isNotNull);
     expect(dpjOfficialRecommendationEntryCount, 9);
   });

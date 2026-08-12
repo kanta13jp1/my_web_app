@@ -224,6 +224,7 @@ import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
 import 'package:my_web_app/pages/guitar_recording_studio_page.dart';
 import 'package:my_web_app/pages/public_guitar_gallery_page.dart';
 import 'package:my_web_app/pages/music_collaboration_page.dart';
+import 'package:my_web_app/ui/features/beatles_guitar_tabs/beatles_guitar_tabs_feature.dart';
 import 'package:my_web_app/pages/event_ticketing_page.dart';
 import 'package:my_web_app/pages/ai_assistant_chat_page.dart';
 import 'package:my_web_app/pages/ai_writing_assistant_page.dart';
@@ -1293,6 +1294,10 @@ Route<dynamic> generateAppRoute(
     case '/guitar-recording-studio':
       return MaterialPageRoute(
         builder: (_) => const GuitarRecordingStudioPage(),
+      );
+    case '/beatles-guitar-tabs':
+      return MaterialPageRoute(
+        builder: (_) => const BeatlesGuitarTabsFeature(),
       );
     case '/public-guitar-gallery':
       return MaterialPageRoute(
