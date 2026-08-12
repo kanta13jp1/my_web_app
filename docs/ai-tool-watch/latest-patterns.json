@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-11T22:06:49Z",
+  "generated_at": "2026-08-12T22:04:25Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -20,9 +20,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-cb357f312627",
+        "entry_id": "nf-79a32e947c28",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.227 / August 10, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.227 August 10, 2026 Fixed feature flags being evaluated without the user’s subscription tier when a session started with an expired login token, which could wrongly prompt...",
+        "text": "Claude Code changelog 2.1.228 / August 11, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.228 August 11, 2026 Fixed interactive sessions that could stop redrawing entirely, while the process kept running, after a rare internal layout error Fixed git / Git Bash...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -31,7 +31,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "ff2122497f3f8c318cf3c6ee0269e7c04d18c75e04f3ed4169f0f69c66312d67",
+          "hash": "2e0924cf9f7756aedb97d4ebddd9d7ef330054912fa40ae84caa6a674ccee7f0",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -75,22 +75,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.227 / August 10, 2026",
+          "latest_signal": "2.1.228 / August 11, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "7e17945d59eff4ba90cc42b4fd77c9ee3d6f7173818874135a7cb4a1178d40a5",
+          "previous_hash": "ff2122497f3f8c318cf3c6ee0269e7c04d18c75e04f3ed4169f0f69c66312d67",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.227 August 10, 2026 Fixed feature flags being evaluated without the user’s subscription tier when a session started with an expired login token, which could wrongly prompt..."
+            "​ 2.1.228 August 11, 2026 Fixed interactive sessions that could stop redrawing entirely, while the process kept running, after a rare internal layout error Fixed git / Git Bash..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-cb357f312627",
+        "entry_id": "nf-79a32e947c28",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -119,7 +119,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "ca1c07ba5ab60e0743c39e9a99623c24207793a31f891de6acf21430e52e4a2f",
+          "hash": "7b931eba183eb97a7caf759caef554ec7b69b530d74f1a6322d18f8d0564cdbb",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -158,7 +158,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "5a924f9a0790833cfeba54a374954e87f9ff437c7b941234ac4ca238087e03cb",
+          "previous_hash": "ca1c07ba5ab60e0743c39e9a99623c24207793a31f891de6acf21430e52e4a2f",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -274,7 +274,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "21c6a3fca411ce7bc195547d16412f905affabc6a9df0cd41dcd76dbc23a93e8",
+          "hash": "15a72b9b2dda1278ce459bb2ed077dac9e92fd601163550e434fa31044adf3c6",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -320,7 +320,7 @@
           "latest_signal": "2026-08-10 / Introducing Daybreak Blue and Daybreak Red Daybreak now offers two access tiers for approve",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "cc9df9aa27783ad9b60c72d95b61b2e8c23bf534643149adfb1d7c06bd553a9d",
+          "previous_hash": "21c6a3fca411ce7bc195547d16412f905affabc6a9df0cd41dcd76dbc23a93e8",
           "slug": "codex-changelog",
           "snippets": [
             "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -364,7 +364,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "eb3b996dd2e4ce5b67d73ab254315dfb779bbaee454848ffe724fea017b7a622",
+          "hash": "669b5a9132ac962597c9f1b09707989c80033bccc9f79223ffa421be1e8f3166",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.4",
@@ -403,7 +403,7 @@
           "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "6fd0858421374b81a1a30c27ab6ebaffe3b777f27218f0f5a47ec380b32e2a43",
+          "previous_hash": "eb3b996dd2e4ce5b67d73ab254315dfb779bbaee454848ffe724fea017b7a622",
           "slug": "codex-use-cases",
           "snippets": [
             "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -487,10 +487,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "a23bd552769066e3de658abf11d3553627ae135cd177078cd4c9cbac3f466ae3",
+          "hash": "7faec165a006a65b1be96a3265a85110e497ecdf150525508178dcd771bb6df5",
           "keyword_groups": {
             "hooks": [
               "hook",
@@ -553,7 +553,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "26aadac92b37e4dba989ec21d669ed9e59ae4ee05b67a6ffff38a4ceeb4c903d",
@@ -581,7 +581,7 @@
           "latest_signal": "VS Code Gemini Code Assist 2.95.0 / August 10, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
-          "previous_hash": "cd6e9ff8949d7c5fe4015a5b039261c21f1ecea5e73d18a972feed159ca159a1",
+          "previous_hash": "26aadac92b37e4dba989ec21d669ed9e59ae4ee05b67a6ffff38a4ceeb4c903d",
           "slug": "gemini-code-assist-release-notes",
           "snippets": [
             "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",

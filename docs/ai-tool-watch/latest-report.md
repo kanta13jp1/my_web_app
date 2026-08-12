@@ -1,16 +1,16 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-08-11T22:06:46Z`
-- Previous check: `2026-08-10T21:59:46Z`
+- Checked at: `2026-08-12T22:04:21Z`
+- Previous check: `2026-08-11T22:06:46Z`
 - Changed/new official sources: `5`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.227 / August 10, 2026
+- `changed` Claude Code changelog: 2.1.228 / August 11, 2026
 - `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
 - `changed` Codex changelog: 2026-08-10 / Introducing Daybreak Blue and Daybreak Red Daybreak now offers two access tiers for approve
 - `changed` Codex use cases: ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of
-- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.95.0 / August 10, 2026
+- `changed` Cursor changelog: New in Cursor
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -22,7 +22,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.227 / August 10, 2026
+  - Latest signal: 2.1.228 / August 11, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .
