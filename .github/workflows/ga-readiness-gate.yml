@@ -13,7 +13,6 @@ on:
       - "lib/widgets/ga_readiness_gate_panel.dart"
       - "scripts/check_ga_readiness_gate.py"
       - "supabase/functions/app-hub/**"
-      - "test/**"
   schedule:
     - cron: "55 21 * * *" # daily 06:55 JST
   workflow_run:
