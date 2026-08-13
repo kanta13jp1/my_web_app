@@ -122,7 +122,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: >-
-      github.event_name == 'pull_request' ||
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
 
@@ -132,29 +131,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Select deployed E2E scope
-        id: e2e_scope
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "run_e2e=false" >> "$GITHUB_OUTPUT"
-            echo "PR code is not deployed to the public URL; public E2E runs after production deployment." >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "run_e2e=true" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Setup Node
-        if: steps.e2e_scope.outputs.run_e2e == 'true'
         uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
 
       - name: Install dependencies
-        if: steps.e2e_scope.outputs.run_e2e == 'true'
         run: npm ci
 
       - name: Cache Playwright browsers
-        if: steps.e2e_scope.outputs.run_e2e == 'true'
         uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
@@ -163,11 +149,9 @@ jobs:
             ${{ runner.os }}-playwright-chromium-
 
       - name: Install Chromium
-        if: steps.e2e_scope.outputs.run_e2e == 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Run repeated public smoke tests
-        if: steps.e2e_scope.outputs.run_e2e == 'true'
         run: >
           npm run e2e:smoke --
           --project=chromium
@@ -179,7 +163,6 @@ jobs:
           PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/public-smoke-results.json
 
       - name: Run desktop and mobile visual evidence tests
-        if: steps.e2e_scope.outputs.run_e2e == 'true'
         run: >
           npm run e2e:visual --
           --project=chromium
@@ -190,7 +173,7 @@ jobs:
           PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/visual-evidence-results.json
 
       - name: Summarize Playwright evidence
-        if: always() && steps.e2e_scope.outputs.run_e2e == 'true'
+        if: always()
         run: |
           node scripts/summarize_playwright_results.mjs \
             playwright-report/public-smoke-results.json \
@@ -198,7 +181,7 @@ jobs:
             --out playwright-report/issue-summary.md
 
       - name: Upload Playwright report
-        if: always() && steps.e2e_scope.outputs.run_e2e == 'true'
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: minimal-e2e-playwright-report

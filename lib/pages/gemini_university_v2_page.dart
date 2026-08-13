@@ -6492,25 +6492,15 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final topics = _publishedVideoTopics();
     if (topics.isEmpty) return const SizedBox.shrink();
 
-    final controller = _tabController;
-    final selectedProvider = controller != null &&
-            controller.index >= 0 &&
-            controller.index < _providers.length
-        ? _providers[controller.index]
-        : null;
-    var topic = topics.first;
-    for (final candidate in topics) {
-      if (candidate.provider == selectedProvider) {
-        topic = candidate;
-        break;
-      }
-    }
-
     return AiUniversityPublishedVideoBanner(
-      title: topic.title,
-      providerLabel: _meta(topic.provider).name,
-      videoCount: topics.length,
-      onPlay: () => _showPublishedVideoLesson(topic),
+      videos: [
+        for (final topic in topics)
+          AiUniversityPublishedVideoBannerItem(
+            title: topic.title,
+            providerLabel: _meta(topic.provider).name,
+            onPlay: () => _showPublishedVideoLesson(topic),
+          ),
+      ],
     );
   }
 

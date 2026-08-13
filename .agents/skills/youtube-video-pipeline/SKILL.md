@@ -188,10 +188,10 @@ Do not bury a published lesson inside the selected provider's collapsed content.
 
 Use the shared `AiUniversityPublishedVideoBanner` contract from [references/ai-university-embedding.md](references/ai-university-embedding.md):
 
-- Show the published title, provider, and total public-video count.
-- Use the design-system orange primary CTA `今すぐ見る` with a minimum 44 px target.
+- Show every active published title and provider together with the total public-video count; never reduce the banner to only `topics.first`.
+- Give every listed lesson its own design-system orange CTA `今すぐ見る` with a minimum 44 px target.
 - Open the reusable embedded player in a barrier-free opaque viewer route without requiring a provider-tab change. Do not place an interactive Web iframe behind a `DialogRoute` or `ModalBarrier`.
-- Switch the CTA below 620 px to a full-width layout and add a narrow-width overflow test.
+- Switch each lesson tile below 620 px to a full-width layout and add a narrow-width overflow test plus a second-item callback test.
 - Keep the app-bar video-generation action distinct, such as `AI動画レッスンを生成`.
 - Derive lessons from database rows; never hard-code one video ID into the banner.
 

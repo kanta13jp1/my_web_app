@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 
-class AiUniversityPublishedVideoBanner extends StatelessWidget {
-  const AiUniversityPublishedVideoBanner({
-    super.key,
+class AiUniversityPublishedVideoBannerItem {
+  const AiUniversityPublishedVideoBannerItem({
     required this.title,
     required this.providerLabel,
-    required this.videoCount,
     required this.onPlay,
   });
 
   final String title;
   final String providerLabel;
-  final int videoCount;
   final VoidCallback onPlay;
+}
+
+class AiUniversityPublishedVideoBanner extends StatelessWidget {
+  const AiUniversityPublishedVideoBanner({super.key, required this.videos})
+    : assert(videos.length > 0);
+
+  final List<AiUniversityPublishedVideoBannerItem> videos;
 
   @override
   Widget build(BuildContext context) {
@@ -43,51 +47,29 @@ class AiUniversityPublishedVideoBanner extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final compact = constraints.maxWidth < 620;
-              final summary = _VideoSummary(
-                title: title,
-                providerLabel: providerLabel,
-                videoCount: videoCount,
-              );
-              final playButton = SizedBox(
-                key: const Key('published-video-play-button'),
-                width: compact ? double.infinity : null,
-                height: 44,
-                child: FilledButton.icon(
-                  onPressed: onPlay,
-                  icon: const Icon(Icons.play_arrow_rounded, size: 22),
-                  label: const Text('今すぐ見る'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6B35),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-              );
+              final itemWidth = compact
+                  ? constraints.maxWidth
+                  : (constraints.maxWidth - 12) / 2;
 
-              if (compact) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    summary,
-                    const SizedBox(height: 14),
-                    playButton,
-                  ],
-                );
-              }
-
-              return Row(
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(child: summary),
-                  const SizedBox(width: 20),
-                  playButton,
+                  _VideoBannerHeader(videoCount: videos.length),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      for (var index = 0; index < videos.length; index++)
+                        SizedBox(
+                          width: itemWidth,
+                          child: _VideoLessonTile(
+                            index: index,
+                            video: videos[index],
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               );
             },
@@ -98,15 +80,9 @@ class AiUniversityPublishedVideoBanner extends StatelessWidget {
   }
 }
 
-class _VideoSummary extends StatelessWidget {
-  const _VideoSummary({
-    required this.title,
-    required this.providerLabel,
-    required this.videoCount,
-  });
+class _VideoBannerHeader extends StatelessWidget {
+  const _VideoBannerHeader({required this.videoCount});
 
-  final String title;
-  final String providerLabel;
   final int videoCount;
 
   @override
@@ -168,22 +144,10 @@ class _VideoSummary extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 5),
-              Text(
-                title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Color(0xFFE5E7EB),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  height: 1.6,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '$providerLabel の公開済み動画教材',
-                style: const TextStyle(
+              const SizedBox(height: 3),
+              const Text(
+                '見たい教材を選んで再生できます',
+                style: TextStyle(
                   color: Color(0xFFB0B0B0),
                   fontSize: 12,
                   height: 1.6,
@@ -193,6 +157,81 @@ class _VideoSummary extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _VideoLessonTile extends StatelessWidget {
+  const _VideoLessonTile({required this.index, required this.video});
+
+  final int index;
+  final AiUniversityPublishedVideoBannerItem video;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFF10131B),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        key: Key('published-video-play-button-$index'),
+        onTap: video.onPlay,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      video.providerLabel,
+                      style: const TextStyle(
+                        color: Color(0xFFFFA07A),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      video.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFFE5E7EB),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.play_circle_fill_rounded,
+                    color: Color(0xFFFF6B35),
+                    size: 28,
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    '今すぐ見る',
+                    style: TextStyle(
+                      color: Color(0xFFFFA07A),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

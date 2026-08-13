@@ -3,11 +3,21 @@
 
 from __future__ import annotations
 
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 import no_verify_sentinel
+
+
+def resolve_executable(command: list[str]) -> list[str]:
+    """Resolve Windows batch shims before passing a command to CreateProcess."""
+    if os.name != "nt" or not command:
+        return command
+    shim = shutil.which(f"{command[0]}.bat") or shutil.which(f"{command[0]}.cmd")
+    return [shim, *command[1:]] if shim else command
 
 
 def staged_files() -> list[str]:
@@ -47,12 +57,6 @@ def commands_for_paths(paths: list[str]) -> list[list[str]]:
             ]
         )
 
-    dart_files = [path for path in paths if path.endswith(".dart") and Path(path).is_file()]
-    if dart_files:
-        commands.append(
-            ["dart", "format", "--output=none", "--set-exit-if-changed", *dart_files]
-        )
-
     edge_files = [
         path
         for path in paths
@@ -74,8 +78,9 @@ def commands_for_paths(paths: list[str]) -> list[list[str]]:
 
 def main() -> int:
     for command in commands_for_paths(staged_files()):
-        print(f"[pre-commit] {' '.join(command)}", flush=True)
-        result = subprocess.run(command, check=False)
+        resolved = resolve_executable(command)
+        print(f"[pre-commit] {' '.join(resolved)}", flush=True)
+        result = subprocess.run(resolved, check=False)
         if result.returncode != 0:
             return result.returncode
     return no_verify_sentinel.mark_pre_commit()

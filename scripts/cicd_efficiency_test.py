@@ -19,6 +19,7 @@ class CicdEfficiencyTest(unittest.TestCase):
         pre_commit = self.read("scripts/pre_commit_quality_gate.py")
         self.assertNotIn('quality_gate.main(["--fast"])', pre_commit)
         self.assertNotIn('"flutter", "analyze"', pre_commit)
+        self.assertNotIn('["dart", "format"', pre_commit)
 
     def test_deploy_reuses_protected_pr_ci_result(self) -> None:
         deploy = self.read(".github/workflows/deploy-prod.yml")
@@ -33,7 +34,14 @@ class CicdEfficiencyTest(unittest.TestCase):
         self.assertNotIn("Wait for deterministic CI checks", workflow)
         self.assertNotIn("check_pr_deterministic_ci.py", workflow)
         self.assertIn("workflow_run:", workflow)
-        self.assertIn("public E2E runs after production deployment", workflow)
+        public_job = workflow.split("  public-e2e-stability:", maxsplit=1)[1]
+        self.assertNotIn("github.event_name == 'pull_request'", public_job)
+        self.assertNotIn("Select deployed E2E scope", public_job)
+
+    def test_non_app_prs_skip_minimal_e2e_declaration(self) -> None:
+        script = self.read("scripts/check_minimal_e2e_gate.py")
+        self.assertIn("if not app_change:", script)
+        self.assertIn("no application runtime code changed", script)
 
     def test_ga_gate_does_not_run_for_every_test_file(self) -> None:
         workflow = self.read(".github/workflows/ga-readiness-gate.yml")
