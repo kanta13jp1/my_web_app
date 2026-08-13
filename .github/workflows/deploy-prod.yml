@@ -24,6 +24,7 @@ on:
       - 'scripts/quality_gate_test.py'
       - 'scripts/pre_commit_quality_gate.py'
       - 'scripts/pre_commit_quality_gate_test.py'
+      - 'scripts/check_ga_readiness_gate.py'
   workflow_dispatch:
 
 concurrency:
