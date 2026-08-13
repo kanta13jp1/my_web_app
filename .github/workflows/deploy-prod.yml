@@ -16,6 +16,15 @@ on:
       - '.github/**/*.md'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/PULL_REQUEST_TEMPLATE.md'
+      - '.github/workflows/**'
+      - 'lefthook.yml'
+      - 'scripts/classify_ci_changes.py'
+      - 'scripts/classify_ci_changes_test.py'
+      - 'scripts/cicd_efficiency_test.py'
+      - 'scripts/quality_gate_test.py'
+      - 'scripts/pre_commit_quality_gate.py'
+      - 'scripts/pre_commit_quality_gate_test.py'
+      - 'scripts/check_ga_readiness_gate.py'
   workflow_dispatch:
 
 concurrency:
@@ -41,6 +50,9 @@ env:
 jobs:
   ci:
     name: Run CI Checks
+    # Pull requests already passed this required workflow. Re-run it only for
+    # an operator-triggered deployment that has no preceding protected PR.
+    if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/ci.yml
     permissions:
       contents: read
@@ -50,6 +62,7 @@ jobs:
     name: Deploy to Production Environment
     runs-on: ubuntu-latest
     needs: ci
+    if: always() && (needs.ci.result == 'success' || needs.ci.result == 'skipped')
     timeout-minutes: 45
     environment:
       name: production
@@ -57,6 +70,10 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
+      deployable: ${{ steps.changes.outputs.deployable }}
+      web: ${{ steps.changes.outputs.web }}
+      edge: ${{ steps.changes.outputs.edge }}
+      migration: ${{ steps.changes.outputs.migration }}
 
     permissions:
       contents: write
@@ -74,12 +91,49 @@ jobs:
           git fetch --tags --prune origin "+${GITHUB_REF}:refs/remotes/origin/checkout"
           git checkout --force refs/remotes/origin/checkout
 
+      - name: Collect pushed files
+        if: github.event_name == 'push'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            const comparison = await github.rest.repos.compareCommitsWithBasehead({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              basehead: `${context.payload.before}...${context.sha}`,
+              per_page: 100,
+            });
+            fs.mkdirSync('.deploy-logs', { recursive: true });
+            fs.writeFileSync(
+              '.deploy-logs/changed-files.txt',
+              (comparison.data.files || []).map((file) => file.filename).join('\n') + '\n',
+            );
+
+      - name: Classify deploy scope
+        id: changes
+        shell: bash
+        env:
+          FORCE_ALL: ${{ github.event_name != 'push' }}
+        run: |
+          mkdir -p .deploy-logs
+          touch .deploy-logs/changed-files.txt
+          args=()
+          if [ "$FORCE_ALL" = "true" ]; then
+            args+=(--all)
+          fi
+          python scripts/classify_ci_changes.py \
+            --changed-files .deploy-logs/changed-files.txt \
+            --github-output "$GITHUB_OUTPUT" \
+            "${args[@]}"
+
       - name: Setup Flutter
+        if: steps.changes.outputs.web == 'true'
         uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
 
       - name: Cache Flutter pub
+        if: steps.changes.outputs.web == 'true'
         uses: actions/cache@v6
         with:
           path: ~/.pub-cache
@@ -88,10 +142,12 @@ jobs:
             ${{ runner.os }}-pub-
 
       - name: Install dependencies
+        if: steps.changes.outputs.web == 'true'
         run: flutter pub get
 
       - name: Generate version
         id: version
+        if: steps.changes.outputs.web == 'true'
         run: |
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
           VERSION=${LATEST_TAG#v}
@@ -105,10 +161,12 @@ jobs:
           echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Update pubspec.yaml version
+        if: steps.changes.outputs.web == 'true'
         run: |
           sed -i "s/^version: .*/version: ${{ steps.version.outputs.version }}+${{ github.run_number }}/" pubspec.yaml
 
       - name: Generate Release Notes data
+        if: steps.changes.outputs.web == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -122,14 +180,17 @@ jobs:
             --output web/release-notes.json
 
       - name: Check migration timestamp collisions
+        if: steps.changes.outputs.migration == 'true'
         run: python scripts/check_migration_timestamps.py
 
       - name: Setup Supabase CLI
+        if: steps.changes.outputs.migration == 'true' || steps.changes.outputs.edge == 'true'
         uses: supabase/setup-cli@v3
         with:
           version: 2.84.2
 
       - name: Run Supabase migrations
+        if: steps.changes.outputs.migration == 'true'
         run: |
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_PROD }} --password ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
           # Repair known stuck migrations (duplicate key from aborted deploys).
@@ -265,7 +326,7 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
 
       - name: Upload Supabase migration logs
-        if: always() && hashFiles('.deploy-logs/**') != ''
+        if: always() && steps.changes.outputs.migration == 'true' && hashFiles('.deploy-logs/**') != ''
         uses: actions/upload-artifact@v7
         with:
           name: supabase-migration-logs
@@ -273,6 +334,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Cleanup consolidated Edge Functions
+        if: steps.changes.outputs.edge == 'true'
         run: |
           # EFハードキャップ: 50本以下。Tier1/Tier2廃止。
           # 旧スタンドアロンEFを全削除 — 6つのmacro-hubに統合済み。
@@ -516,6 +578,7 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Deploy Supabase Edge Functions
+        if: steps.changes.outputs.edge == 'true'
         run: |
           # EFハードキャップ: 50本以下 (Tier1/Tier2廃止 — 2026-04-12 VSCode版#61)
           # 全250本を16本のhubにaction分岐統合 (11 hub + 5 standalone)。新規機能は既存hubへのaction追加のみ。
@@ -662,6 +725,7 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Build Flutter Web (Production)
+        if: steps.changes.outputs.web == 'true'
         run: |
           flutter build web \
             --release \
@@ -683,15 +747,18 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
 
       - name: Write version.json
+        if: steps.changes.outputs.web == 'true'
         run: |
           echo '{"version":"${{ steps.version.outputs.version }}","buildNumber":"${{ github.run_number }}","commit":"${{ github.sha }}","deployedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > build/web/version.json
           cp web/release-notes.json build/web/release-notes.json
 
       - name: Cache-bust OGP image URLs
+        if: steps.changes.outputs.web == 'true'
         run: |
           sed -i 's|/ogp\.png"|/ogp.png?v=${{ steps.version.outputs.version }}"|g' build/web/index.html
 
       - name: Prerender per-route static HTML + sitemap (SEO)
+        if: steps.changes.outputs.web == 'true'
         run: |
           # SEO 監査 H1/H2/H4/H3 対応。厳選 /vs-<slug> の静的HTML (自己参照
           # canonical + 固有 meta/JSON-LD + クロール可能本文) を build/web に生成。
@@ -707,12 +774,14 @@ jobs:
           echo "prerendered vs-* pages:"; ls build/web/ | grep -c '^vs-' || true
 
       - name: Setup Node for Firebase CLI
+        if: steps.changes.outputs.web == 'true'
         uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
 
       - name: Deploy to Firebase Hosting (Production)
+        if: steps.changes.outputs.web == 'true'
         id: firebase_cli_deploy
         continue-on-error: true  # 509 Bandwidth Exceeded 発生中 (2026-04-18) — 復旧後に削除
         shell: bash
@@ -747,6 +816,7 @@ jobs:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
 
       - name: Verify deploy reflects current commit
+        if: steps.changes.outputs.web == 'true'
         continue-on-error: true
         run: |
           EXPECTED="${{ github.sha }}"
@@ -763,6 +833,7 @@ jobs:
           echo "::warning::Deploy verification: production shows $DEPLOYED, expected $EXPECTED. A later queued run may have superseded this one."
 
       - name: Push Release Tag
+        if: steps.changes.outputs.web == 'true'
         id: push_tag
         # Win版#131 part 15: tag push が GitHub App workflow protection で reject される場合
         # (commit range に .github/workflows/*.yml 変更含む + GH_PAT 未設定) は warning に
@@ -783,6 +854,7 @@ jobs:
           fi
 
       - name: Create GitHub Release
+        if: steps.changes.outputs.web == 'true'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.version.outputs.tag }}
@@ -799,6 +871,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Broadcast release notification
+        if: steps.changes.outputs.web == 'true'
         continue-on-error: true
         env:
           SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
@@ -818,15 +891,17 @@ jobs:
           TAG="${{ steps.version.outputs.tag }}"
           SHA="${GITHUB_SHA:0:7}"
           {
-            echo "## 🚀 Production Deploy — v${VERSION} (${SHA})"
+            echo "## 🚀 Production Deploy (${SHA})"
             echo ""
             echo "| 項目 | 値 |"
             echo "|-----|---|"
-            echo "| バージョン | \`${TAG}\` |"
+            echo "| Web / Firebase | ${{ steps.changes.outputs.web }} |"
+            echo "| Edge Functions | ${{ steps.changes.outputs.edge }} |"
+            echo "| SQL migrations | ${{ steps.changes.outputs.migration }} |"
+            echo "| バージョン | \`${TAG:-unchanged}\` |"
             echo "| コミット | \`${SHA}\` |"
             echo "| Actor | ${{ github.actor }} |"
             echo "| 本番URL | https://my-web-app-b67f4.web.app/ |"
-            echo "| Edge Functions | 21本デプロイ済み (ハードキャップ50本以下) |"
           } >> $GITHUB_STEP_SUMMARY
 
   # -----------------------------------------------------------------
@@ -843,7 +918,7 @@ jobs:
 
     steps:
       - name: Notify Slack on Success
-        if: needs.deploy.result == 'success'
+        if: needs.deploy.result == 'success' && needs.deploy.outputs.deployable == 'true'
         run: |
           cat <<EOF > payload.json
           {
@@ -917,7 +992,7 @@ jobs:
           curl -X POST -H 'Content-type: application/json' --data @payload.json ${{ secrets.SLACK_WEBHOOK_URL }} --max-time 10 || true
 
       - name: Comment on commit
-        if: needs.deploy.result == 'success'
+        if: needs.deploy.result == 'success' && needs.deploy.outputs.deployable == 'true'
         continue-on-error: true
         uses: actions/github-script@v9
         with:
@@ -926,5 +1001,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               commit_sha: context.sha,
-              body: 'Successfully deployed to **Production**!\n\n- **Version**: ${{ needs.deploy.outputs.tag }}\n- **URL**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app'
+              body: 'Production deployment completed.\n\n- **Web**: ${{ needs.deploy.outputs.web }}\n- **Edge Functions**: ${{ needs.deploy.outputs.edge }}\n- **Migrations**: ${{ needs.deploy.outputs.migration }}\n- **Version**: ${{ needs.deploy.outputs.tag }}\n- **URL**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app'
             })
