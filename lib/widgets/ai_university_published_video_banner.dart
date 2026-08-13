@@ -14,7 +14,7 @@ class AiUniversityPublishedVideoBannerItem {
 
 class AiUniversityPublishedVideoBanner extends StatelessWidget {
   const AiUniversityPublishedVideoBanner({super.key, required this.videos})
-    : assert(videos.length > 0);
+      : assert(videos.length > 0);
 
   final List<AiUniversityPublishedVideoBannerItem> videos;
 
