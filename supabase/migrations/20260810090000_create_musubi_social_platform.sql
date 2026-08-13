@@ -179,7 +179,7 @@ LANGUAGE plpgsql
 SET search_path = public
 AS $$
 BEGIN
-  UPDATE public.musubi_threads
+  UPDATE musubi_threads
   SET updated_at = now()
   WHERE id = NEW.thread_id;
   RETURN NEW;
