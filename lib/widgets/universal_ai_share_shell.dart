@@ -97,6 +97,7 @@ class UniversalAiShareRouteObserver extends NavigatorObserver {
 const double kAiShareFabTopOffset = kToolbarHeight + 20;
 const double kAiShareFabDefaultBottomOffset = 20;
 const double kAiShareFabLandingBottomOffset = 88;
+const double kAiShareFabMusubiBottomOffset = 88;
 
 bool shouldShowUniversalAiShareFab({
   required String routePath,
@@ -109,6 +110,9 @@ double resolveAiShareFabBottomOffset({
   required String routePath,
   required double screenWidth,
 }) {
+  final isMusubi = routePath == '/musubi' || routePath == '/social-feed';
+  if (isMusubi) return kAiShareFabMusubiBottomOffset;
+
   final isLandingMobile = routePath == '/' && screenWidth < 720;
   return isLandingMobile
       ? kAiShareFabLandingBottomOffset

@@ -336,6 +336,7 @@ import 'utils/app_logger.dart';
 import 'utils/error_reporter.dart';
 
 import 'services/supabase_client_provider.dart';
+import 'services/supabase_runtime_config.dart';
 
 export 'services/supabase_client_provider.dart';
 
@@ -354,11 +355,11 @@ Future<void> main() async {
   usePathUrlStrategy();
 
   final NotificationService notificationService = NotificationService();
+  final supabaseConfig = SupabaseRuntimeConfig.fromCompileTimeEnvironment();
 
   await Supabase.initialize(
-    url: 'https://smmkxxavexumewbfaqpy.supabase.co',
-    publishableKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtbWt4eGF2ZXh1bWV3YmZhcXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTExNzYsImV4cCI6MjA3NjI2NzE3Nn0.U2OsYRYFvbpu2QjTwXulJ67v9wouMMpn0y9B9K5-WHw',
+    url: supabaseConfig.url,
+    publishableKey: supabaseConfig.publishableKey,
   );
 
   // Flutter/Dart エラーを自動で Sentry + フィードバックEF に送信
@@ -1121,6 +1122,7 @@ Route<dynamic> generateAppRoute(
       );
     case '/mcp-file-search':
       return MaterialPageRoute(builder: (_) => const McpFileSearchPage());
+    case '/musubi':
     case '/social-feed':
       return MaterialPageRoute(builder: (_) => const SocialFeedPage());
     case '/sobriety-campaign':
