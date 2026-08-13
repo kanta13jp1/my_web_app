@@ -66,6 +66,12 @@ class MusubiMigrationTest(unittest.TestCase):
         self.assertIn("trigger musubi_posts_refresh_search_vector", self.normalized)
         self.assertNotIn("search_vector tsvector generated always", self.normalized)
 
+    def test_trigram_index_supports_existing_extension_schemas(self):
+        self.assertIn("set search_path = public, extensions", self.normalized)
+        self.assertIn("content gin_trgm_ops", self.normalized)
+        self.assertNotIn("extensions.gin_trgm_ops", self.normalized)
+        self.assertIn("reset search_path", self.normalized)
+
     def test_research_storage_requires_consent_and_supports_deletion(self):
         self.assertIn("consent_to_research boolean not null", self.normalized)
         self.assertIn("and consent_to_research", self.normalized)

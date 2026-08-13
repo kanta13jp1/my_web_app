@@ -2,6 +2,7 @@
 -- moderation audit trail, and consent-based user research.
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA extensions;
+SET search_path = public, extensions;
 
 CREATE TABLE public.musubi_profiles (
   user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -66,7 +67,7 @@ CREATE INDEX musubi_posts_author_created_idx
 CREATE INDEX musubi_posts_search_idx
   ON public.musubi_posts USING gin (search_vector);
 CREATE INDEX musubi_posts_content_trgm_idx
-  ON public.musubi_posts USING gin (content extensions.gin_trgm_ops);
+  ON public.musubi_posts USING gin (content gin_trgm_ops);
 
 CREATE TABLE public.musubi_threads (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -466,3 +467,5 @@ COMMENT ON TABLE public.musubi_reports IS
   'MUSUBI moderation audit trail. Resolution is restricted to existing app admins.';
 COMMENT ON TABLE public.musubi_research_feedback IS
   'Consent-gated UX validation responses. Users may delete their own responses.';
+
+RESET search_path;
