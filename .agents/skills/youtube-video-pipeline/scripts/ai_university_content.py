@@ -190,9 +190,15 @@ def check_ui(args: argparse.Namespace) -> int:
             "今すぐ見る",
             "LayoutBuilder",
         ],
+        "lib/widgets/ai_university_youtube_viewer_route.dart": [
+            "AiUniversityYoutubeViewerRoute",
+            "MaterialPageRoute",
+            "showAiUniversityYoutubeViewer",
+        ],
         "lib/pages/gemini_university_v2_page.dart": [
             "AiUniversityYoutubeEmbed",
             "AiUniversityPublishedVideoBanner",
+            "showAiUniversityYoutubeViewer",
             "_buildPublishedVideoBanner",
             "AI動画レッスンを生成",
         ],

@@ -22,6 +22,7 @@ import '../services/theme_service.dart';
 import '../services/user_data_finetune_readiness_service.dart';
 import '../widgets/ai_university_published_video_banner.dart';
 import '../widgets/ai_university_youtube_embed.dart';
+import '../widgets/ai_university_youtube_viewer_route.dart';
 import 'ai_university_ranking_page.dart';
 import 'api_playground_page.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
@@ -6365,9 +6366,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     if (videoId == null) return;
     final provider = _meta(topic.provider);
 
-    await showDialog<void>(
+    await showAiUniversityYoutubeViewer<void>(
       context: context,
-      builder: (dialogContext) {
+      viewerBuilder: (dialogContext) {
         final windowHeight = MediaQuery.sizeOf(dialogContext).height;
         return Dialog(
           backgroundColor: const Color(0xFF1A1A1A),

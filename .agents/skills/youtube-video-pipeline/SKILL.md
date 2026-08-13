@@ -190,7 +190,7 @@ Use the shared `AiUniversityPublishedVideoBanner` contract from [references/ai-u
 
 - Show the published title, provider, and total public-video count.
 - Use the design-system orange primary CTA `今すぐ見る` with a minimum 44 px target.
-- Open the reusable embedded player in-place without requiring a provider-tab change.
+- Open the reusable embedded player in a barrier-free opaque viewer route without requiring a provider-tab change. Do not place an interactive Web iframe behind a `DialogRoute` or `ModalBarrier`.
 - Switch the CTA below 620 px to a full-width layout and add a narrow-width overflow test.
 - Keep the app-bar video-generation action distinct, such as `AI動画レッスンを生成`.
 - Derive lessons from database rows; never hard-code one video ID into the banner.
@@ -242,9 +242,10 @@ After deployment:
 
 1. Poll `https://my-web-app-b67f4.web.app/version.json` until `commit` equals the squash merge commit.
 2. Open `/ai-university` without relying on a particular provider tab.
-3. Confirm `公開動画で学ぶ` shows the published title and `今すぐ見る` opens the player.
+3. Confirm `公開動画で学ぶ` shows the published title and `今すぐ見る` opens the barrier-free viewer.
 4. Confirm the iframe URL or player contains the published video ID and `YouTubeで開く` resolves to the same public URL.
-5. Report separately: YouTube privacy state, database lesson state, deployed commit, workflow URL, banner visibility, and embedded-player state.
+5. Confirm the iframe is the browser hit-test target at its center, click the YouTube play control, and verify playback time advances.
+6. Report separately: YouTube privacy state, database lesson state, deployed commit, workflow URL, banner visibility, and embedded-player state.
 
 Do not claim completion until the active database lesson, production version, discoverability banner, and visible embedded player are all confirmed.
 

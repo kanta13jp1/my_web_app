@@ -53,10 +53,14 @@ Expected components:
   - Use the orange primary `今すぐ見る` CTA with a minimum 44 px target.
   - Switch to a full-width CTA below 620 px using `LayoutBuilder`.
   - Receive title, provider, count, and callback as data; never hard-code a video ID.
+- `lib/widgets/ai_university_youtube_viewer_route.dart`
+  - Open the embedded lesson through a regular opaque `MaterialPageRoute`.
+  - Do not render an interactive iframe behind a `DialogRoute` or `ModalBarrier`; Flutter Web can place the barrier above the iframe in browser hit testing.
+  - Keep an explicit visible close action and prevent interaction with the previous page while the viewer is open.
 - `lib/pages/gemini_university_v2_page.dart`
   - Detect a YouTube `source_url` and embed the player inside the expanded lesson card.
   - Derive active public-video topics from database rows and show the banner regardless of the selected provider.
-  - Open the embedded lesson in a constrained in-place dialog and keep the generation action labeled separately.
+  - Open the embedded lesson in a constrained barrier-free viewer and keep the generation action labeled separately.
 - `lib/pages/ai_university_video_page.dart`
   - Embed the selected published lesson before the generated-video controls.
 
@@ -89,12 +93,14 @@ python "$skillDir\scripts\ai_university_content.py" check-ui --repo "<worktree>"
 dart analyze lib/services/ai_university_video_lesson_service.dart
 dart analyze lib/widgets/ai_university_youtube_embed.dart
 dart analyze lib/widgets/ai_university_published_video_banner.dart
+dart analyze lib/widgets/ai_university_youtube_viewer_route.dart
 dart analyze lib/pages/ai_university_video_page.dart
 dart analyze lib/pages/gemini_university_v2_page.dart
 flutter test --no-pub test/services/ai_university_video_lesson_service_test.dart
 flutter test --no-pub test/services/ai_university_published_video_seed_test.dart
 flutter test --no-pub test/widgets/ai_university_youtube_embed_test.dart
 flutter test --no-pub test/widgets/ai_university_published_video_banner_test.dart
+flutter test --no-pub test/widgets/ai_university_youtube_viewer_route_test.dart
 git diff --check
 ```
 
@@ -112,7 +118,7 @@ After the separate AI大学 confirmation:
 6. Watch the matching run through migration, Flutter Web build, Firebase deploy, and version verification.
 7. Confirm `https://my-web-app-b67f4.web.app/version.json` reports the squash merge commit.
 8. Open production `/ai-university` without selecting a provider and verify the public-video banner shows the title.
-9. Use `今すぐ見る`, verify the iframe contains the published video ID, and confirm `YouTubeで開く` resolves to the same public video.
+9. Use `今すぐ見る`, verify the iframe contains the published video ID, confirm the iframe is the browser hit-test target, click play and verify playback advances, and confirm `YouTubeで開く` resolves to the same public video.
 
 Report separately: YouTube state, database lesson state, deployed commit, workflow URL, banner state, and visible embed state.
 
