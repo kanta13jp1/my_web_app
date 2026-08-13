@@ -50,16 +50,17 @@ Expected components:
   - Render a non-Web fallback instead of importing Web-only APIs directly.
 - `lib/widgets/ai_university_published_video_banner.dart`
   - Show a provider-independent `公開動画で学ぶ` entry above the genre shelf.
-  - Use the orange primary `今すぐ見る` CTA with a minimum 44 px target.
-  - Switch to a full-width CTA below 620 px using `LayoutBuilder`.
-  - Receive title, provider, count, and callback as data; never hard-code a video ID.
+  - Receive every active public-video lesson as a data list and render each title and provider; never collapse multiple rows to the first topic.
+  - Give each lesson an orange primary `今すぐ見る` CTA with a minimum 44 px target.
+  - Switch each lesson tile to full width below 620 px using `LayoutBuilder`.
+  - Receive titles, providers, and callbacks as data; never hard-code a video ID.
 - `lib/widgets/ai_university_youtube_viewer_route.dart`
   - Open the embedded lesson through a regular opaque `MaterialPageRoute`.
   - Do not render an interactive iframe behind a `DialogRoute` or `ModalBarrier`; Flutter Web can place the barrier above the iframe in browser hit testing.
   - Keep an explicit visible close action and prevent interaction with the previous page while the viewer is open.
 - `lib/pages/gemini_university_v2_page.dart`
   - Detect a YouTube `source_url` and embed the player inside the expanded lesson card.
-  - Derive active public-video topics from database rows and show the banner regardless of the selected provider.
+  - Derive all active public-video topics from database rows and pass every topic to the banner regardless of the selected provider.
   - Open the embedded lesson in a constrained barrier-free viewer and keep the generation action labeled separately.
 - `lib/pages/ai_university_video_page.dart`
   - Embed the selected published lesson before the generated-video controls.

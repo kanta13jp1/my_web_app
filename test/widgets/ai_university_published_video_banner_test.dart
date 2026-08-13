@@ -3,7 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/widgets/ai_university_published_video_banner.dart';
 
 void main() {
-  Widget subject({required VoidCallback onPlay, double width = 800}) {
+  Widget subject({
+    required VoidCallback onFirstPlay,
+    required VoidCallback onSecondPlay,
+    double width = 800,
+  }) {
     return MaterialApp(
       theme: ThemeData.dark(),
       home: Scaffold(
@@ -12,10 +16,18 @@ void main() {
           child: SizedBox(
             width: width,
             child: AiUniversityPublishedVideoBanner(
-              title: 'Codex Record & Replay｜一度見せれば、次から任せられる',
-              providerLabel: 'OpenAI',
-              videoCount: 1,
-              onPlay: onPlay,
+              videos: [
+                AiUniversityPublishedVideoBannerItem(
+                  title: 'Codex Record & Replay｜一度見せれば、次から任せられる',
+                  providerLabel: 'OpenAI',
+                  onPlay: onFirstPlay,
+                ),
+                AiUniversityPublishedVideoBannerItem(
+                  title: '「完了した人としておかしいですよね？」を解説',
+                  providerLabel: 'OpenAI',
+                  onPlay: onSecondPlay,
+                ),
+              ],
             ),
           ),
         ),
@@ -23,34 +35,49 @@ void main() {
     );
   }
 
-  testWidgets('公開動画の情報を表示し、CTAから再生操作を通知する', (tester) async {
-    var playCount = 0;
-    await tester.pumpWidget(subject(onPlay: () => playCount++));
+  testWidgets('公開動画を全件表示し、選んだ動画の再生操作だけを通知する', (tester) async {
+    var firstPlayCount = 0;
+    var secondPlayCount = 0;
+    await tester.pumpWidget(
+      subject(
+        onFirstPlay: () => firstPlayCount++,
+        onSecondPlay: () => secondPlayCount++,
+      ),
+    );
 
     expect(find.text('公開動画で学ぶ'), findsOneWidget);
-    expect(find.text('1本'), findsOneWidget);
+    expect(find.text('2本'), findsOneWidget);
     expect(find.textContaining('Codex Record & Replay'), findsOneWidget);
-    expect(find.text('OpenAI の公開済み動画教材'), findsOneWidget);
+    expect(find.textContaining('完了した人として'), findsOneWidget);
+    expect(find.text('今すぐ見る'), findsNWidgets(2));
 
-    await tester.tap(find.text('今すぐ見る'));
+    await tester.tap(find.byKey(const Key('published-video-play-button-1')));
     await tester.pump();
 
-    expect(playCount, 1);
+    expect(firstPlayCount, 0);
+    expect(secondPlayCount, 1);
   });
 
-  testWidgets('狭い幅ではCTAを横幅いっぱいに配置してオーバーフローしない', (tester) async {
-    await tester.pumpWidget(subject(onPlay: () {}, width: 320));
+  testWidgets('狭い幅では各動画を横幅いっぱいに配置してオーバーフローしない', (tester) async {
+    await tester.pumpWidget(
+      subject(onFirstPlay: () {}, onSecondPlay: () {}, width: 320),
+    );
 
     final banner = tester.getRect(
       find.byKey(const Key('published-video-banner')),
     );
-    final button = tester.getRect(
-      find.byKey(const Key('published-video-play-button')),
+    final firstButton = tester.getRect(
+      find.byKey(const Key('published-video-play-button-0')),
+    );
+    final secondButton = tester.getRect(
+      find.byKey(const Key('published-video-play-button-1')),
     );
 
-    expect(button.width, greaterThan(250));
-    expect(button.left, greaterThanOrEqualTo(banner.left));
-    expect(button.right, lessThanOrEqualTo(banner.right));
+    expect(firstButton.width, greaterThan(250));
+    expect(secondButton.width, greaterThan(250));
+    expect(firstButton.left, greaterThanOrEqualTo(banner.left));
+    expect(firstButton.right, lessThanOrEqualTo(banner.right));
+    expect(secondButton.top, greaterThan(firstButton.bottom));
     expect(tester.takeException(), isNull);
   });
 }

@@ -186,6 +186,7 @@ def check_ui(args: argparse.Namespace) -> int:
         ],
         "lib/widgets/ai_university_published_video_banner.dart": [
             "AiUniversityPublishedVideoBanner",
+            "List<AiUniversityPublishedVideoBannerItem>",
             "公開動画で学ぶ",
             "今すぐ見る",
             "LayoutBuilder",
@@ -200,6 +201,7 @@ def check_ui(args: argparse.Namespace) -> int:
             "AiUniversityPublishedVideoBanner",
             "showAiUniversityYoutubeViewer",
             "_buildPublishedVideoBanner",
+            "for (final topic in topics)",
             "AI動画レッスンを生成",
         ],
         "lib/pages/ai_university_video_page.dart": [
