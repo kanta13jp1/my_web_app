@@ -38,6 +38,9 @@ class CicdEfficiencyTest(unittest.TestCase):
     def test_ga_gate_does_not_run_for_every_test_file(self) -> None:
         workflow = self.read(".github/workflows/ga-readiness-gate.yml")
         self.assertNotIn('- "test/**"', workflow)
+        self.assertNotIn("flutter analyze", workflow)
+        self.assertNotIn("flutter test", workflow)
+        self.assertIn("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", workflow)
 
     def test_auto_fix_is_operator_initiated(self) -> None:
         workflow = self.read(".github/workflows/ci-auto-fix.yml")
