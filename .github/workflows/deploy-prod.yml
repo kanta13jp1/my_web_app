@@ -669,6 +669,8 @@ jobs:
             --build-name=${{ steps.version.outputs.version }} \
             --build-number=${{ github.run_number }} \
             --dart-define=ENVIRONMENT=production \
+            --dart-define=SUPABASE_URL=$SUPABASE_URL \
+            --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
             --dart-define=APP_VERSION=${{ steps.version.outputs.version }} \
             --dart-define=BUILD_NUMBER=${{ github.run_number }} \
             --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true \

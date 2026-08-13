@@ -110,6 +110,7 @@ import '../pages/user_tasks_page.dart';
 import '../pages/guitar_recording_studio_page.dart';
 import '../pages/public_guitar_gallery_page.dart';
 import '../pages/music_collaboration_page.dart';
+import '../ui/features/beatles_guitar_tabs/beatles_guitar_tabs_feature.dart';
 import '../pages/focus_timer_page.dart';
 import '../pages/ai_writing_assistant_page.dart';
 import '../pages/wiki_database_page.dart';
@@ -1658,6 +1659,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
           _pushPage(context, const GuitarRecordingStudioPage()),
     ),
     HomeToolEntry(
+      id: 'beatles-guitar-tabs',
+      sectionId: 'personal',
+      title: 'Beatles ギター・タブ練習',
+      subtitle: '代表曲の奏法を題材にした、権利に配慮したオリジナル練習タブとテンポ調整',
+      icon: Icons.queue_music_outlined,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        'Beatles',
+        'ビートルズ',
+        'ギター',
+        'タブ譜',
+        'TAB',
+        'フィンガーピッキング',
+        'リフ',
+        'コード',
+      ],
+      onOpen: (context) => _pushPage(context, const BeatlesGuitarTabsFeature()),
+    ),
+    HomeToolEntry(
       id: 'public-guitar-gallery',
       sectionId: 'personal',
       title: '公開ギターギャラリー',
@@ -2124,11 +2144,19 @@ List<HomeToolEntry> buildHomeToolCatalog({
     HomeToolEntry(
       id: 'social-feed',
       sectionId: 'growth',
-      title: 'ソーシャルフィード',
-      subtitle: '公開メモ・いいね・コメントのSNSフィード',
-      icon: Icons.forum_outlined,
-      color: const Color(0xFF1565C0),
-      keywords: const <String>['SNS', 'フィード', 'ソーシャル', 'タイムライン', 'social'],
+      title: 'MUSUBI ソーシャル',
+      subtitle: '文脈・翻訳・透明なフィードを自分で選べる人間中心SNS',
+      icon: Icons.hub_outlined,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        'SNS',
+        'フィード',
+        'ソーシャル',
+        'タイムライン',
+        'MUSUBI',
+        'コミュニティ',
+        'social',
+      ],
       onOpen: (context) => _pushPage(context, const SocialFeedPage()),
     ),
     HomeToolEntry(
