@@ -59,6 +59,7 @@ const List<String> kAllAppRoutes = <String>[
   '/autonomous-ops-console',
   '/behavior-log',
   '/behavior-review',
+  '/beatles-guitar-tabs',
   '/billing',
   '/blog',
   '/blog-management',

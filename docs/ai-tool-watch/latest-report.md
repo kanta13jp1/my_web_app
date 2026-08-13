@@ -1,13 +1,16 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-08-08T21:47:36Z`
-- Previous check: `2026-08-07T21:57:04Z`
-- Changed/new official sources: `2`
+- Checked at: `2026-08-12T22:04:21Z`
+- Previous check: `2026-08-11T22:06:46Z`
+- Changed/new official sources: `5`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.226 / August 8, 2026
-- `changed` Devin release notes: August 7, 2026
+- `changed` Claude Code changelog: 2.1.228 / August 11, 2026
+- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
+- `changed` Codex changelog: 2026-08-10 / Introducing Daybreak Blue and Daybreak Red Daybreak now offers two access tiers for approve
+- `changed` Codex use cases: ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of
+- `changed` Cursor changelog: New in Cursor
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -19,7 +22,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.226 / August 8, 2026
+  - Latest signal: 2.1.228 / August 11, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .
@@ -37,7 +40,7 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-08-07 / Codex CLI 0.147.0 pre
+  - Latest signal: 2026-08-10 / Introducing Daybreak Blue and Daybreak Red Daybreak now offers two access tiers for approve
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...
   - Short signal: Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...
@@ -59,7 +62,7 @@
   - Short signal: Install plugins to connect: Google Drive : search files and folders, open and download content, create and organize files Gmail : search and read mail, draft and send messages,...
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
-  - Latest signal: VS Code Gemini Code Assist 2.92.0 / July 20, 2026
+  - Latest signal: VS Code Gemini Code Assist 2.95.0 / August 10, 2026
   - Keyword groups: hooks, schedule, integration, quality-cost
   - Short signal: Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...
   - Short signal: Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra...

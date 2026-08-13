@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-08T21:47:38Z",
+  "generated_at": "2026-08-12T22:04:25Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -20,9 +20,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-4886def50078",
+        "entry_id": "nf-79a32e947c28",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.226 / August 8, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.226 August 8, 2026 Bug fixes and reliability improvements ​ 2.1.225 August 8, 2026 Added gateway spend-limit support to Claude Code’s usage warning; the limit-reached...",
+        "text": "Claude Code changelog 2.1.228 / August 11, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.228 August 11, 2026 Fixed interactive sessions that could stop redrawing entirely, while the process kept running, after a rare internal layout error Fixed git / Git Bash...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -31,7 +31,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "7e17945d59eff4ba90cc42b4fd77c9ee3d6f7173818874135a7cb4a1178d40a5",
+          "hash": "2e0924cf9f7756aedb97d4ebddd9d7ef330054912fa40ae84caa6a674ccee7f0",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -75,22 +75,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.226 / August 8, 2026",
+          "latest_signal": "2.1.228 / August 11, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "f4ebf4c07071aaee2c9d0c4a32dcdbc1029c3452517cbca2fcc3f67d4077ffb9",
+          "previous_hash": "ff2122497f3f8c318cf3c6ee0269e7c04d18c75e04f3ed4169f0f69c66312d67",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.226 August 8, 2026 Bug fixes and reliability improvements ​ 2.1.225 August 8, 2026 Added gateway spend-limit support to Claude Code’s usage warning; the limit-reached..."
+            "​ 2.1.228 August 11, 2026 Fixed interactive sessions that could stop redrawing entirely, while the process kept running, after a rare internal layout error Fixed git / Git Bash..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-4886def50078",
+        "entry_id": "nf-79a32e947c28",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -116,10 +116,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "5a924f9a0790833cfeba54a374954e87f9ff437c7b941234ac4ca238087e03cb",
+          "hash": "7b931eba183eb97a7caf759caef554ec7b69b530d74f1a6322d18f8d0564cdbb",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -158,7 +158,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "5a924f9a0790833cfeba54a374954e87f9ff437c7b941234ac4ca238087e03cb",
+          "previous_hash": "ca1c07ba5ab60e0743c39e9a99623c24207793a31f891de6acf21430e52e4a2f",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -263,18 +263,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-66ad04b12511",
+        "entry_id": "nf-dd6f74214325",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-08-07 / Codex CLI 0.147.0 pre ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources... Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)... All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How...",
+        "text": "Codex changelog 2026-08-10 / Introducing Daybreak Blue and Daybreak Red Daybreak now offers two access tiers for approve ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources... Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)... All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How...",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "3973609a2544add4191e51fd3126d3e82e992e9179d2892a2952949bc9c1b1b3",
+          "hash": "15a72b9b2dda1278ce459bb2ed077dac9e92fd601163550e434fa31044adf3c6",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -317,10 +317,10 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-08-07 / Codex CLI 0.147.0 pre",
+          "latest_signal": "2026-08-10 / Introducing Daybreak Blue and Daybreak Red Daybreak now offers two access tiers for approve",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "3973609a2544add4191e51fd3126d3e82e992e9179d2892a2952949bc9c1b1b3",
+          "previous_hash": "21c6a3fca411ce7bc195547d16412f905affabc6a9df0cd41dcd76dbc23a93e8",
           "slug": "codex-changelog",
           "snippets": [
             "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -332,7 +332,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-66ad04b12511",
+        "entry_id": "nf-dd6f74214325",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -361,10 +361,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "f6d18bc18ccedd8d17d6fb956082dafa1e80116f092b6c28f5102305e05221af",
+          "hash": "669b5a9132ac962597c9f1b09707989c80033bccc9f79223ffa421be1e8f3166",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.4",
@@ -403,7 +403,7 @@
           "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "f6d18bc18ccedd8d17d6fb956082dafa1e80116f092b6c28f5102305e05221af",
+          "previous_hash": "eb3b996dd2e4ce5b67d73ab254315dfb779bbaee454848ffe724fea017b7a622",
           "slug": "codex-use-cases",
           "snippets": [
             "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -487,10 +487,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "a23bd552769066e3de658abf11d3553627ae135cd177078cd4c9cbac3f466ae3",
+          "hash": "7faec165a006a65b1be96a3265a85110e497ecdf150525508178dcd771bb6df5",
           "keyword_groups": {
             "hooks": [
               "hook",
@@ -545,9 +545,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-a9de0746fa95",
+        "entry_id": "nf-09aa9d51f465",
         "title": "Gemini Code Assist release notes",
-        "text": "Gemini Code Assist release notes VS Code Gemini Code Assist 2.92.0 / July 20, 2026 Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application... Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra... April 13, 2026 VS Code Gemini Code Assist 2.77.3 Fixed Quota issues fixed in VS Code Various bug fixes related to quota issues.",
+        "text": "Gemini Code Assist release notes VS Code Gemini Code Assist 2.95.0 / August 10, 2026 Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application... Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra... April 13, 2026 VS Code Gemini Code Assist 2.77.3 Fixed Quota issues fixed in VS Code Various bug fixes related to quota issues.",
         "url": "https://developers.google.com/gemini-code-assist/resources/release-notes",
         "source": "Gemini Code Assist",
         "source_label": "ai-tool-watch",
@@ -556,7 +556,7 @@
           "changed": false,
           "error": null,
           "first_seen": false,
-          "hash": "cd6e9ff8949d7c5fe4015a5b039261c21f1ecea5e73d18a972feed159ca159a1",
+          "hash": "26aadac92b37e4dba989ec21d669ed9e59ae4ee05b67a6ffff38a4ceeb4c903d",
           "keyword_groups": {
             "hooks": [
               "Stop"
@@ -578,10 +578,10 @@
               "workflow"
             ]
           },
-          "latest_signal": "VS Code Gemini Code Assist 2.92.0 / July 20, 2026",
+          "latest_signal": "VS Code Gemini Code Assist 2.95.0 / August 10, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
-          "previous_hash": "cd6e9ff8949d7c5fe4015a5b039261c21f1ecea5e73d18a972feed159ca159a1",
+          "previous_hash": "26aadac92b37e4dba989ec21d669ed9e59ae4ee05b67a6ffff38a4ceeb4c903d",
           "slug": "gemini-code-assist-release-notes",
           "snippets": [
             "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",
@@ -593,7 +593,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-a9de0746fa95",
+        "entry_id": "nf-09aa9d51f465",
         "title": "Gemini Code Assist release notes",
         "url": "https://developers.google.com/gemini-code-assist/resources/release-notes",
         "source": "Gemini Code Assist",
@@ -619,7 +619,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "6ede3f497bb664bdb01f1454286973a8e4ac5dc7e5338cf23b98d0ff3e4d8018",
@@ -659,7 +659,7 @@
           "latest_signal": "August 7, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "b1a20ac3437c2cd2bf3e77d9ab96b2af7bc3d4b83a4dc442b2c677e859f1fa31",
+          "previous_hash": "6ede3f497bb664bdb01f1454286973a8e4ac5dc7e5338cf23b98d0ff3e4d8018",
           "slug": "devin-release-notes",
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
