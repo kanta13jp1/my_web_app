@@ -25,15 +25,13 @@ class BeatlesGuitarTabsFeature extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resolvedRepository =
-        repository ??
+    final resolvedRepository = repository ??
         const LocalGuitarTabRepository(
           catalogService: GuitarTabCatalogService(),
         );
     final resolvedLinkService =
         linkService ?? const UrlLauncherGuitarLessonLinkService();
-    final resolvedCourseRepository =
-        courseRepository ??
+    final resolvedCourseRepository = courseRepository ??
         LocalGuitarCourseRepository(
           catalogService: const GuitarDailyCourseCatalogService(),
           progressService: SharedPreferencesGuitarCourseProgressService(),

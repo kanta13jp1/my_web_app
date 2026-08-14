@@ -45,9 +45,9 @@ class GuitarCourseProgress {
     Iterable<String> completedTaskIds = const <String>[],
     Iterable<int> completedDayNumbers = const <int>[],
     Iterable<String> practiceDateKeys = const <String>[],
-  }) : completedTaskIds = Set<String>.unmodifiable(completedTaskIds),
-       completedDayNumbers = Set<int>.unmodifiable(completedDayNumbers),
-       practiceDateKeys = Set<String>.unmodifiable(practiceDateKeys);
+  })  : completedTaskIds = Set<String>.unmodifiable(completedTaskIds),
+        completedDayNumbers = Set<int>.unmodifiable(completedDayNumbers),
+        practiceDateKeys = Set<String>.unmodifiable(practiceDateKeys);
 
   final Set<String> completedTaskIds;
   final Set<int> completedDayNumbers;

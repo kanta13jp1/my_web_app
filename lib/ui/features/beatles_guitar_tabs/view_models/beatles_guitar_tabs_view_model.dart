@@ -16,11 +16,11 @@ class BeatlesGuitarTabsViewModel extends ChangeNotifier {
     required GuitarLessonLinkService linkService,
     required BuildGuitarCourseSnapshotUseCase buildCourseSnapshot,
     DateTime Function()? clock,
-  }) : _repository = repository,
-       _courseRepository = courseRepository,
-       _linkService = linkService,
-       _buildCourseSnapshot = buildCourseSnapshot,
-       _clock = clock ?? DateTime.now;
+  })  : _repository = repository,
+        _courseRepository = courseRepository,
+        _linkService = linkService,
+        _buildCourseSnapshot = buildCourseSnapshot,
+        _clock = clock ?? DateTime.now;
 
   final GuitarTabRepository _repository;
   final GuitarCourseRepository _courseRepository;

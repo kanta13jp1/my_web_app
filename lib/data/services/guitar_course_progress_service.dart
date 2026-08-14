@@ -11,7 +11,7 @@ abstract interface class GuitarCourseProgressService {
 class SharedPreferencesGuitarCourseProgressService
     implements GuitarCourseProgressService {
   SharedPreferencesGuitarCourseProgressService({SharedPreferences? preferences})
-    : _preferences = preferences;
+      : _preferences = preferences;
 
   static const String _taskIdsKey = 'guitar_course_v1_completed_task_ids';
   static const String _dayNumbersKey = 'guitar_course_v1_completed_day_numbers';
