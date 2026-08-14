@@ -4,9 +4,11 @@ library;
 
 import '../models/election_intelligence.dart';
 
-const String dpjOfficialEndorsementSourceUrl = 'https://new-kokumin.jp/local-election-list';
+const String dpjOfficialEndorsementSourceUrl =
+    'https://new-kokumin.jp/local-election-list';
 const String dpjOfficialEndorsementSourceAsOf = '2026-08-12';
-const String dpjOfficialEndorsementSourceDocumentSha256 = 'e0905c80109db785bdd601db329a8a8ee66855ccf6c09f52cb0f39528547d315';
+const String dpjOfficialEndorsementSourceDocumentSha256 =
+    'e0905c80109db785bdd601db329a8a8ee66855ccf6c09f52cb0f39528547d315';
 const int dpjOfficialRecommendationEntryCount = 9;
 
 const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
@@ -250,13 +252,8 @@ const int dpjOfficialEndorsementNewcomerTotal = 107;
 const int dpjOfficialEndorsementFormerTotal = 9;
 const int dpjOfficialEndorsementPrefectureCount = 33;
 
-OfficialEndorsementPrefecture? dpjOfficialEndorsementFor(
-  String prefecture,
-) {
-  final normalized = prefecture.replaceFirst(
-    RegExp(r'[都府県]$'),
-    '',
-  );
+OfficialEndorsementPrefecture? dpjOfficialEndorsementFor(String prefecture) {
+  final normalized = prefecture.replaceFirst(RegExp(r'[都府県]$'), '');
   for (final item in dpjOfficialEndorsements) {
     if (item.prefecture == normalized) {
       return item;
