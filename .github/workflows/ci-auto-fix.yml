@@ -93,6 +93,7 @@ jobs:
         with:
           flutter-version: '3.38.x'
 
+      # dart format reads package language versions from .dart_tool/package_config.json.
       - name: Resolve Flutter dependencies for formatter language version
         if: steps.pr.outputs.has_dart == 'true'
         run: flutter pub get
