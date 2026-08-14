@@ -22,6 +22,7 @@ const List<String> kAllAppRoutes = <String>[
   '/agents',
   '/ai-assistant-chat',
   '/ai-company-builder',
+  '/agi-fireworks',
   '/ai-dev-principles',
   '/ai-image-generator',
   '/ai-observability',
