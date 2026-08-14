@@ -98,6 +98,27 @@ class AiUniversityVideoLessonService {
     'pika': 'Pika',
   };
 
+  static List<Map<String, dynamic>> mergeContentRowsByProviderCategory(
+    Iterable<Map<String, dynamic>> primaryRows,
+    Iterable<Map<String, dynamic>> supplementalRows,
+  ) {
+    final rowsByKey = <String, Map<String, dynamic>>{};
+    var unkeyedRowIndex = 0;
+
+    for (final row in [...primaryRows, ...supplementalRows]) {
+      final provider =
+          (row['provider'] as String? ?? row['provider_id'] as String? ?? '')
+              .trim();
+      final category = (row['category'] as String? ?? '').trim();
+      final key = provider.isNotEmpty && category.isNotEmpty
+          ? '$provider::$category'
+          : 'unkeyed::${unkeyedRowIndex++}';
+      rowsByKey[key] = row;
+    }
+
+    return rowsByKey.values.toList(growable: false);
+  }
+
   static List<AiUniversityVideoLessonTopic> topicsFromRows(
     List<Map<String, dynamic>> rows,
   ) {
