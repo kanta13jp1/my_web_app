@@ -19,6 +19,7 @@ class LocalElectionPrefecturePlan {
   final int postConventionLossCount;
   final int cdpLocalMembers;
   final String cdpSourceUrl;
+  final int ldpLocalMembers;
   final String prefectureChairName;
   final String prefectureSecretaryGeneralName;
   final String prefectureOfficerSourceUrl;
@@ -45,6 +46,7 @@ class LocalElectionPrefecturePlan {
     this.postConventionLossCount = 0,
     this.cdpLocalMembers = 0,
     this.cdpSourceUrl = '',
+    this.ldpLocalMembers = 0,
     this.prefectureChairName = '',
     this.prefectureSecretaryGeneralName = '',
     this.prefectureOfficerSourceUrl = '',
@@ -74,6 +76,7 @@ class LocalElectionPrefecturePlan {
       postConventionLossCount: _readInt(json['postConventionLossCount']),
       cdpLocalMembers: _readInt(json['cdpLocalMembers']),
       cdpSourceUrl: (json['cdpSourceUrl'] as String? ?? '').trim(),
+      ldpLocalMembers: _readInt(json['ldpLocalMembers']),
       prefectureChairName:
           (json['prefectureChairName'] as String? ?? '').trim(),
       prefectureSecretaryGeneralName:
@@ -106,6 +109,7 @@ class LocalElectionPrefecturePlan {
       'postConventionLossCount': postConventionLossCount,
       'cdpLocalMembers': cdpLocalMembers,
       'cdpSourceUrl': cdpSourceUrl,
+      'ldpLocalMembers': ldpLocalMembers,
       'prefectureChairName': prefectureChairName,
       'prefectureSecretaryGeneralName': prefectureSecretaryGeneralName,
       'prefectureOfficerSourceUrl': prefectureOfficerSourceUrl,
@@ -134,6 +138,7 @@ class LocalElectionPrefecturePlan {
     int? postConventionLossCount,
     int? cdpLocalMembers,
     String? cdpSourceUrl,
+    int? ldpLocalMembers,
     String? prefectureChairName,
     String? prefectureSecretaryGeneralName,
     String? prefectureOfficerSourceUrl,
@@ -171,6 +176,7 @@ class LocalElectionPrefecturePlan {
           postConventionLossCount ?? this.postConventionLossCount,
       cdpLocalMembers: cdpLocalMembers ?? this.cdpLocalMembers,
       cdpSourceUrl: cdpSourceUrl ?? this.cdpSourceUrl,
+      ldpLocalMembers: ldpLocalMembers ?? this.ldpLocalMembers,
       prefectureChairName: prefectureChairName ?? this.prefectureChairName,
       prefectureSecretaryGeneralName:
           prefectureSecretaryGeneralName ?? this.prefectureSecretaryGeneralName,
@@ -211,6 +217,10 @@ class LocalElectionPrefecturePlan {
   int get cdpMemberGap => cdpLocalMembers - currentMembers;
 
   bool get hasCdpComparison => cdpLocalMembers > 0;
+
+  int get ldpMemberGap => ldpLocalMembers - currentMembers;
+
+  bool get hasLdpComparison => ldpLocalMembers > 0;
 
   bool get hasPrefectureOfficerNames =>
       prefectureChairName.isNotEmpty ||
@@ -620,13 +630,93 @@ class LocalElectionPlanDashboard {
     if (membersByPrefecture.isEmpty) {
       return this;
     }
+    final normalized = _normalizeBenchmarkKeys(membersByPrefecture);
     return copyWith(
       prefectures: prefectures.map((item) {
-        final fetched = membersByPrefecture[item.prefecture] ?? 0;
+        final fetched =
+            normalized[normalizePrefectureKey(item.prefecture)] ?? 0;
         if (fetched <= 0 || fetched == item.cdpLocalMembers) {
           return item;
         }
         return item.copyWith(cdpLocalMembers: fetched);
+      }).toList(),
+    );
+  }
+
+  int get totalLdpLocalMembers => prefectures.fold<int>(
+        0,
+        (sum, item) => sum + item.ldpLocalMembers,
+      );
+
+  int get ldpComparisonPrefectureCount =>
+      prefectures.where((item) => item.hasLdpComparison).length;
+
+  /// All prefectures that have an LDP comparison, sorted by gap (largest LDP
+  /// lead first). Powers the full 自民 benchmark list.
+  List<LocalElectionPrefecturePlan> allLdpGapPrefectures() {
+    final sorted = prefectures.where((item) => item.hasLdpComparison).toList()
+      ..sort((a, b) {
+        final gapCompare = b.ldpMemberGap.compareTo(a.ldpMemberGap);
+        if (gapCompare != 0) {
+          return gapCompare;
+        }
+        return b.ldpLocalMembers.compareTo(a.ldpLocalMembers);
+      });
+    return sorted;
+  }
+
+  /// 都道府県名を照合キーへ正規化する (北海道以外の 都/府/県 を落とす)。
+  ///
+  /// ベンチマーク JSON は外部ソース由来で、総務省統計のように「青森県」
+  /// 「東京都」形式で再生成される可能性がある。素の名前で引くと北海道だけ
+  /// 一致して「掲載 1/47」が正しい値のように表示され (=沈黙した誤り)、
+  /// セクション非表示ガードもすり抜けるため、必ず正規化して突合する。
+  /// 「都」を一律に落とすと **京都 → 京** になり、`京都府` 側の正規化結果
+  /// (= 京都) と永久に一致しなくなる。東京都だけを明示的に畳み、
+  /// 一般則は 府/県 のみ落とす (plan_service._prefectureKey と同じ規則)。
+  static String normalizePrefectureKey(String value) {
+    final trimmed = value.trim();
+    if (trimmed == '北海道') {
+      return trimmed;
+    }
+    if (trimmed == '東京都') {
+      return '東京';
+    }
+    if (trimmed.endsWith('府') || trimmed.endsWith('県')) {
+      return trimmed.substring(0, trimmed.length - 1);
+    }
+    return trimmed;
+  }
+
+  static Map<String, int> _normalizeBenchmarkKeys(Map<String, int> source) {
+    final normalized = <String, int>{};
+    source.forEach((key, value) {
+      final name = normalizePrefectureKey(key);
+      if (name.isNotEmpty && value > 0) {
+        normalized[name] = value;
+      }
+    });
+    return normalized;
+  }
+
+  /// Returns a copy with each prefecture's 自民 local member count replaced by
+  /// the benchmark value when present and positive. Mirrors
+  /// [withCdpLocalMembers]: a missing/non-positive entry keeps the seed value.
+  LocalElectionPlanDashboard withLdpLocalMembers(
+    Map<String, int> membersByPrefecture,
+  ) {
+    if (membersByPrefecture.isEmpty) {
+      return this;
+    }
+    final normalized = _normalizeBenchmarkKeys(membersByPrefecture);
+    return copyWith(
+      prefectures: prefectures.map((item) {
+        final fetched =
+            normalized[normalizePrefectureKey(item.prefecture)] ?? 0;
+        if (fetched <= 0 || fetched == item.ldpLocalMembers) {
+          return item;
+        }
+        return item.copyWith(ldpLocalMembers: fetched);
       }).toList(),
     );
   }

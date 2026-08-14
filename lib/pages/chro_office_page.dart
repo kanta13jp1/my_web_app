@@ -91,6 +91,7 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
               'Review incentives and keep the reward system visible.',
               Icons.card_giftcard,
               const RewardsPage(),
+              '/rewards',
             ),
             _buildMenuCard(
               context,
@@ -98,6 +99,7 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
               'Check user-level and team-level HR metrics.',
               Icons.bar_chart,
               const StatsPage(),
+              '/stats',
             ),
             _buildMenuCard(
               context,
@@ -105,6 +107,7 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
               'Keep onboarding and support notes for team operations.',
               Icons.menu_book,
               const PeopleHelpPage(),
+              '/people-help',
               tileKey: const Key('chro_menu_people_help'),
             ),
           ],
@@ -113,12 +116,15 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
     );
   }
 
+  /// [routeName] は遷移先画面の URL。`RouteSettings.name` を付けないと
+  /// Flutter Web でブラウザの URL が更新されないため必須にしている。
   Widget _buildMenuCard(
     BuildContext context,
     String title,
     String subtitle,
     IconData icon,
-    Widget? page, {
+    Widget? page,
+    String routeName, {
     Key? tileKey,
   }) {
     return Card(
@@ -144,7 +150,10 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
             ? null
             : () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => page),
+                  MaterialPageRoute(
+                    settings: RouteSettings(name: routeName),
+                    builder: (_) => page,
+                  ),
                 ),
       ),
     );

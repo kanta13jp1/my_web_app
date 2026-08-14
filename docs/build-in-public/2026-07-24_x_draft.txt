@@ -1,0 +1,4 @@
+自分株式会社 (= Jibun Inc.) 最近 7 日:
+- (Win Claude part342) — tracked 8 ファイル 0 byte 化インシデント対応
+
+#buildinpublic #flutter #supabase #claudecode #aifleet

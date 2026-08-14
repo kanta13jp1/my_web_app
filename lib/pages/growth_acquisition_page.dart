@@ -191,6 +191,7 @@ class _GrowthAcquisitionPageState extends State<GrowthAcquisitionPage> {
           runSpacing: 8,
           children: [
             'touch_landing',
+            'touch_profile',
             'touch_import',
             'touch_public_memo',
             'touch_referral',

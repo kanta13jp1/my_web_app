@@ -46,6 +46,51 @@ void main() {
     expect(selected, overviewTopic);
   });
 
+  test('youtubeVideoIdFromUrl supports common YouTube URLs', () {
+    const videoId = '-ZxiEPqxKRY';
+
+    expect(
+      AiUniversityVideoLessonService.youtubeVideoIdFromUrl(
+        'https://www.youtube.com/watch?v=$videoId',
+      ),
+      videoId,
+    );
+    expect(
+      AiUniversityVideoLessonService.youtubeVideoIdFromUrl(
+        'https://youtu.be/$videoId?t=12',
+      ),
+      videoId,
+    );
+    expect(
+      AiUniversityVideoLessonService.youtubeVideoIdFromUrl(
+        'https://www.youtube.com/embed/$videoId',
+      ),
+      videoId,
+    );
+    expect(
+      AiUniversityVideoLessonService.youtubeVideoIdFromUrl(
+        'https://example.com/watch?v=$videoId',
+      ),
+      isNull,
+    );
+  });
+
+  test('topic exposes YouTube video id and video category label', () {
+    const topic = AiUniversityVideoLessonTopic(
+      provider: 'openai',
+      category: 'video_codex_record_replay',
+      title: 'Codex Record & Replay',
+      content: '一度見せた作業を再利用可能なスキルとして保存する方法を学ぶ。',
+      sourceUrl: 'https://youtu.be/-ZxiEPqxKRY',
+    );
+
+    expect(topic.youtubeVideoId, '-ZxiEPqxKRY');
+    expect(
+      AiUniversityVideoLessonService.categoryLabel(topic.category),
+      '動画レッスン',
+    );
+  });
+
   test('buildPrompt includes provider title and clipped source', () {
     final topic = AiUniversityVideoLessonTopic(
       provider: 'hedra',

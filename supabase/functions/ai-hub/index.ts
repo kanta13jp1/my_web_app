@@ -14,6 +14,10 @@ import {
   prependCharacter,
 } from "../_shared/ai_character_preamble.ts";
 import {
+  buildExternalFileContextBlock,
+  MCP_FILE_CONTEXT_SOURCE,
+} from "../_shared/mcp_external_file.ts";
+import {
   type AgentToolApproval,
   type AgentToolPolicyDecision,
   evaluateAgentToolPolicy,
@@ -29,6 +33,10 @@ import {
   parseOfflineSecureModePolicy,
   shouldBlockExternalProviderCall,
 } from "../_shared/offline_secure_mode_guard.ts";
+import {
+  normalizeAiRouterPreference,
+  normalizeAiRoutingTask,
+} from "../_shared/ai_router_cost_optimization.ts";
 import {
   getUniversityContentByFaculty,
   getUniversityDepartmentList,
@@ -62,6 +70,12 @@ import {
   handleDisposableBalanceAction,
 } from "./disposable_balance.ts";
 import {
+  type AnomalyDetectionDb,
+  AnomalyDetectionError,
+  handleDetectAnomaliesAction,
+  handleScanAllAction,
+} from "./anomaly_detection.ts";
+import {
   handleMarketPriceAction,
   isMarketPriceLiveFetchEnabled,
   MarketPriceActionError,
@@ -73,6 +87,7 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Max-Age": "86400",
 };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -128,6 +143,9 @@ type ProviderInlineFile = {
 
 type ProviderCallOptions = {
   maxTokens?: number;
+  /// この 1 呼び出しの timeout (ms)。未指定なら providerFetchTimeoutMs()。
+  /// chat_auto はリクエスト全体予算から残り時間を配分して渡す。
+  timeoutMs?: number;
 };
 
 function pick(obj: unknown, ...path: (string | number)[]): unknown {
@@ -208,7 +226,7 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     displayName: "DeepSeek",
     envKey: "DEEPSEEK_API_KEY",
     chatUrl: "https://api.deepseek.com/v1/chat/completions",
-    defaultModel: "deepseek-chat",
+    defaultModel: "deepseek-v4-flash",
     buildBody: OPENAI_COMPAT_BODY,
     parseResponse: OPENAI_COMPAT_PARSE,
   },
@@ -549,7 +567,10 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
 type Tier = "free" | "budget" | "performance" | "premium";
 
 const TIER_PROVIDERS: Record<Tier, string[]> = {
-  free: ["deepseek", "groq", "cerebras", "siliconflow", "novita_ai"],
+  // 実障害(2026-07-07): free 先頭の遅延プロバイダが chat_auto の時間予算を
+  // 焼き尽くし 2 連続 503。高速推論ホスト(groq/cerebras)を先頭に置く。
+  // key 未設定のプロバイダは callSingleProvider が即 fail するので無害。
+  free: ["groq", "cerebras", "deepseek", "siliconflow", "novita_ai"],
   budget: [
     "sambanova",
     "arcee_ai",
@@ -664,7 +685,7 @@ async function callSingleProvider(
     const controller = new AbortController();
     const timeoutId = setTimeout(
       () => controller.abort(),
-      providerFetchTimeoutMs(),
+      options?.timeoutMs ?? providerFetchTimeoutMs(),
     );
     let resp: Response;
     let respText: string;
@@ -738,6 +759,25 @@ async function callSingleProvider(
 function providerFetchTimeoutMs(): number {
   const raw = Number(Deno.env.get("AI_HUB_PROVIDER_TIMEOUT_MS"));
   return Number.isFinite(raw) && raw > 0 ? raw : 90_000;
+}
+
+/// provider.chat_auto の「リクエスト全体」予算 (ms)。実障害(2026-07-06): 各
+/// プロバイダ 90s timeout のまま複数プロバイダが遅延すると合計が edge の
+/// wall-clock を超え、gateway に ~66s で kill されて生の 502 が返った。
+/// `AI_HUB_CHAT_TOTAL_BUDGET_MS` で調整可 (既定 45s)。クライアント側の
+/// universal-x-share は 45s timeout + 1 retry — 両者は結合しているので
+/// 変更時はセットで見直す。
+function chatTotalBudgetMs(): number {
+  const raw = Number(Deno.env.get("AI_HUB_CHAT_TOTAL_BUDGET_MS"));
+  return Number.isFinite(raw) && raw > 0 ? raw : 45_000;
+}
+
+/// chat_auto の 1 プロバイダ呼び出し上限 (ms)。ハングした 1 プロバイダの
+/// コストを抑え、予算内で後続プロバイダへ順番を回す。
+/// `AI_HUB_CHAT_PER_CALL_MS` で調整可 (既定 20s)。
+function chatPerCallTimeoutMs(): number {
+  const raw = Number(Deno.env.get("AI_HUB_CHAT_PER_CALL_MS"));
+  return Number.isFinite(raw) && raw > 0 ? raw : 20_000;
 }
 
 /// 外部プロバイダ / 内部サブ関数呼び出しに providerFetchTimeoutMs() のタイムアウトを
@@ -832,6 +872,40 @@ function providerTier(providerId: string): Tier | null {
     if (TIER_PROVIDERS[tier].includes(providerId)) return tier;
   }
   return null;
+}
+
+async function loadManualRoutingPreference(
+  userId: string | null,
+  taskValue: unknown,
+): Promise<{ task: string; provider: string; model: string | null } | null> {
+  if (!userId) return null;
+  const task = normalizeAiRoutingTask(taskValue);
+  try {
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    const { data, error } = await admin
+      .from("ai_task_routing_preferences")
+      .select("task, provider, model, is_enabled, updated_at")
+      .eq("user_id", userId)
+      .eq("task", task)
+      .eq("is_enabled", true)
+      .maybeSingle();
+    if (error) {
+      console.warn(`[ai-router] preference lookup skipped: ${error.message}`);
+      return null;
+    }
+    const preference = normalizeAiRouterPreference(data);
+    if (!preference || !(preference.provider in PROVIDER_CONFIGS)) {
+      return null;
+    }
+    return {
+      task: preference.task,
+      provider: preference.provider,
+      model: preference.model,
+    };
+  } catch (error) {
+    console.warn(`[ai-router] preference lookup failed: ${String(error)}`);
+    return null;
+  }
 }
 
 function stripMarkdownCodeFence(text: string): string {
@@ -2994,6 +3068,8 @@ serve(async (req: Request) => {
       "expense.weekly_coaching.generate",
       "asset.disposable_balance.compute",
       "compute-disposable-balance",
+      "asset.anomaly.detect",
+      "detect-anomalies",
       "voice.tts",
       "voice.stt",
       // 英語速読カリキュラム (実力測定 / AI 生成は要認証 / 教材閲覧は公開)
@@ -3421,12 +3497,41 @@ serve(async (req: Request) => {
           const m = h.metadata as Record<string, unknown>;
           return `User: ${m.message}\nAgent: ${m.response}`;
         }).join("\n");
+        const requestedContextIds = asStringArray(
+          body.context_file_ids ?? body.contextFileIds,
+        ).slice(0, 5);
+        let externalFileContext = "";
+        let attachedContextIds: string[] = [];
+        if (requestedContextIds.length > 0) {
+          const { data: contextRows, error: contextError } = await admin
+            .from("hub_data")
+            .select("id,metadata")
+            .eq("source", MCP_FILE_CONTEXT_SOURCE)
+            .filter("metadata->>user_id", "eq", userId!)
+            .filter("metadata->>security_status", "eq", "allowed")
+            .in("id", requestedContextIds);
+          if (contextError) throw new Error(contextError.message);
+          const rowsById = new Map(
+            (contextRows ?? []).map((row) => [String(row.id), row]),
+          );
+          const orderedRows: Record<string, unknown>[] = [];
+          for (const id of requestedContextIds) {
+            const row = rowsById.get(id);
+            if (row) orderedRows.push(row);
+          }
+          attachedContextIds = orderedRows.map((row) => String(row.id));
+          externalFileContext = buildExternalFileContextBlock(orderedRows);
+        }
         const imageInstruction = image
           ? "\n添付画像も確認し、見えている内容・文脈・ユーザーの質問に関係する示唆を含めて回答してください。"
           : "";
-        const prompt = `あなたは個人AIエージェントです。${
-          recentContext ? "履歴:\n" + recentContext + "\n\n" : ""
-        }ユーザーメッセージ: ${message}${imageInstruction}`;
+        const prompt = [
+          externalFileContext ? AI_CHARACTER_PREAMBLE : "",
+          "あなたは個人AIエージェントです。",
+          recentContext ? `履歴:\n${recentContext}` : "",
+          externalFileContext,
+          `ユーザーメッセージ: ${message}${imageInstruction}`,
+        ].filter(Boolean).join("\n\n");
         let response = "";
         let videoMetadata: Record<string, unknown> | null = null;
         let manusMetadata: Record<string, unknown> | null = null;
@@ -3510,6 +3615,7 @@ serve(async (req: Request) => {
           video_download_url: videoMetadata?.download_url ?? null,
           video_reason: videoMetadata?.reason ?? null,
           video_id: videoMetadata?.id ?? null,
+          context_file_ids: attachedContextIds,
         });
         return json({
           success: true,
@@ -3519,6 +3625,7 @@ serve(async (req: Request) => {
           provider: responseMode === "video" ? "hedra" : agentProvider,
           manus: manusMetadata,
           video: videoMetadata,
+          context_file_ids: attachedContextIds,
         });
       }
 
@@ -4733,6 +4840,51 @@ serve(async (req: Request) => {
         return json({ success: true, ...result });
       }
 
+      case "asset.anomaly.scan_all": {
+        // daily-anomaly-scan.yml (cron) 専用: schedule-hub の service_role
+        // レベルと同じく Bearer === SERVICE_ROLE_KEY の生比較で認可する
+        // (service role JWT は auth.getUser() で user にならないため
+        //  authRequired リストでは扱えない)。
+        const bearer = (req.headers.get("Authorization") ?? "")
+          .replace(/^Bearer\s+/i, "");
+        if (!SERVICE_ROLE_KEY || bearer !== SERVICE_ROLE_KEY) {
+          return json({ error: "Unauthorized" }, 401);
+        }
+        const result = await handleScanAllAction({
+          db: admin as unknown as AnomalyDetectionDb,
+          body,
+        });
+        return json({ success: true, ...result });
+      }
+
+      case "asset.anomaly.detect":
+      case "detect-anomalies": {
+        const explanationEnabled =
+          (Deno.env.get("ANOMALY_AI_EXPLANATION_ENABLED") ?? "")
+            .toLowerCase() === "true";
+        const result = await handleDetectAnomaliesAction({
+          db: admin as unknown as AnomalyDetectionDb,
+          body,
+          userId: userId ?? "",
+          explanationEnabled,
+          invokeProvider: async (request) => {
+            const budget = await checkBudget("ef", "ai-hub");
+            if (!budget.ok) {
+              return {
+                ok: false,
+                error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+              };
+            }
+            return await callSingleProvider(
+              request.provider,
+              request.messages,
+              request.model,
+            );
+          },
+        });
+        return json({ success: true, ...result });
+      }
+
       case "asset.market_price.fetch":
       case "asset.investment.market_price.fetch":
       case "ai_hub.fetch_market_price": {
@@ -5208,26 +5360,104 @@ serve(async (req: Request) => {
         let usedTier: Tier | undefined;
         let usedModel: string | undefined;
 
-        outerLoop:
-        for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
-          const tier = TIER_ORDER[ti];
-          const providers = TIER_PROVIDERS[tier].filter((p) =>
-            p in PROVIDER_CONFIGS
-          );
-          for (const pid of providers) {
+        // リクエスト全体の時間予算。実障害(2026-07-06): 予算なしで遅延プロバイダを
+        // 順に待つと edge の wall-clock を超え、gateway 502 でクライアントに
+        // 66 秒待たせた。予算内で per-call 上限を配分し、残りが尽きたら即返す。
+        const chatBudgetMs = chatTotalBudgetMs();
+        let budgetExhausted = false;
+        // どのプロバイダが予算を焼いたかを可視化する試行トレイル。全滅時の
+        // error_message へ付加し、Supabase Logs だけでチェーン健全性を診断
+        // できるようにする(従来は "budget exhausted" の一言で真犯人が不明)。
+        const attemptTrail: string[] = [];
+        const manualPreference = await loadManualRoutingPreference(
+          userId,
+          routingUseCase ?? body.task ?? body.task_type ?? body.action_key,
+        );
+        if (manualPreference) {
+          const remainingMs = chatBudgetMs -
+            (performance.now() - requestStartedAt);
+          if (remainingMs >= 2_000) {
+            const attemptStartedAt = performance.now();
             const result = await callSingleProvider(
-              pid,
+              manualPreference.provider,
               finalMessages,
+              manualPreference.model ?? undefined,
               undefined,
-              undefined,
-              { maxTokens: requestedMaxTokens },
+              {
+                maxTokens: requestedMaxTokens,
+                timeoutMs: Math.min(
+                  providerFetchTimeoutMs(),
+                  chatPerCallTimeoutMs(),
+                  remainingMs,
+                ),
+              },
             );
             if (result.ok && result.text) {
               resultText = result.text;
-              usedProvider = pid;
-              usedTier = tier;
+              usedProvider = manualPreference.provider;
+              usedTier = providerTier(manualPreference.provider) ?? routedTier;
               usedModel = result.modelUsed;
-              break outerLoop;
+            } else {
+              const attemptMs = Math.round(
+                performance.now() - attemptStartedAt,
+              );
+              const attemptError = (result.error ?? "unknown").slice(0, 80);
+              attemptTrail.push(
+                `manual:${manualPreference.provider}:${attemptMs}ms ${attemptError}`,
+              );
+            }
+          } else {
+            budgetExhausted = true;
+            attemptTrail.push(
+              `budget-stop before manual:${manualPreference.provider}`,
+            );
+          }
+        }
+        if (!resultText) {
+          outerLoop:
+          for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
+            const tier = TIER_ORDER[ti];
+            const providers = TIER_PROVIDERS[tier].filter((p) =>
+              p in PROVIDER_CONFIGS
+            );
+            for (const pid of providers) {
+              const remainingMs = chatBudgetMs -
+                (performance.now() - requestStartedAt);
+              if (remainingMs < 2_000) {
+                budgetExhausted = true;
+                attemptTrail.push(`budget-stop before ${pid}`);
+                break outerLoop;
+              }
+              const attemptStartedAt = performance.now();
+              const result = await callSingleProvider(
+                pid,
+                finalMessages,
+                undefined,
+                undefined,
+                {
+                  maxTokens: requestedMaxTokens,
+                  timeoutMs: Math.min(
+                    providerFetchTimeoutMs(),
+                    chatPerCallTimeoutMs(),
+                    remainingMs,
+                  ),
+                },
+              );
+              if (result.ok && result.text) {
+                resultText = result.text;
+                usedProvider = pid;
+                usedTier = tier;
+                usedModel = result.modelUsed;
+                break outerLoop;
+              }
+              const attemptMs = Math.round(
+                performance.now() - attemptStartedAt,
+              );
+              const attemptError = (result.error ?? "unknown").slice(0, 80);
+              attemptTrail.push(`${pid}:${attemptMs}ms ${attemptError}`);
+              console.warn(
+                `[chat_auto] provider failed: ${pid} tier=${tier} ${attemptMs}ms ${attemptError}`,
+              );
             }
           }
         }
@@ -5247,18 +5477,30 @@ serve(async (req: Request) => {
               trace_id: traceId,
               session_id: sessionId,
               input_chars: inputChars,
-              error_message: "all tiers exhausted",
+              // 予算切れと全プロバイダ失敗を区別し、per-provider の試行
+              // トレイルで真犯人(遅延/死亡プロバイダ)まで特定可能に。
+              error_message: ((budgetExhausted
+                ? "budget exhausted"
+                : "all tiers exhausted") +
+                (attemptTrail.length > 0
+                  ? ` | ${attemptTrail.join("; ")}`
+                  : "")).slice(0, 500),
               action: "provider.chat_auto",
-              status_code: 502,
+              status_code: 503,
               provider_choice_reason: providerChoiceReason,
               routing_use_case: routingUseCase,
             });
           } catch { /* ignore */ }
+          // 503 = ハンドリング済みの exhaustion (runtime kill の生 502 と区別)。
+          // traceId を返しクライアント側から attempt 単位で相関可能にする。
           return json({
             success: false,
             status: "allProvidersFailed",
-            message: "すべての Tier のプロバイダーが失敗しました",
-          }, 502);
+            message: budgetExhausted
+              ? "時間予算内にプロバイダー応答が得られませんでした"
+              : "すべての Tier のプロバイダーが失敗しました",
+            traceId: traceId ?? null,
+          }, 503);
         }
 
         // コスト + 観測データ記録 (best-effort、失敗してもレスポンスには影響しない)
@@ -5385,6 +5627,10 @@ serve(async (req: Request) => {
           ? String(body.session_id)
           : null;
         const explicitModel = asString(body.model) || undefined;
+        const routingUseCase = sanitizeProviderChoiceLogText(
+          body.routing_use_case ?? body.task ?? body.task_type,
+          80,
+        );
 
         let resultText: string | undefined;
         let usedProvider: string | undefined;
@@ -5459,24 +5705,48 @@ serve(async (req: Request) => {
             return json({ error: "invalid tier" }, 400);
           }
 
-          outerLoop:
-          for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
-            const tier = TIER_ORDER[ti];
-            const providers = TIER_PROVIDERS[tier].filter((p) =>
-              p in PROVIDER_CONFIGS
+          const manualPreference = await loadManualRoutingPreference(
+            userId,
+            routingUseCase ?? body.task ?? body.task_type ?? body.action_key,
+          );
+          if (manualPreference) {
+            const result = await callSingleProvider(
+              manualPreference.provider,
+              finalMessages,
+              manualPreference.model ?? undefined,
             );
-            for (const pid of providers) {
-              const result = await callSingleProvider(
-                pid,
-                finalMessages,
-                explicitModel,
+            if (result.ok && result.text) {
+              resultText = result.text;
+              usedProvider = manualPreference.provider;
+              usedTier = providerTier(manualPreference.provider) ?? routedTier;
+              usedModel = result.modelUsed;
+            } else {
+              failureDetail = `manual preference failed: ${
+                result.error ?? manualPreference.provider
+              }`;
+            }
+          }
+
+          if (!resultText) {
+            outerLoop:
+            for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
+              const tier = TIER_ORDER[ti];
+              const providers = TIER_PROVIDERS[tier].filter((p) =>
+                p in PROVIDER_CONFIGS
               );
-              if (result.ok && result.text) {
-                resultText = result.text;
-                usedProvider = pid;
-                usedTier = tier;
-                usedModel = result.modelUsed;
-                break outerLoop;
+              for (const pid of providers) {
+                const result = await callSingleProvider(
+                  pid,
+                  finalMessages,
+                  explicitModel,
+                );
+                if (result.ok && result.text) {
+                  resultText = result.text;
+                  usedProvider = pid;
+                  usedTier = tier;
+                  usedModel = result.modelUsed;
+                  break outerLoop;
+                }
               }
             }
           }
@@ -5504,6 +5774,7 @@ serve(async (req: Request) => {
               error_message: failureDetail ?? "edge_llm.invoke failed",
               action: "edge_llm.invoke",
               status_code: 502,
+              routing_use_case: routingUseCase,
             });
           } catch {
             // ignore logging errors
@@ -5548,6 +5819,7 @@ serve(async (req: Request) => {
             output_chars: outputChars,
             action: "edge_llm.invoke",
             status_code: 200,
+            routing_use_case: routingUseCase,
           });
           await recordSpend("ef", "ai-hub", estimatedCost);
         } catch {
@@ -5578,6 +5850,7 @@ serve(async (req: Request) => {
             output_chars: outputChars,
             action: "edge_llm.invoke",
             status_code: 200,
+            routing_use_case: routingUseCase,
           },
         });
       }
@@ -5978,6 +6251,9 @@ serve(async (req: Request) => {
       return json({ error: err.message }, err.status);
     }
     if (err instanceof DisposableBalanceError) {
+      return json({ error: err.message }, err.status);
+    }
+    if (err instanceof AnomalyDetectionError) {
       return json({ error: err.message }, err.status);
     }
     if (err instanceof MarketPriceActionError) {

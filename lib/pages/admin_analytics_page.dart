@@ -3,9 +3,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/growth_mission_service.dart';
+import '../widgets/structured_field_chips.dart';
 import '../widgets/schedule_task_monitor_card.dart';
 import '../widgets/competitor_monitoring_card.dart';
 import '../widgets/self_devin_control_tower_card.dart';
+import 'admin_x_posted_today.dart';
+import 'admin_dashboard_signals.dart';
+import 'admin_x_candidate_queue.dart';
 import 'ai_secretary_page.dart';
 import 'admin/feedback_list_page.dart';
 import 'admin/quota_dashboard_page.dart';
@@ -46,6 +50,9 @@ class _GrowthActionPlan {
   final IconData icon;
   final String buttonLabel;
   final bool isAcquisitionAction;
+  // R16: 非 null のとき、ボタンはページ遷移ではなくこの URL を外部起動する
+  // (投稿を開く / console.x.com で上限確認 等)。
+  final String? launchUrl;
 
   const _GrowthActionPlan({
     required this.bottleneckLabel,
@@ -54,6 +61,7 @@ class _GrowthActionPlan {
     required this.icon,
     required this.buttonLabel,
     required this.isAcquisitionAction,
+    this.launchUrl,
   });
 }
 
@@ -76,8 +84,28 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   int _blockedToolExecutionCount = 0;
   _PaidConversionMetrics _paidConversionMetrics = _PaidConversionMetrics.empty;
   bool _hasLpViewStats = false;
+  // R16: growth-hub x.today_status の結果(今日すでに投稿したか / 最新tweet+初速
+  // インプレ / spend-cap ブロック中か)。取得失敗や available:false のときは null
+  // に戻し、アクションカードは従来文言(「X投稿を作る」)へ degrade する。
+  Map<String, dynamic>? _xTodayStatus;
+  // R17: growth-hub x.performance_context の結果(計測済み投稿の variant ランキング
+  // / 勝ち型 / winner exemplar)。X 学習ループを意思決定点(ダッシュボード)に露出
+  // する。取得失敗時は null → 成長ループ panel は非表示に degrade。
+  Map<String, dynamic>? _xPerformanceContext;
+  // R26: X投稿候補キュー(HITL 承認待ち)。トラッカー系列の cron が生成した
+  // pending_approval 候補をここで承認→投稿する(UUID 手掘り+workflow dispatch
+  // の運用ボトルネック解消)。X operator 権限が無い/取得失敗は空=panel 非表示。
+  List<XPostCandidateSummary> _xCandidates = const [];
+  // R34: edge の total (limit 前の総数) を status 別に保持。空なら「N件以上」表示。
+  Map<String, int> _xCandidateTotals = const <String, int>{};
+  final Set<String> _xCandidatePublishing = <String>{};
+  // #4080: 鮮度切れ一括却下の実行中フラグ (二重送信防止)。
+  bool _xCandidateRejecting = false;
   bool _isLoading = true;
   WeeklyDigestSnapshot _weeklyDigest = const WeeklyDigestSnapshot.empty();
+  // R18: fetch 完了フラグ。empty() のままか、完了して空かを区別し、静かに失敗/空の
+  // 週を無限「読み込み中」ではなく正直な「計測待ち」に落とす。
+  bool _weeklyDigestLoaded = false;
   late final SupabaseClient _supabase;
   final _growthService = const GrowthMissionService();
   List<Map<String, dynamic>> _featureRequests = [];
@@ -108,6 +136,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Map<String, int> _comparisonTouches = {};
   int _comparisonSignups = 0;
   bool _comparisonCvrLoading = false;
+
+  // R29: 自動エラー報告 (error_reporter が hub_data へ無言送信する caught error)
+  // の可視化。管理者自身の直近報告を admin-hub errors.recent で取得する。
+  List<AutoErrorReportEntry> _autoErrorReports = const [];
+  bool _autoErrorReportsLoading = false;
 
   int _toInt(dynamic value) {
     if (value is int) return value;
@@ -211,10 +244,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   String _formatPaidConversionRate(int paidCustomers, int totalUsers) {
-    if (totalUsers <= 0) {
-      return '0.0%';
-    }
-    return '${(paidCustomers / totalUsers * 100).toStringAsFixed(1)}%';
+    // R17: 母数0のとき「0.0%」は測定した0%に見えて誤解を生む → 計測不能の「—」。
+    return formatRatePercent(paidCustomers, totalUsers);
   }
 
   Map<String, dynamic> _firstMap(dynamic value) {
@@ -293,6 +324,376 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return total / window.length;
   }
 
+  /// R16: growth-hub x.today_status を fail-safe に取得する。今日境界はブラウザ
+  /// ローカル深夜を UTC ISO(絶対時刻)で渡す(サーバは epoch 比較する)。
+  /// 例外・available!=true のときは null を返し、アクションカードは従来動作へ degrade。
+  Future<Map<String, dynamic>?> _loadXTodayStatus() async {
+    try {
+      final startOfDayIso =
+          _startOfDay(DateTime.now()).toUtc().toIso8601String();
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.today_status',
+          'startOfDayIso': startOfDayIso,
+          'tz': 'Asia/Tokyo',
+        },
+      );
+      final data = res.data;
+      if (data is Map && data['available'] == true) {
+        return Map<String, dynamic>.from(data);
+      }
+    } catch (error) {
+      debugPrint('x.today_status unavailable: $error');
+    }
+    return null;
+  }
+
+  /// R17: growth-hub x.performance_context を fail-safe に取得する。edge 側に
+  /// server-side try/catch が無いため、ここで必ず握りつぶして null に degrade
+  /// する(取得失敗で成長ループ panel を消すだけ・ダッシュボードは必ず描画する)。
+  Future<Map<String, dynamic>?> _loadXPerformanceContext() async {
+    try {
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {'action': 'x.performance_context', 'limit': 50},
+      );
+      final data = res.data;
+      if (data is Map && data['success'] == true) {
+        return Map<String, dynamic>.from(data);
+      }
+    } catch (error) {
+      debugPrint('x.performance_context unavailable: $error');
+    }
+    return null;
+  }
+
+  /// R26: X投稿候補キューを fail-safe に取得する。操作可能な3状態(承認待ち/
+  /// 承認済み・投稿未完/投稿失敗)を **status 別クエリ**で取り統合する —
+  /// status 無指定の単一クエリだと finalized 行(posted 等)が created_at 降順
+  /// window を埋め、古い承認待ちを黙って押し出す(レビュー F2)。
+  /// X operator 権限が無いと edge が 403 を返すため、例外/非成功は空リストに
+  /// degrade して panel ごと消す(ダッシュボードは必ず描画する)。
+  Future<XCandidateQueueSnapshot> _loadXCandidateQueue() async {
+    const statuses = ['pending_approval', 'approved', 'publish_failed'];
+    // #4080: statuses[] を渡して 1 往復にまとめる (従来は status ごとに 3 往復
+    // + それぞれに CORS preflight)。edge 側は per-status limit を維持するので
+    // 上記 F2 の窓圧迫は起きない。
+    final byStatus = <String, XCandidateStatusPage>{};
+    try {
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.candidate.list',
+          'statuses': statuses,
+          // R32: ヘッダの「N件以上」判定と同じ定数を使う (両者が drift すると
+          // 上限到達を検出できず backlog を過小表示する)。
+          'limit': kXCandidateStatusFetchLimit,
+        },
+      );
+      final data = res.data;
+      if (data is Map && data['success'] == true && data['byStatus'] is Map) {
+        final raw = Map<String, dynamic>.from(data['byStatus'] as Map);
+        for (final status in statuses) {
+          final entry = raw[status];
+          if (entry is Map) {
+            // R34: edge の total (limit 前の総数) を拾う。返さない場合は null の
+            // まま = ヘッダは「N件以上」へ degrade。
+            final rawTotal = entry['total'];
+            byStatus[status] = XCandidateStatusPage(
+              candidates: parseXPostCandidates(entry['candidates']),
+              total: rawTotal is num ? rawTotal.toInt() : null,
+            );
+          }
+        }
+      }
+    } catch (error) {
+      debugPrint('x.candidate.list(batch) unavailable: $error');
+    }
+    final totals = <String, int>{
+      for (final entry in byStatus.entries)
+        if (entry.value.total != null) entry.key: entry.value.total!,
+    };
+    return XCandidateQueueSnapshot(
+      candidates: mergeCandidateSummaries([
+        for (final status in statuses)
+          byStatus[status]?.candidates ?? const <XPostCandidateSummary>[],
+      ]),
+      totalsByStatus: totals,
+    );
+  }
+
+  /// #4080: 鮮度切れ候補をまとめて却下する。鮮度切れは「承認して投稿」が
+  /// 既に無効化されている(古いニュースの誤公開防止)ため、そのままだと
+  /// キューに残り続けて本当に見るべき候補を埋没させる。終端 status
+  /// 'rejected' へ落として一覧から外す。
+  Future<void> _rejectStaleXCandidates(
+    List<XPostCandidateSummary> staleCandidates,
+  ) async {
+    if (staleCandidates.isEmpty || _xCandidateRejecting) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('鮮度切れ候補をまとめて却下'),
+        content: Text(
+          '${staleCandidates.length}件を却下します。'
+          '却下した候補は投稿できなくなります(一覧からは消えます)。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('却下する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _xCandidateRejecting = true);
+    try {
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.candidate.reject',
+          'candidateIds': staleCandidates.map((c) => c.id).toList(),
+          'reason': 'freshness_expired',
+        },
+      );
+      final data = res.data;
+      final rejected = data is Map && data['rejected'] is List
+          ? (data['rejected'] as List).length
+          : 0;
+      final failures = data is Map && data['failures'] is List
+          ? (data['failures'] as List).length
+          : 0;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            failures > 0
+                ? '$rejected件を却下しました($failures件は失敗)'
+                : '$rejected件を却下しました',
+          ),
+        ),
+      );
+      final refreshed = await _loadXCandidateQueue();
+      if (mounted) {
+        setState(() {
+          _xCandidates = refreshed.candidates;
+          _xCandidateTotals = refreshed.totalsByStatus;
+        });
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('却下に失敗しました: $error')));
+    } finally {
+      if (mounted) setState(() => _xCandidateRejecting = false);
+    }
+  }
+
+  /// R26: 候補を承認→投稿→確定する HITL フロー。無審査自動投稿はしない
+  /// (必ず全文確認ダイアログを挟む)。approve が返す postPayload は edge 側で
+  /// whitelist 済みの「人間がレビューした本文そのもの」で、それ以外を送らない。
+  Future<void> _publishXCandidate(XPostCandidateSummary candidate) async {
+    if (_xCandidatePublishing.contains(candidate.id)) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('候補を承認してXへ投稿: ${candidate.seriesLabel}'),
+        content: SizedBox(
+          width: 520,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'リード全${candidate.text.length}字'
+                '${candidate.replyCount > 0 ? ' + リプライ${candidate.replyCount}件(下に全文)' : ''}'
+                'を実投稿します(取り消し不可)。',
+              ),
+              const SizedBox(height: 8),
+              Flexible(
+                child: SingleChildScrollView(
+                  // リード+全リプライ本文。承認者が見ていない文字列は 1 文字も
+                  // 投稿されない(レビュー F0: 件数表示のみだとスレッド本文が
+                  // 未レビューのまま公開される)。
+                  child: Text(
+                    candidateFullReviewText(candidate),
+                    style: Theme.of(dialogContext).textTheme.bodySmall,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('承認して投稿する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _xCandidatePublishing.add(candidate.id));
+    try {
+      // approve 段は独立に捕捉する: edge は承認失敗を全て非2xx(404/409 等)で
+      // 返し functions_client は非2xx で throw するため、外側 catch に落とすと
+      // 「投稿処理でエラー」と誤誘導になる(レビュー F1: この段では何も投稿
+      // されていない)。
+      Map<String, dynamic> approveData;
+      try {
+        final approveRes = await _supabase.functions.invoke(
+          'growth-hub',
+          body: {
+            'action': 'x.candidate.approve',
+            'candidateId': candidate.id,
+          },
+        );
+        approveData = approveRes.data is Map
+            ? Map<String, dynamic>.from(approveRes.data as Map)
+            : <String, dynamic>{};
+      } catch (approveError) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '承認に失敗しました(投稿は行われていません): $approveError',
+            ),
+          ),
+        );
+        return;
+      }
+      if (approveData['success'] != true ||
+          approveData['postPayload'] is! Map) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '承認に失敗しました: ${approveData['error'] ?? '不明なエラー'}',
+            ),
+          ),
+        );
+        return;
+      }
+      final postPayload = Map<String, dynamic>.from(
+        approveData['postPayload'] as Map,
+      );
+      final postRes = await _supabase.functions.invoke(
+        'growth-hub',
+        body: postPayload,
+      );
+      final postData = postRes.data is Map
+          ? Map<String, dynamic>.from(postRes.data as Map)
+          : <String, dynamic>{};
+      // 投稿結果を候補へ確定記録(posted / rejected_duplicate / publish_failed)。
+      // finalize 自体の失敗は投稿結果の通知を妨げない(ログのみ)。
+      try {
+        await _supabase.functions.invoke(
+          'growth-hub',
+          body: {
+            'action': 'x.candidate.finalize',
+            'candidateId': candidate.id,
+            'result': buildCandidateFinalizeResult(postData),
+          },
+        );
+      } catch (finalizeError) {
+        debugPrint('x.candidate.finalize failed: $finalizeError');
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(candidatePublishOutcomeMessage(postData))),
+      );
+      final refreshed = await _loadXCandidateQueue();
+      if (mounted) {
+        setState(() {
+          _xCandidates = refreshed.candidates;
+          _xCandidateTotals = refreshed.totalsByStatus;
+        });
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('候補の投稿処理でエラー: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _xCandidatePublishing.remove(candidate.id));
+      }
+    }
+  }
+
+  /// R16: 今日すでに X 投稿済みなら「投稿を作れ」ではなく、投稿直後30分は
+  /// ゴールデンアワー(手動リプ/poll確認)、以降は計測待ち、spend-cap 中は上限
+  /// 確認案内へ切り替える。今日未投稿(または status 未取得)なら null を返し、
+  /// 呼び出し側の従来ロジック(流入不足→X投稿を作る)へフォールバックする。
+  _GrowthActionPlan? _buildPostedTodayActionPlan() {
+    final status = _xTodayStatus;
+    if (status == null) return null;
+    final cta = adminXPostedTodayCta(status, DateTime.now());
+
+    switch (cta) {
+      case AdminXPostedTodayCta.none:
+        return null;
+      case AdminXPostedTodayCta.blocked:
+        final resetAt = status['resetAt']?.toString();
+        final resetNote = resetAt != null && resetAt.isNotEmpty
+            ? '（$resetAt に自動リセット見込み）'
+            : '';
+        return _GrowthActionPlan(
+          bottleneckLabel: 'X API上限',
+          title: 'X APIの支出上限に到達中',
+          detail: 'console.x.com の「支出上限を管理」で引き上げると即時解除されます$resetNote。'
+              '解除まで自動投稿はスキップされます。再投稿の前に上限を確認してください。',
+          icon: Icons.credit_card_off,
+          buttonLabel: 'console.x.com で上限を確認',
+          isAcquisitionAction: false,
+          launchUrl: 'https://console.x.com/',
+        );
+      case AdminXPostedTodayCta.goldenHour:
+      case AdminXPostedTodayCta.measuring:
+        final postedCount = _toInt(status['postedTodayCount']);
+        final impressions = status['latestImpressions'];
+        final imprText = impressions == null ? '計測待ち' : 'インプレ $impressions';
+        final tweetId = status['lastTweetId']?.toString();
+        final tweetUrl = tweetId != null && tweetId.isNotEmpty
+            ? 'https://x.com/i/web/status/$tweetId'
+            : null;
+        if (cta == AdminXPostedTodayCta.goldenHour) {
+          return _GrowthActionPlan(
+            bottleneckLabel: 'ゴールデンアワー',
+            title: '投稿直後30分: 反応を取りにいく',
+            detail: '本日$postedCount件投稿済み。今は新規投稿より、投稿を開いて実際に来た'
+                'コメントへ手動で返信し、poll票と初速($imprText)を確認するのが伸びを決めます。',
+            icon: Icons.bolt,
+            buttonLabel: tweetUrl != null ? '投稿を開く' : '反応を確認',
+            isAcquisitionAction: false,
+            launchUrl: tweetUrl,
+          );
+        }
+        return _GrowthActionPlan(
+          bottleneckLabel: 'リーチ→LP変換待ち',
+          title: '本日は投稿済み（計測待ち）',
+          detail: '本日$postedCount件投稿済み（$imprText）。再投稿は近似重複ガードに当たるため'
+              '避け、bio・固定ツイート導線(X_PROFILE_CONVERSION_KIT)の見直しや大型'
+              'アカウントへの手動返信で発見性を上げてください。次の投稿はJST 20-22時が目安です。',
+          icon: Icons.hourglass_bottom,
+          buttonLabel: tweetUrl != null ? '投稿を開いて確認' : '成長プレイブックを見る',
+          isAcquisitionAction: false,
+          launchUrl: tweetUrl,
+        );
+    }
+  }
+
   _GrowthActionPlan _buildGrowthActionPlan({
     required bool achieved,
     required int todayViews,
@@ -313,6 +714,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
 
     if (todayViews == 0) {
+      // R16: 今日すでに投稿済みなら「作れ」ではなくゴールデンアワー/計測待ち/上限
+      // 確認へ切り替える(再投稿の near-dup ガード踏み+有償生成を防ぐ)。今日未投稿
+      // or status 未取得なら null → 従来の「X投稿を作る」へフォールバック。
+      final postedTodayPlan = _buildPostedTodayActionPlan();
+      if (postedTodayPlan != null) return postedTodayPlan;
       return _GrowthActionPlan(
         bottleneckLabel: '流入不足',
         title: '今やる流入改善アクション',
@@ -441,25 +847,32 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
-  Widget _buildAcquisitionTargetPage(String? channelKey) {
+  /// 遷移先ページと、その画面に対応する URL (= route 名) を必ず対で返す。
+  /// route を添えないと Flutter Web でブラウザの URL が更新されない。
+  ({Widget page, String route}) _buildAcquisitionTarget(String? channelKey) {
     switch (channelKey) {
-      case 'x_share':
-      case 'facebook':
-        return CmoPage(
-          initialChannel: channelKey,
-          autoGenerateOnOpen: true,
-        );
       case 'line':
-        return const AISecretaryPage(
-          initialStrategyType: 'now',
-          autoRunOnOpen: true,
+        return (
+          page: const AISecretaryPage(
+            initialStrategyType: 'now',
+            autoRunOnOpen: true,
+          ),
+          route: '/ai-secretary',
         );
       case 'qr_scan':
-        return const NoteListPage(prioritizeShareCandidates: true);
+        return (
+          page: const NoteListPage(prioritizeShareCandidates: true),
+          route: '/notes',
+        );
+      case 'x_share':
+      case 'facebook':
       default:
-        return CmoPage(
-          initialChannel: channelKey,
-          autoGenerateOnOpen: true,
+        return (
+          page: CmoPage(
+            initialChannel: channelKey,
+            autoGenerateOnOpen: true,
+          ),
+          route: '/cmo',
         );
     }
   }
@@ -468,17 +881,33 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     required bool isAcquisitionAction,
     String? priorityChannelKey,
     String? priorityChannelLabel,
+    String? ctaUrl,
   }) {
-    final targetPage = isAcquisitionAction
-        ? _buildAcquisitionTargetPage(priorityChannelKey)
-        : const AISecretaryPage(
-            initialStrategyType: 'now',
-            autoRunOnOpen: true,
+    // R16: 投稿済み/上限ブロック状態のボタンはページ遷移ではなく URL を外部起動
+    // する(投稿を開く / console.x.com)。CmoPage への遷移(有償生成トリガ)を回避。
+    if (ctaUrl != null && ctaUrl.isNotEmpty) {
+      final uri = Uri.tryParse(ctaUrl);
+      if (uri != null) {
+        launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+      return;
+    }
+    final target = isAcquisitionAction
+        ? _buildAcquisitionTarget(priorityChannelKey)
+        : (
+            page: const AISecretaryPage(
+              initialStrategyType: 'now',
+              autoRunOnOpen: true,
+            ),
+            route: '/ai-secretary',
           );
 
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => targetPage),
+      MaterialPageRoute(
+        settings: RouteSettings(name: target.route),
+        builder: (_) => target.page,
+      ),
     );
 
     final hint = isAcquisitionAction
@@ -566,6 +995,34 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     _loadGrowthSummary();
     _loadComparisonCvr();
     _loadAppFeedbacks();
+    _loadRecentErrors();
+  }
+
+  /// R29: 自動エラー報告を admin-hub errors.recent で取得する。取得失敗や未認証は
+  /// 空へ degrade し、カードは「正常」表示 or 非表示になる (ダッシュボードは必ず描画)。
+  Future<void> _loadRecentErrors() async {
+    if (!mounted) return;
+    if (_supabase.auth.currentUser == null) return;
+    setState(() => _autoErrorReportsLoading = true);
+    try {
+      final res = await _supabase.functions.invoke(
+        'admin-hub',
+        body: const {'action': 'errors.recent', 'limit': 20},
+      );
+      final data = res.data;
+      final entries = data is Map && data['success'] == true
+          ? parseAutoErrorReports(data['errors'])
+          : const <AutoErrorReportEntry>[];
+      if (mounted) {
+        setState(() {
+          _autoErrorReports = entries;
+          _autoErrorReportsLoading = false;
+        });
+      }
+    } catch (error) {
+      debugPrint('errors.recent unavailable: $error');
+      if (mounted) setState(() => _autoErrorReportsLoading = false);
+    }
   }
 
   Future<void> _loadAppFeedbacks() async {
@@ -614,9 +1071,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     try {
       final digest = await _growthService.loadWeeklyDigest();
       if (!mounted) return;
-      if (mounted) setState(() => _weeklyDigest = digest);
+      // R18: 完了フラグを立てて loading と loaded-empty を区別する
+      // (loadWeeklyDigest は内部で握りつぶし empty() を返すため rethrow しない)。
+      setState(() {
+        _weeklyDigest = digest;
+        _weeklyDigestLoaded = true;
+      });
     } catch (e) {
       debugPrint('weekly digest load error: $e');
+      if (mounted) setState(() => _weeklyDigestLoaded = true);
     }
   }
 
@@ -627,7 +1090,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final data = await _supabase
           .from('feature_requests')
           .select(
-            'id, title, description, email, votes, status, created_at, admin_reply, admin_replied_at',
+            'id, title, description, email, votes, status, created_at, admin_reply, admin_replied_at, priority, effort, target_date',
           )
           .order('votes', ascending: false)
           .limit(50);
@@ -791,6 +1254,154 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     } catch (e) {
       debugPrint('feature request status update error: $e');
     }
+  }
+
+  /// 優先度・工数・期日 (GitHub Issue Fields 相当) を管理者が設定する。
+  Future<void> _showFeatureFieldsDialog(Map<String, dynamic> req) async {
+    final id = '${req['id'] ?? ''}';
+    if (id.isEmpty) return;
+    String? priority = _nullableString(req['priority']);
+    String? effort = _nullableString(req['effort']);
+    DateTime? targetDate = DateTime.tryParse('${req['target_date'] ?? ''}');
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              title: const Text('優先度・工数・期日'),
+              content: SizedBox(
+                width: 360,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<String?>(
+                      initialValue: priority,
+                      decoration: const InputDecoration(labelText: '優先度'),
+                      items: <DropdownMenuItem<String?>>[
+                        const DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text('未設定'),
+                        ),
+                        ...kPriorityValues.map(
+                          (v) => DropdownMenuItem<String?>(
+                            value: v,
+                            child: Text(priorityLabel(v)),
+                          ),
+                        ),
+                      ],
+                      onChanged: (v) => setDialogState(() => priority = v),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String?>(
+                      initialValue: effort,
+                      decoration: const InputDecoration(labelText: '工数'),
+                      items: <DropdownMenuItem<String?>>[
+                        const DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text('未設定'),
+                        ),
+                        ...kEffortValues.map(
+                          (v) => DropdownMenuItem<String?>(
+                            value: v,
+                            child: Text(effortLabel(v)),
+                          ),
+                        ),
+                      ],
+                      onChanged: (v) => setDialogState(() => effort = v),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            targetDate == null
+                                ? '期日: 未設定'
+                                : '期日: ${DateFormat('yyyy-MM-dd').format(targetDate!)}',
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: dialogContext,
+                              initialDate: targetDate ?? DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2100),
+                            );
+                            if (picked != null) {
+                              setDialogState(() => targetDate = picked);
+                            }
+                          },
+                          child: const Text('選択'),
+                        ),
+                        if (targetDate != null)
+                          IconButton(
+                            tooltip: '期日をクリア',
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () =>
+                                setDialogState(() => targetDate = null),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('キャンセル'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  child: const Text('保存'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (saved != true) return;
+    await _updateFeatureRequestFields(
+      id,
+      priority: priority,
+      effort: effort,
+      targetDate: targetDate,
+    );
+  }
+
+  Future<void> _updateFeatureRequestFields(
+    String id, {
+    required String? priority,
+    required String? effort,
+    required DateTime? targetDate,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _supabase.from('feature_requests').update(<String, dynamic>{
+        'priority': priority,
+        'effort': effort,
+        'target_date': targetDate == null
+            ? null
+            : DateFormat('yyyy-MM-dd').format(targetDate),
+      }).eq('id', id);
+      await _loadFeatureRequests();
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('優先度・工数・期日を更新しました')),
+      );
+    } catch (e) {
+      debugPrint('feature request fields update error: $e');
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text('更新に失敗: $e')));
+    }
+  }
+
+  String? _nullableString(dynamic value) {
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? null : text;
   }
 
   Future<void> _replySupportRequest({
@@ -1222,6 +1833,27 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     bodyCtrl.dispose();
   }
 
+  /// agent_tool_execution_logs を fail-safe に取得する (テーブル未整備でも
+  /// ダッシュボードは必ず描画する)。_loadStats の並列開始点から呼ぶ。
+  Future<List<Map<String, dynamic>>> _fetchToolExecutionLogsSafe() async {
+    try {
+      final dynamic rawToolLogs = await _supabase
+          .from('agent_tool_execution_logs')
+          .select('tool_name, allowed, blocked_reason, created_at')
+          .order('created_at', ascending: false)
+          .limit(80);
+      if (rawToolLogs is List) {
+        return [
+          for (final row in rawToolLogs.whereType<Map>())
+            Map<String, dynamic>.from(row),
+        ];
+      }
+    } catch (error) {
+      debugPrint('agent_tool_execution_logs is unavailable: $error');
+    }
+    return const [];
+  }
+
   Future<void> _loadStats() async {
     try {
       final today = _startOfDay(DateTime.now());
@@ -1229,7 +1861,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final startDateKey = _dateKey(startDate);
       final endDateKey = _dateKey(today);
 
-      final results = await Future.wait<dynamic>([
+      final statsFuture = Future.wait<dynamic>([
         _supabase
             .from('app_analytics')
             .select()
@@ -1246,7 +1878,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             .count(CountOption.exact),
         _supabase.rpc('get_lp_view_stats'),
       ]);
+      // 相互依存の無いローダーは DB 4本と同時に開始する。旧実装は
+      // 「DB 4本 → growth-hub 4本 → tool logs」の3段直列で、全画面スピナーが
+      // 3段の合計時間 (数秒) ブロックしていた。並列化で最遅1本ぶんに縮む。
+      final paidConversionFuture = _loadPaidConversionMetrics();
+      final xTodayStatusFuture = _loadXTodayStatus();
+      final xPerformanceContextFuture = _loadXPerformanceContext();
+      final xCandidatesFuture = _loadXCandidateQueue();
+      final toolLogsFuture = _fetchToolExecutionLogsSafe();
 
+      final results = await statsFuture;
       final statsResponse = results[0] as List<dynamic>;
       final profileResponse = results[1] as List<dynamic>;
       final userCountResponse = results[2];
@@ -1267,42 +1908,32 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ? Map<String, dynamic>.from(lpStatsResponse)
           : <String, dynamic>{};
       final hasLpViewStats = lpStats.isNotEmpty;
-      final paidConversionMetrics = await _loadPaidConversionMetrics();
+      final paidConversionMetrics = await paidConversionFuture;
+      final xTodayStatus = await xTodayStatusFuture;
+      final xPerformanceContext = await xPerformanceContextFuture;
+      final xCandidates = await xCandidatesFuture;
 
       final toolExecutionLogs = <Map<String, dynamic>>[];
       final blockedReasonCounts = <String, int>{};
       var allowedExecutionCount = 0;
       var blockedExecutionCount = 0;
 
-      try {
-        final dynamic rawToolLogs = await _supabase
-            .from('agent_tool_execution_logs')
-            .select('tool_name, allowed, blocked_reason, created_at')
-            .order('created_at', ascending: false)
-            .limit(80);
-
-        if (rawToolLogs is List) {
-          for (final row in rawToolLogs.whereType<Map>()) {
-            final log = Map<String, dynamic>.from(row);
-            final allowed = _toBool(log['allowed']);
-            if (allowed) {
-              allowedExecutionCount += 1;
-            } else {
-              blockedExecutionCount += 1;
-              final rawReason = log['blocked_reason']?.toString().trim() ?? '';
-              final reason =
-                  rawReason.isEmpty ? 'Unknown blocked reason' : rawReason;
-              blockedReasonCounts.update(
-                reason,
-                (current) => current + 1,
-                ifAbsent: () => 1,
-              );
-            }
-            toolExecutionLogs.add(log);
-          }
+      for (final log in await toolLogsFuture) {
+        final allowed = _toBool(log['allowed']);
+        if (allowed) {
+          allowedExecutionCount += 1;
+        } else {
+          blockedExecutionCount += 1;
+          final rawReason = log['blocked_reason']?.toString().trim() ?? '';
+          final reason =
+              rawReason.isEmpty ? 'Unknown blocked reason' : rawReason;
+          blockedReasonCounts.update(
+            reason,
+            (current) => current + 1,
+            ifAbsent: () => 1,
+          );
         }
-      } catch (error) {
-        debugPrint('agent_tool_execution_logs is unavailable: $error');
+        toolExecutionLogs.add(log);
       }
 
       final sortedBlockedReasons = blockedReasonCounts.entries.toList()
@@ -1323,6 +1954,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           _allowedToolExecutionCount = allowedExecutionCount;
           _blockedToolExecutionCount = blockedExecutionCount;
           _paidConversionMetrics = paidConversionMetrics;
+          _xTodayStatus = xTodayStatus;
+          _xPerformanceContext = xPerformanceContext;
+          _xCandidates = xCandidates.candidates;
+          _xCandidateTotals = xCandidates.totalsByStatus;
           _isLoading = false;
         });
       }
@@ -1471,6 +2106,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         : 0;
     final zeroRegistrationStreakDays =
         _countConsecutiveNoRegistrationDays(_dailyStats);
+    // R18: streak が集計窓(_dailyStats)を使い切っていると値は下限。実際はそれ以上
+    // なので「N日以上」と正直に出す(30 をちょうどの安心値に見せない)。
+    final zeroStreakAtCap = streakAtWindowCap(
+      zeroRegistrationStreakDays,
+      _dailyStats.length,
+    );
     final averageViewsLast7Days = _averageViews(_dailyStats);
 
     return Scaffold(
@@ -1543,6 +2184,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
+                            settings:
+                                const RouteSettings(name: '/quota-dashboard'),
                             builder: (_) => const QuotaDashboardPage(),
                           ),
                         ),
@@ -1578,6 +2221,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
+                            settings:
+                                const RouteSettings(name: '/blog-management'),
                             builder: (_) => const BlogManagementPage(),
                           ),
                         ),
@@ -1590,6 +2235,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       sourceBreakdown: sourceBreakdown,
                       todayFunnel: todayFunnel,
                     ),
+                    // R17: X 学習ループ(勝ち型/計測待ち/cron警告)を意思決定点に露出。
+                    // データが無いときは SizedBox.shrink() で静かに消える。
+                    _buildXGrowthLoopSection(),
+                    _buildXCandidateQueueSection(),
                     const SizedBox(height: 16),
                     _buildFunnelOverviewCard(
                       title: '今日の登録ファネル',
@@ -1619,6 +2268,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       todayDropBeforeTrial: todayDropBeforeTrial,
                       totalDropBeforeTrial: totalDropBeforeTrial,
                       zeroRegistrationStreakDays: zeroRegistrationStreakDays,
+                      zeroStreakAtCap: zeroStreakAtCap,
                       averageViewsLast7Days: averageViewsLast7Days,
                       totalTrialRate: _formatRate(
                         totalFunnel.trialRuns,
@@ -1733,6 +2383,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     const SizedBox(height: 16),
                     _buildAutomationOpsCard(),
                     const SizedBox(height: 16),
+                    _buildAutoErrorReportsCard(),
+                    const SizedBox(height: 16),
                     const SelfDevinControlTowerCard(),
                     const SizedBox(height: 16),
                     const ScheduleTaskMonitorCard(),
@@ -1793,43 +2445,52 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
     final accentColor =
         achieved ? const Color(0xFF0D9488) : const Color(0xFFB91C1C);
-    final todayCvr =
-        todayViews == 0 ? 0.0 : (todayRegistrations / todayViews * 100);
+    // R16: 今日すでに投稿済み(または spend-cap ブロック中)なら、todayViews==0 でも
+    // 「流入不足/今日の流入がありません」を出さず、growthAction(投稿済み状態機械の
+    // 出力)の診断・文言をそのまま使う。
+    final postedTodayActive =
+        !achieved && todayViews == 0 && _buildPostedTodayActionPlan() != null;
     final diagnosisLabel = achieved
         ? '登録発生'
-        : todayViews == 0
-            ? '流入不足'
-            : growthAction.bottleneckLabel;
+        : postedTodayActive
+            ? growthAction.bottleneckLabel
+            : todayViews == 0
+                ? '流入不足'
+                : growthAction.bottleneckLabel;
     final diagnosisColor = achieved
         ? const Color(0xFF0D9488)
-        : todayViews == 0
-            ? const Color(0xFFFF6B35)
-            : todayFunnel.trialRuns == 0
-                ? const Color(0xFF0D9488)
-                : todayFunnel.saveClicks == 0
-                    ? const Color(0xFF6366F1)
-                    : todayFunnel.magicLinkSends == 0
-                        ? const Color(0xFFFF6B35)
-                        : todayFunnel.inboxOpens == 0
-                            ? const Color(0xFF92400E)
-                            : const Color(0xFFB91C1C);
+        : postedTodayActive
+            ? const Color(0xFF6366F1)
+            : todayViews == 0
+                ? const Color(0xFFFF6B35)
+                : todayFunnel.trialRuns == 0
+                    ? const Color(0xFF0D9488)
+                    : todayFunnel.saveClicks == 0
+                        ? const Color(0xFF6366F1)
+                        : todayFunnel.magicLinkSends == 0
+                            ? const Color(0xFFFF6B35)
+                            : todayFunnel.inboxOpens == 0
+                                ? const Color(0xFF92400E)
+                                : const Color(0xFFB91C1C);
     final actionTitle = achieved ? null : growthAction.title;
     final actionDetail = achieved ? null : growthAction.detail;
     final actionIcon = achieved ? null : growthAction.icon;
     final actionButtonLabel = achieved ? null : growthAction.buttonLabel;
     final statusText = achieved
         ? '今日の登録目標は達成済みです。次は流入改善で上振れを狙う。'
-        : todayViews == 0
-            ? '今日の流入がありません。まずは露出導線を1つ増やして、訪問者を作ってください。'
-            : todayFunnel.trialRuns == 0
-                ? '流れ込みはありますが、無料体験がまだ1回も実行されていません。最初の一手を試したくなる導線を最優先で短くしてください。'
-                : todayFunnel.saveClicks == 0
-                    ? '無料体験の実行はありますが、保存CTAが押されていません。体験直後に「保存すると残る価値」を再提示する必要があります。'
-                    : todayFunnel.magicLinkSends == 0
-                        ? '保存CTAまでは到達していますが、Magic Link送信が0件です。メール入力前の不安を減らす必要があります。'
-                        : todayFunnel.inboxOpens == 0
-                            ? 'Magic Link送信はありますが、受信箱が開かれていません。送信後の次の行動をさらに明確にしてください。'
-                            : '流れ込みはありますが登録が出ていません。登録完了直前での離脱が発生しています。';
+        : postedTodayActive
+            ? growthAction.detail
+            : todayViews == 0
+                ? '今日の流入がありません。まずは露出導線を1つ増やして、訪問者を作ってください。'
+                : todayFunnel.trialRuns == 0
+                    ? '流れ込みはありますが、無料体験がまだ1回も実行されていません。最初の一手を試したくなる導線を最優先で短くしてください。'
+                    : todayFunnel.saveClicks == 0
+                        ? '無料体験の実行はありますが、保存CTAが押されていません。体験直後に「保存すると残る価値」を再提示する必要があります。'
+                        : todayFunnel.magicLinkSends == 0
+                            ? '保存CTAまでは到達していますが、Magic Link送信が0件です。メール入力前の不安を減らす必要があります。'
+                            : todayFunnel.inboxOpens == 0
+                                ? 'Magic Link送信はありますが、受信箱が開かれていません。送信後の次の行動をさらに明確にしてください。'
+                                : '流れ込みはありますが登録が出ていません。登録完了直前での離脱が発生しています。';
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
@@ -1941,7 +2602,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               ),
               _buildMiniKpiChip(
                 label: '今日のCVR',
-                value: '${todayCvr.toStringAsFixed(1)}%',
+                // R17: 流入0のとき「0.0%」は捏造 → 「—」(ファネル率セルと同じ規律)。
+                value: formatRatePercent(todayRegistrations, todayViews),
                 color: diagnosisColor,
               ),
               if (todayViews > 0)
@@ -1956,8 +2618,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   value: '${todayFunnel.magicLinkSends}',
                   color: const Color(0xFFFF6B35),
                 ),
+              // R27: 値は率ではなくボトルネック診断ラベル(体験未実行 等)なので、
+              // ラベルも「登録率」でなく「今日の診断」にする(label/value 不一致
+              // の解消。率は隣の「今日のCVR」チップが担う)。
               _buildMiniKpiChip(
-                label: '登録率',
+                label: '今日の診断',
                 value: diagnosisLabel,
                 color: diagnosisColor,
               ),
@@ -2050,6 +2715,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                   growthAction.isAcquisitionAction,
                               priorityChannelKey: priorityChannelKey,
                               priorityChannelLabel: priorityChannelLabel,
+                              ctaUrl: growthAction.launchUrl,
                             );
                           },
                           icon: const Icon(Icons.arrow_forward, size: 16),
@@ -2310,34 +2976,55 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               ),
             ),
             const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  cvr.toStringAsFixed(1),
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
-                    color: _getCvrColor(cvr),
-                    height: 1.4,
-                  ),
+            // R17: 流入0のときは測定不能なので「0.0%」ではなく中立の「—」計測待ち
+            // を出す(母数=todayViews==0 で判定。流入>0で登録0は真の0.0%なので従来表示)。
+            if (todayViews == 0)
+              const Text(
+                '—',
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF9CA3AF),
+                  height: 1.4,
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 4),
-                  child: Text(
-                    '%',
+              )
+            else
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    cvr.toStringAsFixed(1),
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 48,
                       fontWeight: FontWeight.bold,
                       color: _getCvrColor(cvr),
-                      height: 1.5,
+                      height: 1.4,
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Text(
+                      '%',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: _getCvrColor(cvr),
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            if (todayViews == 0)
+              const Padding(
+                padding: EdgeInsets.only(top: 2),
+                child: Text(
+                  '計測待ち（流入なし）',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
                 ),
-              ],
-            ),
+              ),
             const SizedBox(height: 24),
             const Divider(height: 1),
             const SizedBox(height: 24),
@@ -2494,12 +3181,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     required int todayDropBeforeTrial,
     required int totalDropBeforeTrial,
     required int zeroRegistrationStreakDays,
+    required bool zeroStreakAtCap,
     required double averageViewsLast7Days,
     required String totalTrialRate,
     required String? registrationsPerLpView,
   }) {
+    // R18: 集計窓を使い切っていたら「N日以上」(実際はそれ以上)と正直に。
+    final streakLabel =
+        '$zeroRegistrationStreakDays日${zeroStreakAtCap ? '以上' : ''}';
     final alertText = zeroRegistrationStreakDays >= 3
-        ? '登録ゼロが$zeroRegistrationStreakDays日連続です。流入ではなく、体験開始と認証前の離脱を最優先で潰してください。'
+        ? '登録ゼロが$streakLabel連続です。流入ではなく、体験開始と認証前の離脱を最優先で潰してください。'
         : todayDropBeforeTrial > 0
             ? '今日は流入がありますが、体験前に$todayDropBeforeTrial件が離脱しています。無料体験の訴求を最優先で確認してください。'
             : '直近の登録導線は動いています。次は送信後の完了率を維持できているかを確認してください。';
@@ -2547,7 +3238,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 _buildMiniKpiChip(
                   label: '連続登録ゼロ日',
-                  value: '$zeroRegistrationStreakDays日',
+                  value: streakLabel,
                   color: const Color(0xFFB91C1C),
                 ),
                 _buildMiniKpiChip(
@@ -2838,7 +3529,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     if (parsed == null) {
       return '--';
     }
-    return DateFormat('MM/dd HH:mm:ss').format(parsed);
+    // R20: 年なし MM/dd は2か月前(05/11)のログを今週に見せる。1か月超/別年は
+    // 年を前置して年齢を明示する(「Recent」ラベルの誤読を解消)。
+    final now = DateTime.now();
+    final stale = parsed.year != now.year || now.difference(parsed).inDays > 30;
+    return DateFormat(stale ? 'yyyy/MM/dd HH:mm:ss' : 'MM/dd HH:mm:ss')
+        .format(parsed);
   }
 
   Color _getCvrColor(double cvr) {
@@ -3116,6 +3812,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return 'Public memo copy';
       case 'touch_landing':
         return 'Landing touch';
+      case 'touch_profile':
+        return 'X profile touch';
       case 'touch_import':
         return 'Import touch';
       case 'touch_public_memo':
@@ -3136,6 +3834,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return 'Public memo sign-up CTA';
       case 'signup_submit_landing':
         return 'Sign-up submit: Landing';
+      case 'signup_submit_profile':
+        return 'Sign-up submit: X profile';
       case 'signup_submit_import':
         return 'Sign-up submit: Import';
       case 'signup_submit_public_memo':
@@ -3177,6 +3877,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return const Color(0xFFFFA000);
       case 'touch_landing':
         return const Color(0xFF475569);
+      case 'touch_profile':
+        return const Color(0xFF0F172A);
       case 'touch_import':
         return const Color(0xFF818CF8);
       case 'touch_public_memo':
@@ -3197,6 +3899,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return const Color(0xFFEC4899);
       case 'signup_submit_landing':
         return const Color(0xFF0D9488);
+      case 'signup_submit_profile':
+        return const Color(0xFF2563EB);
       case 'signup_submit_import':
         return const Color(0xFF4338CA);
       case 'signup_submit_public_memo':
@@ -3213,6 +3917,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildWeeklyDigestCard(BuildContext context) {
     final d = _weeklyDigest;
     final hasData = d.currentWeekStart.isNotEmpty;
+    // R18: loading / loaded-empty / loaded-data の3状態に分けてヘッダ文言を決める。
+    final cardState = weeklyDigestCardState(
+      loaded: _weeklyDigestLoaded,
+      hasData: hasData,
+    );
+    final headerText = switch (cardState) {
+      WeeklyDigestCardState.loading => '読み込み中...',
+      WeeklyDigestCardState.empty => '今週はまだ計測データがありません（計測待ち）',
+      WeeklyDigestCardState.data =>
+        '${d.currentWeekStart} 〜 ${d.currentWeekEnd}',
+    };
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -3230,9 +3945,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  hasData
-                      ? '${d.currentWeekStart} 〜 ${d.currentWeekEnd}'
-                      : '読み込み中...',
+                  headerText,
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -3388,6 +4101,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         final views = _toInt(stat['landing_views']);
         final conv = _toInt(stat['conversions']);
         final cvr = views == 0 ? 0.0 : (conv / views * 100);
+        // R17: 流入0の日は測定不能。「0.0%」赤バッジ(_getCvrColorは0→赤)ではなく
+        // 中立グレーの「—」を出す(流入>0で登録0は真の0.0%なので従来色)。
+        final cvrBadgeColor =
+            views == 0 ? const Color(0xFF9CA3AF) : _getCvrColor(cvr);
+        final cvrBadgeText = formatRatePercent(conv, views);
         final dayFunnel = _extractFunnelMetrics(
           _extractSourceCounts(stat['source_details']),
         );
@@ -3438,7 +4156,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: _getCvrColor(cvr).withValues(alpha: 0.1),
+                color: cvrBadgeColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Column(
@@ -3447,11 +4165,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${cvr.toStringAsFixed(1)}%',
+                    cvrBadgeText,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: _getCvrColor(cvr),
+                      color: cvrBadgeColor,
                       height: 1.5,
                     ),
                   ),
@@ -3459,7 +4177,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     'CVR',
                     style: TextStyle(
                       fontSize: 10,
-                      color: _getCvrColor(cvr),
+                      color: cvrBadgeColor,
                       height: 1.5,
                     ),
                   ),
@@ -3491,32 +4209,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   Widget _buildProfileCompletionSummary() {
-    final complete =
-        _adminUsers.where((u) => _toInt(u['completionPct']) >= 67).length;
-    final partial = _adminUsers.where((u) {
-      final pct = _toInt(u['completionPct']);
-      return pct >= 34 && pct < 67;
-    }).length;
-    final empty =
-        _adminUsers.where((u) => _toInt(u['completionPct']) < 34).length;
+    // R19: 旧サマリは未fetch の completionPct(全員0)で「0完成/0途中/44未設定」を
+    // 捏造していた。email 空=匿名 auth を信頼プロキシに「実ユーザー/匿名テスト」へ
+    // 誠実に分割する(合計44 vs 実CVR4 の乖離=匿名を実登録と誤認する虚栄を防ぐ)。
+    final split = summarizeAdminUsers(_adminUsers);
     return Row(
       children: [
         _profileStatChip(
-          Icons.check_circle,
-          '$complete 完成',
+          Icons.verified_user_outlined,
+          '実ユーザー ${split.real}人',
           const Color(0xFF0D9488),
         ),
         const SizedBox(width: 8),
         _profileStatChip(
-          Icons.pending,
-          '$partial 途中',
-          const Color(0xFFFF6B35),
-        ),
-        const SizedBox(width: 8),
-        _profileStatChip(
-          Icons.warning_amber,
-          '$empty 未設定',
-          const Color(0xFFB91C1C),
+          Icons.help_outline,
+          '匿名テスト ${split.anon}人',
+          const Color(0xFF9CA3AF),
         ),
       ],
     );
@@ -3556,7 +4264,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '登録ユーザー管理 (合計 $_adminUsersTotal 人)',
+                    _adminUsers.isEmpty
+                        ? '登録ユーザー管理 (合計 $_adminUsersTotal 人)'
+                        : '登録ユーザー管理 (合計 $_adminUsersTotal 人 / '
+                            '実 ${summarizeAdminUsers(_adminUsers).real}・'
+                            '匿名 ${summarizeAdminUsers(_adminUsers).anon})',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -3657,13 +4369,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       final bio = user['bio']?.toString();
                       final location = user['location']?.toString();
                       final provider = user['provider']?.toString() ?? 'email';
-                      final createdAt = user['createdAt']?.toString() ?? '';
+                      // R19: edge は created_at(snake)を返すのに旧UIは createdAt
+                      // (camel)を読み全行の登録日が空だった。snake 優先で吸収する。
+                      final createdAt = adminUserCreatedRaw(user);
                       final lastSignIn = user['lastSignInAt']?.toString() ?? '';
-                      final hasProfile = user['hasProfile'] as bool? ?? false;
-                      final completionPct = _toInt(user['completionPct']);
+                      // R19: email 空 = Supabase 匿名 auth(headless 検証)の信頼プロキシ。
+                      final isAnonymous = adminUserIsAnonymous(user);
 
-                      String createdStr = '';
-                      String lastSignInStr = '';
+                      // R19: 登録日=parse 不可なら「日付なし」、最終ログインは edge が
+                      // 未送出のため「ログイン記録なし」と正直に出す(空欄で誤魔化さない)。
+                      String createdStr = '日付なし';
+                      String lastSignInStr = 'ログイン記録なし';
                       try {
                         createdStr = DateFormat('yyyy/MM/dd').format(
                           DateTime.parse(createdAt).toLocal(),
@@ -3678,15 +4394,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       final isGoogle = provider.contains('google');
                       final isDark =
                           Theme.of(context).brightness == Brightness.dark;
-
-                      Color profileColor;
-                      if (!hasProfile || completionPct < 34) {
-                        profileColor = const Color(0xFFB91C1C);
-                      } else if (completionPct < 67) {
-                        profileColor = const Color(0xFFFF6B35);
-                      } else {
-                        profileColor = const Color(0xFF0D9488);
-                      }
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 6),
@@ -3703,7 +4410,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                       ? const Color(0xFF1A1E3A)
                                       : const Color(0xFFE8EAF6)),
                               child: Text(
-                                email.isNotEmpty ? email[0].toUpperCase() : '?',
+                                email.isNotEmpty
+                                    ? email[0].toUpperCase()
+                                    : (isAnonymous ? '匿' : '?'),
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -3726,7 +4435,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                           displayName != null &&
                                                   displayName.isNotEmpty
                                               ? displayName
-                                              : email,
+                                              : (email.isNotEmpty
+                                                  ? email
+                                                  : '匿名ユーザー'),
                                           style: const TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w600,
@@ -3751,7 +4462,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                               BorderRadius.circular(6),
                                         ),
                                         child: Text(
-                                          isGoogle ? 'Google' : 'Email',
+                                          // R30: edge users.list は provider を
+                                          // 返さない → isGoogle は常に false で
+                                          // 全員 'Email' と誤表示していた。
+                                          // 判別不能なので中立の '登録済' にする。
+                                          isAnonymous ? '匿名' : '登録済',
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
@@ -3806,32 +4521,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                       ],
                                     ),
                                   const SizedBox(height: 4),
-                                  Row(
+                                  // R19: completionPct は users.list が未送出で常に0。
+                                  // 「プロフィール 0%」バーは捏造なので出さず、未取得を
+                                  // 正直に表示する(R17 の display-truthfulness 規律)。
+                                  const Row(
                                     children: [
-                                      Expanded(
-                                        child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(4),
-                                          child: LinearProgressIndicator(
-                                            value: completionPct / 100,
-                                            minHeight: 4,
-                                            backgroundColor: Theme.of(context)
-                                                .colorScheme
-                                                .surfaceContainerHighest,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                              profileColor,
-                                            ),
-                                          ),
-                                        ),
+                                      Icon(
+                                        Icons.info_outline,
+                                        size: 11,
+                                        color: Color(0xFF9CA3AF),
                                       ),
-                                      const SizedBox(width: 6),
+                                      SizedBox(width: 4),
                                       Text(
-                                        'プロフィール $completionPct%',
+                                        'プロフィール情報 未取得',
                                         style: TextStyle(
                                           fontSize: 10,
-                                          color: profileColor,
-                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF9CA3AF),
                                           height: 1.5,
                                         ),
                                       ),
@@ -3917,7 +4622,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final hasProfile = user['hasProfile'] as bool? ?? false;
     final provider = user['provider']?.toString() ?? 'email';
     final isGoogle = provider.contains('google');
-    final createdAt = user['createdAt']?.toString() ?? '';
+    // R19: 行と同じ契約バグ。edge の created_at(snake)を優先で拾う。
+    final createdAt = adminUserCreatedRaw(user);
     final lastSignIn = user['lastSignInAt']?.toString() ?? '';
 
     String createdStr = '';
@@ -4529,11 +5235,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   final createdAt = req['created_at']?.toString() ?? '';
                   final adminReply = req['admin_reply']?.toString();
                   final adminRepliedAt = req['admin_replied_at']?.toString();
-                  String dateStr = createdAt;
-                  try {
-                    dateStr = DateFormat('MM/dd')
-                        .format(DateTime.parse(createdAt).toLocal());
-                  } catch (_) {}
+                  // R20: 年なし MM/dd は3か月前(04月)の要望を「今月」に見せる。
+                  // 1か月超/別年は yyyy/ を前置して年齢を明示する。
+                  final dateStr = formatAgeAwareDate(createdAt, DateTime.now());
                   String? repliedAtStr;
                   if (adminRepliedAt != null) {
                     try {
@@ -4640,6 +5344,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                 color: const Color(0xFF4338CA),
                               ),
                             ),
+                            IconButton(
+                              tooltip: '優先度・工数・期日を設定',
+                              onPressed: () => _showFeatureFieldsDialog(req),
+                              icon: const Icon(
+                                Icons.tune,
+                                size: 18,
+                                color: Color(0xFF3D5AFE),
+                              ),
+                            ),
                             PopupMenuButton<String>(
                               initialValue: status,
                               onSelected: (newStatus) =>
@@ -4710,6 +5423,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             ),
                             child: Text(
                               'AI: $adminReply',
+                              // R20: 数百字の返信が50件リストを支配する wall-of-text
+                              // を抑制。全文は返信編集ダイアログで到達可能=無損失。
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 11,
                                 color: Color(0xFF4338CA),
@@ -4909,6 +5626,125 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     );
                   },
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // R29: 自動エラー報告 (error_reporter が hub_data へ無言送信していた caught
+  // error) の可視化カード。0件なら「正常」を明示し、あれば直近を先頭行だけ出す。
+  Widget _buildAutoErrorReportsCard() {
+    final theme = Theme.of(context);
+    final count = _autoErrorReports.length;
+    final hasErrors = count > 0;
+    final accent =
+        hasErrors ? const Color(0xFFB45309) : const Color(0xFF0D9488);
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  hasErrors
+                      ? Icons.report_gmailerrorred
+                      : Icons.verified_outlined,
+                  color: accent,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    autoErrorReportsHealthLabel(count),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                      color: accent,
+                    ),
+                  ),
+                ),
+                if (_autoErrorReportsLoading)
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  IconButton(
+                    icon: const Icon(Icons.refresh, size: 20),
+                    tooltip: '再取得',
+                    onPressed: _loadRecentErrors,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              hasErrors
+                  ? 'アプリが自動で捕捉・記録した例外です (公開 Issue 化はされません)。'
+                      '本文は自分のセッション分のみ表示しています。'
+                  : 'アプリが捕捉した例外は記録されていません。',
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.5,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (hasErrors) ...[
+              const SizedBox(height: 10),
+              ..._autoErrorReports.take(8).map((entry) {
+                final when =
+                    formatAgeAwareDate(entry.createdAt, DateTime.now());
+                final line =
+                    entry.firstLine.isEmpty ? '(本文なし)' : entry.firstLine;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.chevron_right,
+                        size: 16,
+                        color: Color(0xFFB45309),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          line,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            height: 1.5,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        when,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              if (count > 8)
+                Text(
+                  'ほか ${count - 8}件',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
             ],
           ],
@@ -5413,9 +6249,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
 
     final totalTouches = _comparisonTouches.values.fold(0, (a, b) => a + b);
-    final cvrPct = totalTouches > 0
-        ? (_comparisonSignups / totalTouches * 100).toStringAsFixed(1)
-        : '0.0';
+    // R30: 母数0で「0.0%」は計測した0%に見える捏造 → ダッシュボード共通の
+    // formatRatePercent(母数0=「—」)に揃える。到達0で登録>0の自己矛盾表示も回避。
+    final cvrLabel = formatRatePercent(_comparisonSignups, totalTouches);
 
     final sorted = _comparisonTouches.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -5472,7 +6308,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const Color(0xFF059669),
               ),
               const SizedBox(width: 16),
-              _cvrStat('CVR', '$cvrPct%', const Color(0xFFFF6B35)),
+              _cvrStat('CVR', cvrLabel, const Color(0xFFFF6B35)),
             ],
           ),
           const SizedBox(height: 12),
@@ -5588,6 +6424,442 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
+  /// R17: X 学習ループ(growth-hub x.performance_context)を意思決定点へ露出する
+  /// read-only カード。データ無しは SizedBox.shrink() で静かに消える。空(bestVariant
+  /// が既定 'daily_briefing' に落ちる)を勝ち型に見せないため、必ず非空ガードの内側。
+  Widget _buildXGrowthLoopSection() {
+    final perf = _xPerformanceContext;
+    if (perf == null) return const SizedBox.shrink();
+    final rows = perf['rows'] is List ? perf['rows'] as List : const [];
+    final comparableRows = rows.where((row) {
+      return row is! Map || row['learningCohort'] != 'historical_benchmark';
+    }).toList();
+    final variants = perf['variants'] is List ? perf['variants'] as List : null;
+    final historicalBenchmarks = perf['historicalBenchmarks'] is List
+        ? perf['historicalBenchmarks'] as List
+        : const [];
+    final comparisonSampleCount = perf.containsKey('comparisonSampleCount')
+        ? _toInt(perf['comparisonSampleCount'])
+        : comparableRows.length;
+    final loop = resolveXGrowthLoop(
+      measuredCount: comparisonSampleCount,
+      distinctVariantCount: distinctMeasuredVariants(variants),
+      postedTodayCount: _toInt(_xTodayStatus?['postedTodayCount']),
+    );
+    if (loop.state == XGrowthLoopState.hidden && historicalBenchmarks.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final theme = Theme.of(context);
+    // R20: 鮮度はパネル自身のデータ(perf-context 行)から出す。旧実装は今日の投稿の
+    // 計測時刻を読み、12件計測済みでも今日未投稿だと「計測待ち」と矛盾していた。
+    final newestMeasuredAt = newestMeasuredCreatedAt(comparableRows);
+    final freshness = resolveXGrowthLoopFreshness(
+      measuredCount: comparisonSampleCount,
+      newestMeasuredAt: newestMeasuredAt,
+      now: DateTime.now(),
+    );
+    // R27: 鮮度が3日を超えたら灰色フッター任せにせず警告行で知らせる
+    // (unlocked 以降は awaitingMetrics の cron 警告経路が二度と出ないため)。
+    final stalenessWarning = xGrowthLoopStalenessWarning(
+      measuredCount: comparisonSampleCount,
+      newestMeasuredAt: newestMeasuredAt,
+      now: DateTime.now(),
+    );
+    final lines = <Widget>[];
+    if (stalenessWarning != null) {
+      lines.add(
+        _growthLoopLine(
+          Icons.warning_amber_rounded,
+          const Color(0xFFF59E0B),
+          stalenessWarning,
+        ),
+      );
+    }
+
+    switch (loop.state) {
+      case XGrowthLoopState.awaitingMetrics:
+        lines.add(
+          _growthLoopLine(
+            Icons.warning_amber_rounded,
+            const Color(0xFFF59E0B),
+            '本日の投稿はまだ計測されていません。spend-cap 到達や metrics 収集 cron の'
+            '停止で計測が止まっていないか確認してください（console.x.com の支出上限）。',
+          ),
+        );
+        break;
+      case XGrowthLoopState.sampling:
+        lines.add(
+          _growthLoopLine(
+            Icons.hourglass_bottom,
+            const Color(0xFF6366F1),
+            '学習サンプル ${loop.measuredCount}件（variant ${loop.distinctVariantCount}種）。'
+            '勝ちパターンの比較表示まで、あと数投稿ぶんのデータが必要です。',
+          ),
+        );
+        break;
+      case XGrowthLoopState.unlocked:
+        // R27: サーバが「unknown」(タグ無し投稿の受け皿バケット)を勝ち型として
+        // 返す除外漏れへの防御。variants から unknown 除外で勝ち型を再解決する。
+        final bestVariant = resolveDisplayBestVariant(
+          perf['bestVariant']?.toString(),
+          variants,
+        );
+        if (bestVariant != null) {
+          lines.add(
+            _growthLoopLine(
+              Icons.emoji_events_outlined,
+              const Color(0xFF0D9488),
+              '今の勝ち型: $bestVariant',
+            ),
+          );
+        }
+        for (final line in _xGrowthVariantRankingLines(variants)) {
+          lines.add(
+            _growthLoopLine(
+              Icons.leaderboard_outlined,
+              const Color(0xFF6366F1),
+              line,
+            ),
+          );
+        }
+        final winnerHook = _xGrowthWinnerHook(perf['winners']);
+        if (winnerHook != null) {
+          lines.add(
+            _growthLoopLine(
+              Icons.format_quote,
+              const Color(0xFF9CA3AF),
+              '真似る型: $winnerHook',
+            ),
+          );
+        }
+        break;
+      case XGrowthLoopState.hidden:
+        break;
+    }
+
+    // R25: 内容アーキタイプ別実測(R23 Archetype lift)。sampling 中でも型別の
+    // 実測は意思決定材料になるため state に依らず rows から出す。勝ち型は
+    // 実測バケット(n>=2・unknown 除く)が2種以上のときだけ主張する(edge と
+    // 同じ誠実性閾値)。
+    final archetypeEntries = resolveArchetypeLift(rows);
+    final archetypeWinner = archetypeLiftWinner(archetypeEntries);
+    if (archetypeWinner != null) {
+      lines.add(
+        _growthLoopLine(
+          Icons.emoji_events,
+          const Color(0xFF0EA5E9),
+          '勝ちアーキタイプ: ${archetypeWinner.label}'
+          '（72時間経過後の平均${archetypeWinner.averageImpressions} imp）'
+          '— 次の投稿はこの型で',
+        ),
+      );
+    }
+    final archetypeSummary = archetypeLiftSummaryLine(archetypeEntries);
+    if (archetypeSummary != null) {
+      lines.add(
+        _growthLoopLine(
+          Icons.category_outlined,
+          const Color(0xFF0EA5E9),
+          archetypeSummary,
+        ),
+      );
+    }
+    if (historicalBenchmarks.isNotEmpty && historicalBenchmarks.first is Map) {
+      final benchmark = historicalBenchmarks.first as Map;
+      final impressions = _toInt(benchmark['historicalBenchmarkImpressions']);
+      final archetype = (benchmark['archetype'] ?? 'unknown').toString();
+      final label = kArchetypeLiftLabels[archetype] ?? archetype;
+      if (impressions > 0) {
+        lines.add(
+          _growthLoopLine(
+            Icons.history,
+            const Color(0xFF64748B),
+            '参考ベンチマーク（累積実測・I72比較外）: $label '
+            '${NumberFormat.decimalPattern('ja_JP').format(impressions)} imp',
+          ),
+        );
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        color: theme.colorScheme.surfaceContainerLow,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.insights,
+                    size: 18,
+                    color: Color(0xFF0D9488),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'X 成長ループ（計測から勝ち型を学ぶ）',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...lines,
+              const SizedBox(height: 8),
+              Text(
+                freshness,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// R26: X投稿候補キュー(トラッカー量産の HITL 承認面)。系列 cron が生成した
+  /// pending_approval 候補を一覧し、全文確認→承認→投稿→確定を1画面で回す。
+  /// 候補ゼロ or X operator 権限なし(list が空 degrade)は panel ごと非表示。
+  Widget _buildXCandidateQueueSection() {
+    if (_xCandidates.isEmpty) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    // #4080: 鮮度切れ候補は「承認して投稿」が無効化済み = キューに滞留して
+    // 見るべき候補を埋没させる。まとめて終端 status へ落とせるようにする。
+    final now = DateTime.now();
+    final staleCandidates = _xCandidates
+        .where((candidate) => isCandidateExpired(candidate, now))
+        .toList(growable: false);
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        color: theme.colorScheme.surfaceContainerLow,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.pending_actions,
+                    size: 18,
+                    color: Color(0xFF0EA5E9),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'X投稿候補キュー（${candidateQueueHeaderLabel(_xCandidates, totalsByStatus: _xCandidateTotals)}）',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                  if (staleCandidates.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: _xCandidateRejecting
+                          ? null
+                          : () => _rejectStaleXCandidates(staleCandidates),
+                      icon: _xCandidateRejecting
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.block, size: 16),
+                      label: Text('鮮度切れ${staleCandidates.length}件を却下'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFB91C1C),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'トラッカー系列の自動生成候補。承認した本文だけが投稿され、'
+                '計測ループ（Archetype lift）の対象になります。',
+                style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+              ),
+              const SizedBox(height: 12),
+              ..._xCandidates.map(_buildXCandidateRow),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildXCandidateRow(XPostCandidateSummary candidate) {
+    final theme = Theme.of(context);
+    final publishing = _xCandidatePublishing.contains(candidate.id);
+    final now = DateTime.now();
+    final age = candidateAgeLabel(candidate.generatedAt, now);
+    // 鮮度切れ (news_briefing 24h / data_report 72h / 既定7日) の候補は
+    // 承認ボタンを無効化し、古いニュースの誤投稿を防ぐ。
+    final expired = isCandidateExpired(candidate, now);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0EA5E9).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        candidate.seriesLabel,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF0369A1),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    if (candidate.archetype.isNotEmpty)
+                      Text(
+                        candidate.archetype,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF9CA3AF),
+                        ),
+                      ),
+                    if (!candidate.isPendingApproval)
+                      Text(
+                        candidate.statusLabel,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFFB45309),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    if (age.isNotEmpty)
+                      Text(
+                        age,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF9CA3AF),
+                        ),
+                      ),
+                    if (expired)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444).withValues(
+                            alpha: 0.12,
+                          ),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          '鮮度切れ',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFFB91C1C),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  candidatePreviewText(candidate.text),
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton.tonal(
+            onPressed: publishing || !candidate.isActionable || expired
+                ? null
+                : () => _publishXCandidate(candidate),
+            child: publishing
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(expired ? '鮮度切れ' : '承認して投稿'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _growthLoopLine(IconData icon, Color color, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.6,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// variants(平均スコア降順)から上位3種を「{variant} 平均{score} (n={count})」に。
+  List<String> _xGrowthVariantRankingLines(List<dynamic>? variants) {
+    // R28: 勝ち型と同じ畳み込み (unknown 除外 + `_fallback` を base へ) 済みの
+    // ランキングを出す。畳まないと「勝ち型: daily_briefing」なのに直下の
+    // ランキング先頭が「daily_briefing_fallback 平均89」という矛盾表示になる。
+    final folded = foldVariantsForDisplay(variants);
+    final lines = <String>[];
+    for (final entry in folded) {
+      lines.add('${entry.variant} 平均${entry.averageScore} (n=${entry.count})');
+      if (lines.length >= 3) break;
+    }
+    return lines;
+  }
+
+  String? _xGrowthWinnerHook(dynamic winners) {
+    if (winners is! List || winners.isEmpty) return null;
+    final first = winners.first;
+    if (first is! Map) return null;
+    final text = (first['text'] ?? '').toString().trim();
+    if (text.isEmpty) return null;
+    return text.length <= 60 ? text : '${text.substring(0, 58)}…';
+  }
+
   Widget _buildGrowthAchievementSummaryCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor =
@@ -5681,7 +6953,20 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 height: 1.6,
               ),
             )
-          else if (_growthSummary != null) ...[
+          // R30: 期待するメトリクスキーが無いレスポンス(achievement.list は
+          // items のみ返す)では捏造ゼロを出さず、集計未接続を正直に示す。
+          else if (!growthSummaryHasMetrics(_growthSummary) &&
+              !_growthSummaryLoading)
+            const Text(
+              '成長サマリーの集計はまだ接続されていません。'
+              '各カード(登録目標・累計登録・比較CVR等)で実数をご確認ください。',
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF94A3B8),
+                height: 1.6,
+              ),
+            )
+          else if (growthSummaryHasMetrics(_growthSummary)) ...[
             Text(
               '期間: ${_growthSummary!['label'] ?? 'すべて'}',
               style: const TextStyle(
@@ -5880,7 +7165,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const FeedbackListPage()),
+                  MaterialPageRoute(
+                    settings: const RouteSettings(name: '/admin-feedback'),
+                    builder: (_) => const FeedbackListPage(),
+                  ),
                 ),
               ),
             ),

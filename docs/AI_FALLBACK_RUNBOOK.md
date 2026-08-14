@@ -394,10 +394,39 @@ Codex CLI が **Memory** を持つようになり、past task の preference / p
 1. Claude Code CLI (= 設計 / 編集 main) ← 不変
 2. Gemini Code Assist Agent Mode (Gemini 3.1 Pro)  ← 昇格
 3. Codex CLI (with Memory)  ← 昇格
-4. GitHub Copilot (補完 + Cloud Agent)  ← 不変
-5. NotebookLM (リサーチ / Master Brain)  ← 不変
-6. GHA (= Claude 非依存)  ← 不変
+4. Kimi K2.7 Code (OpenAI 互換 API)  ← 新規追加 (2026-07-12)
+5. GitHub Copilot (補完 + Cloud Agent)  ← 不変
+6. NotebookLM (リサーチ / Master Brain)  ← 不変
+7. GHA (= Claude 非依存)  ← 不変
 ```
+
+### Kimi K2.7 Code (Moonshot AI) — 2026-07-12 追加
+
+**追加背景**: Claude Code / Codex quota 超過時のコーディング特化 fallback として採用
+(参照: `docs/vendor-digests/2026-07-12.md`, Issue #3993)
+
+| 項目 | 値 |
+|------|-----|
+| ベース URL | `https://api.moonshot.cn/v1` |
+| モデル名 | `kimi-k2-code` (要 Moonshot API ドキュメント確認) |
+| コンテキスト | 256K tokens |
+| 互換性 | OpenAI ChatCompletions API 互換 |
+| 思考トークン | K2.6 比 -30% (forced thinking mode) |
+| ライセンス | OSS 公開 (MoonshotAI/kimi-code) |
+
+**セットアップ**:
+```bash
+export MOONSHOT_API_KEY="sk-..."
+# Codex CLI / LiteLLM 経由で使用する場合
+# base_url=https://api.moonshot.cn/v1 model=kimi-k2-code
+```
+
+**適用場面**:
+- Claude Code quota 超過かつ Gemini/Codex も不可の場合
+- 200 ステップ超の長時間 agentic コーディングタスク
+- コスト制約が厳しい場合 (思考トークン節約)
+
+**注意**: 本番採用前に公式 API ドキュメント (https://platform.kimi.ai) で最新モデル名を確認すること。
 
 ### 関連 ai-tool-update Issue
 

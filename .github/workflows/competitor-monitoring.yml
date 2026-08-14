@@ -40,7 +40,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 10
           token: ${{ secrets.BYPASS_RULES || github.token }}
@@ -261,6 +261,10 @@ jobs:
               echo "✅ Gemini Flash 生成成功 (${#AI_REPORT} chars)"
             else
               echo "⚠️ Gemini Flash 失敗 — Claude fallback へ"
+              # The response was already captured; it was simply never shown,
+              # so a retired-model 404 looked identical to a quota problem.
+              echo "$GEMINI_RESPONSE" | head -c 500
+              echo
             fi
           fi
 
@@ -283,14 +287,28 @@ jobs:
               if [ -n "$AI_REPORT" ] && [ ${#AI_REPORT} -gt 100 ]; then
                 USED_MODEL="claude-sonnet-4-6"
                 echo "✅ Claude fallback 成功 (${#AI_REPORT} chars)"
+              else
+                echo "⚠️ Claude fallback 失敗"
+                echo "$CLAUDE_RESPONSE" | head -c 500
+                echo
               fi
             fi
           fi
 
           # ── Fallback: スタティックテンプレート ─────────────────────────────
+          # This branch publishes a report that looks like the others, so a
+          # total AI outage reads as a normal green run. Say so out loud, and
+          # state the reason accurately: the old text blamed missing keys even
+          # when both were set and the providers had rejected the requests.
           if [ -z "$AI_REPORT" ] || [ ${#AI_REPORT} -le 100 ]; then
             USED_MODEL="static-template"
-            AI_REPORT=$(printf '## AI生成スキップ (API未設定 or 全プロバイダー失敗)\n\n競合インテリジェンス生成には GEMINI_API_KEY または ANTHROPIC_API_KEY が必要です。\n\n## 可用性チェック結果のみ記録\n\n%s' "$(cat /tmp/avail_results.txt)")
+            if [ -z "$GEMINI_API_KEY" ] && [ -z "$ANTHROPIC_API_KEY" ]; then
+              SKIP_REASON="API キー未設定"
+            else
+              SKIP_REASON="全プロバイダーが応答せず (上のログのレスポンス本文を確認)"
+            fi
+            echo "::warning::競合インテリジェンスは AI 生成されませんでした — ${SKIP_REASON}。static-template を公開します。"
+            AI_REPORT=$(printf '## AI生成スキップ (%s)\n\n本レポートは AI 生成ではなく静的テンプレートです。\n\n## 可用性チェック結果のみ記録\n\n%s' "$SKIP_REASON" "$(cat /tmp/avail_results.txt)")
           fi
 
           echo "used_model=$USED_MODEL" >> $GITHUB_OUTPUT

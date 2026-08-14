@@ -19,8 +19,6 @@ commit-msg:
     - name: reject hook bypass markers
       run: python scripts/check_no_verify_bypass.py --message-file "{1}"
 
-pre-push:
-  parallel: false
-  jobs:
-    - name: full quality gate
-      run: python scripts/quality_gate.py --full
+# The path-scoped pre-commit gate protects the exact committed tree. GitHub
+# Actions is the single full validation authority; repeating it during push
+# added 10-18 minutes locally and then ran the same checks again on the PR.

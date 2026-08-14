@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/asset_management_ai_analysis_history.dart';
+import 'package:my_web_app/models/daily_todo.dart';
 import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/services/ai_hub_chat_service.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
@@ -58,7 +59,8 @@ void main() {
       expect(result.text, 'AIが生成した日本語要約です。');
       expect(capturedBody?['action'], 'provider.chat_auto');
       expect(capturedBody?['tier'], 'performance');
-      expect(capturedBody?['max_tokens'], 24000);
+      // ai-hub 側で min(8192, ...) にクランプされるため実効値は 8192。
+      expect(capturedBody?['max_tokens'], 8192);
       expect(capturedBody?['trace_id'], 'asset-management-ai-summary');
       expect(
         capturedBody?['message'].toString().contains('AIに渡す詳細ペイロード'),
@@ -192,7 +194,8 @@ void main() {
         expect(calls.single['action'], 'provider.chat');
         expect(calls.single['provider'], 'anthropic');
         expect(calls.single['model'], 'claude-opus-4-7');
-        expect(calls.single['max_tokens'], 24000);
+        // ai-hub 側で min(8192, ...) にクランプされるため実効値は 8192。
+        expect(calls.single['max_tokens'], 8192);
         expect(calls.single['routing_use_case'], 'summary');
         expect(
           calls.single['provider_choice_reason'],
@@ -367,9 +370,13 @@ void main() {
 
       await service.generateSummary(report: _report());
 
-      // Gemini 3.1 Pro 等の thinking トークン + 長文要約に耐える予算であること。
+      // ai-hub の `normalizeMaxTokens` が min(8192, ...) にクランプするため、
+      // クライアントが 8192 超を送っても本番の実効値は 8192。ここでは
+      // 「実効上限いっぱいを要求している」ことを検証する (旧テストは 16000 以上を
+      // 期待していたが、その予算が本番で成立したことは一度も無かった)。
+      // 実測の本文は ~3,000-3,500 トークンなので 8192 で十分な余裕がある。
       expect(capturedMaxTokens, isNotNull);
-      expect(capturedMaxTokens! >= 16000, isTrue);
+      expect(capturedMaxTokens, 8192);
     });
 
     test('builds payload from calculated insights only', () {
@@ -699,6 +706,67 @@ void main() {
       expect(result.text, response);
     });
   });
+
+  group('daily_todo をAIペイロードへ載せる', () {
+    final service = AssetManagementAiSummaryService(aiEnabled: false);
+
+    test('digest があり非空なら daily_todo を含み、行動の借金/実績を渡す', () {
+      final now = DateTime(2026, 7, 31, 22);
+      final digest = DailyTodoDigest.fromState(
+        tasks: <DailyTodoTask>[
+          DailyTodoTask(id: 'today', title: '今日の分', plannedDate: now),
+          DailyTodoTask(
+            id: 'debt',
+            title: '溜めた借金',
+            plannedDate: DateTime(2026, 7, 28),
+          ),
+        ],
+        log: const <DailyTodoCompletionLogEntry>[],
+        now: now,
+      );
+      final payload = service.buildAiDetailedPayload(
+        _reportWithDailyTodo(digest: digest),
+      );
+      expect(payload.containsKey('daily_todo'), isTrue);
+      final todo = payload['daily_todo'] as Map<String, dynamic>;
+      expect(todo['today_total'], 1);
+      expect(todo['carried_over_count'], 1);
+      expect(todo['max_carry_over_days'], 3);
+    });
+
+    test('digest が null なら daily_todo を含まない', () {
+      final payload = service.buildAiDetailedPayload(_report());
+      expect(payload.containsKey('daily_todo'), isFalse);
+    });
+
+    test('digest が空(ToDo未使用)なら daily_todo を含まない', () {
+      final emptyDigest = DailyTodoDigest.fromState(
+        tasks: const <DailyTodoTask>[],
+        log: const <DailyTodoCompletionLogEntry>[],
+        now: DateTime(2026, 7, 31),
+      );
+      expect(emptyDigest.isEmpty, isTrue);
+      final payload = service.buildAiDetailedPayload(
+        _reportWithDailyTodo(digest: emptyDigest),
+      );
+      expect(payload.containsKey('daily_todo'), isFalse);
+    });
+  });
+}
+
+AssetManagementInsightReport _reportWithDailyTodo({DailyTodoDigest? digest}) {
+  const planner = AssetLiabilityPlanningService();
+  const insight = AssetManagementInsightService();
+  final workbook = planner.buildWorkbook(
+    latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
+    baseDate: DateTime(2026, 7, 31),
+  );
+  return insight.buildReport(
+    workbook: workbook,
+    userProfile: _userProfile(),
+    minimumSafetyBalance: 10000,
+    dailyTodoDigest: digest,
+  );
 }
 
 AssetManagementInsightReport _reportWithDeveloperRequests() {

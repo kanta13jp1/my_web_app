@@ -171,7 +171,7 @@ class AssetDebtTrendAnalyzer {
     final delta = priorBalance == null ? null : balance - priorBalance;
 
     final breakEven = interest + 1;
-    final payoff24 = _paymentToClearIn(balance, monthlyRate, 24);
+    final payoff24 = paymentToClearIn(balance, monthlyRate, 24);
     final estimate = estimatePayoff(
       balance: balance,
       monthlyRate: monthlyRate,
@@ -360,6 +360,16 @@ class AssetDebtTrendAnalyzer {
     };
   }
 
+  /// 負債マスタ行の現在の予定返済額を続けた場合の完済シミュレーション。
+  /// UI のインライン表示 (リボの概算脱却目安) 用。計算は Dart が正。
+  static DebtPayoffEstimate estimateForRow(AssetLiabilityDebtRow row) {
+    return estimatePayoff(
+      balance: row.balance.abs(),
+      monthlyRate: max(0.0, row.annualRate) / 12,
+      monthlyPayment: max(0.0, row.scheduledPaymentAmount),
+    );
+  }
+
   /// 固定額返済を続けたときの完済シミュレーション。
   ///
   /// [monthlyPayment] が初月の利息以下なら元金が減らないため、
@@ -411,7 +421,7 @@ class AssetDebtTrendAnalyzer {
   /// [targetMonths] ヶ月で完済するために必要な毎月返済額（年金現価式）。
   ///
   /// 月利 0 のときは単純に balance / months。100 円単位へ切り上げる。
-  double _paymentToClearIn(
+  static double paymentToClearIn(
     double balance,
     double monthlyRate,
     int targetMonths,
