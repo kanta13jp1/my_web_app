@@ -8,7 +8,7 @@ const String dpjOfficialEndorsementSourceUrl =
     'https://new-kokumin.jp/local-election-list';
 const String dpjOfficialEndorsementSourceAsOf = '2026-08-12';
 const String dpjOfficialEndorsementSourceDocumentSha256 =
-    'e0905c80109db785bdd601db329a8a8ee66855ccf6c09f52cb0f39528547d315';
+    'f99469ffff825ef0f4eb543b32af7dff10992013fba080c21c4515dbf74e562b';
 const int dpjOfficialRecommendationEntryCount = 9;
 
 const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
@@ -113,9 +113,9 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '静岡',
-    totalCount: 7,
+    totalCount: 8,
     incumbentCount: 6,
-    newcomerCount: 1,
+    newcomerCount: 2,
     formerCount: 0,
   ),
   OfficialEndorsementPrefecture(
@@ -134,9 +134,9 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '大阪',
-    totalCount: 9,
+    totalCount: 10,
     incumbentCount: 7,
-    newcomerCount: 2,
+    newcomerCount: 3,
     formerCount: 0,
   ),
   OfficialEndorsementPrefecture(
@@ -190,8 +190,8 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '高知',
-    totalCount: 2,
-    incumbentCount: 0,
+    totalCount: 3,
+    incumbentCount: 1,
     newcomerCount: 1,
     formerCount: 1,
   ),
@@ -246,14 +246,19 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
 ];
 
-const int dpjOfficialEndorsementTotal = 218;
-const int dpjOfficialEndorsementIncumbentTotal = 102;
-const int dpjOfficialEndorsementNewcomerTotal = 107;
+const int dpjOfficialEndorsementTotal = 221;
+const int dpjOfficialEndorsementIncumbentTotal = 103;
+const int dpjOfficialEndorsementNewcomerTotal = 109;
 const int dpjOfficialEndorsementFormerTotal = 9;
 const int dpjOfficialEndorsementPrefectureCount = 33;
 
-OfficialEndorsementPrefecture? dpjOfficialEndorsementFor(String prefecture) {
-  final normalized = prefecture.replaceFirst(RegExp(r'[都府県]$'), '');
+OfficialEndorsementPrefecture? dpjOfficialEndorsementFor(
+  String prefecture,
+) {
+  final normalized = prefecture.replaceFirst(
+    RegExp(r'[都府県]$'),
+    '',
+  );
   for (final item in dpjOfficialEndorsements) {
     if (item.prefecture == normalized) {
       return item;
