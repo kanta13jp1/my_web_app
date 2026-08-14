@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../domain/models/guitar_daily_course.dart';
 import '../../../../domain/models/guitar_tab_song.dart';
 import '../../../../theme/design_tokens.dart';
 import '../view_models/beatles_guitar_tabs_view_model.dart';
@@ -128,6 +129,8 @@ class _CompactLayout extends StatelessWidget {
       children: <Widget>[
         const _HeroPanel(),
         const SizedBox(height: DesignTokens.space16),
+        _DailyCoursePanel(viewModel: viewModel),
+        const SizedBox(height: DesignTokens.space16),
         _CatalogControls(viewModel: viewModel),
         const SizedBox(height: DesignTokens.space16),
         SizedBox(
@@ -168,7 +171,7 @@ class _HeroPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'Blackbirdを、指からほどく。',
+                  '毎日ひとつ、ギターが弾ける自分へ。',
                   style: TextStyle(
                     color: DesignTokens.textPrimary,
                     fontSize: 24,
@@ -179,7 +182,7 @@ class _HeroPanel extends StatelessWidget {
                 ),
                 SizedBox(height: DesignTokens.space8),
                 Text(
-                  '3つの短いオリジナル練習で、親指の独立、音のつながり、ポジション移動を順番に整えます。',
+                  '今日の3課題を順番にクリアして、基礎からフィンガースタイル演奏まで14日間で積み上げます。',
                   style: TextStyle(
                     color: DesignTokens.textSecondary,
                     fontSize: 14,
@@ -191,12 +194,9 @@ class _HeroPanel extends StatelessWidget {
                   spacing: DesignTokens.space8,
                   runSpacing: DesignTokens.space8,
                   children: <Widget>[
-                    _HeroBadge(icon: Icons.timer_outlined, label: '20分メニュー'),
-                    _HeroBadge(icon: Icons.speed, label: '60 → 92 BPM'),
-                    _HeroBadge(
-                      icon: Icons.pan_tool_alt_outlined,
-                      label: '3フィンガー',
-                    ),
+                    _HeroBadge(icon: Icons.calendar_month, label: '14日コース'),
+                    _HeroBadge(icon: Icons.timer_outlined, label: '毎日15〜20分'),
+                    _HeroBadge(icon: Icons.save_outlined, label: '進捗を端末保存'),
                   ],
                 ),
               ],
@@ -253,6 +253,517 @@ class _HeroBadge extends StatelessWidget {
               color: DesignTokens.textSecondary,
               fontSize: 11,
               height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DailyCoursePanel extends StatelessWidget {
+  const _DailyCoursePanel({required this.viewModel});
+
+  final BeatlesGuitarTabsViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final snapshot = viewModel.courseSnapshot;
+    if (snapshot == null) return const SizedBox.shrink();
+    if (snapshot.isCourseCompleted) {
+      return _CourseCompletedCard(snapshot: snapshot);
+    }
+
+    final day = snapshot.currentDay!;
+    return Container(
+      key: const Key('guitar_daily_course_panel'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(DesignTokens.space20),
+      decoration: BoxDecoration(
+        color: DesignTokens.surface1,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+        border: Border.all(color: DesignTokens.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: DesignTokens.space12,
+                  vertical: DesignTokens.space8,
+                ),
+                decoration: BoxDecoration(
+                  color: DesignTokens.orange.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+                ),
+                child: Text(
+                  'DAY ${day.dayNumber}',
+                  key: const Key('guitar_current_course_day'),
+                  style: const TextStyle(
+                    color: DesignTokens.orangeLight,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              const SizedBox(width: DesignTokens.space12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      _phaseLabel(day.phase),
+                      style: const TextStyle(
+                        color: DesignTokens.indigoLight,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: DesignTokens.space4),
+                    Text(
+                      day.title,
+                      style: const TextStyle(
+                        color: DesignTokens.textPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _CourseMetric(
+                icon: Icons.local_fire_department_outlined,
+                label: '${snapshot.currentStreak}日連続',
+              ),
+            ],
+          ),
+          const SizedBox(height: DesignTokens.space12),
+          Text(
+            day.objective,
+            style: const TextStyle(
+              color: DesignTokens.textSecondary,
+              fontSize: 13,
+              height: 1.7,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space16),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    key: const Key('guitar_course_progress'),
+                    value: snapshot.courseProgress,
+                    minHeight: 8,
+                    color: DesignTokens.orange,
+                    backgroundColor: DesignTokens.surface3,
+                  ),
+                ),
+              ),
+              const SizedBox(width: DesignTokens.space12),
+              Text(
+                '${snapshot.completedDayCount} / ${snapshot.totalDayCount}日',
+                style: const TextStyle(
+                  color: DesignTokens.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: DesignTokens.space12),
+          _CourseDayRail(snapshot: snapshot),
+          const SizedBox(height: DesignTokens.space16),
+          Row(
+            children: <Widget>[
+              const Icon(
+                Icons.today_outlined,
+                color: DesignTokens.orange,
+                size: 18,
+              ),
+              const SizedBox(width: DesignTokens.space8),
+              Expanded(
+                child: Text(
+                  '今日の3課題  ${snapshot.completedCurrentTaskCount}/${day.tasks.length}',
+                  maxLines: 2,
+                  style: const TextStyle(
+                    color: DesignTokens.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: DesignTokens.space8),
+              Text(
+                '${day.totalMinutes}分  •  ${day.recommendedBpm} BPM',
+                style: const TextStyle(
+                  color: DesignTokens.textTertiary,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: DesignTokens.space12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const gap = DesignTokens.space12;
+              final columns = constraints.maxWidth >= 900
+                  ? 3
+                  : constraints.maxWidth >= 560
+                      ? 2
+                      : 1;
+              final width =
+                  (constraints.maxWidth - gap * (columns - 1)) / columns;
+              return Wrap(
+                spacing: gap,
+                runSpacing: gap,
+                children: <Widget>[
+                  for (final task in day.tasks)
+                    SizedBox(
+                      width: width,
+                      child: _DailyTaskCard(
+                        task: task,
+                        completed: viewModel.isDailyTaskCompleted(task.id),
+                        enabled: !viewModel.courseActionInProgress,
+                        onTap: () => viewModel.toggleDailyTask(task.id),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: DesignTokens.space12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(DesignTokens.space12),
+            decoration: BoxDecoration(
+              color: DesignTokens.indigo.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const Icon(
+                  Icons.lightbulb_outline,
+                  color: DesignTokens.indigoLight,
+                  size: 18,
+                ),
+                const SizedBox(width: DesignTokens.space8),
+                Expanded(
+                  child: Text(
+                    day.coachNote,
+                    style: const TextStyle(
+                      color: DesignTokens.textSecondary,
+                      fontSize: 12,
+                      height: 1.6,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (viewModel.courseActionError != null) ...<Widget>[
+            const SizedBox(height: DesignTokens.space8),
+            Text(
+              viewModel.courseActionError!,
+              style: const TextStyle(color: DesignTokens.red, fontSize: 12),
+            ),
+          ],
+          const SizedBox(height: DesignTokens.space16),
+          Wrap(
+            spacing: DesignTokens.space12,
+            runSpacing: DesignTokens.space8,
+            children: <Widget>[
+              FilledButton.icon(
+                key: const Key('guitar_complete_course_day'),
+                onPressed: snapshot.canCompleteCurrentDay &&
+                        !viewModel.courseActionInProgress
+                    ? () => _completeDay(context, day.dayNumber)
+                    : null,
+                style: FilledButton.styleFrom(
+                  backgroundColor: DesignTokens.orange,
+                  foregroundColor: DesignTokens.textPrimary,
+                ),
+                icon: viewModel.courseActionInProgress
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.check_circle_outline),
+                label: Text('Day ${day.dayNumber}を完了'),
+              ),
+              if (day.relatedSongId != null)
+                OutlinedButton.icon(
+                  key: const Key('guitar_open_course_practice'),
+                  onPressed: viewModel.openCurrentCoursePractice,
+                  icon: const Icon(Icons.queue_music),
+                  label: const Text('関連TABを選択'),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _completeDay(BuildContext context, int dayNumber) async {
+    final completed = await viewModel.completeCurrentCourseDay();
+    if (!context.mounted || !completed) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Day $dayNumber 完了！次の課題が解放されました。')));
+  }
+
+  String _phaseLabel(GuitarCoursePhase phase) {
+    return switch (phase) {
+      GuitarCoursePhase.foundation => 'FOUNDATION • 基礎',
+      GuitarCoursePhase.rhythm => 'RHYTHM • リズム',
+      GuitarCoursePhase.fingerstyle => 'FINGERSTYLE • 指弾き',
+      GuitarCoursePhase.performance => 'PERFORMANCE • 演奏',
+    };
+  }
+}
+
+class _DailyTaskCard extends StatelessWidget {
+  const _DailyTaskCard({
+    required this.task,
+    required this.completed,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final GuitarDailyTask task;
+  final bool completed;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: completed
+          ? DesignTokens.orange.withValues(alpha: 0.08)
+          : DesignTokens.surface2,
+      borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
+      child: InkWell(
+        key: Key('guitar_daily_task_${task.id}'),
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 176),
+          padding: const EdgeInsets.all(DesignTokens.space16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
+            border: Border.all(
+              color: completed ? DesignTokens.orange : DesignTokens.divider,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Icon(
+                    completed
+                        ? Icons.check_circle
+                        : Icons.radio_button_unchecked,
+                    color: completed
+                        ? DesignTokens.orange
+                        : DesignTokens.textTertiary,
+                    size: 22,
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${task.minutes}分',
+                    style: const TextStyle(
+                      color: DesignTokens.textTertiary,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: DesignTokens.space12),
+              Text(
+                task.title,
+                style: TextStyle(
+                  color: completed
+                      ? DesignTokens.orangeLight
+                      : DesignTokens.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: DesignTokens.space8),
+              Text(
+                task.instruction,
+                style: const TextStyle(
+                  color: DesignTokens.textSecondary,
+                  fontSize: 12,
+                  height: 1.6,
+                ),
+              ),
+              const SizedBox(height: DesignTokens.space8),
+              Text(
+                '完了条件：${task.completionCriteria}',
+                style: const TextStyle(
+                  color: DesignTokens.textTertiary,
+                  fontSize: 11,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CourseDayRail extends StatelessWidget {
+  const _CourseDayRail({required this.snapshot});
+
+  final GuitarCourseSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: <Widget>[
+          for (final day in snapshot.days) ...<Widget>[
+            _CourseDayMarker(
+              dayNumber: day.dayNumber,
+              completed: snapshot.progress.completedDayNumbers.contains(
+                day.dayNumber,
+              ),
+              current: snapshot.currentDay?.dayNumber == day.dayNumber,
+            ),
+            if (day != snapshot.days.last)
+              const SizedBox(width: DesignTokens.space8),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CourseDayMarker extends StatelessWidget {
+  const _CourseDayMarker({
+    required this.dayNumber,
+    required this.completed,
+    required this.current,
+  });
+
+  final int dayNumber;
+  final bool completed;
+  final bool current;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = completed
+        ? DesignTokens.orange
+        : current
+            ? DesignTokens.indigoLight
+            : DesignTokens.textTertiary;
+    return Container(
+      key: Key('guitar_course_day_$dayNumber'),
+      width: 34,
+      height: 34,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: completed || current ? 0.16 : 0.06),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color),
+      ),
+      child: completed
+          ? const Icon(Icons.check, size: 17, color: DesignTokens.orange)
+          : Text(
+              '$dayNumber',
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+    );
+  }
+}
+
+class _CourseMetric extends StatelessWidget {
+  const _CourseMetric({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Icon(icon, color: DesignTokens.orange, size: 18),
+        const SizedBox(width: DesignTokens.space4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: DesignTokens.textSecondary,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CourseCompletedCard extends StatelessWidget {
+  const _CourseCompletedCard({required this.snapshot});
+
+  final GuitarCourseSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('guitar_course_completed'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(DesignTokens.space24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: <Color>[
+            DesignTokens.orange.withValues(alpha: 0.2),
+            DesignTokens.indigo.withValues(alpha: 0.18),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+        border: Border.all(color: DesignTokens.orange),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.emoji_events, color: DesignTokens.orange, size: 36),
+          const SizedBox(height: DesignTokens.space12),
+          const Text(
+            '14日間コース完了！',
+            style: TextStyle(
+              color: DesignTokens.textPrimary,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space8),
+          Text(
+            '${snapshot.completedDayCount}日分の課題を積み上げました。下のTABライブラリで、好きな練習を自分のテンポで続けましょう。',
+            style: const TextStyle(
+              color: DesignTokens.textSecondary,
+              fontSize: 13,
+              height: 1.7,
             ),
           ),
         ],
@@ -495,6 +1006,10 @@ class _SongDetail extends StatelessWidget {
     if (song == null) return const _EmptyLibrary();
 
     final children = <Widget>[
+      if (scrollable) ...<Widget>[
+        _DailyCoursePanel(viewModel: viewModel),
+        const SizedBox(height: DesignTokens.space24),
+      ],
       Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
