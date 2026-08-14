@@ -36,22 +36,21 @@ class BeatlesGuitarTabsPage extends StatelessWidget {
           builder: (context, _) {
             return switch (viewModel.status) {
               BeatlesGuitarTabsStatus.initial ||
-              BeatlesGuitarTabsStatus.loading =>
-                const Center(
-                  child: CircularProgressIndicator(color: DesignTokens.orange),
-                ),
+              BeatlesGuitarTabsStatus.loading => const Center(
+                child: CircularProgressIndicator(color: DesignTokens.orange),
+              ),
               BeatlesGuitarTabsStatus.failure => _ErrorState(
-                  message: viewModel.errorMessage ?? '読み込みに失敗しました。',
-                  onRetry: viewModel.load,
-                ),
+                message: viewModel.errorMessage ?? '読み込みに失敗しました。',
+                onRetry: viewModel.load,
+              ),
               BeatlesGuitarTabsStatus.ready => LayoutBuilder(
-                  builder: (context, constraints) {
-                    if (constraints.maxWidth >= _wideBreakpoint) {
-                      return _WideLayout(viewModel: viewModel);
-                    }
-                    return _CompactLayout(viewModel: viewModel);
-                  },
-                ),
+                builder: (context, constraints) {
+                  if (constraints.maxWidth >= _wideBreakpoint) {
+                    return _WideLayout(viewModel: viewModel);
+                  }
+                  return _CompactLayout(viewModel: viewModel);
+                },
+              ),
             };
           },
         ),
@@ -417,8 +416,8 @@ class _DailyCoursePanel extends StatelessWidget {
               final columns = constraints.maxWidth >= 900
                   ? 3
                   : constraints.maxWidth >= 560
-                      ? 2
-                      : 1;
+                  ? 2
+                  : 1;
               final width =
                   (constraints.maxWidth - gap * (columns - 1)) / columns;
               return Wrap(
@@ -483,7 +482,8 @@ class _DailyCoursePanel extends StatelessWidget {
             children: <Widget>[
               FilledButton.icon(
                 key: const Key('guitar_complete_course_day'),
-                onPressed: snapshot.canCompleteCurrentDay &&
+                onPressed:
+                    snapshot.canCompleteCurrentDay &&
                         !viewModel.courseActionInProgress
                     ? () => _completeDay(context, day.dayNumber)
                     : null,
@@ -671,8 +671,8 @@ class _CourseDayMarker extends StatelessWidget {
     final color = completed
         ? DesignTokens.orange
         : current
-            ? DesignTokens.indigoLight
-            : DesignTokens.textTertiary;
+        ? DesignTokens.indigoLight
+        : DesignTokens.textTertiary;
     return Container(
       key: Key('guitar_course_day_$dayNumber'),
       width: 34,
@@ -1141,8 +1141,8 @@ class _PracticeRoadmap extends StatelessWidget {
             final columns = constraints.maxWidth >= 760
                 ? 3
                 : constraints.maxWidth >= 520
-                    ? 2
-                    : 1;
+                ? 2
+                : 1;
             final cardWidth =
                 (constraints.maxWidth - gap * (columns - 1)) / columns;
             return Wrap(
@@ -1155,7 +1155,8 @@ class _PracticeRoadmap extends StatelessWidget {
                     child: _PracticeStepCard(
                       index: index,
                       step: song.practiceSteps[index],
-                      selected: viewModel.selectedPracticeStep?.id ==
+                      selected:
+                          viewModel.selectedPracticeStep?.id ==
                           song.practiceSteps[index].id,
                       onTap: () => viewModel.selectPracticeStep(
                         song.practiceSteps[index].id,
@@ -1302,8 +1303,8 @@ class _LearningResources extends StatelessWidget {
             final columns = constraints.maxWidth >= 760
                 ? 3
                 : constraints.maxWidth >= 520
-                    ? 2
-                    : 1;
+                ? 2
+                : 1;
             final cardWidth =
                 (constraints.maxWidth - gap * (columns - 1)) / columns;
             return Wrap(
@@ -1351,17 +1352,17 @@ class _ResourceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final (icon, label) = switch (resource.kind) {
       GuitarLessonResourceKind.pdfGuide => (
-          Icons.picture_as_pdf_outlined,
-          'PDF',
-        ),
+        Icons.picture_as_pdf_outlined,
+        'PDF',
+      ),
       GuitarLessonResourceKind.interactiveScore => (
-          Icons.queue_music_outlined,
-          'SCORE',
-        ),
+        Icons.queue_music_outlined,
+        'SCORE',
+      ),
       GuitarLessonResourceKind.videoLesson => (
-          Icons.ondemand_video_outlined,
-          'VIDEO',
-        ),
+        Icons.ondemand_video_outlined,
+        'VIDEO',
+      ),
     };
 
     return Container(
@@ -1553,8 +1554,8 @@ class _TempoControl extends StatelessWidget {
             child: TextButton.icon(
               onPressed:
                   viewModel.practiceBpm == viewModel.recommendedPracticeBpm
-                      ? null
-                      : viewModel.resetPracticeBpm,
+                  ? null
+                  : viewModel.resetPracticeBpm,
               icon: const Icon(Icons.restart_alt, size: 18),
               label: Text('推奨 ${viewModel.recommendedPracticeBpm} BPM に戻す'),
               style: TextButton.styleFrom(

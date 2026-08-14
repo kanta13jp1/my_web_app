@@ -33,9 +33,7 @@ void main() {
       await _dragUntilBuilt(
         tester,
         scrollable: find.byKey(const Key('beatles_tabs_compact_layout')),
-        target: find.byKey(
-          const Key('beatles_song_blackbird-fingerstyle'),
-        ),
+        target: find.byKey(const Key('beatles_song_blackbird-fingerstyle')),
       );
       expect(
         find.byKey(const Key('beatles_song_blackbird-fingerstyle')),
