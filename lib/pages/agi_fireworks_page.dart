@@ -7,7 +7,6 @@ import '../utils/platform_view.dart' as platform_view;
 class AgiFireworksPage extends StatefulWidget {
   const AgiFireworksPage({super.key});
 
-  static const routePath = '/agi-fireworks';
   static const videoAssetPath =
       '/assets/videos/agi-fireworks-2026-07-15-to-2026-08-14.mp4';
 
