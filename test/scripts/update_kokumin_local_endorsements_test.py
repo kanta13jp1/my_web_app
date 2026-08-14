@@ -82,6 +82,16 @@ class KokuminLocalEndorsementUpdaterTest(unittest.TestCase):
 
         rendered = updater.render_dart_fallback(snapshot)
 
+        self.assertIn(
+            "const String dpjOfficialEndorsementSourceUrl =\n"
+            "    'https://new-kokumin.jp/local-election-list';",
+            rendered,
+        )
+        self.assertIn(
+            "const String dpjOfficialEndorsementSourceDocumentSha256 =\n"
+            "    'abc123';",
+            rendered,
+        )
         self.assertIn("dpjOfficialEndorsementSourceAsOf = '2026-08-10'", rendered)
         self.assertIn("prefecture: '佐賀'", rendered)
         self.assertIn("const int dpjOfficialEndorsementTotal = 1;", rendered)

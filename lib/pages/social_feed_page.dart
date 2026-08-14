@@ -9,6 +9,7 @@ import '../services/musubi_engagement_controllers.dart';
 import '../services/musubi_feature_dependencies.dart';
 import '../services/musubi_social_controller.dart';
 import '../theme/design_tokens.dart';
+import '../widgets/musubi_post_content.dart';
 import 'musubi_engagement_views.dart';
 
 /// 既存の `/social-feed` 導線を保ったまま、MUSUBIを公開する互換エントリ。
@@ -1184,14 +1185,7 @@ class _MusubiPostCardState extends State<_MusubiPostCard> {
             ],
           ),
           const SizedBox(height: DesignTokens.space12),
-          Text(
-            displayedText,
-            style: const TextStyle(
-              color: DesignTokens.textOnDark,
-              fontSize: 14,
-              height: 1.75,
-            ),
-          ),
+          MusubiPostContent(text: displayedText),
           if (post.translatedContent != null) ...[
             const SizedBox(height: DesignTokens.space8),
             TextButton.icon(

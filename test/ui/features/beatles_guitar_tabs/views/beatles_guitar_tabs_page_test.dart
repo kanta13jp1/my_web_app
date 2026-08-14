@@ -4,11 +4,16 @@ import 'package:my_web_app/data/repositories/guitar_tab_repository.dart';
 import 'package:my_web_app/data/services/guitar_tab_catalog_service.dart';
 import 'package:my_web_app/data/services/guitar_lesson_link_service.dart';
 import 'package:my_web_app/ui/features/beatles_guitar_tabs/beatles_guitar_tabs_feature.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   const repository = LocalGuitarTabRepository(
     catalogService: GuitarTabCatalogService(),
   );
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
 
   testWidgets(
     'compact layout filters songs and updates the selected practice',
@@ -24,6 +29,11 @@ void main() {
       expect(
         find.byKey(const Key('beatles_tabs_compact_layout')),
         findsOneWidget,
+      );
+      await _dragUntilBuilt(
+        tester,
+        scrollable: find.byKey(const Key('beatles_tabs_compact_layout')),
+        target: find.byKey(const Key('beatles_song_blackbird-fingerstyle')),
       );
       expect(
         find.byKey(const Key('beatles_song_blackbird-fingerstyle')),
@@ -43,6 +53,11 @@ void main() {
       expect(
         find.byKey(const Key('beatles_song_here-comes-the-sun-arpeggio')),
         findsOneWidget,
+      );
+      await _dragUntilBuilt(
+        tester,
+        scrollable: find.byKey(const Key('beatles_tabs_compact_layout')),
+        target: find.byKey(const Key('beatles_selected_song_title')),
       );
       final selectedTitle = tester.widget<Text>(
         find.byKey(const Key('beatles_selected_song_title')),
@@ -91,11 +106,16 @@ void main() {
     expect(find.text('今日の3ステップ'), findsOneWidget);
     expect(find.text('参考資料で深掘りする'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('blackbird_practice_step_tempo')));
+    final tempoStep = find.byKey(const Key('blackbird_practice_step_tempo'));
+    await tester.ensureVisible(tempoStep);
+    await tester.pumpAndSettle();
+    await tester.tap(tempoStep);
     await tester.pump();
     expect(find.text('84 BPM'), findsWidgets);
 
     final resource = find.byKey(const Key('blackbird_resource_musescore'));
+    await tester.ensureVisible(resource);
+    await tester.pumpAndSettle();
     tester.widget<OutlinedButton>(resource).onPressed!();
     await tester.pump();
 
@@ -104,6 +124,44 @@ void main() {
       Uri.parse('https://ja.musescore.com/user/6375061/scores/7758575'),
     );
   });
+
+  testWidgets('daily course completes tasks and unlocks the next day', (
+    tester,
+  ) async {
+    await _setSurfaceSize(tester, const Size(1200, 1400));
+    await tester.pumpWidget(
+      const MaterialApp(home: BeatlesGuitarTabsFeature(repository: repository)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('guitar_daily_course_panel')), findsOneWidget);
+    expect(find.text('ギターを正しく構える'), findsOneWidget);
+
+    for (final taskId in <String>['d01-posture', 'd01-tune', 'd01-pulse']) {
+      await tester.tap(find.byKey(Key('guitar_daily_task_$taskId')));
+      await tester.pumpAndSettle();
+    }
+
+    final completeButton = tester.widget<FilledButton>(
+      find.byKey(const Key('guitar_complete_course_day')),
+    );
+    expect(completeButton.onPressed, isNotNull);
+    await tester.tap(find.byKey(const Key('guitar_complete_course_day')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('右手で弦を選ぶ'), findsOneWidget);
+    final dayLabel = tester.widget<Text>(
+      find.byKey(const Key('guitar_current_course_day')),
+    );
+    expect(dayLabel.data, 'DAY 2');
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(
+      const MaterialApp(home: BeatlesGuitarTabsFeature(repository: repository)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('右手で弦を選ぶ'), findsOneWidget);
+  });
 }
 
 Future<void> _setSurfaceSize(WidgetTester tester, Size size) async {
@@ -111,6 +169,18 @@ Future<void> _setSurfaceSize(WidgetTester tester, Size size) async {
   tester.view.physicalSize = size;
   addTearDown(tester.view.resetDevicePixelRatio);
   addTearDown(tester.view.resetPhysicalSize);
+}
+
+Future<void> _dragUntilBuilt(
+  WidgetTester tester, {
+  required Finder scrollable,
+  required Finder target,
+}) async {
+  for (var attempt = 0; attempt < 8 && target.evaluate().isEmpty; attempt++) {
+    await tester.drag(scrollable, const Offset(0, -420));
+    await tester.pumpAndSettle();
+  }
+  expect(target, findsOneWidget);
 }
 
 class _RecordingLinkService implements GuitarLessonLinkService {

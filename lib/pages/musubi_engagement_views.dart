@@ -4,6 +4,7 @@ import '../models/musubi_engagement_models.dart';
 import '../models/musubi_social_models.dart';
 import '../services/musubi_engagement_controllers.dart';
 import '../theme/design_tokens.dart';
+import '../widgets/musubi_post_content.dart';
 
 enum MusubiDestination { feed, discover, communities, messages, saved, safety }
 
@@ -811,13 +812,7 @@ class MusubiSavedView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    post.content,
-                    style: const TextStyle(
-                      color: DesignTokens.textOnDark,
-                      height: 1.6,
-                    ),
-                  ),
+                  MusubiPostContent(text: post.content),
                 ],
               ),
             ),

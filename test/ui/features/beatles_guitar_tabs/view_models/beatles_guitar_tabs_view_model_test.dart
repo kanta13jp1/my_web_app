@@ -1,20 +1,33 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/data/models/guitar_daily_course_model.dart';
+import 'package:my_web_app/data/repositories/guitar_course_repository.dart';
 import 'package:my_web_app/data/repositories/guitar_tab_repository.dart';
+import 'package:my_web_app/data/services/guitar_course_progress_service.dart';
+import 'package:my_web_app/data/services/guitar_daily_course_catalog_service.dart';
 import 'package:my_web_app/data/services/guitar_tab_catalog_service.dart';
 import 'package:my_web_app/data/services/guitar_lesson_link_service.dart';
 import 'package:my_web_app/domain/models/guitar_tab_song.dart';
+import 'package:my_web_app/domain/use_cases/build_guitar_course_snapshot_use_case.dart';
 import 'package:my_web_app/ui/features/beatles_guitar_tabs/view_models/beatles_guitar_tabs_view_model.dart';
 
 void main() {
   group('BeatlesGuitarTabsViewModel', () {
     late BeatlesGuitarTabsViewModel viewModel;
+    late _MemoryGuitarCourseProgressService progressService;
 
     setUp(() {
+      progressService = _MemoryGuitarCourseProgressService();
       viewModel = BeatlesGuitarTabsViewModel(
         repository: const LocalGuitarTabRepository(
           catalogService: GuitarTabCatalogService(),
         ),
+        courseRepository: LocalGuitarCourseRepository(
+          catalogService: const GuitarDailyCourseCatalogService(),
+          progressService: progressService,
+        ),
         linkService: _FakeGuitarLessonLinkService(),
+        buildCourseSnapshot: const BuildGuitarCourseSnapshotUseCase(),
+        clock: () => DateTime(2026, 8, 13),
       );
     });
 
@@ -28,6 +41,8 @@ void main() {
       expect(viewModel.selectedSong?.title, 'Blackbird');
       expect(viewModel.practiceBpm, 60);
       expect(viewModel.selectedPracticeStep?.id, 'separate');
+      expect(viewModel.courseSnapshot?.currentDay?.dayNumber, 1);
+      expect(viewModel.courseSnapshot?.totalDayCount, 14);
     });
 
     test(
@@ -84,7 +99,13 @@ void main() {
         repository: const LocalGuitarTabRepository(
           catalogService: GuitarTabCatalogService(),
         ),
+        courseRepository: LocalGuitarCourseRepository(
+          catalogService: const GuitarDailyCourseCatalogService(),
+          progressService: progressService,
+        ),
         linkService: links,
+        buildCourseSnapshot: const BuildGuitarCourseSnapshotUseCase(),
+        clock: () => DateTime(2026, 8, 13),
       );
       addTearDown(linkedViewModel.dispose);
       await linkedViewModel.load();
@@ -100,7 +121,12 @@ void main() {
     test('exposes a retryable failure state', () async {
       final failed = BeatlesGuitarTabsViewModel(
         repository: const _FailingGuitarTabRepository(),
+        courseRepository: LocalGuitarCourseRepository(
+          catalogService: const GuitarDailyCourseCatalogService(),
+          progressService: progressService,
+        ),
         linkService: _FakeGuitarLessonLinkService(),
+        buildCourseSnapshot: const BuildGuitarCourseSnapshotUseCase(),
       );
       addTearDown(failed.dispose);
 
@@ -110,7 +136,36 @@ void main() {
       expect(failed.errorMessage, isNotEmpty);
       expect(failed.songs, isEmpty);
     });
+
+    test('persists daily tasks and unlocks the next course day', () async {
+      await viewModel.load();
+
+      for (final task in viewModel.courseSnapshot!.currentDay!.tasks) {
+        expect(await viewModel.toggleDailyTask(task.id), isTrue);
+      }
+      expect(viewModel.courseSnapshot?.canCompleteCurrentDay, isTrue);
+
+      expect(await viewModel.completeCurrentCourseDay(), isTrue);
+
+      expect(viewModel.courseSnapshot?.completedDayCount, 1);
+      expect(viewModel.courseSnapshot?.currentDay?.dayNumber, 2);
+      expect(viewModel.courseSnapshot?.currentStreak, 1);
+      expect(progressService.value.completedDayNumbers, <int>[1]);
+    });
   });
+}
+
+class _MemoryGuitarCourseProgressService
+    implements GuitarCourseProgressService {
+  GuitarCourseProgressModel value = const GuitarCourseProgressModel();
+
+  @override
+  Future<GuitarCourseProgressModel> load() async => value;
+
+  @override
+  Future<void> save(GuitarCourseProgressModel progress) async {
+    value = progress;
+  }
 }
 
 class _FakeGuitarLessonLinkService implements GuitarLessonLinkService {
