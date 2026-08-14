@@ -6269,15 +6269,32 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   Future<void> _fetchContent() async {
     try {
-      final rows = await _supabase
+      final contentRows = await _supabase
           .from('ai_university_content')
           .select()
           .eq('is_active', true)
           .order('sort_order')
           .timeout(const Duration(seconds: 10));
 
+      // PostgREST limits one response to 1,000 rows. Fetch video lessons
+      // separately so the provider-independent banner never loses published
+      // videos as the general AI University catalog grows.
+      final publishedVideoRows = await _supabase
+          .from('ai_university_content')
+          .select()
+          .eq('is_active', true)
+          .like('category', 'video_%')
+          .order('published_at', ascending: false)
+          .timeout(const Duration(seconds: 10));
+
+      final rows =
+          AiUniversityVideoLessonService.mergeContentRowsByProviderCategory(
+        (contentRows as List).cast<Map<String, dynamic>>(),
+        (publishedVideoRows as List).cast<Map<String, dynamic>>(),
+      );
+
       final Map<String, List<Map<String, dynamic>>> grouped = {};
-      for (final row in (rows as List).cast<Map<String, dynamic>>()) {
+      for (final row in rows) {
         final provider =
             (row['provider'] as String?) ?? (row['provider_id'] as String?);
         if (provider == null) continue;
