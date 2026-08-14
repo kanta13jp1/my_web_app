@@ -1,8 +1,8 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-08-07T21:57:04Z",
-      "hash": "f4ebf4c07071aaee2c9d0c4a32dcdbc1029c3452517cbca2fcc3f67d4077ffb9",
+      "checked_at": "2026-08-13T22:04:48Z",
+      "hash": "ae973f95c841c1e6cd721a08f731554a63507148c3004296dbd4ac8abeec6cc1",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -46,13 +46,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.224 / August 7, 2026",
+      "latest_signal": "2.1.231 / August 13, 2026",
       "name": "Claude Code changelog",
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-08-07T21:57:04Z",
+      "checked_at": "2026-08-13T22:04:48Z",
       "hash": "16169570e6d5b7464fa84bf9a60ba6e09af666e83cf5973d556f37ea81c414a8",
       "keyword_groups": {
         "codex-runtime": [
@@ -90,8 +90,8 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-08-07T21:57:04Z",
-      "hash": "5a924f9a0790833cfeba54a374954e87f9ff437c7b941234ac4ca238087e03cb",
+      "checked_at": "2026-08-13T22:04:48Z",
+      "hash": "25d7d4f9fe758ae28905d5cf0108cb18ce660278e9e58dea70384b8dd8b4998b",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -133,8 +133,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-08-07T21:57:04Z",
-      "hash": "3973609a2544add4191e51fd3126d3e82e992e9179d2892a2952949bc9c1b1b3",
+      "checked_at": "2026-08-13T22:04:48Z",
+      "hash": "b49807688d0ee0e85e4e8d25e628e591dfef36406def106ea17095613ccef9e5",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -177,13 +177,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-08-07 / Codex CLI 0.147.0 pre",
+      "latest_signal": "2026-08-13 / Computer History Computer History is an opt-in feature in the ChatGPT desktop app on macOS",
       "name": "Codex changelog",
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-08-07T21:57:04Z",
+      "checked_at": "2026-08-13T22:04:48Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -192,8 +192,8 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-08-07T21:57:04Z",
-      "hash": "f6d18bc18ccedd8d17d6fb956082dafa1e80116f092b6c28f5102305e05221af",
+      "checked_at": "2026-08-13T22:04:48Z",
+      "hash": "32ad39e015f35a19d5e24c8edb13a38b5eb1ca8938498ac16e073fe7ccb80c95",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.4",
@@ -235,16 +235,15 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-08-07T21:57:04Z",
-      "hash": "a23bd552769066e3de658abf11d3553627ae135cd177078cd4c9cbac3f466ae3",
+      "checked_at": "2026-08-13T22:04:48Z",
+      "hash": "ae74337e03614eb31784f983251beef3857d6a30b0d9f3734294d6e8c5d8ef73",
       "keyword_groups": {
         "hooks": [
           "hook",
           "hooks"
         ],
         "integration": [
-          "MCP",
-          "Slack"
+          "MCP"
         ],
         "quality-cost": [
           "cost",
@@ -264,8 +263,8 @@
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-08-07T21:57:04Z",
-      "hash": "b1a20ac3437c2cd2bf3e77d9ab96b2af7bc3d4b83a4dc442b2c677e859f1fa31",
+      "checked_at": "2026-08-13T22:04:48Z",
+      "hash": "10926c02ec24c81fb0b9ab573da2d02c439a02fb1124fb872c65876cf8e7a30a",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -299,14 +298,14 @@
           "workflow"
         ]
       },
-      "latest_signal": "August 5, 2026",
+      "latest_signal": "August 12, 2026",
       "name": "Devin release notes",
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-08-07T21:57:04Z",
-      "hash": "cd6e9ff8949d7c5fe4015a5b039261c21f1ecea5e73d18a972feed159ca159a1",
+      "checked_at": "2026-08-13T22:04:48Z",
+      "hash": "26aadac92b37e4dba989ec21d669ed9e59ae4ee05b67a6ffff38a4ceeb4c903d",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -328,11 +327,11 @@
           "workflow"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.92.0 / July 20, 2026",
+      "latest_signal": "VS Code Gemini Code Assist 2.95.0 / August 10, 2026",
       "name": "Gemini Code Assist release notes",
       "status": 200,
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-08-07T21:57:04Z"
+  "updated_at": "2026-08-13T22:04:48Z"
 }

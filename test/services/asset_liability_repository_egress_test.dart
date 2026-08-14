@@ -64,7 +64,49 @@ void main() {
       expect(local.defaultPaymentSources['mobit'], 'smbc_otsuka');
       expect(local.defaultCardBillingAccounts['au'], 'aupay_card');
     });
+
+    test('compares only the latest bounded monthly snapshot window', () async {
+      final snapshots = <AssetLiabilityMonthlySnapshot>[
+        for (var index = 0; index < 121; index++)
+          _snapshotFor(DateTime(2016, index + 1)),
+      ];
+      final local = _MemoryAssetLiabilityRepository()
+        ..monthlySnapshots = snapshots;
+      final remote = _CountingRemoteStore()
+        ..monthlySnapshots = snapshots.sublist(1);
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+
+      final preview = await repository.previewSyncMonth(DateTime(2026, 1));
+      final snapshotItem = preview.items.singleWhere(
+        (item) => item.target == AssetLiabilitySyncTarget.monthlySnapshots,
+      );
+
+      expect(snapshotItem.dataMatches, isTrue);
+      expect(snapshotItem.localCount, 120);
+      expect(snapshotItem.remoteCount, 120);
+    });
   });
+}
+
+AssetLiabilityMonthlySnapshot _snapshotFor(DateTime month) {
+  final monthKey = '${month.year}-${month.month.toString().padLeft(2, '0')}';
+  return AssetLiabilityMonthlySnapshot(
+    monthKey: monthKey,
+    savedAt: DateTime.utc(month.year, month.month, 1),
+    positiveAssetTotal: 100000,
+    liabilityTotal: -1000000,
+    netWorth: -900000,
+    cashLikeTotal: 50000,
+    monthlyScheduledPaymentTotal: 100000,
+    monthlyPaidPaymentTotal: 50000,
+    monthlyUnpaidPaymentTotal: 50000,
+    overduePaymentCount: 0,
+  );
 }
 
 final class _MemoryAssetLiabilityRepository extends AssetLiabilityRepository {
@@ -72,6 +114,8 @@ final class _MemoryAssetLiabilityRepository extends AssetLiabilityRepository {
   Map<String, String> defaultPaymentSources = <String, String>{};
   Map<String, String> defaultCardBillingAccounts = <String, String>{};
   int savedMonthCount = 0;
+  List<AssetLiabilityMonthlySnapshot> monthlySnapshots =
+      <AssetLiabilityMonthlySnapshot>[];
 
   @override
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
@@ -130,7 +174,7 @@ final class _MemoryAssetLiabilityRepository extends AssetLiabilityRepository {
 
   @override
   Future<List<AssetLiabilityMonthlySnapshot>> loadMonthlySnapshots() async {
-    return const <AssetLiabilityMonthlySnapshot>[];
+    return List<AssetLiabilityMonthlySnapshot>.from(monthlySnapshots);
   }
 
   @override
@@ -146,6 +190,8 @@ final class _CountingRemoteStore extends AssetLiabilityRemoteStore {
   int monthLoadCount = 0;
   int defaultSettingsLoadCount = 0;
   int legacyDefaultLoadCount = 0;
+  List<AssetLiabilityMonthlySnapshot> monthlySnapshots =
+      <AssetLiabilityMonthlySnapshot>[];
 
   @override
   Future<AssetLiabilityMonthlyState?> loadMonth({
@@ -218,7 +264,7 @@ final class _CountingRemoteStore extends AssetLiabilityRemoteStore {
   Future<List<AssetLiabilityMonthlySnapshot>?> loadMonthlySnapshots({
     required String userId,
   }) async {
-    return null;
+    return List<AssetLiabilityMonthlySnapshot>.from(monthlySnapshots);
   }
 
   @override

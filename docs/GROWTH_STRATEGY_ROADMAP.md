@@ -33462,3 +33462,11 @@ watcher が名指しできるのはスナップショット時点で**生存し�
 
 - 該当原則: 4 (商品=価値 / 競合を観測し自社の差別化を更新する) / 6 (資本=時間 / 自動化で調査時間をゼロトークンへ) / 8 (KPI / ユーザー 61人→次の milestone へ向けた施策立案)
 - ネットワークポリシー制約: Supabase Edge Function / REST への直接 HTTP アクセス不可 → GHA 経路が正規パス (既知・継続)
+
+### Rule 17 WF health check (2026-08-14 01:41 JST)
+
+- 直近30 run: success 10 / failure 2 / cancelled 2 / active 0（結論未確定のscheduled runを除く）
+- 失敗 WF: Minimal E2E Gate 2件 — アプリ変更のないDependabot Actions更新にもPR本文宣言を要求した誤判定
+- 不要処理を削減: 非アプリ変更はMinimal E2E宣言不要、PR時の未デプロイ公開URL smoke runnerを廃止、docs-only PRのCI起動を除外、ローカルSDK差のあるDart formatは固定SDKのCIへ集約
+- 維持する証明: アプリ変更のFlutter analyze/test/Web build、main反映後の公開Playwright、変更種別ごとのWeb/Edge/DBデプロイ
+- orphan branch: blog-publish 2 / daily-report 2 / その他 0（削除閾値5以下）
