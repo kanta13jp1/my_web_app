@@ -93,6 +93,10 @@ jobs:
         with:
           flutter-version: '3.38.x'
 
+      - name: Resolve Flutter dependencies for formatter language version
+        if: steps.pr.outputs.has_dart == 'true'
+        run: flutter pub get
+
       - name: Format changed Dart files
         if: steps.pr.outputs.has_dart == 'true'
         shell: bash
