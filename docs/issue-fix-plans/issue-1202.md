@@ -51,7 +51,52 @@ ElevenLabsは文字数ベースでの従量課金（APIレートで100万文字�
 
 ## Checklist
 
-- [ ] Reproduction is clear
-- [ ] Smallest safe fix is implemented
+- [x] Reproduction is clear
+- [x] Smallest safe fix is implemented
 - [ ] Analyze/tests/CI are checked
 - [ ] PR notes explain the change and the remaining risk
+
+## Implementation (Codex #1 / 2026-08-14)
+
+- Added `/content-dubbing` as a dedicated multilingual content dubbing studio.
+- Added paginated ElevenLabs Voice Library discovery (100 voices per page),
+  sample playback, voice selection, article/text import, and MP3 preview/download.
+- Added model-aware language catalogs: Eleven v3 (70+), Multilingual v2 (29),
+  and Flash v2.5 (32). The UI exposes stability, style, similarity, speed, and
+  speaker boost while disabling controls unsupported by Eleven v3.
+- Added natural-boundary long-text chunking and ElevenLabs request stitching for
+  supported models. Generated MP3 chunks are combined in order and stored in a
+  private `voice-dubbing` bucket with a one-hour signed preview URL.
+- Added atomic monthly character quotas backed by `billing_usage_counters`:
+  free 5,000 / pro 100,000 / team 300,000 characters. Failed generations release
+  their reservation.
+
+Official API references:
+
+- https://elevenlabs.io/docs/overview/models
+- https://elevenlabs.io/docs/api-reference/voices/voice-library/get-shared
+- https://elevenlabs.io/docs/eleven-api/guides/how-to/text-to-speech/request-stitching
+- https://elevenlabs.io/docs/api-reference/text-to-speech/convert
+
+## Acceptance Status
+
+- [x] Select from 70+ reading languages and paginated community voices.
+- [x] Adjust stability and style, plus compatible similarity/speed/boost controls.
+- [x] Split long text on natural boundaries and stitch supported generations.
+- [x] Preview and download the generated private MP3.
+- [x] Track per-user monthly characters and enforce free/pro/team limits atomically.
+
+## Validation
+
+- `deno test --no-lock supabase/functions/ai-hub/voice_dubbing_test.ts` (5 passed)
+- `deno lint` for the new domain module, tests, and `ai-hub/index.ts`
+- `flutter test --no-pub` for service, widget, and direct-route tests (6 passed)
+- `flutter analyze --no-pub` for all new Flutter files and tests (no issues)
+- `git diff --check`
+
+## Operational Gate
+
+- Apply `20260814160000_add_voice_dubbing_usage.sql` before deploying `ai-hub`.
+- Confirm `ELEVENLABS_API_KEY` belongs to a plan with Voice Library API access.
+- Run one authenticated live generation after deployment; provider calls were not
+  made from the local test lane.

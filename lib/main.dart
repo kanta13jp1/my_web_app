@@ -52,6 +52,7 @@ import 'package:my_web_app/pages/public_memo_directory_page.dart';
 import 'package:my_web_app/pages/ai_university_ranking_page.dart';
 import 'package:my_web_app/pages/ai_university_video_page.dart';
 import 'package:my_web_app/pages/ai_university_voice_page.dart';
+import 'package:my_web_app/pages/content_dubbing_page.dart';
 import 'package:my_web_app/pages/reality_check_page.dart';
 import 'package:my_web_app/pages/comparison_page.dart';
 import 'package:my_web_app/pages/competitor_browse_page.dart';
@@ -560,6 +561,11 @@ Route<dynamic> generateAppRoute(
     case '/ai-university-voice':
       return MaterialPageRoute(
         builder: (_) => const AiUniversityVoicePage(),
+      );
+    case '/content-dubbing':
+      return MaterialPageRoute(
+        builder: (_) => const ContentDubbingPage(),
+        settings: settings,
       );
     case '/ai-university-video':
       final args = settings.arguments as Map<String, dynamic>?;
