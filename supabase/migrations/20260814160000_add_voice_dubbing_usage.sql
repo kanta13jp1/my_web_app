@@ -90,7 +90,7 @@ BEGIN
     );
   END IF;
 
-  UPDATE public.billing_usage_counters
+  UPDATE billing_usage_counters
   SET voice_character_count = voice_character_count + p_characters
   WHERE user_id = p_user_id AND period_start = v_period_start
   RETURNING voice_character_count INTO v_used;
@@ -125,7 +125,7 @@ BEGIN
     hashtextextended('voice_dubbing:' || p_user_id::text || ':' || v_period_start::text, 0)
   );
 
-  UPDATE public.billing_usage_counters
+  UPDATE billing_usage_counters
   SET voice_character_count = GREATEST(voice_character_count - p_characters, 0)
   WHERE user_id = p_user_id AND period_start = v_period_start;
 END;
