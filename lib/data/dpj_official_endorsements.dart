@@ -252,13 +252,8 @@ const int dpjOfficialEndorsementNewcomerTotal = 107;
 const int dpjOfficialEndorsementFormerTotal = 9;
 const int dpjOfficialEndorsementPrefectureCount = 33;
 
-OfficialEndorsementPrefecture? dpjOfficialEndorsementFor(
-  String prefecture,
-) {
-  final normalized = prefecture.replaceFirst(
-    RegExp(r'[都府県]$'),
-    '',
-  );
+OfficialEndorsementPrefecture? dpjOfficialEndorsementFor(String prefecture) {
+  final normalized = prefecture.replaceFirst(RegExp(r'[都府県]$'), '');
   for (final item in dpjOfficialEndorsements) {
     if (item.prefecture == normalized) {
       return item;
