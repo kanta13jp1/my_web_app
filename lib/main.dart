@@ -13,8 +13,10 @@ import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/abstinence_guard_page.dart';
 import 'package:my_web_app/pages/self_touch_tracker_page.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
+import 'package:my_web_app/pages/agent_board_page.dart';
 import 'package:my_web_app/pages/autonomous_ops_console_page.dart';
 import 'package:my_web_app/pages/ai_company_builder_page.dart';
+import 'package:my_web_app/pages/agi_fireworks_page.dart';
 import 'package:my_web_app/pages/ai_agent_page.dart';
 import 'package:my_web_app/pages/behavior_review_page.dart';
 import 'package:my_web_app/pages/daily_habits_page.dart';
@@ -30,6 +32,7 @@ import 'package:my_web_app/pages/windows_app_install_page.dart';
 import 'package:my_web_app/pages/payment_reminder_page.dart';
 import 'package:my_web_app/pages/shopping_list_page.dart';
 import 'package:my_web_app/pages/hexciv_shop_page.dart';
+import 'package:my_web_app/services/shop_funnel_service.dart';
 import 'package:my_web_app/pages/digest_queue_page.dart';
 import 'package:my_web_app/pages/gemini_university_v2_page.dart';
 import 'package:my_web_app/pages/growth_mission_page.dart';
@@ -222,6 +225,7 @@ import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
 import 'package:my_web_app/pages/guitar_recording_studio_page.dart';
 import 'package:my_web_app/pages/public_guitar_gallery_page.dart';
 import 'package:my_web_app/pages/music_collaboration_page.dart';
+import 'package:my_web_app/ui/features/beatles_guitar_tabs/beatles_guitar_tabs_feature.dart';
 import 'package:my_web_app/pages/event_ticketing_page.dart';
 import 'package:my_web_app/pages/ai_assistant_chat_page.dart';
 import 'package:my_web_app/pages/ai_writing_assistant_page.dart';
@@ -333,6 +337,7 @@ import 'utils/app_logger.dart';
 import 'utils/error_reporter.dart';
 
 import 'services/supabase_client_provider.dart';
+import 'services/supabase_runtime_config.dart';
 
 export 'services/supabase_client_provider.dart';
 
@@ -351,11 +356,11 @@ Future<void> main() async {
   usePathUrlStrategy();
 
   final NotificationService notificationService = NotificationService();
+  final supabaseConfig = SupabaseRuntimeConfig.fromCompileTimeEnvironment();
 
   await Supabase.initialize(
-    url: 'https://smmkxxavexumewbfaqpy.supabase.co',
-    publishableKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtbWt4eGF2ZXh1bWV3YmZhcXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTExNzYsImV4cCI6MjA3NjI2NzE3Nn0.U2OsYRYFvbpu2QjTwXulJ67v9wouMMpn0y9B9K5-WHw',
+    url: supabaseConfig.url,
+    publishableKey: supabaseConfig.publishableKey,
   );
 
   // Flutter/Dart エラーを自動で Sentry + フィードバックEF に送信
@@ -513,6 +518,11 @@ Route<dynamic> generateAppRoute(
           signupCompletionService: signupCompletionService,
         ),
       );
+    case '/agi-fireworks':
+      return MaterialPageRoute(
+        builder: (_) => const AgiFireworksPage(),
+        settings: settings,
+      );
     // HexCiv ダウンロード版の商品ページ (2026-07-28 追加)。
     // Stripe Checkout の success_url / cancel_url がこの URL に
     // `?purchase=success` / `?purchase=canceled` を付けて戻ってくる。
@@ -520,6 +530,9 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => HexcivShopPage(
           purchaseResult: Uri.base.queryParameters['purchase'],
+          // 計測 (2026-07-29 追加)。閲覧・購入ボタン押下・Checkout 到達を数える。
+          // ここを渡し忘れると計測だけが黙って止まるので、route に直書きする。
+          funnel: ShopFunnelService(),
         ),
         settings: settings,
       );
@@ -534,6 +547,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const AutonomousOpsConsolePage(),
         settings: settings,
+      );
+    case '/agent-board':
+      return MaterialPageRoute(
+        builder: (_) => const AgentBoardPage(),
+        settings: const RouteSettings(name: '/agent-board'),
       );
     case '/ai-company-builder':
       return MaterialPageRoute(
@@ -1110,6 +1128,7 @@ Route<dynamic> generateAppRoute(
       );
     case '/mcp-file-search':
       return MaterialPageRoute(builder: (_) => const McpFileSearchPage());
+    case '/musubi':
     case '/social-feed':
       return MaterialPageRoute(builder: (_) => const SocialFeedPage());
     case '/sobriety-campaign':
@@ -1283,6 +1302,10 @@ Route<dynamic> generateAppRoute(
     case '/guitar-recording-studio':
       return MaterialPageRoute(
         builder: (_) => const GuitarRecordingStudioPage(),
+      );
+    case '/beatles-guitar-tabs':
+      return MaterialPageRoute(
+        builder: (_) => const BeatlesGuitarTabsFeature(),
       );
     case '/public-guitar-gallery':
       return MaterialPageRoute(

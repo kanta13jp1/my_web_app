@@ -1,10 +1,15 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
+  chargeRefundDecision,
   checkoutPaymentDecision,
   processStripeWebhookEventOnce,
 } from "./event_processing.ts";
 import { activateReferralForPaidCheckout } from "./referral_activation.ts";
+import {
+  invoiceSubscriptionId,
+  subscriptionCurrentPeriodEnd,
+} from "./stripe_api_compat.ts";
 
 // .trim(): Supabase secret に紛れ込んだ前後の空白/改行を吸収 (署名検証や
 // Stripe API 呼び出しがコピペ事故で失敗しないよう防御)。
@@ -176,7 +181,9 @@ async function upsertSubscriptionFromStripe(
     stripe_subscription_id: asString(subscription.id) || null,
     tier: normalizeTier(metadata.tier),
     status: normalizeStatus(subscription.status),
-    current_period_end: currentPeriodEnd(subscription.current_period_end),
+    current_period_end: currentPeriodEnd(
+      subscriptionCurrentPeriodEnd(subscription),
+    ),
     cancel_at_period_end: subscription.cancel_at_period_end === true,
     metadata: {
       stripe_event_source: "stripe-webhook",
@@ -293,6 +300,43 @@ async function recordShopPurchase(
     purchased_at: paid ? new Date().toISOString() : null,
   }, { onConflict: "stripe_checkout_session_id" });
   if (error) throw new Error(error.message);
+
+  // funnel の最終段 (2026-07-29 追加)。入金を確認したここでだけ書く。
+  // クライアントの「買えました」を信じると、金銭の絡む段だけ検証できない
+  // 数字になるため。記録の失敗で購入処理を巻き戻さない (計測は本体ではない)。
+  if (paid) await recordPurchaseFunnelStage(admin, metadata);
+}
+
+/**
+ * 購入完了を funnel へ記録する (2026-07-29 追加)。
+ *
+ * visitor_id は shop-checkout が Stripe の metadata に載せて運んでいる。
+ * 無い場合 (metadata を持たない古いセッション等) は**何もしない**。
+ * 適当な値で埋めると、閲覧から購入までの経路が繋がっていない行が混ざり、
+ * 到達人数の集計が壊れる。
+ */
+async function recordPurchaseFunnelStage(
+  admin: SupabaseClient,
+  metadata: Record<string, unknown>,
+): Promise<void> {
+  const visitorId = asString(metadata.shop_visitor_id);
+  const productId = asString(metadata.shop_product_id);
+  if (!visitorId || !productId) return;
+
+  const source = asString(metadata.shop_source) || "direct";
+  const { error } = await admin.from("shop_funnel_events").upsert({
+    visitor_id: visitorId,
+    product_id: productId,
+    stage: "purchase_complete",
+    source,
+    auth_user_id: asString(metadata.user_id) || null,
+  }, {
+    onConflict: "visitor_id,product_id,source,stage",
+    ignoreDuplicates: true,
+  });
+  if (error) {
+    console.error("[stripe-webhook] funnel record failed:", error.message);
+  }
 }
 
 async function handleCheckoutCompleted(
@@ -345,11 +389,69 @@ async function handleCheckoutCompleted(
   );
 }
 
+/**
+ * 返金を受けてダウンロード権利を失効させる (2026-07-30 追加)。
+ *
+ * `shop_purchases` の status='paid' の行がそのまま権利なので (shop-download は
+ * この行だけを見る)、返金後もその行が残っていると**返金したのに落とせる**状態が
+ * 続く。これまでは手動で status を更新する必要があった。
+ *
+ * 対象の特定は `stripe_payment_intent_id`。サブスクの請求に対する返金でも同じ
+ * `charge.refunded` が届くが、その payment intent に一致する購入行は無いので
+ * 0 件更新で素通りする (エラーにしない)。ただし「0 件だった」ことは必ず残す —
+ * 本当に権利を消せていない取りこぼしと区別できなくなるため。
+ *
+ * 冪等性: 同じ payment intent に何度届いても status='refunded' を書くだけなので
+ * 結果は変わらない。`neq` で既に refunded の行を除くのは、updated_at を
+ * 無意味に動かして「いつ返金処理したか」を分からなくしないため。
+ */
+async function markShopPurchaseRefunded(
+  admin: SupabaseClient,
+  charge: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const decision = chargeRefundDecision(charge);
+  const chargeId = asString(charge.id);
+
+  if (!decision.shouldRevoke) {
+    console.warn(
+      "[stripe-webhook] refund did not revoke shop access",
+      JSON.stringify({
+        charge_id: chargeId,
+        reason: decision.reason,
+        amount: decision.amount,
+        amount_refunded: decision.amountRefunded,
+      }),
+    );
+    return { refund_revoked: 0, reason: decision.reason };
+  }
+
+  const { data, error } = await admin
+    .from("shop_purchases")
+    .update({ status: "refunded" })
+    .eq("stripe_payment_intent_id", decision.paymentIntentId)
+    .neq("status", "refunded")
+    .select("id");
+  if (error) throw new Error(error.message);
+
+  const revoked = Array.isArray(data) ? data.length : 0;
+  if (revoked === 0) {
+    // サブスク返金なら正常。買い切りの返金でここに来たら紐付けが壊れている。
+    console.warn(
+      "[stripe-webhook] refund matched no shop purchase",
+      JSON.stringify({
+        charge_id: chargeId,
+        payment_intent: decision.paymentIntentId,
+      }),
+    );
+  }
+  return { refund_revoked: revoked };
+}
+
 async function markPastDue(
   admin: SupabaseClient,
   invoice: Record<string, unknown>,
 ): Promise<void> {
-  const subscriptionId = asString(invoice.subscription);
+  const subscriptionId = invoiceSubscriptionId(invoice);
   const customerId = asString(invoice.customer);
   let userId = "";
   if (customerId) userId = await userIdForCustomer(admin, customerId);
@@ -411,6 +513,8 @@ serve(async (req: Request) => {
           await upsertSubscriptionFromStripe(admin, data);
         } else if (type === "invoice.payment_failed") {
           await markPastDue(admin, data);
+        } else if (type === "charge.refunded") {
+          result = await markShopPurchaseRefunded(admin, data);
         }
 
         return result;

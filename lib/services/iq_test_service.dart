@@ -85,6 +85,7 @@ class IqTestService {
             'weighted_accuracy': summary.weightedAccuracy,
             'correct_count': summary.correctCount,
             'question_count': summary.questionCount,
+            'attempted_count': summary.attemptedCount,
             'duration_seconds': durationSeconds,
             'updated_at': completedAt.toIso8601String(),
           })
@@ -135,6 +136,29 @@ class IqTestService {
       );
     } catch (e) {
       debugPrint('Error fetching IQ test result: $e');
+      rethrow;
+    }
+  }
+
+  /// テストの全回答を取得する。結果画面の振り返り表示に使う。
+  ///
+  /// 問題本体は DB に無いので、呼び出し側で question_seed から
+  /// [IqQuestionBank.standardTest] を再構成して突き合わせる。
+  Future<List<IqAnswerRecord>> getAnswers(int testId) async {
+    try {
+      final rows = await _supabase
+          .from('iq_answers')
+          .select()
+          .eq('test_id', testId)
+          // 一意な id をタイエブレーカにして並びを安定させる
+          .order('id', ascending: true)
+          .limit(200);
+
+      return (rows as List)
+          .map((e) => IqAnswerRecord.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching IQ answers: $e');
       rethrow;
     }
   }

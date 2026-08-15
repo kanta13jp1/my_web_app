@@ -5,11 +5,13 @@
 
 import 'package:flutter/material.dart';
 
+import '../data/iq_question_bank.dart';
 import '../models/iq_test.dart';
 import '../services/iq_scoring.dart';
 import '../services/iq_test_service.dart';
 import '../services/iq_training_service.dart';
 import '../theme/design_tokens.dart';
+import '../widgets/iq_review_list.dart';
 import '../widgets/iq_score_widgets.dart';
 import 'iq_training_page.dart';
 
@@ -40,14 +42,29 @@ class _IqTestResultPageState extends State<IqTestResultPage> {
   bool _isCreatingPlan = false;
   String? _error;
 
+  /// 振り返り用: 保存済み回答と、seed から復元した当時の問題。
+  List<IqAnswerRecord> _answers = const [];
+  Map<String, IqQuestion> _questionsByKey = const {};
+
+  /// 復元した選択肢の並びが当時と一致しているか。
+  /// false のときは selectedIndex から「選んだ選択肢」を復元できない。
+  bool _optionOrderIsTrustworthy = true;
+  bool _isLoadingReview = true;
+
   @override
   void initState() {
     super.initState();
     if (widget.initialResult != null) {
       _result = widget.initialResult;
       _isLoading = false;
+      _loadReview();
     } else {
-      _load();
+      // 結果の取得を待ってから振り返りを読む。
+      // 並行に走らせると _loadReview 側で _result がまだ null になり、
+      // 同じ行をもう一度取りに行っていた (毎回2回フェッチ)。
+      _load().then((_) {
+        if (mounted) _loadReview();
+      });
     }
   }
 
@@ -66,6 +83,53 @@ class _IqTestResultPageState extends State<IqTestResultPage> {
         _isLoading = false;
         _error = '結果の読み込みに失敗しました: $e';
       });
+    }
+  }
+
+  /// 振り返り用データを読み込む。
+  ///
+  /// 問題本体は DB に無いため、保存済みの question_seed で当時の出題を
+  /// 再構成して回答と突き合わせる。seed が無い古い記録では復元できないので
+  /// 振り返りセクション自体を出さない。
+  Future<void> _loadReview() async {
+    try {
+      final answers = await _testService.getAnswers(widget.testId);
+      final seed = _result?.questionSeed;
+
+      // seed から当時の出題を復元する。選択肢の並びまで一致して初めて
+      // 「あなたが選んだ選択肢」を index から復元できる。
+      final reconstructed = seed == null
+          ? <IqQuestion>[]
+          : IqQuestionBank.standardTest(seed: seed);
+      final byKey = {for (final q in reconstructed) q.key: q};
+
+      // 復元集合が回答キーを網羅しているか。
+      // seed の意味を変えた修正 (出題そのものも seed で選ぶ) の前に受けた回は
+      // 復元が一致しないため、放置すると該当問題が振り返りから静かに消える。
+      final answeredKeys = answers.map((a) => a.questionKey).toSet();
+      final reconstructionMatches =
+          answeredKeys.isNotEmpty && answeredKeys.every(byKey.containsKey);
+
+      // 一致しない場合は正本 (全プール) から引いて問題自体は必ず表示する。
+      // ただし選択肢の並びは復元できないので index 由来の表示は使わせない。
+      final resolved = reconstructionMatches
+          ? byKey
+          : {
+              for (final q in IqQuestionBank.allQuestions)
+                if (answeredKeys.contains(q.key)) q.key: q,
+            };
+
+      if (!mounted) return;
+      setState(() {
+        _answers = answers;
+        _questionsByKey = resolved;
+        _optionOrderIsTrustworthy = reconstructionMatches;
+        _isLoadingReview = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      // 振り返りが出せなくてもスコア表示は妨げない
+      setState(() => _isLoadingReview = false);
     }
   }
 
@@ -161,6 +225,33 @@ class _IqTestResultPageState extends State<IqTestResultPage> {
                 style: TextStyle(color: DesignTokens.amber, fontSize: 12),
               ),
             ),
+          // H4: 未回答が多い回は「実力が低い」のではなく「測れていない」。
+          // 同じ見た目で数値だけ出すと利用者が判断を誤る。
+          if (!result.isReliable)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: DesignTokens.space16),
+              padding: const EdgeInsets.all(DesignTokens.space12),
+              decoration: BoxDecoration(
+                color: DesignTokens.red.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
+                border: Border.all(
+                  color: DesignTokens.red.withValues(alpha: 0.4),
+                ),
+              ),
+              child: Text(
+                '着手できたのは ${result.attemptedCount ?? 0} / '
+                '${result.questionCount} 問 '
+                '(完答率 ${(result.completionRate * 100).round()}%) です。'
+                'この回のスコアは実力ではなく「測れていない」ことを表しています。'
+                '最後まで解ける状態で受け直してください。',
+                style: const TextStyle(
+                  color: DesignTokens.red,
+                  fontSize: 12,
+                  height: 1.6,
+                ),
+              ),
+            ),
           IqScoreDial(
             iq: result.totalIq,
             percentile: result.percentile,
@@ -197,6 +288,21 @@ class _IqTestResultPageState extends State<IqTestResultPage> {
             onPressed: _createPlanAndGo,
           ),
           const SizedBox(height: DesignTokens.space24),
+
+          if (!_isLoadingReview && _questionsByKey.isNotEmpty) ...[
+            const _SectionTitle(
+              title: '問題ごとの振り返り',
+              subtitle: '間違えた問題こそ伸びしろです。解説を読んでから学習に進んでください。',
+            ),
+            const SizedBox(height: DesignTokens.space12),
+            IqReviewList(
+              answers: _answers,
+              questionsByKey: _questionsByKey,
+              optionOrderIsTrustworthy: _optionOrderIsTrustworthy,
+            ),
+            const SizedBox(height: DesignTokens.space24),
+          ],
+
           const IqDisclaimerCard(),
           const SizedBox(height: DesignTokens.space32),
         ],

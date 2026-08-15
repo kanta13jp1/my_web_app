@@ -90,17 +90,19 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          $args = @("-BaseUrl", $env:TOOLS_HUB_MCP_URL)
+          $smokeParams = @{
+            BaseUrl = $env:TOOLS_HUB_MCP_URL
+          }
 
           if (-not [string]::IsNullOrWhiteSpace($env:REGISTRATION_REDIRECT_URI)) {
-            $args += @("-RegistrationRedirectUri", $env:REGISTRATION_REDIRECT_URI)
+            $smokeParams.RegistrationRedirectUri = $env:REGISTRATION_REDIRECT_URI
           }
 
           if ($env:ENABLE_WRITE_CONFIRMATION_PROBE -eq "true") {
-            $args += "-EnableWriteConfirmationProbe"
+            $smokeParams.EnableWriteConfirmationProbe = $true
           }
 
-          ./scripts/tools_hub_mcp_smoke.ps1 @args
+          ./scripts/tools_hub_mcp_smoke.ps1 @smokeParams
 
       - name: Job summary
         if: always()
@@ -124,7 +126,6 @@ jobs:
         shell: bash
         env:
           SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
-          JOB_CANCELLED: ${{ cancelled() }}
         run: |
           if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
             echo "::warning::SUPABASE_SERVICE_ROLE_KEY missing; skip schedule_task_runs record"
@@ -132,7 +133,7 @@ jobs:
           fi
 
           STATUS="success"
-          if [ "$JOB_CANCELLED" = "true" ]; then
+          if [ -z "$SMOKE_OUTCOME" ] || [ "$SMOKE_OUTCOME" = "cancelled" ]; then
             STATUS="skipped"  # cancel-in-progress: true によるキャンセル (smoke到達前も含む)
           elif [ "$SMOKE_OUTCOME" != "success" ]; then
             STATUS="error"

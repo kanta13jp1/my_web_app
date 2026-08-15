@@ -49,9 +49,9 @@ void main() {
     });
   });
 
-  group('問題そのものの整合性', () {
+  group('問題そのものの整合性 (代替フォーム含む全50問)', () {
     test('全問が選択肢を持ち、正解インデックスが範囲内', () {
-      for (final q in IqQuestionBank.standardTest()) {
+      for (final q in IqQuestionBank.allQuestions) {
         expect(q.options.length, greaterThanOrEqualTo(2), reason: q.key);
         expect(q.correctIndex, greaterThanOrEqualTo(0), reason: q.key);
         expect(q.correctIndex, lessThan(q.options.length), reason: q.key);
@@ -59,7 +59,7 @@ void main() {
     });
 
     test('選択肢に重複がない (正解が複数存在しない)', () {
-      for (final q in IqQuestionBank.standardTest()) {
+      for (final q in IqQuestionBank.allQuestions) {
         expect(
           q.options.toSet().length,
           q.options.length,
@@ -69,14 +69,14 @@ void main() {
     });
 
     test('全問に空でない問題文と解説がある', () {
-      for (final q in IqQuestionBank.standardTest()) {
+      for (final q in IqQuestionBank.allQuestions) {
         expect(q.prompt.trim(), isNotEmpty, reason: q.key);
         expect(q.explanation.trim(), isNotEmpty, reason: q.key);
       }
     });
 
     test('記憶課題は刺激と提示時間の両方を持つ', () {
-      final memory = IqQuestionBank.standardTest()
+      final memory = IqQuestionBank.allQuestions
           .where((q) => q.category == IqCategory.memory);
 
       expect(memory, isNotEmpty);
@@ -88,7 +88,7 @@ void main() {
     });
 
     test('記憶課題以外は刺激提示フェーズを持たない', () {
-      final others = IqQuestionBank.standardTest()
+      final others = IqQuestionBank.allQuestions
           .where((q) => q.category != IqCategory.memory);
 
       for (final q in others) {
@@ -97,21 +97,48 @@ void main() {
     });
   });
 
+  group('出題プールの構成', () {
+    test('全問のキーが一意', () {
+      final keys = IqQuestionBank.allQuestions.map((q) => q.key).toSet();
+      expect(keys.length, IqQuestionBank.allQuestions.length);
+    });
+
+    test('各 (領域, 難易度) セルにちょうど2問ある', () {
+      final counts = <String, int>{};
+      for (final q in IqQuestionBank.allQuestions) {
+        final cell = '${q.category.key}-${q.difficulty}';
+        counts[cell] = (counts[cell] ?? 0) + 1;
+      }
+
+      expect(counts.length, 25, reason: 'セル数が 5領域 × 5難易度 でない');
+      for (final entry in counts.entries) {
+        expect(
+          entry.value,
+          2,
+          reason: '${entry.key} の候補が ${entry.value} 問 (2問でない)',
+        );
+      }
+    });
+  });
+
   group('選択肢シャッフル', () {
     test('シャッフルしても正解の中身は変わらない', () {
-      final plain = IqQuestionBank.standardTest();
+      // seed は「どの問題を出すか」も変えるため、index 同士では比較できない。
+      // キーで正本を引いて突き合わせる。
+      final canonical = {
+        for (final q in IqQuestionBank.allQuestions) q.key: q,
+      };
       final shuffled = IqQuestionBank.standardTest(seed: 42);
 
-      expect(shuffled.length, plain.length);
-      for (var i = 0; i < plain.length; i++) {
-        final original = plain[i];
-        final variant = shuffled[i];
+      expect(shuffled.length, 25);
+      for (final variant in shuffled) {
+        final original = canonical[variant.key];
+        expect(original, isNotNull, reason: '${variant.key} が正本に無い');
 
-        expect(variant.key, original.key);
         expect(
           variant.options[variant.correctIndex],
-          original.options[original.correctIndex],
-          reason: '${original.key} の正解がシャッフルで入れ替わっている',
+          original!.options[original.correctIndex],
+          reason: '${variant.key} の正解がシャッフルで入れ替わっている',
         );
         expect(variant.options.toSet(), original.options.toSet());
       }
@@ -127,13 +154,16 @@ void main() {
     });
 
     test('多数の seed を通しても正解が保たれる', () {
-      final plain = IqQuestionBank.standardTest();
+      final canonical = {
+        for (final q in IqQuestionBank.allQuestions) q.key: q,
+      };
       for (var seed = 0; seed < 50; seed++) {
-        final shuffled = IqQuestionBank.standardTest(seed: seed);
-        for (var i = 0; i < plain.length; i++) {
+        for (final variant in IqQuestionBank.standardTest(seed: seed)) {
+          final original = canonical[variant.key]!;
           expect(
-            shuffled[i].options[shuffled[i].correctIndex],
-            plain[i].options[plain[i].correctIndex],
+            variant.options[variant.correctIndex],
+            original.options[original.correctIndex],
+            reason: 'seed=$seed / ${variant.key}',
           );
         }
       }

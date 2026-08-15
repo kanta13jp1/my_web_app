@@ -733,6 +733,13 @@ void main() {
   });
 
   testWidgets('calendar drawer toggles visible calendars', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
     final today = DateTime.now();
     final startAt = DateTime(today.year, today.month, today.day, 10);
     final calendars = [

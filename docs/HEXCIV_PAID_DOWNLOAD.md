@@ -48,8 +48,30 @@ RLS の方針は「**読みは本人分だけ・書きは service role だけ**�
 | 関数 | 役割 | 要点 |
 |---|---|---|
 | `shop-checkout` | Checkout セッション作成 | 金額は**決めない**。Stripe の Price を参照するだけ (価格の二重管理を避ける)。`metadata` に `user_id` と `shop_product_id` を載せる |
-| `stripe-webhook` (拡張) | 購入行の作成 | `stripe_checkout_session_id` の unique + `onConflict` で**再送に対して冪等**。`payment_status` が paid でなければ `pending` で作る |
+| `stripe-webhook` (拡張) | 購入行の作成 / 返金時の権利失効 | `stripe_checkout_session_id` の unique + `onConflict` で**再送に対して冪等**。`payment_status` が paid でなければ `pending` で作る。`charge.refunded` (全額) で `status` を `refunded` にする |
 | `shop-download` | 署名付きURL発行 | 権利確認 → 有効期限 **5分**の URL。販売停止 (`is_active=false`) でも**購入済みの人には配信する** |
+
+### Stripe API バージョン (2026-07-29)
+
+webhook endpoint は **2026-06-24.dahlia** で作り直した。元の 2020-03-02 では
+checkout session に `payment_status` が無く、`checkoutPaymentDecision()` が
+「paid でなければ履行しない」で必ず止まるため、**購入が一切記録されなかった**。
+
+注意すべきなのは、この EF には**2つの API バージョンが同時に流れ込む**こと。
+
+| 経路 | 適用されるバージョン |
+|---|---|
+| webhook event の payload | endpoint に固定した **2026-06-24.dahlia** |
+| `stripeGet()` の戻り値 | `Stripe-Version` ヘッダ未指定 = **アカウント既定バージョン** |
+
+`upsertSubscriptionFromStripe()` はこの両方から呼ばれるため、片方の形しか
+読まない実装はもう片方で静かに null を書き込む。差の吸収は
+`stripe_api_compat.ts` に集約してある (2025-03-31.basil で **削除** された
+2フィールド — `invoice.subscription` と `subscription.current_period_end`)。
+
+> アカウント既定バージョンを引き上げても、この層は無害に効き続ける。
+> 「旧形はもう来ないから」と fallback を消すと、既定バージョンが古いままの
+> `stripeGet()` 経路が先に壊れる。消す前に Workbench で既定バージョンを確認すること。
 
 ## 公開までに残っている手順
 
@@ -119,8 +141,14 @@ update public.shop_products set is_active = true where id = 'hexciv-win64';
 - **発行回数は記録するが止めていない**。PC 故障や再インストールでの正当な
   再ダウンロードを機械的に阻むと、問い合わせ対応の方が高くつくため。
   `shop_download_events` を定期的に見て、異常な回数があれば個別に対処する。
-- **返金時**: Stripe 側で返金しても `shop_purchases.status` は自動では変わらない。
-  現状は手動で `refunded` に更新する必要がある (`charge.refunded` の webhook 対応は未実装)。
+- **返金時**: `charge.refunded` を受けて `shop_purchases.status` を `refunded` に
+  自動更新する (2026-07-30 実装 / 手動更新は不要になった)。紐付けは
+  `stripe_payment_intent_id`。**失効させるのは全額返金のときだけ** —
+  部分返金で権利を消すと、支払った分が残っている利用者から取り上げてしまう。
+  🔴 **Stripe 側で `charge.refunded` を購読していないと、この分岐は永久に動かない。**
+  Webhook endpoint の送信イベント一覧に入っているか確認すること (入っていなくても
+  コードも CI も緑のままなので、気付く手掛かりが無い)。動作確認は返金を 1 件試して
+  EF ログに `refund_revoked` が出るかを見るのが確実。
 - **版を上げるとき**: `pack_release.ps1` を実行 → 新しい zip をバケットへ配置 →
   `shop_products` の `version` / `storage_path` / `sha256` / `file_size_bytes` を更新。
   購入済みの利用者は追加の支払いなく最新版を落とせる (権利は商品単位のため)。
@@ -128,6 +156,6 @@ update public.shop_products set is_active = true where id = 'hexciv-win64';
 ## まだ無いもの
 
 - 購入・ダウンロードの UI (商品ページ / マイダウンロードページ)
-- `charge.refunded` を受けて `status` を `refunded` にする webhook 分岐
+- 部分返金の扱い (現状は権利を残すだけで、記録もしていない)
 - 領収書の発行 (Stripe の領収書メールで代替可能かは要判断)
 - Windows 以外のビルド

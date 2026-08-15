@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/kgi_csf_kpi.dart';
 import '../services/heygen_multilingual_sns_service.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// バイラル広告ジェネレーターページ
 /// viral-video-ad-generator / growth-hub (x.post / engine.run / engine.stats) と連携
@@ -18,7 +19,14 @@ class ViralAdGeneratorPage extends StatefulWidget {
 }
 
 class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['generator', 'stats', 'history'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 
