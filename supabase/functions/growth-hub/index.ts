@@ -37,9 +37,11 @@ import {
 } from "./x_analytics_import.ts";
 import {
   buildArchetypeTopicInteractionLine,
+  buildIcpHistoricalExemplarLine,
   buildIcpScopeLine,
   buildTopicLiftLine,
   classifyPostTopic,
+  normalizeTopicBucket,
   selectIcpCohort,
 } from "./x_topic_audience.ts";
 import {
@@ -1123,7 +1125,28 @@ function buildXPerformanceContextFromLogs(
     acquisitionRanked,
     (row) => row.topic,
   );
-  const icpScopeLine = buildIcpScopeLine(icpCohort);
+  // R28 fix: CSV 取込の行は historical_benchmark として learningRows から
+  // 除外されるため、ICP の実績があっても icpCohort には 1 件も入らない。
+  // 返済報告カードの共有はクリップボードのみで x_post_log に残らないので、
+  // ICP の実績は事実上「取り込んだ履歴」にしか存在しない。件数を数えて
+  // 「1本も無い」と「あるが年齢比較できない」を区別して報告する。
+  const icpHistoricalRows = rows.filter((row) =>
+    row.learningCohort === "historical_benchmark" &&
+    normalizeTopicBucket(row.topic) === icpCohort.target
+  );
+  const icpScopeLine = buildIcpScopeLine(icpCohort, icpHistoricalRows.length);
+  // R29: 順位付けと手本提示を分ける。取り込んだ ICP 履歴は lifetime cumulative
+  // なので winners には載せない (期間基準の混在は #4367 で禁止) が、
+  // 「どのフックがこの受け手にクリックされたか」は手本として渡す。
+  // 返済報告カードの共有は HITL 厳守でクリップボード専用のため、ICP の実績は
+  // 事実上ここにしか存在しない。
+  const icpExemplarLine = buildIcpHistoricalExemplarLine(
+    icpHistoricalRows,
+    (row) => row.urlClicks,
+    (row) => row.impressions,
+    (row) => row.text,
+    icpCohort.target,
+  );
   const winners = icpCohort.sufficient ? icpCohort.rows.slice(0, 5) : [];
   const underperformers = icpCohort.sufficient
     ? icpCohort.rows.slice(-5).reverse()
@@ -1373,6 +1396,7 @@ function buildXPerformanceContextFromLogs(
       `Optimize for site visits and replies, not for raw reach.`,
       ...(acquisitionLine ? [acquisitionLine] : []),
       icpScopeLine,
+      ...(icpExemplarLine ? [icpExemplarLine] : []),
       ...winners.map((row, index) =>
         `Winner ${
           index + 1

@@ -263,18 +263,81 @@ export function selectIcpCohort<T>(
 /// x.performance_context に出す ICP スコープ行。コホートが薄いときは
 /// 「グローバルの勝者を手本にするな」と明示する (沈黙すると、他の行に残る
 /// グローバル最大が事実上の手本になってしまう)。
+///
+/// R28 fix: 「ICP の投稿が 1 本も無い」と「ICP の投稿はあるが投稿年齢を揃えた
+/// 比較ができない」は別の状態で、必要な次の一手も違う (前者は書け / 後者は
+/// アプリ経由で投稿して計測を貯めろ)。両者を同じ 0 件として報告していた。
+///
+/// 背景: CSV 取込の行は `learning_cohort='historical_benchmark'` になり、
+/// 年齢正規化ランキング (learningRows) から意図的に除外される。一方、返済
+/// 報告カードの共有はクリップボードのみで `x_post_log` に残らない。結果、
+/// ICP の実績は「取り込んだ履歴」にしか存在しえないのに、それが 1 件も
+/// 見えないまま「measurements first」とだけ言い続ける状態になっていた。
 export function buildIcpScopeLine<T>(
   selection: IcpCohortSelection<T>,
+  historicalCount = 0,
 ): string {
   if (selection.sufficient) {
     return `ICP cohort: winner selection is scoped to topic=${selection.target} ` +
       `(n=${selection.rows.length} of ${selection.totalCount} measured posts). ` +
       `Reach from other topics is not evidence for this audience.`;
   }
-  return `ICP cohort: topic=${selection.target} has only ` +
-    `${selection.rows.length}/${selection.totalCount} measured posts — ` +
-    `not enough to name a winner. Do NOT copy the highest-reach or ` +
+  const base = `ICP cohort: topic=${selection.target} has only ` +
+    `${selection.rows.length}/${selection.totalCount} post-age comparable ` +
+    `posts — not enough to name a winner. Do NOT copy the highest-reach or ` +
     `highest-acquisition post from another topic: those numbers come from a ` +
-    `different audience and do not transfer. Write for the ICP and collect ` +
-    `measurements first.`;
+    `different audience and do not transfer.`;
+  if (historicalCount > 0) {
+    return `${base} ${historicalCount} imported historical ICP post(s) exist ` +
+      `but are lifetime-cumulative, so they cannot be ranked against ` +
+      `age-normalized posts. Treat them as audience evidence only. To get a ` +
+      `comparable winner, post ICP content through the app so metrics are ` +
+      `logged from posting time.`;
+  }
+  return `${base} No ICP post has been measured at all yet — write for the ` +
+    `ICP first, then collect measurements.`;
+}
+
+/// R29: ICP コホートの「手本」を、取り込んだ履歴から供給する。
+///
+/// なぜ必要か: ICP (借金・リボ) の投稿は、返済報告カードの共有が HITL 厳守で
+/// クリップボード専用のため `x_post_log` に入らない。実績は CSV 取込の
+/// `historical_benchmark` 行にしか存在せず、それは lifetime cumulative なので
+/// 年齢正規化ランキング (winners) には載せられない。結果、ICP 向けに何本
+/// 投稿しても「手本ゼロ」のままだった。
+///
+/// ここでは順位付けと手本提示を分ける。**順位付けには使わない** (期間基準の
+/// 混在は #4367 で禁止した) が、**どのフックがこの受け手にクリックされたか**は
+/// 手本として渡す。ランキングの主張はせず、事実と出所を明示する。
+///
+/// 返すのは URL クリック降順の上位。クリック 0 件しか無いときは、
+/// 「この受け手ではまだ 1 クリックも出ていない」ことを事実として返す
+/// (沈黙すると「手本が無い」と「手本はあるが効いていない」が混ざる)。
+export function buildIcpHistoricalExemplarLine<T>(
+  rows: readonly T[],
+  urlClicksOf: (row: T) => number,
+  impressionsOf: (row: T) => number | null,
+  hookOf: (row: T) => string,
+  target: TopicBucket = ICP_TARGET_TOPIC,
+  limit = 3,
+): string | null {
+  if (rows.length === 0) return null;
+  const withClicks = rows.filter((row) => urlClicksOf(row) > 0);
+  if (withClicks.length === 0) {
+    return `ICP exemplars (topic=${target}, imported lifetime-cumulative, ` +
+      `n=${rows.length}): none of them produced a single url click. Do not ` +
+      `reuse their shape as a proven pattern — nothing about this audience ` +
+      `has converted yet. Treat the next post as a fresh test.`;
+  }
+  const top = [...withClicks]
+    .sort((left, right) => urlClicksOf(right) - urlClicksOf(left))
+    .slice(0, limit);
+  const parts = top.map((row) =>
+    `${urlClicksOf(row)} clicks / ${impressionsOf(row) ?? "unknown"} imp — ` +
+    `"${hookOf(row)}"`
+  );
+  return `ICP exemplars (topic=${target}, imported lifetime-cumulative, ` +
+    `${withClicks.length}/${rows.length} posts got >=1 click): ` +
+    `${parts.join(" | ")}. These are NOT age-normalized and are excluded ` +
+    `from the winner ranking — copy their structure, not their rank.`;
 }

@@ -4,6 +4,7 @@ import {
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   buildArchetypeTopicInteractionLine,
+  buildIcpHistoricalExemplarLine,
   buildIcpScopeLine,
   buildTopicLiftLine,
   classifyPostTopic,
@@ -172,4 +173,86 @@ Deno.test("buildIcpScopeLine: 薄いときは他トピックの勝者を真似�
   );
   assert(ok.includes("scoped to topic=debt_recovery"));
   assert(!ok.includes("Do NOT copy"));
+});
+
+// R28 fix: 「ICP投稿が1本も無い」と「あるが年齢比較できない」の区別。
+// CSV 取込行は historical_benchmark で learningRows から除外されるため、
+// 前者としてしか報告されず、次の一手を誤らせていた。
+Deno.test("buildIcpScopeLine: 取り込み履歴が無いときは『まず書け』", () => {
+  const line = buildIcpScopeLine(
+    selectIcpCohort([{ topic: "japan_politics" }], (r) => r.topic),
+    0,
+  );
+  assert(line.includes("No ICP post has been measured at all yet"));
+  assert(line.includes("write for the"));
+  assert(!line.includes("imported historical"));
+});
+
+Deno.test("buildIcpScopeLine: 取り込み履歴があるときは別の次の一手を出す", () => {
+  const line = buildIcpScopeLine(
+    selectIcpCohort([{ topic: "japan_politics" }], (r) => r.topic),
+    7,
+  );
+  assert(line.includes("7 imported historical ICP post(s) exist"));
+  // lifetime cumulative なので年齢正規化ランキングには載せられない、と明示。
+  assert(line.includes("lifetime-cumulative"));
+  assert(line.includes("audience evidence only"));
+  // 次の一手は「書け」ではなく「アプリ経由で投稿して計測を貯めろ」。
+  assert(line.includes("post ICP content through the app"));
+  assert(!line.includes("No ICP post has been measured at all yet"));
+});
+
+Deno.test("buildIcpScopeLine: 十分なら履歴件数に関わらずスコープ宣言のまま", () => {
+  const enough = selectIcpCohort(
+    [{ topic: "debt_recovery" }, { topic: "debt_recovery" }],
+    (r) => r.topic,
+  );
+  assert(
+    buildIcpScopeLine(enough, 9).includes("scoped to topic=debt_recovery"),
+  );
+  assert(!buildIcpScopeLine(enough, 9).includes("imported historical"));
+});
+
+// R29: 取り込んだ ICP 履歴を「順位付けせず手本として」渡す。
+type Ex = { c: number; i: number | null; t: string };
+const exLine = (rows: Ex[]) =>
+  buildIcpHistoricalExemplarLine(
+    rows,
+    (r) => r.c,
+    (r) => r.i,
+    (r) => r.t,
+  );
+
+Deno.test("buildIcpHistoricalExemplarLine: 履歴が無ければ沈黙", () => {
+  assertEquals(exLine([]), null);
+});
+
+Deno.test("buildIcpHistoricalExemplarLine: 全件0クリックなら『効いていない』と言う", () => {
+  const line = exLine([
+    { c: 0, i: 120, t: "残債を減らした話" },
+    { c: 0, i: 80, t: "リボの利息を計算した" },
+  ]);
+  assert(line !== null);
+  // 「手本が無い」と「手本はあるが効いていない」を混ぜない。
+  assert(line!.includes("none of them produced a single url click"));
+  assert(line!.includes("fresh test"));
+  assert(!line!.includes("copy their structure"));
+});
+
+Deno.test("buildIcpHistoricalExemplarLine: クリック降順で手本を出す", () => {
+  const line = exLine([
+    { c: 1, i: 300, t: "低クリック" },
+    { c: 9, i: 4000, t: "高クリック" },
+    { c: 0, i: 50, t: "ゼロ" },
+    { c: 4, i: 900, t: "中クリック" },
+  ]);
+  assert(line !== null);
+  assert(line!.indexOf("高クリック") < line!.indexOf("中クリック"));
+  assert(!line!.includes("ゼロ"), "0クリックは手本にしない");
+  assert(line!.includes("2/4") === false);
+  assert(line!.includes("3/4 posts got >=1 click"));
+  // 順位の主張はしない = ランキングから除外されている旨を必ず添える。
+  assert(line!.includes("NOT age-normalized"));
+  assert(line!.includes("excluded"));
+  assert(line!.includes("copy their structure, not their rank"));
 });

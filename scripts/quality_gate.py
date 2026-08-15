@@ -51,6 +51,10 @@ def base_commands() -> list[GateCommand]:
             [python, "scripts/check_minimal_e2e_gate_test.py"],
         ),
         GateCommand(
+            "dependabot pub policy tests",
+            [python, "scripts/check_dependabot_pub_policy_test.py"],
+        ),
+        GateCommand(
             "high-risk ultrareview gate tests",
             [python, "scripts/check_high_risk_ultrareview_gate_test.py"],
         ),
@@ -97,6 +101,14 @@ def base_commands() -> list[GateCommand]:
         GateCommand(
             "github actions node runtime floor",
             [python, "scripts/check_github_actions_node_runtime.py"],
+        ),
+        GateCommand(
+            "github actions status-function placement",
+            [python, "scripts/check_github_actions_status_functions.py"],
+        ),
+        GateCommand(
+            "github actions PowerShell splatting",
+            [python, "scripts/check_github_actions_powershell_splatting.py"],
         ),
         GateCommand(
             "wbs sync timeout resilience",

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../services/ai_university_video_lesson_service.dart';
+import '../widgets/ai_university_youtube_embed.dart';
 
 class AiUniversityVideoPage extends StatefulWidget {
   const AiUniversityVideoPage({
@@ -218,6 +219,7 @@ class _AiUniversityVideoPageState extends State<AiUniversityVideoPage> {
     const surface2 = Color(0xFF1E1E1E);
     const accent = Color(0xFFFF6B35);
     final topic = _selectedTopic;
+    final youtubeVideoId = topic?.youtubeVideoId;
     final providerLabel = _provider == null
         ? null
         : AiUniversityVideoLessonService.providerLabel(_provider!);
@@ -343,6 +345,21 @@ class _AiUniversityVideoPageState extends State<AiUniversityVideoPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  if (topic != null && youtubeVideoId != null) ...[
+                    _InfoCard(
+                      title: '公開済み動画を視聴',
+                      subtitle:
+                          '${AiUniversityVideoLessonService.categoryLabel(topic.category)} / ${topic.title}',
+                      accent: const Color(0xFFFF0000),
+                      child: AiUniversityYoutubeEmbed(
+                        key: ValueKey(topic.id),
+                        videoId: youtubeVideoId,
+                        title: topic.title,
+                        onOpen: () => _openUrl(topic.sourceUrl ?? ''),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -390,7 +407,8 @@ class _AiUniversityVideoPageState extends State<AiUniversityVideoPage> {
                             ),
                           ),
                           if (topic.sourceUrl != null &&
-                              topic.sourceUrl!.trim().isNotEmpty) ...[
+                              topic.sourceUrl!.trim().isNotEmpty &&
+                              youtubeVideoId == null) ...[
                             const SizedBox(height: 10),
                             TextButton.icon(
                               onPressed: () => _openUrl(topic.sourceUrl ?? ''),

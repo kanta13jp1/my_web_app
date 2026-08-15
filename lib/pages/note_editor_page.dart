@@ -73,26 +73,26 @@ extension NoteEditorAiStyleX on NoteEditorAiStyle {
   String get label {
     switch (this) {
       case NoteEditorAiStyle.normal:
-        return 'Normal';
+        return '標準';
       case NoteEditorAiStyle.concise:
-        return 'Concise';
+        return '簡潔';
       case NoteEditorAiStyle.formal:
-        return 'Formal';
+        return '硬め';
       case NoteEditorAiStyle.explanatory:
-        return 'Explain';
+        return '詳しく';
     }
   }
 
   String get helperText {
     switch (this) {
       case NoteEditorAiStyle.normal:
-        return 'Balanced default tone for general editing.';
+        return 'ふだんの編集に向いたバランスの取れたトーンです。';
       case NoteEditorAiStyle.concise:
-        return 'Short, direct, and easy to scan.';
+        return '短く直接的で、ざっと読みやすい文章にします。';
       case NoteEditorAiStyle.formal:
-        return 'Polished, calm, and professional wording.';
+        return '落ち着いた、ビジネス向けの言い回しにします。';
       case NoteEditorAiStyle.explanatory:
-        return 'More context, guidance, and clear reasoning.';
+        return '背景や理由を補い、筋道を追いやすくします。';
     }
   }
 
@@ -154,6 +154,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   bool _isUploadingAttachment = false;
   bool _isRunningSlashCommand = false;
   bool _isApplyingSnapshot = false;
+  String _observedTitle = '';
+  String _observedContent = '';
+  String? _persistedTitle;
+  String? _persistedContent;
+  String? _persistedReminderIso;
+  bool? _persistedIsFavorite;
+  DateTime? _serverUpdatedAt;
   bool _showMarkdownPreview = false;
   bool? _isSlashCommandBarExpanded;
   int _commentCount = 0;
@@ -163,6 +170,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   List<Attachment> _attachments = const <Attachment>[];
   static const String _draftKeyPrefix = 'note_editor_draft_';
   static const String _aiStylePreferenceKey = 'note_editor_ai_style';
+  static const String _slashBarExpandedKey = 'note_editor_slash_bar_expanded';
   static const List<String> _slashCommandSuggestions = <String>[
     '/help',
     '/improve',
@@ -229,6 +237,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Future<void> _bootstrapEditor() async {
     await _loadPreferredAiModel();
     await _loadAiStylePreference();
+    await _loadSlashBarExpanded();
     await _loadPromptTemplates();
     if (_currentNoteId != null) {
       await _loadNote(_currentNoteId!);
@@ -239,6 +248,23 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     await _restoreDraftFromLocal();
     _initializeEditorHistory();
     _attachTextListeners();
+  }
+
+  /// スラッシュコマンド欄の開閉はメモを開き直すたびにリセットされていた
+  /// (= 折りたたんでも次回また 240px 占有する)。選択を端末に残す。
+  Future<void> _persistSlashBarExpanded(bool expanded) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_slashBarExpandedKey, expanded);
+  }
+
+  Future<void> _loadSlashBarExpanded() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!prefs.containsKey(_slashBarExpandedKey)) return;
+    final stored = prefs.getBool(_slashBarExpandedKey);
+    if (stored == null || !mounted) return;
+    setState(() {
+      _isSlashCommandBarExpanded = stored;
+    });
   }
 
   String _currentDraftKey() {
@@ -266,7 +292,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       'content': content,
       'reminder_date': _reminderDate?.toIso8601String(),
       'is_favorite': _isFavorite,
-      'saved_at': DateTime.now().toIso8601String(),
+      // サーバーの updated_at と比較するため UTC で保存する。
+      'saved_at': DateTime.now().toUtc().toIso8601String(),
     };
     await prefs.setString(_currentDraftKey(), jsonEncode(payload));
   }
@@ -280,6 +307,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     String content;
     DateTime? reminderDate;
     bool isFavorite;
+    DateTime? draftSavedAt;
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return;
@@ -289,6 +317,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           ? null
           : DateTime.tryParse(decoded['reminder_date'].toString())?.toLocal();
       isFavorite = _boolFromValue(decoded['is_favorite']);
+      draftSavedAt = decoded['saved_at'] == null
+          ? null
+          : DateTime.tryParse(decoded['saved_at'].toString())?.toUtc();
     } catch (_) {
       return;
     }
@@ -305,6 +336,44 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         _isFavorite != isFavorite;
     if (!hasChanges) return;
 
+    // 下書きより後にサーバー側が更新されている場合 (= 別端末での編集) は
+    // 黙って上書きしない。どちらを採用するかはユーザーに決めてもらう。
+    final serverUpdatedAt = _serverUpdatedAt;
+    final serverIsNewer = draftSavedAt != null &&
+        serverUpdatedAt != null &&
+        serverUpdatedAt.isAfter(draftSavedAt);
+    if (serverIsNewer) {
+      if (!mounted) return;
+      final restore = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: const Text('未送信の下書きがあります'),
+          content: const Text(
+            'この端末に残っている下書きより、サーバー側のメモの方が新しく更新されています。\n'
+            '別の端末で編集した可能性があります。どちらを表示しますか？',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('サーバー版を使う'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('下書きを復元'),
+            ),
+          ],
+        ),
+      );
+      if (restore == null) {
+        return;
+      }
+      if (!restore) {
+        await _clearDraftFromLocal();
+        return;
+      }
+    }
+
     _titleController.text = title;
     _contentController.text = content;
     _reminderDate = reminderDate;
@@ -312,7 +381,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Local draft restored.')),
+        const SnackBar(content: Text('ローカルの下書きを復元しました')),
       );
     }
   }
@@ -323,8 +392,48 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   void _attachTextListeners() {
+    _syncObservedText();
     _titleController.addListener(_onTextChanged);
     _contentController.addListener(_onTextChanged);
+  }
+
+  /// listener が「本文が変わった」と判断するための基準値を現在値に合わせる。
+  /// TextEditingController はキャレット移動・選択変更でも notifyListeners する
+  /// ため、この基準値と比較しないと no-op 保存が大量に走る。
+  void _syncObservedText() {
+    _observedTitle = _titleController.text;
+    _observedContent = _contentController.text;
+  }
+
+  /// サーバーに保存済みの内容を記録し、無変更 PATCH を弾けるようにする。
+  void _markStatePersisted({
+    required String title,
+    required String content,
+    required String? reminderIso,
+    required bool isFavorite,
+  }) {
+    _persistedTitle = title;
+    _persistedContent = content;
+    _persistedReminderIso = reminderIso;
+    _persistedIsFavorite = isFavorite;
+  }
+
+  /// サーバー側の内容を一度でも取得できているか。取得できていない状態で
+  /// 自動保存すると、空のエディタ内容で既存メモを潰す危険がある。
+  bool get _hasServerBaseline =>
+      _currentNoteId == null || _persistedTitle != null;
+
+  /// 現在の編集内容がサーバー保存済みの内容と一致するか。
+  bool _matchesPersistedState({
+    required String title,
+    required String content,
+    required String? reminderIso,
+    required bool isFavorite,
+  }) {
+    return _persistedTitle == title &&
+        _persistedContent == content &&
+        _persistedReminderIso == reminderIso &&
+        _persistedIsFavorite == isFavorite;
   }
 
   void _detachTextListeners() {
@@ -349,15 +458,43 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         _contentController.text.trim().isNotEmpty ||
         _reminderDate != null ||
         _isFavorite;
-    if (_currentNoteId != null || !hasAnyInput) {
+    // ローカル下書きを復元した直後は、画面上の内容がサーバーより新しい。
+    // 従来はここで無条件に markAsSaved していたため「保存済み」と表示され
+    // つつサーバーには届かず、次に何か入力するまで反映されなかった。
+    final matchesServer = _currentNoteId != null &&
+        _matchesPersistedState(
+          title: _titleController.text.trim(),
+          content: _contentController.text.trim(),
+          reminderIso: _reminderDate?.toUtc().toIso8601String(),
+          isFavorite: _isFavorite,
+        );
+
+    if (matchesServer || (_currentNoteId == null && !hasAnyInput)) {
       _autoSaveService.markAsSaved();
-    } else {
-      _autoSaveService.markAsModified();
+      return;
+    }
+
+    _autoSaveService.markAsModified();
+    // 既存メモの読み込みに失敗しているとサーバー側の基準値が無い。その状態で
+    // 自動保存すると空の本文で上書きしかねないので送らない。
+    if (_hasServerBaseline && _currentNoteId != null) {
+      _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
     }
   }
 
   void _onTextChanged() {
     if (_isApplyingSnapshot) return;
+
+    // キャレット移動・選択変更だけでも listener は発火する。本文が変わって
+    // いないなら履歴追加も自動保存もローカル下書き書き込みも不要。
+    final title = _titleController.text;
+    final content = _contentController.text;
+    if (title == _observedTitle && content == _observedContent) {
+      return;
+    }
+    _observedTitle = title;
+    _observedContent = content;
+
     _undoRedoService.addSnapshot(_buildCurrentSnapshot());
     _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
     _persistDraftToLocal();
@@ -679,7 +816,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
     await _persistAiStylePreference(style);
     if (announce) {
-      _showMessage('AI style: ${style.label}');
+      _showMessage('文章のトーン: ${style.label}');
     }
   }
 
@@ -1201,9 +1338,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     try {
       final data = await _supabase
           .from('notes')
-          .select('title, content, reminder_date, is_favorite')
+          .select('title, content, reminder_date, is_favorite, updated_at')
           .eq('id', id)
           .single();
+      _serverUpdatedAt = data['updated_at'] == null
+          ? null
+          : DateTime.tryParse(data['updated_at'].toString())?.toUtc();
 
       if (mounted) {
         setState(() {
@@ -1216,6 +1356,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 )?.toLocal();
           _isFavorite = _boolFromValue(data['is_favorite']);
         });
+        _markStatePersisted(
+          title: _titleController.text.trim(),
+          content: _contentController.text.trim(),
+          reminderIso: _reminderDate?.toUtc().toIso8601String(),
+          isFavorite: _isFavorite,
+        );
+        _syncObservedText();
       }
     } catch (e) {
       if (mounted) {
@@ -1231,8 +1378,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Future<void> _saveNoteWithoutClosing() async {
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
+    final reminderIso = _reminderDate?.toUtc().toIso8601String();
+    final isFavorite = _isFavorite;
 
     if (!_hasPersistableState && _currentNoteId == null) {
+      return;
+    }
+
+    if (_currentNoteId != null && !_hasServerBaseline) {
       return;
     }
 
@@ -1240,12 +1393,24 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     if (user == null) throw Exception('Login is required.');
 
     if (_currentNoteId != null) {
+      // 保存済みの内容と完全一致するなら PATCH を送らない。
+      if (_matchesPersistedState(
+        title: title,
+        content: content,
+        reminderIso: reminderIso,
+        isFavorite: isFavorite,
+      )) {
+        _autoSaveService.markAsSaved();
+        return;
+      }
       await _supabase.from('notes').update({
         'title': title,
         'content': content,
-        'reminder_date': _reminderDate?.toUtc().toIso8601String(),
-        'is_favorite': _isFavorite,
-        'updated_at': DateTime.now().toIso8601String(),
+        'reminder_date': reminderIso,
+        'is_favorite': isFavorite,
+        // timestamptz 列にはオフセット付きで渡す。ローカル時刻のまま送ると
+        // サーバー側で UTC と解釈され JST 環境では 9 時間ずれる。
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
       }).eq('id', _currentNoteId!);
     } else {
       final dynamic inserted = await _supabase
@@ -1254,8 +1419,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             'user_id': user.id,
             'title': title,
             'content': content,
-            'reminder_date': _reminderDate?.toUtc().toIso8601String(),
-            'is_favorite': _isFavorite,
+            'reminder_date': reminderIso,
+            'is_favorite': isFavorite,
             'is_archived': false,
             'is_pinned': false,
           })
@@ -1272,8 +1437,25 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       }
     }
 
-    _autoSaveService.markAsSaved();
-    await _clearDraftFromLocal();
+    _markStatePersisted(
+      title: title,
+      content: content,
+      reminderIso: reminderIso,
+      isFavorite: isFavorite,
+    );
+
+    final currentMatchesSavedRequest = _matchesPersistedState(
+      title: _titleController.text.trim(),
+      content: _contentController.text.trim(),
+      reminderIso: _reminderDate?.toUtc().toIso8601String(),
+      isFavorite: _isFavorite,
+    );
+    if (currentMatchesSavedRequest) {
+      _autoSaveService.markAsSaved();
+      await _clearDraftFromLocal();
+    } else {
+      _autoSaveService.markAsModified();
+    }
   }
 
   Future<void> _saveManually() async {
@@ -1573,6 +1755,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       selection: TextSelection.collapsed(offset: snapshot.content.length),
     );
     _isApplyingSnapshot = false;
+    // listener を抑止したまま本文を差し替えたので基準値を追従させる。
+    _syncObservedText();
 
     _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
   }
@@ -1666,7 +1850,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           ),
           TextButton(
             onPressed: () => _handleReminderChanged(null),
-            child: const Text('Clear'),
+            child: const Text('解除'),
           ),
         ],
       ),
@@ -1681,11 +1865,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         final lastSaved = _autoSaveService.lastSavedTime;
         switch (state) {
           case SaveState.saved:
-            final suffix = lastSaved != null
-                ? '  Last saved ${_formatTime(lastSaved)}'
-                : '';
+            final suffix =
+                lastSaved != null ? '  最終保存 ${_formatTime(lastSaved)}' : '';
             return Text(
-              'Saved$suffix',
+              '保存済み$suffix',
               style: const TextStyle(
                 fontSize: 12,
                 color: Color(0xFF0D9488),
@@ -1694,7 +1877,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             );
           case SaveState.saving:
             return const Text(
-              'Saving...',
+              '保存中...',
               style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF6366F1),
@@ -1703,7 +1886,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             );
           case SaveState.modified:
             return const Text(
-              'Unsaved changes',
+              '未保存の変更があります',
               style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFFFF6B35),
@@ -1712,7 +1895,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             );
           case SaveState.error:
             return const Text(
-              'Save error',
+              '保存に失敗しました',
               style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFFB91C1C),
@@ -1765,7 +1948,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           const Icon(Icons.memory_rounded, size: 14),
           const SizedBox(width: 6),
           Text(
-            'Default model: $model',
+            '既定のモデル: $model',
             overflow: TextOverflow.ellipsis,
           ),
         ],
@@ -1927,7 +2110,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Claude Code-style slash commands',
+                      'スラッシュコマンド',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -1939,9 +2122,11 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                       isExpanded ? Icons.expand_less : Icons.expand_more,
                     ),
                     onPressed: () {
+                      final next = !isExpanded;
                       setState(() {
-                        _isSlashCommandBarExpanded = !isExpanded;
+                        _isSlashCommandBarExpanded = next;
                       });
+                      unawaited(_persistSlashBarExpanded(next));
                     },
                     tooltip: isExpanded ? '折りたたむ' : '展開する',
                     visualDensity: VisualDensity.compact,
@@ -1956,7 +2141,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   enabled: !_isRunningSlashCommand,
                   onSubmitted: (_) => _runSlashCommand(),
                   decoration: InputDecoration(
-                    hintText: 'Try /summarize or /favorite',
+                    hintText: '/summarize や /favorite を試す',
                     prefixIcon: const Icon(Icons.code_rounded),
                     suffixIcon: _isRunningSlashCommand
                         ? const Padding(
@@ -1973,7 +2158,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                             ),
                             onPressed: _runSlashCommand,
                             icon: const Icon(Icons.play_arrow_rounded),
-                            tooltip: 'Run command',
+                            tooltip: 'コマンドを実行',
                           ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1982,7 +2167,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Press Enter or use the play button to run a command.',
+                  'Enter キーか再生ボタンでコマンドを実行します。',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -1994,7 +2179,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   const SizedBox(height: 8),
                 ],
                 Text(
-                  'Claude-style writing mode',
+                  '文章のトーン',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -2189,8 +2374,48 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     );
   }
 
+  /// デバウンス待ち (入力後 2 秒以内) にエディタを閉じると、`dispose()` で
+  /// タイマーが破棄され未保存の編集がサーバーに届かない。破棄前に確定値を
+  /// 取り出して投げ切る (State には触れないので dispose 後も安全)。
+  void _flushPendingSaveOnExit() {
+    final noteId = _currentNoteId;
+    if (noteId == null) return; // 新規メモはローカル下書きで復元される
+    if (!_hasServerBaseline) return; // 読み込み失敗時は空内容で潰さない
+
+    final title = _titleController.text.trim();
+    final content = _contentController.text.trim();
+    final reminderIso = _reminderDate?.toUtc().toIso8601String();
+    final isFavorite = _isFavorite;
+    if (_matchesPersistedState(
+      title: title,
+      content: content,
+      reminderIso: reminderIso,
+      isFavorite: isFavorite,
+    )) {
+      return;
+    }
+
+    unawaited(
+      _supabase
+          .from('notes')
+          .update({
+            'title': title,
+            'content': content,
+            'reminder_date': reminderIso,
+            'is_favorite': isFavorite,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', noteId)
+          .catchError((Object _) {
+            // 閉じた後なので UI 通知はできない。ローカル下書きが残るため
+            // 次回このメモを開いたときに復元される。
+          }),
+    );
+  }
+
   @override
   void dispose() {
+    _flushPendingSaveOnExit();
     _commentSubscription?.cancel();
     _imagePasteRegistration?.dispose();
     _contentFocusNode.dispose();
@@ -2213,7 +2438,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(isEditing ? 'Edit Note' : 'New Note'),
+            Text(isEditing ? 'メモを編集' : '新しいメモ'),
             _buildSaveStateIndicator(),
           ],
         ),
@@ -2252,12 +2477,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               currentReminder: _reminderDate,
               onReminderSet: _handleReminderChanged,
             ),
-            tooltip: 'Reminder',
+            tooltip: 'リマインダー',
           ),
           IconButton(
             icon: const Icon(Icons.save),
             onPressed: _saveManually,
-            tooltip: 'Save',
+            tooltip: '保存',
           ),
           if (_currentNoteId != null)
             IconButton(

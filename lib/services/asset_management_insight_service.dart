@@ -1,4 +1,5 @@
 import '../models/asset_liability_workbook.dart';
+import '../models/daily_todo.dart';
 import '../models/user_profile.dart';
 import 'asset_debt_discipline_monitor.dart';
 import 'asset_debt_trend_analyzer.dart';
@@ -268,6 +269,10 @@ class AssetManagementInsightReport {
   /// 「まず、これだけ」段階別トリアージ (今日3件まで/今週/今月/専門窓口)。null=未評価。
   final AssetTriagePlan? triagePlan;
 
+  /// 「今日やること」ToDo の日々の実行状況（完遂/繰り越し借金/連続日数）。
+  /// null=ToDo 未使用。細木数子AI が金銭の負債と並べて行動へ助言するための入力。
+  final DailyTodoDigest? dailyTodoDigest;
+
   const AssetManagementInsightReport({
     required this.workbook,
     this.userProfile,
@@ -285,6 +290,7 @@ class AssetManagementInsightReport {
     this.debtTrendInsights = const <AssetDebtTrendInsight>[],
     this.disciplineReport,
     this.triagePlan,
+    this.dailyTodoDigest,
   });
 
   bool get hasAccountShortfallAlerts => accountShortfallAlerts.isNotEmpty;
@@ -293,9 +299,7 @@ class AssetManagementInsightReport {
 
   List<AssetDebtTrendInsight> get criticalDebtTrendInsights {
     return debtTrendInsights
-        .where(
-          (insight) => insight.severity == AssetDebtTrendSeverity.critical,
-        )
+        .where((insight) => insight.severity == AssetDebtTrendSeverity.critical)
         .toList(growable: false);
   }
 
@@ -334,6 +338,7 @@ class AssetManagementInsightService {
         const AssetDebtDisciplineMonitor(),
     AssetTriageGuideService triageGuideService =
         const AssetTriageGuideService(),
+    DailyTodoDigest? dailyTodoDigest,
   }) {
     final breakdown = _availableMoneyBreakdown(
       workbook: workbook,
@@ -413,6 +418,7 @@ class AssetManagementInsightService {
       debtTrendInsights: debtTrendInsights,
       disciplineReport: disciplineReport,
       triagePlan: triagePlan,
+      dailyTodoDigest: dailyTodoDigest,
     );
   }
 
@@ -686,8 +692,10 @@ class AssetManagementInsightService {
   }) {
     final today = _dateOnly(workbook.baseDate);
     final payday = AssetManagementAvailableMoney.nextPayday(today);
-    final remainingDays =
-        AssetManagementAvailableMoney.remainingDaysToPayday(today, payday);
+    final remainingDays = AssetManagementAvailableMoney.remainingDaysToPayday(
+      today,
+      payday,
+    );
     final daysThisWeek = AssetManagementAvailableMoney.daysUntilWeekEnd(
       today,
       remainingDays: remainingDays,
@@ -721,8 +729,9 @@ class AssetManagementInsightService {
     };
     final end = switch (window) {
       AssetManagementInsightWindow.today => start,
-      AssetManagementInsightWindow.week =>
-        start.add(Duration(days: breakdown.daysThisWeek - 1)),
+      AssetManagementInsightWindow.week => start.add(
+          Duration(days: breakdown.daysThisWeek - 1),
+        ),
       AssetManagementInsightWindow.month => breakdown.payday,
     };
     return AssetManagementAvailableMoneyInsight(
@@ -1816,24 +1825,32 @@ class AssetManagementInsightPromptBuilder {
       return '- 規律モニター未評価。\n';
     }
     final buffer = StringBuffer()
-      ..writeln('- 誓約①「追加の借金をしない」: '
-          '${discipline.zeroNewBorrowingAchieved ? '達成' : '違反あり'}'
-          '${discipline.hasPriorMonthData ? '' : '（前月データ未蓄積のため判定保留）'}')
-      ..writeln('- 誓約②「カードは必ず一括返済」: '
-          '${discipline.lumpSumAchieved ? '達成' : '違反あり'}')
+      ..writeln(
+        '- 誓約①「追加の借金をしない」: '
+        '${discipline.zeroNewBorrowingAchieved ? '達成' : '違反あり'}'
+        '${discipline.hasPriorMonthData ? '' : '（前月データ未蓄積のため判定保留）'}',
+      )
+      ..writeln(
+        '- 誓約②「カードは必ず一括返済」: '
+        '${discipline.lumpSumAchieved ? '達成' : '違反あり'}',
+      )
       ..writeln('- 今月の新規借入推定合計: ${_formatAmount(discipline.totalNewBorrowing)}')
-      ..writeln('- リボ/分割で翌月へ繰り越す残高合計: '
-          '${_formatAmount(discipline.totalCarriedOver)}');
+      ..writeln(
+        '- リボ/分割で翌月へ繰り越す残高合計: '
+        '${_formatAmount(discipline.totalCarriedOver)}',
+      );
     if (discipline.isCompliant) {
       buffer.writeln('- 今月は両誓約を守れています。AIはこの達成を必ず褒め、継続を後押ししてください。');
       return buffer.toString();
     }
     for (final violation in discipline.allViolations) {
       buffer
-        ..writeln('- [${violation.severity.name}] '
-            '${_disciplineTypeLabel(violation.type)} / ${violation.accountName} / '
-            '金額:${_formatAmount(violation.amount)} / '
-            '残高:${_formatAmount(violation.currentBalance)}')
+        ..writeln(
+          '- [${violation.severity.name}] '
+          '${_disciplineTypeLabel(violation.type)} / ${violation.accountName} / '
+          '金額:${_formatAmount(violation.amount)} / '
+          '残高:${_formatAmount(violation.currentBalance)}',
+        )
         ..writeln('  - 問題点: ${violation.problem}')
         ..writeln('  - 対応: ${violation.action}');
     }

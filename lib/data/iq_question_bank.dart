@@ -8,6 +8,7 @@
 import 'dart:math' as math;
 
 import '../models/iq_test.dart';
+import 'iq_question_bank_alternates.dart';
 
 class IqQuestionBank {
   const IqQuestionBank._();
@@ -21,34 +22,46 @@ class IqQuestionBank {
   static int get totalQuestions =>
       IqCategory.values.length * questionsPerCategory;
 
+  /// 全問題プール (既定フォーム + 代替フォーム)。
+  static List<IqQuestion> get allQuestions =>
+      List.unmodifiable([..._all, ..._alternates]);
+
+  /// (領域, 難易度) ごとの候補。各セルに2問ずつある。
+  static Map<String, List<IqQuestion>> _pool() {
+    final pool = <String, List<IqQuestion>>{};
+    for (final q in [..._all, ..._alternates]) {
+      pool.putIfAbsent('${q.category.key}-${q.difficulty}', () => []).add(q);
+    }
+    return pool;
+  }
+
   /// 標準テストの25問を返す。
   ///
-  /// [seed] を渡すと選択肢の並びをシャッフルする (正解位置の丸暗記対策)。
+  /// [seed] を渡すと **各セルからどの問題を出すかと選択肢の並びの両方** が変わる。
+  /// 以前は seed が選択肢順しか変えず、再受験すると毎回まったく同じ25問が出て
+  /// いた (= 練習効果でスコアが上がり、推移が能力変化を表さない)。
   /// 問題の並びは領域が偏らないようラウンドロビンで交互に出す。
   static List<IqQuestion> standardTest({int? seed}) {
-    final byCategory = <IqCategory, List<IqQuestion>>{};
-    for (final q in _all) {
-      byCategory.putIfAbsent(q.category, () => []).add(q);
-    }
-    for (final list in byCategory.values) {
-      list.sort((a, b) => a.difficulty.compareTo(b.difficulty));
-    }
+    final pool = _pool();
+    final random = seed == null ? null : math.Random(seed);
 
     // ラウンドロビン: 難易度1を全領域 → 難易度2を全領域 … と並べる。
     // 序盤で難問が固まって離脱するのを防ぐ。
     final ordered = <IqQuestion>[];
-    for (var i = 0; i < questionsPerCategory; i++) {
+    for (var difficulty = 1; difficulty <= questionsPerCategory; difficulty++) {
       for (final category in IqCategory.values) {
-        final list = byCategory[category];
-        if (list != null && i < list.length) {
-          ordered.add(list[i]);
-        }
+        final candidates = pool['${category.key}-$difficulty'];
+        if (candidates == null || candidates.isEmpty) continue;
+
+        // seed 無しは常に先頭 (既定フォーム) = 決定的なので参照用に使える。
+        final picked = random == null
+            ? candidates.first
+            : candidates[random.nextInt(candidates.length)];
+        ordered.add(picked);
       }
     }
 
-    if (seed == null) return ordered;
-
-    final random = math.Random(seed);
+    if (random == null) return ordered;
     return ordered.map((q) => shuffleOptions(q, random)).toList();
   }
 
@@ -72,6 +85,9 @@ class IqQuestionBank {
       monospacePrompt: question.monospacePrompt,
     );
   }
+
+  /// 代替フォーム。各 (領域, 難易度) セルの2問目。
+  static const List<IqQuestion> _alternates = kIqAlternateQuestions;
 
   static const List<IqQuestion> _all = [
     // ---------------------------------------------------------------- 論理推論

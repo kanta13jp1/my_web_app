@@ -26,6 +26,10 @@ class _FakeGateway implements ShopGateway {
   int startCheckoutCalls = 0;
   int downloadCalls = 0;
 
+  /// funnel の最終段を webhook 側で書くために渡される値。
+  String? lastVisitorId;
+  String? lastSource;
+
   @override
   bool get isSignedIn => signedIn;
 
@@ -39,8 +43,14 @@ class _FakeGateway implements ShopGateway {
   Future<bool> hasPurchased(String productId) async => purchased;
 
   @override
-  Future<CheckoutStart> startCheckout(String productId) async {
+  Future<CheckoutStart> startCheckout(
+    String productId, {
+    String? visitorId,
+    String? source,
+  }) async {
     startCheckoutCalls++;
+    lastVisitorId = visitorId;
+    lastSource = source;
     return const CheckoutStart.redirect('https://checkout.example/session');
   }
 

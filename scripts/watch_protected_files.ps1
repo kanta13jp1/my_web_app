@@ -59,6 +59,12 @@ $ErrorActionPreference = 'Stop'
 
 $WatchedRelativeDirs = @('.github\workflows', '.claude')
 
+# .claude/worktrees/ holds entire sibling checkouts of this repository. Watching
+# into them is both wrong and ruinously slow: the first deployment burned its
+# single capture on a tool's temp file inside a worktree, and the burst-window
+# rescan took 54s instead of 10s because it walked six full checkouts.
+$ExcludedPathFragments = @('\.claude\worktrees\', '\node_modules\', '\.dart_tool\', '\build\')
+
 if (-not (Test-Path $LogDir)) {
     New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
 }
@@ -81,14 +87,46 @@ function Write-Log {
     Write-Output $line
 }
 
+function Test-IsExcludedPath {
+    param([string]$Path)
+    foreach ($fragment in $ExcludedPathFragments) {
+        if ($Path -like ('*' + $fragment + '*')) { return $true }
+    }
+    return $false
+}
+
+function Test-IsProtectedTarget {
+    <# Mirrors the CI guard predicate: tracked in git AND non-empty at HEAD.
+
+       An untracked temp file going to 0 bytes is noise, and a tracked file that
+       is *supposed* to be empty (a .gitkeep) is not a regression. Only a file
+       that git says had content is worth spending the capture on.
+    #>
+    param([string]$Path)
+
+    if (Test-IsExcludedPath $Path) { return $false }
+
+    $full = [System.IO.Path]::GetFullPath($Path)
+    $root = [System.IO.Path]::GetFullPath($RepoRoot)
+    if (-not $full.StartsWith($root, [System.StringComparison]::OrdinalIgnoreCase)) { return $false }
+
+    $relative = $full.Substring($root.Length).TrimStart('\', '/').Replace('\', '/')
+    $size = & git -C $RepoRoot cat-file -s ('HEAD:' + $relative) 2>$null
+    if ($LASTEXITCODE -ne 0) { return $false }
+
+    $parsed = 0
+    if (-not [int]::TryParse(($size | Select-Object -First 1), [ref]$parsed)) { return $false }
+    return ($parsed -gt 0)
+}
+
 function Get-ZeroBytePath {
-    <# Every currently-empty file across the watched trees. #>
+    <# Currently-empty files across the watched trees, excluding nested checkouts. #>
     $found = @()
     foreach ($rel in $WatchedRelativeDirs) {
         $dir = Join-Path $RepoRoot $rel
         if (-not (Test-Path $dir)) { continue }
         $found += Get-ChildItem -Path $dir -Recurse -File -ErrorAction SilentlyContinue |
-            Where-Object { $_.Length -eq 0 } |
+            Where-Object { $_.Length -eq 0 -and -not (Test-IsExcludedPath $_.FullName) } |
             ForEach-Object { $_.FullName }
     }
     return $found
@@ -186,6 +224,11 @@ try {
         Remove-Event -EventIdentifier $evt.EventIdentifier -ErrorAction SilentlyContinue
         if (-not $path) { continue }
 
+        # Cheapest filter first, before paying for a process snapshot: nested
+        # checkouts under .claude/worktrees/ produce constant 0-byte churn
+        # (.gitkeep, crash dumps, build artefacts) that is never our target.
+        if (Test-IsExcludedPath $path) { continue }
+
         $isEmpty = $false
         try {
             $item = Get-Item -LiteralPath $path -ErrorAction Stop
@@ -211,6 +254,14 @@ try {
             # Transient 0-byte state from an ordinary write-then-flush. Discard so
             # a normal editor save does not burn the single capture.
             Remove-Item -LiteralPath $dump -Force -ErrorAction SilentlyContinue
+            continue
+        }
+
+        if (-not (Test-IsProtectedTarget $path)) {
+            # Untracked temp file, or a file git says is legitimately empty
+            # (.gitkeep). Not a regression, so keep watching.
+            Remove-Item -LiteralPath $dump -Force -ErrorAction SilentlyContinue
+            Write-Log ("Ignored 0-byte file (not tracked with content at HEAD): {0}" -f $path)
             continue
         }
 

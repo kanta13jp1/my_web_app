@@ -235,6 +235,136 @@ void main() {
     });
   });
 
+  group('DebtProgressCardService.buildPostPayload', () {
+    DebtProgressCardData card() => const DebtProgressCardData(
+          totalDebt: 1234567,
+          monthlyPayment: 45000,
+          payoffMonths: 38,
+          estimatedInterest: 234567,
+          monthOverMonthDelta: -50000,
+          debtCount: 3,
+        );
+
+    test('sends the edited text verbatim instead of regenerating the draft',
+        () {
+      // 🔴 これが崩れると本人が直した内容が捨てられ、意図しない文が公開される。
+      final payload = service.buildPostPayload(
+        card(),
+        month: DateTime(2026, 7, 1),
+        text: '手で直した本文',
+      );
+
+      expect(payload['text'], '手で直した本文');
+      expect(payload['action'], 'x.post');
+    });
+
+    test('falls back to the draft only when no text is supplied', () {
+      final payload = service.buildPostPayload(
+        card(),
+        month: DateTime(2026, 7, 1),
+      );
+
+      expect(payload['text'], contains('2026年7月の返済報告'));
+    });
+
+    test('keeps the acquisition URL in the main post, not the reply', () {
+      // リプライへ逃がすと流入が落ちることが実測済み (part346)。
+      final payload = service.buildPostPayload(
+        card(),
+        month: DateTime(2026, 7, 1),
+        text: 'x',
+      );
+
+      expect(payload['linkInReply'], false);
+      expect(payload['source'], 'debt_progress_card');
+      expect(payload['route'], '/asset-management');
+    });
+  });
+
+  group('DebtProgressCardService card image', () {
+    DebtProgressCardData card({int? payoffMonths = 38}) => DebtProgressCardData(
+          totalDebt: 1234567,
+          monthlyPayment: 45000,
+          payoffMonths: payoffMonths,
+          estimatedInterest: 234567,
+          monthOverMonthDelta: -50000,
+          debtCount: 3,
+        );
+
+    test('puts the user id first so the storage RLS check passes', () {
+      // 🔴 RLS は (storage.foldername(name))[1] = auth.uid() を見る。
+      // 先頭が userId でなくなると保存自体が落ちる。
+      final path = service.buildCardStoragePath(
+        userId: 'user-uuid',
+        month: DateTime(2026, 7, 1),
+        uniqueSuffix: '1753900000000',
+      );
+
+      expect(path.split('/').first, 'user-uuid');
+      expect(path, endsWith('.png'));
+      expect(path, contains('202607'));
+    });
+
+    test('does not collide when the card is rebuilt in the same month', () {
+      final a = service.buildCardStoragePath(
+        userId: 'u',
+        month: DateTime(2026, 7, 1),
+        uniqueSuffix: '1',
+      );
+      final b = service.buildCardStoragePath(
+        userId: 'u',
+        month: DateTime(2026, 7, 1),
+        uniqueSuffix: '2',
+      );
+
+      expect(a, isNot(b));
+    });
+
+    test('alt text stays inside the disclosed range', () {
+      final alt = service.buildCardAltText(card(), month: DateTime(2026, 7, 1));
+
+      expect(alt, contains('残債 1,234,567円'));
+      expect(alt, contains('完済まであと3年2ヶ月'));
+      for (final forbidden in <String>['年収', '月収', '口座残高', '勤務先']) {
+        expect(alt, isNot(contains(forbidden)));
+      }
+    });
+
+    test('alt text says plainly when the debt never clears', () {
+      final alt = service.buildCardAltText(
+        card(payoffMonths: null),
+        month: DateTime(2026, 7, 1),
+      );
+
+      expect(alt, contains('完済しない見込み'));
+    });
+
+    test('attaches media only when a url is supplied', () {
+      final withMedia = service.buildPostPayload(
+        card(),
+        month: DateTime(2026, 7, 1),
+        text: 'x',
+        mediaUrl: 'https://example.com/card.png',
+      );
+      expect(withMedia['mediaUrl'], 'https://example.com/card.png');
+      expect(withMedia['mediaType'], 'image');
+      expect(withMedia['mediaAlt'], contains('返済報告カード'));
+
+      // 画像アップロードが失敗しても投稿自体は成立させる。
+      for (final empty in <String?>[null, '', '   ']) {
+        final textOnly = service.buildPostPayload(
+          card(),
+          month: DateTime(2026, 7, 1),
+          text: 'x',
+          mediaUrl: empty,
+        );
+        expect(textOnly.containsKey('mediaUrl'), isFalse);
+        expect(textOnly.containsKey('mediaAlt'), isFalse);
+        expect(textOnly['text'], 'x');
+      }
+    });
+  });
+
   group('DebtProgressCardData.payoffLabel', () {
     test('formats months, years and mixed spans', () {
       DebtProgressCardData card(int? months) => DebtProgressCardData(

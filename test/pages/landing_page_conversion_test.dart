@@ -226,6 +226,43 @@ void main() {
     expect(LandingPage.shouldFocusTrialForUri(null), isFalse);
   });
 
+  testWidgets('brand search intent is visible and exposed as headings', (
+    tester,
+  ) async {
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.control),
+    );
+
+    expect(find.text('自分株式会社とは'), findsOneWidget);
+    expect(
+      find.textContaining('自分自身を一つの会社に見立て'),
+      findsOneWidget,
+    );
+    expect(find.text('自分が人生のCEOとして決める'), findsOneWidget);
+
+    final heroHeading = tester.widget<Semantics>(
+      find.byKey(const Key('landing_brand_heading')),
+    );
+    final appBarHeading = tester.widget<Semantics>(
+      find.byKey(const Key('landing_appbar_brand_heading')),
+    );
+    final definitionHeading = tester.widget<Semantics>(
+      find.byKey(const Key('landing_brand_definition_heading')),
+    );
+    expect(heroHeading.properties.header, isTrue);
+    expect(appBarHeading.properties.header, isTrue);
+    expect(definitionHeading.properties.header, isTrue);
+
+    final documentTitle = tester.widget<Title>(
+      find.byKey(const Key('landing_document_title')),
+    );
+    expect(
+      documentTitle.title,
+      '自分株式会社とは？ | 人生を経営するAIライフマネジメントアプリ',
+    );
+  });
+
   testWidgets(
     'lp_intent trial brings the promised trial into view for every H03 arm and viewport',
     (tester) async {

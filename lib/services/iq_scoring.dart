@@ -165,6 +165,10 @@ class IqScoring {
       weightedAccuracy: ability,
       correctCount: answers.where((a) => a.isCorrect).length,
       questionCount: answers.length,
+      // 未回答 (selectedIndex == null) を除いた実際に着手した問題数。
+      // これを持たないと「3問だけ解いて時間切れ」と「25問解いて低得点」が
+      // 結果上まったく区別できない。
+      attemptedCount: answers.where((a) => a.selectedIndex != null).length,
       standardError: standardError(ability, answers.length),
       categoryScores: categoryScores(answers),
     );
@@ -178,6 +182,9 @@ class IqScoreSummary {
   final double weightedAccuracy;
   final int correctCount;
   final int questionCount;
+
+  /// 実際に着手した問題数。[questionCount] との差が未回答数。
+  final int attemptedCount;
   final double standardError;
   final List<IqCategoryScore> categoryScores;
 
@@ -187,6 +194,7 @@ class IqScoreSummary {
     required this.weightedAccuracy,
     required this.correctCount,
     required this.questionCount,
+    required this.attemptedCount,
     required this.standardError,
     required this.categoryScores,
   });
@@ -194,10 +202,24 @@ class IqScoreSummary {
   int get iqLower => (totalIq - 1.96 * standardError).round();
   int get iqUpper => (totalIq + 1.96 * standardError).round();
 
-  /// 総合を [gapThreshold] 以上下回る領域 = 学習対象。
-  List<IqCategoryScore> weakAreas({int gapThreshold = 5}) {
+  /// 完答率 0.0..1.0。
+  double get completionRate =>
+      questionCount == 0 ? 0 : attemptedCount / questionCount;
+
+  /// スコアを額面どおり読んでよいか。
+  ///
+  /// 未着手が多い回は「実力が低い」のではなく「測れていない」。
+  /// 両者を同じ数値として提示すると利用者は判断を誤る。
+  bool get isReliable => completionRate >= 0.9;
+
+  /// 弱点と呼べる領域。
+  ///
+  /// 固定値ではなく **その領域自身の測定誤差を上回る差** だけを弱点とする。
+  /// 5問しかない領域スコアの標準誤差は約 18 IQ あり、旧実装の固定閾値 5 は
+  /// 誤差の 0.27 SE にすぎなかった (= ほぼノイズを弱点と呼んでいた)。
+  List<IqCategoryScore> weakAreas({double sigmaThreshold = 1.0}) {
     final weak = categoryScores
-        .where((s) => s.iq <= totalIq - gapThreshold)
+        .where((s) => (totalIq - s.iq) > sigmaThreshold * s.standardError)
         .toList()
       ..sort((a, b) => a.iq.compareTo(b.iq));
     return weak;
