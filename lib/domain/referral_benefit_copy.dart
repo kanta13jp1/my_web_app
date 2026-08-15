@@ -12,9 +12,8 @@ abstract final class ReferralBenefitCopy {
     String inviteUrl, {
     bool includeHashtags = false,
   }) {
-    final hashtags = includeHashtags
-        ? '\n\n#buildinpublic #FlutterWeb #自分株式会社'
-        : '';
+    final hashtags =
+        includeHashtags ? '\n\n#buildinpublic #FlutterWeb #自分株式会社' : '';
     return '自分株式会社を一緒に試してみませんか？\n\n'
         '$shareSummary\n\n'
         '招待リンク:\n${inviteUrl.trim()}$hashtags';
