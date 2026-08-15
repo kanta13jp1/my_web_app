@@ -40,6 +40,21 @@ void main() {
     );
   });
 
+  test('billing funnel stages are explicitly allowlisted', () async {
+    const service = GrowthAcquisitionService();
+
+    for (final stage in GrowthAcquisitionService.billingFunnelStages) {
+      await expectLater(
+        service.recordBillingFunnelStage(stage: stage),
+        completes,
+      );
+    }
+    await expectLater(
+      service.recordBillingFunnelStage(stage: 'funnel_checkout_unknown'),
+      throwsArgumentError,
+    );
+  });
+
   test('maps preview source types to import preview signals', () {
     expect(
       GrowthAcquisitionService.previewSignalForSourceType('notion'),

@@ -39,7 +39,21 @@ BillingService.createCheckoutSession(billing_service.dart:87-96)とsubscription_
 
 ## Checklist
 
-- [ ] Reproduction is clear
-- [ ] Smallest safe fix is implemented
-- [ ] Analyze/tests/CI are checked
-- [ ] PR notes explain the change and the remaining risk
+- [x] Reproduction is clear
+- [x] Smallest safe fix is implemented
+- [x] Analyze/tests are checked locally; CI is pending the implementation push
+- [x] PR notes explain the change and the remaining risk
+
+## Implementation Result
+
+- Reused `app_analytics.source_details` for four billing funnel events.
+- Added billing view, upgrade click, checkout success, and checkout cancel tracking.
+- Added a 30-day billing funnel card to the admin analytics dashboard.
+- Added Flutter and Deno regression coverage for the client and Edge Function allowlist.
+
+## Validation
+
+- `flutter test test/services/growth_acquisition_service_test.dart test/pages/subscription_billing_page_test.dart`
+- `flutter analyze` for the changed Dart implementation and tests
+- `deno test`, `deno lint`, and `deno check` for the growth-hub acquisition allowlist
+- Local Chrome test compilation stalled before execution twice; GitHub Actions remains the browser/build source of truth.

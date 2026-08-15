@@ -22,6 +22,7 @@ import {
   isExternalRevenueCandidate,
   normalizeSupporterBuyerContext,
 } from "../_shared/supporter_buyer.ts";
+import { isSupportedAcquisitionSignal } from "./acquisition_signals.ts";
 import {
   extractPostedTexts,
   findDuplicateContent,
@@ -513,41 +514,6 @@ const IMPORT_PREVIEW_DEFS = [
   },
 ];
 
-const SUPPORTED_ACQUISITION_SIGNALS = new Set([
-  "touch_landing",
-  "touch_profile",
-  "touch_import",
-  "touch_public_memo",
-  "touch_referral",
-  "touch_comparison",
-  "touch_guitar_gallery",
-  "touch_x_first_user_growth",
-  "import_preview_notion",
-  "import_preview_evernote",
-  "import_preview_markdown",
-  "import_signup_cta",
-  "public_memo_signup_cta",
-  "x_first_user_trial_intent",
-  "x_first_user_feedback_summary",
-  "x_first_user_feedback_memo",
-  "x_first_user_feedback_search",
-  "x_first_user_feedback_x_intent",
-  "signup_submit_landing",
-  "signup_submit_profile",
-  "signup_submit_x_first_user_growth",
-  "signup_submit_import",
-  "signup_submit_public_memo",
-  "signup_submit_referral",
-  "signup_submit_comparison",
-  "signup_submit_guitar",
-  // R24: 公開データトラッカー (/public/local-election-700) の着地と CTA。
-  // 実測でサイトへの URL クリック 304 件中 286 件 (94%) がこの着地点だった。
-  // 許可リストに無いと EF が 400 を返し、クライアントが送っても計上されない。
-  "touch_public_tracker",
-  "public_tracker_signup_cta",
-  "signup_submit_public_tracker",
-]);
-
 function formatDateKey(date: Date): string {
   return `${date.getFullYear()}-${
     String(date.getMonth() + 1).padStart(2, "0")
@@ -559,11 +525,6 @@ function resolveDateKey(rawDateKey: unknown): string {
       /^\d{4}-\d{2}-\d{2}$/.test(rawDateKey)
     ? rawDateKey
     : formatDateKey(new Date());
-}
-
-function isSupportedAcquisitionSignal(signalKey: string): boolean {
-  return SUPPORTED_ACQUISITION_SIGNALS.has(signalKey) ||
-    /^touch_comparison_[a-z0-9_-]{1,64}$/i.test(signalKey);
 }
 
 async function recordAcquisitionSignal(

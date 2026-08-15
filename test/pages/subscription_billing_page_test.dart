@@ -12,11 +12,13 @@ void main() {
     tester,
   ) async {
     final billing = _FakeBillingGateway();
+    final acquisition = _RecordingAcquisitionService();
 
     await tester.pumpWidget(
       MaterialApp(
         home: SubscriptionBillingPage(
           service: billing,
+          acquisitionService: acquisition,
           tracker: const NoopActivationRevenueEventTracker(),
           assignment: _treatment,
           initialUri: Uri.parse(
@@ -30,15 +32,21 @@ void main() {
     expect(find.text('プランの決済を受け付けました'), findsOneWidget);
     expect(find.textContaining('最新のプラン状態'), findsOneWidget);
     expect(billing.fetchStatusCount, 1);
+    expect(acquisition.billingStages, [
+      GrowthAcquisitionService.funnelBillingView,
+      GrowthAcquisitionService.funnelCheckoutSuccess,
+    ]);
   });
 
   testWidgets('shows neutral cancel confirmation', (tester) async {
     final billing = _FakeBillingGateway();
+    final acquisition = _RecordingAcquisitionService();
 
     await tester.pumpWidget(
       MaterialApp(
         home: SubscriptionBillingPage(
           service: billing,
+          acquisitionService: acquisition,
           tracker: const NoopActivationRevenueEventTracker(),
           assignment: _treatment,
           initialUri: Uri.parse(
@@ -52,15 +60,50 @@ void main() {
     expect(find.text('プランの決済をキャンセルしました'), findsOneWidget);
     expect(find.textContaining('請求は発生していません'), findsOneWidget);
     expect(billing.fetchStatusCount, 1);
+    expect(acquisition.billingStages, [
+      GrowthAcquisitionService.funnelBillingView,
+      GrowthAcquisitionService.funnelCheckoutCancel,
+    ]);
+  });
+
+  testWidgets('records upgrade click before opening Stripe checkout', (
+    tester,
+  ) async {
+    final acquisition = _RecordingAcquisitionService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: _FakeBillingGateway(),
+          acquisitionService: acquisition,
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
+          initialUri: Uri.parse('https://example.com/subscription-billing'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final checkoutButton = find.byKey(const Key('billing_pro_checkout_button'));
+    await tester.ensureVisible(checkoutButton);
+    await tester.tap(checkoutButton);
+    await tester.pumpAndSettle();
+
+    expect(acquisition.billingStages, [
+      GrowthAcquisitionService.funnelBillingView,
+      GrowthAcquisitionService.funnelUpgradeClick,
+    ]);
   });
 
   testWidgets('shows supporter success confirmation', (tester) async {
     final billing = _FakeBillingGateway();
+    final acquisition = _RecordingAcquisitionService();
 
     await tester.pumpWidget(
       MaterialApp(
         home: SubscriptionBillingPage(
           service: billing,
+          acquisitionService: acquisition,
           tracker: const NoopActivationRevenueEventTracker(),
           assignment: _treatment,
           initialUri: Uri.parse(
@@ -74,6 +117,9 @@ void main() {
     expect(find.text('100円の応援を受け付けました'), findsOneWidget);
     expect(find.textContaining('ありがとうございます'), findsOneWidget);
     expect(billing.fetchStatusCount, 1);
+    expect(acquisition.billingStages, [
+      GrowthAcquisitionService.funnelBillingView,
+    ]);
   });
 
   testWidgets('shows value framing after onboarding on a narrow viewport', (
@@ -107,42 +153,41 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets(
-    'carries the original X variant into the supporter checkout',
-    (tester) async {
-      final billing = _FakeBillingGateway();
-      final acquisition = _RecordingAcquisitionService();
+  testWidgets('carries the original X variant into the supporter checkout', (
+    tester,
+  ) async {
+    final billing = _FakeBillingGateway();
+    final acquisition = _RecordingAcquisitionService();
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SubscriptionBillingPage(
-            service: billing,
-            acquisitionService: acquisition,
-            tracker: const NoopActivationRevenueEventTracker(),
-            assignment: _treatment,
-            initialUri: Uri.parse(
-              'https://example.com/subscription-billing?entry=onboarding',
-            ),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: billing,
+          acquisitionService: acquisition,
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
+          initialUri: Uri.parse(
+            'https://example.com/subscription-billing?entry=onboarding',
           ),
         ),
-      );
-      await tester.pumpAndSettle();
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      expect(acquisition.stages, contains('billing_view'));
-      final checkoutButton = find.byKey(
-        const Key('billing_supporter_checkout_button'),
-      );
-      await tester.ensureVisible(checkoutButton);
-      await tester.tap(checkoutButton);
-      await tester.pumpAndSettle();
+    expect(acquisition.stages, contains('billing_view'));
+    final checkoutButton = find.byKey(
+      const Key('billing_supporter_checkout_button'),
+    );
+    await tester.ensureVisible(checkoutButton);
+    await tester.tap(checkoutButton);
+    await tester.pumpAndSettle();
 
-      expect(acquisition.stages, contains('supporter_checkout'));
-      expect(
-        billing.supporterAttribution?.toJson(),
-        containsPair('utm_content', 'outcome_first_a'),
-      );
-    },
-  );
+    expect(acquisition.stages, contains('supporter_checkout'));
+    expect(
+      billing.supporterAttribution?.toJson(),
+      containsPair('utm_content', 'outcome_first_a'),
+    );
+  });
 }
 
 final _treatment = ActivationRevenueAssignment(
@@ -196,6 +241,12 @@ class _RecordingAcquisitionService extends GrowthAcquisitionService {
   _RecordingAcquisitionService();
 
   final List<String> stages = <String>[];
+  final List<String> billingStages = <String>[];
+
+  @override
+  Future<void> recordBillingFunnelStage({required String stage}) async {
+    billingStages.add(stage);
+  }
 
   @override
   Future<bool> recordFirstUserFunnelStage({
