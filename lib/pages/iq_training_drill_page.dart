@@ -33,7 +33,8 @@ class IqTrainingDrillPage extends StatefulWidget {
   State<IqTrainingDrillPage> createState() => _IqTrainingDrillPageState();
 }
 
-class _IqTrainingDrillPageState extends State<IqTrainingDrillPage> {
+class _IqTrainingDrillPageState extends State<IqTrainingDrillPage>
+    with WidgetsBindingObserver {
   final IqTrainingService _service = IqTrainingService();
 
   late final List<IqQuestion> _questions;
@@ -60,11 +61,25 @@ class _IqTrainingDrillPageState extends State<IqTrainingDrillPage> {
       seed: widget.seed ?? math.Random().nextInt(1 << 31),
     );
     _startedAt = DateTime.now();
+    WidgetsBinding.instance.addObserver(this);
     _prepareQuestion();
+  }
+
+  /// 背面では刺激の提示カウントを止める (テスト側と同じ理由)。
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (!_isRevealing) return;
+    if (state == AppLifecycleState.resumed) {
+      _resumeRevealCountdown();
+    } else {
+      _revealTimer?.cancel();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _revealTimer?.cancel();
     super.dispose();
   }
@@ -85,6 +100,12 @@ class _IqTrainingDrillPageState extends State<IqTrainingDrillPage> {
       _revealRemaining = _current.revealSeconds!;
     });
 
+    _resumeRevealCountdown();
+  }
+
+  /// 残り時間からカウントダウンを（再）開始する。
+  void _resumeRevealCountdown() {
+    _revealTimer?.cancel();
     _revealTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
       setState(() => _revealRemaining--);
@@ -259,8 +280,10 @@ class _IqTrainingDrillPageState extends State<IqTrainingDrillPage> {
               borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
               border: Border.all(color: DesignTokens.divider),
             ),
+            // 図形問題は読み上げ用に言葉へ開いた説明を渡す。
             child: Text(
               question.prompt,
+              semanticsLabel: question.semanticPrompt,
               style: TextStyle(
                 color: DesignTokens.textOnDark,
                 fontSize: 16,
@@ -276,6 +299,7 @@ class _IqTrainingDrillPageState extends State<IqTrainingDrillPage> {
               child: _DrillOption(
                 label: String.fromCharCode(65 + i),
                 text: question.options[i],
+                semanticText: question.semanticOption(i),
                 monospace: question.monospacePrompt,
                 state: _optionState(i),
                 onTap: () => _answer(i),
@@ -445,6 +469,9 @@ enum _OptionState { idle, correct, wrong, dimmed }
 class _DrillOption extends StatelessWidget {
   final String label;
   final String text;
+
+  /// 読み上げ用の代替テキスト。
+  final String semanticText;
   final bool monospace;
   final _OptionState state;
   final VoidCallback onTap;
@@ -452,6 +479,7 @@ class _DrillOption extends StatelessWidget {
   const _DrillOption({
     required this.label,
     required this.text,
+    required this.semanticText,
     required this.monospace,
     required this.state,
     required this.onTap,
@@ -521,6 +549,7 @@ class _DrillOption extends StatelessWidget {
               Expanded(
                 child: Text(
                   text,
+                  semanticsLabel: semanticText,
                   style: TextStyle(
                     color: _textColor,
                     fontSize: 15,

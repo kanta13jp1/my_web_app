@@ -13,6 +13,18 @@ import {
   X_POST_CANDIDATE_HUB_SOURCE,
 } from "./snapshot_history.ts";
 import { normalizeCdpBenchmark } from "./party_gap_ranking.ts";
+import {
+  buildElectionIntelligenceSnapshot,
+  type ElectionModeId,
+  type ElectionModeRegistry,
+  fallbackElectionModeRegistry,
+  fallbackOfficialEndorsementSnapshot,
+  normalizeElectionModeRegistry,
+  normalizeOfficialEndorsementSnapshot,
+  type OfficialEndorsementSnapshot,
+  parseElectionMode,
+  verifyElectionGoalSources,
+} from "./election_mode.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,6 +50,10 @@ const CDP_LOCAL_AUTHORITIES_URL =
 // R28: 立憲実数の repo asset(週次 update_cdp_benchmark.mjs が正本)。
 const CDP_BENCHMARK_ASSET_URL =
   "https://raw.githubusercontent.com/kanta13jp1/my_web_app/main/assets/data/cdp_local_members.json";
+const ELECTION_MODE_REGISTRY_ASSET_URL =
+  "https://raw.githubusercontent.com/kanta13jp1/my_web_app/main/assets/data/kokumin_election_modes.json";
+const OFFICIAL_ENDORSEMENT_ASSET_URL =
+  "https://raw.githubusercontent.com/kanta13jp1/my_web_app/main/assets/data/kokumin_local_endorsements.json";
 const NEW_KOKUMIN_ELECTIONS_URL =
   "https://local-elections.new-kokumin.jp/electionslist/";
 const NEXT_UNIFIED_LOCAL_ELECTION_INFO_URL =
@@ -518,6 +534,7 @@ const MANUAL_SCHEDULE_SUPPLEMENTS: ManualScheduleSupplement[] = [
 interface SnapshotRequest {
   action: "snapshot" | "snapshotAndQueue";
   includeAiSummary: boolean;
+  mode: ElectionModeId;
 }
 
 interface MemberDetailRequest {
@@ -548,6 +565,12 @@ serve(async (req) => {
     }
     if (parsedRequest.action === "snapshotAndQueue") {
       requireServiceRole(req);
+    }
+    if (parsedRequest.mode !== "local") {
+      throw new HttpError(
+        409,
+        `Election mode ${parsedRequest.mode} is registered but its collector is not active.`,
+      );
     }
 
     const memberPageHtml = await fetchText(OFFICIAL_MEMBER_PAGE_URL);
@@ -603,6 +626,12 @@ serve(async (req) => {
     }));
 
     const historical = await fetchHistoricalResult();
+    const electionRegistryResult = await loadElectionModeRegistry();
+    const officialEndorsementResult = await loadOfficialEndorsementSnapshot();
+    const goalVerification = await verifyElectionGoalSources(
+      electionRegistryResult.registry,
+      fetchText,
+    );
     const scrapedScheduledCandidates = (
       await mapWithConcurrency(
         [...officialElectionPrefectureLinks.entries()],
@@ -633,7 +662,19 @@ serve(async (req) => {
         ]
         : []),
       ...scheduleResult.collectionQuality.issues,
+      ...electionRegistryResult.issues,
+      ...officialEndorsementResult.issues,
+      ...goalVerification.issues,
     ];
+
+    const electionIntelligence = buildElectionIntelligenceSnapshot({
+      registry: electionRegistryResult.registry,
+      selectedMode: parsedRequest.mode,
+      verifiedGoalIds: goalVerification.verifiedGoalIds,
+      officialEndorsements: officialEndorsementResult.snapshot,
+      officialCurrentLocalMembers,
+      official2023TotalWins: historical.totalWins,
+    });
 
     const snapshotBase = {
       fetchedAt: new Date().toISOString(),
@@ -649,6 +690,7 @@ serve(async (req) => {
       official2023FirstHalfWins: historical.firstHalfWins,
       official2023SecondHalfWins: historical.secondHalfWins,
       official2023TotalWins: historical.totalWins,
+      electionIntelligence,
       sources: [
         {
           label: "Official members",
@@ -680,6 +722,26 @@ serve(async (req) => {
           category: "official_local_elections",
           note: "Official planned-candidate source.",
         },
+        {
+          label: "Election mode and goal registry",
+          url: ELECTION_MODE_REGISTRY_ASSET_URL,
+          category: "election_intelligence_registry",
+          note:
+            "Versioned mode definitions and official goal-source contracts.",
+        },
+        {
+          label: "Official local-election endorsement snapshot",
+          url: OFFICIAL_ENDORSEMENT_ASSET_URL,
+          category: "official_endorsement_snapshot",
+          note:
+            "Machine-validated snapshot generated from the party's official PDF.",
+        },
+        ...electionIntelligence.goals.map((goal) => ({
+          label: goal.title,
+          url: goal.sourceUrl,
+          category: "official_party_goal",
+          note: `Official goal source (${goal.verificationStatus}).`,
+        })),
         {
           label: "CDP local authorities",
           url: CDP_LOCAL_AUTHORITIES_URL,
@@ -738,6 +800,17 @@ serve(async (req) => {
           scheduleResult.collectionQuality.failedRequiredSourceUrls,
         parserEmptyRequiredScheduleSourceUrls:
           scheduleResult.collectionQuality.parserEmptyRequiredSourceUrls,
+        electionModeRegistryLoaded: electionRegistryResult.issues.length === 0,
+        officialEndorsementSnapshotLoaded:
+          officialEndorsementResult.issues.length === 0,
+        verifiedGoalSourceCount: goalVerification.verifiedGoalIds.length,
+        expectedGoalSourceCount: electionRegistryResult.registry.modes
+          .flatMap((mode) => mode.goals).length,
+        electionIntelligenceIssues: [
+          ...electionRegistryResult.issues,
+          ...officialEndorsementResult.issues,
+          ...goalVerification.issues,
+        ],
         issues: collectionQualityIssues,
       },
     };
@@ -854,6 +927,7 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
     return {
       action: "snapshot",
       includeAiSummary: url.searchParams.get("includeAiSummary") !== "false",
+      mode: parseElectionMode(url.searchParams.get("mode")),
     };
   }
 
@@ -866,12 +940,14 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
       // Persistence runs normally do not need request-time AI prose. The
       // canonical dataset excludes AI fields either way.
       includeAiSummary: body.includeAiSummary === true,
+      mode: parseElectionMode(body.mode),
     };
   }
 
   return {
     action: "snapshot",
     includeAiSummary: body.includeAiSummary !== false,
+    mode: parseElectionMode(body.mode),
   };
 }
 
@@ -1082,6 +1158,40 @@ async function fetchText(url: string): Promise<string> {
     return await response.text();
   } finally {
     clearTimeout(timeoutId);
+  }
+}
+
+async function loadElectionModeRegistry(): Promise<{
+  registry: ElectionModeRegistry;
+  issues: string[];
+}> {
+  try {
+    const registry = normalizeElectionModeRegistry(
+      JSON.parse(await fetchText(ELECTION_MODE_REGISTRY_ASSET_URL)),
+    );
+    return { registry, issues: [] };
+  } catch (_error) {
+    return {
+      registry: fallbackElectionModeRegistry(),
+      issues: ["election_mode_registry_fetch_or_validation_failed"],
+    };
+  }
+}
+
+async function loadOfficialEndorsementSnapshot(): Promise<{
+  snapshot: OfficialEndorsementSnapshot;
+  issues: string[];
+}> {
+  try {
+    const snapshot = normalizeOfficialEndorsementSnapshot(
+      JSON.parse(await fetchText(OFFICIAL_ENDORSEMENT_ASSET_URL)),
+    );
+    return { snapshot, issues: [] };
+  } catch (_error) {
+    return {
+      snapshot: fallbackOfficialEndorsementSnapshot(),
+      issues: ["official_endorsement_snapshot_fetch_or_validation_failed"],
+    };
   }
 }
 

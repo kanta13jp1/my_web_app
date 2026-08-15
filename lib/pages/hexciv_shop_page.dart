@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../services/shop_funnel_service.dart';
 import '../services/shop_service.dart';
 import '../theme/design_tokens.dart';
 
@@ -15,13 +18,21 @@ import '../theme/design_tokens.dart';
 /// 「買えるように見えて買えない」を作らないことを優先している。
 /// 商品が未整備のときに購入ボタンを出すと、押した先で必ず失敗するため。
 class HexcivShopPage extends StatefulWidget {
-  const HexcivShopPage({super.key, this.purchaseResult, this.service});
+  const HexcivShopPage({
+    super.key,
+    this.purchaseResult,
+    this.service,
+    this.funnel,
+  });
 
   /// Stripe からの戻り (`?purchase=success` / `?purchase=canceled`)。
   final String? purchaseResult;
 
   /// テストから差し替えるための注入口。
   final ShopGateway? service;
+
+  /// 計測の注入口。テストでは省略でき、その場合は計測を行わない。
+  final ShopFunnelService? funnel;
 
   @override
   State<HexcivShopPage> createState() => _HexcivShopPageState();
@@ -40,10 +51,31 @@ class _HexcivShopPageState extends State<HexcivShopPage> {
   String? _actionError;
   DownloadTicket? _lastTicket;
 
+  /// 流入元。`?utm_source=itch_io` のように付いて来る。無ければ 'direct'。
+  /// **これが無いとチャネル別の効果が最後まで判定できない**ため、
+  /// 購入導線のどの記録にも同じ値を添える。
+  late final String _source = ShopFunnelService.sourceFromUri(Uri.base);
+  late final String _campaign = ShopFunnelService.campaignFromUri(Uri.base);
+
   @override
   void initState() {
     super.initState();
     _load();
+    _recordFunnel(ShopFunnelService.stageProductView);
+  }
+
+  /// funnel を1段記録する。計測は本体機能ではないので待たず、失敗も無視する。
+  void _recordFunnel(String stage) {
+    final funnel = widget.funnel;
+    if (funnel == null) return;
+    unawaited(
+      funnel.record(
+        stage,
+        productId: ShopService.hexcivProductId,
+        source: _source,
+        campaign: _campaign,
+      ),
+    );
   }
 
   Future<void> _load() async {
@@ -78,8 +110,15 @@ class _HexcivShopPageState extends State<HexcivShopPage> {
       _working = true;
       _actionError = null;
     });
+    // 押した時点で記録する。この後 Stripe 側で失敗しても「押された」事実は
+    // 残したい (押下と Checkout 到達の差が、決済側の問題を映す)。
+    _recordFunnel(ShopFunnelService.stagePurchaseClick);
     try {
-      final start = await _service.startCheckout(ShopService.hexcivProductId);
+      final start = await _service.startCheckout(
+        ShopService.hexcivProductId,
+        visitorId: await widget.funnel?.visitorId(),
+        source: _source,
+      );
       if (start.alreadyPurchased) {
         // 二重課金させず、そのまま購入済み表示へ切り替える。
         if (!mounted) return;
@@ -90,6 +129,8 @@ class _HexcivShopPageState extends State<HexcivShopPage> {
         return;
       }
       final url = Uri.parse(start.checkoutUrl!);
+      // Checkout URL が返った = 決済画面まで到達。押下との差が決済側の問題を映す。
+      _recordFunnel(ShopFunnelService.stageCheckoutRedirect);
       // 決済ページは同一タブで開く。別タブだと戻り先 (success_url) が
       // 元の画面と分かれてしまい、購入後の状態更新が伝わらない。
       await launchUrl(url, webOnlyWindowName: '_self');

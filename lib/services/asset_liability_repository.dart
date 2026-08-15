@@ -3,6 +3,7 @@ import 'package:my_web_app/models/asset_liability_persistence.dart';
 import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
+import 'package:my_web_app/services/asset_management_egress_policy.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 typedef AssetLiabilityUserIdProvider = String? Function();
@@ -1549,6 +1550,9 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   AssetLiabilitySyncPreviewResult _buildSyncPreview(
     _AssetLiabilitySyncData data,
   ) {
+    final comparableLocalSnapshots = _latestMonthlySnapshots(
+      data.localSnapshots,
+    );
     final items = <AssetLiabilitySyncPreviewItem>[
       AssetLiabilitySyncPreviewItem(
         target: AssetLiabilitySyncTarget.monthlyState,
@@ -1599,13 +1603,16 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       ),
       AssetLiabilitySyncPreviewItem(
         target: AssetLiabilitySyncTarget.monthlySnapshots,
-        localHasData: data.localSnapshots.isNotEmpty,
+        localHasData: comparableLocalSnapshots.isNotEmpty,
         remoteHasData: data.remoteSnapshots?.isNotEmpty ?? false,
-        localCount: data.localSnapshots.length,
+        localCount: comparableLocalSnapshots.length,
         remoteCount: data.remoteSnapshots?.length ?? 0,
-        dataMatches: data.localSnapshots.isNotEmpty &&
+        dataMatches: comparableLocalSnapshots.isNotEmpty &&
             (data.remoteSnapshots?.isNotEmpty ?? false) &&
-            _monthlySnapshotsEqual(data.localSnapshots, data.remoteSnapshots!),
+            _monthlySnapshotsEqual(
+              comparableLocalSnapshots,
+              data.remoteSnapshots!,
+            ),
       ),
     ];
     return AssetLiabilitySyncPreviewResult.ready(items: items);
@@ -1852,6 +1859,18 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       }
     }
     return true;
+  }
+
+  List<AssetLiabilityMonthlySnapshot> _latestMonthlySnapshots(
+    List<AssetLiabilityMonthlySnapshot> snapshots,
+  ) {
+    final sorted = List<AssetLiabilityMonthlySnapshot>.from(snapshots)
+      ..sort((left, right) => left.monthKey.compareTo(right.monthKey));
+    const maxSnapshots = AssetManagementEgressPolicy.maxMonthlySnapshots;
+    if (sorted.length <= maxSnapshots) {
+      return sorted;
+    }
+    return sorted.sublist(sorted.length - maxSnapshots);
   }
 
   String? _userIdOrNull() {
@@ -2129,7 +2148,8 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
         .from(AssetLiabilitySupabaseTablePlan.monthlySnapshotsTable)
         .select('month_key,payload')
         .eq('user_id', userId)
-        .order('month_key');
+        .order('month_key', ascending: false)
+        .limit(AssetManagementEgressPolicy.maxMonthlySnapshots);
 
     final snapshots = <AssetLiabilityMonthlySnapshot>[];
     for (final item in response) {

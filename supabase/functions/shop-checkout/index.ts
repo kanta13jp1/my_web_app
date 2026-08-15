@@ -115,6 +115,14 @@ serve(async (req) => {
     // 権利が付与されない (= 客からは「金だけ取られた」に見える) 事故になる。
     form.set("metadata[user_id]", user.id);
     form.set("metadata[shop_product_id]", productId);
+    // funnel の最終段をサーバ側で記録するために持ち回す (2026-07-29 追加)。
+    // クライアントに「買えました」と自己申告させると、金銭の絡む段だけ
+    // 検証できない数字になる。visitor_id を Stripe 経由で webhook まで運び、
+    // 入金を確認した webhook が purchase_complete を書く。
+    const visitorId = asString((body as Record<string, unknown>).visitor_id);
+    if (visitorId) form.set("metadata[shop_visitor_id]", visitorId);
+    const source = asString((body as Record<string, unknown>).source);
+    if (source) form.set("metadata[shop_source]", source);
     if (user.email) form.set("customer_email", user.email);
 
     const response = await fetch(
