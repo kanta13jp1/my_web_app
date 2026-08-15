@@ -57,3 +57,21 @@ BillingService.createCheckoutSession(billing_service.dart:87-96)とsubscription_
 - `flutter analyze` for the changed Dart implementation and tests
 - `deno test`, `deno lint`, and `deno check` for the growth-hub acquisition allowlist
 - Local Chrome test compilation stalled before execution twice; GitHub Actions remains the browser/build source of truth.
+
+## High-risk Ultrareview Gate
+
+- Reviewer: Claude Code #1
+- High-Risk-Ultrareview-Exception: additive analytics allowlist and dashboard wiring only; no auth, secrets, schema, migration, destructive write, or deploy-control change
+- Security: unknown funnel keys remain rejected by the explicit server allowlist.
+- Rollback: revert the implementation commit; no data rollback is required.
+- Data migration: none.
+- Prod smoke: verify the billing route and growth-hub deployment after merge.
+- Observability: the admin dashboard exposes the three funnel steps and cancellations.
+- Unresolved ultrareview findings: none.
+
+## Minimal E2E Gate
+
+- Implementation-detail independent: tests assert visible billing results, upgrade input, and dashboard output.
+- Minimal scope: about 3 cases (happy path, cancel path, empty dashboard state).
+- E2E: no new Flutter `integration_test/` or Playwright `test/e2e/` route is added.
+- E2E-Exception: live completion requires external Stripe and authenticated Supabase state; widget and Edge Function tests cover the deterministic boundary without creating a payment.
