@@ -2789,7 +2789,10 @@ description: ${pageDescription}
         }
 
         // 3. FAL flux/schnell で画像生成
-        const falKey = Deno.env.get("FAL_KEY");
+        // env 名は FAL_KEY / FAL_API_KEY の 2 系統が実在する (2026-07-25 実障害:
+        // FAL_API_KEY だけ登録されていて画像が黙って fallback に落ちていた)。
+        // 上の GITHUB_PAT ?? GITHUB_TOKEN ?? GH_TOKEN と同じく両方を受ける。
+        const falKey = Deno.env.get("FAL_KEY") ?? Deno.env.get("FAL_API_KEY");
         let imageUrl = "https://my-web-app-b67f4.web.app/ogp.png"; // fallback
         let cost = 0;
         let generatedBy = "fallback";

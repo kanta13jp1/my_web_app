@@ -37,6 +37,20 @@ class LandingPageViewStats {
         series = const <LandingPageViewPoint>[];
 }
 
+class LandingSocialProofStats {
+  final int totalUsers;
+  final int publicMemoCount;
+
+  const LandingSocialProofStats({
+    required this.totalUsers,
+    required this.publicMemoCount,
+  });
+
+  const LandingSocialProofStats.empty()
+      : totalUsers = 0,
+        publicMemoCount = 0;
+}
+
 abstract interface class LandingPageAdapter {
   Stream<AuthState> authStateChanges();
 
@@ -47,6 +61,8 @@ abstract interface class LandingPageAdapter {
   });
 
   Future<LandingPageViewStats> loadLpViewStats();
+
+  Future<LandingSocialProofStats> loadSocialProofStats();
 
   /// LP 表示を1回記録する (LP View カウンタ + 流入元帰属)。
   ///
@@ -185,6 +201,59 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
       debugPrint('LP view stats failed: $error');
       return const LandingPageViewStats.empty();
     }
+  }
+
+  @override
+  Future<LandingSocialProofStats> loadSocialProofStats() async {
+    final client = _supabaseClientOrNull;
+    if (client == null) {
+      return const LandingSocialProofStats.empty();
+    }
+
+    var totalUsers = 0;
+    var publicMemoCount = 0;
+
+    try {
+      final row = await client
+          .from('site_statistics')
+          .select('total_users')
+          .order('stat_date', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      totalUsers = (row?['total_users'] as num?)?.toInt() ?? 0;
+    } catch (error) {
+      debugPrint('Public site statistics load failed: $error');
+    }
+
+    if (totalUsers <= 0) {
+      try {
+        final row = await client
+            .from('growth_metrics')
+            .select('total_users')
+            .order('metric_date', ascending: false)
+            .limit(1)
+            .maybeSingle();
+        totalUsers = (row?['total_users'] as num?)?.toInt() ?? 0;
+      } catch (error) {
+        debugPrint('Public growth metrics fallback failed: $error');
+      }
+    }
+
+    try {
+      final response = await client
+          .from('public_memos')
+          .select('id')
+          .eq('is_public', true)
+          .count(CountOption.exact);
+      publicMemoCount = response.count;
+    } catch (error) {
+      debugPrint('Public memo count load failed: $error');
+    }
+
+    return LandingSocialProofStats(
+      totalUsers: totalUsers < 0 ? 0 : totalUsers,
+      publicMemoCount: publicMemoCount < 0 ? 0 : publicMemoCount,
+    );
   }
 
   @override

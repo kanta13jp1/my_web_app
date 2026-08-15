@@ -90,6 +90,7 @@ class _ChoOfficePageState extends State<ChoOfficePage> {
               'Track health routines, sleep, and condition records.',
               Icons.favorite,
               const HealthPage(),
+              '/health',
             ),
             _buildMenuCard(
               context,
@@ -97,6 +98,7 @@ class _ChoOfficePageState extends State<ChoOfficePage> {
               'Review stress and focus signals and keep a simple health check.',
               Icons.psychology,
               const MentalCheckPage(),
+              '/mental-check',
             ),
             _buildMenuCard(
               context,
@@ -104,6 +106,7 @@ class _ChoOfficePageState extends State<ChoOfficePage> {
               'Keep treatment notes and review health-related actions.',
               Icons.medical_services,
               const MedicalNotesPage(),
+              '/medical-notes',
             ),
           ],
         ),
@@ -111,12 +114,15 @@ class _ChoOfficePageState extends State<ChoOfficePage> {
     );
   }
 
+  /// [routeName] は遷移先画面の URL。`RouteSettings.name` を付けないと
+  /// Flutter Web でブラウザの URL が更新されないため必須にしている。
   Widget _buildMenuCard(
     BuildContext context,
     String title,
     String subtitle,
     IconData icon,
     Widget? page,
+    String routeName,
   ) {
     return Card(
       elevation: 2,
@@ -137,8 +143,13 @@ class _ChoOfficePageState extends State<ChoOfficePage> {
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: page != null
-            ? () =>
-                Navigator.push(context, MaterialPageRoute(builder: (_) => page))
+            ? () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    settings: RouteSettings(name: routeName),
+                    builder: (_) => page,
+                  ),
+                )
             : () => ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Coming soon')),
                 ),

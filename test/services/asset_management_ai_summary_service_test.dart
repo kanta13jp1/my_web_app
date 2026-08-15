@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/asset_management_ai_analysis_history.dart';
+import 'package:my_web_app/models/daily_todo.dart';
 import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/services/ai_hub_chat_service.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
@@ -705,6 +706,67 @@ void main() {
       expect(result.text, response);
     });
   });
+
+  group('daily_todo をAIペイロードへ載せる', () {
+    final service = AssetManagementAiSummaryService(aiEnabled: false);
+
+    test('digest があり非空なら daily_todo を含み、行動の借金/実績を渡す', () {
+      final now = DateTime(2026, 7, 31, 22);
+      final digest = DailyTodoDigest.fromState(
+        tasks: <DailyTodoTask>[
+          DailyTodoTask(id: 'today', title: '今日の分', plannedDate: now),
+          DailyTodoTask(
+            id: 'debt',
+            title: '溜めた借金',
+            plannedDate: DateTime(2026, 7, 28),
+          ),
+        ],
+        log: const <DailyTodoCompletionLogEntry>[],
+        now: now,
+      );
+      final payload = service.buildAiDetailedPayload(
+        _reportWithDailyTodo(digest: digest),
+      );
+      expect(payload.containsKey('daily_todo'), isTrue);
+      final todo = payload['daily_todo'] as Map<String, dynamic>;
+      expect(todo['today_total'], 1);
+      expect(todo['carried_over_count'], 1);
+      expect(todo['max_carry_over_days'], 3);
+    });
+
+    test('digest が null なら daily_todo を含まない', () {
+      final payload = service.buildAiDetailedPayload(_report());
+      expect(payload.containsKey('daily_todo'), isFalse);
+    });
+
+    test('digest が空(ToDo未使用)なら daily_todo を含まない', () {
+      final emptyDigest = DailyTodoDigest.fromState(
+        tasks: const <DailyTodoTask>[],
+        log: const <DailyTodoCompletionLogEntry>[],
+        now: DateTime(2026, 7, 31),
+      );
+      expect(emptyDigest.isEmpty, isTrue);
+      final payload = service.buildAiDetailedPayload(
+        _reportWithDailyTodo(digest: emptyDigest),
+      );
+      expect(payload.containsKey('daily_todo'), isFalse);
+    });
+  });
+}
+
+AssetManagementInsightReport _reportWithDailyTodo({DailyTodoDigest? digest}) {
+  const planner = AssetLiabilityPlanningService();
+  const insight = AssetManagementInsightService();
+  final workbook = planner.buildWorkbook(
+    latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
+    baseDate: DateTime(2026, 7, 31),
+  );
+  return insight.buildReport(
+    workbook: workbook,
+    userProfile: _userProfile(),
+    minimumSafetyBalance: 10000,
+    dailyTodoDigest: digest,
+  );
 }
 
 AssetManagementInsightReport _reportWithDeveloperRequests() {

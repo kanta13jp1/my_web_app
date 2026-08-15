@@ -110,12 +110,14 @@ class LandingConversionExperimentService {
 
   static const Set<String> supportedStages = {
     'view',
+    'mobile_view',
     'hero_cta',
     'intent',
     'trial',
     'trial_fallback',
     'save_cta',
     'signup_submit',
+    'mobile_signup_submit',
     'signup_complete',
     'sticky_cta',
     'feature_outcome_trial',
@@ -123,7 +125,7 @@ class LandingConversionExperimentService {
   };
 
   static final RegExp _eventKeyPattern = RegExp(
-    r'^lp_exp_h(?:0[1-9]|10)_(?:control|treatment)_(?:view|hero_cta|intent|trial|trial_fallback|save_cta|signup_submit|signup_complete|sticky_cta|feature_outcome_trial|feature_catalog_expand)$',
+    r'^lp_exp_h(?:0[1-9]|10)_(?:control|treatment)_(?:view|mobile_view|hero_cta|intent|trial|trial_fallback|save_cta|signup_submit|mobile_signup_submit|signup_complete|sticky_cta|feature_outcome_trial|feature_catalog_expand)$',
   );
   static final RegExp _visitorIdPattern = RegExp(
     r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',

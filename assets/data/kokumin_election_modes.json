@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "defaultMode": "local",
+  "modes": [
+    {
+      "id": "local",
+      "label": "地方選",
+      "shortLabel": "地方",
+      "availability": "active",
+      "description": "地方議員数、公認予定候補、地方選実績を追跡します。",
+      "collectors": [
+        "local_members",
+        "official_endorsements",
+        "local_results"
+      ],
+      "goals": [
+        {
+          "id": "local_members_700",
+          "title": "地方議員700人",
+          "metric": "local_member_count",
+          "targetValue": 700,
+          "unit": "人",
+          "deadlineLabel": "次期統一地方選終了時",
+          "sourceUrl": "https://new-kokumin.jp/news/business/20260714_1",
+          "sourcePublishedAt": "2026-07-14",
+          "verificationTerms": [
+            "地方自治体議員",
+            "700"
+          ]
+        }
+      ],
+      "achievements": [
+        {
+          "id": "unified_local_election_wins_2023",
+          "title": "2023年統一地方選 当選者",
+          "metric": "unified_local_election_wins_2023",
+          "unit": "人",
+          "periodLabel": "2023年統一地方選",
+          "sourceUrls": [
+            "https://new-kokumin.jp/news/election/20230410_election",
+            "https://new-kokumin.jp/news/election/20230423_1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "house_of_representatives",
+      "label": "衆院選",
+      "shortLabel": "衆院",
+      "availability": "registered",
+      "description": "公式目標と候補者ソースの確定後に有効化します。",
+      "collectors": [],
+      "goals": [],
+      "achievements": []
+    },
+    {
+      "id": "house_of_councillors",
+      "label": "参院選",
+      "shortLabel": "参院",
+      "availability": "registered",
+      "description": "公式目標と候補者ソースの確定後に有効化します。",
+      "collectors": [],
+      "goals": [],
+      "achievements": []
+    }
+  ]
+}

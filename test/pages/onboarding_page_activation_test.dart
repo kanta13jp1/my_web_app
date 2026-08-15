@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/onboarding_page.dart';
 import 'package:my_web_app/services/activation_revenue_experiment_service.dart';
 import 'package:my_web_app/services/activation_revenue_tracker.dart';
+import 'package:my_web_app/services/growth_acquisition_service.dart';
 import 'package:my_web_app/services/onboarding_activation_gateway.dart';
 import 'package:my_web_app/services/pending_landing_trial_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,12 +24,14 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     final gateway = _FakeOnboardingGateway();
     final tracker = _FakeTracker();
+    final acquisition = _RecordingAcquisitionService();
 
     await tester.pumpWidget(
       MaterialApp(
         home: OnboardingPage(
           gateway: gateway,
           tracker: tracker,
+          acquisitionService: acquisition,
           assignment: _assignment('a10', ActivationRevenueVariant.treatment),
         ),
       ),
@@ -76,6 +79,7 @@ void main() {
         'value_recap_view',
       ]),
     );
+    expect(acquisition.stages, <String>['first_action_completed']);
     expect(tester.takeException(), isNull);
   });
 
@@ -330,6 +334,24 @@ void main() {
     expect(find.textContaining('自動更新なし'), findsOneWidget);
     expect(find.text('ProでAI利用量を増やす'), findsOneWidget);
   });
+}
+
+class _RecordingAcquisitionService extends GrowthAcquisitionService {
+  _RecordingAcquisitionService();
+
+  final List<String> stages = <String>[];
+
+  @override
+  Future<bool> recordFirstUserFunnelStage({
+    required String stage,
+    String? visitorId,
+    Uri? currentUri,
+    SharedPreferences? preferences,
+    DateTime? now,
+  }) async {
+    stages.add(stage);
+    return true;
+  }
 }
 
 Future<void> _pumpArm(

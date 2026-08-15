@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/activation_revenue_experiment_service.dart';
 import '../services/activation_revenue_tracker.dart';
+import '../services/growth_acquisition_service.dart';
 import '../services/onboarding_activation_gateway.dart';
 import '../services/pending_landing_trial_service.dart';
 
@@ -15,6 +16,7 @@ class OnboardingPage extends StatefulWidget {
     this.tracker = const SupabaseActivationRevenueEventTracker(),
     this.experimentService = const ActivationRevenueExperimentService(),
     this.pendingTrialService = const PendingLandingTrialService(),
+    this.acquisitionService = const GrowthAcquisitionService(),
     this.assignment,
     this.initialUri,
   });
@@ -23,6 +25,7 @@ class OnboardingPage extends StatefulWidget {
   final ActivationRevenueEventTracker tracker;
   final ActivationRevenueExperimentService experimentService;
   final PendingLandingTrialService pendingTrialService;
+  final GrowthAcquisitionService acquisitionService;
   final ActivationRevenueAssignment? assignment;
   final Uri? initialUri;
 
@@ -78,6 +81,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   Future<void> _record(String stage) async {
+    if (stage == 'first_action_completed') {
+      try {
+        await widget.acquisitionService.recordFirstUserFunnelStage(
+          stage: stage,
+        );
+      } catch (error) {
+        debugPrint('First-user activation event failed: $error');
+      }
+    }
     final assignment = _assignment ?? widget.assignment;
     if (assignment == null) return;
     try {
