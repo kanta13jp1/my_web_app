@@ -25,7 +25,8 @@ class UiRolloutSummaryCard extends StatelessWidget {
         .length;
     final int inProgressCount = screens
         .where(
-            (screen) => screen.rollout.stage == UiImprovementStage.inProgress)
+          (screen) => screen.rollout.stage == UiImprovementStage.inProgress,
+        )
         .length;
     final int plannedCount = screens
         .where((screen) => screen.rollout.stage == UiImprovementStage.planned)
