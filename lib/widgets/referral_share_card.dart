@@ -63,7 +63,7 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
 
   void _shareToX() {
     final text = '自分株式会社を一緒に試してみませんか？\n'
-        'Notion・Evernote・MoneyForward・Slack・Xなど21競合の機能を1アプリに統合。完全無料👇\n'
+        'Notion・Evernote・MoneyForward・Slack・Xなど21競合の機能を1アプリに統合。無料で開始、Proで支援できます👇\n'
         '$_shareUrl\n'
         '#buildinpublic #FlutterWeb #自分株式会社';
     final intentUrl =
@@ -73,7 +73,7 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
 
   void _nativeShare() {
     try {
-      const text = '21SaaS統合の自分株式会社を試してみよう！完全無料。';
+      const text = '21SaaS統合の自分株式会社を試してみよう！無料で開始、Proで支援できます。';
       web.window.navigator.share(
         web.ShareData(title: '自分株式会社', text: text, url: _shareUrl),
       );

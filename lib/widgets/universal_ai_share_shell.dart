@@ -338,6 +338,11 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
       if (_disposed || !mounted) return;
       setState(() {
         _imageUrl = result.url;
+        if (result.url == null) {
+          _statusMessage =
+              'Image generation is unavailable. Text-only X sharing is ready.';
+          return;
+        }
         _statusMessage =
             result.url == null ? '画像生成URLを取得できませんでした' : 'シェア画像を生成しました';
       });
@@ -391,6 +396,8 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         context: widget.page,
         text: _textController.text,
         mediaUrl: mediaUrl,
+        threadReplies: _draft?.threadReplies ?? const [],
+        linkInReply: _draft?.threadReplies.isNotEmpty == true,
       );
       if (_disposed || !mounted) return;
       setState(() {
@@ -400,24 +407,73 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
       });
     } catch (error) {
       if (_disposed || !mounted) return;
-      setState(() => _statusMessage = 'X投稿に失敗しました: $error');
+      await Clipboard.setData(ClipboardData(text: _textController.text));
+      final launched = await _launchXComposer();
+      if (_disposed || !mounted) return;
+      setState(() {
+        _statusMessage = launched
+            ? 'X API投稿は使えませんでした。投稿文をコピーしてX投稿画面を開きました。動画は「メディア」から開いて手動添付できます。'
+            : 'X API投稿は使えませんでした。投稿文はコピー済みです。X画面ボタンから投稿してください。';
+      });
     } finally {
       if (!_disposed && mounted) setState(() => _posting = false);
     }
   }
 
   Future<void> _copyText() async {
-    await Clipboard.setData(ClipboardData(text: _textController.text));
+    await Clipboard.setData(ClipboardData(text: _copyPayload()));
     if (mounted) {
       setState(() => _statusMessage = '投稿文をコピーしました');
     }
   }
 
   Future<void> _openXComposer() async {
+    final launched = await _launchXComposer();
+    if (_disposed || !mounted) return;
+    setState(() {
+      _statusMessage = launched
+          ? 'X投稿画面を開きました。内容を確認して投稿してください。'
+          : 'X投稿画面を開けませんでした。投稿文をコピーして手動で投稿してください。';
+    });
+  }
+
+  Future<void> _openMediaUrl() async {
+    final mediaUrl = _videoUrl ?? _imageUrl;
+    if (mediaUrl == null) return;
+    final uri = Uri.tryParse(mediaUrl);
+    if (uri == null) return;
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (_disposed || !mounted) return;
+    setState(() {
+      _statusMessage = launched
+          ? '添付メディアを開きました。X APIなしで投稿する場合は、この動画を保存してX投稿画面で添付してください。'
+          : '添付メディアを開けませんでした。URLをコピーしてブラウザで開いてください。';
+    });
+  }
+
+  Future<bool> _launchXComposer() async {
     final uri = Uri.https('x.com', '/intent/tweet', {
       'text': _textController.text,
     });
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    return launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  String _copyPayload() {
+    final replies = _draft?.threadReplies ?? const <String>[];
+    if (replies.isEmpty) return _textController.text;
+    return [_textController.text, ...replies].join('\n\n---\n\n');
+  }
+
+  void _applyGrowthVariant(UniversalXGrowthShareVariant variant) {
+    final draft = UniversalXShareService.buildGrowthDraft(
+      widget.page,
+      variant: variant,
+    );
+    setState(() {
+      _draft = draft;
+      _textController.text = draft.text;
+      _statusMessage = 'Xから最初の1人を取りに行く投稿文に切り替えました';
+    });
   }
 
   static String? _extractString(Map<String, dynamic> raw, String key) {
@@ -449,7 +505,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
     if (generationId != null &&
         const {'queued', 'processing', 'submitted'}.contains(status)) {
       final etaText = eta == null ? '' : ' 目安: 約$eta秒';
-      return 'Hedra動画生成ジョブを開始しました。少し待ってからもう一度「動画生成」を押すと結果を確認します。$etaText';
+      return 'Hedra動画生成ジョブを開始しました。少し待ってからもう一度「Hedra動画」を押すと結果を確認します。$etaText';
     }
     if (reason != null) return '動画生成結果を確認してください: $reason';
     return '動画生成は完了待ちです。少し待ってからもう一度確認してください';
@@ -482,6 +538,8 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                 generatingVideo: _generatingVideo,
               ),
               const SizedBox(height: 12),
+              _GrowthSharePresetBar(onSelect: _applyGrowthVariant),
+              const SizedBox(height: 12),
               if (_loadingDraft)
                 const LinearProgressIndicator()
               else
@@ -497,6 +555,31 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                   ),
                 ),
               const SizedBox(height: 8),
+              if (_draft?.threadReplies.isNotEmpty == true) ...[
+                Text(
+                  'スレッド返信 ${_draft!.threadReplies.length}件',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: 6),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: SelectableText(
+                      _draft!.threadReplies.join('\n\n---\n\n'),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -520,10 +603,10 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                         : const Icon(Icons.movie_creation_outlined),
                     label: Text(
                       _generatingVideo
-                          ? '動画生成中'
+                          ? 'Hedra生成中'
                           : _hedraGenerationId == null
-                              ? '動画生成'
-                              : '動画確認',
+                              ? 'Hedra動画'
+                              : 'Hedra確認',
                     ),
                   ),
                 ],
@@ -531,6 +614,12 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
               if (mediaUrl != null) ...[
                 const SizedBox(height: 12),
                 SelectableText('添付メディア: ${_mediaDisplayText(mediaUrl)}'),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: _openMediaUrl,
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('メディア'),
+                ),
               ],
               if (_statusMessage != null) ...[
                 const SizedBox(height: 12),
@@ -579,9 +668,95 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
               ? null
               : _postToX,
           icon: _posting ? const _TinyProgress() : const Icon(Icons.send),
-          label: Text(_posting ? '投稿中' : 'AI生成して投稿'),
+          label: Text(_posting ? '投稿中' : 'Xへ投稿'),
         ),
       ],
+    );
+  }
+}
+
+class _GrowthSharePresetBar extends StatelessWidget {
+  final ValueChanged<UniversalXGrowthShareVariant> onSelect;
+
+  const _GrowthSharePresetBar({required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'X growth presets',
+          style: theme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _PresetButton(
+              icon: Icons.article_outlined,
+              label: 'ブリーフィング',
+              onPressed: () =>
+                  onSelect(UniversalXGrowthShareVariant.dailyBriefing),
+            ),
+            _PresetButton(
+              icon: Icons.push_pin_outlined,
+              label: '固定',
+              onPressed: () =>
+                  onSelect(UniversalXGrowthShareVariant.pinnedPost),
+            ),
+            _PresetButton(
+              icon: Icons.error_outline,
+              label: '課題',
+              onPressed: () =>
+                  onSelect(UniversalXGrowthShareVariant.problemPost),
+            ),
+            _PresetButton(
+              icon: Icons.auto_awesome_motion,
+              label: '機能',
+              onPressed: () =>
+                  onSelect(UniversalXGrowthShareVariant.featurePost),
+            ),
+            _PresetButton(
+              icon: Icons.help_outline,
+              label: '質問',
+              onPressed: () =>
+                  onSelect(UniversalXGrowthShareVariant.questionPost),
+            ),
+            _PresetButton(
+              icon: Icons.reply_outlined,
+              label: '返信',
+              onPressed: () =>
+                  onSelect(UniversalXGrowthShareVariant.usefulReply),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _PresetButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  const _PresetButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(label),
     );
   }
 }

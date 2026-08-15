@@ -612,6 +612,10 @@ void main() {
     expect(find.byKey(const Key('landing_social_proof_stats')), findsOneWidget);
     expect(find.byKey(const Key('landing_migration_guide')), findsOneWidget);
     expect(find.byKey(const Key('landing_comparison_links')), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_supporter_checkout_button')),
+      findsOneWidget,
+    );
     expect(adapter.loadShareSnapshotCallCount, 0);
     expect(adapter.loadLpViewStatsCallCount, 0);
   });

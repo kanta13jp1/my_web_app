@@ -39,6 +39,41 @@
 - ✅ 全 file mtime 7-30 日超 hard cutoff
 - ✅ JSONL transcript は **gzip 圧縮** で deletion ではなく **size 削減** (= 後で `Expand-Archive` 復元可)
 
+### Tier 1.5 (= マージ時 / `/pr-merge` / 人が起動 / 2026-07-20 新設)
+
+**背景**: 2026-07-20 に `C:\tmp` で **146 worktree / 14 GB** の滞留を検出 (C: 残 6.4 GB)。原因は
+「worktree を作るのは自動、消すのは手動」という非対称性。Tier 1 は mtime cutoff で消すため
+worktree には手を出せず、Tier 2 は週次なので 1 週間分溜まる。**マージの瞬間に閉じる層**が欠けていた。
+
+| 項目 | 内容 |
+|---|---|
+| 起動 | `/pr-merge <PR番号> [--admin] [--dry-run]` (人が打つ。hook ではない) |
+| 実体 | `scripts/pr_merge_and_release.ps1` → `scripts/worktree_release.ps1` |
+| 動作 | `gh pr merge --squash --delete-branch` → **マージ成功を gh に問い直して証明** → 14 ガード → attic 退避 → `git worktree remove --force` → `git worktree prune` |
+| 既定 | **dry-run**。`-Apply` を明示した時だけ削除する |
+| 退避 | `~/.claude/state/worktree-attic/<hash>-<ts>/` に `meta.json` + `worktree.diff` + `index.diff` + `untracked.tar`。**保持 30 日**、書き手側で自動 prune |
+| 補完 | 週次 `/worktree-sweep` で Web UI マージ・raw `gh pr merge` の取りこぼしを回収 |
+
+**主要ガード** (詳細はスクリプト内のコメント。各 `ATTACK n` は塞いでいる攻撃を指す):
+
+- **因果**: `mergedAt` が起動時刻より後でないと撤去しない (PR 番号の打ち間違いで無関係な worktree が消えるのを防ぐ)
+- **包含証明**: `merge-base --is-ancestor HEAD <headRefOid>`。この repo は 100% squash のため
+  `is-ancestor HEAD origin/main` は常に偽になり使えない。upstream 依存も `--delete-branch` で消えるため捨てている
+- **precious ignored**: `git status --porcelain` は ignored を見ないが `--force` は消す。
+  `.env` / `evidence/` は git のどこにも無く attic でも再構成できないため、build 生成物 denylist に
+  載らない ignored が 1 つでもあれば QUARANTINE
+- **fail-CLOSED**: `gh` が落ちて open PR 状態が不明なら「盲目のまま消さない」で中断する
+- **TOCTOU 再検査**: 評価と削除の間に状態が変わっていたら中止 (attic は残す)
+- **attic 失敗で中止**: 退避に失敗したら削除しない。この 1 行が `--force` を生存可能にしている
+
+**安全 rule**:
+
+- ❌ `CLEANUP QUARANTINED` を自動で消さない (人が中身を見る)
+- ❌ `scripts/worktree_prune.ps1` をこの経路から呼ばない (`.claude/worktrees/` 専用 / manual-only 契約)
+- ❌ detached HEAD の worktree には触らない (PR と結びつかず判定不能)
+- ✅ kill switch: `$env:MWA_WORKTREE_RELEASE_DISABLED='1'` / `.cache/worktree-release.DISABLED` /
+  そもそも `/pr-merge` を使わず `gh pr merge` を直に叩く
+
 ### Tier 2 (= 手動 / `/disk-cleanup` slash command / 数分)
 
 `~/.claude/commands/disk-cleanup.md` 経由で 8 step 実行:

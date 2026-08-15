@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wiki Query"
+  short_description: "NotebookLMまたはローカル検索で過去判断を引用付き確認・回答"
+  default_prompt: "Use $wiki-query to answer this question from the project knowledge base."

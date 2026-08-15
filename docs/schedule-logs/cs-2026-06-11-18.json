@@ -1,0 +1,16 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-06-11T18:08:17Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 (全登録済み) / チケット: 0件 / Issue修正: 0件 / workflow-failure修復: 0件 / Schedule健全性: daily-report未実行 Issue#3238 既存",
+  "details": {
+    "tickets": 0,
+    "ef_ui_added": 0,
+    "auto_review_issues_fixed": 0,
+    "workflow_failure_fixed": 0,
+    "supabase_http_code": "200",
+    "guitar_studio": "ok",
+    "escalations": ["#3238 daily-report未実行", "#3237 boot Uncaught Error", "#3175 CI/CD監査継続"]
+  }
+}

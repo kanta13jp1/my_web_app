@@ -7,6 +7,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:my_web_app/data/home_tool_catalog.dart';
+import 'package:my_web_app/utils/feature_route_labels.dart';
 import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/abstinence_guard_page.dart';
 import 'package:my_web_app/pages/self_touch_tracker_page.dart';
@@ -284,6 +285,9 @@ import 'package:my_web_app/pages/poll_survey_page.dart';
 import 'package:my_web_app/pages/notification_digest_page.dart';
 import 'package:my_web_app/pages/ai_university_badges_page.dart';
 import 'package:my_web_app/pages/ai_university_streaks_page.dart';
+import 'package:my_web_app/pages/english_reading_curriculum_page.dart';
+import 'package:my_web_app/pages/english_reading_practice_page.dart';
+import 'package:my_web_app/pages/english_reading_dashboard_page.dart';
 import 'package:my_web_app/pages/ai_workflow_automation_page.dart';
 import 'package:my_web_app/pages/ab_testing_manager_page.dart';
 import 'package:my_web_app/pages/habit_tracker_page.dart';
@@ -303,15 +307,12 @@ import 'package:my_web_app/widgets/global_header_clock_bar.dart';
 import 'utils/app_logger.dart';
 import 'utils/error_reporter.dart';
 
-SupabaseClient? _testSupabaseClient;
+import 'services/supabase_client_provider.dart';
+
+export 'services/supabase_client_provider.dart';
+
 final GrowthPresenceNavigatorObserver _growthPresenceObserver =
     GrowthPresenceNavigatorObserver();
-
-@visibleForTesting
-set supabaseClientForTesting(SupabaseClient client) =>
-    _testSupabaseClient = client;
-
-SupabaseClient get supabase => _testSupabaseClient ?? Supabase.instance.client;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -515,6 +516,10 @@ class _MyAppState extends State<MyApp> {
       ],
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name ?? '/');
+        // 全ての named route 遷移を利用履歴に記録する単一チョークポイント。
+        // 主要導線の直叩き pushNamed が記録されず、最近使った / よく使われる
+        // 機能が「サイト案内AI」しか並ばなかった機能不全 (#3279) を解消する。
+        recordFeatureRouteNavigation(settings.name);
 
         switch (uri.path) {
           case '/':
@@ -1541,6 +1546,22 @@ class _MyAppState extends State<MyApp> {
           case '/ai-university-streaks':
             return MaterialPageRoute(
               builder: (_) => const AiUniversityStreaksPage(),
+            );
+          case '/english-reading-curriculum':
+            return MaterialPageRoute(
+              builder: (_) => const EnglishReadingCurriculumPage(),
+            );
+          case '/english-reading-practice':
+            final args = settings.arguments as Map<String, dynamic>?;
+            return MaterialPageRoute(
+              builder: (_) => EnglishReadingPracticePage(
+                lessonCode: args?['lesson_code'] as String?,
+                mode: args?['mode'] as String? ?? 'measure',
+              ),
+            );
+          case '/english-reading-dashboard':
+            return MaterialPageRoute(
+              builder: (_) => const EnglishReadingDashboardPage(),
             );
           case '/ai-workflow-automation':
             return MaterialPageRoute(

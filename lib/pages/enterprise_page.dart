@@ -131,7 +131,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
           ),
           const SizedBox(height: 20),
           Text(
-            'Slack・Chatwork・ジョブカン・\nMoneyForwardを\n1つに統合。完全無料。',
+            'Slack・Chatwork・ジョブカン・\nMoneyForwardを\n1つに統合。無料で開始。',
             style: TextStyle(
               color: Colors.white,
               fontSize: isMobile ? 28 : 40,
@@ -430,7 +430,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
       _EnterpriseFeature('勤怠管理', false, false, true, false, false),
       _EnterpriseFeature('マインドマップ', true, false, false, false, false),
       _EnterpriseFeature('性格診断', true, false, false, false, false),
-      _EnterpriseFeature('完全無料', true, false, false, false, false),
+      _EnterpriseFeature('無料で開始', true, false, false, false, false),
     ];
 
     if (isMobile) {

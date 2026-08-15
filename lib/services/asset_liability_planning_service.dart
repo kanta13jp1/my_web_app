@@ -37,7 +37,8 @@ class AssetLiabilityPlanningService {
       '請求先カードが未設定です';
   static const String cardBillingReviewRemovedBillingAccountAlert =
       '請求先カードが見つかりません';
-  static const String cardBillingReviewZeroAmountAlert = '金額が0円のため確認してください';
+  static const String cardBillingReviewZeroAmountAlert =
+      '金額が0円のため確認してください（請求が0円の月は今月支払予定額に0を入力すると確認対象外になります）';
   static const String cardStatementMissingImportAlert = 'カード明細の取り込みが未実施です';
   static const String cardStatementBillingAccountMissingAlert =
       '請求先カード口座が見つかりません';
@@ -79,6 +80,7 @@ class AssetLiabilityPlanningService {
     Map<String, double> actualPaymentAmounts = const <String, double>{},
     Map<String, String> paymentDifferenceReasons = const <String, String>{},
     Map<String, double> annualRateOverrides = const <String, double>{},
+    Map<String, int> paymentDayOverrides = const <String, int>{},
     Set<String> paidAccountNames = const <String>{},
     Set<String> billingConfirmedAccountIds = const <String>{},
     Map<String, String> paymentSourceAccountIds = const <String, String>{},
@@ -114,9 +116,12 @@ class AssetLiabilityPlanningService {
     final accounts = effectiveSnapshot.entries
         .where((entry) => entry.key.trim().isNotEmpty && entry.value != 0)
         .map(
-          (entry) => _classifyAccount(
-            name: entry.key.trim(),
-            balance: entry.value,
+          (entry) => _applyPaymentDayOverride(
+            account: _classifyAccount(
+              name: entry.key.trim(),
+              balance: entry.value,
+            ),
+            paymentDayOverrides: paymentDayOverrides,
           ),
         )
         .toList()
@@ -298,6 +303,22 @@ class AssetLiabilityPlanningService {
       manualPaymentCount: manualPaymentCount,
       estimatedPaymentCount: estimatedPaymentCount,
     );
+  }
+
+  AssetLiabilityAccount _applyPaymentDayOverride({
+    required AssetLiabilityAccount account,
+    required Map<String, int> paymentDayOverrides,
+  }) {
+    if (!account.isLiability) {
+      return account;
+    }
+    final override = paymentDayOverrides[account.id] ??
+        paymentDayOverrides[account.name.trim()] ??
+        paymentDayOverrides[account.name];
+    if (override == null || override < 1 || override > 31) {
+      return account;
+    }
+    return account.copyWith(paymentDay: override);
   }
 
   AssetLiabilityAccount _classifyAccount({
@@ -603,6 +624,7 @@ class AssetLiabilityPlanningService {
           liabilityTotal == 0 ? 0 : principal / liabilityTotal.abs(),
       priorityLabel: _priorityLabel(annualRate),
       paymentAmountEstimated: manualPayment == null,
+      fullPaymentEstimate: account.fullPaymentEstimate,
       billingConfirmed: _containsAccountKey(
         billingConfirmedAccountIds,
         account,
@@ -817,7 +839,8 @@ class AssetLiabilityPlanningService {
         alerts.add(cardBillingReviewRemovedBillingAccountAlert);
       }
     }
-    if (row.scheduledPaymentAmount <= 0) {
+    // 手入力の0円 (請求なし月) は正常値として許容し、推定値が0以下の場合のみ確認を促す。
+    if (row.scheduledPaymentAmount <= 0 && row.paymentAmountEstimated) {
       alerts.add(cardBillingReviewZeroAmountAlert);
     }
 

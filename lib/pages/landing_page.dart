@@ -50,6 +50,8 @@ class _LandingPageState extends State<LandingPage> {
   bool _obscurePassword = true;
   bool _showSaveCtaPrompt = false;
   bool _showInboxShortcut = false;
+  bool _showXFirstUserCta = false;
+  bool _isXFirstUserSignalLoading = false;
   int _magicLinkCooldownSeconds = 0;
   int _achievementCount = 0;
   int _totalUsers = 0;
@@ -58,6 +60,7 @@ class _LandingPageState extends State<LandingPage> {
 
   String? _trialAction;
   String? _trialReason;
+  String? _xFirstUserChoice;
   String? _lastMagicLinkEmail;
   String? _pendingReferralCode;
 
@@ -82,6 +85,7 @@ class _LandingPageState extends State<LandingPage> {
       }
     });
     unawaited(_bootstrapReferralInvite());
+    unawaited(_bootstrapFirstUserGrowthCampaign());
     unawaited(_loadAchievementCount());
     unawaited(_loadSocialProofStats());
   }
@@ -114,6 +118,16 @@ class _LandingPageState extends State<LandingPage> {
       return;
     }
     setState(() => _pendingReferralCode = pendingReferralCode);
+  }
+
+  Future<void> _bootstrapFirstUserGrowthCampaign() async {
+    if (!kIsWeb || !GrowthAcquisitionService.isFirstUserGrowthUri(Uri.base)) {
+      return;
+    }
+    if (mounted) {
+      setState(() => _showXFirstUserCta = true);
+    }
+    await _acquisitionService.recordFirstUserGrowthLanding();
   }
 
   void _showMessage(String message) {
@@ -387,6 +401,66 @@ $input
     unawaited(_runTrialActionPreview());
   }
 
+  Future<void> _startXFirstUserTrial() async {
+    setState(() => _isXFirstUserSignalLoading = true);
+    try {
+      await _acquisitionService.recordXFirstUserTrialIntent();
+    } finally {
+      if (mounted) {
+        setState(() => _isXFirstUserSignalLoading = false);
+      }
+    }
+    _scrollToTrialSection();
+  }
+
+  Future<void> _selectXFirstUserFeedback(String choice) async {
+    setState(() {
+      _xFirstUserChoice = choice;
+      _isXFirstUserSignalLoading = true;
+    });
+    try {
+      await _acquisitionService.recordXFirstUserFeedbackChoice(choice);
+    } finally {
+      if (mounted) {
+        setState(() => _isXFirstUserSignalLoading = false);
+      }
+    }
+  }
+
+  String _xFirstUserFeedbackText() {
+    final choice = _xFirstUserChoice;
+    final label = switch (choice) {
+      'summary' => 'A 要約',
+      'memo' => 'B メモ',
+      'search' => 'C 後で探す',
+      _ => 'A/B/C 未選択',
+    };
+    return '@kanta13jp1 Homeを5分触るなら、最初に欲しいのは「$label」です。';
+  }
+
+  Future<void> _copyXFirstUserFeedback() async {
+    await Clipboard.setData(ClipboardData(text: _xFirstUserFeedbackText()));
+    _showMessage('Xに貼れる一言フィードバックをコピーしました');
+  }
+
+  Future<void> _openXFirstUserFeedbackIntent() async {
+    setState(() => _isXFirstUserSignalLoading = true);
+    try {
+      await _acquisitionService.recordXFirstUserFeedbackXIntent();
+    } finally {
+      if (mounted) {
+        setState(() => _isXFirstUserSignalLoading = false);
+      }
+    }
+    final uri = Uri.https('x.com', '/intent/tweet', {
+      'text': _xFirstUserFeedbackText(),
+    });
+    final launched = await launchUrl(uri, webOnlyWindowName: '_blank');
+    if (!launched) {
+      await _copyXFirstUserFeedback();
+    }
+  }
+
   void _scrollToTrialSection() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final trialContext = _trialSectionKey.currentContext;
@@ -414,6 +488,10 @@ $input
         _emailFocusNode.requestFocus();
       });
     });
+  }
+
+  void _openSupporterPage() {
+    Navigator.of(context).pushNamed('/subscription-billing');
   }
 
   Uri _resolveInboxUri(String email) {
@@ -1168,11 +1246,178 @@ $input
     final userCount = _totalUsers > 10 ? '登録者$_totalUsers人突破！' : '';
     final text = 'スマホでギター録音＋21のSaaSを1アプリに統合。'
         '自分株式会社 $userCount\n'
-        '完全無料で使えます👇\n'
+        '無料で始められ、Proで開発支援もできます👇\n'
         '$siteUrl\n'
         '#FlutterWeb #buildinpublic #自分株式会社 #ギター録音';
     final uri = Uri.https('x.com', '/intent/tweet', {'text': text});
     await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Widget _buildXFirstUserFeedbackSection() {
+    if (!_showXFirstUserCta) {
+      return const SizedBox.shrink();
+    }
+
+    final choice = _xFirstUserChoice;
+    final selectedColor = Theme.of(context).colorScheme.primary;
+
+    Widget choiceButton({
+      required String value,
+      required String label,
+      required IconData icon,
+    }) {
+      final selected = choice == value;
+      return ChoiceChip(
+        selected: selected,
+        avatar: Icon(
+          icon,
+          size: 18,
+          color: selected ? Colors.white : const Color(0xFF1F7AE0),
+        ),
+        label: Text(label),
+        labelStyle: TextStyle(
+          color: selected ? Colors.white : const Color(0xFF1B2A41),
+          fontWeight: FontWeight.w700,
+        ),
+        selectedColor: selectedColor,
+        side: BorderSide(
+          color: selected ? selectedColor : const Color(0xFFC7D7EA),
+        ),
+        onSelected: _isXFirstUserSignalLoading
+            ? null
+            : (_) => _selectXFirstUserFeedback(value),
+      );
+    }
+
+    return Container(
+      key: const Key('x_first_user_feedback_section'),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFD7E3F4)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF23405F).withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF3FF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.forum_outlined,
+                  color: Color(0xFF1F7AE0),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Xから来てくれた方へ',
+                      style: TextStyle(
+                        color: Color(0xFF101828),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        height: 1.35,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      '5分だけ触るなら、最初に欲しいものを1つ教えてください。匿名クリックでも集計しますが、Xで一言返してもらえると実ユーザー証跡として追えます。',
+                      style: TextStyle(
+                        color: Color(0xFF526173),
+                        height: 1.55,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              choiceButton(
+                value: 'summary',
+                label: 'A 要約',
+                icon: Icons.summarize_outlined,
+              ),
+              choiceButton(
+                value: 'memo',
+                label: 'B メモ',
+                icon: Icons.sticky_note_2_outlined,
+              ),
+              choiceButton(
+                value: 'search',
+                label: 'C 後で探す',
+                icon: Icons.manage_search_outlined,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed:
+                    _isXFirstUserSignalLoading ? null : _startXFirstUserTrial,
+                icon: _isXFirstUserSignalLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.play_arrow_rounded),
+                label: const Text('5分で試す'),
+              ),
+              OutlinedButton.icon(
+                onPressed: choice == null
+                    ? null
+                    : (_isXFirstUserSignalLoading
+                        ? null
+                        : _openXFirstUserFeedbackIntent),
+                icon: const Icon(Icons.open_in_new_rounded),
+                label: const Text('Xで一言返す'),
+              ),
+              OutlinedButton.icon(
+                onPressed: choice == null ? null : _copyXFirstUserFeedback,
+                icon: const Icon(Icons.copy_rounded),
+                label: const Text('文面コピー'),
+              ),
+            ],
+          ),
+          if (choice != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _xFirstUserFeedbackText(),
+              style: const TextStyle(
+                color: Color(0xFF344054),
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   Widget _buildViralShareSection() {
@@ -2000,7 +2245,7 @@ $input
         Icons.draw,
         '0xFF64748B',
         '電子署名',
-        '契約書・同意書をアプリ内で電子署名。法人・フリーランス向け。DocuSign連携と直接競合する機能を完全無料で提供。'
+        '契約書・同意書をアプリ内で電子署名。法人・フリーランス向け。DocuSign連携と直接競合する機能を無料で始められる形で提供。'
       ),
       (
         Icons.storefront,
@@ -2096,7 +2341,7 @@ $input
         Icons.work_history,
         '0xFF059669',
         '採用ボード',
-        '求人票作成・応募者管理・面接スケジューリングをAIが支援。HR SaaSの代替を完全無料で実現。'
+        '求人票作成・応募者管理・面接スケジューリングをAIが支援。HR SaaSの代替を無料で始められる形で実現。'
       ),
       (
         Icons.sensors,
@@ -2174,7 +2419,7 @@ $input
         Icons.lock,
         '0xFF7C3AED',
         'パスワード金庫',
-        '全パスワードをゼロ知識暗号化で保護・自動入力・セキュリティ監査。1Password/Bitwardenを超える統合認証管理を完全無料で提供。'
+        '全パスワードをゼロ知識暗号化で保護・自動入力・セキュリティ監査。1Password/Bitwardenを超える統合認証管理を無料で始められる形で提供。'
       ),
       (
         Icons.podcasts,
@@ -2186,7 +2431,7 @@ $input
         Icons.screen_share,
         '0xFF0369A1',
         'スクリーン録画',
-        'ブラウザから直接スクリーン録画・即時共有。Loomを超える非同期ビデオコミュニケーションを完全無料で提供。'
+        'ブラウザから直接スクリーン録画・即時共有。Loomを超える非同期ビデオコミュニケーションを無料で始められる形で提供。'
       ),
       (
         Icons.storefront,
@@ -2228,7 +2473,7 @@ $input
         Icons.inventory,
         '0xFF059669',
         '在庫・バーコード管理',
-        '商品バーコードスキャン・在庫数追跡・入出庫記録を自動化。Amazonの倉庫管理機能を個人・中小企業向けに完全無料で提供。'
+        '商品バーコードスキャン・在庫数追跡・入出庫記録を自動化。Amazonの倉庫管理機能を個人・中小企業向けに無料で始められる形で提供。'
       ),
       (
         Icons.dashboard_customize,
@@ -2252,7 +2497,7 @@ $input
         Icons.account_balance_wallet,
         '0xFF00B900',
         'MoneyForward 連携',
-        '銀行・証券・クレカ・電子マネー残高を自動取り込み。総資産・取引履歴をAIが分析して資産増加アドバイス。MoneyForwardを超える完全無料の資産管理を提供。'
+        '銀行・証券・クレカ・電子マネー残高を自動取り込み。総資産・取引履歴をAIが分析して資産増加アドバイス。MoneyForwardを超える資産管理を無料で始められる形で提供。'
       ),
       (
         Icons.webhook,
@@ -2282,7 +2527,7 @@ $input
         Icons.shopping_cart_outlined,
         '0xFFF97316',
         'ショッピングリスト',
-        '買い物リスト作成・価格管理・購入チェックをスマート管理。Amazonの購入管理機能を超えるAI節約提案付きの完全無料ショッピングアシスタント。'
+        '買い物リスト作成・価格管理・購入チェックをスマート管理。Amazonの購入管理機能を超えるAI節約提案付きショッピングアシスタント。'
       ),
       (
         Icons.notifications_active,
@@ -2408,7 +2653,7 @@ $input
         Icons.menu_book,
         '0xFF0F766E',
         'Wikiデータベース',
-        '階層式Wikiページ・社内マニュアル・チームナレッジを一元管理。Confluenceを超える個人・チーム向け知識ベースを完全無料で構築。'
+        '階層式Wikiページ・社内マニュアル・チームナレッジを一元管理。Confluenceを超える個人・チーム向け知識ベースを無料で始められる形で構築。'
       ),
       (
         Icons.view_kanban,
@@ -2889,7 +3134,7 @@ $input
       const _CompetitorRow('Google Workspace', '¥680〜/月', '80+', false),
       const _CompetitorRow('Microsoft 365', '¥1,241〜/月', '90+', false),
       const _CompetitorRow('LINE AI', '¥750〜/月 (5項目)', '5', false),
-      const _CompetitorRow('自分株式会社', '完全無料', '21サービス分', true),
+      const _CompetitorRow('自分株式会社', '無料+Pro支援', '21サービス分', true),
     ];
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -2917,7 +3162,7 @@ $input
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '他社は有料。自分株式会社は完全無料。',
+                  '無料で始めて、Proで開発支援できます。',
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
@@ -2930,11 +3175,34 @@ $input
           ),
           const SizedBox(height: 4),
           const Text(
-            '月額数千円のSaaS21本分の機能を、無料で使えます。',
+            '基本機能は無料で開始。継続開発はProプランやFounding Supporterで支援できます。',
             style: TextStyle(
               fontSize: 13,
               color: Color(0xFF78350F),
               height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              key: const Key('landing_supporter_checkout_button'),
+              onPressed: _openSupporterPage,
+              icon: const Icon(Icons.payments_outlined, size: 18),
+              label: const Text(
+                '100円で開発を支援する',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  height: 1.4,
+                ),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF92400E),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 14),
@@ -3306,15 +3574,15 @@ $input
     const faqs = [
       (
         q: 'Notion AI がカレンダー・メール・Slack連携を始めました。それでも違いはありますか?',
-        a: '2026年4月にNotion AIはカレンダー・Mail・Slack統合をGA化しました。ただし「財務管理」「健康・習慣管理」「KPI＝昨日の自分（自己比較）」「日本語文化対応」は依然として対象外です。自分株式会社はAIが「今日やるべき1件」を決め、MoneyForward型資産管理・習慣化・AI診断まで人生6部署を一元管理します。Notionは仕事を整理しますが、自分株式会社は人生全体を整理します。しかも完全無料です。',
+        a: '2026年4月にNotion AIはカレンダー・Mail・Slack統合をGA化しました。ただし「財務管理」「健康・習慣管理」「KPI＝昨日の自分（自己比較）」「日本語文化対応」は依然として対象外です。自分株式会社はAIが「今日やるべき1件」を決め、MoneyForward型資産管理・習慣化・AI診断まで人生6部署を一元管理します。Notionは仕事を整理しますが、自分株式会社は人生全体を整理します。無料で始められ、Proで継続開発も支援できます。',
       ),
       (
         q: '12部署20人のAI組織OSって何?',
         a: '自分1人で12の仮想部署（企画・開発・営業・CS・法務・広報・調達など）と20人のAIエージェントを動かせる機能です。自然言語でゴールを入力するだけでAIが最適な部署に自動振り分け、タスク分解・進捗管理まで担当します。SlackもJiraも不要で、1アプリで組織のように動けます。',
       ),
       (
-        q: '完全無料で使い続けられますか?',
-        a: 'はい、現在は完全無料です。登録なしでAI提案を1回体験でき、登録後は制限なくすべての機能を利用できます。将来的にプレミアムプランを検討していますが、基本機能は無料のままです。',
+        q: '無料で始められますか? 有料プランはありますか?',
+        a: 'はい、基本機能は無料で始められます。継続開発を支援したい方向けに、ProプランとFounding Supporterの支援導線を用意しています。',
       ),
       (
         q: 'NotionやEvernoteからデータを移行できますか?',
@@ -3330,7 +3598,7 @@ $input
       ),
       (
         q: 'Claude Cowork (Anthropic公式) が出ましたが、何が違うの?',
-        a: 'Claude Cowork (Pro \$20/月〜) は仕事のSaaS連携に特化した企業向けAIエージェントです。分離VM内で動作するため、セッションが終わるとデータが消えます。自分株式会社は「財務・健康・習慣・KPI」など人生6部署をSupabaseに永続保存し、昨日の自分と毎日比較できます。仕事だけでなく人生全体を経営したい個人CEOには、完全無料の自分株式会社が最適です。',
+        a: 'Claude Cowork (Pro \$20/月〜) は仕事のSaaS連携に特化した企業向けAIエージェントです。分離VM内で動作するため、セッションが終わるとデータが消えます。自分株式会社は「財務・健康・習慣・KPI」など人生6部署をSupabaseに永続保存し、昨日の自分と毎日比較できます。仕事だけでなく人生全体を経営したい個人CEO向けに、無料入口とPro支援導線を用意しています。',
       ),
       (
         q: 'Perplexity Mac Agentに毎日のタスクを任せればよいのでは?',
@@ -3338,7 +3606,7 @@ $input
       ),
       (
         q: 'OpenAI Codex DesktopとClaude Codeが競合していますが、自分株式会社はどう違うの?',
-        a: 'Claude Code（423 plugins / 2,849 skills）とOpenAI Codex Desktop（Computer Use先行・20+ plugins）はツール選択の問題です。自分株式会社のai-hubは両方を含むClaude・OpenAI・Geminiを束ねる「指揮所」です。どのAIを使うかより「AIを使い分けるハブを持つか」が個人CEOの合理解。単一vendorへの依存は負債、分散が資産（原則7）。しかも完全無料。',
+        a: 'Claude Code（423 plugins / 2,849 skills）とOpenAI Codex Desktop（Computer Use先行・20+ plugins）はツール選択の問題です。自分株式会社のai-hubは両方を含むClaude・OpenAI・Geminiを束ねる「指揮所」です。どのAIを使うかより「AIを使い分けるハブを持つか」が個人CEOの合理解。単一vendorへの依存は負債、分散が資産（原則7）。無料で始められ、Proで支援できます。',
       ),
       (
         q: 'Notion Custom Agentsが課金されるようになりましたが?',
@@ -3390,7 +3658,7 @@ $input
       ),
       (
         q: 'すでに Notion + Slack を使っています。なぜ自分株式会社が必要ですか?',
-        a: 'Notionはチームのナレッジを整理します。Slackはチームとのコミュニケーションを支えます。しかし「あなた自身の意思決定」「昨日の自分との比較」「資産・負債のバランスシート」を管理するツールはどこにも存在しません。自分株式会社はその空白を埋める個人向けライフOSです。Notionが仕事を整理するなら、自分株式会社はあなた自身を経営します。しかも完全無料です。',
+        a: 'Notionはチームのナレッジを整理します。Slackはチームとのコミュニケーションを支えます。しかし「あなた自身の意思決定」「昨日の自分との比較」「資産・負債のバランスシート」を管理するツールはどこにも存在しません。自分株式会社はその空白を埋める個人向けライフOSです。Notionが仕事を整理するなら、自分株式会社はあなた自身を経営します。無料で始められ、Proで支援できます。',
       ),
       (
         q: 'Notion Japan DC開設で日本市場が変わりますが、自分株式会社との違いは？',
@@ -3440,7 +3708,7 @@ $input
       ('資産/負債バランスシート（時間・お金）', 'プロジェクト管理'),
       ('IPO/ウェルビーイングという個人ゴール', 'ゴール設定なし'),
       ('6部署バランス（人事最優先の自己経営）', '業務効率化のみ'),
-      ('完全無料', '¥1,100〜/月 + AI従量課金'),
+      ('無料で開始・Pro支援可', '¥1,100〜/月 + AI従量課金'),
     ];
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
@@ -3594,7 +3862,7 @@ $input
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _BenefitChip(icon: Icons.card_membership, label: '完全無料'),
+                  _BenefitChip(icon: Icons.card_membership, label: '無料で開始'),
                   _BenefitChip(icon: Icons.auto_awesome, label: 'AI自動整理'),
                   _BenefitChip(icon: Icons.import_export, label: 'Notionから移行可'),
                 ],
@@ -3628,6 +3896,12 @@ $input
                           (_showInboxShortcut && _isMagicLinkCoolingDown))
                       ? null
                       : _sendMagicLink,
+                  style: _showInboxShortcut && !_isMagicLinkCoolingDown
+                      ? FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF0F766E),
+                          foregroundColor: Colors.white,
+                        )
+                      : null,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
@@ -3960,6 +4234,10 @@ $input
                 children: [
                   // 1. ヒーロー
                   _buildHeroSection(),
+                  if (_showXFirstUserCta) ...[
+                    const SizedBox(height: 12),
+                    _buildXFirstUserFeedbackSection(),
+                  ],
                   const SizedBox(height: 20),
                   // 2. 実績数字で信頼感を作る
                   _buildSocialProofStatsSection(),

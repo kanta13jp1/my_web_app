@@ -1,0 +1,15 @@
+interface:
+  display_name: "GitHub Reuse First"
+  short_description: "GitHubで既存OSSを比較し、最小の実装方針を決定"
+  default_prompt: "Use $github-reuse-first to investigate maintained open-source options before writing code and recommend the smallest viable approach."
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "github"
+      description: "Connected GitHub app for repository search and inspection"
+      transport: "streamable_http"
+      url: "https://api.githubcopilot.com/mcp/"
+
+policy:
+  allow_implicit_invocation: true

@@ -232,6 +232,10 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
     Navigator.of(context).pushNamed('/ai-university-video');
   }
 
+  void _openEnglishReading() {
+    Navigator.of(context).pushNamed('/english-reading-curriculum');
+  }
+
   String _buildRefreshLabel() {
     final updatedAt = _latestContentUpdatedAt;
     if (updatedAt == null) return '毎週更新';
@@ -815,6 +819,17 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                       const SizedBox(height: 10),
                       SizedBox(
                         width: double.infinity,
+                        child: _AiCardActionButton(
+                          label: '英語速読',
+                          icon: Icons.speed_outlined,
+                          foregroundColor: const Color(0xFF4CAF50),
+                          borderColor: const Color(0x334CAF50),
+                          onTap: _openEnglishReading,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
                         child: _buildAiXPostButton(),
                       ),
                     ] else
@@ -844,6 +859,14 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             borderColor: const Color(0x3390CAF9),
                             compact: true,
                             onTap: _openVideoLesson,
+                          ),
+                          _AiCardActionButton(
+                            label: '英語速読',
+                            icon: Icons.speed_outlined,
+                            foregroundColor: const Color(0xFF4CAF50),
+                            borderColor: const Color(0x334CAF50),
+                            compact: true,
+                            onTap: _openEnglishReading,
                           ),
                           _buildAiXPostButton(),
                           _AiCardActionButton(

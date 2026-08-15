@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wiki Duplicate-H1 Cleanup"
+  short_description: "重複Markdown見出しを意味を保ちながら安全に整理・検証"
+  default_prompt: "Use $wiki-dup-h1-cleanup to review and resolve duplicate H1 titles."

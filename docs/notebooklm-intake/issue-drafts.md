@@ -1,81 +1,15 @@
 # NotebookLM Intake Issue Drafts
 
-Generated: `2026-05-18T00:01:52Z`
+Generated: `2026-08-15T10:39:13Z`
 
-## [追加要望][P2] NotebookLM source intake: Pro Plan Subscription and Billing Details
-
-Labels: `enhancement`, `追加要望`, `wbs`, `automation`
-
-### Background
-
-- Notebook ID: `0678eea0-f704-42db-9e69-0e3f0a4c9e7d`
-- Created: `2026-05-18T08:31:37`
-- Source count: `unknown`
-- Proposed route: `unclassified`
-
-### Request
-
-Review this NotebookLM source with primary-source verification, then route verified work into an existing Issue/WBS task before creating a new implementation issue.
-
-### Acceptance Criteria
-
-- [ ] Duplicate GitHub Issues and WBS tasks were searched.
-- [ ] NotebookLM claims were verified against official or primary sources where needed.
-- [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
-- [ ] A skip reason was recorded if the notebook is out of project scope.
-
-## [追加要望][P2] NotebookLM source intake: Supabase Organization Quota Limit Notification
+## [追加要望][P2] NotebookLM source intake: Strategic AI Integration and Sustainable Development Roadmap
 
 Labels: `enhancement`, `追加要望`, `wbs`, `automation`
 
 ### Background
 
-- Notebook ID: `38bab02b-dc28-4209-8825-a1d11b377c55`
-- Created: `2026-05-18T08:21:01`
-- Source count: `unknown`
-- Proposed route: `unclassified`
-
-### Request
-
-Review this NotebookLM source with primary-source verification, then route verified work into an existing Issue/WBS task before creating a new implementation issue.
-
-### Acceptance Criteria
-
-- [ ] Duplicate GitHub Issues and WBS tasks were searched.
-- [ ] NotebookLM claims were verified against official or primary sources where needed.
-- [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
-- [ ] A skip reason was recorded if the notebook is out of project scope.
-
-## [追加要望][P2] NotebookLM source intake: Supabase AI Governance and Terms Update 2026
-
-Labels: `enhancement`, `追加要望`, `wbs`, `automation`
-
-### Background
-
-- Notebook ID: `c4606454-d0f7-4936-a3f7-d0049505d4e3`
-- Created: `2026-05-18T08:13:23`
-- Source count: `unknown`
-- Proposed route: `unclassified`
-
-### Request
-
-Review this NotebookLM source with primary-source verification, then route verified work into an existing Issue/WBS task before creating a new implementation issue.
-
-### Acceptance Criteria
-
-- [ ] Duplicate GitHub Issues and WBS tasks were searched.
-- [ ] NotebookLM claims were verified against official or primary sources where needed.
-- [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
-- [ ] A skip reason was recorded if the notebook is out of project scope.
-
-## [追加要望][P2] NotebookLM source intake: Building AI Agents with Claude on Vertex AI
-
-Labels: `enhancement`, `追加要望`, `wbs`, `automation`
-
-### Background
-
-- Notebook ID: `2f61ac17-d33d-4a18-80ae-71817aee505d`
-- Created: `2026-05-18T09:02:06`
+- Notebook ID: `54b1bd0c-f201-4b35-9855-87b4652e9a6e`
+- Created: `2026-06-02T09:43:58+00:00`
 - Source count: `1`
 - Proposed route: `unclassified`
 
@@ -90,14 +24,14 @@ Review this NotebookLM source with primary-source verification, then route verif
 - [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
 - [ ] A skip reason was recorded if the notebook is out of project scope.
 
-## [追加要望][P2] NotebookLM source intake: Makoto Sasaki: Diplomacy from Disaster Experience and Human Ties
+## [追加要望][P2] NotebookLM source intake: Mighty Skill-Bridge Development Knowledge 2026-06-02
 
 Labels: `enhancement`, `追加要望`, `wbs`, `automation`
 
 ### Background
 
-- Notebook ID: `d090afa0-bab8-4968-b7d8-ae11ea88edfa`
-- Created: `2026-05-17T20:04:16`
+- Notebook ID: `4934c12b-b270-4739-97a1-b04b5b84eaaf`
+- Created: `2026-06-20T17:22:03+00:00`
 - Source count: `unknown`
 - Proposed route: `unclassified`
 
@@ -112,36 +46,14 @@ Review this NotebookLM source with primary-source verification, then route verif
 - [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
 - [ ] A skip reason was recorded if the notebook is out of project scope.
 
-## [追加要望][P2] NotebookLM source intake: Building AI Agents with Claude, Bedrock, and Strands SDK
+## [追加要望][P2] NotebookLM source intake: Mighty-Link AI Connect Project Management WBS
 
 Labels: `enhancement`, `追加要望`, `wbs`, `automation`
 
 ### Background
 
-- Notebook ID: `97352ce3-265a-4de4-b782-148eb62dd8ef`
-- Created: `2026-05-18T09:02:11`
-- Source count: `1`
-- Proposed route: `unclassified`
-
-### Request
-
-Review this NotebookLM source with primary-source verification, then route verified work into an existing Issue/WBS task before creating a new implementation issue.
-
-### Acceptance Criteria
-
-- [ ] Duplicate GitHub Issues and WBS tasks were searched.
-- [ ] NotebookLM claims were verified against official or primary sources where needed.
-- [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
-- [ ] A skip reason was recorded if the notebook is out of project scope.
-
-## [追加要望][P2] NotebookLM source intake: The Blueprint for AI Orchestration and Team Command
-
-Labels: `enhancement`, `追加要望`, `wbs`, `automation`
-
-### Background
-
-- Notebook ID: `340b80d0-2582-436d-a01f-899418d2d1cc`
-- Created: `2026-05-17T02:17:57`
+- Notebook ID: `4af4503e-1085-4281-9b3e-f973341c3ebe`
+- Created: `2026-05-21T12:26:10+00:00`
 - Source count: `unknown`
 - Proposed route: `unclassified`
 
@@ -156,14 +68,14 @@ Review this NotebookLM source with primary-source verification, then route verif
 - [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
 - [ ] A skip reason was recorded if the notebook is out of project scope.
 
-## [追加要望][P2] NotebookLM source intake: ENEOS Acquisition of Chevron Subsidiaries in Asia-Pacific Region
+## [追加要望][P2] NotebookLM source intake: Mighty Skill-Bridge Development Knowledge 2026-06-02
 
 Labels: `enhancement`, `追加要望`, `wbs`, `automation`
 
 ### Background
 
-- Notebook ID: `4d9d5d89-b651-4db7-9d21-2c81d1459e2c`
-- Created: `2026-05-17T01:34:43`
+- Notebook ID: `47fd2911-06e4-489d-b7df-47c11bcda32f`
+- Created: `2026-06-19T16:03:55+00:00`
 - Source count: `unknown`
 - Proposed route: `unclassified`
 
@@ -178,14 +90,14 @@ Review this NotebookLM source with primary-source verification, then route verif
 - [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
 - [ ] A skip reason was recorded if the notebook is out of project scope.
 
-## [追加要望][P2] NotebookLM source intake: 競合モニタリングレポート 2026-05-04
+## [追加要望][P2] NotebookLM source intake: Mighty Skill-Bridge Development Knowledge 2026-06-02
 
 Labels: `enhancement`, `追加要望`, `wbs`, `automation`
 
 ### Background
 
-- Notebook ID: `61dc9c75-f61c-4a56-93c9-00a31aa705b7`
-- Created: `2026-05-16T07:37:25`
+- Notebook ID: `fd58e18d-1c62-43c7-9425-0e708879ec25`
+- Created: `2026-06-19T05:38:32+00:00`
 - Source count: `unknown`
 - Proposed route: `unclassified`
 
@@ -200,14 +112,14 @@ Review this NotebookLM source with primary-source verification, then route verif
 - [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
 - [ ] A skip reason was recorded if the notebook is out of project scope.
 
-## [追加要望][P2] NotebookLM source intake: 職業としての政治
+## [追加要望][P2] NotebookLM source intake: Mighty Skill-Bridge Development Knowledge 2026-06-02
 
 Labels: `enhancement`, `追加要望`, `wbs`, `automation`
 
 ### Background
 
-- Notebook ID: `4a131492-f89c-4b40-a11a-caaa0d0c3143`
-- Created: `2026-05-16T07:33:11`
+- Notebook ID: `3439bbed-deef-4b81-9c72-5eeaca44b008`
+- Created: `2026-06-19T04:59:43+00:00`
 - Source count: `unknown`
 - Proposed route: `unclassified`
 
@@ -222,14 +134,14 @@ Review this NotebookLM source with primary-source verification, then route verif
 - [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
 - [ ] A skip reason was recorded if the notebook is out of project scope.
 
-## [追加要望][P2] NotebookLM source intake: Obsidian Comprehensive User Guide and Documentation Index
+## [追加要望][P2] NotebookLM source intake: Mighty Skill-Bridge Development Knowledge 2026-06-02
 
 Labels: `enhancement`, `追加要望`, `wbs`, `automation`
 
 ### Background
 
-- Notebook ID: `75ee4479-b552-41da-b2ec-96d732c10751`
-- Created: `2026-05-05T17:30:45`
+- Notebook ID: `56932988-812c-412e-94f4-4878953d20a1`
+- Created: `2026-06-17T11:43:18+00:00`
 - Source count: `unknown`
 - Proposed route: `unclassified`
 
@@ -244,15 +156,15 @@ Review this NotebookLM source with primary-source verification, then route verif
 - [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
 - [ ] A skip reason was recorded if the notebook is out of project scope.
 
-## [追加要望][P2] NotebookLM source intake: The Claude Arbitrage: High-Yield Trading on a Budget
+## [追加要望][P2] NotebookLM source intake: Mighty Skill-Bridge Development Knowledge 2026-06-02
 
 Labels: `enhancement`, `追加要望`, `wbs`, `automation`
 
 ### Background
 
-- Notebook ID: `aa1ea2a5-2384-4062-9f59-22747b06e4d9`
-- Created: `2026-05-18T09:02:28`
-- Source count: `11`
+- Notebook ID: `52c128b5-0d92-4806-b80c-37b187e6942b`
+- Created: `2026-06-17T11:35:18+00:00`
+- Source count: `unknown`
 - Proposed route: `unclassified`
 
 ### Request
@@ -266,14 +178,212 @@ Review this NotebookLM source with primary-source verification, then route verif
 - [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
 - [ ] A skip reason was recorded if the notebook is out of project scope.
 
-## [追加要望][P2] NotebookLM source intake: Attention Is All You Need
+## [追加要望][P2] NotebookLM source intake: Mighty Skill-Bridge Development Knowledge 2026-06-02
 
 Labels: `enhancement`, `追加要望`, `wbs`, `automation`
 
 ### Background
 
-- Notebook ID: `ebe88c7e-365f-465c-83e9-f1838762df49`
-- Created: `2026-05-04T14:23:06`
+- Notebook ID: `2c7c4a2d-2731-4c8f-8136-4c41daa7b7b3`
+- Created: `2026-06-13T16:41:31+00:00`
+- Source count: `unknown`
+- Proposed route: `unclassified`
+
+### Request
+
+Review this NotebookLM source with primary-source verification, then route verified work into an existing Issue/WBS task before creating a new implementation issue.
+
+### Acceptance Criteria
+
+- [ ] Duplicate GitHub Issues and WBS tasks were searched.
+- [ ] NotebookLM claims were verified against official or primary sources where needed.
+- [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
+- [ ] A skip reason was recorded if the notebook is out of project scope.
+
+## [追加要望][P2] NotebookLM source intake: Mighty Skill-Bridge Development Knowledge 2026-06-02
+
+Labels: `enhancement`, `追加要望`, `wbs`, `automation`
+
+### Background
+
+- Notebook ID: `e82f0b43-69aa-474a-9b6c-b67f018696fb`
+- Created: `2026-06-13T09:08:59+00:00`
+- Source count: `unknown`
+- Proposed route: `unclassified`
+
+### Request
+
+Review this NotebookLM source with primary-source verification, then route verified work into an existing Issue/WBS task before creating a new implementation issue.
+
+### Acceptance Criteria
+
+- [ ] Duplicate GitHub Issues and WBS tasks were searched.
+- [ ] NotebookLM claims were verified against official or primary sources where needed.
+- [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
+- [ ] A skip reason was recorded if the notebook is out of project scope.
+
+## [追加要望][P2] NotebookLM source intake: Mighty Skill-Bridge Development Knowledge 2026-06-02
+
+Labels: `enhancement`, `追加要望`, `wbs`, `automation`
+
+### Background
+
+- Notebook ID: `feb3c4b3-5c14-479d-b55c-a14a1571f805`
+- Created: `2026-06-13T07:42:17+00:00`
+- Source count: `unknown`
+- Proposed route: `unclassified`
+
+### Request
+
+Review this NotebookLM source with primary-source verification, then route verified work into an existing Issue/WBS task before creating a new implementation issue.
+
+### Acceptance Criteria
+
+- [ ] Duplicate GitHub Issues and WBS tasks were searched.
+- [ ] NotebookLM claims were verified against official or primary sources where needed.
+- [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
+- [ ] A skip reason was recorded if the notebook is out of project scope.
+
+## [追加要望][P2] NotebookLM source intake: Mighty Skill-Bridge Development Knowledge 2026-06-02
+
+Labels: `enhancement`, `追加要望`, `wbs`, `automation`
+
+### Background
+
+- Notebook ID: `51b951d0-de08-4ffe-9ba2-aca5be31474b`
+- Created: `2026-06-13T06:40:07+00:00`
+- Source count: `unknown`
+- Proposed route: `unclassified`
+
+### Request
+
+Review this NotebookLM source with primary-source verification, then route verified work into an existing Issue/WBS task before creating a new implementation issue.
+
+### Acceptance Criteria
+
+- [ ] Duplicate GitHub Issues and WBS tasks were searched.
+- [ ] NotebookLM claims were verified against official or primary sources where needed.
+- [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
+- [ ] A skip reason was recorded if the notebook is out of project scope.
+
+## [追加要望][P2] NotebookLM source intake: Mighty Skill-Bridge Development Knowledge 2026-06-02
+
+Labels: `enhancement`, `追加要望`, `wbs`, `automation`
+
+### Background
+
+- Notebook ID: `cd44c4ef-4c46-40b5-ace3-1b6904d29591`
+- Created: `2026-06-10T16:16:30+00:00`
+- Source count: `unknown`
+- Proposed route: `unclassified`
+
+### Request
+
+Review this NotebookLM source with primary-source verification, then route verified work into an existing Issue/WBS task before creating a new implementation issue.
+
+### Acceptance Criteria
+
+- [ ] Duplicate GitHub Issues and WBS tasks were searched.
+- [ ] NotebookLM claims were verified against official or primary sources where needed.
+- [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
+- [ ] A skip reason was recorded if the notebook is out of project scope.
+
+## [追加要望][P2] NotebookLM source intake: Mighty Skill-Bridge Development Knowledge 2026-06-02
+
+Labels: `enhancement`, `追加要望`, `wbs`, `automation`
+
+### Background
+
+- Notebook ID: `a235db10-d2c5-4ee3-9621-89efbb59e74c`
+- Created: `2026-06-03T00:19:14+00:00`
+- Source count: `unknown`
+- Proposed route: `unclassified`
+
+### Request
+
+Review this NotebookLM source with primary-source verification, then route verified work into an existing Issue/WBS task before creating a new implementation issue.
+
+### Acceptance Criteria
+
+- [ ] Duplicate GitHub Issues and WBS tasks were searched.
+- [ ] NotebookLM claims were verified against official or primary sources where needed.
+- [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
+- [ ] A skip reason was recorded if the notebook is out of project scope.
+
+## [追加要望][P2] NotebookLM source intake: Mighty Skill-Bridge Development Knowledge 2026-06-02
+
+Labels: `enhancement`, `追加要望`, `wbs`, `automation`
+
+### Background
+
+- Notebook ID: `28804753-3266-406d-b0ae-e1538f464ba4`
+- Created: `2026-06-02T10:19:28+00:00`
+- Source count: `unknown`
+- Proposed route: `unclassified`
+
+### Request
+
+Review this NotebookLM source with primary-source verification, then route verified work into an existing Issue/WBS task before creating a new implementation issue.
+
+### Acceptance Criteria
+
+- [ ] Duplicate GitHub Issues and WBS tasks were searched.
+- [ ] NotebookLM claims were verified against official or primary sources where needed.
+- [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
+- [ ] A skip reason was recorded if the notebook is out of project scope.
+
+## [追加要望][P2] NotebookLM source intake: Mighty Skill-Bridge Development Knowledge 2026-06-02
+
+Labels: `enhancement`, `追加要望`, `wbs`, `automation`
+
+### Background
+
+- Notebook ID: `75521ea6-6b9b-47b2-9508-50050d8ab2d5`
+- Created: `2026-05-21T16:08:39+00:00`
+- Source count: `unknown`
+- Proposed route: `unclassified`
+
+### Request
+
+Review this NotebookLM source with primary-source verification, then route verified work into an existing Issue/WBS task before creating a new implementation issue.
+
+### Acceptance Criteria
+
+- [ ] Duplicate GitHub Issues and WBS tasks were searched.
+- [ ] NotebookLM claims were verified against official or primary sources where needed.
+- [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
+- [ ] A skip reason was recorded if the notebook is out of project scope.
+
+## [追加要望][P2] NotebookLM source intake: Firebase: Building and Scaling Modern Apps with Google Infrastructure
+
+Labels: `enhancement`, `追加要望`, `wbs`, `automation`
+
+### Background
+
+- Notebook ID: `b0fb4be1-88fb-4079-ab65-ad2bd244bac9`
+- Created: `2026-06-03T00:05:27+00:00`
+- Source count: `unknown`
+- Proposed route: `unclassified`
+
+### Request
+
+Review this NotebookLM source with primary-source verification, then route verified work into an existing Issue/WBS task before creating a new implementation issue.
+
+### Acceptance Criteria
+
+- [ ] Duplicate GitHub Issues and WBS tasks were searched.
+- [ ] NotebookLM claims were verified against official or primary sources where needed.
+- [ ] Findings were routed to an existing Issue/WBS task or this draft was promoted into a new additional-request Issue.
+- [ ] A skip reason was recorded if the notebook is out of project scope.
+
+## [追加要望][P2] NotebookLM source intake: Dreamina Seedance 2.0 Resource Pack Guide
+
+Labels: `enhancement`, `追加要望`, `wbs`, `automation`
+
+### Background
+
+- Notebook ID: `5790a227-0187-4b6c-a88e-08aba80185ea`
+- Created: `2026-05-22T10:38:38+00:00`
 - Source count: `unknown`
 - Proposed route: `unclassified`
 

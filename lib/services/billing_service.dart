@@ -95,6 +95,16 @@ class BillingService {
     return BillingCheckoutSession.fromJson(data);
   }
 
+  Future<BillingCheckoutSession> createSupporterCheckoutSession({
+    required String returnUrl,
+  }) async {
+    final data = await _invokeBillingAction(
+      'billing.create_supporter_checkout_session',
+      {'return_url': returnUrl},
+    );
+    return BillingCheckoutSession.fromJson(data);
+  }
+
   Future<BillingPortalSession> createPortalSession({
     required String returnUrl,
   }) async {

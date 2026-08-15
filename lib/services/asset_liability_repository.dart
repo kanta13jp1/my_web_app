@@ -303,6 +303,13 @@ abstract class AssetLiabilityRepository {
 
   Future<void> saveDefaultCardBillingAccounts(Map<String, String> accounts);
 
+  /// 負債ごとの支払日 (1-31) 手動設定。契約属性のため月をまたいで共有する。
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() async {
+    return const <String, int>{};
+  }
+
+  Future<void> saveDebtPaymentDayOverrides(Map<String, int> overrides) async {}
+
   Future<List<AssetLiabilityRecurringIncomeTemplate>>
       loadRecurringIncomeTemplates();
 
@@ -623,6 +630,17 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
         ),
       );
     }
+  }
+
+  // 支払日手動設定はローカル保存のみ (リモート同期は将来対応)。
+  @override
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() {
+    return localRepository.loadDebtPaymentDayOverrides();
+  }
+
+  @override
+  Future<void> saveDebtPaymentDayOverrides(Map<String, int> overrides) {
+    return localRepository.saveDebtPaymentDayOverrides(overrides);
   }
 
   @override
@@ -2127,6 +2145,16 @@ class SharedPreferencesAssetLiabilityRepository
   @override
   Future<void> saveDefaultCardBillingAccounts(Map<String, String> accounts) {
     return store.saveDefaultCardBillingAccounts(accounts);
+  }
+
+  @override
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() {
+    return store.loadDebtPaymentDayOverrides();
+  }
+
+  @override
+  Future<void> saveDebtPaymentDayOverrides(Map<String, int> overrides) {
+    return store.saveDebtPaymentDayOverrides(overrides);
   }
 
   @override

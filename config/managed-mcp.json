@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "status": "active",
   "defaultDecision": "deny",
-  "lastUpdated": "2026-05-08",
+  "lastUpdated": "2026-08-15",
   "ownerModel": {
     "activeInstances": [
       "Claude Code #1",
@@ -32,7 +32,6 @@
   "dangerousPermissionPatterns": [
     "defaultMode\\s*=\\s*bypassPermissions",
     "skipDangerousModePermissionPrompt\\s*=\\s*true",
-    "sandbox\\s*=\\s*elevated",
     "Bash\\(git reset",
     "Bash\\(git checkout --",
     "Bash\\(rm -rf",
@@ -301,6 +300,136 @@
       }
     },
     {
+      "id": "aidesigner",
+      "displayName": "AI Designer",
+      "aliases": [
+        "aidesigner",
+        "mcp_servers.aidesigner",
+        "mcp__aidesigner"
+      ],
+      "purpose": "Generate or inspect design artifacts only for explicitly requested UI work.",
+      "permissions": [
+        "read",
+        "suggest",
+        "design_write"
+      ],
+      "dataClassification": [
+        "design_files",
+        "source_code"
+      ],
+      "approver": "Codex #1",
+      "humanApprovalRequiredFor": [
+        "create",
+        "update",
+        "delete",
+        "external_share"
+      ],
+      "auditLog": "Task summary with the requested design scope and changed artifact references.",
+      "allowedReason": "The repository has an explicit AI Designer MCP configuration; mutations stay task-scoped and approval-gated.",
+      "auth": {
+        "required": true,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "code-review",
+      "displayName": "Code Review MCP",
+      "aliases": [
+        "code-review",
+        "mcp_servers.code-review",
+        "mcp__code-review"
+      ],
+      "purpose": "Provide a second-pass code review for explicitly selected changes.",
+      "permissions": [
+        "read",
+        "suggest"
+      ],
+      "dataClassification": [
+        "source_code",
+        "diffs"
+      ],
+      "approver": "Codex #1",
+      "humanApprovalRequiredFor": [
+        "external_share",
+        "filesystem_write",
+        "production_write"
+      ],
+      "auditLog": "Reviewed paths, findings, and deterministic validation in the task wrap-up.",
+      "allowedReason": "Read-only review is useful for scoped implementation, while writes and production actions remain outside this server's role.",
+      "auth": {
+        "required": true,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "21st",
+      "displayName": "21st MCP",
+      "aliases": [
+        "21st",
+        "mcp_servers.21st",
+        "magic",
+        "mcp_servers.magic"
+      ],
+      "purpose": "Search UI components and generate implementation suggestions for explicit design tasks.",
+      "permissions": [
+        "read",
+        "suggest",
+        "code_generate"
+      ],
+      "dataClassification": [
+        "public_components",
+        "source_code",
+        "design_context"
+      ],
+      "approver": "Codex #1",
+      "humanApprovalRequiredFor": [
+        "publish",
+        "delete",
+        "external_share",
+        "purchase"
+      ],
+      "auditLog": "21st component or generation references and resulting changed paths.",
+      "allowedReason": "The current first-party HTTP endpoint replaces the deprecated Magic compatibility package and keeps publishing approval-gated.",
+      "auth": {
+        "required": true,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "administrative-procedures",
+      "displayName": "Administrative Procedures MCP",
+      "aliases": [
+        "administrative-procedures",
+        "mcp_servers.administrative-procedures",
+        "mcp__administrative-procedures"
+      ],
+      "purpose": "Query the repository-managed administrative procedures dataset.",
+      "permissions": [
+        "read",
+        "suggest"
+      ],
+      "dataClassification": [
+        "public_government_data",
+        "local_dataset"
+      ],
+      "approver": "Codex #1",
+      "humanApprovalRequiredFor": [
+        "filesystem_write",
+        "external_share",
+        "production_write"
+      ],
+      "auditLog": "Query scope and source dataset reference in the task output.",
+      "allowedReason": "The server is a local read-oriented interface to repository-managed public data.",
+      "auth": {
+        "required": false,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
       "id": "playwright",
       "displayName": "Playwright MCP",
       "aliases": [
@@ -395,7 +524,9 @@
       "displayName": "Browser Use",
       "aliases": [
         "browser-use@openai-bundled",
-        "browser-use"
+        "browser-use",
+        "browser@openai-bundled",
+        "chrome@openai-bundled"
       ],
       "purpose": "In-app browser navigation for local or public UI inspection.",
       "permissions": [
@@ -417,6 +548,110 @@
       "allowedReason": "Codex #1 can gather UI evidence without launching another development instance.",
       "auth": {
         "required": false,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "computer-use",
+      "displayName": "Computer Use Runtime",
+      "aliases": [
+        "computer-use@openai-bundled",
+        "computer-use"
+      ],
+      "purpose": "Operate local Windows applications only for explicit user-requested desktop tasks.",
+      "permissions": [
+        "read",
+        "suggest",
+        "desktop_interact"
+      ],
+      "dataClassification": [
+        "local_app_state",
+        "user_visible_content"
+      ],
+      "approver": "Codex #1",
+      "humanApprovalRequiredFor": [
+        "credential_entry",
+        "purchase",
+        "delete",
+        "external_share"
+      ],
+      "auditLog": "Target application and user-visible action summary in the task wrap-up.",
+      "allowedReason": "The user explicitly enabled the bundled desktop-control plugin; sensitive actions remain approval-gated.",
+      "auth": {
+        "required": false,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "codex-local-runtime",
+      "displayName": "Codex Local and Bundled Runtimes",
+      "aliases": [
+        "node_repl",
+        "openaiDeveloperDocs",
+        "pdf@openai-primary-runtime",
+        "sites@openai-bundled",
+        "template-creator@openai-primary-runtime",
+        "visualize@openai-bundled"
+      ],
+      "purpose": "Use bundled local runtimes for official documentation, local artifacts, visualizations, and explicitly requested site work.",
+      "permissions": [
+        "read",
+        "suggest",
+        "local_file_write",
+        "render"
+      ],
+      "dataClassification": [
+        "public_docs",
+        "local_files",
+        "local_app_state"
+      ],
+      "approver": "Codex #1",
+      "humanApprovalRequiredFor": [
+        "publish",
+        "delete",
+        "external_share",
+        "credential_entry"
+      ],
+      "auditLog": "Changed artifact paths, source URLs, and publication result when applicable.",
+      "allowedReason": "These runtimes are installed from OpenAI-managed marketplaces and are limited to explicit user tasks.",
+      "auth": {
+        "required": false,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "figma",
+      "displayName": "Figma",
+      "aliases": [
+        "figma@openai-curated",
+        "figma@openai-curated-remote",
+        "mcp_servers.figma",
+        "figma"
+      ],
+      "purpose": "Read referenced designs and create or update design artifacts only when the user requests Figma work.",
+      "permissions": [
+        "read",
+        "suggest",
+        "design_write"
+      ],
+      "dataClassification": [
+        "design_files",
+        "local_source_code"
+      ],
+      "approver": "Codex #1",
+      "humanApprovalRequiredFor": [
+        "create",
+        "update",
+        "delete",
+        "external_share"
+      ],
+      "auditLog": "Figma file and node references plus the resulting task summary.",
+      "allowedReason": "The repository design agent explicitly depends on Figma, with mutations limited to user-requested design work.",
+      "auth": {
+        "required": true,
         "status": "managed",
         "expiresAt": null
       }

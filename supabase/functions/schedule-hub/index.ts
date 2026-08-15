@@ -255,8 +255,59 @@ function billingReturnUrl(value: unknown, fallbackPath: string): string {
   }
   const base = Deno.env.get("PUBLIC_SITE_URL") ??
     Deno.env.get("SITE_URL") ??
-    "https://my-web-app-b6f7f4.web.app";
+    "https://my-web-app-b67f4.web.app";
   return new URL(fallbackPath, base).toString();
+}
+
+function billingPublicReturnUrl(value: unknown, fallbackPath: string): string {
+  const fallback = billingReturnUrl("", fallbackPath);
+  const allowedOrigin = new URL(fallback).origin;
+  const raw = asString(value);
+  if (!raw) return fallback;
+  try {
+    const url = new URL(raw);
+    if (
+      (url.protocol === "http:" || url.protocol === "https:") &&
+      url.origin === allowedOrigin
+    ) {
+      return url.toString();
+    }
+  } catch {
+    // Fall through to the deployment fallback.
+  }
+  return fallback;
+}
+
+function supporterAmountJpy(): number {
+  const configured = Number(Deno.env.get("STRIPE_SUPPORTER_AMOUNT_JPY") ?? "");
+  if (Number.isFinite(configured) && configured >= 50) {
+    return Math.round(configured);
+  }
+  return 100;
+}
+
+function stripeAutomaticTaxEnabled(): boolean {
+  return /^(1|true|yes)$/i.test(
+    Deno.env.get("STRIPE_AUTOMATIC_TAX_ENABLED") ?? "",
+  );
+}
+
+function stripeCheckoutTaxParams(
+  options: { hasCustomer?: boolean; createCustomer?: boolean } = {},
+): Record<string, string> {
+  if (!stripeAutomaticTaxEnabled()) return {};
+  return {
+    "automatic_tax[enabled]": "true",
+    ...(options.hasCustomer ? { "customer_update[address]": "auto" } : {}),
+    ...(options.createCustomer ? { customer_creation: "always" } : {}),
+  };
+}
+
+function stripeSupporterTaxParams(): Record<string, string> {
+  const taxCode = asString(Deno.env.get("STRIPE_SUPPORTER_TAX_CODE"));
+  return taxCode
+    ? { "line_items[0][price_data][product_data][tax_code]": taxCode }
+    : {};
 }
 
 function withBillingParam(url: string, value: string): string {
@@ -1582,6 +1633,7 @@ serve(async (req: Request) => {
       "wbs.unblock_dependents",
       "x.post_with_media",
       "maintenance.list_active",
+      "billing.create_supporter_checkout_session",
     ];
     const serviceRoleRequest = isServiceRoleRequest(req);
     let userId: string | null = null;
@@ -1593,6 +1645,41 @@ serve(async (req: Request) => {
     }
 
     switch (action) {
+      case "billing.create_supporter_checkout_session": {
+        const amountJpy = supporterAmountJpy();
+        const returnUrl = billingPublicReturnUrl(
+          body.return_url,
+          "/subscription-billing",
+        );
+        const session = await stripePostForm("/checkout/sessions", {
+          mode: "payment",
+          locale: "ja",
+          ...stripeCheckoutTaxParams({ createCustomer: true }),
+          success_url: withBillingParam(returnUrl, "supporter_success"),
+          cancel_url: withBillingParam(returnUrl, "supporter_cancel"),
+          "line_items[0][price_data][currency]": "jpy",
+          "line_items[0][price_data][unit_amount]": String(amountJpy),
+          "line_items[0][price_data][product_data][name]":
+            "Founding Supporter",
+          "line_items[0][price_data][product_data][description]":
+            "One-time support for Jibun Inc. development",
+          ...stripeSupporterTaxParams(),
+          "line_items[0][quantity]": "1",
+          "metadata[offer]": "founding_supporter",
+          "metadata[milestone_code]": "first-yen-revenue",
+          "metadata[amount_jpy]": String(amountJpy),
+          "payment_intent_data[metadata][offer]": "founding_supporter",
+          "payment_intent_data[metadata][milestone_code]":
+            "first-yen-revenue",
+        });
+        return json({
+          success: true,
+          id: session.id,
+          checkout_url: session.url,
+          amount_jpy: amountJpy,
+        });
+      }
+
       case "billing.status": {
         const billing = await getBillingSubscription(admin, userId!);
         const periodStart = currentBillingPeriodStart();
@@ -1637,6 +1724,7 @@ serve(async (req: Request) => {
         const session = await stripePostForm("/checkout/sessions", {
           mode: "subscription",
           customer: customerId,
+          ...stripeCheckoutTaxParams({ hasCustomer: true }),
           "line_items[0][price]": priceId,
           "line_items[0][quantity]": "1",
           success_url: withBillingParam(returnUrl, "success"),

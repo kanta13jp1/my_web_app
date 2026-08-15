@@ -3,9 +3,18 @@
 > AI エージェント参照用
 > このファイルは [Awesome Design MD JP](https://github.com/kzhrknt/awesome-design-md-jp) フォーマットに準拠しています。
 > Flutter/Dart コードを生成する際は、このファイルのデザイントークンを参照してください。
-> 更新日: 2026-04-06
+> 更新日: 2026-08-15
 
 ---
+
+## 単一 SSOT 契約
+
+UI の色、タイポグラフィ、余白、角丸、コンポーネント、レスポンシブ、アクセシビリティ、レビュー基準は、この `docs/DESIGN.md` だけで定義します。
+
+- `.claude/skills/ui-design/SKILL.md` と `.claude/commands/design-review.md` は廃止済みです。再作成せず、UI 実装とデザインレビューは本書を直接参照してください。
+- Skill、command、agent、MCP 設定には手順だけを置き、色コードや数値トークンを複製しません。
+- Figma は既存画面の証拠、AIDesigner は比較案、`ThemeService` と Flutter コードは実装です。これらが本書と衝突する場合は本書を優先し、必要なら本書と実装を同じ変更で更新します。
+- 派生ファイルだけを変更して新しいトークンを導入しません。デザイントークン変更は、本書の差分をレビューしてから適用します。
 
 ## デザインツール運用
 
@@ -13,17 +22,42 @@
 
 1. `Figma MCP`
 2. `AIDesigner MCP`
-3. `.claude/agents/design-skills.md`
-4. `docs/DESIGN_TOOLING_SETUP.md`
+3. この `docs/DESIGN.md`
+4. `lib/services/theme_service.dart` と既存 Flutter 実装
 
 役割は分けて使います。
 
 - Figma MCP: 既存デザインの正解を読む
 - AIDesigner MCP: 新規案と改善案の初速を出す
-- Design Skills: Claude Code にこのリポジトリの判断基準を渡す
-- この `docs/DESIGN.md`: 最終的な採用基準にする
+- この `docs/DESIGN.md`: 唯一の採用基準にする
+- `ThemeService` / Flutter 実装: 採用済みトークンをコードへ写す
+
+`.claude/agents/design-skills.md`、`.claude/commands/design-component.md`、`.claude/commands/design-check.md` は、この順序を実行する薄い入口です。独自のトークンやレビュー基準を持ちません。セットアップ方法だけが必要な場合は `docs/DESIGN_TOOLING_SETUP.md` を参照してください。
 
 新規 UI や大きめの UI 改修では、モデル単体の生成だけで完結させず、必ず上の流れを通してください。
+
+### UI 実装フロー
+
+1. 本書の関連セクションと対象画面の既存実装を読む。
+2. 既存デザインがある場合は Figma で構造と意図を確認する。探索が必要な場合だけ AIDesigner で desktop / mobile 案を比較する。
+3. `Theme.of(context)`、`ThemeService`、既存の共有定数を優先し、本書と同じ役割のトークンへ対応付ける。新しい色や数値が必要なら、先に本書を更新する。
+4. `LayoutBuilder` または `MediaQuery` で desktop / tablet / mobile の制約を確認する。固定幅だけで完成扱いにしない。
+5. 操作領域は 44×44px 以上、主要ボタンは 48px 高を推奨する。キーボードフォーカス、Semantics、loading / empty / error / disabled 状態も確認する。
+6. 長文は最大幅 660px を基準にし、狭い画面では左右余白を保って縮める。Web の選択対象テキストには `SelectionArea` を検討する。
+7. 実装後に `dart format`、`flutter analyze`、変更対象の widget test または integration test を実行する。
+
+### デザインレビュー手順
+
+指定されたファイルまたは差分だけを対象にし、次の順序で確認します。
+
+1. **カラーとテーマ**: ダーク背景、Orange CTA、Indigo AI、semantic color、テキスト階層、`withValues(alpha:)` が本書と一致するか。
+2. **タイポグラフィ**: Noto Sans JP 系、本文 line-height 1.5 以上、本文への `letterSpacing` 禁止、10px 未満の文字禁止を満たすか。
+3. **レイアウト**: 4px スケール、標準角丸、長文幅、overflow、desktop / mobile 両方の制約を満たすか。
+4. **コンポーネント**: ボタン、カード、入力、チップ、AppBar、feedback state が本書の役割と視覚階層に一致するか。
+5. **アクセシビリティ**: 44×44px 以上の操作領域、focus、Semantics、コントラスト、状態を色だけに依存しない表現があるか。
+6. **実装品質**: 既存 theme / shared widget を再利用し、不要なハードコード、ダミーデータ、無関係な変更を増やしていないか。
+
+レビュー結果は `PASS` / `WARN` / `FAIL`、ファイルと行、対応する本書の節、最小修正案を示します。実装変更を依頼されていないレビューでは、指摘だけを返してコードを変更しません。変更した場合は、実行した `flutter analyze` と対象テストの結果を添えます。
 
 ---
 

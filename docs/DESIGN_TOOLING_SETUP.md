@@ -18,10 +18,8 @@
   - Claude Code 用のデザイン判断ルール
 - `.claude/commands/design-component.md`
   - 新規 UI を作る時の入口
-- `.claude/commands/design-review.md`
-  - UI レビューの入口
 - `docs/DESIGN.md`
-  - 最終的なデザイン基準
+  - UI 実装とデザインレビューの単一 SSOT
 
 ## 初回セットアップ
 
@@ -55,7 +53,7 @@ npx -y @aidesigner/agent-skills doctor
 2. `docs/DESIGN.md` と `lib/services/theme_service.dart` で制約を確認する
 3. AIDesigner MCP で 2〜3 案出す
 4. `.claude/agents/design-skills.md` のルールで Flutter 実装に落とす
-5. `/design-review` 相当でズレを確認する
+5. `docs/DESIGN.md` のデザインレビュー手順でズレを確認する
 
 ### 新規画面を作る時
 
@@ -80,13 +78,13 @@ npx -y @aidesigner/agent-skills doctor
 
 ### Design Skills
 
-- Claude Code にこのプロジェクトの UI 判断ルールを渡す
-- `ThemeService`、`docs/DESIGN.md`、既存 Flutter 実装に沿わせる
+- Claude Code に UI 作業の順序を渡す薄い実行役
+- トークンやレビュー基準は持たず、`docs/DESIGN.md` を直接参照する
 
 ### docs/DESIGN.md
 
 - 最終的な判断基準
-- 色、タイポ、余白、コンポーネントの禁止事項を固定する
+- 色、タイポ、余白、コンポーネント、レスポンシブ、アクセシビリティ、レビュー基準を固定する
 
 ## 実運用メモ
 
@@ -134,14 +132,14 @@ Claude Design SaaS (Anthropic Labs) で生成した handoff bundle を Flutter �
 3. **生成コードを配置・調整**
    - 生成物は `lib/widgets/generated/claude_design/` に保存する命名規則
    - 生成コードは ~70% 精度: `onPressed`、状態管理、API 連携は手動補完
-   - `docs/DESIGN.md` トークン (orange=0xFFFF6B35 / indigo=0xFF6366F1 等) と照合して修正
+   - `docs/DESIGN.md` の現在のトークン役割と照合して修正
 
 4. **flutter analyze 0 エラーを確認してコミット**
 
 ### 実装ファイル
 
 | ファイル | 役割 |
-|---|---|
+| --- | --- |
 | `lib/dev/claude_design/handoff_bundle.dart` | ClaudeDesignHandoff 型定義 (fromJson/toJson) |
 | `lib/dev/claude_design/token_diff.dart` | DESIGN.md トークンとの差分計算 |
 | `lib/dev/claude_design/flutter_codegen.dart` | HTML snippet → Flutter widget コード生成 |

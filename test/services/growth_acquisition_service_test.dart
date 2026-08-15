@@ -68,4 +68,42 @@ void main() {
       GrowthAcquisitionService.signupSubmitLanding,
     );
   });
+
+  test('detects X first-user growth campaign URLs', () {
+    expect(
+      GrowthAcquisitionService.isFirstUserGrowthUri(
+        Uri.parse(
+          'https://my-web-app-b67f4.web.app/?utm_source=x&utm_medium=ai_share&utm_campaign=first_user_growth',
+        ),
+      ),
+      isTrue,
+    );
+    expect(
+      GrowthAcquisitionService.isFirstUserGrowthUri(
+        Uri.parse(
+          'https://my-web-app-b67f4.web.app/?utm_source=x&utm_campaign=other',
+        ),
+      ),
+      isFalse,
+    );
+  });
+
+  test('maps X first-user feedback choices to acquisition signals', () {
+    expect(
+      GrowthAcquisitionService.xFirstUserFeedbackSignalForChoice('summary'),
+      GrowthAcquisitionService.xFirstUserFeedbackSummary,
+    );
+    expect(
+      GrowthAcquisitionService.xFirstUserFeedbackSignalForChoice('memo'),
+      GrowthAcquisitionService.xFirstUserFeedbackMemo,
+    );
+    expect(
+      GrowthAcquisitionService.xFirstUserFeedbackSignalForChoice('search'),
+      GrowthAcquisitionService.xFirstUserFeedbackSearch,
+    );
+    expect(
+      GrowthAcquisitionService.xFirstUserFeedbackSignalForChoice('unknown'),
+      isNull,
+    );
+  });
 }

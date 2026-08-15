@@ -81,6 +81,30 @@ enum _PaymentSourceSaveScope { monthlyOverride, defaultSetting }
 
 enum _DebtMasterReviewFilter { all, billingConfirmation, paymentSource }
 
+/// アクションアイテムから「対処できる場所」へのジャンプリンク文言を返す。
+/// null の場合はリンクを表示しない (関連口座が無い種別など)。
+/// 純関数なので widget を組まずに種別→文言の対応をテストできる。
+@visibleForTesting
+String? assetManagementActionJumpLabel(AssetManagementInsightActionItem item) {
+  final accountId = item.relatedAccountId;
+  if (accountId == null || accountId.trim().isEmpty) {
+    return null;
+  }
+  return switch (item.type) {
+    AssetManagementInsightActionType.missingPaymentDay => '支払日を入力する',
+    AssetManagementInsightActionType.missingInput => '今月支払予定額を入力する',
+    AssetManagementInsightActionType.missingAnnualRate => '利率を入力する',
+    AssetManagementInsightActionType.missingPaymentSource => '支払原資口座を設定する',
+    AssetManagementInsightActionType.cardBillingConfiguration =>
+      '支払い方式と請求先カードを設定する',
+    AssetManagementInsightActionType.doubleCountingRisk => '支払い方式を整理する',
+    AssetManagementInsightActionType.overduePayment => '支払済みチェックへ移動',
+    AssetManagementInsightActionType.upcomingPayment => '支払予定を確認する',
+    AssetManagementInsightActionType.cashShortageRisk => '支払予定を確認する',
+    _ => null,
+  };
+}
+
 class _PaymentSourceCandidate {
   final AssetLiabilityAccount account;
   final double currentBalance;
@@ -14183,7 +14207,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildAssetManagementMonthlyDebtTrendList(report.debtTrendInsights),
             const SizedBox(height: 12),
           ],
-          _buildAssetManagementAssistantActionList(report.actionItems),
+          _buildAssetManagementAssistantActionList(
+            report.actionItems,
+            report.workbook.debtMasterRows.map((row) => row.id).toSet(),
+          ),
           if (report.movementSuggestions.isNotEmpty) ...[
             const SizedBox(height: 12),
             _buildAssetManagementMovementSuggestionList(
@@ -15288,6 +15315,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildAssetManagementAssistantActionList(
     List<AssetManagementInsightActionItem> actionItems,
+    Set<String> debtMasterCardIds,
   ) {
     if (actionItems.isEmpty) {
       return Container(
@@ -15318,7 +15346,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         for (final item in actionItems.take(8))
           Padding(
             padding: const EdgeInsets.only(bottom: 6),
-            child: _buildAssetManagementAssistantActionTile(item),
+            child: _buildAssetManagementAssistantActionTile(
+              item,
+              debtMasterCardIds,
+            ),
           ),
         if (actionItems.length > 8)
           Text(
@@ -15332,33 +15363,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  String? _assetManagementActionJumpLabel(
-    AssetManagementInsightActionItem item,
-  ) {
-    final accountId = item.relatedAccountId;
-    if (accountId == null || accountId.trim().isEmpty) {
-      return null;
-    }
-    return switch (item.type) {
-      AssetManagementInsightActionType.missingPaymentDay => '支払日を入力する',
-      AssetManagementInsightActionType.missingInput => '今月支払予定額を入力する',
-      AssetManagementInsightActionType.missingAnnualRate => '利率を入力する',
-      AssetManagementInsightActionType.missingPaymentSource => '支払原資口座を設定する',
-      AssetManagementInsightActionType.cardBillingConfiguration =>
-        '支払い方式と請求先カードを設定する',
-      AssetManagementInsightActionType.doubleCountingRisk => '支払い方式を整理する',
-      _ => null,
-    };
-  }
-
   Widget _buildAssetManagementAssistantActionTile(
     AssetManagementInsightActionItem item,
+    Set<String> debtMasterCardIds,
   ) {
     final color = _assetManagementInsightSeverityColor(item.severity);
     final dueLabel = item.dueDate == null
         ? (item.paymentDay == null ? null : '${item.paymentDay}日')
         : DateFormat('M/d').format(item.dueDate!);
-    final jumpLabel = _assetManagementActionJumpLabel(item);
+    final jumpLabel = assetManagementActionJumpLabel(item);
+    // 移動先の負債マスタカードが実在する項目だけリンクを出す
+    // (合成IDのアコムショッピング返済等で dead button を出さない)。
+    final canJump = jumpLabel != null &&
+        item.relatedAccountId != null &&
+        debtMasterCardIds.contains(item.relatedAccountId);
 
     return Container(
       width: double.infinity,
@@ -15423,7 +15441,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   item.suggestedAction,
                   style: const TextStyle(fontSize: 12, height: 1.5),
                 ),
-                if (jumpLabel != null)
+                if (canJump)
                   Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton.icon(
@@ -16678,9 +16696,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Text(
-                        group.alerts.isEmpty
-                            ? 'OK'
-                            : group.alerts.join(' / '),
+                        group.alerts.isEmpty ? 'OK' : group.alerts.join(' / '),
                         softWrap: true,
                         style: const TextStyle(height: 1.4),
                       ),

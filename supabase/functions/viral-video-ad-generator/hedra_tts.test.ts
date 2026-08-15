@@ -5,6 +5,7 @@ import {
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   buildHedraTextToSpeechAudioGeneration,
+  extractHedraTextToSpeechModelId,
   isHedraInvalidTextToSpeechModelError,
   resolveConfiguredHedraTextToSpeechModelId,
   stripHedraTextToSpeechModelId,
@@ -44,6 +45,28 @@ Deno.test("Hedra TTS configured model_id accepts only UUID values", () => {
   );
   assertEquals(resolveConfiguredHedraTextToSpeechModelId("not-a-uuid"), null);
   assertEquals(resolveConfiguredHedraTextToSpeechModelId("   "), null);
+});
+
+Deno.test("Hedra TTS model resolver picks text_to_speech models from API payloads", () => {
+  const payload = {
+    data: [
+      {
+        id: "26f0fc66-152b-40ab-abed-76c43df99bc8",
+        type: "video",
+        name: "Avatar",
+      },
+      {
+        id: "d11481da-b973-4e72-ade0-7e8a86915bbf",
+        type: "text_to_speech",
+        name: "Hedra Voice",
+      },
+    ],
+  };
+
+  assertEquals(
+    extractHedraTextToSpeechModelId(payload),
+    "d11481da-b973-4e72-ade0-7e8a86915bbf",
+  );
 });
 
 Deno.test("Hedra TTS retry payload strips invalid model_id only from text_to_speech audio", () => {

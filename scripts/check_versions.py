@@ -12,7 +12,7 @@ check_versions.py — セッション開始時バージョンチェック
   - 終了コード 0: 変更なし / 1: 更新あり / 2: エラー
 """
 
-import subprocess, sys, json, re, os
+import subprocess, sys, json, re, os, shutil
 from datetime import date
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -48,7 +48,20 @@ CODEX_MEMORY_POINTERS = [
 
 def run(cmd: list[str]) -> str:
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        resolved_cmd = list(cmd)
+        if resolved_cmd and not os.path.isabs(resolved_cmd[0]):
+            executable = shutil.which(resolved_cmd[0])
+            if executable:
+                # On Windows, npm-installed CLIs are commonly .CMD shims.
+                # Passing the resolved shim avoids PermissionError from trying
+                # to execute the extensionless command name via CreateProcess.
+                resolved_cmd[0] = executable
+        result = subprocess.run(
+            resolved_cmd,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
         return (result.stdout + result.stderr).strip()
     except Exception:
         return ""
@@ -146,20 +159,25 @@ def main() -> int:
 
     print(f"=== バージョンチェック {TODAY} ===")
     updates: list[tuple[str, str, str]] = []  # (tool, old, new)
+    collection_failures: list[str] = []
 
     # Claude Code CLI
     cc_ver = get_claude_code_version()
     known = load_known_versions()
     old_cc = known.get("claude_code_cli", known.get("claude_code", "unknown"))
     print(f"Claude Code CLI : {cc_ver} (既知: {old_cc})")
-    if cc_ver != "unknown" and cc_ver != old_cc:
+    if cc_ver == "unknown":
+        collection_failures.append("Claude Code CLI")
+    elif cc_ver != old_cc:
         updates.append(("Claude Code CLI", old_cc, cc_ver))
 
     # OpenAI Codex CLI + instruction/memory pointers
     codex_ver = get_codex_cli_version()
     old_codex = known.get("openai_codex_cli", known.get("codex_cli", "unknown"))
     print(f"OpenAI Codex CLI: {codex_ver} (known: {old_codex})")
-    if codex_ver != "unknown" and codex_ver != old_codex:
+    if codex_ver == "unknown":
+        collection_failures.append("OpenAI Codex CLI")
+    elif codex_ver != old_codex:
         updates.append(("OpenAI Codex CLI", old_codex, codex_ver))
     codex_pointers = detect_codex_memory_pointers()
     if codex_pointers:
@@ -198,17 +216,29 @@ def main() -> int:
         known.get("dart_flutter", known.get("dart/flutter", "unknown")),
     )
     print(f"Flutter/Dart SDK               : {fl_ver} (既知: {old_fl})")
-    if fl_ver != "unknown" and fl_ver != old_fl:
+    if fl_ver == "unknown":
+        collection_failures.append("Flutter/Dart SDK")
+    elif fl_ver != old_fl:
         updates.append(("Flutter/Dart SDK", old_fl, fl_ver))
 
     # Deno
     deno_ver = get_deno_version()
     print(f"Deno                           : {deno_ver}")
+    if deno_ver == "unknown":
+        collection_failures.append("Deno")
 
     print()
 
+    if collection_failures:
+        print("⚠️ バージョン取得失敗。最新判定は完了していません:")
+        for tool in collection_failures:
+            print(f"   - {tool}")
+        print()
+
     if not updates:
-        print("✅ すべて最新。バージョン変更なし。")
+        if collection_failures:
+            return 2
+        print("✅ 記録済みバージョンから変更なし（取得不能なし）。")
         return 0
 
     print(f"🆕 バージョン更新検出: {len(updates)} 件")
@@ -257,7 +287,7 @@ GitHub Copilot が更新/インストールされました:
     else:
         print("💡 自動更新する場合: python3 scripts/check_versions.py --update")
 
-    return 1  # 更新あり
+    return 2 if collection_failures else 1
 
 
 def _update_versions_file(updates: list[tuple[str, str, str]]) -> None:

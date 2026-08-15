@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wiki Broken-Link Cleanup"
+  short_description: "確認済みbroken wikilinkをdry-run後に安全に修正・検証"
+  default_prompt: "Use $wiki-broken-cleanup to review and repair confirmed broken wikilinks."

@@ -8,6 +8,7 @@ class GrowthAcquisitionService {
   static const String touchPublicMemo = 'touch_public_memo';
   static const String touchReferral = 'touch_referral';
   static const String touchComparison = 'touch_comparison';
+  static const String touchXFirstUserGrowth = 'touch_x_first_user_growth';
 
   static const String importPreviewNotion = 'import_preview_notion';
   static const String importPreviewEvernote = 'import_preview_evernote';
@@ -15,6 +16,14 @@ class GrowthAcquisitionService {
 
   static const String importSignupCta = 'import_signup_cta';
   static const String publicMemoSignupCta = 'public_memo_signup_cta';
+  static const String xFirstUserTrialIntent = 'x_first_user_trial_intent';
+  static const String xFirstUserFeedbackSummary =
+      'x_first_user_feedback_summary';
+  static const String xFirstUserFeedbackMemo = 'x_first_user_feedback_memo';
+  static const String xFirstUserFeedbackSearch =
+      'x_first_user_feedback_search';
+  static const String xFirstUserFeedbackXIntent =
+      'x_first_user_feedback_x_intent';
 
   static const String signupSubmitLanding = 'signup_submit_landing';
   static const String signupSubmitImport = 'signup_submit_import';
@@ -88,8 +97,29 @@ class GrowthAcquisitionService {
         return signupSubmitReferral;
       case touchComparison:
         return signupSubmitComparison;
+      case touchXFirstUserGrowth:
+        return signupSubmitLanding;
       default:
         return signupSubmitLanding;
+    }
+  }
+
+  static bool isFirstUserGrowthUri(Uri uri) {
+    final params = uri.queryParameters;
+    return params['utm_source']?.toLowerCase() == 'x' &&
+        params['utm_campaign'] == 'first_user_growth';
+  }
+
+  static String? xFirstUserFeedbackSignalForChoice(String choice) {
+    switch (choice) {
+      case 'summary':
+        return xFirstUserFeedbackSummary;
+      case 'memo':
+        return xFirstUserFeedbackMemo;
+      case 'search':
+        return xFirstUserFeedbackSearch;
+      default:
+        return null;
     }
   }
 
@@ -119,6 +149,30 @@ class GrowthAcquisitionService {
   Future<void> recordReferralTouch() async {
     await _persistLatestTouchpoint(touchReferral);
     await _recordSignal(touchReferral);
+  }
+
+  Future<void> recordFirstUserGrowthLanding() async {
+    await _persistLatestTouchpoint(touchXFirstUserGrowth);
+    await _recordSignal(touchXFirstUserGrowth);
+  }
+
+  Future<void> recordXFirstUserTrialIntent() async {
+    await _persistLatestTouchpoint(touchXFirstUserGrowth);
+    await _recordSignal(xFirstUserTrialIntent);
+  }
+
+  Future<void> recordXFirstUserFeedbackChoice(String choice) async {
+    final signalKey = xFirstUserFeedbackSignalForChoice(choice);
+    if (signalKey == null) {
+      return;
+    }
+    await _persistLatestTouchpoint(touchXFirstUserGrowth);
+    await _recordSignal(signalKey);
+  }
+
+  Future<void> recordXFirstUserFeedbackXIntent() async {
+    await _persistLatestTouchpoint(touchXFirstUserGrowth);
+    await _recordSignal(xFirstUserFeedbackXIntent);
   }
 
   /// 比較ページ (/vs-*) 訪問時に呼び出す。

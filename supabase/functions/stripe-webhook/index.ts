@@ -168,11 +168,55 @@ async function upsertSubscriptionFromStripe(
   if (error) throw new Error(error.message);
 }
 
+async function recordSupporterCheckout(
+  admin: SupabaseClient,
+  session: Record<string, unknown>,
+  metadata: Record<string, unknown>,
+): Promise<void> {
+  const sessionId = asString(session.id);
+  if (!sessionId) return;
+
+  const { data: existing, error: existingError } = await admin
+    .from("hub_data")
+    .select("id")
+    .eq("source", "stripe_supporter_payment")
+    .filter("metadata->>stripe_checkout_session_id", "eq", sessionId)
+    .maybeSingle();
+  if (existingError) throw new Error(existingError.message);
+  if (existing) return;
+
+  const customerDetails = asRecord(session.customer_details) ?? {};
+  const amountTotal = Number(session.amount_total ?? 0);
+  const { error } = await admin.from("hub_data").insert({
+    source: "stripe_supporter_payment",
+    metadata: {
+      stripe_event_source: "checkout.session.completed",
+      stripe_checkout_session_id: sessionId,
+      stripe_payment_intent_id: asString(session.payment_intent),
+      stripe_customer_id: asString(session.customer),
+      customer_email: asString(customerDetails.email) ||
+        asString(session.customer_email),
+      amount_total: Number.isFinite(amountTotal) ? amountTotal : null,
+      currency: asString(session.currency).toLowerCase(),
+      payment_status: asString(session.payment_status),
+      offer: asString(metadata.offer, "founding_supporter"),
+      milestone_code: asString(metadata.milestone_code, "first-yen-revenue"),
+      recorded_at: new Date().toISOString(),
+    },
+  });
+  if (error) throw new Error(error.message);
+}
+
 async function handleCheckoutCompleted(
   admin: SupabaseClient,
   session: Record<string, unknown>,
 ): Promise<void> {
   const metadata = asRecord(session.metadata) ?? {};
+  if (asString(metadata.offer) === "founding_supporter") {
+    await recordSupporterCheckout(admin, session, metadata);
+    return;
+  }
+
   const userId = asString(metadata.user_id);
   const customerId = asString(session.customer);
   const subscriptionId = asString(session.subscription);

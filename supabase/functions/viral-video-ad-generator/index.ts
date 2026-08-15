@@ -8,13 +8,14 @@
 // - 生成したメディアをSupabase Storageに保存
 // - X投稿用の動画URL + キャプションを返す
 //
-// POST { "type": "image" | "presenter_video" | "video_script", "template": "dark_war" | "feature_highlight" | "mobile_ux_validation" | "user_growth", "lang": "ja" | "en" }
+// POST { "type": "image" | "presenter_video" | "video_script", "template": "dark_war" | "feature_highlight" | "ai_secretary_site_tour" | "mobile_ux_validation" | "user_growth", "lang": "ja" | "en" }
 // GET  ?view=templates | ?view=history
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
   buildHedraTextToSpeechAudioGeneration,
+  extractHedraTextToSpeechModelId,
   isHedraInvalidTextToSpeechModelError,
   resolveConfiguredHedraTextToSpeechModelId,
   stripHedraTextToSpeechModelId,
@@ -34,7 +35,35 @@ const HEDRA_API_BASE = "https://api.hedra.com/web-app/public";
 const HEDRA_AVATAR_MODEL_ID = Deno.env.get("HEDRA_AVATAR_MODEL_ID") ??
   "26f0fc66-152b-40ab-abed-76c43df99bc8";
 const HEDRA_VOICE_ID = Deno.env.get("HEDRA_VOICE_ID") ?? "";
-const HEDRA_TTS_MODEL_ID = Deno.env.get("HEDRA_TTS_MODEL_ID") ?? "";
+const HEDRA_TTS_MODEL_ID = Deno.env.get("HEDRA_TTS_MODEL_ID") ??
+  Deno.env.get("HEDRA_TEXT_TO_SPEECH_MODEL_ID") ?? "";
+const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
+const ELEVENLABS_LEGACY_FALLBACK_VOICE_ID = "JBFqnCBsd6RMkjVDRZzb";
+const ELEVENLABS_SECRETARY_VOICE_ID =
+  Deno.env.get("ELEVENLABS_SECRETARY_VOICE_ID") ?? "21m00Tcm4TlvDq8ikWAM";
+const ELEVENLABS_VOICE_ID = Deno.env.get("ELEVENLABS_VOICE_ID") ??
+  ELEVENLABS_LEGACY_FALLBACK_VOICE_ID;
+const ELEVENLABS_CURATED_FEMALE_VOICE_IDS: ElevenLabsVoiceCandidate[] = [
+  { id: "EXAVITQu4vr4xnSDxMaL", profile: "curated_female_sarah" },
+  { id: "pFZP5JQG7iQjIQuC4Bku", profile: "curated_female_lily" },
+  { id: "Xb7hH8MSUJpSbSDYk0k2", profile: "curated_female_alice" },
+  { id: "XrExE9yKIg1WjnnlVkGX", profile: "curated_female_matilda" },
+  { id: "LcfcDJNUP1GQjkzn1xUU", profile: "curated_female_emily" },
+  { id: "XB0fDUnXU5powFXDhCwa", profile: "curated_female_charlotte" },
+  { id: "AZnzlk1XvdvUeBnXmlld", profile: "curated_female_domi" },
+  { id: "MF3mGyEYCl7XYWbV9V6O", profile: "curated_female_elli" },
+  { id: "ThT5KcBeYPX3keUQqHPh", profile: "curated_female_dorothy" },
+  { id: "oWAxZDx7w5VEj9dCyTzz", profile: "curated_female_grace" },
+  { id: "jBpfuIE2acCO8z3wKNLl", profile: "curated_female_gigi" },
+  { id: "zrHiDhphv9ZnVXBqCLjz", profile: "curated_female_mimi" },
+];
+const ELEVENLABS_MODEL_ID = Deno.env.get("ELEVENLABS_MODEL_ID") ??
+  "eleven_multilingual_v2";
+const ELEVENLABS_OUTPUT_FORMAT = Deno.env.get("ELEVENLABS_OUTPUT_FORMAT") ??
+  "mp3_44100_128";
+const ELEVENLABS_LANGUAGE_CODE = Deno.env.get("ELEVENLABS_LANGUAGE_CODE") ?? "";
+const GENERATED_VIDEO_BUCKET = "viral-ad-videos";
+const MAX_STORED_VIDEO_BYTES = 100 * 1024 * 1024;
 
 // Dark War風 広告テンプレート定義
 const AD_TEMPLATES = {
@@ -84,6 +113,32 @@ const AD_TEMPLATES = {
       "Clean modern app interface collage, multiple feature screens arranged in elegant grid, gradient purple background, material design, 16:9",
     hashtags: ["#ProductHunt", "#IndieHacker", "#FlutterApp"],
   },
+  ai_secretary_site_tour: {
+    name: "AI秘書サイトツアー",
+    description:
+      "知的で上品に魅力的なAI秘書が、サイトの主要機能を詳しく案内する高品質動画",
+    script: {
+      ja: [
+        "はじめまして。知的で上品なAI秘書が、自分株式会社を案内します。",
+        "AI秘書に聞けば、次に開くべき機能や作業の入口がすぐ分かります。",
+        "AI大学では、AIニュースや主要AI企業を体系的に学び、仕事に転用できます。",
+        "ノート、仕事ログ、資産管理、英語学習を同じ場所でつなぎます。",
+        "迷ったら5分だけ触って、役に立つ点と詰まった点を教えてください。",
+        "https://my-web-app-b67f4.web.app/",
+      ],
+      en: [
+        "Hello. Your elegant AI executive secretary will guide you through this site.",
+        "Ask the AI secretary and you can quickly find the right feature or workflow.",
+        "AI University helps you learn AI news and major AI companies systematically.",
+        "Notes, work logs, finance, and English learning connect in one workspace.",
+        "Try it for five minutes and tell us what helped or what felt confusing.",
+        "https://my-web-app-b67f4.web.app/",
+      ],
+    },
+    imagePrompt:
+      "A sophisticated adult AI executive secretary in a tasteful fitted dark suit, intelligent and subtly alluring expression, premium futuristic office, holographic dashboard panels showing AI assistant, AI University, notes, finance, work logs, English learning, cinematic lighting, elegant luxury SaaS commercial, brand-safe, no nudity, no explicit sexualization, 16:9",
+    hashtags: ["#AI秘書", "#AI大学", "#buildinpublic", "#FlutterWeb"],
+  },
   mobile_ux_validation: {
     name: "スマホアプリUX検証動画",
     description: "動くスマホアプリの体験検証を短尺動画にする",
@@ -108,22 +163,22 @@ const AD_TEMPLATES = {
     hashtags: ["#AI動画", "#FlutterWeb", "#資産管理", "#buildinpublic"],
   },
   user_growth: {
-    name: "ユーザー成長ストーリー",
-    description: "登録者数増加の軌跡を見せるバイラル動画",
+    name: "初回ユーザー募集ストーリー",
+    description: "X経由で最初の実ユーザーを探すための正直な募集動画",
     script: {
       ja: [
-        "🚀 0人から始めた。",
-        "毎日コードを書いた。",
-        "Claude CodeとSupabaseだけで。",
-        "今、4人が使っている。次はあなた。",
-        "自分株式会社 → https://my-web-app-b67f4.web.app/",
+        "AI仕事OSの最初の実ユーザーを探しています。",
+        "学習、仕事ログ、資産、メモを1つの画面にまとめる実験です。",
+        "5分だけ触って、使えそうな点と困った点を教えてください。",
+        "知人頼みではなく、Xから最初の1人を探しています。",
+        "https://my-web-app-b67f4.web.app/",
       ],
       en: [
-        "🚀 Started from zero.",
-        "Coded every single day.",
-        "Just Claude Code and Supabase.",
-        "4 people use it now. You're next.",
-        "自分株式会社 → https://my-web-app-b67f4.web.app/",
+        "I'm looking for the first real user of AI Work OS.",
+        "It brings learning, work logs, finance, and notes into one workspace.",
+        "Try it for five minutes and tell me what works or breaks.",
+        "I'm looking for the first user through X, not warm contacts.",
+        "https://my-web-app-b67f4.web.app/",
       ],
     },
     imagePrompt:
@@ -258,9 +313,19 @@ serve(async (req) => {
     let videoProvider: string | null = null;
     let videoStatus: string | null = null;
     let videoReason: string | null = null;
+    let videoAudioProvider: string | null = null;
+    let videoAudioReason: string | null = null;
+    let videoAudioAssetId: string | null = null;
+    let videoAudioVoiceId: string | null = null;
+    let videoAudioVoiceProfile: string | null = null;
     let hedraGenerationId: string | null = null;
     let hedraProgress: number | null = null;
     let hedraEtaSec: number | null = null;
+    let storedVideoUrl: string | null = null;
+    let storedVideoPath: string | null = null;
+    let storedVideoMimeType: string | null = null;
+    let storedVideoSizeBytes: number | null = null;
+    let videoStorageError: string | null = null;
 
     // FAL.ai で画像生成 (キーが設定されている場合)
     if (FAL_KEY && type === "image") {
@@ -326,9 +391,38 @@ serve(async (req) => {
           videoProvider = "hedra";
           videoStatus = hedraVideo.status;
           videoReason = hedraVideo.reason;
+          videoAudioProvider = hedraVideo.audioProvider ?? null;
+          videoAudioReason = hedraVideo.audioReason ?? null;
+          videoAudioAssetId = hedraVideo.audioAssetId ?? null;
+          videoAudioVoiceId = hedraVideo.audioVoiceId ?? null;
+          videoAudioVoiceProfile = hedraVideo.audioVoiceProfile ?? null;
           hedraGenerationId = hedraVideo.id;
           hedraProgress = hedraVideo.progress;
           hedraEtaSec = hedraVideo.etaSec;
+          const videoSourceUrl = firstNonEmptyString(
+            hedraVideo.downloadUrl,
+            hedraVideo.videoUrl,
+          );
+          if (videoSourceUrl) {
+            try {
+              const storedVideo = await persistGeneratedVideoToStorage(admin, {
+                sourceUrl: videoSourceUrl,
+                generationId: hedraVideo.id,
+                templateKey,
+                lang,
+              });
+              storedVideoUrl = storedVideo.url;
+              storedVideoPath = storedVideo.path;
+              storedVideoMimeType = storedVideo.contentType;
+              storedVideoSizeBytes = storedVideo.sizeBytes;
+              generatedVideoUrl = storedVideo.url;
+              generatedDownloadUrl = storedVideo.url;
+            } catch (error) {
+              videoStorageError = error instanceof Error
+                ? error.message
+                : String(error);
+            }
+          }
           if (!generatedVideoUrl) {
             videoReason = videoReason ?? "Hedra video is not complete yet";
           }
@@ -369,6 +463,17 @@ serve(async (req) => {
           video_provider: videoProvider,
           video_status: videoStatus,
           video_reason: videoReason,
+          video_audio_provider: videoAudioProvider,
+          video_audio_reason: videoAudioReason,
+          video_audio_asset_id: videoAudioAssetId,
+          hedra_generation_id: hedraGenerationId,
+          hedra_progress: hedraProgress,
+          hedra_eta_sec: hedraEtaSec,
+          stored_video_url: storedVideoUrl,
+          stored_video_path: storedVideoPath,
+          stored_video_mime_type: storedVideoMimeType,
+          stored_video_size_bytes: storedVideoSizeBytes,
+          video_storage_error: videoStorageError,
           status: generationStatus,
         })
         .select("id")
@@ -401,10 +506,22 @@ serve(async (req) => {
       videoProvider,
       videoStatus,
       videoReason,
+      videoAudioProvider,
+      videoAudioReason,
+      videoAudioAssetId,
+      videoAudioVoiceId,
+      videoAudioVoiceProfile,
+      storedVideoUrl,
+      storedVideoPath,
+      storedVideoMimeType,
+      storedVideoSizeBytes,
+      videoStorageError,
       status: generatedVideoUrl != null || generatedImageUrl != null
         ? "ready_to_post"
         : generationStatus,
-      nextStep: generatedVideoUrl != null
+      nextStep: storedVideoUrl != null
+        ? "Use storedVideoUrl and caption for the next X post; the video is now hosted from Supabase Storage."
+        : generatedVideoUrl != null
         ? "Call x-media-post with this videoUrl and caption to post to X"
         : generatedImageUrl != null
         ? "Call x-media-post with this imageUrl and caption to post to X"
@@ -439,21 +556,43 @@ function hedraLanguageForLang(_lang: "ja" | "en"): string {
   return "English";
 }
 
+function stripUrlsForVoiceover(line: string): string {
+  return line
+    .replace(/\[([^\]]+)\]\(https?:\/\/[^\s)]+\)/g, "$1")
+    .replace(/https?:\/\/[^\s　)]+/g, "")
+    .replace(/\bmy-web-app-b67f4\.web\.app\/?[^\s　)]*/gi, "")
+    .replace(/\s+/g, " ")
+    .replace(/^Open\s+to try it\.?$/i, "Try it for five minutes.")
+    .replace(/\s+([。．、，,.!?！？])/g, "$1")
+    .replace(/[→:：\-–—|｜]\s*$/g, "")
+    .replace(/^(を|から|で|へ|に)\s*/, "")
+    .trim();
+}
+
+function voiceoverLinesWithoutUrls(script: string[]): string[] {
+  return script
+    .map(stripUrlsForVoiceover)
+    .filter((line) => line.length > 0)
+    .slice(0, 6);
+}
+
 function scriptForHedraVoice(
   script: string[],
   lang: "ja" | "en",
   title?: string,
 ): string[] {
-  if (lang === "en") return script;
+  const sanitized = voiceoverLinesWithoutUrls(script);
+  if (lang === "en") {
+    return sanitized.length > 0
+      ? sanitized
+      : ["Try it for five minutes and tell us what felt useful."];
+  }
   const englishTitle = hedraEnglishTitle(title);
-  const url = script.find((line) => /^https?:\/\//.test(line));
   return [
     `${englishTitle} has been updated.`,
     "This short video introduces the newest improvement in the app.",
     "The creative workflow combines GPT image two, GPT five point five, and Seedance two point zero.",
-    url == null
-      ? "Open the app to try the latest experience."
-      : `Open ${url.replace(/^https?:\/\//, "")} to try it.`,
+    "Try it for five minutes, then share what helped and what felt confusing.",
   ];
 }
 
@@ -474,7 +613,103 @@ type HedraVideoResult = {
   progress: number | null;
   etaSec: number | null;
   reason: string | null;
+  audioProvider?: string | null;
+  audioReason?: string | null;
+  audioAssetId?: string | null;
+  audioVoiceId?: string | null;
+  audioVoiceProfile?: string | null;
 };
+
+type ElevenLabsSpeech = {
+  bytes: Uint8Array;
+  contentType: string;
+  filename: string;
+  voiceId: string;
+  voiceProfile: string;
+  warning: string | null;
+};
+
+type ElevenLabsVoiceCandidate = {
+  id: string;
+  profile: string;
+};
+
+type StoredVideo = {
+  url: string;
+  path: string;
+  contentType: string;
+  sizeBytes: number;
+};
+
+async function persistGeneratedVideoToStorage(
+  admin: SupabaseClient,
+  params: {
+    sourceUrl: string;
+    generationId: string | null;
+    templateKey: string;
+    lang: string;
+  },
+): Promise<StoredVideo> {
+  const response = await fetch(params.sourceUrl);
+  if (!response.ok) {
+    const rawText = await response.text().catch(() => "");
+    throw new Error(
+      `Generated video download ${response.status}: ${
+        rawText.trim() || response.statusText
+      }`,
+    );
+  }
+
+  const contentType = normalizeVideoContentType(
+    response.headers.get("content-type"),
+  );
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  if (bytes.byteLength === 0) {
+    throw new Error("Generated video download was empty");
+  }
+  if (bytes.byteLength > MAX_STORED_VIDEO_BYTES) {
+    throw new Error(
+      `Generated video is too large to store (${bytes.byteLength} bytes)`,
+    );
+  }
+
+  const datePrefix = new Date().toISOString().slice(0, 10);
+  const generationSegment = storageSafeSegment(
+    params.generationId ?? crypto.randomUUID(),
+  );
+  const path = [
+    "hedra",
+    datePrefix,
+    `${generationSegment}-${storageSafeSegment(params.templateKey)}-${
+      storageSafeSegment(params.lang)
+    }.${extensionForVideoContentType(contentType)}`,
+  ].join("/");
+
+  const { error } = await admin.storage
+    .from(GENERATED_VIDEO_BUCKET)
+    .upload(path, bytes, {
+      contentType,
+      cacheControl: "604800",
+      upsert: true,
+    });
+  if (error) {
+    throw new Error(`Supabase Storage upload failed: ${error.message}`);
+  }
+
+  const { data } = admin.storage.from(GENERATED_VIDEO_BUCKET).getPublicUrl(
+    path,
+  );
+  if (!data.publicUrl) {
+    throw new Error("Supabase Storage did not return a public video URL");
+  }
+
+  return {
+    url: data.publicUrl,
+    path,
+    contentType,
+    sizeBytes: bytes.byteLength,
+  };
+}
 
 async function createHedraPresenterVideo(params: {
   apiKey: string;
@@ -501,9 +736,6 @@ async function createHedraPresenterVideo(params: {
     params.voice,
     params.lang,
   );
-  const ttsModelId = resolveConfiguredHedraTextToSpeechModelId(
-    HEDRA_TTS_MODEL_ID,
-  );
   const hedraLanguage = hedraLanguageForLang(params.lang);
   const ttsScript = scriptForHedraVoice(
     params.script,
@@ -511,31 +743,402 @@ async function createHedraPresenterVideo(params: {
     params.title,
   )
     .join("\n");
+  let audioProvider = "hedra";
+  let audioReason: string | null = null;
+  let audioAssetId: string | null = null;
+  let audioVoiceId: string | null = null;
+  let audioVoiceProfile: string | null = null;
+  if (ELEVENLABS_API_KEY) {
+    try {
+      const speech = await generateElevenLabsSpeech({
+        apiKey: ELEVENLABS_API_KEY,
+        text: scriptForElevenLabsVoice(params.script, params.lang, params.title)
+          .join("\n")
+          .slice(0, 1800),
+        lang: params.lang,
+        voice: params.voice,
+      });
+      audioAssetId = await createHedraAudioAssetFromElevenLabs(
+        params.apiKey,
+        speech,
+      );
+      audioProvider = "elevenlabs";
+      audioVoiceId = speech.voiceId;
+      audioVoiceProfile = speech.voiceProfile;
+      audioReason = speech.warning;
+    } catch (error) {
+      audioReason = `ElevenLabs audio failed; fell back to Hedra TTS: ${
+        error instanceof Error ? error.message : String(error)
+      }`;
+    }
+  } else {
+    audioReason = "ELEVENLABS_API_KEY not configured; using Hedra TTS";
+  }
   const generationBody: Record<string, unknown> = {
     type: "video",
     ai_model_id: HEDRA_AVATAR_MODEL_ID,
     start_keyframe_url: imageUrl,
-    audio_generation: buildHedraTextToSpeechAudioGeneration({
-      voiceId,
-      modelId: ttsModelId,
-      text: ttsScript.slice(0, 1800),
-      language: hedraLanguage,
-    }),
     generated_video_inputs: {
       text_prompt: `${params.title ?? "Share update"}\n${params.prompt}`,
+      ai_model_id: HEDRA_AVATAR_MODEL_ID,
       aspect_ratio: "16:9",
       resolution: "540p",
       enhance_prompt: true,
     },
   };
+  let canRetryWithoutTtsModel = false;
+  if (audioAssetId) {
+    generationBody.audio_id = audioAssetId;
+  } else {
+    const ttsModelId = await resolveHedraTextToSpeechModelId(params.apiKey);
+    if (!ttsModelId) {
+      throw new Error(
+        `Hedra text_to_speech model_id could not be resolved. Configure HEDRA_TTS_MODEL_ID or restore ElevenLabs audio assets.${
+          audioReason ? ` audio fallback detail: ${audioReason}` : ""
+        }`,
+      );
+    }
+    canRetryWithoutTtsModel = true;
+    generationBody.audio_generation = buildHedraTextToSpeechAudioGeneration({
+      voiceId,
+      modelId: ttsModelId,
+      text: ttsScript.slice(0, 1800),
+      language: hedraLanguage,
+    });
+  }
   const payload = await createHedraGenerationWithTtsModelFallback(
     params.apiKey,
     generationBody,
-    ttsModelId != null,
-  );
-  return await pollHedraGeneration(
+    canRetryWithoutTtsModel,
+  )
+    .catch((error) => {
+      if (!audioReason) throw error;
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`${message}; audio fallback detail: ${audioReason}`);
+    });
+  const result = await pollHedraGeneration(
     params.apiKey,
     normalizeHedraVideoResponse(payload),
+  );
+  return {
+    ...result,
+    audioProvider,
+    audioReason: result.audioReason ?? audioReason,
+    audioAssetId,
+    audioVoiceId,
+    audioVoiceProfile,
+  };
+}
+
+function scriptForElevenLabsVoice(
+  script: string[],
+  _lang: "ja" | "en",
+  title?: string,
+): string[] {
+  const lines = voiceoverLinesWithoutUrls(script);
+  if (lines.length > 0) return lines;
+  return [title?.trim() || "Share update"];
+}
+
+async function generateElevenLabsSpeech(params: {
+  apiKey: string;
+  text: string;
+  lang: "ja" | "en";
+  voice: string;
+}): Promise<ElevenLabsSpeech> {
+  const candidates = await resolveElevenLabsVoiceCandidates(
+    params.apiKey,
+    params.voice,
+    params.lang,
+  );
+  const errors: string[] = [];
+  for (const voice of candidates) {
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${
+        encodeURIComponent(voice.id)
+      }?output_format=${encodeURIComponent(ELEVENLABS_OUTPUT_FORMAT)}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "xi-api-key": params.apiKey,
+        },
+        body: JSON.stringify({
+          ...elevenLabsTextToSpeechBody(params.text),
+        }),
+      },
+    );
+    if (response.ok) {
+      return {
+        bytes: new Uint8Array(await response.arrayBuffer()),
+        contentType: response.headers.get("content-type") ?? "audio/mpeg",
+        filename: `elevenlabs-share-${Date.now()}.mp3`,
+        voiceId: voice.id,
+        voiceProfile: voice.profile,
+        warning: errors.length === 0
+          ? null
+          : `ElevenLabs voice fallback used after: ${errors.join(" | ")}`,
+      };
+    }
+    const rawText = await response.text();
+    errors.push(
+      `${voice.profile}:${response.status}:${
+        rawText.trim() || response.statusText
+      }`,
+    );
+  }
+  throw new Error(
+    `ElevenLabs API failed for all voice candidates: ${errors.join(" | ")}`,
+  );
+}
+
+async function resolveElevenLabsVoiceCandidates(
+  apiKey: string,
+  preferredVoice: string,
+  lang: "ja" | "en",
+): Promise<ElevenLabsVoiceCandidate[]> {
+  const requested = firstNonEmptyString(preferredVoice) ?? "";
+  const alias = requested.toLowerCase();
+  const secretaryVoiceId = firstNonEmptyString(
+    ELEVENLABS_SECRETARY_VOICE_ID,
+    ELEVENLABS_VOICE_ID,
+  );
+  const defaultVoiceId = firstNonEmptyString(
+    ELEVENLABS_VOICE_ID,
+    secretaryVoiceId,
+  );
+  const candidates: ElevenLabsVoiceCandidate[] = [];
+  if (
+    alias === "ai_secretary_female" ||
+    alias === "secretary" ||
+    alias === "female" ||
+    alias === "ja-jp" ||
+    alias.includes("secretary") ||
+    alias.includes("female")
+  ) {
+    if (!secretaryVoiceId) {
+      throw new Error("ELEVENLABS_SECRETARY_VOICE_ID is empty");
+    }
+    candidates.push({ id: secretaryVoiceId, profile: "ai_secretary_female" });
+    candidates.push(...ELEVENLABS_CURATED_FEMALE_VOICE_IDS);
+  }
+  if (isLikelyElevenLabsVoiceId(requested)) {
+    candidates.push({ id: requested, profile: "custom_request" });
+  }
+  candidates.push(
+    ...await resolveAvailableElevenLabsFemaleVoices(apiKey, lang),
+  );
+  if (!defaultVoiceId) {
+    throw new Error("ELEVENLABS_VOICE_ID is empty");
+  }
+  candidates.push({
+    id: defaultVoiceId,
+    profile: lang === "ja" ? "default_ja" : "default",
+  });
+  return uniqueElevenLabsVoiceCandidates(candidates);
+}
+
+async function resolveAvailableElevenLabsFemaleVoices(
+  apiKey: string,
+  lang: "ja" | "en",
+): Promise<ElevenLabsVoiceCandidate[]> {
+  try {
+    const response = await fetch("https://api.elevenlabs.io/v1/voices", {
+      headers: { "xi-api-key": apiKey },
+    });
+    if (!response.ok) return [];
+    const payload = await response.json().catch(() => ({})) as unknown;
+    const voices = Array.isArray(asRecord(payload)?.["voices"])
+      ? asRecord(payload)?.["voices"] as unknown[]
+      : Array.isArray(payload)
+      ? payload as unknown[]
+      : [];
+    return voices
+      .map((voice) => asRecord(voice))
+      .filter((voice): voice is Record<string, unknown> => voice !== null)
+      .map((voice) => ({
+        voice,
+        id: firstNonEmptyString(voice["voice_id"], voice["id"]),
+        score: elevenLabsFemaleVoiceScore(voice, lang),
+      }))
+      .filter((entry) => entry.id != null && entry.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map((entry) => ({
+        id: entry.id as string,
+        profile: `available_female:${
+          storageSafeSegment(
+            firstNonEmptyString(entry.voice["name"]) ?? "voice",
+          )
+        }`,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+function elevenLabsFemaleVoiceScore(
+  voice: Record<string, unknown>,
+  lang: "ja" | "en",
+): number {
+  const name = String(voice["name"] ?? "").toLowerCase();
+  const labels = asRecord(voice["labels"]) ?? {};
+  const description = String(voice["description"] ?? "").toLowerCase();
+  const preview = String(voice["preview_url"] ?? "").toLowerCase();
+  const category = String(voice["category"] ?? "").toLowerCase();
+  const labelsText = Object.entries(labels)
+    .map(([key, value]) => `${key}:${String(value).toLowerCase()}`)
+    .join(" ");
+  const haystack =
+    `${name} ${description} ${preview} ${category} ${labelsText}`;
+  let score = 0;
+  if (haystack.includes("gender:female") || haystack.includes("female")) {
+    score += 100;
+  }
+  if (haystack.includes("woman") || haystack.includes("feminine")) score += 40;
+  if (haystack.includes("japanese") || haystack.includes("ja")) score += 25;
+  if (lang === "ja" && haystack.includes("multilingual")) score += 15;
+  for (
+    const marker of [
+      "aria",
+      "rachel",
+      "bella",
+      "sarah",
+      "laura",
+      "jessica",
+      "lily",
+      "emily",
+      "alice",
+      "serena",
+      "mimi",
+      "domi",
+      "elli",
+      "matilda",
+      "dorothy",
+      "freya",
+    ]
+  ) {
+    if (name.includes(marker)) score += 20;
+  }
+  if (/\bmale\b/.test(haystack) || /\bman\b/.test(haystack)) score -= 120;
+  return score;
+}
+
+function uniqueElevenLabsVoiceCandidates(
+  candidates: ElevenLabsVoiceCandidate[],
+): ElevenLabsVoiceCandidate[] {
+  const seen = new Set<string>();
+  const unique: ElevenLabsVoiceCandidate[] = [];
+  for (const candidate of candidates) {
+    if (!candidate.id || seen.has(candidate.id)) continue;
+    seen.add(candidate.id);
+    unique.push(candidate);
+  }
+  return unique;
+}
+
+function elevenLabsTextToSpeechBody(text: string): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    text,
+    model_id: ELEVENLABS_MODEL_ID,
+    voice_settings: {
+      stability: 0.5,
+      similarity_boost: 0.75,
+      use_speaker_boost: true,
+    },
+  };
+  const configuredLanguage = firstNonEmptyString(ELEVENLABS_LANGUAGE_CODE);
+  if (configuredLanguage) body.language_code = configuredLanguage;
+  return body;
+}
+
+async function resolveHedraTextToSpeechModelId(
+  apiKey: string,
+): Promise<string | null> {
+  const configured = resolveConfiguredHedraTextToSpeechModelId(
+    HEDRA_TTS_MODEL_ID,
+  );
+  if (configured) return configured;
+  try {
+    return extractHedraTextToSpeechModelId(
+      await hedraJsonRequest(apiKey, "/models", { method: "GET" }),
+    );
+  } catch {
+    return null;
+  }
+}
+
+async function createHedraAudioAssetFromElevenLabs(
+  apiKey: string,
+  speech: ElevenLabsSpeech,
+): Promise<string> {
+  const audioAssetId = await createHedraAsset(
+    apiKey,
+    speech.filename,
+    "audio",
+  );
+  await uploadHedraAsset(apiKey, audioAssetId, speech);
+  return audioAssetId;
+}
+
+async function createHedraAsset(
+  apiKey: string,
+  name: string,
+  type: "audio" | "image",
+): Promise<string> {
+  const payload = await hedraJsonRequest(apiKey, "/assets", {
+    method: "POST",
+    body: { name, type },
+  });
+  const assetId = extractHedraAssetId(payload);
+  if (!assetId) {
+    throw new Error("Hedra asset id was missing from create asset response");
+  }
+  return assetId;
+}
+
+async function uploadHedraAsset(
+  apiKey: string,
+  assetId: string,
+  speech: ElevenLabsSpeech,
+): Promise<void> {
+  const form = new FormData();
+  const audioBuffer = new ArrayBuffer(speech.bytes.byteLength);
+  new Uint8Array(audioBuffer).set(speech.bytes);
+  form.append(
+    "file",
+    new Blob([audioBuffer], { type: speech.contentType }),
+    speech.filename,
+  );
+  const response = await fetch(
+    `${HEDRA_API_BASE}/assets/${encodeURIComponent(assetId)}/upload`,
+    {
+      method: "POST",
+      headers: { "X-API-Key": apiKey },
+      body: form,
+    },
+  );
+  if (!response.ok) {
+    const rawText = await response.text();
+    throw new Error(
+      `Hedra asset upload ${response.status}: ${
+        rawText.trim() || response.statusText
+      }`,
+    );
+  }
+}
+
+function extractHedraAssetId(payload: unknown): string | null {
+  const record = asRecord(payload);
+  const data = asRecord(record?.["data"]);
+  const asset = asRecord(record?.["asset"]);
+  return firstNonEmptyString(
+    record?.["id"],
+    record?.["asset_id"],
+    data?.["id"],
+    data?.["asset_id"],
+    asset?.["id"],
+    asset?.["asset_id"],
   );
 }
 
@@ -751,6 +1354,10 @@ function isUuid(value: string | null): boolean {
       .test(value);
 }
 
+function isLikelyElevenLabsVoiceId(value: string): boolean {
+  return /^[A-Za-z0-9]{16,}$/.test(value);
+}
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === "object" && value !== null
     ? value as Record<string, unknown>
@@ -764,6 +1371,30 @@ function firstNonEmptyString(...values: unknown[]): string | null {
     }
   }
   return null;
+}
+
+function storageSafeSegment(value: string): string {
+  return value.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") ||
+    "unknown";
+}
+
+function normalizeVideoContentType(value: string | null): string {
+  const contentType = value?.split(";")[0]?.trim().toLowerCase() ?? "";
+  if (
+    contentType === "video/mp4" ||
+    contentType === "video/webm" ||
+    contentType === "video/quicktime" ||
+    contentType === "application/octet-stream"
+  ) {
+    return contentType;
+  }
+  return "video/mp4";
+}
+
+function extensionForVideoContentType(contentType: string): string {
+  if (contentType === "video/webm") return "webm";
+  if (contentType === "video/quicktime") return "mov";
+  return "mp4";
 }
 
 function normalizeHedraStartKeyframeUrl(value: string | null): string | null {

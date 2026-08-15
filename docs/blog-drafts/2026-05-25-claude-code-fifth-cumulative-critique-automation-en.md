@@ -1,7 +1,7 @@
 ---
 title: "When the same critique recurs 5 times, ship automation instead of a 6th apology — Claude Code 5-cumulative redundancy threshold pattern"
 tags: ClaudeCode,AI,autonomous-agents,indie-dev,buildinpublic
-published: false
+published: true
 ---
 
 # When the same critique recurs 5 times, ship automation instead of a 6th apology — Claude Code 5-cumulative redundancy threshold pattern

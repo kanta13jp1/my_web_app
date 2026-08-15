@@ -1,0 +1,110 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File 'C:\\Users\\kanta\\GitHub\\my_web_app\\.codex\\hooks\\pretooluse-compression-budget.ps1'"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__codex_apps__github_(create_file|update_file|delete_file)|mcp__plugin_github_github__create_or_update_file|mcp__github__push_files|mcp__plugin_github_github__push_files",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File 'C:\\Users\\kanta\\GitHub\\my_web_app\\.codex\\hooks\\pre-commit-guard.ps1'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "apply_patch|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File 'C:\\Users\\kanta\\GitHub\\my_web_app\\.codex\\hooks\\post-tool-use-dart-format.ps1'"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File 'C:\\Users\\kanta\\GitHub\\my_web_app\\.codex\\hooks\\pre-compact-backup.ps1'"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File 'C:\\Users\\kanta\\GitHub\\my_web_app\\.codex\\hooks\\session-start-sync-rules.ps1'"
+          },
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File 'C:\\Users\\kanta\\GitHub\\my_web_app\\.codex\\hooks\\session-start-hard-gate.ps1'"
+          },
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File 'C:\\Users\\kanta\\GitHub\\my_web_app\\.codex\\hooks\\smartcleanup-monthlydeep-guard.ps1'"
+          },
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File 'C:\\Users\\kanta\\GitHub\\my_web_app\\.codex\\hooks\\session-start-state-check.ps1'"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File 'C:\\Users\\kanta\\GitHub\\my_web_app\\.codex\\hooks\\userprompt-kpi-banner.ps1'"
+          },
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File 'C:\\Users\\kanta\\GitHub\\my_web_app\\.codex\\hooks\\userprompt-idle-gap-fire.ps1'"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File 'C:\\Users\\kanta\\GitHub\\my_web_app\\.codex\\hooks\\subagent-start.ps1'"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File 'C:\\Users\\kanta\\GitHub\\my_web_app\\.codex\\hooks\\subagent-stop.ps1'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File 'C:\\Users\\kanta\\GitHub\\my_web_app\\.codex\\hooks\\session-end-auto-compress.ps1'"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -51,6 +51,15 @@ type OpenAiImageResponse = {
   error?: { message?: string };
 };
 
+type OpenAiImageAttemptError = {
+  model: string;
+  status: number;
+  error: string;
+};
+
+const OPENAI_BILLING_URL =
+  "https://platform.openai.com/settings/organization/billing/overview";
+
 const supportedImageModels = new Set([
   "gpt-image-1.5",
   "gpt-image-1",
@@ -93,6 +102,18 @@ function imageSizeForModel(model: string, requested: string): string {
     : "1792x1024";
 }
 
+function isOpenAiBillingError(error: string): boolean {
+  const normalized = error.toLowerCase();
+  return normalized.includes("billing hard limit") ||
+    normalized.includes("billing quota") ||
+    normalized.includes("insufficient_quota") ||
+    normalized.includes("exceeded your current quota");
+}
+
+function hasOpenAiBillingError(errors: OpenAiImageAttemptError[]): boolean {
+  return errors.some((item) => isOpenAiBillingError(item.error));
+}
+
 function base64ToBytes(base64: string): Uint8Array {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
@@ -105,6 +126,12 @@ function base64ToBytes(base64: string): Uint8Array {
 function storageSafeSegment(value: string): string {
   return value.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") ||
     "anonymous";
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null
+    ? value as Record<string, unknown>
+    : null;
 }
 
 async function persistGeneratedImageToStorage(
@@ -475,8 +502,7 @@ serve(async (req) => {
             : "medium";
         const returnB64 = body.returnB64 === true;
         const persist = body.persist !== false;
-        const errors: Array<{ model: string; status: number; error: string }> =
-          [];
+        const errors: OpenAiImageAttemptError[] = [];
         let generated: OpenAiImageData | undefined;
         let usedModel = "";
         let usedSize = "";
@@ -492,9 +518,6 @@ serve(async (req) => {
           if (model.startsWith("gpt-image-")) {
             payload.quality = quality;
             payload.output_format = "png";
-          } else {
-            payload.style = style;
-            payload.response_format = "url";
           }
 
           const res = await fetch(
@@ -542,11 +565,20 @@ serve(async (req) => {
         const publicImageUrl = imageUrl || storedImageUrl || "";
         const dataUrl = b64Json ? `data:image/png;base64,${b64Json}` : "";
         if (!imageUrl && !b64Json) {
+          const requiresOpenAiBilling = hasOpenAiBillingError(errors);
           return json({
             success: false,
-            error: "OpenAI image response did not include url or b64_json",
+            status: requiresOpenAiBilling
+              ? "openai_billing_required"
+              : "text_only_fallback",
+            error: requiresOpenAiBilling
+              ? "OpenAI API credits are exhausted. Add API credits, then retry image generation."
+              : "OpenAI image generation is unavailable",
+            canPostTextOnly: true,
+            requiresOpenAiBilling,
+            billingUrl: requiresOpenAiBilling ? OPENAI_BILLING_URL : undefined,
             errors,
-          }, 502);
+          });
         }
 
         const item = persist
@@ -674,7 +706,8 @@ serve(async (req) => {
           Array.isArray((board as Record<string, unknown>).elements)
             ? (board as Record<string, unknown>).elements as unknown[]
             : [];
-        elements.push({ ...body.element, id: crypto.randomUUID() });
+        const element = asRecord(body.element) ?? {};
+        elements.push({ ...element, id: crypto.randomUUID() });
         await admin.from("hub_data").update({
           metadata: {
             ...(board as Record<string, unknown>),

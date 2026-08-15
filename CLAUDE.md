@@ -48,7 +48,7 @@
 
 ## Session ritual
 
-- **開始**: `~/.claude/projects/.../memory/MEMORY.md` 参照 + `notebooklm use jibun-master-brain` で過去判断確認
+- **開始**: `~/.claude/projects/.../memory/MEMORY.md` 参照 + `notebooklm use ea6cff25` (= jibun-master-brain / use は ID prefix のみ) で過去判断確認 (= NotebookLM は **kanta13jp@gmail.com 側** / `NOTEBOOKLM_HOME=~/.notebooklm-gmail` を settings.json env で自動適用。default `~/.notebooklm` = ml-mightylink 側 / 他プロジェクト用。詳細 [`docs/NOTEBOOKLM_GUIDE.md`](docs/NOTEBOOKLM_GUIDE.md))
 - **終了**: `/wrap-up` skill (= memory + NotebookLM 蓄積 + 次回 candidate 3-5 件 必須)
 - **手動 skill**: `/session-start-check` `/rule17-wf-health` `/blog-publish-cleanup` `/wrap-up`
 - **自動化**: 5 daily cron (= ai-tool-watch / safety / residuals / crosscheck / wiki-compile) + 30+ workflow
@@ -60,6 +60,21 @@
 - Use mobile push notifications only for actionable remote-control events such as CI completion, blocked secrets, or schedule tasks that need the user's decision.
 - If `ANTHROPIC_BASE_URL` points at a gateway with `/v1/models`, prefer the `/model` picker over hard-coded model names.
 - Before removing an abandoned worktree/session, run `claude project purge [path]` only after git status and pushed branch/PR state are verified.
+
+## PR マージ = worktree 撤去 (1 セット / 2026-07-20)
+
+- **PR は `/pr-merge <PR番号>` で閉じる。** マージと `git worktree remove` を 1 コマンドにまとめてある。
+  マージ後に手で `git worktree remove` を打たない (打ち忘れが `C:\tmp` に 146 worktree / 14 GB を溜めた)。
+- 実体: `scripts/pr_merge_and_release.ps1` → `scripts/worktree_release.ps1` (14 ガード / 既定 dry-run)。
+  削除前に必ず `~/.claude/state/worktree-attic/` へ diff + untracked を退避する (30 日保持)。
+- `CLEANUP QUARANTINED` = 未コミット作業か、git に存在しない ignored ファイル (`.env` / `evidence/`) あり。
+  **自動で消さない。** `CLEANUP QUEUED` = 自己マージか dart/flutter 稼働中。次回自動で片づく。
+- Web UI マージ / raw `gh pr merge` は検知できない。取りこぼしは週次 `/worktree-sweep` で回収する。
+  この sweep は scheduled task `worktree-sweep` (毎週月曜 09:09 / cron `0 9 * * 1`) として自動化済み。
+  既定は撤去可能分のみ `-Apply`、QUARANTINE は報告のみ (hook は `disableAllHooks:true` で無効なため cron 方式)。
+- kill switch: `$env:MWA_WORKTREE_RELEASE_DISABLED = '1'` または `.cache/worktree-release.DISABLED` を置く。
+- `scripts/worktree_prune.ps1` は `.claude/worktrees/` 専用の別系統。manual-only 契約は維持しており、
+  上記の経路からは呼ばない。
 
 ## Quota fallback
 

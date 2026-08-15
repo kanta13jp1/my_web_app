@@ -4,6 +4,12 @@
 > Karpathy 流: index.md (= 内容中心 / 既存 MEMORY.md) + log.md (= 時系列) の二元管理.
 > 編集禁止 (= append-only) / 月次に過去分を summary 化.
 
+## 2026-06-27
+
+- `[2026-06-27 11:10 JST]` **audit** | Obsidian / memory revenue loop check. `scripts/knowledge_vault_lint.py` reported health 96/100, with the main gap being that the active Stripe/X/Hedra/ElevenLabs first-yen revenue sprint was not yet captured in memory. Added `memory/vault/revenue_first_growth_loop_20260627.md` and WBS tasks for Obsidian evidence capture plus Hedra + ElevenLabs AI share video path.
+- `[2026-06-27 12:35 JST]` **growth-media** | Stabilized the Hedra + ElevenLabs first-user video asset by copying completed Hedra generation `b68583c2-7ba4-4367-a06d-6d12b3e8e1c4` into Supabase Storage bucket `viral-ad-videos`. The revenue Obsidian note now links the durable public MP4 evidence instead of relying on an expiring Hedra signed URL.
+- `[2026-06-27 12:45 JST]` **growth-media** | Confirmed the live AI Share `Hedra確認` loop with generation `e8fe90b2-c1f7-4d43-bdd7-38b4cbd6a250`: Edge Function returned `ready_to_post`, stored the feature-highlight MP4 in Supabase Storage, and the public object HEAD check returned 200.
+
 ## 2026-05-05
 
 ### Win版#132 part 139 (= 66 part 連続 dogfood / Layer 3-5 Agent Skills)

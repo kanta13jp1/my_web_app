@@ -96,7 +96,7 @@ class _SocialProofBannerState extends State<SocialProofBanner> {
           ),
           _StatItem(
             value: '無料',
-            label: '完全無料',
+            label: '無料で開始',
             emoji: '🎁',
             isDark: isDark,
           ),

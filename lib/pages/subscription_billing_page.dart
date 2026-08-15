@@ -35,17 +35,33 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
       if (mounted) setState(() => _status = status);
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = '課金情報の取得に失敗しました: $e');
+        setState(() {
+          _errorMessage =
+              _isUnauthorizedBillingError(e) ? null : '課金情報の取得に失敗しました: $e';
+        });
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
+  bool _isUnauthorizedBillingError(Object error) {
+    return error is BillingServiceException && error.statusCode == 401 ||
+        error.toString().contains('Unauthorized');
+  }
+
   Future<void> _openCheckout(String tier) async {
     await _openStripeSession(() {
       return _service.createCheckoutSession(
         tier: tier,
+        returnUrl: _currentReturnUrl,
+      );
+    });
+  }
+
+  Future<void> _openSupporterCheckout() async {
+    await _openStripeSession(() {
+      return _service.createSupporterCheckoutSession(
         returnUrl: _currentReturnUrl,
       );
     });
@@ -83,7 +99,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     if (uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https')) {
       return uri.replace(path: '/subscription-billing', query: '').toString();
     }
-    return 'https://my-web-app-b6f7f4.web.app/subscription-billing';
+    return 'https://my-web-app-b67f4.web.app/subscription-billing';
   }
 
   @override
@@ -122,6 +138,11 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  _SupporterCard(
+                    isBusy: _isOpeningStripe,
+                    onSupport: _openSupporterCheckout,
+                  ),
+                  const SizedBox(height: 16),
                   _CurrentPlanCard(status: status, onOpenPortal: _openPortal),
                   const SizedBox(height: 16),
                   _PlanGrid(
@@ -157,6 +178,66 @@ class _ErrorBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(message, style: const TextStyle(color: Color(0xFFC62828))),
+    );
+  }
+}
+
+class _SupporterCard extends StatelessWidget {
+  const _SupporterCard({
+    required this.isBusy,
+    required this.onSupport,
+  });
+
+  final bool isBusy;
+  final VoidCallback onSupport;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.volunteer_activism_outlined),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Founding Supporter',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Chip(label: Text('一回払い')),
+              ],
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              '銀行口座への初回入金確認に向けた少額支援です。無料プランは維持し、支援は継続開発に使います。',
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: isBusy ? null : onSupport,
+                icon: isBusy
+                    ? const SizedBox.square(
+                        dimension: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.payments_outlined),
+                label: const Text('100円で支援する'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Stripeの決済画面で金額とメールアドレスを確認できます。',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -378,7 +459,8 @@ class _SetupNoticeCard extends StatelessWidget {
         padding: EdgeInsets.all(16),
         child: Text(
           'Stripe本番連携には Supabase secrets に STRIPE_SECRET_KEY、'
-          'STRIPE_WEBHOOK_SECRET、STRIPE_PRO_PRICE_ID を設定してください。',
+          'STRIPE_WEBHOOK_SECRET、STRIPE_PRO_PRICE_ID を設定してください。'
+          'Founding Supporterの金額は STRIPE_SUPPORTER_AMOUNT_JPY で上書きできます。',
         ),
       ),
     );

@@ -1,0 +1,48 @@
+[shell_environment_policy]
+inherit = "core"
+
+[shell_environment_policy.set]
+MCP_TIMEOUT = "60000"
+MAX_MCP_OUTPUT_TOKENS = "50000"
+ENABLE_MCP_TOOL_SEARCH = "true"
+
+[mcp_servers.aidesigner]
+url = "https://api.aidesigner.ai/api/v1/mcp"
+
+[mcp_servers.code-review]
+command = "cmd"
+env_vars = ["ANTHROPIC_API_KEY"]
+startup_timeout_sec = 60
+args = [
+    "/c",
+    "npx",
+    "-y",
+    "@vibesnipe/code-review-mcp@1.0.0",
+]
+
+[mcp_servers.context7]
+url = "https://mcp.context7.com/mcp"
+
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+
+[mcp_servers."21st"]
+url = "https://21st.dev/api/mcp"
+env_http_headers = { "x-api-key" = "API_KEY_21ST" }
+
+[mcp_servers.playwright]
+command = "cmd"
+startup_timeout_sec = 60
+args = [
+    "/c",
+    "npx",
+    "-y",
+    "@playwright/mcp@0.0.79",
+]
+
+[mcp_servers.administrative-procedures]
+command = 'C:\Users\kanta\AppData\Local\my_web_app\mcp\administrative-procedures-mcp\.venv\Scripts\python.exe'
+args = ["-m", "admin_procedures"]
+
+[mcp_servers.administrative-procedures.env]
+ADMIN_PROCEDURES_DATA_DIR = 'C:\Users\kanta\AppData\Local\my_web_app\mcp\administrative-procedures-mcp'

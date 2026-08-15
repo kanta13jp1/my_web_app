@@ -5221,6 +5221,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   TabController? _tabController;
   final Set<String> _answeredQuizzes = {};
   static const String _prefsKey = 'ai_univ_answered_quizzes';
+  // 新ジャンル棚の折りたたみ状態 (画面占有を抑えるため / prefs 永続化)。
+  static const String _genreShelfPrefsKey = 'ai_univ_genre_shelf_collapsed';
+  bool _genreShelfCollapsed = false;
   final _shareCardKey = GlobalKey();
   final _fsrsService = AiFsrsService();
   final _learnerProfileService = AiLearnerProfileService();
@@ -5246,6 +5249,19 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     _loadAnsweredQuizzes();
     _loadRlhfSnapshot();
     _loadFineTuneReadiness();
+    _loadGenreShelfState();
+  }
+
+  Future<void> _loadGenreShelfState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final collapsed = prefs.getBool(_genreShelfPrefsKey) ?? false;
+    if (mounted) setState(() => _genreShelfCollapsed = collapsed);
+  }
+
+  Future<void> _toggleGenreShelf() async {
+    setState(() => _genreShelfCollapsed = !_genreShelfCollapsed);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_genreShelfPrefsKey, _genreShelfCollapsed);
   }
 
   Future<void> _loadRlhfSnapshot() async {
@@ -6057,31 +6073,99 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final genres = _availableGenres();
     if (genres.isEmpty) return const SizedBox.shrink();
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+    final width = MediaQuery.of(context).size.width;
+    // モバイルは次カードがちらっと見える幅、Web は固定幅でカルーセル感を出す。
+    final cardWidth = width < 600 ? (width * 0.82).clamp(220.0, 320.0) : 300.0;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '新ジャンル',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              height: 1.5,
+          // ヘッダー行: タップで棚全体を開閉し、本来のコンテンツ領域を確保する。
+          InkWell(
+            onTap: _toggleGenreShelf,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.auto_awesome,
+                    size: 16,
+                    color: Color(0xFFFFC107),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    '新ジャンル',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '${genres.length}',
+                      style: const TextStyle(
+                        color: Color(0xFFB0B0B0),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    _genreShelfCollapsed ? '開く' : '隠す',
+                    style: const TextStyle(
+                      color: Color(0xFFB0B0B0),
+                      fontSize: 11,
+                      height: 1.4,
+                    ),
+                  ),
+                  Icon(
+                    _genreShelfCollapsed
+                        ? Icons.expand_more
+                        : Icons.expand_less,
+                    size: 20,
+                    color: const Color(0xFFB0B0B0),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 4),
-          const Text(
-            '競合がまだ薄い専門領域を、AI大学の中でも独立した入口として育てます。',
-            style: TextStyle(
-              color: Color(0xFFB0B0B0),
-              fontSize: 12,
-              height: 1.6,
+          if (!_genreShelfCollapsed) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 158,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.only(right: 12),
+                itemCount: genres.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                itemBuilder: (context, i) => SizedBox(
+                  width: cardWidth.toDouble(),
+                  child: _buildGenreCard(genres[i]),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          ...genres.map(_buildGenreCard),
+          ],
         ],
       ),
     );
@@ -6093,137 +6177,136 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         .map((providerId) => _meta(providerId).name)
         .toList();
 
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF151B27),
-            Color.alphaBlend(
-              genre.accentColor.withValues(alpha: 0.18),
-              const Color(0xFF1E2434),
-            ),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: genre.accentColor.withValues(alpha: 0.32),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  genre.title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${providerNames.length}教材',
-                style: TextStyle(
-                  color: genre.accentColor.withValues(alpha: 0.95),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  height: 1.5,
-                ),
+    return InkWell(
+      onTap: () => _selectProvider(genre.launchProviderId),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF151B27),
+              Color.alphaBlend(
+                genre.accentColor.withValues(alpha: 0.18),
+                const Color(0xFF1E2434),
               ),
             ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          const SizedBox(height: 10),
-          Text(
-            genre.headline,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              height: 1.5,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: genre.accentColor.withValues(alpha: 0.32),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      genre.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '${providerNames.length}教材',
+                  style: TextStyle(
+                    color: genre.accentColor.withValues(alpha: 0.95),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            genre.description,
-            style: const TextStyle(
-              color: Color(0xFFD7DBE8),
-              fontSize: 13,
-              height: 1.7,
+            const SizedBox(height: 8),
+            Expanded(
+              child: Text(
+                genre.headline,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  height: 1.45,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final area in genre.focusAreas)
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    providerNames.isNotEmpty
+                        ? providerNames.first
+                        : genre.focusAreas.isNotEmpty
+                            ? genre.focusAreas.first
+                            : genre.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFFB0B0B0),
+                      fontSize: 11,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
+                    horizontal: 12,
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.08),
+                    color: genre.accentColor,
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.10),
-                    ),
                   ),
-                  child: Text(
-                    area,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      height: 1.5,
-                    ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '開く',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          height: 1.3,
+                        ),
+                      ),
+                      SizedBox(width: 2),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                    ],
                   ),
                 ),
-            ],
-          ),
-          if (providerNames.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              '代表プロバイダー: ${providerNames.join(' / ')}',
-              style: const TextStyle(
-                color: Color(0xFFB0B0B0),
-                fontSize: 12,
-                height: 1.6,
-              ),
+              ],
             ),
           ],
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: FilledButton.icon(
-              onPressed: () => _selectProvider(genre.launchProviderId),
-              icon: const Icon(Icons.gavel_rounded),
-              label: Text('${genre.title}を開く'),
-              style: FilledButton.styleFrom(
-                backgroundColor: genre.accentColor,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

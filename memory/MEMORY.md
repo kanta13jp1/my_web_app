@@ -9,6 +9,7 @@ These entries are lightweight anchors for repo-managed memory notes so
 `knowledge_vault_lint.py` can distinguish intentionally retained session
 memory from true orphan files.
 
+- [[revenue_first_growth_loop_20260627]]
 - [[feedback_success_20260420_local_metadata_merge]]
 - [[feedback_success_20260420_two_source_triangulation]]
 - [[feedback_correction_20260419_wrapup_hook]]

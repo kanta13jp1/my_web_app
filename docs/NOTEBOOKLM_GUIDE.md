@@ -17,6 +17,24 @@
 
 ---
 
+## アカウント運用 — 2 アカウント分離 (= part 266b 2026-06-11 確立)
+
+NotebookLM は Google アカウント単位で notebook が分かれる。CLI は `NOTEBOOKLM_HOME` 環境変数で
+認証・context・browser_profile を**丸ごとディレクトリ分離**できる (CLI `paths.py` 正本 / `--storage` 単独は context.json が共有されるため不可):
+
+| 用途 | アカウント | NOTEBOOKLM_HOME | 主な notebook |
+| --- | --- | --- | --- |
+| **本プロジェクト (my_web_app)** | kanta13jp@gmail.com | `C:\Users\kanta\.notebooklm-gmail` (= `.claude/settings.json` env で自動適用) | `jibun-master-brain` (= ID `ea6cff25...` / Shared) |
+| 他プロジェクト | k-umezawa@ml-mightylink.com | default `~/.notebooklm` (= env 未設定時) | Mighty Skill-Bridge / Mighty-Link 系 |
+
+- **初回 setup**: `NOTEBOOKLM_HOME=C:\Users\kanta\.notebooklm-gmail notebooklm login` (browser OAuth = user 操作)。
+- **罠 1**: CLI は login 中アカウントを表示しない (`status` / `auth check` とも cookie domain のみ) → 「notebook 不存在」はまず**アカウント違い**を疑い、`notebooklm list` の notebook 群で指紋確認。
+- **罠 2**: `use <name>` が fail しても後続 `source add` は現行 context の notebook へ着地する → `use` 成功を verify してから add (part 266 で誤着地→`source delete -y` 削除の実例)。
+- **罠 3**: `use` の解決は **notebook ID prefix のみ** (title マッチ不可 / CLI v0.3.4 `helpers.py` 実測) → `notebooklm use ea6cff25` のように ID 先頭で指定する。
+- **未監査**: GHA 側 (notebooklm-video-pipeline 等) は `NOTEBOOKLM_AUTH_JSON` secret 経由 — どちらのアカウントで生成された secret かの監査は別タスク。
+
+---
+
 ## セッション開始 ritual (= Master Brain 参照)
 
 セッション冒頭で必ず以下を確認:
@@ -30,7 +48,7 @@
 **アーキテクチャ・意思決定・好みの質問には必ず Master Brain に問い合わせる**:
 
 ```bash
-notebooklm use jibun-master-brain
+notebooklm use ea6cff25   # = jibun-master-brain (use は ID prefix のみマッチ / title 不可 v0.3.4 実測)
 notebooklm ask "過去の意思決定: [質問内容]"
 ```
 

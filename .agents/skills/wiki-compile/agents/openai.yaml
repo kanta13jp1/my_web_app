@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wiki Compile"
+  short_description: "Wikiの概念ページと索引をpreview後に安全に再生成・検証"
+  default_prompt: "Use $wiki-compile to preview and rebuild managed wiki outputs."

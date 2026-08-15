@@ -3,7 +3,7 @@ title: "docs-only PR を 1 発で通す 3-tier カノニカル — body + label 
 emoji: "🧪"
 type: "tech"
 topics: ["githubactions", "ci", "githubapi", "workflows", "devops"]
-published: false
+published: true
 ---
 
 ## TL;DR

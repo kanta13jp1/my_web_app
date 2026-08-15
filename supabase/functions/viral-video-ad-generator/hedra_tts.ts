@@ -8,6 +8,42 @@ export type HedraTextToSpeechAudioGeneration = {
   model_id?: string;
 };
 
+export function extractHedraTextToSpeechModelId(
+  payload: unknown,
+): string | null {
+  const models = Array.isArray(payload)
+    ? payload
+    : Array.isArray(asRecord(payload)?.["data"])
+    ? asRecord(payload)?.["data"] as unknown[]
+    : [];
+  const candidates = models
+    .map((model) => asRecord(model))
+    .filter((model): model is Record<string, unknown> => model != null)
+    .filter((model) => isUuid(firstNonEmptyString(model["id"])))
+    .map((model) => {
+      const type = String(model["type"] ?? "").toLowerCase();
+      const name = String(model["name"] ?? "").toLowerCase();
+      const description = String(model["description"] ?? "").toLowerCase();
+      const haystack = `${type} ${name} ${description}`;
+      const premium = model["premium"] === true ? 1 : 0;
+      let score = 0;
+      if (type === "text_to_speech") score += 100;
+      if (type.includes("text_to_speech")) score += 80;
+      if (haystack.includes("text to speech")) score += 60;
+      if (haystack.includes("tts")) score += 50;
+      if (type.includes("audio") && haystack.includes("speech")) score += 30;
+      if (haystack.includes("voice")) score += 10;
+      return {
+        id: firstNonEmptyString(model["id"]),
+        score,
+        premium,
+      };
+    })
+    .filter((model) => model.id != null && model.score > 0)
+    .sort((a, b) => b.score - a.score || a.premium - b.premium);
+  return candidates[0]?.id ?? null;
+}
+
 export function resolveConfiguredHedraTextToSpeechModelId(
   configuredValue: string | null | undefined,
 ): string | null {

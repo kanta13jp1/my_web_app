@@ -355,7 +355,9 @@
     "https://deno.land/x/postgres@v0.19.3/query/types.ts": "540f6f973d493d63f2c0059a09f3368071f57931bba68bea408a635a3e0565d6",
     "https://deno.land/x/postgres@v0.19.3/utils/deferred.ts": "5420531adb6c3ea29ca8aac57b9b59bd3e4b9a938a4996bbd0947a858f611080",
     "https://deno.land/x/postgres@v0.19.3/utils/utils.ts": "ca47193ea03ff5b585e487a06f106d367e509263a960b787197ce0c03113a738",
-    "https://esm.sh/@supabase/supabase-js@2.90.1": "fcf5e194d637ff365df76d1806e7c2f239905c4b08e83e5d95690a2b22e21a1d"
+    "https://esm.sh/@supabase/supabase-js@2.90.1": "fcf5e194d637ff365df76d1806e7c2f239905c4b08e83e5d95690a2b22e21a1d",
+    "https://raw.githubusercontent.com/kanta13jp1/my_web_app/codex/fix-election-endorsement-refresh-test/assets/data/kokumin_local_endorsements.json": "342d0be93ba1f60d35f4383972147a8dff03b3d8d40603c72297807e73521fda",
+    "https://raw.githubusercontent.com/kanta13jp1/my_web_app/codex/fix-election-endorsement-refresh-test/supabase/functions/local-election-intelligence/election_mode.ts": "37cc17ab9afca3389e34d829796058c64f91c6aeffb153a17973d9c60f051c56"
   },
   "workspace": {
     "packageJson": {

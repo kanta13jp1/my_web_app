@@ -57,7 +57,7 @@ void main() {
       expect(result.text, 'AIが生成した日本語要約です。');
       expect(capturedBody?['action'], 'provider.chat_auto');
       expect(capturedBody?['tier'], 'performance');
-      expect(capturedBody?['max_tokens'], 3200);
+      expect(capturedBody?['max_tokens'], 8000);
       expect(capturedBody?['trace_id'], 'asset-management-ai-summary');
       expect(
         capturedBody?['message'].toString().contains('AIに渡す詳細ペイロード'),
@@ -183,7 +183,7 @@ void main() {
         expect(calls.single['action'], 'provider.chat');
         expect(calls.single['provider'], 'anthropic');
         expect(calls.single['model'], 'claude-opus-4-7');
-        expect(calls.single['max_tokens'], 3200);
+        expect(calls.single['max_tokens'], 8000);
         expect(calls.single['routing_use_case'], 'summary');
         expect(
           calls.single['provider_choice_reason'],
@@ -411,7 +411,247 @@ void main() {
       expect(payload['emergency_advices'] is List<dynamic>, true);
       expect((payload['emergency_advices'] as List<dynamic>).isNotEmpty, true);
     });
+
+    test('annotates issued requests and demands novel proposals', () async {
+      final report = _reportWithDeveloperRequests();
+      expect(report.developerRequests, isNotEmpty);
+      final issuedTitle = report.developerRequests.first.title;
+
+      Map<String, dynamic>? capturedBody;
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async {
+            capturedBody = body;
+            return <String, dynamic>{
+              'success': true,
+              'text': 'AIが生成した日本語要約です。',
+              'provider': 'groq',
+            };
+          },
+        ),
+        now: () => DateTime(2026, 6, 12, 12),
+      );
+
+      await service.generateSummary(
+        report: report,
+        existingDeveloperIssuesByTitle: <String, Map<String, dynamic>>{
+          issuedTitle: <String, dynamic>{
+            'number': 3064,
+            'state': 'closed',
+            'title': issuedTitle,
+            'html_url': 'https://github.com/example/repo/issues/3064',
+          },
+        },
+      );
+
+      final message = capturedBody?['message'].toString() ?? '';
+      expect(message.contains('"already_issued":true'), true);
+      expect(message.contains('"number":3064'), true);
+      expect(message.contains('既にGitHub Issue起票済み'), true);
+      expect(message.contains('本文にもJSONにも出力禁止'), true);
+      expect(
+        message.contains('新規提案なし（既知の提案はすべて起票済みです）'),
+        true,
+      );
+      expect(message.contains('起票済み。本文・JSONブロックとも再掲禁止。'), true);
+      expect(message.contains('ai-new-proposals'), true);
+      // 起票済みテンプレートの本文 (echo の材料) はプロンプトへ渡さない。
+      expect(
+        message.contains(report.developerRequests.first.description),
+        false,
+      );
+      expect(message.contains('本文・JSONとも再掲禁止'), true);
+    });
+
+    test('extracts ai proposal block into issueable requests', () async {
+      final response = [
+        '## 7. 開発者向け改善提案',
+        '- 新規提案: 負債マスタの一括編集モード',
+        '',
+        '```json ai-new-proposals',
+        '[{"title":"負債マスタの一括編集モード",'
+            '"description":"請求確定待ちの負債をまとめて編集できるようにする。",'
+            '"evidence":["推定額の負債行: 2件"],'
+            '"implementation_steps":["一括編集UIを追加"],'
+            '"acceptance_criteria":["複数行を同時に保存できる"],'
+            '"source_references":["lib/pages/asset_management_page.dart"]}]',
+        '```',
+        '',
+        '## 8. 最後にズバッと総評',
+        '以上。',
+      ].join('\n');
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async {
+            return <String, dynamic>{
+              'success': true,
+              'text': response,
+              'provider': 'groq',
+            };
+          },
+        ),
+        now: () => DateTime(2026, 6, 12, 12),
+      );
+
+      final result = await service.generateSummary(report: _report());
+
+      expect(result.aiDeveloperRequests, hasLength(1));
+      final request = result.aiDeveloperRequests.single;
+      expect(request.title, '負債マスタの一括編集モード');
+      expect(request.acceptanceCriteria, contains('複数行を同時に保存できる'));
+      expect(
+        request.sourceReferences,
+        contains('lib/pages/asset_management_page.dart'),
+      );
+      expect(result.text.contains('ai-new-proposals'), false);
+      expect(result.text.contains('一括編集UIを追加'), false);
+      expect(result.text.contains('## 8. 最後にズバッと総評'), true);
+    });
+
+    test('drops broken ai proposal block safely', () async {
+      final response = [
+        '## 7. 開発者向け改善提案',
+        '提案本文です。',
+        '```json ai-new-proposals',
+        'これはJSONではありません',
+        '```',
+        '## 8. 最後にズバッと総評',
+        '以上。',
+      ].join('\n');
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async {
+            return <String, dynamic>{
+              'success': true,
+              'text': response,
+              'provider': 'groq',
+            };
+          },
+        ),
+        now: () => DateTime(2026, 6, 12, 12),
+      );
+
+      final result = await service.generateSummary(report: _report());
+
+      expect(result.aiDeveloperRequests, isEmpty);
+      expect(result.text.contains('ai-new-proposals'), false);
+      expect(result.text.contains('## 8. 最後にズバッと総評'), true);
+    });
+
+    test('parses marker on the line after the fence', () async {
+      final response = [
+        '## 7. 開発者向け改善提案',
+        '- 新規提案: サンプル',
+        '',
+        '```json',
+        'ai-new-proposals',
+        '[{"title":"サンプル新規提案","description":"説明です。"}]',
+        '```',
+        '',
+        '## 8. 最後にズバッと総評',
+        '以上。',
+      ].join('\n');
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async {
+            return <String, dynamic>{
+              'success': true,
+              'text': response,
+              'provider': 'groq',
+            };
+          },
+        ),
+        now: () => DateTime(2026, 6, 12, 12),
+      );
+
+      final result = await service.generateSummary(report: _report());
+
+      expect(result.aiDeveloperRequests, hasLength(1));
+      expect(result.aiDeveloperRequests.single.title, 'サンプル新規提案');
+      expect(result.text.contains('ai-new-proposals'), false);
+      expect(result.text.contains('```json'), false);
+      expect(result.text.contains('## 8. 最後にズバッと総評'), true);
+    });
+
+    test('filters proposals that repeat known template titles', () async {
+      final report = _reportWithDeveloperRequests();
+      expect(report.developerRequests, isNotEmpty);
+      final knownTitle = report.developerRequests.first.title;
+      final response = [
+        '## 7. 開発者向け改善提案',
+        '提案本文です。',
+        '```json ai-new-proposals',
+        '[{"title":"$knownTitle","description":"既知提案の再掲です。"},'
+            '{"title":"全く新しい改善提案","description":"新規の提案です。"}]',
+        '```',
+        '## 8. 最後にズバッと総評',
+        '以上。',
+      ].join('\n');
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async {
+            return <String, dynamic>{
+              'success': true,
+              'text': response,
+              'provider': 'groq',
+            };
+          },
+        ),
+        now: () => DateTime(2026, 6, 12, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.aiDeveloperRequests, hasLength(1));
+      expect(result.aiDeveloperRequests.single.title, '全く新しい改善提案');
+    });
+
+    test('ignores prose mention of the marker without a block', () async {
+      final response = [
+        '## 7. 開発者向け改善提案',
+        '今回は ai-new-proposals に該当する新規提案はありません。',
+        '## 8. 最後にズバッと総評',
+        '以上。',
+      ].join('\n');
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async {
+            return <String, dynamic>{
+              'success': true,
+              'text': response,
+              'provider': 'groq',
+            };
+          },
+        ),
+        now: () => DateTime(2026, 6, 12, 12),
+      );
+
+      final result = await service.generateSummary(report: _report());
+
+      expect(result.aiDeveloperRequests, isEmpty);
+      expect(result.text, response);
+    });
   });
+}
+
+AssetManagementInsightReport _reportWithDeveloperRequests() {
+  const planner = AssetLiabilityPlanningService();
+  const insight = AssetManagementInsightService();
+  final workbook = planner.buildWorkbook(
+    latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
+    baseDate: DateTime(2026, 6, 1),
+  );
+  return insight.buildReport(
+    workbook: workbook,
+    userProfile: _userProfile(),
+    minimumSafetyBalance: 10000,
+  );
 }
 
 AssetManagementInsightReport _report({DateTime? baseDate}) {
