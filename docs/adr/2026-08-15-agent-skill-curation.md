@@ -39,7 +39,7 @@ Adopt a skill only when it:
 | `qiita-retry` | Retire | Omit | Conflicts with another cooldown policy and mixes rate-limit checks with unsafe branch mutation. |
 | `rule17-wf-health` | Retire | Omit | A health audit must not mass-delete remote branches or push directly to main. |
 | `session-start-check` | Adopt after rewrite | Add | Keep the required repository intake while removing old worktree layout, fleet assumptions, WBS writes, and broken links. |
-| `source-command-design-review` | Retire | Omit | Conflicts with `docs/DESIGN.md` and duplicates current design-review capabilities. |
+| `source-command-design-review` | Retire and integrate | Omit | Move the reusable review workflow into `docs/DESIGN.md`; discard conflicting note-theme values and keep one SSOT. |
 | `source-command-wiki-broken-cleanup` | Retire | Omit | Redundant wrapper with stale paths and invalid CLI flags. |
 | `source-command-wiki-compile` | Retire | Omit | Redundant wrapper and omitted the required `--apply` write flag. |
 | `source-command-wiki-dup-h1-cleanup` | Retire | Omit | Redundant wrapper with stale paths and validation commands. |
@@ -47,7 +47,7 @@ Adopt a skill only when it:
 | `source-command-wiki-orphan-batch` | Retire | Omit | Redundant wrapper with stale paths and validation commands. |
 | `source-command-wrap-up` | Retire | Omit | Bloated legacy fleet/WBS/home-memory routine with hidden external writes. |
 | `t1-blog-dispatch` | Retire | Omit | Conflicting Qiita policy, run-selection races, and unsafe branch mutation. |
-| `ui-design` | Retire | Omit | Missing frontmatter and conflicts with the Orange+Indigo dark-theme SSOT in `docs/DESIGN.md`. |
+| `ui-design` | Retire and integrate | Omit | Move responsive, accessibility, and validation guidance into `docs/DESIGN.md`; discard the conflicting light-theme token copy. |
 | `wiki-broken-cleanup` | Adopt after rewrite | Add | Keep the deterministic cleanup script; require fresh lint, dry run, semantic review, and scoped backup handling. |
 | `wiki-compile` | Adopt after rewrite | Add | Keep managed compilation and document that the default is dry-run and `--apply` performs writes. |
 | `wiki-dup-h1-cleanup` | Adopt after rewrite | Add | Keep deterministic detection with semantic review and no broad backup deletion. |
@@ -69,3 +69,5 @@ The canonical set contains 15 skills:
 - `asset-management-wbs-release`, which already existed on `origin/main`.
 
 The five wiki slash-command wrappers and ten other unsafe, duplicated, or superseded candidates remain absent. Future candidates must pass the skill-creator validator, relative-link checks, command smoke tests, and package-specific tests before adoption. `test/scripts/test_agent_skill_cli_contract.py` locks the active Wiki examples to the local script help contract and rejects the retired lint and NotebookLM command forms.
+
+The tracked `.claude/skills/ui-design/SKILL.md` and `.claude/commands/design-review.md` copies are also removed. Design entry points contain workflow only and defer all tokens and review criteria to `docs/DESIGN.md`.
