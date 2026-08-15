@@ -61,6 +61,13 @@ Adopt a skill only when it:
 
 Retain `asset-management-wbs-release`. Replace its dependency on the retired `source-command-wrap-up` with the current `AGENTS.md` wrap-up and WBS policy.
 
+## A/B CI grades
+
+- **A**: retained or adopted without a core workflow rewrite: `asset-management-wbs-release`, `github-backlog-worktree-drain`, `musubi-social-release-pipeline`, and `youtube-video-pipeline`.
+- **B**: adopted after rewriting stale commands, paths, operating-model assumptions, or safety gates: the other eleven canonical skills.
+
+`.agents/skills/ci-manifest.json` is the executable classification. Every active canonical skill must appear exactly once as A or B and declare at least one allowlisted CLI smoke. `.github/workflows/agent-skill-contract.yml` runs the shared frontmatter lint, relative Markdown-link check, and CLI smoke test for skill or referenced-CLI changes.
+
 ## Result
 
 The canonical set contains 15 skills:
