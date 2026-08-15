@@ -358,9 +358,8 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
   }
 
   Widget _buildStatusChip(String status, bool passed) {
-    final Color tone = passed
-        ? const Color(0xFF10B981)
-        : const Color(0xFFF59E0B);
+    final Color tone =
+        passed ? const Color(0xFF10B981) : const Color(0xFFF59E0B);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -403,9 +402,9 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     final criteria = _asMapList(metadata['criteria']);
     final channels = (metadata['launch_channels'] is List)
         ? (metadata['launch_channels'] as List)
-              .map((item) => item.toString())
-              .where((item) => item.isNotEmpty)
-              .toList(growable: false)
+            .map((item) => item.toString())
+            .where((item) => item.isNotEmpty)
+            .toList(growable: false)
         : const <String>[];
     return Container(
       padding: const EdgeInsets.all(16),
@@ -520,22 +519,20 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     final passed = metadata['passed'] == true;
     final state = control['state']?.toString() ?? (passed ? 'idle' : 'blocked');
     final globalKill = master['kill_switch'] == true;
-    final completed = tasks
-        .where((task) => task['status'] == 'completed')
-        .length;
+    final completed =
+        tasks.where((task) => task['status'] == 'completed').length;
     final progress = tasks.isEmpty ? 0.0 : completed / tasks.length;
     final currentTaskId = control['current_task_id']?.toString();
     final currentTask = tasks.cast<Map<String, dynamic>?>().firstWhere(
-      (task) => task?['id']?.toString() == currentTaskId,
-      orElse: () => null,
-    );
+          (task) => task?['id']?.toString() == currentTaskId,
+          orElse: () => null,
+        );
     final totalCost = events.fold<double>(0, (sum, event) {
       return sum + ((event['estimated_cost_usd'] as num?)?.toDouble() ?? 0);
     });
     final canStart = passed && state == 'idle' && !globalKill;
     final canPause = state == 'running' && !globalKill;
-    final canResume =
-        passed &&
+    final canResume = passed &&
         <String>{'paused', 'blocked', 'cancelled'}.contains(state) &&
         !globalKill;
     final canStop = <String>{'running', 'paused', 'blocked'}.contains(state);
@@ -548,9 +545,8 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
           color: const Color(0xFF111827),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: globalKill
-                ? const Color(0xFFEF4444)
-                : const Color(0x1FFFFFFF),
+            color:
+                globalKill ? const Color(0xFFEF4444) : const Color(0x1FFFFFFF),
           ),
         ),
         child: Column(
@@ -718,8 +714,8 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                     event['status'] == 'failed'
                         ? Icons.error_outline
                         : event['status'] == 'completed'
-                        ? Icons.check_circle_outline
-                        : Icons.bolt_outlined,
+                            ? Icons.check_circle_outline
+                            : Icons.bolt_outlined,
                     color: event['status'] == 'failed'
                         ? const Color(0xFFEF4444)
                         : const Color(0xFF22D3EE),
@@ -1051,49 +1047,47 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
       child: Wrap(
         spacing: 10,
         runSpacing: 10,
-        children: agents
-            .map((agent) {
-              final metadata = _metadataOf(agent);
-              return Container(
-                width: 230,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF111827),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0x1FFFFFFF)),
+        children: agents.map((agent) {
+          final metadata = _metadataOf(agent);
+          return Container(
+            width: 230,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF111827),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0x1FFFFFFF)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  agent['display_name']?.toString() ?? '-',
+                  style: const TextStyle(
+                    color: Color(0xFFE5E7EB),
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      agent['display_name']?.toString() ?? '-',
-                      style: const TextStyle(
-                        color: Color(0xFFE5E7EB),
-                        fontWeight: FontWeight.w700,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      agent['role_title']?.toString() ?? '-',
-                      style: const TextStyle(
-                        color: Color(0xB3E5E7EB),
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      metadata['focus']?.toString() ?? '',
-                      style: const TextStyle(
-                        color: Color(0x8AE5E7EB),
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 4),
+                Text(
+                  agent['role_title']?.toString() ?? '-',
+                  style: const TextStyle(
+                    color: Color(0xB3E5E7EB),
+                    height: 1.5,
+                  ),
                 ),
-              );
-            })
-            .toList(growable: false),
+                const SizedBox(height: 8),
+                Text(
+                  metadata['focus']?.toString() ?? '',
+                  style: const TextStyle(
+                    color: Color(0x8AE5E7EB),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(growable: false),
       ),
     );
   }
@@ -1116,63 +1110,61 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     return _buildDetailSection(
       title: 'Initial Task Graph',
       child: Column(
-        children: tasks
-            .map((task) {
-              final metadata = _metadataOf(task);
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF111827),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0x1FFFFFFF)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        children: tasks.map((task) {
+          final metadata = _metadataOf(task);
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF111827),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0x1FFFFFFF)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            task['title']?.toString() ?? '-',
-                            style: const TextStyle(
-                              color: Color(0xFFE5E7EB),
-                              fontWeight: FontWeight.w700,
-                              height: 1.5,
-                            ),
-                          ),
+                    Expanded(
+                      child: Text(
+                        task['title']?.toString() ?? '-',
+                        style: const TextStyle(
+                          color: Color(0xFFE5E7EB),
+                          fontWeight: FontWeight.w700,
+                          height: 1.5,
                         ),
-                        Text(
-                          metadata['stage']?.toString() ?? '',
-                          style: const TextStyle(
-                            color: Color(0x8AE5E7EB),
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      task['description']?.toString() ?? '',
-                      style: const TextStyle(
-                        color: Color(0xB3E5E7EB),
-                        height: 1.5,
                       ),
                     ),
-                    const SizedBox(height: 10),
                     Text(
-                      '${managerNames[task['supervisor_agent_id']?.toString() ?? ''] ?? '-'} -> ${toolNames[task['assignee_agent_id']?.toString() ?? ''] ?? '-'}',
+                      metadata['stage']?.toString() ?? '',
                       style: const TextStyle(
-                        color: Color(0xFFE5E7EB),
-                        fontWeight: FontWeight.w600,
+                        color: Color(0x8AE5E7EB),
                         height: 1.5,
                       ),
                     ),
                   ],
                 ),
-              );
-            })
-            .toList(growable: false),
+                const SizedBox(height: 8),
+                Text(
+                  task['description']?.toString() ?? '',
+                  style: const TextStyle(
+                    color: Color(0xB3E5E7EB),
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '${managerNames[task['supervisor_agent_id']?.toString() ?? ''] ?? '-'} -> ${toolNames[task['assignee_agent_id']?.toString() ?? ''] ?? '-'}',
+                  style: const TextStyle(
+                    color: Color(0xFFE5E7EB),
+                    fontWeight: FontWeight.w600,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(growable: false),
       ),
     );
   }
@@ -1266,8 +1258,8 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                             color: source['status'] == 'ready'
                                 ? const Color(0xFF34D399)
                                 : source['status'] == 'failed'
-                                ? const Color(0xFFFCA5A5)
-                                : const Color(0xFFFCD34D),
+                                    ? const Color(0xFFFCA5A5)
+                                    : const Color(0xFFFCD34D),
                             fontWeight: FontWeight.w700,
                             height: 1.5,
                           ),
@@ -1325,14 +1317,12 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: routingProfiles
-                  .map((profile) {
-                    return _buildPill(
-                      profile['routing_key']?.toString() ?? 'company_builder',
-                      '${profile['current_tier'] ?? 'free'} - ${profile['last_decision'] ?? 'baseline'}',
-                    );
-                  })
-                  .toList(growable: false),
+              children: routingProfiles.map((profile) {
+                return _buildPill(
+                  profile['routing_key']?.toString() ?? 'company_builder',
+                  '${profile['current_tier'] ?? 'free'} - ${profile['last_decision'] ?? 'baseline'}',
+                );
+              }).toList(growable: false),
             ),
           ],
           if (agentCardUrl.trim().isNotEmpty) ...[
@@ -1377,52 +1367,50 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     return _buildDetailSection(
       title: 'Vault Notes',
       child: Column(
-        children: notes
-            .map((note) {
-              final metadata = _metadataOf(note);
-              final content = metadata['content']?.toString() ?? '';
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF111827),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0x1FFFFFFF)),
+        children: notes.map((note) {
+          final metadata = _metadataOf(note);
+          final content = metadata['content']?.toString() ?? '';
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF111827),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0x1FFFFFFF)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  metadata['title']?.toString() ?? 'Untitled note',
+                  style: const TextStyle(
+                    color: Color(0xFFE5E7EB),
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      metadata['title']?.toString() ?? 'Untitled note',
-                      style: const TextStyle(
-                        color: Color(0xFFE5E7EB),
-                        fontWeight: FontWeight.w700,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      metadata['path']?.toString() ?? '',
-                      style: const TextStyle(
-                        color: Color(0x8AE5E7EB),
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      content.length > 220
-                          ? '${content.substring(0, 220)}...'
-                          : content,
-                      style: const TextStyle(
-                        color: Color(0xB3E5E7EB),
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 4),
+                Text(
+                  metadata['path']?.toString() ?? '',
+                  style: const TextStyle(
+                    color: Color(0x8AE5E7EB),
+                    height: 1.5,
+                  ),
                 ),
-              );
-            })
-            .toList(growable: false),
+                const SizedBox(height: 10),
+                Text(
+                  content.length > 220
+                      ? '${content.substring(0, 220)}...'
+                      : content,
+                  style: const TextStyle(
+                    color: Color(0xB3E5E7EB),
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(growable: false),
       ),
     );
   }
@@ -1431,52 +1419,50 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     return _buildDetailSection(
       title: 'Audit Trail',
       child: Column(
-        children: entries
-            .map((entry) {
-              final metadata = _metadataOf(entry);
-              final details = _asMap(metadata['details']);
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF111827),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0x1FFFFFFF)),
+        children: entries.map((entry) {
+          final metadata = _metadataOf(entry);
+          final details = _asMap(metadata['details']);
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF111827),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0x1FFFFFFF)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  metadata['resource']?.toString() ?? 'event',
+                  style: const TextStyle(
+                    color: Color(0xFFE5E7EB),
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      metadata['resource']?.toString() ?? 'event',
-                      style: const TextStyle(
-                        color: Color(0xFFE5E7EB),
-                        fontWeight: FontWeight.w700,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _shortDate(metadata['timestamp'] ?? entry['created_at']),
-                      style: const TextStyle(
-                        color: Color(0x8AE5E7EB),
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      details.entries
-                          .map((item) => '${item.key}: ${item.value}')
-                          .join('\n'),
-                      style: const TextStyle(
-                        color: Color(0xB3E5E7EB),
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 6),
+                Text(
+                  _shortDate(metadata['timestamp'] ?? entry['created_at']),
+                  style: const TextStyle(
+                    color: Color(0x8AE5E7EB),
+                    height: 1.5,
+                  ),
                 ),
-              );
-            })
-            .toList(growable: false),
+                const SizedBox(height: 8),
+                Text(
+                  details.entries
+                      .map((item) => '${item.key}: ${item.value}')
+                      .join('\n'),
+                  style: const TextStyle(
+                    color: Color(0xB3E5E7EB),
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(growable: false),
       ),
     );
   }
