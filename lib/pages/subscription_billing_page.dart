@@ -59,11 +59,28 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     setState(() => _assignment = assignment);
     unawaited(_record('billing_view'));
     unawaited(
+      widget.acquisitionService.recordBillingFunnelStage(
+        stage: GrowthAcquisitionService.funnelBillingView,
+      ),
+    );
+    unawaited(
       widget.acquisitionService.recordFirstUserFunnelStage(
         stage: 'billing_view',
       ),
     );
-    if (_returnNotice != null) unawaited(_record('checkout_return'));
+    final returnNotice = _returnNotice;
+    if (returnNotice != null) {
+      unawaited(_record('checkout_return'));
+      if (returnNotice.isPlanCheckout) {
+        unawaited(
+          widget.acquisitionService.recordBillingFunnelStage(
+            stage: returnNotice.isSuccess
+                ? GrowthAcquisitionService.funnelCheckoutSuccess
+                : GrowthAcquisitionService.funnelCheckoutCancel,
+          ),
+        );
+      }
+    }
     await _fetchBillingInfo();
   }
 
@@ -96,6 +113,9 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
 
   Future<void> _openCheckout(String tier) async {
     await _record('pro_checkout');
+    await widget.acquisitionService.recordBillingFunnelStage(
+      stage: GrowthAcquisitionService.funnelUpgradeClick,
+    );
     await _openStripeSession(() {
       return widget.acquisitionService.loadLatestTouchpoint().then(
             (latestTouchpoint) => _service.createCheckoutSession(
@@ -354,6 +374,9 @@ class _BillingReturnNotice {
   bool get isSuccess =>
       kind == _BillingReturnKind.success ||
       kind == _BillingReturnKind.supporterSuccess;
+
+  bool get isPlanCheckout =>
+      kind == _BillingReturnKind.success || kind == _BillingReturnKind.cancel;
 
   IconData get icon =>
       isSuccess ? Icons.check_circle_outline : Icons.info_outline;
