@@ -68,4 +68,4 @@ The canonical set contains 15 skills:
 - 14 accepted candidates, including the retained YouTube package;
 - `asset-management-wbs-release`, which already existed on `origin/main`.
 
-The five wiki slash-command wrappers and ten other unsafe, duplicated, or superseded candidates remain absent. Future candidates must pass the skill-creator validator, relative-link checks, command smoke tests, and package-specific tests before adoption.
+The five wiki slash-command wrappers and ten other unsafe, duplicated, or superseded candidates remain absent. Future candidates must pass the skill-creator validator, relative-link checks, command smoke tests, and package-specific tests before adoption. `test/scripts/test_agent_skill_cli_contract.py` locks the active Wiki examples to the local script help contract and rejects the retired lint and NotebookLM command forms.

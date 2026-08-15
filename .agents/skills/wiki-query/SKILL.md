@@ -21,7 +21,7 @@ Resolve the intended notebook by current context or an explicit notebook ID. Do 
 notebooklm ask -n '<notebook-id>' '<question>' --json
 ```
 
-Do not use the removed `notebooklm query` command. Do not pass `--new` unless the user explicitly authorizes deleting the notebook's current conversation.
+Use only the `ask` subcommand for questions. Do not pass `--new` unless the user explicitly authorizes deleting the notebook's current conversation.
 
 Check cited source IDs and distinguish quoted source facts, repository evidence, and inference.
 

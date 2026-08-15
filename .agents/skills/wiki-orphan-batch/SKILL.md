@@ -29,6 +29,16 @@ Review whether each note belongs in an index, should link from a concept page, n
 
 ## 3. Apply the reviewed batch
 
-Use explicit `--prefixes` and a unique `--marker`. Then run lint again and inspect only the affected MEMORY index files.
+Use explicit `--prefixes` and a unique `--marker`:
+
+```powershell
+$marker = "<!-- wiki-batch $([guid]::NewGuid()) -->"
+python scripts/wiki_orphan_batch.py `
+  --lint-json "docs/knowledge-vault-lint/$date.json" `
+  --source orphans --top 50 `
+  --prefixes 'project_,feedback_success_' --marker "$marker"
+```
+
+Then run lint again and inspect only the affected MEMORY index files.
 
 Do not process hundreds of entries in one opaque mutation, append routine metrics to the roadmap, or claim repository isolation when the configured memory directory is tracked by Git.

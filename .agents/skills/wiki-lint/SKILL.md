@@ -5,7 +5,7 @@ description: Audit the repository knowledge vault for orphan notes, broken wikil
 
 # Wiki Lint
 
-Run the current CLI without the removed `--report` flag.
+Pass `--output` explicitly for report destinations; the CLI has no report-only switch.
 
 ## Temporary audit
 
