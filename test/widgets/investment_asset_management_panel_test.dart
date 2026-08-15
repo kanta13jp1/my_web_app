@@ -140,12 +140,7 @@ void main() {
 
   testWidgets('clears holdings when the user logs out', (tester) async {
     final repository = _FakeInvestmentAssetRepository([
-      _asset(
-        id: 'asset-1',
-        ticker: 'AAPL',
-        quantity: 2,
-        buyPriceJpy: 1000,
-      ),
+      _asset(id: 'asset-1', ticker: 'AAPL', quantity: 2, buyPriceJpy: 1000),
     ]);
 
     await _pumpPanel(tester, repository: repository, userId: 'user-1');
@@ -188,6 +183,74 @@ void main() {
     expect(repository.lastUpdatedDraft?.normalizedTicker, 'AAPL');
     expect(repository.lastUpdatedDraft?.currentPriceJpy, isNull);
     expect(repository.lastUpdatedDraft?.lastPricedAt, isNull);
+  });
+
+  testWidgets('shows form errors for blank, invalid, and negative values', (
+    tester,
+  ) async {
+    final repository = _FakeInvestmentAssetRepository(const []);
+    await _pumpPanel(tester, repository: repository, userId: 'user-1');
+
+    await tester.tap(find.byKey(const Key('investment_asset_add')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('investment_asset_save')));
+    await tester.pump();
+
+    expect(find.text('銘柄コードを入力してください。'), findsOne);
+    expect(find.text('0より大きい数量を入力してください。'), findsOne);
+    expect(find.text('0以上の取得価格を入力してください。'), findsOne);
+
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_ticker_field')),
+      '7203/T',
+    );
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_quantity_field')),
+      '-1',
+    );
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_buy_price_field')),
+      '-1',
+    );
+    await tester.tap(find.byKey(const Key('investment_asset_save')));
+    await tester.pump();
+
+    expect(
+      find.text('銘柄コードは半角英数字と . _ : - を1〜32文字で入力してください。'),
+      findsOne,
+    );
+    expect(find.text('0より大きい数量を入力してください。'), findsOne);
+    expect(find.text('0以上の取得価格を入力してください。'), findsOne);
+    expect(repository.createCalls, 0);
+  });
+
+  testWidgets('allows quantity edits for an unchanged legacy ticker', (
+    tester,
+  ) async {
+    final repository = _FakeInvestmentAssetRepository([
+      _asset(
+        id: 'asset-legacy',
+        ticker: 'BTC/JPY',
+        quantity: 1,
+        buyPriceJpy: 100,
+        assetType: InvestmentAssetType.crypto,
+      ),
+    ]);
+    await _pumpPanel(tester, repository: repository, userId: 'user-1');
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('investment_asset_edit_asset-legacy')),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_quantity_field')),
+      '2',
+    );
+    await tester.tap(find.byKey(const Key('investment_asset_save')));
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCalls, 1);
+    expect(repository.lastUpdatedDraft?.toUpdateMap()['ticker'], 'BTC/JPY');
   });
 
   testWidgets('adds, edits, and deletes an investment asset', (tester) async {
@@ -277,12 +340,7 @@ void main() {
     tester,
   ) async {
     final repository = _FakeInvestmentAssetRepository([
-      _asset(
-        id: 'asset-aapl',
-        ticker: 'AAPL',
-        quantity: 1,
-        buyPriceJpy: 10000,
-      ),
+      _asset(id: 'asset-aapl', ticker: 'AAPL', quantity: 1, buyPriceJpy: 10000),
     ]);
     final csv = Uint8List.fromList(
       utf8.encode('''
@@ -319,12 +377,7 @@ MSFT Microsoft,4,20000,22000
     tester,
   ) async {
     final repository = _FakeInvestmentAssetRepository([
-      _asset(
-        id: 'asset-aapl',
-        ticker: 'AAPL',
-        quantity: 1,
-        buyPriceJpy: 10000,
-      ),
+      _asset(id: 'asset-aapl', ticker: 'AAPL', quantity: 1, buyPriceJpy: 10000),
     ]);
     final csv = Uint8List.fromList(
       utf8.encode('''

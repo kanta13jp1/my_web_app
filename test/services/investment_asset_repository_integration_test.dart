@@ -30,9 +30,43 @@ void main() {
       expect(captured.url.queryParameters['user_id'], 'eq.user-a');
       expect(
         captured.url.queryParameters['order'],
-        'asset_type.asc.nullslast,ticker.asc.nullslast',
+        'asset_type.asc.nullslast,ticker.asc.nullslast,id.asc.nullslast',
       );
+      expect(captured.url.queryParameters['offset'], '0');
+      expect(captured.url.queryParameters['limit'], '1000');
       expect(captured.headers['authorization'], 'Bearer user-a-jwt');
+    });
+
+    test('paginates growing portfolios with a stable order', () async {
+      final captured = <http.Request>[];
+      final repository = _repository((request) async {
+        captured.add(request);
+        final offset = request.url.queryParameters['offset'];
+        final rows = offset == '0'
+            ? List<Map<String, dynamic>>.generate(
+                1000,
+                (index) => _assetRow(id: 'asset-$index'),
+              )
+            : <Map<String, dynamic>>[_assetRow(id: 'asset-last')];
+        return http.Response(
+          jsonEncode(rows),
+          200,
+          headers: const {'content-type': 'application/json'},
+          request: request,
+        );
+      });
+
+      final assets = await repository.fetchByUser(userId: 'user-a');
+
+      expect(assets, hasLength(1001));
+      expect(captured, hasLength(2));
+      expect(captured[0].url.queryParameters['offset'], '0');
+      expect(captured[1].url.queryParameters['offset'], '1000');
+      expect(captured[1].url.queryParameters['limit'], '1000');
+      expect(
+        captured[1].url.queryParameters['order'],
+        'asset_type.asc.nullslast,ticker.asc.nullslast,id.asc.nullslast',
+      );
     });
 
     test('creates rows with the authenticated owner id', () async {
@@ -120,9 +154,12 @@ InvestmentAssetDraft _draft({double? currentPriceJpy}) {
   );
 }
 
-Map<String, dynamic> _assetRow({double currentPriceJpy = 3000}) {
+Map<String, dynamic> _assetRow({
+  String id = 'asset-1',
+  double currentPriceJpy = 3000,
+}) {
   return <String, dynamic>{
-    'id': 'asset-1',
+    'id': id,
     'user_id': 'user-a',
     'asset_type': 'stock',
     'ticker': '7203.T',

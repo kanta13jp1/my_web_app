@@ -77,6 +77,32 @@ void main() {
       );
     });
 
+    test('keeps an unchanged legacy ticker editable', () {
+      const draft = InvestmentAssetDraft(
+        assetType: InvestmentAssetType.crypto,
+        ticker: 'BTC/JPY',
+        existingTicker: ' btc/jpy ',
+        quantity: 1,
+        buyPriceJpy: 100,
+      );
+
+      expect(draft.toUpdateMap()['ticker'], 'BTC/JPY');
+      expect(
+        () => draft.toInsertMap(userId: 'user-1'),
+        throwsArgumentError,
+      );
+      expect(
+        () => const InvestmentAssetDraft(
+          assetType: InvestmentAssetType.crypto,
+          ticker: 'ETH/JPY',
+          existingTicker: 'BTC/JPY',
+          quantity: 1,
+          buyPriceJpy: 100,
+        ).toUpdateMap(),
+        throwsArgumentError,
+      );
+    });
+
     test('rejects negative quantity and prices', () {
       expect(
         () => const InvestmentAssetDraft(

@@ -228,9 +228,7 @@ class _InvestmentAssetManagementPanelState
         );
       }
       for (final draft in plan.creates) {
-        saved.add(
-          await widget.repository.create(userId: userId, draft: draft),
-        );
+        saved.add(await widget.repository.create(userId: userId, draft: draft));
       }
       if (!mounted) return;
       final updatedIds = plan.updates.map((item) => item.asset.id).toSet();
@@ -546,10 +544,7 @@ class _InvestmentAssetManagementPanelState
         _Metric(label: acquisitionLabel, value: _yen(acquisitionValue)),
         _Metric(label: '銘柄数', value: '${portfolio.items.length}'),
         if (portfolio.unpricedAssetCount > 0)
-          _Metric(
-            label: '価格未取得',
-            value: '${portfolio.unpricedAssetCount}件',
-          ),
+          _Metric(label: '価格未取得', value: '${portfolio.unpricedAssetCount}件'),
       ],
     );
   }
@@ -870,6 +865,7 @@ class _InvestmentAssetEditorDialogState
       InvestmentAssetDraft(
         assetType: _assetType,
         ticker: ticker,
+        existingTicker: asset?.ticker,
         quantity: _parseNumber(_quantityController.text)!,
         buyPriceJpy: _parseNumber(_buyPriceController.text)!,
         buyDate: _buyDate,
@@ -919,9 +915,10 @@ class _InvestmentAssetEditorDialogState
                   hintText: '例: AAPL / BTC',
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? '銘柄コードを入力してください。'
-                    : null,
+                validator: (value) => _tickerValidationMessage(
+                  value,
+                  existingTicker: widget.asset?.ticker,
+                ),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -1003,6 +1000,18 @@ String _assetTypeLabel(InvestmentAssetType type) {
     InvestmentAssetType.crypto => '暗号資産',
     InvestmentAssetType.reit => 'REIT',
     InvestmentAssetType.etf => 'ETF',
+  };
+}
+
+String? _tickerValidationMessage(String? value, {String? existingTicker}) {
+  return switch (investmentTickerValidationError(
+    value,
+    existingTicker: existingTicker,
+  )) {
+    InvestmentTickerValidationError.empty => '銘柄コードを入力してください。',
+    InvestmentTickerValidationError.invalidFormat =>
+      '銘柄コードは半角英数字と . _ : - を1〜32文字で入力してください。',
+    null => null,
   };
 }
 

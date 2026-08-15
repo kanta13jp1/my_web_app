@@ -63,16 +63,20 @@
 ## Implementation Result
 
 - Added deterministic ticker validation matching the market-price boundary.
-- Added form tests for blank/invalid tickers and negative quantities/prices.
+- Shared ticker validation with the form while keeping unchanged legacy
+  symbols editable.
+- Added widget tests for blank/invalid tickers and negative quantities/prices.
 - Added a PostgREST integration contract test for authenticated CRUD requests.
-- Made portfolio ordering explicitly ascending to avoid SDK-default drift.
+- Changed portfolio query ordering from the SDK's descending default to an
+  explicit asset-type/ticker/id ascending contract (the UI already uses this
+  display order), with bounded pagination for growing portfolios.
 - Reused the existing migration test as the deterministic owner-only RLS gate.
 
 Local validation:
 
 ```text
-flutter analyze <4 changed Dart files> -> No issues found
-flutter test <model, valuation, repository, schema suites> -> 16 passed
+dart analyze --fatal-infos <6 changed Dart files> -> No issues found
+flutter test <model, valuation, repository, schema, widget suites> -> 30 passed
 ```
 
 Residual risk: the repository test validates the real Supabase SDK request
