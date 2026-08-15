@@ -568,6 +568,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       _trialReason = instantSuggestion.$2;
       _showSaveCtaPrompt = true;
     });
+    _scrollToTrialMagicLink(requestFocus: false);
     if (input.isEmpty) {
       return;
     }
@@ -738,11 +739,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     });
   }
 
-  void _scrollToTrialMagicLink() {
+  void _scrollToTrialMagicLink({bool requestFocus = true}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final captureContext = _trialEmailFocusNode.context;
       if (!mounted || captureContext == null) return;
-      _trialEmailFocusNode.requestFocus();
+      if (requestFocus) {
+        _trialEmailFocusNode.requestFocus();
+      }
       unawaited(
         Scrollable.ensureVisible(
           captureContext,

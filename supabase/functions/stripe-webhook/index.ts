@@ -10,6 +10,10 @@ import {
   invoiceSubscriptionId,
   subscriptionCurrentPeriodEnd,
 } from "./stripe_api_compat.ts";
+import {
+  isExternalRevenueCandidate,
+  normalizeSupporterBuyerContext,
+} from "../_shared/supporter_buyer.ts";
 
 // .trim(): Supabase secret に紛れ込んだ前後の空白/改行を吸収 (署名検証や
 // Stripe API 呼び出しがコピペ事故で失敗しないよう防御)。
@@ -231,6 +235,10 @@ async function recordSupporterCheckout(
 
   const amountTotal = asInteger(session.amount_total);
   const amountJpy = asInteger(metadata.amount_jpy) ?? amountTotal;
+  const buyerContext = normalizeSupporterBuyerContext(
+    metadata.auth_user_id,
+    metadata.buyer_classification,
+  );
   const { error } = await admin.from("hub_data").insert({
     source: "stripe_supporter_payment",
     metadata: {
@@ -248,6 +256,9 @@ async function recordSupporterCheckout(
       mode: asString(session.mode),
       offer: asString(metadata.offer),
       milestone_code: asString(metadata.milestone_code),
+      auth_user_id: buyerContext.authUserId,
+      buyer_classification: buyerContext.classification,
+      external_revenue_candidate: isExternalRevenueCandidate(buyerContext),
       recorded_at: new Date().toISOString(),
       ...attribution,
     },
