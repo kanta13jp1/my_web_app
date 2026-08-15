@@ -16,6 +16,7 @@ import 'package:my_web_app/pages/agent_org_page.dart';
 import 'package:my_web_app/pages/agent_board_page.dart';
 import 'package:my_web_app/pages/autonomous_ops_console_page.dart';
 import 'package:my_web_app/pages/ai_company_builder_page.dart';
+import 'package:my_web_app/pages/agi_fireworks_page.dart';
 import 'package:my_web_app/pages/ai_agent_page.dart';
 import 'package:my_web_app/pages/behavior_review_page.dart';
 import 'package:my_web_app/pages/daily_habits_page.dart';
@@ -516,6 +517,11 @@ Route<dynamic> generateAppRoute(
         builder: (_) => LandingPage(
           signupCompletionService: signupCompletionService,
         ),
+      );
+    case '/agi-fireworks':
+      return MaterialPageRoute(
+        builder: (_) => const AgiFireworksPage(),
+        settings: settings,
       );
     // HexCiv ダウンロード版の商品ページ (2026-07-28 追加)。
     // Stripe Checkout の success_url / cancel_url がこの URL に
