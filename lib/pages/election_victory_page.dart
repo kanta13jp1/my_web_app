@@ -1298,18 +1298,23 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   ],
                   const SizedBox(height: 16),
                   _buildChartSection(plan),
-                  const SizedBox(height: 16),
-                  _buildAlertStrip(plan),
-                  const SizedBox(height: 24),
-                  _buildSummaryGrid(plan),
-                  const SizedBox(height: 24),
-                  _buildTopPrioritySection(plan),
-                  const SizedBox(height: 24),
-                  _buildMonthlySection(plan),
-                  const SizedBox(height: 24),
-                  _buildRegionFilter(plan),
-                  const SizedBox(height: 12),
-                  _buildPrefectureAccordion(plan),
+                  if (_isPublicView) ...[
+                    const SizedBox(height: 16),
+                    _buildPublicStrategySnapshot(plan),
+                  ] else ...[
+                    const SizedBox(height: 16),
+                    _buildAlertStrip(plan),
+                    const SizedBox(height: 24),
+                    _buildSummaryGrid(plan),
+                    const SizedBox(height: 24),
+                    _buildTopPrioritySection(plan),
+                    const SizedBox(height: 24),
+                    _buildMonthlySection(plan),
+                    const SizedBox(height: 24),
+                    _buildRegionFilter(plan),
+                    const SizedBox(height: 12),
+                    _buildPrefectureAccordion(plan),
+                  ],
                   const SizedBox(height: 24),
                   Text(
                     '注記: 実データは公式議員ページと2023年の公式選挙結果ページを '
@@ -5839,6 +5844,138 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ),
               const SizedBox(height: 6),
               Text(subtitle),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPublicStrategySnapshot(LocalElectionPlanDashboard plan) {
+    final checkpoints = plan.monthlyCheckpoints.take(4).toList(growable: false);
+    final highlightedPrefectures = plan.topPriorityPrefectures(limit: 6);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildAlertStrip(plan),
+        const SizedBox(height: 20),
+        Text(
+          '公開ビューの見どころ',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '固定URLでは、全体の進捗と重点県連、直近の工程をひと目で確認できる構成に絞っています。',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            _buildSummaryCard(
+              title: '配分済み純増',
+              value: _formatInt(plan.allocatedNetIncrease),
+              subtitle: '必要 ${_formatInt(plan.requiredNetIncrease)} に対して',
+              color: const Color(0xFF0F766E),
+            ),
+            _buildSummaryCard(
+              title: '現職維持目標',
+              value: _formatInt(plan.totalIncumbentRetentionTarget),
+              subtitle: '全国の県連入力合計',
+              color: const Color(0xFFB45309),
+            ),
+            _buildSummaryCard(
+              title: '新人擁立目標',
+              value: _formatInt(plan.totalNewCandidateTarget),
+              subtitle: '全国の県連入力合計',
+              color: const Color(0xFF7C3AED),
+            ),
+            _buildSummaryCard(
+              title: '公認内定済み',
+              value:
+                  '${_formatInt(plan.confirmedEndorsementCount)}/${_formatInt(plan.prefectures.length)}',
+              subtitle: '期限月が設定済みの県連数',
+              color: const Color(0xFF1D4ED8),
+            ),
+          ],
+        ),
+        if (highlightedPrefectures.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          Text(
+            '重点県連の配分サマリー',
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              for (final item in highlightedPrefectures)
+                _buildTopPriorityCard(item),
+            ],
+          ),
+        ],
+        if (checkpoints.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          Text(
+            '直近4か月の月次チェックポイント',
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              for (final month in checkpoints)
+                _buildPublicCheckpointCard(month),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildPublicCheckpointCard(LocalElectionMonthlyCheckpoint month) {
+    return SizedBox(
+      width: 240,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                month.label,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                '現職維持累計 ${_formatInt(month.cumulativeIncumbentRetentionTarget)}',
+              ),
+              Text(
+                '重点自治体累計 ${_formatInt(month.cumulativeFocusMunicipalityCount)}',
+              ),
+              Text(
+                '新人擁立累計 ${_formatInt(month.cumulativeNewCandidateTarget)}',
+              ),
+              Text(
+                '内定期限到来 ${_formatInt(month.endorsementsDueThisMonth)}県連',
+              ),
+              Text(
+                '接戦区支援累計 ${_formatInt(month.cumulativeCloseRaceSupportRounds)}',
+              ),
             ],
           ),
         ),
