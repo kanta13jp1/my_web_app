@@ -1,17 +1,16 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-08-13T22:04:48Z`
-- Previous check: `2026-08-12T22:04:21Z`
-- Changed/new official sources: `6`
+- Checked at: `2026-08-14T21:42:27Z`
+- Previous check: `2026-08-13T22:04:48Z`
+- Changed/new official sources: `5`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.231 / August 13, 2026
+- `changed` Claude Code changelog: 2.1.232 / August 13, 2026
 - `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
+- `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume
 - `changed` Codex changelog: 2026-08-13 / Computer History Computer History is an opt-in feature in the ChatGPT desktop app on macOS
 - `changed` Codex use cases: ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of
-- `changed` Cursor changelog: New in Cursor
-- `changed` Devin release notes: August 12, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -23,7 +22,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.231 / August 13, 2026
+  - Latest signal: 2.1.232 / August 13, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .
