@@ -13,6 +13,8 @@ class BillingServiceException implements Exception {
 }
 
 class BillingStatus {
+  static const int freeAiQueryLimit = 30;
+
   const BillingStatus({
     required this.tier,
     required this.status,
@@ -30,6 +32,12 @@ class BillingStatus {
   final bool cancelAtPeriodEnd;
 
   bool get isPro => tier == 'pro' || tier == 'team';
+
+  int get remainingAiQueries =>
+      (freeAiQueryLimit - aiQueryCount).clamp(0, freeAiQueryLimit).toInt();
+
+  double get aiQueryUsageRatio =>
+      (aiQueryCount / freeAiQueryLimit).clamp(0.0, 1.0).toDouble();
 
   factory BillingStatus.fromJson(Map<String, dynamic> json) {
     final billing = _asMap(json['billing']);

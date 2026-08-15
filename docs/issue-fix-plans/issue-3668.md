@@ -38,7 +38,39 @@
 
 ## Checklist
 
-- [ ] Reproduction is clear
-- [ ] Smallest safe fix is implemented
-- [ ] Analyze/tests/CI are checked
-- [ ] PR notes explain the change and the remaining risk
+- [x] Reproduction is clear
+- [x] Smallest safe fix is implemented
+- [x] Analyze/tests are checked locally; CI is pending the implementation push
+- [x] PR notes explain the change and the remaining risk
+
+## Implementation Result
+
+- Added a persistent home usage card with the current-month `N/30` count, remaining queries, and `/billing` upgrade chip.
+- Added the 30-query free-plan limit, remaining count, and progress bar to the billing usage card.
+- Pro and Team users see an unlimited label without a quota progress bar.
+- Kept the upgrade entry point visible when usage loading fails, and stacked the card safely on narrow viewports.
+
+## Validation
+
+- `flutter test --no-pub test/services/billing_service_test.dart test/widgets/home_billing_nudge_test.dart test/pages/subscription_billing_page_test.dart` (15 tests passed)
+- `flutter analyze --no-pub` for the seven changed Dart implementation and test files
+- `git diff --check`
+- Live authenticated Supabase usage and post-merge browser smoke remain CI/deployment verification items.
+
+## High-risk Ultrareview Gate
+
+- Reviewer: Claude Code #1
+- High-Risk-Ultrareview-Exception: additive usage display and billing navigation only; no auth, secrets, schema, migration, payment mutation, or deploy-control change
+- Security: usage remains read-only and uses the existing authenticated billing status endpoint.
+- Rollback: revert the implementation commit; no data rollback is required.
+- Data migration: none.
+- Prod smoke: verify the signed-in home and `/billing` route after the exact commit deploys.
+- Observability: the visible count and existing billing funnel analytics cover the changed path.
+- Unresolved ultrareview findings: none.
+
+## Minimal E2E Gate
+
+- Implementation-detail independent: the test asserts user-visible input/output, not private internals.
+- Minimal scope: about 3 cases (happy path, error path, recovery or empty state).
+- E2E: Flutter `integration_test/` flow or Playwright `test/e2e/` route.
+- E2E-Exception: manual verification: widget tests cover free, Pro, unavailable usage, and narrow layout; live status requires authenticated Supabase state

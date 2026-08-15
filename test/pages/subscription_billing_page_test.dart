@@ -8,6 +8,60 @@ import 'package:my_web_app/services/growth_acquisition_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  testWidgets('shows the free AI quota, remaining count, and progress', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: _FakeBillingGateway(
+            status: const BillingStatus(
+              tier: 'free',
+              status: 'active',
+              aiQueryCount: 12,
+              efCallCount: 4,
+            ),
+          ),
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
+          initialUri: Uri.parse('https://example.com/subscription-billing'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('AI質問 今月 12/30'), findsOneWidget);
+    expect(find.text('残り 18回'), findsOneWidget);
+    expect(find.byKey(const Key('billing_ai_usage_progress')), findsOneWidget);
+  });
+
+  testWidgets('shows unlimited usage for Pro without a quota progress bar', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: _FakeBillingGateway(
+            status: const BillingStatus(
+              tier: 'pro',
+              status: 'active',
+              aiQueryCount: 55,
+              efCallCount: 8,
+            ),
+          ),
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
+          initialUri: Uri.parse('https://example.com/subscription-billing'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('AI質問: 無制限'), findsOneWidget);
+    expect(find.byKey(const Key('billing_ai_usage_progress')), findsNothing);
+    expect(find.textContaining('/30'), findsNothing);
+  });
+
   testWidgets('shows success confirmation and refreshes billing status', (
     tester,
   ) async {
@@ -196,18 +250,23 @@ final _treatment = ActivationRevenueAssignment(
 );
 
 class _FakeBillingGateway implements BillingGateway {
+  _FakeBillingGateway({
+    this.status = const BillingStatus(
+      tier: 'free',
+      status: 'active',
+      aiQueryCount: 0,
+      efCallCount: 0,
+    ),
+  });
+
+  final BillingStatus status;
   int fetchStatusCount = 0;
   BillingSupporterAttribution? supporterAttribution;
 
   @override
   Future<BillingStatus> fetchStatus() async {
     fetchStatusCount += 1;
-    return const BillingStatus(
-      tier: 'free',
-      status: 'active',
-      aiQueryCount: 0,
-      efCallCount: 0,
-    );
+    return status;
   }
 
   @override
