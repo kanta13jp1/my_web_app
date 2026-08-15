@@ -129,10 +129,15 @@ class AssetLiabilityPlanningService {
   /// 振替元に選んでも保存 ID がこのカードローンを指して「原資未設定」に倒れる
   /// バグの原因だった (#part341)。両者は別 ID に分離する。
   static const String jibunBankCardLoanAccountId = 'jibun_bank_card_loan';
+  // 旧・固定額(¥80,000)の組み込み資金移動タスクの ID。かつては毎ビルドで
+  // 三井住友大塚→じぶん銀行の ¥80,000 移動を自動注入していたが、これは不足額と
+  // 無関係の固定値で、給料の入金先がじぶん銀行のとき「給料入金 + 移動入金」の
+  // 二重計上になり、逆に三井住友を ¥80,000 減らして幻の不足→逆方向の提案を
+  // 生んでいた (ユーザー報告)。自動注入は撤去し、資金移動は不足額に上限が
+  // 掛かる動的提案 (_buildTransferSuggestions) に一本化した。ID 定数は、過去に
+  // 「完了」で退避された永続タスクを組み込み扱いと認識するためだけに残す。
   static const String auPayCardFundingTransferTaskId =
       'transfer_smbc_otsuka_to_jibun_aupay_card_funding';
-  static const int auPayCardFundingTransferDay = 26;
-  static const double auPayCardFundingTransferAmount = 80000;
 
   /// ハードコードされた既定固定費 (家賃/KDDI/水道/ガス) のデータ駆動定義。
   /// `buildWorkbook(includeDefaultFixedPayments: true)` で当月該当かつ未計上の
@@ -273,14 +278,8 @@ class AssetLiabilityPlanningService {
       incomePlans: incomePlans,
       accountsById: accountsById,
     );
-    final effectiveTransferTasks = _withDefaultAuPayCardFundingTransfer(
-      transferTasks: transferTasks,
-      accounts: accounts,
-      baseDate: baseDate,
-      salaryDay: salaryDay,
-    );
     final resolvedTransferTasks = _resolveTransferTasks(
-      transferTasks: effectiveTransferTasks,
+      transferTasks: transferTasks,
       accounts: accounts,
       accountsById: accountsById,
     );
@@ -1711,45 +1710,6 @@ class AssetLiabilityPlanningService {
       return a.id.compareTo(b.id);
     });
     return result;
-  }
-
-  List<AssetLiabilityTransferTask> _withDefaultAuPayCardFundingTransfer({
-    required List<AssetLiabilityTransferTask> transferTasks,
-    required List<AssetLiabilityAccount> accounts,
-    required DateTime baseDate,
-    int? salaryDay,
-  }) {
-    if (transferTasks.any(
-      (task) => task.id == auPayCardFundingTransferTaskId,
-    )) {
-      return transferTasks;
-    }
-
-    final fromAccount = _findCashLikeAccountById(
-      accounts,
-      smbcOtsukaBranchAccountId,
-    );
-    final toAccount = _findCashLikeAccountById(accounts, jibunBankAccountId);
-    if (fromAccount == null || toAccount == null) {
-      return transferTasks;
-    }
-
-    return <AssetLiabilityTransferTask>[
-      ...transferTasks,
-      AssetLiabilityTransferTask(
-        id: auPayCardFundingTransferTaskId,
-        fromAccountId: fromAccount.id,
-        fromAccountName: fromAccount.name,
-        toAccountId: toAccount.id,
-        toAccountName: toAccount.name,
-        amount: auPayCardFundingTransferAmount,
-        dueDate: _resolveCyclePaymentDate(
-          baseDate,
-          salaryDay,
-          auPayCardFundingTransferDay,
-        ),
-      ),
-    ];
   }
 
   AssetLiabilityAccount? _findCashLikeAccountById(

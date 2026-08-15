@@ -42,6 +42,13 @@ jobs:
         with:
           deno-version: v2.x
 
+      - name: Cache Deno modules
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/deno
+          key: deno-${{ hashFiles('deno.lock') }}
+          restore-keys: deno-
+
       - name: Deno check
         run: deno check scripts/mcp_audit_anomaly.ts scripts/mcp_audit_anomaly_test.ts
 
@@ -65,6 +72,13 @@ jobs:
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+
+      - name: Cache Deno modules
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/deno
+          key: deno-${{ hashFiles('deno.lock') }}
+          restore-keys: deno-
 
       - name: Detect anomaly
         run: >
