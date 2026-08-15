@@ -8,18 +8,17 @@ import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
 import '../models/public_memo.dart';
 
-typedef LocalElectionMemoPublisher =
-    Future<PublicMemo?> Function({
-      required int noteId,
-      required String userId,
-      required String title,
-      String? content,
-      String? category,
-      Map<String, dynamic> metadata,
-    });
+typedef LocalElectionMemoPublisher = Future<PublicMemo?> Function({
+  required int noteId,
+  required String userId,
+  required String title,
+  String? content,
+  String? category,
+  Map<String, dynamic> metadata,
+});
 
-typedef LocalElectionMemoLoader =
-    Future<PublicMemo?> Function({required int noteId, required String userId});
+typedef LocalElectionMemoLoader = Future<PublicMemo?> Function(
+    {required int noteId, required String userId});
 
 typedef _OfficialEndorsementTotals = ({
   int total,
@@ -89,14 +88,14 @@ class LocalElectionShareService {
       DateTime(2027, 4, 18);
   static final List<LocalElectionShareWindow> availableWindows =
       List<LocalElectionShareWindow>.unmodifiable(
-        List<LocalElectionShareWindow>.generate(
-          maxWeekendWindowCount,
-          (index) => LocalElectionShareWindow(
-            label: index == 0 ? '今週末' : '${index + 1}週後',
-            weekendOffset: index,
-          ),
-        ),
-      );
+    List<LocalElectionShareWindow>.generate(
+      maxWeekendWindowCount,
+      (index) => LocalElectionShareWindow(
+        label: index == 0 ? '今週末' : '${index + 1}週後',
+        weekendOffset: index,
+      ),
+    ),
+  );
 
   final SupabaseClient _supabase;
   final LocalElectionMemoPublisher? _publishMemo;
@@ -126,9 +125,9 @@ class LocalElectionShareService {
     LocalElectionMemoLoader? loadMemo,
     OfficialEndorsementRepository officialEndorsementRepository =
         const OfficialEndorsementRepository(),
-  }) : _publishMemo = publishMemo,
-       _loadMemo = loadMemo,
-       _officialEndorsementRepository = officialEndorsementRepository;
+  })  : _publishMemo = publishMemo,
+        _loadMemo = loadMemo,
+        _officialEndorsementRepository = officialEndorsementRepository;
 
   Future<PublicMemo?> publishSnapshot({
     required LocalElectionRealitySnapshot snapshot,
@@ -306,9 +305,8 @@ class LocalElectionShareService {
       return '$body\n\n$publicUrl';
     }
     final prefectures = _prefecturesForDisplay(snapshot);
-    final missingCount = prefectures
-        .where((item) => item.currentMembers == 0)
-        .length;
+    final missingCount =
+        prefectures.where((item) => item.currentMembers == 0).length;
     final lowCount = prefectures
         .where(
           (item) =>
@@ -370,9 +368,8 @@ class LocalElectionShareService {
     int maxWeightedChars = 24000,
   }) {
     final draft = buildDraft(snapshot: snapshot, members: members, plan: plan);
-    final suffix = publicUrl.isEmpty
-        ? ''
-        : '\n\n全都道府県の内訳と現職名簿の公開ノート:\n$publicUrl';
+    final suffix =
+        publicUrl.isEmpty ? '' : '\n\n全都道府県の内訳と現職名簿の公開ノート:\n$publicUrl';
     final body = draft.content.trim();
     if (xWeightedLength(body) + xWeightedLength(suffix) <= maxWeightedChars) {
       return '$body$suffix';
@@ -383,8 +380,7 @@ class LocalElectionShareService {
     final truncationNote = publicUrl.isEmpty
         ? '\n\n(文字数上限のため名簿は途中まで)'
         : '\n\n(文字数上限のため名簿の続きは公開ノートへ)';
-    final budget =
-        maxWeightedChars -
+    final budget = maxWeightedChars -
         xWeightedLength(suffix) -
         xWeightedLength(truncationNote);
     if (budget <= 0) {
@@ -556,30 +552,29 @@ class LocalElectionShareService {
     DateTime? now,
   }) {
     final range = scheduleWindowRange(window, now: now);
-    final schedules =
-        snapshot.targetElectionSchedules.where((entry) {
-          if (entry.isPast) {
-            return false;
-          }
-          final voteDate = entry.parsedVoteDate;
-          if (voteDate == null) {
-            return false;
-          }
-          final localDate = _normalizeDate(voteDate.toLocal());
-          return !localDate.isBefore(range.start) &&
-              !localDate.isAfter(range.end);
-        }).toList()..sort((a, b) {
-          final aDate = a.parsedVoteDate ?? DateTime(9999);
-          final bDate = b.parsedVoteDate ?? DateTime(9999);
-          if (aDate != bDate) {
-            return aDate.compareTo(bDate);
-          }
-          final prefectureCompare = a.prefecture.compareTo(b.prefecture);
-          if (prefectureCompare != 0) {
-            return prefectureCompare;
-          }
-          return a.electionName.compareTo(b.electionName);
-        });
+    final schedules = snapshot.targetElectionSchedules.where((entry) {
+      if (entry.isPast) {
+        return false;
+      }
+      final voteDate = entry.parsedVoteDate;
+      if (voteDate == null) {
+        return false;
+      }
+      final localDate = _normalizeDate(voteDate.toLocal());
+      return !localDate.isBefore(range.start) && !localDate.isAfter(range.end);
+    }).toList()
+      ..sort((a, b) {
+        final aDate = a.parsedVoteDate ?? DateTime(9999);
+        final bDate = b.parsedVoteDate ?? DateTime(9999);
+        if (aDate != bDate) {
+          return aDate.compareTo(bDate);
+        }
+        final prefectureCompare = a.prefecture.compareTo(b.prefecture);
+        if (prefectureCompare != 0) {
+          return prefectureCompare;
+        }
+        return a.electionName.compareTo(b.electionName);
+      });
     return schedules;
   }
 
@@ -616,22 +611,20 @@ class LocalElectionShareService {
           return a.prefecture.compareTo(b.prefecture);
         });
     } else {
-      upcoming =
-          snapshot
-              .schedulesWithinDays(daysAhead)
-              .where((e) => !e.isPast)
-              .toList()
-            ..sort((a, b) {
-              final aDate = a.parsedVoteDate ?? DateTime(9999);
-              final bDate = b.parsedVoteDate ?? DateTime(9999);
-              if (aDate != bDate) return aDate.compareTo(bDate);
-              return a.prefecture.compareTo(b.prefecture);
-            });
+      upcoming = snapshot
+          .schedulesWithinDays(daysAhead)
+          .where((e) => !e.isPast)
+          .toList()
+        ..sort((a, b) {
+          final aDate = a.parsedVoteDate ?? DateTime(9999);
+          final bDate = b.parsedVoteDate ?? DateTime(9999);
+          if (aDate != bDate) return aDate.compareTo(bDate);
+          return a.prefecture.compareTo(b.prefecture);
+        });
     }
 
-    final noCandidate = upcoming
-        .where((e) => e.kokuminCandidateCount == 0)
-        .toList();
+    final noCandidate =
+        upcoming.where((e) => e.kokuminCandidateCount == 0).toList();
     final total = upcoming.length;
     final noCount = noCandidate.length;
 
@@ -658,13 +651,11 @@ class LocalElectionShareService {
     }
     if (noCount > 0) {
       final candidatePhrase = noCount == total ? '1人も' : '$noCount件';
-      introText =
-          '$weekendLabel投開票日の地方選挙が$total件ありますが、'
+      introText = '$weekendLabel投開票日の地方選挙が$total件ありますが、'
           '国民民主党は独自公認候補を$candidatePhrase擁立できていません。'
           '痛恨の極みです。こんな状況では統一地方選までに地方議員700人など絶対に達成できません。';
     } else {
-      introText =
-          '$weekendLabel投開票日の地方選挙が$total件あります。'
+      introText = '$weekendLabel投開票日の地方選挙が$total件あります。'
           '国民民主党は全選挙に候補者を擁立しています！';
     }
 
@@ -697,9 +688,8 @@ class LocalElectionShareService {
 
     // --- Tweet 2: statistics + top prefectures + link ---
     final prefectures = _prefecturesForDisplay(snapshot);
-    final missingCount = prefectures
-        .where((item) => item.currentMembers == 0)
-        .length;
+    final missingCount =
+        prefectures.where((item) => item.currentMembers == 0).length;
     final lowCount = prefectures
         .where(
           (item) =>
@@ -757,9 +747,8 @@ class LocalElectionShareService {
     final dpjOfficialEndorsementFormerTotal = endorsementTotals.former;
     final dpjOfficialEndorsementPrefectureCount = endorsementTotals.prefectures;
     final cdpByPrefecture = _cdpByPrefecture(plan);
-    final missing = prefectures
-        .where((item) => item.currentMembers == 0)
-        .toList();
+    final missing =
+        prefectures.where((item) => item.currentMembers == 0).toList();
     final low = prefectures
         .where(
           (item) =>
@@ -899,9 +888,8 @@ class LocalElectionShareService {
     LocalElectionPlanDashboard? plan,
   }) {
     final cdpByPrefecture = _cdpByPrefecture(plan);
-    final missing = prefectures
-        .where((item) => item.currentMembers == 0)
-        .toList();
+    final missing =
+        prefectures.where((item) => item.currentMembers == 0).toList();
     final low = prefectures
         .where(
           (item) =>
@@ -931,15 +919,14 @@ class LocalElectionShareService {
       'electionAchievements': snapshot.electionIntelligence.achievements
           .map((item) => item.toJson())
           .toList(),
-      'officialEndorsements': snapshot.electionIntelligence.officialEndorsements
-          .toJson(),
+      'officialEndorsements':
+          snapshot.electionIntelligence.officialEndorsements.toJson(),
       'cdpLocalMembers': prefectures.fold<int>(
         0,
         (sum, item) => sum + _resolveCdpLocalMembers(item, cdpByPrefecture),
       ),
-      'activePrefectureCount': prefectures
-          .where((item) => item.currentMembers > 0)
-          .length,
+      'activePrefectureCount':
+          prefectures.where((item) => item.currentMembers > 0).length,
       'missingPrefectureCount': missing.length,
       'missingPrefectures': missing.map((item) => item.prefecture).toList(),
       'lowPresenceThreshold': lowPresenceThreshold,
@@ -1172,8 +1159,7 @@ class LocalElectionShareService {
       if (prefectureCompare != 0) {
         return prefectureCompare;
       }
-      final categoryCompare =
-          categoryRank(left.assemblyCategory) -
+      final categoryCompare = categoryRank(left.assemblyCategory) -
           categoryRank(right.assemblyCategory);
       if (categoryCompare != 0) {
         return categoryCompare;
@@ -1240,18 +1226,12 @@ class LocalElectionShareService {
       return '';
     }
 
-    return entry.kokuminCandidateNames
-        .asMap()
-        .entries
-        .map((candidate) {
-          final status = candidate.key < entry.kokuminCandidateStatuses.length
-              ? entry.kokuminCandidateStatuses[candidate.key].trim()
-              : '';
-          return status.isEmpty
-              ? candidate.value
-              : '${candidate.value}（$status）';
-        })
-        .join('、');
+    return entry.kokuminCandidateNames.asMap().entries.map((candidate) {
+      final status = candidate.key < entry.kokuminCandidateStatuses.length
+          ? entry.kokuminCandidateStatuses[candidate.key].trim()
+          : '';
+      return status.isEmpty ? candidate.value : '${candidate.value}（$status）';
+    }).join('、');
   }
 
   String _prefectureMarker(LocalElectionPrefectureReality item) {
@@ -1312,12 +1292,10 @@ class LocalElectionShareService {
     if (top.isEmpty) {
       return null;
     }
-    final parts = top
-        .map((item) {
-          final gap = item.cdpMemberGap;
-          return '${item.prefecture}${gap >= 0 ? '+' : ''}$gap';
-        })
-        .join(' / ');
+    final parts = top.map((item) {
+      final gap = item.cdpMemberGap;
+      return '${item.prefecture}${gap >= 0 ? '+' : ''}$gap';
+    }).join(' / ');
     return '立憲民主党との地力差（上位）：$parts。';
   }
 

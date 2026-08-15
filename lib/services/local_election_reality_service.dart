@@ -23,7 +23,7 @@ class LocalElectionRealityService {
   final SupabaseClient? _client;
 
   const LocalElectionRealityService({SupabaseClient? client})
-    : _client = client;
+      : _client = client;
 
   SupabaseClient? get _resolvedClient {
     if (_client != null) {
@@ -106,17 +106,16 @@ class LocalElectionRealityService {
       if (decoded is! List) {
         return const <LocalElectionRealityHistoryPoint>[];
       }
-      final points =
-          decoded
-              .whereType<Map>()
-              .map(
-                (item) => LocalElectionRealityHistoryPoint.fromJson(
-                  Map<String, dynamic>.from(item),
-                ),
-              )
-              .where((item) => item.officialCurrentLocalMembers > 0)
-              .toList()
-            ..sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
+      final points = decoded
+          .whereType<Map>()
+          .map(
+            (item) => LocalElectionRealityHistoryPoint.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          )
+          .where((item) => item.officialCurrentLocalMembers > 0)
+          .toList()
+        ..sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
       return points;
     } catch (error) {
       debugPrint('Local election history parse failed: $error');
@@ -185,8 +184,8 @@ class LocalElectionRealityService {
         await loadCachedSnapshot(prefs: store, mode: mode);
     final memorySnapshot =
         _memorySnapshot?.electionIntelligence.selectedMode == mode
-        ? _memorySnapshot
-        : null;
+            ? _memorySnapshot
+            : null;
     final LocalElectionRealitySnapshot? fallbackSnapshot = _pickNewerSnapshot(
       memorySnapshot,
       cachedSnapshot,
@@ -207,10 +206,10 @@ class LocalElectionRealityService {
 
     final Future<LocalElectionRealitySnapshot> request =
         _fetchLatestSnapshotFromEdgeFunction(
-          client: client,
-          includeAiSummary: includeAiSummary,
-          mode: mode,
-        ).then(_rejectSuspiciousSnapshot);
+      client: client,
+      includeAiSummary: includeAiSummary,
+      mode: mode,
+    ).then(_rejectSuspiciousSnapshot);
     _latestSnapshotInFlight = request;
     _latestSnapshotInFlightMode = mode;
 
@@ -296,15 +295,13 @@ class LocalElectionRealityService {
     required bool includeAiSummary,
     required ElectionModeId mode,
   }) async {
-    final response = await client.functions
-        .invoke(
-          'local-election-intelligence',
-          body: <String, dynamic>{
-            'mode': mode.wireName,
-            'includeAiSummary': includeAiSummary,
-          },
-        )
-        .timeout(_edgeFunctionTimeout);
+    final response = await client.functions.invoke(
+      'local-election-intelligence',
+      body: <String, dynamic>{
+        'mode': mode.wireName,
+        'includeAiSummary': includeAiSummary,
+      },
+    ).timeout(_edgeFunctionTimeout);
     final data = _toMap(response.data);
     if (data['success'] != true) {
       throw Exception(
@@ -411,15 +408,13 @@ class LocalElectionRealityService {
 
     final history = await loadSnapshotHistory(prefs: store);
     final currentDayKey = _historyDayKey(currentPoint.fetchedAt.toLocal());
-    final updated =
-        history
-            .where(
-              (item) =>
-                  _historyDayKey(item.fetchedAt.toLocal()) != currentDayKey,
-            )
-            .toList()
-          ..add(currentPoint)
-          ..sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
+    final updated = history
+        .where(
+          (item) => _historyDayKey(item.fetchedAt.toLocal()) != currentDayKey,
+        )
+        .toList()
+      ..add(currentPoint)
+      ..sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
 
     const maxPoints = 180;
     final trimmed = updated.length > maxPoints

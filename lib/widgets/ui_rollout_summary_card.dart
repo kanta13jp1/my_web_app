@@ -24,7 +24,8 @@ class UiRolloutSummaryCard extends StatelessWidget {
         .where((screen) => screen.rollout.stage == UiImprovementStage.applied)
         .length;
     final int inProgressCount = screens
-        .where((screen) => screen.rollout.stage == UiImprovementStage.inProgress)
+        .where(
+            (screen) => screen.rollout.stage == UiImprovementStage.inProgress)
         .length;
     final int plannedCount = screens
         .where((screen) => screen.rollout.stage == UiImprovementStage.planned)
@@ -61,8 +62,7 @@ class UiRolloutSummaryCard extends StatelessWidget {
         applied: screens
             .where(
               (screen) =>
-                  screen.rollout.designSkills ==
-                  UiImprovementAdoption.applied,
+                  screen.rollout.designSkills == UiImprovementAdoption.applied,
             )
             .length,
         inProgress: screens
@@ -75,8 +75,7 @@ class UiRolloutSummaryCard extends StatelessWidget {
         planned: screens
             .where(
               (screen) =>
-                  screen.rollout.designSkills ==
-                  UiImprovementAdoption.planned,
+                  screen.rollout.designSkills == UiImprovementAdoption.planned,
             )
             .length,
       ),
@@ -86,8 +85,7 @@ class UiRolloutSummaryCard extends StatelessWidget {
         applied: screens
             .where(
               (screen) =>
-                  screen.rollout.aiDesignerMcp ==
-                  UiImprovementAdoption.applied,
+                  screen.rollout.aiDesignerMcp == UiImprovementAdoption.applied,
             )
             .length,
         inProgress: screens
@@ -100,8 +98,7 @@ class UiRolloutSummaryCard extends StatelessWidget {
         planned: screens
             .where(
               (screen) =>
-                  screen.rollout.aiDesignerMcp ==
-                  UiImprovementAdoption.planned,
+                  screen.rollout.aiDesignerMcp == UiImprovementAdoption.planned,
             )
             .length,
       ),
@@ -363,8 +360,8 @@ class UiRolloutSummaryCard extends StatelessWidget {
   }
 
   int _compareScreens(_ScreenSnapshot a, _ScreenSnapshot b) {
-    final int stageCompare =
-        _stagePriority(a.rollout.stage).compareTo(_stagePriority(b.rollout.stage));
+    final int stageCompare = _stagePriority(a.rollout.stage)
+        .compareTo(_stagePriority(b.rollout.stage));
     if (stageCompare != 0) {
       return stageCompare;
     }
@@ -518,9 +515,8 @@ class _ToolCoverageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final int coveragePercent = total <= 0
-        ? 0
-        : ((coverage.applied / total) * 100).round();
+    final int coveragePercent =
+        total <= 0 ? 0 : ((coverage.applied / total) * 100).round();
 
     return Container(
       width: 220,
@@ -578,7 +574,8 @@ class _CategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String label = categoryLabel[coverage.category] ?? coverage.category.name;
+    final String label =
+        categoryLabel[coverage.category] ?? coverage.category.name;
     final Color color = coverage.priorityCount == 0
         ? const Color(0xFF1E7B65)
         : coverage.priorityCount <= 2
@@ -635,8 +632,8 @@ class _ScreenPreviewRow extends StatelessWidget {
                 color: _stageColor(screen.rollout.stage),
               ),
               _StatusBadge(
-                label:
-                    categoryLabel[screen.record.category] ?? screen.record.category.name,
+                label: categoryLabel[screen.record.category] ??
+                    screen.record.category.name,
                 color: const Color(0xFF475569),
                 backgroundAlpha: 0.10,
               ),
@@ -681,7 +678,8 @@ class _ScreenPreviewRow extends StatelessWidget {
                 color: _adoptionColor(screen.rollout.figmaMcp),
               ),
               _StatusBadge(
-                label: 'AIDesigner ${_adoptionLabel(screen.rollout.aiDesignerMcp)}',
+                label:
+                    'AIDesigner ${_adoptionLabel(screen.rollout.aiDesignerMcp)}',
                 color: _adoptionColor(screen.rollout.aiDesignerMcp),
               ),
               _StatusBadge(
