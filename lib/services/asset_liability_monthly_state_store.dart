@@ -1270,6 +1270,10 @@ class AssetLiabilityMonthlyStateStore {
       final monthlyReceivedIncomeTotal = _parseNonNullDouble(
         rawSnapshot['monthlyReceivedIncomeTotal'],
       );
+      // キー欠落は null (= 未追跡) のまま保持し、0 円評価と区別する。
+      final securitiesTotal = _parseNonNullDouble(
+        rawSnapshot['securitiesTotal'],
+      );
       if (monthKey == null ||
           monthKey.isEmpty ||
           savedAt == null ||
@@ -1299,6 +1303,7 @@ class AssetLiabilityMonthlyStateStore {
           monthlyPaymentDifferenceTotal: monthlyPaymentDifferenceTotal ?? 0,
           overduePaymentCount: overduePaymentCount,
           monthlyReceivedIncomeTotal: monthlyReceivedIncomeTotal,
+          securitiesTotal: securitiesTotal,
         ),
       );
     }
@@ -1677,6 +1682,9 @@ class AssetLiabilityMonthlyStateStore {
           // null (= 収入未追跡) はキーを書かず、旧データと区別できるようにする。
           if (snapshot.monthlyReceivedIncomeTotal != null)
             'monthlyReceivedIncomeTotal': snapshot.monthlyReceivedIncomeTotal,
+          // null (= 証券評価額 未追跡) はキーを書かず旧データと区別する。
+          if (snapshot.securitiesTotal != null)
+            'securitiesTotal': snapshot.securitiesTotal,
         },
     ];
   }

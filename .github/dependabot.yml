@@ -76,6 +76,11 @@ updates:
       flutter-dependencies:
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
+        exclude-patterns:
+          - "flutter_native_splash"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"

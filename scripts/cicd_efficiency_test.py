@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+from pathlib import Path
+import unittest
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class CicdEfficiencyTest(unittest.TestCase):
+    def read(self, relative: str) -> str:
+        return (ROOT / relative).read_text(encoding="utf-8")
+
+    def test_push_does_not_repeat_full_local_gate(self) -> None:
+        lefthook = self.read("lefthook.yml")
+        self.assertNotIn("pre-push:", lefthook)
+        self.assertNotIn("quality_gate.py --full", lefthook)
+        pre_commit = self.read("scripts/pre_commit_quality_gate.py")
+        self.assertNotIn('quality_gate.main(["--fast"])', pre_commit)
+        self.assertNotIn('"flutter", "analyze"', pre_commit)
+        self.assertNotIn('["dart", "format"', pre_commit)
+
+    def test_deploy_reuses_protected_pr_ci_result(self) -> None:
+        deploy = self.read(".github/workflows/deploy-prod.yml")
+        self.assertIn("if: github.event_name == 'workflow_dispatch'", deploy)
+        self.assertIn("needs.ci.result == 'skipped'", deploy)
+        self.assertIn("if: steps.changes.outputs.web == 'true'", deploy)
+        self.assertIn("if: steps.changes.outputs.edge == 'true'", deploy)
+        self.assertIn("if: steps.changes.outputs.migration == 'true'", deploy)
+
+    def test_minimal_gate_does_not_poll_ci(self) -> None:
+        workflow = self.read(".github/workflows/minimal-e2e-gate.yml")
+        self.assertNotIn("Wait for deterministic CI checks", workflow)
+        self.assertNotIn("check_pr_deterministic_ci.py", workflow)
+        self.assertIn("workflow_run:", workflow)
+        public_job = workflow.split("  public-e2e-stability:", maxsplit=1)[1]
+        self.assertNotIn("github.event_name == 'pull_request'", public_job)
+        self.assertNotIn("Select deployed E2E scope", public_job)
+
+    def test_non_app_prs_skip_minimal_e2e_declaration(self) -> None:
+        script = self.read("scripts/check_minimal_e2e_gate.py")
+        self.assertIn("if not app_change:", script)
+        self.assertIn("no application runtime code changed", script)
+
+    def test_ga_gate_does_not_run_for_every_test_file(self) -> None:
+        workflow = self.read(".github/workflows/ga-readiness-gate.yml")
+        self.assertNotIn('- "test/**"', workflow)
+        self.assertNotIn("flutter analyze", workflow)
+        self.assertNotIn("flutter test", workflow)
+        self.assertIn("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", workflow)
+
+    def test_auto_fix_is_operator_initiated(self) -> None:
+        workflow = self.read(".github/workflows/ci-auto-fix.yml")
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("workflow_run:", workflow)
+
+    def test_ci_expensive_steps_are_path_scoped(self) -> None:
+        workflow = self.read(".github/workflows/ci.yml")
+        self.assertIn("if: steps.changes.outputs.flutter == 'true'", workflow)
+        self.assertIn("if: steps.changes.outputs.edge == 'true'", workflow)
+        self.assertIn("if: steps.changes.outputs.caption == 'true'", workflow)
+        self.assertIn("steps.changes.outputs.web == 'true'", workflow)
+
+
+if __name__ == "__main__":
+    unittest.main()

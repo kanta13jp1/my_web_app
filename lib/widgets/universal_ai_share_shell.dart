@@ -95,6 +95,29 @@ class UniversalAiShareRouteObserver extends NavigatorObserver {
 /// ボタンが押せなくなる (実機 build 4873/4877 で発生)。ツールバー高さぶん下げて
 /// アプリの chrome を塞がないようにする。bottom 配置は元から干渉しない。
 const double kAiShareFabTopOffset = kToolbarHeight + 20;
+const double kAiShareFabDefaultBottomOffset = 20;
+const double kAiShareFabLandingBottomOffset = 88;
+const double kAiShareFabMusubiBottomOffset = 88;
+
+bool shouldShowUniversalAiShareFab({
+  required String routePath,
+  required bool isLoggedIn,
+}) {
+  return routePath != '/' || isLoggedIn;
+}
+
+double resolveAiShareFabBottomOffset({
+  required String routePath,
+  required double screenWidth,
+}) {
+  final isMusubi = routePath == '/musubi' || routePath == '/social-feed';
+  if (isMusubi) return kAiShareFabMusubiBottomOffset;
+
+  final isLandingMobile = routePath == '/' && screenWidth < 720;
+  return isLandingMobile
+      ? kAiShareFabLandingBottomOffset
+      : kAiShareFabDefaultBottomOffset;
+}
 
 class UniversalAiShareShell extends StatefulWidget {
   final Widget child;
@@ -192,6 +215,10 @@ class _UniversalAiShareShellState extends State<UniversalAiShareShell> {
                   navigatorKey: widget.navigatorKey,
                 ),
               ),
+              bottomOffset: resolveAiShareFabBottomOffset(
+                routePath: page.routePath,
+                screenWidth: MediaQuery.sizeOf(context).width,
+              ),
             );
           },
         );
@@ -199,16 +226,20 @@ class _UniversalAiShareShellState extends State<UniversalAiShareShell> {
     );
   }
 
-  Widget _positionedFab(AiShareButtonPosition position, Widget child) {
+  Widget _positionedFab(
+    AiShareButtonPosition position,
+    Widget child, {
+    required double bottomOffset,
+  }) {
     switch (position) {
       case AiShareButtonPosition.topLeft:
         return Positioned(left: 16, top: kAiShareFabTopOffset, child: child);
       case AiShareButtonPosition.topRight:
         return Positioned(right: 16, top: kAiShareFabTopOffset, child: child);
       case AiShareButtonPosition.bottomLeft:
-        return Positioned(left: 16, bottom: 20, child: child);
+        return Positioned(left: 16, bottom: bottomOffset, child: child);
       case AiShareButtonPosition.bottomRight:
-        return Positioned(right: 16, bottom: 20, child: child);
+        return Positioned(right: 16, bottom: bottomOffset, child: child);
     }
   }
 }
@@ -259,6 +290,13 @@ class _UniversalAiShareFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = _isLoggedIn;
+    if (!shouldShowUniversalAiShareFab(
+      routePath: page.routePath,
+      isLoggedIn: isLoggedIn,
+    )) {
+      return const SizedBox.shrink();
+    }
+
     final colorScheme = Theme.of(context).colorScheme;
     final backgroundColor = isLoggedIn
         ? colorScheme.primaryContainer
@@ -350,6 +388,18 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
   bool _posting = false;
   bool _disposed = false;
 
+  /// R24: リンク位置。既定は「リードにURL」= false。
+  ///
+  /// 従来は `linkInReply: true` をハードコードしていたが、実測 (X analytics
+  /// 2026-04-27〜07-25 / 350投稿) がこの既定を否定した:
+  ///   - リンクをリードに置く経路 (地方議員集計 / `'$body\n\n$publicUrl'`)
+  ///     … 5本で URL クリック 286件 = アカウント全クリックの 94%
+  ///   - この経路が生成した最終CTAリプライ「試せるURLはこちらです。5分だけ
+  ///     触って…」… 30 impressions / プロダクト系24本で計 2クリック
+  /// A/B の余地は残す (performance_context の "link placement" lift は両方の
+  /// バケットに n>=2 が無いと沈黙するため、切り替え自体は残す必要がある)。
+  bool _linkInReply = false;
+
   @override
   void initState() {
     super.initState();
@@ -381,12 +431,19 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
       final slopWarning = composeSlopWarning(
         detectSlop(draft.text, draft.threadReplies.join('\n')),
       );
+      // R27: 年号は事実主張なのでスロップより優先して出す。プロンプトに
+      // 「never invent another year (e.g. never write 2024)」があるにも関わらず、
+      // 実際に `デイリーブリーフィング — 2024/07/05 朝` が出荷された実例がある。
+      final staleYearWarning = composeStaleYearWarning(
+        detectStaleYears('${draft.text}\n${draft.threadReplies.join('\n')}'),
+      );
       setState(() {
         _draft = draft;
         _textController.text = draft.text;
         _loadingDraft = false;
-        _statusMessage =
-            draft.fallbackUsed ? 'AI生成が不安定なため、安全な定型文を使っています' : slopWarning;
+        _statusMessage = draft.fallbackUsed
+            ? 'AI生成が不安定なため、安全な定型文を使っています'
+            : (staleYearWarning ?? slopWarning);
       });
     } catch (error) {
       if (_disposed || !mounted) return;
@@ -575,7 +632,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
           );
         }
       }
-      // 3. X 投稿(URLはリプライへ、スレッド返信も投稿)
+      // 3. X 投稿(既定はリードにURL / スレッド返信も投稿)
       final postedMedia = _videoUrl != null ? '動画' : '画像';
       setState(() => _statusMessage = 'Xに投稿しています…（$postedMedia付き）');
       // 非同日の再利用動画のみ最終リプへ1行開示する(リード1行目のフックには
@@ -593,7 +650,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         text: _textController.text,
         mediaUrl: _videoUrl ?? _imageUrl,
         threadReplies: threadReplies,
-        linkInReply: true,
+        linkInReply: _linkInReply,
         // ネイティブ投票(H7 / impressions ブースター)。draft.poll が null の
         // ときは従来と完全に同一の投稿になる(additive / default-off)。
         poll: draft.poll,
@@ -689,6 +746,24 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                   ),
                 ),
               const SizedBox(height: 8),
+              // R24: リンク位置の A/B スイッチ。既定 (リードにURL) は実測に
+              // 従う。切り替えを残すのは、performance_context の
+              // "link placement" lift が両バケット n>=2 で初めて出るため。
+              SwitchListTile.adaptive(
+                value: _linkInReply,
+                onChanged: _posting
+                    ? null
+                    : (value) => setState(() => _linkInReply = value),
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: const Text('URLを最終リプライに置く'),
+                subtitle: Text(
+                  _linkInReply
+                      ? 'A/B用。実測ではこの配置のCTAリプライは30impに留まりました'
+                      : '既定。実測でクリックの94%はリードにURLがある投稿から出ています',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
               if (mediaUrl != null) ...[
                 const SizedBox(height: 12),
                 SelectableText(

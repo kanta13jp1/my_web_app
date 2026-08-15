@@ -4,6 +4,8 @@ import 'package:my_web_app/pages/subscription_billing_page.dart';
 import 'package:my_web_app/services/activation_revenue_experiment_service.dart';
 import 'package:my_web_app/services/activation_revenue_tracker.dart';
 import 'package:my_web_app/services/billing_service.dart';
+import 'package:my_web_app/services/growth_acquisition_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('shows success confirmation and refreshes billing status', (
@@ -104,6 +106,43 @@ void main() {
     expect(find.textContaining('自動更新なし'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'carries the original X variant into the supporter checkout',
+    (tester) async {
+      final billing = _FakeBillingGateway();
+      final acquisition = _RecordingAcquisitionService();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SubscriptionBillingPage(
+            service: billing,
+            acquisitionService: acquisition,
+            tracker: const NoopActivationRevenueEventTracker(),
+            assignment: _treatment,
+            initialUri: Uri.parse(
+              'https://example.com/subscription-billing?entry=onboarding',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(acquisition.stages, contains('billing_view'));
+      final checkoutButton = find.byKey(
+        const Key('billing_supporter_checkout_button'),
+      );
+      await tester.ensureVisible(checkoutButton);
+      await tester.tap(checkoutButton);
+      await tester.pumpAndSettle();
+
+      expect(acquisition.stages, contains('supporter_checkout'));
+      expect(
+        billing.supporterAttribution?.toJson(),
+        containsPair('utm_content', 'outcome_first_a'),
+      );
+    },
+  );
 }
 
 final _treatment = ActivationRevenueAssignment(
@@ -113,6 +152,7 @@ final _treatment = ActivationRevenueAssignment(
 
 class _FakeBillingGateway implements BillingGateway {
   int fetchStatusCount = 0;
+  BillingSupporterAttribution? supporterAttribution;
 
   @override
   Future<BillingStatus> fetchStatus() async {
@@ -140,6 +180,7 @@ class _FakeBillingGateway implements BillingGateway {
     BillingSupporterAttribution attribution =
         const BillingSupporterAttribution(),
   }) async {
+    supporterAttribution = attribution;
     return const BillingCheckoutSession(url: 'https://stripe.example.test');
   }
 
@@ -148,5 +189,43 @@ class _FakeBillingGateway implements BillingGateway {
     required String returnUrl,
   }) async {
     return const BillingPortalSession(url: 'https://stripe.example.test');
+  }
+}
+
+class _RecordingAcquisitionService extends GrowthAcquisitionService {
+  _RecordingAcquisitionService();
+
+  final List<String> stages = <String>[];
+
+  @override
+  Future<bool> recordFirstUserFunnelStage({
+    required String stage,
+    String? visitorId,
+    Uri? currentUri,
+    SharedPreferences? preferences,
+    DateTime? now,
+  }) async {
+    stages.add(stage);
+    return true;
+  }
+
+  @override
+  Future<String?> loadLatestTouchpoint() async {
+    return GrowthAcquisitionService.touchXFirstUserGrowth;
+  }
+
+  @override
+  Future<FirstUserGrowthAttribution?> loadFirstUserAttribution({
+    SharedPreferences? preferences,
+    DateTime? now,
+  }) async {
+    return FirstUserGrowthAttribution(
+      visitorId: '00000000-0000-4000-8000-000000000001',
+      utmSource: 'x',
+      utmMedium: 'organic',
+      utmCampaign: 'first_user_growth',
+      utmContent: 'outcome_first_a',
+      capturedAt: DateTime.utc(2026, 7, 24),
+    );
   }
 }

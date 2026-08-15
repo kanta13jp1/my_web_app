@@ -193,6 +193,23 @@ def build_public_route_html(template: str, route: dict, base_url: str) -> str:
     out = replace_attr_content(
         out, r'(<meta property="twitter:url" content=")([^"]*)(")', url)
 
+    image = route.get("image")
+    if image:
+        image_url = image if image.startswith("http") else f"{base_url}{image}"
+        image_alt = route.get("image_alt", title)
+        out = replace_attr_content(
+            out, r'(<meta\s+property="og:image"\s+content=")([^"]*)(")',
+            image_url)
+        out = replace_attr_content(
+            out, r'(<meta\s+property="twitter:image"\s+content=")([^"]*)(")',
+            image_url)
+        out = replace_attr_content(
+            out, r'(<meta property="og:image:alt" content=")([^"]*)(")',
+            image_alt)
+        out = replace_attr_content(
+            out, r'(<meta property="twitter:image:alt" content=")([^"]*)(")',
+            image_alt)
+
     graph = {
         "@context": "https://schema.org",
         "@type": "WebPage",

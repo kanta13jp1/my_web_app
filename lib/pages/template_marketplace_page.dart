@@ -367,6 +367,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
     Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: '/note-editor'),
         builder: (_) => NoteEditorPage(
           initialTitle: t.title,
           initialContent: t.content,

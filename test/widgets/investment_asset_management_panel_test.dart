@@ -1,6 +1,8 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/investment_asset.dart';
+import 'package:my_web_app/models/investment_portfolio_history.dart';
 import 'package:my_web_app/services/investment_asset_repository.dart';
 import 'package:my_web_app/widgets/investment_asset_management_panel.dart';
 
@@ -71,6 +73,66 @@ void main() {
 
     expect(find.byKey(const Key('investment_asset_empty')), findsOne);
     expect(repository.fetchCalls, 2);
+  });
+
+  testWidgets('retries a history error without hiding holdings', (
+    tester,
+  ) async {
+    final repository = _FakeInvestmentAssetRepository([
+      _asset(
+        id: 'asset-1',
+        ticker: 'AAPL',
+        quantity: 2,
+        buyPriceJpy: 1000,
+        currentPriceJpy: 1200,
+      ),
+    ])
+      ..historyFetchError = Exception('temporary history failure');
+
+    await _pumpPanel(tester, repository: repository, userId: 'user-1');
+
+    expect(find.text('AAPL'), findsOne);
+    expect(find.byKey(const Key('investment_history_load_error')), findsOne);
+    expect(repository.historyFetchCalls, 1);
+
+    repository.historyFetchError = null;
+    await tester.tap(find.byTooltip('推移を再読み込み'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('investment_history_empty')), findsOne);
+    expect(repository.historyFetchCalls, 2);
+  });
+
+  testWidgets('filters portfolio history when the period changes', (
+    tester,
+  ) async {
+    final repository = _FakeInvestmentAssetRepository(
+      [
+        _asset(
+          id: 'asset-1',
+          ticker: 'AAPL',
+          quantity: 2,
+          buyPriceJpy: 1000,
+          currentPriceJpy: 1200,
+        ),
+      ],
+      history: [
+        _historyPoint(DateTime.utc(2024, 7, 21)),
+        _historyPoint(DateTime.utc(2026, 7, 21)),
+      ],
+    );
+
+    await _pumpPanel(
+      tester,
+      repository: repository,
+      userId: 'user-1',
+      now: () => DateTime.utc(2026, 7, 21),
+    );
+
+    expect(_marketSpotCount(tester), 1);
+    await tester.tap(find.text('3年'));
+    await tester.pumpAndSettle();
+    expect(_marketSpotCount(tester), 2);
   });
 
   testWidgets('clears holdings when the user logs out', (tester) async {
@@ -200,6 +262,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.deleteCalls, 1);
+    expect(repository.historyFetchCalls, 5);
     expect(
       find.byKey(const ValueKey<String>('investment_asset_asset-1')),
       findsNothing,
@@ -212,6 +275,7 @@ Future<void> _pumpPanel(
   WidgetTester tester, {
   required InvestmentAssetRepository repository,
   required String? userId,
+  DateTime Function()? now,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -222,6 +286,7 @@ Future<void> _pumpPanel(
             child: InvestmentAssetManagementPanel(
               repository: repository,
               userId: userId,
+              now: now,
             ),
           ),
         ),
@@ -229,6 +294,11 @@ Future<void> _pumpPanel(
     ),
   );
   await tester.pumpAndSettle();
+}
+
+int _marketSpotCount(WidgetTester tester) {
+  final chart = tester.widget<LineChart>(find.byType(LineChart));
+  return chart.data.lineBarsData.first.spots.length;
 }
 
 InvestmentAsset _asset({
@@ -255,17 +325,23 @@ InvestmentAsset _asset({
 }
 
 class _FakeInvestmentAssetRepository implements InvestmentAssetRepository {
-  _FakeInvestmentAssetRepository(Iterable<InvestmentAsset> seed)
-      : assets = seed.toList();
+  _FakeInvestmentAssetRepository(
+    Iterable<InvestmentAsset> seed, {
+    Iterable<InvestmentPortfolioHistoryPoint> history = const [],
+  })  : assets = seed.toList(),
+        history = history.toList();
 
   final List<InvestmentAsset> assets;
+  final List<InvestmentPortfolioHistoryPoint> history;
   int fetchCalls = 0;
   int createCalls = 0;
   int updateCalls = 0;
   int deleteCalls = 0;
+  int historyFetchCalls = 0;
   InvestmentAssetDraft? lastCreatedDraft;
   InvestmentAssetDraft? lastUpdatedDraft;
   Exception? fetchError;
+  Exception? historyFetchError;
 
   @override
   Future<List<InvestmentAsset>> fetchByUser({required String userId}) async {
@@ -273,6 +349,16 @@ class _FakeInvestmentAssetRepository implements InvestmentAssetRepository {
     final error = fetchError;
     if (error != null) throw error;
     return List<InvestmentAsset>.from(assets);
+  }
+
+  @override
+  Future<List<InvestmentPortfolioHistoryPoint>> fetchPortfolioHistory({
+    required String userId,
+  }) async {
+    historyFetchCalls++;
+    final error = historyFetchError;
+    if (error != null) throw error;
+    return List<InvestmentPortfolioHistoryPoint>.from(history);
   }
 
   @override
@@ -306,6 +392,16 @@ class _FakeInvestmentAssetRepository implements InvestmentAssetRepository {
     deleteCalls++;
     assets.removeWhere((asset) => asset.id == assetId);
   }
+}
+
+InvestmentPortfolioHistoryPoint _historyPoint(DateTime recordedAt) {
+  return InvestmentPortfolioHistoryPoint(
+    recordedAt: recordedAt,
+    marketValueJpy: 2400,
+    acquisitionCostJpy: 2000,
+    pricedAssetCount: 1,
+    unpricedAssetCount: 0,
+  );
 }
 
 InvestmentAsset _fromDraft({

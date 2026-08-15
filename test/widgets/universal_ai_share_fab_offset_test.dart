@@ -18,4 +18,57 @@ void main() {
     // home_page など toolbarHeight を広げたページでも干渉しないこと。
     expect(kAiShareFabTopOffset, greaterThan(74.0));
   });
+
+  test('LPのモバイル下部では登録CTAの上に退避する', () {
+    expect(
+      resolveAiShareFabBottomOffset(routePath: '/', screenWidth: 390),
+      kAiShareFabLandingBottomOffset,
+    );
+    expect(
+      kAiShareFabLandingBottomOffset,
+      greaterThan(kAiShareFabDefaultBottomOffset),
+    );
+  });
+
+  test('LP以外またはデスクトップでは既定位置を維持する', () {
+    expect(
+      resolveAiShareFabBottomOffset(routePath: '/notes', screenWidth: 390),
+      kAiShareFabDefaultBottomOffset,
+    );
+    expect(
+      resolveAiShareFabBottomOffset(routePath: '/', screenWidth: 1200),
+      kAiShareFabDefaultBottomOffset,
+    );
+  });
+
+  test('MUSUBIではDM送信ボタンの上に退避する', () {
+    for (final routePath in <String>['/musubi', '/social-feed']) {
+      expect(
+        resolveAiShareFabBottomOffset(
+          routePath: routePath,
+          screenWidth: 1280,
+        ),
+        kAiShareFabMusubiBottomOffset,
+      );
+    }
+    expect(
+      kAiShareFabMusubiBottomOffset,
+      greaterThan(kAiShareFabDefaultBottomOffset),
+    );
+  });
+
+  test('anonymous landing hides only the universal share FAB', () {
+    expect(
+      shouldShowUniversalAiShareFab(routePath: '/', isLoggedIn: false),
+      isFalse,
+    );
+    expect(
+      shouldShowUniversalAiShareFab(routePath: '/', isLoggedIn: true),
+      isTrue,
+    );
+    expect(
+      shouldShowUniversalAiShareFab(routePath: '/notes', isLoggedIn: false),
+      isTrue,
+    );
+  });
 }

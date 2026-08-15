@@ -73,6 +73,7 @@ import {
   type AnomalyDetectionDb,
   AnomalyDetectionError,
   handleDetectAnomaliesAction,
+  handleScanAllAction,
 } from "./anomaly_detection.ts";
 import {
   handleMarketPriceAction,
@@ -4835,6 +4836,23 @@ serve(async (req: Request) => {
               request.model,
             );
           },
+        });
+        return json({ success: true, ...result });
+      }
+
+      case "asset.anomaly.scan_all": {
+        // daily-anomaly-scan.yml (cron) 専用: schedule-hub の service_role
+        // レベルと同じく Bearer === SERVICE_ROLE_KEY の生比較で認可する
+        // (service role JWT は auth.getUser() で user にならないため
+        //  authRequired リストでは扱えない)。
+        const bearer = (req.headers.get("Authorization") ?? "")
+          .replace(/^Bearer\s+/i, "");
+        if (!SERVICE_ROLE_KEY || bearer !== SERVICE_ROLE_KEY) {
+          return json({ error: "Unauthorized" }, 401);
+        }
+        const result = await handleScanAllAction({
+          db: admin as unknown as AnomalyDetectionDb,
+          body,
         });
         return json({ success: true, ...result });
       }

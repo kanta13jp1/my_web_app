@@ -886,6 +886,15 @@ class AssetLiabilityMonthlySnapshot {
   final double monthlyPaymentDifferenceTotal;
   final int overduePaymentCount;
 
+  /// その月末時点の証券 (securities 口座) 評価額合計。
+  ///
+  /// 従来スナップショットに保存されておらず、旧データ / Supabase 同期分は
+  /// null (= 未追跡) になる。投資評価額の時系列グラフ (#2469) は
+  /// 「未追跡」と「評価額 0 円」を区別する必要があるため nullable のままにし、
+  /// null の月はグラフの点として描かない (0 円へ落とすと保有していたはずの
+  /// 資産が消えたように見えるため)。
+  final double? securitiesTotal;
+
   /// その月に受領済み (received=true) となった収入の合計。
   ///
   /// 収入は従来スナップショットに保存されておらず、旧データ / Supabase 同期分は
@@ -909,6 +918,7 @@ class AssetLiabilityMonthlySnapshot {
     this.monthlyPaymentDifferenceTotal = 0,
     required this.overduePaymentCount,
     this.monthlyReceivedIncomeTotal,
+    this.securitiesTotal,
   });
 }
 
@@ -1389,12 +1399,23 @@ class AssetLiabilityWorkbook {
     );
   }
 
+  /// 支払原資が未設定の支払い。支払済み行は除く。
+  ///
+  /// 原資未設定を警告する根拠は「どの口座の見込み残高からも差し引かれず、
+  /// 残高不足を先読みできない」ことだが、口座別見込み残高は支払済み行を
+  /// 最初から控除対象外にしている (`_buildAccountCashflowSummaries` の
+  /// `!row.paid`) ため、支払済み行にその盲点は存在しない。`!row.paid` が
+  /// 無いと支払済みにしてもバナー・アラート・合計金額が残り続け、「払い
+  /// 終わった支払いに引落口座を後付けする」以外に消す手段が無くなる。
+  /// 兄弟の [paymentSourceInvalidRows] / [billingConfirmationPendingRows] と
+  /// 述語を揃える。
   List<AssetLiabilityDebtRow> get paymentSourceMissingRows {
     return debtMasterRows
         .where(
           (row) =>
               row.isDirectCashflowTarget &&
               row.scheduledPaymentAmount > 0 &&
+              !row.paid &&
               (row.paymentSourceAccountId == null ||
                   row.paymentSourceAccountId!.trim().isEmpty),
         )

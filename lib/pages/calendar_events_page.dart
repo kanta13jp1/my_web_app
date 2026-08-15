@@ -1896,27 +1896,30 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                   )
                 : _selectedDayEvents.isEmpty
                     ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.event_available,
-                              size: 48,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHighest,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'この日のイベントはありません',
-                              style: TextStyle(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .outlineVariant,
-                                height: 1.5,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.event_available,
+                                size: 48,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 8),
+                              Text(
+                                'この日のイベントはありません',
+                                style: TextStyle(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .outlineVariant,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       )
                     : ListView.builder(
