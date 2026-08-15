@@ -14,6 +14,7 @@ from typing import Any
 CONFIG_PATH = Path("config/context-injection-map.json")
 NOTEBOOKLM_SNAPSHOT_PATH = Path("docs/notebooklm-intake/latest-snapshot.json")
 NOTEBOOKLM_ISSUE_DRAFTS_PATH = Path("docs/notebooklm-intake/issue-drafts.md")
+NOTEBOOKLM_REPORT_PATH = Path("docs/notebooklm-intake/latest-report.md")
 HARNESS_NOTEBOOK_ID = "bc58b50b-5fc4-4840-9a62-b397d6d3b65a"
 SAFE_DISPOSITIONS = {
     "applied",
@@ -140,6 +141,7 @@ def validate_config(root: Path, config: dict[str, Any]) -> list[str]:
 def notebooklm_intake_summary(root: Path) -> dict[str, Any]:
     snapshot_path = root / NOTEBOOKLM_SNAPSHOT_PATH
     drafts_path = root / NOTEBOOKLM_ISSUE_DRAFTS_PATH
+    report_path = root / NOTEBOOKLM_REPORT_PATH
     snapshot = load_json(snapshot_path, {})
     notebooks = snapshot.get("notebooks", []) if isinstance(snapshot, dict) else []
     if not isinstance(notebooks, list):
@@ -168,6 +170,18 @@ def notebooklm_intake_summary(root: Path) -> dict[str, Any]:
         drafts = drafts_path.read_text(encoding="utf-8-sig")
         drafts_state = "none" if "No new issue drafts" in drafts else "has_drafts"
 
+    harness_in_notebooks = any(
+        isinstance(notebook, dict) and notebook.get("id") == HARNESS_NOTEBOOK_ID
+        for notebook in notebooks
+    )
+    harness_in_report = (
+        report_path.exists()
+        and HARNESS_NOTEBOOK_ID in report_path.read_text(encoding="utf-8-sig")
+    )
+    harness_found = (
+        bool(snapshot.get("harness_found", False)) if isinstance(snapshot, dict) else False
+    ) or harness_in_notebooks or harness_in_report
+
     return {
         "snapshot": str(NOTEBOOKLM_SNAPSHOT_PATH),
         "issue_drafts": str(NOTEBOOKLM_ISSUE_DRAFTS_PATH),
@@ -175,9 +189,7 @@ def notebooklm_intake_summary(root: Path) -> dict[str, Any]:
         "harness_notebook_id": snapshot.get("harness_notebook_id", HARNESS_NOTEBOOK_ID)
         if isinstance(snapshot, dict)
         else HARNESS_NOTEBOOK_ID,
-        "harness_found": bool(snapshot.get("harness_found", False))
-        if isinstance(snapshot, dict)
-        else False,
+        "harness_found": harness_found,
         "notebook_count": int(snapshot.get("notebook_count", len(notebooks)))
         if isinstance(snapshot, dict)
         else len(notebooks),
