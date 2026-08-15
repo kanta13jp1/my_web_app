@@ -58,6 +58,7 @@ import '../widgets/kgi_csf_kpi_panel.dart';
 import '../widgets/life_waste_elimination_panel.dart';
 import '../widgets/referral_share_card.dart';
 import '../widgets/thought_interrupt_quick_widget.dart';
+import '../widgets/ui_rollout_summary_card.dart';
 import 'ai_secretary_page.dart';
 import 'work_menu_page.dart';
 import '../data/home_tool_catalog.dart';
@@ -5999,6 +6000,15 @@ abstinence_slip_details: $slipDetailsText
                                 iconColor: Color(0xFF10B981),
                                 initiallyExpanded: false,
                                 child: DevelopmentAchievementsCard(),
+                              ),
+                              const SizedBox(height: 12),
+                              const CollapsibleHomeSection(
+                                storageKey: 'home_section_ui_rollout',
+                                title: 'UI改善適用状況',
+                                icon: Icons.palette_outlined,
+                                iconColor: Color(0xFFFF6B35),
+                                initiallyExpanded: false,
+                                child: UiRolloutSummaryCard(),
                               ),
                               const SizedBox(height: 12),
                               // Edge Functions 実装状況 (アコーディオン / 初期折りたたみ)
