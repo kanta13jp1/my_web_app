@@ -183,9 +183,17 @@ Content-Type: application/json
 
 1. 関連する Dart/TypeScript ソースを `lib/` または `supabase/functions/` から読んで原因を特定
 2. 修正可能な軽微なバグ（typo、null チェック漏れ、ロジック誤りなど）であれば:
-   a. コードを修正
-   b. `flutter analyze` を実行し 0 エラーを確認（Dart の場合）
+   a. コードを修正（**Edit ツールで局所修正**。`sed` / heredoc で全文上書きしない。
+      文字列補間 `${expr}` / `$var` の `$` を**絶対にエスケープしない** —
+      `$`→`\$` 過剰エスケープは compile 不能化の典型バグ。2026-06-25 incident 参照）
+   b. **検証ゲート (必須)**: 変更ファイルを analyzer へ通し 0 エラーを確認。
+      Dart → `dart analyze <変更ファイル>`（全体は OOM のため変更ファイルのみ） /
+      TypeScript → `deno check <変更ファイル>`。
+      早期検知 → `grep -nF '\${' <変更ファイル>` で `\${` を見つけたら過剰エスケープ。
+      0 エラーでなければ commit しない。
    c. `git add -p && git commit -m "fix: <バグ内容>" && git push origin main` でコミット
+      （**analyzer を実行できない実行環境 (例: WEB版 sandbox) では main へ直接 push 禁止。
+      PR を作り ci.yml にゲートさせる**）
    d. 返信文に「修正しました。本番デプロイまで数分お待ちください」と記載して返信
 3. 複雑な修正が必要な場合はエスカレーション (ケース C)
 

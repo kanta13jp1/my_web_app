@@ -43,6 +43,64 @@ Deno.test("keeps pinned asset-management issue schedule after issue sync", () =>
   assertEquals(plan.updates[0].end_date, "2026-05-18");
 });
 
+Deno.test("rolls overdue pinned tasks forward while preserving roadmap spacing", () => {
+  const plan = buildWbsReschedulePlan(
+    [
+      task("asset-2468", {
+        github_issue_number: 2468,
+        github_issue_state: "OPEN",
+      }),
+      task("asset-2469", {
+        github_issue_number: 2469,
+        github_issue_state: "OPEN",
+      }),
+      task("asset-2486", {
+        github_issue_number: 2486,
+        github_issue_state: "OPEN",
+      }),
+    ],
+    {},
+    new Date("2026-07-19T12:00:00.000Z"),
+  );
+
+  const byIssue = new Map(
+    plan.updates.map((update) => [update.github_issue_number, update]),
+  );
+  assertEquals(byIssue.get(2468)?.start_date, "2026-07-19");
+  assertEquals(byIssue.get(2468)?.end_date, "2026-07-20");
+  assertEquals(byIssue.get(2469)?.start_date, "2026-07-21");
+  assertEquals(byIssue.get(2469)?.end_date, "2026-07-22");
+  assertEquals(byIssue.get(2486)?.start_date, "2026-08-14");
+  assertEquals(byIssue.get(2486)?.end_date, "2026-08-15");
+});
+
+Deno.test("starts computed issue work after the rolled-forward pinned window", () => {
+  const plan = buildWbsReschedulePlan(
+    [
+      task("asset-2468", {
+        github_issue_number: 2468,
+        github_issue_state: "OPEN",
+      }),
+      task("ordinary-issue", {
+        github_issue_number: 4000,
+        github_issue_state: "OPEN",
+      }),
+    ],
+    {
+      github_issue_offset_days: 0,
+      github_issue_duration_days: 0,
+      github_issue_parallel_capacity: 1,
+    },
+    new Date("2026-07-19T00:00:00.000Z"),
+  );
+
+  const ordinary = plan.updates.find((update) =>
+    update.id === "ordinary-issue"
+  );
+  assert(ordinary);
+  assertEquals(ordinary.start_date, "2026-07-21");
+});
+
 Deno.test("does not place a large feature-request queue on one day", () => {
   const tasks = Array.from(
     { length: 5 },

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// AI Observability — プロバイダーヘルス + ヒートマップ + セッショントレース
 ///
@@ -22,7 +23,14 @@ class AiObservabilityPage extends StatefulWidget {
 }
 
 class _AiObservabilityPageState extends State<AiObservabilityPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['health', 'heatmap', 'sessions'];
+
+  @override
+  TabController get tabUrlController => _tab;
+
   late TabController _tab;
   final _supabase = Supabase.instance.client;
 

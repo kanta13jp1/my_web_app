@@ -1,6 +1,17 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+
+/// R35: flutter_local_notifications はローカル通知の **スケジュール** を web で
+/// サポートせず、`zonedSchedule()` は `UnsupportedError` を投げる。
+/// main.dart は起動時に既定 true (`stock_tasks_saturday_reminder_enabled`) で
+/// `scheduleSaturdayReminder()` を呼ぶため、**web では毎回の起動で
+/// 例外→`FlutterError.reportError`→auto_error_report** が発生し、
+/// コンソールと hub_data のエラーログ (第5弾の可視化カードが読む先) を、
+/// web では原理的に成功し得ない条件で汚し続けていた。
+/// web ではスケジュール系を静かに no-op する (機能自体が web に存在しない)。
+bool get notificationSchedulingSupported => !kIsWeb;
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -52,6 +63,8 @@ class NotificationService {
   }
 
   Future<void> scheduleSaturdayReminder() async {
+    // R35: web はスケジュール未対応 (zonedSchedule が UnsupportedError)。
+    if (!notificationSchedulingSupported) return;
     await init();
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
@@ -88,6 +101,8 @@ class NotificationService {
     int hour = 21,
     int minute = 0,
   }) async {
+    // R35: web はスケジュール未対応 (zonedSchedule が UnsupportedError)。
+    if (!notificationSchedulingSupported) return;
     await init();
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
@@ -123,6 +138,8 @@ class NotificationService {
     int id = abstinenceRecoveryReminderId,
     DateTime? dueAt,
   }) async {
+    // R35: web はスケジュール未対応 (zonedSchedule が UnsupportedError)。
+    if (!notificationSchedulingSupported) return;
     await init();
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
@@ -172,6 +189,7 @@ class NotificationService {
     required DateTime startAt,
     required int reminderMinutes,
   }) async {
+    if (!notificationSchedulingSupported) return;
     final normalizedId = eventId.trim();
     if (normalizedId.isEmpty) return;
 

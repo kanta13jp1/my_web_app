@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/affiliate_link_stats.dart';
+
 /// アフィリエイト・マーケティングページ
 /// affiliate-marketing Edge Function と連携してアフィリエイト情報を管理
 class AffiliateMarketingPage extends StatefulWidget {
@@ -14,8 +16,8 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _errorMessage;
-  List<Map<String, dynamic>> _campaigns = [];
-  Map<String, dynamic>? _summary;
+  List<AffiliateLinkStats> _campaigns = [];
+  AffiliateSummary? _summary;
 
   @override
   void initState() {
@@ -37,17 +39,11 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
         'social-commerce-hub',
         body: {'action': 'affiliate.list_links'},
       );
-      final data = response.data;
-      if (data is Map<String, dynamic>) {
-        setState(() {
-          _campaigns = ((data['links'] ?? data['campaigns']) as List?)
-                  ?.cast<Map<String, dynamic>>() ??
-              [];
-          _summary = data['summary'] as Map<String, dynamic>?;
-        });
-      } else if (data is List) {
-        setState(() => _campaigns = data.cast<Map<String, dynamic>>());
-      }
+      final links = AffiliateLinkStats.listFromResponse(response.data);
+      setState(() {
+        _campaigns = links;
+        _summary = AffiliateSummary.fromLinks(links);
+      });
     } catch (e) {
       if (mounted) {
         setState(() => _errorMessage = 'アフィリエイト情報の取得に失敗しました: $e');
@@ -68,20 +64,20 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
           children: [
             _buildStat(
               '総クリック数',
-              _summary!['total_clicks']?.toString() ?? '0',
+              _summary!.totalClicks.toString(),
               Icons.touch_app,
               const Color(0xFF3D5AFE),
             ),
             _buildStat(
               'コンバージョン',
-              _summary!['total_conversions']?.toString() ?? '0',
+              _summary!.totalConversions.toString(),
               Icons.check_circle,
               const Color(0xFF4CAF50),
             ),
             _buildStat(
-              '報酬合計',
-              '¥${_summary!['total_earnings']?.toString() ?? '0'}',
-              Icons.monetization_on,
+              'リンク数',
+              _summary!.linkCount.toString(),
+              Icons.link,
               const Color(0xFFFF6B35),
             ),
           ],
@@ -170,10 +166,10 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
                     )
                   else
                     ..._campaigns.map((c) {
-                      final name = c['name']?.toString() ?? 'キャンペーン';
-                      final status = c['status']?.toString() ?? '';
-                      final clicks = c['clicks']?.toString() ?? '0';
-                      final earnings = c['earnings']?.toString() ?? '0';
+                      final name = c.title.isNotEmpty ? c.title : 'キャンペーン';
+                      final commission = c.commissionPct > 0
+                          ? '  |  報酬率: ${c.commissionPct}%'
+                          : '';
                       return Card(
                         color: const Color(0xFF1E1E1E),
                         child: ListTile(
@@ -182,15 +178,20 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
                             color: Color(0xFF3D5AFE),
                           ),
                           title: Text(name),
-                          subtitle: Text('クリック: $clicks  |  報酬: ¥$earnings'),
-                          trailing: Chip(
-                            label: Text(status),
-                            backgroundColor: status == 'active'
-                                ? const Color(0xFFC8E6C9)
-                                : Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerHighest,
+                          subtitle: Text(
+                            'クリック: ${c.clicks}  |  CV: ${c.conversions}$commission',
                           ),
+                          trailing: c.code.isNotEmpty
+                              ? Chip(
+                                  label: Text(
+                                    c.code,
+                                    style: const TextStyle(fontSize: 11),
+                                  ),
+                                  backgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
+                                )
+                              : null,
                         ),
                       );
                     }),

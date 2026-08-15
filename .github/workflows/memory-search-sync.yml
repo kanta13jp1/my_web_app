@@ -3,7 +3,7 @@ name: Memory Search Sync
 on:
   workflow_dispatch:
   schedule:
-    - cron: "12 */2 * * *"  # 2026-06-11 ci-audit: 毎時→2時間, 360runs/月削減
+    - cron: "12 */4 * * *"  # 2026-06-11 ci-audit: 毎時→2時間 / 2026-07-21 ci-audit: 2時間→4時間, 180runs/月削減
 
 permissions:
   contents: read
@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Pre-flight budget check
         env:

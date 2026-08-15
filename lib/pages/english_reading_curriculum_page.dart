@@ -126,6 +126,7 @@ class _EnglishReadingCurriculumPageState
   Future<void> _openPractice(EnglishReadingLesson lesson, String mode) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/english-reading-practice'),
         builder: (_) => EnglishReadingPracticePage(lesson: lesson, mode: mode),
       ),
     );

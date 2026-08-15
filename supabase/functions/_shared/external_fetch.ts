@@ -79,8 +79,12 @@ export async function externalFetch(
     baseDelayMs,
     Math.floor(options.maxDelayMs ?? 5_000),
   );
+  // 429 は既定でリトライしない: rate-limit 到達後の自動再試行は全 call を
+  // 最大 4 倍に増幅し、プラットフォーム側からは bot 的アクセス継続に見える
+  // (2026-07-12 Qiita アカウント停止インシデントの加重要因)。
+  // 必要な呼び出し元のみ options.retryStatuses で明示 opt-in する。
   const retryStatuses = new Set(
-    options.retryStatuses ?? [408, 429, 500, 502, 503, 504],
+    options.retryStatuses ?? [408, 500, 502, 503, 504],
   );
   const fetcher = options.fetcher ?? fetch;
   const sleep = options.sleep ??

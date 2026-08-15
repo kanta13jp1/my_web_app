@@ -14,12 +14,22 @@ import '../models/local_election_plan.dart';
 import 'kgi_csf_kpi_panel.dart';
 
 class ElectionRegionalKpiChart extends StatefulWidget {
+  /// 棒グラフに表示する県連 (重点上位県のみの部分集合でもよい)。
   final List<LocalElectionPrefecturePlan> prefectures;
+
+  /// KGI/サマリー/月次テーブルの母数となる全県連。
+  /// 部分集合の合計を全国目標と比較すると常に過大な不足警告になるため分離した。
+  final List<LocalElectionPrefecturePlan> allPrefectures;
+  final int targetLocalMembers;
+  final int requiredNetIncrease;
   final GlobalKey? pieChartKey;
 
   const ElectionRegionalKpiChart({
     super.key,
     required this.prefectures,
+    required this.allPrefectures,
+    required this.targetLocalMembers,
+    required this.requiredNetIncrease,
     this.pieChartKey,
   });
 
@@ -209,15 +219,15 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
       return const SizedBox.shrink();
     }
 
-    final totalRetain = widget.prefectures
+    final totalRetain = widget.allPrefectures
         .fold<int>(0, (sum, p) => sum + p.incumbentRetentionTarget);
-    final totalNew =
-        widget.prefectures.fold<int>(0, (sum, p) => sum + p.newCandidateTarget);
+    final totalNew = widget.allPrefectures
+        .fold<int>(0, (sum, p) => sum + p.newCandidateTarget);
     final totalTarget = totalRetain + totalNew;
 
     // 月次進捗データの集計
     final monthlyStats = <String, Map<String, int>>{};
-    for (final p in widget.prefectures) {
+    for (final p in widget.allPrefectures) {
       final month = p.endorsementDeadlineMonth;
       if (month.isEmpty) continue;
       monthlyStats.putIfAbsent(month, () => {'total': 0, 'confirmed': 0});
@@ -286,6 +296,16 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                 ),
               ],
             ),
+            if (widget.prefectures.length < widget.allPrefectures.length) ...[
+              const SizedBox(height: 4),
+              Text(
+                '棒グラフは重点上位${widget.prefectures.length}県連のみ表示。'
+                '合計値と月次テーブルは全${widget.allPrefectures.length}県連が母数です。',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ],
             const SizedBox(
               height: 16,
             ),
@@ -294,8 +314,10 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                 domain: '都道府県連別配分',
                 kgi: '現職維持と新人擁立を県連別に数値配分する',
                 actualLabel: '$totalTarget人',
-                targetLabel: '700人',
-                progress: totalTarget / 700,
+                targetLabel: '${widget.targetLocalMembers}人',
+                progress: widget.targetLocalMembers > 0
+                    ? totalTarget / widget.targetLocalMembers
+                    : 0,
                 metrics: <KgiCsfKpiMetric>[
                   KgiCsfKpiMetric.number(
                     csf: '現職基盤の維持',
@@ -308,18 +330,18 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                     csf: '新人候補の上積み',
                     kpi: '新人擁立目標合計',
                     actual: totalNew,
-                    target: 360,
+                    target: widget.requiredNetIncrease,
                     unit: '人',
                   ),
                   KgiCsfKpiMetric.number(
                     csf: '公認内定管理',
                     kpi: '期限設定済み県連',
-                    actual: widget.prefectures
+                    actual: widget.allPrefectures
                         .where(
                           (item) => item.endorsementDeadlineMonth.isNotEmpty,
                         )
                         .length,
-                    target: widget.prefectures.length,
+                    target: widget.allPrefectures.length,
                     unit: '県',
                   ),
                 ],
@@ -365,7 +387,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                               ),
                             ],
                           ),
-                          if (totalTarget < 700) ...[
+                          if (totalTarget < widget.targetLocalMembers) ...[
                             const SizedBox(
                               height: 12,
                             ),
@@ -389,7 +411,8 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    '必達目標(700名)まで あと ${700 - totalTarget}名 不足しています',
+                                    '必達目標(${widget.targetLocalMembers}名)まで '
+                                    'あと ${widget.targetLocalMembers - totalTarget}名 不足しています',
                                     style: TextStyle(
                                       color: Colors.red.shade700,
                                       fontWeight: FontWeight.bold,
@@ -687,7 +710,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
   }
 
   void _showMonthlyDetailsDialog(BuildContext context, String month) {
-    final prefecturesInMonth = widget.prefectures
+    // 月次テーブルの件数は allPrefectures 集計なので、ドリルダウンの一覧も
+    // 全県連を母数にする (prefectures=重点上位部分集合で絞ると件数と乖離する)。
+    final prefecturesInMonth = widget.allPrefectures
         .where((p) => p.endorsementDeadlineMonth == month)
         .toList();
     // 未確定の県連が上に来るようにソート

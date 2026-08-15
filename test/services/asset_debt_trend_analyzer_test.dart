@@ -8,6 +8,49 @@ void main() {
   const analyzer = AssetDebtTrendAnalyzer();
   final baseDate = DateTime(2026, 6, 1);
 
+  group('AssetDebtTrendAnalyzer.estimateForRow', () {
+    test('projects payoff months from the row scheduled payment', () {
+      // ファミペイ 残高10万・月1万返済・年利15% → 約11ヶ月で完済見込み。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'ファミペイ': -100000,
+        },
+        baseDate: baseDate,
+        monthlyPaymentOverrides: const <String, double>{'ファミペイ': 10000},
+      );
+      final row = workbook.debtMasterRows.firstWhere(
+        (candidate) => candidate.name == 'ファミペイ',
+      );
+
+      final estimate = AssetDebtTrendAnalyzer.estimateForRow(row);
+
+      expect(estimate.everPaysOff, isTrue);
+      expect(estimate.months, isNotNull);
+      expect(estimate.months! >= 10 && estimate.months! <= 12, isTrue);
+    });
+
+    test('reports never-pays-off when payment is below interest', () {
+      // 月1,000円は初月利息 (1,250円) 以下 → 完済不能。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'ファミペイ': -100000,
+        },
+        baseDate: baseDate,
+        monthlyPaymentOverrides: const <String, double>{'ファミペイ': 1000},
+      );
+      final row = workbook.debtMasterRows.firstWhere(
+        (candidate) => candidate.name == 'ファミペイ',
+      );
+
+      final estimate = AssetDebtTrendAnalyzer.estimateForRow(row);
+
+      expect(estimate.everPaysOff, isFalse);
+      expect(estimate.months, isNull);
+    });
+  });
+
   String debtId(AssetLiabilityWorkbook workbook, String name) {
     return workbook.debtMasterRows.firstWhere((row) => row.name == name).id;
   }

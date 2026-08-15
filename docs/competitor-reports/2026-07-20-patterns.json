@@ -1,0 +1,2038 @@
+{
+  "generated_at": "2026-07-19T22:47:28Z",
+  "source_files": [
+    "docs/competitor-reports/2026-07-20.md"
+  ],
+  "min_confidence": 0.5,
+  "entries_total": 67,
+  "filter_summary": {
+    "total": 67,
+    "by_verdict": {
+      "pass": 0,
+      "review": 67,
+      "drop": 0
+    },
+    "risk_flags": {
+      "missing_source_url": 67
+    }
+  },
+  "entries": [
+    {
+      "entry": {
+        "entry_id": "nf-20261a8e6f32",
+        "title": "エグゼクティブサマリー (前回 [2026-07-19](./2026-07-19.md) 比 — 新シグナルのみ)",
+        "text": "エグゼクティブサマリー (前回 [2026-07-19](./2026-07-19.md) 比 — 新シグナルのみ)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "エグゼクティブサマリー (前回 [2026-07-19](./2026-07-19.md) 比 — 新シグナルのみ)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-20261a8e6f32",
+        "title": "エグゼクティブサマリー (前回 [2026-07-19](./2026-07-19.md) 比 — 新シグナルのみ)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3bdb578df4bb",
+        "title": "詳細セクション (重大シグナルのみ深掘り)",
+        "text": "詳細セクション (重大シグナルのみ深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "詳細セクション (重大シグナルのみ深掘り)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3bdb578df4bb",
+        "title": "詳細セクション (重大シグナルのみ深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9ee6ee95a8b4",
+        "title": "改定内容**:",
+        "text": "改定内容**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "改定内容**:"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9ee6ee95a8b4",
+        "title": "改定内容**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-60cad62372e4",
+        "title": "Max + Team Premium**: Fable 5 を**恒久的にプラン同梱**。ただし **weekly usage limits の 50%** での提供。",
+        "text": "Max + Team Premium**: Fable 5 を**恒久的にプラン同梱**。ただし **weekly usage limits の 50%** での提供。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Max + Team Premium**: Fable 5 を**恒久的にプラン同梱**。ただし **weekly usage limits の 50%** での提供。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-60cad62372e4",
+        "title": "Max + Team Premium**: Fable 5 を**恒久的にプラン同梱**。ただし **weekly usage limits の 50%** での提供。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e4c3a5ba45f2",
+        "title": "Pro + Team Standard**: **同梱対象外**。**一回限り $100 の usage credit** が付与され、消化後の継続利用は API 従量 = **$10 / M input tokens・$50 / M ou",
+        "text": "Pro + Team Standard**: **同梱対象外**。**一回限り $100 の usage credit** が付与され、消化後の継続利用は API 従量 = **$10 / M input tokens・$50 / M output tokens**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Pro + Team Standard**: **同梱対象外**。**一回限り $100 の usage credit** が付与され、消化後の継続利用は API 従量 = **$10 / M input tokens・$50 / M output tokens**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e4c3a5ba45f2",
+        "title": "Pro + Team Standard**: **同梱対象外**。**一回限り $100 の usage credit** が付与され、消化後の継続利用は API 従量 = **$10 / M input tokens・$50 / M ou",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-800e39c85d2c",
+        "title": "同日の複合要因**: Claude Code の **weekly rate limit +50% ブーストが 7-20 で終了**。したがって Max 系の実効枠は「**基準枠そのものの縮小**」×「**その 50% での Fable 5",
+        "text": "同日の複合要因**: Claude Code の **weekly rate limit +50% ブーストが 7-20 で終了**。したがって Max 系の実効枠は「**基準枠そのものの縮小**」×「**その 50% での Fable 5 提供**」の二重で効く。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "同日の複合要因**: Claude Code の **weekly rate limit +50% ブーストが 7-20 で終了**。したがって Max 系の実効枠は「**基準枠そのものの縮小**」×「**その 50% での Fable 5 提供**」の二重で効く。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-800e39c85d2c",
+        "title": "同日の複合要因**: Claude Code の **weekly rate limit +50% ブーストが 7-20 で終了**。したがって Max 系の実効枠は「**基準枠そのものの縮小**」×「**その 50% での Fable 5",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3a19640f0000",
+        "title": "経緯**: 当初 7-07 終了予定 → 7-12 へ延長 → 最終的に 7-20 の恒久構造へ着地。Anthropic 側は「Fable の需要は予測が難しく、そのため段階的にサブスクへ展開した」と説明。",
+        "text": "経緯**: 当初 7-07 終了予定 → 7-12 へ延長 → 最終的に 7-20 の恒久構造へ着地。Anthropic 側は「Fable の需要は予測が難しく、そのため段階的にサブスクへ展開した」と説明。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "経緯**: 当初 7-07 終了予定 → 7-12 へ延長 → 最終的に 7-20 の恒久構造へ着地。Anthropic 側は「Fable の需要は予測が難しく、そのため段階的にサブスクへ展開した」と説明。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3a19640f0000",
+        "title": "経緯**: 当初 7-07 終了予定 → 7-12 へ延長 → 最終的に 7-20 の恒久構造へ着地。Anthropic 側は「Fable の需要は予測が難しく、そのため段階的にサブスクへ展開した」と説明。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-bc9e9006c4c2",
+        "title": "`[AI-TOOL-VERIFY]` 検証ステータス = 確度「高」・一次 URL 未取得**:",
+        "text": "`[AI-TOOL-VERIFY]` 検証ステータス = 確度「高」・一次 URL 未取得**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "`[AI-TOOL-VERIFY]` 検証ステータス = 確度「高」・一次 URL 未取得**:"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-bc9e9006c4c2",
+        "title": "`[AI-TOOL-VERIFY]` 検証ステータス = 確度「高」・一次 URL 未取得**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b09109e3b63f",
+        "title": "✅ **モデルの実在は一次確認済**: Anthropic newsroom に「Redeploying Fable 5」(6-30 / 7-1 グローバル復帰) および「More details on Fable 5's cyber sa",
+        "text": "✅ **モデルの実在は一次確認済**: Anthropic newsroom に「Redeploying Fable 5」(6-30 / 7-1 グローバル復帰) および「More details on Fable 5's cyber safeguards and our jailbreak framework」(7-02) が存在。claude.com/pricing のモデル系統にも **Fable** が掲載。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "✅ **モデルの実在は一次確認済**: Anthropic newsroom に「Redeploying Fable 5」(6-30 / 7-1 グローバル復帰) および「More details on Fable 5's cyber safeguards and our jailbreak framework」(7-02) が存在。claude.com/pricing のモデル系統にも **Fable** が掲載。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b09109e3b63f",
+        "title": "✅ **モデルの実在は一次確認済**: Anthropic newsroom に「Redeploying Fable 5」(6-30 / 7-1 グローバル復帰) および「More details on Fable 5's cyber sa",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-46d1cdf876e9",
+        "title": "✅ **改定内容は独立した複数二次ソースが収斂** (DAWN / TechTimes / Tech2 / the420 / newsbytes / Forbes) し、いずれも Claude 公式ポストの同一文言を引用: 「Beginni",
+        "text": "✅ **改定内容は独立した複数二次ソースが収斂** (DAWN / TechTimes / Tech2 / the420 / newsbytes / Forbes) し、いずれも Claude 公式ポストの同一文言を引用: 「Beginning July 20, Claude Fable 5 will be included in all Max and Team Premium plans, at 50 per cent of limits」。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "✅ **改定内容は独立した複数二次ソースが収斂** (DAWN / TechTimes / Tech2 / the420 / newsbytes / Forbes) し、いずれも Claude 公式ポストの同一文言を引用: 「Beginning July 20, Claude Fable 5 will be included in all Max and Team Premium plans, at 50 per cent of limits」。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-46d1cdf876e9",
+        "title": "✅ **改定内容は独立した複数二次ソースが収斂** (DAWN / TechTimes / Tech2 / the420 / newsbytes / Forbes) し、いずれも Claude 公式ポストの同一文言を引用: 「Beginni",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-74e6da753705",
+        "title": "⚠️ **未確定点**: 公式ポストの**発信日が 7-18 と 7-19 でソース間に食い違い**。また **claude.com/pricing には Fable 5 のプラン別記載がまだ無い**ため、**一次 URL のピン留めは次サ",
+        "text": "⚠️ **未確定点**: 公式ポストの**発信日が 7-18 と 7-19 でソース間に食い違い**。また **claude.com/pricing には Fable 5 のプラン別記載がまだ無い**ため、**一次 URL のピン留めは次サイクルへ持ち越し**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "⚠️ **未確定点**: 公式ポストの**発信日が 7-18 と 7-19 でソース間に食い違い**。また **claude.com/pricing には Fable 5 のプラン別記載がまだ無い**ため、**一次 URL のピン留めは次サイクルへ持ち越し**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-74e6da753705",
+        "title": "⚠️ **未確定点**: 公式ポストの**発信日が 7-18 と 7-19 でソース間に食い違い**。また **claude.com/pricing には Fable 5 のプラン別記載がまだ無い**ため、**一次 URL のピン留めは次サ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9e19ca72ab25",
+        "title": "⚠️ **参考 (逆方向のノイズ)**: 一部テック系記事は「\"Claude Fable 5\" という名称が公開モデル系統と一致しない」として**報道自体を疑問視**していたが、これは上記 Anthropic newsroom / pric",
+        "text": "⚠️ **参考 (逆方向のノイズ)**: 一部テック系記事は「\"Claude Fable 5\" という名称が公開モデル系統と一致しない」として**報道自体を疑問視**していたが、これは上記 Anthropic newsroom / pricing の記載により**当該記事側の誤り**と判定できる。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "⚠️ **参考 (逆方向のノイズ)**: 一部テック系記事は「\"Claude Fable 5\" という名称が公開モデル系統と一致しない」として**報道自体を疑問視**していたが、これは上記 Anthropic newsroom / pricing の記載により**当該記事側の誤り**と判定できる。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9e19ca72ab25",
+        "title": "⚠️ **参考 (逆方向のノイズ)**: 一部テック系記事は「\"Claude Fable 5\" という名称が公開モデル系統と一致しない」として**報道自体を疑問視**していたが、これは上記 Anthropic newsroom / pric",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-711b22a4a444",
+        "title": "自社への含意**:",
+        "text": "自社への含意**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社への含意**:"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-711b22a4a444",
+        "title": "自社への含意**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3f1d1f9cb4ee",
+        "title": "直接対象外**: GHA cron 30+ / Schedule cron / `claude -p` 系は **6-15 の課金分離で programmatic pool 側**に分離済のため、本改定 (サブスク同梱枠の話) の直接対象で",
+        "text": "直接対象外**: GHA cron 30+ / Schedule cron / `claude -p` 系は **6-15 の課金分離で programmatic pool 側**に分離済のため、本改定 (サブスク同梱枠の話) の直接対象ではない。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "直接対象外**: GHA cron 30+ / Schedule cron / `claude -p` 系は **6-15 の課金分離で programmatic pool 側**に分離済のため、本改定 (サブスク同梱枠の話) の直接対象ではない。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3f1d1f9cb4ee",
+        "title": "直接対象外**: GHA cron 30+ / Schedule cron / `claude -p` 系は **6-15 の課金分離で programmatic pool 側**に分離済のため、本改定 (サブスク同梱枠の話) の直接対象で",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-bf347bdfb435",
+        "title": "直接影響**: **対話 Claude Code セッション = Win Claude #132 fleet 本体**の weekly 枠が本日から縮む。長時間の探索・大規模 subagent fan-out は枠を早く食う。",
+        "text": "直接影響**: **対話 Claude Code セッション = Win Claude #132 fleet 本体**の weekly 枠が本日から縮む。長時間の探索・大規模 subagent fan-out は枠を早く食う。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "直接影響**: **対話 Claude Code セッション = Win Claude #132 fleet 本体**の weekly 枠が本日から縮む。長時間の探索・大規模 subagent fan-out は枠を早く食う。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-bf347bdfb435",
+        "title": "直接影響**: **対話 Claude Code セッション = Win Claude #132 fleet 本体**の weekly 枠が本日から縮む。長時間の探索・大規模 subagent fan-out は枠を早く食う。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-196b04762220",
+        "title": "対応の方向**: `[AI_FALLBACK_RUNBOOK]` の振り分け閾値 (どの重さの作業を Codex / Gemini へ回すか) を、**枠縮小後の実測**に合わせて引き直す。モデル選択より先に**作業の振り分け側**を調整す",
+        "text": "対応の方向**: `[AI_FALLBACK_RUNBOOK]` の振り分け閾値 (どの重さの作業を Codex / Gemini へ回すか) を、**枠縮小後の実測**に合わせて引き直す。モデル選択より先に**作業の振り分け側**を調整するのが安い。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "対応の方向**: `[AI_FALLBACK_RUNBOOK]` の振り分け閾値 (どの重さの作業を Codex / Gemini へ回すか) を、**枠縮小後の実測**に合わせて引き直す。モデル選択より先に**作業の振り分け側**を調整するのが安い。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-196b04762220",
+        "title": "対応の方向**: `[AI_FALLBACK_RUNBOOK]` の振り分け閾値 (どの重さの作業を Codex / Gemini へ回すか) を、**枠縮小後の実測**に合わせて引き直す。モデル選択より先に**作業の振り分け側**を調整す",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c507807e1964",
+        "title": "確定した数値 (TechCrunch 一次報道)**:",
+        "text": "確定した数値 (TechCrunch 一次報道)**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "確定した数値 (TechCrunch 一次報道)**:"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c507807e1964",
+        "title": "確定した数値 (TechCrunch 一次報道)**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-28b00518b76f",
+        "title": "2026-07-08**: **$300M を $13.2B 評価で調達交渉中**と報道。**Menlo Ventures がリードの見込み** (同社は直前に $3B の新ファンドを発表)。$13.2B は **2025-12 の $6.",
+        "text": "2026-07-08**: **$300M を $13.2B 評価で調達交渉中**と報道。**Menlo Ventures がリードの見込み** (同社は直前に $3B の新ファンドを発表)。$13.2B は **2025-12 の $6.6B の丁度 2 倍**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "2026-07-08**: **$300M を $13.2B 評価で調達交渉中**と報道。**Menlo Ventures がリードの見込み** (同社は直前に $3B の新ファンドを発表)。$13.2B は **2025-12 の $6.6B の丁度 2 倍**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-28b00518b76f",
+        "title": "2026-07-08**: **$300M を $13.2B 評価で調達交渉中**と報道。**Menlo Ventures がリードの見込み** (同社は直前に $3B の新ファンドを発表)。$13.2B は **2025-12 の $6.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5e62596429cc",
+        "title": "ARR**: **6 月に annualized $500M** に到達 (創業 3 年未満)。エンタープライズ顧客に Workday / Asana / Nvidia。",
+        "text": "ARR**: **6 月に annualized $500M** に到達 (創業 3 年未満)。エンタープライズ顧客に Workday / Asana / Nvidia。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ARR**: **6 月に annualized $500M** に到達 (創業 3 年未満)。エンタープライズ顧客に Workday / Asana / Nvidia。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5e62596429cc",
+        "title": "ARR**: **6 月に annualized $500M** に到達 (創業 3 年未満)。エンタープライズ顧客に Workday / Asana / Nvidia。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2bae00d8e20a",
+        "title": "既往ラウンド**: **Series B = $330M @ $6.6B (2025-12-18 / CapitalG + Menlo リード)**。",
+        "text": "既往ラウンド**: **Series B = $330M @ $6.6B (2025-12-18 / CapitalG + Menlo リード)**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "既往ラウンド**: **Series B = $330M @ $6.6B (2025-12-18 / CapitalG + Menlo リード)**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2bae00d8e20a",
+        "title": "既往ラウンド**: **Series B = $330M @ $6.6B (2025-12-18 / CapitalG + Menlo リード)**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f0351263415e",
+        "title": "自社レポートとの差分**: 7-07 は「Lovable の $12B 評価での調達協議 (Forbes 6-05)」、7-08 は「$12B 協議 + 『7 月 $200M financing』報道」を**低確度で観察のみ**としていた。",
+        "text": "自社レポートとの差分**: 7-07 は「Lovable の $12B 評価での調達協議 (Forbes 6-05)」、7-08 は「$12B 協議 + 『7 月 $200M financing』報道」を**低確度で観察のみ**としていた。本日 TechCrunch により **$12B → $13.2B / $200M → $300M** へ更新。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社レポートとの差分**: 7-07 は「Lovable の $12B 評価での調達協議 (Forbes 6-05)」、7-08 は「$12B 協議 + 『7 月 $200M financing』報道」を**低確度で観察のみ**としていた。本日 TechCrunch により **$12B → $13.2B / $200M → $300M** へ更新。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f0351263415e",
+        "title": "自社レポートとの差分**: 7-07 は「Lovable の $12B 評価での調達協議 (Forbes 6-05)」、7-08 は「$12B 協議 + 『7 月 $200M financing』報道」を**低確度で観察のみ**としていた。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8115999623e9",
+        "title": "⚠️ `[AI-TOOL-VERIFY]` 実例 — アグリゲータの誤記**: AI ファンディング系アグリゲータは同件を「**Lovable's $200M Series B at $2.8B**」と記載。これは (a) 実際の Seri",
+        "text": "⚠️ `[AI-TOOL-VERIFY]` 実例 — アグリゲータの誤記**: AI ファンディング系アグリゲータは同件を「**Lovable's $200M Series B at $2.8B**」と記載。これは (a) 実際の Series B ($330M @ $6.6B) とも (b) 今回の協議 ($300M @ $13.2B) とも一致せず、**ラウンド名・金額・評価額の 3 点すべてが不整合**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "⚠️ `[AI-TOOL-VERIFY]` 実例 — アグリゲータの誤記**: AI ファンディング系アグリゲータは同件を「**Lovable's $200M Series B at $2.8B**」と記載。これは (a) 実際の Series B ($330M @ $6.6B) とも (b) 今回の協議 ($300M @ $13.2B) とも一致せず、**ラウンド名・金額・評価額の 3 点すべてが不整合**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8115999623e9",
+        "title": "⚠️ `[AI-TOOL-VERIFY]` 実例 — アグリゲータの誤記**: AI ファンディング系アグリゲータは同件を「**Lovable's $200M Series B at $2.8B**」と記載。これは (a) 実際の Seri",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-93c5327322d3",
+        "title": "教訓**: 資金調達・評価額の数値は**アグリゲータを一次扱いしない**。TechCrunch / Forbes / 企業自身の発表 (lovable.dev/blog/series-b) まで降りて裏取りする。本件は 1 検索で誤りが判明",
+        "text": "教訓**: 資金調達・評価額の数値は**アグリゲータを一次扱いしない**。TechCrunch / Forbes / 企業自身の発表 (lovable.dev/blog/series-b) まで降りて裏取りする。本件は 1 検索で誤りが判明した = **コストは低く、誤記の伝播コストは高い**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "教訓**: 資金調達・評価額の数値は**アグリゲータを一次扱いしない**。TechCrunch / Forbes / 企業自身の発表 (lovable.dev/blog/series-b) まで降りて裏取りする。本件は 1 検索で誤りが判明した = **コストは低く、誤記の伝播コストは高い**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-93c5327322d3",
+        "title": "教訓**: 資金調達・評価額の数値は**アグリゲータを一次扱いしない**。TechCrunch / Forbes / 企業自身の発表 (lovable.dev/blog/series-b) まで降りて裏取りする。本件は 1 検索で誤りが判明",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e6a8af5841ef",
+        "title": "事実**: Anysphere (Cursor 親会社) が **Continue** を acqui-hire。発表は **2026-06-16 頃** (= SpaceX × Anysphere $60B と同日)、最終リリース **v",
+        "text": "事実**: Anysphere (Cursor 親会社) が **Continue** を acqui-hire。発表は **2026-06-16 頃** (= SpaceX × Anysphere $60B と同日)、最終リリース **v2.0.0-vscode が 6-19**、**Continue の cloud データは 7-15 以降削除**。取引条件は非開示。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "事実**: Anysphere (Cursor 親会社) が **Continue** を acqui-hire。発表は **2026-06-16 頃** (= SpaceX × Anysphere $60B と同日)、最終リリース **v2.0.0-vscode が 6-19**、**Continue の cloud データは 7-15 以降削除**。取引条件は非開示。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e6a8af5841ef",
+        "title": "事実**: Anysphere (Cursor 親会社) が **Continue** を acqui-hire。発表は **2026-06-16 頃** (= SpaceX × Anysphere $60B と同日)、最終リリース **v",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-45abcdf8d58a",
+        "title": "Continue とは**: Y Combinator 出身 / GitHub 34K stars。**vendor-neutral** な VS Code + JetBrains 拡張で、**任意の LLM を差し替え可能** (ローカル",
+        "text": "Continue とは**: Y Combinator 出身 / GitHub 34K stars。**vendor-neutral** な VS Code + JetBrains 拡張で、**任意の LLM を差し替え可能** (ローカル Ollama / Claude / GPT)、Jira・Confluence 等のローカルデータをインデックス可能。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Continue とは**: Y Combinator 出身 / GitHub 34K stars。**vendor-neutral** な VS Code + JetBrains 拡張で、**任意の LLM を差し替え可能** (ローカル Ollama / Claude / GPT)、Jira・Confluence 等のローカルデータをインデックス可能。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-45abcdf8d58a",
+        "title": "Continue とは**: Y Combinator 出身 / GitHub 34K stars。**vendor-neutral** な VS Code + JetBrains 拡張で、**任意の LLM を差し替え可能** (ローカル",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1489607885e3",
+        "title": "買収後**: プロダクトは**停止**。コードベースは **Apache 2.0 のまま**残るため fork・改変・再配布は合法に継続可能だが、**upstream 保守 (セキュリティパッチ / 新モデルアダプタ / エディタ互換修正)",
+        "text": "買収後**: プロダクトは**停止**。コードベースは **Apache 2.0 のまま**残るため fork・改変・再配布は合法に継続可能だが、**upstream 保守 (セキュリティパッチ / 新モデルアダプタ / エディタ互換修正) は停止**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "買収後**: プロダクトは**停止**。コードベースは **Apache 2.0 のまま**残るため fork・改変・再配布は合法に継続可能だが、**upstream 保守 (セキュリティパッチ / 新モデルアダプタ / エディタ互換修正) は停止**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1489607885e3",
+        "title": "買収後**: プロダクトは**停止**。コードベースは **Apache 2.0 のまま**残るため fork・改変・再配布は合法に継続可能だが、**upstream 保守 (セキュリティパッチ / 新モデルアダプタ / エディタ互換修正)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9f0620e5de08",
+        "title": "自社への含意**: 自社は複数 AI を **routing matrix** で束ねる設計を採る。Continue はまさに「**中立レイヤとして複数 LLM を束ねる OSS**」であり、それが商用統合に吸収されて**保守停止**した。",
+        "text": "自社への含意**: 自社は複数 AI を **routing matrix** で束ねる設計を採る。Continue はまさに「**中立レイヤとして複数 LLM を束ねる OSS**」であり、それが商用統合に吸収されて**保守停止**した。→ **中立 OSS レイヤは買収で消えうる前提**で依存点を設計すべき。差別化は「どの中立レイヤに乗るか」ではなく「**乗り換え可能な状態を自前で保つ運用ルール側**」にある (= `[WORKDIR-ISOLATION]` / fallback runbook と同じ思想)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社への含意**: 自社は複数 AI を **routing matrix** で束ねる設計を採る。Continue はまさに「**中立レイヤとして複数 LLM を束ねる OSS**」であり、それが商用統合に吸収されて**保守停止**した。→ **中立 OSS レイヤは買収で消えうる前提**で依存点を設計すべき。差別化は「どの中立レイヤに乗るか」ではなく「**乗り換え可能な状態を自前で保つ運用ルール側**」にある (= `[WORKDIR-ISOLATION]` / fallback runbook と同じ思想)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9f0620e5de08",
+        "title": "自社への含意**: 自社は複数 AI を **routing matrix** で束ねる設計を採る。Continue はまさに「**中立レイヤとして複数 LLM を束ねる OSS**」であり、それが商用統合に吸収されて**保守停止**した。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4494a4b320f5",
+        "title": "EdWealth「Ed」**: 7-15 launch (GlobeNewswire 一次) から**新展開なし**。昇格分岐点として置いた (a) 日本語/日本市場展開、(b)「会社経営 metaphor」への接近 は**いずれも兆候なし",
+        "text": "EdWealth「Ed」**: 7-15 launch (GlobeNewswire 一次) から**新展開なし**。昇格分岐点として置いた (a) 日本語/日本市場展開、(b)「会社経営 metaphor」への接近 は**いずれも兆候なし**。US 限定・英語・Plaid 依存のまま → **7-24 unlock の第 1 候補群 (Ed / Visa) 据え置き**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "EdWealth「Ed」**: 7-15 launch (GlobeNewswire 一次) から**新展開なし**。昇格分岐点として置いた (a) 日本語/日本市場展開、(b)「会社経営 metaphor」への接近 は**いずれも兆候なし**。US 限定・英語・Plaid 依存のまま → **7-24 unlock の第 1 候補群 (Ed / Visa) 据え置き**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4494a4b320f5",
+        "title": "EdWealth「Ed」**: 7-15 launch (GlobeNewswire 一次) から**新展開なし**。昇格分岐点として置いた (a) 日本語/日本市場展開、(b)「会社経営 metaphor」への接近 は**いずれも兆候なし",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9aa2e79f363b",
+        "title": "Visa AI Financial Assistant**: **US 金融機関向け pilot は 8 月**、その後グローバル展開 — **タイムライン変化なし**。本日 **investor.visa.com の一次リリースを確認**",
+        "text": "Visa AI Financial Assistant**: **US 金融機関向け pilot は 8 月**、その後グローバル展開 — **タイムライン変化なし**。本日 **investor.visa.com の一次リリースを確認**し、基盤 = **年間 3,000 億件超のトランザクション網** + 銀行自身のデータの組み合わせ、**会話 UI 内でカードロック・アラート設定まで実行**、銀行側は**カスタム開発不要で自社ブランドのまま**埋め込み可、と確定。consumer 到達・日本の金融機関波及は**未確認**ゆえ signal 層維持。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Visa AI Financial Assistant**: **US 金融機関向け pilot は 8 月**、その後グローバル展開 — **タイムライン変化なし**。本日 **investor.visa.com の一次リリースを確認**し、基盤 = **年間 3,000 億件超のトランザクション網** + 銀行自身のデータの組み合わせ、**会話 UI 内でカードロック・アラート設定まで実行**、銀行側は**カスタム開発不要で自社ブランドのまま**埋め込み可、と確定。consumer 到達・日本の金融機関波及は**未確認**ゆえ signal 層維持。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9aa2e79f363b",
+        "title": "Visa AI Financial Assistant**: **US 金融機関向け pilot は 8 月**、その後グローバル展開 — **タイムライン変化なし**。本日 **investor.visa.com の一次リリースを確認**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-90510bee9040",
+        "title": "OpenAI ChatGPT (27 社目 / 採択済)**: personal finance は **Plus / Pro に 6-25 GA** (US / web・iOS・Android)、Plaid 経由で 12,000+ 機関接",
+        "text": "OpenAI ChatGPT (27 社目 / 採択済)**: personal finance は **Plus / Pro に 6-25 GA** (US / web・iOS・Android)、Plaid 経由で 12,000+ 機関接続、Finances ページで支出・請求・サブスク・純資産・投資を一覧 — **差分なし**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "OpenAI ChatGPT (27 社目 / 採択済)**: personal finance は **Plus / Pro に 6-25 GA** (US / web・iOS・Android)、Plaid 経由で 12,000+ 機関接続、Finances ページで支出・請求・サブスク・純資産・投資を一覧 — **差分なし**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-90510bee9040",
+        "title": "OpenAI ChatGPT (27 社目 / 採択済)**: personal finance は **Plus / Pro に 6-25 GA** (US / web・iOS・Android)、Plaid 経由で 12,000+ 機関接",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5d62146d8f9e",
+        "title": "MoneyForward**: 監視トリガー「**ME に AI エージェント / 自律アドバイス層が載る瞬間**」は**本日も未点火**。7-8 の「暗号資産」独立カテゴリ化 (app v19.19.0) は**既報** (7-16 で深",
+        "text": "MoneyForward**: 監視トリガー「**ME に AI エージェント / 自律アドバイス層が載る瞬間**」は**本日も未点火**。7-8 の「暗号資産」独立カテゴリ化 (app v19.19.0) は**既報** (7-16 で深掘り済)。AI Cowork は法人バックオフィス専用のまま。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "MoneyForward**: 監視トリガー「**ME に AI エージェント / 自律アドバイス層が載る瞬間**」は**本日も未点火**。7-8 の「暗号資産」独立カテゴリ化 (app v19.19.0) は**既報** (7-16 で深掘り済)。AI Cowork は法人バックオフィス専用のまま。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5d62146d8f9e",
+        "title": "MoneyForward**: 監視トリガー「**ME に AI エージェント / 自律アドバイス層が載る瞬間**」は**本日も未点火**。7-8 の「暗号資産」独立カテゴリ化 (app v19.19.0) は**既報** (7-16 で深",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ea0febe21e7b",
+        "title": "Lindy AI (26 社目 / 採択済)**: 直近出荷として「**複数メールアカウントの同時管理**」(仕事・個人・副業の全受信箱を 1 つの iMessage スレッドで triage / draft / schedule) が挙が",
+        "text": "Lindy AI (26 社目 / 採択済)**: 直近出荷として「**複数メールアカウントの同時管理**」(仕事・個人・副業の全受信箱を 1 つの iMessage スレッドで triage / draft / schedule) が挙がるが、**出荷日を特定できず**新旧判定不能 → **弱シグナル・状態監視のみ**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Lindy AI (26 社目 / 採択済)**: 直近出荷として「**複数メールアカウントの同時管理**」(仕事・個人・副業の全受信箱を 1 つの iMessage スレッドで triage / draft / schedule) が挙がるが、**出荷日を特定できず**新旧判定不能 → **弱シグナル・状態監視のみ**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ea0febe21e7b",
+        "title": "Lindy AI (26 社目 / 採択済)**: 直近出荷として「**複数メールアカウントの同時管理**」(仕事・個人・副業の全受信箱を 1 つの iMessage スレッドで triage / draft / schedule) が挙が",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-16b19ffc3c98",
+        "title": "dev-tool クラスタ**: Codex = GPT-5.6 (Sol) が 7-09 GA / Claude Code は Opus 4.8 + Claude 5 系 / Cursor Composer 2.5 / Devin Des",
+        "text": "dev-tool クラスタ**: Codex = GPT-5.6 (Sol) が 7-09 GA / Claude Code は Opus 4.8 + Claude 5 系 / Cursor Composer 2.5 / Devin Desktop (Windsurf rebrand・Cascade は 7-01 EOL) — **同一 agentic blueprint への収斂が継続**、差は *harness* 側という総括も継続。**自社ナラティブと同方向・深掘り不要**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "dev-tool クラスタ**: Codex = GPT-5.6 (Sol) が 7-09 GA / Claude Code は Opus 4.8 + Claude 5 系 / Cursor Composer 2.5 / Devin Desktop (Windsurf rebrand・Cascade は 7-01 EOL) — **同一 agentic blueprint への収斂が継続**、差は *harness* 側という総括も継続。**自社ナラティブと同方向・深掘り不要**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-16b19ffc3c98",
+        "title": "dev-tool クラスタ**: Codex = GPT-5.6 (Sol) が 7-09 GA / Claude Code は Opus 4.8 + Claude 5 系 / Cursor Composer 2.5 / Devin Des",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0370a642fba5",
+        "title": "Discovery セクション",
+        "text": "Discovery セクション",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Discovery セクション"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0370a642fba5",
+        "title": "Discovery セクション",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-6e00cd2f589a",
+        "title": "理由**: 最終 discovery = **2026-07-17 OpenAI ChatGPT 採択**から **3 日経過**。7 日 cooldown により**次回 unlock は 2026-07-24**。",
+        "text": "理由**: 最終 discovery = **2026-07-17 OpenAI ChatGPT 採択**から **3 日経過**。7 日 cooldown により**次回 unlock は 2026-07-24**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "理由**: 最終 discovery = **2026-07-17 OpenAI ChatGPT 採択**から **3 日経過**。7 日 cooldown により**次回 unlock は 2026-07-24**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-6e00cd2f589a",
+        "title": "理由**: 最終 discovery = **2026-07-17 OpenAI ChatGPT 採択**から **3 日経過**。7 日 cooldown により**次回 unlock は 2026-07-24**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2c9038fe166d",
+        "title": "現況**: **27 社 / cap 50** (残り 23 枠)。",
+        "text": "現況**: **27 社 / cap 50** (残り 23 枠)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "現況**: **27 社 / cap 50** (残り 23 枠)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2c9038fe166d",
+        "title": "現況**: **27 社 / cap 50** (残り 23 枠)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5abb3e86fde5",
+        "title": "7-24 unlock の第 1 候補群 (二本柱・本日変更なし)**:",
+        "text": "7-24 unlock の第 1 候補群 (二本柱・本日変更なし)**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "7-24 unlock の第 1 候補群 (二本柱・本日変更なし)**:"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5abb3e86fde5",
+        "title": "7-24 unlock の第 1 候補群 (二本柱・本日変更なし)**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f8d499d1c4b4",
+        "title": "次点**: Emergent「Wingman」(基準 b 止まり) / Motion (基準 c 不成立) / Monarch・Copilot Money・Cleo (7 月新規シグナルなし)。",
+        "text": "次点**: Emergent「Wingman」(基準 b 止まり) / Motion (基準 c 不成立) / Monarch・Copilot Money・Cleo (7 月新規シグナルなし)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "次点**: Emergent「Wingman」(基準 b 止まり) / Motion (基準 c 不成立) / Monarch・Copilot Money・Cleo (7 月新規シグナルなし)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f8d499d1c4b4",
+        "title": "次点**: Emergent「Wingman」(基準 b 止まり) / Motion (基準 c 不成立) / Monarch・Copilot Money・Cleo (7 月新規シグナルなし)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "text": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "アクション提案"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f73adc6226b0",
+        "title": "#",
+        "text": "# # 優先 提案 根拠",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "#",
+          "url": "",
+          "status": "",
+          "summary": "# 優先 提案 根拠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f73adc6226b0",
+        "title": "#",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-89d61c5afa16",
+        "title": "1",
+        "text": "1 1 🔴 高 **`[AI_FALLBACK_RUNBOOK]` の振り分け閾値を、7-20 以降の実効 weekly 枠で引き直す** — 重い探索・大規模 subagent fan-out を Codex / Gemini へ回す閾値を実測ベースで再設定 Fable 5 同梱が limits の 50% + Claude Code weekly ブースト終了の**二重縮小**が本日発効。モデル選択より作業振り分け側の調整が安い",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "1",
+          "url": "",
+          "status": "",
+          "summary": "1 🔴 高 **`[AI_FALLBACK_RUNBOOK]` の振り分け閾値を、7-20 以降の実効 weekly 枠で引き直す** — 重い探索・大規模 subagent fan-out を Codex / Gemini へ回す閾値を実測ベースで再設定 Fable 5 同梱が limits の 50% + Claude Code weekly ブースト終了の**二重縮小**が本日発効。モデル選択より作業振り分け側の調整が安い"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-89d61c5afa16",
+        "title": "1",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b2320959f4a7",
+        "title": "2",
+        "text": "2 2 🟠 中 **資金調達・評価額の数値は「アグリゲータ非一次」を明文ルール化** し、`[AI-TOOL-VERIFY]` の事例として knowledge vault へ 1 件追記 本日 Lovable でラウンド名・金額・評価額の 3 点不整合を検出。検出コストは 1 検索・伝播コストは高い",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "2",
+          "url": "",
+          "status": "",
+          "summary": "2 🟠 中 **資金調達・評価額の数値は「アグリゲータ非一次」を明文ルール化** し、`[AI-TOOL-VERIFY]` の事例として knowledge vault へ 1 件追記 本日 Lovable でラウンド名・金額・評価額の 3 点不整合を検出。検出コストは 1 検索・伝播コストは高い"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b2320959f4a7",
+        "title": "2",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-644885a15853",
+        "title": "3",
+        "text": "3 3 🟠 中 **routing matrix の「中立 OSS レイヤ」依存点を棚卸し** — 買収・保守停止で消えうる前提での代替経路を確認 Continue (34K stars / 任意 LLM 差し替え可能な中立レイヤ) が acqui-hire → プロダクト停止 → 7-15 データ削除・upstream 保守停止",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "3",
+          "url": "",
+          "status": "",
+          "summary": "3 🟠 中 **routing matrix の「中立 OSS レイヤ」依存点を棚卸し** — 買収・保守停止で消えうる前提での代替経路を確認 Continue (34K stars / 任意 LLM 差し替え可能な中立レイヤ) が acqui-hire → プロダクト停止 → 7-15 データ削除・upstream 保守停止"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-644885a15853",
+        "title": "3",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c585dba29f65",
+        "title": "4",
+        "text": "4 4 🟢 低 **Fable 5 改定の一次 URL を次サイクルでピン留め** (claude.com/pricing 更新 or 公式ポスト) — 公式発信日の 7-18 / 7-19 食い違いも併せて解消 現状は二次ソース収斂 + 公式引用のみ。`[AI-TOOL-VERIFY]` 完了条件を満たしていない",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "4",
+          "url": "",
+          "status": "",
+          "summary": "4 🟢 低 **Fable 5 改定の一次 URL を次サイクルでピン留め** (claude.com/pricing 更新 or 公式ポスト) — 公式発信日の 7-18 / 7-19 食い違いも併せて解消 現状は二次ソース収斂 + 公式引用のみ。`[AI-TOOL-VERIFY]` 完了条件を満たしていない"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c585dba29f65",
+        "title": "4",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1797b06c3028",
+        "title": "5",
+        "text": "5 5 🟢 低 **7-24 unlock に向け Ed / Visa の分岐点監視を継続** (Ed = 日本語展開・会社 metaphor / Visa = consumer 到達・日本波及) 二本柱とも本日 delta なし。分岐点が動いた方を採択候補第 1 位に",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "5",
+          "url": "",
+          "status": "",
+          "summary": "5 🟢 低 **7-24 unlock に向け Ed / Visa の分岐点監視を継続** (Ed = 日本語展開・会社 metaphor / Visa = consumer 到達・日本波及) 二本柱とも本日 delta なし。分岐点が動いた方を採択候補第 1 位に"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1797b06c3028",
+        "title": "5",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "text": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ソース"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-11a1ea33051e",
+        "title": "[Anthropic to add Claude's Fable 5 model to Max, Team Premium plans at 50pc of usage limits — DAWN](https://www.dawn.com",
+        "text": "[Anthropic to add Claude's Fable 5 model to Max, Team Premium plans at 50pc of usage limits — DAWN](https://www.dawn.com/news/2016483)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Anthropic to add Claude's Fable 5 model to Max, Team Premium plans at 50pc of usage limits — DAWN](https://www.dawn.com/news/2016483)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-11a1ea33051e",
+        "title": "[Anthropic to add Claude's Fable 5 model to Max, Team Premium plans at 50pc of usage limits — DAWN](https://www.dawn.com",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5833aeba965a",
+        "title": "[Claude Fable 5 Ends Subscription Limbo: Permanent for Max, Credits-Only for Pro — TechTimes](https://www.techtimes.com/",
+        "text": "[Claude Fable 5 Ends Subscription Limbo: Permanent for Max, Credits-Only for Pro — TechTimes](https://www.techtimes.com/articles/320905/20260718/claude-fable-5-ends-subscription-limbo-permanent-max-credits-only-pro.htm)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Claude Fable 5 Ends Subscription Limbo: Permanent for Max, Credits-Only for Pro — TechTimes](https://www.techtimes.com/articles/320905/20260718/claude-fable-5-ends-subscription-limbo-permanent-max-credits-only-pro.htm)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5833aeba965a",
+        "title": "[Claude Fable 5 Ends Subscription Limbo: Permanent for Max, Credits-Only for Pro — TechTimes](https://www.techtimes.com/",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e499d4f2cd55",
+        "title": "[Claude Fable 5 access changes from July 20: new limits and usage credits explained — Tech2](https://www.tech2.com/tech2",
+        "text": "[Claude Fable 5 access changes from July 20: new limits and usage credits explained — Tech2](https://www.tech2.com/tech2/claude-fable-5-access-changes-from-july-20-new-limits-and-usage-credits-explained-text-ws-kl-10221773.html)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Claude Fable 5 access changes from July 20: new limits and usage credits explained — Tech2](https://www.tech2.com/tech2/claude-fable-5-access-changes-from-july-20-new-limits-and-usage-credits-explained-text-ws-kl-10221773.html)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e499d4f2cd55",
+        "title": "[Claude Fable 5 access changes from July 20: new limits and usage credits explained — Tech2](https://www.tech2.com/tech2",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1cc09b6f7b9c",
+        "title": "[Redeploying Claude Fable 5 — Anthropic (一次 / モデル実在確認)](https://www.anthropic.com/news/redeploying-fable-5)",
+        "text": "[Redeploying Claude Fable 5 — Anthropic (一次 / モデル実在確認)](https://www.anthropic.com/news/redeploying-fable-5)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Redeploying Claude Fable 5 — Anthropic (一次 / モデル実在確認)](https://www.anthropic.com/news/redeploying-fable-5)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1cc09b6f7b9c",
+        "title": "[Redeploying Claude Fable 5 — Anthropic (一次 / モデル実在確認)](https://www.anthropic.com/news/redeploying-fable-5)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7d1e60d3d86e",
+        "title": "[Newsroom — Anthropic (一次 / 7-02 Fable 5 cyber safeguards・7-14 Claude for Teachers)](https://www.anthropic.com/news)",
+        "text": "[Newsroom — Anthropic (一次 / 7-02 Fable 5 cyber safeguards・7-14 Claude for Teachers)](https://www.anthropic.com/news)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Newsroom — Anthropic (一次 / 7-02 Fable 5 cyber safeguards・7-14 Claude for Teachers)](https://www.anthropic.com/news)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7d1e60d3d86e",
+        "title": "[Newsroom — Anthropic (一次 / 7-02 Fable 5 cyber safeguards・7-14 Claude for Teachers)](https://www.anthropic.com/news)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ddab5e669cba",
+        "title": "[Claude Pricing — claude.com (一次 / モデル系統に Fable 掲載・Fable 5 プラン別記載は未反映)](https://claude.com/pricing)",
+        "text": "[Claude Pricing — claude.com (一次 / モデル系統に Fable 掲載・Fable 5 プラン別記載は未反映)](https://claude.com/pricing)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Claude Pricing — claude.com (一次 / モデル系統に Fable 掲載・Fable 5 プラン別記載は未反映)](https://claude.com/pricing)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ddab5e669cba",
+        "title": "[Claude Pricing — claude.com (一次 / モデル系統に Fable 掲載・Fable 5 プラン別記載は未反映)](https://claude.com/pricing)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-da58d98247cc",
+        "title": "[Lovable reportedly in talks to double its valuation to $13.2B — TechCrunch (2026-07-08)](https://techcrunch.com/2026/07",
+        "text": "[Lovable reportedly in talks to double its valuation to $13.2B — TechCrunch (2026-07-08)](https://techcrunch.com/2026/07/08/lovable-reportedly-in-talks-to-double-its-valuation-to-13-2b/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Lovable reportedly in talks to double its valuation to $13.2B — TechCrunch (2026-07-08)](https://techcrunch.com/2026/07/08/lovable-reportedly-in-talks-to-double-its-valuation-to-13-2b/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-da58d98247cc",
+        "title": "[Lovable reportedly in talks to double its valuation to $13.2B — TechCrunch (2026-07-08)](https://techcrunch.com/2026/07",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-27f7586c826b",
+        "title": "[Vibe-coding startup Lovable raises $330M at a $6.6B valuation — TechCrunch (2025-12-18 / Series B 一次)](https://techcrun",
+        "text": "[Vibe-coding startup Lovable raises $330M at a $6.6B valuation — TechCrunch (2025-12-18 / Series B 一次)](https://techcrunch.com/2025/12/18/vibe-coding-startup-lovable-raises-330m-at-a-6-6b-valuation/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Vibe-coding startup Lovable raises $330M at a $6.6B valuation — TechCrunch (2025-12-18 / Series B 一次)](https://techcrunch.com/2025/12/18/vibe-coding-startup-lovable-raises-330m-at-a-6-6b-valuation/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-27f7586c826b",
+        "title": "[Vibe-coding startup Lovable raises $330M at a $6.6B valuation — TechCrunch (2025-12-18 / Series B 一次)](https://techcrun",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c79fdfa591a1",
+        "title": "[Lovable raises $330M to power the age of the builder — Lovable 公式](https://lovable.dev/blog/series-b)",
+        "text": "[Lovable raises $330M to power the age of the builder — Lovable 公式](https://lovable.dev/blog/series-b)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Lovable raises $330M to power the age of the builder — Lovable 公式](https://lovable.dev/blog/series-b)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c79fdfa591a1",
+        "title": "[Lovable raises $330M to power the age of the builder — Lovable 公式](https://lovable.dev/blog/series-b)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-df76d4062ad5",
+        "title": "[Cursor quietly acquires Continue, an open-source alternative to GitHub Copilot — The New Stack](https://thenewstack.io/",
+        "text": "[Cursor quietly acquires Continue, an open-source alternative to GitHub Copilot — The New Stack](https://thenewstack.io/cursor-acquires-continue-coding/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Cursor quietly acquires Continue, an open-source alternative to GitHub Copilot — The New Stack](https://thenewstack.io/cursor-acquires-continue-coding/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-df76d4062ad5",
+        "title": "[Cursor quietly acquires Continue, an open-source alternative to GitHub Copilot — The New Stack](https://thenewstack.io/",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a2ea933baa4e",
+        "title": "[Visa Introduces AI Financial Assistant, Helping Banks Guide Customers from Insight to Action — Visa 投資家向け一次リリース](https:",
+        "text": "[Visa Introduces AI Financial Assistant, Helping Banks Guide Customers from Insight to Action — Visa 投資家向け一次リリース](https://investor.visa.com/news/news-details/2026/Visa-Introduces-AI-Financial-Assistant-Helping-Banks-Guide-Customers-from-Insight-to-Action/default.aspx)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Visa Introduces AI Financial Assistant, Helping Banks Guide Customers from Insight to Action — Visa 投資家向け一次リリース](https://investor.visa.com/news/news-details/2026/Visa-Introduces-AI-Financial-Assistant-Helping-Banks-Guide-Customers-from-Insight-to-Action/default.aspx)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a2ea933baa4e",
+        "title": "[Visa Introduces AI Financial Assistant, Helping Banks Guide Customers from Insight to Action — Visa 投資家向け一次リリース](https:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-868424ffe567",
+        "title": "[Visa Readies AI Financial Assistant for Banking Apps — PYMNTS](https://www.pymnts.com/news/artificial-intelligence/2026",
+        "text": "[Visa Readies AI Financial Assistant for Banking Apps — PYMNTS](https://www.pymnts.com/news/artificial-intelligence/2026/visa-readies-rollout-ai-financial-assistant-banking-apps/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Visa Readies AI Financial Assistant for Banking Apps — PYMNTS](https://www.pymnts.com/news/artificial-intelligence/2026/visa-readies-rollout-ai-financial-assistant-banking-apps/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-868424ffe567",
+        "title": "[Visa Readies AI Financial Assistant for Banking Apps — PYMNTS](https://www.pymnts.com/news/artificial-intelligence/2026",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-02807c7bbcb7",
+        "title": "[EdWealth Launches Ed, an AI Personal Coach for the New Era of Financial Fitness — GlobeNewswire (2026-07-15 / 一次 wire)]",
+        "text": "[EdWealth Launches Ed, an AI Personal Coach for the New Era of Financial Fitness — GlobeNewswire (2026-07-15 / 一次 wire)](https://www.globenewswire.com/news-release/2026/07/15/3327868/0/en/edwealth-launches-ed-an-ai-personal-coach-for-the-new-era-of-financial-fitness.html)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[EdWealth Launches Ed, an AI Personal Coach for the New Era of Financial Fitness — GlobeNewswire (2026-07-15 / 一次 wire)](https://www.globenewswire.com/news-release/2026/07/15/3327868/0/en/edwealth-launches-ed-an-ai-personal-coach-for-the-new-era-of-financial-fitness.html)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-02807c7bbcb7",
+        "title": "[EdWealth Launches Ed, an AI Personal Coach for the New Era of Financial Fitness — GlobeNewswire (2026-07-15 / 一次 wire)]",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c214db77cb4d",
+        "title": "[A new personal finance experience in ChatGPT — OpenAI 一次](https://openai.com/index/personal-finance-chatgpt/)",
+        "text": "[A new personal finance experience in ChatGPT — OpenAI 一次](https://openai.com/index/personal-finance-chatgpt/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[A new personal finance experience in ChatGPT — OpenAI 一次](https://openai.com/index/personal-finance-chatgpt/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c214db77cb4d",
+        "title": "[A new personal finance experience in ChatGPT — OpenAI 一次](https://openai.com/index/personal-finance-chatgpt/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b7562a3361bf",
+        "title": "[Finances in ChatGPT — OpenAI Help Center](https://help.openai.com/en/articles/20001222-finances-in-chatgpt)",
+        "text": "[Finances in ChatGPT — OpenAI Help Center](https://help.openai.com/en/articles/20001222-finances-in-chatgpt)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Finances in ChatGPT — OpenAI Help Center](https://help.openai.com/en/articles/20001222-finances-in-chatgpt)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b7562a3361bf",
+        "title": "[Finances in ChatGPT — OpenAI Help Center](https://help.openai.com/en/articles/20001222-finances-in-chatgpt)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e04ea172c02c",
+        "title": "[『マネーフォワード ME』、資産カテゴリに「暗号資産」を新たに追加するアップデートを実施 — 公式 PR TIMES (2026-07-08 / 既報)](https://prtimes.jp/main/html/rd/p/0000016",
+        "text": "[『マネーフォワード ME』、資産カテゴリに「暗号資産」を新たに追加するアップデートを実施 — 公式 PR TIMES (2026-07-08 / 既報)](https://prtimes.jp/main/html/rd/p/000001652.000008962.html)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[『マネーフォワード ME』、資産カテゴリに「暗号資産」を新たに追加するアップデートを実施 — 公式 PR TIMES (2026-07-08 / 既報)](https://prtimes.jp/main/html/rd/p/000001652.000008962.html)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e04ea172c02c",
+        "title": "[『マネーフォワード ME』、資産カテゴリに「暗号資産」を新たに追加するアップデートを実施 — 公式 PR TIMES (2026-07-08 / 既報)](https://prtimes.jp/main/html/rd/p/0000016",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-433939a10476",
+        "title": "[バックオフィス業務を自律的に遂行する AI サービス『マネーフォワード AI Cowork』を 2026 年 7 月より提供開始予定 — MF 公式](https://corp.moneyforward.com/news/release/",
+        "text": "[バックオフィス業務を自律的に遂行する AI サービス『マネーフォワード AI Cowork』を 2026 年 7 月より提供開始予定 — MF 公式](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[バックオフィス業務を自律的に遂行する AI サービス『マネーフォワード AI Cowork』を 2026 年 7 月より提供開始予定 — MF 公式](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-433939a10476",
+        "title": "[バックオフィス業務を自律的に遂行する AI サービス『マネーフォワード AI Cowork』を 2026 年 7 月より提供開始予定 — MF 公式](https://corp.moneyforward.com/news/release/",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-40bdc8f9ee3d",
+        "title": "[AI Executive Assistant in 2026: Stop Managing, Start Deciding — Lindy 公式ブログ](https://www.lindy.ai/blog/ai-executive-ass",
+        "text": "[AI Executive Assistant in 2026: Stop Managing, Start Deciding — Lindy 公式ブログ](https://www.lindy.ai/blog/ai-executive-assistant)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[AI Executive Assistant in 2026: Stop Managing, Start Deciding — Lindy 公式ブログ](https://www.lindy.ai/blog/ai-executive-assistant)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-40bdc8f9ee3d",
+        "title": "[AI Executive Assistant in 2026: Stop Managing, Start Deciding — Lindy 公式ブログ](https://www.lindy.ai/blog/ai-executive-ass",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ba11cbca568d",
+        "title": "[July 1, 2026 – Notion 3.6: External Agents, HTML blocks, and more — Notion 公式 (既報)](https://www.notion.com/releases/202",
+        "text": "[July 1, 2026 – Notion 3.6: External Agents, HTML blocks, and more — Notion 公式 (既報)](https://www.notion.com/releases/2026-07-01)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[July 1, 2026 – Notion 3.6: External Agents, HTML blocks, and more — Notion 公式 (既報)](https://www.notion.com/releases/2026-07-01)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ba11cbca568d",
+        "title": "[July 1, 2026 – Notion 3.6: External Agents, HTML blocks, and more — Notion 公式 (既報)](https://www.notion.com/releases/202",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ea4747ce71c5",
+        "title": "[Claude Code vs. Cursor vs. Codex vs. Antigravity — six months in — The New Stack](https://thenewstack.io/claude-code-vs",
+        "text": "[Claude Code vs. Cursor vs. Codex vs. Antigravity — six months in — The New Stack](https://thenewstack.io/claude-code-vs-cursor-vs-codex-vs-antigravity-2026/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Claude Code vs. Cursor vs. Codex vs. Antigravity — six months in — The New Stack](https://thenewstack.io/claude-code-vs-cursor-vs-codex-vs-antigravity-2026/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ea4747ce71c5",
+        "title": "[Claude Code vs. Cursor vs. Codex vs. Antigravity — six months in — The New Stack](https://thenewstack.io/claude-code-vs",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a19faf4d3e8b",
+        "title": "Step 1 skipped**: `SUPABASE_SERVICE_KEY` が env に未設定のため `admin-hub:competitor.check` は実行せず (既知の失敗モード)。",
+        "text": "Step 1 skipped**: `SUPABASE_SERVICE_KEY` が env に未設定のため `admin-hub:competitor.check` は実行せず (既知の失敗モード)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Step 1 skipped**: `SUPABASE_SERVICE_KEY` が env に未設定のため `admin-hub:competitor.check` は実行せず (既知の失敗モード)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a19faf4d3e8b",
+        "title": "Step 1 skipped**: `SUPABASE_SERVICE_KEY` が env に未設定のため `admin-hub:competitor.check` は実行せず (既知の失敗モード)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    }
+  ],
+  "patterns": [],
+  "issue_candidates": []
+}

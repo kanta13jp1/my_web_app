@@ -20,9 +20,11 @@ on:
         required: false
         default: 'true'
       platforms:
-        description: '投稿先: qiita / devto / qiita,devto'
+        # 2026-07-12: Qiita アカウント利用停止につき既定を devto へ変更。
+        # 停止解除まで qiita を指定しないこと。
+        description: '投稿先: devto (qiita は停止中につき指定しない)'
         required: false
-        default: 'qiita'
+        default: 'devto'
 
 concurrency:
   group: blog-batch-publish
@@ -39,7 +41,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
@@ -82,7 +84,8 @@ jobs:
           MAX_POSTS: ${{ github.event.inputs.max_posts || '999' }}
           DELAY: ${{ github.event.inputs.delay_seconds || '30' }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'true' }}
-          PLATFORMS: ${{ github.event.inputs.platforms || 'qiita' }}
+          # 2026-07-12: fallback も devto へ (qiita はアカウント利用停止中)
+          PLATFORMS: ${{ github.event.inputs.platforms || 'devto' }}
         run: |
           python3 scripts/batch_publish.py
 

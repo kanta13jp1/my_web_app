@@ -52,7 +52,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 20
           token: ${{ secrets.BYPASS_RULES || github.token }}
@@ -61,6 +61,19 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+
+      - name: Select weekly pip cache key
+        id: pip_cache_period
+        shell: bash
+        run: echo "period=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pip (notebooklm-py)
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-notebooklm-py-${{ steps.pip_cache_period.outputs.period }}
+          restore-keys: |
+            ${{ runner.os }}-pip-notebooklm-py-
 
       - name: Restore NotebookLM auth
         id: restore_auth

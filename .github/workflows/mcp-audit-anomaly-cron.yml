@@ -25,7 +25,7 @@ permissions:
 
 concurrency:
   group: mcp-audit-anomaly
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}  # 2026-07-09 ci-audit: PR 連続 push キュー積み防止 / schedule は false 維持 (セキュリティ監査ギャップ防止)
 
 jobs:
   script-test:
@@ -35,12 +35,19 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Deno
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+
+      - name: Cache Deno modules
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/deno
+          key: deno-${{ hashFiles('deno.lock') }}
+          restore-keys: deno-
 
       - name: Deno check
         run: deno check scripts/mcp_audit_anomaly.ts scripts/mcp_audit_anomaly_test.ts
@@ -59,12 +66,19 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Deno
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+
+      - name: Cache Deno modules
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/deno
+          key: deno-${{ hashFiles('deno.lock') }}
+          restore-keys: deno-
 
       - name: Detect anomaly
         run: >
@@ -116,7 +130,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4

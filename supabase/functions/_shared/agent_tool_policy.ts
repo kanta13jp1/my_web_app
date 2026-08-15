@@ -12,6 +12,11 @@ export const AGENT_TOOL_SCOPES = [
 
 export type AgentToolScope = typeof AGENT_TOOL_SCOPES[number];
 
+export const GENERATED_UI_SANDBOX_ACTOR_ROLE = "generated_ui_sandbox";
+export const GENERATED_UI_SANDBOX_ALLOWED_SCOPES: readonly AgentToolScope[] = [
+  "read",
+];
+
 export type ApprovalDecision = "approved" | "pending" | "rejected";
 
 export interface AgentToolApproval {
@@ -55,6 +60,7 @@ export const DEFAULT_AGENT_ROLE_SCOPES: Readonly<
   cmo: ["read", "suggest", "create", "external_share"],
   cho: ["read", "suggest", "create"],
   chro: ["read", "suggest", "create", "update"],
+  [GENERATED_UI_SANDBOX_ACTOR_ROLE]: GENERATED_UI_SANDBOX_ALLOWED_SCOPES,
   legal: ["read", "suggest", "create", "update"],
 };
 
@@ -131,6 +137,16 @@ export function evaluateAgentToolPolicy(
       blocked_reason: blockedReason,
     },
   };
+}
+
+export function evaluateGeneratedUiSandboxToolPolicy(
+  input: Omit<AgentToolPolicyInput, "actorRole" | "allowedScopes">,
+): AgentToolPolicyDecision {
+  return evaluateAgentToolPolicy({
+    ...input,
+    actorRole: GENERATED_UI_SANDBOX_ACTOR_ROLE,
+    allowedScopes: GENERATED_UI_SANDBOX_ALLOWED_SCOPES,
+  });
 }
 
 function isAgentToolScope(scope: string): scope is AgentToolScope {

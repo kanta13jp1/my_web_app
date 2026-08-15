@@ -22,7 +22,8 @@ class MaintenanceShell extends StatefulWidget {
   State<MaintenanceShell> createState() => _MaintenanceShellState();
 }
 
-class _MaintenanceShellState extends State<MaintenanceShell> {
+class _MaintenanceShellState extends State<MaintenanceShell>
+    with WidgetsBindingObserver {
   late final MaintenanceService _service;
   Timer? _timer;
   MaintenanceSnapshot _snapshot = MaintenanceSnapshot(
@@ -34,15 +35,41 @@ class _MaintenanceShellState extends State<MaintenanceShell> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _service = widget.service ?? MaintenanceService();
     _refresh(force: true);
-    _timer = Timer.periodic(MaintenanceService.cacheTtl, (_) {
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer ??= Timer.periodic(MaintenanceService.cacheTtl, (_) {
       _refresh(force: true);
     });
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 非表示タブ/バックグラウンドでの schedule-hub 定期ポーリングを止める。
+    // 復帰時はタイマーを再開し、refresh は **force:false** にする。Flutter Web は
+    // フォーカス往復(DevTools/タブ切替)のたびに resumed を送るため、force:true だと
+    // その都度 schedule-hub maintenance.list_active を叩いていた(キャッシュ TTL
+    // 無視)。非force なら 5分キャッシュが新しい間は再取得せず、TTL 超過(=実際に
+    // 長時間離席)のときだけ再取得する。version_check_service の _minCheckGap と同じ
+    // 「resumed 連発抑制」規律 (part337 H3 / version.json と同型)。
+    if (state == AppLifecycleState.resumed) {
+      _startTimer();
+      _refresh();
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
+      _timer?.cancel();
+      _timer = null;
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
   }

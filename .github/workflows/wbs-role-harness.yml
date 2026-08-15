@@ -53,7 +53,7 @@ jobs:
       COMMENT_ON_ISSUE: ${{ inputs.comment_on_issue || 'false' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
