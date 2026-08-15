@@ -1643,13 +1643,16 @@ class _HomePageState extends State<HomePage> with RouteAware {
         balanceCheckDone: balanceCheckDone ?? current.balanceCheckDone,
       );
 
-      await Supabase.instance.client.from('home_daily_status').upsert({
-        'user_id': userId,
-        'status_date': _statusDateKey(targetDate),
-        'morning_briefing_done': next.morningBriefingDone,
-        'balance_check_done': next.balanceCheckDone,
-        'updated_at': DateTime.now().toIso8601String(),
-      }, onConflict: 'user_id,status_date');
+      await Supabase.instance.client.from('home_daily_status').upsert(
+        {
+          'user_id': userId,
+          'status_date': _statusDateKey(targetDate),
+          'morning_briefing_done': next.morningBriefingDone,
+          'balance_check_done': next.balanceCheckDone,
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        onConflict: 'user_id,status_date',
+      );
     } catch (e) {
       debugPrint('Error upserting home daily status: $e');
     }

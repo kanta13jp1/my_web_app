@@ -4067,10 +4067,12 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         if (!wins && !candidate.isLoss) {
           continue;
         }
-        entries.add((
-          date: result.parsedDate,
-          text: _formatPastElectionOutcomeLine(result, candidate),
-        ));
+        entries.add(
+          (
+            date: result.parsedDate,
+            text: _formatPastElectionOutcomeLine(result, candidate),
+          ),
+        );
       }
     }
 

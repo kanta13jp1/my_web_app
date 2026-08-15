@@ -649,13 +649,16 @@ $inviteUrl
 
     try {
       if (user != null) {
-        await client.from('user_presence').upsert(<String, dynamic>{
-          'user_id': user.id,
-          'session_id': sessionId,
-          'is_online': true,
-          'last_seen': nowIso,
-          'page_path': pagePath,
-        }, onConflict: 'user_id,session_id');
+        await client.from('user_presence').upsert(
+          <String, dynamic>{
+            'user_id': user.id,
+            'session_id': sessionId,
+            'is_online': true,
+            'last_seen': nowIso,
+            'page_path': pagePath,
+          },
+          onConflict: 'user_id,session_id',
+        );
 
         if (_lastGuestCleanupSession != sessionId) {
           await client
@@ -666,11 +669,14 @@ $inviteUrl
           _lastGuestCleanupSession = sessionId;
         }
       } else {
-        await client.from('guest_presence').upsert(<String, dynamic>{
-          'session_id': sessionId,
-          'last_seen': nowIso,
-          'page_path': pagePath,
-        }, onConflict: 'session_id');
+        await client.from('guest_presence').upsert(
+          <String, dynamic>{
+            'session_id': sessionId,
+            'last_seen': nowIso,
+            'page_path': pagePath,
+          },
+          onConflict: 'session_id',
+        );
       }
     } catch (error) {
       debugPrint('Growth presence sync failed: $error');
