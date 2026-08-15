@@ -1245,6 +1245,91 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     );
   }
 
+  Widget _buildBrandDefinitionSection() {
+    const principles = <String>[
+      '自分が人生のCEOとして決める',
+      '時間・お金・スキルを資産として育てる',
+      '他人ではなく昨日の自分をKPIにする',
+    ];
+
+    return Container(
+      key: const Key('landing_brand_definition'),
+      padding: const EdgeInsets.fromLTRB(22, 20, 22, 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFDCE7F2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Semantics(
+            key: const Key('landing_brand_definition_heading'),
+            header: true,
+            child: const Text(
+              '自分株式会社とは',
+              style: TextStyle(
+                color: Color(0xFF172033),
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                height: 1.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            '自分株式会社は、自分自身を一つの会社に見立て、人生のCEOとして仕事・学習・お金・健康を経営する考え方をAIで実践できるライフマネジメントアプリです。AIが状況を整理し、今日やる1件まで具体化します。',
+            style: TextStyle(
+              color: Color(0xFF475569),
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              height: 1.7,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final principle in principles)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF5FB),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    principle,
+                    style: const TextStyle(
+                      color: Color(0xFF26364A),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      height: 1.45,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            key: const Key('landing_brand_philosophy_link'),
+            onPressed: () => Navigator.of(context).pushNamed('/philosophy'),
+            icon: const Icon(Icons.arrow_forward, size: 17),
+            label: const Text('9つの基本理念を見る'),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF1F7AE0),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildConversionSequence() {
     final trialFirst = _usesHeroTrial;
     return Column(
@@ -5000,13 +5085,17 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               ),
             ),
             const SizedBox(width: 10),
-            const Text(
-              '自分株式会社',
-              key: Key('landing_page_title'),
-              style: TextStyle(
-                color: Color(0xFF172033),
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
+            Semantics(
+              key: const Key('landing_appbar_brand_heading'),
+              header: true,
+              child: const Text(
+                '自分株式会社',
+                key: Key('landing_page_title'),
+                style: TextStyle(
+                  color: Color(0xFF172033),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ],
@@ -5060,7 +5149,15 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Title(
+                    key: const Key('landing_document_title'),
+                    title: '自分株式会社とは？ | 人生を経営するAIライフマネジメントアプリ',
+                    color: const Color(0xFF1F7AE0),
+                    child: const SizedBox.shrink(),
+                  ),
                   _buildHeroSection(),
+                  const SizedBox(height: 20),
+                  _buildBrandDefinitionSection(),
                   const SizedBox(height: 20),
                   if (_hypothesisEnabled('h02')) ...[
                     _buildIntentSelector(),
@@ -5272,16 +5369,20 @@ class _WorkflowLandingHero extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (!compactTrialHero) ...[
-            const Center(
-              child: Text(
-                '自分株式会社',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFF172033),
-                  fontSize: 42,
-                  fontWeight: FontWeight.w800,
-                  height: 1.16,
-                  letterSpacing: 0,
+            Center(
+              child: Semantics(
+                key: const Key('landing_brand_heading'),
+                header: true,
+                child: const Text(
+                  '自分株式会社',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF172033),
+                    fontSize: 42,
+                    fontWeight: FontWeight.w800,
+                    height: 1.16,
+                    letterSpacing: 0,
+                  ),
                 ),
               ),
             ),

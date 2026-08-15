@@ -9,7 +9,7 @@ import '../widgets/kgi_csf_kpi_panel.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// バイラル広告ジェネレーターページ
-/// viral-video-ad-generator / x-media-post / viral-growth-engine と連携
+/// viral-video-ad-generator / growth-hub (x.post / engine.run / engine.stats) と連携
 /// Dark War風動画広告の生成・X投稿・バイラル指標を管理
 class ViralAdGeneratorPage extends StatefulWidget {
   const ViralAdGeneratorPage({super.key});
@@ -150,38 +150,51 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
       final caption = _generatedAd!['caption']?.toString() ?? '';
       final imageUrl = _generatedAd!['generatedImageUrl']?.toString();
       final videoUrl = _generatedAd!['generatedVideoUrl']?.toString();
-      final adId = _generatedAd!['id']?.toString();
-
-      String endpoint;
-      Map<String, dynamic> body;
 
       final mediaUrl =
           (videoUrl != null && videoUrl.isNotEmpty) ? videoUrl : imageUrl;
+      final hasMedia = mediaUrl != null && mediaUrl.isNotEmpty;
 
-      if (mediaUrl != null && mediaUrl.isNotEmpty) {
-        endpoint = 'x-media-post';
-        body = {
+      // 旧 post-x-update / x-media-post は EF 統合で削除済み (呼ぶと 404)。
+      // growth-hub x.post が text / media 両方を 1 action で受ける
+      // (= universal_x_share_service と同じ経路)。
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.post',
           'text': caption.length > 280 ? caption.substring(0, 280) : caption,
-          'mediaUrl': mediaUrl,
-          'adGenerationId': adId,
-        };
-      } else {
-        endpoint = 'post-x-update';
-        body = {
-          'text': caption.length > 280 ? caption.substring(0, 280) : caption,
-        };
+          'mediaUrl': hasMedia ? mediaUrl : null,
+          'source': 'viral_ad_generator',
+          'contentKind': hasMedia ? 'media' : 'text',
+        },
+      );
+      final result = res.data as Map<String, dynamic>?;
+      // 旧実装は success を見ずに tweetLink だけ読んでいたため、
+      // 失敗レスポンスでも「投稿完了」と表示されていた。
+      if (result?['success'] != true) {
+        throw Exception(result?['error']?.toString() ?? 'X post failed');
       }
 
-      final res = await _supabase.functions.invoke(endpoint, body: body);
-      final result = res.data as Map<String, dynamic>?;
-
       if (mounted) {
-        final tweetUrl =
-            result?['tweetLink']?.toString() ?? result?['tweetUrl']?.toString();
+        final tweetId = result?['tweetId']?.toString();
+        final tweetUrl = (tweetId != null && tweetId.isNotEmpty)
+            ? 'https://x.com/i/web/status/$tweetId'
+            : null;
+        // posted=false は dryRun か X 認証情報の未設定。success=true で返るので、
+        // ここを分けないと「投稿していないのに投稿成功」と表示されてしまう。
+        final posted = result?['posted'] == true;
+        final warning = result?['warning']?.toString();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(tweetUrl != null ? '✅ X投稿成功! $tweetUrl' : '✅ 投稿完了'),
-            backgroundColor: const Color(0xFF4CAF50),
+            content: Text(
+              !posted
+                  ? '⚠️ 未投稿: ${warning ?? 'dryRun または X 認証情報が未設定です'}'
+                  : tweetUrl != null
+                      ? '✅ X投稿成功! $tweetUrl'
+                      : '✅ 投稿完了',
+            ),
+            backgroundColor:
+                posted ? const Color(0xFF4CAF50) : const Color(0xFFF59E0B),
             duration: const Duration(seconds: 5),
           ),
         );
