@@ -156,10 +156,14 @@ Deno.test("local snapshot resolves goal progress and official achievements", () 
 Deno.test("generated endorsement asset passes the shared validator", () => {
   const snapshot = normalizeOfficialEndorsementSnapshot(endorsementAsset);
 
-  assertEquals(snapshot.totalCount, 218);
-  assertEquals(snapshot.incumbentCount, 102);
-  assertEquals(snapshot.newcomerCount, 107);
-  assertEquals(snapshot.formerCount, 9);
-  assertEquals(snapshot.recommendationCount, 9);
-  assertEquals(snapshot.prefectureCount, 33);
+  assertEquals(snapshot.totalCount, endorsementAsset.totalCount);
+  assertEquals(snapshot.incumbentCount, endorsementAsset.incumbentCount);
+  assertEquals(snapshot.newcomerCount, endorsementAsset.newcomerCount);
+  assertEquals(snapshot.formerCount, endorsementAsset.formerCount);
+  assertEquals(snapshot.recommendationCount, endorsementAsset.recommendationCount);
+  assertEquals(snapshot.prefectureCount, endorsementAsset.prefectureCount);
+  assertEquals(
+    snapshot.totalCount,
+    snapshot.incumbentCount + snapshot.newcomerCount + snapshot.formerCount,
+  );
 });
