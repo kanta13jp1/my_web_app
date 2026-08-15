@@ -84,14 +84,39 @@ import {
 import { applyProviderGenerationOptions } from "./provider_generation_options.ts";
 import {
   buildCompanyRuntimePrompt,
-  companyRuntimeRoutingTier,
+  nextCompanyRuntimeRoutingProfile,
   parseCompanyRuntimeQueueMessages,
+  selectCompanyRuntimeRouting,
 } from "./company_builder_runtime.ts";
+import {
+  buildExtractiveResearchFallback,
+  buildResearchCitationContext,
+  canonicalResearchUrl,
+  chunkResearchMarkdown,
+  ensureCitationFooter,
+  fetchPublicResearchDocument,
+  normalizeResearchCitations,
+  type ResearchCitation,
+  sha256Hex,
+} from "./company_research.ts";
+import {
+  assertA2AVersion,
+  buildCompanyAgentCard,
+  COMPANY_A2A_CONTENT_TYPE,
+  COMPANY_A2A_PROTOCOL_VERSION,
+  companyTaskToA2A,
+  decodeA2APageToken,
+  encodeA2APageToken,
+  parseA2ASendMessage,
+} from "./company_a2a.ts";
+import { rankBm25 } from "../memory-search-hub/search/bm25.ts";
+import { embedTextWithGemini } from "../memory-search-hub/search/vector.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, a2a-version, a2a-extensions",
+  "Access-Control-Expose-Headers": "A2A-Version, WWW-Authenticate",
   "Access-Control-Max-Age": "86400",
 };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -115,6 +140,22 @@ function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function a2aJson(
+  data: unknown,
+  status = 200,
+  extraHeaders: HeadersInit = {},
+): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "A2A-Version": COMPANY_A2A_PROTOCOL_VERSION,
+      "Content-Type": COMPANY_A2A_CONTENT_TYPE,
+      ...Object.fromEntries(new Headers(extraHeaders)),
+    },
   });
 }
 
@@ -1990,6 +2031,8 @@ async function getCompanyBuilderDetail(
     runtimeControlResult,
     runtimeMasterResult,
     runtimeEventsResult,
+    researchSourcesResult,
+    routingProfilesResult,
   ] = await Promise.all([
     admin.from("agents").select("*")
       .eq("user_id", userId)
@@ -2034,6 +2077,17 @@ async function getCompanyBuilderDetail(
       .eq("company_id", companyId)
       .order("occurred_at", { ascending: false })
       .limit(100),
+    admin.from("company_research_sources").select(
+      "id, source_url, canonical_url, title, excerpt, status, http_status, content_type, last_error, metadata, fetched_at, created_at, updated_at",
+    )
+      .eq("user_id", userId)
+      .eq("company_id", companyId)
+      .order("updated_at", { ascending: false })
+      .limit(100),
+    admin.from("company_runtime_routing_profiles").select("*")
+      .eq("user_id", userId)
+      .eq("company_id", companyId)
+      .order("updated_at", { ascending: false }),
   ]);
 
   if (managerAgentsResult.error) {
@@ -2054,6 +2108,12 @@ async function getCompanyBuilderDetail(
   if (runtimeEventsResult.error) {
     throw new Error(runtimeEventsResult.error.message);
   }
+  if (researchSourcesResult.error) {
+    throw new Error(researchSourcesResult.error.message);
+  }
+  if (routingProfilesResult.error) {
+    throw new Error(routingProfilesResult.error.message);
+  }
 
   return {
     company,
@@ -2067,6 +2127,10 @@ async function getCompanyBuilderDetail(
     runtime_control: runtimeControlResult.data,
     runtime_master_control: runtimeMasterResult.data,
     runtime_events: runtimeEventsResult.data ?? [],
+    research_sources: researchSourcesResult.data ?? [],
+    routing_profiles: routingProfilesResult.data ?? [],
+    a2a_agent_card_url:
+      `${SUPABASE_URL}/functions/v1/ai-hub/.well-known/agent-card.json`,
   };
 }
 
@@ -2191,6 +2255,373 @@ async function archiveCompanyRuntimeMessage(
   if (error) throw new Error(error.message);
 }
 
+async function getOwnedCompany(
+  admin: SupabaseClient,
+  userId: string,
+  companyId: string,
+): Promise<Record<string, unknown> | null> {
+  const { data, error } = await admin.from("hub_data")
+    .select("id, metadata, created_at")
+    .eq("id", companyId)
+    .eq("source", "company_builder_company")
+    .filter("metadata->>user_id", "eq", userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data as Record<string, unknown> | null;
+}
+
+async function embedCompanyResearchDocuments(
+  texts: string[],
+  apiKey: string,
+): Promise<Array<number[] | null>> {
+  if (!apiKey || texts.length === 0) return texts.map(() => null);
+  const embeddings: Array<number[] | null> = [];
+  for (let offset = 0; offset < texts.length; offset += 20) {
+    const batch = texts.slice(offset, offset + 20);
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
+        body: JSON.stringify({
+          requests: batch.map((text) => ({
+            model: "models/gemini-embedding-001",
+            content: { parts: [{ text: text.slice(0, 3500) }] },
+            taskType: "RETRIEVAL_DOCUMENT",
+            outputDimensionality: 768,
+          })),
+        }),
+        signal: AbortSignal.timeout(15_000),
+      },
+    );
+    if (!response.ok) {
+      throw new Error(`Gemini document embedding returned ${response.status}`);
+    }
+    const payload = await response.json() as {
+      embeddings?: Array<{ values?: number[] }>;
+    };
+    const values = payload.embeddings ?? [];
+    if (values.length !== batch.length) {
+      throw new Error("Gemini document embedding count mismatch");
+    }
+    embeddings.push(
+      ...values.map((item) =>
+        Array.isArray(item.values) && item.values.length === 768
+          ? item.values
+          : null
+      ),
+    );
+  }
+  return embeddings;
+}
+
+const COMPANY_RESEARCH_EMBEDDING_CHUNK_LIMIT = 60;
+
+async function ingestCompanyResearchSource(
+  admin: SupabaseClient,
+  userId: string,
+  companyId: string,
+  rawUrl: unknown,
+): Promise<Record<string, unknown>> {
+  if (!await getOwnedCompany(admin, userId, companyId)) {
+    throw new Error("Company not found");
+  }
+  const canonicalUrl = canonicalResearchUrl(rawUrl);
+  const sourceUrl = String(rawUrl).trim();
+  const { data: source, error: sourceError } = await admin
+    .from("company_research_sources")
+    .upsert({
+      user_id: userId,
+      company_id: companyId,
+      source_url: sourceUrl,
+      canonical_url: canonicalUrl,
+      status: "processing",
+      last_error: null,
+      metadata: { ingestion: "company_builder" },
+    }, { onConflict: "user_id,company_id,canonical_url" })
+    .select("*")
+    .single();
+  if (sourceError) throw new Error(sourceError.message);
+  const sourceId = asString(source.id);
+
+  try {
+    const document = await fetchPublicResearchDocument(sourceUrl);
+    const chunks = chunkResearchMarkdown(document.markdown);
+    if (chunks.length === 0) {
+      throw new Error("Source produced no research chunks");
+    }
+    const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+    let embeddings = chunks.map(() => null as number[] | null);
+    let embeddingStatus = geminiKey ? "failed" : "unavailable";
+    if (geminiKey) {
+      try {
+        const generated = await embedCompanyResearchDocuments(
+          chunks.slice(0, COMPANY_RESEARCH_EMBEDDING_CHUNK_LIMIT).map((chunk) =>
+            chunk.content
+          ),
+          geminiKey,
+        );
+        embeddings = chunks.map((_, index) => generated[index] ?? null);
+        embeddingStatus = generated.some(Boolean)
+          ? chunks.length > COMPANY_RESEARCH_EMBEDDING_CHUNK_LIMIT
+            ? "partial"
+            : "ready"
+          : "failed";
+      } catch (error) {
+        console.warn("company research embedding fallback", error);
+      }
+    }
+
+    const { error: deleteError } = await admin.from("company_research_chunks")
+      .delete().eq("source_id", sourceId).eq("user_id", userId)
+      .eq("company_id", companyId);
+    if (deleteError) throw new Error(deleteError.message);
+    const chunkRows = chunks.map((chunk, index) => ({
+      source_id: sourceId,
+      user_id: userId,
+      company_id: companyId,
+      chunk_index: chunk.chunkIndex,
+      heading: chunk.heading,
+      location: chunk.location,
+      content: chunk.content,
+      embedding: embeddings[index],
+      metadata: { source_title: document.title },
+    }));
+    const { error: chunkError } = await admin.from("company_research_chunks")
+      .insert(chunkRows);
+    if (chunkError) throw new Error(chunkError.message);
+
+    const { data: ready, error: updateError } = await admin
+      .from("company_research_sources")
+      .update({
+        source_url: document.sourceUrl,
+        title: document.title,
+        content_markdown: document.markdown,
+        excerpt: document.excerpt,
+        content_hash: await sha256Hex(document.markdown),
+        status: "ready",
+        http_status: document.httpStatus,
+        content_type: document.contentType,
+        last_error: null,
+        fetched_at: new Date().toISOString(),
+        metadata: {
+          ingestion: "company_builder",
+          final_canonical_url: document.canonicalUrl,
+          chunk_count: chunks.length,
+          embedding_status: embeddingStatus,
+        },
+      })
+      .eq("id", sourceId).eq("user_id", userId).eq("company_id", companyId)
+      .select("*")
+      .single();
+    if (updateError) throw new Error(updateError.message);
+    await addCompanyEvent(
+      admin,
+      userId,
+      companyId,
+      "research_source_ready",
+      "ready",
+      {
+        source_id: sourceId,
+        chunk_count: chunks.length,
+        embedding_status: embeddingStatus,
+      },
+    );
+    return ready as Record<string, unknown>;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await admin.from("company_research_sources").update({
+      status: "failed",
+      last_error: message.slice(0, 1000),
+      metadata: {
+        ingestion: "company_builder",
+        fallback: "source_failure_recorded",
+      },
+    }).eq("id", sourceId).eq("user_id", userId).eq("company_id", companyId);
+    await addCompanyEvent(
+      admin,
+      userId,
+      companyId,
+      "research_source_failed",
+      "failed",
+      { source_id: sourceId, error: message.slice(0, 500) },
+    );
+    throw error;
+  }
+}
+
+async function searchCompanyResearch(
+  admin: SupabaseClient,
+  userId: string,
+  companyId: string,
+  query: string,
+): Promise<ResearchCitation[]> {
+  const { data: sources, error: sourcesError } = await admin
+    .from("company_research_sources")
+    .select("id, source_url, title, fetched_at")
+    .eq("user_id", userId).eq("company_id", companyId).eq("status", "ready")
+    .order("updated_at", { ascending: false }).limit(100);
+  if (sourcesError) throw new Error(sourcesError.message);
+  const sourceMap = new Map(
+    ((sources ?? []) as Record<string, unknown>[]).map((
+      source,
+    ) => [asString(source.id), source]),
+  );
+  if (sourceMap.size === 0) return [];
+
+  const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+  let queryEmbedding: number[] | null = null;
+  if (geminiKey) {
+    try {
+      queryEmbedding = await embedTextWithGemini(query, geminiKey);
+    } catch (error) {
+      console.warn("company research query embedding fallback", error);
+    }
+  }
+
+  const merged = new Map<string, Record<string, unknown>>();
+  const { data: hybridRows, error: hybridError } = await admin.rpc(
+    "match_company_research_chunks",
+    {
+      p_user_id: userId,
+      p_company_id: companyId,
+      p_query_text: query,
+      p_query_embedding: queryEmbedding,
+      p_match_count: 12,
+      p_match_threshold: 0.05,
+    },
+  );
+  if (hybridError) {
+    console.warn("company research database search fallback", hybridError);
+  } else {
+    for (const row of (hybridRows ?? []) as Record<string, unknown>[]) {
+      merged.set(asString(row.chunk_id), row);
+    }
+  }
+
+  const { data: chunks, error: chunksError } = await admin
+    .from("company_research_chunks")
+    .select("id, source_id, heading, location, content, updated_at")
+    .eq("user_id", userId).eq("company_id", companyId)
+    .in("source_id", [...sourceMap.keys()]).limit(300);
+  if (chunksError) throw new Error(chunksError.message);
+  const documents = ((chunks ?? []) as Record<string, unknown>[]).map(
+    (chunk) => {
+      const source = sourceMap.get(asString(chunk.source_id)) ?? {};
+      return {
+        file_path: asString(chunk.id),
+        title: asString(source.title),
+        content: asString(chunk.content),
+        snippet: asString(chunk.content).slice(0, 700),
+        updated_at: asString(chunk.updated_at),
+        metadata: { chunk, source },
+      };
+    },
+  );
+  const lexicalRows = rankBm25(query, documents, 12);
+  const maxLexical = Math.max(1, ...lexicalRows.map((row) => row.score));
+  for (const lexical of lexicalRows) {
+    const metadata = asRecord(lexical.metadata) ?? {};
+    const chunk = asRecord(metadata.chunk) ?? {};
+    const source = asRecord(metadata.source) ?? {};
+    const chunkId = asString(chunk.id);
+    const candidate: Record<string, unknown> = {
+      chunk_id: chunkId,
+      source_id: asString(chunk.source_id),
+      source_url: asString(source.source_url),
+      title: asString(source.title),
+      heading: asString(chunk.heading),
+      location: asString(chunk.location),
+      content: asString(chunk.content),
+      fetched_at: asString(source.fetched_at),
+      score: lexical.score / maxLexical,
+    };
+    const existing = merged.get(chunkId);
+    if (!existing || Number(existing.score ?? 0) < Number(candidate.score)) {
+      merged.set(chunkId, candidate);
+    }
+  }
+
+  const ranked = [...merged.values()].sort((left, right) =>
+    Number(right.score ?? 0) - Number(left.score ?? 0)
+  );
+  return normalizeResearchCitations(ranked, 6);
+}
+
+async function persistCompanyRoutingOutcome(
+  admin: SupabaseClient,
+  userId: string,
+  companyId: string,
+  profile: Record<string, unknown>,
+  success: boolean,
+  provider: string,
+  model: string,
+) {
+  const timestampField = success ? "last_success_at" : "last_failure_at";
+  const { data, error } = await admin.from("company_runtime_routing_profiles")
+    .upsert({
+      user_id: userId,
+      company_id: companyId,
+      ...profile,
+      last_provider: provider || null,
+      last_model: model || null,
+      [timestampField]: new Date().toISOString(),
+    }, { onConflict: "user_id,company_id,routing_key" })
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return data as Record<string, unknown>;
+}
+
+async function consolidateCompanyTaskResult(
+  admin: SupabaseClient,
+  userId: string,
+  companyId: string,
+  task: Record<string, unknown>,
+  resultText: string,
+  citations: ResearchCitation[],
+  routingProfile: Record<string, unknown>,
+) {
+  const metadata = asRecord(task.metadata) ?? {};
+  const taskId = asString(task.id);
+  const agentId = asString(task.assignee_agent_id);
+  const { error: memoryError } = await admin.from("agent_memories").insert({
+    user_id: userId,
+    agent_id: agentId,
+    memory_layer: "knowledge",
+    content: resultText,
+    source: "company_builder_runtime",
+    metadata: {
+      system: "company_builder",
+      company_id: companyId,
+      task_id: taskId,
+      stage: metadata.stage,
+      citations,
+      routing: routingProfile,
+    },
+  });
+  if (memoryError) throw new Error(memoryError.message);
+  await addItem(admin, "wiki_page", userId, {
+    title: `${asString(task.title) || "Company task"} Result`,
+    content: resultText,
+    category: "company_builder",
+    tags: [
+      "ai-company-builder",
+      "runtime-result",
+      asString(metadata.stage) || "general",
+    ],
+    system: "company_builder",
+    company_id: companyId,
+    task_id: taskId,
+    note_type: "runtime_result",
+    citations,
+    routing: routingProfile,
+  });
+}
+
 async function runCompanyRuntimeWorker(
   admin: SupabaseClient,
 ): Promise<Record<string, unknown>> {
@@ -2230,16 +2661,21 @@ async function runCompanyRuntimeWorker(
   const supervisorId = asString(task.supervisor_agent_id);
   const assigneeId = asString(task.assignee_agent_id);
   let success = false;
+  let routingSuccess = false;
   let resultText = "";
   let errorMessage: string | null = null;
   let provider = "";
   let model = "";
   let tier = "";
   let prompt = "";
+  let fallbackReason: string | null = null;
+  let citations: ResearchCitation[] = [];
+  let currentRoutingProfile: Record<string, unknown> | null = null;
+  let routingDecision = selectCompanyRuntimeRouting(task, null);
   const startedAt = performance.now();
 
   try {
-    const [companyResult, agentsResult] = await Promise.all([
+    const [companyResult, agentsResult, routingResult] = await Promise.all([
       admin.from("hub_data").select("id, metadata, created_at")
         .eq("id", message.companyId)
         .eq("source", "company_builder_company")
@@ -2248,41 +2684,75 @@ async function runCompanyRuntimeWorker(
       admin.from("agents").select("*")
         .eq("user_id", message.userId)
         .in("id", [supervisorId, assigneeId]),
+      admin.from("company_runtime_routing_profiles").select("*")
+        .eq("user_id", message.userId)
+        .eq("company_id", message.companyId)
+        .eq("routing_key", routingDecision.routingKey)
+        .maybeSingle(),
     ]);
     if (companyResult.error) throw new Error(companyResult.error.message);
     if (agentsResult.error) throw new Error(agentsResult.error.message);
+    if (routingResult.error) throw new Error(routingResult.error.message);
 
     const agents = (agentsResult.data ?? []) as Record<string, unknown>[];
     const manager = agents.find((agent) => agent.id === supervisorId) ?? null;
     const tool = agents.find((agent) => agent.id === assigneeId) ?? null;
+    currentRoutingProfile = routingResult.data as
+      | Record<string, unknown>
+      | null;
+    routingDecision = selectCompanyRuntimeRouting(task, currentRoutingProfile);
+    citations = await searchCompanyResearch(
+      admin,
+      message.userId,
+      message.companyId,
+      [asString(task.title), asString(task.description)].filter(Boolean).join(
+        "\n",
+      ),
+    );
     prompt = buildCompanyRuntimePrompt(
       companyResult.data as Record<string, unknown>,
       task,
       manager,
       tool,
+      buildResearchCitationContext(citations),
     );
 
     const providerResponse = await invokeAiHubInternal({
       action: "provider.chat_auto",
       internal_user_id: message.userId,
       message: prompt,
-      tier: companyRuntimeRoutingTier(task),
+      tier: routingDecision.tier,
       max_tokens: 1800,
       session_id: message.companyId,
       trace_id: crypto.randomUUID(),
-      routing_use_case: "company_builder.runtime",
-      provider_choice_reason: "durable company task routing",
+      routing_use_case: routingDecision.routingKey,
+      provider_choice_reason: routingDecision.reason,
     });
     resultText = asString(providerResponse.payload.text);
     success = providerResponse.ok &&
       providerResponse.payload.success === true && resultText !== "";
+    routingSuccess = success;
     provider = asString(providerResponse.payload.provider);
     model = asString(providerResponse.payload.model);
     tier = asString(providerResponse.payload.tier);
-    if (!success) {
+    if (success) {
+      resultText = ensureCitationFooter(resultText, citations);
+    } else {
       errorMessage = asString(
         providerResponse.payload.message ?? providerResponse.payload.status,
       ) || `provider.chat_auto returned ${providerResponse.status}`;
+      if (citations.length > 0) {
+        fallbackReason = errorMessage;
+        resultText = buildExtractiveResearchFallback(
+          asString(task.title),
+          citations,
+        );
+        success = true;
+        provider = "extractive";
+        model = "deterministic-citation-fallback";
+        tier = routingDecision.tier;
+        errorMessage = null;
+      }
     }
   } catch (error) {
     errorMessage = error instanceof Error ? error.message : String(error);
@@ -2298,6 +2768,12 @@ async function runCompanyRuntimeWorker(
       estimateTokensFromChars(outputChars),
     )
     : 0;
+  const nextRoutingProfile = nextCompanyRuntimeRoutingProfile(
+    currentRoutingProfile,
+    routingDecision,
+    routingSuccess,
+    tier,
+  );
   const { data: rawFinish, error: finishError } = await admin.rpc(
     "finish_company_agent_task",
     {
@@ -2305,7 +2781,18 @@ async function runCompanyRuntimeWorker(
       p_company_id: message.companyId,
       p_task_id: taskId,
       p_success: success,
-      p_result: success ? { text: resultText, provider, model, tier } : {},
+      p_result: success
+        ? {
+          text: resultText,
+          provider,
+          model,
+          tier,
+          citations,
+          routing: nextRoutingProfile,
+          routing_provider_success: routingSuccess,
+          fallback_reason: fallbackReason,
+        }
+        : {},
       p_error: errorMessage,
       p_metrics: {
         provider,
@@ -2315,13 +2802,71 @@ async function runCompanyRuntimeWorker(
         output_chars: outputChars,
         estimated_cost_usd: estimatedCost,
         duration_ms: durationMs,
+        routing_provider_success: routingSuccess,
       },
     },
   );
   if (finishError) throw new Error(finishError.message);
+  const finish = asRecord(rawFinish) ?? {};
+  const finalTaskStatus = asString(finish.task_status);
+  const taskCancelled = finalTaskStatus === "cancelled";
+
+  let persistedRoutingProfile = nextRoutingProfile;
+  if (!taskCancelled) {
+    try {
+      persistedRoutingProfile = await persistCompanyRoutingOutcome(
+        admin,
+        message.userId,
+        message.companyId,
+        nextRoutingProfile,
+        routingSuccess,
+        provider,
+        model,
+      );
+      await addCompanyEvent(
+        admin,
+        message.userId,
+        message.companyId,
+        "routing_outcome_recorded",
+        routingSuccess ? "completed" : "failed",
+        {
+          task_id: taskId,
+          requested_tier: routingDecision.tier,
+          used_tier: tier,
+          reason: routingDecision.reason,
+          decision: persistedRoutingProfile.last_decision,
+          next_tier: persistedRoutingProfile.current_tier,
+        },
+      );
+    } catch (error) {
+      console.error("company routing profile persistence failed", error);
+    }
+  }
+  if (success && finalTaskStatus === "completed") {
+    try {
+      await consolidateCompanyTaskResult(
+        admin,
+        message.userId,
+        message.companyId,
+        task,
+        resultText,
+        citations,
+        persistedRoutingProfile,
+      );
+    } catch (error) {
+      console.error("company result consolidation failed", error);
+      await addCompanyEvent(
+        admin,
+        message.userId,
+        message.companyId,
+        "memory_consolidation_failed",
+        "failed",
+        { task_id: taskId, error: String(error).slice(0, 500) },
+      ).catch(() => undefined);
+    }
+  }
 
   await archiveCompanyRuntimeMessage(admin, message.msgId);
-  const finish = asRecord(rawFinish) ?? {};
   const shouldContinue = finish.continue === true;
   if (shouldContinue) {
     await enqueueCompanyRuntime(
@@ -2351,6 +2896,290 @@ async function getUserId(req: Request): Promise<string | null> {
   });
   const { data: { user } } = await c.auth.getUser();
   return user?.id ?? null;
+}
+
+function companyA2ARelativePath(req: Request): string | null {
+  const pathname = new URL(req.url).pathname;
+  const match = pathname.match(/\/a2a(?=\/|$)/);
+  if (!match || match.index === undefined) return null;
+  return pathname.slice(match.index + match[0].length) || "/";
+}
+
+async function activateCompanyA2ATaskRuntime(
+  admin: SupabaseClient,
+  userId: string,
+  companyId: string,
+) {
+  const { error: controlError } = await admin.rpc(
+    "set_company_agent_runtime_state",
+    {
+      p_user_id: userId,
+      p_company_id: companyId,
+      p_command: "start",
+    },
+  );
+  if (controlError) throw new Error(controlError.message);
+  await enqueueCompanyRuntime(admin, userId, companyId, "a2a_message");
+  scheduleCompanyRuntimeWorker();
+}
+
+async function createCompanyA2ATask(
+  admin: SupabaseClient,
+  userId: string,
+  value: unknown,
+): Promise<Record<string, unknown>> {
+  const input = parseA2ASendMessage(value);
+  const company = await getOwnedCompany(admin, userId, input.companyId);
+  if (!company) throw new Error("TaskNotFoundError: company not found");
+  const companyMetadata = asRecord(company.metadata) ?? {};
+  if (companyMetadata.passed !== true) {
+    throw new Error("UnsupportedOperationError: company gate is not approved");
+  }
+
+  const { data: existing, error: existingError } = await admin
+    .from("agent_tasks").select("*")
+    .eq("user_id", userId)
+    .eq("task_type", "company_builder_a2a")
+    .filter("metadata->>company_id", "eq", input.companyId)
+    .filter("metadata->>a2a_message_id", "eq", input.messageId)
+    .maybeSingle();
+  if (existingError) throw new Error(existingError.message);
+  if (existing) {
+    if (asString(existing.status) === "queued") {
+      await activateCompanyA2ATaskRuntime(admin, userId, input.companyId);
+    }
+    return existing as Record<string, unknown>;
+  }
+
+  const route = input.skillId === "cited-research"
+    ? { managerKey: "chief", toolKey: "nova", stage: "research" }
+    : input.skillId === "launch-execution"
+    ? { managerKey: "ivy", toolKey: "piper", stage: "growth" }
+    : { managerKey: "chief", toolKey: "sage", stage: "operations" };
+  const [managerResult, toolResult] = await Promise.all([
+    admin.from("agents").select("id").eq("user_id", userId)
+      .filter("metadata->>company_id", "eq", input.companyId)
+      .filter("metadata->>manager_key", "eq", route.managerKey)
+      .maybeSingle(),
+    admin.from("agents").select("id").eq("user_id", userId)
+      .filter("metadata->>system", "eq", "company_builder")
+      .filter("metadata->>shared_pool", "eq", "true")
+      .filter("metadata->>tool_key", "eq", route.toolKey)
+      .maybeSingle(),
+  ]);
+  if (managerResult.error) throw new Error(managerResult.error.message);
+  if (toolResult.error) throw new Error(toolResult.error.message);
+  if (!managerResult.data || !toolResult.data) {
+    throw new Error(
+      "UnsupportedOperationError: company agents are unavailable",
+    );
+  }
+
+  const { data: task, error: taskError } = await admin.from("agent_tasks")
+    .insert({
+      user_id: userId,
+      supervisor_agent_id: managerResult.data.id,
+      assignee_agent_id: toolResult.data.id,
+      title: `${input.skillId}: ${
+        input.text.replace(/\s+/g, " ").slice(0, 120)
+      }`,
+      description: input.text,
+      status: "queued",
+      priority: "normal",
+      task_type: "company_builder_a2a",
+      source: "company_builder_bootstrap",
+      metadata: {
+        system: "company_builder",
+        company_id: input.companyId,
+        company_name: asString(companyMetadata.company_name),
+        manager_key: route.managerKey,
+        tool_key: route.toolKey,
+        stage: route.stage,
+        a2a_message_id: input.messageId,
+        a2a_context_id: input.contextId,
+        a2a_skill_id: input.skillId,
+        a2a_message: input.rawMessage,
+      },
+    }).select("*").single();
+  if (taskError) {
+    if (taskError.code === "23505") {
+      const { data: duplicate, error: duplicateError } = await admin
+        .from("agent_tasks").select("*")
+        .eq("user_id", userId)
+        .eq("task_type", "company_builder_a2a")
+        .filter("metadata->>company_id", "eq", input.companyId)
+        .filter("metadata->>a2a_message_id", "eq", input.messageId)
+        .single();
+      if (duplicateError) throw new Error(duplicateError.message);
+      if (asString(duplicate.status) === "queued") {
+        await activateCompanyA2ATaskRuntime(admin, userId, input.companyId);
+      }
+      return duplicate as Record<string, unknown>;
+    }
+    throw new Error(taskError.message);
+  }
+
+  await activateCompanyA2ATaskRuntime(admin, userId, input.companyId);
+  await addCompanyEvent(
+    admin,
+    userId,
+    input.companyId,
+    "a2a_task_submitted",
+    "queued",
+    { task_id: task.id, message_id: input.messageId, skill_id: input.skillId },
+  );
+  return task as Record<string, unknown>;
+}
+
+async function handleCompanyA2ARequest(
+  req: Request,
+  body: Record<string, unknown>,
+  admin: SupabaseClient,
+  userId: string,
+): Promise<Response> {
+  try {
+    assertA2AVersion(req);
+  } catch (error) {
+    return a2aJson({
+      error: { code: "VersionNotSupportedError", message: String(error) },
+    }, 400);
+  }
+  const relative = companyA2ARelativePath(req) ?? "/";
+
+  try {
+    if (req.method === "POST" && relative === "/message:send") {
+      const task = await createCompanyA2ATask(admin, userId, body);
+      return a2aJson({ task: companyTaskToA2A(task) }, 202);
+    }
+
+    if (req.method === "GET" && relative === "/tasks") {
+      const url = new URL(req.url);
+      const requestedPageSize = Number(url.searchParams.get("pageSize"));
+      const pageSize = Math.max(
+        1,
+        Math.min(
+          Number.isFinite(requestedPageSize) && requestedPageSize > 0
+            ? Math.trunc(requestedPageSize)
+            : 50,
+          100,
+        ),
+      );
+      const includeArtifacts =
+        url.searchParams.get("includeArtifacts") === "true";
+      const cursor = decodeA2APageToken(url.searchParams.get("pageToken"));
+      if (url.searchParams.has("pageToken") && !cursor) {
+        return a2aJson({
+          error: { code: "InvalidArgumentError", message: "Invalid pageToken" },
+        }, 400);
+      }
+      let query = admin.from("agent_tasks").select("*")
+        .eq("user_id", userId).eq("task_type", "company_builder_a2a")
+        .order("updated_at", { ascending: false })
+        .order("id", { ascending: false }).limit(pageSize + 1);
+      const contextId = asString(url.searchParams.get("contextId"));
+      if (contextId.length > 200) {
+        return a2aJson({
+          error: {
+            code: "InvalidArgumentError",
+            message: "contextId exceeds 200 characters",
+          },
+        }, 400);
+      }
+      if (contextId) {
+        query = query.filter("metadata->>a2a_context_id", "eq", contextId);
+      }
+      if (cursor) {
+        query = query.or(
+          `updated_at.lt.${cursor.updatedAt},and(updated_at.eq.${cursor.updatedAt},id.lt.${cursor.id})`,
+        );
+      }
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      const rows = (data ?? []) as Record<string, unknown>[];
+      const hasNext = rows.length > pageSize;
+      const page = rows.slice(0, pageSize);
+      return a2aJson({
+        tasks: page.map((task) => companyTaskToA2A(task, includeArtifacts)),
+        nextPageToken: hasNext && page.length > 0
+          ? encodeA2APageToken(page[page.length - 1])
+          : "",
+      });
+    }
+
+    const cancelMatch = relative.match(/^\/tasks\/([0-9a-f-]{36}):cancel$/i);
+    if (req.method === "POST" && cancelMatch) {
+      const { data: current, error: currentError } = await admin.from(
+        "agent_tasks",
+      )
+        .select("*").eq("id", cancelMatch[1]).eq("user_id", userId)
+        .eq("task_type", "company_builder_a2a").maybeSingle();
+      if (currentError) throw new Error(currentError.message);
+      if (!current) {
+        return a2aJson({
+          error: { code: "TaskNotFoundError", message: "Task not found" },
+        }, 404);
+      }
+      if (
+        ["completed", "failed", "cancelled"].includes(asString(current.status))
+      ) {
+        return a2aJson({
+          error: {
+            code: "TaskNotCancelableError",
+            message: "Task is already terminal",
+          },
+        }, 409);
+      }
+      const { data: cancelled, error: cancelError } = await admin.from(
+        "agent_tasks",
+      )
+        .update({ status: "cancelled", last_error: "Cancelled through A2A" })
+        .eq("id", cancelMatch[1]).eq("user_id", userId)
+        .eq("task_type", "company_builder_a2a").select("*").single();
+      if (cancelError) throw new Error(cancelError.message);
+      const metadata = asRecord(cancelled.metadata) ?? {};
+      await addCompanyEvent(
+        admin,
+        userId,
+        asString(metadata.company_id),
+        "a2a_task_cancelled",
+        "cancelled",
+        { task_id: cancelled.id },
+      );
+      return a2aJson({ task: companyTaskToA2A(cancelled) });
+    }
+
+    const getMatch = relative.match(/^\/tasks\/([0-9a-f-]{36})$/i);
+    if (req.method === "GET" && getMatch) {
+      const { data, error } = await admin.from("agent_tasks").select("*")
+        .eq("id", getMatch[1]).eq("user_id", userId)
+        .eq("task_type", "company_builder_a2a").maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!data) {
+        return a2aJson({
+          error: { code: "TaskNotFoundError", message: "Task not found" },
+        }, 404);
+      }
+      return a2aJson({
+        task: companyTaskToA2A(data as Record<string, unknown>),
+      });
+    }
+
+    return a2aJson({
+      error: {
+        code: "UnsupportedOperationError",
+        message: "A2A operation is not supported",
+      },
+    }, 404);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const code = message.split(":", 1)[0];
+    const status = code === "TaskNotFoundError"
+      ? 404
+      : code === "UnsupportedOperationError"
+      ? 409
+      : 400;
+    return a2aJson({ error: { code, message } }, status);
+  }
 }
 
 async function evaluateUniversityQuizMaster(
@@ -3322,14 +4151,45 @@ serve(async (req: Request) => {
   }
 
   try {
+    const requestUrl = new URL(req.url);
+    if (
+      req.method === "GET" &&
+      requestUrl.pathname.endsWith("/.well-known/agent-card.json")
+    ) {
+      return a2aJson(
+        buildCompanyAgentCard(`${SUPABASE_URL}/functions/v1/ai-hub`),
+        200,
+        { "Cache-Control": "public, max-age=3600" },
+      );
+    }
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    const userId = await getUserId(req);
+    const a2aPath = companyA2ARelativePath(req);
+    if (a2aPath !== null) {
+      if (!userId) {
+        return a2aJson(
+          {
+            error: {
+              code: "UnauthenticatedError",
+              message: "Bearer authentication is required",
+            },
+          },
+          401,
+          { "WWW-Authenticate": 'Bearer realm="ai-company-builder"' },
+        );
+      }
+      const body = req.method === "POST"
+        ? await req.json() as Record<string, unknown>
+        : {};
+      return await handleCompanyA2ARequest(req, body, admin, userId);
+    }
+
     const body = req.method === "POST"
       ? await req.json() as Record<string, unknown>
       : {};
     const action = String(
-      body.action ?? new URL(req.url).searchParams.get("action") ?? "",
+      body.action ?? requestUrl.searchParams.get("action") ?? "",
     );
-    const userId = await getUserId(req);
 
     // Actions that require authentication
     const authRequired = [
@@ -3350,6 +4210,7 @@ serve(async (req: Request) => {
       "company_builder.list",
       "company_builder.get",
       "company_builder.bootstrap",
+      "company_builder.research.add",
       "company_builder.start",
       "company_builder.pause",
       "company_builder.resume",
@@ -4023,6 +4884,38 @@ serve(async (req: Request) => {
         const detail = await getCompanyBuilderDetail(admin, userId!, companyId);
         if (!detail) return json({ error: "Company not found" }, 404);
         return json({ success: true, ...detail });
+      }
+
+      case "company_builder.research.add": {
+        const companyId = asString(body.company_id);
+        const sourceUrl = asString(body.source_url ?? body.url);
+        if (!companyId) return json({ error: "company_id required" }, 400);
+        if (!sourceUrl) return json({ error: "source_url required" }, 400);
+        try {
+          const source = await ingestCompanyResearchSource(
+            admin,
+            userId!,
+            companyId,
+            sourceUrl,
+          );
+          return json({ success: true, source });
+        } catch (error) {
+          const message = error instanceof Error
+            ? error.message
+            : String(error);
+          const status = message === "Company not found"
+            ? 404
+            : message.toLowerCase().includes("private") ||
+                message.toLowerCase().includes("source url") ||
+                message.toLowerCase().includes("unsupported")
+            ? 400
+            : 422;
+          return json({
+            success: false,
+            status: "research_ingestion_failed",
+            message,
+          }, status);
+        }
       }
 
       case "company_builder.bootstrap": {

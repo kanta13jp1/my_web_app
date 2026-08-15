@@ -85,5 +85,14 @@ void main() {
         expect(aiHub, contains(action));
       }
     });
+
+    test('exposes cited research and the A2A 1.0 HTTP surface', () {
+      expect(aiHub, contains('company_builder.research.add'));
+      expect(aiHub, contains('/.well-known/agent-card.json'));
+      expect(aiHub, contains('/message:send'));
+      expect(aiHub, contains('relative === "/tasks"'));
+      expect(aiHub, contains(':cancel'));
+      expect(aiHub, contains('"WWW-Authenticate"'));
+    });
   });
 }

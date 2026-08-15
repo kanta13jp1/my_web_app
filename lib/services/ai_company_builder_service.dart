@@ -58,6 +58,21 @@ class AiCompanyBuilderService {
     return _asMap(response.data);
   }
 
+  Future<Map<String, dynamic>> addResearchSource({
+    required String companyId,
+    required String sourceUrl,
+  }) async {
+    final response = await _client.functions.invoke(
+      'ai-hub',
+      body: {
+        'action': 'company_builder.research.add',
+        'company_id': companyId,
+        'source_url': sourceUrl,
+      },
+    );
+    return _asMap(response.data);
+  }
+
   Future<Map<String, dynamic>> setGlobalKillSwitch({
     required bool enabled,
   }) async {

@@ -15,6 +15,8 @@ class AiCompanyBuilderPage extends StatefulWidget {
 
 class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
   final TextEditingController _ideaController = TextEditingController();
+  final TextEditingController _researchSourceController =
+      TextEditingController();
   late final AiCompanyBuilderController _controller;
 
   double _threshold = 7;
@@ -22,6 +24,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
   bool get _isLoading => _controller.isLoading;
   bool get _isSubmitting => _controller.isSubmitting;
   bool get _isControlBusy => _controller.isControlBusy;
+  bool get _isResearchBusy => _controller.isResearchBusy;
   String? get _errorMessage => _controller.errorMessage;
   String? get _selectedCompanyId => _controller.selectedCompanyId;
   List<Map<String, dynamic>> get _companies => _controller.companies;
@@ -41,6 +44,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     _controller.removeListener(_onControllerChanged);
     _controller.dispose();
     _ideaController.dispose();
+    _researchSourceController.dispose();
     super.dispose();
   }
 
@@ -105,6 +109,22 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
 
   Future<void> _setGlobalKillSwitch(bool enabled) async {
     await _controller.setGlobalKillSwitch(enabled);
+  }
+
+  Future<void> _addResearchSource() async {
+    final added = await _controller.addResearchSource(
+      _researchSourceController.text,
+    );
+    if (added) _researchSourceController.clear();
+  }
+
+  Future<void> _copyAgentCardUrl(String url) async {
+    if (url.trim().isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: url));
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Agent Card URL copied')));
   }
 
   Future<void> _copyBlueprintPost(Map<String, dynamic> blueprint) async {
@@ -1149,6 +1169,200 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     );
   }
 
+  Widget _buildResearchSection(
+    List<Map<String, dynamic>> sources,
+    List<Map<String, dynamic>> routingProfiles,
+    String agentCardUrl,
+  ) {
+    return _buildDetailSection(
+      title: 'Research & Interop',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            key: const Key('company-research-source-url'),
+            controller: _researchSourceController,
+            keyboardType: TextInputType.url,
+            autocorrect: false,
+            style: const TextStyle(color: Color(0xFFE5E7EB), height: 1.5),
+            decoration: InputDecoration(
+              labelText: 'Source URL',
+              hintText: 'https://example.com/research',
+              labelStyle: const TextStyle(color: Color(0xB3E5E7EB)),
+              hintStyle: const TextStyle(color: Color(0x61FFFFFF)),
+              filled: true,
+              fillColor: const Color(0xFF111827),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onSubmitted: _isResearchBusy ? null : (_) => _addResearchSource(),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              key: const Key('company-research-add'),
+              onPressed: _isResearchBusy ? null : _addResearchSource,
+              icon: _isResearchBusy
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.library_add_outlined),
+              label: Text(
+                _isResearchBusy ? 'Ingesting source...' : 'Add research source',
+              ),
+            ),
+          ),
+          if (sources.isEmpty) ...[
+            const SizedBox(height: 12),
+            const Text(
+              'Add a public source before running evidence-sensitive tasks.',
+              style: TextStyle(color: Color(0x8AE5E7EB), height: 1.5),
+            ),
+          ] else ...[
+            const SizedBox(height: 16),
+            for (final source in sources)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF111827),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0x1FFFFFFF)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            source['title']?.toString().trim().isNotEmpty ==
+                                    true
+                                ? source['title'].toString()
+                                : 'Research source',
+                            style: const TextStyle(
+                              color: Color(0xFFE5E7EB),
+                              fontWeight: FontWeight.w700,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          source['status']?.toString() ?? 'processing',
+                          style: TextStyle(
+                            color: source['status'] == 'ready'
+                                ? const Color(0xFF34D399)
+                                : source['status'] == 'failed'
+                                    ? const Color(0xFFFCA5A5)
+                                    : const Color(0xFFFCD34D),
+                            fontWeight: FontWeight.w700,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    SelectableText(
+                      source['source_url']?.toString() ?? '',
+                      style: const TextStyle(
+                        color: Color(0xFF93C5FD),
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                    ),
+                    if (source['excerpt']?.toString().trim().isNotEmpty ==
+                        true) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        source['excerpt'].toString(),
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xB3E5E7EB),
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                    if (source['last_error']?.toString().trim().isNotEmpty ==
+                        true) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        source['last_error'].toString(),
+                        style: const TextStyle(
+                          color: Color(0xFFFCA5A5),
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+          ],
+          if (routingProfiles.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text(
+              'Adaptive model routes',
+              style: TextStyle(
+                color: Color(0xFFE5E7EB),
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: routingProfiles.map((profile) {
+                return _buildPill(
+                  profile['routing_key']?.toString() ?? 'company_builder',
+                  '${profile['current_tier'] ?? 'free'} - ${profile['last_decision'] ?? 'baseline'}',
+                );
+              }).toList(growable: false),
+            ),
+          ],
+          if (agentCardUrl.trim().isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Text(
+              'A2A 1.0 Agent Card',
+              style: TextStyle(
+                color: Color(0xFFE5E7EB),
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: SelectableText(
+                    agentCardUrl,
+                    key: const Key('company-a2a-agent-card-url'),
+                    style: const TextStyle(
+                      color: Color(0xFF93C5FD),
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Copy Agent Card URL',
+                  onPressed: () => _copyAgentCardUrl(agentCardUrl),
+                  icon: const Icon(Icons.copy_outlined),
+                  color: const Color(0xFFE5E7EB),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildVaultSection(List<Map<String, dynamic>> notes) {
     return _buildDetailSection(
       title: 'Vault Notes',
@@ -1276,6 +1490,9 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     final notes = _asMapList(_detail!['vault_notes']);
     final auditEntries = _asMapList(_detail!['audit_entries']);
     final runtimeEvents = _asMapList(_detail!['runtime_events']);
+    final researchSources = _asMapList(_detail!['research_sources']);
+    final routingProfiles = _asMapList(_detail!['routing_profiles']);
+    final agentCardUrl = _detail!['a2a_agent_card_url']?.toString() ?? '';
     final blueprint = _asMap(_metadataOf(company)['thirty_day_saas_blueprint']);
 
     return Column(
@@ -1286,6 +1503,8 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
         _buildRuntimeControl(company),
         const SizedBox(height: 24),
         _buildRuntimeEventsSection(runtimeEvents),
+        const SizedBox(height: 24),
+        _buildResearchSection(researchSources, routingProfiles, agentCardUrl),
         const SizedBox(height: 24),
         if (blueprint.isNotEmpty) ...[
           _buildThirtyDayBlueprint(company),
