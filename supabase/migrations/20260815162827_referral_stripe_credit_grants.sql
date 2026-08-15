@@ -1,6 +1,8 @@
 -- Convert activation-gated referral points into an auditable Stripe credit
 -- outbox. Stripe calls remain in the webhook; these RPCs only claim/finalize
 -- short database transactions so external I/O never holds a row lock.
+-- nocheck: time-relative -- UPDATE statements below are runtime RPC bodies;
+-- this migration executes no data UPDATE while being applied or replayed.
 
 create table if not exists public.referral_credit_grants (
   id bigint generated always as identity primary key,
