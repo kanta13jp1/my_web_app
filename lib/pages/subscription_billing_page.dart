@@ -58,6 +58,11 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     if (!mounted) return;
     setState(() => _assignment = assignment);
     unawaited(_record('billing_view'));
+    unawaited(
+      widget.acquisitionService.recordFirstUserFunnelStage(
+        stage: 'billing_view',
+      ),
+    );
     if (_returnNotice != null) unawaited(_record('checkout_return'));
     await _fetchBillingInfo();
   }
@@ -106,16 +111,22 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
 
   Future<void> _openSupporterCheckout() async {
     await _record('supporter_checkout');
-    await _openStripeSession(() {
-      return widget.acquisitionService.loadLatestTouchpoint().then(
-            (latestTouchpoint) => _service.createSupporterCheckoutSession(
-              returnUrl: _currentReturnUrl,
-              attribution: BillingSupporterAttribution.fromUri(
-                _sourceUri,
-                fallbackTouchpoint: latestTouchpoint,
-              ),
-            ),
-          );
+    await widget.acquisitionService.recordFirstUserFunnelStage(
+      stage: 'supporter_checkout',
+    );
+    await _openStripeSession(() async {
+      final latestTouchpoint =
+          await widget.acquisitionService.loadLatestTouchpoint();
+      final firstUserAttribution =
+          await widget.acquisitionService.loadFirstUserAttribution();
+      return _service.createSupporterCheckoutSession(
+        returnUrl: _currentReturnUrl,
+        attribution: BillingSupporterAttribution.fromUri(
+          _sourceUri,
+          fallbackTouchpoint: latestTouchpoint,
+          firstUserAttribution: firstUserAttribution,
+        ),
+      );
     });
   }
 

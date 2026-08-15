@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// ペットケア管理ページ
 /// ペット情報・健康記録・予防接種・食事管理。
@@ -12,7 +13,14 @@ class PetCareManagerPage extends StatefulWidget {
 }
 
 class _PetCareManagerPageState extends State<PetCareManagerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['pets', 'health', 'vaccination'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 

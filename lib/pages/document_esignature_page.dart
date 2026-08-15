@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// ドキュメント電子署名ページ
 /// 文書のアップロード・署名依頼・署名状況確認。
@@ -12,7 +13,13 @@ class DocumentEsignaturePage extends StatefulWidget {
 }
 
 class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['pending', 'completed'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 

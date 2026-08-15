@@ -15,6 +15,7 @@ import {
   computeLocalElectionDiff,
 } from "./snapshot_history.ts";
 import { classifyPostArchetype } from "../growth-hub/x_post_archetype.ts";
+import { canonicalizeElectionIntelligenceSnapshot } from "./election_mode.ts";
 
 function prefecture(
   name: string,
@@ -75,8 +76,14 @@ function snapshot(
       parserEmptyScheduleSourceUrls: [],
       failedRequiredScheduleSourceUrls: [],
       parserEmptyRequiredScheduleSourceUrls: [],
+      electionModeRegistryLoaded: true,
+      officialEndorsementSnapshotLoaded: true,
+      verifiedGoalSourceCount: 1,
+      expectedGoalSourceCount: 1,
+      electionIntelligenceIssues: [],
       issues: [],
     },
+    electionIntelligence: canonicalizeElectionIntelligenceSnapshot({}),
     sources: [
       {
         label: "Official members",

@@ -2,7 +2,7 @@ name: tools-hub MCP Smoke
 
 on:
   schedule:
-    - cron: "22 */6 * * *" # every 6 hours at :22
+    - cron: "22 */12 * * *" # every 12 hours at :22 (2026-07-20 ci-audit: 6h→12h, -60 runs/月; health-monitor 2h毎に tools-hub をカバー済)
   workflow_dispatch:
     inputs:
       base_url:
@@ -24,7 +24,7 @@ permissions:
 
 concurrency:
   group: tools-hub-mcp-smoke
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-07-24 ci-audit: スモークテスト(stateless HTTP probe)のためキャンセル安全 / 手動+schedule 重複時のキュー待機(最大8min)を回避
 
 jobs:
   smoke:
@@ -90,17 +90,19 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          $args = @("-BaseUrl", $env:TOOLS_HUB_MCP_URL)
+          $smokeParams = @{
+            BaseUrl = $env:TOOLS_HUB_MCP_URL
+          }
 
           if (-not [string]::IsNullOrWhiteSpace($env:REGISTRATION_REDIRECT_URI)) {
-            $args += @("-RegistrationRedirectUri", $env:REGISTRATION_REDIRECT_URI)
+            $smokeParams.RegistrationRedirectUri = $env:REGISTRATION_REDIRECT_URI
           }
 
           if ($env:ENABLE_WRITE_CONFIRMATION_PROBE -eq "true") {
-            $args += "-EnableWriteConfirmationProbe"
+            $smokeParams.EnableWriteConfirmationProbe = $true
           }
 
-          ./scripts/tools_hub_mcp_smoke.ps1 @args
+          ./scripts/tools_hub_mcp_smoke.ps1 @smokeParams
 
       - name: Job summary
         if: always()
@@ -131,11 +133,13 @@ jobs:
           fi
 
           STATUS="success"
-          if [ "$SMOKE_OUTCOME" != "success" ]; then
+          if [ -z "$SMOKE_OUTCOME" ] || [ "$SMOKE_OUTCOME" = "cancelled" ]; then
+            STATUS="skipped"  # cancel-in-progress: true によるキャンセル (smoke到達前も含む)
+          elif [ "$SMOKE_OUTCOME" != "success" ]; then
             STATUS="error"
           fi
 
-          SUMMARY="tools-hub MCP smoke ${SMOKE_OUTCOME}; target=${TOOLS_HUB_MCP_URL}; auth_token_configured=${{ secrets.TOOLS_HUB_MCP_BEARER_TOKEN != '' }}"
+          SUMMARY="tools-hub MCP smoke ${SMOKE_OUTCOME:-cancelled}; target=${TOOLS_HUB_MCP_URL}; auth_token_configured=${{ secrets.TOOLS_HUB_MCP_BEARER_TOKEN != '' }}"
           jq -n \
             --arg task_id "tools-hub-mcp-smoke" \
             --arg status "$STATUS" \

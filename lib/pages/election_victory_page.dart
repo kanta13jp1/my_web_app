@@ -7,7 +7,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../data/repositories/official_endorsement_repository.dart';
 import '../data/dpj_prefecture_announced_targets.dart';
+import '../models/election_intelligence.dart';
 import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
 import '../models/public_memo.dart';
@@ -17,13 +19,17 @@ import '../services/local_election_plan_service.dart';
 import '../utils/web_image_downloader.dart';
 import '../services/local_election_reality_service.dart';
 import '../services/prefecture_election_news_service.dart';
+import '../services/growth_acquisition_service.dart';
 import '../services/local_election_share_service.dart';
 import '../services/public_memo_service.dart';
+import '../ui/features/election_victory/view_models/official_endorsement_view_model.dart';
+import 'landing_page.dart';
 import '../widgets/election_japan_map.dart';
 import '../widgets/election_progress_chart.dart';
 import '../widgets/election_regional_kpi_chart.dart';
 import '../widgets/election_news_badge.dart';
 import '../widgets/election_x_post_composer_dialog.dart';
+import '../widgets/public_tracker_cta_card.dart';
 
 class ElectionVictoryPage extends StatefulWidget {
   final bool publicView;
@@ -100,6 +106,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   final LocalElectionPlanService _service = const LocalElectionPlanService();
   final LocalElectionRealityService _realityService =
       const LocalElectionRealityService();
+  late final OfficialEndorsementViewModel _officialEndorsementViewModel =
+      OfficialEndorsementViewModel(
+    repository: const OfficialEndorsementRepository(),
+  );
   final PrefectureElectionNewsService _newsService =
       const PrefectureElectionNewsService();
   final ScrollController _scrollController = ScrollController();
@@ -129,6 +139,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   final Map<String, String> _memberProfileErrors = <String, String>{};
   PublicMemo? _publishedSnapshotMemo;
   PublicMemo? _publishedKpiMemo;
+
+  /// KPI公開ノートを一度でも読みに行ったか。KPIノートIDは固定値なので、
+  /// 自動リフレッシュでの再取得を抑止する判定に使う (結果が null=未公開でも
+  /// 「試行済み」として扱い、毎回リトライして重複フェッチに戻るのを防ぐ)。
+  bool _kpiMemoLoadAttempted = false;
   bool _isLoading = true;
   bool _isRealityLoading = false;
   bool _isPublishingSnapshotMemo = false;
@@ -142,6 +157,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   Map<String, int> _cdpLocalMemberBenchmark = const <String, int>{};
   LocalElectionLdpBenchmark _ldpBenchmark = LocalElectionLdpBenchmark.empty;
   String _selectedRegion = _allLabel;
+  ElectionModeId _selectedElectionMode = ElectionModeId.local;
   String _selectedMemberPrefecture = _allLabel;
   String _selectedMemberAssemblyCategory = _allAssemblyCategories;
   int _visibleMemberCount = _memberPageSize;
@@ -154,6 +170,36 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   // キーに派生データをメモ化する。
   LocalElectionRealitySnapshot? _derivedCacheSnapshot;
   List<LocalElectionScheduleEntry>? _sortedSchedulesAscCache;
+
+  ElectionIntelligenceSnapshot get _electionIntelligence =>
+      _realitySnapshot?.electionIntelligence ??
+      const ElectionIntelligenceSnapshot.localFallback();
+
+  OfficialEndorsementSnapshot get _officialEndorsements =>
+      _officialEndorsementViewModel.snapshot;
+
+  // Compatibility names keep existing dashboard sections and share affordances
+  // on the repository-resolved snapshot.
+  List<OfficialEndorsementPrefecture> get dpjOfficialEndorsements =>
+      _officialEndorsements.prefectures;
+  int get dpjOfficialEndorsementTotal => _officialEndorsements.totalCount;
+  int get dpjOfficialEndorsementIncumbentTotal =>
+      _officialEndorsements.incumbentCount;
+  int get dpjOfficialEndorsementNewcomerTotal =>
+      _officialEndorsements.newcomerCount;
+  int get dpjOfficialEndorsementFormerTotal =>
+      _officialEndorsements.formerCount;
+  int get dpjOfficialEndorsementPrefectureCount =>
+      _officialEndorsements.prefectureCount;
+  int get dpjOfficialRecommendationEntryCount =>
+      _officialEndorsements.recommendationCount;
+  String get dpjLocalElectionOfficialListAsOf =>
+      _officialEndorsements.sourceAsOf;
+  String get dpjLocalElectionOfficialListUrl => _officialEndorsements.sourceUrl;
+  OfficialEndorsementPrefecture? dpjOfficialEndorsementFor(
+    String prefecture,
+  ) =>
+      _officialEndorsementViewModel.forPrefecture(prefecture);
   List<LocalElectionScheduleEntry>? _sortedSchedulesDescCache;
   Map<DateTime, List<LocalElectionScheduleEntry>>? _scheduleEventMapCache;
   List<Map<String, dynamic>>? _pastResultsCacheGeminiRef;
@@ -199,6 +245,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   @override
   void dispose() {
+    _officialEndorsementViewModel.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -223,7 +270,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final cachedSnapshot = results[1] as LocalElectionRealitySnapshot?;
     final cachedHistory = results[2] as List<LocalElectionRealityHistoryPoint>;
 
-    if (cachedSnapshot != null && cachedSnapshot.hasData) {
+    if (cachedSnapshot != null &&
+        cachedSnapshot.hasData &&
+        cachedSnapshot.electionIntelligence.selectedMode ==
+            ElectionModeId.local) {
       plan = await _syncPlanWithSnapshot(
         plan,
         cachedSnapshot,
@@ -234,9 +284,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       }
     }
 
+    _officialEndorsementViewModel.updateFromIntelligence(
+      cachedSnapshot?.electionIntelligence,
+    );
     setState(() {
       _plan = plan;
       _realitySnapshot = cachedSnapshot;
+      _selectedElectionMode =
+          cachedSnapshot?.electionIntelligence.selectedMode ??
+              ElectionModeId.local;
       _realityHistory = cachedHistory;
       _publishedSnapshotMemo = null;
       _publishedKpiMemo = null;
@@ -273,7 +329,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         .withCdpLocalMembers(_cdpLocalMemberBenchmark)
         .withLdpLocalMembers(_ldpBenchmark.membersByPrefecture);
     final snapshot = _realitySnapshot;
-    if (snapshot != null && snapshot.hasData) {
+    if (snapshot != null &&
+        snapshot.hasData &&
+        snapshot.electionIntelligence.selectedMode == ElectionModeId.local) {
       plan = await _syncPlanWithSnapshot(
         plan,
         snapshot,
@@ -528,6 +586,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   Future<void> _loadPublishedKpiMemo() async {
+    _kpiMemoLoadAttempted = true;
     final memo = await _shareService.loadPublishedPlanDashboard();
     if (!mounted) {
       return;
@@ -577,10 +636,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       final snapshot = await _realityService.fetchLatestSnapshot(
         includeAiSummary: false,
         forceRefresh: forceRefresh,
+        mode: _selectedElectionMode,
       );
       final history = await _realityService.loadSnapshotHistory();
       LocalElectionPlanDashboard? syncedPlan;
-      if (_plan != null && snapshot.hasData) {
+      if (_plan != null &&
+          snapshot.hasData &&
+          snapshot.electionIntelligence.selectedMode == ElectionModeId.local) {
         syncedPlan = await _syncPlanWithSnapshot(
           _plan!,
           snapshot,
@@ -590,10 +652,18 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       if (!mounted) {
         return;
       }
-      // 初期ロード直後の refresh がキャッシュと同一 snapshot を返すケースでは
-      // 公開ノートの再ロードを省略する (page load ごとの public_memos 二重
-      // フェッチ対策)。fetchedAt が変わったときだけ再取得する。
-      final snapshotChanged = _realitySnapshot?.fetchedAt != snapshot.fetchedAt;
+      // 公開ノートの再取得は「参照するノートIDが変わったとき」だけに絞る。
+      // snapshot ノートIDは日付のみから作られ (buildSyntheticNoteId)、
+      // KPIノートIDは固定定数なので、fetchedAt (時刻込み) を基準にすると
+      // EF 再取得のたびに必ず変化して同じIDを取り直してしまう
+      // (初回ロードで public_memos が 4 フェッチになる原因)。
+      final previousSnapshot = _realitySnapshot;
+      final snapshotNoteChanged = previousSnapshot == null ||
+          _shareService.buildSyntheticNoteId(previousSnapshot) !=
+              _shareService.buildSyntheticNoteId(snapshot);
+      _officialEndorsementViewModel.updateFromIntelligence(
+        snapshot.electionIntelligence,
+      );
       setState(() {
         if (syncedPlan != null) {
           _plan = syncedPlan;
@@ -602,17 +672,23 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           }
         }
         _realitySnapshot = snapshot;
+        _selectedElectionMode = snapshot.electionIntelligence.selectedMode;
         _realityHistory = history;
         _realityError = null;
-        if (snapshotChanged) {
+        if (snapshotNoteChanged) {
           _publishedSnapshotMemo = null;
-          _publishedKpiMemo = null;
         }
         _syncMemberSelection(snapshot);
         _syncScheduleSelection(snapshot);
       });
-      if (snapshotChanged) {
+      if (snapshotNoteChanged) {
         unawaited(_loadPublishedSnapshotMemo(snapshot));
+      }
+      // KPIノートIDは snapshot に依存しない固定値なので、自動リフレッシュでは
+      // 再取得しない (未公開でメモが null のときも「試行済み」で判定する。
+      // 結果 null を条件にすると毎回リトライして重複フェッチが戻る)。
+      // ユーザーが明示的に再取得したときだけ取り直す。
+      if (forceRefresh || !_kpiMemoLoadAttempted) {
         unawaited(_loadPublishedKpiMemo());
       }
       if (showSnackBar) {
@@ -633,6 +709,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       final message = _describeRealityError(error);
       setState(() {
         _realityError = message;
+        _selectedElectionMode =
+            _realitySnapshot?.electionIntelligence.selectedMode ??
+                ElectionModeId.local;
       });
       if (showSnackBar) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -732,9 +811,25 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
+  /// R24: 外部へ配る公開ダッシュボードURL。実測でサイト流入の 94% を占める
+  /// 経路なのに UTM が無く、着地を計測できていなかった。共有・コピー経路だけ
+  /// UTM を付ける (ページ内表示用の素の URL はそのまま)。
+  /// `utm_source=x` + `utm_campaign=first_user_growth` は
+  /// GrowthAcquisitionService.isFirstUserGrowthUri の判定条件に合わせる。
+  static String get _shareablePublicDashboardUrl => Uri.parse(
+        _publicLocalElectionDashboardUrl,
+      ).replace(
+        queryParameters: const <String, String>{
+          'utm_source': 'x',
+          'utm_medium': 'data_report',
+          'utm_campaign': 'first_user_growth',
+          'utm_content': 'local_election_700',
+        },
+      ).toString();
+
   Future<void> _copyPublicDashboardLink() async {
     await Clipboard.setData(
-      const ClipboardData(text: _publicLocalElectionDashboardUrl),
+      ClipboardData(text: _shareablePublicDashboardUrl),
     );
     if (!mounted) {
       return;
@@ -776,7 +871,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       final memo = await _shareService.publishPlanDashboard(
         plan: plan,
         snapshot: snapshot,
-        publicDashboardUrl: _publicLocalElectionDashboardUrl,
+        publicDashboardUrl: _shareablePublicDashboardUrl,
       );
       if (!mounted) {
         return memo;
@@ -908,7 +1003,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final memo =
         _publishedKpiMemo ?? (canPublishMemo ? await _publishKpiMemo() : null);
     final publicUrl = memo == null
-        ? _publicLocalElectionDashboardUrl
+        ? _shareablePublicDashboardUrl
         : PublicMemoService.buildPublicMemoUrl(memo.id);
     final uri = _shareService.buildPlanDashboardXShareIntentUri(
       plan: plan,
@@ -1160,7 +1255,19 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         ],
       ),
       body: _isLoading || plan == null
-          ? const Center(child: CircularProgressIndicator())
+          // R24: 公開ビューは X からの着地点 (実測でサイト流入の 94%)。
+          // 読み込み中や取得失敗でスピナーだけを出すと、訪問者は「何のサイトか」
+          // を 1 文字も読めないまま離脱する。データを待たずに導線だけは見せる。
+          ? (_isPublicView
+              ? ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    _buildPublicTrackerCtaCard(),
+                    const SizedBox(height: 24),
+                    const Center(child: CircularProgressIndicator()),
+                  ],
+                )
+              : const Center(child: CircularProgressIndicator()))
           : RefreshIndicator(
               onRefresh: _refreshAll,
               child: ListView(
@@ -1169,9 +1276,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   if (_isPublicView) ...[
+                    _buildPublicTrackerCtaCard(),
+                    const SizedBox(height: 16),
                     _buildPublicViewNotice(),
                     const SizedBox(height: 16),
                   ],
+                  _buildElectionModeCard(),
+                  const SizedBox(height: 16),
                   _buildHeroCard(plan),
                   const SizedBox(height: 16),
                   _buildAnnouncedTargetSection(),
@@ -1215,6 +1326,122 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildElectionModeCard() {
+    final theme = Theme.of(context);
+    final intelligence = _electionIntelligence;
+    final modes = intelligence.modes.isEmpty
+        ? const ElectionIntelligenceSnapshot.localFallback().modes
+        : intelligence.modes;
+    final selectedMode = _selectedElectionMode;
+    final selectedOption = modes.firstWhere(
+      (mode) => mode.id == selectedMode,
+      orElse: () => const ElectionModeOption.localFallback(),
+    );
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.swap_horiz_rounded),
+                const SizedBox(width: 8),
+                Text(
+                  '選挙モード',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final mode in modes)
+                  ChoiceChip(
+                    selected: mode.id == selectedMode,
+                    avatar: mode.isActive
+                        ? null
+                        : const Icon(Icons.lock_clock_outlined, size: 16),
+                    label: Text(
+                      mode.isActive ? mode.label : '${mode.label}（準備中）',
+                    ),
+                    onSelected: mode.isActive
+                        ? (selected) {
+                            if (!selected || mode.id == selectedMode) {
+                              return;
+                            }
+                            setState(() {
+                              _selectedElectionMode = mode.id;
+                            });
+                            unawaited(
+                              _refreshRealityData(
+                                showSnackBar: true,
+                                forceRefresh: true,
+                              ),
+                            );
+                          }
+                        : null,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              selectedOption.description,
+              style: theme.textTheme.bodySmall,
+            ),
+            if (intelligence.goals.isNotEmpty ||
+                intelligence.achievements.isNotEmpty) ...[
+              const Divider(height: 24),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final goal in intelligence.goals)
+                    ActionChip(
+                      avatar: Icon(
+                        goal.isVerified
+                            ? Icons.verified_outlined
+                            : Icons.warning_amber_rounded,
+                        size: 17,
+                        color: goal.isVerified
+                            ? const Color(0xFF0F766E)
+                            : const Color(0xFFB45309),
+                      ),
+                      label: Text(
+                        goal.currentValue != null && goal.targetValue != null
+                            ? '${goal.title}: ${_formatInt(goal.currentValue!)} / ${_formatInt(goal.targetValue!)}${goal.unit}'
+                            : goal.title,
+                      ),
+                      onPressed: goal.sourceUrl.isEmpty
+                          ? null
+                          : () => _openUrl(goal.sourceUrl),
+                    ),
+                  for (final achievement in intelligence.achievements)
+                    if (achievement.value != null)
+                      Chip(
+                        avatar: const Icon(
+                          Icons.emoji_events_outlined,
+                          size: 17,
+                          color: Color(0xFF7C3AED),
+                        ),
+                        label: Text(
+                          '${achievement.title}: ${_formatInt(achievement.value!)}${achievement.unit}',
+                        ),
+                      ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -1355,6 +1582,37 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPublicTrackerCtaCard() {
+    return PublicTrackerCtaCard(
+      headline: 'この集計は「自分株式会社」が毎日自動更新しています',
+      description: '公式ページを定期取得して、現職数・目標との差分・残り日数を自動で計算しています。'
+          '同じ仕組みを、家計や資産、仕事ログ、AIツールの定点観測にも使えるように作っている個人向けのダッシュボードです。',
+      onActionPressed: _openLandingPageFromPublicTracker,
+    );
+  }
+
+  Future<void> _openLandingPageFromPublicTracker() async {
+    // 計測は遷移を待たせない (fire-and-forget)。await すると、未ログインや
+    // ネットワーク不調で計測が失敗・遅延したときにボタンが無反応になる。
+    // 着地点最大の CTA なので、計測の失敗が導線を殺してはいけない。
+    unawaited(
+      const GrowthAcquisitionService()
+          .recordPublicTrackerSignUpCta()
+          .catchError((Object error) {
+        debugPrint('public tracker CTA signal failed: $error');
+      }),
+    );
+    if (!mounted) {
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/'),
+        builder: (_) => const LandingPage(),
       ),
     );
   }
@@ -4770,9 +5028,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               color: const Color(0xFFB45309),
               icon: Icons.warning_amber_rounded,
             ),
-            if (dpjFirstEndorsementPrefectureCount > 0) ...[
+            if (dpjOfficialEndorsementPrefectureCount > 0) ...[
               const SizedBox(height: 12),
-              _buildFirstEndorsementSummary(),
+              _buildOfficialEndorsementSummary(),
             ],
             const SizedBox(height: 12),
             Align(
@@ -4815,14 +5073,20 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
-  // 第1次公認(県連が実際に公認を決めた候補予定者)の全国サマリー。
-  // 「擁立目標」とは別の実績値で、目標に対する進捗として示す。
-  // 数値は県連公式発表・報道を出典に手動で構造化し、更新元は党公式一覧。
-  Widget _buildFirstEndorsementSummary() {
+  // 党公式一覧の「公認」掲載行を集計した全国サマリー。
+  // 「擁立目標」とは別の実績値で、「推薦」は含めない。
+  Widget _buildOfficialEndorsementSummary() {
+    return ListenableBuilder(
+      listenable: _officialEndorsementViewModel,
+      builder: (context, _) => _buildOfficialEndorsementSummaryContent(),
+    );
+  }
+
+  Widget _buildOfficialEndorsementSummaryContent() {
     const accent = Color(0xFF2563EB);
-    final incumbent = dpjFirstEndorsementIncumbentTotal;
-    final newcomer = dpjFirstEndorsementNewcomerTotal;
-    final former = dpjFirstEndorsementFormerTotal;
+    final incumbent = dpjOfficialEndorsementIncumbentTotal;
+    final newcomer = dpjOfficialEndorsementNewcomerTotal;
+    final former = dpjOfficialEndorsementFormerTotal;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -4840,7 +5104,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '第1次公認の発表状況',
+                  '公認予定候補の掲載状況',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: accent,
@@ -4855,45 +5119,70 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             runSpacing: 8,
             children: [
               _buildMiniStatChip(
-                '公認合計',
-                dpjFirstEndorsementTotal,
+                '公認掲載',
+                dpjOfficialEndorsementTotal,
                 color: accent,
+                suffix: '件',
               ),
               if (incumbent > 0)
                 _buildMiniStatChip(
                   '現職',
                   incumbent,
                   color: const Color(0xFF0F766E),
+                  suffix: '件',
                 ),
               if (newcomer > 0)
                 _buildMiniStatChip(
                   '新人',
                   newcomer,
                   color: const Color(0xFF7C3AED),
+                  suffix: '件',
                 ),
               if (former > 0)
                 _buildMiniStatChip(
                   '元職',
                   former,
                   color: const Color(0xFFB45309),
+                  suffix: '件',
                 ),
-              // 分母 (掲載県数) を併記しないと「発表済み1県」が全国1県だけ
-              // なのか掲載中の一部なのか読めないため /N を添える。
               _buildMiniStatChip(
-                '発表済み',
-                dpjFirstEndorsementPrefectureCount,
-                suffix: '/${dpjPrefectureAnnouncedTargets.length}県',
+                '掲載地域',
+                dpjOfficialEndorsementPrefectureCount,
+                suffix: '/47都道府県',
                 color: const Color(0xFF64748B),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            '県連が第1次として公認を決めた候補予定者の実績です(擁立目標とは別)。'
-            '数値は県連公式発表・報道を出典に確認できたものだけを掲載しています。',
+            '党公式一覧で「公認」と明記された掲載行を集計しています(擁立目標とは別)。'
+            '推薦$dpjOfficialRecommendationEntryCount件は含めず、公式表の表記を独自補正していません。',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
+          Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: const EdgeInsets.only(bottom: 8),
+              dense: true,
+              title: const Text('都道府県別の公認掲載件数'),
+              subtitle: Text('$dpjOfficialEndorsementPrefectureCount都道府県'),
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final item in dpjOfficialEndorsements)
+                        _buildOfficialEndorsementPrefectureChip(item),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
           Align(
             alignment: Alignment.centerLeft,
             child: OutlinedButton.icon(
@@ -4910,7 +5199,33 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
-  /// ISO 日付 (yyyy-MM-dd) を表示用に整形する。第1次公認の党公式一覧、
+  Widget _buildOfficialEndorsementPrefectureChip(
+    OfficialEndorsementPrefecture endorsement,
+  ) {
+    const color = Color(0xFF1D4ED8);
+    final breakdown =
+        endorsement.hasBreakdown ? ' (${endorsement.breakdownLabel})' : '';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Text(
+        '${endorsement.prefecture} ${_formatInt(endorsement.totalCount)}件'
+        '$breakdown',
+        style: const TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          height: 1.3,
+        ),
+      ),
+    );
+  }
+
+  /// ISO 日付 (yyyy-MM-dd) を表示用に整形する。公認予定候補の党公式一覧、
   /// 自民ベンチマークの総務省統計など「基準日」表示で共用する。
   String _formatAsOfDate(String iso) {
     final parsed = DateTime.tryParse(iso);
@@ -4922,6 +5237,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   Widget _buildAnnouncedTargetPill(DpjPrefectureAnnouncedTarget item) {
     final color = _announcedTargetKindColor(item.kind);
+    final officialEndorsement = dpjOfficialEndorsementFor(item.prefecture);
 
     return Container(
       constraints: const BoxConstraints(minWidth: 148, maxWidth: 320),
@@ -4972,22 +5288,25 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ),
             ),
           ],
-          if (item.firstEndorsement case final endorsement?) ...[
+          if (officialEndorsement case final endorsement?
+              when endorsement.totalCount > 0) ...[
             const SizedBox(height: 8),
-            _buildFirstEndorsementBadge(endorsement),
+            _buildOfficialEndorsementBadge(endorsement),
           ],
         ],
       ),
     );
   }
 
-  // 県別ピル内の第1次公認バッジ。出典タップで県連発表ページを開く。
-  Widget _buildFirstEndorsementBadge(DpjFirstEndorsement endorsement) {
+  // 県別目標ピル内の公認掲載バッジ。出典タップで党公式一覧を開く。
+  Widget _buildOfficialEndorsementBadge(
+    OfficialEndorsementPrefecture endorsement,
+  ) {
     const badgeColor = Color(0xFF1D4ED8);
     final breakdown =
         endorsement.hasBreakdown ? ' (${endorsement.breakdownLabel})' : '';
-    final hasSource = endorsement.sourceUrl.isNotEmpty;
-    final label = '第1次公認 ${_formatInt(endorsement.totalCount)}人$breakdown';
+    final hasSource = dpjLocalElectionOfficialListUrl.isNotEmpty;
+    final label = '公認掲載 ${_formatInt(endorsement.totalCount)}件$breakdown';
     // 出典を開く操作なので、タップ領域を Material 最小 48px 以上に広げ、
     // スクリーンリーダー向けに link であることと出典先を読み上げさせる。
     return Semantics(
@@ -4997,7 +5316,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 48),
         child: InkWell(
-          onTap: hasSource ? () => _openUrl(endorsement.sourceUrl) : null,
+          onTap: hasSource
+              ? () => _openUrl(dpjLocalElectionOfficialListUrl)
+              : null,
           borderRadius: BorderRadius.circular(999),
           child: Center(
             widthFactor: 1,

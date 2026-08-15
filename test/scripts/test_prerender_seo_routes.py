@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+import struct
 import tempfile
 import unittest
 import xml.dom.minidom
@@ -29,12 +30,16 @@ TEMPLATE = """<!DOCTYPE html>
   >
   <meta property="og:url" content="https://my-web-app-b67f4.web.app/">
   <meta property="og:type" content="website">
+  <meta property="og:image" content="https://example.com/home.png">
+  <meta property="og:image:alt" content="HOME IMAGE">
   <meta property="twitter:title" content="HOME TW TITLE">
   <meta
     property="twitter:description"
     content="HOME TW DESC"
   >
   <meta property="twitter:url" content="https://my-web-app-b67f4.web.app/">
+  <meta property="twitter:image" content="https://example.com/home.png">
+  <meta property="twitter:image:alt" content="HOME IMAGE">
   <title>ホーム | 自分株式会社</title>
 </head>
 <body>
@@ -56,6 +61,86 @@ ROUTE = {
 }
 
 BASE = "https://my-web-app-b67f4.web.app"
+
+
+class HomepageSocialPreviewTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.repo_root = Path(__file__).resolve().parents[2]
+        cls.index_html = (cls.repo_root / "web" / "index.html").read_text(
+            encoding="utf-8"
+        )
+        cls.og_image = (
+            cls.repo_root / "web" / "lp-og-first-action-20260720.png"
+        )
+
+    def test_home_meta_matches_brand_search_intent(self) -> None:
+        self.assertIn(
+            '<meta property="og:title" '
+            'content="自分株式会社 | 人生を経営するAIライフマネジメントアプリ">',
+            self.index_html,
+        )
+        self.assertIn(
+            'content="自分自身を一つの会社に見立て、人生のCEOとして仕事・学習・'
+            'お金・健康を経営。AIが今日やる1件まで整理します。"',
+            self.index_html,
+        )
+        self.assertIn(
+            'content="自分株式会社は、自分自身を一つの会社に見立て、人生のCEOとして'
+            '仕事・学習・お金・健康を経営する考え方をAIで実践できる公式'
+            'ライフマネジメントアプリです。無料・カード不要。"',
+            self.index_html,
+        )
+        self.assertIn(
+            '<title>自分株式会社とは？ | 人生を経営するAIライフマネジメントアプリ</title>',
+            self.index_html,
+        )
+        self.assertNotIn('<meta\n    name="keywords"', self.index_html)
+        self.assertNotIn(
+            '<meta property="og:title" content="自分株式会社 | 190社以上の競合SaaS',
+            self.index_html,
+        )
+
+    def test_homepage_explains_the_brand_in_visible_semantic_html(self) -> None:
+        self.assertIn('<h1 id="seo-title">自分株式会社</h1>', self.index_html)
+        self.assertIn('<h2 id="seo-about-title">自分株式会社とは</h2>', self.index_html)
+        self.assertIn('自分が人生のCEOとして決める', self.index_html)
+        self.assertIn('href="/philosophy"', self.index_html)
+        self.assertIn(
+            '"@id": "https://my-web-app-b67f4.web.app/#software-application"',
+            self.index_html,
+        )
+
+    def test_home_og_image_is_real_lp_screenshot(self) -> None:
+        image_url = f"{BASE}/lp-og-first-action-20260720.png"
+        self.assertIn(
+            f'property="og:image"\n    content="{image_url}"',
+            self.index_html,
+        )
+        self.assertIn(
+            f'property="twitter:image"\n    content="{image_url}"',
+            self.index_html,
+        )
+        self.assertTrue(self.og_image.is_file())
+        png = self.og_image.read_bytes()
+        self.assertEqual(png[:8], b"\x89PNG\r\n\x1a\n")
+        self.assertEqual(struct.unpack(">II", png[16:24]), (1200, 630))
+
+    def test_default_and_ai_university_images_remain_route_specific(self) -> None:
+        self.assertIn(
+            "var defaultOgImageUrl = "
+            "'https://my-web-app-b67f4.web.app/lp-og-first-action-20260720.png';",
+            self.index_html,
+        )
+        self.assertIn(
+            "var aiUniversityOgImageUrl = "
+            "'https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png';",
+            self.index_html,
+        )
+        self.assertIn(
+            '"url": "https://my-web-app-b67f4.web.app/icons/Icon-512.png"',
+            self.index_html,
+        )
 
 
 class PrerenderRouteTest(unittest.TestCase):
@@ -150,6 +235,65 @@ class PublicRouteTest(unittest.TestCase):
         parsed = json.loads(vs[0].replace("\\u003c", "<"))
         self.assertEqual(parsed["@type"], "WebPage")
         self.assertEqual(parsed["url"], f"{BASE}/competitors")
+
+    def test_route_specific_social_image(self) -> None:
+        route = {
+            **PUBLIC_ROUTE,
+            "image": "/ai-university.png",
+            "image_alt": "AI大学の学習画面",
+        }
+        out = build_public_route_html(TEMPLATE, route, BASE)
+        self.assertIn(
+            '<meta property="og:image" '
+            'content="https://my-web-app-b67f4.web.app/ai-university.png">',
+            out,
+        )
+        self.assertIn(
+            '<meta property="twitter:image" '
+            'content="https://my-web-app-b67f4.web.app/ai-university.png">',
+            out,
+        )
+        self.assertIn(
+            '<meta property="og:image:alt" content="AI大学の学習画面">',
+            out,
+        )
+
+    def test_ai_university_config_uses_dedicated_social_image(self) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        routes = json.loads(
+            (repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        route = next(
+            item
+            for item in routes["routes"]
+            if item["path"] == "/ai-university"
+        )
+        index_html = (repo_root / "web" / "index.html").read_text(
+            encoding="utf-8"
+        )
+
+        out = build_public_route_html(index_html, route, BASE)
+        image_url = f"{BASE}/ogp-image-gen2-20260428.png"
+        homepage_image_url = f"{BASE}/lp-og-first-action-20260720.png"
+
+        self.assertRegex(
+            out,
+            rf'<meta\s+property="og:image"\s+content="{re.escape(image_url)}"\s*>',
+        )
+        self.assertRegex(
+            out,
+            rf'<meta\s+property="twitter:image"\s+'
+            rf'content="{re.escape(image_url)}"\s*>',
+        )
+        self.assertIsNone(
+            re.search(
+                rf'<meta\s+property="og:image"\s+'
+                rf'content="{re.escape(homepage_image_url)}"\s*>',
+                out,
+            )
+        )
 
 
 class SitemapTest(unittest.TestCase):

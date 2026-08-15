@@ -275,6 +275,15 @@ String candidateQueueHeaderLabel(
 /// R34: 候補キューの取得結果。`totalsByStatus` は edge の `total`
 /// (limit で切る前の総数) を status 別に保持する。edge が返さなかった status は
 /// 欠落し、ヘッダは従来の「N件以上」表示へ degrade する。
+/// #4080: x.candidate.list の statuses[] バッチ応答 1 status 分。
+/// total は limit で切る前の総数 (取得できなければ null = 「N件以上」表示へ)。
+class XCandidateStatusPage {
+  final List<XPostCandidateSummary> candidates;
+  final int? total;
+
+  const XCandidateStatusPage({required this.candidates, this.total});
+}
+
 class XCandidateQueueSnapshot {
   final List<XPostCandidateSummary> candidates;
   final Map<String, int> totalsByStatus;

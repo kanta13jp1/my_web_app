@@ -886,6 +886,15 @@ class AssetLiabilityMonthlySnapshot {
   final double monthlyPaymentDifferenceTotal;
   final int overduePaymentCount;
 
+  /// その月末時点の証券 (securities 口座) 評価額合計。
+  ///
+  /// 従来スナップショットに保存されておらず、旧データ / Supabase 同期分は
+  /// null (= 未追跡) になる。投資評価額の時系列グラフ (#2469) は
+  /// 「未追跡」と「評価額 0 円」を区別する必要があるため nullable のままにし、
+  /// null の月はグラフの点として描かない (0 円へ落とすと保有していたはずの
+  /// 資産が消えたように見えるため)。
+  final double? securitiesTotal;
+
   /// その月に受領済み (received=true) となった収入の合計。
   ///
   /// 収入は従来スナップショットに保存されておらず、旧データ / Supabase 同期分は
@@ -909,6 +918,7 @@ class AssetLiabilityMonthlySnapshot {
     this.monthlyPaymentDifferenceTotal = 0,
     required this.overduePaymentCount,
     this.monthlyReceivedIncomeTotal,
+    this.securitiesTotal,
   });
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// 採用・求人ボードページ
 /// 求人掲載・応募者管理・選考フロー。
@@ -13,7 +14,13 @@ class RecruitmentJobBoardPage extends StatefulWidget {
 }
 
 class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['jobs', 'applicants'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 
