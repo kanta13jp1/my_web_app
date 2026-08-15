@@ -13,6 +13,7 @@ class AiCompanyBuilderController extends ChangeNotifier {
   bool _isLoading = true;
   bool _isSubmitting = false;
   bool _isControlBusy = false;
+  bool _isResearchBusy = false;
   bool _disposed = false;
   String? _errorMessage;
   String? _selectedCompanyId;
@@ -23,6 +24,7 @@ class AiCompanyBuilderController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isSubmitting => _isSubmitting;
   bool get isControlBusy => _isControlBusy;
+  bool get isResearchBusy => _isResearchBusy;
   String? get errorMessage => _errorMessage;
   String? get selectedCompanyId => _selectedCompanyId;
   List<Map<String, dynamic>> get companies => _companies;
@@ -136,6 +138,38 @@ class AiCompanyBuilderController extends ChangeNotifier {
       _errorMessage = 'Global kill switch failed: $error';
     } finally {
       _isControlBusy = false;
+      _notify();
+    }
+  }
+
+  Future<bool> addResearchSource(String sourceUrl) async {
+    final companyId = _selectedCompanyId;
+    if (companyId == null || companyId.isEmpty) return false;
+    final trimmed = sourceUrl.trim();
+    final uri = Uri.tryParse(trimmed);
+    if (uri == null ||
+        !uri.hasScheme ||
+        uri.host.isEmpty ||
+        !const {'http', 'https'}.contains(uri.scheme)) {
+      _errorMessage = 'Enter a valid HTTP or HTTPS source URL.';
+      _notify();
+      return false;
+    }
+    _isResearchBusy = true;
+    _errorMessage = null;
+    _notify();
+    try {
+      await _service.addResearchSource(
+        companyId: companyId,
+        sourceUrl: trimmed,
+      );
+      await _refreshSelectedDetail();
+      return true;
+    } catch (error) {
+      _errorMessage = 'Research ingestion failed: $error';
+      return false;
+    } finally {
+      _isResearchBusy = false;
       _notify();
     }
   }

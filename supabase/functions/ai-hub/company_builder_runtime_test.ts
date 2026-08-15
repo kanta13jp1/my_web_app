@@ -5,7 +5,9 @@ import {
 import {
   buildCompanyRuntimePrompt,
   companyRuntimeRoutingTier,
+  nextCompanyRuntimeRoutingProfile,
   parseCompanyRuntimeQueueMessages,
+  selectCompanyRuntimeRouting,
 } from "./company_builder_runtime.ts";
 
 Deno.test("queue parser rejects malformed or unscoped messages", () => {
@@ -60,6 +62,18 @@ Deno.test("runtime prompt binds company, manager, tool, and task context", () =>
   assertStringIncludes(prompt, "Return a concrete work product");
 });
 
+Deno.test("runtime prompt requires bracket citations when research is available", () => {
+  const prompt = buildCompanyRuntimePrompt(
+    { metadata: { company_name: "Signal School" } },
+    { title: "Review pricing", metadata: { stage: "research" } },
+    null,
+    null,
+    "[1] Pricing page\nURL: https://example.com/pricing\nExcerpt: Pro is $20.",
+  );
+  assertStringIncludes(prompt, "Company research sources:");
+  assertStringIncludes(prompt, "Cite concrete claims with bracket references");
+});
+
 Deno.test("high-risk business stages start on stronger routing tiers", () => {
   assertEquals(
     companyRuntimeRoutingTier({ metadata: { stage: "legal" } }),
@@ -73,4 +87,53 @@ Deno.test("high-risk business stages start on stronger routing tiers", () => {
     companyRuntimeRoutingTier({ metadata: { stage: "product" } }),
     "free",
   );
+});
+
+Deno.test("adaptive routing escalates retries and failures", () => {
+  const task = { attempt_count: 2, metadata: { stage: "finance" } };
+  const decision = selectCompanyRuntimeRouting(task, {
+    current_tier: "budget",
+  });
+  assertEquals(decision.tier, "performance");
+  assertEquals(decision.retryBoost, 1);
+  const profile = nextCompanyRuntimeRoutingProfile(
+    null,
+    decision,
+    false,
+    "performance",
+  );
+  assertEquals(profile.current_tier, "premium");
+  assertEquals(profile.last_decision, "escalated_after_failure");
+});
+
+Deno.test("adaptive routing downgrades after five consecutive successes", () => {
+  const decision = selectCompanyRuntimeRouting(
+    { attempt_count: 1, metadata: { stage: "finance" } },
+    { current_tier: "performance" },
+  );
+  const profile = nextCompanyRuntimeRoutingProfile(
+    { consecutive_successes: 4, current_tier: "performance" },
+    decision,
+    true,
+    "performance",
+  );
+  assertEquals(profile.current_tier, "budget");
+  assertEquals(profile.consecutive_successes, 0);
+  assertEquals(profile.downgrade_count, 1);
+  assertEquals(profile.last_decision, "downgraded_after_5_successes");
+});
+
+Deno.test("adaptive routing never downgrades legal tasks below performance", () => {
+  const decision = selectCompanyRuntimeRouting(
+    { attempt_count: 1, metadata: { stage: "legal" } },
+    { current_tier: "performance" },
+  );
+  const profile = nextCompanyRuntimeRoutingProfile(
+    { consecutive_successes: 4, current_tier: "performance" },
+    decision,
+    true,
+    "performance",
+  );
+  assertEquals(profile.current_tier, "performance");
+  assertEquals(profile.last_decision, "success_floor_retained");
 });

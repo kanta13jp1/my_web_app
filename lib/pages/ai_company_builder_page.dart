@@ -15,6 +15,8 @@ class AiCompanyBuilderPage extends StatefulWidget {
 
 class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
   final TextEditingController _ideaController = TextEditingController();
+  final TextEditingController _researchSourceController =
+      TextEditingController();
   late final AiCompanyBuilderController _controller;
 
   double _threshold = 7;
@@ -22,6 +24,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
   bool get _isLoading => _controller.isLoading;
   bool get _isSubmitting => _controller.isSubmitting;
   bool get _isControlBusy => _controller.isControlBusy;
+  bool get _isResearchBusy => _controller.isResearchBusy;
   String? get _errorMessage => _controller.errorMessage;
   String? get _selectedCompanyId => _controller.selectedCompanyId;
   List<Map<String, dynamic>> get _companies => _controller.companies;
@@ -41,6 +44,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     _controller.removeListener(_onControllerChanged);
     _controller.dispose();
     _ideaController.dispose();
+    _researchSourceController.dispose();
     super.dispose();
   }
 
@@ -105,6 +109,22 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
 
   Future<void> _setGlobalKillSwitch(bool enabled) async {
     await _controller.setGlobalKillSwitch(enabled);
+  }
+
+  Future<void> _addResearchSource() async {
+    final added = await _controller.addResearchSource(
+      _researchSourceController.text,
+    );
+    if (added) _researchSourceController.clear();
+  }
+
+  Future<void> _copyAgentCardUrl(String url) async {
+    if (url.trim().isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: url));
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Agent Card URL copied')));
   }
 
   Future<void> _copyBlueprintPost(Map<String, dynamic> blueprint) async {
@@ -338,8 +358,9 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
   }
 
   Widget _buildStatusChip(String status, bool passed) {
-    final Color tone =
-        passed ? const Color(0xFF10B981) : const Color(0xFFF59E0B);
+    final Color tone = passed
+        ? const Color(0xFF10B981)
+        : const Color(0xFFF59E0B);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -382,9 +403,9 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     final criteria = _asMapList(metadata['criteria']);
     final channels = (metadata['launch_channels'] is List)
         ? (metadata['launch_channels'] as List)
-            .map((item) => item.toString())
-            .where((item) => item.isNotEmpty)
-            .toList(growable: false)
+              .map((item) => item.toString())
+              .where((item) => item.isNotEmpty)
+              .toList(growable: false)
         : const <String>[];
     return Container(
       padding: const EdgeInsets.all(16),
@@ -499,20 +520,22 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     final passed = metadata['passed'] == true;
     final state = control['state']?.toString() ?? (passed ? 'idle' : 'blocked');
     final globalKill = master['kill_switch'] == true;
-    final completed =
-        tasks.where((task) => task['status'] == 'completed').length;
+    final completed = tasks
+        .where((task) => task['status'] == 'completed')
+        .length;
     final progress = tasks.isEmpty ? 0.0 : completed / tasks.length;
     final currentTaskId = control['current_task_id']?.toString();
     final currentTask = tasks.cast<Map<String, dynamic>?>().firstWhere(
-          (task) => task?['id']?.toString() == currentTaskId,
-          orElse: () => null,
-        );
+      (task) => task?['id']?.toString() == currentTaskId,
+      orElse: () => null,
+    );
     final totalCost = events.fold<double>(0, (sum, event) {
       return sum + ((event['estimated_cost_usd'] as num?)?.toDouble() ?? 0);
     });
     final canStart = passed && state == 'idle' && !globalKill;
     final canPause = state == 'running' && !globalKill;
-    final canResume = passed &&
+    final canResume =
+        passed &&
         <String>{'paused', 'blocked', 'cancelled'}.contains(state) &&
         !globalKill;
     final canStop = <String>{'running', 'paused', 'blocked'}.contains(state);
@@ -525,8 +548,9 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
           color: const Color(0xFF111827),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color:
-                globalKill ? const Color(0xFFEF4444) : const Color(0x1FFFFFFF),
+            color: globalKill
+                ? const Color(0xFFEF4444)
+                : const Color(0x1FFFFFFF),
           ),
         ),
         child: Column(
@@ -694,8 +718,8 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                     event['status'] == 'failed'
                         ? Icons.error_outline
                         : event['status'] == 'completed'
-                            ? Icons.check_circle_outline
-                            : Icons.bolt_outlined,
+                        ? Icons.check_circle_outline
+                        : Icons.bolt_outlined,
                     color: event['status'] == 'failed'
                         ? const Color(0xFFEF4444)
                         : const Color(0xFF22D3EE),
@@ -1027,47 +1051,49 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
       child: Wrap(
         spacing: 10,
         runSpacing: 10,
-        children: agents.map((agent) {
-          final metadata = _metadataOf(agent);
-          return Container(
-            width: 230,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF111827),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0x1FFFFFFF)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  agent['display_name']?.toString() ?? '-',
-                  style: const TextStyle(
-                    color: Color(0xFFE5E7EB),
-                    fontWeight: FontWeight.w700,
-                    height: 1.5,
-                  ),
+        children: agents
+            .map((agent) {
+              final metadata = _metadataOf(agent);
+              return Container(
+                width: 230,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF111827),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0x1FFFFFFF)),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  agent['role_title']?.toString() ?? '-',
-                  style: const TextStyle(
-                    color: Color(0xB3E5E7EB),
-                    height: 1.5,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      agent['display_name']?.toString() ?? '-',
+                      style: const TextStyle(
+                        color: Color(0xFFE5E7EB),
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      agent['role_title']?.toString() ?? '-',
+                      style: const TextStyle(
+                        color: Color(0xB3E5E7EB),
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      metadata['focus']?.toString() ?? '',
+                      style: const TextStyle(
+                        color: Color(0x8AE5E7EB),
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  metadata['focus']?.toString() ?? '',
-                  style: const TextStyle(
-                    color: Color(0x8AE5E7EB),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(growable: false),
+              );
+            })
+            .toList(growable: false),
       ),
     );
   }
@@ -1090,61 +1116,259 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     return _buildDetailSection(
       title: 'Initial Task Graph',
       child: Column(
-        children: tasks.map((task) {
-          final metadata = _metadataOf(task);
-          return Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF111827),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0x1FFFFFFF)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+        children: tasks
+            .map((task) {
+              final metadata = _metadataOf(task);
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF111827),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0x1FFFFFFF)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        task['title']?.toString() ?? '-',
-                        style: const TextStyle(
-                          color: Color(0xFFE5E7EB),
-                          fontWeight: FontWeight.w700,
-                          height: 1.5,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            task['title']?.toString() ?? '-',
+                            style: const TextStyle(
+                              color: Color(0xFFE5E7EB),
+                              fontWeight: FontWeight.w700,
+                              height: 1.5,
+                            ),
+                          ),
                         ),
+                        Text(
+                          metadata['stage']?.toString() ?? '',
+                          style: const TextStyle(
+                            color: Color(0x8AE5E7EB),
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      task['description']?.toString() ?? '',
+                      style: const TextStyle(
+                        color: Color(0xB3E5E7EB),
+                        height: 1.5,
                       ),
                     ),
+                    const SizedBox(height: 10),
                     Text(
-                      metadata['stage']?.toString() ?? '',
+                      '${managerNames[task['supervisor_agent_id']?.toString() ?? ''] ?? '-'} -> ${toolNames[task['assignee_agent_id']?.toString() ?? ''] ?? '-'}',
                       style: const TextStyle(
-                        color: Color(0x8AE5E7EB),
+                        color: Color(0xFFE5E7EB),
+                        fontWeight: FontWeight.w600,
                         height: 1.5,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  task['description']?.toString() ?? '',
-                  style: const TextStyle(
-                    color: Color(0xB3E5E7EB),
-                    height: 1.5,
+              );
+            })
+            .toList(growable: false),
+      ),
+    );
+  }
+
+  Widget _buildResearchSection(
+    List<Map<String, dynamic>> sources,
+    List<Map<String, dynamic>> routingProfiles,
+    String agentCardUrl,
+  ) {
+    return _buildDetailSection(
+      title: 'Research & Interop',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            key: const Key('company-research-source-url'),
+            controller: _researchSourceController,
+            keyboardType: TextInputType.url,
+            autocorrect: false,
+            style: const TextStyle(color: Color(0xFFE5E7EB), height: 1.5),
+            decoration: InputDecoration(
+              labelText: 'Source URL',
+              hintText: 'https://example.com/research',
+              labelStyle: const TextStyle(color: Color(0xB3E5E7EB)),
+              hintStyle: const TextStyle(color: Color(0x61FFFFFF)),
+              filled: true,
+              fillColor: const Color(0xFF111827),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onSubmitted: _isResearchBusy ? null : (_) => _addResearchSource(),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              key: const Key('company-research-add'),
+              onPressed: _isResearchBusy ? null : _addResearchSource,
+              icon: _isResearchBusy
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.library_add_outlined),
+              label: Text(
+                _isResearchBusy ? 'Ingesting source...' : 'Add research source',
+              ),
+            ),
+          ),
+          if (sources.isEmpty) ...[
+            const SizedBox(height: 12),
+            const Text(
+              'Add a public source before running evidence-sensitive tasks.',
+              style: TextStyle(color: Color(0x8AE5E7EB), height: 1.5),
+            ),
+          ] else ...[
+            const SizedBox(height: 16),
+            for (final source in sources)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF111827),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0x1FFFFFFF)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            source['title']?.toString().trim().isNotEmpty ==
+                                    true
+                                ? source['title'].toString()
+                                : 'Research source',
+                            style: const TextStyle(
+                              color: Color(0xFFE5E7EB),
+                              fontWeight: FontWeight.w700,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          source['status']?.toString() ?? 'processing',
+                          style: TextStyle(
+                            color: source['status'] == 'ready'
+                                ? const Color(0xFF34D399)
+                                : source['status'] == 'failed'
+                                ? const Color(0xFFFCA5A5)
+                                : const Color(0xFFFCD34D),
+                            fontWeight: FontWeight.w700,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    SelectableText(
+                      source['source_url']?.toString() ?? '',
+                      style: const TextStyle(
+                        color: Color(0xFF93C5FD),
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                    ),
+                    if (source['excerpt']?.toString().trim().isNotEmpty ==
+                        true) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        source['excerpt'].toString(),
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xB3E5E7EB),
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                    if (source['last_error']?.toString().trim().isNotEmpty ==
+                        true) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        source['last_error'].toString(),
+                        style: const TextStyle(
+                          color: Color(0xFFFCA5A5),
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+          ],
+          if (routingProfiles.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text(
+              'Adaptive model routes',
+              style: TextStyle(
+                color: Color(0xFFE5E7EB),
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: routingProfiles
+                  .map((profile) {
+                    return _buildPill(
+                      profile['routing_key']?.toString() ?? 'company_builder',
+                      '${profile['current_tier'] ?? 'free'} - ${profile['last_decision'] ?? 'baseline'}',
+                    );
+                  })
+                  .toList(growable: false),
+            ),
+          ],
+          if (agentCardUrl.trim().isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Text(
+              'A2A 1.0 Agent Card',
+              style: TextStyle(
+                color: Color(0xFFE5E7EB),
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: SelectableText(
+                    agentCardUrl,
+                    key: const Key('company-a2a-agent-card-url'),
+                    style: const TextStyle(
+                      color: Color(0xFF93C5FD),
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  '${managerNames[task['supervisor_agent_id']?.toString() ?? ''] ?? '-'} -> ${toolNames[task['assignee_agent_id']?.toString() ?? ''] ?? '-'}',
-                  style: const TextStyle(
-                    color: Color(0xFFE5E7EB),
-                    fontWeight: FontWeight.w600,
-                    height: 1.5,
-                  ),
+                IconButton(
+                  tooltip: 'Copy Agent Card URL',
+                  onPressed: () => _copyAgentCardUrl(agentCardUrl),
+                  icon: const Icon(Icons.copy_outlined),
+                  color: const Color(0xFFE5E7EB),
                 ),
               ],
             ),
-          );
-        }).toList(growable: false),
+          ],
+        ],
       ),
     );
   }
@@ -1153,50 +1377,52 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     return _buildDetailSection(
       title: 'Vault Notes',
       child: Column(
-        children: notes.map((note) {
-          final metadata = _metadataOf(note);
-          final content = metadata['content']?.toString() ?? '';
-          return Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF111827),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0x1FFFFFFF)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  metadata['title']?.toString() ?? 'Untitled note',
-                  style: const TextStyle(
-                    color: Color(0xFFE5E7EB),
-                    fontWeight: FontWeight.w700,
-                    height: 1.5,
-                  ),
+        children: notes
+            .map((note) {
+              final metadata = _metadataOf(note);
+              final content = metadata['content']?.toString() ?? '';
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF111827),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0x1FFFFFFF)),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  metadata['path']?.toString() ?? '',
-                  style: const TextStyle(
-                    color: Color(0x8AE5E7EB),
-                    height: 1.5,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      metadata['title']?.toString() ?? 'Untitled note',
+                      style: const TextStyle(
+                        color: Color(0xFFE5E7EB),
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      metadata['path']?.toString() ?? '',
+                      style: const TextStyle(
+                        color: Color(0x8AE5E7EB),
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      content.length > 220
+                          ? '${content.substring(0, 220)}...'
+                          : content,
+                      style: const TextStyle(
+                        color: Color(0xB3E5E7EB),
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  content.length > 220
-                      ? '${content.substring(0, 220)}...'
-                      : content,
-                  style: const TextStyle(
-                    color: Color(0xB3E5E7EB),
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(growable: false),
+              );
+            })
+            .toList(growable: false),
       ),
     );
   }
@@ -1205,50 +1431,52 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     return _buildDetailSection(
       title: 'Audit Trail',
       child: Column(
-        children: entries.map((entry) {
-          final metadata = _metadataOf(entry);
-          final details = _asMap(metadata['details']);
-          return Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF111827),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0x1FFFFFFF)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  metadata['resource']?.toString() ?? 'event',
-                  style: const TextStyle(
-                    color: Color(0xFFE5E7EB),
-                    fontWeight: FontWeight.w700,
-                    height: 1.5,
-                  ),
+        children: entries
+            .map((entry) {
+              final metadata = _metadataOf(entry);
+              final details = _asMap(metadata['details']);
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF111827),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0x1FFFFFFF)),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  _shortDate(metadata['timestamp'] ?? entry['created_at']),
-                  style: const TextStyle(
-                    color: Color(0x8AE5E7EB),
-                    height: 1.5,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      metadata['resource']?.toString() ?? 'event',
+                      style: const TextStyle(
+                        color: Color(0xFFE5E7EB),
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _shortDate(metadata['timestamp'] ?? entry['created_at']),
+                      style: const TextStyle(
+                        color: Color(0x8AE5E7EB),
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      details.entries
+                          .map((item) => '${item.key}: ${item.value}')
+                          .join('\n'),
+                      style: const TextStyle(
+                        color: Color(0xB3E5E7EB),
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  details.entries
-                      .map((item) => '${item.key}: ${item.value}')
-                      .join('\n'),
-                  style: const TextStyle(
-                    color: Color(0xB3E5E7EB),
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(growable: false),
+              );
+            })
+            .toList(growable: false),
       ),
     );
   }
@@ -1276,6 +1504,9 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     final notes = _asMapList(_detail!['vault_notes']);
     final auditEntries = _asMapList(_detail!['audit_entries']);
     final runtimeEvents = _asMapList(_detail!['runtime_events']);
+    final researchSources = _asMapList(_detail!['research_sources']);
+    final routingProfiles = _asMapList(_detail!['routing_profiles']);
+    final agentCardUrl = _detail!['a2a_agent_card_url']?.toString() ?? '';
     final blueprint = _asMap(_metadataOf(company)['thirty_day_saas_blueprint']);
 
     return Column(
@@ -1286,6 +1517,8 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
         _buildRuntimeControl(company),
         const SizedBox(height: 24),
         _buildRuntimeEventsSection(runtimeEvents),
+        const SizedBox(height: 24),
+        _buildResearchSection(researchSources, routingProfiles, agentCardUrl),
         const SizedBox(height: 24),
         if (blueprint.isNotEmpty) ...[
           _buildThirtyDayBlueprint(company),
