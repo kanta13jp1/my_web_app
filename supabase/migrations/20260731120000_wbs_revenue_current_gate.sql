@@ -6,6 +6,10 @@
 -- self-test evidence only and must not count as external-user revenue.
 -- nocheck: time-relative
 
+-- Keep github_issue_* unset for these split tasks. Production enforces one
+-- active WBS row per (github_issue_number, instance), and issue #3639 remains
+-- attached to the parent bank-payout task.
+
 UPDATE public.wbs_milestones
 SET
   target_date = DATE '2026-08-07',
@@ -30,11 +34,7 @@ INSERT INTO public.wbs_tasks (
   stale_threshold_hours,
   remaining_work,
   recovery_plan,
-  depends_on_titles,
-  github_issue_number,
-  github_issue_url,
-  github_issue_state,
-  github_issue_synced_at
+  depends_on_titles
 )
 VALUES
   (
@@ -55,11 +55,7 @@ VALUES
     24,
     'Merge and deploy the readiness action, then run Stripe Account Readiness with both strict gates enabled and attach the redacted artifact to issue #3639.',
     'If the restricted Stripe key cannot read the account object, grant it Accounts read permission or rotate to an appropriate live key. Never print or commit the key.',
-    ARRAY[]::text[],
-    3639,
-    'https://github.com/kanta13jp1/my_web_app/issues/3639',
-    'OPEN',
-    now()
+    ARRAY[]::text[]
   ),
   (
     'revenue / first-yen-funnel',
@@ -79,11 +75,7 @@ VALUES
     12,
     'Obtain the exact public-post approval, publish candidate 6203a344-55bd-44a0-b4ba-ab191f6fb9a2 once, then record 3h/24h impressions, clicks, landing views, signups, first actions, checkout starts, and paid events.',
     'Do not publish without exact owner approval. If 24-hour clicks remain zero, change only the hook for the next experiment; do not add irrelevant trends, fabricated news, DMs, follows, or acquaintances.',
-    ARRAY[]::text[],
-    4343,
-    'https://github.com/kanta13jp1/my_web_app/issues/4343',
-    'OPEN',
-    now()
+    ARRAY[]::text[]
   ),
   (
     'revenue / first-yen-funnel',
@@ -106,11 +98,7 @@ VALUES
     ARRAY[
       '[revenue-p0][stripe-account] Automate live charge and payout readiness evidence',
       '[revenue-p0][acquisition] Publish approved Hook B and measure the 3h/24h funnel'
-    ]::text[],
-    3639,
-    'https://github.com/kanta13jp1/my_web_app/issues/3639',
-    'OPEN',
-    now()
+    ]::text[]
   )
 ON CONFLICT (title, instance) DO UPDATE SET
   category = EXCLUDED.category,
@@ -135,10 +123,6 @@ ON CONFLICT (title, instance) DO UPDATE SET
   remaining_work = EXCLUDED.remaining_work,
   recovery_plan = EXCLUDED.recovery_plan,
   depends_on_titles = EXCLUDED.depends_on_titles,
-  github_issue_number = EXCLUDED.github_issue_number,
-  github_issue_url = EXCLUDED.github_issue_url,
-  github_issue_state = EXCLUDED.github_issue_state,
-  github_issue_synced_at = EXCLUDED.github_issue_synced_at,
   updated_at = now();
 
 UPDATE public.wbs_tasks
