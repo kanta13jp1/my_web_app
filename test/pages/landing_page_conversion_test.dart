@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/landing_page.dart';
 import 'package:my_web_app/services/growth_acquisition_service.dart';
+import 'package:my_web_app/services/landing_conversion_analytics.dart';
 import 'package:my_web_app/services/landing_conversion_experiment_service.dart';
 import 'package:my_web_app/services/landing_page_adapter.dart';
 import 'package:my_web_app/services/landing_signup_completion_service.dart';
@@ -121,6 +122,20 @@ class _RecordingAcquisitionService extends GrowthAcquisitionService {
   }
 }
 
+class _RecordingConversionAnalytics implements LandingConversionAnalytics {
+  final List<String> eventKeys = <String>[];
+  final List<Map<String, Object>> properties = <Map<String, Object>>[];
+
+  @override
+  Future<void> captureExperimentEvent({
+    required String eventKey,
+    Map<String, Object> properties = const <String, Object>{},
+  }) async {
+    eventKeys.add(eventKey);
+    this.properties.add(Map<String, Object>.from(properties));
+  }
+}
+
 LandingConversionHypothesis _hypothesis(String id) {
   return LandingConversionExperimentService.hypotheses.firstWhere(
     (hypothesis) => hypothesis.id == id,
@@ -159,6 +174,7 @@ void main() {
     bool? analyticsEnabled,
     Uri? landingUri,
     LandingConversionExperimentService? conversionExperimentService,
+    LandingConversionAnalytics? conversionAnalytics,
     GrowthAcquisitionService? acquisitionService,
   }) async {
     tester.view.devicePixelRatio = 1;
@@ -177,6 +193,7 @@ void main() {
           adapter: adapter,
           experimentAssignment: assignment,
           conversionExperimentService: conversionExperimentService,
+          conversionAnalytics: conversionAnalytics,
           acquisitionService: acquisitionService,
           analyticsEnabled: analyticsEnabled,
           landingUri: landingUri,
@@ -224,6 +241,45 @@ void main() {
       isFalse,
     );
     expect(LandingPage.shouldFocusTrialForUri(null), isFalse);
+  });
+
+  testWidgets('mirrors an anonymous experiment view with safe attribution', (
+    tester,
+  ) async {
+    final analytics = _RecordingConversionAnalytics();
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.treatment),
+      conversionAnalytics: analytics,
+      size: const Size(390, 844),
+      landingUri: Uri.parse(
+        'https://example.com/start?utm_source=x&utm_medium=organic'
+        '&utm_campaign=first_user&ref=invite-code',
+      ),
+    );
+
+    expect(analytics.eventKeys, contains('lp_exp_h01_treatment_view'));
+    final viewIndex = analytics.eventKeys.indexOf('lp_exp_h01_treatment_view');
+    expect(analytics.properties[viewIndex], <String, Object>{
+      'path': '/start',
+      'viewport': 'mobile',
+      'utm_source': 'x',
+      'utm_medium': 'organic',
+      'utm_campaign': 'first_user',
+      'referral_present': true,
+    });
+  });
+
+  testWidgets('QA traffic does not reach conversion analytics', (tester) async {
+    final analytics = _RecordingConversionAnalytics();
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.control),
+      conversionAnalytics: analytics,
+      landingUri: Uri.parse('https://example.com/?lp_qa=1'),
+    );
+
+    expect(analytics.eventKeys, isEmpty);
   });
 
   testWidgets('brand search intent is visible and exposed as headings', (

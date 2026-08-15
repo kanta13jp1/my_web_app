@@ -518,6 +518,36 @@
       }
     }
   </style>
+  <script>
+    window.initializePostHogForFlutter = async function(projectToken, host) {
+      if (!projectToken || window.__posthogFlutterInitialized) return;
+
+      const normalizedHost = (host || 'https://us.i.posthog.com').replace(/\/$/, '');
+      if (!window.posthog || typeof window.posthog.init !== 'function') {
+        const assetHost = normalizedHost.replace('.i.posthog.com', '-assets.i.posthog.com');
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.async = true;
+          script.crossOrigin = 'anonymous';
+          script.src = `${assetHost}/static/array.js`;
+          script.onload = resolve;
+          script.onerror = () => reject(new Error('PostHog script failed to load'));
+          document.head.appendChild(script);
+        });
+      }
+
+      window.posthog.init(projectToken, {
+        api_host: normalizedHost,
+        autocapture: false,
+        capture_pageview: false,
+        capture_pageleave: false,
+        disable_session_recording: true,
+        person_profiles: 'never',
+        advanced_disable_feature_flags_on_first_load: true
+      });
+      window.__posthogFlutterInitialized = true;
+    };
+  </script>
 </head>
 <body>
   <div id="seo-shell">
