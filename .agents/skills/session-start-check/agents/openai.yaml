@@ -1,0 +1,4 @@
+interface:
+  display_name: "Session Start Check"
+  short_description: "作業開始前にGit・worktree・ツール・ルール状態を安全に確認"
+  default_prompt: "Use $session-start-check to run a read-only repository intake before work."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wiki Ingest"
+  short_description: "資料をレビュー可能なAtomic Note下書きへ安全に変換・保存"
+  default_prompt: "Use $wiki-ingest to draft and review an atomic note from this source."

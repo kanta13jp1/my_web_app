@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI University Provider"
+  short_description: "AI大学の新規プロバイダーを公式情報から安全に追加"
+  default_prompt: "Use $ai-university-add-provider to evaluate and safely add a provider to AI University."

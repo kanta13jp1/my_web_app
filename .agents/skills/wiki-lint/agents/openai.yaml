@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wiki Lint"
+  short_description: "knowledge vaultのリンク・索引・重複・孤立状態を読み取り監査"
+  default_prompt: "Use $wiki-lint to run a read-only knowledge-vault health audit."
