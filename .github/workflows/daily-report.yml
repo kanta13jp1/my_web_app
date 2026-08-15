@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 200
           token: ${{ secrets.BYPASS_RULES || github.token }}
@@ -209,81 +209,36 @@ jobs:
           echo "date=$DATE"         >> $GITHUB_OUTPUT
           echo "📄 レポート生成: $FILEPATH"
 
-      # ── Step 5: X投稿 (viral-growth-engine → post-x-update fallback) ──────────
-      - name: Step 5 - X投稿 (@kanta13jp1)
+      # ── Step 5: X投稿ナッジ (report-only) ─────────────────────────────────────
+      # 旧実装は viral-growth-engine → post-x-update の自動投稿だったが、両
+      # edge 関数ともリポジトリから削除済みで恒常 404 の死路だった(2026-07-07
+      # R8 監査)。固定テンプレの自動投稿は近似重複でスパム降格リスクもあるため
+      # 復活させない。代わりに「当日 JST の投稿有無」を照会し、未投稿なら
+      # warning でワンボタン投稿を促す report-only ナッジに置換。
+      - name: Step 5 - X投稿ナッジ (report-only)
         if: steps.gitlog.outputs.count != '0'
         id: xpost
         run: |
-          COMMIT_COUNT=${{ steps.gitlog.outputs.count }}
-          TOTAL_USERS="${{ steps.digest.outputs.total_users }}"
-          TOP_COMMIT=$(head -1 /tmp/recent_commits.txt | cut -d' ' -f2- | tr -d '"\\/' | cut -c1-50)
-
-          TWEET="自分株式会社 今日も${COMMIT_COUNT}件の改善を実施💪 直近: ${TOP_COMMIT} ユーザー${TOTAL_USERS}人 https://my-web-app-b67f4.web.app/ #buildinpublic #FlutterWeb"
-          TWEET=$(echo "$TWEET" | cut -c1-270)
-
-          JSON_PAYLOAD=$(jq -n --arg text "$TWEET" '{"text": $text}')
-          echo "📝 投稿文: $TWEET"
-
-          # --- Primary: viral-growth-engine (バイラル広告エンジン) ---
+          # JST の今日 0 時を UTC で表現 (repo 規約: 複数行 python3 -c 禁止)。
+          TODAY_UTC=$(python3 -c "from datetime import datetime, timedelta, timezone; now_jst = datetime.now(timezone.utc) + timedelta(hours=9); start_jst = now_jst.replace(hour=0, minute=0, second=0, microsecond=0); print((start_jst - timedelta(hours=9)).strftime('%Y-%m-%dT%H:%M:%SZ'))")
           set +e
-          VIRAL_CODE=$(curl -s -o /tmp/viral.json -w "%{http_code}" \
-            -X POST \
+          COUNT=$(curl -s --max-time 30 \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{"action":"auto_post_now"}' \
-            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/viral-growth-engine" \
-            --max-time 30)
+            "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/hub_data?source=eq.x_post_log&created_at=gte.${TODAY_UTC}&select=id&limit=5" \
+            | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null)
           set -e
-
-          if [ "$VIRAL_CODE" = "200" ]; then
-            echo "x_posted=true"   >> $GITHUB_OUTPUT
-            echo "post_code=200"   >> $GITHUB_OUTPUT
-            echo "post_via=viral-growth-engine" >> $GITHUB_OUTPUT
-            echo "✅ viral-growth-engine 投稿成功 (HTTP $VIRAL_CODE)"
-            echo "" >> "${{ steps.report.outputs.filepath }}"
-            echo "## X投稿" >> "${{ steps.report.outputs.filepath }}"
-            echo "- ステータス: ✅ 投稿成功 via viral-growth-engine (HTTP $VIRAL_CODE)" >> "${{ steps.report.outputs.filepath }}"
+          COUNT="${COUNT:-0}"
+          echo "本日(JST)の X 投稿ログ: ${COUNT} 件 (>= ${TODAY_UTC})"
+          echo "" >> "${{ steps.report.outputs.filepath }}"
+          echo "## X投稿" >> "${{ steps.report.outputs.filepath }}"
+          if [ "$COUNT" = "0" ]; then
+            echo "x_posted=false" >> $GITHUB_OUTPUT
+            echo "::warning::本日まだ X 未投稿です — アプリの「AI生成して投稿」ワンボタンを実行してください (推奨: JST 07-09 / 20-22)。"
+            echo "- ステータス: ⚠️ 本日未投稿 — ワンボタン投稿を推奨 (JST 07-09 / 20-22)" >> "${{ steps.report.outputs.filepath }}"
           else
-            echo "⚠️ viral-growth-engine 失敗 (HTTP $VIRAL_CODE) — post-x-update にフォールバック"
-
-            # --- Fallback: post-x-update ---
-            x_post() {
-              curl -s -o /tmp/xpost.json -w "%{http_code}" \
-                -X POST \
-                -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-                -H "Content-Type: application/json" \
-                -d "$JSON_PAYLOAD" \
-                "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/post-x-update" \
-                --max-time 20
-            }
-
-            set +e
-            POST_CODE=$(x_post)
-            if [ "$POST_CODE" != "200" ]; then
-              echo "⚠️ 1回目失敗 (HTTP $POST_CODE) — 20秒後にリトライ"
-              sleep 20
-              POST_CODE=$(x_post)
-            fi
-            set -e
-
-            echo "post_code=$POST_CODE"         >> $GITHUB_OUTPUT
-            echo "post_via=post-x-update"       >> $GITHUB_OUTPUT
-
-            if [ "$POST_CODE" = "200" ]; then
-              echo "x_posted=true" >> $GITHUB_OUTPUT
-              echo "✅ post-x-update 投稿成功"
-              echo "" >> "${{ steps.report.outputs.filepath }}"
-              echo "## X投稿" >> "${{ steps.report.outputs.filepath }}"
-              echo "- ステータス: ✅ 投稿成功 via post-x-update フォールバック (HTTP $POST_CODE)" >> "${{ steps.report.outputs.filepath }}"
-              echo "- 投稿内容: $TWEET" >> "${{ steps.report.outputs.filepath }}"
-            else
-              echo "x_posted=false" >> $GITHUB_OUTPUT
-              echo "⚠️ X投稿失敗 (リトライ後も HTTP $POST_CODE)"
-              cat /tmp/xpost.json 2>/dev/null || true
-              echo "" >> "${{ steps.report.outputs.filepath }}"
-              echo "## X投稿" >> "${{ steps.report.outputs.filepath }}"
-              echo "- ステータス: ⚠️ 投稿失敗 (viral-growth-engine + post-x-update 両方失敗)" >> "${{ steps.report.outputs.filepath }}"
-            fi
+            echo "x_posted=true" >> $GITHUB_OUTPUT
+            echo "- ステータス: ✅ 本日 ${COUNT} 件投稿済み (手動ワンボタン運用)" >> "${{ steps.report.outputs.filepath }}"
           fi
 
       # ── Step 5.5: AI大学 学習リマインダー送信 ──────────────────────────────────

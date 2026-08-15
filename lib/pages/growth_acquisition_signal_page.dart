@@ -21,6 +21,7 @@ class _GrowthAcquisitionSignalPageState
 
   static const List<String> _signals = [
     'touch_landing',
+    'touch_profile',
     'touch_import',
     'touch_public_memo',
     'touch_referral',
@@ -31,6 +32,7 @@ class _GrowthAcquisitionSignalPageState
     'import_signup_cta',
     'public_memo_signup_cta',
     'signup_submit_landing',
+    'signup_submit_profile',
     'signup_submit_import',
     'signup_submit_public_memo',
     'signup_submit_referral',
@@ -39,6 +41,7 @@ class _GrowthAcquisitionSignalPageState
 
   static const Map<String, String> _signalLabels = {
     'touch_landing': 'ランディング到達',
+    'touch_profile': 'Xプロフィール到達',
     'touch_import': 'インポート到達',
     'touch_public_memo': '公開メモ到達',
     'touch_referral': '紹介経由到達',
@@ -49,6 +52,7 @@ class _GrowthAcquisitionSignalPageState
     'import_signup_cta': 'インポートCTA',
     'public_memo_signup_cta': '公開メモCTA',
     'signup_submit_landing': 'LP登録送信',
+    'signup_submit_profile': 'Xプロフィール登録送信',
     'signup_submit_import': 'インポート登録送信',
     'signup_submit_public_memo': '公開メモ登録送信',
     'signup_submit_referral': '紹介登録送信',

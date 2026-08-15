@@ -241,6 +241,7 @@ class _ImportPageState extends State<ImportPage> {
     }
     Navigator.of(context).push(
       MaterialPageRoute(
+        settings: const RouteSettings(name: '/'),
         builder: (_) => const LandingPage(),
       ),
     );
@@ -254,6 +255,10 @@ class _ImportPageState extends State<ImportPage> {
         return const <String>['enex', 'xml'];
       case 'markdown':
         return const <String>['md', 'markdown', 'txt'];
+      case 'xlsx':
+        return const <String>['xlsx'];
+      case 'docx':
+        return const <String>['docx'];
       default:
         return const <String>[];
     }
@@ -381,6 +386,18 @@ class _ImportPageState extends State<ImportPage> {
                 subtitle:
                     'Preview a Markdown file as a note before importing it.',
                 icon: Icons.description,
+              ),
+              _sourceCard(
+                sourceType: 'xlsx',
+                title: 'Excel (XLSX)',
+                subtitle: 'Notionの表エクスポート等を行ごと・列見出し対応でノート化。',
+                icon: Icons.grid_on,
+              ),
+              _sourceCard(
+                sourceType: 'docx',
+                title: 'Word (DOCX)',
+                subtitle: 'Word文書の段落を1つのノートとして取り込みます。',
+                icon: Icons.article_outlined,
               ),
             ],
           ),
@@ -872,6 +889,8 @@ class _ImportPageState extends State<ImportPage> {
       'notion' || 'notion_api' => 'Notion',
       'evernote' => 'Evernote',
       'markdown' => 'Markdown',
+      'xlsx' => 'Excel',
+      'docx' => 'Word',
       _ => '競合ツール',
     };
     final count = result.insertedCount;

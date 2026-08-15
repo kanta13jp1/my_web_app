@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../widgets/structured_field_chips.dart';
+
 class FeatureRequestsPage extends StatefulWidget {
   const FeatureRequestsPage({super.key});
 
@@ -40,7 +42,10 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
     try {
       final data = await _supabase
           .from('feature_requests')
-          .select('id, title, description, votes, status, created_at, user_id')
+          .select(
+            'id, title, description, votes, status, created_at, user_id, '
+            'priority, effort, target_date',
+          )
           .eq('status', 'open')
           .order('votes', ascending: false)
           .order('created_at', ascending: false)
@@ -322,6 +327,11 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
     final title = '${request['title'] ?? ''}';
     final description = '${request['description'] ?? ''}'.trim();
     final createdAt = '${request['created_at'] ?? ''}';
+    final chips = <Widget?>[
+      priorityChip(request['priority']?.toString()),
+      effortChip(request['effort']?.toString()),
+      dueDateChip(request['target_date']),
+    ].whereType<Widget>().toList();
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
@@ -341,6 +351,10 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
+            ],
+            if (chips.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Wrap(spacing: 6, runSpacing: 6, children: chips),
             ],
             if (createdAt.isNotEmpty) ...[
               const SizedBox(height: 4),

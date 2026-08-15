@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// 人生目標管理ページ。
 /// 夢 → 大目標 → 中目標 → 小目標（日常行動）の4階層ツリーで
@@ -13,7 +14,14 @@ class LifeGoalsPage extends StatefulWidget {
 }
 
 class _LifeGoalsPageState extends State<LifeGoalsPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['dream', 'big', 'medium', 'small'];
+
+  @override
+  TabController get tabUrlController => _tabs;
+
   final _supabase = Supabase.instance.client;
   late TabController _tabs;
   bool _loading = true;

@@ -1,0 +1,138 @@
+name: Public Memo Bot-View Smoke
+
+# core-hub の匿名 action memo.public.view / memo.public.list (PR #3870) の
+# 本番 smoke。WEB版 sandbox は *.supabase.co へ直接アクセスできないため、
+# GHA から匿名 (ヘッダーなし) で叩いて HTML / JSON / Markdown の応答を検証する。
+on:
+  workflow_dispatch:
+    inputs:
+      memo_id:
+        description: "検証する公開メモ ID"
+        required: false
+        default: "44"
+  # 日次回帰検知: core-hub リファクタで HEAD/GET/POST 匿名アクセスが壊れたら
+  # 検知する (外部 AI 互換性の継続保証 / PR #3870, #3873)。
+  # push トリガーは使わない — main push 直後は deploy-prod 完了前で誤検知するため。
+  schedule:
+    - cron: "7 21 * * *" # 毎日 06:07 JST
+
+concurrency:
+  group: public-memo-smoke
+  cancel-in-progress: true  # 2026-07-13 ci-audit: schedule+手動重複実行防止
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Anonymous GET smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Smoke memo.public.view / memo.public.list (no auth headers)
+        run: |
+          BASE="https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub"
+          MEMO_ID="${{ github.event.inputs.memo_id || '44' }}"
+          FAIL=0
+
+          check() {
+            local label="$1" url="$2" expected="$3" needle="$4"
+            local body code
+            body=$(curl -sS --max-time 20 -w "\n%{http_code}" "$url" 2>&1) || true
+            code=$(echo "$body" | tail -1)
+            body=$(echo "$body" | head -n -1)
+            echo "=== $label ==="
+            echo "URL: $url"
+            echo "HTTP: $code (expected $expected)"
+            echo "$body" | head -c 600
+            echo ""
+            if [ "$code" != "$expected" ]; then
+              echo "::error::$label: HTTP $code != $expected"
+              FAIL=1
+            elif [ -n "$needle" ] && ! echo "$body" | grep -qF "$needle"; then
+              echo "::error::$label: response does not contain '$needle'"
+              FAIL=1
+            else
+              echo "✅ $label OK"
+            fi
+            echo ""
+          }
+
+          check "view html"  "$BASE?action=memo.public.view&id=$MEMO_ID" "200" "<html lang=\"ja\">"
+          check "view json"  "$BASE?action=memo.public.view&id=$MEMO_ID&format=json" "200" "\"appUrl\""
+          check "view md"    "$BASE?action=memo.public.view&id=$MEMO_ID&format=md" "200" "App URL:"
+          check "list html"  "$BASE?action=memo.public.list&limit=5" "200" "公開メモ一覧"
+          check "not found"  "$BASE?action=memo.public.view&id=999999999" "404" ""
+
+          # PR #3873: AI フェッチャーの HEAD プリフライト / 空 body POST も匿名で通ること
+          echo "=== HEAD ==="
+          HEAD_CODE=$(curl -sS --max-time 20 -o /dev/null -w "%{http_code}" -I \
+            "$BASE?action=memo.public.view&id=$MEMO_ID") || true
+          echo "HTTP: $HEAD_CODE (expected 200)"
+          if [ "$HEAD_CODE" != "200" ]; then
+            echo "::error::HEAD preflight: HTTP $HEAD_CODE != 200"
+            FAIL=1
+          else
+            echo "✅ HEAD OK"
+          fi
+          echo "=== POST empty body ==="
+          POST_BODY=$(curl -sS --max-time 20 -X POST -w "\n%{http_code}" \
+            "$BASE?action=memo.public.view&id=$MEMO_ID") || true
+          POST_CODE=$(echo "$POST_BODY" | tail -1)
+          echo "HTTP: $POST_CODE (expected 200)"
+          if [ "$POST_CODE" != "200" ] || ! echo "$POST_BODY" | grep -qF '"appUrl"'; then
+            echo "::error::POST empty body: HTTP $POST_CODE or missing appUrl"
+            FAIL=1
+          else
+            echo "✅ POST empty body OK"
+          fi
+
+          # AI 向け search / related action (匿名)。search は 0 件でも 200 が正。
+          # GET は format 未指定だと HTML が既定のため format=json を明示する。
+          check "search json"      "$BASE?action=memo.public.search&q=2026&limit=5&format=json" "200" "\"success\":true"
+          check "search too short" "$BASE?action=memo.public.search&q=x" "400" ""
+          check "related json"     "$BASE?action=memo.public.related&id=$MEMO_ID&limit=5&format=json" "200" "\"success\":true"
+
+          # AI フェッチャー救済: text/plain 版と HTML エンティティ化け URL (&amp;)
+          check "view txt"         "$BASE?action=memo.public.view&id=$MEMO_ID&format=txt" "200" "App URL:"
+          check "amp-mangled rescue" "$BASE?action=memo.public.view&amp;id=$MEMO_ID&amp;format=json" "200" "\"appUrl\""
+
+          # PR: 公開ブログ SSR (blog.public.list) が匿名で 200 + success を返すこと
+          check "blog list json"   "$BASE?action=blog.public.list&limit=3&format=json" "200" "\"success\":true"
+
+          # PR #3899: prerender 済み /vs-<slug> が固有本文 + 自己参照 canonical で
+          # 配信されること (SPA シェルではなく静的HTMLが Firebase 優先配信される)。
+          VS="https://my-web-app-b67f4.web.app/vs-notion"
+          check "prerender vs-notion body"      "$VS" "200" "data-prerender=\"vs-body\""
+          check "prerender vs-notion canonical" "$VS" "200" "href=\"https://my-web-app-b67f4.web.app/vs-notion\""
+
+          exit "$FAIL"
+
+      # 外部 AI / ブラウザ系フェッチャーのリクエスト形状を再現し、
+      # どの形が 401 になるか特定する診断ステップ (失敗しても job は落とさない)。
+      - name: Diagnose external-AI request variants (informational)
+        if: always()
+        run: |
+          BASE="https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub"
+          MEMO_ID="${{ github.event.inputs.memo_id || '44' }}"
+          URL="$BASE?action=memo.public.view&id=$MEMO_ID"
+
+          probe() {
+            local label="$1"; shift
+            local out code
+            out=$(curl -sS --max-time 20 -o /tmp/body.txt -w "%{http_code}" "$@" 2>&1) || true
+            code="$out"
+            echo "=== $label → HTTP $code ==="
+            head -c 300 /tmp/body.txt; echo ""
+          }
+
+          probe "GET plain"            "$URL"
+          probe "HEAD"                 -I "$URL"
+          probe "GET UA=ChatGPT-User"  -H "User-Agent: ChatGPT-User/2.0 (+https://openai.com/bot)" "$URL"
+          probe "GET UA=OAI-SearchBot" -H "User-Agent: OAI-SearchBot/1.0; +https://openai.com/searchbot" "$URL"
+          probe "GET UA=Chrome+Origin" -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0" -H "Origin: https://chatgpt.com" "$URL"
+          probe "GET Accept html"      -H "Accept: text/html,application/xhtml+xml" "$URL"
+          probe "GET amp-mangled URL"  "$BASE?action=memo.public.view&amp;id=$MEMO_ID"
+          probe "GET trailing slash"   "$BASE/?action=memo.public.view&id=$MEMO_ID"
+          probe "POST empty body"      -X POST "$URL"
+          probe "GET empty Authorization" -H "Authorization:" "$URL"

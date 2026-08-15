@@ -22,11 +22,38 @@ import {
   matchExistingFeatureRequestIssues,
 } from "./feature_request_dedupe.ts";
 import { buildFeedbackIssue } from "./feedback_issue.ts";
+import {
+  clampPublicMemoLimit,
+  normalizePublicMemoSearchQuery,
+  PUBLIC_MEMO_SEARCH_MAX_QUERY_LENGTH,
+  PUBLIC_MEMO_SEARCH_MIN_QUERY_LENGTH,
+  PUBLIC_MEMO_VIEW_COLUMNS,
+  publicMemoToPayload,
+  type PublicMemoViewRow,
+  renderPublicMemoHtml,
+  renderPublicMemoListHtml,
+  renderPublicMemoListMarkdown,
+  renderPublicMemoMarkdown,
+  renderPublicMemoNotFoundHtml,
+  resolvePublicMemoViewFormat,
+  searchParamsToActionBody,
+} from "./public_memo_view.ts";
+import {
+  BLOG_VIEW_COLUMNS,
+  type BlogPostRow,
+  blogPostToPayload,
+  renderBlogHtml,
+  renderBlogListHtml,
+  renderBlogListMarkdown,
+  renderBlogMarkdown,
+  renderBlogNotFoundHtml,
+} from "./blog_view.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Max-Age": "86400",
 };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -36,6 +63,17 @@ function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function publicText(body: string, contentType: string, status = 200): Response {
+  return new Response(body, {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": contentType,
+      "Cache-Control": "public, max-age=300",
+    },
   });
 }
 
@@ -806,11 +844,20 @@ serve(async (req: Request) => {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
     // deno-lint-ignore no-explicit-any
     let body: Record<string, any> = {};
-    if (req.method !== "GET") {
+    if (req.method === "GET" || req.method === "HEAD") {
+      // GET/HEAD は query param を body 相当として扱う。ヘッダーを付けられない
+      // クローラー / 外部 AI が匿名 action (memo.public.* 等) を叩けるようにする。
+      // HEAD はブラウザ / AI フェッチャーが本文取得前のプリフライトとして送る。
+      body = searchParamsToActionBody(req.url);
+    } else {
       try {
         body = await req.json();
       } catch {
         body = {};
+      }
+      if (typeof body.action !== "string" || body.action === "") {
+        // 一部フェッチャーは POST でも body を送らない — query param を fallback。
+        body = { ...searchParamsToActionBody(req.url), ...body };
       }
     }
 
@@ -823,7 +870,15 @@ serve(async (req: Request) => {
       "discord.notify",
     ]);
     // Anonymous-allowed actions (no auth required / page-specific cache)
-    const anonymousActions = new Set(["page.share_generate"]);
+    const anonymousActions = new Set([
+      "page.share_generate",
+      "memo.public.view",
+      "memo.public.list",
+      "memo.public.search",
+      "memo.public.related",
+      "blog.public.view",
+      "blog.public.list",
+    ]);
     const bearer = (req.headers.get("authorization") ?? "").replace(
       /^Bearer\s+/i,
       "",
@@ -891,6 +946,259 @@ serve(async (req: Request) => {
           image: body.image,
         });
         return json({ success: true, item });
+      }
+
+      // ---- Public memo bot/AI-readable view (anonymous) ----
+      // Flutter SPA (/public-memo?id=X) は JS 実行後に本文を取得するため、
+      // ChatGPT 等の外部 AI / クローラーは URL を開いても本文を読めない。
+      // GET ?action=memo.public.view&id=44 で SSR 済み HTML を返す
+      // (format=json / md も可)。RLS と同じく is_public=true の行のみ返す。
+      case "memo.public.view": {
+        const memoId = Number(body.id ?? body.memo_id);
+        const format = resolvePublicMemoViewFormat(body.format, req.method);
+        if (!Number.isInteger(memoId) || memoId <= 0) {
+          return json({ error: "id (positive integer) required" }, 400);
+        }
+        const { data, error } = await admin
+          .from("public_memos")
+          .select(PUBLIC_MEMO_VIEW_COLUMNS)
+          .eq("id", memoId)
+          .eq("is_public", true)
+          .maybeSingle();
+        if (error) return json({ error: error.message }, 500);
+        if (!data) {
+          if (format === "html") {
+            return publicText(
+              renderPublicMemoNotFoundHtml(memoId),
+              "text/html; charset=utf-8",
+              404,
+            );
+          }
+          return json({ error: `Public memo ${memoId} not found` }, 404);
+        }
+        const row = data as PublicMemoViewRow;
+        if (format === "json") {
+          return json({ success: true, memo: publicMemoToPayload(row) });
+        }
+        if (format === "md" || format === "txt") {
+          return publicText(
+            renderPublicMemoMarkdown(row),
+            format === "md"
+              ? "text/markdown; charset=utf-8"
+              : "text/plain; charset=utf-8",
+          );
+        }
+        return publicText(
+          renderPublicMemoHtml(row),
+          "text/html; charset=utf-8",
+        );
+      }
+
+      case "memo.public.list": {
+        const limit = clampPublicMemoLimit(body.limit, 20, 50);
+        const format = resolvePublicMemoViewFormat(body.format, req.method);
+        const { data, error } = await admin
+          .from("public_memos")
+          .select(PUBLIC_MEMO_VIEW_COLUMNS)
+          .eq("is_public", true)
+          .order("published_at", { ascending: false })
+          .limit(limit);
+        if (error) return json({ error: error.message }, 500);
+        const rows = (data ?? []) as PublicMemoViewRow[];
+        if (format === "html") {
+          return publicText(
+            renderPublicMemoListHtml(rows),
+            "text/html; charset=utf-8",
+          );
+        }
+        if (format === "md" || format === "txt") {
+          return publicText(
+            renderPublicMemoListMarkdown(rows),
+            format === "md"
+              ? "text/markdown; charset=utf-8"
+              : "text/plain; charset=utf-8",
+          );
+        }
+        return json({
+          success: true,
+          memos: rows.map(publicMemoToPayload),
+        });
+      }
+
+      // ---- Public memo search (anonymous / AI 向け) ----
+      // 負荷対策: query は正規化 + 2〜100 字ガード、limit は 1..50 clamp、
+      // is_public=true のみ。ilike ワイルドカードは無害化済み。
+      case "memo.public.search": {
+        const query = normalizePublicMemoSearchQuery(body.q ?? body.query);
+        if (query === null) {
+          return json({
+            error: `q (${PUBLIC_MEMO_SEARCH_MIN_QUERY_LENGTH}-` +
+              `${PUBLIC_MEMO_SEARCH_MAX_QUERY_LENGTH} chars) required`,
+          }, 400);
+        }
+        const limit = clampPublicMemoLimit(body.limit, 20, 50);
+        const format = resolvePublicMemoViewFormat(body.format, req.method);
+        const pattern = `%${query}%`;
+        const { data, error } = await admin
+          .from("public_memos")
+          .select(PUBLIC_MEMO_VIEW_COLUMNS)
+          .eq("is_public", true)
+          .or(
+            `title.ilike.${pattern},content.ilike.${pattern},category.ilike.${pattern}`,
+          )
+          .order("published_at", { ascending: false })
+          .limit(limit);
+        if (error) return json({ error: error.message }, 500);
+        const rows = (data ?? []) as PublicMemoViewRow[];
+        if (format === "html") {
+          return publicText(
+            renderPublicMemoListHtml(rows),
+            "text/html; charset=utf-8",
+          );
+        }
+        if (format === "md" || format === "txt") {
+          return publicText(
+            renderPublicMemoListMarkdown(rows),
+            format === "md"
+              ? "text/markdown; charset=utf-8"
+              : "text/plain; charset=utf-8",
+          );
+        }
+        return json({
+          success: true,
+          query,
+          memos: rows.map(publicMemoToPayload),
+        });
+      }
+
+      // ---- Public memo related v1 (anonymous / 同カテゴリ・自分以外・新しい順) ----
+      case "memo.public.related": {
+        const memoId = Number(body.id ?? body.memo_id);
+        if (!Number.isInteger(memoId) || memoId <= 0) {
+          return json({ error: "id (positive integer) required" }, 400);
+        }
+        const limit = clampPublicMemoLimit(body.limit, 5, 20);
+        const format = resolvePublicMemoViewFormat(body.format, req.method);
+        const { data: base, error: baseError } = await admin
+          .from("public_memos")
+          .select("id, category")
+          .eq("id", memoId)
+          .eq("is_public", true)
+          .maybeSingle();
+        if (baseError) return json({ error: baseError.message }, 500);
+        if (!base) {
+          if (format === "html") {
+            return publicText(
+              renderPublicMemoNotFoundHtml(memoId),
+              "text/html; charset=utf-8",
+              404,
+            );
+          }
+          return json({ error: `Public memo ${memoId} not found` }, 404);
+        }
+        const category = ((base as { category: string | null }).category ?? "")
+          .trim();
+        let rows: PublicMemoViewRow[] = [];
+        if (category) {
+          const { data, error } = await admin
+            .from("public_memos")
+            .select(PUBLIC_MEMO_VIEW_COLUMNS)
+            .eq("is_public", true)
+            .eq("category", category)
+            .neq("id", memoId)
+            .order("published_at", { ascending: false })
+            .limit(limit);
+          if (error) return json({ error: error.message }, 500);
+          rows = (data ?? []) as PublicMemoViewRow[];
+        }
+        if (format === "html") {
+          return publicText(
+            renderPublicMemoListHtml(rows),
+            "text/html; charset=utf-8",
+          );
+        }
+        if (format === "md" || format === "txt") {
+          return publicText(
+            renderPublicMemoListMarkdown(rows),
+            format === "md"
+              ? "text/markdown; charset=utf-8"
+              : "text/plain; charset=utf-8",
+          );
+        }
+        return json({
+          success: true,
+          memoId,
+          category: category || null,
+          memos: rows.map(publicMemoToPayload),
+        });
+      }
+
+      // ---- Public blog bot/AI-readable view (anonymous / status='posted') ----
+      // /blog/post は SPA でアプリ内ナビ引数から記事を特定するため URL で
+      // クロールできない。GET ?action=blog.public.view&id=X で SSR 済み HTML
+      // (format=json / md 可) を返す。RLS と同じく status='posted' のみ。
+      case "blog.public.view": {
+        const id = String(body.id ?? "").trim();
+        const format = resolvePublicMemoViewFormat(body.format, req.method);
+        if (!id) return json({ error: "id required" }, 400);
+        const { data, error } = await admin
+          .from("blog_posts")
+          .select(BLOG_VIEW_COLUMNS)
+          .eq("id", id)
+          .eq("status", "posted")
+          .maybeSingle();
+        if (error) return json({ error: error.message }, 500);
+        if (!data) {
+          if (format === "html") {
+            return publicText(
+              renderBlogNotFoundHtml(id),
+              "text/html; charset=utf-8",
+              404,
+            );
+          }
+          return json({ error: `Blog ${id} not found` }, 404);
+        }
+        const row = data as BlogPostRow;
+        if (format === "json") {
+          return json({ success: true, post: blogPostToPayload(row) });
+        }
+        if (format === "md" || format === "txt") {
+          return publicText(
+            renderBlogMarkdown(row),
+            format === "md"
+              ? "text/markdown; charset=utf-8"
+              : "text/plain; charset=utf-8",
+          );
+        }
+        return publicText(renderBlogHtml(row), "text/html; charset=utf-8");
+      }
+
+      case "blog.public.list": {
+        const limit = clampPublicMemoLimit(body.limit, 20, 50);
+        const format = resolvePublicMemoViewFormat(body.format, req.method);
+        const { data, error } = await admin
+          .from("blog_posts")
+          .select(BLOG_VIEW_COLUMNS)
+          .eq("status", "posted")
+          .order("posted_at", { ascending: false })
+          .limit(limit);
+        if (error) return json({ error: error.message }, 500);
+        const rows = (data ?? []) as BlogPostRow[];
+        if (format === "html") {
+          return publicText(
+            renderBlogListHtml(rows),
+            "text/html; charset=utf-8",
+          );
+        }
+        if (format === "md" || format === "txt") {
+          return publicText(
+            renderBlogListMarkdown(rows),
+            format === "md"
+              ? "text/markdown; charset=utf-8"
+              : "text/plain; charset=utf-8",
+          );
+        }
+        return json({ success: true, posts: rows.map(blogPostToPayload) });
       }
 
       // ---- OGP fetch (stateless) ----
@@ -2481,7 +2789,10 @@ description: ${pageDescription}
         }
 
         // 3. FAL flux/schnell で画像生成
-        const falKey = Deno.env.get("FAL_KEY");
+        // env 名は FAL_KEY / FAL_API_KEY の 2 系統が実在する (2026-07-25 実障害:
+        // FAL_API_KEY だけ登録されていて画像が黙って fallback に落ちていた)。
+        // 上の GITHUB_PAT ?? GITHUB_TOKEN ?? GH_TOKEN と同じく両方を受ける。
+        const falKey = Deno.env.get("FAL_KEY") ?? Deno.env.get("FAL_API_KEY");
         let imageUrl = "https://my-web-app-b67f4.web.app/ogp.png"; // fallback
         let cost = 0;
         let generatedBy = "fallback";

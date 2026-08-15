@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'blog_sync_feedback.dart';
+
 class _NewsSignalLintReport {
   final String checkedAt;
   final String status;
@@ -26,6 +28,12 @@ class _NewsSignalLintReport {
       );
 }
 
+/// Qiita アカウント (@kanta13jp1) は 2026-07-12 に ToS 違反で停止済み
+/// (全記事非公開・異議申し立て中・当面 dev.to 一本化)。停止が解除されるまで
+/// Qiita への同期・返信・新規投稿の導線を無効化する単一ソースのフラグ。
+/// 解除されたらここを false に戻すだけで全導線が復活する。
+const bool kQiitaAccountSuspended = true;
+
 class BlogManagementPage extends StatefulWidget {
   const BlogManagementPage({super.key});
 
@@ -42,6 +50,9 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   List<Map<String, dynamic>> _drafts = [];
   bool _isLoading = true;
   bool _isSyncing = false;
+  // R21: 最後の同期失敗を保持し、空状態を「Syncで取得できます」の失敗ループ
+  // ではなく失敗理由+是正手順の表示に切り替える。
+  String? _lastSyncError;
   bool _isLintingNewsSignals = false;
   final Set<String> _publishingIds = {};
   final Set<String> _togglingIds = {};
@@ -52,6 +63,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   String _tab =
       'articles'; // 'articles' | 'comments' | 'drafts' | 'corrections'
   String _platformFilter = 'all'; // 'all' | 'qiita' | 'devto'
+  String _commentFilter = 'all'; // 'all' | 'unreplied'
   String _draftSearch = '';
   String _draftStatusFilter = 'all'; // 'all' | 'draft' | 'ready'
   final _draftSearchCtrl = TextEditingController();
@@ -88,10 +100,12 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             .select()
             .order('fetched_at', ascending: false)
             .limit(300),
+        // content (記事全文 = 転送量の~84%) は一覧では取得しない。
+        // 編集時に _editDraft が対象1件だけ lazy fetch する。
         _supabase
             .from('blog_posts')
             .select(
-              'id, title, status, target_platforms, draft_path, posted_at, url, created_at, content, tags, notes',
+              'id, title, status, target_platforms, draft_path, posted_at, url, created_at, tags, notes',
             )
             .inFilter('status', ['draft', 'ready'])
             .order('created_at', ascending: false)
@@ -138,32 +152,51 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   Future<void> _syncNow() async {
     if (_isSyncing) return;
     setState(() => _isSyncing = true);
+    // R21: Qiita と dev.to を独立に同期する(ボタンの文言どおり両方実行し、
+    // Qiita トークン失効が dev.to 同期を巻き添えにしない)。失敗は生
+    // FunctionException ではなく是正手順つきの文言へ変換する。
+    final lines = <String>[];
+    var anySuccess = false;
+    var anyFailure = false;
+
+    Future<void> runSync(String label, String action) async {
+      try {
+        final res = await _supabase.functions.invoke(
+          'schedule-hub',
+          body: {'action': action},
+        );
+        lines.add(composeBlogSyncSuccessLine(label, res.data));
+        anySuccess = true;
+      } on FunctionException catch (e) {
+        anyFailure = true;
+        lines.add(
+          '$label: ${composeBlogSyncErrorMessage(status: e.status, details: e.details)}',
+        );
+      } catch (e) {
+        anyFailure = true;
+        lines.add('$label: ${composeBlogSyncErrorMessage(fallback: '$e')}');
+      }
+    }
+
     try {
-      final res = await _supabase.functions.invoke(
-        'schedule-hub',
-        body: {'action': 'blog.sync_engagement'},
+      if (kQiitaAccountSuspended) {
+        lines.add('Qiita: アカウント停止中 (2026-07-12〜) のため同期スキップ');
+      } else {
+        await runSync('Qiita', 'blog.sync_engagement');
+      }
+      await runSync('dev.to', 'blog.devto_sync_engagement');
+
+      if (!mounted) return;
+      final message = lines.join('\n');
+      setState(() => _lastSyncError = anyFailure ? message : null);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(anyFailure ? '⚠️ $message' : '✅ $message'),
+          backgroundColor: anyFailure ? _red : _green,
+          duration: Duration(seconds: anyFailure ? 8 : 3),
+        ),
       );
-      if (mounted) {
-        final success = res.status == 200;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(success ? '✅ 同期完了' : '⚠️ 同期エラー (${res.status})'),
-            backgroundColor: success ? _green : _red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-        if (success) await _loadData();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ 同期失敗: $e'),
-            backgroundColor: _red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
+      if (anySuccess) await _loadData();
     } finally {
       if (mounted) setState(() => _isSyncing = false);
     }
@@ -400,14 +433,39 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   Future<void> _editDraft(Map<String, dynamic> d) async {
     final id = d['id']?.toString() ?? '';
     if (id.isEmpty) return;
+    // 一覧クエリは content を含まないため、編集対象の1件だけここで取得する。
+    // 取得失敗のままダイアログを開くと、保存時に blog.update_post が
+    // 空本文で実データを上書きしてしまうため、必ず中断する。
+    String initialContent;
+    try {
+      final row = await _supabase
+          .from('blog_posts')
+          .select('content')
+          .eq('id', id)
+          .maybeSingle();
+      if (row == null) {
+        throw StateError('post not found: $id');
+      }
+      initialContent = row['content'] as String? ?? '';
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ 本文の取得に失敗したため編集を中止しました: $e'),
+            backgroundColor: _red,
+          ),
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
     final titleCtrl = TextEditingController(text: d['title'] as String? ?? '');
     final tagsCtrl = TextEditingController(
       text: (d['tags'] is List)
           ? (d['tags'] as List).join(', ')
           : d['tags']?.toString() ?? '',
     );
-    final contentCtrl =
-        TextEditingController(text: d['content'] as String? ?? '');
+    final contentCtrl = TextEditingController(text: initialContent);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -567,7 +625,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     final titleCtrl = TextEditingController();
     final tagsCtrl = TextEditingController();
     final contentCtrl = TextEditingController();
-    String selectedPlatform = 'qiita';
+    String selectedPlatform = kQiitaAccountSuspended ? 'devto' : 'qiita';
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -603,19 +661,25 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                         style: TextStyle(color: Colors.white54, height: 1.5),
                       ),
                       ...['qiita', 'devto', 'qiita,devto'].map(
-                        (p) => Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: ChoiceChip(
-                            label: Text(
-                              p,
-                              style: const TextStyle(height: 1.5),
+                        (p) {
+                          // Qiita 停止中は Qiita を含む投稿先を選ばせない。
+                          final disabled =
+                              kQiitaAccountSuspended && p.contains('qiita');
+                          return Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: ChoiceChip(
+                              label: Text(
+                                disabled ? '$p (停止中)' : p,
+                                style: const TextStyle(height: 1.5),
+                              ),
+                              selected: selectedPlatform == p,
+                              onSelected: disabled
+                                  ? null
+                                  : (_) => setSt(() => selectedPlatform = p),
+                              selectedColor: _orange,
                             ),
-                            selected: selectedPlatform == p,
-                            onSelected: (_) =>
-                                setSt(() => selectedPlatform = p),
-                            selectedColor: _orange,
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -948,6 +1012,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             '$unreplied',
             Icons.comment_outlined,
             color: unreplied > 0 ? _red : _green,
+            onTap: () => setState(() {
+              _tab = 'comments';
+              _commentFilter = 'unreplied';
+            }),
           ),
           const SizedBox(width: 8),
           _statCard(
@@ -966,38 +1034,46 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     String value,
     IconData icon, {
     Color color = _orange,
+    VoidCallback? onTap,
   }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        decoration: BoxDecoration(
-          color: _card,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(
-                color: color,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                height: 1.5,
-              ),
-            ),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white38,
-                fontSize: 10,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
+    final card = Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        color: _card,
+        borderRadius: BorderRadius.circular(12),
       ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              height: 1.5,
+            ),
+          ),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white38,
+              fontSize: 10,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+    return Expanded(
+      child: onTap == null
+          ? card
+          : InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(12),
+              child: card,
+            ),
     );
   }
 
@@ -1034,9 +1110,22 @@ class _BlogManagementPageState extends State<BlogManagementPage>
               children: [
                 _filterBtn('all', '全て'),
                 const SizedBox(width: 6),
-                _filterBtn('qiita', 'Qiita'),
+                _filterBtn(
+                  'qiita',
+                  kQiitaAccountSuspended ? 'Qiita (停止中)' : 'Qiita',
+                ),
                 const SizedBox(width: 6),
                 _filterBtn('devto', 'dev.to'),
+              ],
+            ),
+          ],
+          if (_tab == 'comments') ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                _commentFilterBtn('all', '全て'),
+                const SizedBox(width: 6),
+                _commentFilterBtn('unreplied', '未返信のみ ($_unrepliedCount)'),
               ],
             ),
           ],
@@ -1175,6 +1264,31 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     );
   }
 
+  Widget _commentFilterBtn(String id, String label) {
+    final selected = _commentFilter == id;
+    return GestureDetector(
+      onTap: () => setState(() => _commentFilter = id),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: selected ? Colors.white24 : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? Colors.white38 : Colors.white12,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white70 : Colors.white38,
+            fontSize: 11,
+            height: 1.5,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _draftStatusBtn(String id, String label) {
     final selected = _draftStatusFilter == id;
     return GestureDetector(
@@ -1229,16 +1343,27 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             padding: const EdgeInsets.all(32),
             child: Column(
               children: [
-                const Icon(
-                  Icons.article_outlined,
-                  color: Colors.white24,
+                Icon(
+                  _lastSyncError != null
+                      ? Icons.sync_problem
+                      : Icons.article_outlined,
+                  color: _lastSyncError != null ? _orange : Colors.white24,
                   size: 48,
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'データなし\nSync ボタンで Qiita / dev.to から取得できます',
+                // R21: 同期失敗後は「Syncで取得できます」ではなく失敗理由+
+                // 是正手順を出す(失敗ループのデッドエンド解消)。
+                Text(
+                  _lastSyncError != null
+                      ? '前回の同期に失敗しました。\n$_lastSyncError'
+                      : 'データなし\nSync ボタンで Qiita / dev.to から取得できます',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white38, height: 1.6),
+                  style: TextStyle(
+                    color: _lastSyncError != null
+                        ? Colors.white70
+                        : Colors.white38,
+                    height: 1.6,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
@@ -1266,7 +1391,33 @@ class _BlogManagementPageState extends State<BlogManagementPage>
       ];
     }
 
+    // R21: 表示中の数値がいつの同期かを明示する(同期失敗中の凍結値を
+    // 今の数値に見せない)。フィルタ後の行を platform 別に評価する — 独立同期
+    // 化により「Qiita だけ凍結・dev.to は新鮮」が全体 max に隠れるのを防ぐ。
+    // 直近同期が失敗していれば警告も添える。
+    final rawFreshness =
+        blogEngagementFreshnessByPlatform(items, DateTime.now());
+    // Qiita 停止中は「58日前」等の凍結値が異常に見えないよう理由を添える。
+    final freshness = rawFreshness != null &&
+            kQiitaAccountSuspended &&
+            rawFreshness.contains('Qiita')
+        ? '$rawFreshness(Qiita はアカウント停止中 2026-07-12〜)'
+        : rawFreshness;
     return [
+      if (freshness != null)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Text(
+              _lastSyncError != null ? '$freshness(直近の同期は失敗しています)' : freshness,
+              style: TextStyle(
+                color: _lastSyncError != null ? _orange : Colors.white38,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ),
       SliverPadding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
         sliver: SliverList(
@@ -1395,7 +1546,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
 
   // ── コメント一覧 ─────────────────────────────────────────────
   List<Widget> _buildCommentSliver() {
-    final sorted = [..._comments]..sort((a, b) {
+    final filtered = _commentFilter == 'unreplied'
+        ? _comments.where((c) => (c['replied'] as bool?) != true).toList()
+        : _comments;
+    final sorted = [...filtered]..sort((a, b) {
         final ra = (a['replied'] as bool?) == true ? 1 : 0;
         final rb = (b['replied'] as bool?) == true ? 1 : 0;
         return ra.compareTo(rb); // 未返信を先頭に
@@ -1403,13 +1557,13 @@ class _BlogManagementPageState extends State<BlogManagementPage>
 
     if (sorted.isEmpty) {
       return [
-        const SliverToBoxAdapter(
+        SliverToBoxAdapter(
           child: Padding(
-            padding: EdgeInsets.all(32),
+            padding: const EdgeInsets.all(32),
             child: Center(
               child: Text(
-                'コメントなし',
-                style: TextStyle(
+                _commentFilter == 'unreplied' ? '未返信コメントなし' : 'コメントなし',
+                style: const TextStyle(
                   color: Colors.white38,
                   height: 1.5,
                 ),
@@ -1433,12 +1587,28 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     ];
   }
 
+  /// コメントの属する記事 URL を engagement 一覧から引く (platform +
+  /// article_id 一致)。blog_comments 自体は url 列を持たないため。
+  String _commentArticleUrl(Map<String, dynamic> c) {
+    final platform = c['platform']?.toString() ?? '';
+    final articleId = c['article_id']?.toString() ?? '';
+    if (platform.isEmpty || articleId.isEmpty) return '';
+    for (final e in _engagement) {
+      if ((e['platform']?.toString() ?? '') == platform &&
+          (e['article_id']?.toString() ?? '') == articleId) {
+        return e['url']?.toString() ?? '';
+      }
+    }
+    return '';
+  }
+
   Widget _buildCommentCard(Map<String, dynamic> c) {
     final platform = c['platform'] as String? ?? '';
     final author = c['author'] as String? ?? '';
     final body = c['body'] as String? ?? '';
     final replied = (c['replied'] as bool?) == true;
     final replyText = c['reply_text'] as String? ?? '';
+    final articleUrl = _commentArticleUrl(c);
 
     return Card(
       color: _card,
@@ -1477,6 +1647,20 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                     height: 1.5,
                   ),
                 ),
+                if (articleUrl.isNotEmpty) ...[
+                  const SizedBox(width: 4),
+                  InkWell(
+                    onTap: () => _openUrl(articleUrl),
+                    child: const Padding(
+                      padding: EdgeInsets.all(2),
+                      child: Icon(
+                        Icons.open_in_new,
+                        size: 13,
+                        color: Colors.white38,
+                      ),
+                    ),
+                  ),
+                ],
                 const Spacer(),
                 Container(
                   padding:
@@ -1549,6 +1733,18 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                 alignment: Alignment.centerRight,
                 child: Builder(
                   builder: (ctx) {
+                    // Qiita 停止中は返信 API (blog.qiita_comment_post) が
+                    // 停止済みアカウントで失敗するため導線ごと無効化する。
+                    if (kQiitaAccountSuspended) {
+                      return const Text(
+                        'Qiita停止中のため返信不可',
+                        style: TextStyle(
+                          color: Colors.white38,
+                          fontSize: 11,
+                          height: 1.5,
+                        ),
+                      );
+                    }
                     final id = c['id']?.toString() ?? '';
                     final isReplying = _replyingIds.contains(id);
                     return SizedBox(

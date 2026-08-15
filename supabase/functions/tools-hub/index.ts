@@ -27,6 +27,7 @@ import {
 import {
   buildSaasApprovalStatus,
   externalSaasGateReason,
+  isPendingSaasApprovalStatus,
   normalizeSaasApprovalDecision,
   normalizeSaasConnectorSettings,
   SAAS_APPROVAL_REQUEST_SOURCE,
@@ -34,7 +35,14 @@ import {
   type SaasApprovalDecision,
 } from "../_shared/saas_human_approval.ts";
 import {
+  type EvalAutomationCalendarEvent,
+  type EvalAutomationTask,
+  executeEvalApprovalAutomation,
+  selectEvalApprovalAutomationPayload,
+} from "./eval_approval_automation.ts";
+import {
   buildMcpFeatureRequestPayload,
+  buildMcpNotePayload,
   buildMcpToolCatalog,
   hasMcpWriteConfirmation,
   mcpActionToToolName,
@@ -42,6 +50,20 @@ import {
   type McpMyWebAppToolName,
   mcpRequestedScopes,
 } from "../_shared/mcp_my_web_app_tools.ts";
+import {
+  connectorsAvailableToUser,
+  MCP_FILE_CONTEXT_SOURCE,
+  type McpFileConnectorConfig,
+  normalizeExternalFileContent,
+  normalizeExternalFileSearchResults,
+  parseMcpFileConnectorConfigs,
+  publicMcpFileConnector,
+} from "../_shared/mcp_external_file.ts";
+import { callExternalMcpTool } from "../_shared/mcp_external_file_client.ts";
+import {
+  createSupabaseJibunApiStore,
+  handleJibunApiAction,
+} from "./jibun_api.ts";
 import {
   dedupeWbsTasksById,
   normalizeWbsListPagination,
@@ -56,11 +78,68 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Max-Age": "86400",
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+
+class ToolsHubRequestError extends Error {
+  constructor(readonly status: number, message: string) {
+    super(message);
+    this.name = "ToolsHubRequestError";
+  }
+}
+
+function configuredMcpFileConnectors(): McpFileConnectorConfig[] {
+  try {
+    return parseMcpFileConnectorConfigs(
+      Deno.env.get("MCP_FILE_CONNECTORS_JSON") ?? "",
+      Deno.env.get("MCP_FILE_CONNECTOR_ALLOWED_HOSTS") ?? "",
+    );
+  } catch (error) {
+    console.error("MCP file connector configuration rejected", error);
+    throw new ToolsHubRequestError(503, "mcp_file_connector_unavailable");
+  }
+}
+
+function mcpFileConnectorForUser(
+  userId: string,
+  connectorId: unknown,
+): McpFileConnectorConfig {
+  const requestedId = String(connectorId ?? "").trim().toLowerCase();
+  if (!requestedId) {
+    throw new ToolsHubRequestError(400, "connector_id is required");
+  }
+  const connector = connectorsAvailableToUser(
+    configuredMcpFileConnectors(),
+    userId,
+  ).find((item) => item.id === requestedId);
+  if (!connector) {
+    throw new ToolsHubRequestError(404, "mcp_file_connector_not_found");
+  }
+  return connector;
+}
+
+async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(value),
+  );
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function externalMcpAuditContext(userId: string): McpAuthContext {
+  return {
+    client_id: `app-user:${userId}`,
+    subject: userId,
+    scopes: ["read"],
+    aud: [toolResourceUrn("external-file-search")],
+  };
+}
 
 function json(
   data: unknown,
@@ -952,15 +1031,29 @@ async function handleMcpFacade(
           "mcp.wbs.list",
           "mcp.feature_request.create",
           "mcp.user_tasks.list",
+          "mcp.notes.list",
+          "mcp.notes.create",
         ],
         generic_action: "mcp.tool.call",
+        batch_action: "mcp.batch.call",
         generic_arguments_shape: {
           action: "mcp.tool.call",
           tool_name: "wbs.tasks.list",
           arguments: { instance: "codex", limit: 10 },
         },
+        batch_arguments_shape: {
+          action: "mcp.batch.call",
+          calls: [
+            { tool_name: "wbs.tasks.list", arguments: { limit: 5 } },
+            { tool_name: "notes.list", arguments: { limit: 10 } },
+          ],
+        },
       },
     });
+  }
+
+  if (action === "mcp.batch.call") {
+    return await handleMcpBatch(req, body, admin);
   }
 
   const toolName = mcpActionToToolName(action, body);
@@ -1142,7 +1235,148 @@ async function handleMcpFacade(
     }, 201);
   }
 
+  // ── notes.list (MCP) ─────────────────────────────────────────────────────
+  if (toolName === "notes.list") {
+    const limit = Math.min(Math.max(Number(args.limit ?? 20), 1), 50);
+    const q = typeof args.q === "string" ? args.q.trim() : "";
+    let query = admin
+      .from("notes")
+      .select("id, title, content, created_at, updated_at")
+      .eq("user_id", auth.ctx.subject)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (q !== "") {
+      // Simple sanitize: strip PostgREST metacharacters before embedding in ilike
+      const safe = q.replace(/[,()"'\\%_*]/g, " ").replace(/\s+/g, " ").trim()
+        .slice(0, 100);
+      if (safe !== "") {
+        query = query.or(`title.ilike.%${safe}%,content.ilike.%${safe}%`);
+      }
+    }
+    const { data: notes, error: notesErr } = await query;
+    if (notesErr) throw new Error(notesErr.message);
+    await logMcpInvocation(auth.ctx, toolName, args, 200, req);
+    return mcpToolResponse(body, {
+      success: true,
+      tool: toolName,
+      structuredContent: { count: (notes ?? []).length, notes: notes ?? [] },
+      content: mcpTextResult(`Found ${(notes ?? []).length} note(s).`),
+    });
+  }
+
+  // ── notes.create (MCP) ───────────────────────────────────────────────────
+  if (toolName === "notes.create") {
+    const payloadResult = buildMcpNotePayload(args);
+    if (!payloadResult.ok) {
+      await logMcpInvocation(
+        auth.ctx,
+        toolName,
+        args,
+        payloadResult.status,
+        req,
+      );
+      return mcpToolResponse(body, {
+        success: false,
+        error: payloadResult.error,
+        tool: toolName,
+      }, payloadResult.status);
+    }
+    if (!hasMcpWriteConfirmation(toolName, args)) {
+      const phrase = mcpConfirmationPhrase(toolName);
+      await logMcpInvocation(auth.ctx, toolName, args, 409, req);
+      return mcpToolResponse(body, {
+        success: false,
+        error: "confirmation_required",
+        tool: toolName,
+        confirmation: { confirm: true, confirmation_phrase: phrase },
+        proposed_note: payloadResult.payload,
+        content: mcpTextResult(
+          `Confirmation required. Retry with confirm=true and confirmation_phrase=${phrase}.`,
+        ),
+      }, 409);
+    }
+    const { data: note, error: noteErr } = await admin
+      .from("notes")
+      .insert({ user_id: auth.ctx.subject, ...payloadResult.payload })
+      .select("id, title, content, created_at, updated_at")
+      .single();
+    if (noteErr) throw new Error(noteErr.message);
+    await logMcpInvocation(auth.ctx, toolName, args, 201, req);
+    return mcpToolResponse(body, {
+      success: true,
+      tool: toolName,
+      structuredContent: { note },
+      content: mcpTextResult(`Created note: ${note.title}`),
+    }, 201);
+  }
+
   return null;
+}
+
+// ── MCP Batch (token最適化 / Notion MCP 91%削減 対抗) ────────────────────────
+// 複数 MCP ツール呼び出しを 1 HTTP リクエストに束ねることで、往復オーバーヘッドと
+// 認証ハンドシェイクを削減する。最大 5 呼び出しを並列処理。
+async function handleMcpBatch(
+  req: Request,
+  body: Record<string, unknown>,
+  admin: SupabaseClient,
+): Promise<Response | null> {
+  const rawCalls = Array.isArray(body.calls) ? body.calls : null;
+  if (!rawCalls) {
+    return json({
+      error: "calls must be an array",
+      example: [{ tool_name: "notes.list", arguments: { limit: 10 } }],
+    }, 400);
+  }
+  const calls = rawCalls.slice(0, 5);
+  if (calls.length === 0) {
+    return json({ error: "calls must be a non-empty array (max 5)" }, 400);
+  }
+  const results = await Promise.all(
+    calls.map(async (call: unknown, idx: number) => {
+      if (call === null || typeof call !== "object" || Array.isArray(call)) {
+        return { index: idx, success: false, error: "invalid call object" };
+      }
+      const c = call as Record<string, unknown>;
+      const toolName = String(c.tool_name ?? "");
+      const callArgs = (
+          c.arguments !== null &&
+          typeof c.arguments === "object" &&
+          !Array.isArray(c.arguments)
+        )
+        ? c.arguments as Record<string, unknown>
+        : {};
+      const subBody: Record<string, unknown> = {
+        tool_name: toolName,
+        arguments: callArgs,
+      };
+      try {
+        const res = await handleMcpFacade(req, "mcp.tool.call", subBody, admin);
+        if (!res) {
+          return {
+            index: idx,
+            tool: toolName,
+            success: false,
+            error: "unknown_tool",
+          };
+        }
+        const data = await res.clone().json().catch(() => null);
+        return { index: idx, tool: toolName, success: res.ok, data };
+      } catch (err) {
+        return {
+          index: idx,
+          tool: toolName,
+          success: false,
+          error: String(err).slice(0, 200),
+        };
+      }
+    }),
+  );
+  return json({
+    success: true,
+    count: results.length,
+    results,
+  });
 }
 
 function parseGithubIssueNumber(value: unknown): number | null {
@@ -1781,6 +2015,72 @@ async function createSaasApprovalRequest(
   return publicSaasApprovalRequest(item as Record<string, unknown>);
 }
 
+async function addEvalAutomationItem(
+  admin: SupabaseClient,
+  userId: string,
+  source: "team_task" | "calendar_event",
+  metadata: Record<string, unknown>,
+): Promise<boolean> {
+  const { error } = await admin.from("hub_data").insert({
+    source,
+    metadata: { ...metadata, user_id: userId },
+  });
+  if (error?.code === "23505") return false;
+  if (error) throw new Error(error.message);
+  return true;
+}
+
+async function executeApprovedEvalAutomation(
+  admin: SupabaseClient,
+  userId: string,
+  requestId: string,
+  payload: Record<string, unknown>,
+  selectedOptionId: string,
+) {
+  if (!requestId) {
+    return {
+      success: false,
+      status: "failed",
+      error: "approval request id is required for internal automation",
+    };
+  }
+  return await executeEvalApprovalAutomation(payload, {
+    createTask: async (task: EvalAutomationTask, itemKey: string) => {
+      return await addEvalAutomationItem(admin, userId, "team_task", {
+        title: task.title,
+        description: task.description,
+        assignee: task.assignee ?? userId,
+        due_date: task.dueDate,
+        status: "pending",
+        priority: task.priority,
+        source: "eval_approval",
+        approval_request_id: requestId,
+        automation_item_key: itemKey,
+      });
+    },
+    createCalendarEvent: async (
+      event: EvalAutomationCalendarEvent,
+      itemKey: string,
+    ) => {
+      return await addEvalAutomationItem(admin, userId, "calendar_event", {
+        title: event.title,
+        description: event.description,
+        start_at: event.startAt,
+        end_at: event.endAt,
+        all_day: event.allDay,
+        color: event.color,
+        reminder_min: event.reminderMinutes,
+        calendar_id: event.calendarId,
+        rrule: null,
+        timezone: null,
+        source: "eval_approval",
+        approval_request_id: requestId,
+        automation_item_key: itemKey,
+      });
+    },
+  }, selectedOptionId);
+}
+
 async function executeApprovedSaasAction(
   admin: SupabaseClient,
   userId: string,
@@ -1788,6 +2088,15 @@ async function executeApprovedSaasAction(
 ) {
   const provider = normalizeText(metadata.provider);
   const payload = asRecord(metadata.payload) ?? {};
+  if (provider === "internal" || provider === "eval_automation") {
+    return await executeApprovedEvalAutomation(
+      admin,
+      userId,
+      normalizeText(metadata.request_id),
+      payload,
+      normalizeText(metadata.selected_option_id),
+    );
+  }
   if (provider !== "slack") {
     return {
       success: false,
@@ -1834,6 +2143,7 @@ async function decideSaasApprovalRequest(
     reviewNote: string;
     revisedPayload: Record<string, unknown> | null;
     execute: boolean;
+    selectedOptionId: string;
   },
 ) {
   const { data, error } = await admin.from("hub_data")
@@ -1846,6 +2156,27 @@ async function decideSaasApprovalRequest(
   if (!data) return null;
 
   const metadata = asRecord(data.metadata) ?? {};
+  if (!isPendingSaasApprovalStatus(metadata.status)) {
+    throw new ToolsHubRequestError(
+      409,
+      `approval request is already ${normalizeText(metadata.status)}`,
+    );
+  }
+  const provider = normalizeText(metadata.provider);
+  const payload = asRecord(input.revisedPayload ?? metadata.payload) ?? {};
+  if (
+    decision === "approved" && input.execute &&
+    (provider === "internal" || provider === "eval_automation")
+  ) {
+    try {
+      selectEvalApprovalAutomationPayload(payload, input.selectedOptionId);
+    } catch (error) {
+      throw new ToolsHubRequestError(
+        400,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
   const now = new Date().toISOString();
   const nextMetadata: Record<string, unknown> = {
     ...metadata,
@@ -1854,7 +2185,9 @@ async function decideSaasApprovalRequest(
     decided_by: userId,
     decided_at: now,
     review_note: input.reviewNote,
+    selected_option_id: input.selectedOptionId || null,
     updated_at: now,
+    request_id: requestId,
   };
   if (decision === "revision_requested") {
     nextMetadata.status = "pending";
@@ -1872,7 +2205,9 @@ async function decideSaasApprovalRequest(
       nextMetadata,
     );
     nextMetadata.execution = execution;
-    nextMetadata.execution_status = execution.success ? "sent" : "failed";
+    nextMetadata.execution_status = execution.success
+      ? normalizeText(execution.status, "sent")
+      : "failed";
     nextMetadata.executed_at = now;
   }
 
@@ -5536,6 +5871,24 @@ serve(async (req) => {
 
     const mcpResponse = await handleMcpFacade(req, action, body, admin);
     if (mcpResponse) return mcpResponse;
+
+    // ── 自分API (Notion Developer Platform 対抗 / 2026-07-12 WEB版) ─────────
+    // jibunapi.* = 管理系 (Supabase JWT) / api.* = 外部公開系 (jibun_sk_ キー)。
+    // GET 呼び出し (AI エージェント / curl) 向けに query params も body へマージする。
+    if (action.startsWith("jibunapi.") || action.startsWith("api.")) {
+      const merged: Record<string, unknown> = {
+        ...Object.fromEntries(url.searchParams),
+        ...body,
+      };
+      const jibunResponse = await handleJibunApiAction({
+        req,
+        action,
+        body: merged,
+        store: createSupabaseJibunApiStore(admin),
+        getUserId: () => getUserId(req),
+      });
+      if (jibunResponse) return jibunResponse;
+    }
 
     // ── Stateless utilities (no auth needed) ────────────────────────────────
     if (action === "generate_password") {
@@ -9215,6 +9568,171 @@ ${reportText ? `> ${reportText}` : ""}`,
     if (!userId) return json({ error: "Unauthorized" }, 401);
 
     switch (action) {
+      case "mcp_file.connectors": {
+        const connectors = connectorsAvailableToUser(
+          configuredMcpFileConnectors(),
+          userId,
+        ).map(publicMcpFileConnector);
+        return json({
+          success: true,
+          connectors: connectors.map((connector) => ({
+            id: connector.id,
+            name: connector.name,
+            search_tool: connector.searchTool,
+            can_attach_context: connector.canAttachContext,
+          })),
+        });
+      }
+      case "mcp_file.search": {
+        const query = String(body.query ?? "").trim();
+        if (!query) {
+          throw new ToolsHubRequestError(400, "query is required");
+        }
+        const connector = mcpFileConnectorForUser(
+          userId,
+          body.connector_id,
+        );
+        const requestedLimit = Number(body.limit ?? 20);
+        const limit = Number.isFinite(requestedLimit)
+          ? Math.min(Math.max(Math.trunc(requestedLimit), 1), 20)
+          : 20;
+        let status = 502;
+        try {
+          const toolResult = await callExternalMcpTool(
+            connector,
+            connector.searchTool,
+            { query: query.slice(0, 500), limit, user_id: userId },
+          );
+          const normalized = normalizeExternalFileSearchResults(
+            toolResult,
+            connector,
+            userId,
+          );
+          status = 200;
+          return json({
+            success: true,
+            connector: publicMcpFileConnector(connector),
+            results: normalized.results.map((item) => ({
+              id: item.id,
+              title: item.title,
+              uri: item.uri,
+              mime_type: item.mimeType,
+              snippet: item.snippet,
+              modified_at: item.modifiedAt,
+              score: item.score,
+              connector_id: item.connectorId,
+              connector_name: item.connectorName,
+              context_eligible: item.contextEligible,
+            })),
+            denied_count: normalized.deniedCount,
+            unsafe_count: normalized.unsafeCount,
+          });
+        } catch (error) {
+          console.warn("MCP file search failed", {
+            connector: connector.id,
+            error: String(error),
+          });
+          throw new ToolsHubRequestError(502, "mcp_file_search_failed");
+        } finally {
+          await logMcpInvocation(
+            externalMcpAuditContext(userId),
+            `external.${connector.searchTool}`,
+            { connector_id: connector.id, query: query.slice(0, 500), limit },
+            status,
+            req,
+          );
+        }
+      }
+      case "mcp_file.attach_context": {
+        const connector = mcpFileConnectorForUser(
+          userId,
+          body.connector_id,
+        );
+        const expectedId = String(body.file_id ?? body.id ?? "").trim().slice(
+          0,
+          512,
+        );
+        const expectedUri = String(body.uri ?? "").trim().slice(0, 2048);
+        if (!expectedId || !expectedUri) {
+          throw new ToolsHubRequestError(400, "file_id and uri are required");
+        }
+        let status = 502;
+        try {
+          const toolResult = await callExternalMcpTool(
+            connector,
+            connector.fetchTool,
+            {
+              id: expectedId,
+              file_id: expectedId,
+              uri: expectedUri,
+              user_id: userId,
+            },
+          );
+          const file = normalizeExternalFileContent(
+            toolResult,
+            connector,
+            userId,
+            expectedId,
+            expectedUri,
+          );
+          const item = await addItem(admin, MCP_FILE_CONTEXT_SOURCE, userId, {
+            connector_id: connector.id,
+            connector_name: connector.name,
+            external_file_id: file.id,
+            title: file.title,
+            uri: file.uri,
+            mime_type: file.mimeType,
+            content: file.content,
+            content_sha256: await sha256Hex(file.content),
+            truncated: file.truncated,
+            security_status: "allowed",
+            attached_at: new Date().toISOString(),
+          });
+          status = 201;
+          return json({
+            success: true,
+            context: {
+              id: item.id,
+              title: file.title,
+              uri: file.uri,
+              connector_id: connector.id,
+              connector_name: connector.name,
+              truncated: file.truncated,
+            },
+          }, 201);
+        } catch (error) {
+          const message = String(error);
+          if (message.includes("external_file_access_denied")) {
+            status = 403;
+            throw new ToolsHubRequestError(403, "external_file_access_denied");
+          }
+          if (message.includes("external_file_not_found")) {
+            status = 404;
+            throw new ToolsHubRequestError(404, "external_file_not_found");
+          }
+          if (message.includes("external_file_content_unsafe")) {
+            status = 422;
+            throw new ToolsHubRequestError(422, "external_file_content_unsafe");
+          }
+          console.warn("MCP file context attach failed", {
+            connector: connector.id,
+            error: message,
+          });
+          throw new ToolsHubRequestError(502, "mcp_file_context_failed");
+        } finally {
+          await logMcpInvocation(
+            externalMcpAuditContext(userId),
+            `external.${connector.fetchTool}`,
+            {
+              connector_id: connector.id,
+              file_id: expectedId,
+              uri: expectedUri,
+            },
+            status,
+            req,
+          );
+        }
+      }
       // ── Bookmarks ───────────────────────────────────────────────────────────
       case "bookmark.list":
         return json({
@@ -10159,6 +10677,7 @@ ${reportText ? `> ${reportText}` : ""}`,
             reviewNote: normalizeText(body.review_note),
             revisedPayload: asRecord(body.revised_payload),
             execute: body.execute === true,
+            selectedOptionId: normalizeText(body.selected_option_id),
           },
         );
         if (!approval) {
@@ -10294,10 +10813,16 @@ ${reportText ? `> ${reportText}` : ""}`,
             "wbs.submit_user_task_report",
             "mcp.tools.list",
             "mcp.tool.call",
+            "mcp.batch.call",
             "mcp.auth.register",
             "mcp.wbs.list",
             "mcp.feature_request.create",
             "mcp.user_tasks.list",
+            "mcp.notes.list",
+            "mcp.notes.create",
+            "mcp_file.connectors",
+            "mcp_file.search",
+            "mcp_file.attach_context",
             "legal.harvey.complete",
             "legal-assistant.harvey.complete",
             "legal-assistant.review",
@@ -10305,6 +10830,9 @@ ${reportText ? `> ${reportText}` : ""}`,
         }, 400);
     }
   } catch (e) {
+    if (e instanceof ToolsHubRequestError) {
+      return json({ error: e.message }, e.status);
+    }
     return json({ error: String(e) }, 500);
   }
 });

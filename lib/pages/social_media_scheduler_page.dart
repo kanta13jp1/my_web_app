@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/scheduled_post_entry.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
+
 /// SNS投稿スケジュール管理ページ
 /// social-media-scheduler Edge Function と連携
 class SocialMediaSchedulerPage extends StatefulWidget {
@@ -12,14 +15,21 @@ class SocialMediaSchedulerPage extends StatefulWidget {
 }
 
 class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['scheduled', 'published', 'drafts'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late TabController _tabController;
   bool _isLoading = false;
   String? _errorMessage;
-  List<dynamic> _scheduled = [];
-  List<dynamic> _published = [];
-  List<dynamic> _drafts = [];
+  List<ScheduledPostEntry> _scheduled = [];
+  List<ScheduledPostEntry> _published = [];
+  List<ScheduledPostEntry> _drafts = [];
 
   @override
   void initState() {
@@ -48,14 +58,12 @@ class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
         'social-commerce-hub',
         body: {'action': 'schedule.list'},
       );
-      final data = res.data;
-      if (data is Map<String, dynamic>) {
-        setState(() {
-          _scheduled = (data['posts'] as List?) ?? [];
-          _published = [];
-          _drafts = [];
-        });
-      }
+      final all = ScheduledPostEntry.listFromResponse(res.data);
+      setState(() {
+        _scheduled = all.where((p) => p.status != 'published').toList();
+        _published = all.where((p) => p.status == 'published').toList();
+        _drafts = all.where((p) => p.status == 'draft').toList();
+      });
     } catch (e) {
       if (mounted) setState(() => _errorMessage = 'データ取得に失敗しました: $e');
     } finally {
@@ -247,7 +255,7 @@ class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
     );
   }
 
-  Widget _buildPostList(List<dynamic> posts, String emptyMessage) {
+  Widget _buildPostList(List<ScheduledPostEntry> posts, String emptyMessage) {
     if (posts.isEmpty) {
       return Center(
         child: Column(
@@ -272,8 +280,9 @@ class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
       itemCount: posts.length,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, i) {
-        final post = posts[i] as Map<String, dynamic>;
-        final platform = post['platform']?.toString();
+        final post = posts[i];
+        final platform = post.primaryPlatform;
+        final time = post.displayTime.isNotEmpty ? post.displayTime : '-';
         return Card(
           color: const Color(0xFF1E1E1E),
           child: ListTile(
@@ -286,13 +295,12 @@ class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
               ),
             ),
             title: Text(
-              post['content']?.toString() ?? '',
+              post.content,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             subtitle: Text(
-              '${platform?.toUpperCase() ?? '-'}  |  '
-              '${post['scheduled_at'] ?? post['published_at'] ?? post['created_at'] ?? '-'}',
+              '${post.platformsLabel}  |  $time',
               style: const TextStyle(
                 fontSize: 11,
                 height: 1.5,

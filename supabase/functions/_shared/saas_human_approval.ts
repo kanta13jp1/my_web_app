@@ -95,3 +95,8 @@ export function buildSaasApprovalStatus(
   if (decision === "rejected") return "rejected";
   return "revision_requested";
 }
+
+export function isPendingSaasApprovalStatus(value: unknown): boolean {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  return normalized === "" || normalized === "pending";
+}

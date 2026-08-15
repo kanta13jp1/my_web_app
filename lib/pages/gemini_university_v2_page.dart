@@ -15,12 +15,17 @@ import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_fsrs_service.dart';
 import '../services/ai_learner_profile_service.dart';
 import '../services/ai_university_rlhf_service.dart';
+import '../services/ai_university_video_lesson_service.dart';
 import '../services/ai_university_x_post_service.dart';
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 import '../services/user_data_finetune_readiness_service.dart';
+import '../widgets/ai_university_published_video_banner.dart';
+import '../widgets/ai_university_youtube_embed.dart';
+import '../widgets/ai_university_youtube_viewer_route.dart';
 import 'ai_university_ranking_page.dart';
 import 'api_playground_page.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // プロバイダーメタデータ
@@ -5699,7 +5704,16 @@ class AiUniversityPage extends StatefulWidget {
 }
 
 class _AiUniversityPageState extends State<AiUniversityPage>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, TabRouteUrlSync {
+  // タブ = AI プロバイダ。ID (openai / anthropic ...) をそのまま URL に使う。
+  // プロバイダ一覧は非同期ロード後に決まるので、TabController を作り直した
+  // 直後に rebindTabUrlSync() を呼んで同期を張り替える。
+  @override
+  List<String> get tabUrlSlugs => _providers;
+
+  @override
+  TabController? get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
 
   List<String> _providers = [];
@@ -6255,15 +6269,32 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   Future<void> _fetchContent() async {
     try {
-      final rows = await _supabase
+      final contentRows = await _supabase
           .from('ai_university_content')
           .select()
           .eq('is_active', true)
           .order('sort_order')
           .timeout(const Duration(seconds: 10));
 
+      // PostgREST limits one response to 1,000 rows. Fetch video lessons
+      // separately so the provider-independent banner never loses published
+      // videos as the general AI University catalog grows.
+      final publishedVideoRows = await _supabase
+          .from('ai_university_content')
+          .select()
+          .eq('is_active', true)
+          .like('category', 'video_%')
+          .order('published_at', ascending: false)
+          .timeout(const Duration(seconds: 10));
+
+      final rows =
+          AiUniversityVideoLessonService.mergeContentRowsByProviderCategory(
+        (contentRows as List).cast<Map<String, dynamic>>(),
+        (publishedVideoRows as List).cast<Map<String, dynamic>>(),
+      );
+
       final Map<String, List<Map<String, dynamic>>> grouped = {};
-      for (final row in (rows as List).cast<Map<String, dynamic>>()) {
+      for (final row in rows) {
         final provider =
             (row['provider'] as String?) ?? (row['provider_id'] as String?);
         if (provider == null) continue;
@@ -6298,6 +6329,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           _error = null;
           _tabController = tc;
         });
+        rebindTabUrlSync();
       }
     } catch (e) {
       if (mounted) {
@@ -6309,6 +6341,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           _providers = providers;
           _tabController = TabController(length: providers.length, vsync: this);
         });
+        rebindTabUrlSync();
       }
     }
   }
@@ -6328,6 +6361,164 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     if (controller == null || index < 0) return;
     controller.animateTo(index);
     _loadFsrsDue(providerId);
+  }
+
+  List<AiUniversityVideoLessonTopic> _publishedVideoTopics() {
+    final topics = <AiUniversityVideoLessonTopic>[];
+    for (final rows in _content.values) {
+      topics.addAll(
+        AiUniversityVideoLessonService.topicsFromRows(rows).where(
+          (topic) => topic.youtubeVideoId != null,
+        ),
+      );
+    }
+    topics.sort((a, b) => a.title.compareTo(b.title));
+    return topics;
+  }
+
+  Future<void> _showPublishedVideoLesson(
+    AiUniversityVideoLessonTopic topic,
+  ) async {
+    final videoId = topic.youtubeVideoId;
+    if (videoId == null) return;
+    final provider = _meta(topic.provider);
+
+    await showAiUniversityYoutubeViewer<void>(
+      context: context,
+      viewerBuilder: (dialogContext) {
+        final windowHeight = MediaQuery.sizeOf(dialogContext).height;
+        return Dialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: const Color(0xFFFF6B35).withValues(alpha: 0.28),
+            ),
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 840,
+              maxHeight: windowHeight - 48,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color:
+                              const Color(0xFFFF6B35).withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.smart_display_rounded,
+                          color: Color(0xFFFF6B35),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              topic.title,
+                              style: const TextStyle(
+                                color: Color(0xFFF5F5F5),
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '${provider.emoji} ${provider.name}・公開動画',
+                              style: const TextStyle(
+                                color: Color(0xFFB0B0B0),
+                                fontSize: 12,
+                                height: 1.6,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        tooltip: '閉じる',
+                        icon: const Icon(Icons.close),
+                        color: const Color(0xFFE5E7EB),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  AiUniversityYoutubeEmbed(
+                    videoId: videoId,
+                    title: topic.title,
+                    onOpen: () => _launchUrl(topic.sourceUrl ?? ''),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    AiUniversityVideoLessonService.previewText(topic.content),
+                    style: const TextStyle(
+                      color: Color(0xFFCCCCCC),
+                      fontSize: 13,
+                      height: 1.7,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                        _selectProvider(topic.provider);
+                      },
+                      icon: const Icon(Icons.school_outlined, size: 18),
+                      label: Text('${provider.name}の教材一覧へ'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFFFA07A),
+                        minimumSize: const Size(0, 44),
+                        side: BorderSide(
+                          color:
+                              const Color(0xFFFF6B35).withValues(alpha: 0.46),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPublishedVideoBanner() {
+    final topics = _publishedVideoTopics();
+    if (topics.isEmpty) return const SizedBox.shrink();
+
+    return AiUniversityPublishedVideoBanner(
+      videos: [
+        for (final topic in topics)
+          AiUniversityPublishedVideoBannerItem(
+            title: topic.title,
+            providerLabel: _meta(topic.provider).name,
+            onPlay: () => _showPublishedVideoLesson(topic),
+          ),
+      ],
+    );
   }
 
   // 351 タブの到達性改善: 検索 + カテゴリ別一覧から選択したタブへジャンプする。
@@ -6603,6 +6794,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
+                settings: const RouteSettings(name: '/ai-university-ranking'),
                 builder: (_) => const AiUniversityRankingPage(),
               ),
             ),
@@ -6612,7 +6804,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             tooltip: 'API実験室',
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const ApiPlaygroundPage()),
+              MaterialPageRoute(
+                settings: const RouteSettings(name: '/api-playground'),
+                builder: (_) => const ApiPlaygroundPage(),
+              ),
             ),
           ),
           IconButton(
@@ -6623,7 +6818,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           ),
           IconButton(
             icon: const Icon(Icons.videocam_outlined),
-            tooltip: '動画レッスン',
+            tooltip: 'AI動画レッスンを生成',
             onPressed: () {
               final controller = _tabController;
               final provider = controller != null &&
@@ -6700,6 +6895,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 ],
               ),
             ),
+          _buildPublishedVideoBanner(),
           _buildGenreShelf(),
           Expanded(
             child: TabBarView(
@@ -7572,6 +7768,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final title = row['title'] as String? ?? '';
     final content = row['content'] as String? ?? '';
     final sourceUrl = row['source_url'] as String?;
+    final youtubeVideoId =
+        AiUniversityVideoLessonService.youtubeVideoIdFromUrl(sourceUrl);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -7611,7 +7809,17 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                     },
                   ),
                 ),
-                if (sourceUrl != null && sourceUrl.isNotEmpty) ...[
+                if (youtubeVideoId != null) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityYoutubeEmbed(
+                    videoId: youtubeVideoId,
+                    title: title,
+                    onOpen: () => _launchUrl(sourceUrl ?? ''),
+                  ),
+                ],
+                if (sourceUrl != null &&
+                    sourceUrl.isNotEmpty &&
+                    youtubeVideoId == null) ...[
                   const SizedBox(height: 8),
                   TextButton.icon(
                     icon: const Icon(Icons.open_in_new, size: 14),
@@ -7905,6 +8113,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       'pricing': '料金',
       'news': '最新ニュース',
       'tutorial': 'チュートリアル',
+      'video_codex_record_replay': '動画レッスン',
     };
     return labels[category] ?? category;
   }

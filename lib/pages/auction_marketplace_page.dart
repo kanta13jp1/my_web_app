@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/auction_listing.dart';
+
 /// オークション・マーケットプレイスページ
 /// auction-marketplace Edge Function と連携してオークション出品・入札を管理
 class AuctionMarketplacePage extends StatefulWidget {
@@ -14,7 +16,7 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _errorMessage;
-  List<Map<String, dynamic>> _items = [];
+  List<AuctionListing> _items = [];
 
   @override
   void initState() {
@@ -36,19 +38,9 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
         'social-commerce-hub',
         body: {'action': 'auction.list'},
       );
-      final data = response.data;
-      final auctionList = data is Map<String, dynamic>
-          ? (data['items'] ?? data['auctions'])
-          : null;
-      if (auctionList is List) {
-        setState(
-          () => _items = auctionList.cast<Map<String, dynamic>>(),
-        );
-      } else if (data is List) {
-        setState(() => _items = data.cast<Map<String, dynamic>>());
-      } else {
-        setState(() => _items = []);
-      }
+      setState(
+        () => _items = AuctionListing.listFromResponse(response.data),
+      );
     } catch (e) {
       if (mounted) {
         setState(() => _errorMessage = 'オークション一覧の取得に失敗しました: $e');
@@ -110,12 +102,12 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
                       itemCount: _items.length,
                       itemBuilder: (context, index) {
                         final item = _items[index];
-                        final title =
-                            item['title']?.toString() ?? 'アイテム ${index + 1}';
-                        final currentPrice = item['current_price'];
-                        final description =
-                            item['description']?.toString() ?? '';
-                        final endAt = item['end_at'];
+                        final title = item.title.isNotEmpty
+                            ? item.title
+                            : 'アイテム ${index + 1}';
+                        final currentPrice = item.displayPrice;
+                        final endAt =
+                            item.endsAt.isNotEmpty ? item.endsAt : null;
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           child: ListTile(
@@ -133,7 +125,7 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
                             subtitle: Text(
                               currentPrice != null
                                   ? '現在価格: ¥$currentPrice'
-                                  : description,
+                                  : '価格情報なし',
                             ),
                             trailing: endAt != null
                                 ? Text(

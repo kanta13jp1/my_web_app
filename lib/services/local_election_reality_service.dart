@@ -5,10 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/local_election_reality.dart';
+import '../models/election_intelligence.dart';
 
 class LocalElectionRealityService {
-  static const String _snapshotStorageKey =
-      'local_election_reality_snapshot_v5';
+  static const String _snapshotStoragePrefix =
+      'election_intelligence_snapshot_v6_';
   static const String _historyStorageKey =
       'local_election_reality_snapshot_history_v1';
   static const String _memberProfileStoragePrefix =
@@ -17,6 +18,7 @@ class LocalElectionRealityService {
   static const Duration _edgeFunctionTimeout = Duration(seconds: 90);
   static LocalElectionRealitySnapshot? _memorySnapshot;
   static Future<LocalElectionRealitySnapshot>? _latestSnapshotInFlight;
+  static ElectionModeId? _latestSnapshotInFlightMode;
 
   final SupabaseClient? _client;
 
@@ -37,9 +39,10 @@ class LocalElectionRealityService {
 
   Future<LocalElectionRealitySnapshot?> loadCachedSnapshot({
     SharedPreferences? prefs,
+    ElectionModeId mode = ElectionModeId.local,
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
-    final raw = store.getString(_snapshotStorageKey);
+    final raw = store.getString(_snapshotStorageKey(mode));
     if (raw == null || raw.trim().isEmpty) {
       return null;
     }
@@ -52,6 +55,9 @@ class LocalElectionRealityService {
       final snapshot = LocalElectionRealitySnapshot.fromJson(
         Map<String, dynamic>.from(decoded),
       );
+      if (snapshot.electionIntelligence.selectedMode != mode) {
+        return null;
+      }
       if (snapshot.hasSuspiciousEmptyOfficialPrefecture) {
         debugPrint(
           'Ignoring suspicious local election snapshot: '
@@ -78,8 +84,13 @@ class LocalElectionRealityService {
       return;
     }
     final store = prefs ?? await SharedPreferences.getInstance();
-    await store.setString(_snapshotStorageKey, jsonEncode(snapshot.toJson()));
-    await _cacheHistoryPoint(snapshot, prefs: store);
+    await store.setString(
+      _snapshotStorageKey(snapshot.electionIntelligence.selectedMode),
+      jsonEncode(snapshot.toJson()),
+    );
+    if (snapshot.electionIntelligence.selectedMode == ElectionModeId.local) {
+      await _cacheHistoryPoint(snapshot, prefs: store);
+    }
   }
 
   Future<List<LocalElectionRealityHistoryPoint>> loadSnapshotHistory({
@@ -160,9 +171,9 @@ class LocalElectionRealityService {
 
   Future<LocalElectionRealitySnapshot> fetchLatestSnapshot({
     bool includeAiSummary = true,
-    bool includeCdpBenchmarks = true,
     SharedPreferences? prefs,
     bool forceRefresh = false,
+    ElectionModeId mode = ElectionModeId.local,
   }) async {
     final client = _resolvedClient;
     if (client == null) {
@@ -171,9 +182,13 @@ class LocalElectionRealityService {
 
     final store = prefs ?? await SharedPreferences.getInstance();
     final LocalElectionRealitySnapshot? cachedSnapshot =
-        await loadCachedSnapshot(prefs: store);
+        await loadCachedSnapshot(prefs: store, mode: mode);
+    final memorySnapshot =
+        _memorySnapshot?.electionIntelligence.selectedMode == mode
+            ? _memorySnapshot
+            : null;
     final LocalElectionRealitySnapshot? fallbackSnapshot =
-        _pickNewerSnapshot(_memorySnapshot, cachedSnapshot);
+        _pickNewerSnapshot(memorySnapshot, cachedSnapshot);
 
     if (!forceRefresh &&
         fallbackSnapshot != null &&
@@ -184,7 +199,7 @@ class LocalElectionRealityService {
 
     final Future<LocalElectionRealitySnapshot>? inFlight =
         _latestSnapshotInFlight;
-    if (inFlight != null) {
+    if (inFlight != null && _latestSnapshotInFlightMode == mode) {
       return inFlight;
     }
 
@@ -192,9 +207,10 @@ class LocalElectionRealityService {
         _fetchLatestSnapshotFromEdgeFunction(
       client: client,
       includeAiSummary: includeAiSummary,
-      includeCdpBenchmarks: includeCdpBenchmarks,
+      mode: mode,
     ).then(_rejectSuspiciousSnapshot);
     _latestSnapshotInFlight = request;
+    _latestSnapshotInFlightMode = mode;
 
     try {
       final snapshot = await request;
@@ -213,6 +229,7 @@ class LocalElectionRealityService {
     } finally {
       if (identical(_latestSnapshotInFlight, request)) {
         _latestSnapshotInFlight = null;
+        _latestSnapshotInFlightMode = null;
       }
     }
   }
@@ -268,16 +285,20 @@ class LocalElectionRealityService {
     return '$_memberProfileStoragePrefix${Uri.encodeComponent(detailUrl)}';
   }
 
+  String _snapshotStorageKey(ElectionModeId mode) {
+    return '$_snapshotStoragePrefix${mode.wireName}';
+  }
+
   Future<LocalElectionRealitySnapshot> _fetchLatestSnapshotFromEdgeFunction({
     required SupabaseClient client,
     required bool includeAiSummary,
-    required bool includeCdpBenchmarks,
+    required ElectionModeId mode,
   }) async {
     final response = await client.functions.invoke(
       'local-election-intelligence',
       body: <String, dynamic>{
+        'mode': mode.wireName,
         'includeAiSummary': includeAiSummary,
-        'includeCdpBenchmarks': includeCdpBenchmarks,
       },
     ).timeout(_edgeFunctionTimeout);
     final data = _toMap(response.data);
