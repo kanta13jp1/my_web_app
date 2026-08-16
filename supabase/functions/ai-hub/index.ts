@@ -52,6 +52,11 @@ import {
   normalizeMonthlyAssetReportProvider,
 } from "./monthly_asset_report.ts";
 import {
+  DepartmentFinanceSummaryActionError,
+  type DepartmentFinanceSummaryDb,
+  handleDepartmentFinanceSummaryAction,
+} from "./department_finance_summary_actions.ts";
+import {
   handleParsePayslipAction,
   isPayslipIngestionAction,
   type PayslipDb,
@@ -4232,6 +4237,8 @@ serve(async (req: Request) => {
       "ai_hub.fetch_market_price",
       "asset.monthly_report.generate",
       "asset_liability.monthly_report.generate",
+      "department_finance_summary",
+      "ai_hub.department_finance_summary",
       "payslip.parse",
       "parse-payslip",
       "expense.classify",
@@ -6245,6 +6252,16 @@ serve(async (req: Request) => {
         return json({ success: true, ...result });
       }
 
+      case "department_finance_summary":
+      case "ai_hub.department_finance_summary": {
+        const result = await handleDepartmentFinanceSummaryAction({
+          db: admin as unknown as DepartmentFinanceSummaryDb,
+          body,
+          userId: userId ?? "",
+        });
+        return json({ success: true, ...result });
+      }
+
       case "asset.monthly_report.generate":
       case "asset_liability.monthly_report.generate": {
         const aiSummaryEnabled = isMonthlyAssetReportAiSummaryEnabled(body);
@@ -7594,6 +7611,9 @@ serve(async (req: Request) => {
       return json({ error: err.message }, err.status);
     }
     if (err instanceof MonthlyAssetReportActionError) {
+      return json({ error: err.message }, err.status);
+    }
+    if (err instanceof DepartmentFinanceSummaryActionError) {
       return json({ error: err.message }, err.status);
     }
     if (err instanceof PayslipIngestionError) {
