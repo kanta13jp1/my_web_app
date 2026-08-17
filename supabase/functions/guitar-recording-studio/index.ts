@@ -1480,10 +1480,10 @@ async function postPublicRecordingToX(
       // hub は投稿失敗を HTTP 200 + success:false で返すことがある。
       // status だけ見ると失敗を握り潰すのでボディも確認する。
       const result = await resp.json().catch(() => null);
-      if (result && result.success !== true) {
+      if (!result || result.success !== true || result.posted !== true) {
         console.warn(
           `[guitar-recording-studio] X post rejected: ${
-            result.error ?? "unknown error"
+            result?.error ?? result?.warning ?? "not posted"
           }`,
         );
       }
