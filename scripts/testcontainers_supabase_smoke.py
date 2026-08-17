@@ -3,10 +3,10 @@
 
 The smoke intentionally avoids production Supabase credentials. It starts a
 disposable Postgres container, applies a small migration/seed fixture, verifies
-the Issue #2773 fail-closed RLS migration, checks the real Edge Function import
-policy, and runs a Deno HTTP fixture against the container. Logs are written as
-artifacts so CI failures point to the migration, function, or seed boundary that
-broke.
+the Issue #2773 fail-closed RLS migration and Issue #2484 asset-chat isolation,
+checks the real Edge Function import policy, and runs a Deno HTTP fixture against
+the container. Logs are written as artifacts so CI failures point to the
+migration, function, or seed boundary that broke.
 """
 
 from __future__ import annotations
@@ -47,6 +47,13 @@ ISSUE_2773_USER_1 = "00000000-0000-4000-8000-000000002773"
 ISSUE_2773_USER_2 = "00000000-0000-4000-8000-000000002774"
 ISSUE_2773_EXPERIMENT_1 = "00000000-0000-4000-8000-000000002775"
 ISSUE_2773_EXPERIMENT_2 = "00000000-0000-4000-8000-000000002776"
+ASSET_CHAT_MIGRATION = (
+    ROOT / "supabase" / "migrations" / "20260817151738_create_asset_chat_tables.sql"
+)
+ASSET_CHAT_TABLES = ("asset_chat_messages", "asset_chat_threads")
+ASSET_CHAT_THREAD_1 = "00000000-0000-4000-8000-000000002484"
+ASSET_CHAT_THREAD_2 = "00000000-0000-4000-8000-000000002485"
+ASSET_CHAT_TEMP_THREAD = "00000000-0000-4000-8000-000000002486"
 EDGE_FIXTURE_ENV_ALLOW = (
     "DATABASE_URL",
     "PORT",
@@ -153,6 +160,14 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "authenticated privileges are policy-backed and least-privilege",
             "missing tenant claims see zero rows and cannot write",
             "authenticated users see only their own tenant rows",
+        ],
+        "asset_chat_migration": ASSET_CHAT_MIGRATION.relative_to(ROOT).as_posix(),
+        "asset_chat_checks": [
+            "threads and messages have owner-only RLS",
+            "anon has no table privileges",
+            "authenticated users cannot insert across tenants",
+            "message ownership follows the parent thread",
+            "deleting an owned thread cascades to its messages",
         ],
         "edge_db_fixture": edge_fixture.relative_to(ROOT).as_posix(),
         "actual_edge_checks": [
@@ -451,6 +466,221 @@ def check_issue_2773_rls(conn: Any) -> dict[str, Any]:
     }
 
 
+def seed_asset_chat_fixture(conn: Any) -> None:
+    with conn.cursor() as cur:
+        cur.executemany(
+            "insert into public.asset_chat_threads (id, user_id, title) "
+            "values (%s::uuid, %s::uuid, %s)",
+            [
+                (ASSET_CHAT_THREAD_1, ISSUE_2773_USER_1, "owner one thread"),
+                (ASSET_CHAT_THREAD_2, ISSUE_2773_USER_2, "owner two thread"),
+            ],
+        )
+        cur.executemany(
+            "insert into public.asset_chat_messages "
+            "(thread_id, role, content, tokens_in, tokens_out, model) "
+            "values (%s::uuid, %s, %s, %s, %s, %s)",
+            [
+                (ASSET_CHAT_THREAD_1, "user", "owner one message", 12, 0, None),
+                (
+                    ASSET_CHAT_THREAD_2,
+                    "assistant",
+                    "owner two response",
+                    20,
+                    8,
+                    "fixture-model",
+                ),
+            ],
+        )
+    conn.commit()
+
+
+def asset_chat_role_count(
+    conn: Any,
+    role: str,
+    user_id: str | None,
+    table: str,
+) -> int:
+    if role not in {"anon", "authenticated", "service_role"}:
+        raise ValueError(f"unexpected role for asset chat query: {role}")
+    if table not in ASSET_CHAT_TABLES:
+        raise ValueError(f"unexpected table for asset chat query: {table}")
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute(f"set local role {role}")
+            cur.execute(
+                "select set_config('request.jwt.claim.sub', %s, true)",
+                (user_id or "",),
+            )
+            cur.execute(f"select count(*) from public.{table}")
+            row = cur.fetchone()
+    return int(row[0])
+
+
+def check_asset_chat_rls(conn: Any) -> dict[str, Any]:
+    with conn.cursor() as cur:
+        cur.execute(
+            "select c.relname from pg_class c "
+            "join pg_namespace n on n.oid = c.relnamespace "
+            "where n.nspname = 'public' and c.relname = any(%s) "
+            "and c.relrowsecurity order by c.relname",
+            (list(ASSET_CHAT_TABLES),),
+        )
+        enabled_tables = [row[0] for row in cur.fetchall()]
+        cur.execute(
+            "select policyname from pg_policies where schemaname = 'public' "
+            "and tablename = any(%s) order by policyname",
+            (list(ASSET_CHAT_TABLES),),
+        )
+        policy_names = [row[0] for row in cur.fetchall()]
+    conn.commit()
+
+    if enabled_tables != sorted(ASSET_CHAT_TABLES):
+        raise AssertionError(
+            f"asset chat RLS was not enabled on every table: {enabled_tables}"
+        )
+
+    expected_policies = {
+        f"{table}_{operation}_own"
+        for table in ASSET_CHAT_TABLES
+        for operation in ("select", "insert", "update", "delete")
+    }
+    if set(policy_names) != expected_policies:
+        raise AssertionError(f"unexpected asset chat policy set: {policy_names}")
+
+    authenticated_grants = {"SELECT", "INSERT", "UPDATE", "DELETE"}
+    table_privileges = (
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "TRUNCATE",
+        "REFERENCES",
+        "TRIGGER",
+    )
+    with conn.cursor() as cur:
+        for table in ASSET_CHAT_TABLES:
+            for privilege in table_privileges:
+                cur.execute(
+                    "select has_table_privilege(%s, %s, %s)",
+                    ("anon", f"public.{table}", privilege),
+                )
+                if bool(cur.fetchone()[0]):
+                    raise AssertionError(
+                        f"anon retained {privilege} on asset chat table {table}"
+                    )
+                cur.execute(
+                    "select has_table_privilege(%s, %s, %s)",
+                    ("authenticated", f"public.{table}", privilege),
+                )
+                actual = bool(cur.fetchone()[0])
+                expected = privilege in authenticated_grants
+                if actual != expected:
+                    raise AssertionError(
+                        f"authenticated {privilege} on {table}: "
+                        f"expected {expected}, got {actual}"
+                    )
+    conn.commit()
+
+    missing_claim_counts = {
+        table: asset_chat_role_count(conn, "authenticated", None, table)
+        for table in ASSET_CHAT_TABLES
+    }
+    if any(missing_claim_counts.values()):
+        raise AssertionError(
+            f"missing tenant claim exposed asset chat rows: {missing_claim_counts}"
+        )
+
+    owner_counts = {
+        table: asset_chat_role_count(
+            conn,
+            "authenticated",
+            ISSUE_2773_USER_1,
+            table,
+        )
+        for table in ASSET_CHAT_TABLES
+    }
+    expected_owner_counts = {
+        "asset_chat_messages": 1,
+        "asset_chat_threads": 1,
+    }
+    if owner_counts != expected_owner_counts:
+        raise AssertionError(f"asset chat tenant filtering failed: {owner_counts}")
+
+    cross_thread_sqlstate = issue_2773_expect_denied(
+        conn,
+        role="authenticated",
+        user_id=ISSUE_2773_USER_1,
+        statement=(
+            "insert into public.asset_chat_messages (thread_id, role, content) "
+            "values (%s::uuid, 'user', 'cross-tenant write')"
+        ),
+        params=(ASSET_CHAT_THREAD_2,),
+    )
+    forged_owner_sqlstate = issue_2773_expect_denied(
+        conn,
+        role="authenticated",
+        user_id=ISSUE_2773_USER_1,
+        statement=(
+            "insert into public.asset_chat_threads (user_id, title) "
+            "values (%s::uuid, 'forged owner')"
+        ),
+        params=(ISSUE_2773_USER_2,),
+    )
+
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute("set local role authenticated")
+            cur.execute(
+                "select set_config('request.jwt.claim.sub', %s, true)",
+                (ISSUE_2773_USER_1,),
+            )
+            cur.execute(
+                "insert into public.asset_chat_threads (id, user_id, title) "
+                "values (%s::uuid, %s::uuid, 'cascade smoke')",
+                (ASSET_CHAT_TEMP_THREAD, ISSUE_2773_USER_1),
+            )
+            cur.execute(
+                "insert into public.asset_chat_messages (thread_id, role, content) "
+                "values (%s::uuid, 'user', 'delete with thread')",
+                (ASSET_CHAT_TEMP_THREAD,),
+            )
+            cur.execute(
+                "delete from public.asset_chat_threads where id = %s::uuid",
+                (ASSET_CHAT_TEMP_THREAD,),
+            )
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "select count(*) from public.asset_chat_messages "
+            "where thread_id = %s::uuid",
+            (ASSET_CHAT_TEMP_THREAD,),
+        )
+        cascade_remaining = int(cur.fetchone()[0])
+    conn.commit()
+    if cascade_remaining != 0:
+        raise AssertionError("asset chat thread deletion left orphan messages")
+
+    for table in ASSET_CHAT_TABLES:
+        issue_2773_expect_denied(
+            conn,
+            role="anon",
+            user_id=None,
+            statement=f"select count(*) from public.{table}",
+        )
+
+    return {
+        "enabled_tables": enabled_tables,
+        "policies": policy_names,
+        "missing_claim_counts": missing_claim_counts,
+        "owner_counts": owner_counts,
+        "cross_thread_sqlstate": cross_thread_sqlstate,
+        "forged_owner_sqlstate": forged_owner_sqlstate,
+        "cascade_remaining": cascade_remaining,
+        "anon_access": "denied on both asset chat tables",
+    }
+
+
 def check_actual_edge_function(args: argparse.Namespace, artifacts_dir: Path) -> None:
     import_result = run_command(
         [sys.executable, "scripts/check_edge_function_imports.py", "--root", "supabase/functions"],
@@ -591,6 +821,9 @@ def run_smoke(args: argparse.Namespace) -> int:
             apply_sql_fixture(conn, ISSUE_2773_RLS_MIGRATION, artifacts_dir)
             seed_issue_2773_fixture(conn)
             tenant_rls = check_issue_2773_rls(conn)
+            apply_sql_fixture(conn, ASSET_CHAT_MIGRATION, artifacts_dir)
+            seed_asset_chat_fixture(conn)
+            asset_chat_rls = check_asset_chat_rls(conn)
             counts = {table: table_count(conn, table) for table in REQUIRED_TABLES}
 
         edge_result = run_edge_db_fixture(connection_url, args, artifacts_dir)
@@ -601,6 +834,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "url": redact_url(connection_url),
             "tables": counts,
             "tenant_rls": tenant_rls,
+            "asset_chat_rls": asset_chat_rls,
         },
         "edge_fixture": {
             "path": args.edge_fixture.relative_to(ROOT).as_posix(),
