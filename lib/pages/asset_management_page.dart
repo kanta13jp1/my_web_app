@@ -100,6 +100,7 @@ import 'package:my_web_app/services/waste_tracking_service.dart';
 import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
+import 'package:my_web_app/widgets/asset_chat_widget.dart';
 import 'package:my_web_app/widgets/debt_progress_share_dialog.dart';
 import 'package:my_web_app/widgets/asset_alert_center_card.dart';
 import 'package:my_web_app/widgets/asset_cashflow_statement_card.dart';
@@ -9482,6 +9483,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
       backgroundColor: const Color(0xFF64748B),
+      floatingActionButton: AssetChatWidget(service: _aiHubChatService),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SingleChildScrollView(
         controller: _scrollController,
         padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
