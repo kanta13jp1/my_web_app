@@ -80,7 +80,7 @@ async function openLanding(page: Page) {
 }
 
 async function focusStory(page: Page) {
-  const story = page.getByRole('progressbar', {
+  const story = page.getByRole('group', {
     name: /自分株式会社で、迷いが今日の1件に変わるまで/,
   });
   await expect(story).toBeVisible({ timeout: 60_000 });
