@@ -10,6 +10,7 @@ import 'package:my_web_app/services/landing_page_adapter.dart';
 import 'package:my_web_app/services/landing_signup_completion_service.dart';
 import 'package:my_web_app/services/pending_landing_trial_service.dart';
 import 'package:my_web_app/services/route_visibility_observer.dart';
+import 'package:my_web_app/utils/route_document_title.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -315,7 +316,7 @@ void main() {
     );
     expect(
       documentTitle.title,
-      '自分株式会社とは？ | 人生を経営するAIライフマネジメントアプリ',
+      landingDocumentTitle,
     );
   });
 

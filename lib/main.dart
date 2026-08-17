@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:my_web_app/data/home_tool_catalog.dart';
 import 'package:my_web_app/utils/feature_route_labels.dart';
 import 'package:my_web_app/utils/route_url_sync.dart';
+import 'package:my_web_app/utils/route_document_title.dart';
 import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/abstinence_guard_page.dart';
 import 'package:my_web_app/pages/self_touch_tracker_page.dart';
@@ -1856,60 +1857,63 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final themeService = Provider.of<ThemeService>(context);
 
-    return MaterialApp(
-      title: '自分株式会社', //  旧: マイメモ -> 新: 自分株式会社
-      debugShowCheckedModeBanner: false,
-      scaffoldMessengerKey: _scaffoldMessengerKey,
-      navigatorKey: _navigatorKey,
-      initialRoute: _initialRouteName(),
-      theme: themeService.overrideTheme ?? themeService.getLightTheme(),
-      darkTheme: themeService.overrideTheme ?? themeService.getDarkTheme(),
-      themeMode: themeService.overrideTheme != null
-          ? ThemeMode.light
-          : themeService.getFlutterThemeMode(),
-      builder: (context, child) {
-        return GlobalHeaderClockShell(
-          navigatorKey: _navigatorKey,
-          child: UniversalAiShareShell(
+    return ValueListenableBuilder(
+      valueListenable: universalAiShareRouteObserver.currentPage,
+      builder: (context, currentPage, _) => MaterialApp(
+        title: documentTitleForRoute(currentPage.routePath),
+        debugShowCheckedModeBanner: false,
+        scaffoldMessengerKey: _scaffoldMessengerKey,
+        navigatorKey: _navigatorKey,
+        initialRoute: _initialRouteName(),
+        theme: themeService.overrideTheme ?? themeService.getLightTheme(),
+        darkTheme: themeService.overrideTheme ?? themeService.getDarkTheme(),
+        themeMode: themeService.overrideTheme != null
+            ? ThemeMode.light
+            : themeService.getFlutterThemeMode(),
+        builder: (context, child) {
+          return GlobalHeaderClockShell(
             navigatorKey: _navigatorKey,
-            child: MaintenanceShell(
-              routeListenable: universalAiShareRouteObserver.currentPage,
-              child: Column(
-                children: [
-                  if (_showUpdateBanner)
-                    UpdateBanner(
-                      onDismiss: () =>
-                          setState(() => _showUpdateBanner = false),
-                    ),
-                  Expanded(child: child ?? const SizedBox.shrink()),
-                ],
+            child: UniversalAiShareShell(
+              navigatorKey: _navigatorKey,
+              child: MaintenanceShell(
+                routeListenable: universalAiShareRouteObserver.currentPage,
+                child: Column(
+                  children: [
+                    if (_showUpdateBanner)
+                      UpdateBanner(
+                        onDismiss: () =>
+                            setState(() => _showUpdateBanner = false),
+                      ),
+                    Expanded(child: child ?? const SizedBox.shrink()),
+                  ],
+                ),
               ),
             ),
+          );
+        },
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('ja'), Locale('en')],
+        locale: const Locale('ja'),
+        navigatorObservers: <NavigatorObserver>[
+          _growthPresenceObserver,
+          universalAiShareRouteObserver,
+          // deep link 直開き時に下へ積まれた HomePage / LandingPage の fetch・
+          // LP View 計測を可視化まで遅延させる (可視化ゲート)。
+          deepLinkVisibilityRouteObserver,
+          if (MyApp._sentryNavigatorObserver != null)
+            MyApp._sentryNavigatorObserver!,
+        ],
+        onGenerateRoute: (settings) => ensureRouteAnnouncesUrl(
+          generateAppRoute(
+            settings,
+            signupCompletionService: widget.signupCompletionService,
           ),
-        );
-      },
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('ja'), Locale('en')],
-      locale: const Locale('ja'),
-      navigatorObservers: <NavigatorObserver>[
-        _growthPresenceObserver,
-        universalAiShareRouteObserver,
-        // deep link 直開き時に下へ積まれた HomePage / LandingPage の fetch・
-        // LP View 計測を可視化まで遅延させる (可視化ゲート)。
-        deepLinkVisibilityRouteObserver,
-        if (MyApp._sentryNavigatorObserver != null)
-          MyApp._sentryNavigatorObserver!,
-      ],
-      onGenerateRoute: (settings) => ensureRouteAnnouncesUrl(
-        generateAppRoute(
           settings,
-          signupCompletionService: widget.signupCompletionService,
         ),
-        settings,
       ),
     );
   }

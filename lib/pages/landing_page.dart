@@ -14,6 +14,7 @@ import '../services/landing_page_adapter.dart';
 import '../services/landing_signup_completion_service.dart';
 import '../services/pending_landing_trial_service.dart';
 import '../services/route_visibility_observer.dart';
+import '../utils/route_document_title.dart';
 import '../widgets/live_growth_banner.dart';
 import '../widgets/landing_story_journey.dart';
 
@@ -5194,7 +5195,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   if (ModalRoute.of(context)?.isCurrent ?? true)
                     Title(
                       key: const Key('landing_document_title'),
-                      title: '自分株式会社とは？ | 人生を経営するAIライフマネジメントアプリ',
+                      title: landingDocumentTitle,
                       color: const Color(0xFF1F7AE0),
                       child: const SizedBox.shrink(),
                     ),

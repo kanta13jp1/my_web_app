@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/philosophy_page.dart';
+import 'package:my_web_app/utils/route_document_title.dart';
 
 void main() {
   testWidgets('philosophy page explains the self-management operating model',
