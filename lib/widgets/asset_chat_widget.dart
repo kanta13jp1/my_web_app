@@ -28,8 +28,7 @@ class _AssetChatWidgetState extends State<AssetChatWidget> {
   void initState() {
     super.initState();
     _ownsViewModel = widget.viewModel == null;
-    _viewModel =
-        widget.viewModel ??
+    _viewModel = widget.viewModel ??
         AssetChatViewModel(service: widget.service ?? const AiHubChatService());
     _viewModel.addListener(_handleViewModelChanged);
   }
@@ -292,13 +291,13 @@ class _AssetChatWidgetState extends State<AssetChatWidget> {
                 minLines: 1,
                 maxLines: 4,
                 maxLength: 4000,
-                buildCounter:
-                    (
-                      _, {
-                      required currentLength,
-                      required isFocused,
-                      maxLength,
-                    }) => null,
+                buildCounter: (
+                  _, {
+                  required currentLength,
+                  required isFocused,
+                  maxLength,
+                }) =>
+                    null,
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => _sendCurrentMessage(),
                 decoration: const InputDecoration(

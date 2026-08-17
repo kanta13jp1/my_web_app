@@ -14,17 +14,17 @@ Widget _testApp(AiHubChatService service) {
 }
 
 Map<String, dynamic> _successResponse() => <String, dynamic>{
-  'success': true,
-  'thread_id': '11111111-1111-4111-8111-111111111111',
-  'thread_title': '今月の支払い相談',
-  'thread_created': true,
-  'reply': '口座残高と未払い予定を確認してください。',
-  'provider': 'google',
-  'model': 'gemini-2.5-flash',
-  'tokens_in': 128,
-  'tokens_out': 42,
-  'estimated_cost_usd': 0.000321,
-};
+      'success': true,
+      'thread_id': '11111111-1111-4111-8111-111111111111',
+      'thread_title': '今月の支払い相談',
+      'thread_created': true,
+      'reply': '口座残高と未払い予定を確認してください。',
+      'provider': 'google',
+      'model': 'gemini-2.5-flash',
+      'tokens_in': 128,
+      'tokens_out': 42,
+      'estimated_cost_usd': 0.000321,
+    };
 
 void main() {
   setUp(() {
