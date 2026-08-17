@@ -319,6 +319,29 @@ void main() {
     );
   });
 
+  testWidgets('landing title is inactive while a deep-linked route is current',
+      (
+    tester,
+  ) async {
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.control),
+    );
+
+    Navigator.of(tester.element(find.byType(LandingPage))).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const Scaffold(body: Text('deep link destination')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('deep link destination'), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_document_title')),
+      findsNothing,
+    );
+  });
+
   testWidgets(
     'lp_intent trial brings the promised trial into view for every H03 arm and viewport',
     (tester) async {

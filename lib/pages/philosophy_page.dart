@@ -3,10 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/platform_view.dart' as platform_view;
-import '../utils/document_title.dart' as document_title;
 
 const philosophyDocumentTitle = '自分株式会社とは？人生を経営する9原則と実践方法';
-const homepageDocumentTitle = '自分株式会社とは？ | 人生を経営するAIライフマネジメントアプリ';
 
 /// 自分株式会社 — 基本理念ページ
 ///
@@ -25,15 +23,6 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // MaterialApp's root Title updates later in the first frame. Defer one
-      // event turn so the route-specific title is the final browser value.
-      Future<void>.delayed(Duration.zero, () {
-        if (mounted) {
-          document_title.setDocumentTitle(philosophyDocumentTitle);
-        }
-      });
-    });
     for (final v in _videos) {
       final src = v.mp4Url ?? 'https://www.youtube.com/embed/${v.id}';
       platform_view.registerIframeViewFactory(
@@ -41,12 +30,6 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
         src,
       );
     }
-  }
-
-  @override
-  void dispose() {
-    document_title.setDocumentTitle(homepageDocumentTitle);
-    super.dispose();
   }
 
   @override
