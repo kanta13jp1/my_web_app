@@ -308,6 +308,36 @@ class PublicRouteTest(unittest.TestCase):
         faq = parsed["@graph"][2]
         self.assertEqual(len(faq["mainEntity"]), 4)
 
+        all_blocks = re.findall(
+            r'<script type="application/ld\+json"[^>]*>(.*?)</script>',
+            out,
+            re.DOTALL,
+        )
+        all_schemas = [
+            json.loads(block.replace("\\u003c", "<")) for block in all_blocks
+        ]
+        faq_pages = []
+        for schema in all_schemas:
+            nodes = schema.get("@graph", [schema])
+            faq_pages.extend(
+                node for node in nodes if node.get("@type") == "FAQPage"
+            )
+        self.assertEqual(len(faq_pages), 1)
+        visible_faq = re.search(
+            r'<section id="philosophy-faq" data-prerender="public-faq">'
+            r"(.*?)</section>",
+            out,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(visible_faq)
+        visible_questions = re.findall(
+            r"<dt>(.*?)</dt>", visible_faq.group(1), re.DOTALL
+        )
+        structured_questions = [
+            item["name"] for item in faq_pages[0]["mainEntity"]
+        ]
+        self.assertEqual(structured_questions, visible_questions)
+
     def test_ai_university_config_uses_dedicated_social_image(self) -> None:
         repo_root = Path(__file__).resolve().parents[2]
         routes = json.loads(

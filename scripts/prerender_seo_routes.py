@@ -38,6 +38,18 @@ def replace_attr_content(html_text: str, selector_regex: str, new_value: str) ->
                  html_text, count=1)
 
 
+def remove_homepage_faq_schema(html_text: str) -> str:
+    """公開サブルートに引き継がれたホーム専用 FAQPage を除去する。"""
+    return re.sub(
+        r'\s*<script\s+type="application/ld\+json"\s+'
+        r'data-homepage-schema="faq">.*?</script>',
+        "",
+        html_text,
+        count=1,
+        flags=re.DOTALL,
+    )
+
+
 def build_route_html(template: str, route: dict, base_url: str) -> str:
     slug = route["slug"]
     title = route["title"]
@@ -49,7 +61,7 @@ def build_route_html(template: str, route: dict, base_url: str) -> str:
     esc_desc = html.escape(desc)
     esc_url = html.escape(url)
 
-    out = template
+    out = remove_homepage_faq_schema(template)
 
     # <title>
     out = re.sub(r"<title>.*?</title>",
@@ -173,7 +185,7 @@ def build_public_route_html(template: str, route: dict, base_url: str) -> str:
     esc_desc = html.escape(desc)
     esc_url = html.escape(url)
 
-    out = template
+    out = remove_homepage_faq_schema(template)
     out = re.sub(r"<title>.*?</title>",
                  f"<title>{esc_title}</title>", out, count=1, flags=re.DOTALL)
     out = re.sub(r'(<link rel="canonical" href=")[^"]*(">)',
