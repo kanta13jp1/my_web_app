@@ -401,6 +401,42 @@
       font-weight: 700;
     }
 
+    .seo-about h3 {
+      margin: 24px 0 0;
+      color: #172033;
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    .seo-business-map {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin: 14px 0 0;
+    }
+
+    .seo-business-map div {
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid #d9e4ee;
+      border-radius: 6px;
+      background: #f8fbfe;
+    }
+
+    .seo-business-map dt {
+      color: #245078;
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.5;
+    }
+
+    .seo-business-map dd {
+      margin: 6px 0 0;
+      color: #526071;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
     .seo-flow {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
@@ -496,6 +532,10 @@
         grid-template-columns: 1fr;
       }
 
+      .seo-business-map {
+        grid-template-columns: 1fr 1fr;
+      }
+
       .seo-links a {
         width: 100%;
         min-width: 0;
@@ -583,7 +623,28 @@
           <li>時間・お金・スキルを資産として育てる</li>
           <li>他人ではなく昨日の自分をKPIにする</li>
         </ul>
-        <p><a href="/philosophy">自分株式会社の9つの基本理念を読む</a></p>
+        <h3>個人経営の基本構造</h3>
+        <dl class="seo-business-map">
+          <div>
+            <dt>売上</dt>
+            <dd>給与だけでなく、仕事・学習・発信で届けた価値</dd>
+          </div>
+          <div>
+            <dt>経費</dt>
+            <dd>お金に加えて、使った時間・集中力・回復力</dd>
+          </div>
+          <div>
+            <dt>資産</dt>
+            <dd>スキル・健康・信用・人間関係・再利用できる知識</dd>
+          </div>
+          <div>
+            <dt>利益</dt>
+            <dd>次の選択に使えるお金・時間・心の余白</dd>
+          </div>
+        </dl>
+        <p>
+          <a href="/philosophy">個人のP/L・B/S、6部署、30日運営サイクルを読む</a>
+        </p>
       </section>
 
       <section class="seo-flow" id="seo-how" aria-label="利用の流れ">

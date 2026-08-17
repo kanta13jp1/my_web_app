@@ -90,3 +90,26 @@
 3. AI Overview の引用元に変化があるか
 4. 1ページ目のURL構成、特にnote・IFA・研修事例・書籍結果の増減
 5. 再クロール後も圏外なら、基本理念ページの検索意図整合、外部言及・著者実績・一次情報の強化を別施策として検討する
+
+### 2026-08-18 追加実装
+
+ユーザー確認を受け、上位ページで共通していた「短い定義から具体的な運営方法へ進む」情報構造を、文章や固有表現を転用せず基本理念ページへ反映した。ホームページの title / meta description は前回施策の再クロールを観測できるよう変更していない。
+
+- `/philosophy` の静的HTMLとFlutter画面に、自分株式会社の定義、個人のP/L・B/S、6部署、30日運営サイクル、AIの役割を追加
+- `/philosophy` に目次相当の見出し構造、FAQ、関連ページへの内部リンク、公開日・更新日を追加
+- FAQの可視本文と同一内容から `FAQPage`、階層を示す `BreadcrumbList`、日付を持つ `WebPage` を生成
+- ホームには「売上・経費・資産・利益」の短い導入と基本理念ページへの説明的な内部リンクのみを追加
+- 静的HTML生成器が属性順に依存せず日本語のリード段落を置換できるよう修正
+- 非Web環境では動画領域を案内表示に切り替え、理念ページのウィジェットテストを可能にした
+
+追加実装の検証:
+
+- Python静的HTML生成テスト: 16件合格
+- Flutter理念ページ／LP導線テスト: 2件合格
+- `dart analyze lib/pages/philosophy_page.dart`: `No issues found`
+- `flutter build web --release --no-pub --no-wasm-dry-run`: 成功
+- 生成後HTML: 固有title、canonical、本文、FAQ、内部リンク、`WebPage` / `BreadcrumbList` / `FAQPage`、公開日・更新日を確認
+- 実ブラウザ: Flutter描画後も固有title、定義、P/L・B/S、6部署、30日サイクル、AIの役割が表示されることを確認
+- 全体 `flutter analyze --no-pub` は、このWindows環境でanalysis serverが無出力待機したため中断。変更対象ファイルの解析とrelease buildのコンパイルは成功
+
+これは検索上位を保証する変更ではない。次回以降は、Googleの再クロール後に `/philosophy` の表示URL・クエリ・順位変化を分けて観測する。

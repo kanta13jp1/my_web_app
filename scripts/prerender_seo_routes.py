@@ -154,7 +154,7 @@ def build_route_html(template: str, route: dict, base_url: str) -> str:
         f"<ul>{points_html}</ul></section>"
     )
     # 最初の <p lang="ja">...</p> を比較セクションに差し替え
-    out = re.sub(r'<p lang="ja">.*?</p>', comparison_section,
+    out = re.sub(r'<p\b[^>]*\blang="ja"[^>]*>.*?</p>', comparison_section,
                  out, count=1, flags=re.DOTALL)
 
     return out
@@ -210,7 +210,7 @@ def build_public_route_html(template: str, route: dict, base_url: str) -> str:
             out, r'(<meta property="twitter:image:alt" content=")([^"]*)(")',
             image_alt)
 
-    graph = {
+    web_page = {
         "@context": "https://schema.org",
         "@type": "WebPage",
         "@id": f"{url}#webpage",
@@ -221,6 +221,56 @@ def build_public_route_html(template: str, route: dict, base_url: str) -> str:
         "isPartOf": {"@id": f"{base_url}/#website"},
         "publisher": {"@id": f"{base_url}/#organization"},
     }
+    for field in ("datePublished", "dateModified"):
+        config_key = "date_published" if field == "datePublished" else "date_modified"
+        if route.get(config_key):
+            web_page[field] = route[config_key]
+
+    faq = route.get("faq", [])
+    if faq:
+        breadcrumb = {
+            "@type": "BreadcrumbList",
+            "@id": f"{url}#breadcrumb",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "自分株式会社",
+                    "item": f"{base_url}/",
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": route.get("breadcrumb_label", h1),
+                    "item": url,
+                },
+            ],
+        }
+        web_page["breadcrumb"] = {"@id": f"{url}#breadcrumb"}
+        graph = {
+            "@context": "https://schema.org",
+            "@graph": [
+                {key: value for key, value in web_page.items() if key != "@context"},
+                breadcrumb,
+                {
+                    "@type": "FAQPage",
+                    "@id": f"{url}#faq",
+                    "mainEntity": [
+                        {
+                            "@type": "Question",
+                            "name": item["question"],
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": item["answer"],
+                            },
+                        }
+                        for item in faq
+                    ],
+                },
+            ],
+        }
+    else:
+        graph = web_page
     json_ld = json.dumps(graph, ensure_ascii=False).replace("<", "\\u003c")
     out = out.replace(
         "</head>",
@@ -231,13 +281,81 @@ def build_public_route_html(template: str, route: dict, base_url: str) -> str:
                  lambda m: m.group(1) + html.escape(h1) + m.group(2),
                  out, count=1, flags=re.DOTALL)
     points_html = "".join(f"<li>{html.escape(p)}</li>" for p in points)
+    sections_html = "".join(
+        _render_public_section(item) for item in route.get("sections", [])
+    )
+    faq_html = _render_public_faq(faq)
+    links_html = _render_public_links(route.get("links", []))
+    updated_html = ""
+    if route.get("date_modified"):
+        updated_html = (
+            '<p data-prerender="public-updated">'
+            f'最終更新: <time datetime="{html.escape(route["date_modified"], quote=True)}">'
+            f'{html.escape(route["date_modified"])}</time></p>'
+        )
     section = (
         f'<p lang="ja">{esc_desc}</p>'
         f'<section aria-label="{html.escape(h1)}" data-prerender="public-body">'
         f"<ul>{points_html}</ul></section>"
+        f"{updated_html}{sections_html}{faq_html}{links_html}"
     )
-    out = re.sub(r'<p lang="ja">.*?</p>', section, out, count=1, flags=re.DOTALL)
+    out = re.sub(
+        r'<p\b[^>]*\blang="ja"[^>]*>.*?</p>',
+        section,
+        out,
+        count=1,
+        flags=re.DOTALL,
+    )
     return out
+
+
+def _render_public_section(section: dict) -> str:
+    """Render one trusted public-route content section as semantic static HTML."""
+    section_id = section.get("id")
+    id_attr = (
+        f' id="{html.escape(section_id, quote=True)}"' if section_id else ""
+    )
+    body = section.get("body")
+    body_html = f"<p>{html.escape(body)}</p>" if body else ""
+    points_html = "".join(
+        f"<li>{html.escape(point)}</li>" for point in section.get("points", [])
+    )
+    list_html = f"<ul>{points_html}</ul>" if points_html else ""
+    return (
+        f'<section{id_attr} data-prerender="public-section">'
+        f'<h2>{html.escape(section["heading"])}</h2>'
+        f"{body_html}{list_html}</section>"
+    )
+
+
+def _render_public_faq(faq: list[dict]) -> str:
+    if not faq:
+        return ""
+    items = "".join(
+        "<div>"
+        f'<dt>{html.escape(item["question"])}</dt>'
+        f'<dd>{html.escape(item["answer"])}</dd>'
+        "</div>"
+        for item in faq
+    )
+    return (
+        '<section id="philosophy-faq" data-prerender="public-faq">'
+        f"<h2>よくある質問</h2><dl>{items}</dl></section>"
+    )
+
+
+def _render_public_links(links: list[dict]) -> str:
+    if not links:
+        return ""
+    items = "".join(
+        f'<li><a href="{html.escape(item["href"], quote=True)}">'
+        f'{html.escape(item["label"])}</a></li>'
+        for item in links
+    )
+    return (
+        '<nav aria-label="関連ページ" data-prerender="public-links">'
+        f"<h2>関連ページ</h2><ul>{items}</ul></nav>"
+    )
 
 
 def main(argv: list[str]) -> int:
