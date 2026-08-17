@@ -168,11 +168,20 @@ class _LandingStoryJourneyState extends State<LandingStoryJourney> {
 
   void _goToChapter(int index) {
     if (!widget.scrollController.hasClients || _maxPinDistance <= 0) return;
-    final chapterProgress = index / (LandingStoryJourney.chapters.length - 1);
-    final targetOffset = widget.scrollController.offset -
-        _pinOffset +
-        (_maxPinDistance * chapterProgress);
+    final trackRenderObject = _trackKey.currentContext?.findRenderObject();
+    if (trackRenderObject is! RenderBox || !trackRenderObject.hasSize) return;
+
     final position = widget.scrollController.position;
+    final notificationContext = position.context.notificationContext;
+    final viewportRenderObject = notificationContext?.findRenderObject();
+    final viewportTop = viewportRenderObject is RenderBox
+        ? viewportRenderObject.localToGlobal(Offset.zero).dy
+        : MediaQuery.paddingOf(context).top;
+    final trackTop = trackRenderObject.localToGlobal(Offset.zero).dy;
+    final trackStartOffset =
+        widget.scrollController.offset + trackTop - viewportTop - 8;
+    final chapterProgress = index / (LandingStoryJourney.chapters.length - 1);
+    final targetOffset = trackStartOffset + (_maxPinDistance * chapterProgress);
     final clampedTarget = targetOffset.clamp(
       position.minScrollExtent,
       position.maxScrollExtent,
@@ -629,35 +638,41 @@ class _JourneyRail extends StatelessWidget {
             button: true,
             selected: index == activeChapter,
             label: '${LandingStoryJourney.chapters[index].label}の章へ移動',
-            child: IconButton(
-              key: Key('landing_story_dot_$index'),
-              onPressed: () => onChapterSelected(index),
-              tooltip: LandingStoryJourney.chapters[index].label,
-              icon: AnimatedContainer(
-                duration: reduceMotion
-                    ? Duration.zero
-                    : const Duration(milliseconds: 180),
-                width: index == activeChapter ? 12 : 7,
-                height: index == activeChapter ? 12 : 7,
-                decoration: BoxDecoration(
-                  color: index == activeChapter
-                      ? const Color(0xFFFFA85C)
-                      : const Color(0x99FFFFFF),
-                  shape: BoxShape.circle,
-                  boxShadow: index == activeChapter
-                      ? const [
-                          BoxShadow(
-                            color: Color(0x66FFA85C),
-                            blurRadius: 10,
-                            spreadRadius: 3,
-                          ),
-                        ]
-                      : null,
+            onTap: () => onChapterSelected(index),
+            child: ExcludeSemantics(
+              child: IconButton(
+                key: Key('landing_story_dot_$index'),
+                onPressed: () => onChapterSelected(index),
+                tooltip: LandingStoryJourney.chapters[index].label,
+                icon: AnimatedContainer(
+                  duration: reduceMotion
+                      ? Duration.zero
+                      : const Duration(milliseconds: 180),
+                  width: index == activeChapter ? 12 : 7,
+                  height: index == activeChapter ? 12 : 7,
+                  decoration: BoxDecoration(
+                    color: index == activeChapter
+                        ? const Color(0xFFFFA85C)
+                        : const Color(0x99FFFFFF),
+                    shape: BoxShape.circle,
+                    boxShadow: index == activeChapter
+                        ? const [
+                            BoxShadow(
+                              color: Color(0x66FFA85C),
+                              blurRadius: 10,
+                              spreadRadius: 3,
+                            ),
+                          ]
+                        : null,
+                  ),
+                ),
+                color: Colors.white,
+                padding: EdgeInsets.all(compact ? 10 : 12),
+                constraints: const BoxConstraints(
+                  minWidth: 44,
+                  minHeight: 44,
                 ),
               ),
-              color: Colors.white,
-              padding: EdgeInsets.all(compact ? 10 : 12),
-              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             ),
           ),
       ],

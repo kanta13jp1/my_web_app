@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-08-15",
+    "date": "2026-08-17",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-08-15T00:00:00Z",
+  "generatedAt": "2026-08-17T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -32,16 +32,133 @@
       "changes": [
         {
           "category": "feature",
-          "id": "pr-4475",
+          "id": "pr-4581",
           "links": [
             {
-              "title": "PR #4475",
+              "title": "PR #4581",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4475"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/4581"
             }
           ],
-          "mergedAt": "2026-08-15T08:46:35Z",
-          "summary": "#4475 feat(asset): import Rakuten and SBI holdings CSV"
+          "mergedAt": "2026-08-17T17:51:22Z",
+          "summary": "#4581 feat(ai-hub): add asset chat context endpoint"
+        },
+        {
+          "category": "feature",
+          "id": "pr-4575",
+          "links": [
+            {
+              "title": "PR #4575",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/4575"
+            }
+          ],
+          "mergedAt": "2026-08-17T15:48:40Z",
+          "summary": "#4575 Add owner-scoped asset chat persistence"
+        },
+        {
+          "category": "feature",
+          "id": "pr-4569",
+          "links": [
+            {
+              "title": "PR #4569",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/4569"
+            }
+          ],
+          "mergedAt": "2026-08-16T18:18:17Z",
+          "summary": "#4569 Add department finance summary action"
+        },
+        {
+          "category": "feature",
+          "id": "pr-4568",
+          "links": [
+            {
+              "title": "PR #4568",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/4568"
+            }
+          ],
+          "mergedAt": "2026-08-16T04:27:02Z",
+          "summary": "#4568 db: add six-department KPI routing (#2480)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-4566",
+          "links": [
+            {
+              "title": "PR #4566",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/4566"
+            }
+          ],
+          "mergedAt": "2026-08-15T21:14:56Z",
+          "summary": "#4566 feat: complete cited research, adaptive routing, and A2A runtime"
+        },
+        {
+          "category": "fix",
+          "id": "pr-4565",
+          "links": [
+            {
+              "title": "PR #4565",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/4565"
+            }
+          ],
+          "mergedAt": "2026-08-15T20:25:36Z",
+          "summary": "#4565 fix: note editor console errors and conveni report payload"
+        },
+        {
+          "category": "feature",
+          "id": "pr-4564",
+          "links": [
+            {
+              "title": "PR #4564",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/4564"
+            }
+          ],
+          "mergedAt": "2026-08-15T19:54:15Z",
+          "summary": "#4564 feat: add durable AI company runtime"
+        },
+        {
+          "category": "feature",
+          "id": "pr-4561",
+          "links": [
+            {
+              "title": "PR #4561",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/4561"
+            }
+          ],
+          "mergedAt": "2026-08-15T19:03:17Z",
+          "summary": "#4561 feat: add local election candidate release skill"
+        },
+        {
+          "category": "fix",
+          "id": "pr-4550",
+          "links": [
+            {
+              "title": "PR #4550",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/4550"
+            }
+          ],
+          "mergedAt": "2026-08-15T13:04:52Z",
+          "summary": "#4550 fix: enforce fail-closed RLS for exposed tables (#2773)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-4547",
+          "links": [
+            {
+              "title": "PR #4547",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/4547"
+            }
+          ],
+          "mergedAt": "2026-08-15T10:21:57Z",
+          "summary": "#4547 feat: add privacy-safe LP conversion analytics"
         },
         {
           "category": "fix",
@@ -55,19 +172,6 @@
           ],
           "mergedAt": "2026-08-15T08:22:50Z",
           "summary": "#4546 fix(wbs): avoid duplicate issue links in revenue migration"
-        },
-        {
-          "category": "feature",
-          "id": "pr-4461",
-          "links": [
-            {
-              "title": "PR #4461",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4461"
-            }
-          ],
-          "mergedAt": "2026-08-15T07:48:44Z",
-          "summary": "#4461 feat: automate Stripe revenue readiness gate"
         },
         {
           "category": "feature",
@@ -315,113 +419,9 @@
           ],
           "mergedAt": "2026-08-13T02:53:37Z",
           "summary": "#4506 feat: launch MUSUBI social MVP"
-        },
-        {
-          "category": "feature",
-          "id": "pr-4503",
-          "links": [
-            {
-              "title": "PR #4503",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4503"
-            }
-          ],
-          "mergedAt": "2026-08-12T18:15:26Z",
-          "summary": "#4503 feat: add guided Blackbird guitar lesson"
-        },
-        {
-          "category": "feature",
-          "id": "pr-4500",
-          "links": [
-            {
-              "title": "PR #4500",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4500"
-            }
-          ],
-          "mergedAt": "2026-08-12T11:21:37Z",
-          "summary": "#4500 feat: add Beatles guitar practice tabs"
-        },
-        {
-          "category": "feature",
-          "id": "pr-4481",
-          "links": [
-            {
-              "title": "PR #4481",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4481"
-            }
-          ],
-          "mergedAt": "2026-08-10T09:47:21Z",
-          "summary": "#4481 feat: 国民民主党の選挙インテリジェンスを自動更新"
-        },
-        {
-          "category": "automation",
-          "id": "pr-4465",
-          "links": [
-            {
-              "title": "PR #4465",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4465"
-            }
-          ],
-          "mergedAt": "2026-08-05T01:08:50Z",
-          "summary": "#4465 ci: handle disposed tools-hub error responses"
-        },
-        {
-          "category": "automation",
-          "id": "pr-4457",
-          "links": [
-            {
-              "title": "PR #4457",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4457"
-            }
-          ],
-          "mergedAt": "2026-08-03T14:48:02Z",
-          "summary": "#4457 ci: support PowerShell 7 smoke error responses"
-        },
-        {
-          "category": "fix",
-          "id": "pr-4423",
-          "links": [
-            {
-              "title": "PR #4423",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4423"
-            }
-          ],
-          "mergedAt": "2026-07-31T03:10:48Z",
-          "summary": "#4423 ci: fix tools-hub MCP smoke parameter binding"
-        },
-        {
-          "category": "automation",
-          "id": "pr-4422",
-          "links": [
-            {
-              "title": "PR #4422",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4422"
-            }
-          ],
-          "mergedAt": "2026-07-31T01:18:35Z",
-          "summary": "#4422 ci: restore tools-hub MCP smoke workflow"
-        },
-        {
-          "category": "feature",
-          "id": "pr-4421",
-          "links": [
-            {
-              "title": "PR #4421",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4421"
-            }
-          ],
-          "mergedAt": "2026-07-31T00:30:48Z",
-          "summary": "#4421 feat: prepare first-user Hook B candidate"
         }
       ],
-      "date": "2026-08-15",
+      "date": "2026-08-17",
       "extensions": {
         "aiToolWatch": {
           "changedSourceCount": 5,
