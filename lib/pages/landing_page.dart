@@ -15,6 +15,7 @@ import '../services/landing_signup_completion_service.dart';
 import '../services/pending_landing_trial_service.dart';
 import '../services/route_visibility_observer.dart';
 import '../widgets/live_growth_banner.dart';
+import '../widgets/landing_story_journey.dart';
 
 enum _LandingIntent { work, learning, money }
 
@@ -81,6 +82,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   final _trialPromptController = TextEditingController();
   final _emailFocusNode = FocusNode();
   final _trialEmailFocusNode = FocusNode();
+  final ScrollController _pageScrollController = ScrollController();
   final GlobalKey _trialSectionKey = GlobalKey();
   final GlobalKey _authSectionKey = GlobalKey();
 
@@ -322,6 +324,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     _trialPromptController.dispose();
     _emailFocusNode.dispose();
     _trialEmailFocusNode.dispose();
+    _pageScrollController.dispose();
     super.dispose();
   }
 
@@ -5178,6 +5181,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
+            controller: _pageScrollController,
             padding: EdgeInsets.symmetric(
               horizontal: screenWidth < 640 ? 14 : 28,
               vertical: screenWidth < 480 ? 12 : 22,
@@ -5194,6 +5198,12 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                     child: const SizedBox.shrink(),
                   ),
                   _buildHeroSection(),
+                  const SizedBox(height: 20),
+                  LandingStoryJourney(
+                    scrollController: _pageScrollController,
+                    onPrimaryAction: _handleHeroSignup,
+                    onSecondaryAction: _scrollToTrialSection,
+                  ),
                   const SizedBox(height: 20),
                   _buildBrandDefinitionSection(),
                   const SizedBox(height: 20),
