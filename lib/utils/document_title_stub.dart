@@ -1,0 +1,1 @@
+void setDocumentTitle(String title) {}

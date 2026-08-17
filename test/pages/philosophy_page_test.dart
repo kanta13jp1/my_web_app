@@ -29,7 +29,12 @@ void main() {
     expect(find.text('財務'), findsOneWidget);
     expect(find.text('マーケ営業'), findsOneWidget);
     expect(find.text('横断'), findsOneWidget);
-    expect(find.byKey(const Key('philosophy_document_title')), findsOneWidget);
+    final documentTitle = find.byKey(const Key('philosophy_document_title'));
+    expect(documentTitle, findsOneWidget);
+    expect(
+      tester.widget<Title>(documentTitle).title,
+      philosophyDocumentTitle,
+    );
     expect(tester.takeException(), isNull);
   });
 }
