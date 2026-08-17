@@ -7,9 +7,17 @@ import {
 } from "./event_processing.ts";
 import { activateReferralForPaidCheckout } from "./referral_activation.ts";
 import {
+  fulfillReferralCreditsForPaidCheckout,
+  ReferralCreditGrant,
+} from "./referral_credit.ts";
+import {
   invoiceSubscriptionId,
   subscriptionCurrentPeriodEnd,
 } from "./stripe_api_compat.ts";
+import {
+  isExternalRevenueCandidate,
+  normalizeSupporterBuyerContext,
+} from "../_shared/supporter_buyer.ts";
 
 // .trim(): Supabase secret に紛れ込んだ前後の空白/改行を吸収 (署名検証や
 // Stripe API 呼び出しがコピペ事故で失敗しないよう防御)。
@@ -18,6 +26,7 @@ const SERVICE_ROLE_KEY = (Deno.env.get("SERVICE_ROLE_KEY") ?? "").trim();
 const STRIPE_SECRET_KEY = (Deno.env.get("STRIPE_SECRET_KEY") ?? "").trim();
 const STRIPE_WEBHOOK_SECRET = (Deno.env.get("STRIPE_WEBHOOK_SECRET") ?? "")
   .trim();
+const STRIPE_API_VERSION = "2026-06-24.dahlia";
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -138,7 +147,10 @@ async function verifyStripeEvent(rawBody: string, signatureHeader: string) {
 async function stripeGet(path: string): Promise<Record<string, unknown>> {
   if (!STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not configured");
   const response = await fetch(`https://api.stripe.com/v1${path}`, {
-    headers: { Authorization: `Bearer ${STRIPE_SECRET_KEY}` },
+    headers: {
+      Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
+      "Stripe-Version": STRIPE_API_VERSION,
+    },
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -148,6 +160,120 @@ async function stripeGet(path: string): Promise<Record<string, unknown>> {
     );
   }
   return asRecord(data) ?? {};
+}
+
+async function stripePostForm(
+  path: string,
+  params: Record<string, string>,
+  idempotencyKey?: string,
+): Promise<Record<string, unknown>> {
+  if (!STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not configured");
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
+    "Content-Type": "application/x-www-form-urlencoded",
+    "Stripe-Version": STRIPE_API_VERSION,
+  };
+  if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
+  const response = await fetch(`https://api.stripe.com/v1${path}`, {
+    method: "POST",
+    headers,
+    body: new URLSearchParams(params),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const err = asRecord(data.error) ?? {};
+    throw new Error(
+      asString(err.message) || `Stripe API failed: ${response.status}`,
+    );
+  }
+  return asRecord(data) ?? {};
+}
+
+function stripeProPriceId(): string {
+  return (Deno.env.get("STRIPE_PRO_PRICE_ID") ??
+    Deno.env.get("STRIPE_PRICE_PRO") ?? "").trim();
+}
+
+async function loadReferralCreditValue(): Promise<{
+  amount: number;
+  currency: string;
+}> {
+  const priceId = stripeProPriceId();
+  if (!priceId) throw new Error("STRIPE_PRO_PRICE_ID not configured");
+  const price = await stripeGet(`/prices/${encodeURIComponent(priceId)}`);
+  const amount = asInteger(price.unit_amount) ?? 0;
+  const currency = asString(price.currency).toLowerCase();
+  const recurring = asRecord(price.recurring);
+  if (
+    amount <= 0 ||
+    !/^[a-z]{3}$/.test(currency) ||
+    asString(recurring?.interval) !== "month" ||
+    (asInteger(recurring?.interval_count) ?? 1) !== 1
+  ) {
+    throw new Error("Stripe Pro price must be a one-month recurring price");
+  }
+  return { amount, currency };
+}
+
+async function getOrCreateReferralStripeCustomer(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<string> {
+  const { data: currentData, error: currentError } = await admin
+    .from("billing_subscriptions")
+    .select("stripe_customer_id, tier, status, metadata")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (currentError) throw new Error(currentError.message);
+  const current = asRecord(currentData) ?? {};
+  const existingCustomerId = asString(current.stripe_customer_id);
+  if (existingCustomerId) return existingCustomerId;
+
+  const { data: userData, error: userError } = await admin.auth.admin
+    .getUserById(userId);
+  if (userError) throw new Error(userError.message);
+  const customer = await stripePostForm("/customers", {
+    email: userData.user?.email ?? "",
+    "metadata[user_id]": userId,
+    "metadata[source]": "referral_credit",
+  }, `referral-customer-${userId}`);
+  const customerId = asString(customer.id);
+  if (!customerId) throw new Error("Stripe customer id missing");
+
+  const { error: upsertError } = await admin.from("billing_subscriptions")
+    .upsert({
+      user_id: userId,
+      stripe_customer_id: customerId,
+      tier: asString(current.tier, "free"),
+      status: asString(current.status, "active"),
+      metadata: {
+        ...(asRecord(current.metadata) ?? {}),
+        referral_credit_customer_created: true,
+      },
+    }, { onConflict: "user_id" });
+  if (upsertError) throw new Error(upsertError.message);
+  return customerId;
+}
+
+async function createReferralBalanceTransaction(input: {
+  grant: ReferralCreditGrant;
+  customerId: string;
+  amount: number;
+  currency: string;
+}): Promise<string> {
+  const transaction = await stripePostForm(
+    `/customers/${encodeURIComponent(input.customerId)}/balance_transactions`,
+    {
+      amount: String(input.amount),
+      currency: input.currency,
+      description: "紹介特典: Pro 1か月分クレジット",
+      "metadata[referral_credit_grant_id]": String(input.grant.id),
+      "metadata[referral_id]": String(input.grant.referralId),
+      "metadata[beneficiary_role]": input.grant.beneficiaryRole,
+    },
+    input.grant.stripeIdempotencyKey,
+  );
+  return asString(transaction.id);
 }
 
 async function userIdForCustomer(
@@ -231,6 +357,10 @@ async function recordSupporterCheckout(
 
   const amountTotal = asInteger(session.amount_total);
   const amountJpy = asInteger(metadata.amount_jpy) ?? amountTotal;
+  const buyerContext = normalizeSupporterBuyerContext(
+    metadata.auth_user_id,
+    metadata.buyer_classification,
+  );
   const { error } = await admin.from("hub_data").insert({
     source: "stripe_supporter_payment",
     metadata: {
@@ -248,6 +378,9 @@ async function recordSupporterCheckout(
       mode: asString(session.mode),
       offer: asString(metadata.offer),
       milestone_code: asString(metadata.milestone_code),
+      auth_user_id: buyerContext.authUserId,
+      buyer_classification: buyerContext.classification,
+      external_revenue_candidate: isExternalRevenueCandidate(buyerContext),
       recorded_at: new Date().toISOString(),
       ...attribution,
     },
@@ -382,11 +515,20 @@ async function handleCheckoutCompleted(
     await upsertSubscriptionFromStripe(admin, subscription, userId);
   }
 
-  await activateReferralForPaidCheckout(
+  const hasReferral = await activateReferralForPaidCheckout(
     admin,
     userId,
     asString(session.id),
   );
+  if (hasReferral) {
+    await fulfillReferralCreditsForPaidCheckout(userId, {
+      client: admin,
+      loadCreditValue: loadReferralCreditValue,
+      getOrCreateCustomer: (beneficiaryUserId) =>
+        getOrCreateReferralStripeCustomer(admin, beneficiaryUserId),
+      createBalanceTransaction: createReferralBalanceTransaction,
+    });
+  }
 }
 
 /**
