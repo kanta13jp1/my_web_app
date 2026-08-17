@@ -113,3 +113,9 @@
 - 全体 `flutter analyze --no-pub` は、このWindows環境でanalysis serverが無出力待機したため中断。変更対象ファイルの解析とrelease buildのコンパイルは成功
 
 これは検索上位を保証する変更ではない。次回以降は、Googleの再クロール後に `/philosophy` の表示URL・クエリ・順位変化を分けて観測する。
+
+#### PR同期記録
+
+- 2026-08-18、`origin/main`（`7194a3d83`）を作業ブランチへ競合なく取り込み
+- 同期後もPython静的HTML生成テスト16件、Flutter理念ページ／LP導線テスト2件が合格
+- PR本文の高リスク語句はproduction build／本番デプロイを行わない旨の説明によるものであり、認証・決済・DB・デプロイ設定などの高リスクパスは変更していないことを明記
