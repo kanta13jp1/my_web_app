@@ -2074,7 +2074,7 @@ serve(async (req: Request) => {
           text,
           mediaIds: uploadedMedia ? [uploadedMedia.mediaId] : undefined,
         });
-        const log = await addItem(admin, "x_post", userId!, {
+        const log = await addItem(admin, "x_post", userId ?? "gha", {
           ...baseLog,
           status: "posted",
           tweet_id: result.tweetId,
