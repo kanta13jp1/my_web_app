@@ -3,8 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/platform_view.dart' as platform_view;
-
-const philosophyDocumentTitle = '自分株式会社とは？人生を経営する9原則と実践方法';
+import '../utils/route_document_title.dart';
 
 /// 自分株式会社 — 基本理念ページ
 ///
