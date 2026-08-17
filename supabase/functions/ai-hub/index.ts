@@ -51,6 +51,8 @@ import {
   type MonthlyAssetReportDb,
   normalizeMonthlyAssetReportProvider,
 } from "./monthly_asset_report.ts";
+import { AssetChatActionError, handleAssetChatAction } from "./asset_chat.ts";
+import { createSupabaseAssetChatStore } from "./asset_chat_supabase.ts";
 import {
   DepartmentFinanceSummaryActionError,
   type DepartmentFinanceSummaryDb,
@@ -4237,6 +4239,8 @@ serve(async (req: Request) => {
       "ai_hub.fetch_market_price",
       "asset.monthly_report.generate",
       "asset_liability.monthly_report.generate",
+      "asset.chat",
+      "ai_hub.asset_chat",
       "department_finance_summary",
       "ai_hub.department_finance_summary",
       "payslip.parse",
@@ -6354,6 +6358,118 @@ serve(async (req: Request) => {
         return json({ success: true, ...result });
       }
 
+      case "asset.chat":
+      case "ai_hub.asset_chat": {
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        const requestedProvider = String(body.provider ?? "google").trim() ||
+          "google";
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action,
+              provider: requestedProvider,
+            }),
+            409,
+          );
+        }
+        const authorization = req.headers.get("Authorization") ?? "";
+        const userScopedClient = createClient(
+          SUPABASE_URL,
+          SUPABASE_ANON_KEY,
+          { global: { headers: { Authorization: authorization } } },
+        );
+        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const sessionId = body.session_id != null
+          ? String(body.session_id)
+          : null;
+        const providerChoiceReason =
+          sanitizeProviderChoiceLogText(body.provider_choice_reason) ??
+            "asset chat provider preference";
+        const routingUseCase =
+          sanitizeProviderChoiceLogText(body.routing_use_case, 80) ??
+            "asset_chat";
+        const result = await handleAssetChatAction({
+          store: createSupabaseAssetChatStore(userScopedClient),
+          body,
+          userId: userId ?? "",
+          invokeProvider: async (request) => {
+            const usage = await checkAndRecordAiUsage(
+              supabaseUsageStore(admin),
+              userId ?? "",
+            );
+            if (!usage.allowed) {
+              return {
+                ok: false,
+                error: "usageLimitReached: free_limit_reached",
+                httpStatus: 402,
+                isRetriable: false,
+              };
+            }
+            const budget = await checkBudget("ef", "ai-hub");
+            if (!budget.ok) {
+              return {
+                ok: false,
+                error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+                httpStatus: 429,
+                isRetriable: false,
+              };
+            }
+            const startedAt = performance.now();
+            const providerResult = await callSingleProvider(
+              request.provider,
+              request.messages,
+              request.model,
+              undefined,
+              {
+                maxTokens: normalizeMaxTokens(
+                  body.max_tokens ?? body.maxTokens,
+                ),
+              },
+            );
+            const inputChars = request.messages.reduce(
+              (sum, item) => sum + item.content.length,
+              0,
+            );
+            const outputChars = providerResult.text?.length ?? 0;
+            const estimatedCost = providerResult.ok
+              ? calculateApiCost(
+                providerResult.modelUsed ?? request.model ?? request.provider,
+                estimateTokensFromChars(inputChars),
+                estimateTokensFromChars(outputChars),
+              )
+              : 0;
+            try {
+              await admin.from("ai_hub_chat_logs").insert({
+                provider: request.provider,
+                tier: providerTier(request.provider) ?? "direct",
+                success: providerResult.ok,
+                estimated_cost_usd: estimatedCost,
+                model: providerResult.modelUsed ?? request.model ?? null,
+                latency_ms: Math.round(performance.now() - startedAt),
+                trace_id: traceId,
+                session_id: sessionId,
+                input_chars: inputChars,
+                output_chars: outputChars,
+                error_message: providerResult.ok
+                  ? null
+                  : providerResult.error ?? "asset chat provider failed",
+                action: "ai_hub.asset_chat",
+                status_code: providerResult.ok ? 200 : 502,
+                provider_choice_reason: providerChoiceReason,
+                routing_use_case: routingUseCase,
+              });
+              if (providerResult.ok && estimatedCost > 0) {
+                await recordSpend("ef", "ai-hub", estimatedCost);
+              }
+            } catch {
+              // Observability must not make a successful chat fail.
+            }
+            return { ...providerResult, estimatedCostUsd: estimatedCost };
+          },
+        });
+        return json({ success: true, ...result });
+      }
+
       case "provider.chat": {
         // 汎用プロバイダー呼び出し (AI大学150社の実装済みAIに統一インターフェースで話しかける)
         // 対応: OpenAI互換 8社 (openai/xai/deepseek/groq/sambanova/openrouter/fireworks/together/arcee_ai)
@@ -7612,6 +7728,9 @@ serve(async (req: Request) => {
     }
     if (err instanceof MonthlyAssetReportActionError) {
       return json({ error: err.message }, err.status);
+    }
+    if (err instanceof AssetChatActionError) {
+      return json({ error: err.message, code: err.code }, err.status);
     }
     if (err instanceof DepartmentFinanceSummaryActionError) {
       return json({ error: err.message }, err.status);
