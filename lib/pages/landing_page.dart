@@ -5191,12 +5191,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Title(
-                    key: const Key('landing_document_title'),
-                    title: '自分株式会社とは？ | 人生を経営するAIライフマネジメントアプリ',
-                    color: const Color(0xFF1F7AE0),
-                    child: const SizedBox.shrink(),
-                  ),
+                  if (ModalRoute.of(context)?.isCurrent ?? true)
+                    Title(
+                      key: const Key('landing_document_title'),
+                      title: '自分株式会社とは？ | 人生を経営するAIライフマネジメントアプリ',
+                      color: const Color(0xFF1F7AE0),
+                      child: const SizedBox.shrink(),
+                    ),
                   _buildHeroSection(),
                   const SizedBox(height: 20),
                   LandingStoryJourney(
