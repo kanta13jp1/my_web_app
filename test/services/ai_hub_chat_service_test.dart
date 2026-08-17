@@ -9,6 +9,68 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
+  test('sendAssetChat maps the backend thread and usage contract', () async {
+    final service = AiHubChatService(
+      invoker: (body) async {
+        expect(body['action'], 'ai_hub.asset_chat');
+        expect(body['message'], '今月の支払いを確認して');
+        expect(body['thread_id'], '11111111-1111-4111-8111-111111111111');
+        expect(body['snapshot_months'], 3);
+        expect(body['history_messages'], 8);
+        expect(body['pii_mode'], 'off');
+        return <String, dynamic>{
+          'success': true,
+          'thread_id': '11111111-1111-4111-8111-111111111111',
+          'thread_title': '今月の支払い',
+          'thread_created': false,
+          'reply': '未払い予定を先に確認してください。',
+          'provider': 'google',
+          'model': 'gemini-2.5-flash',
+          'tokens_in': 123,
+          'tokens_out': 45,
+          'estimated_cost_usd': 0.000321,
+        };
+      },
+    );
+
+    final response = await service.sendAssetChat(
+      message: '  今月の支払いを確認して  ',
+      threadId: '11111111-1111-4111-8111-111111111111',
+    );
+
+    expect(response.threadId, '11111111-1111-4111-8111-111111111111');
+    expect(response.threadTitle, '今月の支払い');
+    expect(response.threadCreated, isFalse);
+    expect(response.reply, '未払い予定を先に確認してください。');
+    expect(response.usage.tokensIn, 123);
+    expect(response.usage.tokensOut, 45);
+    expect(response.usage.totalTokens, 168);
+    expect(response.usage.estimatedCostUsd, 0.000321);
+    expect(response.usage.provider, 'google');
+    expect(response.usage.model, 'gemini-2.5-flash');
+  });
+
+  test('sendAssetChat rejects an incomplete successful response', () async {
+    final service = AiHubChatService(
+      invoker: (_) async => <String, dynamic>{
+        'success': true,
+        'thread_id': '11111111-1111-4111-8111-111111111111',
+        'reply': '',
+      },
+    );
+
+    await expectLater(
+      () => service.sendAssetChat(message: 'hello'),
+      throwsA(
+        isA<AiHubChatException>().having(
+          (error) => error.message,
+          'message',
+          contains('Asset chat response was empty'),
+        ),
+      ),
+    );
+  });
+
   test('sendProviderChat returns normalized provider text', () async {
     final service = AiHubChatService(
       invoker: (body) async {

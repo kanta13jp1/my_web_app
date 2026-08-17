@@ -102,6 +102,26 @@ void main() {
   });
 
   group('AssetManagementPage smoke', () {
+    testWidgets('sticky asset chat entry opens and closes the panel', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await _pumpAssetPage(tester);
+
+      expect(find.byKey(const Key('asset_chat_open_button')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('asset_chat_open_button')));
+      await tester.pump();
+      expect(find.byKey(const Key('asset_chat_panel')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('asset_chat_close_button')));
+      await tester.pump();
+      expect(find.byKey(const Key('asset_chat_panel')), findsNothing);
+
+      await _unmount(tester);
+    });
+
     testWidgets('display mode chips reduce visible sections', (tester) async {
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
