@@ -5,6 +5,13 @@ import {
   SERVICE_ROLE_ONLY_ACTIONS,
 } from "./action_auth.ts";
 
+Deno.test("Stripe account readiness is service-role only", () => {
+  assertEquals(
+    requiredAuthLevel("billing.get_stripe_account_readiness"),
+    "service_role",
+  );
+});
+
 Deno.test("blog/x 書き込み系 4 action は service_role 必須", () => {
   for (
     const action of [

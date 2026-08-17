@@ -54,6 +54,63 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
         self.assertFalse(plan["production_credentials_required"])
         self.assertIn("summary.json", " ".join(plan["artifacts"]))
 
+    def test_plan_includes_fail_closed_rls_migration(self) -> None:
+        plan = module.build_plan(
+            ROOT / "test" / "fixtures" / "testcontainers" / "sql",
+            ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts",
+            ROOT / "supabase" / "functions" / "health-check" / "index.ts",
+        )
+        self.assertEqual(
+            plan["tenant_rls_migration"],
+            "supabase/migrations/20260815124052_fail_closed_rls_issue_2773.sql",
+        )
+        self.assertIn(
+            "missing tenant claims see zero rows",
+            " ".join(plan["tenant_rls_checks"]),
+        )
+
+    def test_plan_includes_asset_chat_rls_migration(self) -> None:
+        plan = module.build_plan(
+            ROOT / "test" / "fixtures" / "testcontainers" / "sql",
+            ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts",
+            ROOT / "supabase" / "functions" / "health-check" / "index.ts",
+        )
+        self.assertEqual(
+            plan["asset_chat_migration"],
+            "supabase/migrations/20260817151738_create_asset_chat_tables.sql",
+        )
+        self.assertIn(
+            "message ownership follows the parent thread",
+            plan["asset_chat_checks"],
+        )
+
+    def test_tenant_role_count_rejects_untrusted_identifiers(self) -> None:
+        with self.assertRaisesRegex(ValueError, "unexpected role"):
+            module.issue_2773_role_count(
+                None,
+                "postgres",
+                None,
+                "ab_assignments",
+            )
+        with self.assertRaisesRegex(ValueError, "unexpected table"):
+            module.issue_2773_role_count(None, "authenticated", None, "pg_authid")
+
+    def test_asset_chat_role_count_rejects_untrusted_identifiers(self) -> None:
+        with self.assertRaisesRegex(ValueError, "unexpected role"):
+            module.asset_chat_role_count(
+                None,
+                "postgres",
+                None,
+                "asset_chat_threads",
+            )
+        with self.assertRaisesRegex(ValueError, "unexpected table"):
+            module.asset_chat_role_count(
+                None,
+                "authenticated",
+                None,
+                "pg_authid",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

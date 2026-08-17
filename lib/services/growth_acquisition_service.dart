@@ -152,6 +152,17 @@ class GrowthAcquisitionService {
   static const String signupSubmitPublicTracker =
       'signup_submit_public_tracker';
 
+  static const String funnelBillingView = 'funnel_billing_view';
+  static const String funnelUpgradeClick = 'funnel_upgrade_click';
+  static const String funnelCheckoutSuccess = 'funnel_checkout_success';
+  static const String funnelCheckoutCancel = 'funnel_checkout_cancel';
+  static const Set<String> billingFunnelStages = <String>{
+    funnelBillingView,
+    funnelUpgradeClick,
+    funnelCheckoutSuccess,
+    funnelCheckoutCancel,
+  };
+
   static const String _latestTouchpointKey = 'growth_latest_touchpoint';
   static const String _latestTouchpointUpdatedAtKey =
       'growth_latest_touchpoint_updated_at';
@@ -175,9 +186,8 @@ class GrowthAcquisitionService {
 
   final SupabaseClient? _clientOverride;
 
-  const GrowthAcquisitionService({
-    SupabaseClient? clientOverride,
-  }) : _clientOverride = clientOverride;
+  const GrowthAcquisitionService({SupabaseClient? clientOverride})
+      : _clientOverride = clientOverride;
 
   SupabaseClient? get _client {
     if (_clientOverride != null) {
@@ -338,6 +348,17 @@ class GrowthAcquisitionService {
     await _recordSignal(resolveSignupSubmitSignal(latestTouchpoint));
   }
 
+  Future<void> recordBillingFunnelStage({required String stage}) async {
+    if (!billingFunnelStages.contains(stage)) {
+      throw ArgumentError.value(
+        stage,
+        'stage',
+        'Unsupported billing funnel stage',
+      );
+    }
+    await _recordSignal(stage);
+  }
+
   Future<bool> recordFirstUserFunnelStage({
     required String stage,
     String? visitorId,
@@ -434,9 +455,7 @@ class GrowthAcquisitionService {
     return attribution;
   }
 
-  Future<void> notifySignupSuccess({
-    required String? signupUserId,
-  }) async {
+  Future<void> notifySignupSuccess({required String? signupUserId}) async {
     final userId = signupUserId?.trim();
     if (userId == null || userId.isEmpty) {
       return;
@@ -484,10 +503,7 @@ class GrowthAcquisitionService {
     }
   }
 
-  Future<void> _recordSignal(
-    String signalKey, {
-    DateTime? now,
-  }) async {
+  Future<void> _recordSignal(String signalKey, {DateTime? now}) async {
     final client = _client;
     if (client == null) {
       return;
@@ -516,10 +532,7 @@ class GrowthAcquisitionService {
       debugPrintStack(stackTrace: stackTrace);
     }
 
-    await _recordSignalFallback(
-      signalKey: signalKey,
-      dateKey: dateKey,
-    );
+    await _recordSignalFallback(signalKey: signalKey, dateKey: dateKey);
   }
 
   Future<void> _recordSignalFallback({
@@ -555,9 +568,12 @@ class GrowthAcquisitionService {
       final sourceDetails = _normalizeSourceDetails(row['source_details'])
         ..update(signalKey, (count) => count + 1, ifAbsent: () => 1);
 
-      await client.from('app_analytics').update(<String, dynamic>{
-        'source_details': sourceDetails,
-      }).eq('date', dateKey);
+      await client
+          .from('app_analytics')
+          .update(<String, dynamic>{'source_details': sourceDetails}).eq(
+        'date',
+        dateKey,
+      );
     } catch (error, stackTrace) {
       debugPrint('Growth acquisition fallback failed: $error');
       debugPrintStack(stackTrace: stackTrace);

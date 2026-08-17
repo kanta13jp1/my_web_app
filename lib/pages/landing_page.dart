@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../services/growth_acquisition_service.dart';
 import '../services/growth_mission_service.dart';
+import '../services/landing_conversion_analytics.dart';
 import '../services/landing_conversion_experiment_service.dart';
 import '../services/landing_page_adapter.dart';
 import '../services/landing_signup_completion_service.dart';
@@ -20,6 +21,7 @@ enum _LandingIntent { work, learning, money }
 class LandingPage extends StatefulWidget {
   final LandingPageAdapter adapter;
   final GrowthMissionService growthService;
+  final LandingConversionAnalytics conversionAnalytics;
   final LandingConversionExperimentService conversionExperimentService;
   final LandingSignupCompletionService signupCompletionService;
   final PendingLandingTrialService pendingTrialService;
@@ -32,6 +34,7 @@ class LandingPage extends StatefulWidget {
     super.key,
     LandingPageAdapter? adapter,
     GrowthMissionService? growthService,
+    LandingConversionAnalytics? conversionAnalytics,
     LandingConversionExperimentService? conversionExperimentService,
     LandingSignupCompletionService? signupCompletionService,
     PendingLandingTrialService? pendingTrialService,
@@ -41,6 +44,8 @@ class LandingPage extends StatefulWidget {
     this.landingUri,
   })  : adapter = adapter ?? const SupabaseLandingPageAdapter(),
         growthService = growthService ?? const GrowthMissionService(),
+        conversionAnalytics =
+            conversionAnalytics ?? const PostHogLandingConversionAnalytics(),
         pendingTrialService =
             pendingTrialService ?? const PendingLandingTrialService(),
         signupCompletionService =
@@ -203,8 +208,15 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       if (!_recordedExperimentStages.add(stage)) {
         return;
       }
+      final eventKey = assignment.eventKey(stage);
+      unawaited(
+        widget.conversionAnalytics.captureExperimentEvent(
+          eventKey: eventKey,
+          properties: _conversionAnalyticsProperties(),
+        ),
+      );
       await widget.adapter.recordConversionEvent(
-        eventKey: assignment.eventKey(stage),
+        eventKey: eventKey,
         visitorId: visitorId,
       );
     } catch (error) {
@@ -223,6 +235,32 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     } catch (error) {
       debugPrint('First-user LP funnel event failed ($stage): $error');
     }
+  }
+
+  Map<String, Object> _conversionAnalyticsProperties() {
+    final uri = _landingUri;
+    final width = MediaQuery.maybeSizeOf(context)?.width;
+    final properties = <String, Object>{
+      'path': uri?.path.isNotEmpty == true ? uri!.path : '/',
+      'viewport': width != null && width < 600 ? 'mobile' : 'desktop',
+    };
+    for (final key in const <String>[
+      'utm_source',
+      'utm_medium',
+      'utm_campaign',
+    ]) {
+      final value = uri?.queryParameters[key]?.trim();
+      if (value != null && value.isNotEmpty) {
+        properties[key] = value;
+      }
+    }
+    properties['referral_present'] = _pendingReferralCode != null ||
+        const <String>{
+          'ref',
+          'referral',
+          'referral_code',
+        }.any((key) => uri?.queryParameters[key]?.trim().isNotEmpty == true);
+    return properties;
   }
 
   @override
@@ -568,6 +606,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       _trialReason = instantSuggestion.$2;
       _showSaveCtaPrompt = true;
     });
+    _scrollToTrialMagicLink(requestFocus: false);
     if (input.isEmpty) {
       return;
     }
@@ -738,11 +777,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     });
   }
 
-  void _scrollToTrialMagicLink() {
+  void _scrollToTrialMagicLink({bool requestFocus = true}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final captureContext = _trialEmailFocusNode.context;
       if (!mounted || captureContext == null) return;
-      _trialEmailFocusNode.requestFocus();
+      if (requestFocus) {
+        _trialEmailFocusNode.requestFocus();
+      }
       unawaited(
         Scrollable.ensureVisible(
           captureContext,

@@ -5,7 +5,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.4.1 <4.0.0'
+  sdk: '>=3.6.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -15,6 +15,7 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
   supabase_flutter: ^2.0.0
+  posthog_flutter: ^5.36.1
   crypto: ^3.0.7
   cupertino_icons: ^1.0.6
   web: ^1.1.0

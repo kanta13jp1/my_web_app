@@ -32,10 +32,16 @@ import {
   summarizePlatformFailures,
 } from "./upstream_error.ts";
 import { requiredAuthLevel } from "./action_auth.ts";
+import { summarizeStripeAccountReadiness } from "./stripe_account_readiness.ts";
 import {
   billingAllowedHosts,
   resolveBillingReturnUrl,
 } from "./billing_return_url.ts";
+import {
+  classifySupporterBuyer,
+  type SupporterBuyerContext,
+  supporterBuyerStripeParams,
+} from "../_shared/supporter_buyer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -357,6 +363,30 @@ async function stripePostForm(
   return asRecord(data) ?? {};
 }
 
+async function stripeGet(
+  path: string,
+): Promise<Record<string, unknown>> {
+  const key = stripeSecretKey();
+  if (!key) {
+    throw new Error("STRIPE_SECRET_KEY not configured");
+  }
+  const response = await fetch(`https://api.stripe.com/v1${path}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Stripe-Version": "2026-06-24.dahlia",
+    },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const err = asRecord(data.error) ?? {};
+    throw new Error(
+      asString(err.message) || `Stripe API failed: ${response.status}`,
+    );
+  }
+  return asRecord(data) ?? {};
+}
+
 async function getBillingSubscription(
   admin: SupabaseClient,
   userId: string,
@@ -398,6 +428,34 @@ async function getOrCreateStripeCustomer(
   }, { onConflict: "user_id" });
   if (error) throw new Error(error.message);
   return customerId;
+}
+
+async function resolveSupporterBuyerContext(
+  admin: SupabaseClient,
+  userId: string | null,
+): Promise<SupporterBuyerContext> {
+  if (!userId) return classifySupporterBuyer({ userId: null });
+
+  const [authResult, profileResult] = await Promise.all([
+    admin.auth.admin.getUserById(userId),
+    admin
+      .from("user_profiles")
+      .select("is_admin, role")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+  if (authResult.error) throw new Error(authResult.error.message);
+  if (profileResult.error) throw new Error(profileResult.error.message);
+
+  const profile = asRecord(profileResult.data) ?? {};
+  const authMetadata = asRecord(authResult.data.user?.app_metadata) ?? {};
+  return classifySupporterBuyer({
+    userId,
+    isAnonymous: authResult.data.user?.is_anonymous === true,
+    profileIsAdmin: profile.is_admin === true,
+    profileRole: asString(profile.role) || null,
+    authRole: asString(authMetadata.role) || null,
+  });
 }
 
 function defaultNewsSignalFeeds(): Array<Record<string, string>> {
@@ -1670,8 +1728,25 @@ serve(async (req: Request) => {
       userId = await getUserId(req);
       if (!userId) return json({ error: "Unauthorized" }, 401);
     }
+    if (
+      authLevel === "public" &&
+      !serviceRoleRequest &&
+      action === "billing.create_supporter_checkout_session"
+    ) {
+      userId = await getUserId(req);
+    }
 
     switch (action) {
+      case "billing.get_stripe_account_readiness": {
+        const key = stripeSecretKey();
+        const account = await stripeGet("/account");
+        return json({
+          success: true,
+          checked_at: new Date().toISOString(),
+          account: summarizeStripeAccountReadiness(account, key),
+        });
+      }
+
       case "billing.status": {
         const billing = await getBillingSubscription(admin, userId!);
         const periodStart = currentBillingPeriodStart();
@@ -1736,6 +1811,7 @@ serve(async (req: Request) => {
 
       case "billing.create_supporter_checkout_session": {
         const amountJpy = supporterAmountJpy();
+        const buyerContext = await resolveSupporterBuyerContext(admin, userId);
         const returnUrl = billingReturnUrl(
           body.return_url,
           "/subscription-billing",
@@ -1758,6 +1834,7 @@ serve(async (req: Request) => {
           "payment_intent_data[metadata][offer]": "founding_supporter",
           "payment_intent_data[metadata][milestone_code]": "first-yen-revenue",
           "payment_intent_data[metadata][amount_jpy]": String(amountJpy),
+          ...supporterBuyerStripeParams(buyerContext),
           ...supporterAttributionParams(body),
         });
         return json({
@@ -1997,7 +2074,8 @@ serve(async (req: Request) => {
           text,
           mediaIds: uploadedMedia ? [uploadedMedia.mediaId] : undefined,
         });
-        const log = await addItem(admin, "x_post", userId!, {
+        const logOwnerUserId = userId ?? `gha`;
+        const log = await addItem(admin, `x_post`, logOwnerUserId, {
           ...baseLog,
           status: "posted",
           tweet_id: result.tweetId,
