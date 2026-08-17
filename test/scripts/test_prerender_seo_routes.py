@@ -105,6 +105,12 @@ class HomepageSocialPreviewTest(unittest.TestCase):
         self.assertIn('<h1 id="seo-title">自分株式会社</h1>', self.index_html)
         self.assertIn('<h2 id="seo-about-title">自分株式会社とは</h2>', self.index_html)
         self.assertIn('自分が人生のCEOとして決める', self.index_html)
+        self.assertIn('<h3>個人経営の基本構造</h3>', self.index_html)
+        self.assertIn('<dt>売上</dt>', self.index_html)
+        self.assertIn('<dt>経費</dt>', self.index_html)
+        self.assertIn('<dt>資産</dt>', self.index_html)
+        self.assertIn('<dt>利益</dt>', self.index_html)
+        self.assertIn('個人のP/L・B/S、6部署、30日運営サイクルを読む', self.index_html)
         self.assertIn('href="/philosophy"', self.index_html)
         self.assertIn(
             '"@id": "https://my-web-app-b67f4.web.app/#software-application"',
@@ -257,6 +263,80 @@ class PublicRouteTest(unittest.TestCase):
             '<meta property="og:image:alt" content="AI大学の学習画面">',
             out,
         )
+
+    def test_philosophy_route_renders_original_guide_and_visible_faq(self) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        routes = json.loads(
+            (repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        route = next(
+            item for item in routes["routes"] if item["path"] == "/philosophy"
+        )
+        index_html = (repo_root / "web" / "index.html").read_text(
+            encoding="utf-8"
+        )
+
+        out = build_public_route_html(index_html, route, BASE)
+
+        self.assertIn(
+            "<title>自分株式会社とは？人生を経営する9原則と実践方法</title>",
+            out,
+        )
+        self.assertIn("個人のP/LとB/Sで生活を見直す", out)
+        self.assertIn("人生を6部署に分けて点検する", out)
+        self.assertIn("30日で回す自分株式会社の運営サイクル", out)
+        self.assertIn('data-prerender="public-faq"', out)
+        self.assertIn("自分株式会社とは何ですか？", out)
+        self.assertIn('href="/development-achievements"', out)
+        self.assertIn('<time datetime="2026-08-18">2026-08-18</time>', out)
+
+        blocks = re.findall(
+            r'<script type="application/ld\+json" data-prerender="public">'
+            r"(.*?)</script>",
+            out,
+            re.DOTALL,
+        )
+        self.assertEqual(len(blocks), 1)
+        parsed = json.loads(blocks[0].replace("\\u003c", "<"))
+        types = [item["@type"] for item in parsed["@graph"]]
+        self.assertEqual(types, ["WebPage", "BreadcrumbList", "FAQPage"])
+        webpage = parsed["@graph"][0]
+        self.assertEqual(webpage["datePublished"], "2026-04-18")
+        self.assertEqual(webpage["dateModified"], "2026-08-18")
+        faq = parsed["@graph"][2]
+        self.assertEqual(len(faq["mainEntity"]), 4)
+
+        all_blocks = re.findall(
+            r'<script type="application/ld\+json"[^>]*>(.*?)</script>',
+            out,
+            re.DOTALL,
+        )
+        all_schemas = [
+            json.loads(block.replace("\\u003c", "<")) for block in all_blocks
+        ]
+        faq_pages = []
+        for schema in all_schemas:
+            nodes = schema.get("@graph", [schema])
+            faq_pages.extend(
+                node for node in nodes if node.get("@type") == "FAQPage"
+            )
+        self.assertEqual(len(faq_pages), 1)
+        visible_faq = re.search(
+            r'<section id="philosophy-faq" data-prerender="public-faq">'
+            r"(.*?)</section>",
+            out,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(visible_faq)
+        visible_questions = re.findall(
+            r"<dt>(.*?)</dt>", visible_faq.group(1), re.DOTALL
+        )
+        structured_questions = [
+            item["name"] for item in faq_pages[0]["mainEntity"]
+        ]
+        self.assertEqual(structured_questions, visible_questions)
 
     def test_ai_university_config_uses_dedicated_social_image(self) -> None:
         repo_root = Path(__file__).resolve().parents[2]
