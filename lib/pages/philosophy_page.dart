@@ -26,9 +26,13 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        document_title.setDocumentTitle(philosophyDocumentTitle);
-      }
+      // MaterialApp's root Title updates later in the first frame. Defer one
+      // event turn so the route-specific title is the final browser value.
+      Future<void>.delayed(Duration.zero, () {
+        if (mounted) {
+          document_title.setDocumentTitle(philosophyDocumentTitle);
+        }
+      });
     });
     for (final v in _videos) {
       final src = v.mp4Url ?? 'https://www.youtube.com/embed/${v.id}';

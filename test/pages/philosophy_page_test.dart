@@ -14,6 +14,7 @@ void main() {
       const MaterialApp(home: PhilosophyPage()),
     );
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1));
 
     expect(
       find.text('自分株式会社を30日で運営する実践ガイド'),
