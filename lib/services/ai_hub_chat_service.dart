@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/asset_chat.dart';
+import 'asset_chat_privacy_settings_service.dart';
 import 'offline_secure_mode_settings_service.dart';
 
 typedef AiHubChatInvoker = Future<Map<String, dynamic>> Function(
@@ -148,22 +149,26 @@ class AiHubChatService {
   final SupabaseClient? _supabase;
   final AiHubChatInvoker? _invoker;
   final OfflineSecureModeSettingsService _offlineSettingsService;
+  final AssetChatPrivacySettingsService _assetChatPrivacySettingsService;
 
   const AiHubChatService({
     SupabaseClient? supabase,
     AiHubChatInvoker? invoker,
     OfflineSecureModeSettingsService offlineSettingsService =
         const OfflineSecureModeSettingsService(),
+    AssetChatPrivacySettingsService assetChatPrivacySettingsService =
+        const AssetChatPrivacySettingsService(),
   })  : _supabase = supabase,
         _invoker = invoker,
-        _offlineSettingsService = offlineSettingsService;
+        _offlineSettingsService = offlineSettingsService,
+        _assetChatPrivacySettingsService = assetChatPrivacySettingsService;
 
   Future<AssetChatResponse> sendAssetChat({
     required String message,
     String? threadId,
     int snapshotMonths = 3,
     int historyMessages = 8,
-    String piiMode = 'off',
+    String? piiMode,
   }) async {
     final normalizedMessage = message.trim();
     if (normalizedMessage.isEmpty) {
@@ -181,6 +186,10 @@ class AiHubChatService {
     if (AiHubChatQuotaGuard.isCoolingDown()) {
       throw const AiHubChatException('AI quota cooldown');
     }
+    final resolvedPiiMode = piiMode ??
+        ((await _assetChatPrivacySettingsService.loadMaskMoneyAmounts())
+            ? 'mask'
+            : 'off');
 
     try {
       final data = await _invoke(
@@ -191,7 +200,7 @@ class AiHubChatService {
             'thread_id': threadId.trim(),
           'snapshot_months': snapshotMonths.clamp(1, 12),
           'history_messages': historyMessages.clamp(0, 20),
-          'pii_mode': piiMode,
+          'pii_mode': resolvedPiiMode,
         }),
       );
       final reply = data['reply']?.toString().trim();
