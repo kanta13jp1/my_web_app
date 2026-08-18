@@ -143,6 +143,7 @@ import 'package:my_web_app/pages/team_workspace_page.dart';
 import 'package:my_web_app/pages/ai_status_page.dart';
 import 'package:my_web_app/pages/ai_provider_status_page.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/pages/asset_chat_history_page.dart';
 import 'package:my_web_app/pages/cfo_office_page.dart';
 import 'package:my_web_app/pages/cho_office_page.dart';
 import 'package:my_web_app/pages/chro_office_page.dart';
@@ -1094,6 +1095,10 @@ Route<dynamic> generateAppRoute(
     case '/asset-management':
       return MaterialPageRoute(
         builder: (_) => const AssetManagementPage(),
+      );
+    case '/asset-chat-history':
+      return MaterialPageRoute(
+        builder: (_) => const AssetChatHistoryPage(),
       );
     case '/cfo-office':
       return MaterialPageRoute(builder: (_) => const CfoOfficePage());

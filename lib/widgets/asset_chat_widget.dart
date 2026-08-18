@@ -9,8 +9,14 @@ import '../view_models/asset_chat_view_model.dart';
 class AssetChatWidget extends StatefulWidget {
   final AiHubChatService? service;
   final AssetChatViewModel? viewModel;
+  final VoidCallback? onOpenHistory;
 
-  const AssetChatWidget({super.key, this.service, this.viewModel});
+  const AssetChatWidget({
+    super.key,
+    this.service,
+    this.viewModel,
+    this.onOpenHistory,
+  });
 
   @override
   State<AssetChatWidget> createState() => _AssetChatWidgetState();
@@ -65,6 +71,16 @@ class _AssetChatWidgetState extends State<AssetChatWidget> {
       _inputController.clear();
     }
     await pending;
+  }
+
+  void _openHistory() {
+    setState(() => _isOpen = false);
+    final callback = widget.onOpenHistory;
+    if (callback != null) {
+      callback();
+      return;
+    }
+    Navigator.of(context).pushNamed('/asset-chat-history');
   }
 
   @override
@@ -140,6 +156,12 @@ class _AssetChatWidgetState extends State<AssetChatWidget> {
                   ),
                 ],
               ),
+            ),
+            IconButton(
+              key: const Key('asset_chat_history_button'),
+              tooltip: 'チャット履歴を開く',
+              onPressed: _openHistory,
+              icon: const Icon(Icons.history, color: Colors.white),
             ),
             IconButton(
               key: const Key('asset_chat_close_button'),
