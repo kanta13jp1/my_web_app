@@ -52,6 +52,7 @@ const List<String> kAllAppRoutes = <String>[
   '/app-hub',
   '/appointment-scheduler',
   '/ar-navigation',
+  '/asset-chat-history',
   '/asset-management',
   '/auction-marketplace',
   '/audio-effects-processor',
