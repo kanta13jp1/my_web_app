@@ -169,10 +169,26 @@
 
 Googleはトップページの新しいタイトル・説明文をまだ取得しておらず、理念ページも未検出である。公開から時間が短く、再クロール前に追加の文言や構造を重ねると今回実装の効果測定が混線するため、アプリ本体は変更しない。追跡ファイルへの観測追加だけを行う。
 
+### `/philosophy` クロール可能性監査
+
+未検出が技術的な遮断によるものかを本番レスポンスで追加確認した。
+
+- `https://my-web-app-b67f4.web.app/philosophy`: HTTP 200、`text/html; charset=utf-8`
+- robots meta: `index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1`
+- `X-Robots-Tag`: インデックスを妨げる指定なし
+- canonical: `https://my-web-app-b67f4.web.app/philosophy` の自己参照
+- `robots.txt`: `/philosophy` を明示的にAllowし、sitemap URLを掲載
+- `sitemap.xml`: `/philosophy` を掲載（`lastmod: 2026-08-17`、`changefreq: monthly`、`priority: 0.5`）。本番sitemapは47 URLでHTTP 200
+- 本番トップページの静的HTMLから `/philosophy` への内部リンクあり
+- 本番HTMLのJSON-LD 3ブロックはすべてJSONとして解析可能
+
+結論: Googlebotの発見・取得・インデックスを妨げる明確な技術要因は見つからない。公開直後のクロール待ちが最も整合的であり、検索結果だけからクロール日時やインデックス採否は断定しない。Search ConsoleのURL検査データは今回未確認。
+
 ### 検証結果
 
 - JSONL全行をJSONとして読み込めることを確認
 - `git diff --check` で空白エラーがないことを確認
+- 本番のHTTP、robots、canonical、sitemap、内部リンク、JSON-LDを機械的に監査
 - アプリコード変更なしのため、Flutterテスト・buildは前回の本番デプロイ検証を継続参照
 
 ### 次回確認事項
