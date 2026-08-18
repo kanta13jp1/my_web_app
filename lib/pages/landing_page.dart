@@ -106,6 +106,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
   String? _trialAction;
   String? _trialReason;
+  String? _trialErrorTitle;
+  String? _trialErrorMessage;
   String? _lastMagicLinkEmail;
   String? _pendingReferralCode;
   _LandingIntent _selectedIntent = _LandingIntent.work;
@@ -602,20 +604,27 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   Future<void> _runTrialActionPreview() async {
-    unawaited(_recordTrialStages());
     final input = _trialPromptController.text.trim();
-    final instantSuggestion = _buildTrialFallbackSuggestion(input);
-    setState(() {
-      _trialAction = instantSuggestion.$1;
-      _trialReason = instantSuggestion.$2;
-      _showSaveCtaPrompt = true;
-    });
-    _scrollToTrialMagicLink(requestFocus: false);
     if (input.isEmpty) {
+      setState(() {
+        _trialAction = null;
+        _trialReason = null;
+        _trialErrorTitle = '入力内容を確認してください';
+        _trialErrorMessage = 'いま詰まっていることを1行入力してください。';
+        _showSaveCtaPrompt = false;
+      });
       return;
     }
 
-    setState(() => _isTrialLoading = true);
+    unawaited(_recordTrialStages());
+    setState(() {
+      _isTrialLoading = true;
+      _trialAction = null;
+      _trialReason = null;
+      _trialErrorTitle = null;
+      _trialErrorMessage = null;
+      _showSaveCtaPrompt = false;
+    });
     try {
       final result = await widget.adapter.improveTrialPrompt(prompt: input);
       final parsed = _parseTrialAiResponse(result);
@@ -623,17 +632,22 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       setState(() {
         _trialAction = parsed.$1;
         _trialReason = parsed.$2;
+        _trialErrorTitle = null;
+        _trialErrorMessage = null;
         _showSaveCtaPrompt = true;
       });
+      _scrollToTrialMagicLink(requestFocus: false);
     } catch (e) {
       debugPrint('Trial preview failed: $e');
       unawaited(_recordConversionStage('trial_fallback'));
-      final fallback = _buildTrialFallbackSuggestion(input);
+      final failure = _resolveTrialPreviewError(e);
       if (!mounted) return;
       setState(() {
-        _trialAction = fallback.$1;
-        _trialReason = fallback.$2;
-        _showSaveCtaPrompt = true;
+        _trialAction = null;
+        _trialReason = null;
+        _trialErrorTitle = failure.$1;
+        _trialErrorMessage = failure.$2;
+        _showSaveCtaPrompt = false;
       });
     } finally {
       if (mounted) {
@@ -911,66 +925,56 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       return (safe, 'AIの返答をそのまま簡易表示しています。');
     }
 
-    return _buildTrialFallbackSuggestion(_trialPromptController.text.trim());
+    throw const FormatException('Landing trial returned an empty response.');
   }
 
-  (String, String) _buildTrialFallbackSuggestion(String input) {
-    final text = input.trim();
-    if (text.isEmpty) {
-      return ('今日の最重要を1件決める', '入力が空でも、最初に最重要を1件に絞るだけで着手はかなり早くなります。');
+  (String, String) _resolveTrialPreviewError(Object error) {
+    if (error is LandingTrialPreviewException) {
+      switch (error.code) {
+        case 'trial_quota_exhausted':
+          return (
+            '本日の無料試用回数に達しました',
+            '登録前のAI試用は1日3回までです。日本時間の翌日に回数が戻ります。',
+          );
+        case 'prompt is required':
+          return ('入力内容を確認してください', 'いま詰まっていることを1行入力してください。');
+        case 'trial_ai_unavailable':
+          return (
+            'AIの回答を取得できませんでした',
+            'AIが一時的に応答できません。少し時間をおいて、もう一度お試しください。',
+          );
+      }
+      if (error.code.startsWith('prompt must be')) {
+        return ('入力内容を確認してください', '入力は280文字以内に短くしてください。');
+      }
     }
-
-    if (text.contains('メール') ||
-        text.contains('SMS') ||
-        text.contains('DM') ||
-        text.contains('連絡')) {
-      return ('未読の確認を1件だけ終える', '連絡系は放置コストが高いので、最初に1件だけ処理すると全体が進みます。');
+    if (error is LandingPageAuthUnavailableException) {
+      return (
+        'AIの回答を取得できませんでした',
+        'AIへの接続を準備できませんでした。ページを再読み込みして、もう一度お試しください。',
+      );
     }
+    return (
+      'AIの回答を取得できませんでした',
+      '通信状態を確認し、少し時間をおいてもう一度お試しください。',
+    );
+  }
 
-    if (RegExp(
-      r'支出|出費|家計|固定費|変動費|予算|浪費|お金|請求|明細|サブスク|収入|貯金|資産|借金|返済|税金|投資|削減',
-    ).hasMatch(text)) {
-      return ('先月の明細で最も高い固定費を1件特定', '最大の固定費を先に確認すると、削減効果を比較しやすくなるためです。');
+  void _handleTrialPromptChanged(String _) {
+    if (_trialAction == null &&
+        _trialReason == null &&
+        _trialErrorTitle == null &&
+        _trialErrorMessage == null &&
+        !_showSaveCtaPrompt) {
+      return;
     }
-
-    if (RegExp(r'学習|勉強|英語|読書|復習|試験|資格|暗記|教材|授業').hasMatch(text)) {
-      return ('今日復習する教材を1件開く', '対象を1件に固定すると、短時間でも復習を完了しやすくなるためです。');
-    }
-
-    if (RegExp(
-      r'LP|ランディング|登録|サインアップ|フォーム|CTA|ボタン|申込|コンバージョン|離脱',
-      caseSensitive: false,
-    ).hasMatch(text)) {
-      return ('登録ボタン直前の価値説明を1文見直す', '登録後に得られる成果を明確にすると、迷った訪問者が判断しやすくなるためです。');
-    }
-
-    if (RegExp(r'健康|運動|睡眠|食事|体重|病院|服薬').hasMatch(text)) {
-      return ('直近の健康記録を1件確認', '最新の状態を1件確認すると、今日変える行動を具体化しやすくなるためです。');
-    }
-
-    if (RegExp(r'情報整理|ノート|メモ|資料|ファイル|知識|文書').hasMatch(text)) {
-      return ('未整理のメモを1件開き用途を1行追記', '用途を1行で固定すると、残すか行動に変えるかを判断しやすくなるためです。');
-    }
-
-    if (RegExp(r'予定|時間|先送り|後回し|着手|集中|習慣').hasMatch(text)) {
-      return ('今日の予定から先送り中の1件を選ぶ', '対象を1件に固定すると、使える時間をその行動に割り当てやすくなるためです。');
-    }
-
-    if (text.contains('考える') ||
-        text.contains('悩む') ||
-        text.contains('迷う') ||
-        text.contains('決めたい')) {
-      return ('判断条件を1つだけ書き出す', '条件を先に言語化すると、迷いが減って次の行動が決まりやすくなります。');
-    }
-
-    if (text.contains('タスク') ||
-        RegExp('[Tt][Oo][Dd][Oo]').hasMatch(text) ||
-        text.contains('仕事') ||
-        text.contains('課題')) {
-      return ('10分だけ使って最重要を1件に絞る', '最重要を1件だけ先に固定すると、その後の先延ばしが大きく減ります。');
-    }
-
-    return ('20分だけ動ける最小単位に分解する', '大きすぎる作業は始めにくいので、最小単位まで分けてから着手してください。');
+    setState(() {
+      _trialAction = null;
+      _trialReason = null;
+      _trialErrorTitle = null;
+      _trialErrorMessage = null;
+      _showSaveCtaPrompt = false;
+    });
   }
 
   String _resolveEmailAuthError(Object error) {
@@ -4157,6 +4161,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               TextField(
                 key: const Key('landing_trial_prompt_input'),
                 controller: _trialPromptController,
+                readOnly: _isTrialLoading,
+                onChanged: _handleTrialPromptChanged,
                 minLines: heroMode ? 1 : 2,
                 maxLines: heroMode ? 2 : 3,
                 decoration: InputDecoration(
@@ -4183,14 +4189,16 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                       : heroMode
                           ? _runHeroTrialActionPreview
                           : _runTrialActionPreview,
-                  icon: const Icon(Icons.play_arrow),
-                  label: _isTrialLoading
+                  icon: _isTrialLoading
                       ? const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('今やる1件を試す'),
+                      : const Icon(Icons.play_arrow),
+                  label: Text(
+                    _isTrialLoading ? 'AIが具体的な1件を考えています…' : '今やる1件を試す',
+                  ),
                   style: compactHero
                       ? FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(44),
@@ -4198,6 +4206,90 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                       : null,
                 ),
               ),
+              if (_isTrialLoading) ...[
+                const SizedBox(height: 10),
+                Semantics(
+                  liveRegion: true,
+                  child: Container(
+                    key: const Key('landing_trial_loading'),
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F8FC),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      '入力内容から、10分以内に完了できる具体的な1件を作成しています。',
+                      style: TextStyle(
+                        color: Color(0xFF475569),
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              if (_trialErrorMessage != null) ...[
+                const SizedBox(height: 14),
+                Container(
+                  key: const Key('landing_trial_error'),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF7ED),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFF59E0B)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.info_outline,
+                            size: 20,
+                            color: Color(0xFFB45309),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _trialErrorTitle!,
+                              style: const TextStyle(
+                                color: Color(0xFF7C2D12),
+                                fontWeight: FontWeight.w800,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _trialErrorMessage!,
+                        style: const TextStyle(
+                          color: Color(0xFF9A3412),
+                          fontSize: 13,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          key: const Key('landing_trial_retry'),
+                          onPressed: _runTrialActionPreview,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('もう一度試す'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               if (_trialAction != null) ...[
                 const SizedBox(height: 14),
                 Container(

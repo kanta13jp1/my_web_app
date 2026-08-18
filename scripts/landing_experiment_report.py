@@ -46,6 +46,12 @@ REPORT_SELECT = ",".join(
         "last_event_at",
     )
 )
+FUNNEL_EVENT_KEYS = (
+    "funnel_trial_run",
+    "funnel_save_cta",
+    "funnel_magic_link_send",
+    "funnel_inbox_open",
+)
 
 
 class ReportContractError(ValueError):
@@ -203,6 +209,63 @@ def validate_arm_rows(rows: Any) -> dict[tuple[str, str], ArmStats]:
     return parsed
 
 
+def experiment_observation_window(
+    arms: dict[tuple[str, str], ArmStats],
+) -> tuple[str | None, str | None]:
+    dates: list[str] = []
+    for arm in arms.values():
+        for value in (arm.first_event_at, arm.last_event_at):
+            if not value:
+                continue
+            try:
+                parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            except ValueError as exc:
+                raise ReportContractError(
+                    f"invalid experiment event timestamp: {value}"
+                ) from exc
+            dates.append(parsed.date().isoformat())
+    if not dates:
+        return (None, None)
+    return (min(dates), max(dates))
+
+
+def summarize_funnel_rows(rows: Any) -> dict[str, int]:
+    if not isinstance(rows, list):
+        raise ReportContractError("app analytics response must be a list")
+
+    totals = {event_key: 0 for event_key in FUNNEL_EVENT_KEYS}
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ReportContractError("every app analytics row must be an object")
+        source_details = row.get("source_details")
+        if source_details is None:
+            continue
+        if not isinstance(source_details, dict):
+            raise ReportContractError("app analytics source_details must be an object")
+        for event_key in FUNNEL_EVENT_KEYS:
+            value = source_details.get(event_key, 0)
+            if isinstance(value, bool):
+                raise ReportContractError(
+                    f"app analytics {event_key} must be an integer"
+                )
+            if isinstance(value, float) and not value.is_integer():
+                raise ReportContractError(
+                    f"app analytics {event_key} must be an integer"
+                )
+            try:
+                count = int(value)
+            except (TypeError, ValueError) as exc:
+                raise ReportContractError(
+                    f"app analytics {event_key} must be an integer"
+                ) from exc
+            if count < 0:
+                raise ReportContractError(
+                    f"app analytics {event_key} must be non-negative"
+                )
+            totals[event_key] += count
+    return totals
+
+
 def wilson_interval(
     successes: int,
     trials: int,
@@ -288,6 +351,8 @@ def build_report(
     arms: dict[tuple[str, str], ArmStats],
     *,
     synthetic_offsets: dict[tuple[str, str], int] | None = None,
+    funnel_counts: dict[str, int] | None = None,
+    funnel_observation_window: tuple[str | None, str | None] = (None, None),
     minimum_views_per_arm: int = 100,
     minimum_metric_denominator_per_arm: int = 20,
     minimum_total_primary_successes: int = 10,
@@ -312,6 +377,18 @@ def build_report(
     global_submit_gate_ready = (
         total_signup_submits >= minimum_total_primary_successes
     )
+    funnel_diagnostics = {
+        "status": "available" if funnel_counts is not None else "not_fetched",
+        "observation_start": funnel_observation_window[0],
+        "observation_end": funnel_observation_window[1],
+        "counting": "aggregate_events_not_unique_visitors",
+        "trial_runs": (funnel_counts or {}).get("funnel_trial_run"),
+        "save_ctas": (funnel_counts or {}).get("funnel_save_cta"),
+        "magic_link_sends": (funnel_counts or {}).get(
+            "funnel_magic_link_send"
+        ),
+        "inbox_opens": (funnel_counts or {}).get("funnel_inbox_open"),
+    }
 
     hypotheses: list[dict[str, Any]] = []
     for hypothesis_id in HYPOTHESES:
@@ -422,6 +499,7 @@ def build_report(
             "global_signup_submit_gate_ready": global_submit_gate_ready,
             "auth_and_performance_guardrail": "requires_separate_telemetry",
         },
+        "funnel_diagnostics": funnel_diagnostics,
         "hypotheses": hypotheses,
     }
 
@@ -439,6 +517,7 @@ def _format_rate(arm: dict[str, Any]) -> str:
 
 def render_markdown(report: dict[str, Any]) -> str:
     gates = report["gates"]
+    funnel = report["funnel_diagnostics"]
     lines = [
         "# Landing experiment decision report",
         "",
@@ -460,6 +539,19 @@ def render_markdown(report: dict[str, Any]) -> str:
         "- Minimum primary successes per hypothesis: "
         f"{gates['minimum_total_primary_successes']}",
         f"- Auth/performance guardrail: {gates['auth_and_performance_guardrail']}",
+        "",
+        "## Signup handoff diagnostics",
+        "",
+        f"- Status: {funnel['status']}",
+        "- Observation window: "
+        f"{funnel['observation_start'] or 'unknown'} to "
+        f"{funnel['observation_end'] or 'unknown'}",
+        f"- Trial runs: {funnel['trial_runs'] if funnel['trial_runs'] is not None else 'missing'}",
+        f"- Save CTA events: {funnel['save_ctas'] if funnel['save_ctas'] is not None else 'missing'}",
+        "- Successful Magic Link sends: "
+        f"{funnel['magic_link_sends'] if funnel['magic_link_sends'] is not None else 'missing'}",
+        f"- Inbox opens: {funnel['inbox_opens'] if funnel['inbox_opens'] is not None else 'missing'}",
+        "- Counting note: aggregate event counts, not unique visitors.",
         "",
         "## Hypotheses",
         "",
@@ -542,6 +634,48 @@ def fetch_arm_rows(
     return payload
 
 
+def fetch_funnel_rows(
+    supabase_url: str,
+    service_role_key: str,
+    *,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    timeout: int = 20,
+) -> list[dict[str, Any]]:
+    if not service_role_key.strip():
+        raise ReportContractError("SUPABASE_SERVICE_ROLE_KEY is required")
+    query_parameters = {
+        "select": "date,source_details",
+        "order": "date.asc",
+    }
+    if start_date:
+        query_parameters["date"] = f"gte.{start_date}"
+    if end_date:
+        query_parameters["and"] = f"(date.lte.{end_date})"
+    query = urllib.parse.urlencode(query_parameters)
+    url = f"{supabase_url.rstrip('/')}/rest/v1/app_analytics?{query}"
+    request = urllib.request.Request(
+        url,
+        headers={
+            "apikey": service_role_key,
+            "Authorization": f"Bearer {service_role_key}",
+            "Accept": "application/json",
+            "User-Agent": "my-web-app-landing-experiment-report/1.0",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        message = exc.read().decode("utf-8", errors="replace")[:500]
+        raise ReportContractError(
+            f"signup handoff report API returned HTTP {exc.code}: {message}"
+        ) from exc
+    if not isinstance(payload, list):
+        raise ReportContractError("signup handoff report API returned non-list JSON")
+    return payload
+
+
 def write_report(path: str, content: str) -> None:
     report_path = Path(path)
     report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -577,7 +711,21 @@ def main(argv: list[str] | None = None) -> int:
         )
         arms = validate_arm_rows(rows)
         offsets = parse_synthetic_offsets(args.synthetic_view_offset)
-        report = build_report(arms, synthetic_offsets=offsets)
+        observation_window = experiment_observation_window(arms)
+        funnel_rows = fetch_funnel_rows(
+            args.supabase_url,
+            service_role_key,
+            start_date=observation_window[0],
+            end_date=observation_window[1],
+            timeout=args.timeout,
+        )
+        funnel_counts = summarize_funnel_rows(funnel_rows)
+        report = build_report(
+            arms,
+            synthetic_offsets=offsets,
+            funnel_counts=funnel_counts,
+            funnel_observation_window=observation_window,
+        )
         markdown = render_markdown(report)
         write_report(
             args.json_report,

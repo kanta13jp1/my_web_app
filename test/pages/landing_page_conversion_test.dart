@@ -842,7 +842,8 @@ void main() {
     },
   );
 
-  testWidgets('H11 shows proof before interaction and instant value on tap', (
+  testWidgets('H11 shows proof before interaction and waits for the AI result',
+      (
     tester,
   ) async {
     final adapter = await pumpLanding(
@@ -862,15 +863,20 @@ void main() {
     expect(adapter.trialRuns, 1);
     expect(
       find.byKey(const Key('landing_trial_result_action')),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.textContaining('10分だけ使って最重要を1件に絞る'), findsOneWidget);
+    expect(find.byKey(const Key('landing_trial_loading')), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_h04_inline_magic_capture')),
+      findsNothing,
+    );
 
     adapter.trialResponse!.complete('ACTION: 確認先を1人決める\nREASON: 停滞を最短で解消するため');
     await tester.pump();
     await tester.pump();
 
     expect(find.text('確認先を1人決める'), findsOneWidget);
+    expect(find.byKey(const Key('landing_trial_loading')), findsNothing);
     expect(adapter.lastTrialPrompt, '仕事が多すぎて、何から始めるか決められない');
     expect(
       adapter.conversionEvents,
@@ -879,9 +885,21 @@ void main() {
         'lp_exp_h01_treatment_trial',
       ]),
     );
+
+    await tester.enterText(
+      find.byKey(const Key('landing_trial_prompt_input')),
+      '別の仕事について相談したい',
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('landing_trial_result_action')), findsNothing);
+    expect(
+      find.byKey(const Key('landing_h04_inline_magic_capture')),
+      findsNothing,
+    );
   });
 
-  testWidgets('trial provider failure keeps the useful instant result', (
+  testWidgets('trial provider failure shows an honest retry state', (
     tester,
   ) async {
     final adapter = await pumpLanding(
@@ -896,11 +914,79 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.textContaining('10分だけ使って最重要を1件に絞る'), findsOneWidget);
-    expect(find.textContaining('AI応答が不安定'), findsNothing);
+    expect(find.byKey(const Key('landing_trial_result_action')), findsNothing);
+    expect(find.byKey(const Key('landing_trial_error')), findsOneWidget);
+    expect(find.text('AIの回答を取得できませんでした'), findsOneWidget);
+    expect(find.byKey(const Key('landing_trial_retry')), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_h04_inline_magic_capture')),
+      findsNothing,
+    );
+
+    adapter.trialError = null;
+    await tester.tap(find.byKey(const Key('landing_trial_retry')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byKey(const Key('landing_trial_error')), findsNothing);
+    expect(find.text('重要な案件を1件選ぶ'), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_h04_inline_magic_capture')),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('trial provider failure keeps a finance-specific result', (
+  testWidgets('trial quota exhaustion explains the daily limit', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.treatment),
+    );
+    adapter.trialError = const LandingTrialPreviewException(
+      'trial_quota_exhausted',
+      statusCode: 429,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('landing_h11_answer_preview_action')),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('本日の無料試用回数に達しました'), findsOneWidget);
+    expect(find.textContaining('1日3回'), findsOneWidget);
+    expect(find.textContaining('日本時間の翌日'), findsOneWidget);
+    expect(find.byKey(const Key('landing_trial_result_action')), findsNothing);
+    expect(
+      find.byKey(const Key('landing_h04_inline_magic_capture')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('empty trial input is not recorded as an AI trial', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.treatment),
+    );
+
+    await tester.tap(find.byKey(const Key('landing_h03_inline_trial_action')));
+    await tester.pump();
+
+    expect(find.text('入力内容を確認してください'), findsOneWidget);
+    expect(find.textContaining('1行入力してください'), findsOneWidget);
+    expect(adapter.trialRuns, 0);
+    expect(adapter.lastTrialPrompt, isNull);
+    expect(find.byKey(const Key('landing_trial_result_action')), findsNothing);
+    expect(
+      find.byKey(const Key('landing_h04_inline_magic_capture')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('trial provider failure never presents a fixed finance answer', (
     tester,
   ) async {
     final adapter = await pumpLanding(
@@ -917,8 +1003,13 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('先月の明細で最も高い固定費を1件特定'), findsOneWidget);
-    expect(find.textContaining('20分だけ動ける最小単位'), findsNothing);
+    expect(find.byKey(const Key('landing_trial_result_action')), findsNothing);
+    expect(find.text('先月の明細で最も高い固定費を1件特定'), findsNothing);
+    expect(find.byKey(const Key('landing_trial_error')), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_h04_inline_magic_capture')),
+      findsNothing,
+    );
     expect(
       adapter.conversionEvents,
       contains('lp_exp_h01_treatment_trial_fallback'),
