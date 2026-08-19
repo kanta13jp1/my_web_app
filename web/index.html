@@ -705,6 +705,72 @@
     </main>
   </div>
   <script>
+    // Supabase Auth consumes OAuth callback parameters during Flutter startup.
+    // Convert failures to an allowlisted category first, and remove raw provider
+    // text from the address bar so the LP can recover without retaining PII.
+    (function preserveSafeOAuthCallbackFailure() {
+      var url = new URL(window.location.href);
+      var query = url.searchParams;
+      var hashValue = url.hash.replace(/^#/, '');
+      var queryStart = hashValue.indexOf('?');
+      var hash = new URLSearchParams(
+        queryStart >= 0 ? hashValue.slice(queryStart + 1) : hashValue
+      );
+      var error = hash.get('error') || query.get('error') || '';
+      var code = hash.get('error_code') || query.get('error_code') || '';
+      var description =
+        hash.get('error_description') || query.get('error_description') || '';
+      if (!error && !code && !description) return;
+
+      var signal = (error + ' ' + code + ' ' + description).toLowerCase();
+      var category = 'unknown';
+      if (
+        signal.indexOf('access_denied') !== -1 ||
+        signal.indexOf('cancelled') !== -1 ||
+        signal.indexOf('canceled') !== -1 ||
+        signal.indexOf('user denied') !== -1
+      ) {
+        category = 'cancelled';
+      } else if (
+        signal.indexOf('rate_limit') !== -1 ||
+        signal.indexOf('too many requests') !== -1 ||
+        signal.indexOf('429') !== -1
+      ) {
+        category = 'rate_limit';
+      } else if (
+        signal.indexOf('provider_disabled') !== -1 ||
+        signal.indexOf('provider is not enabled') !== -1 ||
+        signal.indexOf('unsupported provider') !== -1
+      ) {
+        category = 'provider_config';
+      } else if (
+        signal.indexOf('redirect') !== -1 ||
+        signal.indexOf('callback url') !== -1
+      ) {
+        category = 'redirect';
+      } else if (
+        signal.indexOf('flow_state') !== -1 ||
+        signal.indexOf('pkce') !== -1 ||
+        signal.indexOf('code exchange') !== -1 ||
+        signal.indexOf('exchange external code') !== -1 ||
+        signal.indexOf('unable to exchange') !== -1 ||
+        signal.indexOf('oauth state') !== -1
+      ) {
+        category = 'callback_exchange';
+      }
+
+      query.delete('error');
+      query.delete('error_code');
+      query.delete('error_description');
+      query.set('oauth_callback_failure', category);
+      url.hash = '';
+      window.history.replaceState(
+        window.history.state,
+        '',
+        url.pathname + url.search
+      );
+    })();
+
     // The SEO shell is interactive before Flutter's first frame. On the root
     // landing page, keep the in-flight app download instead of reloading the
     // same 4MB+ bundle just to add lp_intent=trial to the URL.

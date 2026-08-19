@@ -57,6 +57,20 @@ void main() {
     );
   });
 
+  test('accepts the browser-sanitized callback category', () {
+    final failure = LandingOAuthCallbackFailure.fromUri(
+      Uri.parse(
+        'https://example.com/?oauth_callback_failure=callback_exchange',
+      ),
+    );
+
+    expect(
+      failure?.category,
+      LandingOAuthCallbackFailureCategory.callbackExchange,
+    );
+    expect(failure?.userMessage, isNot(contains('oauth')));
+  });
+
   test('classifies rate limits and provider configuration failures', () {
     expect(
       LandingOAuthCallbackFailure.fromUri(

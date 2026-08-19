@@ -40,6 +40,16 @@ class LandingOAuthCallbackFailure {
       }
     }
 
+    final safeCategory = _categoryFromSafeCode(
+      parameters['oauth_callback_failure']?.trim().toLowerCase(),
+    );
+    if (safeCategory != null) {
+      return LandingOAuthCallbackFailure(
+        category: safeCategory,
+        userMessage: _messageFor(safeCategory),
+      );
+    }
+
     final error = parameters['error']?.trim() ?? '';
     final code = parameters['error_code']?.trim() ?? '';
     final description = parameters['error_description']?.trim() ?? '';
@@ -84,6 +94,22 @@ class LandingOAuthCallbackFailure {
       return LandingOAuthCallbackFailureCategory.callbackExchange;
     }
     return LandingOAuthCallbackFailureCategory.unknown;
+  }
+
+  static LandingOAuthCallbackFailureCategory? _categoryFromSafeCode(
+    String? code,
+  ) {
+    return switch (code) {
+      'cancelled' => LandingOAuthCallbackFailureCategory.cancelled,
+      'rate_limit' => LandingOAuthCallbackFailureCategory.rateLimited,
+      'provider_config' =>
+        LandingOAuthCallbackFailureCategory.providerConfiguration,
+      'redirect' => LandingOAuthCallbackFailureCategory.redirectConfiguration,
+      'callback_exchange' =>
+        LandingOAuthCallbackFailureCategory.callbackExchange,
+      'unknown' => LandingOAuthCallbackFailureCategory.unknown,
+      _ => null,
+    };
   }
 
   static String _messageFor(

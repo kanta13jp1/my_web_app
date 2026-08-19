@@ -73,7 +73,24 @@ test.describe('LP first-user acquisition', () => {
 
   test('Google callback failure exposes safe retry and Magic Link recovery', async ({
     page,
-  }) => {
+  }, testInfo) => {
+    const browserIssues: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') {
+        browserIssues.push(`console: ${message.text()}`);
+      }
+    });
+    page.on('pageerror', (error) => {
+      browserIssues.push(`pageerror: ${error.message}`);
+    });
+    page.on('response', (response) => {
+      if (response.status() >= 500) {
+        browserIssues.push(
+          `http ${response.status()}: ${response.url()}`,
+        );
+      }
+    });
+
     await openLanding(
       page,
       '/?lp_hypothesis=h04&lp_variant=treatment&lp_qa=1'
@@ -99,6 +116,9 @@ test.describe('LP first-user acquisition', () => {
     await expect(retry).toBeVisible();
     await expect(magicLink).toBeVisible();
     await expect(page.getByText('private@example.com')).toHaveCount(0);
+    expect(decodeURIComponent(page.url())).not.toContain(
+      'private@example.com',
+    );
 
     const viewport = page.viewportSize();
     const recoveryBox = await magicLink.boundingBox();
@@ -107,6 +127,19 @@ test.describe('LP first-user acquisition', () => {
     expect(recoveryBox!.y + recoveryBox!.height).toBeLessThanOrEqual(
       viewport!.height,
     );
+
+    await testInfo.attach('oauth-callback-recovery', {
+      // Flutter Web canvases can duplicate frames when Playwright temporarily
+      // resizes the viewport for a full-page capture. Keep this visual proof
+      // aligned with the viewport whose recovery controls were asserted above.
+      body: await page.screenshot(),
+      contentType: 'image/png',
+    });
+    await testInfo.attach('oauth-callback-browser-issues', {
+      body: JSON.stringify(browserIssues, null, 2),
+      contentType: 'application/json',
+    });
+    expect(browserIssues).toEqual([]);
   });
 
   test('H03 control keeps recoverable authentication before the lower trial', async ({
@@ -194,4 +227,8 @@ async function openLanding(page: Page, path: string) {
       exact: true,
     }),
   ).toBeVisible({ timeout: 60_000 });
+  await page.locator('#seo-shell').waitFor({
+    state: 'detached',
+    timeout: 10_000,
+  });
 }
