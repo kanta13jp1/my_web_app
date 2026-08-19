@@ -479,7 +479,8 @@ class _AuthenticatedHomePageState extends State<_AuthenticatedHomePage> {
 String _initialRouteName() {
   final uri = Uri.base;
   if (uri.path.isNotEmpty && uri.path != '/') {
-    return uri.hasQuery ? '${uri.path}?${uri.query}' : uri.path;
+    final path = normalizeRoutePath(uri.path);
+    return uri.hasQuery ? '$path?${uri.query}' : path;
   }
   if (uri.fragment.startsWith('/')) {
     return uri.fragment;
@@ -498,12 +499,13 @@ Route<dynamic> generateAppRoute(
   required LandingSignupCompletionService signupCompletionService,
 }) {
   final uri = Uri.parse(settings.name ?? '/');
+  final routePath = normalizeRoutePath(uri.path);
   // 全ての named route 遷移を利用履歴に記録する単一チョークポイント。
   // 主要導線の直叩き pushNamed が記録されず、最近使った / よく使われる
   // 機能が「サイト案内AI」しか並ばなかった機能不全 (#3279) を解消する。
   recordFeatureRouteNavigation(settings.name);
 
-  switch (uri.path) {
+  switch (routePath) {
     case '/':
       return MaterialPageRoute(
         builder: (_) => supabase.auth.currentSession != null
@@ -1797,10 +1799,10 @@ Route<dynamic> generateAppRoute(
         builder: (_) => HorseracingRaceDetailPage(race: race),
       );
     default:
-      if (uri.path.startsWith('/vs-')) {
+      if (routePath.startsWith('/vs-')) {
         return MaterialPageRoute(
           builder: (_) => ComparisonPage(
-            competitorKey: uri.path.replaceFirst('/vs-', ''),
+            competitorKey: routePath.replaceFirst('/vs-', ''),
           ),
           settings: settings,
         );
