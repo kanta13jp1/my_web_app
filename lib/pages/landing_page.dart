@@ -523,21 +523,26 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       return;
     }
 
+    final isSignup = _isSignUp;
+    final tracksSignup = isSignup && _analyticsEnabled;
+
     if (_emailController.text.trim() != email) {
       _emailController.text = email;
     }
 
     setState(() => _isLoading = true);
     try {
-      if (_analyticsEnabled) {
+      if (tracksSignup) {
         await _markSignupCompletionPending(email: email);
       }
-      unawaited(_recordSignupSubmitStages());
-      unawaited(_acquisitionService.recordLandingSignupSubmit());
+      if (isSignup) {
+        unawaited(_recordSignupSubmitStages());
+        unawaited(_acquisitionService.recordLandingSignupSubmit());
+      }
       await widget.adapter.sendMagicLink(
         email: email,
         emailRedirectTo: _webRedirectUrl,
-        shouldCreateUser: true,
+        shouldCreateUser: isSignup,
       );
       if (mounted) {
         setState(() {
@@ -546,14 +551,18 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         });
       }
       _startMagicLinkCooldown();
-      _showMessage('Magic Link を送信しました。メール内のリンクからそのまま開始できます。');
+      _showMessage(
+        isSignup
+            ? 'Magic Link を送信しました。メール内のリンクからそのまま開始できます。'
+            : 'Magic Link を送信しました。メール内のリンクからログインできます。',
+      );
     } on LandingPageAuthUnavailableException {
-      if (_analyticsEnabled) {
+      if (tracksSignup) {
         await widget.signupCompletionService.cancelPending(email: email);
       }
       _showMessage('認証機能を初期化できませんでした。');
     } catch (error) {
-      if (_analyticsEnabled) {
+      if (tracksSignup) {
         await widget.signupCompletionService.cancelPending(email: email);
       }
       if (mounted) {
@@ -766,16 +775,31 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authContext = _authSectionKey.currentContext;
       if (!mounted || authContext == null) return;
-      Scrollable.ensureVisible(
-        authContext,
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeOut,
-        alignment: 0.08,
-      ).then((_) {
-        if (!mounted) return;
-        _emailFocusNode.requestFocus();
-      });
+      _emailFocusNode.requestFocus();
+      unawaited(
+        Scrollable.ensureVisible(
+          authContext,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOut,
+          alignment: 0.08,
+        ),
+      );
     });
+  }
+
+  void _showAuthModeAndScroll({required bool isSignUp}) {
+    if (_isSignUp != isSignUp) {
+      setState(() => _isSignUp = isSignUp);
+    }
+    _scrollToAuthSection();
+  }
+
+  void _showSignupAndScroll() {
+    _showAuthModeAndScroll(isSignUp: true);
+  }
+
+  void _showLoginAndScroll() {
+    _showAuthModeAndScroll(isSignUp: false);
   }
 
   void _scrollToTrialMagicLink({bool requestFocus = true}) {
@@ -798,7 +822,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
   void _handleHeroSignup() {
     unawaited(_recordConversionStage('hero_cta'));
-    _scrollToAuthSection();
+    _showSignupAndScroll();
   }
 
   void _handleStickySignup() {
@@ -812,7 +836,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       _scrollToTrialMagicLink();
       return;
     }
-    _scrollToAuthSection();
+    _showSignupAndScroll();
   }
 
   Uri _resolveInboxUri(String email) {
@@ -1576,7 +1600,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               message: 'アカウントを作成して提案を保存できます。登録は30秒程度です。',
               child: FilledButton.icon(
                 key: const Key('landing_register_button'),
-                onPressed: _scrollToAuthSection,
+                onPressed: _showSignupAndScroll,
                 icon: const Icon(Icons.rocket_launch, size: 18),
                 label: const Text(
                   '無料で始める',
@@ -2054,7 +2078,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               runSpacing: 10,
               children: [
                 FilledButton.icon(
-                  onPressed: _scrollToAuthSection,
+                  onPressed: _showSignupAndScroll,
                   icon: const Icon(Icons.person_add_alt_1),
                   label: const Text('Create account'),
                 ),
@@ -4015,7 +4039,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             width: double.infinity,
             height: 48,
             child: FilledButton.icon(
-              onPressed: _scrollToAuthSection,
+              onPressed: _showSignupAndScroll,
               icon: const Icon(Icons.rocket_launch, size: 18),
               label: const Text(
                 '無料で始める（30秒）',
@@ -4629,6 +4653,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       ),
     ];
 
+    const primaryFaqCount = 4;
+    final primaryFaqs = faqs.take(primaryFaqCount);
+    final additionalFaqs = faqs.skip(primaryFaqCount);
+
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -4651,9 +4679,43 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               style: TextStyle(color: Color(0xFF64748B), height: 1.5),
             ),
             const SizedBox(height: 12),
-            for (final faq in faqs) ...[
+            for (final faq in primaryFaqs) ...[
               _FaqItem(question: faq.q, answer: faq.a),
             ],
+            Theme(
+              data: Theme.of(context).copyWith(
+                dividerColor: Colors.transparent,
+                splashColor: const Color(0x143949AB),
+              ),
+              child: ExpansionTile(
+                key: const Key('landing_faq_more_toggle'),
+                tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+                childrenPadding: EdgeInsets.zero,
+                iconColor: const Color(0xFF3949AB),
+                collapsedIconColor: const Color(0xFF64748B),
+                title: Text(
+                  'その他の質問を見る（${faqs.length - primaryFaqCount}件）',
+                  style: const TextStyle(
+                    color: Color(0xFF27364A),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    height: 1.5,
+                  ),
+                ),
+                subtitle: const Text(
+                  '連携・AI構成・セキュリティなどの詳細',
+                  style: TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+                children: [
+                  for (final faq in additionalFaqs)
+                    _FaqItem(question: faq.q, answer: faq.a),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -4827,9 +4889,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
                 const SizedBox(height: 14),
               ],
-              const Text(
-                '今すぐ無料ではじめる',
-                style: TextStyle(
+              Text(
+                _isSignUp ? '今すぐ無料ではじめる' : 'ログインして続きから再開',
+                key: const Key('landing_auth_mode_heading'),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                   height: 1.4,
@@ -4840,6 +4903,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 _isSignUp
                     ? 'メールアドレスだけで30秒登録。AIが今日のタスクを整理し、資産管理・習慣化まで一元化。カード不要。'
                     : '既存ユーザーも Magic Link が最短です。パスワード入力なしで、そのまま再開できます。',
+                key: const Key('landing_auth_mode_description'),
                 style: const TextStyle(color: Color(0xFF64748B), height: 1.5),
               ),
               const SizedBox(height: 12),
@@ -4854,6 +4918,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               ),
               const SizedBox(height: 16),
               TextField(
+                key: const Key('landing_auth_email'),
                 controller: _emailController,
                 focusNode: _emailFocusNode,
                 keyboardType: TextInputType.emailAddress,
@@ -4893,7 +4958,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                             ? (_isMagicLinkCoolingDown
                                 ? '送信済み'
                                 : 'Magic Linkを再送')
-                            : 'Magic Linkで今すぐ始める',
+                            : (_isSignUp
+                                ? 'Magic Linkで今すぐ始める'
+                                : 'Magic Linkでログイン'),
                       ),
                       if (_showInboxShortcut && _isMagicLinkCoolingDown) ...[
                         const SizedBox(width: 8),
@@ -5043,6 +5110,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 SizedBox(
                   height: 52,
                   child: FilledButton(
+                    key: const Key('landing_auth_password_action'),
                     onPressed: _isLoading ? null : _auth,
                     child: _isLoading
                         ? const SizedBox(
@@ -5062,6 +5130,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
                 const SizedBox(height: 10),
                 TextButton(
+                  key: const Key('landing_auth_mode_toggle'),
                   onPressed: _isLoading
                       ? null
                       : () {
@@ -5137,9 +5206,250 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     );
   }
 
+  Widget _buildEditorialPrologue() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 860;
+        final title = Semantics(
+          header: true,
+          child: const Text(
+            '迷いを、判断に変えるための4章。',
+            style: TextStyle(
+              color: Color(0xFF111D2B),
+              fontSize: 38,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -1.2,
+              height: 1.25,
+            ),
+          ),
+        );
+        const copy = Text(
+          '機能を並べるのではなく、理解して、1件で試し、続ける理由を確かめ、最後に不安を解消する順番で案内します。',
+          style: TextStyle(
+            color: Color(0xFF52606D),
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            height: 1.75,
+          ),
+        );
+
+        return Container(
+          key: const Key('landing_editorial_prologue'),
+          padding: EdgeInsets.only(bottom: wide ? 58 : 36),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'THE DECISION JOURNEY',
+                style: TextStyle(
+                  color: Color(0xFFB45F42),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2.3,
+                ),
+              ),
+              const SizedBox(height: 14),
+              if (wide)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(flex: 7, child: title),
+                    const SizedBox(width: 48),
+                    const Expanded(flex: 4, child: copy),
+                  ],
+                )
+              else ...[
+                title,
+                const SizedBox(height: 16),
+                copy,
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEditorialChapter({
+    required int number,
+    required String eyebrow,
+    required String title,
+    required String description,
+    required List<Widget> children,
+  }) {
+    final spacedChildren = <Widget>[];
+    for (var index = 0; index < children.length; index++) {
+      spacedChildren.add(children[index]);
+      if (index < children.length - 1) {
+        spacedChildren.add(const SizedBox(height: 22));
+      }
+    }
+
+    return Container(
+      key: Key('landing_editorial_chapter_$number'),
+      padding: const EdgeInsets.symmetric(vertical: 42),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Color(0xFFD6CFC4))),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 900;
+          final introduction = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF101D2B),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      number.toString().padLeft(2, '0'),
+                      style: const TextStyle(
+                        color: Color(0xFFF2E7D5),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Flexible(
+                    child: Text(
+                      eyebrow.toUpperCase(),
+                      style: const TextStyle(
+                        color: Color(0xFFB45F42),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.8,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Semantics(
+                header: true,
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: const Color(0xFF111D2B),
+                    fontSize: wide ? 28 : 25,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                description,
+                style: const TextStyle(
+                  color: Color(0xFF64707D),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  height: 1.7,
+                ),
+              ),
+            ],
+          );
+          final content = Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: spacedChildren,
+          );
+
+          if (!wide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                introduction,
+                const SizedBox(height: 28),
+                content,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(width: 250, child: introduction),
+              const SizedBox(width: 54),
+              Expanded(child: content),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEditorialArchive() {
+    final archiveChildren = <Widget>[
+      _buildRecentAchievementsSection(),
+      _buildMigrationGuideSection(),
+      _buildNotionVsSection(),
+      _buildImportCtaSection(),
+      _buildComparisonLinksSection(),
+      _buildEnterpriseCta(),
+      LiveGrowthBanner(
+        growthService: widget.growthService,
+        compact: true,
+        title: '今まさに成長中',
+        subtitle: '登録者数・開発状況をリアルタイムで確認',
+      ),
+      _buildViralShareSection(),
+    ];
+
+    return Container(
+      key: const Key('landing_editorial_archive'),
+      decoration: BoxDecoration(
+        color: const Color(0xFF101D2B),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF2B3C4D)),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          key: const Key('landing_editorial_archive_toggle'),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+          childrenPadding: const EdgeInsets.fromLTRB(18, 4, 18, 22),
+          iconColor: const Color(0xFFF0E5D0),
+          collapsedIconColor: const Color(0xFFB9C5CF),
+          title: const Text(
+            '比較・移行・開発情報を詳しく見る',
+            style: TextStyle(
+              color: Color(0xFFF7F1E7),
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              height: 1.5,
+            ),
+          ),
+          subtitle: const Text(
+            '必要になった時だけ開ける、導入検討者向けの資料庫です。',
+            style: TextStyle(
+              color: Color(0xFFAEBAC5),
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          children: [
+            for (var index = 0; index < archiveChildren.length; index++) ...[
+              archiveChildren[index],
+              if (index < archiveChildren.length - 1)
+                const SizedBox(height: 18),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildEditorialSurface(double screenWidth) {
     final compact = screenWidth < 720;
-    final sectionGap = compact ? 20.0 : 30.0;
 
     return Container(
       key: const Key('landing_editorial_surface'),
@@ -5160,58 +5470,54 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildBrandDefinitionSection(),
-              SizedBox(height: sectionGap),
-              if (_hypothesisEnabled('h02')) ...[
-                _buildIntentSelector(),
-                SizedBox(height: sectionGap),
-              ],
-              if (_hypothesisEnabled('h06')) ...[
-                _buildProductProofSection(),
-                SizedBox(height: sectionGap),
-              ],
-              if (_hypothesisEnabled('h07')) ...[
-                _buildSocialProofStatsSection(),
-                SizedBox(height: sectionGap),
-              ],
-              _buildConversionSequence(),
-              SizedBox(height: sectionGap),
-              if (!_hypothesisEnabled('h07')) ...[
-                _buildSocialProofStatsSection(),
-                SizedBox(height: sectionGap),
-              ],
-              _buildUniqueValueSection(),
-              SizedBox(height: sectionGap),
-              _buildGetStartedStepsSection(),
-              SizedBox(height: sectionGap),
-              _buildPricingComparisonSection(),
-              SizedBox(height: sectionGap),
-              _buildRecentAchievementsSection(),
-              SizedBox(height: sectionGap),
-              _buildMigrationGuideSection(),
-              SizedBox(height: sectionGap),
-              _buildNotionVsSection(),
-              SizedBox(height: sectionGap),
-              _buildFaqSection(),
-              SizedBox(height: sectionGap),
-              _buildImportCtaSection(),
-              SizedBox(height: sectionGap),
-              _buildComparisonLinksSection(),
-              _buildEnterpriseCta(),
-              SizedBox(height: sectionGap),
-              LiveGrowthBanner(
-                growthService: widget.growthService,
-                compact: true,
-                title: '今まさに成長中',
-                subtitle: '登録者数・開発状況をリアルタイムで確認',
+              _buildEditorialPrologue(),
+              _buildEditorialChapter(
+                number: 1,
+                eyebrow: 'Understand',
+                title: 'まず、何のためのOSかを知る。',
+                description: '思想と体験の輪郭だけを先に。細かな機能を見る前に、自分の迷いがどう変わるかを確かめます。',
+                children: [
+                  _buildBrandDefinitionSection(),
+                  if (_hypothesisEnabled('h06')) _buildProductProofSection(),
+                ],
               ),
-              const SizedBox(height: 12),
-              _buildViralShareSection(),
-              SizedBox(height: sectionGap),
+              _buildEditorialChapter(
+                number: 2,
+                eyebrow: 'Try one thing',
+                title: '次の1件を、その場で試す。',
+                description: '説明より先に、いま詰まっていることを入力。登録前の体験から保存までを一続きにします。',
+                children: [
+                  if (_hypothesisEnabled('h02')) _buildIntentSelector(),
+                  _buildConversionSequence(),
+                  _buildSocialProofStatsSection(),
+                ],
+              ),
+              _buildEditorialChapter(
+                number: 3,
+                eyebrow: 'Build continuity',
+                title: '続ける理由を、具体で比べる。',
+                description: '始め方、得られる価値、料金を同じ章に集約。登録後の生活がどう変わるかを判断できます。',
+                children: [
+                  _buildUniqueValueSection(),
+                  _buildGetStartedStepsSection(),
+                  _buildPricingComparisonSection(),
+                ],
+              ),
+              _buildEditorialChapter(
+                number: 4,
+                eyebrow: 'Decide with confidence',
+                title: '不安を残さず、始めるか決める。',
+                description: 'よくある疑問だけを先に表示し、比較表や移行手順は必要な人が開ける資料庫へ整理しました。',
+                children: [
+                  _buildFaqSection(),
+                  _buildEditorialArchive(),
+                ],
+              ),
+              const SizedBox(height: 28),
               _buildLegalFooterLinks(),
-              SizedBox(height: sectionGap),
+              const SizedBox(height: 24),
               _buildReferralInviteSection(),
-              if (_pendingReferralCode != null) SizedBox(height: sectionGap),
+              if (_pendingReferralCode != null) const SizedBox(height: 24),
             ],
           ),
         ),
@@ -5276,7 +5582,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         actions: [
           if (wideHeader)
             TextButton(
-              onPressed: _scrollToAuthSection,
+              key: const Key('landing_header_login'),
+              onPressed: _showLoginAndScroll,
               child: const Text(
                 'ログイン',
                 style: TextStyle(
@@ -5291,6 +5598,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               left: 8,
             ),
             child: FilledButton(
+              key: const Key('landing_header_signup'),
               onPressed: _handleHeroSignup,
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFF0E5D0),
@@ -5662,16 +5970,34 @@ class _WorkflowLandingHero extends StatelessWidget {
         return Container(
           key: const Key('landing_hero_section'),
           constraints: BoxConstraints(minHeight: compact ? 650 : 720),
-          decoration: const BoxDecoration(
-            color: Color(0xFF07111E),
-            image: DecorationImage(
-              image: AssetImage('assets/landing_journey/01-scattered.webp'),
-              fit: BoxFit.cover,
-              alignment: Alignment(0.35, 0),
-            ),
-          ),
+          color: const Color(0xFF07111E),
           child: Stack(
             children: [
+              Positioned.fill(
+                child: RepaintBoundary(
+                  child: ExcludeSemantics(
+                    child: Image.asset(
+                      'assets/landing_journey/01-scattered.webp',
+                      key: const Key('landing_hero_media_image'),
+                      fit: BoxFit.cover,
+                      alignment: const Alignment(0.35, 0),
+                      cacheWidth: compact ? 900 : 1600,
+                      filterQuality: FilterQuality.medium,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const DecoratedBox(
+                        key: Key('landing_hero_media_fallback'),
+                        decoration: BoxDecoration(
+                          gradient: RadialGradient(
+                            center: Alignment(0.58, -0.3),
+                            radius: 1.22,
+                            colors: [Color(0xFF15334E), Color(0xFF07111E)],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               const Positioned.fill(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
