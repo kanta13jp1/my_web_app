@@ -133,6 +133,18 @@ Deno.test("landing trial quality gate accepts a concrete monetization step", () 
   );
 });
 
+Deno.test("landing trial quality gate rejects generic monetization ideation", () => {
+  const issues = landingTrialQualityIssues(
+    "ChatGPTのサブスク代金をこのサイトからの収益でまかないたい",
+    {
+      action: "このサイトの収益化アイデアを1つ考える",
+      reason: "収益化の具体案を1つ持つことで実行可能性が高まるため",
+    },
+  );
+
+  assertEquals(issues.includes("generic_action"), true);
+});
+
 Deno.test("landing trial client address prefers trusted proxy headers", () => {
   assertEquals(
     resolveLandingTrialClientAddress(
@@ -185,6 +197,7 @@ Deno.test("landing trial provider request is constrained server-side", async () 
   assertEquals(requestBody.max_tokens, 180);
   const messages = requestBody.messages as Array<{ content: string }>;
   assertStringIncludes(messages[0].content, "untrusted data");
+  assertStringIncludes(messages[0].content, "Never stop at idea generation");
   assertStringIncludes(messages[0].content, "サイト収益でAIの月額代");
   assertStringIncludes(messages[1].content, "仕事が多すぎて");
 });
