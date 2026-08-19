@@ -37,7 +37,7 @@ test.describe('LP first-user acquisition', () => {
     expect(inputBox!.y).toBeLessThan(actionBox!.y);
   });
 
-  test('H04 treatment reveals one-field Magic Link capture after value', async ({
+  test('H04 treatment reveals Google save and Magic Link fallback after value', async ({
     page,
   }) => {
     await openLanding(page, treatmentPath);
@@ -48,6 +48,12 @@ test.describe('LP first-user acquisition', () => {
 
     await expect(
       page.getByRole('group', { name: /提案された1件/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', {
+        name: 'Googleで無料登録して保存',
+        exact: true,
+      }),
     ).toBeVisible();
     await expect(
       page.getByRole('textbox', { name: 'メールアドレス', exact: true }),
@@ -65,12 +71,16 @@ test.describe('LP first-user acquisition', () => {
     ).toBeVisible();
   });
 
-  test('H03 control keeps authentication before the lower trial', async ({
+  test('H03 control keeps recoverable authentication before the lower trial', async ({
     page,
   }) => {
     await openLanding(page, controlPath);
 
-    const authAction = page.getByRole('button', {
+    const googleAction = page.getByRole('button', {
+      name: 'Googleで無料登録',
+      exact: true,
+    });
+    const magicLinkAction = page.getByRole('button', {
       name: 'Magic Linkで今すぐ始める',
       exact: true,
     });
@@ -79,17 +89,29 @@ test.describe('LP first-user acquisition', () => {
       exact: true,
     });
 
-    await expect(authAction).toBeVisible();
+    await expect(googleAction).toBeVisible();
+    await expect(magicLinkAction).toBeVisible();
     await expect(lowerTrial).toBeVisible();
     await expect(
       page.getByRole('textbox', { name: /30秒で試す/ }),
     ).toHaveCount(0);
 
-    const authBox = await authAction.boundingBox();
+    const authBox = await googleAction.boundingBox();
     const trialBox = await lowerTrial.boundingBox();
     expect(authBox).not.toBeNull();
     expect(trialBox).not.toBeNull();
     expect(authBox!.y).toBeLessThan(trialBox!.y);
+
+    await page
+      .getByRole('textbox', { name: 'メールアドレス', exact: true })
+      .fill('sales @example.com');
+    await magicLinkAction.click();
+    await expect(
+      page.getByText('メールアドレスの形式を確認してください。', {
+        exact: false,
+      }),
+    ).toBeVisible();
+    await expect(googleAction).toBeVisible();
   });
 });
 

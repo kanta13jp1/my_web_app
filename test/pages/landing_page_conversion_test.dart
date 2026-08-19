@@ -23,6 +23,9 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   final List<String> conversionVisitorIds = <String>[];
   final List<String> magicLinkEmails = <String>[];
   final List<bool> magicLinkShouldCreateUsers = <bool>[];
+  int googleLaunches = 0;
+  bool googleLaunchResult = true;
+  Exception? magicLinkError;
   Completer<String>? trialResponse;
   Exception? trialError;
   String? lastTrialPrompt;
@@ -75,6 +78,14 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   }) async {
     magicLinkEmails.add(email);
     magicLinkShouldCreateUsers.add(shouldCreateUser);
+    final error = magicLinkError;
+    if (error != null) throw error;
+  }
+
+  @override
+  Future<bool> signInWithGoogle({String? redirectTo}) async {
+    googleLaunches += 1;
+    return googleLaunchResult;
   }
 
   @override
@@ -175,6 +186,7 @@ void main() {
     LandingExperimentAssignment? assignment,
     Size size = const Size(1200, 900),
     bool? analyticsEnabled,
+    bool? googleLoginEnabled,
     Uri? landingUri,
     LandingConversionExperimentService? conversionExperimentService,
     LandingConversionAnalytics? conversionAnalytics,
@@ -199,6 +211,7 @@ void main() {
           conversionAnalytics: conversionAnalytics,
           acquisitionService: acquisitionService,
           analyticsEnabled: analyticsEnabled,
+          googleLoginEnabled: googleLoginEnabled,
           landingUri: landingUri,
         ),
       ),
@@ -244,6 +257,120 @@ void main() {
       isFalse,
     );
     expect(LandingPage.shouldFocusTrialForUri(null), isFalse);
+  });
+
+  testWidgets('Google is the primary production registration path', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h04', LandingExperimentVariant.treatment),
+      googleLoginEnabled: true,
+    );
+
+    final googleButton = find.byKey(const Key('landing_google_primary'));
+    expect(googleButton, findsOneWidget);
+    expect(find.text('Googleで無料登録'), findsOneWidget);
+    expect(find.textContaining('約10秒'), findsWidgets);
+
+    await Scrollable.ensureVisible(tester.element(googleButton));
+    await tester.tap(googleButton);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(adapter.googleLaunches, 1);
+    expect(
+      adapter.conversionEvents,
+      contains('lp_exp_h04_treatment_signup_submit'),
+    );
+  });
+
+  testWidgets('invalid email is rejected before signup attribution', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h04', LandingExperimentVariant.treatment),
+    );
+    await tester.enterText(
+      find.byKey(const Key('landing_auth_email')),
+      'not-an-email',
+    );
+    final magicLinkButton = find.byKey(const Key('landing_h04_magic_primary'));
+    await Scrollable.ensureVisible(tester.element(magicLinkButton));
+    await tester.tap(magicLinkButton);
+    await tester.pump();
+
+    expect(adapter.magicLinkEmails, isEmpty);
+    expect(find.byKey(const Key('landing_magic_link_error')), findsOneWidget);
+    expect(
+      adapter.conversionEvents,
+      isNot(contains('lp_exp_h04_treatment_signup_submit')),
+    );
+  });
+
+  testWidgets('email validation accepts s characters', (tester) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h04', LandingExperimentVariant.treatment),
+    );
+    final emailField = find.byKey(const Key('landing_auth_email'));
+    final magicLinkButton = find.byKey(const Key('landing_h04_magic_primary'));
+
+    await tester.enterText(emailField, 'sales@example.com');
+    await Scrollable.ensureVisible(tester.element(magicLinkButton));
+    await tester.tap(magicLinkButton);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(adapter.magicLinkEmails, contains('sales@example.com'));
+  });
+
+  testWidgets('email validation rejects whitespace', (tester) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h04', LandingExperimentVariant.treatment),
+    );
+    await tester.enterText(
+      find.byKey(const Key('landing_auth_email')),
+      'sales @example.com',
+    );
+    final magicLinkButton = find.byKey(const Key('landing_h04_magic_primary'));
+    await Scrollable.ensureVisible(tester.element(magicLinkButton));
+    await tester.tap(magicLinkButton);
+    await tester.pump();
+    expect(adapter.magicLinkEmails, isEmpty);
+    expect(find.byKey(const Key('landing_magic_link_error')), findsOneWidget);
+  });
+
+  testWidgets('Magic Link delivery failure offers Google recovery', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h04', LandingExperimentVariant.treatment),
+      googleLoginEnabled: true,
+    );
+    adapter.magicLinkError = const AuthException(
+      'Email address not authorized',
+      code: 'email_provider_disabled',
+    );
+    await tester.enterText(
+      find.byKey(const Key('landing_auth_email')),
+      'first-user@example.com',
+    );
+    final magicLinkButton = find.byKey(const Key('landing_h04_magic_primary'));
+    await Scrollable.ensureVisible(tester.element(magicLinkButton));
+    await tester.tap(magicLinkButton);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.byKey(const Key('landing_magic_link_error')), findsOneWidget);
+    final recovery = find.byKey(
+      const Key('landing_magic_link_google_recovery'),
+    );
+    expect(recovery, findsOneWidget);
+    await Scrollable.ensureVisible(tester.element(recovery));
+    await tester.tap(recovery);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(adapter.googleLaunches, 1);
   });
 
   testWidgets('mirrors an anonymous experiment view with safe attribution', (

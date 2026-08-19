@@ -30,6 +30,7 @@ class LandingPage extends StatefulWidget {
   final GrowthAcquisitionService acquisitionService;
   final LandingExperimentAssignment? experimentAssignment;
   final bool? analyticsEnabled;
+  final bool? googleLoginEnabled;
   final Uri? landingUri;
 
   const LandingPage({
@@ -43,6 +44,7 @@ class LandingPage extends StatefulWidget {
     GrowthAcquisitionService? acquisitionService,
     this.experimentAssignment,
     this.analyticsEnabled,
+    this.googleLoginEnabled,
     this.landingUri,
   })  : adapter = adapter ?? const SupabaseLandingPageAdapter(),
         growthService = growthService ?? const GrowthMissionService(),
@@ -76,6 +78,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     'LANDING_GOOGLE_LOGIN_ENABLED',
     defaultValue: false,
   );
+  static final RegExp _emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
 
   final _emailController = TextEditingController();
   final _trialEmailController = TextEditingController();
@@ -108,6 +111,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   String? _trialReason;
   String? _trialErrorTitle;
   String? _trialErrorMessage;
+  String? _magicLinkErrorMessage;
   String? _lastMagicLinkEmail;
   String? _pendingReferralCode;
   _LandingIntent _selectedIntent = _LandingIntent.work;
@@ -119,6 +123,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
   Uri? get _landingUri => widget.landingUri ?? (kIsWeb ? Uri.base : null);
   GrowthAcquisitionService get _acquisitionService => widget.acquisitionService;
+  bool get _googleLoginEnabled =>
+      widget.googleLoginEnabled ?? _googleLoginFeatureEnabled;
 
   bool get _analyticsEnabled {
     final override = widget.analyticsEnabled;
@@ -478,15 +484,19 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   Future<void> _signInWithGoogle() async {
-    if (!_googleLoginFeatureEnabled) {
+    if (!_googleLoginEnabled) {
       _showMessage(
         'Googleログインは現在非表示です。`LANDING_GOOGLE_LOGIN_ENABLED=true` で再ビルドすると表示されます。',
       );
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _magicLinkErrorMessage = null;
+    });
     try {
+      await _preserveTrialForGoogle();
       if (_analyticsEnabled) {
         await _markSignupCompletionPending();
       }
@@ -518,10 +528,41 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     }
   }
 
+  Future<void> _preserveTrialForGoogle() async {
+    final prompt = _trialPromptController.text.trim();
+    final action = _trialAction?.trim() ?? '';
+    final reason = _trialReason?.trim() ?? '';
+    if (!_showSaveCtaPrompt ||
+        prompt.isEmpty ||
+        action.isEmpty ||
+        reason.isEmpty) {
+      return;
+    }
+
+    await _recordSaveStages();
+    try {
+      await widget.pendingTrialService.saveForOAuth(
+        intent: _selectedIntent.name,
+        prompt: prompt,
+        action: action,
+        reason: reason,
+      );
+    } catch (error) {
+      debugPrint('Pending OAuth landing trial save failed: $error');
+    }
+  }
+
   Future<void> _sendMagicLink({String? emailOverride}) async {
     final email = (emailOverride ?? _emailController.text).trim();
-    if (email.isEmpty) {
-      _showMessage('Magic Link を送るにはメールアドレスを入力してください。');
+    if (!_emailPattern.hasMatch(email)) {
+      const message = 'メールアドレスの形式を確認してください。例: name@example.com';
+      if (mounted) {
+        setState(() {
+          _showInboxShortcut = false;
+          _magicLinkErrorMessage = message;
+        });
+      }
+      _showMessage(message);
       return;
     }
 
@@ -532,7 +573,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       _emailController.text = email;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _magicLinkErrorMessage = null;
+    });
     try {
       if (tracksSignup) {
         await _markSignupCompletionPending(email: email);
@@ -549,6 +593,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       if (mounted) {
         setState(() {
           _showInboxShortcut = true;
+          _magicLinkErrorMessage = null;
           _lastMagicLinkEmail = email;
         });
       }
@@ -562,15 +607,25 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       if (tracksSignup) {
         await widget.signupCompletionService.cancelPending(email: email);
       }
-      _showMessage('認証機能を初期化できませんでした。');
+      const message = '認証機能を初期化できませんでした。再読み込みしてからお試しください。';
+      if (mounted) {
+        setState(() => _magicLinkErrorMessage = message);
+      }
+      _showMessage(message);
     } catch (error) {
       if (tracksSignup) {
         await widget.signupCompletionService.cancelPending(email: email);
       }
       if (mounted) {
-        setState(() => _showInboxShortcut = false);
+        final message = _resolveMagicLinkError(error);
+        setState(() {
+          _showInboxShortcut = false;
+          _magicLinkErrorMessage = message;
+        });
+        _showMessage(message);
+      } else {
+        _showMessage(_resolveMagicLinkError(error));
       }
-      _showMessage(_resolveMagicLinkError(error));
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -731,6 +786,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       }
     }
     await _sendMagicLink(emailOverride: email);
+  }
+
+  Future<void> _saveTrialWithGoogle() async {
+    if (mounted) {
+      setState(() => _isSignUp = true);
+    }
+    await _signInWithGoogle();
   }
 
   void _runQuickTrialSample(String prompt, {bool recordHeroCta = false}) {
@@ -1070,37 +1132,24 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   String _resolveMagicLinkError(Object error) {
-    if (error is AuthException) {
-      final code = (error.code ?? '').toLowerCase();
-      final message = error.message.toLowerCase();
-      final status = error.statusCode?.toString() ?? '';
-
-      if (code == 'email_address_invalid' ||
-          message.contains('invalid email')) {
+    switch (classifyLandingMagicLinkFailure(error)) {
+      case LandingMagicLinkFailureCategory.invalidEmail:
         return 'メールアドレスの形式が正しくありません。`@` を含む形式で入力してください。';
-      }
-      if (code == 'signup_disabled') {
-        return '新規登録が停止中です。既存アカウントでのログインか、設定確認が必要です。';
-      }
-      if (code == 'email_provider_disabled') {
-        return 'メール認証が無効です。Supabase の Email provider 設定を確認してください。';
-      }
-      if (code == 'validation_failed') {
-        return 'Magic Link の送信条件を満たしていません。メールアドレスとリダイレクト設定を確認してください。';
-      }
-      if (code == 'over_email_send_rate_limit' ||
-          code == 'over_request_rate_limit' ||
-          status == '429' ||
-          message.contains('rate limit')) {
+      case LandingMagicLinkFailureCategory.rateLimit:
         return '送信回数が多すぎます。少し待ってから再送してください。';
-      }
-      if (code == 'flow_state_expired' || code == 'flow_state_not_found') {
-        return '前回の認証状態が切れています。ページを再読み込みしてからもう一度送信してください。';
-      }
-
-      return 'Magic Link の送信に失敗しました。メール設定と入力内容を確認してください。';
+      case LandingMagicLinkFailureCategory.deliveryConfiguration:
+        return _googleLoginEnabled
+            ? '現在メールを送信できません。Googleならそのまま無料登録を続けられます。'
+            : '現在メールを送信できません。少し待ってから再試行してください。';
+      case LandingMagicLinkFailureCategory.redirectConfiguration:
+        return '認証リンクの設定を確認できませんでした。ページを再読み込みするか、Googleで続けてください。';
+      case LandingMagicLinkFailureCategory.network:
+        return '通信に失敗しました。接続を確認してから再試行してください。';
+      case LandingMagicLinkFailureCategory.unknown:
+        return _googleLoginEnabled
+            ? 'Magic Linkを送信できませんでした。Googleならそのまま無料登録を続けられます。'
+            : 'Magic Linkの送信に失敗しました。少し待ってから再試行してください。';
     }
-    return 'Magic Link の送信に失敗しました。通信状況を確認してから再試行してください。';
   }
 
   String _promptForIntent(_LandingIntent intent) {
@@ -4581,6 +4630,39 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             ),
           ),
           const SizedBox(height: 8),
+          if (_googleLoginEnabled) ...[
+            FilledButton.icon(
+              key: const Key('landing_h04_inline_google'),
+              onPressed: _isLoading ? null : _saveTrialWithGoogle,
+              icon: const Icon(Icons.login, size: 18),
+              label: const Text('Googleで無料登録して保存'),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '約10秒・パスワード不要・カード不要',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFF64748B),
+                fontSize: 12,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Row(
+              children: [
+                Expanded(child: Divider()),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  child: Text(
+                    'またはメールで保存',
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                  ),
+                ),
+                Expanded(child: Divider()),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
           TextField(
             key: const Key('landing_h04_inline_email'),
             controller: _trialEmailController,
@@ -4939,6 +5021,24 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     );
   }
 
+  Widget _buildMagicLinkButtonContent() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          _showInboxShortcut
+              ? (_isMagicLinkCoolingDown ? '送信済み' : 'Magic Linkを再送')
+              : (_isSignUp ? 'Magic Linkで今すぐ始める' : 'Magic Linkでログイン'),
+        ),
+        if (_showInboxShortcut && _isMagicLinkCoolingDown) ...[
+          const SizedBox(width: 8),
+          const Icon(Icons.check_circle, size: 18),
+        ],
+      ],
+    );
+  }
+
   Widget _buildAuthSection() {
     final compactMagicLink = _hypothesisEnabled('h04');
     return KeyedSubtree(
@@ -4962,9 +5062,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                       color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
                     ),
                   ),
-                  child: const Text(
-                    'この提案を保存するには登録が必要です。Magic Link なら、メール1通でそのまま保存を始められます。',
-                    style: TextStyle(
+                  child: Text(
+                    _googleLoginEnabled
+                        ? 'この提案を保存するには無料登録が必要です。Googleなら約10秒、カード入力なしで続けられます。'
+                        : 'この提案を保存するには登録が必要です。Magic Linkなら、メール1通でそのまま保存を始められます。',
+                    style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       height: 1.5,
@@ -4985,8 +5087,12 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               const SizedBox(height: 6),
               Text(
                 _isSignUp
-                    ? 'メールアドレスだけで30秒登録。AIが今日のタスクを整理し、資産管理・習慣化まで一元化。カード不要。'
-                    : '既存ユーザーも Magic Link が最短です。パスワード入力なしで、そのまま再開できます。',
+                    ? (_googleLoginEnabled
+                        ? 'Googleで約10秒。AIが今日のタスクを整理し、資産管理・習慣化まで一元化。カード不要。'
+                        : 'メールアドレスだけで30秒登録。AIが今日のタスクを整理し、資産管理・習慣化まで一元化。カード不要。')
+                    : (_googleLoginEnabled
+                        ? 'Googleならパスワード入力なしで、そのまま続きから再開できます。'
+                        : '既存ユーザーもMagic Linkが最短です。パスワード入力なしで、そのまま再開できます。'),
                 key: const Key('landing_auth_mode_description'),
                 style: const TextStyle(color: Color(0xFF64748B), height: 1.5),
               ),
@@ -5001,6 +5107,43 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ],
               ),
               const SizedBox(height: 16),
+              if (_googleLoginEnabled) ...[
+                SizedBox(
+                  key: const Key('landing_google_primary'),
+                  height: 52,
+                  child: FilledButton.icon(
+                    onPressed: _isLoading ? null : _signInWithGoogle,
+                    icon: const Icon(Icons.login),
+                    label: Text(_isSignUp ? 'Googleで無料登録' : 'Googleでログイン'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '約10秒・パスワード不要・カード不要',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.w600,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Row(
+                  children: [
+                    Expanded(child: Divider()),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        'またはメールで続ける',
+                        style: TextStyle(color: Color(0xFF94A3B8), height: 1.5),
+                      ),
+                    ),
+                    Expanded(child: Divider()),
+                  ],
+                ),
+                const SizedBox(height: 14),
+              ],
               TextField(
                 key: const Key('landing_auth_email'),
                 controller: _emailController,
@@ -5028,31 +5171,21 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               SizedBox(
                 key: const Key('landing_h04_magic_primary'),
                 height: 52,
-                child: FilledButton(
-                  onPressed: (_isLoading ||
-                          (_showInboxShortcut && _isMagicLinkCoolingDown))
-                      ? null
-                      : _sendMagicLink,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _showInboxShortcut
-                            ? (_isMagicLinkCoolingDown
-                                ? '送信済み'
-                                : 'Magic Linkを再送')
-                            : (_isSignUp
-                                ? 'Magic Linkで今すぐ始める'
-                                : 'Magic Linkでログイン'),
+                child: _googleLoginEnabled
+                    ? OutlinedButton(
+                        onPressed: (_isLoading ||
+                                (_showInboxShortcut && _isMagicLinkCoolingDown))
+                            ? null
+                            : _sendMagicLink,
+                        child: _buildMagicLinkButtonContent(),
+                      )
+                    : FilledButton(
+                        onPressed: (_isLoading ||
+                                (_showInboxShortcut && _isMagicLinkCoolingDown))
+                            ? null
+                            : _sendMagicLink,
+                        child: _buildMagicLinkButtonContent(),
                       ),
-                      if (_showInboxShortcut && _isMagicLinkCoolingDown) ...[
-                        const SizedBox(width: 8),
-                        const Icon(Icons.check_circle, size: 18),
-                      ],
-                    ],
-                  ),
-                ),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -5063,6 +5196,54 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   height: 1.5,
                 ),
               ),
+              if (_magicLinkErrorMessage != null) ...[
+                const SizedBox(height: 10),
+                Container(
+                  key: const Key('landing_magic_link_error'),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF4E5),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFFFB74D)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.info_outline,
+                            color: Color(0xFF9A5800),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _magicLinkErrorMessage!,
+                              style: const TextStyle(
+                                color: Color(0xFF713F12),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (_googleLoginEnabled) ...[
+                        const SizedBox(height: 10),
+                        FilledButton.icon(
+                          key: const Key('landing_magic_link_google_recovery'),
+                          onPressed: _isLoading ? null : _signInWithGoogle,
+                          icon: const Icon(Icons.login, size: 18),
+                          label: const Text('Googleで登録を続ける'),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
               if (_showInboxShortcut) ...[
                 const SizedBox(height: 10),
                 Container(
@@ -5125,17 +5306,6 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
               ],
               const SizedBox(height: 14),
-              if (_googleLoginFeatureEnabled) ...[
-                SizedBox(
-                  height: 48,
-                  child: OutlinedButton.icon(
-                    onPressed: _isLoading ? null : _signInWithGoogle,
-                    icon: const Icon(Icons.login),
-                    label: const Text('Googleで続ける'),
-                  ),
-                ),
-                const SizedBox(height: 10),
-              ],
               if (!compactMagicLink || _showPasswordAuth) ...[
                 const Row(
                   children: [

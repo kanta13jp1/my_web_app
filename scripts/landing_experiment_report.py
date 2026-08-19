@@ -49,7 +49,15 @@ REPORT_SELECT = ",".join(
 FUNNEL_EVENT_KEYS = (
     "funnel_trial_run",
     "funnel_save_cta",
+    "funnel_magic_link_attempt",
     "funnel_magic_link_send",
+    "funnel_magic_link_fail_invalid_email",
+    "funnel_magic_link_fail_rate_limit",
+    "funnel_magic_link_fail_delivery_config",
+    "funnel_magic_link_fail_redirect",
+    "funnel_magic_link_fail_network",
+    "funnel_magic_link_fail_unknown",
+    "funnel_google_oauth_start",
     "funnel_inbox_open",
 )
 
@@ -377,17 +385,59 @@ def build_report(
     global_submit_gate_ready = (
         total_signup_submits >= minimum_total_primary_successes
     )
+    observed_funnel = funnel_counts or {}
+    magic_link_failures = {
+        "invalid_email": observed_funnel.get(
+            "funnel_magic_link_fail_invalid_email"
+        ),
+        "rate_limit": observed_funnel.get(
+            "funnel_magic_link_fail_rate_limit"
+        ),
+        "delivery_configuration": observed_funnel.get(
+            "funnel_magic_link_fail_delivery_config"
+        ),
+        "redirect_configuration": observed_funnel.get(
+            "funnel_magic_link_fail_redirect"
+        ),
+        "network": observed_funnel.get("funnel_magic_link_fail_network"),
+        "unknown": observed_funnel.get("funnel_magic_link_fail_unknown"),
+    }
+    magic_link_failure_total = (
+        sum(value or 0 for value in magic_link_failures.values())
+        if funnel_counts is not None
+        else None
+    )
+    magic_link_attempts = observed_funnel.get("funnel_magic_link_attempt")
+    magic_link_sends = observed_funnel.get("funnel_magic_link_send")
+    google_oauth_starts = observed_funnel.get("funnel_google_oauth_start")
+
+    if funnel_counts is None:
+        recommended_next_action = "fetch_auth_handoff_diagnostics"
+    elif (observed_funnel.get("funnel_save_cta") or 0) == 0:
+        recommended_next_action = "increase_qualified_trial_and_save_cta_traffic"
+    elif (magic_link_attempts or 0) + (google_oauth_starts or 0) == 0:
+        recommended_next_action = "improve_registration_cta_handoff"
+    elif (magic_link_attempts or 0) > 0 and (magic_link_sends or 0) == 0:
+        recommended_next_action = "repair_magic_link_delivery_or_use_google_oauth"
+    elif total_non_anonymous_completes == 0:
+        recommended_next_action = "verify_oauth_callback_and_signup_completion"
+    else:
+        recommended_next_action = "move_activated_users_to_checkout"
+
     funnel_diagnostics = {
         "status": "available" if funnel_counts is not None else "not_fetched",
         "observation_start": funnel_observation_window[0],
         "observation_end": funnel_observation_window[1],
         "counting": "aggregate_events_not_unique_visitors",
-        "trial_runs": (funnel_counts or {}).get("funnel_trial_run"),
-        "save_ctas": (funnel_counts or {}).get("funnel_save_cta"),
-        "magic_link_sends": (funnel_counts or {}).get(
-            "funnel_magic_link_send"
-        ),
-        "inbox_opens": (funnel_counts or {}).get("funnel_inbox_open"),
+        "trial_runs": observed_funnel.get("funnel_trial_run"),
+        "save_ctas": observed_funnel.get("funnel_save_cta"),
+        "magic_link_attempts": magic_link_attempts,
+        "magic_link_sends": magic_link_sends,
+        "magic_link_failures": magic_link_failures,
+        "magic_link_failure_total": magic_link_failure_total,
+        "google_oauth_starts": google_oauth_starts,
+        "inbox_opens": observed_funnel.get("funnel_inbox_open"),
+        "recommended_next_action": recommended_next_action,
     }
 
     hypotheses: list[dict[str, Any]] = []
@@ -548,9 +598,16 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"{funnel['observation_end'] or 'unknown'}",
         f"- Trial runs: {funnel['trial_runs'] if funnel['trial_runs'] is not None else 'missing'}",
         f"- Save CTA events: {funnel['save_ctas'] if funnel['save_ctas'] is not None else 'missing'}",
+        "- Magic Link attempts: "
+        f"{funnel['magic_link_attempts'] if funnel['magic_link_attempts'] is not None else 'missing'}",
         "- Successful Magic Link sends: "
         f"{funnel['magic_link_sends'] if funnel['magic_link_sends'] is not None else 'missing'}",
+        "- Categorized Magic Link failures: "
+        f"{funnel['magic_link_failure_total'] if funnel['magic_link_failure_total'] is not None else 'missing'}",
+        "- Google OAuth starts: "
+        f"{funnel['google_oauth_starts'] if funnel['google_oauth_starts'] is not None else 'missing'}",
         f"- Inbox opens: {funnel['inbox_opens'] if funnel['inbox_opens'] is not None else 'missing'}",
+        f"- Recommended next action: {funnel['recommended_next_action']}",
         "- Counting note: aggregate event counts, not unique visitors.",
         "",
         "## Hypotheses",

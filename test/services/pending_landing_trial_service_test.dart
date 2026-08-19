@@ -47,6 +47,28 @@ void main() {
     expect(await service.loadForEmail('owner@example.com'), isNotNull);
   });
 
+  test(
+    'restores an OAuth trial only after an authenticated email returns',
+    () async {
+      final service = PendingLandingTrialService(
+        clock: () => DateTime.utc(2026, 8, 19, 1),
+      );
+      await service.saveForOAuth(
+        intent: 'work',
+        prompt: '今日の最優先を決めたい',
+        action: '案件を1件開く',
+        reason: '着手を具体化できるため',
+      );
+
+      expect(await service.loadForEmail(null), isNull);
+      final trial = await service.loadForEmail('google-user@example.com');
+      expect(trial, isNotNull);
+      expect(trial!.acceptsAuthenticatedUser, isTrue);
+      expect(trial.email, isEmpty);
+      expect(await service.clearForEmail('google-user@example.com'), isTrue);
+    },
+  );
+
   test('removes an expired trial', () async {
     var now = DateTime.utc(2026, 7, 21, 1);
     final service = PendingLandingTrialService(clock: () => now);
