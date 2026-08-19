@@ -258,6 +258,8 @@ class _LandingStoryJourneyState extends State<LandingStoryJourney> {
 }
 
 class _JourneyStage extends StatelessWidget {
+  static const double _mediaWarmupThreshold = 0.02;
+
   final double progress;
   final int activeChapter;
   final bool compact;
@@ -278,10 +280,25 @@ class _JourneyStage extends StatelessWidget {
     required this.onSecondaryAction,
   });
 
+  Set<int> _visibleMediaIndices() {
+    if (reduceMotion) return <int>{activeChapter};
+
+    final exact = progress * (LandingStoryJourney.chapters.length - 1);
+    final lower =
+        exact.floor().clamp(0, LandingStoryJourney.chapters.length - 1).toInt();
+    final upper =
+        exact.ceil().clamp(0, LandingStoryJourney.chapters.length - 1).toInt();
+    return <int>{
+      lower,
+      if (upper != lower && exact - lower > _mediaWarmupThreshold) upper,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final chapter = LandingStoryJourney.chapters[activeChapter];
     final isFinal = activeChapter == LandingStoryJourney.chapters.length - 1;
+    final visibleMediaIndices = _visibleMediaIndices();
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -300,20 +317,24 @@ class _JourneyStage extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            for (var index = 0;
-                index < LandingStoryJourney.chapters.length;
-                index++)
+            for (final index in visibleMediaIndices)
               Positioned.fill(
+                key: Key('landing_story_media_$index'),
                 child: Opacity(
                   opacity: imageOpacity(index, reduceMotion),
-                  child: ExcludeSemantics(
-                    child: Image.asset(
-                      LandingStoryJourney.chapters[index].assetPath,
-                      fit: BoxFit.cover,
-                      alignment:
-                          compact ? Alignment.center : Alignment.centerRight,
-                      cacheWidth: compact ? 1000 : 1600,
-                      filterQuality: FilterQuality.medium,
+                  child: RepaintBoundary(
+                    child: ExcludeSemantics(
+                      child: Image.asset(
+                        LandingStoryJourney.chapters[index].assetPath,
+                        key: Key('landing_story_media_image_$index'),
+                        fit: BoxFit.cover,
+                        alignment:
+                            compact ? Alignment.center : Alignment.centerRight,
+                        cacheWidth: compact ? 900 : 1600,
+                        filterQuality: FilterQuality.medium,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const _JourneyMediaFallback(),
+                      ),
                     ),
                   ),
                 ),
@@ -365,16 +386,18 @@ class _JourneyStage extends StatelessWidget {
                       : const Duration(milliseconds: 360),
                   switchInCurve: Curves.easeOut,
                   switchOutCurve: Curves.easeIn,
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0, 0.035),
-                        end: Offset.zero,
-                      ).animate(animation),
-                      child: child,
-                    ),
-                  ),
+                  transitionBuilder: reduceMotion
+                      ? (child, animation) => child
+                      : (child, animation) => FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0, 0.035),
+                                end: Offset.zero,
+                              ).animate(animation),
+                              child: child,
+                            ),
+                          ),
                   child: _JourneyCopy(
                     key: ValueKey<int>(activeChapter),
                     chapter: chapter,
@@ -433,6 +456,24 @@ class _JourneyStage extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _JourneyMediaFallback extends StatelessWidget {
+  const _JourneyMediaFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      key: Key('landing_story_media_fallback'),
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          center: Alignment(0.58, -0.34),
+          radius: 1.18,
+          colors: [Color(0xFF163553), Color(0xFF061126)],
         ),
       ),
     );

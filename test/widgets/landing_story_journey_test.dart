@@ -63,6 +63,10 @@ void main() {
     expect(find.byKey(const Key('landing_story_journey')), findsOneWidget);
     expect(find.textContaining('情報が増えるほど'), findsOneWidget);
     expect(find.byKey(const Key('landing_story_primary_cta')), findsNothing);
+    expect(find.byKey(const Key('landing_story_media_0')), findsOneWidget);
+    expect(find.byKey(const Key('landing_story_media_1')), findsNothing);
+    expect(find.byKey(const Key('landing_story_media_2')), findsNothing);
+    expect(find.byKey(const Key('landing_story_media_3')), findsNothing);
 
     await tester.tap(find.byKey(const Key('landing_story_dot_3')));
     await tester.pumpAndSettle();
@@ -73,6 +77,10 @@ void main() {
       find.byKey(const Key('landing_story_secondary_cta')),
       findsOneWidget,
     );
+    expect(find.byKey(const Key('landing_story_media_0')), findsNothing);
+    expect(find.byKey(const Key('landing_story_media_1')), findsNothing);
+    expect(find.byKey(const Key('landing_story_media_2')), findsNothing);
+    expect(find.byKey(const Key('landing_story_media_3')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('landing_story_primary_cta')));
     await tester.tap(find.byKey(const Key('landing_story_secondary_cta')));
@@ -100,6 +108,7 @@ void main() {
       find.byKey(const Key('landing_story_secondary_cta')),
       findsOneWidget,
     );
+    expect(find.byKey(const Key('landing_story_media_3')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -115,5 +124,30 @@ void main() {
 
     expect(find.textContaining('複雑さを'), findsOneWidget);
     expect(find.byKey(const Key('landing_story_chapter_2')), findsOneWidget);
+  });
+
+  testWidgets('story media exposes a designed missing-asset fallback', (
+    tester,
+  ) async {
+    await pumpJourney(tester, size: const Size(1200, 900));
+
+    final imageFinder = find.byKey(
+      const Key('landing_story_media_image_0'),
+    );
+    final image = tester.widget<Image>(imageFinder);
+    expect(image.errorBuilder, isNotNull);
+
+    final fallback = image.errorBuilder!(
+      tester.element(imageFinder),
+      StateError('missing test asset'),
+      StackTrace.empty,
+    );
+    await tester.pumpWidget(
+      MaterialApp(home: SizedBox(width: 800, height: 500, child: fallback)),
+    );
+    expect(
+      find.byKey(const Key('landing_story_media_fallback')),
+      findsOneWidget,
+    );
   });
 }

@@ -523,21 +523,26 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       return;
     }
 
+    final isSignup = _isSignUp;
+    final tracksSignup = isSignup && _analyticsEnabled;
+
     if (_emailController.text.trim() != email) {
       _emailController.text = email;
     }
 
     setState(() => _isLoading = true);
     try {
-      if (_analyticsEnabled) {
+      if (tracksSignup) {
         await _markSignupCompletionPending(email: email);
       }
-      unawaited(_recordSignupSubmitStages());
-      unawaited(_acquisitionService.recordLandingSignupSubmit());
+      if (isSignup) {
+        unawaited(_recordSignupSubmitStages());
+        unawaited(_acquisitionService.recordLandingSignupSubmit());
+      }
       await widget.adapter.sendMagicLink(
         email: email,
         emailRedirectTo: _webRedirectUrl,
-        shouldCreateUser: true,
+        shouldCreateUser: isSignup,
       );
       if (mounted) {
         setState(() {
@@ -546,14 +551,18 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         });
       }
       _startMagicLinkCooldown();
-      _showMessage('Magic Link を送信しました。メール内のリンクからそのまま開始できます。');
+      _showMessage(
+        isSignup
+            ? 'Magic Link を送信しました。メール内のリンクからそのまま開始できます。'
+            : 'Magic Link を送信しました。メール内のリンクからログインできます。',
+      );
     } on LandingPageAuthUnavailableException {
-      if (_analyticsEnabled) {
+      if (tracksSignup) {
         await widget.signupCompletionService.cancelPending(email: email);
       }
       _showMessage('認証機能を初期化できませんでした。');
     } catch (error) {
-      if (_analyticsEnabled) {
+      if (tracksSignup) {
         await widget.signupCompletionService.cancelPending(email: email);
       }
       if (mounted) {
@@ -710,10 +719,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     await _sendMagicLink(emailOverride: email);
   }
 
-  void _runQuickTrialSample(
-    String prompt, {
-    bool recordHeroCta = false,
-  }) {
+  void _runQuickTrialSample(String prompt, {bool recordHeroCta = false}) {
     if (recordHeroCta) {
       unawaited(_recordConversionStage('hero_cta'));
     }
@@ -769,16 +775,31 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authContext = _authSectionKey.currentContext;
       if (!mounted || authContext == null) return;
-      Scrollable.ensureVisible(
-        authContext,
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeOut,
-        alignment: 0.08,
-      ).then((_) {
-        if (!mounted) return;
-        _emailFocusNode.requestFocus();
-      });
+      _emailFocusNode.requestFocus();
+      unawaited(
+        Scrollable.ensureVisible(
+          authContext,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOut,
+          alignment: 0.08,
+        ),
+      );
     });
+  }
+
+  void _showAuthModeAndScroll({required bool isSignUp}) {
+    if (_isSignUp != isSignUp) {
+      setState(() => _isSignUp = isSignUp);
+    }
+    _scrollToAuthSection();
+  }
+
+  void _showSignupAndScroll() {
+    _showAuthModeAndScroll(isSignUp: true);
+  }
+
+  void _showLoginAndScroll() {
+    _showAuthModeAndScroll(isSignUp: false);
   }
 
   void _scrollToTrialMagicLink({bool requestFocus = true}) {
@@ -801,7 +822,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
   void _handleHeroSignup() {
     unawaited(_recordConversionStage('hero_cta'));
-    _scrollToAuthSection();
+    _showSignupAndScroll();
   }
 
   void _handleStickySignup() {
@@ -815,7 +836,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       _scrollToTrialMagicLink();
       return;
     }
-    _scrollToAuthSection();
+    _showSignupAndScroll();
   }
 
   Uri _resolveInboxUri(String email) {
@@ -1399,8 +1420,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         height: 68,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFDCE7F2))),
+          color: Color(0xFF081421),
+          border: Border(top: BorderSide(color: Color(0xFF263748))),
         ),
         child: Row(
           children: [
@@ -1408,7 +1429,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               child: Text(
                 '無料コア・カード不要',
                 style: TextStyle(
-                  color: Color(0xFF475569),
+                  color: Color(0xFFB5C0CA),
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
@@ -1424,10 +1445,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               ),
               label: Text(hasTrialResult ? 'この提案を保存' : '無料で始める'),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF1F7AE0),
-                foregroundColor: Colors.white,
+                backgroundColor: const Color(0xFFF0E5D0),
+                foregroundColor: const Color(0xFF101A24),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(999),
                 ),
               ),
             ),
@@ -1579,7 +1600,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               message: 'アカウントを作成して提案を保存できます。登録は30秒程度です。',
               child: FilledButton.icon(
                 key: const Key('landing_register_button'),
-                onPressed: _scrollToAuthSection,
+                onPressed: _showSignupAndScroll,
                 icon: const Icon(Icons.rocket_launch, size: 18),
                 label: const Text(
                   '無料で始める',
@@ -2057,7 +2078,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               runSpacing: 10,
               children: [
                 FilledButton.icon(
-                  onPressed: _scrollToAuthSection,
+                  onPressed: _showSignupAndScroll,
                   icon: const Icon(Icons.person_add_alt_1),
                   label: const Text('Create account'),
                 ),
@@ -4018,7 +4039,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             width: double.infinity,
             height: 48,
             child: FilledButton.icon(
-              onPressed: _scrollToAuthSection,
+              onPressed: _showSignupAndScroll,
               icon: const Icon(Icons.rocket_launch, size: 18),
               label: const Text(
                 '無料で始める（30秒）',
@@ -4048,236 +4069,287 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     final compactHero = heroMode && MediaQuery.sizeOf(context).width < 480;
     return KeyedSubtree(
       key: const Key('landing_trial_section'),
-      child: Card(
-        key: _trialSectionKey,
-        elevation: heroMode ? 0 : 1,
-        color: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        child: Padding(
-          key: Key(
-            heroMode ? 'landing_h03_inline_trial' : 'landing_h03_lower_trial',
+      child: Theme(
+        data: heroMode
+            ? ThemeData(
+                brightness: Brightness.dark,
+                useMaterial3: true,
+                colorScheme: const ColorScheme.dark(
+                  primary: Color(0xFFF0E5D0),
+                  onPrimary: Color(0xFF101A24),
+                  surface: Color(0xFF14212B),
+                  onSurface: Color(0xFFF6F0E5),
+                ),
+                inputDecorationTheme: InputDecorationTheme(
+                  filled: true,
+                  fillColor: const Color(0xFF081421).withValues(alpha: 0.7),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFF41505C)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFF41505C)),
+                  ),
+                ),
+              )
+            : Theme.of(context),
+        child: Card(
+          key: _trialSectionKey,
+          elevation: heroMode ? 0 : 1,
+          color: heroMode ? const Color(0xE615202A) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(heroMode ? 24 : 8),
+            side: heroMode
+                ? const BorderSide(color: Color(0x4DF6F0E5))
+                : BorderSide.none,
           ),
-          padding: EdgeInsets.all(compactHero ? 10 : (heroMode ? 16 : 18)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                firstUserGrowthMode
-                    ? 'Xから来た方へ: まず1タップで結果を見る'
-                    : heroMode
-                        ? '30秒で試す: いま詰まっていることは？'
-                        : 'AIに「今日やる1件」を聞く',
-                style: TextStyle(
-                  fontSize: compactHero ? 16 : 18,
-                  fontWeight: FontWeight.w800,
-                  height: compactHero ? 1.3 : 1.4,
-                ),
-              ),
-              SizedBox(height: compactHero ? 4 : 6),
-              Text(
-                firstUserGrowthMode
-                    ? '入力・登録・カードは不要です。下のボタンだけで「今やる1件」を確認し、役立った時だけ保存できます。'
-                    : compactHero
-                        ? '登録不要。例を押すか1行書くと「今やる1件」を返します。'
-                        : heroMode
-                            ? '登録はまだ不要です。1行書くか、下の例を押すと「今やる1件」を返します。'
-                            : 'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
-                style: TextStyle(
-                  color: const Color(0xFF64748B),
-                  fontSize: compactHero ? 12 : 14,
-                  height: compactHero ? 1.35 : 1.5,
-                ),
-              ),
-              SizedBox(height: compactHero ? 6 : 12),
-              _buildTrialAnswerPreview(
-                compact: compactHero,
-                heroMode: heroMode,
-                firstUserGrowthMode: firstUserGrowthMode,
-              ),
-              SizedBox(height: compactHero ? 8 : 12),
-              Text(
-                firstUserGrowthMode ? '別の悩みで試す' : 'ほかの悩みを1タップで試す',
-                style: TextStyle(
-                  color: const Color(0xFF475569),
-                  fontSize: compactHero ? 11 : 12,
-                  fontWeight: FontWeight.w700,
-                  height: 1.4,
-                ),
-              ),
-              SizedBox(height: compactHero ? 5 : 7),
-              Wrap(
-                spacing: compactHero ? 6 : 8,
-                runSpacing: compactHero ? 6 : 8,
-                children: [
-                  ActionChip(
-                    key: const Key('landing_trial_sample_priority'),
-                    avatar: Icon(Icons.flash_on, size: compactHero ? 16 : 18),
-                    label: Text(compactHero ? '最優先' : '今日の最優先'),
-                    visualDensity: compactHero ? VisualDensity.compact : null,
-                    materialTapTargetSize:
-                        compactHero ? MaterialTapTargetSize.shrinkWrap : null,
-                    onPressed: _isTrialLoading
-                        ? null
-                        : () => _runQuickTrialSample(
-                              '今日の最優先タスクを1件に絞りたい',
-                              recordHeroCta: heroMode,
-                            ),
-                  ),
-                  ActionChip(
-                    key: const Key('landing_trial_sample_plan'),
-                    avatar: Icon(Icons.event_note, size: compactHero ? 16 : 18),
-                    label: Text(compactHero ? '計画' : '今日の計画を立てる'),
-                    visualDensity: compactHero ? VisualDensity.compact : null,
-                    materialTapTargetSize:
-                        compactHero ? MaterialTapTargetSize.shrinkWrap : null,
-                    onPressed: _isTrialLoading
-                        ? null
-                        : () => _runQuickTrialSample(
-                              '今日1日の計画を立てて、最も重要なことに集中したい',
-                              recordHeroCta: heroMode,
-                            ),
-                  ),
-                  ActionChip(
-                    key: const Key('landing_trial_sample_procrastination'),
-                    avatar: Icon(Icons.done_all, size: compactHero ? 16 : 18),
-                    label: Text(compactHero ? '先送り' : '先送り解消'),
-                    visualDensity: compactHero ? VisualDensity.compact : null,
-                    materialTapTargetSize:
-                        compactHero ? MaterialTapTargetSize.shrinkWrap : null,
-                    onPressed: _isTrialLoading
-                        ? null
-                        : () => _runQuickTrialSample(
-                              '今いちばん先送りしていることを片付けたい',
-                              recordHeroCta: heroMode,
-                            ),
-                  ),
-                ],
-              ),
-              SizedBox(height: compactHero ? 8 : 14),
-              TextField(
-                key: const Key('landing_trial_prompt_input'),
-                controller: _trialPromptController,
-                minLines: heroMode ? 1 : 2,
-                maxLines: heroMode ? 2 : 3,
-                decoration: InputDecoration(
-                  labelText: '例: 今日いちばん詰まっていることを簡単に書く',
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.bolt),
-                  isDense: compactHero,
-                  contentPadding: compactHero
-                      ? const EdgeInsets.symmetric(horizontal: 12, vertical: 12)
-                      : null,
-                ),
-              ),
-              SizedBox(height: compactHero ? 8 : 12),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  key: Key(
-                    heroMode
-                        ? 'landing_h03_inline_trial_action'
-                        : 'landing_h03_lower_trial_action',
-                  ),
-                  onPressed: _isTrialLoading
-                      ? null
+          child: Padding(
+            key: Key(
+              heroMode ? 'landing_h03_inline_trial' : 'landing_h03_lower_trial',
+            ),
+            padding: EdgeInsets.all(compactHero ? 10 : (heroMode ? 16 : 18)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  firstUserGrowthMode
+                      ? 'Xから来た方へ: まず1タップで結果を見る'
                       : heroMode
-                          ? _runHeroTrialActionPreview
-                          : _runTrialActionPreview,
-                  icon: const Icon(Icons.play_arrow),
-                  label: _isTrialLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('今やる1件を試す'),
-                  style: compactHero
-                      ? FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(44),
-                        )
-                      : null,
-                ),
-              ),
-              if (_trialAction != null) ...[
-                const SizedBox(height: 14),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF2F7FF),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: const Color(0xFF3D5AFE).withValues(alpha: 0.2),
-                    ),
+                          ? '30秒で試す: いま詰まっていることは？'
+                          : 'AIに「今日やる1件」を聞く',
+                  style: TextStyle(
+                    fontSize: compactHero ? 16 : 18,
+                    fontWeight: FontWeight.w800,
+                    height: compactHero ? 1.3 : 1.4,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '提案された1件',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF3D5AFE),
-                          height: 1.5,
-                        ),
+                ),
+                SizedBox(height: compactHero ? 4 : 6),
+                Text(
+                  firstUserGrowthMode
+                      ? '入力・登録・カードは不要です。下のボタンだけで「今やる1件」を確認し、役立った時だけ保存できます。'
+                      : compactHero
+                          ? '登録不要。例を押すか1行書くと「今やる1件」を返します。'
+                          : heroMode
+                              ? '登録はまだ不要です。1行書くか、下の例を押すと「今やる1件」を返します。'
+                              : 'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
+                  style: TextStyle(
+                    color: heroMode
+                        ? const Color(0xFFBCC6CE)
+                        : const Color(0xFF64748B),
+                    fontSize: compactHero ? 12 : 14,
+                    height: compactHero ? 1.35 : 1.5,
+                  ),
+                ),
+                SizedBox(height: compactHero ? 6 : 12),
+                _buildTrialAnswerPreview(
+                  compact: compactHero,
+                  heroMode: heroMode,
+                  firstUserGrowthMode: firstUserGrowthMode,
+                ),
+                SizedBox(height: compactHero ? 8 : 12),
+                Text(
+                  firstUserGrowthMode ? '別の悩みで試す' : 'ほかの悩みを1タップで試す',
+                  style: TextStyle(
+                    color: heroMode
+                        ? const Color(0xFFC9D1D7)
+                        : const Color(0xFF475569),
+                    fontSize: compactHero ? 11 : 12,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+                SizedBox(height: compactHero ? 5 : 7),
+                Wrap(
+                  spacing: compactHero ? 6 : 8,
+                  runSpacing: compactHero ? 6 : 8,
+                  children: [
+                    ActionChip(
+                      key: const Key('landing_trial_sample_priority'),
+                      avatar: Icon(Icons.flash_on, size: compactHero ? 16 : 18),
+                      label: Text(compactHero ? '最優先' : '今日の最優先'),
+                      visualDensity: compactHero ? VisualDensity.compact : null,
+                      materialTapTargetSize:
+                          compactHero ? MaterialTapTargetSize.shrinkWrap : null,
+                      onPressed: _isTrialLoading
+                          ? null
+                          : () => _runQuickTrialSample(
+                                '今日の最優先タスクを1件に絞りたい',
+                                recordHeroCta: heroMode,
+                              ),
+                    ),
+                    ActionChip(
+                      key: const Key('landing_trial_sample_plan'),
+                      avatar: Icon(
+                        Icons.event_note,
+                        size: compactHero ? 16 : 18,
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        _trialAction!,
-                        key: const Key('landing_trial_result_action'),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          height: 1.5,
-                        ),
+                      label: Text(compactHero ? '計画' : '今日の計画を立てる'),
+                      visualDensity: compactHero ? VisualDensity.compact : null,
+                      materialTapTargetSize:
+                          compactHero ? MaterialTapTargetSize.shrinkWrap : null,
+                      onPressed: _isTrialLoading
+                          ? null
+                          : () => _runQuickTrialSample(
+                                '今日1日の計画を立てて、最も重要なことに集中したい',
+                                recordHeroCta: heroMode,
+                              ),
+                    ),
+                    ActionChip(
+                      key: const Key('landing_trial_sample_procrastination'),
+                      avatar: Icon(Icons.done_all, size: compactHero ? 16 : 18),
+                      label: Text(compactHero ? '先送り' : '先送り解消'),
+                      visualDensity: compactHero ? VisualDensity.compact : null,
+                      materialTapTargetSize:
+                          compactHero ? MaterialTapTargetSize.shrinkWrap : null,
+                      onPressed: _isTrialLoading
+                          ? null
+                          : () => _runQuickTrialSample(
+                                '今いちばん先送りしていることを片付けたい',
+                                recordHeroCta: heroMode,
+                              ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: compactHero ? 8 : 14),
+                TextField(
+                  key: const Key('landing_trial_prompt_input'),
+                  controller: _trialPromptController,
+                  minLines: heroMode ? 1 : 2,
+                  maxLines: heroMode ? 2 : 3,
+                  decoration: InputDecoration(
+                    labelText: '例: 今日いちばん詰まっていることを簡単に書く',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.bolt),
+                    isDense: compactHero,
+                    contentPadding: compactHero
+                        ? const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          )
+                        : null,
+                  ),
+                ),
+                SizedBox(height: compactHero ? 8 : 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    key: Key(
+                      heroMode
+                          ? 'landing_h03_inline_trial_action'
+                          : 'landing_h03_lower_trial_action',
+                    ),
+                    onPressed: _isTrialLoading
+                        ? null
+                        : heroMode
+                            ? _runHeroTrialActionPreview
+                            : _runTrialActionPreview,
+                    icon: const Icon(Icons.play_arrow),
+                    label: _isTrialLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('今やる1件を試す'),
+                    style: compactHero
+                        ? FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(44),
+                          )
+                        : null,
+                  ),
+                ),
+                if (_trialAction != null) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: heroMode
+                          ? const Color(0xFF0B1823)
+                          : const Color(0xFFF2F7FF),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: heroMode
+                            ? const Color(0x66F0E5D0)
+                            : const Color(0xFF3D5AFE).withValues(alpha: 0.2),
                       ),
-                      if (_trialReason != null) ...[
-                        const SizedBox(height: 6),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          _trialReason!,
-                          key: const Key('landing_trial_result_reason'),
-                          style: const TextStyle(
-                            color: Color(0xFF64748B),
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
-                      if (_hypothesisEnabled('h10')) ...[
-                        const SizedBox(height: 10),
-                        const Text(
-                          '登録すると、この提案・実行履歴・次の一手が残り、明日もここから再開できます。',
-                          key: Key('landing_h10_continuity_value'),
+                          '提案された1件',
                           style: TextStyle(
                             fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF607D8B),
+                            fontWeight: FontWeight.w700,
+                            color: heroMode
+                                ? const Color(0xFFF0E5D0)
+                                : const Color(0xFF3D5AFE),
                             height: 1.5,
                           ),
                         ),
-                      ],
-                      const SizedBox(height: 12),
-                      if (_hypothesisEnabled('h04'))
-                        _buildInlineTrialMagicLink()
-                      else
-                        SizedBox(
-                          width: double.infinity,
-                          child: FilledButton.icon(
-                            key: const Key('landing_h04_control_save_scroll'),
-                            onPressed: _promptRegistrationForTrialSave,
-                            icon: const Icon(Icons.save_outlined),
-                            label: Text(
-                              _hypothesisEnabled('h10')
-                                  ? 'この結果を保存して明日も続ける'
-                                  : 'この結果を保存して続ける',
-                            ),
+                        const SizedBox(height: 6),
+                        Text(
+                          _trialAction!,
+                          key: const Key('landing_trial_result_action'),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            height: 1.5,
                           ),
                         ),
-                    ],
+                        if (_trialReason != null) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            _trialReason!,
+                            key: const Key('landing_trial_result_reason'),
+                            style: TextStyle(
+                              color: heroMode
+                                  ? const Color(0xFFBCC6CE)
+                                  : const Color(0xFF64748B),
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                        if (_hypothesisEnabled('h10')) ...[
+                          const SizedBox(height: 10),
+                          Text(
+                            '登録すると、この提案・実行履歴・次の一手が残り、明日もここから再開できます。',
+                            key: const Key('landing_h10_continuity_value'),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: heroMode
+                                  ? const Color(0xFFB7C1C9)
+                                  : const Color(0xFF607D8B),
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 12),
+                        if (_hypothesisEnabled('h04'))
+                          _buildInlineTrialMagicLink()
+                        else
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              key: const Key('landing_h04_control_save_scroll'),
+                              onPressed: _promptRegistrationForTrialSave,
+                              icon: const Icon(Icons.save_outlined),
+                              label: Text(
+                                _hypothesisEnabled('h10')
+                                    ? 'この結果を保存して明日も続ける'
+                                    : 'この結果を保存して続ける',
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -4581,6 +4653,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       ),
     ];
 
+    const primaryFaqCount = 4;
+    final primaryFaqs = faqs.take(primaryFaqCount);
+    final additionalFaqs = faqs.skip(primaryFaqCount);
+
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -4603,9 +4679,43 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               style: TextStyle(color: Color(0xFF64748B), height: 1.5),
             ),
             const SizedBox(height: 12),
-            for (final faq in faqs) ...[
+            for (final faq in primaryFaqs) ...[
               _FaqItem(question: faq.q, answer: faq.a),
             ],
+            Theme(
+              data: Theme.of(context).copyWith(
+                dividerColor: Colors.transparent,
+                splashColor: const Color(0x143949AB),
+              ),
+              child: ExpansionTile(
+                key: const Key('landing_faq_more_toggle'),
+                tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+                childrenPadding: EdgeInsets.zero,
+                iconColor: const Color(0xFF3949AB),
+                collapsedIconColor: const Color(0xFF64748B),
+                title: Text(
+                  'その他の質問を見る（${faqs.length - primaryFaqCount}件）',
+                  style: const TextStyle(
+                    color: Color(0xFF27364A),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    height: 1.5,
+                  ),
+                ),
+                subtitle: const Text(
+                  '連携・AI構成・セキュリティなどの詳細',
+                  style: TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+                children: [
+                  for (final faq in additionalFaqs)
+                    _FaqItem(question: faq.q, answer: faq.a),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -4779,9 +4889,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
                 const SizedBox(height: 14),
               ],
-              const Text(
-                '今すぐ無料ではじめる',
-                style: TextStyle(
+              Text(
+                _isSignUp ? '今すぐ無料ではじめる' : 'ログインして続きから再開',
+                key: const Key('landing_auth_mode_heading'),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                   height: 1.4,
@@ -4792,6 +4903,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 _isSignUp
                     ? 'メールアドレスだけで30秒登録。AIが今日のタスクを整理し、資産管理・習慣化まで一元化。カード不要。'
                     : '既存ユーザーも Magic Link が最短です。パスワード入力なしで、そのまま再開できます。',
+                key: const Key('landing_auth_mode_description'),
                 style: const TextStyle(color: Color(0xFF64748B), height: 1.5),
               ),
               const SizedBox(height: 12),
@@ -4806,6 +4918,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               ),
               const SizedBox(height: 16),
               TextField(
+                key: const Key('landing_auth_email'),
                 controller: _emailController,
                 focusNode: _emailFocusNode,
                 keyboardType: TextInputType.emailAddress,
@@ -4845,7 +4958,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                             ? (_isMagicLinkCoolingDown
                                 ? '送信済み'
                                 : 'Magic Linkを再送')
-                            : 'Magic Linkで今すぐ始める',
+                            : (_isSignUp
+                                ? 'Magic Linkで今すぐ始める'
+                                : 'Magic Linkでログイン'),
                       ),
                       if (_showInboxShortcut && _isMagicLinkCoolingDown) ...[
                         const SizedBox(width: 8),
@@ -4995,6 +5110,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 SizedBox(
                   height: 52,
                   child: FilledButton(
+                    key: const Key('landing_auth_password_action'),
                     onPressed: _isLoading ? null : _auth,
                     child: _isLoading
                         ? const SizedBox(
@@ -5014,6 +5130,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
                 const SizedBox(height: 10),
                 TextButton(
+                  key: const Key('landing_auth_mode_toggle'),
                   onPressed: _isLoading
                       ? null
                       : () {
@@ -5089,6 +5206,325 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     );
   }
 
+  Widget _buildEditorialPrologue() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 860;
+        final title = Semantics(
+          header: true,
+          child: const Text(
+            '迷いを、判断に変えるための4章。',
+            style: TextStyle(
+              color: Color(0xFF111D2B),
+              fontSize: 38,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -1.2,
+              height: 1.25,
+            ),
+          ),
+        );
+        const copy = Text(
+          '機能を並べるのではなく、理解して、1件で試し、続ける理由を確かめ、最後に不安を解消する順番で案内します。',
+          style: TextStyle(
+            color: Color(0xFF52606D),
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            height: 1.75,
+          ),
+        );
+
+        return Container(
+          key: const Key('landing_editorial_prologue'),
+          padding: EdgeInsets.only(bottom: wide ? 58 : 36),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'THE DECISION JOURNEY',
+                style: TextStyle(
+                  color: Color(0xFFB45F42),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2.3,
+                ),
+              ),
+              const SizedBox(height: 14),
+              if (wide)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(flex: 7, child: title),
+                    const SizedBox(width: 48),
+                    const Expanded(flex: 4, child: copy),
+                  ],
+                )
+              else ...[
+                title,
+                const SizedBox(height: 16),
+                copy,
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEditorialChapter({
+    required int number,
+    required String eyebrow,
+    required String title,
+    required String description,
+    required List<Widget> children,
+  }) {
+    final spacedChildren = <Widget>[];
+    for (var index = 0; index < children.length; index++) {
+      spacedChildren.add(children[index]);
+      if (index < children.length - 1) {
+        spacedChildren.add(const SizedBox(height: 22));
+      }
+    }
+
+    return Container(
+      key: Key('landing_editorial_chapter_$number'),
+      padding: const EdgeInsets.symmetric(vertical: 42),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Color(0xFFD6CFC4))),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 900;
+          final introduction = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF101D2B),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      number.toString().padLeft(2, '0'),
+                      style: const TextStyle(
+                        color: Color(0xFFF2E7D5),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Flexible(
+                    child: Text(
+                      eyebrow.toUpperCase(),
+                      style: const TextStyle(
+                        color: Color(0xFFB45F42),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.8,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Semantics(
+                header: true,
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: const Color(0xFF111D2B),
+                    fontSize: wide ? 28 : 25,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                description,
+                style: const TextStyle(
+                  color: Color(0xFF64707D),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  height: 1.7,
+                ),
+              ),
+            ],
+          );
+          final content = Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: spacedChildren,
+          );
+
+          if (!wide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                introduction,
+                const SizedBox(height: 28),
+                content,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(width: 250, child: introduction),
+              const SizedBox(width: 54),
+              Expanded(child: content),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEditorialArchive() {
+    final archiveChildren = <Widget>[
+      _buildRecentAchievementsSection(),
+      _buildMigrationGuideSection(),
+      _buildNotionVsSection(),
+      _buildImportCtaSection(),
+      _buildComparisonLinksSection(),
+      _buildEnterpriseCta(),
+      LiveGrowthBanner(
+        growthService: widget.growthService,
+        compact: true,
+        title: '今まさに成長中',
+        subtitle: '登録者数・開発状況をリアルタイムで確認',
+      ),
+      _buildViralShareSection(),
+    ];
+
+    return Container(
+      key: const Key('landing_editorial_archive'),
+      decoration: BoxDecoration(
+        color: const Color(0xFF101D2B),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF2B3C4D)),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          key: const Key('landing_editorial_archive_toggle'),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+          childrenPadding: const EdgeInsets.fromLTRB(18, 4, 18, 22),
+          iconColor: const Color(0xFFF0E5D0),
+          collapsedIconColor: const Color(0xFFB9C5CF),
+          title: const Text(
+            '比較・移行・開発情報を詳しく見る',
+            style: TextStyle(
+              color: Color(0xFFF7F1E7),
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              height: 1.5,
+            ),
+          ),
+          subtitle: const Text(
+            '必要になった時だけ開ける、導入検討者向けの資料庫です。',
+            style: TextStyle(
+              color: Color(0xFFAEBAC5),
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          children: [
+            for (var index = 0; index < archiveChildren.length; index++) ...[
+              archiveChildren[index],
+              if (index < archiveChildren.length - 1)
+                const SizedBox(height: 18),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditorialSurface(double screenWidth) {
+    final compact = screenWidth < 720;
+
+    return Container(
+      key: const Key('landing_editorial_surface'),
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: Color(0xFFF2EEE6),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        compact ? 14 : 34,
+        compact ? 42 : 72,
+        compact ? 14 : 34,
+        compact ? 56 : 88,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1180),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildEditorialPrologue(),
+              _buildEditorialChapter(
+                number: 1,
+                eyebrow: 'Understand',
+                title: 'まず、何のためのOSかを知る。',
+                description: '思想と体験の輪郭だけを先に。細かな機能を見る前に、自分の迷いがどう変わるかを確かめます。',
+                children: [
+                  _buildBrandDefinitionSection(),
+                  if (_hypothesisEnabled('h06')) _buildProductProofSection(),
+                ],
+              ),
+              _buildEditorialChapter(
+                number: 2,
+                eyebrow: 'Try one thing',
+                title: '次の1件を、その場で試す。',
+                description: '説明より先に、いま詰まっていることを入力。登録前の体験から保存までを一続きにします。',
+                children: [
+                  if (_hypothesisEnabled('h02')) _buildIntentSelector(),
+                  _buildConversionSequence(),
+                  _buildSocialProofStatsSection(),
+                ],
+              ),
+              _buildEditorialChapter(
+                number: 3,
+                eyebrow: 'Build continuity',
+                title: '続ける理由を、具体で比べる。',
+                description: '始め方、得られる価値、料金を同じ章に集約。登録後の生活がどう変わるかを判断できます。',
+                children: [
+                  _buildUniqueValueSection(),
+                  _buildGetStartedStepsSection(),
+                  _buildPricingComparisonSection(),
+                ],
+              ),
+              _buildEditorialChapter(
+                number: 4,
+                eyebrow: 'Decide with confidence',
+                title: '不安を残さず、始めるか決める。',
+                description: 'よくある疑問だけを先に表示し、比較表や移行手順は必要な人が開ける資料庫へ整理しました。',
+                children: [
+                  _buildFaqSection(),
+                  _buildEditorialArchive(),
+                ],
+              ),
+              const SizedBox(height: 28),
+              _buildLegalFooterLinks(),
+              const SizedBox(height: 24),
+              _buildReferralInviteSection(),
+              if (_pendingReferralCode != null) const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.sizeOf(context).width;
@@ -5100,33 +5536,33 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         automaticallyImplyLeading: false,
         toolbarHeight: screenWidth < 480 ? 56 : 72,
         elevation: 0,
-        scrolledUnderElevation: 1,
+        scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        backgroundColor: Colors.white.withValues(alpha: 0.96),
+        backgroundColor: const Color(0xFF07111E),
+        shape: const Border(
+          bottom: BorderSide(color: Color(0xFF253443), width: 0.8),
+        ),
         titleSpacing: screenWidth >= 900 ? 72 : 16,
         title: Row(
           children: [
             Container(
-              width: 28,
+              width: 18,
               height: 28,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1F7AE0),
-                borderRadius: BorderRadius.circular(7),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF1F7AE0).withValues(alpha: 0.18),
-                    blurRadius: 12,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.auto_awesome_rounded,
-                color: Colors.white,
-                size: 17,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFF0E5D0), Color(0xFFEF8E67)],
+                ),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(18),
+                  bottomRight: Radius.circular(18),
+                  topRight: Radius.circular(5),
+                  bottomLeft: Radius.circular(5),
+                ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Semantics(
               key: const Key('landing_appbar_brand_heading'),
               header: true,
@@ -5134,9 +5570,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 '自分株式会社',
                 key: Key('landing_page_title'),
                 style: TextStyle(
-                  color: Color(0xFF172033),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
+                  color: Color(0xFFF6F0E5),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.1,
                 ),
               ),
             ),
@@ -5145,11 +5582,12 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         actions: [
           if (wideHeader)
             TextButton(
-              onPressed: _scrollToAuthSection,
+              key: const Key('landing_header_login'),
+              onPressed: _showLoginAndScroll,
               child: const Text(
                 'ログイン',
                 style: TextStyle(
-                  color: Color(0xFF344054),
+                  color: Color(0xFFBAC4CC),
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -5160,13 +5598,14 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               left: 8,
             ),
             child: FilledButton(
+              key: const Key('landing_header_signup'),
               onPressed: _handleHeroSignup,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF1F7AE0),
-                foregroundColor: Colors.white,
+                backgroundColor: const Color(0xFFF0E5D0),
+                foregroundColor: const Color(0xFF101A24),
                 minimumSize: Size(screenWidth < 480 ? 92 : 132, 44),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(999),
                 ),
               ),
               child: Text(
@@ -5177,18 +5616,15 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
         ],
       ),
-      backgroundColor: const Color(0xFFF8FBFF),
+      backgroundColor: const Color(0xFF07111E),
       bottomNavigationBar: _buildMobileStickyCta(screenWidth),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             controller: _pageScrollController,
-            padding: EdgeInsets.symmetric(
-              horizontal: screenWidth < 640 ? 14 : 28,
-              vertical: screenWidth < 480 ? 12 : 22,
-            ),
+            padding: EdgeInsets.zero,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1180),
+              constraints: const BoxConstraints(maxWidth: 1440),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -5200,65 +5636,17 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                       child: const SizedBox.shrink(),
                     ),
                   _buildHeroSection(),
-                  const SizedBox(height: 20),
-                  LandingStoryJourney(
-                    scrollController: _pageScrollController,
-                    onPrimaryAction: _handleHeroSignup,
-                    onSecondaryAction: _scrollToTrialSection,
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth < 720 ? 0 : 28,
+                    ),
+                    child: LandingStoryJourney(
+                      scrollController: _pageScrollController,
+                      onPrimaryAction: _handleHeroSignup,
+                      onSecondaryAction: _scrollToTrialSection,
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  _buildBrandDefinitionSection(),
-                  const SizedBox(height: 20),
-                  if (_hypothesisEnabled('h02')) ...[
-                    _buildIntentSelector(),
-                    const SizedBox(height: 20),
-                  ],
-                  if (_hypothesisEnabled('h06')) ...[
-                    _buildProductProofSection(),
-                    const SizedBox(height: 20),
-                  ],
-                  if (_hypothesisEnabled('h07')) ...[
-                    _buildSocialProofStatsSection(),
-                    const SizedBox(height: 20),
-                  ],
-                  _buildConversionSequence(),
-                  const SizedBox(height: 20),
-                  if (!_hypothesisEnabled('h07')) ...[
-                    _buildSocialProofStatsSection(),
-                    const SizedBox(height: 20),
-                  ],
-                  _buildUniqueValueSection(),
-                  const SizedBox(height: 20),
-                  _buildGetStartedStepsSection(),
-                  const SizedBox(height: 20),
-                  _buildPricingComparisonSection(),
-                  const SizedBox(height: 20),
-                  _buildRecentAchievementsSection(),
-                  const SizedBox(height: 20),
-                  _buildMigrationGuideSection(),
-                  const SizedBox(height: 20),
-                  _buildNotionVsSection(),
-                  const SizedBox(height: 20),
-                  _buildFaqSection(),
-                  const SizedBox(height: 20),
-                  _buildImportCtaSection(),
-                  const SizedBox(height: 20),
-                  _buildComparisonLinksSection(),
-                  _buildEnterpriseCta(),
-                  const SizedBox(height: 20),
-                  LiveGrowthBanner(
-                    growthService: widget.growthService,
-                    compact: true,
-                    title: '今まさに成長中',
-                    subtitle: '登録者数・開発状況をリアルタイムで確認',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildViralShareSection(),
-                  const SizedBox(height: 20),
-                  _buildLegalFooterLinks(),
-                  const SizedBox(height: 20),
-                  _buildReferralInviteSection(),
-                  if (_pendingReferralCode != null) const SizedBox(height: 20),
+                  _buildEditorialSurface(screenWidth),
                 ],
               ),
             ),
@@ -5272,20 +5660,29 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 class _TrustPoint extends StatelessWidget {
   final IconData icon;
   final String label;
+  final bool dark;
 
-  const _TrustPoint({required this.icon, required this.label});
+  const _TrustPoint({
+    required this.icon,
+    required this.label,
+    this.dark = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 17, color: const Color(0xFF247B64)),
+        Icon(
+          icon,
+          size: 17,
+          color: dark ? const Color(0xFFF0E5D0) : const Color(0xFF247B64),
+        ),
         const SizedBox(width: 5),
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF475569),
+          style: TextStyle(
+            color: dark ? const Color(0xFFD1D9DF) : const Color(0xFF475569),
             fontSize: 12,
             fontWeight: FontWeight.w700,
           ),
@@ -5401,130 +5798,117 @@ class _WorkflowLandingHero extends StatelessWidget {
     required this.onWatchDemo,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final compactTrialHero = screenWidth < 480 && inlineTrial != null;
-
-    return Container(
-      key: const Key('landing_hero_section'),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEAF4FB),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      padding: compactTrialHero
-          ? const EdgeInsets.fromLTRB(10, 12, 10, 16)
-          : const EdgeInsets.fromLTRB(22, 46, 22, 42),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (!compactTrialHero) ...[
-            Center(
-              child: Semantics(
-                key: const Key('landing_brand_heading'),
-                header: true,
-                child: const Text(
-                  '自分株式会社',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFF172033),
-                    fontSize: 42,
-                    fontWeight: FontWeight.w800,
-                    height: 1.16,
-                    letterSpacing: 0,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
-          ],
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 820),
-              child: Text(
-                outcomeFirstMessage
-                    ? '仕事・学習・お金の「次の1件」を、AIが1分で決める'
-                    : 'Notion・Slack・MoneyForward・WBSを、ひとつの仕事OSへ',
-                key: Key(
-                  outcomeFirstMessage
-                      ? 'landing_h01_outcome_offer'
-                      : 'landing_h01_control_offer',
-                ),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: const Color(0xFF102A43),
-                  fontSize: compactTrialHero ? 22 : 28,
-                  height: compactTrialHero ? 1.25 : 1.45,
-                  fontWeight: FontWeight.w800,
-                ),
+  Widget _buildHeroCopy({
+    required bool compact,
+    required bool condensed,
+    required double headingSize,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (condensed)
+          Semantics(
+            key: const Key('landing_brand_heading'),
+            header: true,
+            label: '自分株式会社',
+            child: const SizedBox.shrink(),
+          )
+        else
+          Semantics(
+            key: const Key('landing_brand_heading'),
+            header: true,
+            child: const Text(
+              '自分株式会社',
+              style: TextStyle(
+                color: Color(0xFFF0E5D0),
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 3.2,
               ),
             ),
           ),
-          SizedBox(height: compactTrialHero ? 8 : 12),
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 720),
-              child: Text(
-                outcomeFirstMessage
-                    ? '散らばった予定・メモ・資産・学習をまとめ、迷いを「今やる具体的な行動」に変えます。'
-                    : '情報を一か所にまとめ、AIが今日の最優先アクションまで案内します。',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: const Color(0xFF475569),
-                  fontSize: compactTrialHero ? 13 : 16,
-                  height: compactTrialHero ? 1.45 : 1.7,
-                  fontWeight: FontWeight.w500,
-                ),
+        SizedBox(height: condensed ? 0 : (compact ? 18 : 24)),
+        Text(
+          outcomeFirstMessage
+              ? '仕事・学習・お金の「次の1件」を、AIが1分で決める'
+              : 'Notion・Slack・MoneyForward・WBSを、ひとつの仕事OSへ',
+          key: Key(
+            outcomeFirstMessage
+                ? 'landing_h01_outcome_offer'
+                : 'landing_h01_control_offer',
+          ),
+          style: TextStyle(
+            color: const Color(0xFFF8F3EA),
+            fontFamily: 'NotoSansJP',
+            fontSize: headingSize,
+            height: compact ? 1.22 : 1.14,
+            fontWeight: FontWeight.w500,
+            letterSpacing: compact ? -1.4 : -3.0,
+            shadows: const [
+              Shadow(
+                color: Color(0x8A020710),
+                blurRadius: 28,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          maxLines: condensed ? 3 : null,
+          overflow: condensed ? TextOverflow.ellipsis : null,
+        ),
+        SizedBox(height: condensed ? 10 : (compact ? 20 : 26)),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Text(
+            outcomeFirstMessage
+                ? '散らばった予定・メモ・資産・学習をまとめ、迷いを「今やる具体的な行動」に変えます。'
+                : '情報を一か所にまとめ、AIが今日の最優先アクションまで案内します。',
+            style: TextStyle(
+              color: const Color(0xFFD1D9DF),
+              fontSize: compact ? 15 : 17,
+              height: condensed ? 1.45 : 1.8,
+              fontWeight: FontWeight.w400,
+            ),
+            maxLines: condensed ? 2 : null,
+            overflow: condensed ? TextOverflow.ellipsis : null,
+          ),
+        ),
+        if (achievementCount > 0 && !condensed) ...[
+          const SizedBox(height: 22),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0x26152534),
+              border: Border.all(color: const Color(0x4DF0E5D0)),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              '実装済み $achievementCount機能 · ひとつの作業空間から',
+              style: const TextStyle(
+                color: Color(0xFFE5DDD0),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.4,
               ),
             ),
           ),
-          if (inlineTrial != null) ...[
-            SizedBox(height: compactTrialHero ? 10 : 18),
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 760),
-                child: inlineTrial,
-              ),
-            ),
-          ],
-          if (achievementCount > 0) ...[
-            const SizedBox(height: 12),
-            Center(
-              child: Text(
-                '実装済み機能 $achievementCount件を、ひとつの作業空間から利用できます',
-                style: const TextStyle(
-                  color: Color(0xFF247B64),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  height: 1.5,
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 24),
-          if (showFirstUserGrowthCta && inlineTrial == null) ...[
-            _FirstUserGrowthHeroCta(
-              onGetStarted: onGetStarted,
-              onWatchDemo: onWatchDemo,
-            ),
-            const SizedBox(height: 18),
-          ],
+        ],
+        if (inlineTrial == null) ...[
+          SizedBox(height: compact ? 30 : 38),
           Wrap(
-            alignment: WrapAlignment.center,
             spacing: 12,
-            runSpacing: 10,
+            runSpacing: 12,
             children: [
               FilledButton.icon(
                 key: const Key('landing_primary_signup_cta'),
                 onPressed: onGetStarted,
-                icon: const Icon(Icons.arrow_forward, size: 18),
+                icon: const Icon(Icons.arrow_forward_rounded, size: 18),
                 label: const Text('無料で保存を始める'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF1F7AE0),
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(190, 52),
+                  backgroundColor: const Color(0xFFF0E5D0),
+                  foregroundColor: const Color(0xFF101A24),
+                  minimumSize: const Size(196, 54),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(999),
                   ),
                   textStyle: const TextStyle(
                     fontSize: 15,
@@ -5532,46 +5916,220 @@ class _WorkflowLandingHero extends StatelessWidget {
                   ),
                 ),
               ),
-              if (inlineTrial == null)
-                OutlinedButton.icon(
-                  key: const Key('landing_primary_trial_cta'),
-                  onPressed: onWatchDemo,
-                  icon: const Icon(Icons.play_circle_outline, size: 19),
-                  label: const Text('登録なしで1件試す'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF172033),
-                    minimumSize: const Size(190, 52),
-                    side: const BorderSide(color: Color(0xFF9CB7CC)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
+              OutlinedButton.icon(
+                key: const Key('landing_primary_trial_cta'),
+                onPressed: onWatchDemo,
+                icon: const Icon(Icons.south_rounded, size: 18),
+                label: const Text('登録なしで1件試す'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFF6F0E5),
+                  minimumSize: const Size(196, 54),
+                  side: const BorderSide(color: Color(0x73F6F0E5)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 760;
+        final wide = constraints.maxWidth >= 980;
+        final compactTrial = compact && inlineTrial != null;
+        final headingSize = compact
+            ? compactTrial
+                ? 26.0
+                : 38.0
+            : constraints.maxWidth >= 1220
+                ? 68.0
+                : 56.0;
+        final pagePadding = EdgeInsets.fromLTRB(
+          compactTrial ? 12 : (compact ? 20 : 64),
+          compactTrial ? 14 : (compact ? 24 : 36),
+          compactTrial ? 12 : (compact ? 20 : 64),
+          compactTrial ? 32 : (compact ? 46 : 70),
+        );
+        final heroCopy = _buildHeroCopy(
+          compact: compact,
+          condensed: compactTrial,
+          headingSize: headingSize,
+        );
+
+        return Container(
+          key: const Key('landing_hero_section'),
+          constraints: BoxConstraints(minHeight: compact ? 650 : 720),
+          color: const Color(0xFF07111E),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: RepaintBoundary(
+                  child: ExcludeSemantics(
+                    child: Image.asset(
+                      'assets/landing_journey/01-scattered.webp',
+                      key: const Key('landing_hero_media_image'),
+                      fit: BoxFit.cover,
+                      alignment: const Alignment(0.35, 0),
+                      cacheWidth: compact ? 900 : 1600,
+                      filterQuality: FilterQuality.medium,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const DecoratedBox(
+                        key: Key('landing_hero_media_fallback'),
+                        decoration: BoxDecoration(
+                          gradient: RadialGradient(
+                            center: Alignment(0.58, -0.3),
+                            radius: 1.22,
+                            colors: [Color(0xFF15334E), Color(0xFF07111E)],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
+              ),
+              const Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        Color(0xFA06101D),
+                        Color(0xE80A1624),
+                        Color(0x8A07111E),
+                        Color(0xC207111E),
+                      ],
+                      stops: [0, 0.38, 0.72, 1],
+                    ),
+                  ),
+                ),
+              ),
+              const Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0x33000000),
+                        Color(0x00000000),
+                        Color(0xCC040A11),
+                      ],
+                      stops: [0, 0.58, 1],
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: pagePadding,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (!compactTrial)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'PERSONAL OPERATING SYSTEM',
+                            style: TextStyle(
+                              color: Color(0xFFB8C2CA),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 2.2,
+                            ),
+                          ),
+                          if (!compact)
+                            const Text(
+                              'SCROLL TO EXPLORE · 01',
+                              style: TextStyle(
+                                color: Color(0xFF9CA9B3),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.8,
+                              ),
+                            ),
+                        ],
+                      ),
+                    SizedBox(
+                      height: compactTrial ? 4 : (compact ? 58 : 118),
+                    ),
+                    if (wide && inlineTrial != null)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 11, child: heroCopy),
+                          const SizedBox(width: 52),
+                          Expanded(
+                            flex: 9,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 540),
+                              child: inlineTrial,
+                            ),
+                          ),
+                        ],
+                      )
+                    else ...[
+                      heroCopy,
+                      if (inlineTrial != null) ...[
+                        SizedBox(
+                          height: compactTrial ? 14 : (compact ? 38 : 48),
+                        ),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 640),
+                          child: inlineTrial,
+                        ),
+                      ],
+                    ],
+                    if (showFirstUserGrowthCta && inlineTrial == null) ...[
+                      const SizedBox(height: 24),
+                      _FirstUserGrowthHeroCta(
+                        onGetStarted: onGetStarted,
+                        onWatchDemo: onWatchDemo,
+                      ),
+                    ],
+                    if (showRiskReversal) ...[
+                      const SizedBox(height: 28),
+                      const Wrap(
+                        key: Key('landing_h05_risk_reversal'),
+                        spacing: 16,
+                        runSpacing: 10,
+                        children: [
+                          _TrustPoint(
+                            icon: Icons.check_circle_outline,
+                            label: '無料コア',
+                            dark: true,
+                          ),
+                          _TrustPoint(
+                            icon: Icons.credit_card_off_outlined,
+                            label: 'カード不要',
+                            dark: true,
+                          ),
+                          _TrustPoint(
+                            icon: Icons.pause_circle_outline,
+                            label: 'いつでも停止',
+                            dark: true,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ],
           ),
-          if (showRiskReversal) ...[
-            const SizedBox(height: 16),
-            const Wrap(
-              key: Key('landing_h05_risk_reversal'),
-              alignment: WrapAlignment.center,
-              spacing: 14,
-              runSpacing: 8,
-              children: [
-                _TrustPoint(icon: Icons.check_circle_outline, label: '無料コア'),
-                _TrustPoint(
-                  icon: Icons.credit_card_off_outlined,
-                  label: 'カード不要',
-                ),
-                _TrustPoint(icon: Icons.pause_circle_outline, label: 'いつでも停止'),
-              ],
-            ),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 }
