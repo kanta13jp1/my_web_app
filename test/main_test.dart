@@ -113,6 +113,7 @@ void main() {
       // Assert
       expect(find.byType(LandingPage), findsOneWidget);
       expect(find.byType(HomePage), findsNothing);
+      expect(find.byKey(const Key('global_header_clock_bar')), findsNothing);
     });
 
     testWidgets('ログイン済みでオンボーディング未完了時は OnboardingPage が表示されること',
@@ -207,6 +208,7 @@ void main() {
 
       // Assert
       expect(find.byType(HomePage), findsOneWidget);
+      expect(find.byKey(const Key('global_header_clock_bar')), findsOneWidget);
     });
 
     testWidgets('オンボーディングは保存済みページから再開できること', (WidgetTester tester) async {

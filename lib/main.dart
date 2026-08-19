@@ -1880,6 +1880,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         builder: (context, child) {
           return GlobalHeaderClockShell(
             navigatorKey: _navigatorKey,
+            // 時計とビルド番号はログイン後の業務用クロームに限定する。
+            // 公開LPに内部ステータス風の帯を出すと、未完成・デバッグ中に
+            // 見えるうえ、狭幅ではラベルが切れて信頼を損なう。
+            showClockBar: supabase.auth.currentSession != null,
             child: UniversalAiShareShell(
               navigatorKey: _navigatorKey,
               child: MaintenanceShell(
