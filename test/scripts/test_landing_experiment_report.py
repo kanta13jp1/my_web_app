@@ -265,6 +265,7 @@ class LandingExperimentReportTest(unittest.TestCase):
                         "funnel_magic_link_send": 2,
                         "funnel_magic_link_fail_delivery_config": 1,
                         "funnel_google_oauth_start": 1,
+                        "funnel_google_oauth_fail_redirect": 1,
                         "funnel_inbox_open": 1,
                         "unrelated_event": 99,
                     },
@@ -291,13 +292,23 @@ class LandingExperimentReportTest(unittest.TestCase):
             report["funnel_diagnostics"]["magic_link_failure_total"], 1
         )
         self.assertEqual(report["funnel_diagnostics"]["google_oauth_starts"], 1)
+        self.assertEqual(
+            report["funnel_diagnostics"]["google_oauth_failure_total"], 1
+        )
+        self.assertEqual(
+            report["funnel_diagnostics"]["google_oauth_failures"][
+                "redirect_configuration"
+            ],
+            1,
+        )
         self.assertEqual(report["funnel_diagnostics"]["inbox_opens"], 1)
         self.assertEqual(
             report["funnel_diagnostics"]["recommended_next_action"],
-            "verify_oauth_callback_and_signup_completion",
+            "repair_google_oauth_callback_failure",
         )
         self.assertIn("Magic Link attempts: 3", markdown)
         self.assertIn("Successful Magic Link sends: 2", markdown)
+        self.assertIn("Categorized Google OAuth callback failures: 1", markdown)
         self.assertIn("Categorized Magic Link failures: 1", markdown)
         self.assertIn("Google OAuth starts: 1", markdown)
         self.assertIn("Inbox opens: 1", markdown)

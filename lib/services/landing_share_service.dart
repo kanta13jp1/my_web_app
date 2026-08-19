@@ -53,6 +53,18 @@ class LandingShareService {
   static const String funnelMagicLinkFailUnknown =
       'funnel_magic_link_fail_unknown';
   static const String funnelGoogleOAuthStart = 'funnel_google_oauth_start';
+  static const String funnelGoogleOAuthFailCancelled =
+      'funnel_google_oauth_fail_cancelled';
+  static const String funnelGoogleOAuthFailRateLimit =
+      'funnel_google_oauth_fail_rate_limit';
+  static const String funnelGoogleOAuthFailProviderConfig =
+      'funnel_google_oauth_fail_provider_config';
+  static const String funnelGoogleOAuthFailRedirect =
+      'funnel_google_oauth_fail_redirect';
+  static const String funnelGoogleOAuthFailCallbackExchange =
+      'funnel_google_oauth_fail_callback_exchange';
+  static const String funnelGoogleOAuthFailUnknown =
+      'funnel_google_oauth_fail_unknown';
   static const String funnelInboxOpen = 'funnel_inbox_open';
 
   static const List<String> supportedChannels = <String>[
@@ -409,6 +421,12 @@ $shareUrl
       case funnelMagicLinkFailNetwork:
       case funnelMagicLinkFailUnknown:
       case funnelGoogleOAuthStart:
+      case funnelGoogleOAuthFailCancelled:
+      case funnelGoogleOAuthFailRateLimit:
+      case funnelGoogleOAuthFailProviderConfig:
+      case funnelGoogleOAuthFailRedirect:
+      case funnelGoogleOAuthFailCallbackExchange:
+      case funnelGoogleOAuthFailUnknown:
       case funnelInboxOpen:
         return true;
       default:

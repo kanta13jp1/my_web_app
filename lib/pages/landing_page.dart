@@ -10,6 +10,7 @@ import '../services/growth_acquisition_service.dart';
 import '../services/growth_mission_service.dart';
 import '../services/landing_conversion_analytics.dart';
 import '../services/landing_conversion_experiment_service.dart';
+import '../services/landing_oauth_callback_failure.dart';
 import '../services/landing_page_adapter.dart';
 import '../services/landing_signup_completion_service.dart';
 import '../services/pending_landing_trial_service.dart';
@@ -114,6 +115,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   String? _magicLinkErrorMessage;
   String? _lastMagicLinkEmail;
   String? _pendingReferralCode;
+  LandingOAuthCallbackFailure? _oauthCallbackFailure;
   _LandingIntent _selectedIntent = _LandingIntent.work;
   LandingExperimentAssignment? _experimentAssignment;
   Future<LandingExperimentAssignment>? _experimentBootstrapFuture;
@@ -153,6 +155,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   @override
   void initState() {
     super.initState();
+    _oauthCallbackFailure = LandingOAuthCallbackFailure.fromUri(_landingUri);
     _experimentAssignment = widget.experimentAssignment;
     if (_experimentAssignment != null) {
       _experimentBootstrapFuture = Future.value(_experimentAssignment!);
@@ -175,6 +178,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         _goToAuthenticatedEntry();
       }
     });
+    final oauthCallbackFailure = _oauthCallbackFailure;
+    if (oauthCallbackFailure != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(_handleOAuthCallbackFailure(oauthCallbackFailure));
+      });
+    }
     unawaited(_bootstrapReferralInvite());
     unawaited(_loadSocialProofStats());
   }
@@ -373,6 +383,28 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  Future<void> _handleOAuthCallbackFailure(
+    LandingOAuthCallbackFailure failure,
+  ) async {
+    try {
+      await widget.signupCompletionService.cancelPending();
+    } catch (error) {
+      debugPrint('Pending signup cancellation failed after OAuth error: $error');
+    }
+    if (_analyticsEnabled) {
+      try {
+        await widget.adapter.recordGoogleOAuthCallbackFailure(
+          category: failure.category,
+        );
+      } catch (error) {
+        debugPrint('Google OAuth callback failure analytics failed: $error');
+      }
+    }
+    if (mounted) {
+      _showMessage(failure.userMessage);
+    }
+  }
+
   Future<void> _loadAchievementCount() async {
     final client = _supabaseClientOrNull;
     if (client == null) return;
@@ -494,6 +526,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     setState(() {
       _isLoading = true;
       _magicLinkErrorMessage = null;
+      _oauthCallbackFailure = null;
     });
     try {
       await _preserveTrialForGoogle();
@@ -5039,6 +5072,75 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     );
   }
 
+  Widget _buildOAuthCallbackNotice() {
+    final failure = _oauthCallbackFailure;
+    if (failure == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      key: const Key('landing_google_oauth_callback_error'),
+      color: const Color(0xFFFFF4E5),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1100),
+          child: Wrap(
+            spacing: 16,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const Icon(
+                Icons.info_outline,
+                color: Color(0xFF9A5800),
+                size: 22,
+              ),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 610),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Google登録を完了できませんでした',
+                      style: TextStyle(
+                        color: Color(0xFF713F12),
+                        fontWeight: FontWeight.w800,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      failure.userMessage,
+                      style: const TextStyle(
+                        color: Color(0xFF713F12),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              OutlinedButton.icon(
+                key: const Key('landing_google_oauth_retry'),
+                onPressed: _isLoading ? null : _signInWithGoogle,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Googleでもう一度'),
+              ),
+              TextButton.icon(
+                key: const Key('landing_google_oauth_magic_link'),
+                onPressed: _showSignupAndScroll,
+                icon: const Icon(Icons.email_outlined, size: 18),
+                label: const Text('Magic Linkで続ける'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildAuthSection() {
     final compactMagicLink = _hypothesisEnabled('h04');
     return KeyedSubtree(
@@ -5882,6 +5984,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                       color: const Color(0xFF1F7AE0),
                       child: const SizedBox.shrink(),
                     ),
+                  if (_oauthCallbackFailure != null)
+                    _buildOAuthCallbackNotice(),
                   _buildHeroSection(),
                   Padding(
                     padding: EdgeInsets.symmetric(

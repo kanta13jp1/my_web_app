@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/services/landing_oauth_callback_failure.dart';
 import 'package:my_web_app/services/landing_page_adapter.dart';
 import 'package:my_web_app/services/landing_share_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -38,6 +39,22 @@ void main() {
         LandingShareService.funnelMagicLinkFailRedirect,
         LandingShareService.funnelMagicLinkFailNetwork,
         LandingShareService.funnelMagicLinkFailUnknown,
+      ],
+    );
+  });
+
+  test('maps every Google callback category to an allowlisted aggregate key', () {
+    expect(
+      LandingOAuthCallbackFailureCategory.values.map(
+        landingGoogleOAuthFailureEventKey,
+      ),
+      <String>[
+        LandingShareService.funnelGoogleOAuthFailCancelled,
+        LandingShareService.funnelGoogleOAuthFailRateLimit,
+        LandingShareService.funnelGoogleOAuthFailProviderConfig,
+        LandingShareService.funnelGoogleOAuthFailRedirect,
+        LandingShareService.funnelGoogleOAuthFailCallbackExchange,
+        LandingShareService.funnelGoogleOAuthFailUnknown,
       ],
     );
   });
