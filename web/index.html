@@ -66,6 +66,7 @@
   <link rel="dns-prefetch" href="//smmkxxavexumewbfaqpy.supabase.co">
   <link rel="preload" href="flutter_bootstrap.js" as="script">
   <link rel="preload" href="main.dart.js" as="script" fetchpriority="high">
+  <link rel="preload" href="assets/web/assets/fonts/NotoSansJP-Regular.ttf" as="font" type="font/ttf" crossorigin>
   <!--
     Google Fonts (Noto Sans JP / Noto Serif JP) のランタイム読み込みは廃止した。
     - この CSS は日本語の unicode-range 分割により **458kB / 496 シャード宣言**
@@ -238,11 +239,29 @@
     }
 
     #seo-shell {
+      position: fixed;
+      inset: 0;
+      z-index: 2147483646;
       min-height: 100vh;
       display: flex;
       align-items: flex-start;
       justify-content: center;
       padding: 56px 24px 32px;
+      overflow-y: auto;
+      background: #f5f7fa;
+      opacity: 1;
+      transition: opacity 600ms ease-out;
+    }
+
+    #seo-shell[data-flutter-prewarm="true"] {
+      opacity: 0.9;
+      transition-duration: 120ms;
+    }
+
+    #seo-shell[data-flutter-ready="true"] {
+      opacity: 0;
+      pointer-events: none;
+      transition-duration: 600ms;
     }
 
     .seo-card {
@@ -555,6 +574,12 @@
 
       .seo-flow-arrow {
         transform: rotate(90deg);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #seo-shell {
+        transition: none;
       }
     }
   </style>
@@ -1240,9 +1265,40 @@
 
     window.addEventListener('flutter-first-frame', function () {
       var seoShell = document.getElementById('seo-shell');
-      if (seoShell) {
-        seoShell.remove();
-      }
+      if (!seoShell) return;
+
+      // flutter-first-frame can fire while the web renderer is still warming
+      // the bundled Japanese font and glyph atlas. Removing the readable SEO
+      // shell immediately exposed a blank frame followed by tofu glyphs in the
+      // primary CTA. Keep the shell as an overlay through a short stabilization
+      // window and several additional painted frames, then fade it without
+      // blocking the app.
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          window.setTimeout(function () {
+            seoShell.setAttribute('data-flutter-prewarm', 'true');
+            var stableFramesRemaining = 12;
+            function revealAfterStableFrames() {
+              requestAnimationFrame(function () {
+                stableFramesRemaining -= 1;
+                if (stableFramesRemaining > 0) {
+                  revealAfterStableFrames();
+                  return;
+                }
+
+                seoShell.setAttribute('data-flutter-ready', 'true');
+                seoShell.setAttribute('aria-hidden', 'true');
+                window.setTimeout(function () {
+                  if (seoShell.isConnected) {
+                    seoShell.remove();
+                  }
+                }, 650);
+              });
+            }
+            revealAfterStableFrames();
+          }, 700);
+        });
+      });
     });
   </script>
   <script>

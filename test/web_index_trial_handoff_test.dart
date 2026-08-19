@@ -30,4 +30,32 @@ void main() {
       contains('trialCta.setAttribute(\'aria-busy\', \'true\')'),
     );
   });
+
+  test('SEO shell covers the incomplete Flutter font handoff', () {
+    final html = File('web/index.html').readAsStringSync();
+
+    expect(
+      html,
+      contains(
+        '<link rel="preload" '
+        'href="assets/web/assets/fonts/NotoSansJP-Regular.ttf" '
+        'as="font" type="font/ttf" crossorigin>',
+      ),
+    );
+    expect(html, contains('position: fixed;'));
+    expect(html, contains('inset: 0;'));
+    expect(html, contains('transition: opacity 600ms ease-out;'));
+    expect(html, contains('#seo-shell[data-flutter-prewarm="true"]'));
+    expect(html, contains('opacity: 0.9;'));
+    expect(html, contains('#seo-shell[data-flutter-ready="true"]'));
+    expect(html, contains('requestAnimationFrame(function ()'));
+    expect(html, contains('var stableFramesRemaining = 12;'));
+    expect(
+      html,
+      contains("seoShell.setAttribute('data-flutter-ready', 'true')"),
+    );
+    expect(html, contains('}, 650);'));
+    expect(html, contains("seoShell.setAttribute('aria-hidden', 'true')"));
+    expect(html, contains('seoShell.remove();'));
+  });
 }
