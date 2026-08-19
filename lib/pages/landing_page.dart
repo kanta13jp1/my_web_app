@@ -32,6 +32,7 @@ class LandingPage extends StatefulWidget {
   final bool? analyticsEnabled;
   final bool? googleLoginEnabled;
   final Uri? landingUri;
+  final bool showUnverifiedMarketingForQa;
 
   const LandingPage({
     super.key,
@@ -46,6 +47,7 @@ class LandingPage extends StatefulWidget {
     this.analyticsEnabled,
     this.googleLoginEnabled,
     this.landingUri,
+    this.showUnverifiedMarketingForQa = false,
   })  : adapter = adapter ?? const SupabaseLandingPageAdapter(),
         growthService = growthService ?? const GrowthMissionService(),
         conversionAnalytics =
@@ -125,6 +127,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   GrowthAcquisitionService get _acquisitionService => widget.acquisitionService;
   bool get _googleLoginEnabled =>
       widget.googleLoginEnabled ?? _googleLoginFeatureEnabled;
+  bool get _showUnverifiedMarketingForQa => widget.showUnverifiedMarketingForQa;
 
   bool get _analyticsEnabled {
     final override = widget.analyticsEnabled;
@@ -755,7 +758,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       _showSaveCtaPrompt = true;
       _isSignUp = true;
     });
-    _showMessage('この結果を保存するには登録が必要です。下の登録セクションから30秒で保存を開始できます。');
+    _showMessage('この結果を保存するには登録が必要です。登録方法を選ぶと、今回の提案を引き継げます。');
     _scrollToAuthSection();
   }
 
@@ -1286,7 +1289,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         icon: Icons.bookmark_added_outlined,
         eyebrow: '継続',
         title: '保存して明日へつなぐ',
-        detail: '提案、実行履歴、次の一手を同じ場所から再開',
+        detail: '今回の入力、AIの提案、提案理由を登録後に引き継ぐ',
       ),
     ];
 
@@ -1468,7 +1471,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           children: [
             const Expanded(
               child: Text(
-                '無料コア・カード不要',
+                '登録前に体験・登録時カード不要',
                 style: TextStyle(
                   color: Color(0xFFB5C0CA),
                   fontSize: 12,
@@ -1573,7 +1576,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           const SizedBox(height: 20),
           // メインヘッドライン
           const Text(
-            '今日やるべき1件を、AIが決める。\n迷いが消えて、毎日が動き出す。',
+            '今日やる1件を、AIと一緒に絞る。\n迷いを減らして、動き出す。',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 32,
@@ -1638,7 +1641,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           SizedBox(
             height: 56,
             child: Tooltip(
-              message: 'アカウントを作成して提案を保存できます。登録は30秒程度です。',
+              message: 'アカウントを作成すると、今回の提案を引き継げます。',
               child: FilledButton.icon(
                 key: const Key('landing_register_button'),
                 onPressed: _showSignupAndScroll,
@@ -1694,10 +1697,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             spacing: 8,
             runSpacing: 6,
             children: [
-              _BenefitChip(icon: Icons.lock_open, label: '無料・制限なし'),
-              _BenefitChip(icon: Icons.upload_file, label: 'Notionから移行可'),
-              _BenefitChip(icon: Icons.smart_toy, label: 'AI自動整理'),
-              _BenefitChip(icon: Icons.public, label: 'メモ公開共有'),
+              _BenefitChip(icon: Icons.visibility_outlined, label: '登録前に体験'),
+              _BenefitChip(
+                icon: Icons.credit_card_off_outlined,
+                label: '登録時カード不要',
+              ),
+              _BenefitChip(icon: Icons.auto_awesome, label: 'AIが提案'),
+              _BenefitChip(icon: Icons.how_to_reg_outlined, label: '決めるのはあなた'),
             ],
           ),
         ],
@@ -2188,7 +2194,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               const Icon(Icons.bar_chart, color: Color(0xFF7986CB), size: 18),
               const SizedBox(width: 8),
               const Text(
-                'リアルタイム実績',
+                '現在の利用状況',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -3595,7 +3601,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           const SizedBox(height: 8),
           const Text(
-            '134機能を覚える必要はありません。悩みを1文入力すると、登録前に10分で終わる最初の一手を返します。気に入った提案だけ無料で保存できます。',
+            '悩みを1文入力すると、AIが最初の一手を提案します。実行するかはあなたが決め、役立つ提案だけ登録後に引き継げます。',
             style: TextStyle(
               fontSize: 13,
               color: Color(0xFF526174),
@@ -3608,7 +3614,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             icon: Icons.task_alt,
             color: const Color(0xFF1F6FEB),
             title: '仕事を1件に絞る',
-            description: '散らかったタスクから、今日動かす1件と次の一手を決めます。',
+            description: '散らかったタスクから、今日動かす1件の候補と次の一手を提案します。',
           ),
           const Divider(height: 1, color: Color(0xFFDDE4EE)),
           outcomeRow(
@@ -3616,7 +3622,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             icon: Icons.savings_outlined,
             color: const Color(0xFF0B7A53),
             title: '見直す支出を1件決める',
-            description: '家計の悩みから、最初に確認する固定費や明細を具体化します。',
+            description: '家計の悩みから、最初に確認する固定費や明細の候補を具体化します。',
           ),
           const Divider(height: 1, color: Color(0xFFDDE4EE)),
           outcomeRow(
@@ -3624,7 +3630,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             icon: Icons.school_outlined,
             color: const Color(0xFF9A5A00),
             title: '今日の復習を1件決める',
-            description: '学びたい内容を、今日終えられる復習や練習に変えます。',
+            description: '学びたい内容から、今日取り組む復習や練習の候補を提案します。',
           ),
           const SizedBox(height: 14),
           SizedBox(
@@ -3656,7 +3662,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           const SizedBox(height: 8),
           const Center(
             child: Text(
-              'メール登録は、提案を保存するときだけ',
+              '登録は、提案を引き継ぎたいときだけ',
               style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
@@ -3670,25 +3676,28 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             spacing: 4,
             runSpacing: 4,
             children: [
-              TextButton.icon(
-                key: const Key('landing_h15_feature_catalog_toggle'),
-                onPressed: () {
-                  final willShow = !_showAllUniqueFeatures;
-                  setState(() => _showAllUniqueFeatures = willShow);
-                  if (willShow) {
-                    unawaited(_recordConversionStage('feature_catalog_expand'));
-                  }
-                },
-                icon: Icon(
-                  _showAllUniqueFeatures
-                      ? Icons.expand_less
-                      : Icons.expand_more,
-                  size: 18,
+              if (_showUnverifiedMarketingForQa)
+                TextButton.icon(
+                  key: const Key('landing_h15_feature_catalog_toggle'),
+                  onPressed: () {
+                    final willShow = !_showAllUniqueFeatures;
+                    setState(() => _showAllUniqueFeatures = willShow);
+                    if (willShow) {
+                      unawaited(
+                        _recordConversionStage('feature_catalog_expand'),
+                      );
+                    }
+                  },
+                  icon: Icon(
+                    _showAllUniqueFeatures
+                        ? Icons.expand_less
+                        : Icons.expand_more,
+                    size: 18,
+                  ),
+                  label: Text(
+                    _showAllUniqueFeatures ? '3つの成果だけ見る' : '開発中の機能一覧を確認',
+                  ),
                 ),
-                label: Text(
-                  _showAllUniqueFeatures ? '3つの成果だけ見る' : '134機能をすべて見る',
-                ),
-              ),
               TextButton.icon(
                 key: const Key('landing_h15_pricing_link'),
                 onPressed: () => Navigator.of(context).pushNamed('/billing'),
@@ -3831,136 +3840,61 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     );
   }
 
-  /// 競合サービスとの価格・機能数比較セクション
+  /// 登録前に確認できる料金と決済の説明。
   Widget _buildPricingComparisonSection() {
-    final rows = [
-      const _CompetitorRow('Notion', '¥1,100〜/月 (+AI従量課金)', '100+', false),
-      const _CompetitorRow('Evernote', '¥1,300〜/月', '50+', false),
-      const _CompetitorRow('MoneyForward', '¥500〜/月', '30+', false),
-      const _CompetitorRow('Slack (Agentforce)', '¥2,250〜/月', '80+', false),
-      const _CompetitorRow(
-        'Claude Cowork',
-        '¥3,000〜/月 (Pro \$20)',
-        '30+',
-        false,
-      ),
-      const _CompetitorRow('Google Workspace', '¥680〜/月', '80+', false),
-      const _CompetitorRow('Microsoft 365', '¥1,241〜/月', '90+', false),
-      const _CompetitorRow('LINE AI', '¥750〜/月 (5項目)', '5', false),
-      const _CompetitorRow('自分株式会社', '無料コア + Pro', '21サービス分', true),
-    ];
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
+      key: const Key('landing_pricing_disclosure'),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2A1F0A) : const Color(0xFFFFFBF0),
+        color: const Color(0xFFFFFBF0),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? const Color(0xFF3A2A00) : const Color(0xFFFDE68A),
-        ),
+        border: Border.all(color: const Color(0xFFF4DFA7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('💰', style: TextStyle(fontSize: 20, height: 1.4)),
-              SizedBox(width: 8),
+              Icon(
+                Icons.receipt_long_outlined,
+                color: Color(0xFF8A5A12),
+                size: 22,
+              ),
+              SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'コアは無料。Proで支援と上限緩和。',
+                  '料金は、申し込む前に確認できます',
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF92400E),
+                    color: Color(0xFF6F470C),
                     height: 1.5,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          const Text(
-            '日常の基本機能は無料で使えます。Pro/Teamは決済後に追加機能と上限緩和を提供します。',
-            style: TextStyle(
-              fontSize: 13,
-              color: Color(0xFF78350F),
-              height: 1.6,
-            ),
-          ),
           const SizedBox(height: 8),
           const Text(
-            'Free: AI質問30回/月・基本機能無料 / Pro: ¥980/月 / Team: ¥2,980/席',
+            '登録前のAI提案と無料登録では、カード情報を求めません。有料プランは別画面で内容と料金を確認し、同意した場合だけ申し込めます。',
             style: TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF78350F),
+              color: Color(0xFF6F5530),
               height: 1.6,
             ),
           ),
           const SizedBox(height: 14),
-          ...rows.map((row) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              decoration: BoxDecoration(
-                color: row.isOurs
-                    ? const Color(0xFF3949AB)
-                    : const Color(0xFFFEFCE8),
-                borderRadius: BorderRadius.circular(12),
-                border: row.isOurs
-                    ? null
-                    : Border.all(color: const Color(0xFFFDE68A)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      row.name,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color:
-                            row.isOurs ? Colors.white : const Color(0xFF1E293B),
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      row.price,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight:
-                            row.isOurs ? FontWeight.w800 : FontWeight.w600,
-                        color: row.isOurs
-                            ? const Color(0xFFFFC107)
-                            : const Color(0xFF64748B),
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      '${row.featureCount}機能',
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: row.isOurs
-                            ? const Color(0xB3FFFFFF)
-                            : const Color(0xFF94A3B8),
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
+          OutlinedButton.icon(
+            key: const Key('landing_pricing_disclosure_link'),
+            onPressed: () => Navigator.of(context).pushNamed('/billing'),
+            icon: const Icon(Icons.open_in_new, size: 17),
+            label: const Text('有料プランの内容を確認'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF6F470C),
+              side: const BorderSide(color: Color(0xFFD6B66F)),
+            ),
+          ),
         ],
       ),
     );
@@ -3978,13 +3912,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       (
         Icons.save_outlined,
         '2. 無料登録して保存',
-        'メール認証だけで即登録。提案を保存して明日も続きから再開。',
+        'Google認証またはメールのログインリンクで登録し、今回の提案を引き継ぎます。',
         Color(0xFF10B981),
       ),
       (
         Icons.upload_file_outlined,
         '3. 既存データを移行 (XLSX/DOCX/CSV/ENEX)',
-        'Excel・Word・Notion CSV・Evernote ENEX をそのままインポート。移行コストゼロ。',
+        '必要になったらインポート画面で対応形式と取り込み内容を確認します。',
         Color(0xFFF59E0B),
       ),
     ];
@@ -4021,7 +3955,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           const SizedBox(height: 4),
           const Text(
-            'クレジットカード不要。登録は30秒。',
+            '登録画面でカード情報は求めません。所要時間は認証方法や通信環境で変わります。',
             style: TextStyle(
               fontSize: 13,
               color: Color(0xFF64748B),
@@ -4083,7 +4017,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               onPressed: _showSignupAndScroll,
               icon: const Icon(Icons.rocket_launch, size: 18),
               label: const Text(
-                '無料で始める（30秒）',
+                '無料登録へ進む',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -4157,7 +4091,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   firstUserGrowthMode
                       ? 'Xから来た方へ: まず1タップで結果を見る'
                       : heroMode
-                          ? '30秒で試す: いま詰まっていることは？'
+                          ? '登録なしで試す: いま詰まっていることは？'
                           : 'AIに「今日やる1件」を聞く',
                   style: TextStyle(
                     fontSize: compactHero ? 16 : 18,
@@ -4412,7 +4346,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '提案された1件',
+                          'AIからの提案',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -4448,7 +4382,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         if (_hypothesisEnabled('h10')) ...[
                           const SizedBox(height: 10),
                           Text(
-                            '登録すると、この提案・実行履歴・次の一手が残り、明日もここから再開できます。',
+                            '登録すると、今回の入力・提案・理由を同じブラウザから引き継げます。',
                             key: const Key('landing_h10_continuity_value'),
                             style: TextStyle(
                               fontSize: 12,
@@ -4621,7 +4555,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            'この提案を保存して、明日もここから再開',
+            'この提案を登録後に引き継ぐ',
             style: TextStyle(
               color: Color(0xFF172033),
               fontSize: 14,
@@ -4635,11 +4569,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               key: const Key('landing_h04_inline_google'),
               onPressed: _isLoading ? null : _saveTrialWithGoogle,
               icon: const Icon(Icons.login, size: 18),
-              label: const Text('Googleで無料登録して保存'),
+              label: const Text('Googleで無料登録して引き継ぐ'),
             ),
             const SizedBox(height: 8),
             const Text(
-              '約10秒・パスワード不要・カード不要',
+              'Google認証で続行します。登録時にカード入力はありません。',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Color(0xFF64748B),
@@ -4695,14 +4629,14 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               size: 18,
             ),
             label: Text(
-              _showInboxShortcut ? 'Magic Linkを送信しました' : '無料で保存して始める',
+              _showInboxShortcut ? 'ログインリンクを送信しました' : '無料登録して提案を引き継ぐ',
             ),
           ),
           const SizedBox(height: 6),
           Text(
             _showInboxShortcut
                 ? '受信箱のリンクを開くと、保存した提案から開始できます。'
-                : 'パスワード・カード入力は不要です。',
+                : 'メールで届くログインリンクを使います。パスワード・カード入力はありません。',
             style: const TextStyle(
               color: Color(0xFF64748B),
               fontSize: 12,
@@ -4726,20 +4660,20 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   Widget _buildFaqSection() {
     const faqs = [
       (
-        q: 'Notion AI がカレンダー・メール・Slack連携を始めました。それでも違いはありますか?',
-        a: '2026年4月にNotion AIはカレンダー・Mail・Slack統合をGA化しました。ただし「財務管理」「健康・習慣管理」「KPI＝昨日の自分（自己比較）」「日本語文化対応」は依然として対象外です。自分株式会社はAIが「今日やるべき1件」を決め、MoneyForward型資産管理・習慣化・AI診断まで人生6部署を一元管理します。Notionは仕事を整理しますが、自分株式会社は人生全体を整理します。基本機能は無料で、Pro/Teamで上限緩和と支援導線を用意します。',
+        q: 'AIが勝手に「やること」を決めるのですか?',
+        a: 'いいえ。AIは入力内容を整理して、次に動かす1件の候補と理由を提案します。実行するか、別の行動を選ぶかはユーザーが決めます。',
       ),
       (
-        q: '12部署20人のAI組織OSって何?',
-        a: '自分1人で12の仮想部署（企画・開発・営業・CS・法務・広報・調達など）と20人のAIエージェントを動かせる機能です。自然言語でゴールを入力するだけでAIが最適な部署に自動振り分け、タスク分解・進捗管理まで担当します。SlackもJiraも不要で、1アプリで組織のように動けます。',
+        q: '登録する前に試せますか?',
+        a: 'はい。いま詰まっていることを1行入力し、AIの提案を1件確認するまでは登録不要です。提案を引き継ぎたい場合だけ無料登録へ進みます。',
       ),
       (
-        q: '無料のまま使い続けられますか?',
-        a: 'はい。登録なしでAI提案を1回体験でき、登録後も基本機能は無料で利用できます。Pro/Teamは追加機能・上限緩和・開発支援のための有料プランです。',
+        q: '登録時にカード情報は必要ですか?',
+        a: 'いいえ。無料登録の画面ではカード情報を求めません。有料プランは、別の料金画面で内容を確認してから申し込めます。',
       ),
       (
-        q: 'NotionやEvernoteからデータを移行できますか?',
-        a: 'はい、インポート機能が使えます。NotionのCSVエクスポートとEvernoteのENEXファイルをそのままインポートできます。移行コストゼロで今すぐ試せます。',
+        q: '登録前に試した提案は引き継げますか?',
+        a: 'はい。同じブラウザでGoogle認証またはメールのログインリンクから登録すると、今回の入力・AIの提案・提案理由を引き継ぎます。',
       ),
       (
         q: 'LINE・Discord・SNSの代わりになりますか?',
@@ -4848,40 +4782,41 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             for (final faq in primaryFaqs) ...[
               _FaqItem(question: faq.q, answer: faq.a),
             ],
-            Theme(
-              data: Theme.of(context).copyWith(
-                dividerColor: Colors.transparent,
-                splashColor: const Color(0x143949AB),
-              ),
-              child: ExpansionTile(
-                key: const Key('landing_faq_more_toggle'),
-                tilePadding: const EdgeInsets.symmetric(horizontal: 4),
-                childrenPadding: EdgeInsets.zero,
-                iconColor: const Color(0xFF3949AB),
-                collapsedIconColor: const Color(0xFF64748B),
-                title: Text(
-                  'その他の質問を見る（${faqs.length - primaryFaqCount}件）',
-                  style: const TextStyle(
-                    color: Color(0xFF27364A),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    height: 1.5,
-                  ),
+            if (_showUnverifiedMarketingForQa)
+              Theme(
+                data: Theme.of(context).copyWith(
+                  dividerColor: Colors.transparent,
+                  splashColor: const Color(0x143949AB),
                 ),
-                subtitle: const Text(
-                  '連携・AI構成・セキュリティなどの詳細',
-                  style: TextStyle(
-                    color: Color(0xFF64748B),
-                    fontSize: 12,
-                    height: 1.5,
+                child: ExpansionTile(
+                  key: const Key('landing_faq_more_toggle'),
+                  tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+                  childrenPadding: EdgeInsets.zero,
+                  iconColor: const Color(0xFF3949AB),
+                  collapsedIconColor: const Color(0xFF64748B),
+                  title: Text(
+                    'その他の質問を見る（${faqs.length - primaryFaqCount}件）',
+                    style: const TextStyle(
+                      color: Color(0xFF27364A),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      height: 1.5,
+                    ),
                   ),
+                  subtitle: const Text(
+                    '連携・AI構成・セキュリティなどの詳細',
+                    style: TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
+                  ),
+                  children: [
+                    for (final faq in additionalFaqs)
+                      _FaqItem(question: faq.q, answer: faq.a),
+                  ],
                 ),
-                children: [
-                  for (final faq in additionalFaqs)
-                    _FaqItem(question: faq.q, answer: faq.a),
-                ],
               ),
-            ),
           ],
         ),
       ),
@@ -5064,7 +4999,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   ),
                   child: Text(
                     _googleLoginEnabled
-                        ? 'この提案を保存するには無料登録が必要です。Googleなら約10秒、カード入力なしで続けられます。'
+                        ? 'この提案を引き継ぐには無料登録が必要です。Google認証ではパスワード入力がなく、登録時にカード情報は求めません。'
                         : 'この提案を保存するには登録が必要です。Magic Linkなら、メール1通でそのまま保存を始められます。',
                     style: const TextStyle(
                       fontSize: 13,
@@ -5088,8 +5023,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               Text(
                 _isSignUp
                     ? (_googleLoginEnabled
-                        ? 'Googleで約10秒。AIが今日のタスクを整理し、資産管理・習慣化まで一元化。カード不要。'
-                        : 'メールアドレスだけで30秒登録。AIが今日のタスクを整理し、資産管理・習慣化まで一元化。カード不要。')
+                        ? 'Google認証で無料登録できます。登録画面でカード情報は求めません。'
+                        : 'メールで届くログインリンクから無料登録できます。登録画面でカード情報は求めません。')
                     : (_googleLoginEnabled
                         ? 'Googleならパスワード入力なしで、そのまま続きから再開できます。'
                         : '既存ユーザーもMagic Linkが最短です。パスワード入力なしで、そのまま再開できます。'),
@@ -5101,9 +5036,15 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _BenefitChip(icon: Icons.card_membership, label: '無料コア'),
-                  _BenefitChip(icon: Icons.auto_awesome, label: 'AI自動整理'),
-                  _BenefitChip(icon: Icons.import_export, label: 'Notionから移行可'),
+                  _BenefitChip(
+                    icon: Icons.visibility_outlined,
+                    label: '登録前に体験',
+                  ),
+                  _BenefitChip(icon: Icons.auto_awesome, label: 'AIが提案'),
+                  _BenefitChip(
+                    icon: Icons.how_to_reg_outlined,
+                    label: '決めるのはあなた',
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -5119,7 +5060,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  '約10秒・パスワード不要・カード不要',
+                  'Google認証で続行します。登録時にカード入力はありません。',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,
@@ -5158,7 +5099,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               if (_hypothesisEnabled('h10')) ...[
                 const SizedBox(height: 8),
                 const Text(
-                  '保存される内容: AI提案 / 実行履歴 / 明日の続き',
+                  '引き継ぐ内容: 今回の入力 / AIの提案 / 提案理由',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -5428,7 +5369,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'メールはログイン確認に使用し、公開しません。決済情報はStripeが管理します。',
+                              'メールアドレスはログイン確認に使用します。登録時に決済情報は求めません。',
                               style: TextStyle(
                                 color: Color(0xFF475569),
                                 fontSize: 12,
@@ -5638,6 +5579,50 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   Widget _buildEditorialArchive() {
+    if (!_showUnverifiedMarketingForQa) {
+      return Container(
+        key: const Key('landing_trust_disclosure'),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF101D2B),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF2B3C4D)),
+        ),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '始める前に確認できること',
+              style: TextStyle(
+                color: Color(0xFFF7F1E7),
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                height: 1.5,
+              ),
+            ),
+            SizedBox(height: 12),
+            _TrustPoint(
+              icon: Icons.visibility_outlined,
+              label: 'AI提案は登録前に1件試せます',
+              dark: true,
+            ),
+            SizedBox(height: 8),
+            _TrustPoint(
+              icon: Icons.credit_card_off_outlined,
+              label: '無料登録の画面でカード情報は求めません',
+              dark: true,
+            ),
+            SizedBox(height: 8),
+            _TrustPoint(
+              icon: Icons.how_to_reg_outlined,
+              label: 'AIは候補を提案し、実行するかはあなたが決めます',
+              dark: true,
+            ),
+          ],
+        ),
+      );
+    }
+
     final archiveChildren = <Widget>[
       _buildRecentAchievementsSection(),
       _buildMigrationGuideSection(),
@@ -5757,7 +5742,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 number: 4,
                 eyebrow: 'Decide with confidence',
                 title: '不安を残さず、始めるか決める。',
-                description: 'よくある疑問だけを先に表示し、比較表や移行手順は必要な人が開ける資料庫へ整理しました。',
+                description: 'AIの役割、登録、保存、料金について、実際の動作に沿って説明します。',
                 children: [_buildFaqSection(), _buildEditorialArchive()],
               ),
               const SizedBox(height: 28),
@@ -6077,8 +6062,8 @@ class _WorkflowLandingHero extends StatelessWidget {
         SizedBox(height: condensed ? 0 : (compact ? 18 : 24)),
         Text(
           outcomeFirstMessage
-              ? '仕事・学習・お金の「次の1件」を、AIが1分で決める'
-              : 'Notion・Slack・MoneyForward・WBSを、ひとつの仕事OSへ',
+              ? '仕事・学習・お金の「次の1件」を、AIと一緒に絞る'
+              : '仕事・学習・お金を、ひとつの仕事OSへ',
           key: Key(
             outcomeFirstMessage
                 ? 'landing_h01_outcome_offer'
@@ -6108,7 +6093,7 @@ class _WorkflowLandingHero extends StatelessWidget {
           child: Text(
             outcomeFirstMessage
                 ? '散らばった予定・メモ・資産・学習をまとめ、迷いを「今やる具体的な行動」に変えます。'
-                : '情報を一か所にまとめ、AIが今日の最優先アクションまで案内します。',
+                : '情報を一か所にまとめ、AIが今日の最優先アクションを提案します。',
             style: TextStyle(
               color: const Color(0xFFD1D9DF),
               fontSize: compact ? 15 : 17,
@@ -6352,17 +6337,17 @@ class _WorkflowLandingHero extends StatelessWidget {
                         children: [
                           _TrustPoint(
                             icon: Icons.check_circle_outline,
-                            label: '無料コア',
+                            label: '登録前に1件体験',
                             dark: true,
                           ),
                           _TrustPoint(
                             icon: Icons.credit_card_off_outlined,
-                            label: 'カード不要',
+                            label: '登録時カード不要',
                             dark: true,
                           ),
                           _TrustPoint(
-                            icon: Icons.pause_circle_outline,
-                            label: 'いつでも停止',
+                            icon: Icons.how_to_reg_outlined,
+                            label: '最終判断はあなた',
                             dark: true,
                           ),
                         ],
@@ -6419,7 +6404,7 @@ class _FirstUserGrowthHeroCta extends StatelessWidget {
                     key: const Key('first_user_growth_signup_button'),
                     onPressed: onGetStarted,
                     icon: const Icon(Icons.bolt, size: 18),
-                    label: const Text('30秒で保存'),
+                    label: const Text('提案を引き継ぐ'),
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF1F7AE0),
                       foregroundColor: Colors.white,
@@ -7219,15 +7204,6 @@ class _BenefitChip extends StatelessWidget {
   }
 }
 
-class _CompetitorRow {
-  final String name;
-  final String price;
-  final String featureCount;
-  final bool isOurs;
-
-  const _CompetitorRow(this.name, this.price, this.featureCount, this.isOurs);
-}
-
 class _FaqItem extends StatefulWidget {
   final String question;
   final String answer;
@@ -7295,7 +7271,7 @@ class _GettingStartedStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const steps = <(String, String)>[
-      ('1', '無料で始める（30秒）'),
+      ('1', '登録前にAI提案を試す'),
       ('2', '今日の最優先1件をAIが提案'),
       ('3', 'AI大学・英語速読で学ぶ習慣に'),
     ];

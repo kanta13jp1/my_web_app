@@ -25,10 +25,7 @@ void main() {
     expect(html, contains('event.preventDefault();'));
     expect(html, contains('window.history.replaceState('));
     expect(html, contains('target.pathname + target.search + target.hash'));
-    expect(
-      html,
-      contains('trialCta.setAttribute(\'aria-busy\', \'true\')'),
-    );
+    expect(html, contains('trialCta.setAttribute(\'aria-busy\', \'true\')'));
   });
 
   test('SEO shell covers the incomplete Flutter font handoff', () {
@@ -57,5 +54,16 @@ void main() {
     expect(html, contains('}, 650);'));
     expect(html, contains("seoShell.setAttribute('aria-hidden', 'true')"));
     expect(html, contains('seoShell.remove();'));
+  });
+
+  test('SEO shell describes the trial without unsupported promises', () {
+    final html = File('web/index.html').readAsStringSync();
+
+    expect(html, contains('登録なしで1件試す'));
+    expect(html, contains('AIは提案、決めるのは本人'));
+    expect(html, contains('登録時にカード入力なし'));
+    expect(html, isNot(contains('5分だけ無料で試す')));
+    expect(html, isNot(contains('データは本人だけに表示')));
+    expect(html, isNot(contains('基本機能は無料。いつでも停止できます。')));
   });
 }

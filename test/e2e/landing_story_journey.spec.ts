@@ -34,7 +34,7 @@ test.describe('Landing story journey', () => {
     await story.getByRole('button', { name: '登録なしで1件試す' }).click();
 
     await expect(
-      page.getByRole('textbox', { name: /30秒で試す/ }),
+      page.getByRole('textbox', { name: /登録なしで試す/ }),
     ).toBeInViewport();
     await expect(
       page.getByRole('button', { name: '今やる1件を試す', exact: true }),

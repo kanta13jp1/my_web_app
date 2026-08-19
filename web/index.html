@@ -12,7 +12,7 @@
 
   <meta
     name="description"
-    content="自分株式会社は、自分自身を一つの会社に見立て、人生のCEOとして仕事・学習・お金・健康を経営する考え方をAIで実践できる公式ライフマネジメントアプリです。無料・カード不要。"
+    content="自分株式会社は、自分自身を一つの会社に見立て、仕事・学習・お金・健康を整理するライフマネジメントアプリです。登録前にAIの提案を1件試せます。"
   >
   <meta name="author" content="自分株式会社 (Jibun Inc.)">
   <meta
@@ -92,7 +92,7 @@
     "url": "https://my-web-app-b67f4.web.app/",
     "description": "自分自身を一つの会社に見立て、人生のCEOとして仕事・学習・お金・健康を経営する考え方をAIで実践できるライフマネジメントアプリ。",
     "applicationCategory": "ProductivityApplication",
-    "operatingSystem": "Web, iOS, Android",
+    "operatingSystem": "Web",
     "availableLanguage": ["ja", "en"],
     "offers": {
       "@type": "Offer",
@@ -100,16 +100,10 @@
       "priceCurrency": "JPY"
     },
     "featureList": [
-      "今日の最優先タスク提案（Notion・Todoist代替）",
-      "ノート・メモ管理（Evernote・Notion代替）",
-      "資産・家計管理（MoneyForward代替）",
-      "チームコラボ・メッセージ（Slack・Chatwork代替）",
-      "習慣化・ルーティン管理",
-      "AIによる行動整理・MAGIシステム",
-      "ソーシャル投稿・記事管理（X代替）",
-      "48時間以内の次の一手整理",
-      "提案の保存と再開",
-      "無料体験導線"
+      "AIによる次の行動候補の提案",
+      "提案理由の表示",
+      "登録前にAI提案を1件体験",
+      "登録後に今回の提案を引き綩ぎ"
     ],
     "inLanguage": "ja",
     "publisher": {
@@ -130,26 +124,26 @@
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "Notionと何が違うの?",
+        "name": "AIが勝手にやることを決めるのですか?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "自分株式会社はAIが「今日やるべき1件」を決めてくれる点が最大の違いです。Notionは情報整理ツールですが、本アプリはAIが優先順位を付けて行動提案まで行います。メモ・資産管理・習慣化も1つのアプリで完結します。"
+          "text": "いいえ。AIは入力内容を整理して、次に動かす1件の候補と理由を提案します。実行するかはユーザーが決めます。"
         }
       },
       {
         "@type": "Question",
-        "name": "無料で使い続けられますか? 有料プランはありますか?",
+        "name": "登録時にカード情報は必要ですか?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "はい、無料で始められます。登録なしでAI提案を1回体験でき、登録後も基本機能は無料で利用できます。Pro/Teamは追加機能・上限緩和・開発支援のための有料プランです。"
+          "text": "いいえ。無料登録の画面ではカード情報を求めません。有料プランは別の料金画面で内容を確認してから申し込めます。"
         }
       },
       {
         "@type": "Question",
-        "name": "データは安全ですか?",
+        "name": "登録する前に試せますか?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "データはSupabase (PostgreSQL) に保存され、行レベルのセキュリティで各ユーザーが自分のデータのみアクセスできます。AIに送信されるのはあなたが入力したテキストのみで、第三者に販売・共有することはありません。"
+          "text": "はい。いま詰まっていることを1行入力し、AIの提案を1件確認するまでは登録不要です。提案を引き継ぎたい場合だけ無料登録へ進みます。"
         }
       },
       {
@@ -157,7 +151,7 @@
         "name": "NotionやEvernoteからデータを移行できますか?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "インポート機能を実装中です。現在はMarkdown形式のテキストをメモとして貼り付けて取り込めます。Notionエクスポートのサポートを近日公開予定です。"
+          "text": "対応形式と取り込み内容は、登録後のインポート画面で確認できます。元データを削除せず、内容を確認してから利用してください。"
         }
       },
       {
@@ -165,7 +159,7 @@
         "name": "AIは具体的に何をしてくれますか?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "タスク・習慣・資産・状況をもとに「今日の最優先アクション1件」を提案します。なぜそれをすべきかの理由と、48時間以内の次の一手まで整理してくれます。MAGIシステムで3つの視点から意思決定をサポートします。"
+          "text": "入力内容を整理し、次に動かす1件の候補と、その理由を提案します。提案を実行するかはユーザーが決めます。"
         }
       },
       {
@@ -617,7 +611,7 @@
 <body>
   <div id="seo-shell">
     <main class="seo-card" aria-labelledby="seo-title">
-      <p class="seo-badge">無料コア・カード不要</p>
+      <p class="seo-badge">登録前にAI提案を1件体験</p>
       <h1 id="seo-title">自分株式会社</h1>
       <p class="seo-kicker">人生を経営するAIライフマネジメントアプリ</p>
       <p class="seo-lead" lang="ja">
@@ -626,15 +620,15 @@
         散らばった情報をまとめ、いま困っていることを理由つきの具体的な一手に変えます。
       </p>
       <div class="seo-trust" aria-label="安心して試せる理由">
-        <span>✓ 登録前に体験</span>
-        <span>✓ クレジットカード不要</span>
-        <span>✓ データは本人だけに表示</span>
+        <span>✓ AIは提案、決めるのは本人</span>
+        <span>✓ 登録時にカード入力なし</span>
+        <span>✓ 利用規約とプライバシーを公開</span>
       </div>
       <nav class="seo-links" aria-label="体験を始める">
-        <a id="seo-trial-cta" class="primary" href="/?lp_intent=trial&amp;utm_source=seo_shell&amp;utm_medium=landing&amp;utm_campaign=first_user_growth">5分だけ無料で試す</a>
+        <a id="seo-trial-cta" class="primary" href="/?lp_intent=trial&amp;utm_source=seo_shell&amp;utm_medium=landing&amp;utm_campaign=first_user_growth">登録なしで1件試す</a>
         <a class="secondary" href="#seo-how">使い方を見る</a>
       </nav>
-      <p class="seo-note">基本機能は無料。いつでも停止できます。</p>
+      <p class="seo-note">提案を引き継ぎたい場合だけ、無料登録へ進めます。</p>
 
       <section class="seo-about" aria-labelledby="seo-about-title">
         <h2 id="seo-about-title">自分株式会社とは</h2>
@@ -1167,7 +1161,7 @@
                 "name": compName + "から自分株式会社に乗り換えられますか?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "30秒でアカウント登録できます。既存データはMarkdown形式で取り込め、NotionとEvernoteはインポート機能もあります。無料コアからお試しいただけます。"
+                  "text": "無料登録の画面ではカード情報を求めません。既存データの対応形式と取り込み内容は、登録後のインポート画面で確認できます。"
                 }
               }
             ]
