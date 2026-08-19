@@ -145,9 +145,8 @@ class _LandingStoryJourneyState extends State<LandingStoryJourney> {
       0.0,
       maxPinDistance,
     );
-    final nextProgress = maxPinDistance == 0
-        ? 0.0
-        : nextPinOffset / maxPinDistance;
+    final nextProgress =
+        maxPinDistance == 0 ? 0.0 : nextPinOffset / maxPinDistance;
     final nextActive =
         (nextProgress * (LandingStoryJourney.chapters.length - 1))
             .round()
@@ -285,14 +284,10 @@ class _JourneyStage extends StatelessWidget {
     if (reduceMotion) return <int>{activeChapter};
 
     final exact = progress * (LandingStoryJourney.chapters.length - 1);
-    final lower = exact
-        .floor()
-        .clamp(0, LandingStoryJourney.chapters.length - 1)
-        .toInt();
-    final upper = exact
-        .ceil()
-        .clamp(0, LandingStoryJourney.chapters.length - 1)
-        .toInt();
+    final lower =
+        exact.floor().clamp(0, LandingStoryJourney.chapters.length - 1).toInt();
+    final upper =
+        exact.ceil().clamp(0, LandingStoryJourney.chapters.length - 1).toInt();
     return <int>{
       lower,
       if (upper != lower && exact - lower > _mediaWarmupThreshold) upper,
@@ -333,9 +328,8 @@ class _JourneyStage extends StatelessWidget {
                         LandingStoryJourney.chapters[index].assetPath,
                         key: Key('landing_story_media_image_$index'),
                         fit: BoxFit.cover,
-                        alignment: compact
-                            ? Alignment.center
-                            : Alignment.centerRight,
+                        alignment:
+                            compact ? Alignment.center : Alignment.centerRight,
                         cacheWidth: compact ? 900 : 1600,
                         filterQuality: FilterQuality.medium,
                         errorBuilder: (context, error, stackTrace) =>
@@ -384,9 +378,8 @@ class _JourneyStage extends StatelessWidget {
               top: compact ? null : 0,
               bottom: compact ? 58 : 0,
               child: Align(
-                alignment: compact
-                    ? Alignment.bottomLeft
-                    : Alignment.centerLeft,
+                alignment:
+                    compact ? Alignment.bottomLeft : Alignment.centerLeft,
                 child: AnimatedSwitcher(
                   duration: reduceMotion
                       ? Duration.zero
@@ -396,15 +389,15 @@ class _JourneyStage extends StatelessWidget {
                   transitionBuilder: reduceMotion
                       ? (child, animation) => child
                       : (child, animation) => FadeTransition(
-                          opacity: animation,
-                          child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(0, 0.035),
-                              end: Offset.zero,
-                            ).animate(animation),
-                            child: child,
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0, 0.035),
+                                end: Offset.zero,
+                              ).animate(animation),
+                              child: child,
+                            ),
                           ),
-                        ),
                   child: _JourneyCopy(
                     key: ValueKey<int>(activeChapter),
                     chapter: chapter,
@@ -679,11 +672,9 @@ class _JourneyRail extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (
-          var index = 0;
-          index < LandingStoryJourney.chapters.length;
-          index++
-        )
+        for (var index = 0;
+            index < LandingStoryJourney.chapters.length;
+            index++)
           Semantics(
             button: true,
             selected: index == activeChapter,
