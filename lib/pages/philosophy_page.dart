@@ -1067,8 +1067,7 @@ const _videos = [
     id: 'Zclp_zK9cYM',
     label: '番外: AnthropicのClaude Apps 解説 (D variant)',
     duration: '7:10',
-    description:
-        'NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。'
+    description: 'NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。'
         'Anthropic Claude Apps の MCP オープン化戦略・市場シェア 18→29%・3500億ドル評価・'
         'ChatGPT との設計思想の違いを 7 分で解説。AI大学シリーズ #1。',
   ),
@@ -1076,8 +1075,7 @@ const _videos = [
     id: 'di5SbHouAVY',
     label: '番外: Google Gemini で暮らしを整える 8 つのコツ (D variant)',
     duration: '6:27',
-    description:
-        'NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。'
+    description: 'NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。'
         'Google Gemini の agentic AI で Gmail / Google Calendar / Photos / Lens / Keep を横断する'
         '実践テクニック 8 つを解説。AI大学シリーズ #2。',
   ),
@@ -1085,8 +1083,7 @@ const _videos = [
     id: 'shdsy9qqcNM',
     label: '番外: Nomic Platform — 建設・設計業界特化 AI (D variant)',
     duration: '8:17',
-    description:
-        'NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。'
+    description: 'NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。'
         'Nomic Platform (Nomic AEC) — 建築 / エンジニアリング / 建設 業界向け Domain-Specific AI。'
         '3000 ページ規模の RFI / RFP / 仕様書を AI で横断検索・分析。BIM / Revit / Procore 統合。'
         'AI大学シリーズ #3。',
@@ -1119,64 +1116,55 @@ const _principles = [
   _Principle(
     number: 1,
     title: 'ユーザーは自分の人生の CEO',
-    summary:
-        '機能はユーザーが「自分でコントロールできる」感覚を強化する方向に作る。'
+    summary: '機能はユーザーが「自分でコントロールできる」感覚を強化する方向に作る。'
         '自動化・AI 提案は最終決定権をユーザーに残す。',
   ),
   _Principle(
     number: 2,
     title: 'ミッション・コアバリュー駆動',
-    summary:
-        '機能はユーザーが自分のミッション・価値観を明確化・追跡できる助けになる。'
+    summary: '機能はユーザーが自分のミッション・価値観を明確化・追跡できる助けになる。'
         'ノート・タスク・目標機能はミッションとの繋がりを可視化する。',
   ),
   _Principle(
     number: 3,
     title: '取締役会 = 信頼できる伴走者',
-    summary:
-        'AI / 通知 / コーチングは優しい mentor であって、監視・命令する存在ではない。'
+    summary: 'AI / 通知 / コーチングは優しい mentor であって、監視・命令する存在ではない。'
         '罪悪感を与える表現は使わない。',
   ),
   _Principle(
     number: 4,
     title: '6 部署バランス (人事最優先)',
-    summary:
-        '新機能は R&D / 財務 / マーケ営業 / 人事 / 本社 の 5 部署のどれに貢献するか分類する。'
+    summary: '新機能は R&D / 財務 / マーケ営業 / 人事 / 本社 の 5 部署のどれに貢献するか分類する。'
         '人事 (健康) は最優先。',
   ),
   _Principle(
     number: 5,
     title: '商品 = ユーザー自身の価値',
-    summary:
-        '機能はユーザーの価値を高める・可視化する方向に作る。'
+    summary: '機能はユーザーの価値を高める・可視化する方向に作る。'
         '時間消費・無限スクロール風の機能は避ける。',
   ),
   _Principle(
     number: 6,
     title: '資本 = 時間',
-    summary:
-        '機能は時間の使い方を可視化・配分を最適化する。操作時間を最小化し、'
+    summary: '機能は時間の使い方を可視化・配分を最適化する。操作時間を最小化し、'
         '使い終わって後悔させない。',
   ),
   _Principle(
     number: 7,
     title: 'バランスシート (資産 vs 負債)',
-    summary:
-        '機能は資産を増やす・負債を減らすのどちらかに位置づく。'
+    summary: '機能は資産を増やす・負債を減らすのどちらかに位置づく。'
         '悪い習慣・否定的思考の可視化機能も価値がある。',
   ),
   _Principle(
     number: 8,
     title: 'KPI = 昨日の自分',
-    summary:
-        '比較対象は他人ではなく過去の自分。ランキングでも自己進捗を主軸にし、'
+    summary: '比較対象は他人ではなく過去の自分。ランキングでも自己進捗を主軸にし、'
         '他人比較は副次的に。',
   ),
   _Principle(
     number: 9,
     title: 'ゴール = IPO / ウェルビーイング',
-    summary:
-        '短期 KPI (DAU・滞在時間) より長期ウェルビーイング指標を最優先。'
+    summary: '短期 KPI (DAU・滞在時間) より長期ウェルビーイング指標を最優先。'
         '使う時間を減らして幸福感を高める設計を喜ぶ。',
   ),
 ];
