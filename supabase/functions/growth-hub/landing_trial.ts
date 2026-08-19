@@ -47,6 +47,7 @@ const GENERIC_ACTION_PATTERNS = [
   /計画を立て/,
   /情報を集め/,
   /まず.{0,4}(?:考え|確認|整理)する/,
+  /(?:アイデア|案|方法|施策)を.{0,6}考え/,
 ];
 
 // Japanese action copy commonly uses a verbal noun as an imperative
@@ -231,6 +232,7 @@ export async function generateLandingTrialSuggestion(args: {
     "reason must connect that step to the user's stated bottleneck and explain the immediate benefit, at most 100 Japanese characters.",
     "Keep the action and reason in the same concern domain as the input; incidental words such as 見直す do not make an unrelated work answer relevant to a household-spending concern.",
     "Never answer with contact forms, requests for more detail, generic task listing, generic prioritization, generic organizing, or generic research.",
+    "Never stop at idea generation; choose one sellable item or offer and one concrete setup or publishing step.",
     "Do not include URLs, markdown, sales copy, or claims about completing work you cannot perform.",
     'Good example for "LPから登録されない": {"action":"登録ボタン直前に無料で得る物を1文追記","reason":"登録後の価値が見えない離脱要因を10分で減らせるため"}',
     'Good example for "仕事が多く優先順位を決められない": {"action":"今日締切の仕事を1件開き次の操作を1行書く","reason":"対象と次の動作を固定すると迷いを止めて着手できるため"}',
