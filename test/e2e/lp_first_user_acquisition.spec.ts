@@ -43,7 +43,7 @@ test.describe('LP first-user acquisition', () => {
     await openLanding(page, treatmentPath);
 
     await page
-      .getByRole('button', { name: '今やる1件を試す', exact: true })
+      .getByRole('button', { name: 'この例で即試す', exact: true })
       .click();
 
     await expect(
@@ -103,13 +103,14 @@ test.describe('LP first-user acquisition', () => {
     expect(authBox!.y).toBeLessThan(trialBox!.y);
 
     await page
-      .getByRole('textbox', { name: 'メールアドレス', exact: true })
+      .getByRole('textbox', { name: /メールアドレス/ })
+      .first()
       .fill('sales @example.com');
     await magicLinkAction.click();
     await expect(
       page.getByText('メールアドレスの形式を確認してください。', {
         exact: false,
-      }),
+      }).first(),
     ).toBeVisible();
     await expect(googleAction).toBeVisible();
   });
@@ -123,6 +124,24 @@ async function openLanding(page: Page, path: string) {
       contentType: 'application/json',
       headers: isRead ? { 'content-range': '0-0/0' } : undefined,
       body: isRead ? '[]' : '',
+    });
+  });
+
+  await page.route('**/functions/v1/growth-hub', async (route) => {
+    const body = JSON.parse(route.request().postData() ?? '{}') as {
+      action?: string;
+    };
+    const responseBody = body.action === 'landing.trial'
+      ? {
+          success: true,
+          action: '止まっている案件を1つ開き、確認先を1人決める',
+          reason: '10分で連絡文の下書きまで進められるためです。',
+        }
+      : { success: true, skipped: true };
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(responseBody),
     });
   });
 
