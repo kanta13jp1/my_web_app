@@ -3879,15 +3879,25 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   Widget _buildPricingComparisonSection() {
     return Container(
       key: const Key('landing_pricing_disclosure'),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF0),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF4DFA7)),
+        color: const Color(0xFFE9E2D8),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFD6CFC4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Text(
+            'PRICE & CONTINUITY',
+            style: TextStyle(
+              color: Color(0xFFB45F42),
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.8,
+            ),
+          ),
+          const SizedBox(height: 10),
           const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -3915,8 +3925,40 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             '登録前のAI提案と無料登録では、カード情報を求めません。有料プランは別画面で内容と料金を確認し、同意した場合だけ申し込めます。',
             style: TextStyle(
               fontSize: 13,
-              color: Color(0xFF6F5530),
-              height: 1.6,
+              color: Color(0xFF52606D),
+              height: 1.65,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            key: const Key('landing_pricing_trust_summary'),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7F1E7),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFD6CFC4)),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.verified_user_outlined,
+                  size: 18,
+                  color: Color(0xFFB45F42),
+                ),
+                SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    '無料登録: カード不要 / 有料プラン: 内容・料金を事前確認',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF111D2B),
+                      height: 1.55,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 14),

@@ -1009,6 +1009,35 @@ void main() {
     expect(find.textContaining('21サービス分'), findsNothing);
   });
 
+  testWidgets(
+    'pricing disclosure keeps verified trust essentials visible',
+    (tester) async {
+      await pumpLanding(
+        tester,
+        assignment: _assignment('h01', LandingExperimentVariant.treatment),
+      );
+
+      expect(
+        find.byKey(const Key('landing_pricing_trust_summary')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          '無料登録: カード不要 / 有料プラン: 内容・料金を事前確認',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('landing_pricing_disclosure_link')),
+        findsOneWidget,
+      );
+      expect(
+        find.text('競合サービスとの料金比較を見る'),
+        findsNothing,
+      );
+    },
+  );
+
   testWidgets('hero media keeps a readable fallback contract', (tester) async {
     await pumpLanding(
       tester,
