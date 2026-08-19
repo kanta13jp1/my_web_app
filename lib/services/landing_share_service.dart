@@ -305,7 +305,9 @@ $shareUrl
       await client
           .from('app_analytics')
           .update(<String, dynamic>{'source_details': sourceDetails}).eq(
-              'date', dateKey);
+        'date',
+        dateKey,
+      );
     } catch (error) {
       debugPrint('Share analytics update failed: $error');
     }
