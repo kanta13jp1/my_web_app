@@ -24,15 +24,15 @@ class PendingLandingTrial {
   bool get acceptsAuthenticatedUser => authMethod == 'oauth';
 
   Map<String, Object> toJson() => <String, Object>{
-    'version': 2,
-    'email': email,
-    'auth_method': authMethod,
-    'intent': intent,
-    'prompt': prompt,
-    'action': action,
-    'reason': reason,
-    'created_at': createdAt.toUtc().toIso8601String(),
-  };
+        'version': 2,
+        'email': email,
+        'auth_method': authMethod,
+        'intent': intent,
+        'prompt': prompt,
+        'action': action,
+        'reason': reason,
+        'created_at': createdAt.toUtc().toIso8601String(),
+      };
 
   static PendingLandingTrial? fromJson(Object? value) {
     if (value is! Map) return null;
