@@ -638,6 +638,7 @@ void main() {
         home: LandingPage(
           adapter: adapter,
           experimentAssignment: assignment,
+          showUnverifiedMarketingForQa: true,
         ),
       ),
     );

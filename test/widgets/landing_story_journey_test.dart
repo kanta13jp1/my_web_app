@@ -102,7 +102,7 @@ void main() {
     await tester.tap(find.byKey(const Key('landing_story_dot_3')));
     await tester.pump();
 
-    expect(find.text('試すのは無料 · カード不要'), findsOneWidget);
+    expect(find.text('登録前に体験 · 登録時カード不要'), findsOneWidget);
     expect(find.byKey(const Key('landing_story_primary_cta')), findsOneWidget);
     expect(
       find.byKey(const Key('landing_story_secondary_cta')),
@@ -131,9 +131,7 @@ void main() {
   ) async {
     await pumpJourney(tester, size: const Size(1200, 900));
 
-    final imageFinder = find.byKey(
-      const Key('landing_story_media_image_0'),
-    );
+    final imageFinder = find.byKey(const Key('landing_story_media_image_0'));
     final image = tester.widget<Image>(imageFinder);
     expect(image.errorBuilder, isNotNull);
 

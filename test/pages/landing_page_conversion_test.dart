@@ -197,6 +197,7 @@ void main() {
     Size size = const Size(1200, 900),
     bool? analyticsEnabled,
     bool? googleLoginEnabled,
+    bool showUnverifiedMarketingForQa = false,
     Uri? landingUri,
     LandingConversionExperimentService? conversionExperimentService,
     LandingConversionAnalytics? conversionAnalytics,
@@ -222,6 +223,7 @@ void main() {
           acquisitionService: acquisitionService,
           analyticsEnabled: analyticsEnabled,
           googleLoginEnabled: googleLoginEnabled,
+          showUnverifiedMarketingForQa: showUnverifiedMarketingForQa,
           landingUri: landingUri,
         ),
       ),
@@ -269,6 +271,26 @@ void main() {
     expect(LandingPage.shouldFocusTrialForUri(null), isFalse);
   });
 
+  test(
+    'unverified marketing content requires an explicit test-only override',
+    () {
+      expect(
+        LandingPage(
+          landingUri: Uri.parse(
+            'https://example.com/?lp_unverified_marketing_qa=1',
+          ),
+        ).showUnverifiedMarketingForQa,
+        isFalse,
+      );
+      expect(
+        const LandingPage(
+          showUnverifiedMarketingForQa: true,
+        ).showUnverifiedMarketingForQa,
+        isTrue,
+      );
+    },
+  );
+
   testWidgets('Google is the primary production registration path', (
     tester,
   ) async {
@@ -281,7 +303,8 @@ void main() {
     final googleButton = find.byKey(const Key('landing_google_primary'));
     expect(googleButton, findsOneWidget);
     expect(find.text('Googleで無料登録'), findsOneWidget);
-    expect(find.textContaining('約10秒'), findsWidgets);
+    expect(find.textContaining('登録時にカード入力はありません'), findsWidgets);
+    expect(find.textContaining('約10秒'), findsNothing);
 
     await Scrollable.ensureVisible(tester.element(googleButton));
     await tester.tap(googleButton);
@@ -943,17 +966,25 @@ void main() {
       findsOneWidget,
     );
     expect(
+      find.textContaining('今回の入力・提案・理由を同じブラウザから引き継げます'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('実行履歴'), findsNothing);
+    expect(
       find.byKey(const Key('landing_h04_inline_magic_capture')),
       findsOneWidget,
     );
   });
 
-  testWidgets('editorial lower page keeps detailed decision aids on demand', (
+  testWidgets('editorial lower page shows only verified decision aids', (
     tester,
   ) async {
     await pumpLanding(
       tester,
       assignment: _assignment('h01', LandingExperimentVariant.treatment),
+      landingUri: Uri.parse(
+        'https://example.com/?lp_unverified_marketing_qa=1',
+      ),
     );
 
     expect(find.byKey(const Key('landing_editorial_prologue')), findsOneWidget);
@@ -963,20 +994,19 @@ void main() {
         findsOneWidget,
       );
     }
-    expect(find.byKey(const Key('landing_faq_more_toggle')), findsOneWidget);
+    expect(find.byKey(const Key('landing_faq_more_toggle')), findsNothing);
+    expect(find.byKey(const Key('landing_trust_disclosure')), findsOneWidget);
+    expect(find.byKey(const Key('landing_pricing_disclosure')), findsOneWidget);
+    expect(find.text('AIが勝手に「やること」を決めるのですか?'), findsOneWidget);
+    expect(find.text('登録時にカード情報は必要ですか?'), findsOneWidget);
     expect(find.byKey(const Key('landing_migration_guide')), findsNothing);
     expect(find.byKey(const Key('landing_comparison_links')), findsNothing);
-
-    final archiveToggle = find.byKey(
-      const Key('landing_editorial_archive_toggle'),
+    expect(
+      find.byKey(const Key('landing_editorial_archive_toggle')),
+      findsNothing,
     );
-    await tester.ensureVisible(archiveToggle);
-    await tester.pump();
-    await tester.tap(archiveToggle);
-    await tester.pump(const Duration(milliseconds: 300));
-
-    expect(find.byKey(const Key('landing_migration_guide')), findsOneWidget);
-    expect(find.byKey(const Key('landing_comparison_links')), findsOneWidget);
+    expect(find.textContaining('¥1,100〜/月'), findsNothing);
+    expect(find.textContaining('21サービス分'), findsNothing);
   });
 
   testWidgets('hero media keeps a readable fallback contract', (tester) async {
@@ -1098,7 +1128,7 @@ void main() {
   );
 
   testWidgets(
-    'H15 starts with three outcomes and reveals the 134-feature catalog on demand',
+    'H15 starts with three outcomes without exposing unverified feature claims',
     (tester) async {
       final adapter = await pumpLanding(
         tester,
@@ -1131,25 +1161,18 @@ void main() {
         contains('lp_exp_h01_treatment_feature_outcome_trial'),
       );
 
-      final toggle = find.byKey(
-        const Key('landing_h15_feature_catalog_toggle'),
-      );
-      await Scrollable.ensureVisible(tester.element(toggle), alignment: 0.7);
-      await tester.pump();
-      await tester.tap(toggle);
-      await tester.pump();
-
-      expect(find.text('競馬AI自動予想'), findsOneWidget);
-      expect(find.text('3つの成果だけ見る'), findsOneWidget);
-      expect(
-        adapter.conversionEvents,
-        contains('lp_exp_h01_treatment_feature_catalog_expand'),
-      );
-
-      await tester.tap(toggle);
-      await tester.pump();
       expect(find.text('競馬AI自動予想'), findsNothing);
-      expect(find.text('134機能をすべて見る'), findsOneWidget);
+      expect(
+        find.byKey(const Key('landing_h15_feature_catalog_toggle')),
+        findsNothing,
+      );
+      expect(find.textContaining('134機能'), findsNothing);
+      expect(
+        find.text(
+          '悩みを1文入力すると、AIが最初の一手を提案します。実行するかはあなたが決め、役立つ提案だけ登録後に引き継げます。',
+        ),
+        findsOneWidget,
+      );
     },
   );
 

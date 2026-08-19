@@ -11,7 +11,7 @@ test.describe('LP first-user acquisition', () => {
   }) => {
     await openLanding(page, treatmentPath);
 
-    const trialInput = page.getByRole('textbox', { name: /30秒で試す/ });
+    const trialInput = page.getByRole('textbox', { name: /登録なしで試す/ });
     const trialAction = page.getByRole('button', {
       name: '今やる1件を試す',
       exact: true,
@@ -164,7 +164,7 @@ test.describe('LP first-user acquisition', () => {
     await expect(magicLinkAction).toBeVisible();
     await expect(lowerTrial).toBeVisible();
     await expect(
-      page.getByRole('textbox', { name: /30秒で試す/ }),
+      page.getByRole('textbox', { name: /登録なしで試す/ }),
     ).toHaveCount(0);
 
     const authBox = await googleAction.boundingBox();
@@ -223,7 +223,7 @@ async function openLanding(page: Page, path: string) {
     { timeout: 60_000 },
   );
   await expect(
-    page.getByText('仕事・学習・お金の「次の1件」を、AIが1分で決める', {
+    page.getByText('仕事・学習・お金の「次の1件」を、AIと一緒に絞る', {
       exact: true,
     }),
   ).toBeVisible({ timeout: 60_000 });

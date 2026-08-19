@@ -24,7 +24,7 @@ test.describe('public production smoke', () => {
     expect(response.ok()).toBeTruthy();
     const html = await response.text();
 
-    expect(html).toContain('5分だけ無料で試す');
+    expect(html).toContain('登録なしで1件試す');
     expect(html).toContain('WBSガントチャート');
     expect(html).toMatch(
       /href="(?:https:\/\/my-web-app-b67f4\.web\.app)?\/?\?lp_intent=trial&amp;utm_source=seo_shell&amp;utm_medium=landing&amp;utm_campaign=first_user_growth"/,
