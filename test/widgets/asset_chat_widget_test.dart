@@ -103,4 +103,30 @@ void main() {
     expect(panelSize.width, lessThanOrEqualTo(320));
     expect(panelSize.height, lessThanOrEqualTo(568));
   });
+
+  testWidgets('opens the registered chat history route from the header', (
+    tester,
+  ) async {
+    final service = AiHubChatService(invoker: (_) async => _successResponse());
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {
+          '/asset-chat-history': (_) => const Scaffold(
+                body: Text('履歴ページ'),
+              ),
+        },
+        home: Scaffold(
+          body: const SizedBox.expand(),
+          floatingActionButton: AssetChatWidget(service: service),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('asset_chat_open_button')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('asset_chat_history_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('履歴ページ'), findsOneWidget);
+  });
 }
