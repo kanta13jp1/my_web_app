@@ -4665,10 +4665,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   padding: EdgeInsets.symmetric(horizontal: 10),
                   child: Text(
                     'またはメールで保存',
-                    style: TextStyle(
-                      color: Color(0xFF94A3B8),
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
                   ),
                 ),
                 Expanded(child: Divider()),
