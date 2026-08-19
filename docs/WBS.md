@@ -4,40 +4,48 @@
 > **蜿ら・**: 繧ｵ繧､繝井ｸ翫・ `/project-gantt` 繝壹・繧ｸ縺ｧ繝ｪ繧｢繝ｫ繧ｿ繧､繝遒ｺ隱榊庄閭ｽ  
 > **DB**: `wbs_milestones` + `wbs_tasks` 繝・・繝悶Ν (migration 20260417180000 / 20260417190000 / 20260417200000)
 
-## 収益化P0 現在地 (2026-08-08)
+## 収益化P0 現在地 (2026-08-19)
 
 - ゴールは未達。完了条件は、知人ではない外部ユーザーの実決済、Stripe Payout、銀行口座への1円以上の着金を同じ証跡で確認すること。
-- LP仮説A01-A10は各2案、合計20 armを実装・本番検証済み。2026-08-05のPIIなし本番集計は456 unique LP views、6 trials、1 signup submit、0 verified signups、0 activations、0 supporter checkouts。流入0ではなく、trial/view 1.32%、signup submit/view 0.22%、signup completion 0%が現在のボトルネック。arm別の標本と登録完了が不足しているため、判定は全て`insufficient_data`のままとし、仮説を「勝ち」とは扱わない。
-- 同期間のSupabase Auth集計は新規auth records 3、confirmed 0、non-anonymous 0。計測欠損だけではなく、外部ユーザーが認証完了まで到達していないことを確認した。
+- LP仮説A01-A10は各2案、合計20 armを実装・本番検証済み。2026-08-19のPIIなし本番集計は692 unique LP views、10 trials、1 save CTA、2 signup submits、0 verified signups。trial/view 1.45%、signup submit/view 0.29%、signup completion 0%で、現在の最狭ボトルネックは登録送信から認証完了への遷移。arm別の標本と登録完了が不足しているため、判定は全て`insufficient_data`のままとし、仮説を「勝ち」とは扱わない。
+- 2026-08-05のSupabase Auth照合では新規auth records 3、confirmed 0、non-anonymous 0。計測欠損だけではなく、外部ユーザーが認証完了まで到達していないことを確認した。最新期間の認証完了は次回レポートで再照合する。
 - X Hook Aの24時間結果は13 impressions、1 engagement、0 clicks、0 LP views、0 signups、0 payments。一方、`first_user_growth`計測URL全体では4 unique views、1 trial、0 signups。入口Hook改善とtrial後登録導線改善を別々に計測する。
 - X Hook BはIssue [#4343](https://github.com/kanta13jp1/my_web_app/issues/4343) と候補ID `6203a344-55bd-44a0-b4ba-ab191f6fb9a2` まで準備済み。公開には所有者の明示承認が必要で、未承認のため未投稿。
-- Stripeは100円のlive Checkout生成とWebhook secret設定まで確認済み。ただし現在の`charges_enabled` / `payouts_enabled`は機械証跡がなく、銀行着金へ進めるか断定できない。
+- 2026-08-19実行のStripe Account Readiness workflowで、live mode、`details_submitted=true`、`charges_enabled=true`、`payouts_enabled=true`、未完了要件0を伏字済みJSONで確認した。決済・Payout基盤は外部購入者を受け入れ可能で、次の障害は外部ユーザーの登録完了と課金転換。
 - 2026-07-29にHexCivの500円live決済、処理済み`checkout.session.completed`、ダウンロードURL発行2回を本番DBで確認した。ただし購入者は`user_profiles.is_admin=true`かつ`role=admin`のため自己購入であり、外部ユーザー売上・1人目獲得・銀行着金ゴールには数えない。決済/Webhook/商品配信経路の動作確認証跡としてのみ扱い、現時点の適格な外部決済額は0円。
 - 2026-08-08の匿名本番ブラウザ実査では、静的SEOシェルからFlutter初回描画まで約20秒、本番`main.dart.js`は圧縮転送でも4,597,034 bytesだった。ルートLPの静的CTAは同一ページへ遷移して進行中の本体読込を再開前に破棄する構造だったため、`main.dart.js`の先読みと`history.replaceState`による無再読込handoffを追加した。
 - 同実査で登録前trialの提案生成は成功したが、次の「無料で保存して始める」CTAは1280x720 viewportに対して`top=868px`で画面外だった。trial直後にCTAへ自動スクロールし、モバイルではキーボードを開かない修正を最優先の登録導線として維持する。
+- trialで固定文を即時表示していた実装は、AI失敗時にも成功したように見えて登録を促す信頼上の欠陥だった。実AIのloading、成功、回数上限、接続失敗、再試行を分離し、成功時だけ保存CTAを表示して自動スクロールする修正を実装・対象テスト済み。本番反映前のため、現時点では「implemented, not deployed」。
+- `funnel_magic_link_send`と`funnel_inbox_open`は既にPIIなし集計へ記録されていたが、意思決定レポートから欠落していた。実験期間のtrial、save、Magic Link送信成功、受信箱遷移を集計表示する修正を追加し、登録送信2件の離脱点を次回workflowで確定する。
 - 今回の最優先LP実装は、trial結果の直後に画面外のMagic Link保存導線を自動表示し、モバイルではキーボードを勝手に開かないこと。Stripe側は並行して`billing.get_stripe_account_readiness` と手動workflow `Stripe Account Readiness`で、live決済可否・Payout可否・未完了要件だけを伏字済みJSONへ記録する。
 - 支援Checkoutの購入者分類を追加する。任意のログインJWTをサーバー側で検証し、`admin_self` / `authenticated_non_admin` / `anonymous_unclassified` をStripe metadataへ付与する。署名済みWebhookと`revenue.funnel_report`は管理者・匿名・旧形式の未分類決済を外部売上から除外し、PIIなしSQLでのみ集計する。
 - クリティカルパス:
   1. SEOシェルからtrialへの無再読込handoffと、trial直後の保存・登録CTA自動スクロールを本番反映し、デスクトップ/モバイルで露出を確認
-  2. Stripe readiness workflowで`charges_enabled=true`かつ`payouts_enabled=true`を確認
+  2. 収益レポートでMagic Link送信成功と受信箱遷移を確認し、送信前・受信箱・認証復帰の離脱点を確定
   3. 明示承認後にHook Bを1回だけ公開し、3h/24hの固定ファネルを計測
   4. 知人ではない外部ユーザー1人のverified signupとfirst actionをUTMで確認
   5. X計測URLからsignupとfirst actionまで到達した、ログイン済み非管理者のFounding Supporter 100円決済とpaid Webhookを確認。匿名・自己購入・未分類の決済は除外する
   6. Stripe Payoutと伏字済み銀行明細の1円以上着金を照合
+- 直近P0タスク:
+  1. `Codex`: trial成功時CTA露出・正直な失敗表示・PIIなしhandoffレポートをPR化する。受入証跡は対象テスト、CI、本番デスクトップ/モバイル表示。登録CTAが再び画面外になる、または失敗時に保存CTAが出る場合はロールバック。
+  2. `Codex`: デプロイ後に手動workflowを再実行し、Magic Link送信成功・受信箱遷移・verified signupを同じ観測期間で確認する。個人情報やraw eventを成果物へ含めない。
+  3. `所有者`: 本番QA後、Hook Bの公開を明示承認する。公開後3時間/24時間のUTM流入を固定観測し、無関係なトレンド便乗や自動DMは行わない。
+  4. `外部ユーザー`: 知人ではない利用者が登録、first action、100円支援決済を完了する。Stripeの`authenticated_non_admin`分類とpaid webhookが受入証跡。
+  5. `Stripe/銀行`: 適格決済を含むpaid payoutと銀行明細の1円以上着金を照合する。pending/in transitは完了扱いにしない。
 - 禁止事項: 自己決済や知人決済を獲得証跡に数えない。自動DM・自動follow・無関係なトレンド便乗・架空ニュース・承認前X投稿を行わない。
 - WBS反映: migration `20260731120000_wbs_revenue_current_gate.sql` / `20260805140000_wbs_lp_trial_signup_conversion_gate.sql`。Stripe readiness、支援購入者分類、Hook B計測、trial後登録導線を銀行着金タスクへ接続し、重複Issueを増やさない。
 
-## LP 10仮説の検証台帳 (2026-08-08)
+## LP 10仮説の検証台帳 (2026-08-19)
 
 - 判定ルール: widget/回帰テスト通過は「実装検証済み」、本番のcontrol/treatment差は「統計判定」。登録完了0の現状では、見かけのクリック差だけで勝者を決めない。
-- 共通ファネル: 456 views -> 6 trials -> 1 signup submit -> 0 verified signups -> 0 first actions -> 0 checkouts。
+- 共通ファネル: 692 views -> 10 trials -> 1 save CTA -> 2 signup submits -> 0 verified signups。first action以降はverified signupが0のため未到達。
 
 | ID | 仮説 | 実装検証 | 本番判定 / 次の確認 |
 |---|---|---|---|
 | H01 | 成果を先に伝えるヒーロー | treatment/controlとCTA計測をテスト済み | `insufficient_data`; hero CTAからverified signupまで比較 |
 | H02 | 目的別パーソナライズ | 仕事・お金・学習の切替とtrial計測をテスト済み | `insufficient_data`; trial開始率と登録完了率を比較 |
-| H03 | 登録前の価値体験 | 登録前trial、X深リンク、SEOシェルからの無再読込handoffをデスクトップ/モバイルでテスト済み | 6 trialsを確認、ただし登録完了0; 初回起動待ちとtrial->signupを最優先改善 |
-| H04 | Magic Linkを主導線にする | inline email、pending trial保存、signup submit、trial後自動スクロールをテスト済み | 1 submit / 0 complete; 画面外だった保存CTAを本番露出して再計測 |
+| H03 | 登録前の価値体験 | 登録前trial、X深リンク、SEOシェルからの無再読込handoffをデスクトップ/モバイルでテスト済み | 10 trialsを確認、ただし登録完了0; 正直なAI状態表示とtrial->signupを最優先改善 |
+| H04 | Magic Linkを主導線にする | inline email、pending trial保存、signup submit、trial後自動スクロールをテスト済み | 2 submits / 0 completes; Magic Link送信・受信箱・認証復帰を分離計測 |
 | H05 | 料金リスクを先回りして解消 | カード不要・無料範囲の表示差をテスト済み | `insufficient_data`; verified signupへの影響を比較 |
 | H06 | 具体的な利用結果を見せる | product proofの表示差をテスト済み | `insufficient_data`; trial開始と登録完了を比較 |
 | H07 | 実数の社会的証明 | 公開集計のみの匿名安全な表示をテスト済み | `insufficient_data`; signup submitではなくcompleteで評価 |

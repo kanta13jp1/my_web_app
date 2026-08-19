@@ -7,6 +7,16 @@ class LandingPageAuthUnavailableException implements Exception {
   const LandingPageAuthUnavailableException();
 }
 
+class LandingTrialPreviewException implements Exception {
+  final String code;
+  final int? statusCode;
+
+  const LandingTrialPreviewException(this.code, {this.statusCode});
+
+  @override
+  String toString() => 'LandingTrialPreviewException($code, $statusCode)';
+}
+
 class LandingPageViewPoint {
   final DateTime? date;
   final double count;
@@ -265,13 +275,26 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
       throw const LandingPageAuthUnavailableException();
     }
 
-    final response = await client.functions.invoke(
-      'growth-hub',
-      body: <String, dynamic>{
-        'action': 'landing.trial',
-        'prompt': prompt,
-      },
-    );
+    late final FunctionResponse response;
+    try {
+      response = await client.functions.invoke(
+        'growth-hub',
+        body: <String, dynamic>{
+          'action': 'landing.trial',
+          'prompt': prompt,
+        },
+      );
+    } on FunctionException catch (error) {
+      final details = error.details;
+      final errorCode =
+          details is Map ? details['error']?.toString().trim() : null;
+      throw LandingTrialPreviewException(
+        (errorCode == null || errorCode.isEmpty)
+            ? 'trial_ai_unavailable'
+            : errorCode,
+        statusCode: error.status,
+      );
+    }
     final data = response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
@@ -281,8 +304,11 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
       return 'ACTION: $action\nREASON: $reason';
     }
 
-    throw Exception(
-      data['error']?.toString() ?? 'Landing trial preview failed.',
+    throw LandingTrialPreviewException(
+      data['error']?.toString().trim().isNotEmpty == true
+          ? data['error'].toString().trim()
+          : 'trial_ai_unavailable',
+      statusCode: response.status,
     );
   }
 
