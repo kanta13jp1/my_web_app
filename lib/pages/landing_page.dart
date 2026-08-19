@@ -389,7 +389,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     try {
       await widget.signupCompletionService.cancelPending();
     } catch (error) {
-      debugPrint('Pending signup cancellation failed after OAuth error: $error');
+      debugPrint(
+          'Pending signup cancellation failed after OAuth error: $error');
     }
     if (_analyticsEnabled) {
       try {

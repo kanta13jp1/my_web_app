@@ -43,7 +43,8 @@ void main() {
     );
   });
 
-  test('maps every Google callback category to an allowlisted aggregate key', () {
+  test('maps every Google callback category to an allowlisted aggregate key',
+      () {
     expect(
       LandingOAuthCallbackFailureCategory.values.map(
         landingGoogleOAuthFailureEventKey,
