@@ -102,7 +102,7 @@ void main() {
     await tester.tap(find.byKey(const Key('landing_story_dot_3')));
     await tester.pump();
 
-    expect(find.text('登録前に体験 · 登録時カード不要'), findsOneWidget);
+    expect(find.text('登録前に体験 · 無料登録時カード不要'), findsOneWidget);
     expect(find.byKey(const Key('landing_story_primary_cta')), findsOneWidget);
     expect(
       find.byKey(const Key('landing_story_secondary_cta')),

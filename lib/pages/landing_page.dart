@@ -1035,7 +1035,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     if (action != null && action.isNotEmpty) {
       return (
         action,
-        (reason != null && reason.isNotEmpty) ? reason : 'AIが最短の1件として判断しました。',
+        (reason != null && reason.isNotEmpty)
+            ? reason
+            : '入力内容をもとに、最初の候補として提案しました。',
       );
     }
 
@@ -1506,7 +1508,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           children: [
             const Expanded(
               child: Text(
-                '登録前に体験・登録時カード不要',
+                '登録前に体験・無料登録時カード不要',
                 style: TextStyle(
                   color: Color(0xFFB5C0CA),
                   fontSize: 12,
@@ -1735,7 +1737,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               _BenefitChip(icon: Icons.visibility_outlined, label: '登録前に体験'),
               _BenefitChip(
                 icon: Icons.credit_card_off_outlined,
-                label: '登録時カード不要',
+                label: '無料登録時カード不要',
               ),
               _BenefitChip(icon: Icons.auto_awesome, label: 'AIが提案'),
               _BenefitChip(icon: Icons.how_to_reg_outlined, label: '決めるのはあなた'),
@@ -4194,12 +4196,25 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   ),
                 ),
                 SizedBox(height: compactHero ? 6 : 12),
-                _buildTrialAnswerPreview(
-                  compact: compactHero,
-                  heroMode: heroMode,
-                  firstUserGrowthMode: firstUserGrowthMode,
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _trialPromptController,
+                  builder: (context, value, child) {
+                    if (value.text.trim().isNotEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildTrialAnswerPreview(
+                          compact: compactHero,
+                          heroMode: heroMode,
+                          firstUserGrowthMode: firstUserGrowthMode,
+                        ),
+                        SizedBox(height: compactHero ? 8 : 12),
+                      ],
+                    );
+                  },
                 ),
-                SizedBox(height: compactHero ? 8 : 12),
                 Text(
                   firstUserGrowthMode ? '別の悩みで試す' : 'ほかの悩みを1タップで試す',
                   style: TextStyle(
@@ -4333,7 +4348,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        '入力内容から、10分以内に完了できる具体的な1件を作成しています。',
+                        '入力内容から、短時間で着手できる具体的な1件を作成しています。',
                         style: TextStyle(
                           color: heroMode
                               ? const Color(0xFFBCC6CE)
@@ -4518,7 +4533,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            '実際の回答例',
+            '入力例と提案サンプル',
             style: TextStyle(
               color: Color(0xFF1D4ED8),
               fontSize: 11,
@@ -4528,7 +4543,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           const SizedBox(height: 4),
           Text(
-            '入力: 「$samplePrompt」',
+            '入力例: 「$samplePrompt」',
             style: TextStyle(
               color: const Color(0xFF64748B),
               fontSize: compact ? 11 : 12,
@@ -4537,7 +4552,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           const SizedBox(height: 7),
           Text(
-            '今やる1件: 止まっている案件を1つ開く',
+            '提案例: 止まっている案件を1つ選ぶ',
             style: TextStyle(
               color: const Color(0xFF172033),
               fontSize: compact ? 13 : 14,
@@ -4547,10 +4562,19 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           const SizedBox(height: 2),
           Text(
-            '最初の10分: 確認先を1人決め、連絡文の下書きを作る',
+            '次の一手例: 確認先を1人決め、連絡文の下書きを作る',
             style: TextStyle(
               color: const Color(0xFF475569),
               fontSize: compact ? 11 : 12,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            '実際の提案は、入力内容によって変わります。',
+            style: TextStyle(
+              color: const Color(0xFF64748B),
+              fontSize: compact ? 10 : 11,
               height: 1.45,
             ),
           ),
@@ -4585,7 +4609,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         recordHeroCta: heroMode,
                       ),
               icon: const Icon(Icons.bolt, size: 17),
-              label: const Text('この例で即試す'),
+              label: const Text('この入力例でAIに提案させる'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF1F7AE0),
                 minimumSize: Size.fromHeight(compact ? 40 : 44),
@@ -4609,7 +4633,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
                 _TrustPoint(
                   icon: Icons.credit_card_off_outlined,
-                  label: 'カード不要',
+                  label: '無料登録時カード不要',
                 ),
               ],
             ),
@@ -6490,7 +6514,7 @@ class _WorkflowLandingHero extends StatelessWidget {
                           ),
                           _TrustPoint(
                             icon: Icons.credit_card_off_outlined,
-                            label: '登録時カード不要',
+                            label: '無料登録時カード不要',
                             dark: true,
                           ),
                           _TrustPoint(

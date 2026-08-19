@@ -43,7 +43,10 @@ test.describe('LP first-user acquisition', () => {
     await openLanding(page, treatmentPath);
 
     await page
-      .getByRole('button', { name: 'この例で即試す', exact: true })
+      .getByRole('button', {
+        name: 'この入力例でAIに提案させる',
+        exact: true,
+      })
       .click();
 
     await expect(
