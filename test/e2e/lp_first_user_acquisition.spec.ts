@@ -71,6 +71,44 @@ test.describe('LP first-user acquisition', () => {
     ).toBeVisible();
   });
 
+  test('Google callback failure exposes safe retry and Magic Link recovery', async ({
+    page,
+  }) => {
+    await openLanding(
+      page,
+      '/?lp_hypothesis=h04&lp_variant=treatment&lp_qa=1'
+        + '#error=server_error'
+        + '&error_description=Unable+to+exchange+external+code+'
+        + 'for+private%40example.com',
+    );
+
+    const notice = page.getByText(
+      'Google登録を完了できませんでした',
+      { exact: true },
+    );
+    const retry = page.getByRole('button', {
+      name: 'Googleでもう一度',
+      exact: true,
+    });
+    const magicLink = page.getByRole('button', {
+      name: 'Magic Linkで続ける',
+      exact: true,
+    });
+
+    await expect(notice).toBeVisible();
+    await expect(retry).toBeVisible();
+    await expect(magicLink).toBeVisible();
+    await expect(page.getByText('private@example.com')).toHaveCount(0);
+
+    const viewport = page.viewportSize();
+    const recoveryBox = await magicLink.boundingBox();
+    expect(viewport).not.toBeNull();
+    expect(recoveryBox).not.toBeNull();
+    expect(recoveryBox!.y + recoveryBox!.height).toBeLessThanOrEqual(
+      viewport!.height,
+    );
+  });
+
   test('H03 control keeps recoverable authentication before the lower trial', async ({
     page,
   }) => {
