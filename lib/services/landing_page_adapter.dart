@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'landing_oauth_callback_failure.dart';
 import 'landing_share_service.dart';
 
 class LandingPageAuthUnavailableException implements Exception {
@@ -74,6 +75,25 @@ String landingMagicLinkFailureEventKey(
       return LandingShareService.funnelMagicLinkFailNetwork;
     case LandingMagicLinkFailureCategory.unknown:
       return LandingShareService.funnelMagicLinkFailUnknown;
+  }
+}
+
+String landingGoogleOAuthFailureEventKey(
+  LandingOAuthCallbackFailureCategory category,
+) {
+  switch (category) {
+    case LandingOAuthCallbackFailureCategory.cancelled:
+      return LandingShareService.funnelGoogleOAuthFailCancelled;
+    case LandingOAuthCallbackFailureCategory.rateLimited:
+      return LandingShareService.funnelGoogleOAuthFailRateLimit;
+    case LandingOAuthCallbackFailureCategory.providerConfiguration:
+      return LandingShareService.funnelGoogleOAuthFailProviderConfig;
+    case LandingOAuthCallbackFailureCategory.redirectConfiguration:
+      return LandingShareService.funnelGoogleOAuthFailRedirect;
+    case LandingOAuthCallbackFailureCategory.callbackExchange:
+      return LandingShareService.funnelGoogleOAuthFailCallbackExchange;
+    case LandingOAuthCallbackFailureCategory.unknown:
+      return LandingShareService.funnelGoogleOAuthFailUnknown;
   }
 }
 
@@ -160,6 +180,10 @@ abstract interface class LandingPageAdapter {
   });
 
   Future<bool> signInWithGoogle({String? redirectTo});
+
+  Future<void> recordGoogleOAuthCallbackFailure({
+    required LandingOAuthCallbackFailureCategory category,
+  });
 
   Future<void> sendMagicLink({
     required String email,
@@ -404,6 +428,15 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
       );
     }
     return launched;
+  }
+
+  @override
+  Future<void> recordGoogleOAuthCallbackFailure({
+    required LandingOAuthCallbackFailureCategory category,
+  }) {
+    return _recordFunnelEventBestEffort(
+      landingGoogleOAuthFailureEventKey(category),
+    );
   }
 
   @override

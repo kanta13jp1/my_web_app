@@ -14,6 +14,7 @@ import 'package:my_web_app/services/agent_org_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:my_web_app/services/landing_conversion_experiment_service.dart';
+import 'package:my_web_app/services/landing_oauth_callback_failure.dart';
 import 'package:my_web_app/services/landing_page_adapter.dart';
 import 'package:my_web_app/services/landing_share_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -114,6 +115,11 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
     String? redirectTo,
   }) =>
       Future<bool>.value(true);
+
+  @override
+  Future<void> recordGoogleOAuthCallbackFailure({
+    required LandingOAuthCallbackFailureCategory category,
+  }) async {}
 
   @override
   Future<AuthResponse> signUp({
