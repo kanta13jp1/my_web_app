@@ -38,7 +38,21 @@ class LandingShareService {
   static const String channelCopy = 'copy';
   static const String funnelTrialRun = 'funnel_trial_run';
   static const String funnelSaveCta = 'funnel_save_cta';
+  static const String funnelMagicLinkAttempt = 'funnel_magic_link_attempt';
   static const String funnelMagicLinkSend = 'funnel_magic_link_send';
+  static const String funnelMagicLinkFailInvalidEmail =
+      'funnel_magic_link_fail_invalid_email';
+  static const String funnelMagicLinkFailRateLimit =
+      'funnel_magic_link_fail_rate_limit';
+  static const String funnelMagicLinkFailDeliveryConfig =
+      'funnel_magic_link_fail_delivery_config';
+  static const String funnelMagicLinkFailRedirect =
+      'funnel_magic_link_fail_redirect';
+  static const String funnelMagicLinkFailNetwork =
+      'funnel_magic_link_fail_network';
+  static const String funnelMagicLinkFailUnknown =
+      'funnel_magic_link_fail_unknown';
+  static const String funnelGoogleOAuthStart = 'funnel_google_oauth_start';
   static const String funnelInboxOpen = 'funnel_inbox_open';
 
   static const List<String> supportedChannels = <String>[
@@ -290,10 +304,8 @@ $shareUrl
 
       await client
           .from('app_analytics')
-          .update(<String, dynamic>{'source_details': sourceDetails}).eq(
-        'date',
-        dateKey,
-      );
+          .update(<String, dynamic>{'source_details': sourceDetails})
+          .eq('date', dateKey);
     } catch (error) {
       debugPrint('Share analytics update failed: $error');
     }
@@ -386,7 +398,15 @@ $shareUrl
     switch (eventKey) {
       case funnelTrialRun:
       case funnelSaveCta:
+      case funnelMagicLinkAttempt:
       case funnelMagicLinkSend:
+      case funnelMagicLinkFailInvalidEmail:
+      case funnelMagicLinkFailRateLimit:
+      case funnelMagicLinkFailDeliveryConfig:
+      case funnelMagicLinkFailRedirect:
+      case funnelMagicLinkFailNetwork:
+      case funnelMagicLinkFailUnknown:
+      case funnelGoogleOAuthStart:
       case funnelInboxOpen:
         return true;
       default:
