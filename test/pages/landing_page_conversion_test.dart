@@ -457,9 +457,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('landing_h03_auth_before_trial')), findsOne);
-      final trialTop = tester
-          .getTopLeft(find.byKey(const Key('landing_trial_section')))
-          .dy;
+      final trialTop =
+          tester.getTopLeft(find.byKey(const Key('landing_trial_section'))).dy;
       expect(trialTop, inInclusiveRange(0, size.height));
       expect(_landingScrollOffset(tester), greaterThan(0));
     },
