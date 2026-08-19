@@ -86,9 +86,9 @@ class HomepageSocialPreviewTest(unittest.TestCase):
             self.index_html,
         )
         self.assertIn(
-            'content="自分株式会社は、自分自身を一つの会社に見立て、人生のCEOとして'
-            '仕事・学習・お金・健康を経営する考え方をAIで実践できる公式'
-            'ライフマネジメントアプリです。無料・カード不要。"',
+            'content="自分株式会社は、自分自身を一つの会社に見立て、仕事・学習・'
+            'お金・健康を整理するライフマネジメントアプリです。'
+            '登録前にAIの提案を1件試せます。"',
             self.index_html,
         )
         self.assertIn(
@@ -397,6 +397,27 @@ class SitemapTest(unittest.TestCase):
         doc = build_sitemap(BASE, [], "2026-07-09")
         home = doc.split(f"<loc>{BASE}/</loc>")[1].split("</url>")[0]
         self.assertIn("<priority>1.0</priority>", home)
+
+    def test_sitemap_omits_unverified_lastmod_values(self) -> None:
+        doc = build_sitemap(
+            BASE,
+            ["notion"],
+            None,
+            {"/philosophy": "2026-08-19"},
+        )
+
+        self.assertEqual(doc.count("<lastmod>"), 1)
+        philosophy = doc.split(f"<loc>{BASE}/philosophy</loc>")[1].split(
+            "</url>", 1
+        )[0]
+        home = doc.split(f"<loc>{BASE}/</loc>")[1].split("</url>", 1)[0]
+        comparison = doc.split(f"<loc>{BASE}/vs-notion</loc>")[1].split(
+            "</url>", 1
+        )[0]
+
+        self.assertIn("<lastmod>2026-08-19</lastmod>", philosophy)
+        self.assertNotIn("<lastmod>", home)
+        self.assertNotIn("<lastmod>", comparison)
 
 
 if __name__ == "__main__":
