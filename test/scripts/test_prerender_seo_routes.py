@@ -287,10 +287,14 @@ class PublicRouteTest(unittest.TestCase):
         self.assertIn("個人のP/LとB/Sで生活を見直す", out)
         self.assertIn("人生を6部署に分けて点検する", out)
         self.assertIn("30日で回す自分株式会社の運営サイクル", out)
+        self.assertIn("3分でできる棚卸しの記入例", out)
+        self.assertIn("架空ケース：30日でどう見直すか", out)
+        self.assertIn("実在する利用者の体験談や成果ではなく", out)
+        self.assertIn("このページの編集方針", out)
         self.assertIn('data-prerender="public-faq"', out)
         self.assertIn("自分株式会社とは何ですか？", out)
         self.assertIn('href="/development-achievements"', out)
-        self.assertIn('<time datetime="2026-08-18">2026-08-18</time>', out)
+        self.assertIn('<time datetime="2026-08-19">2026-08-19</time>', out)
 
         blocks = re.findall(
             r'<script type="application/ld\+json" data-prerender="public">'
@@ -304,7 +308,7 @@ class PublicRouteTest(unittest.TestCase):
         self.assertEqual(types, ["WebPage", "BreadcrumbList", "FAQPage"])
         webpage = parsed["@graph"][0]
         self.assertEqual(webpage["datePublished"], "2026-04-18")
-        self.assertEqual(webpage["dateModified"], "2026-08-18")
+        self.assertEqual(webpage["dateModified"], "2026-08-19")
         faq = parsed["@graph"][2]
         self.assertEqual(len(faq["mainEntity"]), 4)
 
