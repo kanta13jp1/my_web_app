@@ -58,6 +58,12 @@ FUNNEL_EVENT_KEYS = (
     "funnel_magic_link_fail_network",
     "funnel_magic_link_fail_unknown",
     "funnel_google_oauth_start",
+    "funnel_google_oauth_fail_cancelled",
+    "funnel_google_oauth_fail_rate_limit",
+    "funnel_google_oauth_fail_provider_config",
+    "funnel_google_oauth_fail_redirect",
+    "funnel_google_oauth_fail_callback_exchange",
+    "funnel_google_oauth_fail_unknown",
     "funnel_inbox_open",
 )
 
@@ -410,6 +416,25 @@ def build_report(
     magic_link_attempts = observed_funnel.get("funnel_magic_link_attempt")
     magic_link_sends = observed_funnel.get("funnel_magic_link_send")
     google_oauth_starts = observed_funnel.get("funnel_google_oauth_start")
+    google_oauth_failures = {
+        "cancelled": observed_funnel.get("funnel_google_oauth_fail_cancelled"),
+        "rate_limit": observed_funnel.get("funnel_google_oauth_fail_rate_limit"),
+        "provider_configuration": observed_funnel.get(
+            "funnel_google_oauth_fail_provider_config"
+        ),
+        "redirect_configuration": observed_funnel.get(
+            "funnel_google_oauth_fail_redirect"
+        ),
+        "callback_exchange": observed_funnel.get(
+            "funnel_google_oauth_fail_callback_exchange"
+        ),
+        "unknown": observed_funnel.get("funnel_google_oauth_fail_unknown"),
+    }
+    google_oauth_failure_total = (
+        sum(value or 0 for value in google_oauth_failures.values())
+        if funnel_counts is not None
+        else None
+    )
 
     if funnel_counts is None:
         recommended_next_action = "fetch_auth_handoff_diagnostics"
@@ -419,6 +444,8 @@ def build_report(
         recommended_next_action = "improve_registration_cta_handoff"
     elif (magic_link_attempts or 0) > 0 and (magic_link_sends or 0) == 0:
         recommended_next_action = "repair_magic_link_delivery_or_use_google_oauth"
+    elif (google_oauth_failure_total or 0) > 0 and total_non_anonymous_completes == 0:
+        recommended_next_action = "repair_google_oauth_callback_failure"
     elif total_non_anonymous_completes == 0:
         recommended_next_action = "verify_oauth_callback_and_signup_completion"
     else:
@@ -436,6 +463,8 @@ def build_report(
         "magic_link_failures": magic_link_failures,
         "magic_link_failure_total": magic_link_failure_total,
         "google_oauth_starts": google_oauth_starts,
+        "google_oauth_failures": google_oauth_failures,
+        "google_oauth_failure_total": google_oauth_failure_total,
         "inbox_opens": observed_funnel.get("funnel_inbox_open"),
         "recommended_next_action": recommended_next_action,
     }
@@ -606,6 +635,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"{funnel['magic_link_failure_total'] if funnel['magic_link_failure_total'] is not None else 'missing'}",
         "- Google OAuth starts: "
         f"{funnel['google_oauth_starts'] if funnel['google_oauth_starts'] is not None else 'missing'}",
+        "- Categorized Google OAuth callback failures: "
+        f"{funnel['google_oauth_failure_total'] if funnel['google_oauth_failure_total'] is not None else 'missing'}",
         f"- Inbox opens: {funnel['inbox_opens'] if funnel['inbox_opens'] is not None else 'missing'}",
         f"- Recommended next action: {funnel['recommended_next_action']}",
         "- Counting note: aggregate event counts, not unique visitors.",

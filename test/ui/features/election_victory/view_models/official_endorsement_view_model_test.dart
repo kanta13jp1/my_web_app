@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/data/dpj_official_endorsements.dart';
 import 'package:my_web_app/models/election_intelligence.dart';
 import 'package:my_web_app/ui/features/election_victory/view_models/official_endorsement_view_model.dart';
 
@@ -7,8 +8,8 @@ void main() {
     final viewModel = OfficialEndorsementViewModel();
     addTearDown(viewModel.dispose);
 
-    expect(viewModel.snapshot.sourceAsOf, '2026-08-19');
-    expect(viewModel.snapshot.totalCount, 264);
+    expect(viewModel.snapshot.sourceAsOf, dpjOfficialEndorsementSourceAsOf);
+    expect(viewModel.snapshot.totalCount, dpjOfficialEndorsementTotal);
     expect(viewModel.forPrefecture('佐賀県')?.newcomerCount, 1);
   });
 
@@ -40,8 +41,8 @@ void main() {
     );
 
     expect(notificationCount, 1);
-    expect(viewModel.snapshot.sourceAsOf, '2026-08-19');
-    expect(viewModel.snapshot.totalCount, 264);
+    expect(viewModel.snapshot.sourceAsOf, dpjOfficialEndorsementSourceAsOf);
+    expect(viewModel.snapshot.totalCount, dpjOfficialEndorsementTotal);
   });
 }
 

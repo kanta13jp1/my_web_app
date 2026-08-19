@@ -6,6 +6,7 @@ import 'package:my_web_app/pages/landing_page.dart';
 import 'package:my_web_app/services/growth_acquisition_service.dart';
 import 'package:my_web_app/services/landing_conversion_analytics.dart';
 import 'package:my_web_app/services/landing_conversion_experiment_service.dart';
+import 'package:my_web_app/services/landing_oauth_callback_failure.dart';
 import 'package:my_web_app/services/landing_page_adapter.dart';
 import 'package:my_web_app/services/landing_signup_completion_service.dart';
 import 'package:my_web_app/services/pending_landing_trial_service.dart';
@@ -23,6 +24,8 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   final List<String> conversionVisitorIds = <String>[];
   final List<String> magicLinkEmails = <String>[];
   final List<bool> magicLinkShouldCreateUsers = <bool>[];
+  final List<LandingOAuthCallbackFailureCategory> googleCallbackFailures =
+      <LandingOAuthCallbackFailureCategory>[];
   int googleLaunches = 0;
   bool googleLaunchResult = true;
   Exception? magicLinkError;
@@ -86,6 +89,13 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   Future<bool> signInWithGoogle({String? redirectTo}) async {
     googleLaunches += 1;
     return googleLaunchResult;
+  }
+
+  @override
+  Future<void> recordGoogleOAuthCallbackFailure({
+    required LandingOAuthCallbackFailureCategory category,
+  }) async {
+    googleCallbackFailures.add(category);
   }
 
   @override
@@ -305,6 +315,80 @@ void main() {
       adapter.conversionEvents,
       contains('lp_exp_h04_treatment_signup_submit'),
     );
+  });
+
+  testWidgets('Google callback failure is visible, counted, and recoverable', (
+    tester,
+  ) async {
+    await const LandingSignupCompletionService().markPending(
+      email: null,
+      eventKey: 'lp_exp_h04_treatment_signup_complete',
+      visitorId: '00000000-0000-4000-8000-000000000001',
+    );
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h04', LandingExperimentVariant.treatment),
+      googleLoginEnabled: true,
+      landingUri: Uri.parse(
+        'https://example.com/#error=access_denied'
+        '&error_code=user_cancelled_authorization'
+        '&error_description=The+user+cancelled',
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      find.byKey(const Key('landing_google_oauth_callback_error')),
+      findsOneWidget,
+    );
+    expect(
+      adapter.googleCallbackFailures,
+      <LandingOAuthCallbackFailureCategory>[
+        LandingOAuthCallbackFailureCategory.cancelled,
+      ],
+    );
+    final preferences = await SharedPreferences.getInstance();
+    expect(
+      preferences.containsKey(LandingSignupCompletionService.storageKey),
+      isFalse,
+    );
+
+    await tester.tap(find.byKey(const Key('landing_google_oauth_retry')));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(adapter.googleLaunches, 1);
+    expect(
+      find.byKey(const Key('landing_google_oauth_callback_error')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('Google callback recovery stays usable in the mobile viewport', (
+    tester,
+  ) async {
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h04', LandingExperimentVariant.treatment),
+      size: const Size(390, 844),
+      analyticsEnabled: false,
+      googleLoginEnabled: true,
+      landingUri: Uri.parse(
+        'https://example.com/#error=server_error'
+        '&error_description=Unable+to+exchange+external+code',
+      ),
+    );
+
+    final notice = find.byKey(
+      const Key('landing_google_oauth_callback_error'),
+    );
+    expect(notice, findsOneWidget);
+    expect(find.byKey(const Key('landing_google_oauth_retry')), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_google_oauth_magic_link')),
+      findsOneWidget,
+    );
+    expect(tester.getBottomRight(notice).dy, lessThanOrEqualTo(844));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('invalid email is rejected before signup attribution', (
