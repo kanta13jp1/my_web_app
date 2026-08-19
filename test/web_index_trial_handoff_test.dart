@@ -30,9 +30,10 @@ void main() {
 
   test('SEO shell hands off without showing two landing pages at once', () {
     final html = File('web/index.html').readAsStringSync();
+    final normalizedHtml = html.replaceAll('\r\n', '\n');
 
     expect(
-      html,
+      normalizedHtml,
       contains(
         '<link rel="preload" '
         'href="assets/web/assets/fonts/NotoSansJP-Regular.ttf" '
@@ -43,7 +44,7 @@ void main() {
     expect(html, contains('inset: 0;'));
     expect(html, contains('transition: opacity 120ms ease-out;'));
     expect(
-      html,
+      normalizedHtml,
       contains(
         '#seo-shell[data-flutter-prewarm="true"] {\n'
         '      opacity: 1;\n'
