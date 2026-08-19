@@ -244,18 +244,17 @@
       overflow-y: auto;
       background: #f5f7fa;
       opacity: 1;
-      transition: opacity 600ms ease-out;
+      transition: opacity 120ms ease-out;
     }
 
     #seo-shell[data-flutter-prewarm="true"] {
-      opacity: 0.9;
-      transition-duration: 120ms;
+      opacity: 1;
     }
 
     #seo-shell[data-flutter-ready="true"] {
       opacity: 0;
       pointer-events: none;
-      transition-duration: 600ms;
+      transition-duration: 120ms;
     }
 
     .seo-card {
@@ -1335,8 +1334,9 @@
       // the bundled Japanese font and glyph atlas. Removing the readable SEO
       // shell immediately exposed a blank frame followed by tofu glyphs in the
       // primary CTA. Keep the shell as an overlay through a short stabilization
-      // window and several additional painted frames, then fade it without
-      // blocking the app.
+      // window and several additional painted frames. Keep it fully opaque
+      // during that wait so two different landing pages never appear stacked,
+      // then hand off with only a brief fade.
       requestAnimationFrame(function () {
         requestAnimationFrame(function () {
           window.setTimeout(function () {
@@ -1356,7 +1356,7 @@
                   if (seoShell.isConnected) {
                     seoShell.remove();
                   }
-                }, 650);
+                }, 150);
               });
             }
             revealAfterStableFrames();
