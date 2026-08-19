@@ -7,8 +7,8 @@ void main() {
     final viewModel = OfficialEndorsementViewModel();
     addTearDown(viewModel.dispose);
 
-    expect(viewModel.snapshot.sourceAsOf, '2026-08-12');
-    expect(viewModel.snapshot.totalCount, 221);
+    expect(viewModel.snapshot.sourceAsOf, '2026-08-19');
+    expect(viewModel.snapshot.totalCount, 264);
     expect(viewModel.forPrefecture('佐賀県')?.newcomerCount, 1);
   });
 
@@ -40,8 +40,8 @@ void main() {
     );
 
     expect(notificationCount, 1);
-    expect(viewModel.snapshot.sourceAsOf, '2026-08-12');
-    expect(viewModel.snapshot.totalCount, 221);
+    expect(viewModel.snapshot.sourceAsOf, '2026-08-19');
+    expect(viewModel.snapshot.totalCount, 264);
   });
 }
 

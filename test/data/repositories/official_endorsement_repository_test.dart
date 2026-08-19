@@ -8,9 +8,9 @@ void main() {
   test('generated official snapshot is the deterministic offline fallback', () {
     final snapshot = repository.resolve(null);
 
-    expect(snapshot.sourceAsOf, '2026-08-12');
-    expect(snapshot.totalCount, 221);
-    expect(snapshot.prefectureCount, 33);
+    expect(snapshot.sourceAsOf, '2026-08-19');
+    expect(snapshot.totalCount, 264);
+    expect(snapshot.prefectureCount, 36);
     expect(snapshot.forPrefecture('佐賀県')?.newcomerCount, 1);
   });
 
