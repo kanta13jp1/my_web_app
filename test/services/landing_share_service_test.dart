@@ -643,6 +643,28 @@ void main() {
     expect(find.byKey(const Key('landing_trial_section')), findsOneWidget);
     expect(find.byKey(const Key('landing_auth_section')), findsOneWidget);
     expect(find.byKey(const Key('landing_social_proof_stats')), findsOneWidget);
+    expect(find.byKey(const Key('landing_editorial_prologue')), findsOneWidget);
+    for (var chapter = 1; chapter <= 4; chapter++) {
+      expect(
+        find.byKey(Key('landing_editorial_chapter_$chapter')),
+        findsOneWidget,
+      );
+    }
+    expect(
+      find.byKey(const Key('landing_editorial_archive_toggle')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('landing_migration_guide')), findsNothing);
+    expect(find.byKey(const Key('landing_comparison_links')), findsNothing);
+
+    final archiveToggle = find.byKey(
+      const Key('landing_editorial_archive_toggle'),
+    );
+    await tester.ensureVisible(archiveToggle);
+    await tester.pump();
+    await tester.tap(archiveToggle);
+    await tester.pump(const Duration(milliseconds: 300));
+
     expect(find.byKey(const Key('landing_migration_guide')), findsOneWidget);
     expect(find.byKey(const Key('landing_comparison_links')), findsOneWidget);
     expect(adapter.loadShareSnapshotCallCount, 0);

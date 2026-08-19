@@ -22,6 +22,7 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   final List<String> conversionEvents = <String>[];
   final List<String> conversionVisitorIds = <String>[];
   final List<String> magicLinkEmails = <String>[];
+  final List<bool> magicLinkShouldCreateUsers = <bool>[];
   Completer<String>? trialResponse;
   Exception? trialError;
   String? lastTrialPrompt;
@@ -73,6 +74,7 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
     bool shouldCreateUser = true,
   }) async {
     magicLinkEmails.add(email);
+    magicLinkShouldCreateUsers.add(shouldCreateUser);
   }
 
   @override
@@ -292,10 +294,7 @@ void main() {
     );
 
     expect(find.text('自分株式会社とは'), findsOneWidget);
-    expect(
-      find.textContaining('自分自身を一つの会社に見立て'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('自分自身を一つの会社に見立て'), findsOneWidget);
     expect(find.text('自分が人生のCEOとして決める'), findsOneWidget);
 
     final heroHeading = tester.widget<Semantics>(
@@ -314,33 +313,101 @@ void main() {
     final documentTitle = tester.widget<Title>(
       find.byKey(const Key('landing_document_title')),
     );
-    expect(
-      documentTitle.title,
-      landingDocumentTitle,
-    );
+    expect(documentTitle.title, landingDocumentTitle);
   });
 
-  testWidgets('landing title is inactive while a deep-linked route is current',
-      (
+  testWidgets(
+    'landing title is inactive while a deep-linked route is current',
+    (tester) async {
+      await pumpLanding(
+        tester,
+        assignment: _assignment('h01', LandingExperimentVariant.control),
+      );
+
+      Navigator.of(tester.element(find.byType(LandingPage))).push(
+        MaterialPageRoute<void>(
+          builder: (_) => const Scaffold(body: Text('deep link destination')),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('deep link destination'), findsOneWidget);
+      expect(find.byKey(const Key('landing_document_title')), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'header login selects login mode without creating a new Magic Link user',
+    (tester) async {
+      final adapter = await pumpLanding(
+        tester,
+        assignment: _assignment('h04', LandingExperimentVariant.control),
+      );
+
+      await tester.tap(find.byKey(const Key('landing_header_login')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pump();
+
+      expect(find.text('ログインして続きから再開'), findsOneWidget);
+      expect(find.text('メールでログイン'), findsOneWidget);
+      expect(find.text('Magic Linkでログイン'), findsOneWidget);
+      final emailField = tester.widget<TextField>(
+        find.byKey(const Key('landing_auth_email')),
+      );
+      expect(emailField.focusNode?.hasFocus, isTrue);
+
+      await tester.enterText(
+        find.byKey(const Key('landing_auth_email')),
+        'existing-user@example.com',
+      );
+      final magicLinkButton = find.byKey(
+        const Key('landing_h04_magic_primary'),
+      );
+      await Scrollable.ensureVisible(
+        tester.element(magicLinkButton),
+        alignment: 0.5,
+      );
+      await tester.pump();
+      await tester.tap(magicLinkButton);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(adapter.magicLinkEmails, <String>['existing-user@example.com']);
+      expect(adapter.magicLinkShouldCreateUsers, <bool>[false]);
+      expect(
+        adapter.conversionEvents,
+        isNot(contains('lp_exp_h04_control_signup_submit')),
+      );
+    },
+  );
+
+  testWidgets('signup CTA restores signup mode and keeps hero attribution', (
     tester,
   ) async {
-    await pumpLanding(
+    final adapter = await pumpLanding(
       tester,
-      assignment: _assignment('h01', LandingExperimentVariant.control),
+      assignment: _assignment('h04', LandingExperimentVariant.control),
     );
 
-    Navigator.of(tester.element(find.byType(LandingPage))).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const Scaffold(body: Text('deep link destination')),
-      ),
-    );
-    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('landing_header_login')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.text('メールでログイン'), findsOneWidget);
 
-    expect(find.text('deep link destination'), findsOneWidget);
-    expect(
-      find.byKey(const Key('landing_document_title')),
-      findsNothing,
+    await tester.tap(find.byKey(const Key('landing_header_signup')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump();
+
+    expect(find.text('今すぐ無料ではじめる'), findsOneWidget);
+    expect(find.text('メールで新規登録'), findsOneWidget);
+    expect(find.text('Magic Linkで今すぐ始める'), findsOneWidget);
+    final emailField = tester.widget<TextField>(
+      find.byKey(const Key('landing_auth_email')),
     );
+    expect(emailField.focusNode?.hasFocus, isTrue);
+    expect(adapter.conversionEvents, contains('lp_exp_h04_control_hero_cta'));
   });
 
   testWidgets(
@@ -380,22 +447,19 @@ void main() {
         tester,
         size: size,
         analyticsEnabled: false,
-        landingUri: Uri.parse(
-          'https://example.com/?lp_intent=trial&lp_qa=1',
-        ),
+        landingUri: Uri.parse('https://example.com/?lp_intent=trial&lp_qa=1'),
         conversionExperimentService: _DelayedExperimentService(
           assignment.future,
         ),
       );
 
-      assignment.complete(
-        _assignment('h03', LandingExperimentVariant.control),
-      );
+      assignment.complete(_assignment('h03', LandingExperimentVariant.control));
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('landing_h03_auth_before_trial')), findsOne);
-      final trialTop =
-          tester.getTopLeft(find.byKey(const Key('landing_trial_section'))).dy;
+      final trialTop = tester
+          .getTopLeft(find.byKey(const Key('landing_trial_section')))
+          .dy;
       expect(trialTop, inInclusiveRange(0, size.height));
       expect(_landingScrollOffset(tester), greaterThan(0));
     },
@@ -417,65 +481,56 @@ void main() {
     expect(find.byKey(const Key('landing_h03_auth_before_trial')), findsOne);
   });
 
-  testWidgets(
-    'first-user X traffic gets a one-tap trial before registration',
-    (tester) async {
-      final acquisition = _RecordingAcquisitionService();
-      final adapter = await pumpLanding(
-        tester,
-        assignment: _assignment('h03', LandingExperimentVariant.control),
-        landingUri: Uri.parse(
-          'https://example.com/?lp_intent=trial'
-          '&utm_source=x&utm_medium=organic'
-          '&utm_campaign=first_user_growth'
-          '&utm_content=outcome_first_a',
-        ),
-        acquisitionService: acquisition,
-      );
-      await tester.pumpAndSettle();
+  testWidgets('first-user X traffic gets a one-tap trial before registration', (
+    tester,
+  ) async {
+    final acquisition = _RecordingAcquisitionService();
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h03', LandingExperimentVariant.control),
+      landingUri: Uri.parse(
+        'https://example.com/?lp_intent=trial'
+        '&utm_source=x&utm_medium=organic'
+        '&utm_campaign=first_user_growth'
+        '&utm_content=outcome_first_a',
+      ),
+      acquisitionService: acquisition,
+    );
+    await tester.pumpAndSettle();
 
-      expect(
-        find.text('Xから来た方へ: まず1タップで結果を見る'),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const Key('first_user_growth_one_tap_trial')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const Key('first_user_growth_trial_reassurance')),
-        findsOneWidget,
-      );
-      expect(acquisition.stages, contains('view'));
+    expect(find.text('Xから来た方へ: まず1タップで結果を見る'), findsOneWidget);
+    expect(
+      find.byKey(const Key('first_user_growth_one_tap_trial')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('first_user_growth_trial_reassurance')),
+      findsOneWidget,
+    );
+    expect(acquisition.stages, contains('view'));
 
-      await tester.tap(
-        find.byKey(const Key('first_user_growth_one_tap_trial')),
-      );
-      await tester.pump(const Duration(milliseconds: 100));
+    await tester.tap(find.byKey(const Key('first_user_growth_one_tap_trial')));
+    await tester.pump(const Duration(milliseconds: 100));
 
-      expect(adapter.trialRuns, 1);
-      expect(acquisition.stages, contains('trial'));
-      expect(
-        adapter.lastTrialPrompt,
-        '仕事が多すぎて、何から始めるか決められない',
-      );
-      expect(
-        adapter.conversionEvents,
-        containsAll(<String>[
-          'lp_exp_h03_control_hero_cta',
-          'lp_exp_h03_control_trial',
-        ]),
-      );
-      expect(
-        find.byKey(const Key('landing_trial_result_action')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const Key('landing_h04_inline_magic_capture')),
-        findsOneWidget,
-      );
-    },
-  );
+    expect(adapter.trialRuns, 1);
+    expect(acquisition.stages, contains('trial'));
+    expect(adapter.lastTrialPrompt, '仕事が多すぎて、何から始めるか決められない');
+    expect(
+      adapter.conversionEvents,
+      containsAll(<String>[
+        'lp_exp_h03_control_hero_cta',
+        'lp_exp_h03_control_trial',
+      ]),
+    );
+    expect(
+      find.byKey(const Key('landing_trial_result_action')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('landing_h04_inline_magic_capture')),
+      findsOneWidget,
+    );
+  });
 
   testWidgets('first-user one-tap trial stays in the mobile first viewport', (
     tester,
@@ -683,6 +738,58 @@ void main() {
     );
   });
 
+  testWidgets('editorial lower page keeps detailed decision aids on demand', (
+    tester,
+  ) async {
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.treatment),
+    );
+
+    expect(find.byKey(const Key('landing_editorial_prologue')), findsOneWidget);
+    for (var chapter = 1; chapter <= 4; chapter++) {
+      expect(
+        find.byKey(Key('landing_editorial_chapter_$chapter')),
+        findsOneWidget,
+      );
+    }
+    expect(find.byKey(const Key('landing_faq_more_toggle')), findsOneWidget);
+    expect(find.byKey(const Key('landing_migration_guide')), findsNothing);
+    expect(find.byKey(const Key('landing_comparison_links')), findsNothing);
+
+    final archiveToggle = find.byKey(
+      const Key('landing_editorial_archive_toggle'),
+    );
+    await tester.ensureVisible(archiveToggle);
+    await tester.pump();
+    await tester.tap(archiveToggle);
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const Key('landing_migration_guide')), findsOneWidget);
+    expect(find.byKey(const Key('landing_comparison_links')), findsOneWidget);
+  });
+
+  testWidgets('hero media keeps a readable fallback contract', (tester) async {
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h03', LandingExperimentVariant.treatment),
+      size: const Size(390, 844),
+    );
+
+    final imageFinder = find.byKey(const Key('landing_hero_media_image'));
+    final image = tester.widget<Image>(imageFinder);
+    expect(image.image, isA<ResizeImage>());
+    expect((image.image as ResizeImage).width, 900);
+    expect(image.errorBuilder, isNotNull);
+
+    final fallback = image.errorBuilder!(
+      tester.element(imageFinder),
+      StateError('missing test asset'),
+      StackTrace.empty,
+    );
+    expect(fallback.key, const Key('landing_hero_media_fallback'));
+  });
+
   testWidgets('trial result converts inline with one-field Magic Link', (
     tester,
   ) async {
@@ -745,10 +852,7 @@ void main() {
   testWidgets(
     'trial result reveals the inline save path without forcing keyboard focus',
     (tester) async {
-      for (final size in <Size>[
-        const Size(1200, 720),
-        const Size(390, 844),
-      ]) {
+      for (final size in <Size>[const Size(1200, 720), const Size(390, 844)]) {
         await pumpLanding(
           tester,
           assignment: _assignment('h04', LandingExperimentVariant.treatment),
@@ -775,10 +879,7 @@ void main() {
           tester.getBottomRight(saveButton).dy,
           lessThanOrEqualTo(size.height),
         );
-        expect(
-          tester.widget<TextField>(email).focusNode?.hasFocus,
-          isFalse,
-        );
+        expect(tester.widget<TextField>(email).focusNode?.hasFocus, isFalse);
 
         await tester.pumpWidget(const SizedBox.shrink());
         await tester.pump();
@@ -842,62 +943,70 @@ void main() {
     },
   );
 
-  testWidgets('H11 shows proof before interaction and waits for the AI result',
-      (
-    tester,
-  ) async {
-    final adapter = await pumpLanding(
-      tester,
-      assignment: _assignment('h01', LandingExperimentVariant.treatment),
-    );
-    adapter.trialResponse = Completer<String>();
+  testWidgets(
+    'H11 shows proof before interaction and waits for the AI result',
+    (tester) async {
+      final adapter = await pumpLanding(
+        tester,
+        assignment: _assignment('h01', LandingExperimentVariant.treatment),
+      );
+      adapter.trialResponse = Completer<String>();
 
-    expect(find.byKey(const Key('landing_h11_answer_preview')), findsOneWidget);
-    expect(find.textContaining('止まっている案件を1つ開く'), findsOneWidget);
+      expect(
+        find.byKey(const Key('landing_h11_answer_preview')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('止まっている案件を1つ開く'), findsOneWidget);
 
-    await tester.tap(
-      find.byKey(const Key('landing_h11_answer_preview_action')),
-    );
-    await tester.pump();
+      await tester.tap(
+        find.byKey(const Key('landing_h11_answer_preview_action')),
+      );
+      await tester.pump();
 
-    expect(adapter.trialRuns, 1);
-    expect(
-      find.byKey(const Key('landing_trial_result_action')),
-      findsNothing,
-    );
-    expect(find.byKey(const Key('landing_trial_loading')), findsOneWidget);
-    expect(
-      find.byKey(const Key('landing_h04_inline_magic_capture')),
-      findsNothing,
-    );
+      expect(adapter.trialRuns, 1);
+      expect(
+        find.byKey(const Key('landing_trial_result_action')),
+        findsNothing,
+      );
+      expect(find.byKey(const Key('landing_trial_loading')), findsOneWidget);
+      expect(
+        find.byKey(const Key('landing_h04_inline_magic_capture')),
+        findsNothing,
+      );
 
-    adapter.trialResponse!.complete('ACTION: 確認先を1人決める\nREASON: 停滞を最短で解消するため');
-    await tester.pump();
-    await tester.pump();
+      adapter.trialResponse!.complete(
+        'ACTION: 確認先を1人決める\nREASON: 停滞を最短で解消するため',
+      );
+      await tester.pump();
+      await tester.pump();
 
-    expect(find.text('確認先を1人決める'), findsOneWidget);
-    expect(find.byKey(const Key('landing_trial_loading')), findsNothing);
-    expect(adapter.lastTrialPrompt, '仕事が多すぎて、何から始めるか決められない');
-    expect(
-      adapter.conversionEvents,
-      containsAll(<String>[
-        'lp_exp_h01_treatment_hero_cta',
-        'lp_exp_h01_treatment_trial',
-      ]),
-    );
+      expect(find.text('確認先を1人決める'), findsOneWidget);
+      expect(find.byKey(const Key('landing_trial_loading')), findsNothing);
+      expect(adapter.lastTrialPrompt, '仕事が多すぎて、何から始めるか決められない');
+      expect(
+        adapter.conversionEvents,
+        containsAll(<String>[
+          'lp_exp_h01_treatment_hero_cta',
+          'lp_exp_h01_treatment_trial',
+        ]),
+      );
 
-    await tester.enterText(
-      find.byKey(const Key('landing_trial_prompt_input')),
-      '別の仕事について相談したい',
-    );
-    await tester.pump();
+      await tester.enterText(
+        find.byKey(const Key('landing_trial_prompt_input')),
+        '別の仕事について相談したい',
+      );
+      await tester.pump();
 
-    expect(find.byKey(const Key('landing_trial_result_action')), findsNothing);
-    expect(
-      find.byKey(const Key('landing_h04_inline_magic_capture')),
-      findsNothing,
-    );
-  });
+      expect(
+        find.byKey(const Key('landing_trial_result_action')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('landing_h04_inline_magic_capture')),
+        findsNothing,
+      );
+    },
+  );
 
   testWidgets('trial provider failure shows an honest retry state', (
     tester,
@@ -1163,6 +1272,48 @@ void main() {
         'lp_exp_h09_treatment_mobile_view',
         'lp_exp_h09_treatment_sticky_cta',
       ]),
+    );
+  });
+
+  testWidgets('mobile sticky CTA restores signup mode and email focus', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h09', LandingExperimentVariant.treatment),
+      size: const Size(390, 844),
+    );
+
+    final passwordToggle = find.byKey(const Key('landing_h04_password_toggle'));
+    await Scrollable.ensureVisible(
+      tester.element(passwordToggle),
+      alignment: 0.35,
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.tap(passwordToggle);
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('landing_auth_mode_toggle')));
+    await tester.pump();
+    expect(find.text('ログインして続きから再開'), findsOneWidget);
+
+    final sticky = find.byKey(const Key('landing_h09_mobile_sticky_cta'));
+    await tester.tap(
+      find.descendant(of: sticky, matching: find.text('無料で始める')),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump();
+
+    expect(find.text('今すぐ無料ではじめる'), findsOneWidget);
+    expect(find.text('メールで新規登録'), findsOneWidget);
+    final emailField = tester.widget<TextField>(
+      find.byKey(const Key('landing_auth_email')),
+    );
+    expect(emailField.focusNode?.hasFocus, isTrue);
+    expect(
+      adapter.conversionEvents,
+      contains('lp_exp_h09_treatment_sticky_cta'),
     );
   });
 
