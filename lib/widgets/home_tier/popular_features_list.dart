@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/home_feature_actions.dart';
+import 'home_tier_styles.dart';
 
 class PopularFeaturesList extends StatefulWidget {
   const PopularFeaturesList({super.key});
@@ -66,6 +67,7 @@ class _PopularFeaturesListState extends State<PopularFeaturesList> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = HomeTierPalette.of(context);
     if (_loading) {
       return const Padding(
         padding: EdgeInsets.all(16),
@@ -79,7 +81,8 @@ class _PopularFeaturesListState extends State<PopularFeaturesList> {
         runSpacing: 8,
         children: _items.map((item) {
           final route = _normalizeRoute(item['feature_route'] as String? ?? '');
-          final label = (item['feature_label'] as String?) ??
+          final label =
+              (item['feature_label'] as String?) ??
               (item['label'] as String?) ??
               _fallbackLabel(route);
           final countValue = item['use_count'];
@@ -96,13 +99,15 @@ class _PopularFeaturesListState extends State<PopularFeaturesList> {
               ),
               label: Text(
                 count > 0 ? '$label  $count' : label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFFE2E8F0),
+                  color: palette.primaryText,
                   height: 1.5,
                 ),
               ),
-              backgroundColor: const Color(0xFF10201D),
+              backgroundColor: palette.tintedChipBackground(
+                const Color(0xFF0D9488),
+              ),
               side: const BorderSide(color: Color(0xFF0D9488), width: 0.8),
               onPressed: route.isEmpty
                   ? null
