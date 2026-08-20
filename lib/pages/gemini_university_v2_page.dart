@@ -6940,8 +6940,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             IconButton(
               icon: const Icon(Icons.menu_book_outlined),
               tooltip: '英語速読カリキュラム',
-              onPressed: () =>
-                  _handleUniversityMenuAction('reading'),
+              onPressed: () => _handleUniversityMenuAction('reading'),
             ),
             IconButton(
               icon: const Icon(Icons.leaderboard),
