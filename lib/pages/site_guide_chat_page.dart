@@ -163,6 +163,15 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
     Navigator.of(context).pushNamed('/user-manual');
   }
 
+  void _leaveGuide() {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+    } else {
+      navigator.pushReplacementNamed('/');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -172,10 +181,18 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
     final cardColor = isDark ? const Color(0xFF0F172A) : Colors.white;
     final outlineColor =
         isDark ? Colors.white.withValues(alpha: 0.10) : const Color(0xFFE2E8F0);
+    final isCompact = MediaQuery.sizeOf(context).width < 600;
 
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
+        leading: IconButton(
+          tooltip: Navigator.of(context).canPop() ? '戻る' : 'ホーム',
+          onPressed: _leaveGuide,
+          icon: Icon(
+            Navigator.of(context).canPop() ? Icons.arrow_back : Icons.home,
+          ),
+        ),
         title: const Text('サイト案内AI'),
         actions: [
           IconButton(
@@ -188,16 +205,32 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              child: _buildIntroCard(cardColor, outlineColor, isDark),
-            ),
+            if (!isCompact || _messages.isEmpty)
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  isCompact ? 12 : 16,
+                  isCompact ? 8 : 12,
+                  isCompact ? 12 : 16,
+                  isCompact ? 8 : 12,
+                ),
+                child: _buildIntroCard(
+                  cardColor,
+                  outlineColor,
+                  isDark,
+                  isCompact,
+                ),
+              ),
             Expanded(
               child: _messages.isEmpty
                   ? _buildEmptyState(isDark)
                   : ListView.builder(
                       controller: _scrollController,
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      padding: EdgeInsets.fromLTRB(
+                        isCompact ? 12 : 16,
+                        0,
+                        isCompact ? 12 : 16,
+                        12,
+                      ),
                       itemCount: _messages.length + (_isSending ? 1 : 0),
                       itemBuilder: (context, index) {
                         if (index == _messages.length) {
@@ -215,7 +248,12 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
     );
   }
 
-  Widget _buildIntroCard(Color cardColor, Color outlineColor, bool isDark) {
+  Widget _buildIntroCard(
+    Color cardColor,
+    Color outlineColor,
+    bool isDark,
+    bool isCompact,
+  ) {
     final quickColor =
         isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
     return Container(
@@ -233,7 +271,7 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(isCompact ? 14 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -253,11 +291,11 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'このサイトの使い方をAIに聞く',
                         style: TextStyle(
                           fontSize: 16,
@@ -265,34 +303,40 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
                           height: 1.5,
                         ),
                       ),
-                      SizedBox(height: 2),
-                      Text(
-                        'どこを開けばいいか、何から始めればいいか、機能の違いは何かを案内します。',
-                        style: TextStyle(fontSize: 12, height: 1.5),
-                      ),
+                      if (!isCompact) ...[
+                        const SizedBox(height: 2),
+                        const Text(
+                          'どこを開けばいいか、何から始めればいいか、機能の違いは何かを案内します。',
+                          style: TextStyle(fontSize: 12, height: 1.5),
+                        ),
+                      ],
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: quickColor,
-                borderRadius: BorderRadius.circular(12),
+            if (!isCompact) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: quickColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  '例: 「資産管理はどこ？」「統一地方選700必達管理室の見方は？」「最初に使うべき機能は？」',
+                  style: TextStyle(fontSize: 12, height: 1.6),
+                ),
               ),
-              child: const Text(
-                '例: 「資産管理はどこ？」「統一地方選700必達管理室の見方は？」「最初に使うべき機能は？」',
-                style: TextStyle(fontSize: 12, height: 1.6),
-              ),
-            ),
+            ],
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _suggestedQuestions.map((question) {
+              children: _suggestedQuestions
+                  .take(isCompact ? 3 : _suggestedQuestions.length)
+                  .map((question) {
                 return ActionChip(
                   label: Text(question),
                   onPressed: () => _sendQuestion(question),
