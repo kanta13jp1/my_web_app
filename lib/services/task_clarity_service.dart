@@ -7,6 +7,7 @@ abstract class TaskClarityEvaluator {
   });
 }
 
+/// Injectable adapter for the authenticated task-clarity action.
 typedef TaskClarityInvoker = Future<Map<String, dynamic>> Function(
   Map<String, dynamic> body,
 );
