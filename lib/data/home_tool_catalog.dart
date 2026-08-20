@@ -159,6 +159,7 @@ import '../pages/semantic_search_page.dart';
 import '../pages/smart_inbox_triage_page.dart';
 import '../pages/social_feed_page.dart';
 import '../pages/subscription_billing_page.dart';
+import '../pages/digital_product_store_pages.dart';
 import '../pages/video_ad_generator_page.dart';
 import '../pages/viral_ad_generator_page.dart';
 import '../pages/viral_video_generator_page.dart';
@@ -1906,6 +1907,28 @@ List<HomeToolEntry> buildHomeToolCatalog({
           _pushPage(context, const AudioEffectsProcessorPage()),
     ),
     // office セクション
+    HomeToolEntry(
+      id: 'shop',
+      sectionId: 'office',
+      title: 'デジタル作品ストア',
+      subtitle: '制作した画像・音声・動画・文章・ゲーム等を販売',
+      icon: Icons.storefront_outlined,
+      color: const Color(0xFFE65100),
+      keywords: const <String>[
+        '販売',
+        '商品',
+        'ストア',
+        '画像',
+        '音声',
+        '動画',
+        'プロンプト',
+        'ゲーム',
+        'テンプレート',
+        'shop',
+      ],
+      onOpen: (context) =>
+          _pushPage(context, const DigitalProductStorePage()),
+    ),
     HomeToolEntry(
       id: 'subscription-billing',
       sectionId: 'office',
