@@ -34,6 +34,12 @@ export type XPostCandidateApproval = {
   context?: unknown;
 };
 
+export type XPostCandidateRejection = {
+  actorUserId: string;
+  rejectedBy: string;
+  reason?: unknown;
+};
+
 function asRecord(value: unknown): JsonRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value)
     ? value as JsonRecord
@@ -302,6 +308,47 @@ export function approveXPostCandidateMetadata(
       post_payload: postPayload,
     },
     postPayload,
+  };
+}
+
+/// 却下 = 運用者が「もう投稿しない」と決めた終端状態 (#4080)。
+///
+/// 状態機械の設計判断:
+/// - 却下できるのは actionable な 3 状態のみ。`posted` は既に公開済みで
+///   取り消しにはならず、却下扱いにすると「投稿していない」と誤読させる。
+/// - `rejected` / `rejected_duplicate` は既に終端なので **冪等に no-op**
+///   (再押下やバッチ再送でエラーにしない)。ただし最初の却下情報は保持する。
+/// - 却下は投稿試行ではないので `publish_attempts` を増やさない。
+export function rejectXPostCandidateMetadata(
+  value: unknown,
+  rejection: XPostCandidateRejection,
+  now = new Date(),
+): { metadata: JsonRecord; changed: boolean } {
+  const metadata = asRecord(value);
+  const status = firstString(metadata.status);
+  if (status === "rejected" || status === "rejected_duplicate") {
+    return { metadata, changed: false };
+  }
+  if (!["pending_approval", "approved", "publish_failed"].includes(status)) {
+    throw new Error(`draft status ${status || "missing"} cannot be rejected`);
+  }
+  const actorUserId = firstString(rejection.actorUserId);
+  const rejectedBy = firstString(rejection.rejectedBy);
+  if (!actorUserId || !rejectedBy) {
+    throw new Error("rejection actor and rejector are required");
+  }
+  const rejectedAt = now.toISOString();
+  return {
+    metadata: {
+      ...metadata,
+      status: "rejected",
+      rejected_at: rejectedAt,
+      rejected_by: rejectedBy.slice(0, 200),
+      rejection_actor_user_id: actorUserId.slice(0, 200),
+      reject_reason: limitedString(rejection.reason, 500) ?? null,
+      updated_at: rejectedAt,
+    },
+    changed: true,
   };
 }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 class ElectionManagementDashboard extends StatefulWidget {
   const ElectionManagementDashboard({super.key});
@@ -12,7 +13,18 @@ class ElectionManagementDashboard extends StatefulWidget {
 
 class _ElectionManagementDashboardState
     extends State<ElectionManagementDashboard>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  // タブ: 月次工程管理 (KPI) / 最新実データ (AI取得) / 選挙スケジュール
+  @override
+  List<String> get tabUrlSlugs => const <String>[
+        'kpi',
+        'live-data',
+        'schedule',
+      ];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   late TabController _tabController;
   bool _isLoading = true;
   List<Map<String, dynamic>> _politicians = [];

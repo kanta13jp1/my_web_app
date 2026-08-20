@@ -7,6 +7,7 @@ import {
   buildXPostCandidateMetadata,
   finalizeXPostCandidateMetadata,
   normalizeXPostCandidatePayload,
+  rejectXPostCandidateMetadata,
 } from "./x_post_candidate.ts";
 
 const NOW = new Date("2026-07-12T10:00:00.000Z");
@@ -214,4 +215,148 @@ Deno.test("duplicate rejection is retained as an auditable terminal status", () 
   assertEquals(rejected.status, "rejected_duplicate");
   assertEquals(rejected.publish_code, "duplicate_content");
   assertEquals(rejected.publish_error, "same content");
+});
+
+const REJECTED_AT = new Date("2026-07-22T09:00:00.000Z");
+
+Deno.test("rejection is audited and moves an actionable draft to the terminal state", () => {
+  const draft = buildXPostCandidateMetadata({ text: "stale news" }, {
+    now: NOW,
+  });
+  const rejected = rejectXPostCandidateMetadata(
+    draft,
+    {
+      actorUserId: "operator-uuid",
+      rejectedBy: "operator-uuid",
+      reason: "freshness_expired",
+    },
+    REJECTED_AT,
+  );
+
+  assertEquals(rejected.changed, true);
+  assertEquals(rejected.metadata.status, "rejected");
+  assertEquals(rejected.metadata.rejected_at, REJECTED_AT.toISOString());
+  assertEquals(rejected.metadata.rejected_by, "operator-uuid");
+  assertEquals(rejected.metadata.reject_reason, "freshness_expired");
+});
+
+Deno.test("rejection does not count as a publish attempt", () => {
+  const draft = buildXPostCandidateMetadata({ text: "retry me" }, { now: NOW });
+  const approved = approveXPostCandidateMetadata(draft, {
+    actorUserId: "operator-uuid",
+    approvedBy: "operator-uuid",
+    channel: "admin_ui",
+  }, APPROVED_AT);
+  assertEquals(approved.metadata.publish_attempts, 1);
+
+  const rejected = rejectXPostCandidateMetadata(approved.metadata, {
+    actorUserId: "operator-uuid",
+    rejectedBy: "operator-uuid",
+  }, REJECTED_AT);
+  // 却下は投稿試行ではない: approve が積んだ回数をそのまま保つ。
+  assertEquals(rejected.metadata.publish_attempts, 1);
+});
+
+Deno.test("approved and publish_failed drafts can still be rejected", () => {
+  const draft = buildXPostCandidateMetadata({ text: "retry me" }, { now: NOW });
+  const approved = approveXPostCandidateMetadata(draft, {
+    actorUserId: "operator-uuid",
+    approvedBy: "operator-uuid",
+    channel: "admin_ui",
+  }, APPROVED_AT);
+  const failed = finalizeXPostCandidateMetadata(
+    approved.metadata,
+    { posted: false, error: "network", code: "transient" },
+    APPROVED_AT,
+  );
+  assertEquals(failed.status, "publish_failed");
+
+  for (const source of [approved.metadata, failed]) {
+    const rejected = rejectXPostCandidateMetadata(source, {
+      actorUserId: "operator-uuid",
+      rejectedBy: "operator-uuid",
+    }, REJECTED_AT);
+    assertEquals(rejected.changed, true);
+    assertEquals(rejected.metadata.status, "rejected");
+    assertEquals(rejected.metadata.reject_reason, null);
+  }
+});
+
+Deno.test("rejecting a terminal draft is an idempotent no-op that keeps the first audit", () => {
+  const draft = buildXPostCandidateMetadata({ text: "stale" }, { now: NOW });
+  const first = rejectXPostCandidateMetadata(draft, {
+    actorUserId: "operator-uuid",
+    rejectedBy: "operator-uuid",
+    reason: "freshness_expired",
+  }, REJECTED_AT);
+  const second = rejectXPostCandidateMetadata(first.metadata, {
+    actorUserId: "another-operator",
+    rejectedBy: "another-operator",
+    reason: "changed my mind",
+  }, new Date("2026-07-23T09:00:00.000Z"));
+
+  assertEquals(second.changed, false);
+  assertEquals(second.metadata.rejected_at, REJECTED_AT.toISOString());
+  assertEquals(second.metadata.rejected_by, "operator-uuid");
+  assertEquals(second.metadata.reject_reason, "freshness_expired");
+});
+
+Deno.test("rejected_duplicate is already terminal and is not overwritten", () => {
+  const draft = buildXPostCandidateMetadata({ text: "dupe" }, { now: NOW });
+  const approved = approveXPostCandidateMetadata(draft, {
+    actorUserId: "operator-uuid",
+    approvedBy: "operator-uuid",
+    channel: "admin_ui",
+  }, APPROVED_AT);
+  const duplicate = finalizeXPostCandidateMetadata(approved.metadata, {
+    posted: false,
+    code: "duplicate_content",
+  }, APPROVED_AT);
+  assertEquals(duplicate.status, "rejected_duplicate");
+
+  const result = rejectXPostCandidateMetadata(duplicate, {
+    actorUserId: "operator-uuid",
+    rejectedBy: "operator-uuid",
+  }, REJECTED_AT);
+  assertEquals(result.changed, false);
+  assertEquals(result.metadata.status, "rejected_duplicate");
+});
+
+Deno.test("a posted draft cannot be rejected", () => {
+  const draft = buildXPostCandidateMetadata({ text: "already live" }, {
+    now: NOW,
+  });
+  const approved = approveXPostCandidateMetadata(draft, {
+    actorUserId: "operator-uuid",
+    approvedBy: "operator-uuid",
+    channel: "admin_ui",
+  }, APPROVED_AT);
+  const posted = finalizeXPostCandidateMetadata(approved.metadata, {
+    posted: true,
+    tweetId: "2076129162553889018",
+  }, APPROVED_AT);
+  assertEquals(posted.status, "posted");
+
+  assertThrows(
+    () =>
+      rejectXPostCandidateMetadata(posted, {
+        actorUserId: "operator-uuid",
+        rejectedBy: "operator-uuid",
+      }, REJECTED_AT),
+    Error,
+    "cannot be rejected",
+  );
+});
+
+Deno.test("rejection requires actor and rejector", () => {
+  const draft = buildXPostCandidateMetadata({ text: "x" }, { now: NOW });
+  assertThrows(
+    () =>
+      rejectXPostCandidateMetadata(draft, {
+        actorUserId: "",
+        rejectedBy: "operator-uuid",
+      }, REJECTED_AT),
+    Error,
+    "required",
+  );
 });

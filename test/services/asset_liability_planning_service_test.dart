@@ -219,6 +219,36 @@ void main() {
       expect(reviewed.paymentSourceMissingRows, isEmpty);
     });
 
+    test('drops paid rows from the payment source missing review', () {
+      const snapshot = <String, double>{'bank': 50000, 'PayPay': -20000};
+      const overrides = <String, double>{'paypay_card': 20000};
+
+      final unpaid = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: overrides,
+      );
+
+      // 原資未設定かつ未払いなので、警告対象として拾われる。
+      expect(unpaid.paymentSourceMissingRows.single.id, 'paypay_card');
+      expect(unpaid.hasPaymentSourceMissingRows, isTrue);
+      expect(unpaid.paymentSourceMissingTotal, closeTo(20000, 0.001));
+
+      final paid = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: overrides,
+        paidAccountNames: const <String>{'paypay_card'},
+      );
+
+      // 支払済みにしたら、原資を後付けしなくてもバナー・アラート・合計から消える。
+      // 見込み残高は支払済み行を最初から控除しないので、警告する盲点も無い。
+      expect(paid.debtMasterRows.single.paid, isTrue);
+      expect(paid.paymentSourceMissingRows, isEmpty);
+      expect(paid.hasPaymentSourceMissingRows, isFalse);
+      expect(paid.paymentSourceMissingTotal, 0);
+    });
+
     test('treats zero yen as a valid manually entered payment', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
@@ -1538,7 +1568,14 @@ void main() {
       expect(bankSummary.projectedBalance, -10000);
     });
 
-    test('adds monthly auPay card funding transfer to Jibun bank', () {
+    test('no longer injects a hardcoded auPay funding transfer', () {
+      // The old code auto-injected a fixed 80,000 transfer (SMBC Otsuka ->
+      // Jibun bank) on every build. It was unrelated to any shortfall and,
+      // when the salary lands in Jibun bank, double-counted (income + transfer
+      // -in) and drained SMBC by 80,000, creating a phantom shortfall and a
+      // reverse suggestion. It is removed; funding is now handled by the
+      // shortfall-capped dynamic suggestions. With no user transfer task there
+      // must be no transfer and no phantom transfer in/out.
       const smbcOtsukaName =
           '\u4e09\u4e95\u4f4f\u53cb\u9280\u884c\u5927\u585a\u652f\u5e97';
       const jibunBankName = '\u3058\u3076\u3093\u9280\u884c';
@@ -1559,11 +1596,6 @@ void main() {
         },
       );
 
-      final transfer = workbook.transferTasks.singleWhere(
-        (task) =>
-            task.id ==
-            AssetLiabilityPlanningService.auPayCardFundingTransferTaskId,
-      );
       final smbcSummary = workbook.accountCashflowSummaries.singleWhere(
         (summary) =>
             summary.accountId ==
@@ -1575,72 +1607,20 @@ void main() {
             AssetLiabilityPlanningService.jibunBankAccountId,
       );
 
+      // No hardcoded built-in transfer task exists anymore.
       expect(
-        transfer.fromAccountId,
-        AssetLiabilityPlanningService.smbcOtsukaBranchAccountId,
+        workbook.transferTasks.where(
+          (task) =>
+              task.id ==
+              AssetLiabilityPlanningService.auPayCardFundingTransferTaskId,
+        ),
+        isEmpty,
       );
-      expect(
-        transfer.toAccountId,
-        AssetLiabilityPlanningService.jibunBankAccountId,
-      );
-      expect(
-        transfer.amount,
-        AssetLiabilityPlanningService.auPayCardFundingTransferAmount,
-      );
-      expect(transfer.dueDate, DateTime(2026, 5, 26));
-      expect(smbcSummary.pendingTransferOut, 80000);
-      expect(smbcSummary.projectedBalance, 120000);
-      expect(jibunSummary.upcomingPayments, 80000);
-      expect(jibunSummary.pendingTransferIn, 80000);
-      expect(jibunSummary.projectedBalance, 10000);
-    });
-
-    test('does not duplicate completed built-in auPay funding transfer', () {
-      const smbcOtsukaName =
-          '\u4e09\u4e95\u4f4f\u53cb\u9280\u884c\u5927\u585a\u652f\u5e97';
-      const jibunBankName = '\u3058\u3076\u3093\u9280\u884c';
-      final workbook = service.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          smbcOtsukaName: 200000,
-          jibunBankName: 10000,
-        },
-        baseDate: DateTime(2026, 5, 1),
-        transferTasks: <AssetLiabilityTransferTask>[
-          AssetLiabilityTransferTask(
-            id: AssetLiabilityPlanningService.auPayCardFundingTransferTaskId,
-            fromAccountId:
-                AssetLiabilityPlanningService.smbcOtsukaBranchAccountId,
-            fromAccountName: smbcOtsukaName,
-            toAccountId: AssetLiabilityPlanningService.jibunBankAccountId,
-            toAccountName: jibunBankName,
-            amount:
-                AssetLiabilityPlanningService.auPayCardFundingTransferAmount,
-            dueDate: DateTime(2026, 5, 26),
-            completed: true,
-            completedAt: DateTime(2026, 5, 26, 8),
-          ),
-        ],
-      );
-
-      final transfer = workbook.transferTasks.singleWhere(
-        (task) =>
-            task.id ==
-            AssetLiabilityPlanningService.auPayCardFundingTransferTaskId,
-      );
-      final smbcSummary = workbook.accountCashflowSummaries.singleWhere(
-        (summary) =>
-            summary.accountId ==
-            AssetLiabilityPlanningService.smbcOtsukaBranchAccountId,
-      );
-      final jibunSummary = workbook.accountCashflowSummaries.singleWhere(
-        (summary) =>
-            summary.accountId ==
-            AssetLiabilityPlanningService.jibunBankAccountId,
-      );
-
-      expect(transfer.completed, isTrue);
+      // And no phantom transfer in/out is applied to the accounts.
       expect(smbcSummary.pendingTransferOut, 0);
       expect(jibunSummary.pendingTransferIn, 0);
+      // SMBC keeps its full projected balance (no 80,000 drain).
+      expect(smbcSummary.projectedBalance, 200000);
     });
 
     test('does not double count completed transfer tasks', () {

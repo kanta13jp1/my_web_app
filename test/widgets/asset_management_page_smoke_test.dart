@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/services/asset_chat_privacy_settings_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
@@ -102,6 +103,57 @@ void main() {
   });
 
   group('AssetManagementPage smoke', () {
+    testWidgets('sticky asset chat entry opens and closes the panel', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await _pumpAssetPage(tester);
+
+      expect(find.byKey(const Key('asset_chat_open_button')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('asset_chat_open_button')));
+      await tester.pump();
+      expect(find.byKey(const Key('asset_chat_panel')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('asset_chat_close_button')));
+      await tester.pump();
+      expect(find.byKey(const Key('asset_chat_panel')), findsNothing);
+
+      await _unmount(tester);
+    });
+
+    testWidgets('asset chat money range protection defaults off and persists', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await _pumpAssetPage(tester);
+      final customizeButton =
+          find.byKey(const Key('asset_section_customize_button'));
+      await tester.ensureVisible(customizeButton);
+      await tester.tap(customizeButton);
+      await tester.pump(const Duration(milliseconds: 200));
+
+      final toggle = find.byKey(const Key('asset_chat_money_range_toggle'));
+      expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+
+      await tester.tap(toggle);
+      await tester.pump(const Duration(milliseconds: 200));
+
+      final preferences = await SharedPreferences.getInstance();
+      expect(
+        preferences.getBool(
+          AssetChatPrivacySettingsService.maskMoneyAmountsKey,
+        ),
+        isTrue,
+      );
+      expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
+
+      await _unmount(tester);
+    });
+
     testWidgets('display mode chips reduce visible sections', (tester) async {
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -1435,13 +1487,16 @@ void main() {
     ) async {
       // ファミペイ残高10万を月9万返済 → 繰越1万でリボ違反だが、脱却月額
       // (12ヶ月・約9千) より現状の返済が多い → 反映(減額)ボタンは出さない。
+      // ページは資産の当日キー(_todayDateKey)も給与サイクル月キー
+      // (_currentSalaryCycleKey は _now = DateTime.now() 基準)も実 now で読む。
+      // payment を固定日で保存すると CI 実行日が給料日(既定25日)の給与サイクル
+      // 境界を跨いだ際にキー不一致で payment が読まれず、脱却ボタンの表示判定が
+      // 反転して日付依存で落ちる。資産・payment 双方を実 now 基準に統一する。
       final now = DateTime.now();
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       // 支払予定額は給与サイクル月キーでネストされる。
       final monthKey =
-          AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(
-        DateTime(2026, 7, 10),
-      );
+          AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(now);
       SharedPreferences.setMockInitialValues(<String, Object>{
         AssetLiabilityMonthlyStateStore.paymentPrefsKey: jsonEncode(
           <String, Map<String, double>>{

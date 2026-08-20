@@ -5,7 +5,35 @@ import {
   falQueueAppId,
   isFalExhaustedBalanceError,
   normalizeFalQueueStatus,
+  resolveFalApiKey,
 } from "./fal_video.ts";
+
+// 2026-07-25 実障害の回帰ガード。値は 2026-04-18 から FAL_API_KEY として
+// 存在したのに、コードが FAL_KEY しか読まず動画が静かに落ちていた。
+Deno.test("resolveFalApiKey prefers FAL_KEY when both names are set", () => {
+  const env: Record<string, string> = {
+    FAL_KEY: "primary",
+    FAL_API_KEY: "secondary",
+  };
+  assertEquals(resolveFalApiKey((name) => env[name]), "primary");
+});
+
+Deno.test("resolveFalApiKey falls back to FAL_API_KEY", () => {
+  const env: Record<string, string> = { FAL_API_KEY: "secondary" };
+  assertEquals(resolveFalApiKey((name) => env[name]), "secondary");
+});
+
+Deno.test("resolveFalApiKey returns empty string when neither name is set", () => {
+  assertEquals(resolveFalApiKey(() => undefined), "");
+});
+
+Deno.test("resolveFalApiKey skips blank values and trims", () => {
+  const env: Record<string, string> = {
+    FAL_KEY: "   ",
+    FAL_API_KEY: "  secondary  ",
+  };
+  assertEquals(resolveFalApiKey((name) => env[name]), "secondary");
+});
 
 Deno.test("falQueueAppId keeps owner/alias and drops model sub-paths", () => {
   assertEquals(falQueueAppId("fal-ai/veo3/fast"), "fal-ai/veo3");

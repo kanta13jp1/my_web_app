@@ -13,6 +13,8 @@ class BillingServiceException implements Exception {
 }
 
 class BillingStatus {
+  static const int freeAiQueryLimit = 30;
+
   const BillingStatus({
     required this.tier,
     required this.status,
@@ -30,6 +32,12 @@ class BillingStatus {
   final bool cancelAtPeriodEnd;
 
   bool get isPro => tier == 'pro' || tier == 'team';
+
+  int get remainingAiQueries =>
+      (freeAiQueryLimit - aiQueryCount).clamp(0, freeAiQueryLimit).toInt();
+
+  double get aiQueryUsageRatio =>
+      (aiQueryCount / freeAiQueryLimit).clamp(0.0, 1.0).toDouble();
 
   factory BillingStatus.fromJson(Map<String, dynamic> json) {
     final billing = _asMap(json['billing']);
@@ -130,25 +138,34 @@ class BillingSupporterAttribution {
     Uri uri, {
     String landingTouchpoint = 'subscription_billing',
     String? fallbackTouchpoint,
+    FirstUserGrowthAttribution? firstUserAttribution,
   }) {
     final params = uri.queryParameters;
     final isXProfile =
         fallbackTouchpoint == GrowthAcquisitionService.touchProfile;
-    final isXFirstUserGrowth = isXProfile ||
+    final isXFirstUserGrowth = firstUserAttribution != null ||
+        isXProfile ||
         fallbackTouchpoint == GrowthAcquisitionService.touchXFirstUserGrowth;
     return BillingSupporterAttribution(
-      utmSource: params['utm_source'] ?? (isXFirstUserGrowth ? 'x' : null),
+      utmSource: params['utm_source'] ??
+          firstUserAttribution?.utmSource ??
+          (isXFirstUserGrowth ? 'x' : null),
       utmMedium: params['utm_medium'] ??
+          firstUserAttribution?.utmMedium ??
           (isXFirstUserGrowth ? (isXProfile ? 'profile' : 'organic') : null),
       utmCampaign: params['utm_campaign'] ??
+          firstUserAttribution?.utmCampaign ??
           (isXFirstUserGrowth ? 'first_user_growth' : null),
       utmContent: params['utm_content'] ??
+          firstUserAttribution?.utmContent ??
           (isXFirstUserGrowth ? 'activation_to_paid' : null),
       experimentKey: params['experiment_key'] ??
           params['utm_campaign'] ??
+          firstUserAttribution?.utmCampaign ??
           (isXFirstUserGrowth ? 'first_user_growth' : null),
       variant: params['variant'] ??
           params['utm_content'] ??
+          firstUserAttribution?.utmContent ??
           (isXFirstUserGrowth ? 'activation_to_paid' : null),
       sourceLogId: params['source_log_id'] ?? params['x_post_log_id'],
       landingTouchpoint: fallbackTouchpoint ?? landingTouchpoint,

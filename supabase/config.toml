@@ -196,7 +196,9 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/mcp-well-known/index.ts"
 
-[functions.task-clarity]
+[functions.autonomous-ops]
 enabled = true
-verify_jwt = true
-entrypoint = "./functions/task-clarity/index.ts"
+# Browser-facing: deployed with --no-verify-jwt; owner auth is enforced in-function
+# (user_profiles.is_admin). Requires Function Secret GH_ACTIONS_READ_TOKEN.
+verify_jwt = false
+entrypoint = "./functions/autonomous-ops/index.ts"

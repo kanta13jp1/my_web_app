@@ -31,6 +31,20 @@ class _FunnelMetrics {
   });
 }
 
+class _BillingFunnelMetrics {
+  final int billingViews;
+  final int upgradeClicks;
+  final int checkoutSuccesses;
+  final int checkoutCancels;
+
+  const _BillingFunnelMetrics({
+    required this.billingViews,
+    required this.upgradeClicks,
+    required this.checkoutSuccesses,
+    required this.checkoutCancels,
+  });
+}
+
 class _PaidConversionMetrics {
   final int paidCustomers;
   final int mrrYen;
@@ -99,6 +113,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   // R34: edge の total (limit 前の総数) を status 別に保持。空なら「N件以上」表示。
   Map<String, int> _xCandidateTotals = const <String, int>{};
   final Set<String> _xCandidatePublishing = <String>{};
+  // #4080: 鮮度切れ一括却下の実行中フラグ (二重送信防止)。
+  bool _xCandidateRejecting = false;
   bool _isLoading = true;
   WeeklyDigestSnapshot _weeklyDigest = const WeeklyDigestSnapshot.empty();
   // R18: fetch 完了フラグ。empty() のままか、完了して空かを区別し、静かに失敗/空の
@@ -228,6 +244,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
+  _BillingFunnelMetrics _extractBillingFunnelMetrics(Map<String, int> sources) {
+    return _BillingFunnelMetrics(
+      billingViews: sources['funnel_billing_view'] ?? 0,
+      upgradeClicks: sources['funnel_upgrade_click'] ?? 0,
+      checkoutSuccesses: sources['funnel_checkout_success'] ?? 0,
+      checkoutCancels: sources['funnel_checkout_cancel'] ?? 0,
+    );
+  }
+
   Map<String, int> _extractSourceCounts(dynamic rawSourceDetails) {
     final counts = <String, int>{};
     _mergeSourceCounts(counts, rawSourceDetails);
@@ -327,8 +352,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   /// 例外・available!=true のときは null を返し、アクションカードは従来動作へ degrade。
   Future<Map<String, dynamic>?> _loadXTodayStatus() async {
     try {
-      final startOfDayIso =
-          _startOfDay(DateTime.now()).toUtc().toIso8601String();
+      final startOfDayIso = _startOfDay(
+        DateTime.now(),
+      ).toUtc().toIso8601String();
       final res = await _supabase.functions.invoke(
         'growth-hub',
         body: {
@@ -374,51 +400,124 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   /// degrade して panel ごと消す(ダッシュボードは必ず描画する)。
   Future<XCandidateQueueSnapshot> _loadXCandidateQueue() async {
     const statuses = ['pending_approval', 'approved', 'publish_failed'];
-    final results = await Future.wait(
-      statuses.map((status) async {
-        try {
-          final res = await _supabase.functions.invoke(
-            'growth-hub',
-            body: {
-              'action': 'x.candidate.list',
-              'status': status,
-              // R32: ヘッダの「N件以上」判定と同じ定数を使う (両者が drift すると
-              // 上限到達を検出できず backlog を過小表示する)。
-              'limit': kXCandidateStatusFetchLimit,
-            },
-          );
-          final data = res.data;
-          if (data is Map && data['success'] == true) {
+    // #4080: statuses[] を渡して 1 往復にまとめる (従来は status ごとに 3 往復
+    // + それぞれに CORS preflight)。edge 側は per-status limit を維持するので
+    // 上記 F2 の窓圧迫は起きない。
+    final byStatus = <String, XCandidateStatusPage>{};
+    try {
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.candidate.list',
+          'statuses': statuses,
+          // R32: ヘッダの「N件以上」判定と同じ定数を使う (両者が drift すると
+          // 上限到達を検出できず backlog を過小表示する)。
+          'limit': kXCandidateStatusFetchLimit,
+        },
+      );
+      final data = res.data;
+      if (data is Map && data['success'] == true && data['byStatus'] is Map) {
+        final raw = Map<String, dynamic>.from(data['byStatus'] as Map);
+        for (final status in statuses) {
+          final entry = raw[status];
+          if (entry is Map) {
             // R34: edge の total (limit 前の総数) を拾う。返さない場合は null の
             // まま = ヘッダは「N件以上」へ degrade。
-            final rawTotal = data['total'];
-            final total = rawTotal is num ? rawTotal.toInt() : null;
-            return (
-              status: status,
-              candidates: parseXPostCandidates(data['candidates']),
-              total: total,
+            final rawTotal = entry['total'];
+            byStatus[status] = XCandidateStatusPage(
+              candidates: parseXPostCandidates(entry['candidates']),
+              total: rawTotal is num ? rawTotal.toInt() : null,
             );
           }
-        } catch (error) {
-          debugPrint('x.candidate.list($status) unavailable: $error');
         }
-        return (
-          status: status,
-          candidates: const <XPostCandidateSummary>[],
-          total: null,
-        );
-      }),
-    );
+      }
+    } catch (error) {
+      debugPrint('x.candidate.list(batch) unavailable: $error');
+    }
     final totals = <String, int>{
-      for (final result in results)
-        if (result.total != null) result.status: result.total!,
+      for (final entry in byStatus.entries)
+        if (entry.value.total != null) entry.key: entry.value.total!,
     };
     return XCandidateQueueSnapshot(
-      candidates: mergeCandidateSummaries(
-        results.map((result) => result.candidates).toList(),
-      ),
+      candidates: mergeCandidateSummaries([
+        for (final status in statuses)
+          byStatus[status]?.candidates ?? const <XPostCandidateSummary>[],
+      ]),
       totalsByStatus: totals,
     );
+  }
+
+  /// #4080: 鮮度切れ候補をまとめて却下する。鮮度切れは「承認して投稿」が
+  /// 既に無効化されている(古いニュースの誤公開防止)ため、そのままだと
+  /// キューに残り続けて本当に見るべき候補を埋没させる。終端 status
+  /// 'rejected' へ落として一覧から外す。
+  Future<void> _rejectStaleXCandidates(
+    List<XPostCandidateSummary> staleCandidates,
+  ) async {
+    if (staleCandidates.isEmpty || _xCandidateRejecting) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('鮮度切れ候補をまとめて却下'),
+        content: Text(
+          '${staleCandidates.length}件を却下します。'
+          '却下した候補は投稿できなくなります(一覧からは消えます)。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('却下する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _xCandidateRejecting = true);
+    try {
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.candidate.reject',
+          'candidateIds': staleCandidates.map((c) => c.id).toList(),
+          'reason': 'freshness_expired',
+        },
+      );
+      final data = res.data;
+      final rejected = data is Map && data['rejected'] is List
+          ? (data['rejected'] as List).length
+          : 0;
+      final failures = data is Map && data['failures'] is List
+          ? (data['failures'] as List).length
+          : 0;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            failures > 0
+                ? '$rejected件を却下しました($failures件は失敗)'
+                : '$rejected件を却下しました',
+          ),
+        ),
+      );
+      final refreshed = await _loadXCandidateQueue();
+      if (mounted) {
+        setState(() {
+          _xCandidates = refreshed.candidates;
+          _xCandidateTotals = refreshed.totalsByStatus;
+        });
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('却下に失敗しました: $error')));
+    } finally {
+      if (mounted) setState(() => _xCandidateRejecting = false);
+    }
   }
 
   /// R26: 候補を承認→投稿→確定する HITL フロー。無審査自動投稿はしない
@@ -479,10 +578,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       try {
         final approveRes = await _supabase.functions.invoke(
           'growth-hub',
-          body: {
-            'action': 'x.candidate.approve',
-            'candidateId': candidate.id,
-          },
+          body: {'action': 'x.candidate.approve', 'candidateId': candidate.id},
         );
         approveData = approveRes.data is Map
             ? Map<String, dynamic>.from(approveRes.data as Map)
@@ -490,11 +586,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       } catch (approveError) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '承認に失敗しました(投稿は行われていません): $approveError',
-            ),
-          ),
+          SnackBar(content: Text('承認に失敗しました(投稿は行われていません): $approveError')),
         );
         return;
       }
@@ -503,9 +595,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              '承認に失敗しました: ${approveData['error'] ?? '不明なエラー'}',
-            ),
+            content: Text('承認に失敗しました: ${approveData['error'] ?? '不明なエラー'}'),
           ),
         );
         return;
@@ -547,9 +637,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       }
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('候補の投稿処理でエラー: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('候補の投稿処理でエラー: $error')));
     } finally {
       if (mounted) {
         setState(() => _xCandidatePublishing.remove(candidate.id));
@@ -772,25 +862,29 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
-  Widget _buildAcquisitionTargetPage(String? channelKey) {
+  /// 遷移先ページと、その画面に対応する URL (= route 名) を必ず対で返す。
+  /// route を添えないと Flutter Web でブラウザの URL が更新されない。
+  ({Widget page, String route}) _buildAcquisitionTarget(String? channelKey) {
     switch (channelKey) {
-      case 'x_share':
-      case 'facebook':
-        return CmoPage(
-          initialChannel: channelKey,
-          autoGenerateOnOpen: true,
-        );
       case 'line':
-        return const AISecretaryPage(
-          initialStrategyType: 'now',
-          autoRunOnOpen: true,
+        return (
+          page: const AISecretaryPage(
+            initialStrategyType: 'now',
+            autoRunOnOpen: true,
+          ),
+          route: '/ai-secretary',
         );
       case 'qr_scan':
-        return const NoteListPage(prioritizeShareCandidates: true);
+        return (
+          page: const NoteListPage(prioritizeShareCandidates: true),
+          route: '/notes',
+        );
+      case 'x_share':
+      case 'facebook':
       default:
-        return CmoPage(
-          initialChannel: channelKey,
-          autoGenerateOnOpen: true,
+        return (
+          page: CmoPage(initialChannel: channelKey, autoGenerateOnOpen: true),
+          route: '/cmo',
         );
     }
   }
@@ -810,16 +904,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       }
       return;
     }
-    final targetPage = isAcquisitionAction
-        ? _buildAcquisitionTargetPage(priorityChannelKey)
-        : const AISecretaryPage(
-            initialStrategyType: 'now',
-            autoRunOnOpen: true,
+    final target = isAcquisitionAction
+        ? _buildAcquisitionTarget(priorityChannelKey)
+        : (
+            page: const AISecretaryPage(
+              initialStrategyType: 'now',
+              autoRunOnOpen: true,
+            ),
+            route: '/ai-secretary',
           );
 
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => targetPage),
+      MaterialPageRoute(
+        settings: RouteSettings(name: target.route),
+        builder: (_) => target.page,
+      ),
     );
 
     final hint = isAcquisitionAction
@@ -831,9 +931,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           }
         : 'AI秘書を導線改善モードで開きました。訴求文と導線文言を先に整えてください。';
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(hint)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(hint)));
   }
 
   List<Map<String, dynamic>> _buildMergedDailyStats({
@@ -1104,9 +1202,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final digestResult = results[0].data as Map<String, dynamic>?;
       final supportResult = results[1].data as Map<String, dynamic>?;
       if (digestResult?['success'] != true) {
-        throw Exception(
-          '${digestResult?['error'] ?? 'digest load failed'}',
-        );
+        throw Exception('${digestResult?['error'] ?? 'digest load failed'}');
       }
       if (supportResult?['success'] != true) {
         throw Exception(
@@ -1301,9 +1397,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       }).eq('id', id);
       await _loadFeatureRequests();
       if (!mounted) return;
-      messenger.showSnackBar(
-        const SnackBar(content: Text('優先度・工数・期日を更新しました')),
-      );
+      messenger.showSnackBar(const SnackBar(content: Text('優先度・工数・期日を更新しました')));
     } catch (e) {
       debugPrint('feature request fields update error: $e');
       if (!mounted) return;
@@ -1346,11 +1440,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       await _loadAutomationOps();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            escalate ? 'チケットをエスカレーションしました' : '返信を送信しました',
-          ),
-        ),
+        SnackBar(content: Text(escalate ? 'チケットをエスカレーションしました' : '返信を送信しました')),
       );
     } catch (e) {
       if (!mounted) return;
@@ -1461,9 +1551,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final reply = action['reply']?.toString().trim();
     final newStatus = action['status']?.toString() ?? 'in_progress';
     if (!escalate && (reply == null || reply.isEmpty)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('返信文を入力してください')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('返信文を入力してください')));
       return;
     }
 
@@ -1506,11 +1596,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final response = await _supabase.functions.invoke(
         'schedule-hub',
         headers: _adminAuthHeaders(session.accessToken),
-        body: {
-          'action': 'x.post',
-          'text': text,
-          'dryRun': dryRun,
-        },
+        body: {'action': 'x.post', 'text': text, 'dryRun': dryRun},
       );
       final data = response.data as Map<String, dynamic>?;
       if (data?['success'] != true) {
@@ -1636,15 +1722,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       }
       if (!mounted) return;
       setState(() => _sendingNotification = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$email に通知を送信しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$email に通知を送信しました')));
     } catch (e) {
       if (!mounted) return;
       setState(() => _sendingNotification = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('通知送信に失敗しました: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('通知送信に失敗しました: $e')));
     }
   }
 
@@ -1670,9 +1756,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       if (mounted) {
         final data = res.data as Map<String, dynamic>?;
         final sent = data?['sent'] ?? 0;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$sent 件に送信しました')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$sent 件に送信しました')));
       }
     } catch (e) {
       debugPrint('send notification error: $e');
@@ -1895,8 +1981,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             child: const Text('キャンセル'),
           ),
           TextButton(
-            style:
-                TextButton.styleFrom(foregroundColor: const Color(0xFFB91C1C)),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFB91C1C),
+            ),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('リセット実行'),
           ),
@@ -1928,9 +2015,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('分析データをリセットしました')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('分析データをリセットしました')));
         // 再読み込み
         await _loadStats();
       }
@@ -2006,6 +2093,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         : (todayRegistrations / effectiveTodayViews * 100);
     final todayFunnel = _extractFunnelMetrics(todaySourceDetails);
     final totalFunnel = _extractFunnelMetrics(funnelBreakdown);
+    final totalBillingFunnel = _extractBillingFunnelMetrics(funnelBreakdown);
     final total30DayRegistrations = _dailyStats.fold<int>(
       0,
       (sum, stat) => sum + _toInt(stat['conversions']),
@@ -2016,8 +2104,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final totalDropBeforeTrial = effectiveTotalLpViews > totalFunnel.trialRuns
         ? effectiveTotalLpViews - totalFunnel.trialRuns
         : 0;
-    final zeroRegistrationStreakDays =
-        _countConsecutiveNoRegistrationDays(_dailyStats);
+    final zeroRegistrationStreakDays = _countConsecutiveNoRegistrationDays(
+      _dailyStats,
+    );
     // R18: streak が集計窓(_dailyStats)を使い切っていると値は下限。実際はそれ以上
     // なので「N日以上」と正直に出す(30 をちょうどの安心値に見せない)。
     final zeroStreakAtCap = streakAtWindowCap(
@@ -2031,10 +2120,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       appBar: AppBar(
         title: const Text(
           '経営分析ダッシュボード',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            height: 1.5,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
         ),
         backgroundColor: const Color(0xFF6366F1),
         foregroundColor: const Color(0xFFE5E7EB),
@@ -2096,6 +2182,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
+                            settings: const RouteSettings(
+                              name: '/quota-dashboard',
+                            ),
                             builder: (_) => const QuotaDashboardPage(),
                           ),
                         ),
@@ -2131,6 +2220,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
+                            settings: const RouteSettings(
+                              name: '/blog-management',
+                            ),
                             builder: (_) => const BlogManagementPage(),
                           ),
                         ),
@@ -2172,6 +2264,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       totalUsers: _actualUserCount,
                     ),
                     const SizedBox(height: 16),
+                    _buildBillingFunnelCard(totalBillingFunnel),
+                    const SizedBox(height: 16),
                     _buildRegistrationOpsCard(
                       todayDropBeforeTrial: todayDropBeforeTrial,
                       totalDropBeforeTrial: totalDropBeforeTrial,
@@ -2201,8 +2295,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       height: 220,
                       padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
                       decoration: BoxDecoration(
-                        color:
-                            Theme.of(context).colorScheme.surfaceContainerLow,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
@@ -2470,8 +2565,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: accentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(999),
@@ -2577,11 +2674,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       color: diagnosisColor.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      actionIcon,
-                      color: diagnosisColor,
-                      size: 18,
-                    ),
+                    child: Icon(actionIcon, color: diagnosisColor, size: 18),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -3017,10 +3110,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           children: [
             Row(
               children: [
-                const Icon(
-                  Icons.workspace_premium,
-                  color: Color(0xFF0D9488),
-                ),
+                const Icon(Icons.workspace_premium, color: Color(0xFF0D9488)),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
@@ -3076,6 +3166,92 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   label: '登録総数',
                   value: '$totalUsers',
                   color: const Color(0xFF475569),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBillingFunnelCard(_BillingFunnelMetrics metrics) {
+    return Card(
+      key: const Key('billing_funnel_card'),
+      elevation: 3,
+      shadowColor: const Color(0x33000000),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.shopping_cart_checkout, color: Color(0xFF6366F1)),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '過去30日の課金ファネル',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '課金ページ表示 → アップグレードクリック → Stripe決済結果を同じ集計窓で確認します。',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _buildMiniKpiChip(
+                  label: '課金ページ表示',
+                  value: '${metrics.billingViews}',
+                  color: const Color(0xFF475569),
+                ),
+                _buildMiniKpiChip(
+                  label: 'アップグレードクリック',
+                  value: '${metrics.upgradeClicks}',
+                  color: const Color(0xFF6366F1),
+                ),
+                _buildMiniKpiChip(
+                  label: '決済成功',
+                  value: '${metrics.checkoutSuccesses}',
+                  color: const Color(0xFF0D9488),
+                ),
+                _buildMiniKpiChip(
+                  label: '決済キャンセル',
+                  value: '${metrics.checkoutCancels}',
+                  color: const Color(0xFFB45309),
+                ),
+                _buildMiniKpiChip(
+                  label: '表示→クリック',
+                  value: _formatRate(
+                    metrics.upgradeClicks,
+                    metrics.billingViews,
+                  ),
+                  color: const Color(0xFF6366F1),
+                ),
+                _buildMiniKpiChip(
+                  label: 'クリック→成功',
+                  value: _formatRate(
+                    metrics.checkoutSuccesses,
+                    metrics.upgradeClicks,
+                  ),
+                  color: const Color(0xFF0D9488),
                 ),
               ],
             ),
@@ -3262,8 +3438,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               ..._blockedReasonBreakdown.entries.take(6).map((entry) {
                 final ratio = _blockedToolExecutionCount == 0
                     ? 0.0
-                    : (entry.value / _blockedToolExecutionCount)
-                        .clamp(0.0, 1.0);
+                    : (entry.value / _blockedToolExecutionCount).clamp(
+                        0.0,
+                        1.0,
+                      );
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Column(
@@ -3300,9 +3478,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         child: LinearProgressIndicator(
                           minHeight: 6,
                           value: ratio,
-                          backgroundColor: const Color(0xFFB91C1C).withValues(
-                            alpha: 0.08,
-                          ),
+                          backgroundColor: const Color(
+                            0xFFB91C1C,
+                          ).withValues(alpha: 0.08),
                           valueColor: const AlwaysStoppedAnimation<Color>(
                             Color(0xFFB91C1C),
                           ),
@@ -3373,8 +3551,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           createdAt,
                           style: TextStyle(
                             fontSize: 11,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                             height: 1.5,
                           ),
                         ),
@@ -3441,8 +3620,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     // 年を前置して年齢を明示する(「Recent」ラベルの誤読を解消)。
     final now = DateTime.now();
     final stale = parsed.year != now.year || now.difference(parsed).inDays > 30;
-    return DateFormat(stale ? 'yyyy/MM/dd HH:mm:ss' : 'MM/dd HH:mm:ss')
-        .format(parsed);
+    return DateFormat(
+      stale ? 'yyyy/MM/dd HH:mm:ss' : 'MM/dd HH:mm:ss',
+    ).format(parsed);
   }
 
   Color _getCvrColor(double cvr) {
@@ -3579,10 +3759,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           child: Center(
             child: Text(
               'データなし',
-              style: TextStyle(
-                color: Color(0xFF9CA3AF),
-                height: 1.5,
-              ),
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
             ),
           ),
         ),
@@ -3642,10 +3819,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     const SizedBox(width: 6),
                     Text(
                       _formatSourceName(e.key),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        height: 1.5,
-                      ),
+                      style: const TextStyle(fontSize: 12, height: 1.5),
                     ),
                     Text(
                       ' $percent%',
@@ -3672,6 +3846,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       case 'funnel_save_cta':
       case 'funnel_magic_link_send':
       case 'funnel_inbox_open':
+      case 'funnel_billing_view':
+      case 'funnel_upgrade_click':
+      case 'funnel_checkout_success':
+      case 'funnel_checkout_cancel':
         return true;
       default:
         return false;
@@ -4029,12 +4207,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(8),
-            border:
-                Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
           ),
           child: ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 0,
+            ),
             title: Text(
               dateStr,
               style: const TextStyle(
@@ -4215,10 +4396,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   horizontal: 12,
                 ),
               ),
-              style: const TextStyle(
-                fontSize: 13,
-                height: 1.6,
-              ),
+              style: const TextStyle(fontSize: 13, height: 1.6),
               onChanged: (v) => setState(() => _userSearchQuery = v),
             ),
             const SizedBox(height: 8),
@@ -4234,10 +4412,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text(
                   'ユーザーが取得できませんでした',
-                  style: TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    height: 1.5,
-                  ),
+                  style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
                 ),
               )
             else
@@ -4258,10 +4433,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       padding: EdgeInsets.symmetric(vertical: 12),
                       child: Text(
                         '該当するユーザーが見つかりません',
-                        style: TextStyle(
-                          color: Color(0xFF9CA3AF),
-                          height: 1.5,
-                        ),
+                        style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
                       ),
                     );
                   }
@@ -4289,14 +4461,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       String createdStr = '日付なし';
                       String lastSignInStr = 'ログイン記録なし';
                       try {
-                        createdStr = DateFormat('yyyy/MM/dd').format(
-                          DateTime.parse(createdAt).toLocal(),
-                        );
+                        createdStr = DateFormat(
+                          'yyyy/MM/dd',
+                        ).format(DateTime.parse(createdAt).toLocal());
                       } catch (_) {}
                       try {
-                        lastSignInStr = DateFormat('MM/dd HH:mm').format(
-                          DateTime.parse(lastSignIn).toLocal(),
-                        );
+                        lastSignInStr = DateFormat(
+                          'MM/dd HH:mm',
+                        ).format(DateTime.parse(lastSignIn).toLocal());
                       } catch (_) {}
 
                       final isGoogle = provider.contains('google');
@@ -4366,8 +4538,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                               : (isDark
                                                   ? const Color(0xFF1A1E3A)
                                                   : const Color(0xFFE8EAF6)),
-                                          borderRadius:
-                                              BorderRadius.circular(6),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
                                         ),
                                         child: Text(
                                           // R30: edge users.list は provider を
@@ -4402,9 +4575,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                       bio,
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
                                         height: 1.5,
                                       ),
                                       maxLines: 1,
@@ -4476,8 +4649,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                         ),
                                       ),
                                       style: TextButton.styleFrom(
-                                        foregroundColor:
-                                            const Color(0xFF3949AB),
+                                        foregroundColor: const Color(
+                                          0xFF3949AB,
+                                        ),
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 8,
                                           vertical: 2,
@@ -4537,14 +4711,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     String createdStr = '';
     String lastSignInStr = '';
     try {
-      createdStr = DateFormat('yyyy/MM/dd HH:mm').format(
-        DateTime.parse(createdAt).toLocal(),
-      );
+      createdStr = DateFormat(
+        'yyyy/MM/dd HH:mm',
+      ).format(DateTime.parse(createdAt).toLocal());
     } catch (_) {}
     try {
-      lastSignInStr = DateFormat('yyyy/MM/dd HH:mm').format(
-        DateTime.parse(lastSignIn).toLocal(),
-      );
+      lastSignInStr = DateFormat(
+        'yyyy/MM/dd HH:mm',
+      ).format(DateTime.parse(lastSignIn).toLocal());
     } catch (_) {}
 
     Color profileColor;
@@ -4601,16 +4775,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   saving = false;
                 });
                 _loadAdminUsers();
-                ScaffoldMessenger.of(ctx2).showSnackBar(
-                  const SnackBar(content: Text('プロフィールを更新しました')),
-                );
+                ScaffoldMessenger.of(
+                  ctx2,
+                ).showSnackBar(const SnackBar(content: Text('プロフィールを更新しました')));
               }
             } catch (e) {
               if (ctx2.mounted) {
                 setInner(() => saving = false);
-                ScaffoldMessenger.of(ctx2).showSnackBar(
-                  SnackBar(content: Text('更新失敗: $e')),
-                );
+                ScaffoldMessenger.of(
+                  ctx2,
+                ).showSnackBar(SnackBar(content: Text('更新失敗: $e')));
               }
             }
           }
@@ -4695,10 +4869,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   Chip(
                     label: const Text(
                       '編集中',
-                      style: TextStyle(
-                        fontSize: 10,
-                        height: 1.5,
-                      ),
+                      style: TextStyle(fontSize: 10, height: 1.5),
                     ),
                     backgroundColor: isDark
                         ? const Color(0xFF0A1A2E)
@@ -4722,9 +4893,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             child: LinearProgressIndicator(
                               value: completionPct / 100,
                               minHeight: 6,
-                              backgroundColor: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 profileColor,
                               ),
@@ -4833,10 +5004,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.6,
-                        ),
+                        style: const TextStyle(fontSize: 13, height: 1.6),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -4848,10 +5016,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           border: OutlineInputBorder(),
                         ),
                         maxLines: 2,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.6,
-                        ),
+                        style: const TextStyle(fontSize: 13, height: 1.6),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -4865,10 +5030,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.6,
-                        ),
+                        style: const TextStyle(fontSize: 13, height: 1.6),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -4879,10 +5041,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.6,
-                        ),
+                        style: const TextStyle(fontSize: 13, height: 1.6),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -4893,10 +5052,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.6,
-                        ),
+                        style: const TextStyle(fontSize: 13, height: 1.6),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -4907,10 +5063,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.6,
-                        ),
+                        style: const TextStyle(fontSize: 13, height: 1.6),
                       ),
                       const SizedBox(height: 8),
                       Row(
@@ -4923,10 +5076,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           const SizedBox(width: 6),
                           const Text(
                             '公開プロフィール',
-                            style: TextStyle(
-                              fontSize: 13,
-                              height: 1.6,
-                            ),
+                            style: TextStyle(fontSize: 13, height: 1.6),
                           ),
                           const Spacer(),
                           Switch(
@@ -5016,10 +5166,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
-              fontSize: 12,
-              height: 1.5,
-            ),
+            style: const TextStyle(fontSize: 12, height: 1.5),
             overflow: TextOverflow.ellipsis,
             maxLines: 3,
           ),
@@ -5076,10 +5223,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           children: [
             Row(
               children: [
-                const Icon(
-                  Icons.lightbulb_outline,
-                  color: Color(0xFFFFC107),
-                ),
+                const Icon(Icons.lightbulb_outline, color: Color(0xFFFFC107)),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
@@ -5093,10 +5237,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 Text(
                   '${_featureRequests.length}件',
-                  style: const TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    height: 1.5,
-                  ),
+                  style: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
                 ),
                 const SizedBox(width: 8),
                 IconButton(
@@ -5119,10 +5260,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text(
                   'リクエストはまだありません',
-                  style: TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    height: 1.5,
-                  ),
+                  style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
                 ),
               )
             else
@@ -5149,8 +5287,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   String? repliedAtStr;
                   if (adminRepliedAt != null) {
                     try {
-                      repliedAtStr = DateFormat('MM/dd HH:mm')
-                          .format(DateTime.parse(adminRepliedAt).toLocal());
+                      repliedAtStr = DateFormat(
+                        'MM/dd HH:mm',
+                      ).format(DateTime.parse(adminRepliedAt).toLocal());
                     } catch (_) {}
                   }
 
@@ -5175,9 +5314,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                               ? (isDarkFR
                                   ? const Color(0xFF2A1C06)
                                   : const Color(0xFFFEF3C7))
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest,
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
                           child: Text(
                             '$votes',
                             style: TextStyle(
@@ -5187,28 +5326,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                   ? (isDarkFR
                                       ? const Color(0xFFFDE68A)
                                       : const Color(0xFF92400E))
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                               height: 1.5,
                             ),
                           ),
                         ),
                         title: Text(
                           title,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            height: 1.6,
-                          ),
+                          style: const TextStyle(fontSize: 13, height: 1.6),
                         ),
                         subtitle: Row(
                           children: [
                             Text(
                               dateStr,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                height: 1.5,
-                              ),
+                              style: const TextStyle(fontSize: 11, height: 1.5),
                             ),
                             if (adminReply != null) ...[
                               const SizedBox(width: 6),
@@ -5218,12 +5351,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                   vertical: 1,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF6366F1)
-                                      .withValues(alpha: 0.08),
+                                  color: const Color(
+                                    0xFF6366F1,
+                                  ).withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
-                                    color: const Color(0xFF6366F1)
-                                        .withValues(alpha: 0.24),
+                                    color: const Color(
+                                      0xFF6366F1,
+                                    ).withValues(alpha: 0.24),
                                   ),
                                 ),
                                 child: Text(
@@ -5321,12 +5456,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             width: double.infinity,
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6366F1)
-                                  .withValues(alpha: 0.04),
+                              color: const Color(
+                                0xFF6366F1,
+                              ).withValues(alpha: 0.04),
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color: const Color(0xFF6366F1)
-                                    .withValues(alpha: 0.16),
+                                color: const Color(
+                                  0xFF6366F1,
+                                ).withValues(alpha: 0.16),
                               ),
                             ),
                             child: Text(
@@ -5502,8 +5639,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       contentPadding: EdgeInsets.zero,
                       leading: CircleAvatar(
                         radius: 14,
-                        backgroundColor:
-                            const Color(0xFF6366F1).withValues(alpha: 0.07),
+                        backgroundColor: const Color(
+                          0xFF6366F1,
+                        ).withValues(alpha: 0.07),
                         child: Text(
                           '$votes',
                           style: const TextStyle(
@@ -5516,17 +5654,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                       title: Text(
                         title,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          height: 1.5,
-                        ),
+                        style: const TextStyle(fontSize: 12, height: 1.5),
                       ),
                       subtitle: Text(
                         email == null || email.isEmpty ? 'メール未登録' : email,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          height: 1.5,
-                        ),
+                        style: const TextStyle(fontSize: 11, height: 1.5),
                       ),
                       trailing: TextButton(
                         onPressed: () => _showSupportReplyDialog(ticket),
@@ -5607,8 +5739,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             if (hasErrors) ...[
               const SizedBox(height: 10),
               ..._autoErrorReports.take(8).map((entry) {
-                final when =
-                    formatAgeAwareDate(entry.createdAt, DateTime.now());
+                final when = formatAgeAwareDate(
+                  entry.createdAt,
+                  DateTime.now(),
+                );
                 final line =
                     entry.firstLine.isEmpty ? '(本文なし)' : entry.firstLine;
                 return Padding(
@@ -5678,11 +5812,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: 11,
-              color: color,
-              height: 1.5,
-            ),
+            style: TextStyle(fontSize: 11, color: color, height: 1.5),
           ),
           const SizedBox(height: 2),
           Text(
@@ -5759,10 +5889,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text(
                   '登録者はまだいません',
-                  style: TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    height: 1.5,
-                  ),
+                  style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
                 ),
               )
             else
@@ -5778,9 +5905,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   final createdAt = entry['created_at']?.toString() ?? '';
                   String dateStr = createdAt;
                   try {
-                    dateStr = DateFormat('MM/dd HH:mm').format(
-                      DateTime.parse(createdAt).toLocal(),
-                    );
+                    dateStr = DateFormat(
+                      'MM/dd HH:mm',
+                    ).format(DateTime.parse(createdAt).toLocal());
                   } catch (_) {}
 
                   return ListTile(
@@ -5792,17 +5919,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                     title: Text(
                       email,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        height: 1.6,
-                      ),
+                      style: const TextStyle(fontSize: 13, height: 1.6),
                     ),
                     subtitle: Text(
                       '$source  $dateStr',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        height: 1.5,
-                      ),
+                      style: const TextStyle(fontSize: 11, height: 1.5),
                     ),
                   );
                 },
@@ -5848,8 +5969,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: const Text('投稿URLを入力'),
           content: TextField(
             controller: urlController,
@@ -6074,8 +6196,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color:
-                                  statusColor(status).withValues(alpha: 0.08),
+                              color: statusColor(
+                                status,
+                              ).withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Row(
@@ -6539,6 +6662,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildXCandidateQueueSection() {
     if (_xCandidates.isEmpty) return const SizedBox.shrink();
     final theme = Theme.of(context);
+    // #4080: 鮮度切れ候補は「承認して投稿」が無効化済み = キューに滞留して
+    // 見るべき候補を埋没させる。まとめて終端 status へ落とせるようにする。
+    final now = DateTime.now();
+    final staleCandidates = _xCandidates
+        .where((candidate) => isCandidateExpired(candidate, now))
+        .toList(growable: false);
     return Padding(
       padding: const EdgeInsets.only(top: 16),
       child: Card(
@@ -6568,6 +6697,23 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     ),
                   ),
+                  if (staleCandidates.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: _xCandidateRejecting
+                          ? null
+                          : () => _rejectStaleXCandidates(staleCandidates),
+                      icon: _xCandidateRejecting
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.block, size: 16),
+                      label: Text('鮮度切れ${staleCandidates.length}件を却下'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFB91C1C),
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -6657,9 +6803,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEF4444).withValues(
-                            alpha: 0.12,
-                          ),
+                          color: const Color(
+                            0xFFEF4444,
+                          ).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text(
@@ -6755,15 +6901,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final periods = [
       (
         '今日',
-        DateTime.now().copyWith(hour: 0, minute: 0, second: 0).toIso8601String()
+        DateTime.now()
+            .copyWith(hour: 0, minute: 0, second: 0)
+            .toIso8601String(),
       ),
       (
         '今週',
-        DateTime.now().subtract(const Duration(days: 7)).toIso8601String()
+        DateTime.now().subtract(const Duration(days: 7)).toIso8601String(),
       ),
       (
         '今月',
-        DateTime.now().subtract(const Duration(days: 30)).toIso8601String()
+        DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
       ),
       ('すべて', '2020-01-01T00:00:00Z'),
     ];
@@ -6817,10 +6965,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               return ActionChip(
                 label: Text(
                   lbl,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    height: 1.5,
-                  ),
+                  style: const TextStyle(fontSize: 12, height: 1.5),
                 ),
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
@@ -6906,10 +7051,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 13,
-                height: 1.6,
-              ),
+              style: const TextStyle(fontSize: 13, height: 1.6),
             ),
           ),
           Text(
@@ -6959,8 +7101,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 if (newCount > 0)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFB91C1C),
                       borderRadius: BorderRadius.circular(12),
@@ -7050,7 +7194,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const FeedbackListPage()),
+                  MaterialPageRoute(
+                    settings: const RouteSettings(name: '/admin-feedback'),
+                    builder: (_) => const FeedbackListPage(),
+                  ),
                 ),
               ),
             ),
@@ -7122,16 +7269,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     content,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      height: 1.6,
-                    ),
+                    style: const TextStyle(fontSize: 13, height: 1.6),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
@@ -7181,10 +7327,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                     child: const Text(
                       '確認済にする',
-                      style: TextStyle(
-                        fontSize: 11,
-                        height: 1.5,
-                      ),
+                      style: TextStyle(fontSize: 11, height: 1.5),
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -7201,10 +7344,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                     child: const Text(
                       '対応完了',
-                      style: TextStyle(
-                        fontSize: 11,
-                        height: 1.5,
-                      ),
+                      style: TextStyle(fontSize: 11, height: 1.5),
                     ),
                   ),
                 ],

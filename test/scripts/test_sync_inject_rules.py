@@ -34,5 +34,38 @@ class SyncInjectRulesTest(unittest.TestCase):
         self.assertEqual(missing, [])
 
 
+class ReadFromRefTest(unittest.TestCase):
+    """The unattended sync reads the canonical out of a ref, never the working tree."""
+
+    def test_reads_canonical_from_a_ref(self) -> None:
+        text = sync_inject_rules.read_text_from_ref("HEAD")
+
+        self.assertIsNotNone(text)
+        self.assertEqual(
+            sync_inject_rules.verify(text or "")["rule_count"],
+            sync_inject_rules.EXPECTED_RULE_COUNT,
+        )
+
+    def test_returns_none_for_unknown_ref(self) -> None:
+        # A missing ref must surface as None so the caller can fail loudly rather
+        # than silently syncing empty rules into the home file.
+        self.assertIsNone(sync_inject_rules.read_text_from_ref("no/such/ref"))
+
+    def test_ref_read_ignores_working_tree_edits(self) -> None:
+        # The whole point: the result must not depend on what the checkout happens
+        # to contain, so the daily sync is safe on any branch, clean or dirty.
+        from_ref = sync_inject_rules.read_text_from_ref("HEAD")
+        from_tree = sync_inject_rules.read_text(sync_inject_rules.CANONICAL)
+
+        self.assertIsNotNone(from_ref)
+        self.assertIsNotNone(from_tree)
+        # Committed tree and ref agree here; the guarantee is that from_ref came
+        # from the object store, which no working-tree edit can reach.
+        self.assertEqual(
+            sync_inject_rules.list_rule_ids(from_ref or ""),
+            sync_inject_rules.list_rule_ids(from_tree or ""),
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

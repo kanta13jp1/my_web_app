@@ -1,6 +1,11 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/investment_asset.dart';
+import 'package:my_web_app/models/investment_portfolio_history.dart';
 import 'package:my_web_app/services/investment_asset_repository.dart';
 import 'package:my_web_app/widgets/investment_asset_management_panel.dart';
 
@@ -73,14 +78,69 @@ void main() {
     expect(repository.fetchCalls, 2);
   });
 
-  testWidgets('clears holdings when the user logs out', (tester) async {
+  testWidgets('retries a history error without hiding holdings', (
+    tester,
+  ) async {
     final repository = _FakeInvestmentAssetRepository([
       _asset(
         id: 'asset-1',
         ticker: 'AAPL',
         quantity: 2,
         buyPriceJpy: 1000,
+        currentPriceJpy: 1200,
       ),
+    ])
+      ..historyFetchError = Exception('temporary history failure');
+
+    await _pumpPanel(tester, repository: repository, userId: 'user-1');
+
+    expect(find.text('AAPL'), findsOne);
+    expect(find.byKey(const Key('investment_history_load_error')), findsOne);
+    expect(repository.historyFetchCalls, 1);
+
+    repository.historyFetchError = null;
+    await tester.tap(find.byTooltip('推移を再読み込み'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('investment_history_empty')), findsOne);
+    expect(repository.historyFetchCalls, 2);
+  });
+
+  testWidgets('filters portfolio history when the period changes', (
+    tester,
+  ) async {
+    final repository = _FakeInvestmentAssetRepository(
+      [
+        _asset(
+          id: 'asset-1',
+          ticker: 'AAPL',
+          quantity: 2,
+          buyPriceJpy: 1000,
+          currentPriceJpy: 1200,
+        ),
+      ],
+      history: [
+        _historyPoint(DateTime.utc(2024, 7, 21)),
+        _historyPoint(DateTime.utc(2026, 7, 21)),
+      ],
+    );
+
+    await _pumpPanel(
+      tester,
+      repository: repository,
+      userId: 'user-1',
+      now: () => DateTime.utc(2026, 7, 21),
+    );
+
+    expect(_marketSpotCount(tester), 1);
+    await tester.tap(find.text('3年'));
+    await tester.pumpAndSettle();
+    expect(_marketSpotCount(tester), 2);
+  });
+
+  testWidgets('clears holdings when the user logs out', (tester) async {
+    final repository = _FakeInvestmentAssetRepository([
+      _asset(id: 'asset-1', ticker: 'AAPL', quantity: 2, buyPriceJpy: 1000),
     ]);
 
     await _pumpPanel(tester, repository: repository, userId: 'user-1');
@@ -123,6 +183,74 @@ void main() {
     expect(repository.lastUpdatedDraft?.normalizedTicker, 'AAPL');
     expect(repository.lastUpdatedDraft?.currentPriceJpy, isNull);
     expect(repository.lastUpdatedDraft?.lastPricedAt, isNull);
+  });
+
+  testWidgets('shows form errors for blank, invalid, and negative values', (
+    tester,
+  ) async {
+    final repository = _FakeInvestmentAssetRepository(const []);
+    await _pumpPanel(tester, repository: repository, userId: 'user-1');
+
+    await tester.tap(find.byKey(const Key('investment_asset_add')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('investment_asset_save')));
+    await tester.pump();
+
+    expect(find.text('銘柄コードを入力してください。'), findsOne);
+    expect(find.text('0より大きい数量を入力してください。'), findsOne);
+    expect(find.text('0以上の取得価格を入力してください。'), findsOne);
+
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_ticker_field')),
+      '7203/T',
+    );
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_quantity_field')),
+      '-1',
+    );
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_buy_price_field')),
+      '-1',
+    );
+    await tester.tap(find.byKey(const Key('investment_asset_save')));
+    await tester.pump();
+
+    expect(
+      find.text('銘柄コードは半角英数字と . _ : - を1〜32文字で入力してください。'),
+      findsOne,
+    );
+    expect(find.text('0より大きい数量を入力してください。'), findsOne);
+    expect(find.text('0以上の取得価格を入力してください。'), findsOne);
+    expect(repository.createCalls, 0);
+  });
+
+  testWidgets('allows quantity edits for an unchanged legacy ticker', (
+    tester,
+  ) async {
+    final repository = _FakeInvestmentAssetRepository([
+      _asset(
+        id: 'asset-legacy',
+        ticker: 'BTC/JPY',
+        quantity: 1,
+        buyPriceJpy: 100,
+        assetType: InvestmentAssetType.crypto,
+      ),
+    ]);
+    await _pumpPanel(tester, repository: repository, userId: 'user-1');
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('investment_asset_edit_asset-legacy')),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_quantity_field')),
+      '2',
+    );
+    await tester.tap(find.byKey(const Key('investment_asset_save')));
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCalls, 1);
+    expect(repository.lastUpdatedDraft?.toUpdateMap()['ticker'], 'BTC/JPY');
   });
 
   testWidgets('adds, edits, and deletes an investment asset', (tester) async {
@@ -200,11 +328,85 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.deleteCalls, 1);
+    expect(repository.historyFetchCalls, 5);
     expect(
       find.byKey(const ValueKey<String>('investment_asset_asset-1')),
       findsNothing,
     );
     expect(find.text('BTC'), findsOne);
+  });
+
+  testWidgets('previews CSV and skips an existing ticker by default', (
+    tester,
+  ) async {
+    final repository = _FakeInvestmentAssetRepository([
+      _asset(id: 'asset-aapl', ticker: 'AAPL', quantity: 1, buyPriceJpy: 10000),
+    ]);
+    final csv = Uint8List.fromList(
+      utf8.encode('''
+銘柄,数量,取得単価,現在値
+AAPL Apple,3,16000,19000
+MSFT Microsoft,4,20000,22000
+'''),
+    );
+    await _pumpPanel(
+      tester,
+      repository: repository,
+      userId: 'user-1',
+      csvBytesPicker: () async => csv,
+    );
+
+    await tester.tap(find.byKey(const Key('investment_asset_csv_import')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const Key('investment_csv_preview_dialog')), findsOne);
+    expect(find.text('SBI証券 CSVプレビュー'), findsOne);
+    expect(find.textContaining('新規1・更新0・スキップ1'), findsOne);
+
+    await tester.tap(find.byKey(const Key('investment_csv_import_confirm')));
+    await tester.pumpAndSettle();
+
+    expect(repository.createCalls, 1);
+    expect(repository.updateCalls, 0);
+    expect(repository.lastCreatedDraft?.normalizedTicker, 'MSFT');
+    expect(find.text('MSFT'), findsOne);
+  });
+
+  testWidgets('updates an existing ticker when update policy is selected', (
+    tester,
+  ) async {
+    final repository = _FakeInvestmentAssetRepository([
+      _asset(id: 'asset-aapl', ticker: 'AAPL', quantity: 1, buyPriceJpy: 10000),
+    ]);
+    final csv = Uint8List.fromList(
+      utf8.encode('''
+銘柄,数量,取得単価,現在値
+AAPL Apple,3,16000,19000
+'''),
+    );
+    await _pumpPanel(
+      tester,
+      repository: repository,
+      userId: 'user-1',
+      csvBytesPicker: () async => csv,
+    );
+
+    await tester.tap(find.byKey(const Key('investment_asset_csv_import')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('更新'));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.textContaining('新規0・更新1・スキップ0'), findsOne);
+    await tester.tap(find.byKey(const Key('investment_csv_import_confirm')));
+    await tester.pumpAndSettle();
+
+    expect(repository.createCalls, 0);
+    expect(repository.updateCalls, 1);
+    expect(repository.lastUpdatedDraft?.normalizedTicker, 'AAPL');
+    expect(repository.lastUpdatedDraft?.quantity, 3);
+    expect(repository.lastUpdatedDraft?.buyPriceJpy, 16000);
   });
 }
 
@@ -212,6 +414,8 @@ Future<void> _pumpPanel(
   WidgetTester tester, {
   required InvestmentAssetRepository repository,
   required String? userId,
+  DateTime Function()? now,
+  InvestmentCsvBytesPicker? csvBytesPicker,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -222,6 +426,8 @@ Future<void> _pumpPanel(
             child: InvestmentAssetManagementPanel(
               repository: repository,
               userId: userId,
+              now: now,
+              csvBytesPicker: csvBytesPicker,
             ),
           ),
         ),
@@ -229,6 +435,11 @@ Future<void> _pumpPanel(
     ),
   );
   await tester.pumpAndSettle();
+}
+
+int _marketSpotCount(WidgetTester tester) {
+  final chart = tester.widget<LineChart>(find.byType(LineChart));
+  return chart.data.lineBarsData.first.spots.length;
 }
 
 InvestmentAsset _asset({
@@ -255,17 +466,23 @@ InvestmentAsset _asset({
 }
 
 class _FakeInvestmentAssetRepository implements InvestmentAssetRepository {
-  _FakeInvestmentAssetRepository(Iterable<InvestmentAsset> seed)
-      : assets = seed.toList();
+  _FakeInvestmentAssetRepository(
+    Iterable<InvestmentAsset> seed, {
+    Iterable<InvestmentPortfolioHistoryPoint> history = const [],
+  })  : assets = seed.toList(),
+        history = history.toList();
 
   final List<InvestmentAsset> assets;
+  final List<InvestmentPortfolioHistoryPoint> history;
   int fetchCalls = 0;
   int createCalls = 0;
   int updateCalls = 0;
   int deleteCalls = 0;
+  int historyFetchCalls = 0;
   InvestmentAssetDraft? lastCreatedDraft;
   InvestmentAssetDraft? lastUpdatedDraft;
   Exception? fetchError;
+  Exception? historyFetchError;
 
   @override
   Future<List<InvestmentAsset>> fetchByUser({required String userId}) async {
@@ -273,6 +490,16 @@ class _FakeInvestmentAssetRepository implements InvestmentAssetRepository {
     final error = fetchError;
     if (error != null) throw error;
     return List<InvestmentAsset>.from(assets);
+  }
+
+  @override
+  Future<List<InvestmentPortfolioHistoryPoint>> fetchPortfolioHistory({
+    required String userId,
+  }) async {
+    historyFetchCalls++;
+    final error = historyFetchError;
+    if (error != null) throw error;
+    return List<InvestmentPortfolioHistoryPoint>.from(history);
   }
 
   @override
@@ -306,6 +533,16 @@ class _FakeInvestmentAssetRepository implements InvestmentAssetRepository {
     deleteCalls++;
     assets.removeWhere((asset) => asset.id == assetId);
   }
+}
+
+InvestmentPortfolioHistoryPoint _historyPoint(DateTime recordedAt) {
+  return InvestmentPortfolioHistoryPoint(
+    recordedAt: recordedAt,
+    marketValueJpy: 2400,
+    acquisitionCostJpy: 2000,
+    pricedAssetCount: 1,
+    unpricedAssetCount: 0,
+  );
 }
 
 InvestmentAsset _fromDraft({

@@ -22,6 +22,35 @@ void main() {
     expect(evaluation.status, 'clear');
   });
 
+  test('service routes evaluation through the authenticated ai-hub action',
+      () async {
+    final service = TaskClarityService(
+      invoker: (body) async {
+        expect(body, <String, dynamic>{
+          'action': 'task.clarity.evaluate',
+          'title': '売上を改善する',
+          'description': '',
+        });
+        return <String, dynamic>{
+          'success': true,
+          'evaluation': <String, dynamic>{
+            'score': 3,
+            'threshold': 6,
+            'source': 'heuristic',
+            'questions': <String>['期限はいつですか？'],
+            'ambiguities': <String>['期限が未指定です'],
+            'evaluated_at': '2026-08-21T00:00:00Z',
+          },
+        };
+      },
+    );
+
+    final evaluation = await service.evaluate(title: ' 売上を改善する ');
+
+    expect(evaluation.needsClarification, isTrue);
+    expect(evaluation.questions, <String>['期限はいつですか？']);
+  });
+
   test('fromJson clamps score and derives a consistent status', () {
     final evaluation = TaskClarityEvaluation.fromJson(<String, dynamic>{
       'score': 99,

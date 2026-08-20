@@ -7,6 +7,10 @@ abstract class TaskClarityEvaluator {
   });
 }
 
+typedef TaskClarityInvoker = Future<Map<String, dynamic>> Function(
+  Map<String, dynamic> body,
+);
+
 class TaskClarityEvaluation {
   static const int defaultThreshold = 6;
 
@@ -121,6 +125,9 @@ class TaskClarityEvaluation {
       questions.add('対象範囲、ユーザー、または画面はどこですか？');
       ambiguities.add('対象範囲が未指定です');
     }
+    if (score <= defaultThreshold && questions.isEmpty) {
+      questions.add('完了を一意に判断できる条件は何ですか？');
+    }
 
     return TaskClarityEvaluation(
       score: score,
@@ -182,9 +189,13 @@ class TaskClarityEvaluation {
 
 class TaskClarityService implements TaskClarityEvaluator {
   final SupabaseClient? _supabaseClient;
+  final TaskClarityInvoker? _invoker;
 
-  const TaskClarityService({SupabaseClient? supabaseClient})
-      : _supabaseClient = supabaseClient;
+  const TaskClarityService({
+    SupabaseClient? supabaseClient,
+    TaskClarityInvoker? invoker,
+  })  : _supabaseClient = supabaseClient,
+        _invoker = invoker;
 
   SupabaseClient get _supabase => _supabaseClient ?? Supabase.instance.client;
 
@@ -194,17 +205,12 @@ class TaskClarityService implements TaskClarityEvaluator {
     String description = '',
   }) async {
     try {
-      final response = await _supabase.functions.invoke(
-        'task-clarity',
-        body: <String, dynamic>{
-          'title': title.trim(),
-          'description': description.trim(),
-        },
-      );
-      if (response.data is! Map) {
-        throw const FormatException('Task clarity response must be an object.');
-      }
-      final payload = Map<String, dynamic>.from(response.data as Map);
+      final body = <String, dynamic>{
+        'action': 'task.clarity.evaluate',
+        'title': title.trim(),
+        'description': description.trim(),
+      };
+      final payload = await _invoke(body);
       if (payload['success'] != true || payload['evaluation'] is! Map) {
         throw const FormatException('Task clarity evaluation is missing.');
       }
@@ -217,5 +223,21 @@ class TaskClarityService implements TaskClarityEvaluator {
         description: description,
       );
     }
+  }
+
+  Future<Map<String, dynamic>> _invoke(Map<String, dynamic> body) async {
+    final invoker = _invoker;
+    if (invoker != null) {
+      return invoker(body);
+    }
+    final response = await _supabase.functions.invoke('ai-hub', body: body);
+    final data = response.data;
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+    throw const FormatException('Task clarity response must be an object.');
   }
 }

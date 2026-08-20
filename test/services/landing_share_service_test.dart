@@ -15,6 +15,7 @@ import 'package:my_web_app/services/task_clarity_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:my_web_app/services/landing_conversion_experiment_service.dart';
+import 'package:my_web_app/services/landing_oauth_callback_failure.dart';
 import 'package:my_web_app/services/landing_page_adapter.dart';
 import 'package:my_web_app/services/landing_share_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -47,6 +48,11 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
     ],
   );
 
+  LandingSocialProofStats socialProofStats = const LandingSocialProofStats(
+    totalUsers: 38,
+    publicMemoCount: 12,
+  );
+
   @override
   Stream<AuthState> authStateChanges() => const Stream<AuthState>.empty();
 
@@ -60,6 +66,11 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
   Future<LandingPageViewStats> loadLpViewStats() async {
     loadLpViewStatsCallCount += 1;
     return lpViewStats;
+  }
+
+  @override
+  Future<LandingSocialProofStats> loadSocialProofStats() async {
+    return socialProofStats;
   }
 
   @override
@@ -107,6 +118,11 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
       Future<bool>.value(true);
 
   @override
+  Future<void> recordGoogleOAuthCallbackFailure({
+    required LandingOAuthCallbackFailureCategory category,
+  }) async {}
+
+  @override
   Future<AuthResponse> signUp({
     required String email,
     required String password,
@@ -134,7 +150,10 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
   Future<void> recordTrialRun() async {}
 
   @override
-  Future<void> recordConversionEvent({required String eventKey}) async {
+  Future<void> recordConversionEvent({
+    required String eventKey,
+    required String visitorId,
+  }) async {
     conversionEvents.add(eventKey);
   }
 }
@@ -663,6 +682,7 @@ void main() {
         home: LandingPage(
           adapter: adapter,
           experimentAssignment: assignment,
+          showUnverifiedMarketingForQa: true,
         ),
       ),
     );
@@ -674,6 +694,28 @@ void main() {
     expect(find.byKey(const Key('landing_trial_section')), findsOneWidget);
     expect(find.byKey(const Key('landing_auth_section')), findsOneWidget);
     expect(find.byKey(const Key('landing_social_proof_stats')), findsOneWidget);
+    expect(find.byKey(const Key('landing_editorial_prologue')), findsOneWidget);
+    for (var chapter = 1; chapter <= 4; chapter++) {
+      expect(
+        find.byKey(Key('landing_editorial_chapter_$chapter')),
+        findsOneWidget,
+      );
+    }
+    expect(
+      find.byKey(const Key('landing_editorial_archive_toggle')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('landing_migration_guide')), findsNothing);
+    expect(find.byKey(const Key('landing_comparison_links')), findsNothing);
+
+    final archiveToggle = find.byKey(
+      const Key('landing_editorial_archive_toggle'),
+    );
+    await tester.ensureVisible(archiveToggle);
+    await tester.pump();
+    await tester.tap(archiveToggle);
+    await tester.pump(const Duration(milliseconds: 300));
+
     expect(find.byKey(const Key('landing_migration_guide')), findsOneWidget);
     expect(find.byKey(const Key('landing_comparison_links')), findsOneWidget);
     expect(adapter.loadShareSnapshotCallCount, 0);

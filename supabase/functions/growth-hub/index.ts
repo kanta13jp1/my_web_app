@@ -19,12 +19,36 @@ import {
   type XTweetMetrics,
 } from "../_shared/x-client.ts";
 import {
+  isExternalRevenueCandidate,
+  normalizeSupporterBuyerContext,
+} from "../_shared/supporter_buyer.ts";
+import { isSupportedAcquisitionSignal } from "./acquisition_signals.ts";
+import {
   extractPostedTexts,
   findDuplicateContent,
   resolveDuplicateGuardConfig,
   type XPostLogRowLike,
 } from "./x_duplicate_content.ts";
 import { pickBestVariant, pickConfidentVariant } from "./x_best_variant.ts";
+import {
+  buildAcquisitionRankingLine,
+  computeAcquisitionScore,
+  resolveAcquisitionScoreInput,
+} from "./x_acquisition_score.ts";
+import {
+  buildAccountAcquisitionLine,
+  buildAnalyticsImportMetadata,
+  parseXAnalyticsCsv,
+} from "./x_analytics_import.ts";
+import {
+  buildArchetypeTopicInteractionLine,
+  buildIcpHistoricalExemplarLine,
+  buildIcpScopeLine,
+  buildTopicLiftLine,
+  classifyPostTopic,
+  normalizeTopicBucket,
+  selectIcpCohort,
+} from "./x_topic_audience.ts";
 import {
   buildSignupSlackPayload,
   isRecentSignupCreatedAt,
@@ -69,6 +93,7 @@ import {
   approveXPostCandidateMetadata,
   buildXPostCandidateMetadata,
   finalizeXPostCandidateMetadata,
+  rejectXPostCandidateMetadata,
   X_POST_CANDIDATE_SOURCE,
 } from "./x_post_candidate.ts";
 import {
@@ -77,6 +102,20 @@ import {
   type RoadmapPlan,
   selectShareableRoadmapPlans,
 } from "./roadmap_share_stats.ts";
+import {
+  DEFAULT_LANDING_TRIAL_MODEL,
+  generateLandingTrialSuggestion,
+  hashLandingTrialClient,
+  LandingTrialInputError,
+  normalizeLandingTrialPrompt,
+} from "./landing_trial.ts";
+import {
+  buildFirstUserFunnelReport,
+  FIRST_USER_FUNNEL_STAGES,
+  type FirstUserAcquisitionEvent,
+  type FirstUserPayment,
+  type FirstUserXPost,
+} from "./first_user_funnel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -88,6 +127,10 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ??
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
+const LANDING_TRIAL_AI_MODEL = Deno.env.get("LANDING_TRIAL_AI_MODEL") ?? "";
+const LANDING_TRIAL_RATE_LIMIT_SALT =
+  Deno.env.get("LANDING_TRIAL_RATE_LIMIT_SALT") ?? SERVICE_ROLE_KEY;
 // x.post 近似重複ガードの調整用 env (未設定時は既定 0.9 / 直近 5 件)。
 const X_DUP_SIMILARITY_THRESHOLD = Deno.env.get("X_DUP_SIMILARITY_THRESHOLD") ??
   null;
@@ -416,6 +459,12 @@ const TOUCHPOINT_DEFS = [
     signupSignal: "signup_submit_profile",
   },
   {
+    id: "x_first_user_growth",
+    label: "X first-user campaign",
+    touchSignal: "touch_x_first_user_growth",
+    signupSignal: "signup_submit_x_first_user_growth",
+  },
+  {
     id: "import",
     label: "Import",
     touchSignal: "touch_import",
@@ -465,34 +514,6 @@ const IMPORT_PREVIEW_DEFS = [
   },
 ];
 
-const SUPPORTED_ACQUISITION_SIGNALS = new Set([
-  "touch_landing",
-  "touch_profile",
-  "touch_import",
-  "touch_public_memo",
-  "touch_referral",
-  "touch_comparison",
-  "touch_guitar_gallery",
-  "touch_x_first_user_growth",
-  "import_preview_notion",
-  "import_preview_evernote",
-  "import_preview_markdown",
-  "import_signup_cta",
-  "public_memo_signup_cta",
-  "x_first_user_trial_intent",
-  "x_first_user_feedback_summary",
-  "x_first_user_feedback_memo",
-  "x_first_user_feedback_search",
-  "x_first_user_feedback_x_intent",
-  "signup_submit_landing",
-  "signup_submit_profile",
-  "signup_submit_import",
-  "signup_submit_public_memo",
-  "signup_submit_referral",
-  "signup_submit_comparison",
-  "signup_submit_guitar",
-]);
-
 function formatDateKey(date: Date): string {
   return `${date.getFullYear()}-${
     String(date.getMonth() + 1).padStart(2, "0")
@@ -504,11 +525,6 @@ function resolveDateKey(rawDateKey: unknown): string {
       /^\d{4}-\d{2}-\d{2}$/.test(rawDateKey)
     ? rawDateKey
     : formatDateKey(new Date());
-}
-
-function isSupportedAcquisitionSignal(signalKey: string): boolean {
-  return SUPPORTED_ACQUISITION_SIGNALS.has(signalKey) ||
-    /^touch_comparison_[a-z0-9_-]{1,64}$/i.test(signalKey);
 }
 
 async function recordAcquisitionSignal(
@@ -558,6 +574,78 @@ async function recordAcquisitionSignal(
     .eq("date", dateKey);
   if (error) throw new Error(error.message);
   return { success: true, signalKey, dateKey };
+}
+
+const firstUserFunnelStageSet = new Set<string>(FIRST_USER_FUNNEL_STAGES);
+const firstUserTokenPattern = /^[a-z0-9_-]{1,64}$/;
+
+async function recordFirstUserFunnelSignal(
+  admin: SupabaseClient,
+  actorUserId: string | null,
+  body: Record<string, unknown>,
+) {
+  const visitorId = firstString(body.visitorId, body.visitor_id).toLowerCase();
+  const stage = firstString(body.stage).toLowerCase();
+  const utmSource = firstString(
+    body.utmSource,
+    body.utm_source,
+  ).toLowerCase();
+  const utmMedium = firstString(
+    body.utmMedium,
+    body.utm_medium,
+  ).toLowerCase();
+  const utmCampaign = firstString(
+    body.utmCampaign,
+    body.utm_campaign,
+  ).toLowerCase();
+  const utmContent = firstString(
+    body.utmContent,
+    body.utm_content,
+  ).toLowerCase();
+
+  if (
+    !isUuid(visitorId) ||
+    !firstUserFunnelStageSet.has(stage) ||
+    utmSource !== "x" ||
+    utmCampaign !== "first_user_growth" ||
+    !firstUserTokenPattern.test(utmMedium) ||
+    !firstUserTokenPattern.test(utmContent)
+  ) {
+    return {
+      success: false,
+      error: "invalid first-user funnel signal",
+    };
+  }
+
+  const { data, error } = await admin
+    .from("first_user_acquisition_events")
+    .upsert({
+      visitor_id: visitorId,
+      auth_user_id: actorUserId && isUuid(actorUserId) ? actorUserId : null,
+      stage,
+      utm_source: utmSource,
+      utm_medium: utmMedium,
+      utm_campaign: utmCampaign,
+      utm_content: utmContent,
+    }, {
+      onConflict:
+        "visitor_id,utm_source,utm_medium,utm_campaign,utm_content,stage",
+      ignoreDuplicates: true,
+    })
+    .select("visitor_id")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return {
+    success: true,
+    duplicate: data === null,
+    stage,
+    attribution: {
+      utmSource,
+      utmMedium,
+      utmCampaign,
+      utmContent,
+    },
+  };
 }
 
 type XPostLogItem = {
@@ -866,6 +954,16 @@ function buildXPerformanceContextFromLogs(
           firstString(metadata.text, latest.text),
           Array.isArray(metadata.reply_texts) ? metadata.reply_texts : [],
         ),
+        // R24: 「どの既存オーディエンスに乗ったか」の軸 (x_topic_audience.ts)。
+        // archetype と独立に測らないと、勝ち型の移植失敗を繰り返す。
+        topic: classifyPostTopic(
+          [
+            firstString(metadata.text, latest.text),
+            ...(Array.isArray(metadata.reply_texts)
+              ? metadata.reply_texts.map((entry: unknown) => String(entry))
+              : []),
+          ].join("\n"),
+        ),
         linkInReply: latest.link_in_reply === true ||
           metadata.link_in_reply === true,
         threadReplyCount: firstNumber(
@@ -931,6 +1029,26 @@ function buildXPerformanceContextFromLogs(
         rankingBookmarkRate: sample?.bookmarkRate ?? null,
         rankingProfileClickRate: sample?.profileClickRate ?? null,
         rankingUrlClickRate: sample?.urlClickRate ?? null,
+        // R24: 学習ランキングの基準値。到達ではなく獲得(URL クリック最上位・
+        // impressions は上限キャップ付き補助項)で並べる (x_acquisition_score.ts)。
+        // R24 fix: 全項を同じ期間基準で渡す (all-or-nothing)。従来は
+        // impressions だけ窓の値・残り 6 項が lifetime 累積で、重み 1000 の
+        // urlClicks に年齢バイアスが丸ごと残っていた (上限 100 点の
+        // impressions 項では埋め合わせ不可能)。
+        acquisitionScore: computeAcquisitionScore(
+          resolveAcquisitionScoreInput(sample, {
+            urlClicks: row.urlClicks,
+            profileClicks: row.profileClicks,
+            bookmarkCount: row.bookmarkCount,
+            replyCount: row.replyCount,
+            repostCount: row.repostCount,
+            likeCount: row.likeCount,
+            impressions: row.impressions,
+          }).input,
+        ),
+        acquisitionBasis: resolveAcquisitionScoreInput(sample, {
+          impressions: row.impressions,
+        }).basis,
       };
     })
     .sort((left, right) =>
@@ -953,13 +1071,58 @@ function buildXPerformanceContextFromLogs(
       (left.historicalBenchmarkImpressions ?? 0)
     );
 
-  const winners = learningRows.slice(0, 5);
-  const underperformers = learningRows.slice(-5).reverse();
+  // R24: 勝ち/負け exemplar は獲得スコア順で選ぶ。到達順のままだと
+  // 「122,978 imp / 0 クリック」の投稿が「500 imp / 3 クリック」を永久に
+  // 上回り、サイトへ 1 人も送っていない投稿を LLM に手本提示してしまう。
+  // 年齢コホート (learningRows) の絞り込みは従来どおり効かせる。
+  const acquisitionRanked = [...learningRows].sort((left, right) =>
+    right.acquisitionScore - left.acquisitionScore ||
+    (right.rankingImpressions ?? -1) - (left.rankingImpressions ?? -1)
+  );
+  // R28: 勝ち exemplar と勝ち型は ICP トピックのコホート内で選ぶ。実測では
+  // URL クリックの 94% が japan_politics の定点観測シリーズから出ており、
+  // 素朴に最大値を取ると学習ループが「政治の集計レポートを再生産せよ」と
+  // 指示する。2026-07-28 の戦略確定で楔は「借金・リボ払いからの生活再建」に
+  // 絞られており、その受け手は楔の客ではない。
+  // コホートが薄いときはグローバルへ落ちず、勝者を宣言しない (落とすと
+  // 政治シリーズが復活し、このスコープの意味が消える)。
+  const icpCohort = selectIcpCohort(
+    acquisitionRanked,
+    (row) => row.topic,
+  );
+  // R28 fix: CSV 取込の行は historical_benchmark として learningRows から
+  // 除外されるため、ICP の実績があっても icpCohort には 1 件も入らない。
+  // 返済報告カードの共有はクリップボードのみで x_post_log に残らないので、
+  // ICP の実績は事実上「取り込んだ履歴」にしか存在しない。件数を数えて
+  // 「1本も無い」と「あるが年齢比較できない」を区別して報告する。
+  const icpHistoricalRows = rows.filter((row) =>
+    row.learningCohort === "historical_benchmark" &&
+    normalizeTopicBucket(row.topic) === icpCohort.target
+  );
+  const icpScopeLine = buildIcpScopeLine(icpCohort, icpHistoricalRows.length);
+  // R29: 順位付けと手本提示を分ける。取り込んだ ICP 履歴は lifetime cumulative
+  // なので winners には載せない (期間基準の混在は #4367 で禁止) が、
+  // 「どのフックがこの受け手にクリックされたか」は手本として渡す。
+  // 返済報告カードの共有は HITL 厳守でクリップボード専用のため、ICP の実績は
+  // 事実上ここにしか存在しない。
+  const icpExemplarLine = buildIcpHistoricalExemplarLine(
+    icpHistoricalRows,
+    (row) => row.urlClicks,
+    (row) => row.impressions,
+    (row) => row.text,
+    icpCohort.target,
+  );
+  const winners = icpCohort.sufficient ? icpCohort.rows.slice(0, 5) : [];
+  const underperformers = icpCohort.sufficient
+    ? icpCohort.rows.slice(-5).reverse()
+    : [];
   const byVariant = new Map<
     string,
     { variant: string; count: number; totalScore: number; maxScore: number }
   >();
-  for (const row of learningRows) {
+  // R28: 勝ち型 (variant) も ICP コホート内で数える。グローバルで数えると
+  // 政治シリーズの variant が「勝ち型」として昇格してしまう。
+  for (const row of (icpCohort.sufficient ? icpCohort.rows : [])) {
     const key = row.variant || "unknown";
     const current = byVariant.get(key) ?? {
       variant: key,
@@ -968,7 +1131,8 @@ function buildXPerformanceContextFromLogs(
       maxScore: 0,
     };
     current.count += 1;
-    const rankingScore = row.rankingImpressions ?? row.score;
+    // R24: 型ごとの優劣も獲得スコアで測る (到達平均ではない)。
+    const rankingScore = row.acquisitionScore;
     current.totalScore += rankingScore;
     current.maxScore = Math.max(current.maxScore, rankingScore);
     byVariant.set(key, current);
@@ -992,12 +1156,11 @@ function buildXPerformanceContextFromLogs(
   // して LLM へ渡す。データが薄い間は行自体を出さない(=実質 default-off で、
   // 投稿が貯まるほど自動的に有効化される)。従来は top-1 variant と逸話的な
   // winner 行のみで、集計済みの variants ランキングが未提示だった。
+  // R24: 構造 lift の平均も獲得スコア基準へ統一する。到達平均のままだと
+  // 「メディアありは到達が高い」等の結論が、クリック 0 でも勝ちに見える。
   const avgScore = (list: typeof rows): number =>
     list.length === 0 ? 0 : Math.round(
-      list.reduce(
-        (sum, row) => sum + (row.rankingImpressions ?? row.score),
-        0,
-      ) / list.length,
+      list.reduce((sum, row) => sum + row.acquisitionScore, 0) / list.length,
     );
   const structuralLines: string[] = [];
   if (comparisonWindow) {
@@ -1011,7 +1174,7 @@ function buildXPerformanceContextFromLogs(
   const withoutMedia = learningRows.filter((r) => !r.hasMedia);
   if (withMedia.length >= 2 && withoutMedia.length >= 2) {
     structuralLines.push(
-      `Structural lift (media): avg score with media=${
+      `Structural lift (media): avg acquisition score with media=${
         avgScore(withMedia)
       } (n=${withMedia.length}) vs without=${
         avgScore(withoutMedia)
@@ -1025,7 +1188,7 @@ function buildXPerformanceContextFromLogs(
   const mediaLine = buildMediaLiftLine(
     learningRows,
     (row) => row.mediaType,
-    (row) => row.rankingImpressions ?? row.score,
+    (row) => row.acquisitionScore,
   );
   if (mediaLine) structuralLines.push(mediaLine);
   // R23: 内容アーキタイプ別 lift。実測(2026-07-12 同日3連投: データレポート型
@@ -1042,11 +1205,27 @@ function buildXPerformanceContextFromLogs(
     (row) => row.i72h ?? Number.NaN,
   );
   if (archetypeLine) structuralLines.push(archetypeLine);
+  // R24: topic 単独の lift と、archetype × topic の交互作用。
+  // 実測では同一の data_report 型が topic 違いで 122,978 → 58 まで落ちており、
+  // archetype 単独の結論だけを渡すと勝ち型の移植失敗を再生産する。
+  const topicLine = buildTopicLiftLine(
+    learningRows,
+    (row) => row.topic,
+    (row) => row.acquisitionScore,
+  );
+  if (topicLine) structuralLines.push(topicLine);
+  const interactionLine = buildArchetypeTopicInteractionLine(
+    learningRows,
+    (row) => row.archetype,
+    (row) => row.topic,
+    (row) => row.acquisitionScore,
+  );
+  if (interactionLine) structuralLines.push(interactionLine);
   const linkReply = learningRows.filter((r) => r.linkInReply);
   const linkLead = learningRows.filter((r) => !r.linkInReply);
   if (linkReply.length >= 2 && linkLead.length >= 2) {
     structuralLines.push(
-      `Structural lift (link placement): avg score link-in-reply=${
+      `Structural lift (link placement): avg acquisition score link-in-reply=${
         avgScore(linkReply)
       } (n=${linkReply.length}) vs link-in-lead=${
         avgScore(linkLead)
@@ -1076,7 +1255,7 @@ function buildXPerformanceContextFromLogs(
       buckets.sort((a, b) => avgScore(b[1]) - avgScore(a[1]));
       const [label, list] = buckets[0];
       structuralLines.push(
-        `Best thread length so far: ${label} (avg score ${
+        `Best thread length so far: ${label} (avg acquisition score ${
           avgScore(list)
         }, n=${list.length}).`,
       );
@@ -1127,7 +1306,7 @@ function buildXPerformanceContextFromLogs(
   }
   const distinctVariants = variants.filter((v) => v.variant !== "unknown");
   const rankingLine = distinctVariants.length >= 2
-    ? `Variant ranking (avg ${comparisonLabel} impressions, n): ${
+    ? `Variant ranking (avg acquisition score, n): ${
       distinctVariants.slice(0, 5).map((v) =>
         `${v.variant}=${v.averageScore} (n=${v.count})`
       ).join(", ")
@@ -1138,6 +1317,16 @@ function buildXPerformanceContextFromLogs(
   const ownDataLine = buildOwnDataFactsLine(
     learningRows,
     (row) => row.rankingImpressions,
+  );
+  // R24: 獲得ランキングと、到達 1 位 ≠ 獲得 1 位のときの乖離警告。
+  // 実測 (90 日 350 投稿) では URL クリックの 94% が単一シリーズに集中し、
+  // 到達上位の共感型 (57K/いいね 2.5K) のクリックは 0 だった。
+  const acquisitionLine = buildAcquisitionRankingLine(
+    learningRows,
+    (row) => row.acquisitionScore,
+    (row) => row.rankingImpressions ?? row.impressions,
+    (row) => row.text,
+    (row) => row.urlClicks,
   );
   const historicalBenchmarkLine = historicalBenchmarks.length === 0
     ? ""
@@ -1161,10 +1350,22 @@ function buildXPerformanceContextFromLogs(
       confidentBest
         ? `Target: 10K impressions. Current best variant: ${confidentBest.variant} (n=${confidentBest.count}).`
         : "Target: 10K impressions. No post-age comparable winner yet.",
-      `Ranking basis: ${comparisonLabel} impressions ` +
-      `(comparable n=${learningRows.length}; total measured n=${rows.length}).`,
+      // R24: 目的は「サイトへ 1 人送ること」。手本の選定基準は到達ではなく獲得。
+      `Ranking basis: acquisition score (url clicks weighted first, ` +
+      `impressions capped; every term read from the same period basis — ` +
+      `${
+        learningRows.filter((r) => r.acquisitionBasis === "window").length
+      }/${learningRows.length} rows scored on the age window, the rest on ` +
+      `lifetime cumulative); age cohort = ${comparisonLabel} ` +
+      `(comparable n=${learningRows.length}; total measured n=${rows.length}). ` +
+      `Optimize for site visits and replies, not for raw reach.`,
+      ...(acquisitionLine ? [acquisitionLine] : []),
+      icpScopeLine,
+      ...(icpExemplarLine ? [icpExemplarLine] : []),
       ...winners.map((row, index) =>
-        `Winner ${index + 1}: variant=${row.variant}, impressions=${
+        `Winner ${
+          index + 1
+        }: acquisition=${row.acquisitionScore}, variant=${row.variant}, impressions=${
           row.impressions ?? "unknown"
         }, comparison=${row.rankingMetric}:${
           row.rankingImpressions ?? "unknown"
@@ -1189,7 +1390,7 @@ function buildXPerformanceContextFromLogs(
       ...underperformers.slice(0, 3).map((row, index) =>
         `Avoid ${
           index + 1
-        }: variant=${row.variant}, comparison=${row.rankingMetric}:${
+        }: acquisition=${row.acquisitionScore}, variant=${row.variant}, comparison=${row.rankingMetric}:${
           row.rankingImpressions ?? "unknown"
         }, score=${row.score}, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
       ),
@@ -1226,6 +1427,93 @@ function buildXPerformanceContextFromLogs(
       ? X_METRIC_LEARNING_SELECTION_RULE
       : "latest cumulative fallback because no normalized cohort has 3 posts",
     promptContext,
+  };
+}
+
+/// R24: X Analytics CSV をパースして x_post_log へ upsert する。
+/// 既に公式 X API で計測済みの行 (metric_provenance='x_api') は上書きしない
+/// — CSV は lifetime cumulative の観測値で、API の窓付き実測より弱いため。
+async function importXAnalyticsCsv(
+  admin: SupabaseClient,
+  userId: string,
+  options: { csv: string; exportRange: string; dryRun: boolean },
+) {
+  const rows = parseXAnalyticsCsv(options.csv);
+  if (rows.length === 0) {
+    return {
+      success: false,
+      imported: 0,
+      skipped: 0,
+      error: "No rows parsed. Expected the X Analytics content CSV export.",
+    };
+  }
+  const observedAt = new Date().toISOString();
+  const accountAcquisitionLine = buildAccountAcquisitionLine(rows);
+  if (options.dryRun) {
+    return {
+      success: true,
+      dryRun: true,
+      parsed: rows.length,
+      imported: 0,
+      skipped: 0,
+      accountAcquisitionLine,
+    };
+  }
+
+  const tweetIds = rows.map((row) => row.postId);
+  const { data: existingRows, error: existingError } = await admin
+    .from("hub_data")
+    .select("id, metadata")
+    .eq("source", "x_post_log")
+    .filter("metadata->>tweet_id", "in", `(${tweetIds.join(",")})`);
+  if (existingError) {
+    throw new Error(`x_analytics_import lookup: ${existingError.message}`);
+  }
+  const existingByTweetId = new Map(
+    (existingRows ?? []).map((
+      item: { id: string; metadata: unknown },
+    ) => [firstString(asRecord(item.metadata).tweet_id), item]),
+  );
+
+  let imported = 0;
+  let skipped = 0;
+  for (const row of rows) {
+    const metadata = buildAnalyticsImportMetadata(row, {
+      userId,
+      archetype: classifyPostArchetype(row.text),
+      observedAt,
+      exportRange: options.exportRange,
+    });
+    const existing = existingByTweetId.get(row.postId);
+    if (existing === undefined) {
+      const { error } = await admin
+        .from("hub_data")
+        .insert({ source: "x_post_log", metadata });
+      if (error) throw new Error(`x_analytics_import insert: ${error.message}`);
+      imported += 1;
+      continue;
+    }
+    const existingMetadata = asRecord(existing.metadata);
+    // 公式 API 実測が既にある行は、CSV の累積値で塗り潰さない。
+    if (firstString(existingMetadata.metric_provenance) === "x_api") {
+      skipped += 1;
+      continue;
+    }
+    const { error } = await admin
+      .from("hub_data")
+      .update({ metadata: { ...existingMetadata, ...metadata } })
+      .eq("id", existing.id)
+      .eq("source", "x_post_log");
+    if (error) throw new Error(`x_analytics_import update: ${error.message}`);
+    imported += 1;
+  }
+  return {
+    success: true,
+    parsed: rows.length,
+    imported,
+    skipped,
+    observedAt,
+    accountAcquisitionLine,
   };
 }
 
@@ -1384,14 +1672,19 @@ async function buildRevenueFunnelReport(
     .limit(limit);
   if (error) throw new Error(error.message);
 
-  const paidPayments = (payments ?? [])
+  const allPaidPayments = (payments ?? [])
     .map((item) => {
       const metadata = asRecord(item.metadata);
+      const buyerContext = normalizeSupporterBuyerContext(
+        metadata.auth_user_id,
+        metadata.buyer_classification,
+      );
       return {
-        id: String(item.id),
         createdAt: String(item.created_at),
         amountJpy: firstNumber(metadata.amount_jpy, metadata.amount_total) ?? 0,
         paymentStatus: firstString(metadata.payment_status),
+        buyerClassification: buyerContext.classification,
+        externalRevenueCandidate: isExternalRevenueCandidate(buyerContext),
         variant: firstString(metadata.variant, "unknown"),
         experimentKey: firstString(metadata.experiment_key),
         sourceLogId: firstString(metadata.source_log_id),
@@ -1399,12 +1692,14 @@ async function buildRevenueFunnelReport(
         utmMedium: firstString(metadata.utm_medium),
         utmCampaign: firstString(metadata.utm_campaign),
         utmContent: firstString(metadata.utm_content),
-        stripeCheckoutSessionId: firstString(
-          metadata.stripe_checkout_session_id,
-        ),
       };
     })
     .filter((row) => row.paymentStatus === "paid");
+  const externalPaidPayments = allPaidPayments.filter((row) =>
+    row.externalRevenueCandidate &&
+    row.utmSource === "x" &&
+    row.utmCampaign === "first_user_growth"
+  );
 
   const xRows = performance.rows as Array<{
     id: string;
@@ -1447,7 +1742,7 @@ async function buildRevenueFunnelReport(
     current.score += firstNumber(row.rankingImpressions) ?? row.score;
     byVariant.set(key, current);
   }
-  for (const payment of paidPayments) {
+  for (const payment of externalPaidPayments) {
     const key = payment.variant || "unknown";
     const current = byVariant.get(key) ?? {
       variant: key,
@@ -1480,8 +1775,17 @@ async function buildRevenueFunnelReport(
       comparisonWindow: performance.comparisonWindow,
       comparisonLabel: performance.comparisonLabel,
       comparisonSampleCount: performance.comparisonSampleCount,
-      latestPaidSupporters: paidPayments.length,
-      revenueJpy: paidPayments.reduce(
+      allPaidSupporters: allPaidPayments.length,
+      excludedAdminSupporters:
+        allPaidPayments.filter((payment) =>
+          payment.buyerClassification === "admin_self"
+        ).length,
+      excludedUnclassifiedSupporters:
+        allPaidPayments.filter((payment) =>
+          payment.buyerClassification === "anonymous_unclassified"
+        ).length,
+      latestPaidSupporters: externalPaidPayments.length,
+      revenueJpy: externalPaidPayments.reduce(
         (sum, payment) => sum + payment.amountJpy,
         0,
       ),
@@ -1489,22 +1793,134 @@ async function buildRevenueFunnelReport(
       bestVariantForReach: performance.bestVariant,
     },
     variants,
-    payments: paidPayments,
+    payments: externalPaidPayments,
     xPerformance: {
       winners: performance.winners,
       underperformers: performance.underperformers,
       promptContext: performance.promptContext,
     },
-    nextActions: paidPayments.length === 0
+    nextActions: externalPaidPayments.length === 0
       ? [
         "Post the next high-information X variant with link-in-reply enabled.",
-        "Use the Founding Supporter checkout URL from the billing page for one real supporter payment.",
+        "Acquire one signed-in non-admin supporter through the measured first_user_growth URL.",
         "After payment, rerun revenue.funnel_report and first_supporter_webhook_evidence.sql.",
       ]
       : [
         "Double down on the revenue-winning variant for the next 3 posts.",
         "Verify Stripe payout eligibility and bank payout evidence.",
       ],
+  };
+}
+
+async function buildFirstUserAcquisitionReport(
+  admin: SupabaseClient,
+  userId: string,
+  rawUtmMedium: unknown,
+  rawUtmContent: unknown,
+  rawLimit: unknown,
+) {
+  const utmMedium = firstString(rawUtmMedium, "organic").toLowerCase();
+  const utmContent = firstString(rawUtmContent, "outcome_first_a")
+    .toLowerCase();
+  if (
+    !firstUserTokenPattern.test(utmMedium) ||
+    !firstUserTokenPattern.test(utmContent)
+  ) {
+    throw new Error("invalid first-user UTM");
+  }
+  const limit = Math.max(
+    10,
+    Math.min(100, Math.trunc(firstNumber(rawLimit) ?? 50)),
+  );
+  const logs = (await listXPostLogs(admin, userId, limit)) as XPostLogItem[];
+  const matchingLogs = logs.filter((item) => {
+    const metadata = asRecord(item.metadata);
+    const variants = [
+      metadata.utm_content,
+      metadata.utmContent,
+      metadata.variant,
+      metadata.selected_variant,
+    ].map((value) => firstString(value).toLowerCase());
+    return firstString(metadata.tweet_id) !== "" &&
+      variants.includes(utmContent);
+  });
+  const latestLog = matchingLogs[0] ?? null;
+  let post: FirstUserXPost | null = null;
+  if (latestLog) {
+    const normalized = await loadNormalizedXMetricWindows(
+      admin,
+      userId,
+      [latestLog],
+    );
+    const metadata = asRecord(latestLog.metadata);
+    const latestMetrics = asRecord(metadata.latest_metrics);
+    post = {
+      sourceLogId: latestLog.id,
+      tweetId: firstString(metadata.tweet_id),
+      postedAt: firstString(metadata.posted_at, latestLog.created_at),
+      latestImpressions: firstNumber(
+        latestMetrics.impressions,
+        metadata.impressions,
+      ),
+      latestUrlClicks: firstNumber(latestMetrics.url_clicks),
+      normalized: normalized[0] ?? null,
+    };
+  }
+
+  let eventQuery = admin
+    .from("first_user_acquisition_events")
+    .select("visitor_id,stage,first_occurred_at")
+    .eq("utm_source", "x")
+    .eq("utm_medium", utmMedium)
+    .eq("utm_campaign", "first_user_growth")
+    .eq("utm_content", utmContent)
+    .order("first_occurred_at", { ascending: true });
+  if (post?.postedAt) {
+    eventQuery = eventQuery.gte("first_occurred_at", post.postedAt);
+  }
+  const { data: eventData, error: eventError } = await eventQuery;
+  if (eventError) throw new Error(eventError.message);
+
+  let paymentQuery = admin
+    .from("hub_data")
+    .select("metadata,created_at")
+    .eq("source", "stripe_supporter_payment")
+    .filter("metadata->>payment_status", "eq", "paid")
+    .filter("metadata->>utm_source", "eq", "x")
+    .filter("metadata->>utm_medium", "eq", utmMedium)
+    .filter("metadata->>utm_campaign", "eq", "first_user_growth")
+    .filter("metadata->>utm_content", "eq", utmContent)
+    .filter(
+      "metadata->>buyer_classification",
+      "eq",
+      "authenticated_non_admin",
+    )
+    .filter("metadata->>external_revenue_candidate", "eq", "true")
+    .order("created_at", { ascending: true });
+  if (post?.postedAt) {
+    paymentQuery = paymentQuery.gte("created_at", post.postedAt);
+  }
+  const { data: paymentData, error: paymentError } = await paymentQuery;
+  if (paymentError) throw new Error(paymentError.message);
+
+  const payments = (paymentData ?? []).map((row): FirstUserPayment => {
+    const metadata = asRecord(row.metadata);
+    return {
+      amountJpy: firstNumber(metadata.amount_jpy, metadata.amount_total) ?? 0,
+      createdAt: firstString(row.created_at),
+    };
+  });
+  const report = buildFirstUserFunnelReport({
+    utmMedium,
+    utmContent,
+    post,
+    events: (eventData ?? []) as FirstUserAcquisitionEvent[],
+    payments,
+  });
+  return {
+    ...report,
+    issue: 3883,
+    reportGeneratedAt: new Date().toISOString(),
   };
 }
 
@@ -1956,8 +2372,10 @@ serve(async (req: Request) => {
       "waitlist.notify",
       "acquisition.report",
       "acquisition.signal",
+      "acquisition.funnel_signal",
       "acquisition.track",
       "acquisition.touchpoint_report",
+      "landing.trial",
       "signup.notify",
     ];
     let userId: string | null = null;
@@ -1967,6 +2385,81 @@ serve(async (req: Request) => {
     }
 
     switch (action) {
+      // ─── Landing AI trial (anonymous, hard-capped server-side) ──────────────
+      case "landing.trial": {
+        let prompt: string;
+        try {
+          prompt = normalizeLandingTrialPrompt(body.prompt);
+        } catch (error) {
+          if (error instanceof LandingTrialInputError) {
+            return json({
+              success: false,
+              error: error.message,
+              canUseInstantPreview: true,
+            }, 400);
+          }
+          throw error;
+        }
+
+        if (
+          !OPENAI_API_KEY || !SERVICE_ROLE_KEY ||
+          !LANDING_TRIAL_RATE_LIMIT_SALT
+        ) {
+          return json({
+            success: false,
+            error: "trial_ai_unavailable",
+            canUseInstantPreview: true,
+          }, 503);
+        }
+
+        const clientHash = await hashLandingTrialClient(
+          req.headers,
+          LANDING_TRIAL_RATE_LIMIT_SALT,
+        );
+        const { data: quotaData, error: quotaError } = await admin.rpc(
+          "claim_landing_trial_ai_quota",
+          { p_client_hash: clientHash },
+        );
+        if (quotaError) {
+          console.error("landing.trial quota claim failed", quotaError.code);
+          return json({
+            success: false,
+            error: "trial_ai_unavailable",
+            canUseInstantPreview: true,
+          }, 503);
+        }
+
+        const quota = (quotaData ?? {}) as Record<string, unknown>;
+        if (quota.allowed !== true) {
+          return json({
+            success: false,
+            error: "trial_quota_exhausted",
+            canUseInstantPreview: true,
+          }, 429);
+        }
+
+        try {
+          const suggestion = await generateLandingTrialSuggestion({
+            apiKey: OPENAI_API_KEY,
+            prompt,
+            model: LANDING_TRIAL_AI_MODEL,
+          });
+          return json({
+            success: true,
+            ...suggestion,
+            model: LANDING_TRIAL_AI_MODEL || DEFAULT_LANDING_TRIAL_MODEL,
+            remainingAttempts: quota.remaining_client,
+          });
+        } catch (error) {
+          console.error("landing.trial provider failed", errorMessage(error));
+          return json({
+            success: false,
+            error: "trial_ai_unavailable",
+            canUseInstantPreview: true,
+          }, 503);
+        }
+      }
+
       // ─── Acquisition ───────────────────────────────────────────────────────
       case "acquisition.get": {
         const items = await listItems(admin, "growth_signal", userId!);
@@ -1996,6 +2489,16 @@ serve(async (req: Request) => {
           admin,
           body.signalKey,
           body.dateKey,
+        );
+        return json(result, result.success ? 200 : 400);
+      }
+
+      case "acquisition.funnel_signal": {
+        const actorUserId = await getUserId(req);
+        const result = await recordFirstUserFunnelSignal(
+          admin,
+          actorUserId,
+          body,
         );
         return json(result, result.success ? 200 : 400);
       }
@@ -2463,6 +2966,22 @@ serve(async (req: Request) => {
         }
       }
 
+      // R24: X Analytics のコンテンツ CSV エクスポートをそのまま学習母集団へ
+      // 取り込む。アプリ経由の投稿しか見ていなかった学習ループに、アカウント
+      // 全体の実績 (= 実測でサイト流入の 99% を生んでいた手動投稿) を入れる。
+      case "x.analytics_import": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        return json(
+          await importXAnalyticsCsv(admin, userId!, {
+            csv: String(body.csv ?? ""),
+            exportRange: String(body.exportRange ?? body.export_range ?? ""),
+            dryRun: body.dryRun === true || body.dry_run === true,
+          }),
+        );
+      }
+
       case "x.metrics_normalized": {
         const scopeUserId = await xReadScopeUserId(admin, userId!);
         return json(
@@ -2474,6 +2993,21 @@ serve(async (req: Request) => {
         const scopeUserId = await xReadScopeUserId(admin, userId!);
         return json(
           await buildXPerformanceContext(admin, scopeUserId, body.limit),
+        );
+      }
+
+      case "x.first_user_funnel": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        return json(
+          await buildFirstUserAcquisitionReport(
+            admin,
+            "service_role",
+            body.utmMedium ?? body.utm_medium,
+            body.utmContent ?? body.utm_content,
+            body.limit,
+          ),
         );
       }
 
@@ -2598,8 +3132,11 @@ serve(async (req: Request) => {
       }
 
       case "revenue.funnel_report": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
         return json(
-          await buildRevenueFunnelReport(admin, userId!, body.limit),
+          await buildRevenueFunnelReport(admin, "service_role", body.limit),
         );
       }
 
@@ -2612,33 +3149,65 @@ serve(async (req: Request) => {
           Math.min(100, Math.trunc(firstNumber(body.limit) ?? 50)),
         );
         const requestedStatus = firstString(body.status);
+        // #4080: statuses[] を渡すと 1 リクエストで複数 status を返す
+        // (client は従来 3 status を 3 往復していた)。
+        // 🔑 **per-status limit は維持する** — 単一 IN() + 共有 limit にすると
+        // finalized 行が created_at 降順 window を埋めて古い承認待ちを黙って
+        // 押し出す F2 の窓圧迫が status 間で再発する。
+        const rawStatuses = Array.isArray(body.statuses)
+          ? (body.statuses as unknown[]).map((entry) => firstString(entry))
+            .filter(Boolean)
+          : [];
+        const batchStatuses = [...new Set(rawStatuses)].slice(0, 10);
+
         // R34: count:"exact" で「limit で切る前の総数」も返す。従来は limit 件しか
         // 返さないため client 側は上限に達したかしか分からず、承認待ちが 11 件でも
         // 200 件でも「10件以上」としか出せなかった (backlog の規模が掴めない)。
         // source は idx_hub_data_source があり EF は service_role なので、count は
         // x_post_candidate 部分集合への index scan で収まる (agent_memories のような
         // 無索引全表走査にはならない)。
-        let query = admin
-          .from("hub_data")
-          .select("id, metadata, created_at", { count: "exact" })
-          .eq("source", X_POST_CANDIDATE_SOURCE)
-          .order("created_at", { ascending: false })
-          .limit(limit);
-        if (requestedStatus) {
-          query = query.filter(
-            "metadata->>status",
-            "eq",
-            requestedStatus,
+        const runQuery = async (status: string) => {
+          let query = admin
+            .from("hub_data")
+            .select("id, metadata, created_at", { count: "exact" })
+            .eq("source", X_POST_CANDIDATE_SOURCE)
+            .order("created_at", { ascending: false })
+            .limit(limit);
+          if (status) {
+            query = query.filter("metadata->>status", "eq", status);
+          }
+          const { data, error, count } = await query;
+          if (error) throw new Error(error.message);
+          return {
+            candidates: data ?? [],
+            // limit で切る前の総数。取得できないときは null (client は従来の
+            // 「N件以上」表示へ degrade する)。
+            total: typeof count === "number" ? count : null,
+          };
+        };
+
+        if (batchStatuses.length > 0) {
+          const results = await Promise.all(
+            batchStatuses.map(async (status) => ({
+              status,
+              ...(await runQuery(status)),
+            })),
           );
+          const byStatus: Record<string, unknown> = {};
+          for (const result of results) {
+            byStatus[result.status] = {
+              candidates: result.candidates,
+              total: result.total,
+            };
+          }
+          return json({ success: true, byStatus });
         }
-        const { data, error, count } = await query;
-        if (error) throw new Error(error.message);
+
+        const single = await runQuery(requestedStatus);
         return json({
           success: true,
-          candidates: data ?? [],
-          // limit で切る前の総数。取得できないときは null (client は従来の
-          // 「N件以上」表示へ degrade する)。
-          total: typeof count === "number" ? count : null,
+          candidates: single.candidates,
+          total: single.total,
         });
       }
 
@@ -2832,6 +3401,94 @@ serve(async (req: Request) => {
           // the exact whitelisted payload reviewed by the operator.
           postPayload: { ...approved.postPayload, candidateId },
         });
+      }
+
+      case "x.candidate.reject": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        // 単体 (candidateId) と一括 (candidateIds[]) の両対応。UI の
+        // 「鮮度切れをまとめて却下」は後者を使う。
+        const rawIds = Array.isArray(body.candidateIds ?? body.candidate_ids)
+          ? (body.candidateIds ?? body.candidate_ids) as unknown[]
+          : [];
+        const singleId = firstString(body.candidateId, body.candidate_id);
+        const requestedIds = [
+          ...(singleId ? [singleId] : []),
+          ...rawIds.map((entry) => firstString(entry)),
+        ].filter(Boolean);
+        // 重複除去して順序は入力順を維持 (結果の突き合わせを容易にする)。
+        const candidateIds = [...new Set(requestedIds)];
+        if (candidateIds.length === 0) {
+          return json(
+            { success: false, error: "candidateId or candidateIds required" },
+            400,
+          );
+        }
+        if (candidateIds.some((id) => !isUuid(id))) {
+          return json(
+            { success: false, error: "all candidate ids must be uuid" },
+            400,
+          );
+        }
+        // 一括は 1 リクエストあたり 50 件で頭打ち (F2 window 圧迫と
+        // 長時間トランザクションを避ける)。超過は明示エラーで気付かせる。
+        if (candidateIds.length > 50) {
+          return json(
+            { success: false, error: "at most 50 candidate ids per request" },
+            400,
+          );
+        }
+        const rejectedBy = userId === "service_role"
+          ? firstString(body.rejectedBy, body.rejected_by, "service_role")
+          : userId!;
+        const reason = body.reason ?? body.rejectReason ?? body.reject_reason;
+
+        const rejected: string[] = [];
+        const unchanged: string[] = [];
+        const failures: { candidateId: string; error: string }[] = [];
+        for (const candidateId of candidateIds) {
+          try {
+            const { data: candidate, error: candidateError } = await admin
+              .from("hub_data")
+              .select("id, metadata, created_at")
+              .eq("id", candidateId)
+              .eq("source", X_POST_CANDIDATE_SOURCE)
+              .maybeSingle();
+            if (candidateError) throw new Error(candidateError.message);
+            if (!candidate) {
+              failures.push({ candidateId, error: "candidate not found" });
+              continue;
+            }
+            const result = rejectXPostCandidateMetadata(
+              asRecord(candidate.metadata),
+              { actorUserId: userId!, rejectedBy, reason },
+            );
+            if (!result.changed) {
+              // 既に終端 (rejected / rejected_duplicate) = 冪等 no-op。
+              unchanged.push(candidateId);
+              continue;
+            }
+            const { error: updateError } = await admin
+              .from("hub_data")
+              .update({ metadata: result.metadata })
+              .eq("id", candidateId)
+              .eq("source", X_POST_CANDIDATE_SOURCE);
+            if (updateError) throw new Error(updateError.message);
+            rejected.push(candidateId);
+          } catch (error) {
+            // 1 件の失敗で残りを巻き添えにしない (一括却下の途中終了防止)。
+            failures.push({ candidateId, error: errorMessage(error) });
+          }
+        }
+        return json({
+          success: failures.length === 0,
+          status: "rejected",
+          requested: candidateIds.length,
+          rejected,
+          unchanged,
+          failures,
+        }, failures.length > 0 && rejected.length === 0 ? 400 : 200);
       }
 
       case "x.candidate.finalize": {

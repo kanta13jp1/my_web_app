@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 
+import '../services/conveni_daily_report_payload.dart';
+
 class ConveniStorePage extends StatefulWidget {
   const ConveniStorePage({super.key});
 
@@ -168,26 +170,27 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
       final revenue = baseRevenue -
           variance +
           (DateTime.now().millisecond % (variance * 2));
-      final expenses = (revenue * 0.6).toInt();
-      final profit = revenue - expenses;
+      final costOfGoods = (revenue * 0.6).toInt();
+      final profit = revenue - costOfGoods;
       final newCash = cash + profit;
       final newReputation = (reputation + (profit > 0 ? 1 : -1)).clamp(0, 100);
 
-      await _supabase.from('conveni_daily_reports').insert({
-        'store_id': storeId,
-        'game_day': currentDay,
-        'revenue': revenue,
-        'expense': expenses,
-        'profit': profit,
-        'customer_count': (revenue / 600).toInt(),
-        'weather': 'sunny',
-      });
+      await _supabase.from('conveni_daily_reports').insert(
+            buildConveniDailyReportPayload(
+              storeId: storeId,
+              gameDay: currentDay,
+              revenue: revenue,
+              costOfGoods: costOfGoods,
+              profit: profit,
+              customerCount: (revenue / 600).toInt(),
+            ),
+          );
 
       await _supabase.from('conveni_stores').update({
         'current_day': currentDay + 1,
         'cash': newCash,
         'total_revenue': (_store!['total_revenue'] as int? ?? 0) + revenue,
-        'total_expense': (_store!['total_expense'] as int? ?? 0) + expenses,
+        'total_expense': (_store!['total_expense'] as int? ?? 0) + costOfGoods,
         'total_profit': (_store!['total_profit'] as int? ?? 0) + profit,
         'reputation': newReputation,
         'experience_points': (_store!['experience_points'] as int? ?? 0) + 10,
