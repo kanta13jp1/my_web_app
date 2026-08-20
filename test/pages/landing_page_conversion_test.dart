@@ -378,9 +378,7 @@ void main() {
       ),
     );
 
-    final notice = find.byKey(
-      const Key('landing_google_oauth_callback_error'),
-    );
+    final notice = find.byKey(const Key('landing_google_oauth_callback_error'));
     expect(notice, findsOneWidget);
     expect(find.byKey(const Key('landing_google_oauth_retry')), findsOneWidget);
     expect(
@@ -1021,10 +1019,7 @@ void main() {
       find.byKey(const Key('landing_h10_continuity_value')),
       findsOneWidget,
     );
-    expect(
-      find.textContaining('今回の入力・提案・理由を同じブラウザから引き継げます'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('今回の入力・提案・理由を同じブラウザから引き継げます'), findsOneWidget);
     expect(find.textContaining('実行履歴'), findsNothing);
     expect(
       find.byKey(const Key('landing_h04_inline_magic_capture')),
@@ -1065,34 +1060,25 @@ void main() {
     expect(find.textContaining('21サービス分'), findsNothing);
   });
 
-  testWidgets(
-    'pricing disclosure keeps verified trust essentials visible',
-    (tester) async {
-      await pumpLanding(
-        tester,
-        assignment: _assignment('h01', LandingExperimentVariant.treatment),
-      );
+  testWidgets('pricing disclosure keeps verified trust essentials visible', (
+    tester,
+  ) async {
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.treatment),
+    );
 
-      expect(
-        find.byKey(const Key('landing_pricing_trust_summary')),
-        findsOneWidget,
-      );
-      expect(
-        find.text(
-          '無料登録: カード不要 / 有料プラン: 内容・料金を事前確認',
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const Key('landing_pricing_disclosure_link')),
-        findsOneWidget,
-      );
-      expect(
-        find.text('競合サービスとの料金比較を見る'),
-        findsNothing,
-      );
-    },
-  );
+    expect(
+      find.byKey(const Key('landing_pricing_trust_summary')),
+      findsOneWidget,
+    );
+    expect(find.text('無料登録: カード不要 / 有料プラン: 内容・料金を事前確認'), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_pricing_disclosure_link')),
+      findsOneWidget,
+    );
+    expect(find.text('競合サービスとの料金比較を見る'), findsNothing);
+  });
 
   testWidgets('hero media keeps a readable fallback contract', (tester) async {
     await pumpLanding(
@@ -1253,9 +1239,7 @@ void main() {
       );
       expect(find.textContaining('134機能'), findsNothing);
       expect(
-        find.text(
-          '悩みを1文入力すると、AIが最初の一手を提案します。実行するかはあなたが決め、役立つ提案だけ登録後に引き継げます。',
-        ),
+        find.text('悩みを1文入力すると、AIが最初の一手を提案します。実行するかはあなたが決め、役立つ提案だけ登録後に引き継げます。'),
         findsOneWidget,
       );
     },
@@ -1469,6 +1453,101 @@ void main() {
     );
   });
 
+  testWidgets('trial provider fallback shows an honest instant preview', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.treatment),
+    );
+    adapter.trialError = const LandingTrialPreviewException(
+      'trial_ai_unavailable',
+      statusCode: 503,
+      canUseInstantPreview: true,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('landing_h11_answer_preview_action')),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byKey(const Key('landing_trial_error')), findsNothing);
+    expect(find.text('簡易プレビュー（AI未使用）'), findsOneWidget);
+    expect(find.textContaining('止まっている作業を1件開き'), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_trial_instant_preview_notice')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('landing_trial_ai_retry')), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_h04_inline_magic_capture')),
+      findsNothing,
+    );
+    expect(
+      adapter.conversionEvents,
+      contains('lp_exp_h01_treatment_trial_fallback'),
+    );
+
+    adapter.trialError = null;
+    final retry = find.byKey(const Key('landing_trial_ai_retry'));
+    await tester.ensureVisible(retry);
+    await tester.tap(retry);
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('簡易プレビュー（AI未使用）'), findsNothing);
+    expect(find.text('AIからの提案'), findsOneWidget);
+    expect(find.text('重要な案件を1件選ぶ'), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_h04_inline_magic_capture')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+      'instant preview stays usable without becoming a mobile save path', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.treatment),
+      size: const Size(390, 844),
+    );
+    adapter.trialError = const LandingTrialPreviewException(
+      'trial_ai_unavailable',
+      statusCode: 503,
+      canUseInstantPreview: true,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('landing_h11_answer_preview_action')),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    final notice = find.byKey(
+      const Key('landing_trial_instant_preview_notice'),
+    );
+    await tester.ensureVisible(notice);
+    await tester.pumpAndSettle();
+
+    expect(notice, findsOneWidget);
+    expect(find.byKey(const Key('landing_trial_ai_retry')), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_h04_inline_magic_capture')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(
+      find.byKey(const Key('landing_h09_mobile_sticky_cta')),
+    );
+    await tester.pump();
+
+    expect(adapter.saveCtas, 0);
+  });
+
   testWidgets('trial quota exhaustion explains the daily limit', (
     tester,
   ) async {
@@ -1479,6 +1558,7 @@ void main() {
     adapter.trialError = const LandingTrialPreviewException(
       'trial_quota_exhausted',
       statusCode: 429,
+      canUseInstantPreview: true,
     );
 
     await tester.tap(

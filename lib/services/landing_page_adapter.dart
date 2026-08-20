@@ -100,11 +100,17 @@ String landingGoogleOAuthFailureEventKey(
 class LandingTrialPreviewException implements Exception {
   final String code;
   final int? statusCode;
+  final bool canUseInstantPreview;
 
-  const LandingTrialPreviewException(this.code, {this.statusCode});
+  const LandingTrialPreviewException(
+    this.code, {
+    this.statusCode,
+    this.canUseInstantPreview = false,
+  });
 
   @override
-  String toString() => 'LandingTrialPreviewException($code, $statusCode)';
+  String toString() =>
+      'LandingTrialPreviewException($code, $statusCode, $canUseInstantPreview)';
 }
 
 class LandingPageViewPoint {
@@ -128,10 +134,10 @@ class LandingPageViewStats {
   });
 
   const LandingPageViewStats.empty()
-      : todayViews = 0,
-        monthViews = 0,
-        totalViews = 0,
-        series = const <LandingPageViewPoint>[];
+    : todayViews = 0,
+      monthViews = 0,
+      totalViews = 0,
+      series = const <LandingPageViewPoint>[];
 }
 
 class LandingSocialProofStats {
@@ -143,9 +149,7 @@ class LandingSocialProofStats {
     required this.publicMemoCount,
   });
 
-  const LandingSocialProofStats.empty()
-      : totalUsers = 0,
-        publicMemoCount = 0;
+  const LandingSocialProofStats.empty() : totalUsers = 0, publicMemoCount = 0;
 }
 
 abstract interface class LandingPageAdapter {
@@ -270,10 +274,12 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
 
     try {
       final dynamic raw = await client.rpc('get_lp_view_stats');
-      final data =
-          raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
-      final seriesRaw =
-          data['series'] is List ? data['series'] as List : const <dynamic>[];
+      final data = raw is Map
+          ? Map<String, dynamic>.from(raw)
+          : <String, dynamic>{};
+      final seriesRaw = data['series'] is List
+          ? data['series'] as List
+          : const <dynamic>[];
 
       final series = <LandingPageViewPoint>[];
       for (final rowRaw in seriesRaw) {
@@ -366,13 +372,17 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
       );
     } on FunctionException catch (error) {
       final details = error.details;
-      final errorCode =
-          details is Map ? details['error']?.toString().trim() : null;
+      final errorCode = details is Map
+          ? details['error']?.toString().trim()
+          : null;
+      final canUseInstantPreview =
+          details is Map && details['canUseInstantPreview'] == true;
       throw LandingTrialPreviewException(
         (errorCode == null || errorCode.isEmpty)
             ? 'trial_ai_unavailable'
             : errorCode,
         statusCode: error.status,
+        canUseInstantPreview: canUseInstantPreview,
       );
     }
     final data = response.data is Map<String, dynamic>
@@ -389,6 +399,7 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
           ? data['error'].toString().trim()
           : 'trial_ai_unavailable',
       statusCode: response.status,
+      canUseInstantPreview: data['canUseInstantPreview'] == true,
     );
   }
 
