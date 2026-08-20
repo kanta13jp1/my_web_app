@@ -683,10 +683,23 @@ class _LoadFailure extends StatelessWidget {
               style: const TextStyle(color: DesignTokens.textOnDark),
             ),
             const SizedBox(height: DesignTokens.space16),
-            FilledButton(
-              onPressed: () => viewModel.load(currentUri: Uri.base),
-              child: const Text('再試行'),
-            ),
+            if (viewModel.authenticationRequired) ...[
+              FilledButton.icon(
+                key: const Key('video-studio-login'),
+                onPressed: () => Navigator.of(context).pushNamed('/login'),
+                icon: const Icon(Icons.login),
+                label: const Text('ログインする'),
+              ),
+              const SizedBox(height: DesignTokens.space8),
+              TextButton(
+                onPressed: () => viewModel.load(currentUri: Uri.base),
+                child: const Text('ログイン済みなら再読み込み'),
+              ),
+            ] else
+              FilledButton(
+                onPressed: () => viewModel.load(currentUri: Uri.base),
+                child: const Text('再試行'),
+              ),
           ],
         ),
       ),

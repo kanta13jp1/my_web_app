@@ -36,6 +36,7 @@ class VideoStudioViewModel extends ChangeNotifier {
   bool _isRefreshing = false;
   String? _openingOutputJobId;
   bool _isOpeningCheckout = false;
+  bool _authenticationRequired = false;
   String? _errorMessage;
   String? _noticeMessage;
   String? _idempotencyKey;
@@ -56,6 +57,7 @@ class VideoStudioViewModel extends ChangeNotifier {
   bool get isRefreshing => _isRefreshing;
   String? get openingOutputJobId => _openingOutputJobId;
   bool get isOpeningCheckout => _isOpeningCheckout;
+  bool get authenticationRequired => _authenticationRequired;
   String? get errorMessage => _errorMessage;
   String? get noticeMessage => _noticeMessage;
 
@@ -78,6 +80,7 @@ class VideoStudioViewModel extends ChangeNotifier {
 
   Future<void> load({Uri? currentUri}) async {
     _loadStatus = VideoStudioLoadStatus.loading;
+    _authenticationRequired = false;
     _errorMessage = null;
     _noticeMessage =
         currentUri?.queryParameters['billing'] == 'video_credits_success'
@@ -85,12 +88,14 @@ class VideoStudioViewModel extends ChangeNotifier {
             : null;
     notifyListeners();
     try {
-      final catalogFuture = _gateway.loadCatalog();
-      final balanceFuture = _gateway.loadBalance();
-      final jobsFuture = _gateway.listJobs();
-      _catalog = await catalogFuture;
-      _balance = await balanceFuture;
-      _jobs = await jobsFuture;
+      final results = await Future.wait<Object>([
+        _gateway.loadCatalog(),
+        _gateway.loadBalance(),
+        _gateway.listJobs(),
+      ]);
+      _catalog = results[0] as VideoStudioCatalog;
+      _balance = results[1] as VideoCreditBalance;
+      _jobs = results[2] as List<VideoGenerationJob>;
       if (_catalog?.models.isEmpty ?? true) {
         throw const VideoStudioException('catalog_empty');
       }
@@ -100,6 +105,9 @@ class VideoStudioViewModel extends ChangeNotifier {
       if (_activeJob != null) _startPolling();
     } catch (error) {
       _loadStatus = VideoStudioLoadStatus.failure;
+      _authenticationRequired =
+          error is VideoStudioException &&
+          error.code == 'authentication_required';
       _errorMessage = _friendlyError(error);
     }
     notifyListeners();

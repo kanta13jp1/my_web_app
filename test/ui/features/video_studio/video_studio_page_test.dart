@@ -76,17 +76,42 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('authentication failure offers a direct login action', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        gateway: _AuthenticationRequiredGateway(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('この機能を使うにはログインしてください。'), findsOneWidget);
+    expect(find.byKey(const Key('video-studio-login')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('video-studio-login')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('video-studio-login-page')), findsOneWidget);
+  });
 }
 
-Widget _app({List<VideoGenerationJob> jobs = const []}) {
+Widget _app({
+  List<VideoGenerationJob> jobs = const [],
+  VideoStudioGateway? gateway,
+}) {
   return MaterialApp(
     routes: {
+      '/login': (_) => const Scaffold(
+        body: Text('Login page', key: Key('video-studio-login-page')),
+      ),
       '/terms': (_) => const SizedBox(),
       '/privacy': (_) => const SizedBox(),
       '/tokusho': (_) => const SizedBox(),
     },
     home: VideoStudioFeature(
-      gateway: _PageGateway(jobs: jobs),
+      gateway: gateway ?? _PageGateway(jobs: jobs),
       initialUri: Uri.parse('https://example.test/video-studio'),
     ),
   );
@@ -151,4 +176,11 @@ class _PageGateway implements VideoStudioGateway {
     required String returnUrl,
   }) async =>
       Uri.parse('https://checkout.stripe.test/session');
+}
+
+class _AuthenticationRequiredGateway extends _PageGateway {
+  @override
+  Future<VideoStudioCatalog> loadCatalog() => Future.error(
+        const VideoStudioException('authentication_required'),
+      );
 }

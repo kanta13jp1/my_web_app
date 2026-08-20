@@ -78,6 +78,21 @@ void main() {
     expect(gateway.createdIdempotencyKey, isNull);
   });
 
+  test('authentication failures expose a login-specific load state', () async {
+    final gateway = _FakeVideoStudioGateway(
+      balance: _balance(0),
+      loadError: const VideoStudioException('authentication_required'),
+    );
+    final viewModel = VideoStudioViewModel(gateway: gateway);
+    addTearDown(viewModel.dispose);
+
+    await viewModel.load();
+
+    expect(viewModel.loadStatus, VideoStudioLoadStatus.failure);
+    expect(viewModel.authenticationRequired, isTrue);
+    expect(viewModel.errorMessage, 'この機能を使うにはログインしてください。');
+  });
+
   test('completed history refreshes an expired or missing signed URL',
       () async {
     final completedWithoutUrl = _job(status: 'succeeded', includeOutput: false);
@@ -103,22 +118,31 @@ class _FakeVideoStudioGateway implements VideoStudioGateway {
     required this.balance,
     this.initialJobs = const [],
     this.refreshedJob,
+    this.loadError,
   });
 
   VideoCreditBalance balance;
   final List<VideoGenerationJob> initialJobs;
   final VideoGenerationJob? refreshedJob;
+  final Exception? loadError;
   String? createdIdempotencyKey;
   int refreshCount = 0;
 
   @override
-  Future<VideoStudioCatalog> loadCatalog() async => _catalog;
+  Future<VideoStudioCatalog> loadCatalog() async {
+    if (loadError case final error?) throw error;
+    return _catalog;
+  }
 
   @override
-  Future<VideoCreditBalance> loadBalance() async => balance;
+  Future<VideoCreditBalance> loadBalance() async {
+    return balance;
+  }
 
   @override
-  Future<List<VideoGenerationJob>> listJobs() async => initialJobs;
+  Future<List<VideoGenerationJob>> listJobs() async {
+    return initialJobs;
+  }
 
   @override
   Future<VideoCreateResult> createJob({
