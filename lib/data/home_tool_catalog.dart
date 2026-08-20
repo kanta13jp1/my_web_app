@@ -1926,8 +1926,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'テンプレート',
         'shop',
       ],
-      onOpen: (context) =>
-          _pushPage(context, const DigitalProductStorePage()),
+      onOpen: (context) => _pushPage(context, const DigitalProductStorePage()),
     ),
     HomeToolEntry(
       id: 'subscription-billing',
