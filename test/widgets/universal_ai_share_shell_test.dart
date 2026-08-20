@@ -40,6 +40,21 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('mobile viewport hides the overlay so it cannot cover content', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(_buildShell());
+    await tester.pump();
+
+    expect(find.byTooltip('AIシェア'), findsNothing);
+    expect(find.byTooltip('AIシェアボタン設定'), findsNothing);
+  });
+
   testWidgets('settings sheet opens from the overlay-hosted share button',
       (tester) async {
     await tester.pumpWidget(_buildShell());

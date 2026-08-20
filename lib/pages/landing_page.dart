@@ -124,6 +124,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   Future<String>? _experimentVisitorIdFuture;
   final Set<String> _recordedExperimentStages = <String>{};
   bool _landingIntentHandled = false;
+  bool _showMobileStickyCta = false;
 
   Uri? get _landingUri => widget.landingUri ?? (kIsWeb ? Uri.base : null);
   GrowthAcquisitionService get _acquisitionService => widget.acquisitionService;
@@ -158,6 +159,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   @override
   void initState() {
     super.initState();
+    _pageScrollController.addListener(_updateMobileStickyVisibility);
     _oauthCallbackFailure = LandingOAuthCallbackFailure.fromUri(_landingUri);
     _experimentAssignment = widget.experimentAssignment;
     if (_experimentAssignment != null) {
@@ -346,6 +348,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     _trialPromptController.dispose();
     _emailFocusNode.dispose();
     _trialEmailFocusNode.dispose();
+    _pageScrollController.removeListener(_updateMobileStickyVisibility);
     _pageScrollController.dispose();
     super.dispose();
   }
@@ -363,6 +366,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
   bool get _usesHeroTrial {
     return _isFirstUserGrowthTraffic || _hypothesisEnabled('h03');
+  }
+
+  void _updateMobileStickyVisibility() {
+    if (!_pageScrollController.hasClients) return;
+    final shouldShow = _pageScrollController.offset >= 520;
+    if (shouldShow == _showMobileStickyCta || !mounted) return;
+    setState(() => _showMobileStickyCta = shouldShow);
   }
 
   void _goToAuthenticatedEntry() {
@@ -1490,7 +1500,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   Widget? _buildMobileStickyCta(double screenWidth) {
-    if (screenWidth >= 720 || !_hypothesisEnabled('h09')) {
+    if (screenWidth >= 720 ||
+        !_hypothesisEnabled('h09') ||
+        !_showMobileStickyCta) {
       return null;
     }
     final hasTrialResult = _trialAction != null && _hypothesisEnabled('h04');
@@ -4541,16 +4553,19 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            '入力例: 「$samplePrompt」',
-            style: TextStyle(
-              color: const Color(0xFF64748B),
-              fontSize: compact ? 11 : 12,
-              height: 1.45,
+          if (!compact) ...[
+            const SizedBox(height: 4),
+            const Text(
+              '入力例: 「$samplePrompt」',
+              style: TextStyle(
+                color: Color(0xFF64748B),
+                fontSize: 12,
+                height: 1.45,
+              ),
             ),
-          ),
-          const SizedBox(height: 7),
+            const SizedBox(height: 7),
+          ] else
+            const SizedBox(height: 3),
           Text(
             '提案例: 止まっている案件を1つ選ぶ',
             style: TextStyle(
@@ -4560,15 +4575,17 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            '次の一手例: 確認先を1人決め、連絡文の下書きを作る',
-            style: TextStyle(
-              color: const Color(0xFF475569),
-              fontSize: compact ? 11 : 12,
-              height: 1.45,
+          if (!compact) ...[
+            const SizedBox(height: 2),
+            const Text(
+              '次の一手例: 確認先を1人決め、連絡文の下書きを作る',
+              style: TextStyle(
+                color: Color(0xFF475569),
+                fontSize: 12,
+                height: 1.45,
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: 3),
           Text(
             '実際の提案は、入力内容によって変わります。',
@@ -6501,29 +6518,41 @@ class _WorkflowLandingHero extends StatelessWidget {
                       ),
                     ],
                     if (showRiskReversal) ...[
-                      const SizedBox(height: 28),
-                      const Wrap(
-                        key: Key('landing_h05_risk_reversal'),
-                        spacing: 16,
-                        runSpacing: 10,
-                        children: [
-                          _TrustPoint(
-                            icon: Icons.check_circle_outline,
-                            label: '登録前に1件体験',
-                            dark: true,
+                      SizedBox(height: compactTrial ? 16 : 28),
+                      if (compactTrial)
+                        const Text(
+                          '登録不要・無料登録時カード不要・結果を見てから保存',
+                          key: Key('landing_h05_risk_reversal'),
+                          style: TextStyle(
+                            color: Color(0xFFC9D1D7),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            height: 1.5,
                           ),
-                          _TrustPoint(
-                            icon: Icons.credit_card_off_outlined,
-                            label: '無料登録時カード不要',
-                            dark: true,
-                          ),
-                          _TrustPoint(
-                            icon: Icons.how_to_reg_outlined,
-                            label: '最終判断はあなた',
-                            dark: true,
-                          ),
-                        ],
-                      ),
+                        )
+                      else
+                        const Wrap(
+                          key: Key('landing_h05_risk_reversal'),
+                          spacing: 16,
+                          runSpacing: 10,
+                          children: [
+                            _TrustPoint(
+                              icon: Icons.check_circle_outline,
+                              label: '登録前に1件体験',
+                              dark: true,
+                            ),
+                            _TrustPoint(
+                              icon: Icons.credit_card_off_outlined,
+                              label: '無料登録時カード不要',
+                              dark: true,
+                            ),
+                            _TrustPoint(
+                              icon: Icons.how_to_reg_outlined,
+                              label: '最終判断はあなた',
+                              dark: true,
+                            ),
+                          ],
+                        ),
                     ],
                   ],
                 ),
