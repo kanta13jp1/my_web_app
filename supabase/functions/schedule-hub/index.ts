@@ -42,6 +42,10 @@ import {
   type SupporterBuyerContext,
   supporterBuyerStripeParams,
 } from "../_shared/supporter_buyer.ts";
+import {
+  videoCreditPack,
+  videoCreditPackMetadata,
+} from "../_shared/video_credit_packs.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1842,6 +1846,52 @@ serve(async (req: Request) => {
           id: session.id,
           checkout_url: session.url,
           amount_jpy: amountJpy,
+        });
+      }
+
+      case "billing.create_video_credit_checkout_session": {
+        const pack = videoCreditPack(body.pack_key);
+        if (!pack) {
+          return json({ error: "invalid_video_credit_pack" }, 400);
+        }
+        const customerId = await getOrCreateStripeCustomer(admin, userId!);
+        const returnUrl = billingReturnUrl(body.return_url, "/video-studio");
+        const metadata = videoCreditPackMetadata(userId!, pack);
+        const session = await stripePostForm("/checkout/sessions", {
+          mode: "payment",
+          locale: "ja",
+          customer: customerId,
+          success_url: withBillingParam(returnUrl, "video_credits_success"),
+          cancel_url: withBillingParam(returnUrl, "video_credits_cancel"),
+          "line_items[0][price_data][currency]": "jpy",
+          "line_items[0][price_data][product_data][name]":
+            `AI動画クレジット ${pack.name}`,
+          "line_items[0][price_data][product_data][description]":
+            pack.description,
+          "line_items[0][price_data][unit_amount]": String(pack.amountJpy),
+          "line_items[0][quantity]": "1",
+          "metadata[offer]": metadata.offer,
+          "metadata[user_id]": metadata.user_id,
+          "metadata[video_credit_pack_key]": metadata.video_credit_pack_key,
+          "metadata[video_credits]": metadata.video_credits,
+          "metadata[amount_jpy]": metadata.amount_jpy,
+          "payment_intent_data[metadata][offer]": metadata.offer,
+          "payment_intent_data[metadata][user_id]": metadata.user_id,
+          "payment_intent_data[metadata][video_credit_pack_key]":
+            metadata.video_credit_pack_key,
+          "payment_intent_data[metadata][video_credits]":
+            metadata.video_credits,
+          "payment_intent_data[metadata][amount_jpy]": metadata.amount_jpy,
+        });
+        return json({
+          success: true,
+          id: session.id,
+          checkout_url: session.url,
+          pack: {
+            key: pack.key,
+            credits: pack.credits,
+            amount_jpy: pack.amountJpy,
+          },
         });
       }
 

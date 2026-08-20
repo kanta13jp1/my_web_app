@@ -163,6 +163,7 @@ import '../pages/digital_product_store_pages.dart';
 import '../pages/video_ad_generator_page.dart';
 import '../pages/viral_ad_generator_page.dart';
 import '../pages/viral_video_generator_page.dart';
+import '../ui/features/video_studio/video_studio_feature.dart';
 import '../pages/youtube_stats_page.dart';
 import '../pages/virtual_pet_page.dart';
 import '../pages/work_menu_page.dart';
@@ -2285,6 +2286,22 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF283593),
       keywords: const <String>['ABテスト', 'ランディング', 'LP', 'CVR', 'コンバージョン'],
       onOpen: (context) => _pushPage(context, const LandingAbTestPage()),
+    ),
+    HomeToolEntry(
+      id: 'video-studio',
+      sectionId: 'growth',
+      title: 'AI動画スタジオ',
+      subtitle: '前払いクレジットで使う、当サイト運営GPUの非公開動画生成',
+      icon: Icons.movie_filter_outlined,
+      color: const Color(0xFF5C6BC0),
+      keywords: const <String>[
+        'AI動画',
+        'テキスト動画',
+        '動画生成',
+        'video studio',
+        'text to video',
+      ],
+      onOpen: (context) => _pushPage(context, const VideoStudioFeature()),
     ),
     HomeToolEntry(
       id: 'viral-ad-generator',
