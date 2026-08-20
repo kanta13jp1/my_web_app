@@ -5,6 +5,16 @@ import '../domain/video_studio_models.dart';
 class VideoStudioException implements Exception {
   const VideoStudioException(this.code, [this.message]);
 
+  factory VideoStudioException.fromFunctionException(FunctionException error) {
+    final details = videoStudioMap(error.details);
+    final code = details['error']?.toString().trim();
+    final message = details['message']?.toString().trim();
+    return VideoStudioException(
+      code == null || code.isEmpty ? 'http_${error.status}' : code,
+      message == null || message.isEmpty ? error.reasonPhrase : message,
+    );
+  }
+
   final String code;
   final String? message;
 
@@ -99,14 +109,11 @@ class SupabaseVideoStudioGateway implements VideoStudioGateway {
     required String packKey,
     required String returnUrl,
   }) async {
-    final response = await _client.functions.invoke(
-      'schedule-hub',
-      body: {
-        'action': 'billing.create_video_credit_checkout_session',
-        'pack_key': packKey,
-        'return_url': returnUrl,
-      },
-    );
+    final response = await _invokeFunction('schedule-hub', {
+      'action': 'billing.create_video_credit_checkout_session',
+      'pack_key': packKey,
+      'return_url': returnUrl,
+    });
     final data = videoStudioMap(response.data);
     _throwForResponse(response.status, data);
     final uri = Uri.tryParse(data['checkout_url']?.toString() ?? '');
@@ -117,13 +124,21 @@ class SupabaseVideoStudioGateway implements VideoStudioGateway {
   }
 
   Future<Map<String, dynamic>> _invokeVideo(Map<String, dynamic> body) async {
-    final response = await _client.functions.invoke(
-      'video-generation-hub',
-      body: body,
-    );
+    final response = await _invokeFunction('video-generation-hub', body);
     final data = videoStudioMap(response.data);
     _throwForResponse(response.status, data);
     return data;
+  }
+
+  Future<FunctionResponse> _invokeFunction(
+    String functionName,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      return await _client.functions.invoke(functionName, body: body);
+    } on FunctionException catch (error) {
+      throw VideoStudioException.fromFunctionException(error);
+    }
   }
 
   void _throwForResponse(int status, Map<String, dynamic> data) {
