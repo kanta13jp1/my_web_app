@@ -34,6 +34,13 @@ class _FakeGateway implements ShopGateway {
   bool get isSignedIn => signedIn;
 
   @override
+  Future<List<ShopProduct>> fetchProducts({ShopProductType? type}) async {
+    final value = product;
+    if (value == null || (type != null && value.type != type)) return const [];
+    return [value];
+  }
+
+  @override
   Future<ShopProduct?> fetchProduct(String productId) async {
     if (fetchError != null) throw fetchError!;
     return product;
@@ -41,6 +48,9 @@ class _FakeGateway implements ShopGateway {
 
   @override
   Future<bool> hasPurchased(String productId) async => purchased;
+
+  @override
+  Future<List<ShopPurchase>> fetchPurchases() async => const [];
 
   @override
   Future<CheckoutStart> startCheckout(
@@ -63,6 +73,7 @@ class _FakeGateway implements ShopGateway {
       version: '1.0',
       sha256: 'cc0e5caa',
       fileSizeBytes: 37572177,
+      fileName: 'HexCiv-v1.0-win64.zip',
     );
   }
 }
@@ -77,6 +88,9 @@ ShopProduct _product({bool purchasable = true}) => ShopProduct(
       sha256:
           'cc0e5caae732fa123d26ed62c1827a923c4ccd777823190ed714ba178e97ed93',
       isPurchasable: purchasable,
+      requirementsJa: 'Windows 10 / 11 (64bit)',
+      formatLabel: 'Windows / ZIP',
+      downloadFileName: 'HexCiv-v1.0-win64.zip',
     );
 
 Future<void> _pump(
@@ -86,7 +100,11 @@ Future<void> _pump(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      home: HexcivShopPage(service: gateway, purchaseResult: purchaseResult),
+      home: HexcivShopPage(
+        service: gateway,
+        purchaseResult: purchaseResult,
+        urlLauncher: (_, __) async => true,
+      ),
     ),
   );
   await tester.pumpAndSettle();

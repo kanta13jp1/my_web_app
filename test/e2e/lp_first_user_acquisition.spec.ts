@@ -37,13 +37,40 @@ test.describe('LP first-user acquisition', () => {
     expect(inputBox!.y).toBeLessThan(actionBox!.y);
   });
 
+  test('custom input hides the unrelated fixed sample without hiding the trial action', async ({
+    page,
+  }) => {
+    await openLanding(page, treatmentPath);
+
+    const trialInput = page.getByRole('textbox', { name: /登録なしで試す/ });
+    const sampleAction = page.getByRole('button', {
+      name: 'この入力例でAIに提案させる',
+      exact: true,
+    });
+    const trialAction = page.getByRole('button', {
+      name: '今やる1件を試す',
+      exact: true,
+    });
+
+    await expect(sampleAction).toBeVisible();
+    await trialInput.fill(
+      'サブスクで無駄な支払いが多い。サブスクを棚卸ししたい。',
+    );
+
+    await expect(sampleAction).toHaveCount(0);
+    await expect(trialAction).toBeVisible();
+  });
+
   test('H04 treatment reveals Google save and Magic Link fallback after value', async ({
     page,
   }) => {
     await openLanding(page, treatmentPath);
 
     await page
-      .getByRole('button', { name: 'この例で即試す', exact: true })
+      .getByRole('button', {
+        name: 'この入力例でAIに提案させる',
+        exact: true,
+      })
       .click();
 
     await expect(
