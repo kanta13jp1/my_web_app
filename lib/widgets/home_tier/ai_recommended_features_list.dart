@@ -125,8 +125,7 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
                 _stringValue(item['id']) ??
                 '',
           );
-          final label =
-              _stringValue(item['label']) ??
+          final label = _stringValue(item['label']) ??
               _stringValue(item['feature_label']) ??
               _fallbackLabel(route) ??
               _stringValue(item['title']) ??

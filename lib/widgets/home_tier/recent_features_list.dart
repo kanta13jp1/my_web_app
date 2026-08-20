@@ -84,8 +84,7 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
         runSpacing: 8,
         children: _items.map((item) {
           final route = _normalizeRoute(item['feature_route'] as String? ?? '');
-          final label =
-              item['feature_label'] as String? ??
+          final label = item['feature_label'] as String? ??
               route.substring(1).replaceAll('-', ' ');
           return GestureDetector(
             onLongPress: route.isEmpty

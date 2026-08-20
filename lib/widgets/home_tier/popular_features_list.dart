@@ -81,8 +81,7 @@ class _PopularFeaturesListState extends State<PopularFeaturesList> {
         runSpacing: 8,
         children: _items.map((item) {
           final route = _normalizeRoute(item['feature_route'] as String? ?? '');
-          final label =
-              (item['feature_label'] as String?) ??
+          final label = (item['feature_label'] as String?) ??
               (item['label'] as String?) ??
               _fallbackLabel(route);
           final countValue = item['use_count'];
