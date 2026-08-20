@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import socket
 import subprocess
 import sys
@@ -54,6 +55,12 @@ ASSET_CHAT_TABLES = ("asset_chat_messages", "asset_chat_threads")
 ASSET_CHAT_THREAD_1 = "00000000-0000-4000-8000-000000002484"
 ASSET_CHAT_THREAD_2 = "00000000-0000-4000-8000-000000002485"
 ASSET_CHAT_TEMP_THREAD = "00000000-0000-4000-8000-000000002486"
+TAX_RECORDS_MIGRATION = (
+    ROOT / "supabase" / "migrations" / "20260820023000_create_tax_records.sql"
+)
+TAX_RECORDS_TABLES = ("tax_records",)
+TAX_RECORD_1 = "00000000-0000-4000-8000-000000002489"
+TAX_RECORD_2 = "00000000-0000-4000-8000-000000002490"
 EDGE_FIXTURE_ENV_ALLOW = (
     "DATABASE_URL",
     "PORT",
@@ -101,7 +108,108 @@ def sql_files(sql_dir: Path) -> list[Path]:
 
 
 def sql_statements(sql: str) -> list[str]:
-    return [statement.strip() for statement in sql.split(";") if statement.strip()]
+    statements: list[str] = []
+    current: list[str] = []
+    index = 0
+    state = "normal"
+    dollar_tag = ""
+
+    while index < len(sql):
+        char = sql[index]
+        next_char = sql[index + 1] if index + 1 < len(sql) else ""
+
+        if state == "single_quote":
+            current.append(char)
+            if char == "'" and next_char == "'":
+                current.append(next_char)
+                index += 2
+                continue
+            if char == "'":
+                state = "normal"
+            index += 1
+            continue
+
+        if state == "double_quote":
+            current.append(char)
+            if char == '"' and next_char == '"':
+                current.append(next_char)
+                index += 2
+                continue
+            if char == '"':
+                state = "normal"
+            index += 1
+            continue
+
+        if state == "line_comment":
+            current.append(char)
+            if char == "\n":
+                state = "normal"
+            index += 1
+            continue
+
+        if state == "block_comment":
+            current.append(char)
+            if char == "*" and next_char == "/":
+                current.append(next_char)
+                index += 2
+                state = "normal"
+                continue
+            index += 1
+            continue
+
+        if state == "dollar_quote":
+            if sql.startswith(dollar_tag, index):
+                current.append(dollar_tag)
+                index += len(dollar_tag)
+                state = "normal"
+                continue
+            current.append(char)
+            index += 1
+            continue
+
+        if char == "-" and next_char == "-":
+            current.extend((char, next_char))
+            index += 2
+            state = "line_comment"
+            continue
+        if char == "/" and next_char == "*":
+            current.extend((char, next_char))
+            index += 2
+            state = "block_comment"
+            continue
+        if char == "'":
+            current.append(char)
+            index += 1
+            state = "single_quote"
+            continue
+        if char == '"':
+            current.append(char)
+            index += 1
+            state = "double_quote"
+            continue
+        if char == "$":
+            match = re.match(r"\$(?:[A-Za-z_][A-Za-z0-9_]*)?\$", sql[index:])
+            if match:
+                dollar_tag = match.group(0)
+                current.append(dollar_tag)
+                index += len(dollar_tag)
+                state = "dollar_quote"
+                continue
+        if char == ";":
+            statement = "".join(current).strip()
+            if statement:
+                statements.append(statement)
+            current.clear()
+            index += 1
+            continue
+
+        current.append(char)
+        index += 1
+
+    trailing = "".join(current).strip()
+    if trailing:
+        statements.append(trailing)
+    return statements
 
 
 def free_tcp_port() -> int:
@@ -168,6 +276,14 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "authenticated users cannot insert across tenants",
             "message ownership follows the parent thread",
             "deleting an owned thread cascades to its messages",
+        ],
+        "tax_records_migration": TAX_RECORDS_MIGRATION.relative_to(ROOT).as_posix(),
+        "tax_records_checks": [
+            "tax_records has owner-only RLS",
+            "anon has no table privileges",
+            "authenticated users see only their own tax records",
+            "authenticated users cannot forge another owner",
+            "authenticated owner CRUD succeeds",
         ],
         "edge_db_fixture": edge_fixture.relative_to(ROOT).as_posix(),
         "actual_edge_checks": [
@@ -681,6 +797,191 @@ def check_asset_chat_rls(conn: Any) -> dict[str, Any]:
     }
 
 
+def seed_tax_records_fixture(conn: Any) -> None:
+    with conn.cursor() as cur:
+        cur.executemany(
+            "insert into public.tax_records "
+            "(id, user_id, year, type, amount, category, evidence_url) "
+            "values (%s::uuid, %s::uuid, %s, %s, %s, %s, %s)",
+            [
+                (
+                    TAX_RECORD_1,
+                    ISSUE_2773_USER_1,
+                    2026,
+                    "business",
+                    "120000.0000",
+                    "consulting",
+                    "https://example.invalid/evidence/owner-one",
+                ),
+                (
+                    TAX_RECORD_2,
+                    ISSUE_2773_USER_2,
+                    2026,
+                    "furusato",
+                    "20000.0000",
+                    "donation",
+                    None,
+                ),
+            ],
+        )
+    conn.commit()
+
+
+def tax_records_role_count(
+    conn: Any,
+    role: str,
+    user_id: str | None,
+    table: str,
+) -> int:
+    if role not in {"anon", "authenticated", "service_role"}:
+        raise ValueError(f"unexpected role for tax records query: {role}")
+    if table not in TAX_RECORDS_TABLES:
+        raise ValueError(f"unexpected table for tax records query: {table}")
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute(f"set local role {role}")
+            cur.execute(
+                "select set_config('request.jwt.claim.sub', %s, true)",
+                (user_id or "",),
+            )
+            cur.execute(f"select count(*) from public.{table}")
+            row = cur.fetchone()
+    return int(row[0])
+
+
+def check_tax_records_rls(conn: Any) -> dict[str, Any]:
+    with conn.cursor() as cur:
+        cur.execute(
+            "select c.relname from pg_class c "
+            "join pg_namespace n on n.oid = c.relnamespace "
+            "where n.nspname = 'public' and c.relname = any(%s) "
+            "and c.relrowsecurity order by c.relname",
+            (list(TAX_RECORDS_TABLES),),
+        )
+        enabled_tables = [row[0] for row in cur.fetchall()]
+        cur.execute(
+            "select policyname from pg_policies where schemaname = 'public' "
+            "and tablename = 'tax_records' order by policyname"
+        )
+        policy_names = [row[0] for row in cur.fetchall()]
+    conn.commit()
+
+    if enabled_tables != ["tax_records"]:
+        raise AssertionError(f"tax records RLS was not enabled: {enabled_tables}")
+
+    expected_policies = {
+        f"tax_records_{operation}_own"
+        for operation in ("select", "insert", "update", "delete")
+    }
+    if set(policy_names) != expected_policies:
+        raise AssertionError(f"unexpected tax records policy set: {policy_names}")
+
+    authenticated_grants = {"SELECT", "INSERT", "UPDATE", "DELETE"}
+    table_privileges = (
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "TRUNCATE",
+        "REFERENCES",
+        "TRIGGER",
+    )
+    with conn.cursor() as cur:
+        for privilege in table_privileges:
+            cur.execute(
+                "select has_table_privilege(%s, %s, %s)",
+                ("anon", "public.tax_records", privilege),
+            )
+            if bool(cur.fetchone()[0]):
+                raise AssertionError(f"anon retained {privilege} on tax_records")
+            cur.execute(
+                "select has_table_privilege(%s, %s, %s)",
+                ("authenticated", "public.tax_records", privilege),
+            )
+            actual = bool(cur.fetchone()[0])
+            expected = privilege in authenticated_grants
+            if actual != expected:
+                raise AssertionError(
+                    "authenticated privilege mismatch on tax_records: "
+                    f"{privilege} expected {expected}, got {actual}"
+                )
+    conn.commit()
+
+    missing_claim_count = tax_records_role_count(
+        conn,
+        "authenticated",
+        None,
+        "tax_records",
+    )
+    if missing_claim_count != 0:
+        raise AssertionError(
+            f"missing tenant claim exposed tax records: {missing_claim_count}"
+        )
+
+    owner_count = tax_records_role_count(
+        conn,
+        "authenticated",
+        ISSUE_2773_USER_1,
+        "tax_records",
+    )
+    if owner_count != 1:
+        raise AssertionError(f"tax record tenant filtering failed: {owner_count}")
+
+    forged_owner_sqlstate = issue_2773_expect_denied(
+        conn,
+        role="authenticated",
+        user_id=ISSUE_2773_USER_1,
+        statement=(
+            "insert into public.tax_records "
+            "(user_id, year, type, amount, category) "
+            "values (%s::uuid, 2026, 'medical', 1000, 'forged owner')"
+        ),
+        params=(ISSUE_2773_USER_2,),
+    )
+
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute("set local role authenticated")
+            cur.execute(
+                "select set_config('request.jwt.claim.sub', %s, true)",
+                (ISSUE_2773_USER_1,),
+            )
+            cur.execute(
+                "insert into public.tax_records "
+                "(user_id, year, type, amount, category) "
+                "values (%s::uuid, 2026, 'medical', 0, 'owner smoke') "
+                "returning id",
+                (ISSUE_2773_USER_1,),
+            )
+            temporary_record = cur.fetchone()[0]
+            cur.execute(
+                "update public.tax_records set category = 'owner updated' "
+                "where id = %s",
+                (temporary_record,),
+            )
+            cur.execute(
+                "delete from public.tax_records where id = %s",
+                (temporary_record,),
+            )
+
+    issue_2773_expect_denied(
+        conn,
+        role="anon",
+        user_id=None,
+        statement="select count(*) from public.tax_records",
+    )
+
+    return {
+        "enabled_tables": enabled_tables,
+        "policies": policy_names,
+        "missing_claim_count": missing_claim_count,
+        "owner_count": owner_count,
+        "forged_owner_sqlstate": forged_owner_sqlstate,
+        "owner_crud": "passed",
+        "anon_access": "denied",
+    }
+
+
 def check_actual_edge_function(args: argparse.Namespace, artifacts_dir: Path) -> None:
     import_result = run_command(
         [sys.executable, "scripts/check_edge_function_imports.py", "--root", "supabase/functions"],
@@ -824,6 +1125,9 @@ def run_smoke(args: argparse.Namespace) -> int:
             apply_sql_fixture(conn, ASSET_CHAT_MIGRATION, artifacts_dir)
             seed_asset_chat_fixture(conn)
             asset_chat_rls = check_asset_chat_rls(conn)
+            apply_sql_fixture(conn, TAX_RECORDS_MIGRATION, artifacts_dir)
+            seed_tax_records_fixture(conn)
+            tax_records_rls = check_tax_records_rls(conn)
             counts = {table: table_count(conn, table) for table in REQUIRED_TABLES}
 
         edge_result = run_edge_db_fixture(connection_url, args, artifacts_dir)
@@ -835,6 +1139,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "tables": counts,
             "tenant_rls": tenant_rls,
             "asset_chat_rls": asset_chat_rls,
+            "tax_records_rls": tax_records_rls,
         },
         "edge_fixture": {
             "path": args.edge_fixture.relative_to(ROOT).as_posix(),
