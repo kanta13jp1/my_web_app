@@ -582,9 +582,9 @@ class GrowthAcquisitionService {
       await client
           .from('app_analytics')
           .update(<String, dynamic>{'source_details': sourceDetails}).eq(
-            'date',
-            dateKey,
-          );
+        'date',
+        dateKey,
+      );
     } catch (error, stackTrace) {
       debugPrint('Growth acquisition fallback failed: $error');
       debugPrintStack(stackTrace: stackTrace);
