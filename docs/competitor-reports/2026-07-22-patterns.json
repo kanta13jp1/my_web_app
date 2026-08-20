@@ -1,0 +1,2452 @@
+{
+  "generated_at": "2026-07-21T22:52:33Z",
+  "source_files": [
+    "docs/competitor-reports/2026-07-22.md"
+  ],
+  "min_confidence": 0.5,
+  "entries_total": 79,
+  "filter_summary": {
+    "total": 79,
+    "by_verdict": {
+      "pass": 0,
+      "review": 79,
+      "drop": 0
+    },
+    "risk_flags": {
+      "missing_source_url": 79
+    }
+  },
+  "entries": [
+    {
+      "entry": {
+        "entry_id": "nf-0f4dac9aab21",
+        "title": "エグゼクティブサマリー (前回 [2026-07-21](./2026-07-21.md) 比 — 新シグナルのみ)",
+        "text": "エグゼクティブサマリー (前回 [2026-07-21](./2026-07-21.md) 比 — 新シグナルのみ)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "エグゼクティブサマリー (前回 [2026-07-21](./2026-07-21.md) 比 — 新シグナルのみ)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0f4dac9aab21",
+        "title": "エグゼクティブサマリー (前回 [2026-07-21](./2026-07-21.md) 比 — 新シグナルのみ)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3bdb578df4bb",
+        "title": "詳細セクション (重大シグナルのみ深掘り)",
+        "text": "詳細セクション (重大シグナルのみ深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "詳細セクション (重大シグナルのみ深掘り)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3bdb578df4bb",
+        "title": "詳細セクション (重大シグナルのみ深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c15c7982f013",
+        "title": "項目",
+        "text": "項目 項目 一次実測 (7-22)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "項目",
+          "url": "",
+          "status": "",
+          "summary": "項目 一次実測 (7-22)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c15c7982f013",
+        "title": "項目",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-36263fff0cf5",
+        "title": "製品ページ",
+        "text": "製品ページ 製品ページ **「先行受付中！」「2026 年 7 月提供予定」** = GA 前の文言のまま",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "製品ページ",
+          "url": "",
+          "status": "",
+          "summary": "製品ページ **「先行受付中！」「2026 年 7 月提供予定」** = GA 前の文言のまま"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-36263fff0cf5",
+        "title": "製品ページ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7a3ac7f4a349",
+        "title": "corp newsroom 7 月",
+        "text": "corp newsroom 7 月 corp newsroom 7 月 7-16 個別原価 / 7-7 請求書 Plus / 7-6 ME STUDIO / 7-3 mitosel — **AI Cowork の GA リリースなし**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "corp newsroom 7 月",
+          "url": "",
+          "status": "",
+          "summary": "corp newsroom 7 月 7-16 個別原価 / 7-7 請求書 Plus / 7-6 ME STUDIO / 7-3 mitosel — **AI Cowork の GA リリースなし**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7a3ac7f4a349",
+        "title": "corp newsroom 7 月",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e5707a982436",
+        "title": "announce",
+        "text": "announce announce 2026-04-07 (先行受付開始)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "announce",
+          "url": "",
+          "status": "",
+          "summary": "announce 2026-04-07 (先行受付開始)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e5707a982436",
+        "title": "announce",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-14f96febaca0",
+        "title": "effective",
+        "text": "effective effective **未達** (7-22 時点 / 7 月残り 9 日)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "effective",
+          "url": "",
+          "status": "",
+          "summary": "effective **未達** (7-22 時点 / 7 月残り 9 日)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-14f96febaca0",
+        "title": "effective",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-fa42e2edbfa6",
+        "title": "Atlas は単独ブラウザとして廃止**され、**ChatGPT Work に吸収**",
+        "text": "Atlas は単独ブラウザとして廃止**され、**ChatGPT Work に吸収**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Atlas は単独ブラウザとして廃止**され、**ChatGPT Work に吸収**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-fa42e2edbfa6",
+        "title": "Atlas は単独ブラウザとして廃止**され、**ChatGPT Work に吸収**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-561b55d23e24",
+        "title": "Codex デスクトップ**も統合 ChatGPT アプリへ",
+        "text": "Codex デスクトップ**も統合 ChatGPT アプリへ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Codex デスクトップ**も統合 ChatGPT アプリへ"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-561b55d23e24",
+        "title": "Codex デスクトップ**も統合 ChatGPT アプリへ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-28a79f640de9",
+        "title": "Atlas 停止は 8-09 が effective**",
+        "text": "Atlas 停止は 8-09 が effective**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Atlas 停止は 8-09 が effective**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-28a79f640de9",
+        "title": "Atlas 停止は 8-09 が effective**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9cd2f28c96c1",
+        "title": "Chat / Work / Codex が **Free を含む全プラン**に載る構成",
+        "text": "Chat / Work / Codex が **Free を含む全プラン**に載る構成",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Chat / Work / Codex が **Free を含む全プラン**に載る構成"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9cd2f28c96c1",
+        "title": "Chat / Work / Codex が **Free を含む全プラン**に載る構成",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-779e50bd6c37",
+        "title": "version",
+        "text": "version version 日付 本環境に効く修正",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "version",
+          "url": "",
+          "status": "",
+          "summary": "version 日付 本環境に効く修正"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-779e50bd6c37",
+        "title": "version",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2cd7fef41670",
+        "title": "2.1.214",
+        "text": "2.1.214 2.1.214 7-18 **Windows PowerShell 5.1 の permission-check バイパス** / `dir/**` が配下任意への書き込みを誤承認 / 10,000 字超コマンドの権限判定 / docker daemon-redirect フラグ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "2.1.214",
+          "url": "",
+          "status": "",
+          "summary": "2.1.214 7-18 **Windows PowerShell 5.1 の permission-check バイパス** / `dir/**` が配下任意への書き込みを誤承認 / 10,000 字超コマンドの権限判定 / docker daemon-redirect フラグ"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2cd7fef41670",
+        "title": "2.1.214",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7d73e817c97e",
+        "title": "2.1.216",
+        "text": "2.1.216 2.1.216 7-20 **`git -C` / `--git-dir` / `GIT_DIR` で worktree 隔離 subagent が共有 checkout へ脱出** / worktree セッションが無関係な残存 worktree に着地 / `sandbox.filesystem.disabled` 追加",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "2.1.216",
+          "url": "",
+          "status": "",
+          "summary": "2.1.216 7-20 **`git -C` / `--git-dir` / `GIT_DIR` で worktree 隔離 subagent が共有 checkout へ脱出** / worktree セッションが無関係な残存 worktree に着地 / `sandbox.filesystem.disabled` 追加"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7d73e817c97e",
+        "title": "2.1.216",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-109bf8d534cd",
+        "title": "2.1.217",
+        "text": "2.1.217 2.1.217 7-21 **Windows 自動更新の失敗時に `claude.exe` を復元** / background session がシンボリックリンク作業ディレクトリを正規化せず workspace 脱出 / `/rewind` がリンク越しに復元・削除",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "2.1.217",
+          "url": "",
+          "status": "",
+          "summary": "2.1.217 7-21 **Windows 自動更新の失敗時に `claude.exe` を復元** / background session がシンボリックリンク作業ディレクトリを正規化せず workspace 脱出 / `/rewind` がリンク越しに復元・削除"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-109bf8d534cd",
+        "title": "2.1.217",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1a7fc755d975",
+        "title": "GitHub Copilot / Gemini 3.6 Flash GA** (7-21 / 段階ロールアウト) — Pro・Pro+・Max・Business・Enterprise 対象。**Business / Enterprise は",
+        "text": "GitHub Copilot / Gemini 3.6 Flash GA** (7-21 / 段階ロールアウト) — Pro・Pro+・Max・Business・Enterprise 対象。**Business / Enterprise は管理者が Gemini 3.6 Flash Preview ポリシーを有効化するまで使えない**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "GitHub Copilot / Gemini 3.6 Flash GA** (7-21 / 段階ロールアウト) — Pro・Pro+・Max・Business・Enterprise 対象。**Business / Enterprise は管理者が Gemini 3.6 Flash Preview ポリシーを有効化するまで使えない**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1a7fc755d975",
+        "title": "GitHub Copilot / Gemini 3.6 Flash GA** (7-21 / 段階ロールアウト) — Pro・Pro+・Max・Business・Enterprise 対象。**Business / Enterprise は",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-793588655b33",
+        "title": "GitHub Copilot CLI v1.0.72 (7-20) / v1.0.73 (7-21)** — v1.0.73 で**追加ディレクトリ設定時も Anthropic subagent が動作継続**、custom agent i",
+        "text": "GitHub Copilot CLI v1.0.72 (7-20) / v1.0.73 (7-21)** — v1.0.73 で**追加ディレクトリ設定時も Anthropic subagent が動作継続**、custom agent instructions の相対リンクを agent ファイル基準で解決。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "GitHub Copilot CLI v1.0.72 (7-20) / v1.0.73 (7-21)** — v1.0.73 で**追加ディレクトリ設定時も Anthropic subagent が動作継続**、custom agent instructions の相対リンクを agent ファイル基準で解決。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-793588655b33",
+        "title": "GitHub Copilot CLI v1.0.72 (7-20) / v1.0.73 (7-21)** — v1.0.73 で**追加ディレクトリ設定時も Anthropic subagent が動作継続**、custom agent i",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-16566322f663",
+        "title": "Slack Desktop 4.51.180** (7-20) — **セキュリティ修正のみ**、機能ノートなし。",
+        "text": "Slack Desktop 4.51.180** (7-20) — **セキュリティ修正のみ**、機能ノートなし。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Slack Desktop 4.51.180** (7-20) — **セキュリティ修正のみ**、機能ノートなし。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-16566322f663",
+        "title": "Slack Desktop 4.51.180** (7-20) — **セキュリティ修正のみ**、機能ノートなし。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-76bd9343d307",
+        "title": "netkeiba** (7-21 announce / **7-25〜8-30 effective**) — 暑熱対策による開催日程変更。**運営・番組編成であり製品変更ではない**。",
+        "text": "netkeiba** (7-21 announce / **7-25〜8-30 effective**) — 暑熱対策による開催日程変更。**運営・番組編成であり製品変更ではない**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "netkeiba** (7-21 announce / **7-25〜8-30 effective**) — 暑熱対策による開催日程変更。**運営・番組編成であり製品変更ではない**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-76bd9343d307",
+        "title": "netkeiba** (7-21 announce / **7-25〜8-30 effective**) — 暑熱対策による開催日程変更。**運営・番組編成であり製品変更ではない**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c8ba214196b8",
+        "title": "xAI Grok** — Musk が 2T パラメータ次世代 Grok の学習開始を示唆。⚠️ **一次未取得** (`x.ai/news` は 403、`xai-org/grok-build` は releases/tags ともに 0",
+        "text": "xAI Grok** — Musk が 2T パラメータ次世代 Grok の学習開始を示唆。⚠️ **一次未取得** (`x.ai/news` は 403、`xai-org/grok-build` は releases/tags ともに 0 件)。**発表でも発効でもない単なる予告**であり、シグナルとして計上しない。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "xAI Grok** — Musk が 2T パラメータ次世代 Grok の学習開始を示唆。⚠️ **一次未取得** (`x.ai/news` は 403、`xai-org/grok-build` は releases/tags ともに 0 件)。**発表でも発効でもない単なる予告**であり、シグナルとして計上しない。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c8ba214196b8",
+        "title": "xAI Grok** — Musk が 2T パラメータ次世代 Grok の学習開始を示唆。⚠️ **一次未取得** (`x.ai/news` は 403、`xai-org/grok-build` は releases/tags ともに 0",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4ec5700a3d05",
+        "title": "AWS** (7-20 の週次まとめ) — コーディングエージェント (Claude Code / Kiro / Cursor / Copilot) 向けのワンクリック Lambda セットアッププロンプト、Bedrock 上の GPT-5",
+        "text": "AWS** (7-20 の週次まとめ) — コーディングエージェント (Claude Code / Kiro / Cursor / Copilot) 向けのワンクリック Lambda セットアッププロンプト、Bedrock 上の GPT-5.6。⚠️ **7-20 はまとめ記事の日付で、個別ローンチは前週 (窓外)**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "AWS** (7-20 の週次まとめ) — コーディングエージェント (Claude Code / Kiro / Cursor / Copilot) 向けのワンクリック Lambda セットアッププロンプト、Bedrock 上の GPT-5.6。⚠️ **7-20 はまとめ記事の日付で、個別ローンチは前週 (窓外)**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4ec5700a3d05",
+        "title": "AWS** (7-20 の週次まとめ) — コーディングエージェント (Claude Code / Kiro / Cursor / Copilot) 向けのワンクリック Lambda セットアッププロンプト、Bedrock 上の GPT-5",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0370a642fba5",
+        "title": "Discovery セクション",
+        "text": "Discovery セクション",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Discovery セクション"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0370a642fba5",
+        "title": "Discovery セクション",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-21d20e9ff1e0",
+        "title": "理由**: 最終 discovery = **2026-07-17 OpenAI ChatGPT 採択**から **5 日経過**。7 日 cooldown により **次回 unlock は 2026-07-24** (残り 2 日)。",
+        "text": "理由**: 最終 discovery = **2026-07-17 OpenAI ChatGPT 採択**から **5 日経過**。7 日 cooldown により **次回 unlock は 2026-07-24** (残り 2 日)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "理由**: 最終 discovery = **2026-07-17 OpenAI ChatGPT 採択**から **5 日経過**。7 日 cooldown により **次回 unlock は 2026-07-24** (残り 2 日)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-21d20e9ff1e0",
+        "title": "理由**: 最終 discovery = **2026-07-17 OpenAI ChatGPT 採択**から **5 日経過**。7 日 cooldown により **次回 unlock は 2026-07-24** (残り 2 日)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2c9038fe166d",
+        "title": "現況**: **27 社 / cap 50** (残り 23 枠)。",
+        "text": "現況**: **27 社 / cap 50** (残り 23 枠)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "現況**: **27 社 / cap 50** (残り 23 枠)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2c9038fe166d",
+        "title": "現況**: **27 社 / cap 50** (残り 23 枠)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7874e605e05d",
+        "title": "7-24 unlock の候補 — 本日の変動は Kubera のみ**:",
+        "text": "7-24 unlock の候補 — 本日の変動は Kubera のみ**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "7-24 unlock の候補 — 本日の変動は Kubera のみ**:"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7874e605e05d",
+        "title": "7-24 unlock の候補 — 本日の変動は Kubera のみ**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-30fd06250896",
+        "title": "順位",
+        "text": "順位 順位 候補 変更 根拠",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "順位",
+          "url": "",
+          "status": "",
+          "summary": "順位 候補 変更 根拠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-30fd06250896",
+        "title": "順位",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-22988f3fc9c3",
+        "title": "**第 1**",
+        "text": "**第 1** **第 1** **Tomo** → 維持 基準 **b 強** (未カバーの人生統合カテゴリ / コーディング偏りの是正) + **c 強** (6-25 / 一次 BusinessWire) + a 中。⚠️ ただし本日**新たな懸念**: `tomo.ai` に blog も changelog も存在せず、**採択後に継続監視するチャネルがない**。採択と同時に**代替の監視経路** (App Store 更新履歴 / BusinessWire 追跡) を決める必要がある",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**第 1**",
+          "url": "",
+          "status": "",
+          "summary": "**第 1** **Tomo** → 維持 基準 **b 強** (未カバーの人生統合カテゴリ / コーディング偏りの是正) + **c 強** (6-25 / 一次 BusinessWire) + a 中。⚠️ ただし本日**新たな懸念**: `tomo.ai` に blog も changelog も存在せず、**採択後に継続監視するチャネルがない**。採択と同時に**代替の監視経路** (App Store 更新履歴 / BusinessWire 追跡) を決める必要がある"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-22988f3fc9c3",
+        "title": "**第 1**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-30975b7f3299",
+        "title": "**第 2**",
+        "text": "**第 2** **第 2** **Kubera** ⬆️ **signal → 第 2 へ昇格** 7-17 付の**日付付き一次を取得**しブロッカーが部分解消。基準 **a に唯一の直撃** (個人 B/S そのもの) + **MCP で ChatGPT/Claude/Perplexity/Gemini CLI/Codex App に接続**。⚠️ **\"Last updated\" は発表日ではなく基準 c は厳密には未成立**、かつ日付を持つチャネルがヘルプセンターのみ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**第 2**",
+          "url": "",
+          "status": "",
+          "summary": "**第 2** **Kubera** ⬆️ **signal → 第 2 へ昇格** 7-17 付の**日付付き一次を取得**しブロッカーが部分解消。基準 **a に唯一の直撃** (個人 B/S そのもの) + **MCP で ChatGPT/Claude/Perplexity/Gemini CLI/Codex App に接続**。⚠️ **\"Last updated\" は発表日ではなく基準 c は厳密には未成立**、かつ日付を持つチャネルがヘルプセンターのみ"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-30975b7f3299",
+        "title": "**第 2**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-343283162df9",
+        "title": "第 3",
+        "text": "第 3 第 3 EdWealth「Ed」 ⬇️ 第 2 → 第 3 基準 a + c は維持するが **7 日連続デルタなし**・調達なし・公式サイトに news/blog すら不在。7-15 以降のヒットは**全て同日付の syndicated copy**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "第 3",
+          "url": "",
+          "status": "",
+          "summary": "第 3 EdWealth「Ed」 ⬇️ 第 2 → 第 3 基準 a + c は維持するが **7 日連続デルタなし**・調達なし・公式サイトに news/blog すら不在。7-15 以降のヒットは**全て同日付の syndicated copy**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-343283162df9",
+        "title": "第 3",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-04c6db1b4cc9",
+        "title": "第 4",
+        "text": "第 4 第 4 Visa AI Financial Assistant → 維持 (日付訂正) **8 月 pilot 据え置き**・提携銀行非開示・日本言及ゼロ。**一次の日付を 7-15 → 7-14 に訂正**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "第 4",
+          "url": "",
+          "status": "",
+          "summary": "第 4 Visa AI Financial Assistant → 維持 (日付訂正) **8 月 pilot 据え置き**・提携銀行非開示・日本言及ゼロ。**一次の日付を 7-15 → 7-14 に訂正**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-04c6db1b4cc9",
+        "title": "第 4",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8e95564da7f6",
+        "title": "signal",
+        "text": "signal signal Emergent「Wingman」/ Motion / Monarch / Copilot Money / Cleo / OpenCode 据え置き 基準 b 止まり or c 不成立。⚠️ **Wingman の一次は 2026-04-15 (窓外)**。`emergent.sh` の「$130M Series C / $1.5B / 7-15」は**全社の調達であって Wingman の件ではない**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "signal",
+          "url": "",
+          "status": "",
+          "summary": "signal Emergent「Wingman」/ Motion / Monarch / Copilot Money / Cleo / OpenCode 据え置き 基準 b 止まり or c 不成立。⚠️ **Wingman の一次は 2026-04-15 (窓外)**。`emergent.sh` の「$130M Series C / $1.5B / 7-15」は**全社の調達であって Wingman の件ではない**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8e95564da7f6",
+        "title": "signal",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-129a5726069d",
+        "title": "⚠️ 名寄せの罠 (新規記録)**: **Motion** を追う際、`motion.dev` は**アニメーションライブラリの別会社**であり混線する。**Copilot Money** は 5-15 に MCP (Beta) で Cla",
+        "text": "⚠️ 名寄せの罠 (新規記録)**: **Motion** を追う際、`motion.dev` は**アニメーションライブラリの別会社**であり混線する。**Copilot Money** は 5-15 に MCP (Beta) で Claude / ChatGPT 接続済 = **Kubera と同型**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "⚠️ 名寄せの罠 (新規記録)**: **Motion** を追う際、`motion.dev` は**アニメーションライブラリの別会社**であり混線する。**Copilot Money** は 5-15 に MCP (Beta) で Claude / ChatGPT 接続済 = **Kubera と同型**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-129a5726069d",
+        "title": "⚠️ 名寄せの罠 (新規記録)**: **Motion** を追う際、`motion.dev` は**アニメーションライブラリの別会社**であり混線する。**Copilot Money** は 5-15 に MCP (Beta) で Cla",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-24a36d881307",
+        "title": "日本市場**: 前日に続き、**30 日窓内に「個人 B/S × 日本語」ニッチへの新規参入は検出されず**。MoneyForward ME の**暗号資産カテゴリ追加** (announce 7-8 / Ver.19.19.0+ で段階ロ",
+        "text": "日本市場**: 前日に続き、**30 日窓内に「個人 B/S × 日本語」ニッチへの新規参入は検出されず**。MoneyForward ME の**暗号資産カテゴリ追加** (announce 7-8 / Ver.19.19.0+ で段階ロールアウト) は既報 (7-20) であり、**AI 機能の言及はない**資産カテゴリ粒度の話。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "日本市場**: 前日に続き、**30 日窓内に「個人 B/S × 日本語」ニッチへの新規参入は検出されず**。MoneyForward ME の**暗号資産カテゴリ追加** (announce 7-8 / Ver.19.19.0+ で段階ロールアウト) は既報 (7-20) であり、**AI 機能の言及はない**資産カテゴリ粒度の話。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-24a36d881307",
+        "title": "日本市場**: 前日に続き、**30 日窓内に「個人 B/S × 日本語」ニッチへの新規参入は検出されず**。MoneyForward ME の**暗号資産カテゴリ追加** (announce 7-8 / Ver.19.19.0+ で段階ロ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-124591137479",
+        "title": "🧹 トラッカー衛生 — 前日の 4 件は未解消 + 本日 4 件を追加",
+        "text": "🧹 トラッカー衛生 — 前日の 4 件は未解消 + 本日 4 件を追加",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🧹 トラッカー衛生 — 前日の 4 件は未解消 + 本日 4 件を追加"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-124591137479",
+        "title": "🧹 トラッカー衛生 — 前日の 4 件は未解消 + 本日 4 件を追加",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-6b6147848541",
+        "title": "⚠️ **併せて要再検証**: 自社の過去レポートは Anthropic の業種別を **Legal 5-12 / Small Business 5-13 / Marketing Ops 5-18 / Financial Services ",
+        "text": "⚠️ **併せて要再検証**: 自社の過去レポートは Anthropic の業種別を **Legal 5-12 / Small Business 5-13 / Marketing Ops 5-18 / Financial Services 5-05** と記録しているが、本日の実測では **Claude for Financial Services のページは「2025-07-15 公開・2026-04-10 更新」**と表示され、内容も **KYC・月次決算など完全にエンタープライズ向けで個人向け言及ゼロ**。**過去記録の日付と性格づけを anthropic.com 一次で洗い直す必要がある** (本レポートでは断定しない)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "⚠️ **併せて要再検証**: 自社の過去レポートは Anthropic の業種別を **Legal 5-12 / Small Business 5-13 / Marketing Ops 5-18 / Financial Services 5-05** と記録しているが、本日の実測では **Claude for Financial Services のページは「2025-07-15 公開・2026-04-10 更新」**と表示され、内容も **KYC・月次決算など完全にエンタープライズ向けで個人向け言及ゼロ**。**過去記録の日付と性格づけを anthropic.com 一次で洗い直す必要がある** (本レポートでは断定しない)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-6b6147848541",
+        "title": "⚠️ **併せて要再検証**: 自社の過去レポートは Anthropic の業種別を **Legal 5-12 / Small Business 5-13 / Marketing Ops 5-18 / Financial Services ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "text": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "アクション提案"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f73adc6226b0",
+        "title": "#",
+        "text": "# # 優先 提案 根拠",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "#",
+          "url": "",
+          "status": "",
+          "summary": "# 優先 提案 根拠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f73adc6226b0",
+        "title": "#",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8838e90de541",
+        "title": "0",
+        "text": "0 0 🔴🔴 最優先 (**2 日連続未着手**) **Claude Code 2.1.170 → 2.1.217 へ更新**。ただし**更新失敗時に `claude.exe` が失われうる前提**で実施し、更新後に `[WORKDIR-ISOLATION]` / `[SUBAGENT-GUARD]` の隔離前提を再確認 2.1.214 = Windows PowerShell 5.1 の permission-check バイパス + `dir/**` 誤承認、2.1.216 = `git -C`/`GIT_DIR` による**worktree 隔離 subagent の共有 checkout 脱出**、2.1.217 = background session の**シンボリックリンク経由 workspace 脱出**。**本環境は全項目の当事者**。復元ロジックは 2.1.217 側にあり**旧アップデータには無い**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "0",
+          "url": "",
+          "status": "",
+          "summary": "0 🔴🔴 最優先 (**2 日連続未着手**) **Claude Code 2.1.170 → 2.1.217 へ更新**。ただし**更新失敗時に `claude.exe` が失われうる前提**で実施し、更新後に `[WORKDIR-ISOLATION]` / `[SUBAGENT-GUARD]` の隔離前提を再確認 2.1.214 = Windows PowerShell 5.1 の permission-check バイパス + `dir/**` 誤承認、2.1.216 = `git -C`/`GIT_DIR` による**worktree 隔離 subagent の共有 checkout 脱出**、2.1.217 = background session の**シンボリックリンク経由 workspace 脱出**。**本環境は全項目の当事者**。復元ロジックは 2.1.217 側にあり**旧アップデータには無い**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8838e90de541",
+        "title": "0",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3a5a038e51fb",
+        "title": "1",
+        "text": "1 1 🔴 高 **`cross-instance-pr` プロトコルの設計前提を見直す** — 「状態を共有できないから md doc で橋渡しする」から「**状態は移行可能になった。ゆえに正本をどれにするかの規律が価値**」へ Codex `/import` が Claude Code の設定・MCP・plugin・session・commands・**project-scoped memories** を移行対象にした (一次 verbatim)。**`memory/` の所属が初めて争点になる**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "1",
+          "url": "",
+          "status": "",
+          "summary": "1 🔴 高 **`cross-instance-pr` プロトコルの設計前提を見直す** — 「状態を共有できないから md doc で橋渡しする」から「**状態は移行可能になった。ゆえに正本をどれにするかの規律が価値**」へ Codex `/import` が Claude Code の設定・MCP・plugin・session・commands・**project-scoped memories** を移行対象にした (一次 verbatim)。**`memory/` の所属が初めて争点になる**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3a5a038e51fb",
+        "title": "1",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c8109360a2b4",
+        "title": "2",
+        "text": "2 2 🔴 高 **差別化ナラティブから「集約」を降ろし、「6 部署 × KPI の経営ナラティブ + 日本語金融文脈」へ寄せる** (7-21 アクション #2 の**再確認・強化**) Kubera (7-17) と Copilot Money (5-15) が**個人資産を MCP で任意の LLM に開くパターン**を確立。集約はコモディティ化を通り越し、**集約結果の可搬性まで**競合が持った",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "2",
+          "url": "",
+          "status": "",
+          "summary": "2 🔴 高 **差別化ナラティブから「集約」を降ろし、「6 部署 × KPI の経営ナラティブ + 日本語金融文脈」へ寄せる** (7-21 アクション #2 の**再確認・強化**) Kubera (7-17) と Copilot Money (5-15) が**個人資産を MCP で任意の LLM に開くパターン**を確立。集約はコモディティ化を通り越し、**集約結果の可搬性まで**競合が持った"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c8109360a2b4",
+        "title": "2",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4b4bc0eaae56",
+        "title": "3",
+        "text": "3 3 🟠 中 **7-24 の候補順位を Tomo 第 1 / Kubera 第 2 (signal から昇格) / Ed 第 3 / Visa 第 4 に更新**。Tomo を採択する場合は**同時に監視チャネルを決める** Kubera は日付付き一次を取得しブロッカーが部分解消。⚠️ Tomo は `tomo.ai` に blog / changelog が無く、**採択しても継続監視できない**構造的問題がある",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "3",
+          "url": "",
+          "status": "",
+          "summary": "3 🟠 中 **7-24 の候補順位を Tomo 第 1 / Kubera 第 2 (signal から昇格) / Ed 第 3 / Visa 第 4 に更新**。Tomo を採択する場合は**同時に監視チャネルを決める** Kubera は日付付き一次を取得しブロッカーが部分解消。⚠️ Tomo は `tomo.ai` に blog / changelog が無く、**採択しても継続監視できない**構造的問題がある"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4b4bc0eaae56",
+        "title": "3",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ee7b6549a46b",
+        "title": "4",
+        "text": "4 4 🟠 中 **MoneyForward AI Cowork の GA を「7 月中に出るか」で watch** し、**7-31 時点で未達なら遅延として明示記録** 製品ページは 7-22 時点で「先行受付中 / 7 月提供予定」のまま。**7 月残り 9 日**。「GA 済み」前提で判断を組むと外す",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "4",
+          "url": "",
+          "status": "",
+          "summary": "4 🟠 中 **MoneyForward AI Cowork の GA を「7 月中に出るか」で watch** し、**7-31 時点で未達なら遅延として明示記録** 製品ページは 7-22 時点で「先行受付中 / 7 月提供予定」のまま。**7 月残り 9 日**。「GA 済み」前提で判断を組むと外す"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ee7b6549a46b",
+        "title": "4",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9eef158fc869",
+        "title": "5",
+        "text": "5 5 🟠 中 **`[AI-TOOL-VERIFY]` に 2 点追記** — (a)「**公式に見えるドメインを出典に採らない**」(`coworkerai.io` の実例) / (b)「**レンダリングされたページの日付表示を信用しない**」(Codex 0.145.0 が \"2024\" と表示された実例。API の `published_at` を採る) 本日いずれも実測。ドメイン名の見た目と、ページ表示の年 — **どちらも一次らしさの偽装として機能した**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "5",
+          "url": "",
+          "status": "",
+          "summary": "5 🟠 中 **`[AI-TOOL-VERIFY]` に 2 点追記** — (a)「**公式に見えるドメインを出典に採らない**」(`coworkerai.io` の実例) / (b)「**レンダリングされたページの日付表示を信用しない**」(Codex 0.145.0 が \"2024\" と表示された実例。API の `published_at` を採る) 本日いずれも実測。ドメイン名の見た目と、ページ表示の年 — **どちらも一次らしさの偽装として機能した**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9eef158fc869",
+        "title": "5",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-840d43fca1f5",
+        "title": "6",
+        "text": "6 6 🟠 中 **過去レポートの Anthropic 業種別エディション記録 (Legal 5-12 / Small Business 5-13 / Marketing Ops 5-18 / FinServ 5-05) を anthropic.com 一次で洗い直す** 汚染源 `coworkerai.io` の存在が判明し、かつ本日実測では FinServ ページが**「2025-07-15 公開・2026-04-10 更新」**かつ**完全にエンタープライズ向け**。**過去記録の日付と性格づけが疑わしい**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "6",
+          "url": "",
+          "status": "",
+          "summary": "6 🟠 中 **過去レポートの Anthropic 業種別エディション記録 (Legal 5-12 / Small Business 5-13 / Marketing Ops 5-18 / FinServ 5-05) を anthropic.com 一次で洗い直す** 汚染源 `coworkerai.io` の存在が判明し、かつ本日実測では FinServ ページが**「2025-07-15 公開・2026-04-10 更新」**かつ**完全にエンタープライズ向け**。**過去記録の日付と性格づけが疑わしい**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-840d43fca1f5",
+        "title": "6",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f40497da8b89",
+        "title": "7",
+        "text": "7 7 🟠 中 **監視の一次を 3 件差し替える** — Codex は **GitHub Releases** へ / Jules は `blog.google` 系へ / Bolt は週次バケットゆえ**窓を跨いだ判定に使わない** Codex web changelog は 7-13 停止、Jules changelog は 3-09 停止、Bolt 最新バケットは 7-19 終端で**本日の窓を覆っていない**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "7",
+          "url": "",
+          "status": "",
+          "summary": "7 🟠 中 **監視の一次を 3 件差し替える** — Codex は **GitHub Releases** へ / Jules は `blog.google` 系へ / Bolt は週次バケットゆえ**窓を跨いだ判定に使わない** Codex web changelog は 7-13 停止、Jules changelog は 3-09 停止、Bolt 最新バケットは 7-19 終端で**本日の窓を覆っていない**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f40497da8b89",
+        "title": "7",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-cb54e777d7d8",
+        "title": "8",
+        "text": "8 8 🟠 中 **Animaworks スロットの退役 or URL ピン留めを決裁する** (**2 日連続で未決**) 日英いずれの探索でも実体不明。**毎回予算を消費して何も返さないスロット**が seed 14 社に残り続けている",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "8",
+          "url": "",
+          "status": "",
+          "summary": "8 🟠 中 **Animaworks スロットの退役 or URL ピン留めを決裁する** (**2 日連続で未決**) 日英いずれの探索でも実体不明。**毎回予算を消費して何も返さないスロット**が seed 14 社に残り続けている"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-cb54e777d7d8",
+        "title": "8",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-aa0281eeca3e",
+        "title": "9",
+        "text": "9 9 🟢 低 **Slack を「目的地」ではなく「制御面」を狙う競合として再分類**し、`5 正本 + OPERATIONS_CHARTER` の**Slack 非依存性**を明文の差別化として書く Slack CLI v4.5.0 が **Claude Code ユーザーに公式 plugin を推奨**し始めた (一次 verbatim)。5-28 の Workflow Builder AI ステップから**一段進んだ**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "9",
+          "url": "",
+          "status": "",
+          "summary": "9 🟢 低 **Slack を「目的地」ではなく「制御面」を狙う競合として再分類**し、`5 正本 + OPERATIONS_CHARTER` の**Slack 非依存性**を明文の差別化として書く Slack CLI v4.5.0 が **Claude Code ユーザーに公式 plugin を推奨**し始めた (一次 verbatim)。5-28 の Workflow Builder AI ステップから**一段進んだ**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-aa0281eeca3e",
+        "title": "9",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5c9295a74237",
+        "title": "10",
+        "text": "10 10 🟢 低 **ChatGPT SuperApp の監視トリガー (d) を「完了」で閉じ、代わりに Atlas 停止 (8-09) を監視カレンダーへ登録** 統合は 7-9 に実行済で、7-19 の「構想」認識は**既に古かった**。次の観測点は 8-09",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "10",
+          "url": "",
+          "status": "",
+          "summary": "10 🟢 低 **ChatGPT SuperApp の監視トリガー (d) を「完了」で閉じ、代わりに Atlas 停止 (8-09) を監視カレンダーへ登録** 統合は 7-9 に実行済で、7-19 の「構想」認識は**既に古かった**。次の観測点は 8-09"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5c9295a74237",
+        "title": "10",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "text": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ソース"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-abe4dd4ce6ba",
+        "title": "[Codex `rust-v0.145.0` — GitHub Releases (**一次** / `/import` が Claude Code の設定・MCP・plugin・session・commands・project-scope",
+        "text": "[Codex `rust-v0.145.0` — GitHub Releases (**一次** / `/import` が Claude Code の設定・MCP・plugin・session・commands・project-scoped memories を移行 / `published_at` = 2026-07-21)](https://github.com/openai/codex/releases/tag/rust-v0.145.0)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Codex `rust-v0.145.0` — GitHub Releases (**一次** / `/import` が Claude Code の設定・MCP・plugin・session・commands・project-scoped memories を移行 / `published_at` = 2026-07-21)](https://github.com/openai/codex/releases/tag/rust-v0.145.0)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-abe4dd4ce6ba",
+        "title": "[Codex `rust-v0.145.0` — GitHub Releases (**一次** / `/import` が Claude Code の設定・MCP・plugin・session・commands・project-scope",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-62e4651115bb",
+        "title": "[Slack Changelog — Slack CLI v4.5.0 (**一次** / 2026-07-21 / 「Claude Code ユーザーに公式 Slack plugin を推奨」verbatim)](https://docs",
+        "text": "[Slack Changelog — Slack CLI v4.5.0 (**一次** / 2026-07-21 / 「Claude Code ユーザーに公式 Slack plugin を推奨」verbatim)](https://docs.slack.dev/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Slack Changelog — Slack CLI v4.5.0 (**一次** / 2026-07-21 / 「Claude Code ユーザーに公式 Slack plugin を推奨」verbatim)](https://docs.slack.dev/changelog)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-62e4651115bb",
+        "title": "[Slack Changelog — Slack CLI v4.5.0 (**一次** / 2026-07-21 / 「Claude Code ユーザーに公式 Slack plugin を推奨」verbatim)](https://docs",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2d32b0d2434b",
+        "title": "[マネーフォワード AI Cowork 製品ページ (**一次** / 7-22 時点で「先行受付中！」「2026 年 7 月提供予定」= **GA 未達**)](https://biz.moneyforward.com/ai-cowork",
+        "text": "[マネーフォワード AI Cowork 製品ページ (**一次** / 7-22 時点で「先行受付中！」「2026 年 7 月提供予定」= **GA 未達**)](https://biz.moneyforward.com/ai-cowork/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[マネーフォワード AI Cowork 製品ページ (**一次** / 7-22 時点で「先行受付中！」「2026 年 7 月提供予定」= **GA 未達**)](https://biz.moneyforward.com/ai-cowork/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2d32b0d2434b",
+        "title": "[マネーフォワード AI Cowork 製品ページ (**一次** / 7-22 時点で「先行受付中！」「2026 年 7 月提供予定」= **GA 未達**)](https://biz.moneyforward.com/ai-cowork",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-abbd28443229",
+        "title": "[マネーフォワード 公式ニュース (**一次** / 7 月は個別原価 7-16 / 請求書 Plus 7-7 / ME STUDIO 7-6 / mitosel 7-3 = **AI Cowork GA 告知なし**)](https://",
+        "text": "[マネーフォワード 公式ニュース (**一次** / 7 月は個別原価 7-16 / 請求書 Plus 7-7 / ME STUDIO 7-6 / mitosel 7-3 = **AI Cowork GA 告知なし**)](https://corp.moneyforward.com/news/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[マネーフォワード 公式ニュース (**一次** / 7 月は個別原価 7-16 / 請求書 Plus 7-7 / ME STUDIO 7-6 / mitosel 7-3 = **AI Cowork GA 告知なし**)](https://corp.moneyforward.com/news/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-abbd28443229",
+        "title": "[マネーフォワード 公式ニュース (**一次** / 7 月は個別原価 7-16 / 請求書 Plus 7-7 / ME STUDIO 7-6 / mitosel 7-3 = **AI Cowork GA 告知なし**)](https://",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1b66943dfa72",
+        "title": "[Kubera MCP 設定ガイド (**一次** / **\"Last updated on July 17, 2026\"** / ChatGPT・Claude・Perplexity・Gemini CLI・Codex App を MCP 対",
+        "text": "[Kubera MCP 設定ガイド (**一次** / **\"Last updated on July 17, 2026\"** / ChatGPT・Claude・Perplexity・Gemini CLI・Codex App を MCP 対応 / 旧 Kubera GPT 廃止)](https://help.kubera.com/article/167-kubera-mcp-config)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Kubera MCP 設定ガイド (**一次** / **\"Last updated on July 17, 2026\"** / ChatGPT・Claude・Perplexity・Gemini CLI・Codex App を MCP 対応 / 旧 Kubera GPT 廃止)](https://help.kubera.com/article/167-kubera-mcp-config)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1b66943dfa72",
+        "title": "[Kubera MCP 設定ガイド (**一次** / **\"Last updated on July 17, 2026\"** / ChatGPT・Claude・Perplexity・Gemini CLI・Codex App を MCP 対",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d68ee6bc3f09",
+        "title": "[Qoder Cantus ローンチ (**一次** / 2026-07-19 effective / ⚠️ **技術文書は課金ページのみ**・ベンチマーク/パラメータ/context window 非公開)](https://docs.q",
+        "text": "[Qoder Cantus ローンチ (**一次** / 2026-07-19 effective / ⚠️ **技術文書は課金ページのみ**・ベンチマーク/パラメータ/context window 非公開)](https://docs.qoder.com/events/cantuslaunch)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Qoder Cantus ローンチ (**一次** / 2026-07-19 effective / ⚠️ **技術文書は課金ページのみ**・ベンチマーク/パラメータ/context window 非公開)](https://docs.qoder.com/events/cantuslaunch)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d68ee6bc3f09",
+        "title": "[Qoder Cantus ローンチ (**一次** / 2026-07-19 effective / ⚠️ **技術文書は課金ページのみ**・ベンチマーク/パラメータ/context window 非公開)](https://docs.q",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-10ed9350fea3",
+        "title": "[Qoder Qwen3.8-Max-Preview 割引 (**一次** / 課金係数 0.5x → 0.05x / SGT 22:00-08:00 は 0.01x / 終了日 TBD)](https://docs.qoder.com/e",
+        "text": "[Qoder Qwen3.8-Max-Preview 割引 (**一次** / 課金係数 0.5x → 0.05x / SGT 22:00-08:00 は 0.01x / 終了日 TBD)](https://docs.qoder.com/events/qwen-max-preview)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Qoder Qwen3.8-Max-Preview 割引 (**一次** / 課金係数 0.5x → 0.05x / SGT 22:00-08:00 は 0.01x / 終了日 TBD)](https://docs.qoder.com/events/qwen-max-preview)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-10ed9350fea3",
+        "title": "[Qoder Qwen3.8-Max-Preview 割引 (**一次** / 課金係数 0.5x → 0.05x / SGT 22:00-08:00 は 0.01x / 終了日 TBD)](https://docs.qoder.com/e",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-169ee5c6ed4e",
+        "title": "[anthropics/claude-code Releases (**一次** / v2.1.217 = 7-21 / Windows 自動更新復元・background session のシンボリックリンク正規化・`/rewind` の",
+        "text": "[anthropics/claude-code Releases (**一次** / v2.1.217 = 7-21 / Windows 自動更新復元・background session のシンボリックリンク正規化・`/rewind` のリンク越し操作修正)](https://github.com/anthropics/claude-code/releases)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[anthropics/claude-code Releases (**一次** / v2.1.217 = 7-21 / Windows 自動更新復元・background session のシンボリックリンク正規化・`/rewind` のリンク越し操作修正)](https://github.com/anthropics/claude-code/releases)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-169ee5c6ed4e",
+        "title": "[anthropics/claude-code Releases (**一次** / v2.1.217 = 7-21 / Windows 自動更新復元・background session のシンボリックリンク正規化・`/rewind` の",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-00ec8becbd21",
+        "title": "[Gemini 3.6 Flash is now available in GitHub Copilot — GitHub Changelog (**一次** / 2026-07-21 / Business・Enterprise は管理者の",
+        "text": "[Gemini 3.6 Flash is now available in GitHub Copilot — GitHub Changelog (**一次** / 2026-07-21 / Business・Enterprise は管理者のポリシー有効化が必要)](https://github.blog/changelog/2026-07-21-gemini-3-6-flash-is-now-available-in-github-copilot/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Gemini 3.6 Flash is now available in GitHub Copilot — GitHub Changelog (**一次** / 2026-07-21 / Business・Enterprise は管理者のポリシー有効化が必要)](https://github.blog/changelog/2026-07-21-gemini-3-6-flash-is-now-available-in-github-copilot/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-00ec8becbd21",
+        "title": "[Gemini 3.6 Flash is now available in GitHub Copilot — GitHub Changelog (**一次** / 2026-07-21 / Business・Enterprise は管理者の",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-863210b35579",
+        "title": "[github/copilot-cli v1.0.73 (**一次** / 2026-07-21 / 追加ディレクトリ設定時も Anthropic subagent が動作継続)](https://github.com/github/cop",
+        "text": "[github/copilot-cli v1.0.73 (**一次** / 2026-07-21 / 追加ディレクトリ設定時も Anthropic subagent が動作継続)](https://github.com/github/copilot-cli/releases/tag/v1.0.73)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[github/copilot-cli v1.0.73 (**一次** / 2026-07-21 / 追加ディレクトリ設定時も Anthropic subagent が動作継続)](https://github.com/github/copilot-cli/releases/tag/v1.0.73)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-863210b35579",
+        "title": "[github/copilot-cli v1.0.73 (**一次** / 2026-07-21 / 追加ディレクトリ設定時も Anthropic subagent が動作継続)](https://github.com/github/cop",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e1bae4ff2f99",
+        "title": "[netkeiba お知らせ (**一次** / 7-21 announce / 7-25〜8-30 effective / 暑熱対策の日程変更 = 製品変更ではない)](https://info.netkeiba.com/)",
+        "text": "[netkeiba お知らせ (**一次** / 7-21 announce / 7-25〜8-30 effective / 暑熱対策の日程変更 = 製品変更ではない)](https://info.netkeiba.com/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[netkeiba お知らせ (**一次** / 7-21 announce / 7-25〜8-30 effective / 暑熱対策の日程変更 = 製品変更ではない)](https://info.netkeiba.com/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e1bae4ff2f99",
+        "title": "[netkeiba お知らせ (**一次** / 7-21 announce / 7-25〜8-30 effective / 暑熱対策の日程変更 = 製品変更ではない)](https://info.netkeiba.com/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-010a68ce4d19",
+        "title": "[Cursor Changelog (**一次** / 最新 7-17)](https://cursor.com/changelog) / [Notion Releases (**一次** / 最新 7-16)](https://www.n",
+        "text": "[Cursor Changelog (**一次** / 最新 7-17)](https://cursor.com/changelog) / [Notion Releases (**一次** / 最新 7-16)](https://www.notion.com/releases) / [Replit Updates (**一次** / 最新 7-17)](https://docs.replit.com/updates)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Cursor Changelog (**一次** / 最新 7-17)](https://cursor.com/changelog) / [Notion Releases (**一次** / 最新 7-16)](https://www.notion.com/releases) / [Replit Updates (**一次** / 最新 7-17)](https://docs.replit.com/updates)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-010a68ce4d19",
+        "title": "[Cursor Changelog (**一次** / 最新 7-17)](https://cursor.com/changelog) / [Notion Releases (**一次** / 最新 7-16)](https://www.n",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1c4f16404a52",
+        "title": "[Bolt Release Notes (**一次** / ⚠️ 最新バケット「July 13-19」= **本日の窓を覆っていない**)](https://support.bolt.new/release-notes)",
+        "text": "[Bolt Release Notes (**一次** / ⚠️ 最新バケット「July 13-19」= **本日の窓を覆っていない**)](https://support.bolt.new/release-notes)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Bolt Release Notes (**一次** / ⚠️ 最新バケット「July 13-19」= **本日の窓を覆っていない**)](https://support.bolt.new/release-notes)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1c4f16404a52",
+        "title": "[Bolt Release Notes (**一次** / ⚠️ 最新バケット「July 13-19」= **本日の窓を覆っていない**)](https://support.bolt.new/release-notes)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8677a2aa91a8",
+        "title": "[Google Jules Changelog (**一次** / ⚠️ 最新 **2026-03-09** = 4 か月半停止 / 「更新なし」は静止を意味しない)](https://jules.google/docs/changelog",
+        "text": "[Google Jules Changelog (**一次** / ⚠️ 最新 **2026-03-09** = 4 か月半停止 / 「更新なし」は静止を意味しない)](https://jules.google/docs/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Google Jules Changelog (**一次** / ⚠️ 最新 **2026-03-09** = 4 か月半停止 / 「更新なし」は静止を意味しない)](https://jules.google/docs/changelog)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8677a2aa91a8",
+        "title": "[Google Jules Changelog (**一次** / ⚠️ 最新 **2026-03-09** = 4 か月半停止 / 「更新なし」は静止を意味しない)](https://jules.google/docs/changelog",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e124d59caf7b",
+        "title": "[OpenClaw Releases (**一次** / 最新 2026.7.2-beta.3 = 7-18 / 窓に 1 日届かず)](https://github.com/openclaw/openclaw/releases)",
+        "text": "[OpenClaw Releases (**一次** / 最新 2026.7.2-beta.3 = 7-18 / 窓に 1 日届かず)](https://github.com/openclaw/openclaw/releases)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[OpenClaw Releases (**一次** / 最新 2026.7.2-beta.3 = 7-18 / 窓に 1 日届かず)](https://github.com/openclaw/openclaw/releases)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e124d59caf7b",
+        "title": "[OpenClaw Releases (**一次** / 最新 2026.7.2-beta.3 = 7-18 / 窓に 1 日届かず)](https://github.com/openclaw/openclaw/releases)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a32d7d182e9c",
+        "title": "[kubell (Chatwork) ニュース (**一次** / 最新 7-16 = 本社移転・製品変更ではない)](https://www.kubell.com/news/) / [ジョブカン プレスリリース (**一次** / 最新 ",
+        "text": "[kubell (Chatwork) ニュース (**一次** / 最新 7-16 = 本社移転・製品変更ではない)](https://www.kubell.com/news/) / [ジョブカン プレスリリース (**一次** / 最新 7-10)](https://all.jobcan.ne.jp/info_categories/press/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[kubell (Chatwork) ニュース (**一次** / 最新 7-16 = 本社移転・製品変更ではない)](https://www.kubell.com/news/) / [ジョブカン プレスリリース (**一次** / 最新 7-10)](https://all.jobcan.ne.jp/info_categories/press/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a32d7d182e9c",
+        "title": "[kubell (Chatwork) ニュース (**一次** / 最新 7-16 = 本社移転・製品変更ではない)](https://www.kubell.com/news/) / [ジョブカン プレスリリース (**一次** / 最新 ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0fdfc0b54d69",
+        "title": "[Visa AI Financial Assistant — Visa IR (**一次** / **日付を 7-15 → 2026-07-14 に訂正** / 8 月 pilot 据え置き・提携銀行非開示)](https://invest",
+        "text": "[Visa AI Financial Assistant — Visa IR (**一次** / **日付を 7-15 → 2026-07-14 に訂正** / 8 月 pilot 据え置き・提携銀行非開示)](https://investor.visa.com/news/news-details/2026/Visa-Introduces-AI-Financial-Assistant-Helping-Banks-Guide-Customers-from-Insight-to-Action/default.aspx)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Visa AI Financial Assistant — Visa IR (**一次** / **日付を 7-15 → 2026-07-14 に訂正** / 8 月 pilot 据え置き・提携銀行非開示)](https://investor.visa.com/news/news-details/2026/Visa-Introduces-AI-Financial-Assistant-Helping-Banks-Guide-Customers-from-Insight-to-Action/default.aspx)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0fdfc0b54d69",
+        "title": "[Visa AI Financial Assistant — Visa IR (**一次** / **日付を 7-15 → 2026-07-14 に訂正** / 8 月 pilot 据え置き・提携銀行非開示)](https://invest",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-54990b51f78d",
+        "title": "[Tomo — BusinessWire (**一次** / 2026-06-25 / ⚠️ 7-07 の各媒体は**同一 wire の再配信**)](https://www.businesswire.com/news/home/20260",
+        "text": "[Tomo — BusinessWire (**一次** / 2026-06-25 / ⚠️ 7-07 の各媒体は**同一 wire の再配信**)](https://www.businesswire.com/news/home/20260625645270/en/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Tomo — BusinessWire (**一次** / 2026-06-25 / ⚠️ 7-07 の各媒体は**同一 wire の再配信**)](https://www.businesswire.com/news/home/20260625645270/en/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-54990b51f78d",
+        "title": "[Tomo — BusinessWire (**一次** / 2026-06-25 / ⚠️ 7-07 の各媒体は**同一 wire の再配信**)](https://www.businesswire.com/news/home/20260",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-473c95c10a21",
+        "title": "[EdWealth Ed — GlobeNewswire (**一次** / 2026-07-15 / 以降は同日付の syndicated copy のみ)](https://www.globenewswire.com/news-rele",
+        "text": "[EdWealth Ed — GlobeNewswire (**一次** / 2026-07-15 / 以降は同日付の syndicated copy のみ)](https://www.globenewswire.com/news-release/2026/07/15/3327868/0/en/edwealth-launches-ed-an-ai-personal-coach-for-the-new-era-of-financial-fitness.html)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[EdWealth Ed — GlobeNewswire (**一次** / 2026-07-15 / 以降は同日付の syndicated copy のみ)](https://www.globenewswire.com/news-release/2026/07/15/3327868/0/en/edwealth-launches-ed-an-ai-personal-coach-for-the-new-era-of-financial-fitness.html)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-473c95c10a21",
+        "title": "[EdWealth Ed — GlobeNewswire (**一次** / 2026-07-15 / 以降は同日付の syndicated copy のみ)](https://www.globenewswire.com/news-rele",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-286e92de25c1",
+        "title": "[Monarch What's New (**一次** / 最新 2026-06-23)](https://www.monarch.com/whats-new) / [Lindy Changelog (**一次** / ⚠️ 最新 **20",
+        "text": "[Monarch What's New (**一次** / 最新 2026-06-23)](https://www.monarch.com/whats-new) / [Lindy Changelog (**一次** / ⚠️ 最新 **2025-10-21** = 9 か月停止)](https://www.lindy.ai/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Monarch What's New (**一次** / 最新 2026-06-23)](https://www.monarch.com/whats-new) / [Lindy Changelog (**一次** / ⚠️ 最新 **2025-10-21** = 9 か月停止)](https://www.lindy.ai/changelog)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-286e92de25c1",
+        "title": "[Monarch What's New (**一次** / 最新 2026-06-23)](https://www.monarch.com/whats-new) / [Lindy Changelog (**一次** / ⚠️ 最新 **20",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9401eaa9b2f6",
+        "title": "X の Android 再構築**: **一次未取得**。`about.x.com` は **HTTP 402**、x.com は fetch 不能。TechCrunch は **@XEng の単一投稿**を引用しており、**他媒体の一致は",
+        "text": "X の Android 再構築**: **一次未取得**。`about.x.com` は **HTTP 402**、x.com は fetch 不能。TechCrunch は **@XEng の単一投稿**を引用しており、**他媒体の一致は再報道であって独立検証ではない**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "X の Android 再構築**: **一次未取得**。`about.x.com` は **HTTP 402**、x.com は fetch 不能。TechCrunch は **@XEng の単一投稿**を引用しており、**他媒体の一致は再報道であって独立検証ではない**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9401eaa9b2f6",
+        "title": "X の Android 再構築**: **一次未取得**。`about.x.com` は **HTTP 402**、x.com は fetch 不能。TechCrunch は **@XEng の単一投稿**を引用しており、**他媒体の一致は",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8eecc2b3d38b",
+        "title": "xAI の 2T パラメータ Grok**: **一次未取得**かつ**予告に過ぎない**。`x.ai/news` は **403**、`xai-org/grok-build` は releases/tags ともに **0 件**。**シ",
+        "text": "xAI の 2T パラメータ Grok**: **一次未取得**かつ**予告に過ぎない**。`x.ai/news` は **403**、`xai-org/grok-build` は releases/tags ともに **0 件**。**シグナルとして計上していない**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "xAI の 2T パラメータ Grok**: **一次未取得**かつ**予告に過ぎない**。`x.ai/news` は **403**、`xai-org/grok-build` は releases/tags ともに **0 件**。**シグナルとして計上していない**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8eecc2b3d38b",
+        "title": "xAI の 2T パラメータ Grok**: **一次未取得**かつ**予告に過ぎない**。`x.ai/news` は **403**、`xai-org/grok-build` は releases/tags ともに **0 件**。**シ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a95b32b96928",
+        "title": "Qoder Cantus / Qwen3.8-Max の性能**: **ベンチマーク・パラメータ数・context window すべて非公開**。「Fable 5 に次ぐ 2 位」等の主張は**自己申告か二次推測**であり **確度 lo",
+        "text": "Qoder Cantus / Qwen3.8-Max の性能**: **ベンチマーク・パラメータ数・context window すべて非公開**。「Fable 5 に次ぐ 2 位」等の主張は**自己申告か二次推測**であり **確度 low 固定**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Qoder Cantus / Qwen3.8-Max の性能**: **ベンチマーク・パラメータ数・context window すべて非公開**。「Fable 5 に次ぐ 2 位」等の主張は**自己申告か二次推測**であり **確度 low 固定**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a95b32b96928",
+        "title": "Qoder Cantus / Qwen3.8-Max の性能**: **ベンチマーク・パラメータ数・context window すべて非公開**。「Fable 5 に次ぐ 2 位」等の主張は**自己申告か二次推測**であり **確度 lo",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-66b0f89e8f63",
+        "title": "ChatGPT personal finance の Plus 展開日**: 自社記録 **6-25** と本日取得 **6-30** が食い違う。**どちらも一次で pin できておらず確定値として扱わない**。",
+        "text": "ChatGPT personal finance の Plus 展開日**: 自社記録 **6-25** と本日取得 **6-30** が食い違う。**どちらも一次で pin できておらず確定値として扱わない**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ChatGPT personal finance の Plus 展開日**: 自社記録 **6-25** と本日取得 **6-30** が食い違う。**どちらも一次で pin できておらず確定値として扱わない**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-66b0f89e8f63",
+        "title": "ChatGPT personal finance の Plus 展開日**: 自社記録 **6-25** と本日取得 **6-30** が食い違う。**どちらも一次で pin できておらず確定値として扱わない**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8a8fb5ffea71",
+        "title": "Kubera の 7-17**: **\"Last updated\" であって発表日ではない**。公式ブログは日付表示ゼロ、`/changelog` は **404**。",
+        "text": "Kubera の 7-17**: **\"Last updated\" であって発表日ではない**。公式ブログは日付表示ゼロ、`/changelog` は **404**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Kubera の 7-17**: **\"Last updated\" であって発表日ではない**。公式ブログは日付表示ゼロ、`/changelog` は **404**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8a8fb5ffea71",
+        "title": "Kubera の 7-17**: **\"Last updated\" であって発表日ではない**。公式ブログは日付表示ゼロ、`/changelog` は **404**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-732a9c255964",
+        "title": "Motion / Cleo / Salesforce**: Motion は `/product-updates` **404**、Cleo は公式 blog/news **403**、Salesforce は **salesforce.c",
+        "text": "Motion / Cleo / Salesforce**: Motion は `/product-updates` **404**、Cleo は公式 blog/news **403**、Salesforce は **salesforce.com 全体が 403**。**「取得できない」であって「変化なし」ではない**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Motion / Cleo / Salesforce**: Motion は `/product-updates` **404**、Cleo は公式 blog/news **403**、Salesforce は **salesforce.com 全体が 403**。**「取得できない」であって「変化なし」ではない**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-732a9c255964",
+        "title": "Motion / Cleo / Salesforce**: Motion は `/product-updates` **404**、Cleo は公式 blog/news **403**、Salesforce は **salesforce.c",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-366aac511d14",
+        "title": "Evernote**: release-notes に**日付表記が一切なく**、窓内外の判定が**構造的に不可能**。",
+        "text": "Evernote**: release-notes に**日付表記が一切なく**、窓内外の判定が**構造的に不可能**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Evernote**: release-notes に**日付表記が一切なく**、窓内外の判定が**構造的に不可能**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-366aac511d14",
+        "title": "Evernote**: release-notes に**日付表記が一切なく**、窓内外の判定が**構造的に不可能**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f73a345d2bf5",
+        "title": "Anthropic の業種別エディション**: 検索が返す `coworkerai.io` は **Anthropic と無関係の第三者サイト**。**`anthropic.com/news` に該当項目なし**。過去レポートの記録 (Le",
+        "text": "Anthropic の業種別エディション**: 検索が返す `coworkerai.io` は **Anthropic と無関係の第三者サイト**。**`anthropic.com/news` に該当項目なし**。過去レポートの記録 (Legal 5-12 / Small Business 5-13 / Marketing Ops 5-18 / FinServ 5-05) は**本レポートでは是非を断定せず、洗い直しをアクション #6 に起票**した。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Anthropic の業種別エディション**: 検索が返す `coworkerai.io` は **Anthropic と無関係の第三者サイト**。**`anthropic.com/news` に該当項目なし**。過去レポートの記録 (Legal 5-12 / Small Business 5-13 / Marketing Ops 5-18 / FinServ 5-05) は**本レポートでは是非を断定せず、洗い直しをアクション #6 に起票**した。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f73a345d2bf5",
+        "title": "Anthropic の業種別エディション**: 検索が返す `coworkerai.io` は **Anthropic と無関係の第三者サイト**。**`anthropic.com/news` に該当項目なし**。過去レポートの記録 (Le",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f2b2525ad3ea",
+        "title": "AWS の 7-20**: **週次まとめ記事の日付**であり、**個別ローンチは前週 (窓外)**。",
+        "text": "AWS の 7-20**: **週次まとめ記事の日付**であり、**個別ローンチは前週 (窓外)**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "AWS の 7-20**: **週次まとめ記事の日付**であり、**個別ローンチは前週 (窓外)**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f2b2525ad3ea",
+        "title": "AWS の 7-20**: **週次まとめ記事の日付**であり、**個別ローンチは前週 (窓外)**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b4b48e918d91",
+        "title": "Replit の 7-20 障害説**: コミュニティフォーラム経由のみで **status page による裏付けなし** → **シグナルとして計上していない**。",
+        "text": "Replit の 7-20 障害説**: コミュニティフォーラム経由のみで **status page による裏付けなし** → **シグナルとして計上していない**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Replit の 7-20 障害説**: コミュニティフォーラム経由のみで **status page による裏付けなし** → **シグナルとして計上していない**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b4b48e918d91",
+        "title": "Replit の 7-20 障害説**: コミュニティフォーラム経由のみで **status page による裏付けなし** → **シグナルとして計上していない**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    }
+  ],
+  "patterns": [],
+  "issue_candidates": []
+}

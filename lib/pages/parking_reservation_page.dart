@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/parking_reservation_entry.dart';
+
 /// 駐車場予約ページ
 /// parking-reservation Edge Function と連携して駐車場の予約を管理
 class ParkingReservationPage extends StatefulWidget {
@@ -14,7 +16,7 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _errorMessage;
-  List<Map<String, dynamic>> _reservations = [];
+  List<ParkingReservationEntry> _reservations = [];
 
   @override
   void initState() {
@@ -36,17 +38,10 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
         'lifestyle-hub',
         body: {'action': 'parking.list'},
       );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['reservations'] is List) {
-        setState(
-          () => _reservations =
-              (data['reservations'] as List).cast<Map<String, dynamic>>(),
-        );
-      } else if (data is List) {
-        setState(() => _reservations = data.cast<Map<String, dynamic>>());
-      } else {
-        setState(() => _reservations = []);
-      }
+      setState(
+        () => _reservations =
+            ParkingReservationEntry.listFromResponse(response.data),
+      );
     } catch (e) {
       if (mounted) {
         setState(() => _errorMessage = '予約一覧の取得に失敗しました: $e');
@@ -104,10 +99,12 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
                       itemCount: _reservations.length,
                       itemBuilder: (context, index) {
                         final res = _reservations[index];
-                        final spotName =
-                            res['spot_name']?.toString() ?? 'スポット ${index + 1}';
-                        final reservedAt = res['reserved_at']?.toString();
-                        final status = res['status']?.toString() ?? '予約済み';
+                        final spotName = res.spotLabel.isNotEmpty
+                            ? res.spotLabel
+                            : 'スポット ${index + 1}';
+                        final timeRange = res.timeRangeLabel;
+                        final feeLabel =
+                            res.fee != null ? '¥${res.fee}' : '予約済み';
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           child: ListTile(
@@ -122,20 +119,20 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
                                 height: 1.5,
                               ),
                             ),
-                            subtitle: Text(reservedAt ?? status),
+                            subtitle: Text(
+                              timeRange.isNotEmpty ? timeRange : '予約済み',
+                            ),
                             trailing: Chip(
                               label: Text(
-                                status,
+                                feeLabel,
                                 style: const TextStyle(
                                   fontSize: 12,
                                   height: 1.5,
                                 ),
                               ),
-                              backgroundColor: status == 'active'
-                                  ? const Color(0xFFC8E6C9)
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .surfaceContainerHigh,
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHigh,
                             ),
                           ),
                         );

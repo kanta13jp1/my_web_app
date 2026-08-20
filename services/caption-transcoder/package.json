@@ -1,0 +1,14 @@
+{
+  "name": "caption-transcoder",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ffmpeg caption burn-in service for X-share presenter videos (VVAG H3).",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

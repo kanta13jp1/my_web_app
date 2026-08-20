@@ -1,9 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/ai_share_button_preferences_service.dart';
 import '../services/universal_x_share_service.dart';
+import '../services/x_copy_guardrails.dart';
 import 'ai_share_button_settings_panel.dart';
+
+/// 投稿済みツイートの URL を組み立てる純関数。ハンドル名は不要な
+/// `https://x.com/i/status/<id>` 形式(アカウント名の @ 付き/表記ゆれに非依存)。
+String? composePostedTweetUrl(String? tweetId) {
+  final id = tweetId?.trim() ?? '';
+  if (id.isEmpty) return null;
+  return 'https://x.com/i/status/$id';
+}
+
+/// 投稿完了メッセージを組み立てる純関数。動画が付かなかった投稿では、その
+/// 理由(例: Hedraクレジット不足)を末尾に残し、operator が投稿画面だけで
+/// 「なぜ静止画になったか」を即視認できるようにする。理由は最初の「。」まで
+/// (最大60字)に短縮する。
+String? _shortenReason(String? videoFailReason) {
+  final reason = videoFailReason?.trim() ?? '';
+  if (reason.isEmpty) return null;
+  var short = reason;
+  final period = short.indexOf('。');
+  if (period > 0) short = short.substring(0, period);
+  final runes = short.runes.toList(growable: false);
+  if (runes.length > 60) {
+    short = '${String.fromCharCodes(runes.take(60))}…';
+  }
+  return short;
+}
+
+String composePostedStatus({
+  required bool posted,
+  required String? account,
+  required bool videoAttached,
+  required String? videoFailReason,
+  bool videoReused = false,
+  String? reusedVideoDate,
+}) {
+  if (!posted) {
+    return '投稿できませんでした。X API secret設定を確認してください';
+  }
+  final who = account ?? '@kanta13jp1';
+  if (videoAttached && videoReused) {
+    // 再利用投稿は劣化系として理由を残す(🎉なし)。
+    final when = reusedVideoDate == null ? '' : '$reusedVideoDate生成・';
+    final short = _shortenReason(videoFailReason);
+    return short == null
+        ? '$who に動画付きで投稿しました（$when過去動画を再利用）'
+        : '$who に動画付きで投稿しました（$when過去動画を再利用・動画生成不可: $short）';
+  }
+  if (videoAttached) return '$who に動画付きで投稿しました 🎉';
+  final short = _shortenReason(videoFailReason);
+  if (short == null) return '$who に画像付きで投稿しました 🎉';
+  return '$who に画像付きで投稿しました（動画なし: $short）';
+}
 
 final universalAiShareRouteObserver = UniversalAiShareRouteObserver();
 
@@ -34,6 +87,36 @@ class UniversalAiShareRouteObserver extends NavigatorObserver {
   void _update(String? routeName) {
     currentPage.value = UniversalSharePageContext.fromRouteName(routeName);
   }
+}
+
+/// R33: AI シェア FAB は Navigator の Overlay に載るため、ページの AppBar より
+/// 前面に出る。top 配置で `top: 20` のままだと標準 AppBar (kToolbarHeight=56) の
+/// actions を覆ってしまい、例えば /admin の「データをリセット」「データを更新」
+/// ボタンが押せなくなる (実機 build 4873/4877 で発生)。ツールバー高さぶん下げて
+/// アプリの chrome を塞がないようにする。bottom 配置は元から干渉しない。
+const double kAiShareFabTopOffset = kToolbarHeight + 20;
+const double kAiShareFabDefaultBottomOffset = 20;
+const double kAiShareFabLandingBottomOffset = 88;
+const double kAiShareFabMusubiBottomOffset = 88;
+
+bool shouldShowUniversalAiShareFab({
+  required String routePath,
+  required bool isLoggedIn,
+}) {
+  return routePath != '/' || isLoggedIn;
+}
+
+double resolveAiShareFabBottomOffset({
+  required String routePath,
+  required double screenWidth,
+}) {
+  final isMusubi = routePath == '/musubi' || routePath == '/social-feed';
+  if (isMusubi) return kAiShareFabMusubiBottomOffset;
+
+  final isLandingMobile = routePath == '/' && screenWidth < 720;
+  return isLandingMobile
+      ? kAiShareFabLandingBottomOffset
+      : kAiShareFabDefaultBottomOffset;
 }
 
 class UniversalAiShareShell extends StatefulWidget {
@@ -132,6 +215,10 @@ class _UniversalAiShareShellState extends State<UniversalAiShareShell> {
                   navigatorKey: widget.navigatorKey,
                 ),
               ),
+              bottomOffset: resolveAiShareFabBottomOffset(
+                routePath: page.routePath,
+                screenWidth: MediaQuery.sizeOf(context).width,
+              ),
             );
           },
         );
@@ -139,16 +226,20 @@ class _UniversalAiShareShellState extends State<UniversalAiShareShell> {
     );
   }
 
-  Widget _positionedFab(AiShareButtonPosition position, Widget child) {
+  Widget _positionedFab(
+    AiShareButtonPosition position,
+    Widget child, {
+    required double bottomOffset,
+  }) {
     switch (position) {
       case AiShareButtonPosition.topLeft:
-        return Positioned(left: 16, top: 20, child: child);
+        return Positioned(left: 16, top: kAiShareFabTopOffset, child: child);
       case AiShareButtonPosition.topRight:
-        return Positioned(right: 16, top: 20, child: child);
+        return Positioned(right: 16, top: kAiShareFabTopOffset, child: child);
       case AiShareButtonPosition.bottomLeft:
-        return Positioned(left: 16, bottom: 20, child: child);
+        return Positioned(left: 16, bottom: bottomOffset, child: child);
       case AiShareButtonPosition.bottomRight:
-        return Positioned(right: 16, bottom: 20, child: child);
+        return Positioned(right: 16, bottom: bottomOffset, child: child);
     }
   }
 }
@@ -199,6 +290,13 @@ class _UniversalAiShareFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = _isLoggedIn;
+    if (!shouldShowUniversalAiShareFab(
+      routePath: page.routePath,
+      isLoggedIn: isLoggedIn,
+    )) {
+      return const SizedBox.shrink();
+    }
+
     final colorScheme = Theme.of(context).colorScheme;
     final backgroundColor = isLoggedIn
         ? colorScheme.primaryContainer
@@ -269,21 +367,44 @@ class UniversalAiShareDialog extends StatefulWidget {
 }
 
 class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
+  // 動画エンジン等のユーザー設定(設定パネルと同一のグローバル controller)。
+  AiShareButtonPreferencesController get _preferencesController =>
+      aiShareButtonPreferencesController;
+
   late final UniversalXShareService _service;
   late final TextEditingController _textController;
   UniversalXShareDraft? _draft;
   String? _imageUrl;
   String? _videoUrl;
+  // 過去生成動画の再利用状態(新規生成が不可のとき静止画の代わりに使う)。
+  bool _videoReused = false;
+  bool _reusedVideoSameDay = false;
+  String? _reusedVideoDateLabel; // 例 '7/6'
   String? _statusMessage;
+  String? _postedTweetUrl;
   bool _loadingDraft = true;
   bool _generatingImage = false;
   bool _generatingVideo = false;
   bool _posting = false;
   bool _disposed = false;
 
+  /// R24: リンク位置。既定は「リードにURL」= false。
+  ///
+  /// 従来は `linkInReply: true` をハードコードしていたが、実測 (X analytics
+  /// 2026-04-27〜07-25 / 350投稿) がこの既定を否定した:
+  ///   - リンクをリードに置く経路 (地方議員集計 / `'$body\n\n$publicUrl'`)
+  ///     … 5本で URL クリック 286件 = アカウント全クリックの 94%
+  ///   - この経路が生成した最終CTAリプライ「試せるURLはこちらです。5分だけ
+  ///     触って…」… 30 impressions / プロダクト系24本で計 2クリック
+  /// A/B の余地は残す (performance_context の "link placement" lift は両方の
+  /// バケットに n>=2 が無いと沈黙するため、切り替え自体は残す必要がある)。
+  bool _linkInReply = false;
+
   @override
   void initState() {
     super.initState();
+    // 通常は shell 側で読込済(冪等)。ダイアログ単体表示でも設定を反映する。
+    _preferencesController.load();
     _service = UniversalXShareService(supabase: Supabase.instance.client);
     _textController = TextEditingController();
     _generateDraft();
@@ -304,12 +425,25 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
     try {
       final draft = await _service.generateDraft(widget.page);
       if (_disposed || !mounted) return;
+      // R22: exact 禁止語はプロンプトだけでは毎回すり抜けが出る(実測 2026-07-11:
+      // 「ウェブアプリ」「ぜひ試して」等)。決定的検出で非ブロッキング警告を出す
+      // (投稿は止めない・自動再生成もしない = 有償生成 foot-gun 回避)。
+      final slopWarning = composeSlopWarning(
+        detectSlop(draft.text, draft.threadReplies.join('\n')),
+      );
+      // R27: 年号は事実主張なのでスロップより優先して出す。プロンプトに
+      // 「never invent another year (e.g. never write 2024)」があるにも関わらず、
+      // 実際に `デイリーブリーフィング — 2024/07/05 朝` が出荷された実例がある。
+      final staleYearWarning = composeStaleYearWarning(
+        detectStaleYears('${draft.text}\n${draft.threadReplies.join('\n')}'),
+      );
       setState(() {
         _draft = draft;
         _textController.text = draft.text;
         _loadingDraft = false;
-        _statusMessage =
-            draft.fallbackUsed ? 'AI生成が不安定なため、安全な定型文を使っています' : null;
+        _statusMessage = draft.fallbackUsed
+            ? 'AI生成が不安定なため、安全な定型文を使っています'
+            : (staleYearWarning ?? slopWarning);
       });
     } catch (error) {
       if (_disposed || !mounted) return;
@@ -333,6 +467,14 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
   /// ワンボタン: 文章(生成済)→画像→音声+動画(Hedra/ElevenLabs, 非同期はポーリング)
   /// →X投稿 を一括実行する。ユーザーは「AI生成して投稿」を押すだけ。失敗時は原因を
   /// 画面に明確表示する。
+  Future<void> _openPostedTweet() async {
+    final url = _postedTweetUrl;
+    if (url == null) return;
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   Future<void> _generateAndPost() async {
     final draft = _draft;
     if (_posting || _loadingDraft) return;
@@ -343,8 +485,33 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
     setState(() {
       _posting = true;
       _statusMessage = null;
+      _postedTweetUrl = null;
     });
+    // 動画が生成できなかった理由。投稿完了メッセージへ残し、静止画になった
+    // 原因(例: Hedraクレジット不足)を operator が投稿画面で即視認できるようにする
+    // (従来は投稿前の一瞬のステータスにしか出ず、気づけなかった)。
+    String? videoFailReason;
     try {
+      // 0. X spend-cap preflight(R15)。cap 到達中は投稿が確定失敗するのに、
+      // 従来は GPT画像+ElevenLabs+Hedra(~119クレジット+最大7.5分)を全部生成
+      // してから投稿で失敗していた(実障害 2026-07-08)。ブロック中は有償生成と
+      // 投稿試行を丸ごとスキップし、解除手段を即提示する。文面は生成済みなので
+      // このダイアログからコピーして X の投稿画面で手動投稿は引き続き可能。
+      final preflight = await _service.checkXPostPreflight();
+      if (_disposed || !mounted) return;
+      if (preflight.blocked) {
+        final resetNote = preflight.resetAt == null
+            ? ''
+            : '（${preflight.resetAt} に自動リセット見込み）';
+        setState(() {
+          _posting = false;
+          _statusMessage = 'X APIのspend cap到達中のため、画像・音声・動画の生成と'
+              'API投稿をスキップしました$resetNote。console.x.com の'
+              '「支出上限を管理」で引き上げると即時解除されます。上の文面を'
+              'コピーして X で手動投稿することは可能です。';
+        });
+        return;
+      }
       // 1. 画像(presenter/舞台がローテ)
       if (_imageUrl == null) {
         setState(() {
@@ -359,23 +526,57 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         _imageUrl = image.url;
         setState(() => _generatingImage = false);
       }
-      // 2. 音声+動画(Hedra は非同期。生成IDが返ったら完了までポーリング)
+      // 2. 音声+動画(Hedra / fal.ai とも非同期。生成IDが返ったら完了までポーリング)
+      // 動画エンジンは設定パネルで選択(既定は従来どおり Hedra プレゼンター動画)。
+      final videoEngine = _preferencesController.preferences.videoEngine;
+      final cinematic = videoEngine == AiShareVideoEngine.cinematic;
       if (_videoUrl == null) {
         setState(() {
           _generatingVideo = true;
-          _statusMessage = 'AIが音声と動画を生成しています…（Hedraは数分かかる場合があります）';
+          _statusMessage = cinematic
+              ? 'AIがシネマティック動画を生成しています…（fal.aiは数分かかる場合があります）'
+              : 'AIが音声と動画を生成しています…（Hedraは数分かかる場合があります）';
         });
-        var video = await _service.generateVideo(
-          context: widget.page,
-          draft: draft,
-          imageUrl: _imageUrl,
-        );
+        // preflight: 直近24h以内の Hedra クレジット不足失敗(以後の成功なし)を
+        // 検出したら、ElevenLabs TTS を含む生成経路を丸ごとスキップして過去
+        // 動画の再利用へ直行する(枯渇中の試行毎の TTS 代 + 30-60 秒待ちを除去)。
+        // クレジット補充後は TTL 24h 失効時の実試行で自動復帰する。
+        // Hedra 固有の課金失敗検出なので cinematic エンジンでは適用しない。
+        List<Map<String, dynamic>> shareHistory = const [];
+        try {
+          shareHistory = await _service.fetchShareVideoHistory();
+        } catch (_) {}
+        if (_disposed || !mounted) return;
+        var skipGeneration = false;
+        if (!cinematic) {
+          skipGeneration = UniversalXShareService.shouldSkipVideoGeneration(
+            shareHistory,
+            nowUtc: DateTime.now().toUtc(),
+          );
+        }
+        var video = skipGeneration
+            ? const UniversalXMediaResult(
+                url: null,
+                status: 'billing_preflight_skipped',
+                raw: {
+                  'videoReason': 'Hedra クレジット不足（直近24h内の失敗を検出し生成をスキップ）',
+                },
+              )
+            : await _service.generateVideo(
+                context: widget.page,
+                draft: draft,
+                imageUrl: _imageUrl,
+                engine: videoEngine,
+              );
+        final generationIdKey =
+            cinematic ? 'falRequestId' : 'hedraGenerationId';
         var generationId = video.url == null
-            ? _extractString(video.raw, 'hedraGenerationId')
+            ? _extractString(video.raw, generationIdKey)
             : null;
-        // Hedra は非同期で、ナレーション長に応じて数分かかる。静止画で投稿されないよう、
-        // 動画URLが返るまでポーリングして完成を待つ。台本は短尺(<=450字)に制限済で通常
-        // 数分内に完成するが、Hedra のキュー変動に備え約7分半まで待つ(defense-in-depth)。
+        // Hedra / fal.ai は非同期で数分かかる。静止画で投稿されないよう、
+        // 動画URLが返るまでポーリングして完成を待つ。Hedra の台本は短尺(<=450字)に
+        // 制限済で通常数分内に完成するが、キュー変動に備え約7分半まで待つ
+        // (defense-in-depth)。fal.ai text-to-video も同予算内に収まる。
         const maxPolls = 45;
         for (var polls = 0;
             video.url == null && generationId != null && polls < maxPolls;
@@ -384,16 +585,20 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
           if (_disposed || !mounted) return;
           final elapsed = (polls + 1) * 10;
           setState(() {
-            _statusMessage = '音声と動画を生成しています…（約$elapsed秒経過 / 最大約7分半）';
+            _statusMessage = cinematic
+                ? 'シネマティック動画を生成しています…（約$elapsed秒経過 / 最大約7分半）'
+                : '音声と動画を生成しています…（約$elapsed秒経過 / 最大約7分半）';
           });
           video = await _service.generateVideo(
             context: widget.page,
             draft: draft,
             imageUrl: _imageUrl,
-            hedraGenerationId: generationId,
+            hedraGenerationId: cinematic ? null : generationId,
+            falRequestId: cinematic ? generationId : null,
+            engine: videoEngine,
           );
           generationId = video.url == null
-              ? (_extractString(video.raw, 'hedraGenerationId') ?? generationId)
+              ? (_extractString(video.raw, generationIdKey) ?? generationId)
               : null;
         }
         if (_disposed || !mounted) return;
@@ -402,27 +607,69 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         if (_videoUrl == null) {
           final reason =
               _extractString(video.raw, 'videoReason') ?? '時間内に完了しませんでした';
-          setState(() => _statusMessage = '動画は生成できませんでした（$reason）。画像付きで投稿します。');
+          videoFailReason = reason;
+          // 静止画へ降格する前に、保存済みの過去生成動画(7日以内・同日/字幕優先)
+          // を再利用する。取得失敗時は従来どおり静止画(never-throw)。
+          try {
+            final reused = await _service.fetchReusableVideo(
+              context: widget.page,
+              history: shareHistory.isNotEmpty ? shareHistory : null,
+            );
+            if (_disposed || !mounted) return;
+            if (reused != null) {
+              _videoUrl = reused.url;
+              _videoReused = true;
+              _reusedVideoSameDay = reused.sameDay;
+              _reusedVideoDateLabel = reused.dateLabel;
+            }
+          } catch (_) {}
+          if (_disposed || !mounted) return;
+          setState(
+            () => _statusMessage = _videoReused
+                ? '新規動画は生成できませんでした（$reason）。過去の生成動画'
+                    '（${_reusedVideoDateLabel ?? '?'}生成）を再利用して投稿します。'
+                : '動画は生成できませんでした（$reason）。画像付きで投稿します。',
+          );
         }
       }
-      // 3. X 投稿(URLはリプライへ、スレッド返信も投稿)
+      // 3. X 投稿(既定はリードにURL / スレッド返信も投稿)
       final postedMedia = _videoUrl != null ? '動画' : '画像';
       setState(() => _statusMessage = 'Xに投稿しています…（$postedMedia付き）');
+      // 非同日の再利用動画のみ最終リプへ1行開示する(リード1行目のフックには
+      // 触れない)。同日生成の再利用は内容が今日の話題なので注記不要。
+      final threadReplies = (_videoReused &&
+              !_reusedVideoSameDay &&
+              _reusedVideoDateLabel != null)
+          ? <String>[
+              ...draft.threadReplies,
+              '※動画は過去生成分（$_reusedVideoDateLabel）を再利用しています',
+            ]
+          : draft.threadReplies;
       final result = await _service.postToX(
         context: widget.page,
         text: _textController.text,
         mediaUrl: _videoUrl ?? _imageUrl,
-        threadReplies: draft.threadReplies,
-        linkInReply: true,
+        threadReplies: threadReplies,
+        linkInReply: _linkInReply,
         // ネイティブ投票(H7 / impressions ブースター)。draft.poll が null の
         // ときは従来と完全に同一の投稿になる(additive / default-off)。
         poll: draft.poll,
+        // 定型文フォールバック投稿を perf 計測で分離するためのタグ。
+        fallbackUsed: draft.fallbackUsed,
       );
       if (_disposed || !mounted) return;
       setState(() {
-        _statusMessage = result.posted
-            ? '${result.account ?? '@kanta13jp1'} に$postedMedia付きで投稿しました 🎉'
-            : '投稿できませんでした。X API secret設定を確認してください';
+        _statusMessage = composePostedStatus(
+          posted: result.posted,
+          account: result.account,
+          videoAttached: _videoUrl != null,
+          videoFailReason: videoFailReason,
+          videoReused: _videoReused,
+          reusedVideoDate: _reusedVideoDateLabel,
+        );
+        // ゴールデンアワー導線用(投稿を開くボタン)。
+        _postedTweetUrl =
+            result.posted ? composePostedTweetUrl(result.tweetId) : null;
       });
     } catch (error) {
       if (_disposed || !mounted) return;
@@ -469,13 +716,19 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 12),
-              _CreativePipelineCard(
-                textReady: !_loadingDraft && _draft != null,
-                imageReady: _imageUrl != null,
-                videoReady: _videoUrl != null,
-                generatingText: _loadingDraft,
-                generatingImage: _generatingImage,
-                generatingVideo: _generatingVideo,
+              AnimatedBuilder(
+                animation: _preferencesController,
+                builder: (context, _) => _CreativePipelineCard(
+                  textReady: !_loadingDraft && _draft != null,
+                  imageReady: _imageUrl != null,
+                  videoReady: _videoUrl != null,
+                  generatingText: _loadingDraft,
+                  generatingImage: _generatingImage,
+                  generatingVideo: _generatingVideo,
+                  videoReused: _videoReused,
+                  cinematic: _preferencesController.preferences.videoEngine ==
+                      AiShareVideoEngine.cinematic,
+                ),
               ),
               const SizedBox(height: 12),
               if (_loadingDraft)
@@ -493,9 +746,31 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                   ),
                 ),
               const SizedBox(height: 8),
+              // R24: リンク位置の A/B スイッチ。既定 (リードにURL) は実測に
+              // 従う。切り替えを残すのは、performance_context の
+              // "link placement" lift が両バケット n>=2 で初めて出るため。
+              SwitchListTile.adaptive(
+                value: _linkInReply,
+                onChanged: _posting
+                    ? null
+                    : (value) => setState(() => _linkInReply = value),
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: const Text('URLを最終リプライに置く'),
+                subtitle: Text(
+                  _linkInReply
+                      ? 'A/B用。実測ではこの配置のCTAリプライは30impに留まりました'
+                      : '既定。実測でクリックの94%はリードにURLがある投稿から出ています',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
               if (mediaUrl != null) ...[
                 const SizedBox(height: 12),
-                SelectableText('添付メディア: ${_mediaDisplayText(mediaUrl)}'),
+                SelectableText(
+                  _videoReused
+                      ? '添付メディア（過去動画を再利用）: ${_mediaDisplayText(mediaUrl)}'
+                      : '添付メディア: ${_mediaDisplayText(mediaUrl)}',
+                ),
               ],
               if (_statusMessage != null) ...[
                 const SizedBox(height: 12),
@@ -507,6 +782,20 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                         ? Theme.of(context).colorScheme.error
                         : Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+              if (_postedTweetUrl != null) ...[
+                const SizedBox(height: 4),
+                // ゴールデンアワー導線: 投稿直後 30-60 分の初速エンゲージが
+                // リーチを複利で伸ばす。開いて確認・当日の看板ならピン留め・
+                // 実コメントには手動で返信する(自動返信はしない)。
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: _openPostedTweet,
+                    icon: const Icon(Icons.open_in_new, size: 16),
+                    label: const Text('投稿を開く（最初の30分の反応が伸びを決めます）'),
                   ),
                 ),
               ],
@@ -537,6 +826,8 @@ class _CreativePipelineCard extends StatelessWidget {
   final bool generatingText;
   final bool generatingImage;
   final bool generatingVideo;
+  final bool videoReused;
+  final bool cinematic;
 
   const _CreativePipelineCard({
     required this.textReady,
@@ -545,6 +836,8 @@ class _CreativePipelineCard extends StatelessWidget {
     required this.generatingText,
     required this.generatingImage,
     required this.generatingVideo,
+    this.videoReused = false,
+    this.cinematic = false,
   });
 
   @override
@@ -552,7 +845,9 @@ class _CreativePipelineCard extends StatelessWidget {
     final theme = Theme.of(context);
     final steps = <_PipelineStepData>[
       // 実際に使うツールを正確に表示する(嘘のパイプラインにしない)。
-      // 文章=GPT-5.5(ai-hub) / 画像=GPT image / 音声=ElevenLabs / 動画=Hedra。
+      // presenter: 文章=GPT-5.5(ai-hub) / 画像=GPT image / 音声=ElevenLabs / 動画=Hedra。
+      // cinematic: 文章=GPT-5.5 / 画像=GPT image(静止画フォールバック用) /
+      //            動画=fal.ai text-to-video(音声・アバターなし)。
       _PipelineStepData(
         index: 1,
         model: 'GPT-5.5',
@@ -567,19 +862,28 @@ class _CreativePipelineCard extends StatelessWidget {
         icon: Icons.image_outlined,
         state: _stateFor(ready: imageReady, running: generatingImage),
       ),
+      if (!cinematic)
+        _PipelineStepData(
+          index: 3,
+          model: 'ElevenLabs',
+          role: '音声',
+          icon: Icons.record_voice_over_outlined,
+          state: _stateFor(
+            ready: videoReady,
+            running: generatingVideo,
+            reused: videoReused,
+          ),
+        ),
       _PipelineStepData(
-        index: 3,
-        model: 'ElevenLabs',
-        role: '音声',
-        icon: Icons.record_voice_over_outlined,
-        state: _stateFor(ready: videoReady, running: generatingVideo),
-      ),
-      _PipelineStepData(
-        index: 4,
-        model: 'Hedra',
+        index: cinematic ? 3 : 4,
+        model: cinematic ? 'fal.ai' : 'Hedra',
         role: '動画',
         icon: Icons.movie_creation_outlined,
-        state: _stateFor(ready: videoReady, running: generatingVideo),
+        state: _stateFor(
+          ready: videoReady,
+          running: generatingVideo,
+          reused: videoReused,
+        ),
       ),
     ];
 
@@ -629,14 +933,18 @@ class _CreativePipelineCard extends StatelessWidget {
   static _PipelineStepState _stateFor({
     required bool ready,
     required bool running,
+    bool reused = false,
   }) {
     if (running) return _PipelineStepState.running;
-    if (ready) return _PipelineStepState.ready;
+    if (ready) {
+      // 再利用時は ElevenLabs/Hedra とも新規生成していないことを正直に表示。
+      return reused ? _PipelineStepState.reused : _PipelineStepState.ready;
+    }
     return _PipelineStepState.waiting;
   }
 }
 
-enum _PipelineStepState { waiting, running, ready }
+enum _PipelineStepState { waiting, running, ready, reused }
 
 class _PipelineStepData {
   final int index;
@@ -665,11 +973,13 @@ class _PipelineStepChip extends StatelessWidget {
     final color = switch (step.state) {
       _PipelineStepState.ready => const Color(0xFF059669),
       _PipelineStepState.running => const Color(0xFFF97316),
+      _PipelineStepState.reused => const Color(0xFF2563EB),
       _PipelineStepState.waiting => theme.colorScheme.onSurfaceVariant,
     };
     final status = switch (step.state) {
       _PipelineStepState.ready => 'ready',
       _PipelineStepState.running => 'running',
+      _PipelineStepState.reused => '再利用',
       _PipelineStepState.waiting => 'waiting',
     };
 

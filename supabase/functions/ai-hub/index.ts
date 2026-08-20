@@ -14,6 +14,10 @@ import {
   prependCharacter,
 } from "../_shared/ai_character_preamble.ts";
 import {
+  buildExternalFileContextBlock,
+  MCP_FILE_CONTEXT_SOURCE,
+} from "../_shared/mcp_external_file.ts";
+import {
   type AgentToolApproval,
   type AgentToolPolicyDecision,
   evaluateAgentToolPolicy,
@@ -30,6 +34,10 @@ import {
   shouldBlockExternalProviderCall,
 } from "../_shared/offline_secure_mode_guard.ts";
 import {
+  normalizeAiRouterPreference,
+  normalizeAiRoutingTask,
+} from "../_shared/ai_router_cost_optimization.ts";
+import {
   getUniversityContentByFaculty,
   getUniversityDepartmentList,
   getUniversityFacultyList,
@@ -43,6 +51,13 @@ import {
   type MonthlyAssetReportDb,
   normalizeMonthlyAssetReportProvider,
 } from "./monthly_asset_report.ts";
+import { AssetChatActionError, handleAssetChatAction } from "./asset_chat.ts";
+import { createSupabaseAssetChatStore } from "./asset_chat_supabase.ts";
+import {
+  DepartmentFinanceSummaryActionError,
+  type DepartmentFinanceSummaryDb,
+  handleDepartmentFinanceSummaryAction,
+} from "./department_finance_summary_actions.ts";
 import {
   handleParsePayslipAction,
   isPayslipIngestionAction,
@@ -62,17 +77,54 @@ import {
   handleDisposableBalanceAction,
 } from "./disposable_balance.ts";
 import {
+  type AnomalyDetectionDb,
+  AnomalyDetectionError,
+  handleDetectAnomaliesAction,
+  handleScanAllAction,
+} from "./anomaly_detection.ts";
+import {
   handleMarketPriceAction,
   isMarketPriceLiveFetchEnabled,
   MarketPriceActionError,
   type MarketPriceDb,
 } from "./market_price.ts";
 import { applyProviderGenerationOptions } from "./provider_generation_options.ts";
+import {
+  buildCompanyRuntimePrompt,
+  nextCompanyRuntimeRoutingProfile,
+  parseCompanyRuntimeQueueMessages,
+  selectCompanyRuntimeRouting,
+} from "./company_builder_runtime.ts";
+import {
+  buildExtractiveResearchFallback,
+  buildResearchCitationContext,
+  canonicalResearchUrl,
+  chunkResearchMarkdown,
+  ensureCitationFooter,
+  fetchPublicResearchDocument,
+  normalizeResearchCitations,
+  type ResearchCitation,
+  sha256Hex,
+} from "./company_research.ts";
+import {
+  assertA2AVersion,
+  buildCompanyAgentCard,
+  COMPANY_A2A_CONTENT_TYPE,
+  COMPANY_A2A_PROTOCOL_VERSION,
+  companyTaskToA2A,
+  decodeA2APageToken,
+  encodeA2APageToken,
+  parseA2ASendMessage,
+} from "./company_a2a.ts";
+import { rankBm25 } from "../memory-search-hub/search/bm25.ts";
+import { embedTextWithGemini } from "../memory-search-hub/search/vector.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, a2a-version, a2a-extensions",
+  "Access-Control-Expose-Headers": "A2A-Version, WWW-Authenticate",
+  "Access-Control-Max-Age": "86400",
 };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -95,6 +147,22 @@ function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function a2aJson(
+  data: unknown,
+  status = 200,
+  extraHeaders: HeadersInit = {},
+): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "A2A-Version": COMPANY_A2A_PROTOCOL_VERSION,
+      "Content-Type": COMPANY_A2A_CONTENT_TYPE,
+      ...Object.fromEntries(new Headers(extraHeaders)),
+    },
   });
 }
 
@@ -128,6 +196,9 @@ type ProviderInlineFile = {
 
 type ProviderCallOptions = {
   maxTokens?: number;
+  /// この 1 呼び出しの timeout (ms)。未指定なら providerFetchTimeoutMs()。
+  /// chat_auto はリクエスト全体予算から残り時間を配分して渡す。
+  timeoutMs?: number;
 };
 
 function pick(obj: unknown, ...path: (string | number)[]): unknown {
@@ -208,7 +279,7 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     displayName: "DeepSeek",
     envKey: "DEEPSEEK_API_KEY",
     chatUrl: "https://api.deepseek.com/v1/chat/completions",
-    defaultModel: "deepseek-chat",
+    defaultModel: "deepseek-v4-flash",
     buildBody: OPENAI_COMPAT_BODY,
     parseResponse: OPENAI_COMPAT_PARSE,
   },
@@ -549,7 +620,10 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
 type Tier = "free" | "budget" | "performance" | "premium";
 
 const TIER_PROVIDERS: Record<Tier, string[]> = {
-  free: ["deepseek", "groq", "cerebras", "siliconflow", "novita_ai"],
+  // 実障害(2026-07-07): free 先頭の遅延プロバイダが chat_auto の時間予算を
+  // 焼き尽くし 2 連続 503。高速推論ホスト(groq/cerebras)を先頭に置く。
+  // key 未設定のプロバイダは callSingleProvider が即 fail するので無害。
+  free: ["groq", "cerebras", "deepseek", "siliconflow", "novita_ai"],
   budget: [
     "sambanova",
     "arcee_ai",
@@ -664,7 +738,7 @@ async function callSingleProvider(
     const controller = new AbortController();
     const timeoutId = setTimeout(
       () => controller.abort(),
-      providerFetchTimeoutMs(),
+      options?.timeoutMs ?? providerFetchTimeoutMs(),
     );
     let resp: Response;
     let respText: string;
@@ -738,6 +812,25 @@ async function callSingleProvider(
 function providerFetchTimeoutMs(): number {
   const raw = Number(Deno.env.get("AI_HUB_PROVIDER_TIMEOUT_MS"));
   return Number.isFinite(raw) && raw > 0 ? raw : 90_000;
+}
+
+/// provider.chat_auto の「リクエスト全体」予算 (ms)。実障害(2026-07-06): 各
+/// プロバイダ 90s timeout のまま複数プロバイダが遅延すると合計が edge の
+/// wall-clock を超え、gateway に ~66s で kill されて生の 502 が返った。
+/// `AI_HUB_CHAT_TOTAL_BUDGET_MS` で調整可 (既定 45s)。クライアント側の
+/// universal-x-share は 45s timeout + 1 retry — 両者は結合しているので
+/// 変更時はセットで見直す。
+function chatTotalBudgetMs(): number {
+  const raw = Number(Deno.env.get("AI_HUB_CHAT_TOTAL_BUDGET_MS"));
+  return Number.isFinite(raw) && raw > 0 ? raw : 45_000;
+}
+
+/// chat_auto の 1 プロバイダ呼び出し上限 (ms)。ハングした 1 プロバイダの
+/// コストを抑え、予算内で後続プロバイダへ順番を回す。
+/// `AI_HUB_CHAT_PER_CALL_MS` で調整可 (既定 20s)。
+function chatPerCallTimeoutMs(): number {
+  const raw = Number(Deno.env.get("AI_HUB_CHAT_PER_CALL_MS"));
+  return Number.isFinite(raw) && raw > 0 ? raw : 20_000;
 }
 
 /// 外部プロバイダ / 内部サブ関数呼び出しに providerFetchTimeoutMs() のタイムアウトを
@@ -832,6 +925,40 @@ function providerTier(providerId: string): Tier | null {
     if (TIER_PROVIDERS[tier].includes(providerId)) return tier;
   }
   return null;
+}
+
+async function loadManualRoutingPreference(
+  userId: string | null,
+  taskValue: unknown,
+): Promise<{ task: string; provider: string; model: string | null } | null> {
+  if (!userId) return null;
+  const task = normalizeAiRoutingTask(taskValue);
+  try {
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    const { data, error } = await admin
+      .from("ai_task_routing_preferences")
+      .select("task, provider, model, is_enabled, updated_at")
+      .eq("user_id", userId)
+      .eq("task", task)
+      .eq("is_enabled", true)
+      .maybeSingle();
+    if (error) {
+      console.warn(`[ai-router] preference lookup skipped: ${error.message}`);
+      return null;
+    }
+    const preference = normalizeAiRouterPreference(data);
+    if (!preference || !(preference.provider in PROVIDER_CONFIGS)) {
+      return null;
+    }
+    return {
+      task: preference.task,
+      provider: preference.provider,
+      model: preference.model,
+    };
+  } catch (error) {
+    console.warn(`[ai-router] preference lookup failed: ${String(error)}`);
+    return null;
+  }
 }
 
 function stripMarkdownCodeFence(text: string): string {
@@ -1908,6 +2035,11 @@ async function getCompanyBuilderDetail(
     notesResult,
     workflowsResult,
     auditsResult,
+    runtimeControlResult,
+    runtimeMasterResult,
+    runtimeEventsResult,
+    researchSourcesResult,
+    routingProfilesResult,
   ] = await Promise.all([
     admin.from("agents").select("*")
       .eq("user_id", userId)
@@ -1940,6 +2072,29 @@ async function getCompanyBuilderDetail(
       .filter("metadata->>company_id", "eq", companyId)
       .order("created_at", { ascending: false })
       .limit(40),
+    admin.from("company_agent_runtime_controls").select("*")
+      .eq("user_id", userId)
+      .eq("company_id", companyId)
+      .maybeSingle(),
+    admin.from("company_agent_runtime_master_controls").select("*")
+      .eq("user_id", userId)
+      .maybeSingle(),
+    admin.from("company_agent_events").select("*")
+      .eq("user_id", userId)
+      .eq("company_id", companyId)
+      .order("occurred_at", { ascending: false })
+      .limit(100),
+    admin.from("company_research_sources").select(
+      "id, source_url, canonical_url, title, excerpt, status, http_status, content_type, last_error, metadata, fetched_at, created_at, updated_at",
+    )
+      .eq("user_id", userId)
+      .eq("company_id", companyId)
+      .order("updated_at", { ascending: false })
+      .limit(100),
+    admin.from("company_runtime_routing_profiles").select("*")
+      .eq("user_id", userId)
+      .eq("company_id", companyId)
+      .order("updated_at", { ascending: false }),
   ]);
 
   if (managerAgentsResult.error) {
@@ -1951,6 +2106,21 @@ async function getCompanyBuilderDetail(
   if (notesResult.error) throw new Error(notesResult.error.message);
   if (workflowsResult.error) throw new Error(workflowsResult.error.message);
   if (auditsResult.error) throw new Error(auditsResult.error.message);
+  if (runtimeControlResult.error) {
+    throw new Error(runtimeControlResult.error.message);
+  }
+  if (runtimeMasterResult.error) {
+    throw new Error(runtimeMasterResult.error.message);
+  }
+  if (runtimeEventsResult.error) {
+    throw new Error(runtimeEventsResult.error.message);
+  }
+  if (researchSourcesResult.error) {
+    throw new Error(researchSourcesResult.error.message);
+  }
+  if (routingProfilesResult.error) {
+    throw new Error(routingProfilesResult.error.message);
+  }
 
   return {
     company,
@@ -1961,6 +2131,767 @@ async function getCompanyBuilderDetail(
     vault_notes: notesResult.data ?? [],
     workflows: workflowsResult.data ?? [],
     audit_entries: auditsResult.data ?? [],
+    runtime_control: runtimeControlResult.data,
+    runtime_master_control: runtimeMasterResult.data,
+    runtime_events: runtimeEventsResult.data ?? [],
+    research_sources: researchSourcesResult.data ?? [],
+    routing_profiles: routingProfilesResult.data ?? [],
+    a2a_agent_card_url:
+      `${SUPABASE_URL}/functions/v1/ai-hub/.well-known/agent-card.json`,
+  };
+}
+
+type InternalAiHubResponse = {
+  ok: boolean;
+  status: number;
+  payload: Record<string, unknown>;
+};
+
+type EdgeRuntimeBridge = {
+  waitUntil(promise: Promise<unknown>): void;
+};
+
+function isServiceRoleRequest(req: Request): boolean {
+  const authorization = req.headers.get("Authorization") ?? "";
+  return SERVICE_ROLE_KEY !== "" &&
+    authorization === `Bearer ${SERVICE_ROLE_KEY}`;
+}
+
+async function invokeAiHubInternal(
+  body: Record<string, unknown>,
+): Promise<InternalAiHubResponse> {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-hub`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+      apikey: SERVICE_ROLE_KEY,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const raw = await response.json().catch(() => ({}));
+  return {
+    ok: response.ok,
+    status: response.status,
+    payload: asRecord(raw) ?? {},
+  };
+}
+
+function runInBackground(promise: Promise<unknown>): void {
+  const runtime = (globalThis as unknown as { EdgeRuntime?: EdgeRuntimeBridge })
+    .EdgeRuntime;
+  const observed = promise.catch((error) => {
+    console.error("company runtime background task failed", error);
+  });
+  if (runtime) {
+    runtime.waitUntil(observed);
+  } else {
+    void observed;
+  }
+}
+
+function scheduleCompanyRuntimeWorker(): void {
+  runInBackground(invokeAiHubInternal({ action: "company_builder.worker" }));
+}
+
+async function addCompanyEvent(
+  admin: SupabaseClient,
+  userId: string,
+  companyId: string,
+  eventType: string,
+  status: string,
+  payload: Record<string, unknown> = {},
+) {
+  const { error } = await admin.from("company_agent_events").insert({
+    user_id: userId,
+    company_id: companyId,
+    event_type: eventType,
+    status,
+    payload,
+  });
+  if (error) throw new Error(error.message);
+}
+
+async function ensureCompanyRuntimeControl(
+  admin: SupabaseClient,
+  userId: string,
+  companyId: string,
+  state: "idle" | "blocked",
+  lastError: string | null = null,
+) {
+  const { error: masterError } = await admin
+    .from("company_agent_runtime_master_controls")
+    .upsert({ user_id: userId }, { onConflict: "user_id" });
+  if (masterError) throw new Error(masterError.message);
+
+  const { data, error } = await admin.from("company_agent_runtime_controls")
+    .upsert({
+      user_id: userId,
+      company_id: companyId,
+      state,
+      last_error: lastError,
+    }, { onConflict: "user_id,company_id" })
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return data as Record<string, unknown>;
+}
+
+async function enqueueCompanyRuntime(
+  admin: SupabaseClient,
+  userId: string,
+  companyId: string,
+  reason: string,
+) {
+  const { data, error } = await admin.rpc("enqueue_company_agent_runtime", {
+    p_user_id: userId,
+    p_company_id: companyId,
+    p_reason: reason,
+  });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+async function archiveCompanyRuntimeMessage(
+  admin: SupabaseClient,
+  messageId: number,
+) {
+  const { error } = await admin.rpc("archive_company_agent_runtime", {
+    p_message_id: messageId,
+  });
+  if (error) throw new Error(error.message);
+}
+
+async function getOwnedCompany(
+  admin: SupabaseClient,
+  userId: string,
+  companyId: string,
+): Promise<Record<string, unknown> | null> {
+  const { data, error } = await admin.from("hub_data")
+    .select("id, metadata, created_at")
+    .eq("id", companyId)
+    .eq("source", "company_builder_company")
+    .filter("metadata->>user_id", "eq", userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data as Record<string, unknown> | null;
+}
+
+async function embedCompanyResearchDocuments(
+  texts: string[],
+  apiKey: string,
+): Promise<Array<number[] | null>> {
+  if (!apiKey || texts.length === 0) return texts.map(() => null);
+  const embeddings: Array<number[] | null> = [];
+  for (let offset = 0; offset < texts.length; offset += 20) {
+    const batch = texts.slice(offset, offset + 20);
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
+        body: JSON.stringify({
+          requests: batch.map((text) => ({
+            model: "models/gemini-embedding-001",
+            content: { parts: [{ text: text.slice(0, 3500) }] },
+            taskType: "RETRIEVAL_DOCUMENT",
+            outputDimensionality: 768,
+          })),
+        }),
+        signal: AbortSignal.timeout(15_000),
+      },
+    );
+    if (!response.ok) {
+      throw new Error(`Gemini document embedding returned ${response.status}`);
+    }
+    const payload = await response.json() as {
+      embeddings?: Array<{ values?: number[] }>;
+    };
+    const values = payload.embeddings ?? [];
+    if (values.length !== batch.length) {
+      throw new Error("Gemini document embedding count mismatch");
+    }
+    embeddings.push(
+      ...values.map((item) =>
+        Array.isArray(item.values) && item.values.length === 768
+          ? item.values
+          : null
+      ),
+    );
+  }
+  return embeddings;
+}
+
+const COMPANY_RESEARCH_EMBEDDING_CHUNK_LIMIT = 60;
+
+async function ingestCompanyResearchSource(
+  admin: SupabaseClient,
+  userId: string,
+  companyId: string,
+  rawUrl: unknown,
+): Promise<Record<string, unknown>> {
+  if (!await getOwnedCompany(admin, userId, companyId)) {
+    throw new Error("Company not found");
+  }
+  const canonicalUrl = canonicalResearchUrl(rawUrl);
+  const sourceUrl = String(rawUrl).trim();
+  const { data: source, error: sourceError } = await admin
+    .from("company_research_sources")
+    .upsert({
+      user_id: userId,
+      company_id: companyId,
+      source_url: sourceUrl,
+      canonical_url: canonicalUrl,
+      status: "processing",
+      last_error: null,
+      metadata: { ingestion: "company_builder" },
+    }, { onConflict: "user_id,company_id,canonical_url" })
+    .select("*")
+    .single();
+  if (sourceError) throw new Error(sourceError.message);
+  const sourceId = asString(source.id);
+
+  try {
+    const document = await fetchPublicResearchDocument(sourceUrl);
+    const chunks = chunkResearchMarkdown(document.markdown);
+    if (chunks.length === 0) {
+      throw new Error("Source produced no research chunks");
+    }
+    const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+    let embeddings = chunks.map(() => null as number[] | null);
+    let embeddingStatus = geminiKey ? "failed" : "unavailable";
+    if (geminiKey) {
+      try {
+        const generated = await embedCompanyResearchDocuments(
+          chunks.slice(0, COMPANY_RESEARCH_EMBEDDING_CHUNK_LIMIT).map((chunk) =>
+            chunk.content
+          ),
+          geminiKey,
+        );
+        embeddings = chunks.map((_, index) => generated[index] ?? null);
+        embeddingStatus = generated.some(Boolean)
+          ? chunks.length > COMPANY_RESEARCH_EMBEDDING_CHUNK_LIMIT
+            ? "partial"
+            : "ready"
+          : "failed";
+      } catch (error) {
+        console.warn("company research embedding fallback", error);
+      }
+    }
+
+    const { error: deleteError } = await admin.from("company_research_chunks")
+      .delete().eq("source_id", sourceId).eq("user_id", userId)
+      .eq("company_id", companyId);
+    if (deleteError) throw new Error(deleteError.message);
+    const chunkRows = chunks.map((chunk, index) => ({
+      source_id: sourceId,
+      user_id: userId,
+      company_id: companyId,
+      chunk_index: chunk.chunkIndex,
+      heading: chunk.heading,
+      location: chunk.location,
+      content: chunk.content,
+      embedding: embeddings[index],
+      metadata: { source_title: document.title },
+    }));
+    const { error: chunkError } = await admin.from("company_research_chunks")
+      .insert(chunkRows);
+    if (chunkError) throw new Error(chunkError.message);
+
+    const { data: ready, error: updateError } = await admin
+      .from("company_research_sources")
+      .update({
+        source_url: document.sourceUrl,
+        title: document.title,
+        content_markdown: document.markdown,
+        excerpt: document.excerpt,
+        content_hash: await sha256Hex(document.markdown),
+        status: "ready",
+        http_status: document.httpStatus,
+        content_type: document.contentType,
+        last_error: null,
+        fetched_at: new Date().toISOString(),
+        metadata: {
+          ingestion: "company_builder",
+          final_canonical_url: document.canonicalUrl,
+          chunk_count: chunks.length,
+          embedding_status: embeddingStatus,
+        },
+      })
+      .eq("id", sourceId).eq("user_id", userId).eq("company_id", companyId)
+      .select("*")
+      .single();
+    if (updateError) throw new Error(updateError.message);
+    await addCompanyEvent(
+      admin,
+      userId,
+      companyId,
+      "research_source_ready",
+      "ready",
+      {
+        source_id: sourceId,
+        chunk_count: chunks.length,
+        embedding_status: embeddingStatus,
+      },
+    );
+    return ready as Record<string, unknown>;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await admin.from("company_research_sources").update({
+      status: "failed",
+      last_error: message.slice(0, 1000),
+      metadata: {
+        ingestion: "company_builder",
+        fallback: "source_failure_recorded",
+      },
+    }).eq("id", sourceId).eq("user_id", userId).eq("company_id", companyId);
+    await addCompanyEvent(
+      admin,
+      userId,
+      companyId,
+      "research_source_failed",
+      "failed",
+      { source_id: sourceId, error: message.slice(0, 500) },
+    );
+    throw error;
+  }
+}
+
+async function searchCompanyResearch(
+  admin: SupabaseClient,
+  userId: string,
+  companyId: string,
+  query: string,
+): Promise<ResearchCitation[]> {
+  const { data: sources, error: sourcesError } = await admin
+    .from("company_research_sources")
+    .select("id, source_url, title, fetched_at")
+    .eq("user_id", userId).eq("company_id", companyId).eq("status", "ready")
+    .order("updated_at", { ascending: false }).limit(100);
+  if (sourcesError) throw new Error(sourcesError.message);
+  const sourceMap = new Map(
+    ((sources ?? []) as Record<string, unknown>[]).map((
+      source,
+    ) => [asString(source.id), source]),
+  );
+  if (sourceMap.size === 0) return [];
+
+  const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+  let queryEmbedding: number[] | null = null;
+  if (geminiKey) {
+    try {
+      queryEmbedding = await embedTextWithGemini(query, geminiKey);
+    } catch (error) {
+      console.warn("company research query embedding fallback", error);
+    }
+  }
+
+  const merged = new Map<string, Record<string, unknown>>();
+  const { data: hybridRows, error: hybridError } = await admin.rpc(
+    "match_company_research_chunks",
+    {
+      p_user_id: userId,
+      p_company_id: companyId,
+      p_query_text: query,
+      p_query_embedding: queryEmbedding,
+      p_match_count: 12,
+      p_match_threshold: 0.05,
+    },
+  );
+  if (hybridError) {
+    console.warn("company research database search fallback", hybridError);
+  } else {
+    for (const row of (hybridRows ?? []) as Record<string, unknown>[]) {
+      merged.set(asString(row.chunk_id), row);
+    }
+  }
+
+  const { data: chunks, error: chunksError } = await admin
+    .from("company_research_chunks")
+    .select("id, source_id, heading, location, content, updated_at")
+    .eq("user_id", userId).eq("company_id", companyId)
+    .in("source_id", [...sourceMap.keys()]).limit(300);
+  if (chunksError) throw new Error(chunksError.message);
+  const documents = ((chunks ?? []) as Record<string, unknown>[]).map(
+    (chunk) => {
+      const source = sourceMap.get(asString(chunk.source_id)) ?? {};
+      return {
+        file_path: asString(chunk.id),
+        title: asString(source.title),
+        content: asString(chunk.content),
+        snippet: asString(chunk.content).slice(0, 700),
+        updated_at: asString(chunk.updated_at),
+        metadata: { chunk, source },
+      };
+    },
+  );
+  const lexicalRows = rankBm25(query, documents, 12);
+  const maxLexical = Math.max(1, ...lexicalRows.map((row) => row.score));
+  for (const lexical of lexicalRows) {
+    const metadata = asRecord(lexical.metadata) ?? {};
+    const chunk = asRecord(metadata.chunk) ?? {};
+    const source = asRecord(metadata.source) ?? {};
+    const chunkId = asString(chunk.id);
+    const candidate: Record<string, unknown> = {
+      chunk_id: chunkId,
+      source_id: asString(chunk.source_id),
+      source_url: asString(source.source_url),
+      title: asString(source.title),
+      heading: asString(chunk.heading),
+      location: asString(chunk.location),
+      content: asString(chunk.content),
+      fetched_at: asString(source.fetched_at),
+      score: lexical.score / maxLexical,
+    };
+    const existing = merged.get(chunkId);
+    if (!existing || Number(existing.score ?? 0) < Number(candidate.score)) {
+      merged.set(chunkId, candidate);
+    }
+  }
+
+  const ranked = [...merged.values()].sort((left, right) =>
+    Number(right.score ?? 0) - Number(left.score ?? 0)
+  );
+  return normalizeResearchCitations(ranked, 6);
+}
+
+async function persistCompanyRoutingOutcome(
+  admin: SupabaseClient,
+  userId: string,
+  companyId: string,
+  profile: Record<string, unknown>,
+  success: boolean,
+  provider: string,
+  model: string,
+) {
+  const timestampField = success ? "last_success_at" : "last_failure_at";
+  const { data, error } = await admin.from("company_runtime_routing_profiles")
+    .upsert({
+      user_id: userId,
+      company_id: companyId,
+      ...profile,
+      last_provider: provider || null,
+      last_model: model || null,
+      [timestampField]: new Date().toISOString(),
+    }, { onConflict: "user_id,company_id,routing_key" })
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return data as Record<string, unknown>;
+}
+
+async function consolidateCompanyTaskResult(
+  admin: SupabaseClient,
+  userId: string,
+  companyId: string,
+  task: Record<string, unknown>,
+  resultText: string,
+  citations: ResearchCitation[],
+  routingProfile: Record<string, unknown>,
+) {
+  const metadata = asRecord(task.metadata) ?? {};
+  const taskId = asString(task.id);
+  const agentId = asString(task.assignee_agent_id);
+  const { error: memoryError } = await admin.from("agent_memories").insert({
+    user_id: userId,
+    agent_id: agentId,
+    memory_layer: "knowledge",
+    content: resultText,
+    source: "company_builder_runtime",
+    metadata: {
+      system: "company_builder",
+      company_id: companyId,
+      task_id: taskId,
+      stage: metadata.stage,
+      citations,
+      routing: routingProfile,
+    },
+  });
+  if (memoryError) throw new Error(memoryError.message);
+  await addItem(admin, "wiki_page", userId, {
+    title: `${asString(task.title) || "Company task"} Result`,
+    content: resultText,
+    category: "company_builder",
+    tags: [
+      "ai-company-builder",
+      "runtime-result",
+      asString(metadata.stage) || "general",
+    ],
+    system: "company_builder",
+    company_id: companyId,
+    task_id: taskId,
+    note_type: "runtime_result",
+    citations,
+    routing: routingProfile,
+  });
+}
+
+async function runCompanyRuntimeWorker(
+  admin: SupabaseClient,
+): Promise<Record<string, unknown>> {
+  const { data: rawMessages, error: readError } = await admin.rpc(
+    "read_company_agent_runtime",
+    { p_visibility_timeout: 120, p_limit: 1 },
+  );
+  if (readError) throw new Error(readError.message);
+
+  const messages = parseCompanyRuntimeQueueMessages(rawMessages);
+  if (messages.length === 0) {
+    return { status: "idle", processed: 0 };
+  }
+
+  const message = messages[0];
+  const { data: rawClaim, error: claimError } = await admin.rpc(
+    "claim_company_agent_task",
+    {
+      p_user_id: message.userId,
+      p_company_id: message.companyId,
+    },
+  );
+  if (claimError) throw new Error(claimError.message);
+
+  const claim = asRecord(rawClaim) ?? {};
+  const task = asRecord(claim.task);
+  if (!task) {
+    await archiveCompanyRuntimeMessage(admin, message.msgId);
+    return {
+      status: asString(claim.state) || "inactive",
+      processed: 0,
+      company_id: message.companyId,
+    };
+  }
+
+  const taskId = asString(task.id);
+  const supervisorId = asString(task.supervisor_agent_id);
+  const assigneeId = asString(task.assignee_agent_id);
+  let success = false;
+  let routingSuccess = false;
+  let resultText = "";
+  let errorMessage: string | null = null;
+  let provider = "";
+  let model = "";
+  let tier = "";
+  let prompt = "";
+  let fallbackReason: string | null = null;
+  let citations: ResearchCitation[] = [];
+  let currentRoutingProfile: Record<string, unknown> | null = null;
+  let routingDecision = selectCompanyRuntimeRouting(task, null);
+  const startedAt = performance.now();
+
+  try {
+    const [companyResult, agentsResult, routingResult] = await Promise.all([
+      admin.from("hub_data").select("id, metadata, created_at")
+        .eq("id", message.companyId)
+        .eq("source", "company_builder_company")
+        .filter("metadata->>user_id", "eq", message.userId)
+        .single(),
+      admin.from("agents").select("*")
+        .eq("user_id", message.userId)
+        .in("id", [supervisorId, assigneeId]),
+      admin.from("company_runtime_routing_profiles").select("*")
+        .eq("user_id", message.userId)
+        .eq("company_id", message.companyId)
+        .eq("routing_key", routingDecision.routingKey)
+        .maybeSingle(),
+    ]);
+    if (companyResult.error) throw new Error(companyResult.error.message);
+    if (agentsResult.error) throw new Error(agentsResult.error.message);
+    if (routingResult.error) throw new Error(routingResult.error.message);
+
+    const agents = (agentsResult.data ?? []) as Record<string, unknown>[];
+    const manager = agents.find((agent) => agent.id === supervisorId) ?? null;
+    const tool = agents.find((agent) => agent.id === assigneeId) ?? null;
+    currentRoutingProfile = routingResult.data as
+      | Record<string, unknown>
+      | null;
+    routingDecision = selectCompanyRuntimeRouting(task, currentRoutingProfile);
+    citations = await searchCompanyResearch(
+      admin,
+      message.userId,
+      message.companyId,
+      [asString(task.title), asString(task.description)].filter(Boolean).join(
+        "\n",
+      ),
+    );
+    prompt = buildCompanyRuntimePrompt(
+      companyResult.data as Record<string, unknown>,
+      task,
+      manager,
+      tool,
+      buildResearchCitationContext(citations),
+    );
+
+    const providerResponse = await invokeAiHubInternal({
+      action: "provider.chat_auto",
+      internal_user_id: message.userId,
+      message: prompt,
+      tier: routingDecision.tier,
+      max_tokens: 1800,
+      session_id: message.companyId,
+      trace_id: crypto.randomUUID(),
+      routing_use_case: routingDecision.routingKey,
+      provider_choice_reason: routingDecision.reason,
+    });
+    resultText = asString(providerResponse.payload.text);
+    success = providerResponse.ok &&
+      providerResponse.payload.success === true && resultText !== "";
+    routingSuccess = success;
+    provider = asString(providerResponse.payload.provider);
+    model = asString(providerResponse.payload.model);
+    tier = asString(providerResponse.payload.tier);
+    if (success) {
+      resultText = ensureCitationFooter(resultText, citations);
+    } else {
+      errorMessage = asString(
+        providerResponse.payload.message ?? providerResponse.payload.status,
+      ) || `provider.chat_auto returned ${providerResponse.status}`;
+      if (citations.length > 0) {
+        fallbackReason = errorMessage;
+        resultText = buildExtractiveResearchFallback(
+          asString(task.title),
+          citations,
+        );
+        success = true;
+        provider = "extractive";
+        model = "deterministic-citation-fallback";
+        tier = routingDecision.tier;
+        errorMessage = null;
+      }
+    }
+  } catch (error) {
+    errorMessage = error instanceof Error ? error.message : String(error);
+  }
+
+  const durationMs = Math.max(0, Math.round(performance.now() - startedAt));
+  const inputChars = prompt.length;
+  const outputChars = resultText.length;
+  const estimatedCost = success
+    ? calculateApiCost(
+      model || provider,
+      estimateTokensFromChars(inputChars),
+      estimateTokensFromChars(outputChars),
+    )
+    : 0;
+  const nextRoutingProfile = nextCompanyRuntimeRoutingProfile(
+    currentRoutingProfile,
+    routingDecision,
+    routingSuccess,
+    tier,
+  );
+  const { data: rawFinish, error: finishError } = await admin.rpc(
+    "finish_company_agent_task",
+    {
+      p_user_id: message.userId,
+      p_company_id: message.companyId,
+      p_task_id: taskId,
+      p_success: success,
+      p_result: success
+        ? {
+          text: resultText,
+          provider,
+          model,
+          tier,
+          citations,
+          routing: nextRoutingProfile,
+          routing_provider_success: routingSuccess,
+          fallback_reason: fallbackReason,
+        }
+        : {},
+      p_error: errorMessage,
+      p_metrics: {
+        provider,
+        model,
+        tier,
+        input_chars: inputChars,
+        output_chars: outputChars,
+        estimated_cost_usd: estimatedCost,
+        duration_ms: durationMs,
+        routing_provider_success: routingSuccess,
+      },
+    },
+  );
+  if (finishError) throw new Error(finishError.message);
+  const finish = asRecord(rawFinish) ?? {};
+  const finalTaskStatus = asString(finish.task_status);
+  const taskCancelled = finalTaskStatus === "cancelled";
+
+  let persistedRoutingProfile = nextRoutingProfile;
+  if (!taskCancelled) {
+    try {
+      persistedRoutingProfile = await persistCompanyRoutingOutcome(
+        admin,
+        message.userId,
+        message.companyId,
+        nextRoutingProfile,
+        routingSuccess,
+        provider,
+        model,
+      );
+      await addCompanyEvent(
+        admin,
+        message.userId,
+        message.companyId,
+        "routing_outcome_recorded",
+        routingSuccess ? "completed" : "failed",
+        {
+          task_id: taskId,
+          requested_tier: routingDecision.tier,
+          used_tier: tier,
+          reason: routingDecision.reason,
+          decision: persistedRoutingProfile.last_decision,
+          next_tier: persistedRoutingProfile.current_tier,
+        },
+      );
+    } catch (error) {
+      console.error("company routing profile persistence failed", error);
+    }
+  }
+  if (success && finalTaskStatus === "completed") {
+    try {
+      await consolidateCompanyTaskResult(
+        admin,
+        message.userId,
+        message.companyId,
+        task,
+        resultText,
+        citations,
+        persistedRoutingProfile,
+      );
+    } catch (error) {
+      console.error("company result consolidation failed", error);
+      await addCompanyEvent(
+        admin,
+        message.userId,
+        message.companyId,
+        "memory_consolidation_failed",
+        "failed",
+        { task_id: taskId, error: String(error).slice(0, 500) },
+      ).catch(() => undefined);
+    }
+  }
+
+  await archiveCompanyRuntimeMessage(admin, message.msgId);
+  const shouldContinue = finish.continue === true;
+  if (shouldContinue) {
+    await enqueueCompanyRuntime(
+      admin,
+      message.userId,
+      message.companyId,
+      success ? "next_task" : "retry_task",
+    );
+    scheduleCompanyRuntimeWorker();
+  }
+
+  return {
+    status: asString(finish.state) || "unknown",
+    processed: 1,
+    company_id: message.companyId,
+    task_id: taskId,
+    task_status: asString(finish.task_status),
+    continue: shouldContinue,
   };
 }
 
@@ -1972,6 +2903,290 @@ async function getUserId(req: Request): Promise<string | null> {
   });
   const { data: { user } } = await c.auth.getUser();
   return user?.id ?? null;
+}
+
+function companyA2ARelativePath(req: Request): string | null {
+  const pathname = new URL(req.url).pathname;
+  const match = pathname.match(/\/a2a(?=\/|$)/);
+  if (!match || match.index === undefined) return null;
+  return pathname.slice(match.index + match[0].length) || "/";
+}
+
+async function activateCompanyA2ATaskRuntime(
+  admin: SupabaseClient,
+  userId: string,
+  companyId: string,
+) {
+  const { error: controlError } = await admin.rpc(
+    "set_company_agent_runtime_state",
+    {
+      p_user_id: userId,
+      p_company_id: companyId,
+      p_command: "start",
+    },
+  );
+  if (controlError) throw new Error(controlError.message);
+  await enqueueCompanyRuntime(admin, userId, companyId, "a2a_message");
+  scheduleCompanyRuntimeWorker();
+}
+
+async function createCompanyA2ATask(
+  admin: SupabaseClient,
+  userId: string,
+  value: unknown,
+): Promise<Record<string, unknown>> {
+  const input = parseA2ASendMessage(value);
+  const company = await getOwnedCompany(admin, userId, input.companyId);
+  if (!company) throw new Error("TaskNotFoundError: company not found");
+  const companyMetadata = asRecord(company.metadata) ?? {};
+  if (companyMetadata.passed !== true) {
+    throw new Error("UnsupportedOperationError: company gate is not approved");
+  }
+
+  const { data: existing, error: existingError } = await admin
+    .from("agent_tasks").select("*")
+    .eq("user_id", userId)
+    .eq("task_type", "company_builder_a2a")
+    .filter("metadata->>company_id", "eq", input.companyId)
+    .filter("metadata->>a2a_message_id", "eq", input.messageId)
+    .maybeSingle();
+  if (existingError) throw new Error(existingError.message);
+  if (existing) {
+    if (asString(existing.status) === "queued") {
+      await activateCompanyA2ATaskRuntime(admin, userId, input.companyId);
+    }
+    return existing as Record<string, unknown>;
+  }
+
+  const route = input.skillId === "cited-research"
+    ? { managerKey: "chief", toolKey: "nova", stage: "research" }
+    : input.skillId === "launch-execution"
+    ? { managerKey: "ivy", toolKey: "piper", stage: "growth" }
+    : { managerKey: "chief", toolKey: "sage", stage: "operations" };
+  const [managerResult, toolResult] = await Promise.all([
+    admin.from("agents").select("id").eq("user_id", userId)
+      .filter("metadata->>company_id", "eq", input.companyId)
+      .filter("metadata->>manager_key", "eq", route.managerKey)
+      .maybeSingle(),
+    admin.from("agents").select("id").eq("user_id", userId)
+      .filter("metadata->>system", "eq", "company_builder")
+      .filter("metadata->>shared_pool", "eq", "true")
+      .filter("metadata->>tool_key", "eq", route.toolKey)
+      .maybeSingle(),
+  ]);
+  if (managerResult.error) throw new Error(managerResult.error.message);
+  if (toolResult.error) throw new Error(toolResult.error.message);
+  if (!managerResult.data || !toolResult.data) {
+    throw new Error(
+      "UnsupportedOperationError: company agents are unavailable",
+    );
+  }
+
+  const { data: task, error: taskError } = await admin.from("agent_tasks")
+    .insert({
+      user_id: userId,
+      supervisor_agent_id: managerResult.data.id,
+      assignee_agent_id: toolResult.data.id,
+      title: `${input.skillId}: ${
+        input.text.replace(/\s+/g, " ").slice(0, 120)
+      }`,
+      description: input.text,
+      status: "queued",
+      priority: "normal",
+      task_type: "company_builder_a2a",
+      source: "company_builder_bootstrap",
+      metadata: {
+        system: "company_builder",
+        company_id: input.companyId,
+        company_name: asString(companyMetadata.company_name),
+        manager_key: route.managerKey,
+        tool_key: route.toolKey,
+        stage: route.stage,
+        a2a_message_id: input.messageId,
+        a2a_context_id: input.contextId,
+        a2a_skill_id: input.skillId,
+        a2a_message: input.rawMessage,
+      },
+    }).select("*").single();
+  if (taskError) {
+    if (taskError.code === "23505") {
+      const { data: duplicate, error: duplicateError } = await admin
+        .from("agent_tasks").select("*")
+        .eq("user_id", userId)
+        .eq("task_type", "company_builder_a2a")
+        .filter("metadata->>company_id", "eq", input.companyId)
+        .filter("metadata->>a2a_message_id", "eq", input.messageId)
+        .single();
+      if (duplicateError) throw new Error(duplicateError.message);
+      if (asString(duplicate.status) === "queued") {
+        await activateCompanyA2ATaskRuntime(admin, userId, input.companyId);
+      }
+      return duplicate as Record<string, unknown>;
+    }
+    throw new Error(taskError.message);
+  }
+
+  await activateCompanyA2ATaskRuntime(admin, userId, input.companyId);
+  await addCompanyEvent(
+    admin,
+    userId,
+    input.companyId,
+    "a2a_task_submitted",
+    "queued",
+    { task_id: task.id, message_id: input.messageId, skill_id: input.skillId },
+  );
+  return task as Record<string, unknown>;
+}
+
+async function handleCompanyA2ARequest(
+  req: Request,
+  body: Record<string, unknown>,
+  admin: SupabaseClient,
+  userId: string,
+): Promise<Response> {
+  try {
+    assertA2AVersion(req);
+  } catch (error) {
+    return a2aJson({
+      error: { code: "VersionNotSupportedError", message: String(error) },
+    }, 400);
+  }
+  const relative = companyA2ARelativePath(req) ?? "/";
+
+  try {
+    if (req.method === "POST" && relative === "/message:send") {
+      const task = await createCompanyA2ATask(admin, userId, body);
+      return a2aJson({ task: companyTaskToA2A(task) }, 202);
+    }
+
+    if (req.method === "GET" && relative === "/tasks") {
+      const url = new URL(req.url);
+      const requestedPageSize = Number(url.searchParams.get("pageSize"));
+      const pageSize = Math.max(
+        1,
+        Math.min(
+          Number.isFinite(requestedPageSize) && requestedPageSize > 0
+            ? Math.trunc(requestedPageSize)
+            : 50,
+          100,
+        ),
+      );
+      const includeArtifacts =
+        url.searchParams.get("includeArtifacts") === "true";
+      const cursor = decodeA2APageToken(url.searchParams.get("pageToken"));
+      if (url.searchParams.has("pageToken") && !cursor) {
+        return a2aJson({
+          error: { code: "InvalidArgumentError", message: "Invalid pageToken" },
+        }, 400);
+      }
+      let query = admin.from("agent_tasks").select("*")
+        .eq("user_id", userId).eq("task_type", "company_builder_a2a")
+        .order("updated_at", { ascending: false })
+        .order("id", { ascending: false }).limit(pageSize + 1);
+      const contextId = asString(url.searchParams.get("contextId"));
+      if (contextId.length > 200) {
+        return a2aJson({
+          error: {
+            code: "InvalidArgumentError",
+            message: "contextId exceeds 200 characters",
+          },
+        }, 400);
+      }
+      if (contextId) {
+        query = query.filter("metadata->>a2a_context_id", "eq", contextId);
+      }
+      if (cursor) {
+        query = query.or(
+          `updated_at.lt.${cursor.updatedAt},and(updated_at.eq.${cursor.updatedAt},id.lt.${cursor.id})`,
+        );
+      }
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      const rows = (data ?? []) as Record<string, unknown>[];
+      const hasNext = rows.length > pageSize;
+      const page = rows.slice(0, pageSize);
+      return a2aJson({
+        tasks: page.map((task) => companyTaskToA2A(task, includeArtifacts)),
+        nextPageToken: hasNext && page.length > 0
+          ? encodeA2APageToken(page[page.length - 1])
+          : "",
+      });
+    }
+
+    const cancelMatch = relative.match(/^\/tasks\/([0-9a-f-]{36}):cancel$/i);
+    if (req.method === "POST" && cancelMatch) {
+      const { data: current, error: currentError } = await admin.from(
+        "agent_tasks",
+      )
+        .select("*").eq("id", cancelMatch[1]).eq("user_id", userId)
+        .eq("task_type", "company_builder_a2a").maybeSingle();
+      if (currentError) throw new Error(currentError.message);
+      if (!current) {
+        return a2aJson({
+          error: { code: "TaskNotFoundError", message: "Task not found" },
+        }, 404);
+      }
+      if (
+        ["completed", "failed", "cancelled"].includes(asString(current.status))
+      ) {
+        return a2aJson({
+          error: {
+            code: "TaskNotCancelableError",
+            message: "Task is already terminal",
+          },
+        }, 409);
+      }
+      const { data: cancelled, error: cancelError } = await admin.from(
+        "agent_tasks",
+      )
+        .update({ status: "cancelled", last_error: "Cancelled through A2A" })
+        .eq("id", cancelMatch[1]).eq("user_id", userId)
+        .eq("task_type", "company_builder_a2a").select("*").single();
+      if (cancelError) throw new Error(cancelError.message);
+      const metadata = asRecord(cancelled.metadata) ?? {};
+      await addCompanyEvent(
+        admin,
+        userId,
+        asString(metadata.company_id),
+        "a2a_task_cancelled",
+        "cancelled",
+        { task_id: cancelled.id },
+      );
+      return a2aJson({ task: companyTaskToA2A(cancelled) });
+    }
+
+    const getMatch = relative.match(/^\/tasks\/([0-9a-f-]{36})$/i);
+    if (req.method === "GET" && getMatch) {
+      const { data, error } = await admin.from("agent_tasks").select("*")
+        .eq("id", getMatch[1]).eq("user_id", userId)
+        .eq("task_type", "company_builder_a2a").maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!data) {
+        return a2aJson({
+          error: { code: "TaskNotFoundError", message: "Task not found" },
+        }, 404);
+      }
+      return a2aJson({
+        task: companyTaskToA2A(data as Record<string, unknown>),
+      });
+    }
+
+    return a2aJson({
+      error: {
+        code: "UnsupportedOperationError",
+        message: "A2A operation is not supported",
+      },
+    }, 404);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const code = message.split(":", 1)[0];
+    const status = code === "TaskNotFoundError"
+      ? 404
+      : code === "UnsupportedOperationError"
+      ? 409
+      : 400;
+    return a2aJson({ error: { code, message } }, status);
+  }
 }
 
 async function evaluateUniversityQuizMaster(
@@ -2943,14 +4158,45 @@ serve(async (req: Request) => {
   }
 
   try {
+    const requestUrl = new URL(req.url);
+    if (
+      req.method === "GET" &&
+      requestUrl.pathname.endsWith("/.well-known/agent-card.json")
+    ) {
+      return a2aJson(
+        buildCompanyAgentCard(`${SUPABASE_URL}/functions/v1/ai-hub`),
+        200,
+        { "Cache-Control": "public, max-age=3600" },
+      );
+    }
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    const userId = await getUserId(req);
+    const a2aPath = companyA2ARelativePath(req);
+    if (a2aPath !== null) {
+      if (!userId) {
+        return a2aJson(
+          {
+            error: {
+              code: "UnauthenticatedError",
+              message: "Bearer authentication is required",
+            },
+          },
+          401,
+          { "WWW-Authenticate": 'Bearer realm="ai-company-builder"' },
+        );
+      }
+      const body = req.method === "POST"
+        ? await req.json() as Record<string, unknown>
+        : {};
+      return await handleCompanyA2ARequest(req, body, admin, userId);
+    }
+
     const body = req.method === "POST"
       ? await req.json() as Record<string, unknown>
       : {};
     const action = String(
-      body.action ?? new URL(req.url).searchParams.get("action") ?? "",
+      body.action ?? requestUrl.searchParams.get("action") ?? "",
     );
-    const userId = await getUserId(req);
 
     // Actions that require authentication
     const authRequired = [
@@ -2971,6 +4217,12 @@ serve(async (req: Request) => {
       "company_builder.list",
       "company_builder.get",
       "company_builder.bootstrap",
+      "company_builder.research.add",
+      "company_builder.start",
+      "company_builder.pause",
+      "company_builder.resume",
+      "company_builder.stop",
+      "company_builder.global_kill_switch",
       // AI大学 v2 (P1〜P4)
       "quiz.fsrs_next",
       "quiz.fsrs_grade",
@@ -2987,6 +4239,10 @@ serve(async (req: Request) => {
       "ai_hub.fetch_market_price",
       "asset.monthly_report.generate",
       "asset_liability.monthly_report.generate",
+      "asset.chat",
+      "ai_hub.asset_chat",
+      "department_finance_summary",
+      "ai_hub.department_finance_summary",
       "payslip.parse",
       "parse-payslip",
       "expense.classify",
@@ -2994,6 +4250,8 @@ serve(async (req: Request) => {
       "expense.weekly_coaching.generate",
       "asset.disposable_balance.compute",
       "compute-disposable-balance",
+      "asset.anomaly.detect",
+      "detect-anomalies",
       "voice.tts",
       "voice.stt",
       // 英語速読カリキュラム (実力測定 / AI 生成は要認証 / 教材閲覧は公開)
@@ -3421,12 +4679,41 @@ serve(async (req: Request) => {
           const m = h.metadata as Record<string, unknown>;
           return `User: ${m.message}\nAgent: ${m.response}`;
         }).join("\n");
+        const requestedContextIds = asStringArray(
+          body.context_file_ids ?? body.contextFileIds,
+        ).slice(0, 5);
+        let externalFileContext = "";
+        let attachedContextIds: string[] = [];
+        if (requestedContextIds.length > 0) {
+          const { data: contextRows, error: contextError } = await admin
+            .from("hub_data")
+            .select("id,metadata")
+            .eq("source", MCP_FILE_CONTEXT_SOURCE)
+            .filter("metadata->>user_id", "eq", userId!)
+            .filter("metadata->>security_status", "eq", "allowed")
+            .in("id", requestedContextIds);
+          if (contextError) throw new Error(contextError.message);
+          const rowsById = new Map(
+            (contextRows ?? []).map((row) => [String(row.id), row]),
+          );
+          const orderedRows: Record<string, unknown>[] = [];
+          for (const id of requestedContextIds) {
+            const row = rowsById.get(id);
+            if (row) orderedRows.push(row);
+          }
+          attachedContextIds = orderedRows.map((row) => String(row.id));
+          externalFileContext = buildExternalFileContextBlock(orderedRows);
+        }
         const imageInstruction = image
           ? "\n添付画像も確認し、見えている内容・文脈・ユーザーの質問に関係する示唆を含めて回答してください。"
           : "";
-        const prompt = `あなたは個人AIエージェントです。${
-          recentContext ? "履歴:\n" + recentContext + "\n\n" : ""
-        }ユーザーメッセージ: ${message}${imageInstruction}`;
+        const prompt = [
+          externalFileContext ? AI_CHARACTER_PREAMBLE : "",
+          "あなたは個人AIエージェントです。",
+          recentContext ? `履歴:\n${recentContext}` : "",
+          externalFileContext,
+          `ユーザーメッセージ: ${message}${imageInstruction}`,
+        ].filter(Boolean).join("\n\n");
         let response = "";
         let videoMetadata: Record<string, unknown> | null = null;
         let manusMetadata: Record<string, unknown> | null = null;
@@ -3510,6 +4797,7 @@ serve(async (req: Request) => {
           video_download_url: videoMetadata?.download_url ?? null,
           video_reason: videoMetadata?.reason ?? null,
           video_id: videoMetadata?.id ?? null,
+          context_file_ids: attachedContextIds,
         });
         return json({
           success: true,
@@ -3519,6 +4807,7 @@ serve(async (req: Request) => {
           provider: responseMode === "video" ? "hedra" : agentProvider,
           manus: manusMetadata,
           video: videoMetadata,
+          context_file_ids: attachedContextIds,
         });
       }
 
@@ -3608,6 +4897,38 @@ serve(async (req: Request) => {
         return json({ success: true, ...detail });
       }
 
+      case "company_builder.research.add": {
+        const companyId = asString(body.company_id);
+        const sourceUrl = asString(body.source_url ?? body.url);
+        if (!companyId) return json({ error: "company_id required" }, 400);
+        if (!sourceUrl) return json({ error: "source_url required" }, 400);
+        try {
+          const source = await ingestCompanyResearchSource(
+            admin,
+            userId!,
+            companyId,
+            sourceUrl,
+          );
+          return json({ success: true, source });
+        } catch (error) {
+          const message = error instanceof Error
+            ? error.message
+            : String(error);
+          const status = message === "Company not found"
+            ? 404
+            : message.toLowerCase().includes("private") ||
+                message.toLowerCase().includes("source url") ||
+                message.toLowerCase().includes("unsupported")
+            ? 400
+            : 422;
+          return json({
+            success: false,
+            status: "research_ingestion_failed",
+            message,
+          }, status);
+        }
+      }
+
       case "company_builder.bootstrap": {
         const idea = asString(body.idea);
         if (!idea) return json({ error: "idea required" }, 400);
@@ -3666,6 +4987,56 @@ serve(async (req: Request) => {
             passed,
           },
         );
+
+        await ensureCompanyRuntimeControl(
+          admin,
+          userId!,
+          companyId,
+          passed ? "idle" : "blocked",
+          passed ? null : plan.recommendation,
+        );
+        await addCompanyEvent(
+          admin,
+          userId!,
+          companyId,
+          passed ? "gate_approved" : "gate_rejected",
+          passed ? "idle" : "blocked",
+          {
+            company_name: companyName,
+            overall_score: overallScore,
+            threshold,
+            recommendation: plan.recommendation,
+          },
+        );
+
+        if (!passed) {
+          await addCompanyAudit(
+            admin,
+            userId!,
+            companyId,
+            "company_builder.bootstrap_rejected",
+            {
+              company_name: companyName,
+              overall_score: overallScore,
+              threshold,
+              recommendation: plan.recommendation,
+              fail_closed: true,
+            },
+          );
+          const detail = await getCompanyBuilderDetail(
+            admin,
+            userId!,
+            companyId,
+          );
+          return json({
+            success: true,
+            status: "gate_rejected",
+            company_id: companyId,
+            overall_score: overallScore,
+            passed: false,
+            ...detail,
+          });
+        }
 
         const toolIds = await ensureSharedToolAgents(admin, userId!);
         const managerIds = await createManagerAgents(
@@ -3730,6 +5101,20 @@ serve(async (req: Request) => {
             paid_users_target: thirtyDaySaasBlueprint.paid_users_target,
           },
         );
+        await addCompanyEvent(
+          admin,
+          userId!,
+          companyId,
+          "bootstrap_completed",
+          "idle",
+          {
+            manager_count: Object.keys(managerIds).length,
+            tool_agent_count: Object.keys(toolIds).length,
+            task_count: taskRows.length,
+            workflow_id: workflow.id,
+            vault_note_count: vaultNotes.length,
+          },
+        );
 
         const detail = await getCompanyBuilderDetail(admin, userId!, companyId);
         return json({
@@ -3739,6 +5124,87 @@ serve(async (req: Request) => {
           passed,
           ...detail,
         });
+      }
+
+      case "company_builder.start":
+      case "company_builder.resume":
+      case "company_builder.pause":
+      case "company_builder.stop": {
+        const companyId = asString(body.company_id);
+        if (!companyId) return json({ error: "company_id required" }, 400);
+        const detail = await getCompanyBuilderDetail(admin, userId!, companyId);
+        if (!detail) return json({ error: "Company not found" }, 404);
+
+        const company = asRecord(detail.company) ?? {};
+        const metadata = asRecord(company.metadata) ?? {};
+        if (metadata.passed !== true) {
+          return json({
+            success: false,
+            status: "gate_rejected",
+            message:
+              "The viability gate did not pass. Revise the company idea before starting agents.",
+          }, 409);
+        }
+
+        const command = action.replace("company_builder.", "");
+        const { data: control, error: controlError } = await admin.rpc(
+          "set_company_agent_runtime_state",
+          {
+            p_user_id: userId!,
+            p_company_id: companyId,
+            p_command: command,
+          },
+        );
+        if (controlError) {
+          return json({
+            success: false,
+            status: "runtime_control_failed",
+            message: controlError.message,
+          }, 409);
+        }
+
+        if (command === "start" || command === "resume") {
+          await enqueueCompanyRuntime(
+            admin,
+            userId!,
+            companyId,
+            command,
+          );
+          scheduleCompanyRuntimeWorker();
+        }
+
+        return json({
+          success: true,
+          command,
+          runtime_control: control,
+        }, command === "start" || command === "resume" ? 202 : 200);
+      }
+
+      case "company_builder.global_kill_switch": {
+        const enabled = body.enabled !== false;
+        const reason = asString(body.reason) ||
+          (enabled ? "Stopped by the user" : "Reset by the user");
+        const { data, error } = await admin.rpc(
+          "set_company_agent_global_kill_switch",
+          {
+            p_user_id: userId!,
+            p_enabled: enabled,
+            p_reason: reason,
+          },
+        );
+        if (error) throw new Error(error.message);
+        return json({
+          success: true,
+          global_kill_switch: data,
+        });
+      }
+
+      case "company_builder.worker": {
+        if (!isServiceRoleRequest(req)) {
+          return json({ error: "Forbidden" }, 403);
+        }
+        const result = await runCompanyRuntimeWorker(admin);
+        return json({ success: true, ...result }, 202);
       }
 
       case "university.content": {
@@ -4733,6 +6199,51 @@ serve(async (req: Request) => {
         return json({ success: true, ...result });
       }
 
+      case "asset.anomaly.scan_all": {
+        // daily-anomaly-scan.yml (cron) 専用: schedule-hub の service_role
+        // レベルと同じく Bearer === SERVICE_ROLE_KEY の生比較で認可する
+        // (service role JWT は auth.getUser() で user にならないため
+        //  authRequired リストでは扱えない)。
+        const bearer = (req.headers.get("Authorization") ?? "")
+          .replace(/^Bearer\s+/i, "");
+        if (!SERVICE_ROLE_KEY || bearer !== SERVICE_ROLE_KEY) {
+          return json({ error: "Unauthorized" }, 401);
+        }
+        const result = await handleScanAllAction({
+          db: admin as unknown as AnomalyDetectionDb,
+          body,
+        });
+        return json({ success: true, ...result });
+      }
+
+      case "asset.anomaly.detect":
+      case "detect-anomalies": {
+        const explanationEnabled =
+          (Deno.env.get("ANOMALY_AI_EXPLANATION_ENABLED") ?? "")
+            .toLowerCase() === "true";
+        const result = await handleDetectAnomaliesAction({
+          db: admin as unknown as AnomalyDetectionDb,
+          body,
+          userId: userId ?? "",
+          explanationEnabled,
+          invokeProvider: async (request) => {
+            const budget = await checkBudget("ef", "ai-hub");
+            if (!budget.ok) {
+              return {
+                ok: false,
+                error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+              };
+            }
+            return await callSingleProvider(
+              request.provider,
+              request.messages,
+              request.model,
+            );
+          },
+        });
+        return json({ success: true, ...result });
+      }
+
       case "asset.market_price.fetch":
       case "asset.investment.market_price.fetch":
       case "ai_hub.fetch_market_price": {
@@ -4741,6 +6252,16 @@ serve(async (req: Request) => {
           body,
           userId: userId ?? "",
           liveFetchEnabled: isMarketPriceLiveFetchEnabled(body),
+        });
+        return json({ success: true, ...result });
+      }
+
+      case "department_finance_summary":
+      case "ai_hub.department_finance_summary": {
+        const result = await handleDepartmentFinanceSummaryAction({
+          db: admin as unknown as DepartmentFinanceSummaryDb,
+          body,
+          userId: userId ?? "",
         });
         return json({ success: true, ...result });
       }
@@ -4832,6 +6353,118 @@ serve(async (req: Request) => {
               }
             } catch { /* ignore observability failures */ }
             return providerResult;
+          },
+        });
+        return json({ success: true, ...result });
+      }
+
+      case "asset.chat":
+      case "ai_hub.asset_chat": {
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        const requestedProvider = String(body.provider ?? "google").trim() ||
+          "google";
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action,
+              provider: requestedProvider,
+            }),
+            409,
+          );
+        }
+        const authorization = req.headers.get("Authorization") ?? "";
+        const userScopedClient = createClient(
+          SUPABASE_URL,
+          SUPABASE_ANON_KEY,
+          { global: { headers: { Authorization: authorization } } },
+        );
+        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const sessionId = body.session_id != null
+          ? String(body.session_id)
+          : null;
+        const providerChoiceReason =
+          sanitizeProviderChoiceLogText(body.provider_choice_reason) ??
+            "asset chat provider preference";
+        const routingUseCase =
+          sanitizeProviderChoiceLogText(body.routing_use_case, 80) ??
+            "asset_chat";
+        const result = await handleAssetChatAction({
+          store: createSupabaseAssetChatStore(userScopedClient),
+          body,
+          userId: userId ?? "",
+          invokeProvider: async (request) => {
+            const usage = await checkAndRecordAiUsage(
+              supabaseUsageStore(admin),
+              userId ?? "",
+            );
+            if (!usage.allowed) {
+              return {
+                ok: false,
+                error: "usageLimitReached: free_limit_reached",
+                httpStatus: 402,
+                isRetriable: false,
+              };
+            }
+            const budget = await checkBudget("ef", "ai-hub");
+            if (!budget.ok) {
+              return {
+                ok: false,
+                error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+                httpStatus: 429,
+                isRetriable: false,
+              };
+            }
+            const startedAt = performance.now();
+            const providerResult = await callSingleProvider(
+              request.provider,
+              request.messages,
+              request.model,
+              undefined,
+              {
+                maxTokens: normalizeMaxTokens(
+                  body.max_tokens ?? body.maxTokens,
+                ),
+              },
+            );
+            const inputChars = request.messages.reduce(
+              (sum, item) => sum + item.content.length,
+              0,
+            );
+            const outputChars = providerResult.text?.length ?? 0;
+            const estimatedCost = providerResult.ok
+              ? calculateApiCost(
+                providerResult.modelUsed ?? request.model ?? request.provider,
+                estimateTokensFromChars(inputChars),
+                estimateTokensFromChars(outputChars),
+              )
+              : 0;
+            try {
+              await admin.from("ai_hub_chat_logs").insert({
+                provider: request.provider,
+                tier: providerTier(request.provider) ?? "direct",
+                success: providerResult.ok,
+                estimated_cost_usd: estimatedCost,
+                model: providerResult.modelUsed ?? request.model ?? null,
+                latency_ms: Math.round(performance.now() - startedAt),
+                trace_id: traceId,
+                session_id: sessionId,
+                input_chars: inputChars,
+                output_chars: outputChars,
+                error_message: providerResult.ok
+                  ? null
+                  : providerResult.error ?? "asset chat provider failed",
+                action: "ai_hub.asset_chat",
+                status_code: providerResult.ok ? 200 : 502,
+                provider_choice_reason: providerChoiceReason,
+                routing_use_case: routingUseCase,
+              });
+              if (providerResult.ok && estimatedCost > 0) {
+                await recordSpend("ef", "ai-hub", estimatedCost);
+              }
+            } catch {
+              // Observability must not make a successful chat fail.
+            }
+            return { ...providerResult, estimatedCostUsd: estimatedCost };
           },
         });
         return json({ success: true, ...result });
@@ -5131,6 +6764,10 @@ serve(async (req: Request) => {
 
       case "provider.chat_auto": {
         const effortSelection = await selectEffort("provider.chat_auto", body);
+        const internalUsageUserId = isServiceRoleRequest(req)
+          ? nullableUuid(body.internal_user_id)
+          : null;
+        const routingUserId = userId ?? internalUsageUserId;
         const offlinePolicy = parseOfflineSecureModePolicy(body);
         const requestedTier = normalizeProviderTier(body.tier);
         const messages = Array.isArray(body.messages) ? body.messages : null;
@@ -5158,10 +6795,10 @@ serve(async (req: Request) => {
         }
 
         // フリーミアム上限ゲート + 使用量メータリング (#3645 / #3646)
-        if (userId) {
+        if (routingUserId) {
           const usage = await checkAndRecordAiUsage(
             supabaseUsageStore(admin),
-            userId,
+            routingUserId,
           );
           if (!usage.allowed) {
             return json({
@@ -5208,26 +6845,104 @@ serve(async (req: Request) => {
         let usedTier: Tier | undefined;
         let usedModel: string | undefined;
 
-        outerLoop:
-        for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
-          const tier = TIER_ORDER[ti];
-          const providers = TIER_PROVIDERS[tier].filter((p) =>
-            p in PROVIDER_CONFIGS
-          );
-          for (const pid of providers) {
+        // リクエスト全体の時間予算。実障害(2026-07-06): 予算なしで遅延プロバイダを
+        // 順に待つと edge の wall-clock を超え、gateway 502 でクライアントに
+        // 66 秒待たせた。予算内で per-call 上限を配分し、残りが尽きたら即返す。
+        const chatBudgetMs = chatTotalBudgetMs();
+        let budgetExhausted = false;
+        // どのプロバイダが予算を焼いたかを可視化する試行トレイル。全滅時の
+        // error_message へ付加し、Supabase Logs だけでチェーン健全性を診断
+        // できるようにする(従来は "budget exhausted" の一言で真犯人が不明)。
+        const attemptTrail: string[] = [];
+        const manualPreference = await loadManualRoutingPreference(
+          routingUserId,
+          routingUseCase ?? body.task ?? body.task_type ?? body.action_key,
+        );
+        if (manualPreference) {
+          const remainingMs = chatBudgetMs -
+            (performance.now() - requestStartedAt);
+          if (remainingMs >= 2_000) {
+            const attemptStartedAt = performance.now();
             const result = await callSingleProvider(
-              pid,
+              manualPreference.provider,
               finalMessages,
+              manualPreference.model ?? undefined,
               undefined,
-              undefined,
-              { maxTokens: requestedMaxTokens },
+              {
+                maxTokens: requestedMaxTokens,
+                timeoutMs: Math.min(
+                  providerFetchTimeoutMs(),
+                  chatPerCallTimeoutMs(),
+                  remainingMs,
+                ),
+              },
             );
             if (result.ok && result.text) {
               resultText = result.text;
-              usedProvider = pid;
-              usedTier = tier;
+              usedProvider = manualPreference.provider;
+              usedTier = providerTier(manualPreference.provider) ?? routedTier;
               usedModel = result.modelUsed;
-              break outerLoop;
+            } else {
+              const attemptMs = Math.round(
+                performance.now() - attemptStartedAt,
+              );
+              const attemptError = (result.error ?? "unknown").slice(0, 80);
+              attemptTrail.push(
+                `manual:${manualPreference.provider}:${attemptMs}ms ${attemptError}`,
+              );
+            }
+          } else {
+            budgetExhausted = true;
+            attemptTrail.push(
+              `budget-stop before manual:${manualPreference.provider}`,
+            );
+          }
+        }
+        if (!resultText) {
+          outerLoop:
+          for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
+            const tier = TIER_ORDER[ti];
+            const providers = TIER_PROVIDERS[tier].filter((p) =>
+              p in PROVIDER_CONFIGS
+            );
+            for (const pid of providers) {
+              const remainingMs = chatBudgetMs -
+                (performance.now() - requestStartedAt);
+              if (remainingMs < 2_000) {
+                budgetExhausted = true;
+                attemptTrail.push(`budget-stop before ${pid}`);
+                break outerLoop;
+              }
+              const attemptStartedAt = performance.now();
+              const result = await callSingleProvider(
+                pid,
+                finalMessages,
+                undefined,
+                undefined,
+                {
+                  maxTokens: requestedMaxTokens,
+                  timeoutMs: Math.min(
+                    providerFetchTimeoutMs(),
+                    chatPerCallTimeoutMs(),
+                    remainingMs,
+                  ),
+                },
+              );
+              if (result.ok && result.text) {
+                resultText = result.text;
+                usedProvider = pid;
+                usedTier = tier;
+                usedModel = result.modelUsed;
+                break outerLoop;
+              }
+              const attemptMs = Math.round(
+                performance.now() - attemptStartedAt,
+              );
+              const attemptError = (result.error ?? "unknown").slice(0, 80);
+              attemptTrail.push(`${pid}:${attemptMs}ms ${attemptError}`);
+              console.warn(
+                `[chat_auto] provider failed: ${pid} tier=${tier} ${attemptMs}ms ${attemptError}`,
+              );
             }
           }
         }
@@ -5247,18 +6962,30 @@ serve(async (req: Request) => {
               trace_id: traceId,
               session_id: sessionId,
               input_chars: inputChars,
-              error_message: "all tiers exhausted",
+              // 予算切れと全プロバイダ失敗を区別し、per-provider の試行
+              // トレイルで真犯人(遅延/死亡プロバイダ)まで特定可能に。
+              error_message: ((budgetExhausted
+                ? "budget exhausted"
+                : "all tiers exhausted") +
+                (attemptTrail.length > 0
+                  ? ` | ${attemptTrail.join("; ")}`
+                  : "")).slice(0, 500),
               action: "provider.chat_auto",
-              status_code: 502,
+              status_code: 503,
               provider_choice_reason: providerChoiceReason,
               routing_use_case: routingUseCase,
             });
           } catch { /* ignore */ }
+          // 503 = ハンドリング済みの exhaustion (runtime kill の生 502 と区別)。
+          // traceId を返しクライアント側から attempt 単位で相関可能にする。
           return json({
             success: false,
             status: "allProvidersFailed",
-            message: "すべての Tier のプロバイダーが失敗しました",
-          }, 502);
+            message: budgetExhausted
+              ? "時間予算内にプロバイダー応答が得られませんでした"
+              : "すべての Tier のプロバイダーが失敗しました",
+            traceId: traceId ?? null,
+          }, 503);
         }
 
         // コスト + 観測データ記録 (best-effort、失敗してもレスポンスには影響しない)
@@ -5385,6 +7112,10 @@ serve(async (req: Request) => {
           ? String(body.session_id)
           : null;
         const explicitModel = asString(body.model) || undefined;
+        const routingUseCase = sanitizeProviderChoiceLogText(
+          body.routing_use_case ?? body.task ?? body.task_type,
+          80,
+        );
 
         let resultText: string | undefined;
         let usedProvider: string | undefined;
@@ -5459,24 +7190,48 @@ serve(async (req: Request) => {
             return json({ error: "invalid tier" }, 400);
           }
 
-          outerLoop:
-          for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
-            const tier = TIER_ORDER[ti];
-            const providers = TIER_PROVIDERS[tier].filter((p) =>
-              p in PROVIDER_CONFIGS
+          const manualPreference = await loadManualRoutingPreference(
+            userId,
+            routingUseCase ?? body.task ?? body.task_type ?? body.action_key,
+          );
+          if (manualPreference) {
+            const result = await callSingleProvider(
+              manualPreference.provider,
+              finalMessages,
+              manualPreference.model ?? undefined,
             );
-            for (const pid of providers) {
-              const result = await callSingleProvider(
-                pid,
-                finalMessages,
-                explicitModel,
+            if (result.ok && result.text) {
+              resultText = result.text;
+              usedProvider = manualPreference.provider;
+              usedTier = providerTier(manualPreference.provider) ?? routedTier;
+              usedModel = result.modelUsed;
+            } else {
+              failureDetail = `manual preference failed: ${
+                result.error ?? manualPreference.provider
+              }`;
+            }
+          }
+
+          if (!resultText) {
+            outerLoop:
+            for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
+              const tier = TIER_ORDER[ti];
+              const providers = TIER_PROVIDERS[tier].filter((p) =>
+                p in PROVIDER_CONFIGS
               );
-              if (result.ok && result.text) {
-                resultText = result.text;
-                usedProvider = pid;
-                usedTier = tier;
-                usedModel = result.modelUsed;
-                break outerLoop;
+              for (const pid of providers) {
+                const result = await callSingleProvider(
+                  pid,
+                  finalMessages,
+                  explicitModel,
+                );
+                if (result.ok && result.text) {
+                  resultText = result.text;
+                  usedProvider = pid;
+                  usedTier = tier;
+                  usedModel = result.modelUsed;
+                  break outerLoop;
+                }
               }
             }
           }
@@ -5504,6 +7259,7 @@ serve(async (req: Request) => {
               error_message: failureDetail ?? "edge_llm.invoke failed",
               action: "edge_llm.invoke",
               status_code: 502,
+              routing_use_case: routingUseCase,
             });
           } catch {
             // ignore logging errors
@@ -5548,6 +7304,7 @@ serve(async (req: Request) => {
             output_chars: outputChars,
             action: "edge_llm.invoke",
             status_code: 200,
+            routing_use_case: routingUseCase,
           });
           await recordSpend("ef", "ai-hub", estimatedCost);
         } catch {
@@ -5578,6 +7335,7 @@ serve(async (req: Request) => {
             output_chars: outputChars,
             action: "edge_llm.invoke",
             status_code: 200,
+            routing_use_case: routingUseCase,
           },
         });
       }
@@ -5971,6 +7729,12 @@ serve(async (req: Request) => {
     if (err instanceof MonthlyAssetReportActionError) {
       return json({ error: err.message }, err.status);
     }
+    if (err instanceof AssetChatActionError) {
+      return json({ error: err.message, code: err.code }, err.status);
+    }
+    if (err instanceof DepartmentFinanceSummaryActionError) {
+      return json({ error: err.message }, err.status);
+    }
     if (err instanceof PayslipIngestionError) {
       return json({ error: err.message }, err.status);
     }
@@ -5978,6 +7742,9 @@ serve(async (req: Request) => {
       return json({ error: err.message }, err.status);
     }
     if (err instanceof DisposableBalanceError) {
+      return json({ error: err.message }, err.status);
+    }
+    if (err instanceof AnomalyDetectionError) {
       return json({ error: err.message }, err.status);
     }
     if (err instanceof MarketPriceActionError) {

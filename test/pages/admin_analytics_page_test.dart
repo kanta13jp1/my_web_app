@@ -200,6 +200,10 @@ void main() {
           'funnel_save_cta': 18,
           'funnel_magic_link_send': 12,
           'funnel_inbox_open': 8,
+          'funnel_billing_view': 30,
+          'funnel_upgrade_click': 9,
+          'funnel_checkout_success': 6,
+          'funnel_checkout_cancel': 2,
         },
       },
       {
@@ -255,6 +259,20 @@ void main() {
     expect(find.text('登録管理の追加指標'), findsOneWidget);
     expect(find.text('今日の登録ファネル'), findsOneWidget);
     expect(find.text('過去30日の登録ファネル'), findsOneWidget);
+    expect(find.text('過去30日の課金ファネル'), findsOneWidget);
+    final billingCard = find.byKey(const Key('billing_funnel_card'));
+    final billingMetrics = tester
+        .widgetList<RichText>(
+          find.descendant(of: billingCard, matching: find.byType(RichText)),
+        )
+        .map((widget) => widget.text.toPlainText())
+        .toList();
+    expect(billingMetrics, contains('課金ページ表示 30'));
+    expect(billingMetrics, contains('アップグレードクリック 9'));
+    expect(billingMetrics, contains('決済成功 6'));
+    expect(billingMetrics, contains('決済キャンセル 2'));
+    expect(billingMetrics, contains('表示→クリック 30.0%'));
+    expect(billingMetrics, contains('クリック→成功 66.7%'));
   });
 
   testWidgets('Shows funnel-based action when trial has not started',
@@ -279,7 +297,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.textContaining('登録率 体験未実行', findRichText: true),
+      find.textContaining('診断 体験未実行', findRichText: true),
       findsOneWidget,
     );
     expect(find.text('今やる単独改善アクション'), findsOneWidget);
@@ -368,6 +386,7 @@ void main() {
     expect(find.text('0.0'), findsOneWidget);
     expect(find.text('今日の登録目標'), findsOneWidget);
     expect(find.text('有料転換'), findsOneWidget);
+    expect(find.text('過去30日の課金ファネル'), findsOneWidget);
     expect(find.text('¥0'), findsOneWidget);
   });
 

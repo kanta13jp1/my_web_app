@@ -1,13 +1,43 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  evaluateScheduleCollectionQuality,
+  type HubDataRow,
+  type HubInsertResult,
+  LOCAL_ELECTION_DATASET,
+  LOCAL_ELECTION_SNAPSHOT_HUB_SOURCE,
+  type LocalElectionHubStore,
+  persistLocalElectionSnapshot,
+  type ScheduleCollectionQuality,
+  type ScheduleSourceFetchHealth,
+  X_POST_CANDIDATE_HUB_SOURCE,
+} from "./snapshot_history.ts";
+import { normalizeCdpBenchmark } from "./party_gap_ranking.ts";
+import {
+  buildElectionIntelligenceSnapshot,
+  type ElectionModeId,
+  type ElectionModeRegistry,
+  fallbackElectionModeRegistry,
+  fallbackOfficialEndorsementSnapshot,
+  normalizeElectionModeRegistry,
+  normalizeOfficialEndorsementSnapshot,
+  type OfficialEndorsementSnapshot,
+  parseElectionMode,
+  verifyElectionGoalSources,
+} from "./election_mode.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Max-Age": "86400",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ??
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const OFFICIAL_MEMBER_PAGE_URL = "https://new-kokumin.jp/member";
 const OFFICIAL_ELECTION_PAGE_URL = "https://new-kokumin.jp/election";
 const OFFICIAL_2023_FIRST_HALF_URL =
@@ -17,12 +47,20 @@ const OFFICIAL_2023_SECOND_HALF_URL =
 const ELECTION_SCHEDULE_URL = "https://go2senkyo.com/schedule";
 const CDP_LOCAL_AUTHORITIES_URL =
   "https://cdp-japan.jp/members/house/local_authorities";
+// R28: 立憲実数の repo asset(週次 update_cdp_benchmark.mjs が正本)。
+const CDP_BENCHMARK_ASSET_URL =
+  "https://raw.githubusercontent.com/kanta13jp1/my_web_app/main/assets/data/cdp_local_members.json";
+const ELECTION_MODE_REGISTRY_ASSET_URL =
+  "https://raw.githubusercontent.com/kanta13jp1/my_web_app/main/assets/data/kokumin_election_modes.json";
+const OFFICIAL_ENDORSEMENT_ASSET_URL =
+  "https://raw.githubusercontent.com/kanta13jp1/my_web_app/main/assets/data/kokumin_local_endorsements.json";
 const NEW_KOKUMIN_ELECTIONS_URL =
   "https://local-elections.new-kokumin.jp/electionslist/";
 const NEXT_UNIFIED_LOCAL_ELECTION_INFO_URL =
   "https://senkyo-news.jp/unified-local-elections/";
 const TARGET_LOCAL_MEMBERS = 700;
 const BASELINE_CURRENT_LOCAL_MEMBERS = 340;
+const MINIMUM_EXPECTED_OFFICIAL_ELECTION_PREFECTURE_LINKS = 10;
 const SCHEDULE_PAST_DAYS = 14;
 const NEXT_UNIFIED_LOCAL_ELECTION_SCHEDULE_END = "2027-04-25";
 // ユーザー要件: 最低でも 1ヶ月分 (30日) の地方選予定を取得する。
@@ -132,6 +170,7 @@ interface OfficialScheduledCandidate {
 interface PrefectureReality {
   prefecture: string;
   sourceUrl: string;
+  fetchStatus: "success" | "not_listed" | "failed";
   currentMembers: number;
   prefecturalAssemblyMembers: number;
   municipalAssemblyMembers: number;
@@ -190,6 +229,21 @@ interface ScheduleOverviewEntry {
   prefecture: string;
   voteDate: string;
   detailUrl: string;
+}
+
+interface ScheduleSourceEntries {
+  entries: ScheduleOverviewEntry[];
+  health: ScheduleSourceFetchHealth;
+}
+
+interface ScheduleOverviewFetchResult {
+  entries: ScheduleOverviewEntry[];
+  sources: ScheduleSourceFetchHealth[];
+}
+
+interface UpcomingScheduleFetchResult {
+  schedules: LocalElectionScheduleEntry[];
+  collectionQuality: ScheduleCollectionQuality;
 }
 
 interface ManualScheduledCandidate {
@@ -478,8 +532,9 @@ const MANUAL_SCHEDULE_SUPPLEMENTS: ManualScheduleSupplement[] = [
 ];
 
 interface SnapshotRequest {
-  action: "snapshot";
+  action: "snapshot" | "snapshotAndQueue";
   includeAiSummary: boolean;
+  mode: ElectionModeId;
 }
 
 interface MemberDetailRequest {
@@ -508,6 +563,15 @@ serve(async (req) => {
       );
       return jsonResponse({ success: true, profile });
     }
+    if (parsedRequest.action === "snapshotAndQueue") {
+      requireServiceRole(req);
+    }
+    if (parsedRequest.mode !== "local") {
+      throw new HttpError(
+        409,
+        `Election mode ${parsedRequest.mode} is registered but its collector is not active.`,
+      );
+    }
 
     const memberPageHtml = await fetchText(OFFICIAL_MEMBER_PAGE_URL);
     const officialElectionHtml = await fetchText(OFFICIAL_ELECTION_PAGE_URL);
@@ -527,7 +591,27 @@ serve(async (req) => {
     const members = prefectureResults.flatMap((item) => item.members).sort(
       compareMembers,
     );
+    const failedPrefectureFetches = prefectureResults
+      .filter((item) => item.fetchStatus === "failed")
+      .map((item) => item.prefecture);
     const officialCurrentLocalMembers = members.length;
+    const linkedPrefectureCount = prefectureDirectoryEntries.filter((item) =>
+      item.sourceUrl !== ""
+    ).length;
+    const minimumExpectedMemberCount = Math.floor(
+      BASELINE_CURRENT_LOCAL_MEMBERS / 2,
+    );
+    const memberCollectionQualityIssues = [
+      ...(failedPrefectureFetches.length > 0
+        ? [`prefecture_fetch_failed:${failedPrefectureFetches.join(",")}`]
+        : []),
+      ...(linkedPrefectureCount < 10
+        ? [`member_directory_links_too_low:${linkedPrefectureCount}`]
+        : []),
+      ...(officialCurrentLocalMembers < minimumExpectedMemberCount
+        ? [`official_member_count_too_low:${officialCurrentLocalMembers}`]
+        : []),
+    ];
     // 立憲(CDP)地方議員数は週次 cron (update_cdp_benchmark.mjs → assets/data/
     // cdp_local_members.json → plan) が正本。この EF は取得せず 0 を返し、
     // クライアントは plan のバッチ値を利用する。
@@ -542,6 +626,12 @@ serve(async (req) => {
     }));
 
     const historical = await fetchHistoricalResult();
+    const electionRegistryResult = await loadElectionModeRegistry();
+    const officialEndorsementResult = await loadOfficialEndorsementSnapshot();
+    const goalVerification = await verifyElectionGoalSources(
+      electionRegistryResult.registry,
+      fetchText,
+    );
     const scrapedScheduledCandidates = (
       await mapWithConcurrency(
         [...officialElectionPrefectureLinks.entries()],
@@ -556,10 +646,35 @@ serve(async (req) => {
       scrapedScheduledCandidates,
       buildManualScheduledCandidates(MANUAL_SCHEDULE_SUPPLEMENTS),
     );
-    const upcomingSchedules = await fetchUpcomingLocalElectionSchedules(
+    const scheduleResult = await fetchUpcomingLocalElectionSchedules(
       officialScheduledCandidates,
       MANUAL_SCHEDULE_SUPPLEMENTS,
     );
+    const upcomingSchedules = scheduleResult.schedules;
+    const officialElectionPrefectureLinkCount =
+      officialElectionPrefectureLinks.size;
+    const collectionQualityIssues = [
+      ...memberCollectionQualityIssues,
+      ...(officialElectionPrefectureLinkCount <
+          MINIMUM_EXPECTED_OFFICIAL_ELECTION_PREFECTURE_LINKS
+        ? [
+          `official_election_prefecture_links_too_low:${officialElectionPrefectureLinkCount}`,
+        ]
+        : []),
+      ...scheduleResult.collectionQuality.issues,
+      ...electionRegistryResult.issues,
+      ...officialEndorsementResult.issues,
+      ...goalVerification.issues,
+    ];
+
+    const electionIntelligence = buildElectionIntelligenceSnapshot({
+      registry: electionRegistryResult.registry,
+      selectedMode: parsedRequest.mode,
+      verifiedGoalIds: goalVerification.verifiedGoalIds,
+      officialEndorsements: officialEndorsementResult.snapshot,
+      officialCurrentLocalMembers,
+      official2023TotalWins: historical.totalWins,
+    });
 
     const snapshotBase = {
       fetchedAt: new Date().toISOString(),
@@ -575,6 +690,7 @@ serve(async (req) => {
       official2023FirstHalfWins: historical.firstHalfWins,
       official2023SecondHalfWins: historical.secondHalfWins,
       official2023TotalWins: historical.totalWins,
+      electionIntelligence,
       sources: [
         {
           label: "Official members",
@@ -607,6 +723,26 @@ serve(async (req) => {
           note: "Official planned-candidate source.",
         },
         {
+          label: "Election mode and goal registry",
+          url: ELECTION_MODE_REGISTRY_ASSET_URL,
+          category: "election_intelligence_registry",
+          note:
+            "Versioned mode definitions and official goal-source contracts.",
+        },
+        {
+          label: "Official local-election endorsement snapshot",
+          url: OFFICIAL_ENDORSEMENT_ASSET_URL,
+          category: "official_endorsement_snapshot",
+          note:
+            "Machine-validated snapshot generated from the party's official PDF.",
+        },
+        ...electionIntelligence.goals.map((goal) => ({
+          label: goal.title,
+          url: goal.sourceUrl,
+          category: "official_party_goal",
+          note: `Official goal source (${goal.verificationStatus}).`,
+        })),
+        {
           label: "CDP local authorities",
           url: CDP_LOCAL_AUTHORITIES_URL,
           category: "opposition_local_members",
@@ -637,27 +773,124 @@ serve(async (req) => {
       prefectures,
       members,
       upcomingSchedules,
+      collectionQuality: {
+        complete: collectionQualityIssues.length === 0,
+        failedPrefectureFetches,
+        linkedPrefectureCount,
+        minimumExpectedMemberCount,
+        officialElectionPrefectureLinkCount,
+        minimumExpectedOfficialElectionPrefectureLinks:
+          MINIMUM_EXPECTED_OFFICIAL_ELECTION_PREFECTURE_LINKS,
+        scheduleSourceCount: scheduleResult.collectionQuality.sourceCount,
+        scheduleFetchSuccessCount:
+          scheduleResult.collectionQuality.fetchSuccessCount,
+        scheduleParsedSourceCount:
+          scheduleResult.collectionQuality.parsedSourceCount,
+        scheduleParsedEntryCount:
+          scheduleResult.collectionQuality.parsedEntryCount,
+        scheduleManualEntryCount:
+          scheduleResult.collectionQuality.manualEntryCount,
+        scheduleManualFallbackOnly:
+          scheduleResult.collectionQuality.manualFallbackOnly,
+        failedScheduleSourceUrls:
+          scheduleResult.collectionQuality.failedSourceUrls,
+        parserEmptyScheduleSourceUrls:
+          scheduleResult.collectionQuality.parserEmptySourceUrls,
+        failedRequiredScheduleSourceUrls:
+          scheduleResult.collectionQuality.failedRequiredSourceUrls,
+        parserEmptyRequiredScheduleSourceUrls:
+          scheduleResult.collectionQuality.parserEmptyRequiredSourceUrls,
+        electionModeRegistryLoaded: electionRegistryResult.issues.length === 0,
+        officialEndorsementSnapshotLoaded:
+          officialEndorsementResult.issues.length === 0,
+        verifiedGoalSourceCount: goalVerification.verifiedGoalIds.length,
+        expectedGoalSourceCount: electionRegistryResult.registry.modes
+          .flatMap((mode) => mode.goals).length,
+        electionIntelligenceIssues: [
+          ...electionRegistryResult.issues,
+          ...officialEndorsementResult.issues,
+          ...goalVerification.issues,
+        ],
+        issues: collectionQualityIssues,
+      },
     };
 
     const aiAnalysis = parsedRequest.includeAiSummary
       ? await buildAiAnalysis(snapshotBase)
       : buildFallbackAnalysis(snapshotBase);
 
+    const snapshot = {
+      ...snapshotBase,
+      aiSummary: aiAnalysis.summary,
+      aiAlerts: aiAnalysis.alerts,
+      aiStrategicNotes: aiAnalysis.strategicNotes,
+      scheduleAiSummary: aiAnalysis.scheduleSummary,
+      scheduleAiAlerts: aiAnalysis.scheduleAlerts,
+    };
+    if (
+      parsedRequest.action === "snapshotAndQueue" &&
+      collectionQualityIssues.length > 0
+    ) {
+      throw new HttpError(
+        503,
+        `Snapshot persistence skipped by collection quality gate: ${
+          collectionQualityIssues.join("; ")
+        }`,
+      );
+    }
+    // R28: 立憲実数(週次 update_cdp_benchmark.mjs が正本の repo asset)を
+    // EF 側で取得して地力差系列へ渡す。この EF の snapshot は cdpLocalMembers
+    // を 0 ハードコードするため、これが本番で唯一の立憲実数源(レビュー F1:
+    // これ無しでは系列が一度も候補を生成しない)。取得失敗は null → composer
+    // 側の cdpTotal ゲートで自然に見送り(その週の候補を作らないだけで、
+    // snapshot 永続化と delta 系列には影響しない)。
+    let cdpByPrefecture: Record<string, number> | null = null;
+    if (parsedRequest.action === "snapshotAndQueue") {
+      try {
+        cdpByPrefecture = normalizeCdpBenchmark(
+          JSON.parse(await fetchText(CDP_BENCHMARK_ASSET_URL)),
+        );
+      } catch (_error) {
+        cdpByPrefecture = null;
+      }
+    }
+    const persistence = parsedRequest.action === "snapshotAndQueue"
+      ? await persistLocalElectionSnapshot(
+        createLocalElectionHubStore(),
+        snapshot,
+        new Date().toISOString(),
+        { cdpByPrefecture },
+      )
+      : null;
+
     return jsonResponse({
       success: true,
-      snapshot: {
-        ...snapshotBase,
-        aiSummary: aiAnalysis.summary,
-        aiAlerts: aiAnalysis.alerts,
-        aiStrategicNotes: aiAnalysis.strategicNotes,
-        scheduleAiSummary: aiAnalysis.scheduleSummary,
-        scheduleAiAlerts: aiAnalysis.scheduleAlerts,
-      },
+      snapshot,
+      ...(persistence
+        ? {
+          persistence: {
+            dataset: persistence.dataset,
+            datasetVersion: persistence.datasetVersion,
+            snapshotHash: persistence.snapshotHash,
+            previousSnapshotId: persistence.previousSnapshotId,
+            previousSnapshotHash: persistence.previousSnapshotHash,
+            baselineCreated: persistence.baselineCreated,
+            snapshotCreated: persistence.snapshotCreated,
+            deduplicated: persistence.deduplicated,
+            significantKinds: persistence.significantKinds,
+            candidateCount: persistence.candidateCount,
+            candidatesCreated: persistence.candidatesCreated,
+            snapshotId: persistence.snapshotRow.id,
+            candidateIds: persistence.candidateRows.map((row) => row.id),
+          },
+        }
+        : {}),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("local-election-intelligence failed:", message);
-    return jsonResponse({ success: false, error: message }, { status: 400 });
+    const status = error instanceof HttpError ? error.status : 400;
+    return jsonResponse({ success: false, error: message }, { status });
   }
 });
 
@@ -694,12 +927,204 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
     return {
       action: "snapshot",
       includeAiSummary: url.searchParams.get("includeAiSummary") !== "false",
+      mode: parseElectionMode(url.searchParams.get("mode")),
+    };
+  }
+
+  if (
+    requestedAction === "snapshotAndQueue" ||
+    requestedAction === "snapshot_and_queue"
+  ) {
+    return {
+      action: "snapshotAndQueue",
+      // Persistence runs normally do not need request-time AI prose. The
+      // canonical dataset excludes AI fields either way.
+      includeAiSummary: body.includeAiSummary === true,
+      mode: parseElectionMode(body.mode),
     };
   }
 
   return {
     action: "snapshot",
     includeAiSummary: body.includeAiSummary !== false,
+    mode: parseElectionMode(body.mode),
+  };
+}
+
+class HttpError extends Error {
+  constructor(public readonly status: number, message: string) {
+    super(message);
+  }
+}
+
+function requireServiceRole(req: Request): void {
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+    throw new HttpError(
+      503,
+      "Server persistence is not configured.",
+    );
+  }
+  const bearer = (req.headers.get("Authorization") ?? "")
+    .replace(/^Bearer\s+/i, "").trim();
+  if (!bearer || bearer !== SERVICE_ROLE_KEY) {
+    throw new HttpError(
+      401,
+      "snapshotAndQueue requires service-role authorization.",
+    );
+  }
+}
+
+function asHubDataRow(value: unknown): HubDataRow {
+  const row = value && typeof value === "object"
+    ? value as Record<string, unknown>
+    : {};
+  const id = typeof row.id === "string" ? row.id : "";
+  const metadata = row.metadata && typeof row.metadata === "object" &&
+      !Array.isArray(row.metadata)
+    ? row.metadata as Record<string, unknown>
+    : {};
+  const createdAt = typeof row.created_at === "string" ? row.created_at : "";
+  if (!id) throw new Error("hub_data row is missing id");
+  return { id, metadata, created_at: createdAt };
+}
+
+function createLocalElectionHubStore(): LocalElectionHubStore {
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const findSnapshotTransition = async (
+    dataset: string,
+    previousSnapshotId: string | null,
+    snapshotHash: string,
+  ): Promise<HubDataRow | null> => {
+    let query = admin
+      .from("hub_data")
+      .select("id, metadata, created_at")
+      .eq("source", LOCAL_ELECTION_SNAPSHOT_HUB_SOURCE)
+      .filter("metadata->>dataset", "eq", dataset)
+      .filter("metadata->>snapshot_hash", "eq", snapshotHash);
+    query = previousSnapshotId
+      ? query.filter(
+        "metadata->>previous_snapshot_id",
+        "eq",
+        previousSnapshotId,
+      )
+      : query.is("metadata->>previous_snapshot_id", null);
+    const { data, error } = await query
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? asHubDataRow(data) : null;
+  };
+
+  const findCandidateByKey = async (
+    candidateKey: string,
+  ): Promise<HubDataRow | null> => {
+    const { data, error } = await admin
+      .from("hub_data")
+      .select("id, metadata, created_at")
+      .eq("source", X_POST_CANDIDATE_HUB_SOURCE)
+      .filter("metadata->>user_id", "eq", "service_role")
+      .filter("metadata->>candidate_key", "eq", candidateKey)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? asHubDataRow(data) : null;
+  };
+
+  const insertRow = async (
+    source: string,
+    metadata: Record<string, unknown>,
+  ): Promise<HubDataRow> => {
+    const { data, error } = await admin
+      .from("hub_data")
+      .insert({ source, metadata })
+      .select("id, metadata, created_at")
+      .single();
+    if (error) {
+      const enriched = new Error(error.message) as Error & { code?: string };
+      enriched.code = error.code;
+      throw enriched;
+    }
+    return asHubDataRow(data);
+  };
+
+  return {
+    findSnapshotTransition,
+    async findSnapshotById(snapshotId: string): Promise<HubDataRow | null> {
+      const { data, error } = await admin
+        .from("hub_data")
+        .select("id, metadata, created_at")
+        .eq("source", LOCAL_ELECTION_SNAPSHOT_HUB_SOURCE)
+        .eq("id", snapshotId)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return data ? asHubDataRow(data) : null;
+    },
+    async getLatestSnapshot(dataset: string): Promise<HubDataRow | null> {
+      const { data, error } = await admin
+        .from("hub_data")
+        .select("id, metadata, created_at")
+        .eq("source", LOCAL_ELECTION_SNAPSHOT_HUB_SOURCE)
+        .filter("metadata->>dataset", "eq", dataset)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return data ? asHubDataRow(data) : null;
+    },
+    async insertSnapshot(
+      metadata: Record<string, unknown>,
+    ): Promise<HubInsertResult> {
+      const snapshotHash = String(metadata.snapshot_hash ?? "");
+      const previousSnapshotId = typeof metadata.previous_snapshot_id ===
+            "string" && metadata.previous_snapshot_id
+        ? metadata.previous_snapshot_id
+        : null;
+      const existing = await findSnapshotTransition(
+        LOCAL_ELECTION_DATASET,
+        previousSnapshotId,
+        snapshotHash,
+      );
+      if (existing) return { row: existing, created: false };
+      try {
+        return {
+          row: await insertRow(LOCAL_ELECTION_SNAPSHOT_HUB_SOURCE, metadata),
+          created: true,
+        };
+      } catch (error) {
+        if ((error as { code?: string }).code !== "23505") throw error;
+        const raced = await findSnapshotTransition(
+          LOCAL_ELECTION_DATASET,
+          previousSnapshotId,
+          snapshotHash,
+        );
+        if (!raced) throw error;
+        return { row: raced, created: false };
+      }
+    },
+    async insertPostCandidate(
+      metadata: Record<string, unknown>,
+    ): Promise<HubInsertResult> {
+      const candidateKey = String(metadata.candidate_key ?? "");
+      if (!candidateKey) throw new Error("candidate_key is required");
+      const existing = await findCandidateByKey(candidateKey);
+      if (existing) return { row: existing, created: false };
+      try {
+        return {
+          row: await insertRow(X_POST_CANDIDATE_HUB_SOURCE, metadata),
+          created: true,
+        };
+      } catch (error) {
+        if ((error as { code?: string }).code !== "23505") throw error;
+        const raced = await findCandidateByKey(candidateKey);
+        if (!raced) throw error;
+        return { row: raced, created: false };
+      }
+    },
   };
 }
 
@@ -736,6 +1161,40 @@ async function fetchText(url: string): Promise<string> {
   }
 }
 
+async function loadElectionModeRegistry(): Promise<{
+  registry: ElectionModeRegistry;
+  issues: string[];
+}> {
+  try {
+    const registry = normalizeElectionModeRegistry(
+      JSON.parse(await fetchText(ELECTION_MODE_REGISTRY_ASSET_URL)),
+    );
+    return { registry, issues: [] };
+  } catch (_error) {
+    return {
+      registry: fallbackElectionModeRegistry(),
+      issues: ["election_mode_registry_fetch_or_validation_failed"],
+    };
+  }
+}
+
+async function loadOfficialEndorsementSnapshot(): Promise<{
+  snapshot: OfficialEndorsementSnapshot;
+  issues: string[];
+}> {
+  try {
+    const snapshot = normalizeOfficialEndorsementSnapshot(
+      JSON.parse(await fetchText(OFFICIAL_ENDORSEMENT_ASSET_URL)),
+    );
+    return { snapshot, issues: [] };
+  } catch (_error) {
+    return {
+      snapshot: fallbackOfficialEndorsementSnapshot(),
+      issues: ["official_endorsement_snapshot_fetch_or_validation_failed"],
+    };
+  }
+}
+
 function delay(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
@@ -748,6 +1207,7 @@ async function fetchPrefectureReality(
     return {
       prefecture,
       sourceUrl,
+      fetchStatus: "not_listed",
       currentMembers: 0,
       prefecturalAssemblyMembers: 0,
       municipalAssemblyMembers: 0,
@@ -763,6 +1223,7 @@ async function fetchPrefectureReality(
       return {
         prefecture,
         sourceUrl,
+        fetchStatus: "success",
         currentMembers: members.length,
         prefecturalAssemblyMembers: members.filter((item) =>
           item.assemblyCategory === "prefectural"
@@ -784,6 +1245,7 @@ async function fetchPrefectureReality(
   return {
     prefecture,
     sourceUrl,
+    fetchStatus: "failed",
     currentMembers: 0,
     prefecturalAssemblyMembers: 0,
     municipalAssemblyMembers: 0,
@@ -1019,16 +1481,25 @@ function parseOfficialScheduledCandidates(
 async function fetchUpcomingLocalElectionSchedules(
   officialCandidates: OfficialScheduledCandidate[],
   manualSupplements: ManualScheduleSupplement[],
-): Promise<LocalElectionScheduleEntry[]> {
+): Promise<UpcomingScheduleFetchResult> {
   const today = startOfDay(new Date());
   const earliestDate = addDays(today, -SCHEDULE_PAST_DAYS);
   const windowDays = Math.max(SCHEDULE_WINDOW_DAYS, SCHEDULE_MIN_WINDOW_DAYS);
   // 最低保証日数 (SCHEDULE_MIN_WINDOW_DAYS) を下限として最終日を決定
   const latestDate = resolveScheduleLatestDate(today, windowDays);
   const detailCutoffDate = addDays(today, SCHEDULE_DETAIL_WINDOW_DAYS);
+  const overviewFetch = await fetchScheduleOverviewEntries(
+    earliestDate,
+    latestDate,
+  );
+  const manualOverviewEntries = buildManualOverviewEntries(manualSupplements);
+  const collectionQuality = evaluateScheduleCollectionQuality(
+    overviewFetch.sources,
+    manualOverviewEntries.length,
+  );
   const overviewEntries = mergeScheduleOverviewEntries(
-    await fetchScheduleOverviewEntries(earliestDate, latestDate),
-    buildManualOverviewEntries(manualSupplements),
+    overviewFetch.entries,
+    manualOverviewEntries,
   ).filter(isTargetScheduleOverviewEntry);
   const upcomingEntries = overviewEntries
     .filter((entry) => {
@@ -1072,7 +1543,7 @@ async function fetchUpcomingLocalElectionSchedules(
       return await applyScheduleResultSources(supplementedEntry, supplement);
     },
   );
-  return detailed.sort((left, right) => {
+  const schedules = detailed.sort((left, right) => {
     const leftDate = parseIsoDate(left.voteDate);
     const rightDate = parseIsoDate(right.voteDate);
     if (leftDate != null && rightDate != null) {
@@ -1087,6 +1558,7 @@ async function fetchUpcomingLocalElectionSchedules(
     }
     return left.electionName.localeCompare(right.electionName, "ja");
   });
+  return { schedules, collectionQuality };
 }
 
 function resolveScheduleLatestDate(today: Date, windowDays: number): Date {
@@ -1108,7 +1580,7 @@ function resolveScheduleLatestDate(today: Date, windowDays: number): Date {
 async function fetchScheduleOverviewEntries(
   earliestDate: Date,
   latestDate: Date,
-): Promise<ScheduleOverviewEntry[]> {
+): Promise<ScheduleOverviewFetchResult> {
   const years = new Set<number>();
   for (
     let year = earliestDate.getFullYear();
@@ -1125,25 +1597,48 @@ async function fetchScheduleOverviewEntries(
     ...[...years].map(scheduleUrlForYear),
   ];
 
-  const [go2senkyoPages, newKokuminEntries] = await Promise.all([
+  const [go2senkyoSources, newKokuminSource] = await Promise.all([
     Promise.all(
       urls.map(async (url) => {
         try {
-          return await fetchText(url);
+          const html = await fetchText(url);
+          const entries = parseScheduleOverviewEntries(html);
+          return {
+            entries,
+            health: {
+              url,
+              requiredForPersistence: url === ELECTION_SCHEDULE_URL,
+              fetchSucceeded: true,
+              parsedEntryCount: entries.length,
+            },
+          } satisfies ScheduleSourceEntries;
         } catch (error) {
           console.error(`Failed to fetch schedule page ${url}:`, error);
-          return "";
+          return {
+            entries: [],
+            health: {
+              url,
+              requiredForPersistence: url === ELECTION_SCHEDULE_URL,
+              fetchSucceeded: false,
+              parsedEntryCount: 0,
+            },
+          } satisfies ScheduleSourceEntries;
         }
       }),
     ),
     fetchNewKokuminScheduleEntries(),
   ]);
 
-  const go2senkyoEntries = go2senkyoPages.flatMap((html) =>
-    html === "" ? [] : parseScheduleOverviewEntries(html)
-  );
-
-  return mergeScheduleOverviewEntries(go2senkyoEntries, newKokuminEntries);
+  return {
+    entries: mergeScheduleOverviewEntries(
+      go2senkyoSources.flatMap((source) => source.entries),
+      newKokuminSource.entries,
+    ),
+    sources: [
+      ...go2senkyoSources.map((source) => source.health),
+      newKokuminSource.health,
+    ],
+  };
 }
 
 function scheduleUrlForYear(year: number): string {
@@ -1151,16 +1646,33 @@ function scheduleUrlForYear(year: number): string {
 }
 
 async function fetchNewKokuminScheduleEntries(): Promise<
-  ScheduleOverviewEntry[]
+  ScheduleSourceEntries
 > {
   let html: string;
   try {
     html = await fetchText(NEW_KOKUMIN_ELECTIONS_URL);
   } catch (error) {
     console.error("Failed to fetch new-kokumin elections page:", error);
-    return [];
+    return {
+      entries: [],
+      health: {
+        url: NEW_KOKUMIN_ELECTIONS_URL,
+        requiredForPersistence: true,
+        fetchSucceeded: false,
+        parsedEntryCount: 0,
+      },
+    };
   }
-  return parseNewKokuminElectionListHtml(html);
+  const entries = parseNewKokuminElectionListHtml(html);
+  return {
+    entries,
+    health: {
+      url: NEW_KOKUMIN_ELECTIONS_URL,
+      requiredForPersistence: true,
+      fetchSucceeded: true,
+      parsedEntryCount: entries.length,
+    },
+  };
 }
 
 function parseNewKokuminElectionListHtml(

@@ -96,7 +96,8 @@ jobs:
 
             # blog_posts テーブルに直接 INSERT (content付き)
             ISO_NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-            INSERT_PAYLOAD=$(TITLE="$TITLE" DRAFT_PATH="$DRAFT_PATH" ISO_NOW="$ISO_NOW" CONTENT="$CONTENT" python3 -c 'import json, os; print(json.dumps({"title": os.environ["TITLE"], "draft_path": os.environ["DRAFT_PATH"], "content": os.environ["CONTENT"], "status": "draft", "target_platforms": ["qiita", "devto"], "created_at": os.environ["ISO_NOW"]}))')
+            # 2026-07-12: Qiita アカウント利用停止につき、新規登録は dev.to のみ。
+            INSERT_PAYLOAD=$(TITLE="$TITLE" DRAFT_PATH="$DRAFT_PATH" ISO_NOW="$ISO_NOW" CONTENT="$CONTENT" python3 -c 'import json, os; print(json.dumps({"title": os.environ["TITLE"], "draft_path": os.environ["DRAFT_PATH"], "content": os.environ["CONTENT"], "status": "draft", "target_platforms": ["devto"], "created_at": os.environ["ISO_NOW"]}))')
 
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
               -X POST \

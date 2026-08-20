@@ -44,6 +44,9 @@ export interface XTweetMetrics {
   repostCount: number;
   quoteCount: number;
   bookmarkCount: number;
+  // 保存性/変換シグナル(既に計算済だが従来は返していなかった)。
+  urlClicks: number;
+  profileClicks: number;
   score: number;
   raw: Record<string, unknown>;
 }
@@ -57,6 +60,8 @@ export interface XApiErrorPayload {
   requiredEnrollment: string | null;
   registrationUrl: string | null;
   actionRequired: string;
+  // R15: spend cap 解除見込み日(ISO, 例 "2026-07-10")。billing 起因以外は null。
+  billingBlockedUntil?: string | null;
   raw: Record<string, unknown> | string;
 }
 
@@ -129,29 +134,42 @@ export async function fetchXTweetMetrics(
   tweetIds: string[],
 ): Promise<XTweetMetrics[]> {
   assertXConfigured();
-  const ids = [...new Set(tweetIds.map(asString).filter((id) => id !== ""))]
-    .slice(0, 100);
+  // X API v2 の /2/tweets は 1 リクエスト最大 100 id。従来は `.slice(0, 100)` で
+  // 101 件目以降を黙って切り捨てており、投稿数が増えるほど計測から漏れた
+  // (perf フィードバックループの入力欠損)。100 件ずつ順次バッチで全件取得する。
+  const ids = [...new Set(tweetIds.map(asString).filter((id) => id !== ""))];
   if (ids.length === 0) return [];
 
-  try {
-    return await fetchXTweetMetricsWithFields(ids, [
-      "created_at",
-      "text",
-      "public_metrics",
-      "non_public_metrics",
-      "organic_metrics",
-    ]);
-  } catch (error) {
-    const payload = isXApiError(error) ? error.payload : null;
-    if (payload && (payload.status === 400 || payload.status === 403)) {
-      return await fetchXTweetMetricsWithFields(ids, [
-        "created_at",
-        "text",
-        "public_metrics",
-      ]);
+  const results: XTweetMetrics[] = [];
+  for (let i = 0; i < ids.length; i += 100) {
+    const batch = ids.slice(i, i + 100);
+    try {
+      results.push(
+        ...await fetchXTweetMetricsWithFields(batch, [
+          "created_at",
+          "text",
+          "public_metrics",
+          "non_public_metrics",
+          "organic_metrics",
+        ]),
+      );
+    } catch (error) {
+      const payload = isXApiError(error) ? error.payload : null;
+      if (payload && (payload.status === 400 || payload.status === 403)) {
+        // 昇格フィールド非対応(未認可)時のダウングレードはバッチ単位で維持。
+        results.push(
+          ...await fetchXTweetMetricsWithFields(batch, [
+            "created_at",
+            "text",
+            "public_metrics",
+          ]),
+        );
+      } else {
+        throw error;
+      }
     }
-    throw error;
   }
+  return results;
 }
 
 async function fetchXTweetMetricsWithFields(
@@ -627,7 +645,15 @@ export function buildXApiErrorPayload(
   const detail = asString(parsed.detail) || null;
   const registrationUrl = asString(parsed.registration_url) || null;
   const requiredEnrollment = asString(parsed.required_enrollment) || null;
-  const code = reason === "client-not-enrolled"
+  // 実障害(2026-07-06): X API のクレジット制プランで残高ゼロになると
+  // 402 "does not have any credits" で全投稿・計測がブロックされる。
+  // spend cap 到達由来の 403 も同じ課金起因なので単一コードへ正規化する。
+  const billingText = `${detail ?? ""} ${title ?? ""} ${rawText}`;
+  const isBillingBlocked = status === 402 ||
+    (status === 403 && /spend cap|billing cycle|credit/i.test(billingText));
+  const code = isBillingBlocked
+    ? "x_billing_blocked"
+    : reason === "client-not-enrolled"
     ? "x_client_not_enrolled"
     : status === 403
     ? "x_forbidden"
@@ -641,8 +667,21 @@ export function buildXApiErrorPayload(
     requiredEnrollment,
     registrationUrl,
     actionRequired: buildXActionRequired(code, requiredEnrollment),
+    // R15: spend cap 解除見込み日(ISO)。X の 402/403 エラーメッセージから
+    // 機械可読化し、preflight(生成前スキップ)と UI 表示の基盤にする。
+    billingBlockedUntil: isBillingBlocked
+      ? parseBillingBlockedUntil(billingText)
+      : null,
     raw: Object.keys(parsed).length > 0 ? parsed : rawText,
   };
+}
+
+/// X の spend-cap エラー文(例: "API requests will be blocked until the next
+/// cycle begins on 2026-07-10.")からリセット日を ISO 日付で抽出する純関数。
+/// 一致しなければ null(呼び出し側は TTL フォールバックへ degrade)。
+export function parseBillingBlockedUntil(text: string): string | null {
+  const match = /next cycle begins on (\d{4}-\d{2}-\d{2})/i.exec(text ?? "");
+  return match ? match[1] : null;
 }
 
 function normalizeXTrends(payload: unknown): XTrend[] {
@@ -721,6 +760,8 @@ function normalizeXTweetMetrics(payload: unknown): XTweetMetrics[] {
         repostCount,
         quoteCount,
         bookmarkCount,
+        urlClicks,
+        profileClicks,
         score,
         raw: tweet,
       };
@@ -754,6 +795,9 @@ function buildXActionRequired(
   if (code === "x_forbidden") {
     return "Check the X Developer App permissions, API access tier, and OAuth user-context access token.";
   }
+  if (code === "x_billing_blocked") {
+    return "X APIのクレジット不足/spend cap到達です。X Developer Portal (console.x.com) の該当プロジェクトでクレジット追加または上限引き上げをしてください。解除まで投稿・計測は失敗します。";
+  }
   return "Check the X API response, credentials, and endpoint permissions.";
 }
 
@@ -765,6 +809,14 @@ function buildXApiErrorMessage(payload: XApiErrorPayload): string {
       "Use keys and tokens from an X Developer App attached to a Project.",
       payload.actionRequired,
     ].join(" ");
+  }
+  if (payload.code === "x_billing_blocked") {
+    // 生 detail(リセット日を含む)はデバッグ/ログ永続用に保持。対処ガイダンスは
+    // actionRequired のみへ単一化(R15: 従来は error にも同文を埋め込んでおり、
+    // クライアントが error + actionRequired を連結して同じ段落が二重表示された)。
+    return `X APIのクレジットが不足しています（${
+      payload.detail ?? payload.status
+    }）。`;
   }
   return `X API error ${payload.status}: ${
     payload.detail || payload.title || JSON.stringify(payload.raw)

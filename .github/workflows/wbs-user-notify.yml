@@ -2,7 +2,7 @@ name: WBS User Task Notify
 
 on:
   schedule:
-    - cron: "0 0 * * *" # 09:00 JST
+    - cron: "27 0 * * *" # 09:27 JST (2026-07-17 ci-audit: 00:00 UTC 8本集中を分散)
   workflow_dispatch:
     inputs:
       limit:

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'gamification_service.dart';
+import 'office_document_parser.dart';
 
 class ImportedNoteDraft {
   final String title;
@@ -132,6 +133,15 @@ class ImportService {
     required String fileName,
     required Uint8List bytes,
   }) async {
+    // XLSX/DOCX はバイナリ (ZIP) のため、テキスト前提の Edge Function を経由せず
+    // クライアントで直接解析する (無駄な base64 アップロードを避ける)。
+    if (sourceType == 'xlsx' || sourceType == 'docx') {
+      return _buildPreviewLocally(
+        sourceType: sourceType,
+        fileName: fileName,
+        bytes: bytes,
+      );
+    }
     try {
       return await _buildPreviewViaEdgeFunction(
         sourceType: sourceType,
@@ -240,6 +250,32 @@ class ImportService {
           warnings: fallbackWarning == null
               ? const <String>[]
               : <String>[fallbackWarning],
+          previewMode: 'local-fallback',
+        );
+      case 'xlsx':
+        return ImportPreviewResult(
+          sourceType: 'xlsx',
+          sourceLabel: 'Excel (XLSX)',
+          fileName: fileName,
+          notes: parseXlsxBytes(bytes),
+          warnings: <String>[
+            'Title / Content / Tags 列があれば利用し、無ければ各行を1つのノートに変換します。',
+            if (fallbackWarning != null) fallbackWarning,
+          ],
+          previewMode: 'local-fallback',
+        );
+      case 'docx':
+        return ImportPreviewResult(
+          sourceType: 'docx',
+          sourceLabel: 'Word (DOCX)',
+          fileName: fileName,
+          notes: <ImportedNoteDraft>[
+            parseDocxBytes(bytes, fileName: fileName),
+          ],
+          warnings: <String>[
+            '段落を改行で連結したプレーンテキストとして取り込みます。',
+            if (fallbackWarning != null) fallbackWarning,
+          ],
           previewMode: 'local-fallback',
         );
       default:
@@ -369,6 +405,116 @@ class ImportService {
       content: text.trim(),
       source: 'markdown',
     );
+  }
+
+  static const OfficeDocumentParser _officeParser = OfficeDocumentParser();
+
+  /// XLSX (Excel) をノート群に変換する。ヘッダ行に Title/Content/Tags 相当の
+  /// 列があればそれを尊重し、無ければ各行を1ノート化する。
+  List<ImportedNoteDraft> parseXlsxBytes(Uint8List bytes) {
+    final rows = _officeParser.parseXlsxToRows(bytes);
+    return _rowsToNotes(rows, source: 'xlsx', fallbackTitle: 'Spreadsheet row');
+  }
+
+  /// DOCX (Word) を単一ノートに変換する。段落を改行結合し、先頭の非空行を
+  /// タイトルに採用する (無ければファイル名)。
+  ImportedNoteDraft parseDocxBytes(
+    Uint8List bytes, {
+    required String fileName,
+  }) {
+    final text = _officeParser.parseDocxToText(bytes);
+    final firstLine = const LineSplitter()
+        .convert(text)
+        .map((line) => line.trim())
+        .firstWhere((line) => line.isNotEmpty, orElse: () => '');
+    final title = firstLine.isNotEmpty
+        ? (firstLine.length > 200 ? firstLine.substring(0, 200) : firstLine)
+        : _fileNameStem(fileName);
+    return ImportedNoteDraft(
+      title: title,
+      content: text.trim(),
+      source: 'docx',
+    );
+  }
+
+  String _fileNameStem(String fileName) {
+    final dotIndex = fileName.lastIndexOf('.');
+    return dotIndex > 0 ? fileName.substring(0, dotIndex) : fileName;
+  }
+
+  /// 2次元セル配列をノート群に変換する共通ロジック。
+  List<ImportedNoteDraft> _rowsToNotes(
+    List<List<String>> rows, {
+    required String source,
+    required String fallbackTitle,
+  }) {
+    final nonEmpty = <List<String>>[
+      for (final row in rows)
+        if (row.any((cell) => cell.trim().isNotEmpty)) row,
+    ];
+    if (nonEmpty.isEmpty) {
+      return const <ImportedNoteDraft>[];
+    }
+
+    final header =
+        nonEmpty.first.map((cell) => cell.trim().toLowerCase()).toList();
+    final titleIndex = _findColumnIndex(
+      header,
+      const <String>['title', 'name', 'note', 'ページ', 'タイトル', '件名'],
+    );
+    final contentIndex = _findColumnIndex(
+      header,
+      const <String>['content', 'text', 'body', 'plain text', '本文', '内容', 'メモ'],
+    );
+    final tagsIndex = _findColumnIndex(
+      header,
+      const <String>['tags', 'tag', 'labels', 'タグ', 'ラベル'],
+    );
+
+    if (titleIndex >= 0 || contentIndex >= 0) {
+      final drafts = <ImportedNoteDraft>[];
+      for (final row in nonEmpty.skip(1)) {
+        final title = _readCell(row, titleIndex).trim();
+        final content = _readCell(row, contentIndex).trim();
+        final tags = _readCell(row, tagsIndex)
+            .split(RegExp(r'[,;]'))
+            .map((tag) => tag.trim())
+            .where((tag) => tag.isNotEmpty)
+            .toList();
+        if (title.isEmpty && content.isEmpty) {
+          continue;
+        }
+        drafts.add(
+          ImportedNoteDraft(
+            title: title.isEmpty ? fallbackTitle : title,
+            content: content,
+            source: source,
+            tags: tags,
+          ),
+        );
+      }
+      return drafts;
+    }
+
+    // ヘッダを検出できないシート: 各行を1ノート化 (先頭セル=タイトル / 全セル=本文)。
+    final drafts = <ImportedNoteDraft>[];
+    for (final row in nonEmpty) {
+      final cells = row
+          .map((cell) => cell.trim())
+          .where((cell) => cell.isNotEmpty)
+          .toList();
+      if (cells.isEmpty) {
+        continue;
+      }
+      drafts.add(
+        ImportedNoteDraft(
+          title: cells.first,
+          content: cells.join('\n'),
+          source: source,
+        ),
+      );
+    }
+    return drafts;
   }
 
   Future<ImportExecutionResult> importNotes({

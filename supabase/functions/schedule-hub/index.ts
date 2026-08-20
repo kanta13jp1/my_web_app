@@ -20,11 +20,34 @@ import {
   externalFetchErrorPayload,
   isExternalFetchError,
 } from "../_shared/external_fetch.ts";
+import { buildOwnSiteBlogPostUrl } from "./blog_canonical.ts";
+import {
+  isQiitaAccessEnabled,
+  resolveBlogPublishPlatforms,
+} from "./blog_publish_policy.ts";
+import {
+  allPlatformsFailed,
+  type BlogUpstreamApi,
+  buildUpstreamErrorPayload,
+  summarizePlatformFailures,
+} from "./upstream_error.ts";
+import { requiredAuthLevel } from "./action_auth.ts";
+import { summarizeStripeAccountReadiness } from "./stripe_account_readiness.ts";
+import {
+  billingAllowedHosts,
+  resolveBillingReturnUrl,
+} from "./billing_return_url.ts";
+import {
+  classifySupporterBuyer,
+  type SupporterBuyerContext,
+  supporterBuyerStripeParams,
+} from "../_shared/supporter_buyer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Max-Age": "86400",
 };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -244,21 +267,16 @@ function currentBillingPeriodStart(): string {
 }
 
 function billingReturnUrl(value: unknown, fallbackPath: string): string {
-  const raw = asString(value);
-  if (raw) {
-    try {
-      const url = new URL(raw);
-      if (url.protocol === "http:" || url.protocol === "https:") {
-        return url.toString();
-      }
-    } catch {
-      // Fall through to the deployment fallback.
-    }
-  }
   const base = (Deno.env.get("PUBLIC_SITE_URL") ??
     Deno.env.get("SITE_URL") ??
     "https://my-web-app-b67f4.web.app").trim();
-  return new URL(fallbackPath, base).toString();
+  // open-redirect 対策: return_url は host allowlist で検証する。
+  // billing.create_supporter_checkout_session は非ログイン公開 action のため、
+  // 無検証だと攻撃者が checkout 後に任意の外部サイトへ誘導できる。
+  const extraHosts = (Deno.env.get("BILLING_RETURN_URL_ALLOWED_HOSTS") ?? "")
+    .split(",");
+  const allowedHosts = billingAllowedHosts(base, extraHosts);
+  return resolveBillingReturnUrl(value, fallbackPath, { base, allowedHosts });
 }
 
 function withBillingParam(url: string, value: string): string {
@@ -300,6 +318,24 @@ function supporterAttributionParams(
   return params;
 }
 
+function checkoutAttributionParams(
+  body: Record<string, unknown>,
+): Record<string, string> {
+  const fields = [
+    "latest_touchpoint",
+    "signup_signal",
+    "referral_channel",
+  ];
+  const params: Record<string, string> = {};
+  for (const field of fields) {
+    const value = stripeMetadataValue(body[field]);
+    if (!value) continue;
+    params[`metadata[${field}]`] = value;
+    params[`subscription_data[metadata][${field}]`] = value;
+  }
+  return params;
+}
+
 async function stripePostForm(
   path: string,
   params: Record<string, string>,
@@ -313,8 +349,33 @@ async function stripePostForm(
     headers: {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "Stripe-Version": "2026-06-24.dahlia",
     },
     body: new URLSearchParams(params),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const err = asRecord(data.error) ?? {};
+    throw new Error(
+      asString(err.message) || `Stripe API failed: ${response.status}`,
+    );
+  }
+  return asRecord(data) ?? {};
+}
+
+async function stripeGet(
+  path: string,
+): Promise<Record<string, unknown>> {
+  const key = stripeSecretKey();
+  if (!key) {
+    throw new Error("STRIPE_SECRET_KEY not configured");
+  }
+  const response = await fetch(`https://api.stripe.com/v1${path}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Stripe-Version": "2026-06-24.dahlia",
+    },
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -367,6 +428,34 @@ async function getOrCreateStripeCustomer(
   }, { onConflict: "user_id" });
   if (error) throw new Error(error.message);
   return customerId;
+}
+
+async function resolveSupporterBuyerContext(
+  admin: SupabaseClient,
+  userId: string | null,
+): Promise<SupporterBuyerContext> {
+  if (!userId) return classifySupporterBuyer({ userId: null });
+
+  const [authResult, profileResult] = await Promise.all([
+    admin.auth.admin.getUserById(userId),
+    admin
+      .from("user_profiles")
+      .select("is_admin, role")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+  if (authResult.error) throw new Error(authResult.error.message);
+  if (profileResult.error) throw new Error(profileResult.error.message);
+
+  const profile = asRecord(profileResult.data) ?? {};
+  const authMetadata = asRecord(authResult.data.user?.app_metadata) ?? {};
+  return classifySupporterBuyer({
+    userId,
+    isAnonymous: authResult.data.user?.is_anonymous === true,
+    profileIsAdmin: profile.is_admin === true,
+    profileRole: asString(profile.role) || null,
+    authRole: asString(authMetadata.role) || null,
+  });
 }
 
 function defaultNewsSignalFeeds(): Array<Record<string, string>> {
@@ -1033,6 +1122,19 @@ async function qiitaFetch(
   init: RequestInit = {},
   traceId = "schedule-hub.qiita",
 ): Promise<Response> {
+  // 2026-07-12: account suspension kill switch. A token alone must never
+  // reactivate traffic; operations must explicitly set QIITA_ACCESS_ENABLED=true.
+  if (!isQiitaAccessEnabled(Deno.env.get("QIITA_ACCESS_ENABLED"))) {
+    return new Response(
+      JSON.stringify({
+        message: "Qiita access disabled by QIITA_ACCESS_ENABLED",
+      }),
+      {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
   const url = path.startsWith("http")
     ? path
     : `https://qiita.com/api/v2${path}`;
@@ -1062,6 +1164,21 @@ async function devtoFetch(
       headers: mergeHeaders({ "api-key": apiKey }, init.headers),
     },
     { traceId },
+  );
+}
+
+// 上流 4xx/5xx を統一 502 応答へ (単一 upstream action 用 / 方針は upstream_error.ts)
+async function upstreamErrorJson(
+  targetApi: BlogUpstreamApi,
+  res: Response,
+): Promise<Response> {
+  const detail = await res.text().catch(() => "");
+  return json(
+    {
+      success: false,
+      ...buildUpstreamErrorPayload({ targetApi, status: res.status, detail }),
+    },
+    502,
   );
 }
 
@@ -1600,35 +1717,36 @@ serve(async (req: Request) => {
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-    // Public actions that don't require auth
-    const publicActions = [
-      "digest.run",
-      "health.check",
-      "blog.auto_publish",
-      "blog.create",
-      "blog.recent_posted", // Win版#132 part 124: tech-blog-tracker page 用 public read
-      "blog.backfill_from_apis", // Win版#132 part 124: 過去 dev.to + Qiita 投稿を hub_data に backfill
-      "reminders.study",
-      "notion.sync_wbs",
-      "notion.preflight_wbs",
-      "notion.sync_roadmap",
-      "notion.sync_memory_index",
-      "notion.fix_wbs_all_instances",
-      "wbs.unblock_dependents",
-      "x.post_with_media",
-      "billing.create_supporter_checkout_session",
-      "maintenance.list_active",
-    ];
+    // 認可: action ごとの必要レベルは action_auth.ts (純ロジック) に集約
+    const authLevel = requiredAuthLevel(action);
     const serviceRoleRequest = isServiceRoleRequest(req);
     let userId: string | null = null;
-    if (!publicActions.includes(action)) {
-      if (!serviceRoleRequest) {
-        userId = await getUserId(req);
-        if (!userId) return json({ error: "Unauthorized" }, 401);
-      }
+    if (authLevel === "service_role" && !serviceRoleRequest) {
+      return json({ error: "Unauthorized" }, 401);
+    }
+    if (authLevel === "user" && !serviceRoleRequest) {
+      userId = await getUserId(req);
+      if (!userId) return json({ error: "Unauthorized" }, 401);
+    }
+    if (
+      authLevel === "public" &&
+      !serviceRoleRequest &&
+      action === "billing.create_supporter_checkout_session"
+    ) {
+      userId = await getUserId(req);
     }
 
     switch (action) {
+      case "billing.get_stripe_account_readiness": {
+        const key = stripeSecretKey();
+        const account = await stripeGet("/account");
+        return json({
+          success: true,
+          checked_at: new Date().toISOString(),
+          account: summarizeStripeAccountReadiness(account, key),
+        });
+      }
+
       case "billing.status": {
         const billing = await getBillingSubscription(admin, userId!);
         const periodStart = currentBillingPeriodStart();
@@ -1682,6 +1800,7 @@ serve(async (req: Request) => {
           "metadata[tier]": tier,
           "subscription_data[metadata][user_id]": userId!,
           "subscription_data[metadata][tier]": tier,
+          ...checkoutAttributionParams(body),
         });
         return json({
           success: true,
@@ -1692,6 +1811,7 @@ serve(async (req: Request) => {
 
       case "billing.create_supporter_checkout_session": {
         const amountJpy = supporterAmountJpy();
+        const buyerContext = await resolveSupporterBuyerContext(admin, userId);
         const returnUrl = billingReturnUrl(
           body.return_url,
           "/subscription-billing",
@@ -1702,9 +1822,10 @@ serve(async (req: Request) => {
           success_url: withBillingParam(returnUrl, "supporter_success"),
           cancel_url: withBillingParam(returnUrl, "supporter_cancel"),
           "line_items[0][price_data][currency]": "jpy",
-          "line_items[0][price_data][product_data][name]": "Founding Supporter",
+          "line_items[0][price_data][product_data][name]":
+            "AI仕事OS 初期サポーター",
           "line_items[0][price_data][product_data][description]":
-            "One-time support for the first revenue proof.",
+            "役に立ったと感じた方のための、1回100円・自動更新なしの開発応援です。",
           "line_items[0][price_data][unit_amount]": String(amountJpy),
           "line_items[0][quantity]": "1",
           "metadata[offer]": "founding_supporter",
@@ -1713,6 +1834,7 @@ serve(async (req: Request) => {
           "payment_intent_data[metadata][offer]": "founding_supporter",
           "payment_intent_data[metadata][milestone_code]": "first-yen-revenue",
           "payment_intent_data[metadata][amount_jpy]": String(amountJpy),
+          ...supporterBuyerStripeParams(buyerContext),
           ...supporterAttributionParams(body),
         });
         return json({
@@ -1952,7 +2074,8 @@ serve(async (req: Request) => {
           text,
           mediaIds: uploadedMedia ? [uploadedMedia.mediaId] : undefined,
         });
-        const log = await addItem(admin, "x_post", userId!, {
+        const logOwnerUserId = userId ?? `gha`;
+        const log = await addItem(admin, `x_post`, logOwnerUserId, {
           ...baseLog,
           status: "posted",
           tweet_id: result.tweetId,
@@ -2158,8 +2281,11 @@ serve(async (req: Request) => {
               const qd = await qr.json() as { url: string; id: string };
               results.qiita = { ok: true, url: qd.url };
             } else {
-              const errText = await qr.text();
-              results.qiita = { ok: false, error: `${qr.status}: ${errText}` };
+              results.qiita = buildUpstreamErrorPayload({
+                targetApi: "qiita",
+                status: qr.status,
+                detail: await qr.text().catch(() => ""),
+              });
             }
           } catch (e) {
             results.qiita = isExternalFetchError(e)
@@ -2193,8 +2319,11 @@ serve(async (req: Request) => {
               const dd = await dr.json() as { url: string; id: number };
               results.devto = { ok: true, url: dd.url };
             } else {
-              const errText = await dr.text();
-              results.devto = { ok: false, error: `${dr.status}: ${errText}` };
+              results.devto = buildUpstreamErrorPayload({
+                targetApi: "dev.to",
+                status: dr.status,
+                detail: await dr.text().catch(() => ""),
+              });
             }
           } catch (e) {
             results.devto = isExternalFetchError(e)
@@ -2272,6 +2401,15 @@ serve(async (req: Request) => {
           console.error("blog.auto_publish DB write failed:", dbErr);
         }
 
+        // 部分成功は 200 (成功済み platform への再投稿リトライ防止) / 全滅のみ 502
+        if (allPlatformsFailed(results)) {
+          return json({
+            success: false,
+            error: summarizePlatformFailures(results),
+            error_code: "all_platforms_failed",
+            results,
+          }, 502);
+        }
         return json({ success: true, results });
       }
 
@@ -2313,9 +2451,17 @@ serve(async (req: Request) => {
             : (body.tags as string[]) ?? [];
         const ppTargetPlatforms = (post as Record<string, unknown>)
           .target_platforms;
-        const ppPlatforms: string[] = Array.isArray(ppTargetPlatforms)
-          ? ppTargetPlatforms
-          : ["qiita", "devto"];
+        const ppPlatformResolution = resolveBlogPublishPlatforms(
+          ppTargetPlatforms,
+          body.platforms,
+        );
+        if (ppPlatformResolution.error) {
+          return json({
+            error: ppPlatformResolution.error,
+            error_code: "invalid_platform_override",
+          }, 400);
+        }
+        const ppPlatforms = ppPlatformResolution.platforms;
         const ppResults: Record<string, unknown> = {};
 
         if (ppPlatforms.includes("qiita") && qiitaToken) {
@@ -2342,16 +2488,19 @@ serve(async (req: Request) => {
               const qd = await qr.json() as { url: string; id: string };
               ppResults.qiita = { ok: true, url: qd.url };
             } else {
-              ppResults.qiita = {
-                ok: false,
-                error: `${qr.status}: ${await qr.text()}`,
-              };
+              ppResults.qiita = buildUpstreamErrorPayload({
+                targetApi: "qiita",
+                status: qr.status,
+                detail: await qr.text().catch(() => ""),
+              });
             }
           } catch (e) {
             ppResults.qiita = isExternalFetchError(e)
               ? externalFetchErrorPayload(e)
               : { ok: false, error: String(e) };
           }
+        } else if (ppPlatforms.includes("qiita")) {
+          ppResults.qiita = { ok: false, error: "QIITA_ACCESS_TOKEN not set" };
         }
 
         if (ppPlatforms.includes("devto") && devtoKey) {
@@ -2373,6 +2522,11 @@ serve(async (req: Request) => {
                   body_markdown: ppContent,
                   published: true,
                   tags: cleanTags.length > 0 ? cleanTags : ["flutter"],
+                  // SEO 監査 H7: postId は blog_posts.id で、直後に status='posted'
+                  // へ更新され core-hub blog_view.ts が /blog/post?id=X で SSR 配信する。
+                  // canonical_url を自サイトへ向け、dev.to へ流出していた検索 authority を
+                  // 自ドメインに集約する。
+                  canonical_url: buildOwnSiteBlogPostUrl(postId),
                 },
               }),
             }, "schedule-hub.blog.publish_post.devto");
@@ -2380,16 +2534,19 @@ serve(async (req: Request) => {
               const dd = await dr.json() as { url: string; id: number };
               ppResults.devto = { ok: true, url: dd.url };
             } else {
-              ppResults.devto = {
-                ok: false,
-                error: `${dr.status}: ${await dr.text()}`,
-              };
+              ppResults.devto = buildUpstreamErrorPayload({
+                targetApi: "dev.to",
+                status: dr.status,
+                detail: await dr.text().catch(() => ""),
+              });
             }
           } catch (e) {
             ppResults.devto = isExternalFetchError(e)
               ? externalFetchErrorPayload(e)
               : { ok: false, error: String(e) };
           }
+        } else if (ppPlatforms.includes("devto")) {
+          ppResults.devto = { ok: false, error: "DEVTO_API_KEY not set" };
         }
 
         const successUrls = (
@@ -2410,6 +2567,15 @@ serve(async (req: Request) => {
             .eq("id", postId);
         }
 
+        // 部分成功は 200 (成功済み platform への再投稿リトライ防止) / 全滅のみ 502
+        if (allPlatformsFailed(ppResults)) {
+          return json({
+            success: false,
+            error: summarizePlatformFailures(ppResults),
+            error_code: "all_platforms_failed",
+            results: ppResults,
+          }, 502);
+        }
         return json({ success: true, results: ppResults });
       }
 
@@ -2661,6 +2827,8 @@ serve(async (req: Request) => {
           skipped_dup: 0,
           skipped_old: 0,
         };
+        // source ごとの取得失敗を記録 (黙殺すると 0 件と区別できない)
+        const backfillErrors: Record<string, unknown> = {};
 
         // ── Qiita 取得 ──────────────────────────────────────────────────
         if (qiitaToken) {
@@ -2706,9 +2874,18 @@ serve(async (req: Request) => {
                 });
                 existingUrls.add(a.url);
               }
+            } else {
+              backfillErrors.qiita = buildUpstreamErrorPayload({
+                targetApi: "qiita",
+                status: qr.status,
+                detail: await qr.text().catch(() => ""),
+              });
             }
           } catch (e) {
             console.error("qiita backfill fetch failed:", e);
+            backfillErrors.qiita = isExternalFetchError(e)
+              ? externalFetchErrorPayload(e)
+              : { ok: false, error: String(e) };
           }
         }
 
@@ -2757,10 +2934,37 @@ serve(async (req: Request) => {
                 });
                 existingUrls.add(a.url);
               }
+            } else {
+              backfillErrors.devto = buildUpstreamErrorPayload({
+                targetApi: "dev.to",
+                status: dr.status,
+                detail: await dr.text().catch(() => ""),
+              });
             }
           } catch (e) {
             console.error("devto backfill fetch failed:", e);
+            backfillErrors.devto = isExternalFetchError(e)
+              ? externalFetchErrorPayload(e)
+              : { ok: false, error: String(e) };
           }
+        }
+
+        // 全 source 失敗時のみ 502 (部分成功は 200 + errors で継続)
+        const attemptedSources = [
+          qiitaToken ? "qiita" : "",
+          devtoKey ? "devto" : "",
+        ].filter(Boolean);
+        if (
+          attemptedSources.length > 0 &&
+          attemptedSources.every((s) => backfillErrors[s] !== undefined)
+        ) {
+          return json({
+            success: false,
+            error: summarizePlatformFailures(backfillErrors),
+            error_code: "all_sources_failed",
+            errors: backfillErrors,
+            summary,
+          }, 502);
         }
 
         // ── 一括 insert ─────────────────────────────────────────────────
@@ -2778,7 +2982,13 @@ serve(async (req: Request) => {
           summary.inserted = inserts.length;
         }
 
-        return json({ success: true, summary });
+        return json({
+          success: true,
+          summary,
+          ...(Object.keys(backfillErrors).length > 0
+            ? { errors: backfillErrors }
+            : {}),
+        });
       }
 
       // Win版#132 part 124: tech-blog-tracker page 用 public read action.
@@ -2831,9 +3041,7 @@ serve(async (req: Request) => {
           {},
           "schedule-hub.blog.qiita_list",
         );
-        if (!qr.ok) {
-          return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
-        }
+        if (!qr.ok) return await upstreamErrorJson("qiita", qr);
         const articles = await qr.json() as Array<{
           id: string;
           title: string;
@@ -2860,7 +3068,7 @@ serve(async (req: Request) => {
           {},
           "schedule-hub.blog.qiita_comments",
         );
-        if (!qr.ok) return json({ error: `Qiita ${qr.status}` }, 502);
+        if (!qr.ok) return await upstreamErrorJson("qiita", qr);
         const comments = await qr.json() as Array<{
           id: string;
           body: string;
@@ -2889,9 +3097,7 @@ serve(async (req: Request) => {
           },
           body: JSON.stringify({ item_id: itemId, body: replyBody }),
         }, "schedule-hub.blog.qiita_comment_post");
-        if (!qr.ok) {
-          return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
-        }
+        if (!qr.ok) return await upstreamErrorJson("qiita", qr);
         const comment = await qr.json();
         return json({ success: true, comment });
       }
@@ -2910,30 +3116,22 @@ serve(async (req: Request) => {
           {},
           "schedule-hub.blog.qiita_likers",
         );
-        if (!qr.ok) return json({ error: `Qiita ${qr.status}` }, 502);
+        if (!qr.ok) return await upstreamErrorJson("qiita", qr);
         const likers = await qr.json() as Array<
           { user: { id: string; name: string; profile_image_url: string } }
         >;
         return json({ success: true, likers, item_id: itemId });
       }
 
-      // blog.qiita_follow — ユーザーをフォロー
+      // blog.qiita_follow は恒久廃止 (2026-07-13): 他ユーザーへの自動フォローは
+      // Qiita アカウント停止 (2026-07-12 / ToS 違反) の最有力原因。
+      // 対他者自動アクションは再実装禁止 — 410 Gone で明示する。
       case "blog.qiita_follow": {
-        const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
-        if (!qiitaToken) {
-          return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
-        }
-        const userId = String(body.user_id ?? "");
-        if (!userId) return json({ error: "user_id required" }, 400);
-        const qr = await qiitaFetch(
-          `/users/${userId}/following`,
-          qiitaToken,
-          { method: "PUT" },
-          "schedule-hub.blog.qiita_follow",
-        );
-        // 204 No Content = success
-        const ok = qr.status === 204 || qr.ok;
-        return json({ success: ok, status: qr.status, user_id: userId });
+        return json({
+          success: false,
+          error:
+            "blog.qiita_follow is permanently removed (auto-follow caused the 2026-07-12 Qiita account suspension)",
+        }, 410);
       }
 
       // blog.qiita_delete — 記事を削除
@@ -2950,11 +3148,8 @@ serve(async (req: Request) => {
           { method: "DELETE" },
           "schedule-hub.blog.qiita_delete",
         );
-        return json({
-          success: qr.status === 204,
-          status: qr.status,
-          item_id: itemId,
-        });
+        if (!qr.ok) return await upstreamErrorJson("qiita", qr);
+        return json({ success: true, status: qr.status, item_id: itemId });
       }
 
       // blog.qiita_update — 記事を更新 (内容訂正)
@@ -2985,9 +3180,7 @@ serve(async (req: Request) => {
           },
           "schedule-hub.blog.qiita_update",
         );
-        if (!qr.ok) {
-          return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
-        }
+        if (!qr.ok) return await upstreamErrorJson("qiita", qr);
         const updated = await qr.json() as {
           id: string;
           url: string;
@@ -3011,12 +3204,7 @@ serve(async (req: Request) => {
           {},
           "schedule-hub.blog.devto_list",
         );
-        if (!dr.ok) {
-          return json(
-            { error: `dev.to ${dr.status}: ${await dr.text()}` },
-            502,
-          );
-        }
+        if (!dr.ok) return await upstreamErrorJson("dev.to", dr);
         const articles = await dr.json() as Array<{
           id: number;
           title: string;
@@ -3037,12 +3225,7 @@ serve(async (req: Request) => {
           `https://dev.to/api/articles/me/published?per_page=${perPage}`,
           { headers: { "api-key": devtoKey } },
         );
-        if (!dr.ok) {
-          return json(
-            { error: `dev.to ${dr.status}: ${await dr.text()}` },
-            502,
-          );
-        }
+        if (!dr.ok) return await upstreamErrorJson("dev.to", dr);
         const articles = await dr.json() as Array<{
           id: number;
           title: string;
@@ -3071,18 +3254,14 @@ serve(async (req: Request) => {
       }
 
       // blog.sync_engagement — Qiita 全記事の likes/comments/likers を DB に同期
-      // body: { auto_reply?: bool, auto_follow?: bool, reply_template?: string }
+      // (read-only 同期のみ)。auto_reply / auto_follow は恒久廃止 (2026-07-13):
+      // 対他者自動アクションは Qiita アカウント停止 (2026-07-12 / ToS 違反) の
+      // 最有力原因のため再実装禁止。
       case "blog.sync_engagement": {
         const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
         if (!qiitaToken) {
           return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
         }
-        const autoReply = Boolean(body.auto_reply);
-        const autoFollow = Boolean(body.auto_follow);
-        const replyTemplate = String(
-          body.reply_template ??
-            "コメントありがとうございます！参考になれば幸いです。",
-        );
 
         // 1. 全記事取得
         const articlesRes = await qiitaFetch(
@@ -3092,7 +3271,7 @@ serve(async (req: Request) => {
           "schedule-hub.blog.sync_engagement.articles",
         );
         if (!articlesRes.ok) {
-          return json({ error: `Qiita list: ${articlesRes.status}` }, 502);
+          return await upstreamErrorJson("qiita", articlesRes);
         }
         const articles = await articlesRes.json() as Array<{
           id: string;
@@ -3118,8 +3297,8 @@ serve(async (req: Request) => {
           onConflict: "platform,article_id",
         });
 
-        let totalComments = 0, repliedCount = 0;
-        let totalLikers = 0, followedCount = 0;
+        let totalComments = 0;
+        let totalLikers = 0;
 
         // 3. 各記事のコメント・ライカーを取得
         for (const article of articles) {
@@ -3163,31 +3342,6 @@ serve(async (req: Request) => {
                   onConflict: "platform,comment_id",
                   ignoreDuplicates: true,
                 });
-
-                // auto-reply
-                if (autoReply && !alreadyReplied) {
-                  const rr = await qiitaFetch("/comments", qiitaToken, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      item_id: article.id,
-                      body: replyTemplate,
-                    }),
-                  }, "schedule-hub.blog.sync_engagement.reply");
-                  if (rr.ok) {
-                    await admin.from("blog_comments")
-                      .update({
-                        replied: true,
-                        reply_text: replyTemplate,
-                        replied_at: new Date().toISOString(),
-                      })
-                      .eq("platform", "qiita")
-                      .eq("comment_id", c.id);
-                    repliedCount++;
-                  }
-                }
               }
             }
           }
@@ -3227,26 +3381,6 @@ serve(async (req: Request) => {
                   onConflict: "article_id,qiita_user_id",
                   ignoreDuplicates: true,
                 });
-
-                // auto-follow
-                if (autoFollow && !alreadyFollowed) {
-                  const fr = await qiitaFetch(
-                    `/users/${uid}/following`,
-                    qiitaToken,
-                    { method: "PUT" },
-                    "schedule-hub.blog.sync_engagement.follow",
-                  );
-                  if (fr.status === 204 || fr.ok) {
-                    await admin.from("blog_likers")
-                      .update({
-                        followed: true,
-                        followed_at: new Date().toISOString(),
-                      })
-                      .eq("article_id", article.id)
-                      .eq("qiita_user_id", uid);
-                    followedCount++;
-                  }
-                }
               }
             }
           }
@@ -3256,11 +3390,7 @@ serve(async (req: Request) => {
           success: true,
           articles_synced: articles.length,
           total_comments: totalComments,
-          replied: repliedCount,
           total_likers: totalLikers,
-          followed: followedCount,
-          auto_reply: autoReply,
-          auto_follow: autoFollow,
         });
       }
 
@@ -3276,8 +3406,9 @@ serve(async (req: Request) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ article: { published: false } }),
         }, "schedule-hub.blog.devto_delete");
+        if (!dr.ok) return await upstreamErrorJson("dev.to", dr);
         return json({
-          success: dr.ok,
+          success: true,
           status: dr.status,
           article_id: articleId,
         });
@@ -3920,6 +4051,80 @@ serve(async (req: Request) => {
           updated,
           failed,
           errors: errors.slice(0, 10),
+        });
+      }
+
+      // ─── Notion Wiki Index Mirror (Karpathy Compile → Notion) ──────────────
+      // wiki_compile.py が生成した docs/INDEX.md を Notion へ自動ミラー。
+      // 親ページ: NOTION_WIKI_PAGE_ID (未設定時は NOTION_ROADMAP_PAGE_ID にフォールバック)
+      // 子ページ "Wiki Index (auto)" を find-or-create して全文置換。
+      case "notion.sync_wiki_index": {
+        const token = Deno.env.get("NOTION_API_TOKEN");
+        const pageId = normalizeNotionId(
+          Deno.env.get("NOTION_WIKI_PAGE_ID") ??
+            Deno.env.get("NOTION_ROADMAP_PAGE_ID"),
+        );
+        if (!token || !pageId) {
+          return json(
+            {
+              success: false,
+              error: "notion_not_configured",
+              missing: !token
+                ? "NOTION_API_TOKEN"
+                : "NOTION_WIKI_PAGE_ID (or NOTION_ROADMAP_PAGE_ID)",
+            },
+            503,
+          );
+        }
+
+        const rawContent = String(body.content ?? "");
+        if (!rawContent.trim()) {
+          return json({ success: false, error: "content required" }, 400);
+        }
+        const maxChars = clampNumber(body.max_chars, 24000, 1000, 60000);
+        const delayMs = clampNumber(body.delay_ms, 800, 400, 2500);
+        const mirrorTitle = asString(body.title, "Wiki Index (auto)");
+        const sourcePath = asString(body.source_path, "docs/INDEX.md");
+        const content = rawContent.length <= maxChars
+          ? rawContent
+          : rawContent.slice(0, maxChars);
+        const syncedAt = new Date().toISOString();
+        const childPage = await findOrCreateNotionChildPage(
+          token,
+          pageId,
+          mirrorTitle,
+        );
+        const chunks = chunkText(content, 1800, 80);
+        const blocks: Array<Record<string, unknown>> = [
+          {
+            object: "block",
+            type: "heading_2",
+            heading_2: { rich_text: notionRichText(mirrorTitle) },
+          },
+          notionParagraph(
+            `Synced at ${syncedAt}. Source: ${sourcePath}. ` +
+              `Chars: ${content.length}/${rawContent.length}.`,
+          ),
+          ...chunks.map(notionCodeBlock),
+        ];
+
+        const result = await replaceNotionPageChildren(
+          token,
+          childPage.pageId,
+          blocks,
+          delayMs,
+        );
+
+        return json({
+          success: true,
+          page_id: childPage.pageId,
+          child_page_created: childPage.created,
+          source_path: sourcePath,
+          source_chars: rawContent.length,
+          synced_chars: content.length,
+          chunks: chunks.length,
+          archived_blocks: result.archived,
+          appended_blocks: result.appended,
         });
       }
 

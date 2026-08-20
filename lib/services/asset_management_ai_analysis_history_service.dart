@@ -28,24 +28,83 @@ class AssetManagementAiAnalysisHistoryService {
       return const <AssetManagementAiAnalysisHistoryEntry>[];
     }
 
+    // プロンプト文脈で実際に使うのは metrics_snapshot 相当の数値だけなので、
+    // 巨大な input_payload 全体と summary_text 本文は取得しない
+    // (5行で ~158KB → 数KB)。本文の存在は summary_text <> '' の
+    // server-side filter で保証する。
     final rawRows = await client
         .from(tableName)
         .select(
-          'id, request_fingerprint, summary_text, status, source, '
+          'id, request_fingerprint, status, source, '
           'generated_at, created_at, report_base_date, provider_choice_reason, '
-          'provider_route, input_payload',
+          'provider_route, '
+          'payload_totals:input_payload->workbook->totals, '
+          'payload_available_money:input_payload->available_money',
         )
         .eq('user_id', userId)
         .eq('status', AssetManagementAiSummaryStatus.aiGenerated.name)
+        .neq('summary_text', '')
         .order('generated_at', ascending: false)
         .limit(limit);
 
     return rawRows
         .map(_rowToMap)
         .where((row) => row.isNotEmpty)
+        .map(_narrowRowToEntryJson)
+        .map(AssetManagementAiAnalysisHistoryEntry.fromJson)
+        .toList(growable: false);
+  }
+
+  /// 指定基準日の保存済み分析のうち最新の 1 件を返す (本文込み)。
+  ///
+  /// フィンガープリントは基準日を含む日付単位で回転するため、指紋一致の
+  /// 再利用判定はこの「同日最新 1 行」を見れば足りる。加えて呼び出し側は
+  /// generated_at の鮮度 (自動再生成クールダウン) 判定にも同じ行を使える —
+  /// 引落済み等の編集毎に指紋が変わり、完全一致だけでは 1 セッションに
+  /// 何度も 1 分超のプレミアム生成が走ってしまうため。
+  Future<AssetManagementAiAnalysisHistoryEntry?> loadLatestForBaseDate({
+    required String reportBaseDate,
+  }) async {
+    final client = _resolveClient();
+    final userId = _resolveUserId(client);
+    if (client == null || userId == null) {
+      return null;
+    }
+
+    final rawRows = await client
+        .from(tableName)
+        .select(
+          'id, request_fingerprint, summary_text, status, source, '
+          'generated_at, created_at, report_base_date, provider_choice_reason, '
+          'provider_route',
+        )
+        .eq('user_id', userId)
+        .eq('status', AssetManagementAiSummaryStatus.aiGenerated.name)
+        .eq('report_base_date', reportBaseDate)
+        .neq('summary_text', '')
+        .order('generated_at', ascending: false)
+        .limit(1);
+
+    final entries = rawRows
+        .map(_rowToMap)
+        .where((row) => row.isNotEmpty)
         .map(AssetManagementAiAnalysisHistoryEntry.fromJson)
         .where((entry) => entry.summaryText.trim().isNotEmpty)
         .toList(growable: false);
+    return entries.isEmpty ? null : entries.first;
+  }
+
+  /// 縮小 projection の行を、モデルが期待する input_payload 形へ組み直す。
+  /// summary_text キーは意図的に持たせない (= summaryTextOmitted として扱う)。
+  Map<String, dynamic> _narrowRowToEntryJson(Map<String, dynamic> row) {
+    final json = Map<String, dynamic>.from(row)
+      ..remove('payload_totals')
+      ..remove('payload_available_money');
+    json['input_payload'] = <String, dynamic>{
+      'workbook': <String, dynamic>{'totals': row['payload_totals']},
+      'available_money': row['payload_available_money'],
+    };
+    return json;
   }
 
   Future<void> saveResult({
@@ -122,9 +181,13 @@ class AssetManagementAiAnalysisHistoryService {
     return const <String, dynamic>{};
   }
 
-  String _dateOnly(DateTime value) {
+  /// report_base_date 列と同一形式 (yyyy-MM-dd) の基準日キー。
+  /// [loadLatestForBaseDate] へ渡す値もこれで作る。
+  static String reportBaseDateKey(DateTime value) {
     final month = value.month.toString().padLeft(2, '0');
     final day = value.day.toString().padLeft(2, '0');
     return '${value.year}-$month-$day';
   }
+
+  String _dateOnly(DateTime value) => reportBaseDateKey(value);
 }

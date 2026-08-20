@@ -2,7 +2,7 @@ name: Codex Worktree Merge Backlog Check
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # daily 09:00 JST
+    - cron: '35 0 * * *'  # daily 09:35 JST (2026-07-17 ci-audit: 00:00 UTC 8本集中を分散)
   workflow_dispatch:
 
 concurrency:

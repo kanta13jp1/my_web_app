@@ -5,7 +5,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.4.1 <4.0.0'
+  sdk: '>=3.6.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -15,6 +15,7 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
   supabase_flutter: ^2.0.0
+  posthog_flutter: ^5.36.1
   crypto: ^3.0.7
   cupertino_icons: ^1.0.6
   web: ^1.1.0
@@ -27,6 +28,8 @@ dependencies:
   shared_preferences: ^2.3.3       # 簡易ストレージ（端末内保存）
   provider: ^6.1.2                 # 状態管理
   file_picker: ^11.0.0             # ファイル選択（Web含む）
+  archive: ^4.0.9                  # ZIP解凍（XLSX/DOCXインポート）
+  xml: ^6.6.1                      # XMLパース（XLSX/DOCXインポート）
   mime: ^1.0.6                     # MIMEタイプ判定
   path: ^1.9.0                     # パス操作
   google_fonts: ^8.1.0             # Google Fonts
@@ -101,6 +104,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/landing_journey/
     - web/assets/fonts/
     - assets/legal/
     - assets/sounds/

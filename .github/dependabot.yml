@@ -76,6 +76,11 @@ updates:
       flutter-dependencies:
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
+        exclude-patterns:
+          - "flutter_native_splash"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
@@ -89,7 +94,13 @@ updates:
       # Flutter stable (3.38.x) は flutter_test が meta 1.17.0 を pin しており
       # group 全体の `flutter pub get` が version solving fail になる
       # (Issue #3209 / #3211 / 2026-06-02 #3057 から週次再発)。
-      # 解除条件: CI の Flutter stable が meta >=1.18.0 を同梱したらこの 2 行を削除。
+      #
+      # 2026-07-14: `versions: [">=2.4.8"]` 修飾付き ignore (2026-06-11 #3214) は
+      # 効いておらず、pubspec 側の上限 pin `">=2.4.7 <2.4.8"` (2026-06-22
+      # 7108258f4) も dependabot が pin ごと `^2.4.8` へ広げる提案を出すため
+      # 素通り。結果 #3606 / #3827 が赤で close、#3986 も同じ経路を辿った。
+      # → versions 修飾を外し「この依存の更新提案自体を出さない」形にする。
+      # 解除条件: CI の Flutter stable が meta >=1.18.0 を同梱したらこの entry を
+      # 削除し、pubspec の上限 pin も `^2.4.8` 以降へ戻す。
       - dependency-name: "flutter_native_splash"
-        versions: [">=2.4.8"]
     rebase-strategy: "auto"

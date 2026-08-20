@@ -9,9 +9,9 @@ class AiShareButtonSettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('AIシェアボタン')),
-      body: const SafeArea(
-        child: SingleChildScrollView(child: AiShareButtonSettingsPanel()),
-      ),
+      // パネル自体が縦スクロールを持つ(設定シートの overflow 対策)ため、
+      // ここでの二重 SingleChildScrollView は不要。
+      body: const SafeArea(child: AiShareButtonSettingsPanel()),
     );
   }
 }

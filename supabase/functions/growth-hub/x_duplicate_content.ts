@@ -166,6 +166,21 @@ export function editSimilarity(a: string, b: string): number {
 }
 
 /**
+ * 編集距離に渡す正規化本文の上限 (code point)。R24 で長文データレポート
+ * (選挙集計 10k-24k 字) が x.post を通るようになり、長文同士の Levenshtein は
+ * O(n*m) で edge の CPU 予算を超える (実測 18k×18k ≈ 3.1s)。テンプレ投稿は
+ * 先頭が最も安定するため、編集距離は先頭スライスの比較で近似する (Jaccard は
+ * 線形なので全文のまま)。
+ */
+export const EDIT_SIMILARITY_MAX_CODEPOINTS = 2000;
+
+function clampForEditSimilarity(normalized: string): string {
+  const points = [...normalized];
+  if (points.length <= EDIT_SIMILARITY_MAX_CODEPOINTS) return normalized;
+  return points.slice(0, EDIT_SIMILARITY_MAX_CODEPOINTS).join("");
+}
+
+/**
  * 2 本の投稿本文の類似度 (0..1)。Jaccard と編集距離の高い方を採用。
  * 正規化後に一方でも空になる場合は 0 (誤ブロックを避けるため fail-open)。
  */
@@ -174,7 +189,10 @@ export function contentSimilarity(rawA: string, rawB: string): number {
   const b = normalizeForSimilarity(rawB);
   if (a === "" || b === "") return 0;
   if (a === b) return 1;
-  return Math.max(jaccardSimilarity(a, b), editSimilarity(a, b));
+  return Math.max(
+    jaccardSimilarity(a, b),
+    editSimilarity(clampForEditSimilarity(a), clampForEditSimilarity(b)),
+  );
 }
 
 /**

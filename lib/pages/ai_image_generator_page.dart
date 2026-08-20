@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/ai_image_generation_request.dart';
+
 /// AI 画像生成ページ
 /// media-hub Edge Function と連携して AI 画像を生成・管理
 class AiImageGeneratorPage extends StatefulWidget {
@@ -12,13 +14,17 @@ class AiImageGeneratorPage extends StatefulWidget {
 
 class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
   final _supabase = Supabase.instance.client;
-  final _promptController = TextEditingController();
+  final _sceneSubjectController = TextEditingController();
+  final _detailsStyleController = TextEditingController();
+  final _constraintsController = TextEditingController();
+  final _imageTextController = TextEditingController();
 
   bool _isFetching = false;
   bool _isGenerating = false;
   String? _errorMessage;
   String _selectedSize = '1024x1024';
   String _selectedStyle = 'vivid';
+  AiImageGenerationQuality _selectedQuality = AiImageGenerationQuality.medium;
   List<_GeneratedImage> _images = [];
 
   bool get _isBusy => _isFetching || _isGenerating;
@@ -42,7 +48,10 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
 
   @override
   void dispose() {
-    _promptController.dispose();
+    _sceneSubjectController.dispose();
+    _detailsStyleController.dispose();
+    _constraintsController.dispose();
+    _imageTextController.dispose();
     super.dispose();
   }
 
@@ -69,9 +78,7 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
       final images = rows
           .whereType<Map>()
           .map(
-            (row) => _GeneratedImage.fromHubRow(
-              Map<String, dynamic>.from(row),
-            ),
+            (row) => _GeneratedImage.fromHubRow(Map<String, dynamic>.from(row)),
           )
           .where((image) => image.imageUrl.isNotEmpty)
           .toList();
@@ -86,8 +93,14 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
   }
 
   Future<void> _generate() async {
-    final prompt = _promptController.text.trim();
-    if (prompt.isEmpty) return;
+    final structuredPrompt = AiImageStructuredPrompt(
+      sceneAndSubject: _sceneSubjectController.text,
+      detailsAndStyle: _detailsStyleController.text,
+      constraints: _constraintsController.text,
+      imageText: _imageTextController.text,
+    );
+    if (!structuredPrompt.hasInput) return;
+    final prompt = structuredPrompt.buildPrompt();
     setState(() {
       _isGenerating = true;
       _errorMessage = null;
@@ -95,19 +108,22 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
     try {
       final response = await _supabase.functions.invoke(
         'media-hub',
-        body: {
-          'action': 'image.generate',
-          'prompt': prompt,
-          'size': _selectedSize,
-          'style': _selectedStyle,
-        },
+        body: buildAiImageGenerateBody(
+          prompt: prompt,
+          size: _selectedSize,
+          style: _selectedStyle,
+          quality: _selectedQuality,
+        ),
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['error'] != null) {
         setState(() => _errorMessage = data['error'].toString());
         return;
       }
-      _promptController.clear();
+      _sceneSubjectController.clear();
+      _detailsStyleController.clear();
+      _constraintsController.clear();
+      _imageTextController.clear();
       await _fetchImages();
     } catch (e) {
       if (mounted) {
@@ -116,6 +132,39 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
     } finally {
       if (mounted) setState(() => _isGenerating = false);
     }
+  }
+
+  Widget _buildPromptField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    int maxLines = 1,
+    bool highlight = false,
+  }) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        enabledBorder: highlight
+            ? const OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFFE65100)),
+              )
+            : const OutlineInputBorder(),
+        focusedBorder: highlight
+            ? const OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFFE65100), width: 2),
+              )
+            : null,
+        prefixIcon: Icon(icon),
+        suffixIcon: highlight
+            ? const Icon(Icons.priority_high, color: Color(0xFFE65100))
+            : null,
+        filled: highlight,
+        fillColor: highlight ? const Color(0xFFFFF8E1) : null,
+      ),
+    );
   }
 
   @override
@@ -136,18 +185,30 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
-              controller: _promptController,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: '画像プロンプト',
-                hintText: '例: 青い空と富士山の風景、水彩画風',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.image_search),
-              ),
-              onSubmitted: (_) {
-                if (!_isBusy) _generate();
-              },
+            _buildPromptField(
+              controller: _sceneSubjectController,
+              label: 'シーンと対象',
+              icon: Icons.image_search,
+            ),
+            const SizedBox(height: 8),
+            _buildPromptField(
+              controller: _detailsStyleController,
+              label: 'スタイル',
+              icon: Icons.palette_outlined,
+            ),
+            const SizedBox(height: 8),
+            _buildPromptField(
+              controller: _constraintsController,
+              label: '制約（維持・除外するもの）',
+              icon: Icons.rule,
+              highlight: true,
+            ),
+            const SizedBox(height: 8),
+            _buildPromptField(
+              controller: _imageTextController,
+              label: '画像内テキスト',
+              icon: Icons.text_fields,
+              maxLines: 1,
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -182,6 +243,31 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
                   : (selection) =>
                       setState(() => _selectedStyle = selection.first),
             ),
+            const SizedBox(height: 8),
+            SegmentedButton<AiImageGenerationQuality>(
+              segments: AiImageGenerationQuality.values
+                  .map(
+                    (quality) => ButtonSegment<AiImageGenerationQuality>(
+                      value: quality,
+                      label: Text(quality.label),
+                      tooltip: quality.description,
+                      icon: Icon(
+                        switch (quality) {
+                          AiImageGenerationQuality.low => Icons.flash_on,
+                          AiImageGenerationQuality.medium =>
+                            Icons.balance_outlined,
+                          AiImageGenerationQuality.high => Icons.high_quality,
+                        },
+                      ),
+                    ),
+                  )
+                  .toList(),
+              selected: {_selectedQuality},
+              onSelectionChanged: _isBusy
+                  ? null
+                  : (selection) =>
+                      setState(() => _selectedQuality = selection.first),
+            ),
             const SizedBox(height: 12),
             ElevatedButton.icon(
               onPressed: _isBusy ? null : _generate,
@@ -197,10 +283,7 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
-                style: const TextStyle(
-                  color: Color(0xFFE53935),
-                  height: 1.5,
-                ),
+                style: const TextStyle(color: Color(0xFFE53935), height: 1.5),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -275,9 +358,7 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
                 ),
               ),
             ] else
-              const Expanded(
-                child: Center(child: Text('生成済み画像はありません')),
-              ),
+              const Expanded(child: Center(child: Text('生成済み画像はありません'))),
           ],
         ),
       ),
@@ -291,6 +372,7 @@ class _GeneratedImage {
     required this.imageUrl,
     required this.size,
     required this.style,
+    required this.quality,
     required this.createdAt,
   });
 
@@ -298,6 +380,7 @@ class _GeneratedImage {
   final String imageUrl;
   final String size;
   final String style;
+  final String quality;
   final String createdAt;
 
   factory _GeneratedImage.fromHubRow(Map<String, dynamic> row) {
@@ -312,6 +395,7 @@ class _GeneratedImage {
           '',
       size: metadata['size']?.toString() ?? '',
       style: metadata['style']?.toString() ?? '',
+      quality: metadata['quality']?.toString() ?? '',
       createdAt: row['created_at']?.toString() ??
           row['createdAt']?.toString() ??
           metadata['created_at']?.toString() ??
@@ -323,6 +407,7 @@ class _GeneratedImage {
     final parts = [
       if (size.isNotEmpty) size,
       if (style.isNotEmpty) styleLabels[style] ?? style,
+      if (quality.isNotEmpty) AiImageGenerationQuality.fromValue(quality).label,
       if (createdAt.isNotEmpty) createdAt,
     ];
     return parts.join(' / ');

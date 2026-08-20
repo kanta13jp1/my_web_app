@@ -22,6 +22,25 @@ void main() {
     expect(find.text('dummy page'), findsOneWidget);
   });
 
+  testWidgets('public shell omits internal clock and build chrome', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: GlobalHeaderClockShell(
+          showClockBar: false,
+          child: Scaffold(
+            body: Center(child: Text('public landing page')),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('global_header_clock_bar')), findsNothing);
+    expect(find.byKey(const Key('global_header_clock_text')), findsNothing);
+    expect(find.text('public landing page'), findsOneWidget);
+  });
+
   testWidgets(
     'version badge opens the release notes dialog via navigatorKey when the '
     'header is mounted above the Navigator (MaterialApp.builder)',

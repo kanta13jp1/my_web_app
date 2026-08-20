@@ -178,6 +178,27 @@
       "category": "AI dev tool / agent-first coding platform (Antigravity 2.0 = desktop+CLI+SDK+managed agents) + async autonomous coding agent (Jules) / self L1 lane + fallback runbook 直結",
       "added": "discovery",
       "added_date": "2026-07-02"
+    },
+    {
+      "name": "Lindy AI",
+      "url": "https://www.lindy.ai",
+      "category": "personal AI executive assistant / autonomous life-admin agent (consumer, mobile-first)",
+      "added": "discovery",
+      "added_date": "2026-07-10"
+    },
+    {
+      "name": "OpenAI ChatGPT",
+      "url": "https://chatgpt.com",
+      "category": "consumer AI / personal finance (個人B/S ダッシュボード) + Work OS (workspace agents) / 個人B/S + 6部署 direct competitor",
+      "added": "discovery",
+      "added_date": "2026-07-17"
+    },
+    {
+      "name": "Tomo",
+      "url": "https://tomo.ai",
+      "category": "personal AI life coach / iMessage-native multi-domain life agent + generative companion micro-apps (savings/budgeting/fitness) / 人生統合カテゴリ (coding 偏り是正) / 監視=App Store 更新履歴 + BusinessWire(BCV portfolio) / 退役trigger=2026-08-23 までに新規シグナル 0 なら退役",
+      "added": "discovery",
+      "added_date": "2026-07-24"
     }
   ],
   "discovery_history": [
@@ -822,6 +843,261 @@
         "Microsoft Copilot Cowork (MAI-Code 既収載ベンダー)",
         "Glean (enterprise search→agent)",
         "Warp (terminal-native・観察)"
+      ]
+    },
+    {
+      "date": "2026-07-06",
+      "name": null,
+      "category": "skip",
+      "reason": "cooldown / 7-day since 2026-07-02 Google Jules-Antigravity adoption / next unlock 2026-07-09 (OpenCode 第1候補)",
+      "skipped": true
+    },
+    {
+      "date": "2026-07-07",
+      "name": null,
+      "category": "skip",
+      "reason": "cooldown / 7-day since 2026-07-02 Google Jules-Antigravity adoption / next unlock 2026-07-09 (OpenCode 第1候補)",
+      "skipped": true
+    },
+    {
+      "date": "2026-07-08",
+      "name": null,
+      "category": "skip",
+      "reason": "cooldown / 7-day since 2026-07-02 (Google Jules / Antigravity) / next unlock 2026-07-09. 第1候補=OpenCode (v1.17.13 / 7-01 / Opencode-managed provider + MCP resource template/read tools / Sonnet 5 adaptive thinking / 160K+ stars). 7/08 delta=全threadが継続シグナル (White House 自主基準 未確定 / Fable 5 switch 実行済 / Gemini 3.5 Pro ~7/17 architectural rebuild / MF AI Cowork orchestrator+My Agents 判明) = 新規採択に足る novel candidate 無し",
+      "skipped": true
+    },
+    {
+      "date": "2026-07-10",
+      "name": "Lindy AI",
+      "category": "personal AI executive assistant / autonomous life-admin agent (consumer, mobile-first)",
+      "reason": "cooldown 明け初サイクル (7-02 Google Jules / Antigravity 採択 + 7-day / next unlock 2026-07-09 経過 / 25→26 社 / cap 50)。採択理由 = 基準 a+b 主導のダイバーシフィケーション是正。(1) 直近 discovery 11 件中 10 件が AI dev tool = 追跡リストが 25 社中 ~13 社 coding tool へ極端に偏り、自社の実プロダクト領域 (= 個人ライフ/家計マネジメント super-app) の競合カバレッジが空洞化していた。(2) Lindy AI = パーソナル AI エグゼクティブアシスタント (受信箱トリアージ + 自分の文体での返信ドラフト + 会議スケジュール + 事前ブリーフ + Daily Brief / iMessage・SMS 主体のモバイル/コンシューマ先行 / 有料ユーザ 40 万人超 / Menlo・Battery・Coatue・Tiger Global から ~$50M 調達 / Gaia 電話エージェント + Computer Use + agent swarms + app builder + enterprise tier / Claude Sonnet 4.5 統合)。自社差別化軸 (= 個人 CEO × AI エージェント統合 × KPI 自動追跡) と正面競合 (基準 a) かつ既存 26 社が誰もカバーしていない『コンシューマ/パーソナル自律 AI アシスタント』カテゴリの代表 (基準 b)。コンシューマ/モバイル先行 (iMessage/SMS・個人課金 40 万人) は自社『個人ライフ CEO ダッシュボード』のターゲットセグメントと直撃。基準 c = 2026-02 パーソナル AI エグゼクティブアシスタントへ relaunch + 2025-2026 に Gaia/Computer Use/agent swarms/app builder を連続投入で『動きのある会社』。NOTE: 6 サイクル queue されていた第1候補 OpenCode (171-178K stars・7.5M MAU・75+ providers・ローカルモデル) は今回意図的に見送り = 追加すると coding tool が 14/26 へ更に偏り基準 b に逆行、かつ OpenCode は自社『製品』でなく開発『ツーリング/fleet-routing』の競合 → signal 層/将来 AI 振り分け matrix 候補として skip 継続。https://www.lindy.ai/ + https://mastra.ai/blog/best-personal-ai-assistants-in-2026",
+      "skipped_candidates": [
+        "OpenCode (= 6 サイクル queue 済 第1候補 / 171-178K stars・1.68M weekly npm DL・7.5M MAU・75+ providers・ローカルモデル [Ollama/LM Studio/llama.cpp]・OpenCode Zen 従量 / だが coding tool 14/26 偏り悪化で基準 b 逆行 + 製品でなくツーリング競合 = signal 層/fleet-routing 候補として skip 継続 / 次の coding-tool サイクルで再評価)",
+        "Motion (= AI SuperApp for Work / $550M valuation・$102M 調達 / project/task/calendar/Gantt = ワーク/チーム寄りで個人ライフ軸から遠い + 直近 delta [email/Siri 統合] は minor / 次点コンシューマ候補)",
+        "OpenAI GPT-5.6 Sol/Terra/Luna (= Codex 既収載ベンダー派生 / 6-26 投入・Codex 既定化)",
+        "Microsoft Copilot Cowork (= MAI-Code 既収載ベンダー / back-office 三つ巴)",
+        "Zo (= autonomous computer / persistent workflows / 動向観察)",
+        "Glean (= enterprise search→agent / 観察)",
+        "Warp (= terminal-native agentic dev / 観察 1 月)"
+      ]
+    },
+    {
+      "date": "2026-07-12",
+      "name": null,
+      "skipped": true,
+      "reason": "cooldown / 7-day since 2026-07-10 (Lindy AI 採択) — next unlock 2026-07-17. 26 社 / cap 50。本日は監視 WebSearch のみ実施 = AI dev tool 一斉更新を検知 (Codex+GPT-5.6 ChatGPT desktop統合 / Cursor iOS+Automations+Grok4.5 / GitHub Copilot desktop全プラン開放 worktree-per-session / Claude Code Sonnet5既定+background agent自走 / Jules scheduled tasks + #TODO自発スキャン)。運用リスク: Antigravity soft-deprecation 疑惑 (未検証, L1 レーン要確認)。次サイクル第1候補メモ = OpenAI ChatGPT Work (7/9 企業向け agent スイート / 基準 b)。",
+      "skipped_candidates": [
+        "OpenAI ChatGPT Work (= 7/9 発表の企業向け agent スイート / 次サイクル第1候補メモ)"
+      ]
+    },
+    {
+      "date": "2026-07-13",
+      "name": null,
+      "skipped": true,
+      "reason": "cooldown / 7-day since 2026-07-10 (Lindy AI 採択) — next unlock 2026-07-17. 26 社 / cap 50。本日は監視 WebSearch のみ。新シグナル = (1) Work OS 軸確立: OpenAI ChatGPT Work (7/9 launch, GPT-5.6, 数時間自律→sheets/slides/docs/web apps, workspace agents を ChatGPT/Slack で scheduled) + MoneyForward AI Cowork (今月=2026-07 提供開始+先行受付, 請求/支払/消込/資金繰り予測 multi-agent + orchestrator + My Agents + MCP 不要); (2) 部署メタファー製品化: Motion が『AI Employee SuperApp』へ再ポジション (名前付き社員 Alfred/Chip/Millie/Suki + custom builder) = 自社 6 部署の正面 productization; (3) [7/12 action#1 決着] Antigravity soft-deprecation は誤り (Google は 2.0 desktop+CLI+SDK+IDE へ拡張) だが実クレームは週次クォータ大幅削減 (Gemini3.0Flash削除/5h cooldown/Ultra 影響) = L1 レーン運用リスクは『廃止』でなく『クォータ逼迫』。novel candidate は次サイクル (7/17) 保留。",
+      "skipped_candidates": [
+        "OpenAI ChatGPT Work (= 次サイクル discovery 第1候補 / 7-09 launch / Work OS 代表)",
+        "Motion (= AI Employee SuperApp / 名前付き部署 AI = 自社6部署の正面 productization / 7-10 skip 候補から昇格級)",
+        "OpenCode (= 8 サイクル queue 済 / coding tool 偏り懸念で継続保留 / signal 層)"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "name": null,
+      "skipped": true,
+      "reason": "cooldown / 7-day since 2026-07-10 (Lindy AI 採択) — next unlock 2026-07-17. 26 社 / cap 50。本日は監視 WebSearch のみ。新シグナル = (1) 基盤直撃: Anthropic Claude Cowork を web/mobile へ展開 + リモートセッション (端末跨ぎ同期 + スケジュールタスクは端末オフラインでも実行 / Max 先行 / 上限 8-5 まで倍化) = 自社 Schedule cron の技術的独自性を基盤側が消費者向けに productize → platform-eating-app リスク顕在化; (2) Anthropic 生産性層進出: Claude が Microsoft 365 write ツール (メール/カレンダー/OneDrive/SharePoint) + Claude for Government (FedRAMP High) + Notion External Agents 第1号が Claude+Cursor; (3) Work OS コモディティ化継続 (差分詳細のみ): MF AI Cowork=『6つのバックオフィス業務』枠+エージェントハーネス制御基盤, ChatGPT Work=Codex app を ChatGPT desktop へ統合; (4) マクロ=Vertical AI Agents Eating Horizontal SaaS (Gartner: 2026末に enterprise app の 40% が agent 内蔵)。次サイクル (7/17) 第1候補 = ChatGPT Work 継続保持。",
+      "skipped_candidates": [
+        "OpenAI ChatGPT Work (= 次サイクル discovery 第1候補 / 7-09 launch / Work OS 代表 / Codex 統合で dev+agent 窓口一本化)",
+        "Motion (= AI Employee SuperApp / 名前付き部署 AI = 自社6部署の正面 productization / $60M Series C @ $550M valuation)",
+        "Claude Cowork consumer 化 (= 既存対象 / discovery でなく既存脅威度引き上げ / 基盤差別化平準化リスク)"
+      ]
+    },
+    {
+      "date": "2026-07-15",
+      "name": null,
+      "skipped": true,
+      "reason": "cooldown / 7-day since 2026-07-10 (Lindy AI 採択) — next unlock 2026-07-17. 26 社 / cap 50。本日は監視 WebSearch のみ。新シグナル = (1) [取りこぼし捕捉/最重要] OpenAI が ChatGPT に『パーソナルファイナンス体験』を出荷済 (6/25, Plus/Pro 米, 口座接続→支出ダッシュボード→文脈付き Q&A) = 自社 個人 B/S コア (AssetAdvisoryBriefingService) の正面競合を過去レポート未捕捉のまま3週間見落とし → 遡及計上。Monarch/WallyGPT も connected-account copilot へ収斂; (2) Anthropic『Claude for Teachers』(7/14, K-12 教師向け無料) = 週内で Government(7/13)→Science→Teachers と縦割り製品を連発 = platform-eating-app 補強 (自社 AI大学 隣接だが直接競合ではない); (3) MoneyForward AI Cowork は依然 法人専用・個人(家計)進出なし = 正面衝突トリガー未点火; (4) Antigravity soft-deprecation 疑惑は実証されず (4製品へ拡張中/廃止は旧 Gemini CLI→Antigravity CLI) = L1 レーン安全。次サイクル(7/17)第1候補 = OpenAI ChatGPT を基準b→基準a(直接競合)へ格上げ。",
+      "skipped_candidates": [
+        "OpenAI ChatGPT (= 次サイクル discovery 第1候補 / Work agent(7/9) + パーソナルファイナンス体験(6/25) の両面で自社 個人B/S コアへ直接競合 → 基準b→基準a 格上げ)",
+        "Motion (= AI Employee SuperApp / 名前付き部署 AI = 自社6部署の正面 productization / $60M Series C @ $550M valuation)",
+        "Monarch / connected-account copilot 勢 (= パーソナルファイナンス AI カテゴリ代表 / 単機能寄り・share は ChatGPT 劣後で signal 層)"
+      ]
+    },
+    {
+      "date": "2026-07-16",
+      "name": null,
+      "category": "skip",
+      "reason": "cooldown / 7-day since 2026-07-10 (Lindy AI 採択) — next unlock 2026-07-17 (明日 = 解禁初日). 26 社 / cap 50。本日は監視 WebSearch のみ。本日の価値は新機能でなく **監視前提の是正 2 件** = (1) [事実訂正] ChatGPT パーソナルファイナンスの初回出荷は 6/25 でなく **5/15 (Pro/米/preview)**、6/25-6/30 は **Plus 拡大日** → 7/15 report の「6/25 提供開始」を訂正 / 見落とし期間は 3 週間でなく **約 2 ヶ月** / 現在 **Plus $20 帯で提供済** = 自社ターゲット価格帯と完全重複 (Plaid 12,000+ 機関 / Intuit coming soon); (2) [最重要] **MoneyForward *ME* (個人向け) 7/8 に「暗号資産」を独立カテゴリ化** (生活資金 vs 投資目的資産を分離 → アセットアロケーション比率明確化) → **ウォッチトリガーの誤設定が露呈**: 従来「AI Cowork(法人) が個人へ降りたら衝突」と設定し毎 run「未点火」と記録してきたが、**MF は ME で個人 B/S を既に押さえている** = 降りてくるのを待つ設定は的外れ。真の衝突点は「**ME が AI エージェント化する瞬間 (Cowork の Claude オーケストレータ基盤の ME 転用)**」→ 次 run から巡回クエリ差替; (3) MF AI Cowork = 法人専用据え置き・個人進出なし (差分なし / 優先度は相対低下); (4) ChatGPT Work 実体判明 = 7/6 で workspace agents 無料期間終了 → **token 従量課金** + **管理者の組織横断統治ビュー** (Agent ID/接続アプリ/メモリファイル/スケジュール/分析) = 自社 fleet 統治ナラティブの競合側 GA; (5) dev-tool クラスタ + connected-account copilot 勢 (Monarch/Copilot/Cleo) = 新規シグナルなし。[AI-TOOL-VERIFY] 検証で **Google Cloud Next 2026 (Gemini Enterprise/A2A/Mariner) は 4/22-24 開催 = 3 ヶ月前**と確定 → 新シグナルとして計上せず除外。教訓 = 本日 日付誤認が 2 件連続表面化 → シグナル計上前に一次情報で初出日を確定する運用へ。次サイクル (7/17 解禁初日) 第 1 候補 = **OpenAI ChatGPT を基準 a で採択推奨** (Work 7/9 + パーソナルファイナンス 5/15〜Plus 展開済 の両面で自社コア直撃)。",
+      "skipped_candidates": [
+        "OpenAI ChatGPT (= 7/17 解禁初日 discovery 第 1 候補 / 基準 a 直接競合 / Work agent(7/9) + パーソナルファイナンス(5/15 launch → 6/25-6/30 Plus 拡大 = 2 ヶ月稼働中) の両面で 個人B/S コア直撃 / 解禁日初日採択 pattern [Lovable 5/17 / Bolt.new 5/24 / Qoder 6/9] 踏襲推奨)",
+        "Motion (= 次点保持 / AI Employee SuperApp = 名前付き部署 AI [Alfred/Chip/Millie/Suki + カスタム社員ビルダー] = 自社 6 部署の正面 productization / $60M Series C @ $550M valuation / Pro AI $19・Business AI $29 per seat)",
+        "Monarch / connected-account copilot 勢 (= Monarch Smart Goals 3月 + AI アシスタント/週次リキャップ 2025-12 / Copilot Money [Apple 特化・Android なし] / Cleo [会話型] / 7 月新規シグナルなし / 単機能寄り・share は ChatGPT 劣後で signal 層留置)",
+        "MoneyForward ME × AI (= discovery 対象でなく **既存対象 MoneyForward の脅威度モニタ軸の再定義** / 7/8 暗号資産カテゴリ分離 = 個人 B/S 資産配分粒度の強化 / 監視は「AI Cowork の個人進出」→「ME の AI エージェント化」へ差替)"
+      ]
+    },
+    {
+      "date": "2026-07-17",
+      "name": "OpenAI ChatGPT",
+      "category": "consumer AI / personal finance (個人B/S) + Work OS (workspace agents)",
+      "reason": "7-day cooldown 明け解禁初日採択 (7-10 Lindy AI 採択 + 7-day / next unlock 2026-07-17 到達 / Lovable 5-17・Bolt.new 5-24・Qoder 6-9 の『解禁日初日に前日の第1候補を採択』pattern 踏襲)。26→27 社 / cap 50。採択理由 = 基準 a (差別化軸直接競合) と 基準 c (過去30日重大リリース) の両立。(1) 基準 a = OpenAI ChatGPT は自社コアの両軸を同時に直撃する唯一の候補: (a) パーソナルファイナンス (5-15 Pro preview → 6-25 Plus/Pro 米 GA / Plaid 経由 12,000+ 金融機関接続 → 残高・取引・投資・負債ダッシュボード + 財務文脈 Q&A / GPT-5.6) = 自社 個人 B/S コア (AssetAdvisoryBriefingService) と正面競合。しかも Plus $20/月 = 自社ターゲット価格帯と完全重複。(b) ChatGPT Work / workspace agents (7-9 launch / workspace agent 従量課金 7-6 GA = agent run ≈5-25 credit/run・input/cached/output メータ / Business は 8-6 まで無料) = 自社 6 部署 + fleet 運用 (GHA cron 30+ / Schedule cron) の Work OS 対抗 + 『監査可能な並列統治』ナラティブの競合側 GA 化。(2) 基準 c = ChatGPT Work workspace agent 従量課金 7-6 GA (採択日 -11 day / 30 日 window 内) + personal finance Plus 展開 6-25。(3) diversification 整合 = personal finance は dev-tool ではなく個人ライフ/家計ドメイン = 7-10 Lindy AI 是正方向 (coding tool 偏り緩和) と同方向。既存 OpenAI Codex (dev tool 軸) とは製品軸が異なり、Claude Code / Claude Cowork 同様の『同社・別製品』entry として妥当。[AI-TOOL-VERIFY] = personal finance / Work の日付・機能は OpenAI 公式 + OpenAI Help Center + TechCrunch 一次情報で裏取り済 (2 次メディア依拠ではない)。https://openai.com/index/personal-finance-chatgpt/ + https://openai.com/index/introducing-workspace-agents-in-chatgpt/",
+      "skipped_candidates": [
+        "Motion (= AI Employee SuperApp / 名前付き部署 AI Alfred/Chip/Clide/Millie/Suki/Dot/Spec = 自社 6 部署の正面 productization で基準 a は強い。ただし [AI-TOOL-VERIFY] 訂正 = $60M Series C @ $550M valuation は 2025-12 で ~7ヶ月前 → 基準 c 不成立。加えて B2B per-seat ($19 Pro AI / $29 Business AI) で自社コンシューマ/個人層と顧客軸がズレる。次点保持・signal 層継続監視)",
+        "Visa AI Financial Assistant (= 7 月中旬発表 / 銀行アプリ埋込型の会話型パーソナルファイナンス AI [月次インサイト + 自然言語 Q&A + カード lock/alert + 類似ユーザ比較] / 8 月に US 金融機関で pilot = 自社 個人 B/S ドメインの distribution-layer 新規脅威。ただし pilot 前段階 = signal 層新規留置・次サイクル以降 昇格判断)",
+        "OpenCode (= 171-178K stars / OSS coding agent / 追加すると coding tool 偏りが再燃し基準 b 逆行 → 7-10 に続き見送り継続 / signal 層・将来 AI 振り分け matrix 候補)",
+        "Monarch / Copilot Money / Cleo (= connected-account copilot 勢 / 単機能寄り + share が ChatGPT に劣後 / signal 層留置で基準値作り継続)",
+        "Google Jules / Antigravity・Microsoft MAI-Code-1-Flash・Salesforce Agentforce Operations (= いずれも既採択済 = 重複対象外)"
+      ]
+    },
+    {
+      "date": "2026-07-18",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-07-17 OpenAI ChatGPT 採択 / 1 day 経過 / cooldown 残 6 day / 次回 unlock 2026-07-24). 本日 7-17→7-18 の主眼は自社コア (個人 B/S) の distribution-layer 候補 Visa AI Financial Assistant の一次確認による深掘り で、cooldown + 昨日採択直後のため新規 discovery 採択には至らず。Visa = 2026-07-14 発表 (Visa 公式 investor newsroom) / 300B+ 年間トランザクション network + 各金融機関の自社ブランドで white-label 提供 (no custom development required) / secure banking 環境内で稼働 / US pilot 8 月 → その後 global rollout。含意 = ChatGPT (ユーザー能動接続) と違い 『既に信頼する銀行アプリの内側』に AI 家計アシスタントを流し込む distribution-layer 脅威 = 獲得 friction ゼロ。現時点は金融機関向け pilot 前段階のため signal 層維持、consumer GA / 消費者到達確認で 2026-07-24 unlock 時の第1候補として昇格判断。既存 27 社は WebSearch 巡回で戦略級 delta なし = (a) OpenAI ChatGPT personal finance は Plus GA 6-25 / Plaid 12,000+ 機関 / Intuit soon で差分なし・状態監視のみ / (b) MoneyForward ME の AI エージェント化トリガー未点火 (7-7 暗号資産カテゴリ既報 / AI Cowork は法人専用据え置き) / (c) Anthropic Reflect (月次 recap dashboard) 7-9・Cowork web/mobile 7-7 は Second Brain/KPI に隣接するが個人 B/S 直接競合ではなく signal 層 / (d) Monarch・Copilot Money・Cleo は 7 月新規調達/機能なしで基準 c 不成立。[AI-TOOL-VERIFY] = Visa の日付・機能・pilot 時期は Visa 公式 investor newsroom + PYMNTS + American Banker の一次/信頼メディアで裏取り済。",
+      "skipped_candidates": [
+        "Visa AI Financial Assistant (= 第1候補 / 2026-07-14 発表確定 + 300B+ tx network + bank-branded white-label + 8 月 US pilot / consumer GA・消費者到達で 2026-07-24 unlock 時 昇格判断 / 基準 a + b)",
+        "Motion (= named-employee 系 / 基準 c 不成立: Series C は 2025-12 (~7 ヶ月前) / 30 日内の新エージェント・個人向け展開・大型調達で再評価)",
+        "Monarch / Copilot Money / Cleo (= connected-account copilot 勢 / 7 月新規シグナルなし / signal 層で基準値作り継続)",
+        "OpenCode (= coding tool 偏り (基準 b 逆行) のため signal 層留置)"
+      ]
+    },
+    {
+      "date": "2026-07-19",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-07-17 OpenAI ChatGPT 採択 / 2 day 経過 / cooldown 残 5 day / 次回 unlock 2026-07-24). 本日 7-18→7-19 の主眼は、個人 B/S ドメインに narrative-layer の新規プレイヤー EdWealth『Ed』(2026-07-15 launch / GlobeNewswire 一次リリース裏取り) を捕捉し、7-24 unlock の採択候補を Visa と二本柱化したこと。Ed = agentic AI 家計コーチ / 『Financial Fitness』= 残高でなく『お金が望む生活のために働いているか』を 5 次元 (Control 月次を賄えるか / Safety ショック耐性 / Growth 資産形成 / Fluency 金融理解 / Peace 罪悪感なき支出) で計測 / Plaid 口座接続 + 書類スクショ upload + 自然言語 Q&A で cash flow・税・RSU・ETF・保険を横断 / $39.99 月 or $299.99 年 / US 中間層限定・edwealth.ai + App Store + Google Play / 創業 Allen Ng。含意 = 自社の『静的残高でなく B/S × 6 部署 KPI という経営ナラティブで計測』という差別化軸に、Ed は『静的残高でなく Financial Fitness という生活ナラティブで計測』の同型思想で正面から重なる (単なる家計簿より近い)。ただし英語・Plaid (US 機関)・US 限定ゆえ日本語金融文脈 moat は未接触。cooldown ゆえ本日採択せず 7-24 unlock の第 1 候補群 (Ed / Visa) に据える。既存 27 社は戦略級 delta なし = (a) dev-tool クラスタは Codex=GPT-5.6 (Sol/Terra/Luna) / Antigravity 2.0 + Gemini 3.5 Flash 等 同一 agentic blueprint 収斂で自社ナラティブと同方向 / (b) ChatGPT personal finance は Plus GA 6-25 から差分なし・ただし ChatGPT+Codex+Atlas の SuperApp 構想が別報道で再燃 → 監視継続 / (c) MoneyForward ME × AI トリガー未点火 (AI Cowork は法人専用) / (d) Lindy 7 月新シグナルなし。[AI-TOOL-VERIFY] = EdWealth の launch 日・5 次元・課金・プラットフォームは GlobeNewswire 一次 wire (Manila Times 転載) で裏取り済 / Visa は 8 月 pilot 据え置き + 消費者データ共有意欲 85% の追加データ点。",
+      "skipped_candidates": [
+        "EdWealth『Ed』(= 【新規 / 7-24 unlock 第 1 候補群】agentic AI 家計コーチ / Financial Fitness 5 次元計測 / 2026-07-15 launch / 基準 a = narrative 差別化軸に直接競合 + 基準 c = 30 日内リリース / 分岐点 = 日本語展開・会社 metaphor 接近の有無 / 現状 US 限定・英語・Plaid で日本語 moat 未接触ゆえ signal 層留置)",
+        "Visa AI Financial Assistant (= 第 1 候補群 / distribution-layer / 8 月 US 金融機関 pilot 据え置き + 消費者 85% がデータ共有意欲 / consumer 到達 or 日本の金融機関波及で 2026-07-24 unlock 時 昇格判断 / 基準 a + b)",
+        "Emergent『Wingman』(= $130M 調達で新ユニコーン 7-15 / personal AI agent だが対象は business worker 生産性 [スケジュール・to-do・議事録・メール] + 本体は vibe-coding/app builder で dev-tool クラスタ重複 / 基準 b 止まり・昇格根拠弱)",
+        "Motion (= named-employee 系 / 基準 c 不成立: Series C 2025-12 / 30 日内の新展開で再評価)",
+        "Monarch / Copilot Money / Cleo (= connected-account copilot 勢 / 7 月新規シグナルなし / signal 層で基準値作り継続)"
+      ]
+    },
+    {
+      "date": "2026-07-20",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-07-17 OpenAI ChatGPT 採択 / 3 day 経過 / cooldown 残 4 day / 次回 unlock 2026-07-24). 本日は個人 B/S 三ベクトル (Ed / Visa / ChatGPT) が揃って停滞し、代わりに自社の運用コスト構造側に戦略級 delta。(1) ★ Claude Fable 5 アクセス改定が本日 7-20 発効 = Max + Team Premium に恒久同梱だが weekly usage limits の 50%、Pro + Team Standard は同梱外で一回限り $100 credit 消化後は API 従量 ($10/M input・$50/M output)。同日 Claude Code の weekly rate limit +50% ブーストも終了するため Max 系の実効枠は二重縮小。6-15 課金分離に続く第 2 の運用コスト構造変化 = GHA cron 30+ / Schedule cron は programmatic pool 側ゆえ直接対象外だが、対話 Claude Code (Win Claude #132 fleet 本体) の weekly 枠が本日から縮む → [AI_FALLBACK_RUNBOOK] 振り分け閾値の引き直しが要る。[AI-TOOL-VERIFY] = 確度「高」・一次 URL 未取得: モデル実在は Anthropic newsroom (6-30 Redeploying Fable 5 / 7-02 cyber safeguards) + claude.com/pricing の Fable 系統掲載で一次確認済、改定内容は独立複数二次ソース (DAWN/TechTimes/Tech2/the420/newsbytes/Forbes) が公式ポストの同一文言を引用して収斂。ただし公式発信日が 7-18 と 7-19 でソース間に食い違い + claude.com/pricing にプラン別記載なし → 一次ピン留めは次サイクル持ち越し。なお一部記事は『Fable 5 という名称が公開モデル系統と不一致』として報道自体を疑問視していたが、上記一次記載により当該記事側の誤りと判定。(2) ★ Lovable 評価額協議が $12B 観察 → $13.2B で具体化 (TechCrunch 7-08 / $300M・Menlo リード見込み・前回 $6.6B の 2 倍 / ARR は 6 月に $500M) = 7-07/7-08 で『低確度観察』としていた Forbes 6-05 $12B 協議 + 『7月 $200M financing』報道を更新。⚠️ 方法論所見 = AI ファンディング系アグリゲータは同件を『$200M Series B @ $2.8B』と記載していたが、実際の Series B ($330M @ $6.6B / 2025-12 / TechCrunch + lovable.dev 公式) とも今回協議 ($300M @ $13.2B) とも不一致 = ラウンド名・金額・評価額の 3 点すべて誤記。[AI-TOOL-VERIFY] 実例として記録し『資金調達数値はアグリゲータを一次扱いしない』を明文ルール化提案。(3) 🟡 Cursor × Continue acqui-hire の後始末完了 = 既報 SpaceX × Anysphere $60B (6-16) と同日発表の sub-signal / Continue (OSS・GitHub 34K stars・任意 LLM 差し替え可能な vendor-neutral レイヤ) はプロダクト停止、最終リリース v2.0.0-vscode 6-19、cloud データ 7-15 以降削除、Apache 2.0 のままだが upstream 保守停止 → 中立 OSS レイヤは買収で消えうる前提で routing matrix の依存点棚卸しが要る。(4) 差分なし = Ed (7-15 launch から新展開なし / 日本語・会社 metaphor の分岐点いずれも未接触) / Visa (8 月 US pilot 据え置き・本日 investor.visa.com 一次確認 = 年間 3,000 億件超トランザクション網 + 会話 UI 内でカードロック/アラート設定・銀行はカスタム開発不要) / ChatGPT (Plus・Pro 6-25 GA から差分なし) / MoneyForward (ME の AI トリガー未点火 / 7-8 暗号資産分離は既報) / Lindy (複数メールアカウント同時管理が直近出荷とあるが出荷日特定できず弱シグナル) / Notion 3.6 + Slackbot MCP (既報) / dev-tool クラスタ (収斂継続). EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 7-24 unlock 第 1 候補群 = Ed / Visa 二本柱据え置き (本日両者とも分岐点に動きなし). https://techcrunch.com/2026/07/08/lovable-reportedly-in-talks-to-double-its-valuation-to-13-2b/",
+      "skipped_candidates": [
+        "EdWealth『Ed』(= 7-24 unlock 第 1 候補群 / agentic AI 家計コーチ / Financial Fitness 5 次元 / 2026-07-15 launch / 基準 a + c / 本日 delta なし = 日本語・日本市場展開の兆候なし・会社 metaphor 未接近ゆえ signal 層維持)",
+        "Visa AI Financial Assistant (= 7-24 unlock 第 1 候補群 / distribution-layer / 8 月 US pilot 据え置き / 本日 investor.visa.com 一次確認済 / consumer 到達・日本の金融機関波及が昇格分岐点 / 基準 a + b)",
+        "Emergent『Wingman』(= $130M 調達 7-15 / personal AI agent だが対象は business worker 生産性 + 本体は vibe-coding/app builder で dev-tool クラスタ重複 / 基準 b 止まり)",
+        "Motion (= named-employee 系 / 基準 c 不成立: Series C 2025-12 / 30 日内の新展開で再評価)",
+        "Monarch / Copilot Money / Cleo (= connected-account copilot 勢 / 7 月新規シグナルなし / signal 層で基準値作り継続)"
+      ]
+    },
+    {
+      "date": "2026-07-21",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-07-17 OpenAI ChatGPT 採択 / 4 day 経過 / cooldown 残 3 day / 次回 unlock 2026-07-24). 27 社 / cap 50. 本日は競合の外形変化が乏しく、主眼は自社レポートの記述訂正と前提の反証に置いた。(1) ★★ 7-20 レポートの「実効枠が二重縮小」は誤りと判明し訂正 = Claude Code の weekly +50% ブーストは 7-20 に終了しておらず 2026-08-19 まで延長されていた。一次 = support.claude.com/en/articles/15910845 に verbatim 'From May 13, 2026 through August 19, 2026, your weekly usage limit in Claude Code is 50% higher' + 'We have extended this promotion. Increased weekly limits now run through August 19, 2026' (対象 Pro/Max/Team/legacy seat-based Enterprise / 除外 Free・consumption-based Enterprise seats)。根本原因 = 同じ 7-19 期限を持つ 2 つの別プロモの取り違え + 向きが逆の 2 つの『50%』の衝突 (Fable 5 の 50% = 週次上限の 50% *まで* 使える = 利用の上限 / Claude Code promo の 50% = 週次上限そのものが 50% *増* = base のブースト) を同方向の縮小として合成したこと。加えて 7-20 は『独立した複数二次ソース (DAWN/TechTimes/Tech2/the420/newsbytes/Forbes) が収斂』を確度根拠にしていたが、6 媒体とも Fable 5 側の 同一公式ポストを引用していただけでブースト側は誰も検証しておらず、収斂は独立性の証明にならないことが実例で判明。→ 7-20 アクション #1 ([AI_FALLBACK_RUNBOOK] 振り分け閾値の引き直し) は前提が崩れたため撤回、新監視期限は 2026-08-19。(2) ★ 7-20 アクション #4 (Fable 5 一次 URL ピン留め) 完了 = support.claude.com/en/articles/15424964 で Max/premium Team/premium Enterprise seats は週次上限の 50% まで無償、Pro/Team standard は同梱外で usage credits、発効 'Starting July 20, 2026'、プロモ終了 'July 19, 2026 at 11:59:59 PM PT' を原文確認。API 従量 $10/MTok in・$50/MTok out も platform.claude.com pricing docs で一致確認。ただし『一回限り $100 クレジット』の $100 は一次に存在せず (support 記事は 'one-time credit' とのみ記載し金額なし / 出所は公式 @claudeai の X 投稿 = PRIMARY だが X が HTTP 402 で fetch 検証不能) → 金額は確定値として扱わない。発表日 7-18 vs 7-19 の食い違いは Anthropic 所有ページが両記事とも相対表記 ('Updated this week') で絶対日付を持たず anthropic.com/news にも 当件未掲載のため一次では解決不能 → 今後は発効日 (7-20) を軸に記述する。典拠に使えない URL として claude.com/pricing (Fable 5 のプラン別記述皆無) / anthropic.com/news (当件未掲載) を確認。(3) ★★ [自社環境直撃 / 競合枠外だが本日最優先] Claude Code 2.1.214-2.1.216 が権限バイパス系を連続修正 = v2.1.214 (7-18) で dir/** 許可ルールの cwd 外書き込み誤承認 + Windows PowerShell 5.1 セッションの permission-check バイパス + help/man の危険な自動承認 + scheduled task が自身の設定プロンプトを untrusted input として誤拒否する不具合、v2.1.216 (7-20) で workflow 保存と scheduled-task 書き込みが .claude のシンボリックリンクを辿りプロジェクト外へ書き込み得る問題 + worktree 隔離 subagent が git -C/--git-dir/GIT_DIR で共有 checkout へ抜ける問題 + Windows で read-only コマンドがネットワークパスへ 権限プロンプトなしでアクセスする問題を修正。本環境は Windows + PowerShell 5.1 + worktree 隔離 + .claude 配下 skill/workflow + scheduled task で構成され全項目の当事者。実測ローカル CLI = 2.1.170 で全て未適用 → 更新が最優先 ([WORKDIR-ISOLATION] / [SUBAGENT-GUARD] の隔離前提が実装側で破れていた)。(4) ★ [前提の反証] Kubera 検出 = 自称 'the balance sheet for those who manage their own wealth' / 追跡資産 $13.5B→$47B / AI Import (CSV・PDF・スクショ→自動取込) + API で自分の B/S を ChatGPT/Claude/Gemini に接続 → 『個人 B/S = 自社独自』の前提は成立せず、差別化は 6 部署 x KPI の経営ナラティブ + 日本語金融文脈 + B/S を入口でなく出力に使う設計へ寄せ直す必要。ただし機能群の一次日付が取れず基準 c 不成立 → signal 層に未検証フラグ付きで登録。(5) 7-24 unlock 候補の順位入替 = 第 1 を Ed/Visa から Tomo へ (Tomo = 2026-06-25 ステルス脱出 + $5M シード / リード Bain Capital Ventures / BusinessWire 一次 / iMessage ネイティブのマルチドメイン人生エージェントで 家計・フィットネス・予定・習慣を単一エージェントが横断 / 有料 10,000 人を 3.5 ヶ月・月 20 日利用 / 基準 b 強 = 未カバーの人生統合カテゴリかつコーディング偏り是正方向 + c 強 + a 中)。Ed は第 2 (6 日連続デルタなし・調達なし・日本語/会社 metaphor いずれも未接触)、Visa は第 3 (8 月 pilot 据え置き・提携銀行名すら非開示・pilot まで昇格材料が構造的に出ない)。(6) 新規シグナル 3 件 = OpenClaw v2026.7.2-beta.3 (7-18 / cloud worker セッション制御・所有ホストでのセッション復帰・cron ジョブのライフサイクル修正・Gateway 再起動リカバリ / 追跡 27 社で唯一『個人 agent の永続性』を反復し自社 Schedule cron と同型 / ~2 日 beta ケイデンスで短い監視間隔が要る) / Cognition 'Welcoming TierZero' (7-20 一次 / automations・インシデント対応を Devin へ統合 / 買収か acquihire か・金額とも非開示 / Security Swarm 7-01・脆弱性修復 7-02 に続く『コード生成以外』3 件目 = コーディング agent → SRE/運用 agent 横展開がトレンド確定) / Cursor 'Agent swarms and the new model economics' (7-20 一次 / 1 run あたり Opus 4.8 hybrid $1,339 vs GPT-5.5 単独 $10,565 を公開 = マルチエージェント実行の単価が公開比較の土俵に上がった / GitHub Copilot 7-20 の AI credit 可視化 2 件と同方向)。(7) 前回の宙吊り解消 = Lindy の『複数メールアカウント同時管理』は 2024-06-14 Lindy 2.0 の既存機能と判明 (2 年前 / 公式 changelog は 2025-10-21 以降更新なし) → 脅威度下方修正。(8) 数値ステータス訂正 = Lovable $300M/$13.2B は『交渉中』であって成立ではない (一次報道 Sifted 7-08 exclusive / TechCrunch は後追い / Lovable はコメント拒否 / lovable.dev/blog の最新資金調達記事は依然 2025-12 Series B $330M・$6.6B / Menlo 自社ブログにも記事なし = Series B では専用記事を書いているので不在自体がシグナル) → 7-20 の『$13.2B で具体化』は踏み込み過ぎ。(9) 誤検知 2 件を除去 = 'Intuit and OpenAI join forces' は 2025-11-18 発表で baseline 前 (Intuit IR 一次確認) / SpaceX x Anysphere $60B は巡回中に『二次のみで裏が取れない』との指摘が出たが CNBC と Forbes 双方が 2026-06-16 に報道しており既報どおり事実と再確認 → 7-06 レポートの記載は訂正不要。(10) トラッカー衛生 4 件を提起 = Animaworks は英語・日本語双方で監視可能な実体を特定できず (公式 URL ピン留め or スロット退役の CEO 判断要) / Bolt.new は stackblitz.com/blog が 404・blog.stackblitz.com が 2025-06-04 で停止のため support.bolt.new/release-notes へ一本化 / Google Jules は changelog が 2026-03-09 で 4 ヶ月停止しており『更新なし』が製品静止の証拠にならない → blog.google 系へ切替 / xAI Grok Build は GitHub Releases 0 件でコミットベース追跡が必要・Alibaba Qoder は changelog が JS レンダリングで静的 fetch 不能 → いずれも『取得できない』を『動きがない』と誤読する構造。(11) 既存 27 社は上記以外 戦略級 delta なし = MoneyForward は ME の AI エージェント化トリガー未点火 (公式ニュースルーム 7-17〜21 のリリースゼロ) かつ AI Cowork の 7 月 GA を告げる一次リリースが未確認 (4-07 の『7 月提供開始予定』のまま / 7 月残り 10 日 → GA 遅延を watch item 化) / EdWealth は 7-15 launch から 新展開なし・言語セレクタ en のみ・会社 metaphor 不在 (ただし公式サイトの料金体系とターゲット層記述が ローンチ PR とズレるが日付不明のため変化と断定せず) / Visa は investor.visa.com 原文で 8 月 pilot 据え置き再確認 / ChatGPT personal finance は米国 Plus/Pro 限定のまま / Monarch は 2026-06-23 が最新・Copilot Money と Cleo は 一次での新規発表なし (Cleo の検索結果はアグリゲータばかりで 7-20 の教訓通り一次扱いせず) / Notion 7-16・Slack 7-15 (7-20 の Mac ビルドはセキュリティ修正のみ)・Claude Cowork 7-14 以降なし・Replit 7-17・Cursor changelog 7-17・Bolt Slides 7-16〜17・Chatwork 7-16 (本社移転で製品シグナルでない)・ジョブカン 7-10 (お盆休業案内)・Evernote 7 月エントリ皆無・netkeiba 7-15・Microsoft MAI-Code-1-Flash NO DELTA・Google Antigravity 7-16 が最新。日本市場は 30 日窓内に新規参入ゼロ = 個人 B/S x 日本語ニッチは無競争。[AI-TOOL-VERIFY] = 本日の主要主張は全て Anthropic ヘルプセンター一次 2 本 + platform.claude.com pricing docs + GitHub releases + 各社公式 changelog で裏取り済 / 未確定は $100 クレジット・発表日・Qoder 7-20 リリース群・Grok Build コミット内容の 4 点に限定し本文に明記。https://support.claude.com/en/articles/15910845-claude-code-may-july-2026-weekly-limits-promotion",
+      "skipped_candidates": [
+        "Tomo (= 【新規 / 7-24 unlock 第 1 候補へ昇格】2026-06-25 ステルス脱出 + $5M シード / リード Bain Capital Ventures・Accel/Conviction/Pear VC 参加 / BusinessWire = 企業発行の一次 / iMessage ネイティブのマルチドメイン人生エージェント = 家計 (銀行明細スクショ)・フィットネス・スケジュール・習慣を単一エージェントが横断 / 有料 10,000 人を 3.5 ヶ月で獲得・月 30 日中 20 日利用 / 基準 b 強 (未カバーの人生統合カテゴリ + コーディング偏り是正方向) + 基準 c 強 (6-25 = 窓内) + 基準 a 中 (B/S は持たないが『人生を統合指標で運営する』設計思想が同型) / Ed・Visa が『金融の中の AI』に留まるのに対し Tomo は金融を人生ドメインの 1 つとして飲み込む側 = 自社統合 KPI 軸に最近接 / ⚠️ BusinessWire ID 20260625 = 一次は 6-25、二次媒体 theaiinsider の 7-07 は再掲日で日付誤りの罠)",
+        "Kubera (= 【新規 / signal 層・未検証フラグ】自称 'the balance sheet for those who manage their own wealth' / 追跡資産 $13.5B→$47B / AI Import (CSV・PDF・スクショ→自動取込) + API で自分の B/S を ChatGPT/Claude/Gemini に接続 / 基準 a に唯一の直撃 = 『個人 B/S は自社独自』の前提を崩す存在 / ただし機能群・金額の一次日付が取れず基準 c 不成立ゆえ 7-24 候補ではない / 次サイクルで一次確認を試み取れ次第 昇格判断)",
+        "EdWealth『Ed』(= 第 1 → 第 2 へ降格 / 基準 a + c は維持するが 6 日連続デルタなし・調達なし / 公式サイト言語セレクタは en のみで日本語/日本市場の兆候ゼロ・『自分を会社として経営する』metaphor も依然不在 = 自社の中核差別化は Ed 方向から未接触 / 金融カテゴリの厚みを増すだけで多様性への寄与が低い / ⚠️ 公式サイトの料金体系 (無料 Hello Ed + 有料 Ed Complete) とターゲット層 ('high earners and professionals') が ローンチ PR (modern middle class / $39.99 単一) とズレるが、サイトに日付がなく変更時期を特定できないため変化と断定しない)",
+        "Visa AI Financial Assistant (= 第 1 → 第 3 へ降格 / investor.visa.com 原文で 8 月 US pilot 据え置きを再確認 / 提携銀行名は一次・二次とも一切非開示・日本の金融機関への言及ゼロ・前倒しや消費者到達の証拠なし / pilot 開始まで昇格材料が構造的に出ない)",
+        "Emergent『Wingman』(= $130M 調達 7-15 / personal AI agent だが対象は business worker 生産性 + 本体は vibe-coding/app builder で dev-tool クラスタ重複 / 基準 b 止まり)",
+        "Motion (= named-employee 系 / 基準 c 不成立: Series C 2025-12 / 30 日内の新展開で再評価)",
+        "Monarch / Copilot Money / Cleo (= connected-account copilot 勢 / Monarch は 2026-06-23 'Goals, reimagined' が最新で 7 月エントリなし / Copilot Money・Cleo は一次での新規発表なし / ⚠️ Cleo の検索結果は Tracxn/Crunchbase/PitchBook/CB Insights などアグリゲータばかりで 7-20 の教訓通り一次扱いしていない)",
+        "OpenCode (= coding tool 偏り (基準 b 逆行) のため signal 層留置)",
+        "却下 = ワンバントーク/スマートバンク (2026-03-05 で窓外) / CFO X (SMB 向け・日付なし) / Jota (ブラジル $30M Series A だが中小企業向け会話型バンキングでカテゴリ不一致) / Sumio (ローンチ日・調達なし) / Jarvie AI・Orchid (EA 系で B/S・人生 KPI に非接触) / Advisor360・Savvy・RightCapital (アドバイザー向け B2B WealthTech) / MUFG x Google (2026-05-07 かつ PoC 段階 = 窓外 + 未ローンチ)"
+      ]
+    },
+    {
+      "date": "2026-07-22",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-07-17 OpenAI ChatGPT 採択 / 5 day 経過 / cooldown 残 2 day / 次回 unlock 2026-07-24). 27 社 / cap 50. 外形変化は静かだったが『既に起きていたのに自社が構想扱いしていた事象』2 件と、Kubera の昇格ブロッカー解消が本日の主眼. (1) ★★ OpenAI Codex rust-v0.145.0 (7-21) の `/import` が Claude Code の設定・MCP・plugin・session・commands・**project-scoped memories** まで移行対象化 (一次 verbatim = 'Expanded /import to migrate Cursor and Claude Code settings, MCP servers, plugins, sessions, commands, and project-scoped memories') = 自社 cross-instance-pr md-doc プロトコルは『Win Claude と Win Codex は状態を共有できない』制約を出発点に設計されており、その制約が Codex 側から一方向に消滅 → ナラティブを『状態は移行可能になった。ゆえに正本をどれにするかの規律 (5 正本 + OPERATIONS_CHARTER) が価値』へ。7-21 時点は 0.145.0-alpha.25 がリリースノート本文空で中身不明だった. ⚠️ レンダリング済ページの表示年が '2024' と誤表示 → Releases API published_at を採用 ([AI-TOOL-VERIFY] 追記事項). (2) ★ Slack CLI v4.5.0 (7-21) が Claude Code ユーザーに公式 Slack plugin を推奨開始 (一次 verbatim) = 5-28 Workflow Builder AI ステップ GA の『Slack を目的地に』から『Slack を agent fleet の既定コントロールサーフェスに』へ一段進行 / 自社は意図的に Slack の外で 2 instance + worktree 隔離 + GHA cron を回しており差別化の主戦場化. (3) ★ 前提訂正 = MoneyForward AI Cowork は 7-22 時点で GA していない (製品ページ『先行受付中！』『2026年7月提供予定』のまま + corp newsroom 7 月は個別原価 7-16/請求書Plus 7-7/ME STUDIO 7-6/mitosel 7-3 で GA 告知なし / 7 月残り 9 日) = 7-21 アクション #8 を一次で裏取り完了・『GA 済み』前提で 7-24 判断を組むと外す. (4) ★ 監視トリガー解決 = 7-19 で『構想・実装確認は次サイクル』としていた ChatGPT SuperApp は 7-9 に実行済 (Atlas を単独ブラウザとして廃止し ChatGPT Work へ吸収 / Codex デスクトップも統合 / **Atlas 停止 8-09 が effective**) → トリガー (d) は『未実装』でなく『完了』で閉じ 8-09 を監視カレンダーへ. (5) 🟠 Kubera ブロッカー部分解消 = help.kubera.com/article/167 に 'Last updated on July 17, 2026' + ChatGPT/Claude/Perplexity/Gemini CLI/Codex App を MCP 対応・旧 Kubera GPT 廃止 → signal 層から第 2 候補へ昇格. ただし『最終更新日 ≠ 発表日』で基準 c 厳密には未成立 + 日付を持つチャネルがヘルプセンターのみ (公式ブログ日付ゼロ・/changelog 404). 構造所見 = Kubera (7-17) と Copilot Money (5-15 MCP Beta) が同型 = **個人資産を MCP で任意の LLM に開くパターンが定着** → 差別化軸を『集約』に置くと正面衝突・6 部署 KPI 経営ナラティブ + 日本語金融文脈のみ残る (7-21 アクション #2 の補強). (6) 🟠 Alibaba Qoder Cantus (7-19 effective) = Ultimate 上位の最上位モデルを全面投入・課金係数 3.2x→期間限定 1.6x だが **ローンチブログ/技術レポート/ベンチマーク/パラメータ数/context window すべて非公開・公開 API も weights もなし** = 存在を示す一次が課金キャンペーンページのみの『発表なき本番投入』→ 性能記述は検証不能として確度 low 固定. 併せて Qwen3.8-Max-Preview (2.4T) を 0.5x→0.05x (90% off) / SGT 22:00-08:00 は 0.01x (98% off) = 価格フロア底抜け継続. (7) 🟠 自社環境 = Claude Code 最新 v2.1.217 (7-21) に対しローカルは依然 2.1.170 で 7-21 アクション #0 が 2 日連続未着手 (2.1.214 Windows PowerShell 5.1 permission-check バイパス / 2.1.216 git -C・GIT_DIR による worktree 隔離 subagent の共有 checkout 脱出 / 2.1.217 background session のシンボリックリンク workspace 脱出 = 本環境は全項目の当事者). ⚠️ 『自動更新失敗時に claude.exe を復元』する修正は 2.1.217 側にあり **旧アップデータには無い** → 更新は失敗時に実行ファイルが失われうる前提で実施. (8) 🟠 GitHub Copilot = Gemini 3.6 Flash GA 開始 (7-21 / Business・Enterprise は管理者のプレビューポリシー有効化が必要) + Copilot CLI v1.0.73 で追加ディレクトリ設定時も Anthropic subagent が動作継続. 窓内デルタなし = Cursor 7-17 / Notion 7-16 / Replit 7-17 / Lovable 7-15 / Claude Cowork 7-07 / Chatwork 7-16 / ジョブカン 7-10 / OpenClaw 7-18 (窓に 1 日届かず) / MS MAI-Code-1-Flash・Agent 365 6-18 / Antigravity 7-18 / Tomo / Ed / Visa / Monarch / Copilot Money / Emergent Wingman / Lindy / Anthropic 金融. トラッカー衛生 = 前日 4 件 (Animaworks 実体不明 [2 日連続未決] / Bolt 週次バケットが 7-19 終端で本日の窓を覆わず / Jules changelog 3-09 停止 4 か月半 / xAI・Qoder が release ベースで追えず) すべて未解消 + 本日 4 件追加 = ⚠️**汚染源 `coworkerai.io` は Anthropic と無関係の第三者サイトで『Claude for Small Business/Marketing Ops/Legal』等の業種別束を返す (anthropic.com/news に該当なし・ドメイン名が公式に見え誤採用リスク高) → 併せて自社の過去記録 (Legal 5-12/Small Business 5-13/Marketing Ops 5-18/FinServ 5-05) の洗い直しを起票 (本日実測では FinServ ページが「2025-07-15 公開・2026-04-10 更新」かつ完全にエンタープライズ向け)** / Codex web changelog が 7-13 停止 (learn.chatgpt.com へ 308) → 一次を GitHub Releases へ切替 / Motion 404・Cleo 403・Salesforce 403 で取得不能 (=『変化なし』ではない) / Evernote は release-notes に日付表記が一切なく窓判定が構造的に不可能. [AI-TOOL-VERIFY] 追記 2 点 = (a) 公式に見えるドメインを出典に採らない (coworkerai.io) (b) レンダリング済ページの日付表示を信用しない (Codex 0.145.0 が 2024 と表示 / API published_at を採る). 7-24 unlock 候補 = 第 1 Tomo 維持 (⚠️ 但し tomo.ai に blog/changelog が無く採択しても継続監視チャネルが無い構造問題 → 採択時は代替経路を同時決定) / 第 2 Kubera (signal→昇格) / 第 3 Ed (7 日連続デルタなし・調達なし) / 第 4 Visa (一次日付を 7-15→**2026-07-14** に訂正・8 月 pilot 据置). https://github.com/openai/codex/releases/tag/rust-v0.145.0",
+      "skipped_candidates": [
+        "Tomo (= 7-24 unlock 第 1 候補 維持 / iMessage ネイティブのマルチドメイン人生エージェント / 一次 BusinessWire 2026-06-25 / 基準 b 強 + c 強 + a 中 / 窓内デルタなし・7-07 各媒体は同一 wire 再配信と再確認 / ⚠️ 新規懸念 = tomo.ai に blog も changelog も存在せず採択後の継続監視チャネルが無い → 採択と同時に App Store 更新履歴 / BusinessWire 追跡等の代替経路を決める必要)",
+        "Kubera (= signal 層 → **第 2 候補へ昇格** / help.kubera.com/article/167 に 'Last updated on July 17, 2026' の日付付き一次を取得しブロッカー部分解消 / ChatGPT・Claude・Perplexity・Gemini CLI・Codex App を MCP 対応・旧 Kubera GPT 廃止 / 基準 a に唯一の直撃 = 個人 B/S そのもの / ⚠️ 『最終更新日 ≠ 発表日』ゆえ基準 c は厳密には未成立 + 日付を持つチャネルがヘルプセンターのみ [公式ブログ日付ゼロ・/changelog 404] + 窓内 7-19〜22 の動きゼロ)",
+        "EdWealth『Ed』(= 第 2 → **第 3 へ降格** / 基準 a + c は維持するが **7 日連続デルタなし**・調達なし・公式サイトに news/blog すら不在 / 7-15 GlobeNewswire 以降のヒットは全て同日付の syndicated copy)",
+        "Visa AI Financial Assistant (= 第 4 / 8 月 US pilot 据え置き・提携銀行非開示・日本言及ゼロ / **一次の日付を 7-15 → 2026-07-14 に訂正** / pilot 開始まで昇格材料が構造的に出ない)",
+        "Emergent『Wingman』(= 基準 b 止まり / ⚠️ **Wingman の一次は 2026-04-15 BusinessWire = 窓外** / emergent.sh の『$130M Series C @ $1.5B / 7-15』は**全社の調達であって Wingman の件ではない** = 名寄せの罠として記録)",
+        "Motion (= **primary still not obtained** / `/product-updates` 404・`/blog` に日付表示なし / ⚠️ `motion.dev` はアニメーションライブラリの**別会社**で混線注意)",
+        "Cleo (= **primary still not obtained** / 公式 blog/news が 403 で読めず = **不在の証明ではない** / 最終確定は PRNewswire 2026-02-05 Autopilot)",
+        "Monarch / Copilot Money (= 窓内新規なし / Monarch は 2026-06-23 'Goals, reimagined' が最新で既知と一致 / Copilot Money は /dispatch 最新 2026-06-11・**5-15 に MCP [Beta] で Claude/ChatGPT 接続済 = Kubera と同型**)",
+        "Salesforce Agentforce Operations (= **primary still not obtained** / salesforce.com 全体が 403 / 二次のみで Agentforce Operations GA 4-29・Summer'26 6-15 GA = いずれも窓外 / developer.salesforce.com は 6-24 が最新で 7 月投稿ゼロ)",
+        "OpenCode (= coding tool 偏り [基準 b 逆行] のため signal 層留置)",
+        "却下 = coworkerai.io 経由の『Anthropic 業種別エディション』群 (= **Anthropic と無関係の第三者サイト**・anthropic.com/news に該当なし = 汚染源として棄却) / Replit 7-20 障害説 (= コミュニティフォーラムのみで status page 裏付けなし) / xAI 2T パラメータ Grok (= 予告のみ・x.ai/news 403・GitHub releases 0 件で一次未取得)"
+      ]
+    },
+    {
+      "date": "2026-07-23",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-07-17 OpenAI ChatGPT 採択 / 6 day 経過 / cooldown 残 1 day / 次回 unlock 2026-07-24 = 明日). 27 社 / cap 50. 窓は 1 日と短いが 7-22 に主要 4 社が同日出荷 + 7-24 第 1 候補 Tomo の「新規」読解が誤りと判明. (1) ★★ Claude Code v2.1.218 (7-22) = 2.1.214 / 2.1.216 / 2.1.217 に続く 4 連続 Windows・権限・隔離修正. 本環境該当 = 『/code-review ultra が非対話セッションで無言のままローカルレビューを実行していた』修正 (本 scheduled task がまさに非対話 = 「緑に見えて実は評価していない」型) + agent frontmatter hooks が agent ファイル自身のフォルダの workspace trust を要求するよう変更 + context: fork skill の background 既定化 (opt out = background: false) + 深いネストツリー削除・移動時の max call stack crash 修正 (worktree 撤去が routine) + auto mode の dangerous-rm / background-& / suspicious-Windows-path が permission dialog を出さず classifier 判定へ ([SUBAGENT-GUARD] の deny-by-default 解釈に影響). 実測 = ローカル claude --version 2.1.170 / npm published 2.1.218 = 48 版差・3 日連続未着手. ⚠️ 同リリースの「Windows パスの \\u 前置 segment が CJK 化してファイル参照不能」バグは trigger が小文字 \\u の segment であり C:\\Users\\kanta\\GitHub\\my_web_app (Users は大文字 U・他 segment も u 始まりでない) は該当と断定できず = クラスとしての記録に留める (過大評価回避). (2) ★ Cursor Router (7-22) = Auto mode を置換し Intelligence / Balance / Cost の 3 モード = 自社 DEV_PROCESS_MULTI_AI.md + AI_FALLBACK_RUNBOOK の『人間が読んで人間が判断する md matrix』が競合では 1 トグル化 → 差別化は『振り分けの自動化』ではなく『どのモデルに何を振ったかが git log で後から監査できる』証跡性へ書き換えるべき. (3) ★ OpenAI Presence (7-22) = enterprise 音声/チャット agent 基盤・self-serve でない limited GA (deployment engineer 帯同)・OpenAI 自社英語電話サポートで inbound 75% を人手なし解決・Codex 駆動 feedback loop が 10 日で human handoff を 15pt 削減・初期顧客に SoftBank Corp. の日本語エージェント本番投入 = 7-21 に『残る差別化は 6 部署 KPI 経営ナラティブ + 日本語金融文脈』と結論したうちの後者に frontier lab が本番事例で接触 = 日本語の防壁は時間の関数. ⚠️ 一次未取得 (openai.com/index/ 403 / help.openai.com 403 / 公式 X は fetch 不能) ゆえ数値・顧客名は全て二次依拠 = 媒体の一致は独立検証ではない. (4) 🟠 ChatGPT for small business program (7-21) = Anthropic Claude for Small Business (5-13) と正面で並ぶ = 『小さな主体の経営を AI が担う』層に frontier lab 2 社が揃って製品を置いた. ⚠️ 一次 403 + 検索が返した比較記事の 1 本が coworker.ai = 7-22 に「Anthropic と無関係の第三者サイト」として汚染源棄却した coworkerai.io と同系統が別クエリで再出現 (一度の棄却では再発する → 除外リスト固定が要る). (5) 🟠 GitHub Copilot = usage metrics impact dashboard (7-22 / account management + enterprise) + copilot-cli v1.0.74-1/-2/-3 (同日 3 本 / sandbox opt-in の初回起動スプラッシュ + Gemini 3.6 Flash + session multiplexing のダイアログ分離 / ⚠️ -2・-3 は本文が読めず). (6) 🟠 Codex 0.146.0-alpha.1/.2/.3 (7-22 に 3 本) は本文取得不可 = 7-21 の 0.145.0-alpha.25 本文空と同型 → alpha 期は『中身不明のまま版だけ進む』のが Codex の常態と確認. 「変化なし」ではなく「読めない」. (7) ★★ [検証所見 / 新しい失敗型] Tomo の companion app は 6-25 wire に既出 = 一次 verbatim 'In addition to the iMessage interface, Tomo just launched a companion app for users who text Tomo more than 20 days a month.' / 同 wire に '10,000 paying customers' 'People reach out 20 out of 30 days a month' も含まれ自社 7-21 記録の出所と一致 → 検索要約の現在形 (just launched) を出来事の新しさと取り違える型を feedback_secondary_source_convergence_is_not_independence 系列に追加. Tomo は 6-25 以降 28 日デルタゼロ確定. ⚠️ Yahoo 版の表示日 6-26 は再配信日で wire の 6-25 と 1 日ズレ. (8) ★ MoneyForward AI Cowork は 7-23 時点も GA せず = 製品ページ verbatim「2026年7月提供予定 先行受付中！」/ 7-22 の corp newsroom 裏取りと合わせ 7 月残り 8 日. (9) ★ [訂正] Ed のローンチ PR は『$39.99 単一』ではなく '$299.99 a year or $39.99 a month' の 2 本立て = 7-21 に記録した「PR とサイト料金体系のズレ」の一部は自社側の読み落としだった. 窓内デルタなし (一次確認) = Notion 7-16 / Slack 7-21 / Replit 7-17 / Bolt (バケット July 13-19 で本日の窓を覆っていない) / Devin 7-17 / OpenClaw 7-18 / Lovable 7-16 (lovable.dev/changelog は docs.lovable.dev へ 308) / kubell 7-16. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 一次未取得 = Google Antigravity (antigravity.google/docs/changelog 404) / Alibaba Qoder (qoder.com/en/changelog は骨格のみ・docs.qoder.com/change-log 404) → いずれも 7-22 の記録を据え置き. 7-24 unlock 第 1 候補 = Tomo 維持だが 採択条件 = 監視チャネル (App Store 更新履歴 + BusinessWire 発行元追跡) の確定とセット (tomo.ai に blog も changelog も無く、決めずに採択すると「追加したが追えない社」を増やす). https://github.com/anthropics/claude-code/releases",
+      "skipped_candidates": [
+        "Tomo (= 7-24 unlock 第 1 候補 維持 / ただし companion app は 6-25 BusinessWire wire に既出と判明し 28 日デルタゼロ確定 / 基準 b 強 [未カバーの人生統合カテゴリ + コーディング偏り是正] は維持・基準 c は 6-25 の一点のみで窓の縁 / ⚠️ 採択は監視チャネル確定 [App Store 更新履歴 + BusinessWire 発行元追跡] とセットが条件)",
+        "Kubera (= 第 2 維持 / 7 月の新規発表を確認できず・基準 c 未成立のまま / ⚠️ 検索が返すのは Kubera Gold Corp. [TSXV: KBRA] / Kubera Capital / Kubera Health など同名他社と Tracxn・PitchBook 等アグリゲータばかり = 『発表がない』ことの証明にはならない)",
+        "EdWealth『Ed』(= 第 3 維持 / 7-15 以降 8 日連続デルタゼロ・ヒットは全て同一 GlobeNewswire の syndicated copy [tradingview/investing/tipranks/manilatimes/benzinga/swacenews/wingerdaily/xbeedaily] / ★訂正 = ローンチ PR は $299.99/年 or $39.99/月 の 2 本立てで『$39.99 単一』ではない)",
+        "Visa AI Financial Assistant (= 第 4 維持 / 8 月 US pilot 待ちで構造的に昇格材料が出ない)",
+        "OpenAI Presence / ChatGPT for small business (= 既存 competitor 『OpenAI ChatGPT』[7-17 採択] の配下であり新規社ではない / ⚠️ 一次 openai.com 403 で二次依拠)",
+        "Salesforce Agentforce Operations / Microsoft MAI-Code-1-Flash / Monarch / Copilot Money / Lindy / Motion / Cleo / Emergent Wingman (= 本日の 1 日窓では個別確認せず 7-22 の状態を据え置き / 『変化なし』と断定していない)",
+        "OpenCode (= coding tool 偏り [基準 b 逆行] のため signal 層留置)"
+      ]
+    },
+    {
+      "date": "2026-07-24",
+      "name": "Tomo",
+      "category": "personal AI life coach / iMessage-native multi-domain life agent + generative companion micro-apps",
+      "reason": "unlock 日 (= 2026-07-17 OpenAI ChatGPT 採択から 7 日 / cooldown 明け初日) に 7 サイクル連続 第 1 候補 Tomo を採択 (Lovable 5-17 / Bolt.new 5-24 の『解禁日初日採択』pattern 踏襲). 採択理由 = 基準 b (= 未カバーの人生統合カテゴリ) が最強 — 27 社中 13 社が AI dev tool に偏っており、iMessage ネイティブで貯蓄/予算/フィットネス等の generative micro-app を本人に合わせて生成する Tomo は『個人の生活全体を AI が department 的に運営する』軸で 6 部署 + 個人 B/S ナラティブの隣接カテゴリを新規に開く. 基準 a 中 (= 生成 UI で budgeting/savings tracker を作る = B/S 隣接) / 基準 c 弱 (= 一次は BusinessWire 2026-06-25 の一点のみ・本日で 29 日 = 30 日窓の縁 / companion app 『just launched』は 6-25 wire に既出の fake-recency と 7-23 に確定済 = 窓内デルタはゼロ). ⚠️ 既知の構造弱点 = tomo.ai に blog も changelog も存在せず + 『Tomo』は TomoCredit/TomoIQ・Tomo Mortgage 等と名寄せ衝突が激しい (本日検索も TomoIQ を混入) → 7-23 report の採択条件に従い監視チャネルを **App Store 更新履歴 (companion app) + BusinessWire 発行元追跡 (Bain Capital Ventures portfolio)** に確定し、かつ **採択後 30 日 (2026-08-23) までに新規シグナルゼロなら退役** を trigger として同時設定 (= 『追加したが追えない社』で cap を消費するリスクの緩和). 28 社 / cap 50. https://www.businesswire.com/news/home/20260625645270/en/",
+      "skipped_candidates": [
+        "Kubera (= 第 2 維持 / 基準 a 直撃 [個人 B/S そのもの] だが基準 c 未成立 [help.kubera.com の 'Last updated July 17' は最終更新日 ≠ 発表日] + 名寄せ衝突 [Kubera Gold Corp./Capital/Health] / 日付を持つチャネルがヘルプセンターのみ)",
+        "EdWealth『Ed』(= 第 3 維持 / fallback 最有力 = 7-15 GlobeNewswire が 30 日窓内で基準 c は Tomo より新しく監視チャネル [GlobeNewswire + edwealth site] も明確 / だが基準 b [カテゴリ新規性] が Tomo に劣後 = personal finance coaching は MoneyForward 隣接で既カバー寄り / 9 日連続デルタゼロ)",
+        "★ Bluwhale (= 本日 discovery scan の新規 / 'AI-native financial operating system' + AI Agent Store [autonomous financial agents marketplace] = 基準 a 最強 [個人 B/S 集約 + agent department marketplace = 自社中核軸に最も近い] / ⚠️ 一次 launch 6-12 = 42 日で 30 日窓外・かつ savings/liquidity/investments を real-time で execute = 送金・取引執行を行う crypto/DeFi 寄りで risk model が別カテゴリ → 未評価のまま同日採択は hasty / signal 層へ登録し次サイクル精査)",
+        "PNC Mobile Banking app (= 7-7 / agentic dev system + embedded gen AI だが銀行の自社アプリで直接競合ではない)",
+        "Pleo (= 6-11 / autonomous spend management = B2B 経費 / 軸遠い)",
+        "Visa AI Financial Assistant (= 第 4 維持 / 8 月 US pilot 待ちで構造的に材料が出ない)",
+        "却下 = Claude Opus 5『7-23 debut』(= prediction market/BigGo/TestingCatalog の期待報道のみ・anthropic.com/news に該当なし [最新 7-22] = 発効せず) + OpenAI Codex『tomorrow is feeling codexy』(= Tibo Sottiaux の teaser のみ・未出荷 / npm published は依然 0.145.0 stable) = いずれも hype であって event ではない (fake-recency 型)"
+      ]
+    },
+    {
+      "date": "2026-07-28",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-07-24 Tomo 採択 / 4 day 経過 / cooldown 残 3 day / 次回 unlock 2026-07-31). 28 社 / cap 50. 直近の Claude 正式 report は 7-24 で、7-25/7-26/7-27 は GHA static-template 経路の自動生成 → 本日の主眼はその 3 日分を一次で検算することに置いた. 新規 5 シグナル = (1) ★★ Claude Opus 5 は 7-24 に実際に GA していた = 7-24 report が skipped_candidates で 「prediction market/BigGo/TestingCatalog の期待報道のみ・anthropic.com/news に該当なし [最新 7-22] = 発効せず」として却下したものが、まさに同じ 7-24 に出荷されていた (一次 = anthropic.com/news/claude-opus-5 の表示日付 verbatim 'Jul 24, 2026' + System Card PDF 表題 'July 24, 2026' + support.claude.com release notes の July 24, 2026 エントリ). 誤りの構造 = 「7-23 時点で news に無い」という観測は正しく、そこから『発効せず』と結論した点が誤り — 不在の証明は観測時刻に紐づくのであって当日の残り時間を含まない. fake-recency を避ける規律が逆方向 (= 真の当日出荷を『まだ無い』と断定する側) へ過剰適用された例として記録. 製品事実 = $5/$25 (Opus 4.8 据置) / 1M context 既定かつ最大 / 128k max output / thinking 既定 ON / **Claude Max の新既定モデル** / Fast mode 2.5x 速 2x 価格 / Frontier-Bench + GDPval-AA で SOTA. 自社 = 本 scheduled task 実行環境が実際に claude-opus-5[1m] で動作 = 二次依拠でない一次の自己確認. ⚠️ announcement に『flagged requests は Claude Code で既定として Opus 4.8 へ fallback』の記述 = AI_FALLBACK_RUNBOOK の想定と別系統のモデル側自動 fallback → 実挙動確認が必要) / (2) ★★ 自社 GHA 自動レポートの 3 本柱中 2 本が fake-recency = 07-27 report の見出しを全件一次照合した結果、Notion 3.6 HTML ブロックは notion.com/releases/2026-07-01 = 27 日前、Slack の Today ビューは slack.com/whats-new = 2026-05-29 = 60 日前 (Slackbot GA に至っては investor.salesforce.com 2026-01-13 = 196 日前) を新規シグナルとして提示していた. GitHub Code Quality GA のみ github.blog/changelog/2026-07-20 で窓内・正しい (= 常に誤るわけではないので混在が厄介). 🔑 memory の feedback_search_summary_present_tense_fake_recency が外部ソースではなく自社の生成物側で再現した実例 — 人手 report には一次 URL + 発効日のピン留めを課しているが GHA static-template 経路に同じゲートが無く、日付ファイル名で並ぶため読み手には当日の出来事に見える. 最小の修正 = 出力テンプレに『一次 URL』『発効日』列を必須化し埋まらない項目は見出しに昇格させない) / (3) ★ MoneyForward AI Cowork が残り 3 日で未 GA = corp.moneyforward.com/news/release/ の 7 月エントリ 7 件を全件確認 (7-24 Legal Forward Day / 7-23 個別原価 工数自動入力エージェント / 7-23 board API 連携 / 7-16 製販振替 / 7-07 請求書Plus / 7-06 ME STUDIO / 7-03 mitosel) し AI Cowork の提供開始告知は不在・最新は 7-24. 7-22 report の判定を 6 日後も追認. ただし読みは一段進む = 7-23 の『工数自動入力エージェントを一部ユーザー向けに提供開始』は AI Cowork 本体でなく個別プロダクトへの agent 埋め込みが先行している形 → big-bang GA でなく漸進投入の可能性があり、判定は二値でなく『AI Cowork ブランドの統合オーケストレータの有無』で見るべき. 7-31 が最終確認窓) / (4) ★ Bluwhale 精査 → 降格 = 7-24 に『discovery scan の新規 / 基準 a 最強』として signal 層登録したものを一次で辿った結果、launch 6-12 (fintech.global) は正しいが **$10M Series A は GlobeNewswire 2025-10-22 が一次** (UOB Venture Management 主導 / SBI Holdings + Sui/Tezos/Cardano/Arbitrum/Movement Labs 参加) で ventureburn・digitaljournal・odaily 等は同一ラウンドの再配信. 『$10M Series A』を新規に数えると 9 ヶ月の fake-recency. 基準 c は 6-12 launch のみで本日 46 日 = 窓外 → 不成立確定・signal 層据え置き (基準 a は最強のままなので、窓内の一次が出た時点で第 1 候補へ昇格)) / (5) ★ OpenAI ChatGPT は既定路線維持 = personal finance が 6-25 に Plus/Pro US 到達 (web/iOS/Android) / ChatGPT Work 7-09 ローンチ (GPT-5.6 + Codex) / **Atlas 停止 8-09 据え置き** = 7-22 で監視カレンダー入りした期日に変更なし. + 名寄せ/日付の罠を 1 件追加 = 『Intuit × OpenAI financial intelligence 提携』は investors.intuit.com 2025-11-18 ($100M+/年・複数年 / TurboTax・QuickBooks・Credit Karma・Mailchimp) = 個人 B/S 軸の検索で上位に来るが窓外 8 ヶ月. + Claude 7 月リリースの自社同軸 = 7-10 メモリ再設計 (日次サマリ → 個別・カテゴリ付きエントリ) が自社 memory/*.md の 『1 ファイル 1 事実 + frontmatter type』構成と同型で本体機能化 → consolidate-memory の価値主張を『方式の独自性』から『運用規律と監査証跡』へ. 7-31 unlock の採択方針 = 第 1 候補 Kubera は基準 c が 3 サイクル連続未成立であり、続くなら EdWealth『Ed』への切替か その週の採択見送りかを明示的に選ぶ (基準 a だけで入れると Tomo と同じ『追加したが追えない社』を増やす). Tomo (7-24 採択) は新規シグナルゼロ・退役 trigger 2026-08-23 まで残り 26 日. https://www.anthropic.com/news/claude-opus-5",
+      "skipped_candidates": [
+        "Kubera (= 第 1 候補 維持 / 基準 a 直撃 [個人 B/S そのもの] だが 7 月の一次を再取得できず基準 c は 3 サイクル連続未成立 / ⚠️ 7-31 は『基準 a だけで採択しない』を事前に固定 — 満たさないまま入れると Tomo と同じ追跡不能社になる)",
+        "EdWealth『Ed』(= 第 2 維持 / 7-15 GlobeNewswire 以降 13 日連続デルタゼロ / 基準 c は Kubera より新しく監視チャネルも明確だが基準 b [カテゴリ新規性] が弱い)",
+        "Bluwhale (= 🔻 signal 層据え置き確定 / 基準 a 最強 [個人 B/S 集約 + AI Agent Store] だが基準 c 不成立 = launch 6-12 で 46 日窓外 + $10M Series A は 2025-10-22 で 9 ヶ月前 / 送金・取引執行を行う crypto/DeFi 寄りでリスクモデルが別カテゴリ = 急ぐ理由なし / 窓内の一次が出たら第 1 へ昇格)",
+        "Visa AI Financial Assistant (= 第 3 維持 / 8 月 US pilot 待ちで構造的に昇格材料が出ない)",
+        "Tomo (= 7-24 採択済 = 対象外 / 新規シグナルゼロ / theaiinsider 7-07 は 6-25 BusinessWire の再配信と再々確認 [『emerging from stealth in early July』という記述自体が再配信日を出来事の日として書いている典型] / 退役 trigger 2026-08-23 まで 26 日)",
+        "Intuit × OpenAI (= 却下 / 個人 B/S 軸の検索で上位に来るが investors.intuit.com 2025-11-18 = 窓外 8 ヶ月 / 名前の新しさに引かれない)",
+        "Notion 3.6 / Slack Today ビュー (= 既存 competitor の更新であり新規社ではない / かつ自社 07-27 自動レポートが新規として提示していた既報 = 27 日前・60 日前)",
+        "OpenCode (= coding tool 偏り [基準 b 逆行] のため signal 層留置)"
+      ]
+    },
+    {
+      "date": "2026-07-29",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-07-24 Tomo 採択 / 5 day 経過 / cooldown 残 2 day / 次回 unlock 2026-07-31). 28 社 / cap 50. 窓は 1 日 (前回 Claude 正式 report = 7-28) のため、本日は昨日立てたアクション項目の実検証に主眼を置いた。新規 7 シグナル = (1) ★★ GHA competitor-monitoring.yml の AI 生成経路が 20 日間 dead-green と判明 = 昨日の ★★2「GHA 自動レポートが fake-recency を出稿」は症状であって原因ではなかった。run 30406229595 の実ログ verbatim で primary (Gemini) 失敗 → Claude fallback 失敗 → static-template 分岐、かつ conclusion=success (直近 8 run 全て success)。model ヘッダ全走査で GHA 経路の最終成功は 2026-07-09 (claude-sonnet-4-6)。原因の切り分け = secret 欠落は否 (GEMINI_API_KEY / ANTHROPIC_API_KEY 両方存在) / primary は gemini-1.5-flash pin で Gemini 1.5 系は全面 shutdown 済 (廃止表にすら不掲載) = 確定的に死 / fallback の claude-sonnet-4-6 は Active (retirement 2027-02-17 以降) = model ID は無罪で失敗原因は未確定 (key/クレジット/レート) → プローブ 1 回が必要。⚠️ 当初「両方 model ID 陳腐化」と読みかけたが一次で Claude 側 Active を確認して訂正 = 確認しなければ誤った修正 (model ID 差し替え) を指示していた。同 pin は claude-agent-review.yml / wbs-ai-review.yml にもあり計 3 workflow。付随して static-template が可用性表を 2 回出力している (99 行 = 49 行 × 2) ことも判明 = 20 日間誰も読んでいなかった傍証。secret 名は存在するが向き先モデルが消滅している型で、ogp-image-refresh (secret 0 件) とは別クラス) / (2) ★★ GitHub Actions が悪意ある可能性のある workflow を承認保留する機能を 7-28 施行 = public repo に自動適用・write 権限者の認証済 web セッション承認が必要。自社は PUBLIC + 107 workflow + 5 daily cron の実測で該当 → 無人 cron が保留されると沈黙停止。feedback_pr_ci_not_triggered_diagnose の action_required 診断に第 3 の原因が加わった。⚠️ 実際に保留された事実は未確認 =「起こりうる」であって「起きた」ではない) / (3) ★ fake-recency 2 件を検索要約側で検出・一次で訂正 =「Gemini 2.5 Pro/3 Flash が Copilot から 7-31 廃止」は発表 7-02 (発効 7-31) / 「GitHub MCP が 7-28 stateless 対応」は発表 7-23 (発効 7-28)。発表日 ≠ 発効日。昨日は自社生成物側、本日は外部要約側で同じ根が再現。なお自社 Gemini 利用は generativelanguage 直叩きで Copilot 経由でないため Copilot 側廃止の影響なし — ただしその確認 grep が (1) の本丸を露出させた) / (4) ★ MCP 仕様 2026-07-28 正式版 = stateless core + per-request capability negotiation + Tasks/Apps/Skills 拡張 + 「tool annotations は untrusted 扱い」明文化 = MCP-AUTH-27 と同方向で独自規律が標準要件へ降りた。自己観測で mcp__github__* 正常動作を確認し昨日の追記アクションをクローズ) / (5) ★ Grok 4.5 が GitHub Copilot に (7-28 / 500K context / effort 3 段 / usage-based billing) = frontier モデルの Copilot 集約継続で「どのモデルを使うか」の差別化はさらに弱化 → 7-23 の結論 (差別化は git log で後から監査できる証跡性) を補強) / (6) MoneyForward AI Cowork は残り 2 日で未 GA (リリース一覧最新 7-24 のまま変化なし / 7-31 が最終確認点) / (7) GitHub Models 7-30 廃止は grep 0 件で自社影響ゼロ確定 = 昨日のアクション #2 クローズ。7-31 unlock の意思決定を本日確定 = 昨日「その場の勢いで決めない」と事前合意した条件 (Kubera 4 サイクル連続 基準 c 未成立) が成立したため、EdWealth『Ed』採択 + 退役 trigger 2026-08-30 同時設定 を推奨。Kubera は「構造的に窓内シグナルを出さない社」バケットへ移し、日付付き一次が出た時点で第 1 復帰させる。",
+      "skipped_candidates": [
+        "EdWealth『Ed』(= 🔺 第 2 → 第 1 昇格 / 7-31 採択推奨 / 7-15 GlobeNewswire は 7-31 時点で 16 日 = 窓内で基準 c 成立 / ただし本日ヒット 9 媒体 [tradingview/manilatimes/globenewswire/tipranks/investing/benzinga/swacenews/wingerdaily/xbeedaily] は全て同一ワイヤの再配信 = 14 日連続デルタゼロ / 基準 b (カテゴリ新規性) は personal finance coaching が MoneyForward 隣接で弱い点を正直に劣ると明記 / 採択は Tomo 同様 退役 trigger 2026-08-30 の同時設定が条件)",
+        "Kubera (= 🔻 第 1 →「構造的非発信」バケットへ移動 / 基準 a 直撃 [個人 B/S そのもの] だが基準 c は 4 サイクル連続未成立 / 本日も 7 月の一次は取得できず、返るのは wallethacks・cryptoadventure・wallstreetzen・thecfoclub・G2 等のレビュー記事とアグリゲータのみ / 判明した最新の実機能更新は 2025-08 の CSV/PDF/スクショ AI インポート + Kubera GPT + API 経由 ChatGPT/Claude/Gemini 接続 = 11 ヶ月前 / 日付を持つ一次が出た時点で第 1 復帰。待ちのコストはゼロ)",
+        "Bluwhale (= signal 層据え置き継続 / 本日変化なし / 基準 a 最強だが launch 2026-06-12 は窓外・$10M Series A は 2025-10-22 で 9 ヶ月前)",
+        "Visa AI Financial Assistant (= 第 3 維持 / 8 月 US pilot 待ちで構造的に昇格材料が出ない / 本日変化なし)",
+        "Tomo (= 7-24 採択済 = 対象外 / 本日も新規シグナルゼロ / 退役 trigger 2026-08-23 まで残り 25 日 / App Store 更新履歴の実チェックは次サイクルへ持ち越し)",
+        "Grok 4.5 / MCP 2026-07-28 spec / GitHub Actions 承認保留 (= いずれも既存 competitor [xAI Grok Build / GitHub Copilot] の更新ないしプロトコル・基盤側の変更であり新規社ではない)",
+        "OpenCode (= coding tool 偏り [基準 b 逆行] のため signal 層留置 / 本日変化なし)"
+      ]
+    },
+    {
+      "date": "2026-07-30",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-07-24 Tomo 採択 / 6 day 経過 / cooldown 残 1 day / 次回 unlock 2026-07-31 = 明日). 28 社 / cap 50. 窓は 1 日 (前回 Claude 正式 report = 7-29) のため昨日までの宿題を実際に引くことへ主眼を置き、最大の発見は外部でなく自社の監視手続き側から出た。新規 8 シグナル = (1) ★★ Tomo の『新規シグナルゼロ』5 日間は不在ではなく未観測だった = 7-24 採択時に監視チャネルを『App Store 更新履歴 + BusinessWire 発行元追跡』と自ら確定し退役 trigger 2026-08-23 まで設定したのに、7-28『新規シグナルゼロ』/ 7-29『App Store 更新履歴の実チェックは次サイクルへ持ち越し』と 2 サイクル連続で判定チャネルを引かないまま評価していた。本日実測 (一次 apps.apple.com/us/app/tomo-your-personal-ai/id6757726935) = 開発者 MAPO LABS INC. / 現行 1.2.3 (Jul 22) / 履歴 1.2.2 (Jul 18) 1.2.1 (Jul 17) 1.2 (Jul 17) 1.1.2 (Jul 9) 1.1.1 (Jul 2) 1.1 (Jun 25) … 1.0.6 (May 17) = 約 5 週で 7 版。基準 c は最初から成立 (1.2.3 = 本日 8 日前 / 窓内) で『追跡不能社』評価は誤り → 退役 trigger 2026-08-23 は根拠喪失 = 解除推奨。副産物 = 名寄せ衝突 (TomoCredit/TomoIQ/Tomo Mortgage) は発行主体 MAPO LABS INC. で機械的に分離可 + 『Tomo AI: Study Companion』(id6758670665) は別アプリ。🔑 監視チャネルを『決めた』ことと『読んだ』ことは別 — 引かないまま『変化なし』と書くと空欄が不在の証明に見える (feedback_prompt_instruction_is_not_a_post_check と同型 / 今回は自分で書いた採択条件が事後検査の代わりにならなかった形)) / (2) ★★ 競合が Claude Code の拡張フォーマットを取り込み始めた = 同日 7-29 に 2 社。(a) GitHub Copilot code review の Agent skills + MCP が GA (一次 github.blog/changelog 掲載日 verbatim 'July 29, 2026' / 設定 verbatim 'Under `.github/skills`, create a skill-specific directory, then add a `SKILL.md` file.' / MCP は verbatim 'limited to read-only' / Pro・Pro+・Business・Enterprise 全有料プラン / skill・MCP 由来コメントに attribution 表示) (b) OpenAI Codex 0.146.0 が verbatim 'Support Agent Plugins manifests, workspace plugin publishing, and additional plugin marketplaces for Amazon Bedrock and Claude Code.' = SKILL.md が事実上の業界標準へ。自社は本 task 自身が SKILL.md で 20+ skill を蓄積 → 良い面 = ベンダロックイン低下 / 悪い面 = 『skill を持っていること』自体が差別化でなくなる。MCP read-only 限定は MCP_AUTH_SECURITY_PRINCIPLES の deny-by-default と同方向 = 7-29 の MCP 2026-07-28 正式版に続き独自規律が標準へ吸収される流れが 2 日連続。7-23 の結論 (差別化は git log で後から監査できる証跡性) を再補強) / (3) ★ Codex 0.146.0 stable で『本文が読めない alpha』系列が読めた (bodylen 17,685 / 7-21 の 0.145.0-alpha.25 本文空・7-22 の alpha 3 本不可 = 『変化なし』でなく『読めない』だったことの確定) = /new /clear セッション命名 + スレッド pin + side conversation 切替 / thread fork (paginated + 一時 fork) / app-server が remote Code Mode host と WebSocket / executor 提供 skill の発見と読み取り / Windows ナビゲーションキー修正 + sandbox プロセスツリー確実終了 + security review 中 proxy 保持。同日 0.147.0-alpha.1 (7-29T09:13Z / 本文なし)) / (4) ★ Claude Code のリリースが 6 日間停止 = npm 一次で 2.1.220 が 2026-07-24T23:11Z で最新、7-17〜7-24 の 8 版/8 日ほぼ日次から空白。⚠️ 原因は断定しない (Opus 5 GA 同日直後という相関のみ / 7-29 の model ID 誤診しかけと同じ規律)。ローカル 2.1.170 との差は 48→50 版。2.1.218 の『非対話セッションで /code-review ultra が無言実行』修正は本 task がまさに非対話ゆえ未適用の影響が残る) / (5) ★ Cursor が iPad へ (一次 cursor.com/changelog Jul 29 'Cursor, now on iPad' = 全有料プラン / inbox / PR 全体レビュー / Apple Pencil markup / 複数 PR セッション / Bitbucket + Azure DevOps) + Jul 28 'Cursor Start' = 『モバイルから long-running session を操舵』競合群 (Copilot Remote Session Monitoring / Codex mobile) に Cursor 合流 = 自社 Schedule cron + JSON log 手動確認は 5-10 以降 一貫して劣後) / (6) ★ MoneyForward AI Cowork は 7 月最終日を残して未 GA (4 日連続追認 / 一次 corp.moneyforward.com/news/release/ の 7 月 7 件全確認 = 最新 7-24 Legal Forward Day / 2026-04-07 発表の『2026年7月より提供開始予定』に対し残り 1 日 / 7-28 の読み = big-bang GA でなく個別プロダクトへの agent 埋め込み先行 を維持 / 7-31 が最終確認点) / (7) ★ Anthropic 7-27 の 2 件が 7-28・7-29 両 report から漏れていた = 一次 anthropic.com/news 最新は Jul 27 'Our position on open-weights models' + 'Cognizant and Anthropic expand their partnership' = 3 日窓内の取りこぼし (7-28/7-29 は GHA 経路検算と自社 workflow 故障解析に時間を割きベンダ一次の定点観測が抜けた)。⚠️ 本日の新規ではない = 日付は 7-27 と明記 (発表日 ≠ 観測日)) / (8) ★ 疑った『GHA cron が 7-28 施行の承認保留で沈黙停止』は誤警報 = gh run list 最新が 7-28T22:54Z で 7-29 分が無く昨日の ★★2 的中と読みかけたが、実測で現在 2026-07-29T22:15Z (= JST 07-30 07:15) / cron '0 22 * * *' の実発火は 22:5x UTC → 本日分は約 40 分後で未到来・欠落ではない (workflow state=active / pending・action_required の run も無し)。🔑 昨日『起こりうる であって 起きた ではない』と線を引いておいたことが翌日そのまま誤診を防いだ = 時計を確認するだけで解ける仮説を確認せずに結論にしない。付随 = workflow Step 5 の手動レポート保護 (`<!-- generated-by: github-actions -->` の有無で判定) により本 report を先に push すれば静的テンプレに上書きされない。Step 1 可用性チェックは SUPABASE_SERVICE_KEY 等 env 不在で skip (既知)。7-31 unlock の意思決定 = 昨日推奨の EdWealth 採択 + 退役 trigger 2026-08-30 を維持するが前提条件を 1 つ追加 = 『採択の前に App Store 版履歴を 1 回引く』。理由 = 本日 Tomo で『press wire を監視チャネルにすると consumer app 企業では delta ゼロが続く』構造が実証され、EdWealth も App Store + Google Play 配布ゆえ『15 日連続デルタゼロ』評価自体が wire しか見ていない産物の可能性がある。版履歴が活発なら基準 c を版履歴で成立させ監視チャネルを版履歴に確定して採択 / 版履歴も静止なら根拠は 7-15 wire 一点のみ = Tomo 採択時と同じ薄さゆえ見送り BridgeApp 精査へ振替。",
+      "skipped_candidates": [
+        "EdWealth『Ed』(= 第 1 維持 / 7-31 採択推奨だが **前提条件を追加** = 採択前に App Store 版履歴を 1 回引く / 7-15 GlobeNewswire 以降 15 日連続デルタゼロ・本日ヒット 9 媒体すべて同一ワイヤ再配信 / 基準 c は 7-31 時点 16 日で窓内・基準 b はカテゴリ新規性が弱い [personal finance coaching は MoneyForward 隣接] / ⚠️ この『デルタゼロ』評価は wire しか見ていない産物の可能性 = Tomo と同一構造)",
+        "Kubera (= 第 2 / 『構造的非発信』バケット維持だが **その分類が channel 選択の産物である可能性は開いたまま** / 本日 Tomo の教訓を転用しようとしたが失敗 = apps.apple.com/us/app/kubera-wealth/id6746436723 は HTTP 404 [検索が返したのは Bolivia storefront + ?platform=watch 付き] + 検索が返す 'Kubera Wealth' の説明は投資信託積立系で kubera.com [個人 B/S ダッシュボード] と不一致 + 'MyKuberaWealth' [id1614682063 / Google Play com.moneyinfo.kubera] は moneyinfo 社の別サービス = 名寄せ衝突。記録は『App Store チャネルは Kubera に使えない』ではなく『本日は app の同一性を確定できなかった』に留める / 次サイクルは検索経由でなく kubera.com からの直リンクで辿る / 基準 c は 5 サイクル連続未成立)",
+        "★ BridgeApp (= 本日 discovery scan の新規 / 7-27 に人・AI エージェント・タスク・コンテキストを 1 workspace に繋ぐ orchestration layer を投入 = 自社 fleet 軸に近接 / ⚠️ 二次 [agentic.ai/news] 依拠で未精査 = signal 層登録 / EdWealth 見送り時の振替先)",
+        "Bluwhale (= signal 層据え置き継続 / 本日変化なし / 基準 a 最強だが launch 2026-06-12 は窓外・$10M Series A は 2025-10-22)",
+        "Visa AI Financial Assistant (= 第 3 維持 / 8 月 US pilot 待ちで構造的に昇格材料が出ない / 本日変化なし)",
+        "Tomo (= 7-24 採択済 = 対象外 / ★ 本日 App Store 実チェックで『新規シグナルゼロ 5 日間』が未観測の産物と判明 = 約 5 週で 7 版出荷 / **退役 trigger 2026-08-23 は根拠喪失 = 解除推奨** / 監視チャネルを MAPO LABS INC. + App Store id6757726935 版履歴 に確定)",
+        "GitHub Copilot / OpenAI Codex / Cursor / Claude Code (= いずれも既存 competitor の更新であり新規社ではない / ただし Copilot の .github/skills SKILL.md GA と Codex の Claude Code plugin marketplace 対応は『自社拡張フォーマットの標準化』として戦略級)",
+        "Notion / Slack / Evernote / netkeiba / Chatwork / ジョブカン / Amazon / Animaworks / Replit / Lovable / Bolt.new / Devin / Qoder / Lindy / Salesforce / Microsoft (= 窓 1 日 + 宿題検算を優先したため本日は個別確認せず = **『変化なし』ではなく『未観測』**)",
+        "OpenCode (= coding tool 偏り [基準 b 逆行] のため signal 層留置 / 本日変化なし)"
       ]
     }
   ],

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../models/kgi_csf_kpi.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 enum PersonalDashboardDataMode { live, fallback }
 
@@ -87,7 +88,13 @@ class PersonalDashboardPage extends StatefulWidget {
 }
 
 class _PersonalDashboardPageState extends State<PersonalDashboardPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['kpi', 'weekly', 'habits'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 

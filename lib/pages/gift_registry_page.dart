@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/gift_registry_item.dart';
+
 /// ギフトレジストリページ
-/// gift-registry Edge Function と連携してギフトリストを管理
+/// social-commerce-hub Edge Function (gift.list) と連携してギフトリストを管理
 class GiftRegistryPage extends StatefulWidget {
   const GiftRegistryPage({super.key});
 
@@ -14,7 +16,7 @@ class _GiftRegistryPageState extends State<GiftRegistryPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _errorMessage;
-  List<Map<String, dynamic>> _gifts = [];
+  List<GiftRegistryItem> _gifts = [];
 
   @override
   void initState() {
@@ -36,19 +38,8 @@ class _GiftRegistryPageState extends State<GiftRegistryPage> {
         'social-commerce-hub',
         body: {'action': 'gift.list'},
       );
-      final data = response.data;
-      final giftList = data is Map<String, dynamic>
-          ? (data['gifts'] ?? data['items'])
-          : null;
-      if (giftList is List) {
-        setState(
-          () => _gifts = giftList.cast<Map<String, dynamic>>(),
-        );
-      } else if (data is List) {
-        setState(() => _gifts = data.cast<Map<String, dynamic>>());
-      } else {
-        setState(() => _gifts = []);
-      }
+      final gifts = parseGiftRegistryItems(response.data);
+      if (mounted) setState(() => _gifts = gifts);
     } catch (e) {
       if (mounted) {
         setState(() => _errorMessage = 'ギフトリストの取得に失敗しました: $e');
@@ -127,11 +118,8 @@ class _GiftRegistryPageState extends State<GiftRegistryPage> {
                       itemBuilder: (context, index) {
                         final gift = _gifts[index];
                         final title =
-                            (gift['title'] ?? gift['name'] ?? 'ギフト $index')
-                                .toString();
-                        final price =
-                            (gift['price'] ?? gift['amount'] ?? '').toString();
-                        final reserved = gift['reserved'] == true;
+                            gift.name.isEmpty ? 'ギフト ${index + 1}' : gift.name;
+                        final reserved = gift.purchased;
                         return Card(
                           child: ListTile(
                             leading: Icon(
@@ -141,7 +129,9 @@ class _GiftRegistryPageState extends State<GiftRegistryPage> {
                                   : const Color(0xFFFF6B35),
                             ),
                             title: Text(title),
-                            subtitle: price.isNotEmpty ? Text('¥$price') : null,
+                            subtitle: gift.hasPrice
+                                ? Text('¥${formatGiftPrice(gift.price!)}')
+                                : null,
                             trailing: reserved
                                 ? const Chip(
                                     label: Text('予約済'),

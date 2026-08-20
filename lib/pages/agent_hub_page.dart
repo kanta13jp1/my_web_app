@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 class AgentHubPage extends StatefulWidget {
   const AgentHubPage({super.key});
@@ -9,7 +10,14 @@ class AgentHubPage extends StatefulWidget {
 }
 
 class _AgentHubPageState extends State<AgentHubPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['departments', 'performance', 'routing'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late TabController _tabController;
   bool _isLoading = false;

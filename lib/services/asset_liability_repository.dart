@@ -3,6 +3,7 @@ import 'package:my_web_app/models/asset_liability_persistence.dart';
 import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
+import 'package:my_web_app/services/asset_management_egress_policy.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 typedef AssetLiabilityUserIdProvider = String? Function();
@@ -281,6 +282,21 @@ class AssetLiabilitySyncPreviewResult {
       ];
 }
 
+class AssetLiabilityDefaultPaymentSettings {
+  final Map<String, String> paymentSourceAccountIds;
+  final Map<String, String> cardBillingAccountIds;
+
+  AssetLiabilityDefaultPaymentSettings({
+    required Map<String, String> paymentSourceAccountIds,
+    required Map<String, String> cardBillingAccountIds,
+  })  : paymentSourceAccountIds = Map<String, String>.unmodifiable(
+          paymentSourceAccountIds,
+        ),
+        cardBillingAccountIds = Map<String, String>.unmodifiable(
+          cardBillingAccountIds,
+        );
+}
+
 abstract class AssetLiabilityRepository {
   const AssetLiabilityRepository();
 
@@ -296,6 +312,20 @@ abstract class AssetLiabilityRepository {
   });
 
   Future<Map<String, String>> loadDefaultPaymentSources();
+
+  Future<AssetLiabilityDefaultPaymentSettings>
+      loadDefaultPaymentSettings() async {
+    final values = await Future.wait<Object>(<Future<Object>>[
+      loadDefaultPaymentSources(),
+      loadDefaultCardBillingAccounts(),
+    ]);
+    return AssetLiabilityDefaultPaymentSettings(
+      paymentSourceAccountIds:
+          Map<String, String>.from(values[0] as Map<String, String>),
+      cardBillingAccountIds:
+          Map<String, String>.from(values[1] as Map<String, String>),
+    );
+  }
 
   Future<void> saveDefaultPaymentSources(Map<String, String> sources);
 
@@ -389,6 +419,24 @@ abstract class AssetLiabilityRemoteStore {
     required String userId,
   });
 
+  Future<AssetLiabilityDefaultPaymentSettings?> loadDefaultPaymentSettings({
+    required String userId,
+  }) async {
+    final values = await Future.wait<Object?>(<Future<Object?>>[
+      loadDefaultPaymentSources(userId: userId),
+      loadDefaultCardBillingAccounts(userId: userId),
+    ]);
+    final sources = values[0] as Map<String, String>?;
+    final accounts = values[1] as Map<String, String>?;
+    if (sources == null && accounts == null) {
+      return null;
+    }
+    return AssetLiabilityDefaultPaymentSettings(
+      paymentSourceAccountIds: sources ?? const <String, String>{},
+      cardBillingAccountIds: accounts ?? const <String, String>{},
+    );
+  }
+
   Future<void> saveDefaultPaymentSources({
     required String userId,
     required Map<String, String> sources,
@@ -471,8 +519,10 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   final bool remoteWritesEnabled;
   final AssetLiabilityUserIdProvider userIdProvider;
   final AssetLiabilitySyncErrorHandler? onSyncError;
+  final Map<String, Future<AssetLiabilityMonthlyState>> _inFlightMonthLoads =
+      <String, Future<AssetLiabilityMonthlyState>>{};
 
-  const FeatureFlaggedAssetLiabilityRepository({
+  FeatureFlaggedAssetLiabilityRepository({
     required this.localRepository,
     required this.remoteStore,
     required this.syncEnabled,
@@ -488,7 +538,24 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   bool get supabaseWritesEnabled => syncEnabled && remoteWritesEnabled;
 
   @override
-  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
+  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) {
+    final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
+    final existing = _inFlightMonthLoads[monthKey];
+    if (existing != null) {
+      return existing;
+    }
+
+    late final Future<AssetLiabilityMonthlyState> load;
+    load = _loadMonthOnce(month).whenComplete(() {
+      if (identical(_inFlightMonthLoads[monthKey], load)) {
+        _inFlightMonthLoads.remove(monthKey);
+      }
+    });
+    _inFlightMonthLoads[monthKey] = load;
+    return load;
+  }
+
+  Future<AssetLiabilityMonthlyState> _loadMonthOnce(DateTime month) async {
     final local = await localRepository.loadMonth(month);
     final remote = _remoteOrNull();
     final userId = _userIdOrNull();
@@ -596,6 +663,63 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     }
 
     return local;
+  }
+
+  @override
+  Future<AssetLiabilityDefaultPaymentSettings>
+      loadDefaultPaymentSettings() async {
+    final local = await localRepository.loadDefaultPaymentSettings();
+    final remote = _remoteOrNull();
+    final userId = _userIdOrNull();
+    if (remote == null || userId == null) {
+      return local;
+    }
+
+    final remoteSettings = await _tryRemote(
+      () => remote.loadDefaultPaymentSettings(userId: userId),
+    );
+    if (remoteSettings == null) {
+      return local;
+    }
+
+    var paymentSources = local.paymentSourceAccountIds;
+    final remotePaymentSources = remoteSettings.paymentSourceAccountIds;
+    if (remotePaymentSources.isEmpty) {
+      if (paymentSources.isNotEmpty && supabaseWritesEnabled) {
+        await _tryRemote(
+          () => remote.saveDefaultPaymentSources(
+            userId: userId,
+            sources: paymentSources,
+          ),
+        );
+      }
+    } else if (paymentSources.isEmpty) {
+      await localRepository.saveDefaultPaymentSources(remotePaymentSources);
+      paymentSources = remotePaymentSources;
+    }
+
+    var cardBillingAccounts = local.cardBillingAccountIds;
+    final remoteCardBillingAccounts = remoteSettings.cardBillingAccountIds;
+    if (remoteCardBillingAccounts.isEmpty) {
+      if (cardBillingAccounts.isNotEmpty && supabaseWritesEnabled) {
+        await _tryRemote(
+          () => remote.saveDefaultCardBillingAccounts(
+            userId: userId,
+            accounts: cardBillingAccounts,
+          ),
+        );
+      }
+    } else if (cardBillingAccounts.isEmpty) {
+      await localRepository.saveDefaultCardBillingAccounts(
+        remoteCardBillingAccounts,
+      );
+      cardBillingAccounts = remoteCardBillingAccounts;
+    }
+
+    return AssetLiabilityDefaultPaymentSettings(
+      paymentSourceAccountIds: paymentSources,
+      cardBillingAccountIds: cardBillingAccounts,
+    );
   }
 
   @override
@@ -1426,6 +1550,9 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   AssetLiabilitySyncPreviewResult _buildSyncPreview(
     _AssetLiabilitySyncData data,
   ) {
+    final comparableLocalSnapshots = _latestMonthlySnapshots(
+      data.localSnapshots,
+    );
     final items = <AssetLiabilitySyncPreviewItem>[
       AssetLiabilitySyncPreviewItem(
         target: AssetLiabilitySyncTarget.monthlyState,
@@ -1476,13 +1603,16 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       ),
       AssetLiabilitySyncPreviewItem(
         target: AssetLiabilitySyncTarget.monthlySnapshots,
-        localHasData: data.localSnapshots.isNotEmpty,
+        localHasData: comparableLocalSnapshots.isNotEmpty,
         remoteHasData: data.remoteSnapshots?.isNotEmpty ?? false,
-        localCount: data.localSnapshots.length,
+        localCount: comparableLocalSnapshots.length,
         remoteCount: data.remoteSnapshots?.length ?? 0,
-        dataMatches: data.localSnapshots.isNotEmpty &&
+        dataMatches: comparableLocalSnapshots.isNotEmpty &&
             (data.remoteSnapshots?.isNotEmpty ?? false) &&
-            _monthlySnapshotsEqual(data.localSnapshots, data.remoteSnapshots!),
+            _monthlySnapshotsEqual(
+              comparableLocalSnapshots,
+              data.remoteSnapshots!,
+            ),
       ),
     ];
     return AssetLiabilitySyncPreviewResult.ready(items: items);
@@ -1731,6 +1861,18 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     return true;
   }
 
+  List<AssetLiabilityMonthlySnapshot> _latestMonthlySnapshots(
+    List<AssetLiabilityMonthlySnapshot> snapshots,
+  ) {
+    final sorted = List<AssetLiabilityMonthlySnapshot>.from(snapshots)
+      ..sort((left, right) => left.monthKey.compareTo(right.monthKey));
+    const maxSnapshots = AssetManagementEgressPolicy.maxMonthlySnapshots;
+    if (sorted.length <= maxSnapshots) {
+      return sorted;
+    }
+    return sorted.sublist(sorted.length - maxSnapshots);
+  }
+
   String? _userIdOrNull() {
     final userId = userIdProvider()?.trim();
     return userId == null || userId.isEmpty ? null : userId;
@@ -1866,6 +2008,27 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
   }
 
   @override
+  Future<AssetLiabilityDefaultPaymentSettings?> loadDefaultPaymentSettings({
+    required String userId,
+  }) async {
+    final payload = await _loadPayloadRow(
+      AssetLiabilitySupabaseTablePlan.paymentSourceSettingsTable,
+      userId: userId,
+      monthKey: AssetLiabilitySupabaseTablePlan.globalMonthKey,
+    );
+    if (payload == null) {
+      return null;
+    }
+    final settings = AssetLiabilityUserSettingsPayload.fromSupabaseJson(
+      payload,
+    );
+    return AssetLiabilityDefaultPaymentSettings(
+      paymentSourceAccountIds: settings.defaultPaymentSourceAccountIds,
+      cardBillingAccountIds: settings.defaultCardBillingAccountIds,
+    );
+  }
+
+  @override
   Future<Map<String, String>?> loadDefaultPaymentSources({
     required String userId,
   }) async {
@@ -1985,7 +2148,8 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
         .from(AssetLiabilitySupabaseTablePlan.monthlySnapshotsTable)
         .select('month_key,payload')
         .eq('user_id', userId)
-        .order('month_key');
+        .order('month_key', ascending: false)
+        .limit(AssetManagementEgressPolicy.maxMonthlySnapshots);
 
     final snapshots = <AssetLiabilityMonthlySnapshot>[];
     for (final item in response) {

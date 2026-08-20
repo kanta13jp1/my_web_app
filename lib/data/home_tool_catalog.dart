@@ -6,8 +6,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/feature_tap_logger.dart';
 
 import '../pages/abstinence_guard_page.dart';
+import '../pages/sobriety_campaign_page.dart';
 import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
+import '../pages/agent_board_page.dart';
+import '../pages/autonomous_ops_console_page.dart';
 import '../pages/agent_gpa_dashboard_page.dart';
 import '../pages/english_reading_curriculum_page.dart';
 import '../pages/ai_company_builder_page.dart';
@@ -67,6 +70,8 @@ import '../pages/thought_anchor_page.dart';
 import '../pages/thought_capture_page.dart';
 import '../pages/wardrobe_page.dart';
 import '../pages/personality_test_questions_page.dart';
+import '../pages/iq_test_page.dart';
+import '../pages/iq_training_page.dart';
 import '../pages/wip_limit_page.dart';
 import '../pages/ai_suggest_tags_page.dart';
 import '../pages/analyze_reality_page.dart';
@@ -105,6 +110,7 @@ import '../pages/user_tasks_page.dart';
 import '../pages/guitar_recording_studio_page.dart';
 import '../pages/public_guitar_gallery_page.dart';
 import '../pages/music_collaboration_page.dart';
+import '../ui/features/beatles_guitar_tabs/beatles_guitar_tabs_feature.dart';
 import '../pages/focus_timer_page.dart';
 import '../pages/ai_writing_assistant_page.dart';
 import '../pages/wiki_database_page.dart';
@@ -148,6 +154,7 @@ import '../pages/qr_code_generator_page.dart';
 import '../pages/reading_list_page.dart';
 import '../pages/referral_program_page.dart';
 import '../pages/rewards_page.dart';
+import '../pages/mcp_file_search_page.dart';
 import '../pages/semantic_search_page.dart';
 import '../pages/smart_inbox_triage_page.dart';
 import '../pages/social_feed_page.dart';
@@ -169,6 +176,7 @@ import '../pages/code_playground_page.dart';
 import '../pages/real_estate_tracker_page.dart';
 import '../pages/goal_tracker_page.dart';
 import '../pages/bookmark_sync_page.dart';
+import '../pages/jibun_api_page.dart';
 import '../pages/ui_design_status_page.dart';
 import '../pages/ai_summarizer_page.dart';
 import '../pages/revenue_forecaster_page.dart';
@@ -350,6 +358,46 @@ List<HomeToolEntry> buildHomeToolCatalog({
       keywords: const <String>['朝会', 'ブリーフィング', '優先順位'],
       onOpen: openMorningBriefing ??
           (context) => _pushPage(context, const MorningBriefingPage()),
+    ),
+    HomeToolEntry(
+      id: 'autonomous-ops-console',
+      sectionId: 'growth',
+      title: '自律オペレーションコンソール',
+      subtitle: 'AIエージェントが自動でタスクをこなす様子を眺める',
+      icon: Icons.auto_awesome_motion,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        'OMOCHA WORKS',
+        '自律',
+        'オペレーション',
+        'エージェント',
+        'カンバン',
+        'ダッシュボード',
+        'autonomous',
+        'ops',
+      ],
+      onOpen: (context) => _pushPage(context, const AutonomousOpsConsolePage()),
+    ),
+    HomeToolEntry(
+      id: 'agent-board',
+      sectionId: 'growth',
+      title: 'AIエージェント ボード',
+      subtitle: 'Claude Code / Codex がWBSタスクを進める様子を眺める',
+      icon: Icons.view_kanban_outlined,
+      color: const Color(0xFF3D5AFE),
+      keywords: const <String>[
+        'エージェント',
+        'ボード',
+        'カンバン',
+        'WBS',
+        'claude',
+        'codex',
+        'gemini',
+        'agent',
+        'board',
+        'kanban',
+      ],
+      onOpen: (context) => _pushPage(context, const AgentBoardPage()),
     ),
     HomeToolEntry(
       id: 'daily-habits',
@@ -954,6 +1002,26 @@ List<HomeToolEntry> buildHomeToolCatalog({
       keywords: const <String>['性格診断', 'MBTI', '16タイプ', '自己分析'],
       onOpen: (context) =>
           _pushPage(context, const PersonalityTestQuestionsPage(testId: 1)),
+    ),
+    HomeToolEntry(
+      id: 'iq-test',
+      sectionId: 'knowledge',
+      title: 'IQテスト (5領域)',
+      subtitle: '論理・数的・空間・記憶・言語を測って弱点を出す',
+      icon: Icons.psychology_outlined,
+      color: const Color(0xFF3D5AFE),
+      keywords: const <String>['IQ', 'IQテスト', '知能', '認知', '診断', '知能テスト'],
+      onOpen: (context) => _pushPage(context, const IqTestPage()),
+    ),
+    HomeToolEntry(
+      id: 'iq-training',
+      sectionId: 'knowledge',
+      title: 'IQトレーニング',
+      subtitle: 'テストの領域別スコアに合わせた難度で鍛える',
+      icon: Icons.fitness_center_outlined,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>['IQ', 'トレーニング', '脳トレ', '学習', '認知', '訓練'],
+      onOpen: (context) => _pushPage(context, const IqTrainingPage()),
     ),
     HomeToolEntry(
       id: 'templates',
@@ -1591,6 +1659,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
           _pushPage(context, const GuitarRecordingStudioPage()),
     ),
     HomeToolEntry(
+      id: 'beatles-guitar-tabs',
+      sectionId: 'personal',
+      title: 'Beatles ギター・タブ練習',
+      subtitle: '代表曲の奏法を題材にした、権利に配慮したオリジナル練習タブとテンポ調整',
+      icon: Icons.queue_music_outlined,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        'Beatles',
+        'ビートルズ',
+        'ギター',
+        'タブ譜',
+        'TAB',
+        'フィンガーピッキング',
+        'リフ',
+        'コード',
+      ],
+      onOpen: (context) => _pushPage(context, const BeatlesGuitarTabsFeature()),
+    ),
+    HomeToolEntry(
       id: 'public-guitar-gallery',
       sectionId: 'personal',
       title: '公開ギターギャラリー',
@@ -1932,6 +2019,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const SemanticSearchPage()),
     ),
     HomeToolEntry(
+      id: 'mcp-file-search',
+      sectionId: 'knowledge',
+      title: '外部ファイル検索',
+      subtitle: '許可済みMCP接続先を横断検索しAIチャットへ追加',
+      icon: Icons.cloud_outlined,
+      color: const Color(0xFF00796B),
+      keywords: const <String>['外部ファイル', 'MCP', '検索', 'コンテキスト', 'file search'],
+      onOpen: (context) => _pushPage(context, const McpFileSearchPage()),
+    ),
+    HomeToolEntry(
       id: 'mindmap',
       sectionId: 'knowledge',
       title: 'マインドマップ',
@@ -2047,12 +2144,38 @@ List<HomeToolEntry> buildHomeToolCatalog({
     HomeToolEntry(
       id: 'social-feed',
       sectionId: 'growth',
-      title: 'ソーシャルフィード',
-      subtitle: '公開メモ・いいね・コメントのSNSフィード',
-      icon: Icons.forum_outlined,
-      color: const Color(0xFF1565C0),
-      keywords: const <String>['SNS', 'フィード', 'ソーシャル', 'タイムライン', 'social'],
+      title: 'MUSUBI ソーシャル',
+      subtitle: '文脈・翻訳・透明なフィードを自分で選べる人間中心SNS',
+      icon: Icons.hub_outlined,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        'SNS',
+        'フィード',
+        'ソーシャル',
+        'タイムライン',
+        'MUSUBI',
+        'コミュニティ',
+        'social',
+      ],
       onOpen: (context) => _pushPage(context, const SocialFeedPage()),
+    ),
+    HomeToolEntry(
+      id: 'sobriety-campaign',
+      sectionId: 'today',
+      title: '断つ応援キャンペーン',
+      subtitle: '酒・煙草・風俗をやめる動画を観てシェアする縦型フィード',
+      icon: Icons.play_circle_outline,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        '禁酒',
+        '禁煙',
+        '脱風俗',
+        '動画',
+        'シェア',
+        'キャンペーン',
+        'sobriety',
+      ],
+      onOpen: (context) => _pushPage(context, const SobrietyCampaignPage()),
     ),
     HomeToolEntry(
       id: 'referral-program',
@@ -2522,6 +2645,33 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const BookmarkSyncPage()),
     ),
     HomeToolEntry(
+      id: 'jibun-api',
+      sectionId: 'ai',
+      title: '自分API',
+      subtitle: 'Notion対抗。APIキー発行・外部AI連携・自作Agent(Worker)登録',
+      icon: Icons.api,
+      color: const Color(0xFF3D5AFE),
+      keywords: const <String>[
+        'API',
+        '自分API',
+        'APIキー',
+        'developer',
+        'デベロッパー',
+        'Worker',
+        'ワーカー',
+        'Agent',
+        'エージェント',
+        '外部連携',
+        'ChatGPT',
+        'Claude',
+        'integration',
+        'webhook',
+        'token',
+        'トークン',
+      ],
+      onOpen: (context) => _pushPage(context, const JibunApiPage()),
+    ),
+    HomeToolEntry(
       id: 'ai-summarizer',
       sectionId: 'knowledge',
       title: 'AI要約',
@@ -2664,6 +2814,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'observability',
       ],
       onOpen: (context) => _pushPage(context, const EdgeLlmPlaygroundPage()),
+    ),
+    HomeToolEntry(
+      id: 'agi-fireworks',
+      sectionId: 'ai',
+      title: 'AGI Fireworks',
+      subtitle: 'AIエージェントとの1か月を、打ち上げ花火の動画で振り返る',
+      icon: Icons.auto_awesome_outlined,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        'AGI',
+        '花火',
+        '動画',
+        'fireworks',
+        'Claude',
+        'Codex',
+        'tool calls',
+        'セッション',
+      ],
+      onOpen: (context) => Navigator.of(context).pushNamed('/agi-fireworks'),
     ),
     HomeToolEntry(
       id: 'tome-deck-studio',

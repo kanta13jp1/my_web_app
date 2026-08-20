@@ -11,7 +11,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "42fb9083dae6170790faab3933c704ef1782243207a2971b82e62902bc8cbc7a",
+      "hash": "ef5ed59000ef000cb398de8c8a3c155e8b61f189627e3bad5314a032bbe59814",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -55,15 +55,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.201 / July 3, 2026",
+      "latest_signal": "2.1.232 / August 13, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "4b06d6ea81c0d1d695550177ec10d87fabce3883f743faa7d4eaf53176688c4f",
+      "previous_hash": "ae973f95c841c1e6cd721a08f731554a63507148c3004296dbd4ac8abeec6cc1",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
-        "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.201 July 3, 2026 Claude Sonnet 5 sessions no longer use the mid-conversation system role for harness reminders ​ 2.1.200 July 3, 2026 Changed AskUserQuestion dialogs to no..."
+        "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
+        "​ 2.1.232 August 13, 2026 Subagent forking is now on by default: a subagent_type: \"fork\" subagent inherits the full conversation and prompt cache, and non-teammate agent spawns..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -72,7 +72,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "6ea514d7f850db8f0f650067ecb593c7653b8b319ef7154596016af809fa2dc9",
+      "hash": "68b553a0d18b67e7ba26e4d100af5a8803b93be507da1440355f5d221b6d764d",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -90,12 +90,14 @@
         "integration": [
           "MCP",
           "connector",
-          "GitHub"
+          "GitHub",
+          "IDE extension"
         ],
         "quality-cost": [
           "OpenTelemetry",
           "cost",
           "rate limit",
+          "sandbox",
           "permission",
           "review",
           "CI"
@@ -109,12 +111,12 @@
       "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "00a049697865362a8b9b84bf4ae5721670210f0d05fc6bd1d979ac88cbbdd22f",
+      "previous_hash": "25d7d4f9fe758ae28905d5cf0108cb18ce660278e9e58dea70384b8dd8b4998b",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
         "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
-        "Copy page For a quickstart guide with examples, see Automate actions with hooks ."
+        "Copy page Copy page For a quickstart guide with examples, see Automate actions with hooks ."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/hooks"
@@ -123,7 +125,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "d50ff352ac5d607c37b9c65a72f48db6b28dacfdeb9b48f7fb4a5a74561203a5",
+      "hash": "0c0ca421e0052172b163f600672402e3fd43da924406e0542fc0e92fc6bcbfcb",
       "keyword_groups": {
         "codex-runtime": [
           "computer use"
@@ -157,18 +159,131 @@
       "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume",
       "name": "Claude Code GitHub Actions",
       "owner": "Claude Code",
-      "previous_hash": "cd1b6179c253ee6ff8d1fe71e27b63ce042190df6d3eb93f34222879a6955b59",
+      "previous_hash": "16169570e6d5b7464fa84bf9a60ba6e09af666e83cf5973d556f37ea81c414a8",
       "slug": "claude-code-github-actions",
       "snippets": [
         "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before...",
         "Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...",
-        "Claude Code Action Setup Quick setup Manual setup Upgrading from Beta Essential changes Breaking Changes Reference Before and After Example Example use cases Basic workflow..."
+        "You can also give the Claude Code GitHub Action a prompt to run automatically on any GitHub event."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/github-actions"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "9f9d8def9bc43b713ccd54237c8dfa1eb48dc8475dadaa9365ad51b20226368a",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.5",
+          "GPT-5.4",
+          "model picker",
+          "in-app browser",
+          "browser use",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "quota",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "schedule",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2026-08-13 / Computer History Computer History is an opt-in feature in the ChatGPT desktop app on macOS",
+      "name": "Codex changelog",
+      "owner": "Codex",
+      "previous_hash": "b49807688d0ee0e85e4e8d25e628e591dfef36406def106ea17095613ccef9e5",
+      "slug": "codex-changelog",
+      "snippets": [
+        "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
+        "Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...",
+        "All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How..."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "554104a900c0f9d762a3088f5517f1bf13f6cabe64ebf7cc0d81bbb5c016e028",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.4",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "schedule",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
+      "name": "Codex use cases",
+      "owner": "Codex",
+      "previous_hash": "32ad39e015f35a19d5e24c8edb13a38b5eb1ca8938498ac16e073fe7ccb80c95",
+      "slug": "codex-use-cases",
+      "snippets": [
+        "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
+        "Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...",
+        "All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How..."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/use-cases/"
     }
   ],
-  "checked_at": "2026-07-04T22:13:19Z",
+  "checked_at": "2026-08-14T21:42:27Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -220,13 +335,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-07-03T22:17:02Z",
+  "previous_checked_at": "2026-08-13T22:04:48Z",
   "sources": [
     {
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "42fb9083dae6170790faab3933c704ef1782243207a2971b82e62902bc8cbc7a",
+      "hash": "ef5ed59000ef000cb398de8c8a3c155e8b61f189627e3bad5314a032bbe59814",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -270,15 +385,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.201 / July 3, 2026",
+      "latest_signal": "2.1.232 / August 13, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "4b06d6ea81c0d1d695550177ec10d87fabce3883f743faa7d4eaf53176688c4f",
+      "previous_hash": "ae973f95c841c1e6cd721a08f731554a63507148c3004296dbd4ac8abeec6cc1",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
-        "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.201 July 3, 2026 Claude Sonnet 5 sessions no longer use the mid-conversation system role for harness reminders ​ 2.1.200 July 3, 2026 Changed AskUserQuestion dialogs to no..."
+        "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
+        "​ 2.1.232 August 13, 2026 Subagent forking is now on by default: a subagent_type: \"fork\" subagent inherits the full conversation and prompt cache, and non-teammate agent spawns..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -287,7 +402,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "6ea514d7f850db8f0f650067ecb593c7653b8b319ef7154596016af809fa2dc9",
+      "hash": "68b553a0d18b67e7ba26e4d100af5a8803b93be507da1440355f5d221b6d764d",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -305,12 +420,14 @@
         "integration": [
           "MCP",
           "connector",
-          "GitHub"
+          "GitHub",
+          "IDE extension"
         ],
         "quality-cost": [
           "OpenTelemetry",
           "cost",
           "rate limit",
+          "sandbox",
           "permission",
           "review",
           "CI"
@@ -324,12 +441,12 @@
       "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "00a049697865362a8b9b84bf4ae5721670210f0d05fc6bd1d979ac88cbbdd22f",
+      "previous_hash": "25d7d4f9fe758ae28905d5cf0108cb18ce660278e9e58dea70384b8dd8b4998b",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
         "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
-        "Copy page For a quickstart guide with examples, see Automate actions with hooks ."
+        "Copy page Copy page For a quickstart guide with examples, see Automate actions with hooks ."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/hooks"
@@ -338,7 +455,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "d50ff352ac5d607c37b9c65a72f48db6b28dacfdeb9b48f7fb4a5a74561203a5",
+      "hash": "0c0ca421e0052172b163f600672402e3fd43da924406e0542fc0e92fc6bcbfcb",
       "keyword_groups": {
         "codex-runtime": [
           "computer use"
@@ -372,21 +489,21 @@
       "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume",
       "name": "Claude Code GitHub Actions",
       "owner": "Claude Code",
-      "previous_hash": "cd1b6179c253ee6ff8d1fe71e27b63ce042190df6d3eb93f34222879a6955b59",
+      "previous_hash": "16169570e6d5b7464fa84bf9a60ba6e09af666e83cf5973d556f37ea81c414a8",
       "slug": "claude-code-github-actions",
       "snippets": [
         "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before...",
         "Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...",
-        "Claude Code Action Setup Quick setup Manual setup Upgrading from Beta Essential changes Breaking Changes Reference Before and After Example Example use cases Basic workflow..."
+        "You can also give the Claude Code GitHub Action a prompt to run automatically on any GitHub event."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "5b30bd4fae62b3bc33063bc896c4566d1a4ae0f8f2b487611119d4fc3c9b4022",
+      "hash": "9f9d8def9bc43b713ccd54237c8dfa1eb48dc8475dadaa9365ad51b20226368a",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -401,8 +518,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "SessionStart",
-          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -411,8 +526,7 @@
           "Slack",
           "Linear",
           "GitHub",
-          "IDE extension",
-          "VSCode"
+          "IDE extension"
         ],
         "quality-cost": [
           "OpenTelemetry",
@@ -432,36 +546,35 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-01 / Codex CLI 0.142.5 pre",
+      "latest_signal": "2026-08-13 / Computer History Computer History is an opt-in feature in the ChatGPT desktop app on macOS",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "5b30bd4fae62b3bc33063bc896c4566d1a4ae0f8f2b487611119d4fc3c9b4022",
+      "previous_hash": "b49807688d0ee0e85e4e8d25e628e591dfef36406def106ea17095613ccef9e5",
       "slug": "codex-changelog",
       "snippets": [
-        "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "( #30771 ) Changelog Full Changelog: rust-v0.142.4...rust-v0.142.5 #30771 [codex] Backport websocket trace fix to release/0.142 @dylan-hurd-oai Full release on Github June 2026...",
-        "Changelog Full Changelog: rust-v0.142.3...rust-v0.142.4 Full release on Github 2026-06-26 Codex CLI 0.142.3 pre]:w-full [&>pre]:max-w-full [&>pre]:mb-0 pt-4\"> $ npm install -g..."
+        "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
+        "Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...",
+        "All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How..."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "5b4a2cfd145e7bb23781fcf11d9ebaa9fd14218ca6e53e8989b1e94359c4e67f",
+      "hash": "554104a900c0f9d762a3088f5517f1bf13f6cabe64ebf7cc0d81bbb5c016e028",
       "keyword_groups": {
         "codex-runtime": [
-          "GPT-5.5",
           "GPT-5.4",
-          "in-app browser",
           "computer use",
           "worktree",
           "subagents"
         ],
         "hooks": [
           "hook",
-          "hooks"
+          "hooks",
+          "Stop"
         ],
         "integration": [
           "MCP",
@@ -481,20 +594,20 @@
         ],
         "schedule": [
           "automation",
-          "automations",
+          "schedule",
           "GitHub Actions",
           "workflow"
         ]
       },
-      "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
+      "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "5b4a2cfd145e7bb23781fcf11d9ebaa9fd14218ca6e53e8989b1e94359c4e67f",
+      "previous_hash": "32ad39e015f35a19d5e24c8edb13a38b5eb1ca8938498ac16e073fe7ccb80c95",
       "slug": "codex-use-cases",
       "snippets": [
-        "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
-        "Automation Integrations Use your computer with Codex Let Codex click, type, and navigate apps on your Mac.",
-        "Knowledge Work Workflow Follow a goal Give Codex a durable objective for long-running work."
+        "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
+        "Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)...",
+        "All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How..."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/use-cases/"
@@ -518,41 +631,36 @@
       "changed": false,
       "error": null,
       "first_seen": false,
-      "hash": "e40fb5b45015b355b1178bba7dad73fbd7107a0c093fb739e092d4382e201e5b",
+      "hash": "ae74337e03614eb31784f983251beef3857d6a30b0d9f3734294d6e8c5d8ef73",
       "keyword_groups": {
-        "codex-runtime": [
-          "computer use",
-          "subagents"
-        ],
         "hooks": [
           "hook",
           "hooks"
         ],
         "integration": [
-          "MCP",
-          "Slack",
-          "GitHub"
+          "MCP"
         ],
         "quality-cost": [
+          "cost",
           "review",
           "CI"
         ],
         "schedule": [
           "automation",
           "automations",
-          "GitHub Actions",
+          "schedule",
           "workflow"
         ]
       },
-      "latest_signal": "3.9 / Jun 29, 2026",
+      "latest_signal": "New in Cursor",
       "name": "Cursor changelog",
       "owner": "Cursor",
-      "previous_hash": "e40fb5b45015b355b1178bba7dad73fbd7107a0c093fb739e092d4382e201e5b",
+      "previous_hash": "ae74337e03614eb31784f983251beef3857d6a30b0d9f3734294d6e8c5d8ef73",
       "slug": "cursor-changelog",
       "snippets": [
-        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Mobile Automations Review Tab Marketplace ↗ Enterprise Pricing Resources...",
-        "# Team MCPs in team marketplaces Admins can now configure Team MCP servers once and distribute them across cloud agents, the agents window, IDE, and CLI.",
-        "When an admin sets up Team MCP servers for cloud agents, they can make those same servers available in a team marketplace from Dashboard -> Integrations & MCP ."
+        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...",
+        "Builds are included with Cloud Agents at no additional cost.",
+        "Or click Run setup agent first to test the migration and review any proposed config changes."
       ],
       "status": 200,
       "url": "https://cursor.com/changelog"
@@ -561,7 +669,7 @@
       "changed": false,
       "error": null,
       "first_seen": false,
-      "hash": "39d0b161e75b795d7ef492799d59b6735efa443635b33401b500bb53c3cf3435",
+      "hash": "26aadac92b37e4dba989ec21d669ed9e59ae4ee05b67a6ffff38a4ceeb4c903d",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -583,15 +691,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
+      "latest_signal": "VS Code Gemini Code Assist 2.95.0 / August 10, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
-      "previous_hash": "39d0b161e75b795d7ef492799d59b6735efa443635b33401b500bb53c3cf3435",
+      "previous_hash": "26aadac92b37e4dba989ec21d669ed9e59ae4ee05b67a6ffff38a4ceeb4c903d",
       "slug": "gemini-code-assist-release-notes",
       "snippets": [
-        "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
-        "Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).",
-        "Gemini Code Assist on GitHub now offers an enterprise version for enhanced code reviews across multiple repositories."
+        "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",
+        "Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra...",
+        "April 13, 2026 VS Code Gemini Code Assist 2.77.3 Fixed Quota issues fixed in VS Code Various bug fixes related to quota issues."
       ],
       "status": 200,
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
@@ -600,14 +708,16 @@
       "changed": false,
       "error": null,
       "first_seen": false,
-      "hash": "2cabf2fb186d0c3f29b773fe2349e4c0d4be483e487220a1a95573b2e2b3d657",
+      "hash": "10926c02ec24c81fb0b9ab573da2d02c439a02fb1124fb872c65876cf8e7a30a",
       "keyword_groups": {
         "codex-runtime": [
+          "model picker",
           "computer use",
           "subagents"
         ],
         "hooks": [
           "hook",
+          "hooks",
           "Stop"
         ],
         "integration": [
@@ -632,15 +742,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "July 1, 2026",
+      "latest_signal": "August 12, 2026",
       "name": "Devin release notes",
       "owner": "Devin",
-      "previous_hash": "2cabf2fb186d0c3f29b773fe2349e4c0d4be483e487220a1a95573b2e2b3d657",
+      "previous_hash": "10926c02ec24c81fb0b9ab573da2d02c439a02fb1124fb872c65876cf8e7a30a",
       "slug": "devin-release-notes",
       "snippets": [
         "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
-        "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
-        "Auto-Review Scoped to Your PRs The auto-review user preference now applies only to PRs you author, so enabling it won’t trigger automatic reviews on other people’s pull requests."
+        "Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Stacked PRs Devin...",
+        "Side chats open in a panel next to the worklog and support stopping in-flight responses."
       ],
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"

@@ -6,7 +6,7 @@ name: WBS User Tasks Notify (毎朝 + manual)
 
 on:
   schedule:
-    - cron: "0 0 * * *"  # 毎日 09:00 JST (UTC 00:00)
+    - cron: "3 0 * * *"  # 毎日 09:03 JST (2026-07-17 ci-audit: 00:00 UTC 8本集中を分散)
   workflow_dispatch:
     inputs:
       limit:

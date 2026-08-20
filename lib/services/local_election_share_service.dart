@@ -3,6 +3,7 @@
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../data/repositories/official_endorsement_repository.dart';
 import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
 import '../models/public_memo.dart';
@@ -16,9 +17,16 @@ typedef LocalElectionMemoPublisher = Future<PublicMemo?> Function({
   Map<String, dynamic> metadata,
 });
 
-typedef LocalElectionMemoLoader = Future<PublicMemo?> Function({
-  required int noteId,
-  required String userId,
+typedef LocalElectionMemoLoader = Future<PublicMemo?> Function(
+    {required int noteId, required String userId});
+
+typedef _OfficialEndorsementTotals = ({
+  int total,
+  int incumbent,
+  int newcomer,
+  int former,
+  int prefectures,
+  String asOf,
 });
 
 class LocalElectionShareDraft {
@@ -49,10 +57,7 @@ class LocalElectionShareWindowRange {
   final DateTime start;
   final DateTime end;
 
-  const LocalElectionShareWindowRange({
-    required this.start,
-    required this.end,
-  });
+  const LocalElectionShareWindowRange({required this.start, required this.end});
 }
 
 class LocalElectionShareService {
@@ -64,8 +69,23 @@ class LocalElectionShareService {
   static const int maxWeekendWindowCount = 60;
   static const int _syntheticNoteIdBase = 90000000000000;
   static const int _planDashboardNoteId = _syntheticNoteIdBase + 7002027;
-  static final DateTime nextUnifiedLocalElectionFirstHalfTargetDate =
-      DateTime(2027, 4, 11);
+  // 統一地方選 2027 の仮日程 (官報告示前の推定 / 単一正本)。
+  // 告示日は公選法の告示日数ルールと 2023 実績 (前半: 知事選17日前 /
+  // 後半: 市区議・市区長7日前) に合わせる。確定後はここだけ更新する。
+  static final DateTime nextUnifiedLocalElectionFirstHalfTargetDate = DateTime(
+    2027,
+    4,
+    11,
+  );
+  static final DateTime nextUnifiedLocalElectionFirstHalfAnnouncementDate =
+      DateTime(2027, 3, 25);
+  static final DateTime nextUnifiedLocalElectionSecondHalfTargetDate = DateTime(
+    2027,
+    4,
+    25,
+  );
+  static final DateTime nextUnifiedLocalElectionSecondHalfAnnouncementDate =
+      DateTime(2027, 4, 18);
   static final List<LocalElectionShareWindow> availableWindows =
       List<LocalElectionShareWindow>.unmodifiable(
     List<LocalElectionShareWindow>.generate(
@@ -80,14 +100,34 @@ class LocalElectionShareService {
   final SupabaseClient _supabase;
   final LocalElectionMemoPublisher? _publishMemo;
   final LocalElectionMemoLoader? _loadMemo;
+  final OfficialEndorsementRepository _officialEndorsementRepository;
   final DateFormat _dateOnlyFormat = DateFormat('yyyy/MM/dd', 'ja_JP');
+
+  _OfficialEndorsementTotals _officialEndorsementTotals(
+    LocalElectionRealitySnapshot? snapshot,
+  ) {
+    final resolved = _officialEndorsementRepository.resolve(
+      snapshot?.electionIntelligence,
+    );
+    return (
+      total: resolved.totalCount,
+      incumbent: resolved.incumbentCount,
+      newcomer: resolved.newcomerCount,
+      former: resolved.formerCount,
+      prefectures: resolved.prefectureCount,
+      asOf: resolved.sourceAsOf,
+    );
+  }
 
   LocalElectionShareService(
     this._supabase, {
     LocalElectionMemoPublisher? publishMemo,
     LocalElectionMemoLoader? loadMemo,
+    OfficialEndorsementRepository officialEndorsementRepository =
+        const OfficialEndorsementRepository(),
   })  : _publishMemo = publishMemo,
-        _loadMemo = loadMemo;
+        _loadMemo = loadMemo,
+        _officialEndorsementRepository = officialEndorsementRepository;
 
   Future<PublicMemo?> publishSnapshot({
     required LocalElectionRealitySnapshot snapshot,
@@ -99,11 +139,7 @@ class LocalElectionShareService {
       return null;
     }
 
-    final draft = buildDraft(
-      snapshot: snapshot,
-      members: members,
-      plan: plan,
-    );
+    final draft = buildDraft(snapshot: snapshot, members: members, plan: plan);
     final publishMemo = _publishMemo;
     if (publishMemo == null) {
       return null;
@@ -129,10 +165,7 @@ class LocalElectionShareService {
     if (loadMemo == null) {
       return null;
     }
-    return loadMemo(
-      noteId: buildSyntheticNoteId(snapshot),
-      userId: userId,
-    );
+    return loadMemo(noteId: buildSyntheticNoteId(snapshot), userId: userId);
   }
 
   Future<PublicMemo?> publishPlanDashboard({
@@ -173,10 +206,7 @@ class LocalElectionShareService {
     if (loadMemo == null) {
       return null;
     }
-    return loadMemo(
-      noteId: _planDashboardNoteId,
-      userId: userId,
-    );
+    return loadMemo(noteId: _planDashboardNoteId, userId: userId);
   }
 
   LocalElectionShareDraft buildDraft({
@@ -232,6 +262,40 @@ class LocalElectionShareService {
     );
   }
 
+  /// R24: 選挙集計スレッドを growth-hub x.post へ渡す payload(純関数・VMテスト可)。
+  /// variant と content_archetype を明示し、8K 実測級の投稿を学習ループ
+  /// (variant ranking / Archetype lift) の計測対象にする。
+  static Map<String, dynamic> buildElectionXPostPayload(List<String> tweets) {
+    final cleaned = tweets
+        .map((t) => t.trim())
+        .where((t) => t.isNotEmpty)
+        .toList(growable: false);
+    if (cleaned.isEmpty) return const {};
+    return {
+      'action': 'x.post',
+      'text': cleaned.first,
+      if (cleaned.length > 1) 'replyTexts': cleaned.sublist(1),
+      'source': 'local_election_tracker',
+      'variant': 'local_election_tracker',
+      'contentArchetype': 'data_report',
+      'experimentKey': 'x_first_user_growth_10k',
+    };
+  }
+
+  /// R24: composer のスレッドを growth-hub x.post 経由で直接投稿する。従来は
+  /// コピー/X intent の手動投稿のみで x_post_log に残らず、データレポート型
+  /// (実測 8K インプ)の勝ちが学習ループから不可視だった。
+  Future<Map<String, dynamic>> postThreadToXViaApi(List<String> tweets) async {
+    final payload = buildElectionXPostPayload(tweets);
+    if (payload.isEmpty) {
+      return {'success': false, 'error': '投稿できるテキストがありません'};
+    }
+    final res = await _supabase.functions.invoke('growth-hub', body: payload);
+    final data = res.data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    return {'success': false, 'error': '不明な応答形式'};
+  }
+
   String buildXShareText({
     required LocalElectionRealitySnapshot snapshot,
     required String publicUrl,
@@ -273,27 +337,84 @@ class LocalElectionShareService {
     return lines.join('\n').trim();
   }
 
-  String buildXShareBody({
+  String buildXShareBody({required LocalElectionRealitySnapshot snapshot}) {
+    return buildXShareText(snapshot: snapshot, publicUrl: '');
+  }
+
+  /// X の投稿長制限(25,000)は twitter-text の加重文字数で数えられる:
+  /// CJK/全角=2、半角(Latin 等)=1、URL=一律23。日本語主体の集計本文を Dart の
+  /// code unit 数で測ると実重みのほぼ半分にしか見えず、上限超過を素通しする
+  /// (レビュー指摘)。ここでは全文字を範囲判定で加重する近似を使う(ASCII の
+  /// URL を 1/字で数える=実際の 23/URL より過大評価で安全側)。
+  static int xWeightedLength(String text) {
+    var weighted = 0;
+    for (final rune in text.runes) {
+      weighted += rune < 0x1100 ? 1 : 2;
+    }
+    return weighted;
+  }
+
+  /// R24: 地方議員集計を growth-hub x.post(API 投稿)へ載せるための長文本文。
+  /// intent 投稿は x_post_log の外=Archetype lift 計測に入らないため、実測
+  /// 累積8Kの既存ポストA（後続A/B実測3.2K）と同じ集計ノート全文を、
+  /// API 経由の第一級経路に
+  /// する。X Premium 上限(25,000 weighted)に対し [maxWeightedChars] で安全側に
+  /// 収め、超過時は名簿セクション境界(\n\n◽️)で切り詰めて公開ノートへ誘導する。
+  String buildXPostLongText({
     required LocalElectionRealitySnapshot snapshot,
+    required List<LocalElectionLegislatorProfile> members,
+    LocalElectionPlanDashboard? plan,
+    String publicUrl = '',
+    int maxWeightedChars = 24000,
   }) {
-    return buildXShareText(
-      snapshot: snapshot,
-      publicUrl: '',
-    );
+    final draft = buildDraft(snapshot: snapshot, members: members, plan: plan);
+    final suffix =
+        publicUrl.isEmpty ? '' : '\n\n全都道府県の内訳と現職名簿の公開ノート:\n$publicUrl';
+    final body = draft.content.trim();
+    if (xWeightedLength(body) + xWeightedLength(suffix) <= maxWeightedChars) {
+      return '$body$suffix';
+    }
+    // 公開ノート URL が無いときは「続きは公開ノートへ」と書かない(リンクの
+    // 無い誘導文が公開されたまま残る事故を防ぐ。呼び出し側でも memo 発行失敗
+    // 時は投稿自体を中止する)。
+    final truncationNote = publicUrl.isEmpty
+        ? '\n\n(文字数上限のため名簿は途中まで)'
+        : '\n\n(文字数上限のため名簿の続きは公開ノートへ)';
+    final budget = maxWeightedChars -
+        xWeightedLength(suffix) -
+        xWeightedLength(truncationNote);
+    if (budget <= 0) {
+      return buildXShareText(snapshot: snapshot, publicUrl: publicUrl);
+    }
+    // weighted budget 内に収まる最大の code-unit 位置を前方走査で求める。
+    var weighted = 0;
+    var cutLimit = 0;
+    for (final rune in body.runes) {
+      final w = rune < 0x1100 ? 1 : 2;
+      if (weighted + w > budget) {
+        break;
+      }
+      weighted += w;
+      cutLimit += rune > 0xFFFF ? 2 : 1;
+    }
+    var cut = body.lastIndexOf('\n\n◽️', cutLimit);
+    if (cut < 0) {
+      cut = body.lastIndexOf('\n\n', cutLimit);
+    }
+    if (cut <= 0) {
+      cut = cutLimit;
+    }
+    return '${body.substring(0, cut).trimRight()}$truncationNote$suffix';
   }
 
   Uri buildXShareIntentUri({
     required LocalElectionRealitySnapshot snapshot,
     required String publicUrl,
   }) {
-    return Uri.https(
-      'x.com',
-      '/intent/tweet',
-      <String, String>{
-        'text': buildXShareBody(snapshot: snapshot),
-        'url': publicUrl,
-      },
-    );
+    return Uri.https('x.com', '/intent/tweet', <String, String>{
+      'text': buildXShareBody(snapshot: snapshot),
+      'url': publicUrl,
+    });
   }
 
   String buildPlanDashboardXShareText({
@@ -310,10 +431,18 @@ class LocalElectionShareService {
   String buildPlanDashboardXShareBody({
     required LocalElectionPlanDashboard plan,
   }) {
+    // X は文字数制限があるため、公認予定候補は掲載がある場合だけ1行足す。
+    final endorsements = _officialEndorsementRepository.fallbackSnapshot;
+    final hasOfficialEndorsement = endorsements.hasData;
     return [
       '統一地方選700 県連KPI一覧',
-      '全${plan.prefectures.length}県連のKGI、CSF、KPI、現職人数、候補者進捗、公認期限、立憲参考値を公開ノートにまとめました。',
+      '全${plan.prefectures.length}県連のKGI、CSF、KPI、現職人数、候補者進捗、公認期限、立憲・自民の参考値を公開ノートにまとめました。',
       '現職 ${plan.currentLocalMembers}人 / 700まで残り${plan.requiredNetIncrease}人',
+      if (hasOfficialEndorsement)
+        '公認予定候補 ${endorsements.totalCount}件'
+            '(現職${endorsements.incumbentCount}/'
+            '新人${endorsements.newcomerCount}/'
+            '元職${endorsements.formerCount})',
       buildNextUnifiedLocalElectionCountdownLine(now: plan.updatedAt.toLocal()),
       '純増目標 ${plan.allocatedNetIncrease}人 / 新人 ${plan.totalNewCandidateTarget}人',
       '#統一地方選 #国民民主党',
@@ -328,8 +457,9 @@ class LocalElectionShareService {
   }
 
   String buildNextUnifiedLocalElectionCountdownLine({DateTime? now}) {
-    final dateLabel =
-        _dateOnlyFormat.format(nextUnifiedLocalElectionFirstHalfTargetDate);
+    final dateLabel = _dateOnlyFormat.format(
+      nextUnifiedLocalElectionFirstHalfTargetDate,
+    );
     final days = daysUntilNextUnifiedLocalElection(now: now);
     return '次回統一地方選($dateLabel目安)まであと$days日';
   }
@@ -343,14 +473,10 @@ class LocalElectionShareService {
     required LocalElectionPlanDashboard plan,
     required String publicUrl,
   }) {
-    return Uri.https(
-      'x.com',
-      '/intent/tweet',
-      <String, String>{
-        'text': buildPlanDashboardXShareBody(plan: plan),
-        if (publicUrl.isNotEmpty) 'url': publicUrl,
-      },
-    );
+    return Uri.https('x.com', '/intent/tweet', <String, String>{
+      'text': buildPlanDashboardXShareBody(plan: plan),
+      if (publicUrl.isNotEmpty) 'url': publicUrl,
+    });
   }
 
   String buildPrefectureKpiXShareText({
@@ -358,10 +484,7 @@ class LocalElectionShareService {
     LocalElectionPrefectureReality? reality,
     required String publicUrl,
   }) {
-    final body = buildPrefectureKpiXShareBody(
-      plan: plan,
-      reality: reality,
-    );
+    final body = buildPrefectureKpiXShareBody(plan: plan, reality: reality);
     if (publicUrl.isEmpty) {
       return body;
     }
@@ -401,17 +524,10 @@ class LocalElectionShareService {
     LocalElectionPrefectureReality? reality,
     required String publicUrl,
   }) {
-    return Uri.https(
-      'x.com',
-      '/intent/tweet',
-      <String, String>{
-        'text': buildPrefectureKpiXShareBody(
-          plan: plan,
-          reality: reality,
-        ),
-        if (publicUrl.isNotEmpty) 'url': publicUrl,
-      },
-    );
+    return Uri.https('x.com', '/intent/tweet', <String, String>{
+      'text': buildPrefectureKpiXShareBody(plan: plan, reality: reality),
+      if (publicUrl.isNotEmpty) 'url': publicUrl,
+    });
   }
 
   LocalElectionShareWindowRange scheduleWindowRange(
@@ -462,8 +578,10 @@ class LocalElectionShareService {
     return schedules;
   }
 
-  String buildWindowDateRangeLabel(LocalElectionShareWindow window,
-      {DateTime? now}) {
+  String buildWindowDateRangeLabel(
+    LocalElectionShareWindow window, {
+    DateTime? now,
+  }) {
     final range = scheduleWindowRange(window, now: now);
     final s = range.start;
     final e = range.end;
@@ -622,6 +740,12 @@ class LocalElectionShareService {
     required List<LocalElectionLegislatorProfile> members,
     LocalElectionPlanDashboard? plan,
   }) {
+    final endorsementTotals = _officialEndorsementTotals(snapshot);
+    final dpjOfficialEndorsementTotal = endorsementTotals.total;
+    final dpjOfficialEndorsementIncumbentTotal = endorsementTotals.incumbent;
+    final dpjOfficialEndorsementNewcomerTotal = endorsementTotals.newcomer;
+    final dpjOfficialEndorsementFormerTotal = endorsementTotals.former;
+    final dpjOfficialEndorsementPrefectureCount = endorsementTotals.prefectures;
     final cdpByPrefecture = _cdpByPrefecture(plan);
     final missing =
         prefectures.where((item) => item.currentMembers == 0).toList();
@@ -650,8 +774,25 @@ class LocalElectionShareService {
         '${snapshot.official2023SecondHalfWins} = ${snapshot.official2023TotalWins}',
       )
       ..writeln(
-          '議員在籍県数: ${prefectures.where((item) => item.currentMembers > 0).length}県')
+        '議員在籍県数: ${prefectures.where((item) => item.currentMembers > 0).length}県',
+      )
       ..writeln('現職名簿件数: ${members.length}人');
+
+    // 画面に出している比較指標 (公認予定候補 / 自民地力差) を共有本文にも載せる。
+    // 載せないと「ノート化」「X投稿」した先で最新の重要指標だけが欠落する。
+    if (dpjOfficialEndorsementTotal > 0) {
+      buffer.writeln(
+        '公認予定候補: $dpjOfficialEndorsementTotal件'
+        '(現職$dpjOfficialEndorsementIncumbentTotal / '
+        '新人$dpjOfficialEndorsementNewcomerTotal / '
+        '元職$dpjOfficialEndorsementFormerTotal) '
+        '※$dpjOfficialEndorsementPrefectureCount/47都道府県に掲載',
+      );
+    }
+    final ldpTotal = plan?.totalLdpLocalMembers ?? 0;
+    if (ldpTotal > 0) {
+      buffer.writeln('自民地方議員参考合計: $ldpTotal人(総務省 所属党派別人員調)');
+    }
 
     if (snapshot.aiSummary.trim().isNotEmpty) {
       buffer
@@ -686,7 +827,8 @@ class LocalElectionShareService {
       buffer.writeln('- 🔴議員不在県なし');
     } else {
       buffer.writeln(
-          '- 🔴議員不在 ${missing.length}県: ${missing.map((item) => item.prefecture).join('、')}');
+        '- 🔴議員不在 ${missing.length}県: ${missing.map((item) => item.prefecture).join('、')}',
+      );
     }
     if (low.isEmpty) {
       buffer.writeln('- 🟡要強化県なし');
@@ -760,12 +902,25 @@ class LocalElectionShareService {
       'type': metadataType,
       'snapshotDate': _dateOnlyFormat.format(snapshot.fetchedAt.toLocal()),
       'fetchedAt': snapshot.fetchedAt.toIso8601String(),
-      'nextUnifiedLocalElectionTargetDate':
-          _dateOnlyFormat.format(nextUnifiedLocalElectionFirstHalfTargetDate),
-      'daysUntilNextUnifiedLocalElection':
-          daysUntilNextUnifiedLocalElection(now: snapshot.fetchedAt.toLocal()),
+      'nextUnifiedLocalElectionTargetDate': _dateOnlyFormat.format(
+        nextUnifiedLocalElectionFirstHalfTargetDate,
+      ),
+      'daysUntilNextUnifiedLocalElection': daysUntilNextUnifiedLocalElection(
+        now: snapshot.fetchedAt.toLocal(),
+      ),
       'officialCurrentLocalMembers': snapshot.officialCurrentLocalMembers,
       'actualNetIncreaseRequired': snapshot.actualNetIncreaseRequired,
+      'electionMode': snapshot.electionIntelligence.selectedMode.wireName,
+      'electionIntelligenceSchemaVersion':
+          snapshot.electionIntelligence.schemaVersion,
+      'partyGoals': snapshot.electionIntelligence.goals
+          .map((item) => item.toJson())
+          .toList(),
+      'electionAchievements': snapshot.electionIntelligence.achievements
+          .map((item) => item.toJson())
+          .toList(),
+      'officialEndorsements':
+          snapshot.electionIntelligence.officialEndorsements.toJson(),
       'cdpLocalMembers': prefectures.fold<int>(
         0,
         (sum, item) => sum + _resolveCdpLocalMembers(item, cdpByPrefecture),
@@ -797,6 +952,12 @@ class LocalElectionShareService {
     required LocalElectionRealitySnapshot? snapshot,
     required String publicDashboardUrl,
   }) {
+    final endorsementTotals = _officialEndorsementTotals(snapshot);
+    final dpjOfficialEndorsementTotal = endorsementTotals.total;
+    final dpjOfficialEndorsementIncumbentTotal = endorsementTotals.incumbent;
+    final dpjOfficialEndorsementNewcomerTotal = endorsementTotals.newcomer;
+    final dpjOfficialEndorsementFormerTotal = endorsementTotals.former;
+    final dpjOfficialEndorsementPrefectureCount = endorsementTotals.prefectures;
     final fetchedAt = snapshot?.fetchedAt.toLocal();
     final realityByPrefecture = <String, LocalElectionPrefectureReality>{
       if (snapshot != null)
@@ -827,17 +988,29 @@ class LocalElectionShareService {
       )
       ..writeln('- 現状当選率: ${plan.currentCandidateWinRateLabel}')
       ..writeln('- 予定支援回数: ${plan.totalCloseRaceSupportRounds}回')
-      ..writeln('- 公認内定済み県連: '
-          '${plan.confirmedEndorsementCount}/${plan.prefectures.length}')
-      ..writeln('- 立憲地方議員参考合計: ${plan.totalCdpLocalMembers}人');
+      ..writeln(
+        '- 公認内定済み県連: '
+        '${plan.confirmedEndorsementCount}/${plan.prefectures.length}',
+      )
+      ..writeln('- 立憲地方議員参考合計: ${plan.totalCdpLocalMembers}人')
+      ..writeln(
+        '- 自民地方議員参考合計: ${plan.totalLdpLocalMembers}人'
+        '(総務省 所属党派別人員調)',
+      )
+      ..writeln(
+        '- 公認予定候補: $dpjOfficialEndorsementTotal件'
+        '(現職$dpjOfficialEndorsementIncumbentTotal / '
+        '新人$dpjOfficialEndorsementNewcomerTotal / '
+        '元職$dpjOfficialEndorsementFormerTotal) '
+        '※$dpjOfficialEndorsementPrefectureCount/47都道府県に掲載',
+      );
 
     buffer
       ..writeln()
       ..writeln('全県連KPI');
     for (final item in plan.prefecturesForRegion('すべて')) {
-      final reality = realityByPrefecture[_normalizePrefectureKey(
-        item.prefecture,
-      )];
+      final reality =
+          realityByPrefecture[_normalizePrefectureKey(item.prefecture)];
       buffer.writeln(_describePlanPrefecture(item, reality));
     }
 
@@ -862,6 +1035,13 @@ class LocalElectionShareService {
     required LocalElectionRealitySnapshot? snapshot,
     required String publicDashboardUrl,
   }) {
+    final endorsementTotals = _officialEndorsementTotals(snapshot);
+    final dpjOfficialEndorsementTotal = endorsementTotals.total;
+    final dpjOfficialEndorsementIncumbentTotal = endorsementTotals.incumbent;
+    final dpjOfficialEndorsementNewcomerTotal = endorsementTotals.newcomer;
+    final dpjOfficialEndorsementFormerTotal = endorsementTotals.former;
+    final dpjOfficialEndorsementPrefectureCount = endorsementTotals.prefectures;
+    final dpjLocalElectionOfficialListAsOf = endorsementTotals.asOf;
     return <String, dynamic>{
       'type': planDashboardMetadataType,
       'publicDashboardUrl': publicDashboardUrl,
@@ -880,6 +1060,19 @@ class LocalElectionShareService {
       'totalCloseRaceSupportRounds': plan.totalCloseRaceSupportRounds,
       'confirmedEndorsementCount': plan.confirmedEndorsementCount,
       'totalCdpLocalMembers': plan.totalCdpLocalMembers,
+      'totalLdpLocalMembers': plan.totalLdpLocalMembers,
+      'officialEndorsementTotal': dpjOfficialEndorsementTotal,
+      'officialEndorsementIncumbent': dpjOfficialEndorsementIncumbentTotal,
+      'officialEndorsementNewcomer': dpjOfficialEndorsementNewcomerTotal,
+      'officialEndorsementFormer': dpjOfficialEndorsementFormerTotal,
+      'officialEndorsementPrefectureCount':
+          dpjOfficialEndorsementPrefectureCount,
+      'officialEndorsementAsOf': dpjLocalElectionOfficialListAsOf,
+      // 既存の共有ノート利用者向けに旧キーを当面維持する。
+      'firstEndorsementTotal': dpjOfficialEndorsementTotal,
+      'firstEndorsementIncumbent': dpjOfficialEndorsementIncumbentTotal,
+      'firstEndorsementNewcomer': dpjOfficialEndorsementNewcomerTotal,
+      'firstEndorsementPrefectureCount': dpjOfficialEndorsementPrefectureCount,
       'prefectures': plan.prefectures
           .map(
             (item) => <String, dynamic>{
@@ -906,6 +1099,8 @@ class LocalElectionShareService {
               'closeRaceSupportRounds': item.closeRaceSupportRounds,
               'cdpLocalMembers': item.cdpLocalMembers,
               'cdpMemberGap': item.cdpMemberGap,
+              'ldpLocalMembers': item.ldpLocalMembers,
+              'ldpMemberGap': item.ldpMemberGap,
               'csfKpis': item.csfKpis.map((kpi) => kpi.toJson()).toList(),
             },
           )
@@ -1017,6 +1212,9 @@ class LocalElectionShareService {
       '支援${plan.closeRaceSupportRounds}回',
       if (cdpMembers > 0)
         '立憲参考$cdpMembers人(${_formatPrefectureKpiGap(cdpMembers - currentMembers)})',
+      if (plan.ldpLocalMembers > 0)
+        '自民参考${plan.ldpLocalMembers}人'
+            '(${_formatPrefectureKpiGap(plan.ldpMemberGap, rivalLabel: '自民')})',
       if (reality != null)
         '公式内訳 都道府県議${reality.prefecturalAssemblyMembers}/市区町村議${reality.municipalAssemblyMembers}',
     ];
@@ -1046,9 +1244,12 @@ class LocalElectionShareService {
     return '';
   }
 
-  String _formatPrefectureKpiGap(int gap) {
+  /// 地力差ラベル。比較相手の党名は呼び出し側が渡す。
+  /// (汎用名のまま '立憲+' を直書きすると、自民の差分に立憲ラベルが付いて
+  /// しまうため必ず [rivalLabel] を明示する)
+  String _formatPrefectureKpiGap(int gap, {String rivalLabel = '立憲'}) {
     if (gap > 0) {
-      return '立憲+$gap';
+      return '$rivalLabel+$gap';
     }
     if (gap < 0) {
       return '国民+${-gap}';

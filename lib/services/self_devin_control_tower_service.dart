@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'schedule_task_runs_repository.dart';
+
 class SelfDevinControlTowerSnapshot {
   final double readiness;
   final int openFeatureRequestCount;
@@ -127,19 +129,23 @@ class SelfDevinControlTowerService {
     ),
   ];
 
+  /// PostgREST の max-rows (既定1000行) を跨いでも取りこぼさないための
+  /// ページング設定。lane 統計は非 completed 行しか使わないため、
+  /// completed はサーバ側で除外して転送・切断の両方を避ける。
+  static const int _taskPageSize = 1000;
+  static const int _maxTaskRows = 3000;
+
   Future<SelfDevinControlTowerSnapshot> load({
     SupabaseClient? supabaseClient,
+    bool forceRefreshRuns = false,
   }) async {
     final supabase = supabaseClient ?? Supabase.instance.client;
     final results = await Future.wait<dynamic>(<Future<dynamic>>[
-      supabase.from('wbs_tasks').select(
-            'title, category, instance, owner_instance, status, progress, end_date, priority, updated_at',
-          ),
-      supabase
-          .from('schedule_task_runs')
-          .select('task_id, status, started_at, summary, error_message')
-          .order('started_at', ascending: false)
-          .limit(120),
+      _loadOpenTasks(supabase),
+      ScheduleTaskRunsRepository.fetch(
+        supabaseClient: supabase,
+        force: forceRefreshRuns,
+      ),
     ]);
 
     return buildSnapshot(
@@ -147,6 +153,36 @@ class SelfDevinControlTowerService {
       rawRuns: List<Map<String, dynamic>>.from(results[1] as List<dynamic>),
       now: DateTime.now(),
     );
+  }
+
+  Future<List<Map<String, dynamic>>> _loadOpenTasks(
+    SupabaseClient supabase,
+  ) async {
+    final rows = <Map<String, dynamic>>[];
+    // updated_at は同値がありうるため id を tiebreaker にして全順序を保証し、
+    // ページ間の並行更新による重複は id で dedupe する (どちらも欠けると
+    // 1000 行超過時に lane 統計が二重計上/欠落する)。
+    final seenIds = <String>{};
+    for (var offset = 0; offset < _maxTaskRows; offset += _taskPageSize) {
+      final page = await supabase
+          .from('wbs_tasks')
+          .select(
+            'id, title, category, instance, owner_instance, status, progress, end_date, priority, updated_at',
+          )
+          .neq('status', 'completed')
+          .order('updated_at', ascending: false)
+          .order('id')
+          .range(offset, offset + _taskPageSize - 1);
+      final list = List<Map<String, dynamic>>.from(page as List<dynamic>);
+      for (final row in list) {
+        final id = row['id']?.toString() ?? '';
+        if (id.isEmpty || seenIds.add(id)) {
+          rows.add(row);
+        }
+      }
+      if (list.length < _taskPageSize) break;
+    }
+    return rows;
   }
 
   static SelfDevinControlTowerSnapshot buildSnapshot({

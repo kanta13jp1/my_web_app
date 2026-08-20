@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'activation_revenue_experiment_service.dart';
 import 'app_share_service.dart';
+import 'landing_conversion_experiment_service.dart';
 
 class LandingShareSnapshot {
   final int todayCount;
@@ -36,7 +38,33 @@ class LandingShareService {
   static const String channelCopy = 'copy';
   static const String funnelTrialRun = 'funnel_trial_run';
   static const String funnelSaveCta = 'funnel_save_cta';
+  static const String funnelMagicLinkAttempt = 'funnel_magic_link_attempt';
   static const String funnelMagicLinkSend = 'funnel_magic_link_send';
+  static const String funnelMagicLinkFailInvalidEmail =
+      'funnel_magic_link_fail_invalid_email';
+  static const String funnelMagicLinkFailRateLimit =
+      'funnel_magic_link_fail_rate_limit';
+  static const String funnelMagicLinkFailDeliveryConfig =
+      'funnel_magic_link_fail_delivery_config';
+  static const String funnelMagicLinkFailRedirect =
+      'funnel_magic_link_fail_redirect';
+  static const String funnelMagicLinkFailNetwork =
+      'funnel_magic_link_fail_network';
+  static const String funnelMagicLinkFailUnknown =
+      'funnel_magic_link_fail_unknown';
+  static const String funnelGoogleOAuthStart = 'funnel_google_oauth_start';
+  static const String funnelGoogleOAuthFailCancelled =
+      'funnel_google_oauth_fail_cancelled';
+  static const String funnelGoogleOAuthFailRateLimit =
+      'funnel_google_oauth_fail_rate_limit';
+  static const String funnelGoogleOAuthFailProviderConfig =
+      'funnel_google_oauth_fail_provider_config';
+  static const String funnelGoogleOAuthFailRedirect =
+      'funnel_google_oauth_fail_redirect';
+  static const String funnelGoogleOAuthFailCallbackExchange =
+      'funnel_google_oauth_fail_callback_exchange';
+  static const String funnelGoogleOAuthFailUnknown =
+      'funnel_google_oauth_fail_unknown';
   static const String funnelInboxOpen = 'funnel_inbox_open';
 
   static const List<String> supportedChannels = <String>[
@@ -156,11 +184,7 @@ $shareUrl
     await store.setInt(perChannelKey, channelCount);
     await store.setString(_lastChannelKey, channel);
 
-    await _recordShareAnalytics(
-      client: client,
-      channel: channel,
-      now: now,
-    );
+    await _recordShareAnalytics(client: client, channel: channel, now: now);
 
     return _readSnapshot(store);
   }
@@ -197,11 +221,7 @@ $shareUrl
         'Unsupported funnel event',
       );
     }
-    await _incrementSourceDetail(
-      client: client,
-      sourceKey: eventKey,
-      now: now,
-    );
+    await _incrementSourceDetail(client: client, sourceKey: eventKey, now: now);
   }
 
   static String? resolveIncomingSource(Map<String, String> queryParameters) {
@@ -234,8 +254,10 @@ $shareUrl
       return;
     }
 
+    var shareCountRecorded = false;
     try {
       await client.rpc('increment_share_count');
+      shareCountRecorded = true;
     } catch (error) {
       debugPrint('Share count rpc failed: $error');
     }
@@ -244,7 +266,7 @@ $shareUrl
       client: client,
       sourceKey: _shareActionKeys[channel]!,
       now: now,
-      fallbackShareCount: 1,
+      fallbackShareCount: shareCountRecorded ? 0 : 1,
     );
   }
 
@@ -259,8 +281,24 @@ $shareUrl
     }
 
     final dateKey = _formatDate(now ?? DateTime.now());
-    final currentRow =
-        await _fetchAnalyticsRow(client: client, dateKey: dateKey);
+    try {
+      await client.rpc(
+        'increment_app_analytics_source_detail',
+        params: <String, dynamic>{
+          'p_source_key': sourceKey,
+          'p_event_date': dateKey,
+          'p_share_increment': fallbackShareCount,
+        },
+      );
+      return;
+    } catch (error) {
+      debugPrint('Atomic funnel analytics rpc failed: $error');
+    }
+
+    final currentRow = await _fetchAnalyticsRow(
+      client: client,
+      dateKey: dateKey,
+    );
     final sourceDetails = _normalizeSourceDetails(currentRow?['source_details'])
       ..update(sourceKey, (count) => count + 1, ifAbsent: () => 1);
 
@@ -276,9 +314,12 @@ $shareUrl
         return;
       }
 
-      await client.from('app_analytics').update(<String, dynamic>{
-        'source_details': sourceDetails,
-      }).eq('date', dateKey);
+      await client
+          .from('app_analytics')
+          .update(<String, dynamic>{'source_details': sourceDetails}).eq(
+        'date',
+        dateKey,
+      );
     } catch (error) {
       debugPrint('Share analytics update failed: $error');
     }
@@ -371,11 +412,28 @@ $shareUrl
     switch (eventKey) {
       case funnelTrialRun:
       case funnelSaveCta:
+      case funnelMagicLinkAttempt:
       case funnelMagicLinkSend:
+      case funnelMagicLinkFailInvalidEmail:
+      case funnelMagicLinkFailRateLimit:
+      case funnelMagicLinkFailDeliveryConfig:
+      case funnelMagicLinkFailRedirect:
+      case funnelMagicLinkFailNetwork:
+      case funnelMagicLinkFailUnknown:
+      case funnelGoogleOAuthStart:
+      case funnelGoogleOAuthFailCancelled:
+      case funnelGoogleOAuthFailRateLimit:
+      case funnelGoogleOAuthFailProviderConfig:
+      case funnelGoogleOAuthFailRedirect:
+      case funnelGoogleOAuthFailCallbackExchange:
+      case funnelGoogleOAuthFailUnknown:
       case funnelInboxOpen:
         return true;
       default:
-        return false;
+        return LandingConversionExperimentService.isExperimentEventKey(
+              eventKey,
+            ) ||
+            ActivationRevenueExperimentService.isExperimentEventKey(eventKey);
     }
   }
 }

@@ -21,7 +21,11 @@ class _PublicBlogPostPageState extends State<PublicBlogPostPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments;
-    final id = (args is Map) ? args['id']?.toString() : null;
+    // アプリ内ナビの arguments を優先しつつ、URL クエリ (/blog/post?id=X) からも
+    // id を解決する。クローラー / 直リンク / SNS 共有からの直接アクセスを可能にし、
+    // 公開ブログをインデックス可能にする (SEO 監査 H7)。
+    final id = (args is Map ? args['id']?.toString() : null) ??
+        Uri.base.queryParameters['id'];
     if (id != null && id != _postId) {
       _postId = id;
       _future = BlogPublishService.getPostById(id);

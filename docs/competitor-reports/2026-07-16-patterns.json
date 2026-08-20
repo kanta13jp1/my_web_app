@@ -1,0 +1,1570 @@
+{
+  "generated_at": "2026-07-15T22:56:14Z",
+  "source_files": [
+    "docs/competitor-reports/2026-07-16.md"
+  ],
+  "min_confidence": 0.5,
+  "entries_total": 52,
+  "filter_summary": {
+    "total": 52,
+    "by_verdict": {
+      "pass": 0,
+      "review": 52,
+      "drop": 0
+    },
+    "risk_flags": {
+      "missing_source_url": 52
+    }
+  },
+  "entries": [
+    {
+      "entry": {
+        "entry_id": "nf-33f0b425e140",
+        "title": "エグゼクティブサマリー (前回 [2026-07-15](./2026-07-15.md) 比 — 新シグナルのみ)",
+        "text": "エグゼクティブサマリー (前回 [2026-07-15](./2026-07-15.md) 比 — 新シグナルのみ)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "エグゼクティブサマリー (前回 [2026-07-15](./2026-07-15.md) 比 — 新シグナルのみ)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-33f0b425e140",
+        "title": "エグゼクティブサマリー (前回 [2026-07-15](./2026-07-15.md) 比 — 新シグナルのみ)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3bdb578df4bb",
+        "title": "詳細セクション (重大シグナルのみ深掘り)",
+        "text": "詳細セクション (重大シグナルのみ深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "詳細セクション (重大シグナルのみ深掘り)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3bdb578df4bb",
+        "title": "詳細セクション (重大シグナルのみ深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8abf789940f8",
+        "title": "5/15 (金) ローンチ** = ChatGPT **Pro** 限定 / **米国のみ** / preview。OpenAI は当時「Plus に出す前に製品を改善したい」と明言。",
+        "text": "5/15 (金) ローンチ** = ChatGPT **Pro** 限定 / **米国のみ** / preview。OpenAI は当時「Plus に出す前に製品を改善したい」と明言。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "5/15 (金) ローンチ** = ChatGPT **Pro** 限定 / **米国のみ** / preview。OpenAI は当時「Plus に出す前に製品を改善したい」と明言。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8abf789940f8",
+        "title": "5/15 (金) ローンチ** = ChatGPT **Pro** 限定 / **米国のみ** / preview。OpenAI は当時「Plus に出す前に製品を改善したい」と明言。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0a057198e5a8",
+        "title": "6/25〜6/30**: **Plus へ拡大** (web / iOS / Android)。昨日レポートの「6/25 提供開始」は**この拡大日を初回出荷日と誤認**したもの → 本日訂正。",
+        "text": "6/25〜6/30**: **Plus へ拡大** (web / iOS / Android)。昨日レポートの「6/25 提供開始」は**この拡大日を初回出荷日と誤認**したもの → 本日訂正。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "6/25〜6/30**: **Plus へ拡大** (web / iOS / Android)。昨日レポートの「6/25 提供開始」は**この拡大日を初回出荷日と誤認**したもの → 本日訂正。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0a057198e5a8",
+        "title": "6/25〜6/30**: **Plus へ拡大** (web / iOS / Android)。昨日レポートの「6/25 提供開始」は**この拡大日を初回出荷日と誤認**したもの → 本日訂正。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-65e459f8d70d",
+        "title": "機能 (変更なし): Plaid 経由で **12,000+ 金融機関**接続 → **ポートフォリオ実績 / 支出 / サブスクリプション / 今後の支払**のダッシュボード → 財務文脈での Q&A (例: 「最近使いすぎている気がする",
+        "text": "機能 (変更なし): Plaid 経由で **12,000+ 金融機関**接続 → **ポートフォリオ実績 / 支出 / サブスクリプション / 今後の支払**のダッシュボード → 財務文脈での Q&A (例: 「最近使いすぎている気がする。何か変わった?」「5 年以内に家を買う計画を立てて」)。**Intuit 連携は coming soon** (税影響の試算・与信通過見込みへ拡張予定)。切断後 30 日でデータ削除。ローンチ時は GPT-5.5、現在は GPT-5.6 世代。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "機能 (変更なし): Plaid 経由で **12,000+ 金融機関**接続 → **ポートフォリオ実績 / 支出 / サブスクリプション / 今後の支払**のダッシュボード → 財務文脈での Q&A (例: 「最近使いすぎている気がする。何か変わった?」「5 年以内に家を買う計画を立てて」)。**Intuit 連携は coming soon** (税影響の試算・与信通過見込みへ拡張予定)。切断後 30 日でデータ削除。ローンチ時は GPT-5.5、現在は GPT-5.6 世代。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-65e459f8d70d",
+        "title": "機能 (変更なし): Plaid 経由で **12,000+ 金融機関**接続 → **ポートフォリオ実績 / 支出 / サブスクリプション / 今後の支払**のダッシュボード → 財務文脈での Q&A (例: 「最近使いすぎている気がする",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-69bf130cd7cc",
+        "title": "含意の更新**: 昨日は「3 週間の見落とし」としたが実際は **約 2 ヶ月**。かつ **$20/月の Plus 帯に既に降りている**点が重い——自社の想定ユーザー (個人・低価格帯) に対し、OpenAI は既に同価格帯で「口座接続",
+        "text": "含意の更新**: 昨日は「3 週間の見落とし」としたが実際は **約 2 ヶ月**。かつ **$20/月の Plus 帯に既に降りている**点が重い——自社の想定ユーザー (個人・低価格帯) に対し、OpenAI は既に同価格帯で「口座接続 + ダッシュボード + AI Q&A」を提供済。**この 3 点セットは自社の差別化要素として主張できない**ことが確定した。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "含意の更新**: 昨日は「3 週間の見落とし」としたが実際は **約 2 ヶ月**。かつ **$20/月の Plus 帯に既に降りている**点が重い——自社の想定ユーザー (個人・低価格帯) に対し、OpenAI は既に同価格帯で「口座接続 + ダッシュボード + AI Q&A」を提供済。**この 3 点セットは自社の差別化要素として主張できない**ことが確定した。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-69bf130cd7cc",
+        "title": "含意の更新**: 昨日は「3 週間の見落とし」としたが実際は **約 2 ヶ月**。かつ **$20/月の Plus 帯に既に降りている**点が重い——自社の想定ユーザー (個人・低価格帯) に対し、OpenAI は既に同価格帯で「口座接続",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-da9425793023",
+        "title": "⚠️ 教訓: 昨日は「捕捉できた」ことに満足して**一次情報の日付を裏取りしていなかった**。カテゴリ捕捉と時系列確定は別作業。",
+        "text": "⚠️ 教訓: 昨日は「捕捉できた」ことに満足して**一次情報の日付を裏取りしていなかった**。カテゴリ捕捉と時系列確定は別作業。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "⚠️ 教訓: 昨日は「捕捉できた」ことに満足して**一次情報の日付を裏取りしていなかった**。カテゴリ捕捉と時系列確定は別作業。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-da9425793023",
+        "title": "⚠️ 教訓: 昨日は「捕捉できた」ことに満足して**一次情報の日付を裏取りしていなかった**。カテゴリ捕捉と時系列確定は別作業。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-590850610c32",
+        "title": "7/8 公式リリース**: 『マネーフォワード ME』が資産カテゴリ分類を更新し、**「暗号資産」を独立カテゴリとして新設**。従来は「預金・現金・暗号資産」を同一カテゴリで分類していた。",
+        "text": "7/8 公式リリース**: 『マネーフォワード ME』が資産カテゴリ分類を更新し、**「暗号資産」を独立カテゴリとして新設**。従来は「預金・現金・暗号資産」を同一カテゴリで分類していた。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "7/8 公式リリース**: 『マネーフォワード ME』が資産カテゴリ分類を更新し、**「暗号資産」を独立カテゴリとして新設**。従来は「預金・現金・暗号資産」を同一カテゴリで分類していた。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-590850610c32",
+        "title": "7/8 公式リリース**: 『マネーフォワード ME』が資産カテゴリ分類を更新し、**「暗号資産」を独立カテゴリとして新設**。従来は「預金・現金・暗号資産」を同一カテゴリで分類していた。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5a6a23c84ca3",
+        "title": "MF の説明 (公式): ユーザー要望は「**日々の生活資金（預金・現金）と、投資目的の資産を分けて管理したい**」。効果は (a)「**暗号資産の急激な価格変動が預金・現金のグラフや残高推移に影響しない**」= 日常収支の正確な把握、(b",
+        "text": "MF の説明 (公式): ユーザー要望は「**日々の生活資金（預金・現金）と、投資目的の資産を分けて管理したい**」。効果は (a)「**暗号資産の急激な価格変動が預金・現金のグラフや残高推移に影響しない**」= 日常収支の正確な把握、(b)「**アセットアロケーション（資産配分）における暗号資産の保有比率が明確になる**」= ポートフォリオ最適化。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "MF の説明 (公式): ユーザー要望は「**日々の生活資金（預金・現金）と、投資目的の資産を分けて管理したい**」。効果は (a)「**暗号資産の急激な価格変動が預金・現金のグラフや残高推移に影響しない**」= 日常収支の正確な把握、(b)「**アセットアロケーション（資産配分）における暗号資産の保有比率が明確になる**」= ポートフォリオ最適化。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5a6a23c84ca3",
+        "title": "MF の説明 (公式): ユーザー要望は「**日々の生活資金（預金・現金）と、投資目的の資産を分けて管理したい**」。効果は (a)「**暗号資産の急激な価格変動が預金・現金のグラフや残高推移に影響しない**」= 日常収支の正確な把握、(b",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7b819573b7e8",
+        "title": "脅威分析 (認識のアップデート)**: 機能自体は小粒だが、**監視設計の誤りを露呈させた点で本日最重要**。",
+        "text": "脅威分析 (認識のアップデート)**: 機能自体は小粒だが、**監視設計の誤りを露呈させた点で本日最重要**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "脅威分析 (認識のアップデート)**: 機能自体は小粒だが、**監視設計の誤りを露呈させた点で本日最重要**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7b819573b7e8",
+        "title": "脅威分析 (認識のアップデート)**: 機能自体は小粒だが、**監視設計の誤りを露呈させた点で本日最重要**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-636b58613e11",
+        "title": "これまでの前提: 「MF AI Cowork (法人経理) が**個人資産形成へ降りてきたら**正面衝突」→ 毎 run「未点火」と記録してきた。",
+        "text": "これまでの前提: 「MF AI Cowork (法人経理) が**個人資産形成へ降りてきたら**正面衝突」→ 毎 run「未点火」と記録してきた。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "これまでの前提: 「MF AI Cowork (法人経理) が**個人資産形成へ降りてきたら**正面衝突」→ 毎 run「未点火」と記録してきた。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-636b58613e11",
+        "title": "これまでの前提: 「MF AI Cowork (法人経理) が**個人資産形成へ降りてきたら**正面衝突」→ 毎 run「未点火」と記録してきた。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-002936ac33af",
+        "title": "実際: **MF は個人 B/S を既に押さえている**。ME は個人向け資産管理アプリとして稼働中で、本更新は**個人の資産配分 (アセットアロケーション) 粒度を上げる**方向——つまり自社「個人 B/S」コアの土俵そのもの。**降りて",
+        "text": "実際: **MF は個人 B/S を既に押さえている**。ME は個人向け資産管理アプリとして稼働中で、本更新は**個人の資産配分 (アセットアロケーション) 粒度を上げる**方向——つまり自社「個人 B/S」コアの土俵そのもの。**降りてくるのを待つ設定は最初から的外れ**だった。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "実際: **MF は個人 B/S を既に押さえている**。ME は個人向け資産管理アプリとして稼働中で、本更新は**個人の資産配分 (アセットアロケーション) 粒度を上げる**方向——つまり自社「個人 B/S」コアの土俵そのもの。**降りてくるのを待つ設定は最初から的外れ**だった。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-002936ac33af",
+        "title": "実際: **MF は個人 B/S を既に押さえている**。ME は個人向け資産管理アプリとして稼働中で、本更新は**個人の資産配分 (アセットアロケーション) 粒度を上げる**方向——つまり自社「個人 B/S」コアの土俵そのもの。**降りて",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-74f9da44d7a2",
+        "title": "真の衝突点の再定義**: 法人 Cowork の個人進出ではなく、「**ME に AI エージェント/自律アドバイス層が載る瞬間 (ME × AI Cowork の技術転用)**」。MF は Cowork で Claude ベースのオーケス",
+        "text": "真の衝突点の再定義**: 法人 Cowork の個人進出ではなく、「**ME に AI エージェント/自律アドバイス層が載る瞬間 (ME × AI Cowork の技術転用)**」。MF は Cowork で Claude ベースのオーケストレータ + マルチエージェント基盤を既に構築済 = **その基盤を ME へ転用する経路が既に存在する**。これが点火したとき、自社は「日本語 × 個人 B/S × AI アドバイス」を同時に失う。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "真の衝突点の再定義**: 法人 Cowork の個人進出ではなく、「**ME に AI エージェント/自律アドバイス層が載る瞬間 (ME × AI Cowork の技術転用)**」。MF は Cowork で Claude ベースのオーケストレータ + マルチエージェント基盤を既に構築済 = **その基盤を ME へ転用する経路が既に存在する**。これが点火したとき、自社は「日本語 × 個人 B/S × AI アドバイス」を同時に失う。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-74f9da44d7a2",
+        "title": "真の衝突点の再定義**: 法人 Cowork の個人進出ではなく、「**ME に AI エージェント/自律アドバイス層が載る瞬間 (ME × AI Cowork の技術転用)**」。MF は Cowork で Claude ベースのオーケス",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-569419fe4856",
+        "title": "自社への含意**: `AssetAdvisoryBriefingService` (資金繰り予測 + 負債トレンド + 規律 → 部署横断アクション) の非代替性は、**資産配分の可視化粒度では守れない** (MF ME が本業で磨いている",
+        "text": "自社への含意**: `AssetAdvisoryBriefingService` (資金繰り予測 + 負債トレンド + 規律 → 部署横断アクション) の非代替性は、**資産配分の可視化粒度では守れない** (MF ME が本業で磨いている領域)。守れるのは **「6 部署 KPI × B/S × 自己経営ナラティブ」という経営メタファーの統合**のみ。moat 記述の全振り (昨日アクション #3) の緊急度をさらに引き上げる。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社への含意**: `AssetAdvisoryBriefingService` (資金繰り予測 + 負債トレンド + 規律 → 部署横断アクション) の非代替性は、**資産配分の可視化粒度では守れない** (MF ME が本業で磨いている領域)。守れるのは **「6 部署 KPI × B/S × 自己経営ナラティブ」という経営メタファーの統合**のみ。moat 記述の全振り (昨日アクション #3) の緊急度をさらに引き上げる。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-569419fe4856",
+        "title": "自社への含意**: `AssetAdvisoryBriefingService` (資金繰り予測 + 負債トレンド + 規律 → 部署横断アクション) の非代替性は、**資産配分の可視化粒度では守れない** (MF ME が本業で磨いている",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2ae44a810d18",
+        "title": "再確認でも提供対象は「**マネーフォワード クラウド**」利用の**法人**バックオフィス (経理・労務・法務ほか 6 業務)。2026 年 7 月提供開始予定 + 4/7 開始の先行受付継続。",
+        "text": "再確認でも提供対象は「**マネーフォワード クラウド**」利用の**法人**バックオフィス (経理・労務・法務ほか 6 業務)。2026 年 7 月提供開始予定 + 4/7 開始の先行受付継続。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "再確認でも提供対象は「**マネーフォワード クラウド**」利用の**法人**バックオフィス (経理・労務・法務ほか 6 業務)。2026 年 7 月提供開始予定 + 4/7 開始の先行受付継続。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2ae44a810d18",
+        "title": "再確認でも提供対象は「**マネーフォワード クラウド**」利用の**法人**バックオフィス (経理・労務・法務ほか 6 業務)。2026 年 7 月提供開始予定 + 4/7 開始の先行受付継続。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f0e31924d055",
+        "title": "中核は「ユーザーの指示を解釈して適切な AI エージェントに振り分ける**オーケストレーター**」で、**Claude の推論エンジン**を採用。",
+        "text": "中核は「ユーザーの指示を解釈して適切な AI エージェントに振り分ける**オーケストレーター**」で、**Claude の推論エンジン**を採用。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "中核は「ユーザーの指示を解釈して適切な AI エージェントに振り分ける**オーケストレーター**」で、**Claude の推論エンジン**を採用。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f0e31924d055",
+        "title": "中核は「ユーザーの指示を解釈して適切な AI エージェントに振り分ける**オーケストレーター**」で、**Claude の推論エンジン**を採用。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-bdea6bbfb243",
+        "title": "個人 (家計) 向けアナウンスは本日時点でも未確認** = 従来トリガーは未点火。ただし上記 #2 の通り**この監視軸自体の優先度を下げ**、ME 側の AI 化監視へ資源を移す。",
+        "text": "個人 (家計) 向けアナウンスは本日時点でも未確認** = 従来トリガーは未点火。ただし上記 #2 の通り**この監視軸自体の優先度を下げ**、ME 側の AI 化監視へ資源を移す。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "個人 (家計) 向けアナウンスは本日時点でも未確認** = 従来トリガーは未点火。ただし上記 #2 の通り**この監視軸自体の優先度を下げ**、ME 側の AI 化監視へ資源を移す。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-bdea6bbfb243",
+        "title": "個人 (家計) 向けアナウンスは本日時点でも未確認** = 従来トリガーは未点火。ただし上記 #2 の通り**この監視軸自体の優先度を下げ**、ME 側の AI 化監視へ資源を移す。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f654c49eaa94",
+        "title": "7/9 ローンチ**。成果物 (ドキュメント / スプレッドシート / スライド / レポート / Sites) を**数時間かけて自律生成**し、接続済アプリとファイルを横断。",
+        "text": "7/9 ローンチ**。成果物 (ドキュメント / スプレッドシート / スライド / レポート / Sites) を**数時間かけて自律生成**し、接続済アプリとファイルを横断。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "7/9 ローンチ**。成果物 (ドキュメント / スプレッドシート / スライド / レポート / Sites) を**数時間かけて自律生成**し、接続済アプリとファイルを横断。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f654c49eaa94",
+        "title": "7/9 ローンチ**。成果物 (ドキュメント / スプレッドシート / スライド / レポート / Sites) を**数時間かけて自律生成**し、接続済アプリとファイルを横断。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f3ae79b55add",
+        "title": "本日判明した実体 2 点: (a) **7/6 で workspace agents の無料期間が終了 → token ベース課金** (input / cached input / output で credit 消費)、(b) **管理",
+        "text": "本日判明した実体 2 点: (a) **7/6 で workspace agents の無料期間が終了 → token ベース課金** (input / cached input / output で credit 消費)、(b) **管理者に組織横断の統合ビュー** (Agent ID / 直近アクティビティ / 接続アプリ / **メモリファイル** / スケジュール / 分析)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "本日判明した実体 2 点: (a) **7/6 で workspace agents の無料期間が終了 → token ベース課金** (input / cached input / output で credit 消費)、(b) **管理者に組織横断の統合ビュー** (Agent ID / 直近アクティビティ / 接続アプリ / **メモリファイル** / スケジュール / 分析)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f3ae79b55add",
+        "title": "本日判明した実体 2 点: (a) **7/6 で workspace agents の無料期間が終了 → token ベース課金** (input / cached input / output で credit 消費)、(b) **管理",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-79e76de58dc2",
+        "title": "提供: workspace agents は Business / Enterprise / Edu で GA。Work は Free / Go を除く有料プランへ展開中 (Pro / Pro Lite / Enterprise / Edu",
+        "text": "提供: workspace agents は Business / Enterprise / Edu で GA。Work は Free / Go を除く有料プランへ展開中 (Pro / Pro Lite / Enterprise / Edu 先行 → Plus / Business が追随)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "提供: workspace agents は Business / Enterprise / Edu で GA。Work は Free / Go を除く有料プランへ展開中 (Pro / Pro Lite / Enterprise / Edu 先行 → Plus / Business が追随)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-79e76de58dc2",
+        "title": "提供: workspace agents は Business / Enterprise / Edu で GA。Work は Free / Go を除く有料プランへ展開中 (Pro / Pro Lite / Enterprise / Edu",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9df586a16393",
+        "title": "含意**: 「エージェントを**統治**する UI + 従量課金」は自社 fleet 運用 (GHA cron 30+ / Schedule cron / 手動 JSON ログ確認) の先取り。**ナラティブ「並列 → 監査可能な並列統治」",
+        "text": "含意**: 「エージェントを**統治**する UI + 従量課金」は自社 fleet 運用 (GHA cron 30+ / Schedule cron / 手動 JSON ログ確認) の先取り。**ナラティブ「並列 → 監査可能な並列統治」の裏付けが競合側で GA 化**。7/17 の discovery 第 1 候補 (OpenAI ChatGPT / 基準 a) を維持・補強。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "含意**: 「エージェントを**統治**する UI + 従量課金」は自社 fleet 運用 (GHA cron 30+ / Schedule cron / 手動 JSON ログ確認) の先取り。**ナラティブ「並列 → 監査可能な並列統治」の裏付けが競合側で GA 化**。7/17 の discovery 第 1 候補 (OpenAI ChatGPT / 基準 a) を維持・補強。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9df586a16393",
+        "title": "含意**: 「エージェントを**統治**する UI + 従量課金」は自社 fleet 運用 (GHA cron 30+ / Schedule cron / 手動 JSON ログ確認) の先取り。**ナラティブ「並列 → 監査可能な並列統治」",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4b4144b66bb0",
+        "title": "Claude Code**: 経過時間カウンタ表示 / 権限・タイムアウト警告の明確化 / attach・バックグラウンドワーカー・**worktree**・MCP サーバ・承認まわりの安定性向上 = いずれも小粒 patch。自社 fle",
+        "text": "Claude Code**: 経過時間カウンタ表示 / 権限・タイムアウト警告の明確化 / attach・バックグラウンドワーカー・**worktree**・MCP サーバ・承認まわりの安定性向上 = いずれも小粒 patch。自社 fleet の dogfood 対象だが戦略シグナルではない。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Claude Code**: 経過時間カウンタ表示 / 権限・タイムアウト警告の明確化 / attach・バックグラウンドワーカー・**worktree**・MCP サーバ・承認まわりの安定性向上 = いずれも小粒 patch。自社 fleet の dogfood 対象だが戦略シグナルではない。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4b4144b66bb0",
+        "title": "Claude Code**: 経過時間カウンタ表示 / 権限・タイムアウト警告の明確化 / attach・バックグラウンドワーカー・**worktree**・MCP サーバ・承認まわりの安定性向上 = いずれも小粒 patch。自社 fle",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-418b6693a01e",
+        "title": "Grok Build (7/8 / Grok 4.5)**、Codex (GPT-5.6 Sol/Terra/Luna) 等 = 既報から差分なし。「7 強 (Claude Code / Antigravity / Codex / Curs",
+        "text": "Grok Build (7/8 / Grok 4.5)**、Codex (GPT-5.6 Sol/Terra/Luna) 等 = 既報から差分なし。「7 強 (Claude Code / Antigravity / Codex / Cursor / Kiro / Copilot / Windsurf) が同一の agentic blueprint へ収斂し、差は *harness* (エージェントの編成方法) にある」という業界総括は自社ナラティブと同方向。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Grok Build (7/8 / Grok 4.5)**、Codex (GPT-5.6 Sol/Terra/Luna) 等 = 既報から差分なし。「7 強 (Claude Code / Antigravity / Codex / Cursor / Kiro / Copilot / Windsurf) が同一の agentic blueprint へ収斂し、差は *harness* (エージェントの編成方法) にある」という業界総括は自社ナラティブと同方向。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-418b6693a01e",
+        "title": "Grok Build (7/8 / Grok 4.5)**、Codex (GPT-5.6 Sol/Terra/Luna) 等 = 既報から差分なし。「7 強 (Claude Code / Antigravity / Codex / Curs",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e99e249b6ede",
+        "title": "connected-account copilot 勢** (昨日アクション #1 で常設化した軸): **Monarch** (Smart Goals = 取引履歴から貯蓄目標を自動提案し毎月調整 / 3 月、AI アシスタント + 週次",
+        "text": "connected-account copilot 勢** (昨日アクション #1 で常設化した軸): **Monarch** (Smart Goals = 取引履歴から貯蓄目標を自動提案し毎月調整 / 3 月、AI アシスタント + 週次リキャップ / 2025-12)、**Copilot Money** (Apple エコシステム特化 / Android なし)、**Cleo** (会話型)。**7 月の新規シグナルなし**——ただし本軸は昨日新設したばかりなので、継続巡回で基準値を作る。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "connected-account copilot 勢** (昨日アクション #1 で常設化した軸): **Monarch** (Smart Goals = 取引履歴から貯蓄目標を自動提案し毎月調整 / 3 月、AI アシスタント + 週次リキャップ / 2025-12)、**Copilot Money** (Apple エコシステム特化 / Android なし)、**Cleo** (会話型)。**7 月の新規シグナルなし**——ただし本軸は昨日新設したばかりなので、継続巡回で基準値を作る。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e99e249b6ede",
+        "title": "connected-account copilot 勢** (昨日アクション #1 で常設化した軸): **Monarch** (Smart Goals = 取引履歴から貯蓄目標を自動提案し毎月調整 / 3 月、AI アシスタント + 週次",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-dbbc358fdf96",
+        "title": "Notion 3.6 (7/1)**: External Agents 第 1 号 = Claude + Cursor (7/14 既報)。7 月分の追加として **Custom Agents が Slack Enterprise Grid",
+        "text": "Notion 3.6 (7/1)**: External Agents 第 1 号 = Claude + Cursor (7/14 既報)。7 月分の追加として **Custom Agents が Slack Enterprise Grid 全社 + プライベートチャンネル対応**。既存対象の脅威度モニタとして計上、深掘り不要。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Notion 3.6 (7/1)**: External Agents 第 1 号 = Claude + Cursor (7/14 既報)。7 月分の追加として **Custom Agents が Slack Enterprise Grid 全社 + プライベートチャンネル対応**。既存対象の脅威度モニタとして計上、深掘り不要。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-dbbc358fdf96",
+        "title": "Notion 3.6 (7/1)**: External Agents 第 1 号 = Claude + Cursor (7/14 既報)。7 月分の追加として **Custom Agents が Slack Enterprise Grid",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-374206f20f8b",
+        "title": "Lindy AI (7/10 採択 / 新規対象)**: 複数メールアカウント (Gmail / Outlook) を **iMessage 単一スレッドで一括トリアージ**する更新。無料プラン廃止、$49.99〜$199.99/月。「テキ",
+        "text": "Lindy AI (7/10 採択 / 新規対象)**: 複数メールアカウント (Gmail / Outlook) を **iMessage 単一スレッドで一括トリアージ**する更新。無料プラン廃止、$49.99〜$199.99/月。「テキストで指示する個人向け自律アシスタント」路線を維持 = 採択時の評価どおり。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Lindy AI (7/10 採択 / 新規対象)**: 複数メールアカウント (Gmail / Outlook) を **iMessage 単一スレッドで一括トリアージ**する更新。無料プラン廃止、$49.99〜$199.99/月。「テキストで指示する個人向け自律アシスタント」路線を維持 = 採択時の評価どおり。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-374206f20f8b",
+        "title": "Lindy AI (7/10 採択 / 新規対象)**: 複数メールアカウント (Gmail / Outlook) を **iMessage 単一スレッドで一括トリアージ**する更新。無料プラン廃止、$49.99〜$199.99/月。「テキ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5ff159f707fd",
+        "title": "巡回中、「Google Cloud Next 2026: Gemini Enterprise / A2A protocol / Project Mariner / managed MCP servers」が上位に浮上したが、**同カンファレ",
+        "text": "巡回中、「Google Cloud Next 2026: Gemini Enterprise / A2A protocol / Project Mariner / managed MCP servers」が上位に浮上したが、**同カンファレンスは 4/22〜24 (Las Vegas) 開催 = 約 3 ヶ月前**。検索結果の見出しが日付を伴わないため直近の発表に見えるが**新規シグナルではない**ため本レポートには計上しない。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "巡回中、「Google Cloud Next 2026: Gemini Enterprise / A2A protocol / Project Mariner / managed MCP servers」が上位に浮上したが、**同カンファレンスは 4/22〜24 (Las Vegas) 開催 = 約 3 ヶ月前**。検索結果の見出しが日付を伴わないため直近の発表に見えるが**新規シグナルではない**ため本レポートには計上しない。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5ff159f707fd",
+        "title": "巡回中、「Google Cloud Next 2026: Gemini Enterprise / A2A protocol / Project Mariner / managed MCP servers」が上位に浮上したが、**同カンファレ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ba52f0d4b93b",
+        "title": "同様に「7/16 の Anthropic 発表」も実体は**ウェビナー 1 本** (Evals for AI Agents) であり製品発表ではない。",
+        "text": "同様に「7/16 の Anthropic 発表」も実体は**ウェビナー 1 本** (Evals for AI Agents) であり製品発表ではない。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "同様に「7/16 の Anthropic 発表」も実体は**ウェビナー 1 本** (Evals for AI Agents) であり製品発表ではない。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ba52f0d4b93b",
+        "title": "同様に「7/16 の Anthropic 発表」も実体は**ウェビナー 1 本** (Evals for AI Agents) であり製品発表ではない。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8d0b4a043d67",
+        "title": "教訓: 本日は ChatGPT の日付誤認 (#1) と併せ、**日付の裏取り漏れが 2 件連続**で表面化した。カンファレンス/機能の「初出日」を一次情報で確定してから計上する運用を徹底する。",
+        "text": "教訓: 本日は ChatGPT の日付誤認 (#1) と併せ、**日付の裏取り漏れが 2 件連続**で表面化した。カンファレンス/機能の「初出日」を一次情報で確定してから計上する運用を徹底する。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "教訓: 本日は ChatGPT の日付誤認 (#1) と併せ、**日付の裏取り漏れが 2 件連続**で表面化した。カンファレンス/機能の「初出日」を一次情報で確定してから計上する運用を徹底する。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8d0b4a043d67",
+        "title": "教訓: 本日は ChatGPT の日付誤認 (#1) と併せ、**日付の裏取り漏れが 2 件連続**で表面化した。カンファレンス/機能の「初出日」を一次情報で確定してから計上する運用を徹底する。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0370a642fba5",
+        "title": "Discovery セクション",
+        "text": "Discovery セクション",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Discovery セクション"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0370a642fba5",
+        "title": "Discovery セクション",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-813b51dce973",
+        "title": "直近 discovery = **Lindy AI (2026-07-10)**、本日 2026-07-16 は **6 日後** → 「過去 7 日以内に discovery 履歴あり = skip」に従いスキップ。**次 unlock ",
+        "text": "直近 discovery = **Lindy AI (2026-07-10)**、本日 2026-07-16 は **6 日後** → 「過去 7 日以内に discovery 履歴あり = skip」に従いスキップ。**次 unlock = 2026-07-17 (明日)**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "直近 discovery = **Lindy AI (2026-07-10)**、本日 2026-07-16 は **6 日後** → 「過去 7 日以内に discovery 履歴あり = skip」に従いスキップ。**次 unlock = 2026-07-17 (明日)**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-813b51dce973",
+        "title": "直近 discovery = **Lindy AI (2026-07-10)**、本日 2026-07-16 は **6 日後** → 「過去 7 日以内に discovery 履歴あり = skip」に従いスキップ。**次 unlock ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d613d660e5b3",
+        "title": "現在 **26 社 / cap 50** (room あり)。",
+        "text": "現在 **26 社 / cap 50** (room あり)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "現在 **26 社 / cap 50** (room あり)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d613d660e5b3",
+        "title": "現在 **26 社 / cap 50** (room あり)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-fe93d6024be3",
+        "title": "次サイクル (7/17 = 明日) 候補プール (優先度順 — 本日更新):",
+        "text": "次サイクル (7/17 = 明日) 候補プール (優先度順 — 本日更新):",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "次サイクル (7/17 = 明日) 候補プール (優先度順 — 本日更新):"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-fe93d6024be3",
+        "title": "次サイクル (7/17 = 明日) 候補プール (優先度順 — 本日更新):",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "text": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "アクション提案"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "text": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ソース"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ba4342f6fc4f",
+        "title": "[OpenAI launches ChatGPT for personal finance, will let you connect bank accounts (TechCrunch, 2026-05-15)](https://tech",
+        "text": "[OpenAI launches ChatGPT for personal finance, will let you connect bank accounts (TechCrunch, 2026-05-15)](https://techcrunch.com/2026/05/15/openai-launches-chatgpt-for-personal-finance-will-let-you-connect-bank-accounts/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[OpenAI launches ChatGPT for personal finance, will let you connect bank accounts (TechCrunch, 2026-05-15)](https://techcrunch.com/2026/05/15/openai-launches-chatgpt-for-personal-finance-will-let-you-connect-bank-accounts/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ba4342f6fc4f",
+        "title": "[OpenAI launches ChatGPT for personal finance, will let you connect bank accounts (TechCrunch, 2026-05-15)](https://tech",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-803b66b32e9a",
+        "title": "[A new personal finance experience in ChatGPT (OpenAI)](https://openai.com/index/personal-finance-chatgpt/)",
+        "text": "[A new personal finance experience in ChatGPT (OpenAI)](https://openai.com/index/personal-finance-chatgpt/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[A new personal finance experience in ChatGPT (OpenAI)](https://openai.com/index/personal-finance-chatgpt/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-803b66b32e9a",
+        "title": "[A new personal finance experience in ChatGPT (OpenAI)](https://openai.com/index/personal-finance-chatgpt/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4c71536fa8f1",
+        "title": "[OpenAI's personal finance features for ChatGPT expands to more customers (9to5Mac, 2026-06-30)](https://9to5mac.com/202",
+        "text": "[OpenAI's personal finance features for ChatGPT expands to more customers (9to5Mac, 2026-06-30)](https://9to5mac.com/2026/06/30/openai-just-released-new-personal-finance-features-for-chatgpt-customers/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[OpenAI's personal finance features for ChatGPT expands to more customers (9to5Mac, 2026-06-30)](https://9to5mac.com/2026/06/30/openai-just-released-new-personal-finance-features-for-chatgpt-customers/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4c71536fa8f1",
+        "title": "[OpenAI's personal finance features for ChatGPT expands to more customers (9to5Mac, 2026-06-30)](https://9to5mac.com/202",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c3ca0ff52f7b",
+        "title": "[ChatGPT Plus Users Can Now Connect Financial Accounts (Dataconomy, 2026-07-01)](https://dataconomy.com/2026/07/01/opena",
+        "text": "[ChatGPT Plus Users Can Now Connect Financial Accounts (Dataconomy, 2026-07-01)](https://dataconomy.com/2026/07/01/openai-chatgpt-personal-finance-tools-us/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[ChatGPT Plus Users Can Now Connect Financial Accounts (Dataconomy, 2026-07-01)](https://dataconomy.com/2026/07/01/openai-chatgpt-personal-finance-tools-us/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c3ca0ff52f7b",
+        "title": "[ChatGPT Plus Users Can Now Connect Financial Accounts (Dataconomy, 2026-07-01)](https://dataconomy.com/2026/07/01/opena",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e735f9b2c2ec",
+        "title": "[『マネーフォワード ME』、資産カテゴリに「暗号資産」を新たに追加するアップデートを実施 (公式 PR TIMES, 2026-07-08)](https://prtimes.jp/main/html/rd/p/000001652.000",
+        "text": "[『マネーフォワード ME』、資産カテゴリに「暗号資産」を新たに追加するアップデートを実施 (公式 PR TIMES, 2026-07-08)](https://prtimes.jp/main/html/rd/p/000001652.000008962.html)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[『マネーフォワード ME』、資産カテゴリに「暗号資産」を新たに追加するアップデートを実施 (公式 PR TIMES, 2026-07-08)](https://prtimes.jp/main/html/rd/p/000001652.000008962.html)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e735f9b2c2ec",
+        "title": "[『マネーフォワード ME』、資産カテゴリに「暗号資産」を新たに追加するアップデートを実施 (公式 PR TIMES, 2026-07-08)](https://prtimes.jp/main/html/rd/p/000001652.000",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ed32a1e4735a",
+        "title": "[バックオフィス業務を自律的に遂行するAIサービス『マネーフォワード AI Cowork』を2026年7月より提供開始予定 (公式)](https://corp.moneyforward.com/news/release/service/2",
+        "text": "[バックオフィス業務を自律的に遂行するAIサービス『マネーフォワード AI Cowork』を2026年7月より提供開始予定 (公式)](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[バックオフィス業務を自律的に遂行するAIサービス『マネーフォワード AI Cowork』を2026年7月より提供開始予定 (公式)](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ed32a1e4735a",
+        "title": "[バックオフィス業務を自律的に遂行するAIサービス『マネーフォワード AI Cowork』を2026年7月より提供開始予定 (公式)](https://corp.moneyforward.com/news/release/service/2",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0bf173c78e5f",
+        "title": "[マネーフォワード AI Coworkとは？AIが担う6つのバックオフィス業務 (ZIDAI Notebook)](https://zidaiinc.com/method/moneyforward-ai-cowork/)",
+        "text": "[マネーフォワード AI Coworkとは？AIが担う6つのバックオフィス業務 (ZIDAI Notebook)](https://zidaiinc.com/method/moneyforward-ai-cowork/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[マネーフォワード AI Coworkとは？AIが担う6つのバックオフィス業務 (ZIDAI Notebook)](https://zidaiinc.com/method/moneyforward-ai-cowork/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0bf173c78e5f",
+        "title": "[マネーフォワード AI Coworkとは？AIが担う6つのバックオフィス業務 (ZIDAI Notebook)](https://zidaiinc.com/method/moneyforward-ai-cowork/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ad35383b9e4c",
+        "title": "[Introducing workspace agents in ChatGPT (OpenAI)](https://openai.com/index/introducing-workspace-agents-in-chatgpt/)",
+        "text": "[Introducing workspace agents in ChatGPT (OpenAI)](https://openai.com/index/introducing-workspace-agents-in-chatgpt/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Introducing workspace agents in ChatGPT (OpenAI)](https://openai.com/index/introducing-workspace-agents-in-chatgpt/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ad35383b9e4c",
+        "title": "[Introducing workspace agents in ChatGPT (OpenAI)](https://openai.com/index/introducing-workspace-agents-in-chatgpt/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ef4ebb129a28",
+        "title": "[ChatGPT Work: OpenAI's Agent That Ships Finished Work (Digital Applied)](https://www.digitalapplied.com/blog/chatgpt-wo",
+        "text": "[ChatGPT Work: OpenAI's Agent That Ships Finished Work (Digital Applied)](https://www.digitalapplied.com/blog/chatgpt-work-openai-agent-launch-2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[ChatGPT Work: OpenAI's Agent That Ships Finished Work (Digital Applied)](https://www.digitalapplied.com/blog/chatgpt-work-openai-agent-launch-2026)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ef4ebb129a28",
+        "title": "[ChatGPT Work: OpenAI's Agent That Ships Finished Work (Digital Applied)](https://www.digitalapplied.com/blog/chatgpt-wo",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-25062b8fa9d0",
+        "title": "[ChatGPT Business - Release Notes (OpenAI Help Center)](https://help.openai.com/en/articles/11391654-chatgpt-business-re",
+        "text": "[ChatGPT Business - Release Notes (OpenAI Help Center)](https://help.openai.com/en/articles/11391654-chatgpt-business-release-notes)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[ChatGPT Business - Release Notes (OpenAI Help Center)](https://help.openai.com/en/articles/11391654-chatgpt-business-release-notes)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-25062b8fa9d0",
+        "title": "[ChatGPT Business - Release Notes (OpenAI Help Center)](https://help.openai.com/en/articles/11391654-chatgpt-business-re",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a784d4c06ea1",
+        "title": "[Claude Code Updates by Anthropic - July 2026 (Releasebot)](https://releasebot.io/updates/anthropic/claude-code)",
+        "text": "[Claude Code Updates by Anthropic - July 2026 (Releasebot)](https://releasebot.io/updates/anthropic/claude-code)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Claude Code Updates by Anthropic - July 2026 (Releasebot)](https://releasebot.io/updates/anthropic/claude-code)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a784d4c06ea1",
+        "title": "[Claude Code Updates by Anthropic - July 2026 (Releasebot)](https://releasebot.io/updates/anthropic/claude-code)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-197a90c99d9c",
+        "title": "[Claude Code vs. Cursor vs. Codex vs. Antigravity — six months in (The New Stack)](https://thenewstack.io/claude-code-vs",
+        "text": "[Claude Code vs. Cursor vs. Codex vs. Antigravity — six months in (The New Stack)](https://thenewstack.io/claude-code-vs-cursor-vs-codex-vs-antigravity-2026/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Claude Code vs. Cursor vs. Codex vs. Antigravity — six months in (The New Stack)](https://thenewstack.io/claude-code-vs-cursor-vs-codex-vs-antigravity-2026/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-197a90c99d9c",
+        "title": "[Claude Code vs. Cursor vs. Codex vs. Antigravity — six months in (The New Stack)](https://thenewstack.io/claude-code-vs",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-dec77252e627",
+        "title": "[July 1, 2026 – Notion 3.6: External Agents, HTML blocks, and more (Notion)](https://www.notion.com/releases/2026-07-01)",
+        "text": "[July 1, 2026 – Notion 3.6: External Agents, HTML blocks, and more (Notion)](https://www.notion.com/releases/2026-07-01)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[July 1, 2026 – Notion 3.6: External Agents, HTML blocks, and more (Notion)](https://www.notion.com/releases/2026-07-01)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-dec77252e627",
+        "title": "[July 1, 2026 – Notion 3.6: External Agents, HTML blocks, and more (Notion)](https://www.notion.com/releases/2026-07-01)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-eea54ab9a40d",
+        "title": "[Best AI Money Coach Apps 2026: Cleo / Monarch / Copilot comparison](https://ledgerwire.lovable.app/article/best-ai-mone",
+        "text": "[Best AI Money Coach Apps 2026: Cleo / Monarch / Copilot comparison](https://ledgerwire.lovable.app/article/best-ai-money-coach-apps-2026-cleo-monarch-copilot-comparison)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Best AI Money Coach Apps 2026: Cleo / Monarch / Copilot comparison](https://ledgerwire.lovable.app/article/best-ai-money-coach-apps-2026-cleo-monarch-copilot-comparison)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-eea54ab9a40d",
+        "title": "[Best AI Money Coach Apps 2026: Cleo / Monarch / Copilot comparison](https://ledgerwire.lovable.app/article/best-ai-mone",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-17a322673c7e",
+        "title": "[AI Executive Assistant in 2026: Stop Managing, Start Deciding (Lindy)](https://www.lindy.ai/blog/ai-executive-assistant",
+        "text": "[AI Executive Assistant in 2026: Stop Managing, Start Deciding (Lindy)](https://www.lindy.ai/blog/ai-executive-assistant)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[AI Executive Assistant in 2026: Stop Managing, Start Deciding (Lindy)](https://www.lindy.ai/blog/ai-executive-assistant)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-17a322673c7e",
+        "title": "[AI Executive Assistant in 2026: Stop Managing, Start Deciding (Lindy)](https://www.lindy.ai/blog/ai-executive-assistant",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0882f12f763c",
+        "title": "[The AI Powered SuperApp for Work (Motion)](https://www.usemotion.com/)",
+        "text": "[The AI Powered SuperApp for Work (Motion)](https://www.usemotion.com/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[The AI Powered SuperApp for Work (Motion)](https://www.usemotion.com/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0882f12f763c",
+        "title": "[The AI Powered SuperApp for Work (Motion)](https://www.usemotion.com/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9553b2a90a63",
+        "title": "[Registration is live for Google Cloud Next 2026 in Las Vegas — April 22–24 (Google Cloud Blog)](https://cloud.google.co",
+        "text": "[Registration is live for Google Cloud Next 2026 in Las Vegas — April 22–24 (Google Cloud Blog)](https://cloud.google.com/blog/topics/google-cloud-next/registration-is-open-for-google-cloud-next)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Registration is live for Google Cloud Next 2026 in Las Vegas — April 22–24 (Google Cloud Blog)](https://cloud.google.com/blog/topics/google-cloud-next/registration-is-open-for-google-cloud-next)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9553b2a90a63",
+        "title": "[Registration is live for Google Cloud Next 2026 in Las Vegas — April 22–24 (Google Cloud Blog)](https://cloud.google.co",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    }
+  ],
+  "patterns": [],
+  "issue_candidates": []
+}

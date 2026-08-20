@@ -22,12 +22,16 @@ class ReferralGrowthSnapshot {
   final ReferralCode? myReferralCode;
   final int totalReferrals;
   final int successfulReferrals;
+  final int billingConvertedReferrals;
+  final List<ReferralBillingChannelSnapshot> billingChannels;
   final String? pendingReferralCode;
 
   const ReferralGrowthSnapshot({
     required this.myReferralCode,
     required this.totalReferrals,
     required this.successfulReferrals,
+    this.billingConvertedReferrals = 0,
+    this.billingChannels = const <ReferralBillingChannelSnapshot>[],
     required this.pendingReferralCode,
   });
 
@@ -35,6 +39,8 @@ class ReferralGrowthSnapshot {
       : myReferralCode = null,
         totalReferrals = 0,
         successfulReferrals = 0,
+        billingConvertedReferrals = 0,
+        billingChannels = const <ReferralBillingChannelSnapshot>[],
         pendingReferralCode = null;
 
   String? get referralCode => myReferralCode?.referralCode;
@@ -45,6 +51,47 @@ class ReferralGrowthSnapshot {
       return null;
     }
     return GrowthMissionService.buildInviteUrlForCode(code);
+  }
+
+  double get freeToProConversionRate {
+    if (totalReferrals <= 0) {
+      return 0;
+    }
+    return billingConvertedReferrals / totalReferrals;
+  }
+}
+
+class ReferralBillingChannelSnapshot {
+  final String id;
+  final String label;
+  final int totalReferrals;
+  final int proConversions;
+
+  const ReferralBillingChannelSnapshot({
+    required this.id,
+    required this.label,
+    required this.totalReferrals,
+    required this.proConversions,
+  });
+
+  factory ReferralBillingChannelSnapshot.fromJson(Map<String, dynamic> json) {
+    return ReferralBillingChannelSnapshot(
+      id: json['id']?.toString() ?? 'referral',
+      label: json['label']?.toString() ?? 'Referral',
+      totalReferrals: GrowthAcquisitionTouchpointSnapshot._toInt(
+        json['totalReferrals'],
+      ),
+      proConversions: GrowthAcquisitionTouchpointSnapshot._toInt(
+        json['proConversions'],
+      ),
+    );
+  }
+
+  double get freeToProConversionRate {
+    if (totalReferrals <= 0) {
+      return 0;
+    }
+    return proConversions / totalReferrals;
   }
 }
 
@@ -68,9 +115,7 @@ class GrowthAcquisitionTouchpointSnapshot {
       id: json['id']?.toString() ?? 'touchpoint',
       label: (json['label'] ?? json['touchpoint'])?.toString() ?? 'Touchpoint',
       touchCount: _toInt(json['touchCount'] ?? json['touches']),
-      signupSubmitCount: _toInt(
-        json['signupSubmitCount'] ?? json['signups'],
-      ),
+      signupSubmitCount: _toInt(json['signupSubmitCount'] ?? json['signups']),
     );
   }
 
@@ -136,9 +181,7 @@ class GrowthAcquisitionSnapshot {
     required this.publicMemoSignupCtaCount,
   });
 
-  factory GrowthAcquisitionSnapshot.empty({
-    int windowDays = 30,
-  }) {
+  factory GrowthAcquisitionSnapshot.empty({int windowDays = 30}) {
     final now = DateTime.now();
     final startDate = now.subtract(Duration(days: math.max(0, windowDays - 1)));
     return GrowthAcquisitionSnapshot(
@@ -229,15 +272,11 @@ class GrowthAcquisitionSnapshot {
     );
   }
 
-  int get totalTouches => touchpoints.fold<int>(
-        0,
-        (sum, item) => sum + item.touchCount,
-      );
+  int get totalTouches =>
+      touchpoints.fold<int>(0, (sum, item) => sum + item.touchCount);
 
-  int get totalSignupSubmits => touchpoints.fold<int>(
-        0,
-        (sum, item) => sum + item.signupSubmitCount,
-      );
+  int get totalSignupSubmits =>
+      touchpoints.fold<int>(0, (sum, item) => sum + item.signupSubmitCount);
 }
 
 class GrowthMissionDashboard {
@@ -498,9 +537,8 @@ class GrowthMissionService {
 
   final SupabaseClient? _clientOverride;
 
-  const GrowthMissionService({
-    SupabaseClient? clientOverride,
-  }) : _clientOverride = clientOverride;
+  const GrowthMissionService({SupabaseClient? clientOverride})
+      : _clientOverride = clientOverride;
 
   SupabaseClient? get _client {
     if (_clientOverride != null) {
@@ -523,10 +561,7 @@ class GrowthMissionService {
       ..['utm_medium'] = 'invite'
       ..['utm_campaign'] = 'growth_mission';
     return baseUri
-        .replace(
-          path: '/referral',
-          queryParameters: nextQuery,
-        )
+        .replace(path: '/referral', queryParameters: nextQuery)
         .toString();
   }
 
@@ -559,9 +594,7 @@ $inviteUrl
 ''';
   }
 
-  Future<void> capturePendingReferralFromUri({
-    Uri? currentUri,
-  }) async {
+  Future<void> capturePendingReferralFromUri({Uri? currentUri}) async {
     final uri = currentUri ?? Uri.base;
     final refCode = (uri.queryParameters['ref'] ?? uri.queryParameters['code'])
         ?.trim()
@@ -601,9 +634,7 @@ $inviteUrl
     return created;
   }
 
-  Future<void> syncPresence({
-    required String pagePath,
-  }) async {
+  Future<void> syncPresence({required String pagePath}) async {
     final client = _client;
     if (client == null) {
       return;
@@ -706,9 +737,7 @@ $inviteUrl
     try {
       final response = await client.functions.invoke(
         'growth-hub',
-        body: const <String, dynamic>{
-          'action': 'referral.list',
-        },
+        body: const <String, dynamic>{'action': 'referral.list'},
       );
       final data = _toMapValue(response.data);
       if (data['success'] == true) {
@@ -843,6 +872,7 @@ $inviteUrl
         myReferralCode: null,
         totalReferrals: 0,
         successfulReferrals: 0,
+        billingConvertedReferrals: 0,
         pendingReferralCode: pendingCode,
       );
     }
@@ -850,9 +880,7 @@ $inviteUrl
     try {
       final response = await client.functions.invoke(
         'growth-hub',
-        body: const <String, dynamic>{
-          'action': 'referral.list',
-        },
+        body: const <String, dynamic>{'action': 'referral.list'},
       );
       final data = _toMapValue(response.data);
       if (data['success'] == true) {
@@ -863,6 +891,18 @@ $inviteUrl
               : ReferralCode.fromJson(referralCodeRow),
           totalReferrals: _toIntValue(data['totalReferrals']),
           successfulReferrals: _toIntValue(data['successfulReferrals']),
+          billingConvertedReferrals: _toIntValue(
+            data['billingConvertedReferrals'],
+          ),
+          billingChannels:
+              (data['billingChannels'] as List<dynamic>? ?? const <dynamic>[])
+                  .whereType<Map>()
+                  .map(
+                    (row) => ReferralBillingChannelSnapshot.fromJson(
+                      Map<String, dynamic>.from(row),
+                    ),
+                  )
+                  .toList(),
           pendingReferralCode: pendingCode,
         );
       }
@@ -874,17 +914,44 @@ $inviteUrl
     try {
       final rows = await client
           .from('referrals')
-          .select('status')
+          .select('referred_user_id, status')
           .eq('referrer_user_id', user.id);
       final referralRows = rows;
       final successful = referralRows.where((row) {
         return row['status']?.toString() == 'completed';
       }).length;
+      final referredUserIds = referralRows
+          .map((row) => row['referred_user_id']?.toString() ?? '')
+          .where((id) => id.isNotEmpty)
+          .toSet()
+          .toList();
+      var billingConverted = 0;
+      if (referredUserIds.isNotEmpty) {
+        final billingRows = await client
+            .from('billing_subscriptions')
+            .select('user_id, tier, status')
+            .inFilter('user_id', referredUserIds);
+        billingConverted = billingRows.where((row) {
+          final tier = row['tier']?.toString();
+          final status = row['status']?.toString();
+          return (tier == 'pro' || tier == 'team') &&
+              (status == 'active' || status == 'trialing');
+        }).length;
+      }
 
       return ReferralGrowthSnapshot(
         myReferralCode: myCode,
         totalReferrals: referralRows.length,
         successfulReferrals: successful,
+        billingConvertedReferrals: billingConverted,
+        billingChannels: [
+          ReferralBillingChannelSnapshot(
+            id: 'referral',
+            label: 'Referral',
+            totalReferrals: referralRows.length,
+            proConversions: billingConverted,
+          ),
+        ],
         pendingReferralCode: pendingCode,
       );
     } catch (error) {
@@ -893,6 +960,7 @@ $inviteUrl
         myReferralCode: myCode,
         totalReferrals: 0,
         successfulReferrals: 0,
+        billingConvertedReferrals: 0,
         pendingReferralCode: pendingCode,
       );
     }
@@ -1073,9 +1141,7 @@ $inviteUrl
         );
       }
 
-      return GrowthCommandCenterBrief.fromJson(
-        _toMapValue(data['brief']),
-      );
+      return GrowthCommandCenterBrief.fromJson(_toMapValue(data['brief']));
     } catch (error) {
       debugPrint('Growth command center fallback: $error');
       return _buildLocalCommandCenterBrief(dashboard);
@@ -1096,12 +1162,15 @@ $inviteUrl
 
       final data = _toMapValue(response.data);
       if (data['success'] != true) {
-        throw Exception(
-          data['error']?.toString() ?? 'Weekly digest failed.',
-        );
+        throw Exception(data['error']?.toString() ?? 'Weekly digest failed.');
       }
 
-      return WeeklyDigestSnapshot.fromJson(data);
+      // R30: edge は {success, digest:{currentWeek,...}} と nested で返す。
+      // 兄弟の command-center brief (data['brief']) は unwrap しているのに
+      // ここだけ top-level を渡していたため fromJson が全キー null →
+      // currentWeekStart='' → カードが常に「計測待ち」を表示していた
+      // (成功レスポンス+実データでも空表示)。digest を unwrap する。
+      return WeeklyDigestSnapshot.fromJson(_toMapValue(data['digest']));
     } catch (error) {
       debugPrint('Weekly digest fallback: $error');
       return const WeeklyDigestSnapshot.empty();
@@ -1412,10 +1481,13 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
   Timer? _heartbeatTimer;
   Timer? _metricsTimer;
   Future<void>? _immediatePresenceSyncInFlight;
-  String? _immediatePresenceSyncInFlightPagePath;
   DateTime? _lastImmediatePresenceSyncAt;
-  String? _lastImmediatePresenceSyncPagePath;
   String _currentPagePath = '/';
+
+  /// まだ 1 ルートも track していない状態の区別。初期値 _currentPagePath='/'
+  /// と初回ルート '/' (root 直行 = 最多の入口) が一致して同一 path skip に
+  /// 入ると、touchpoint/referral 記録が丸ごと消えるため。
+  bool _hasTrackedRoute = false;
 
   GrowthPresenceNavigatorObserver({
     GrowthMissionService service = const GrowthMissionService(),
@@ -1428,37 +1500,45 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
 
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _heartbeatTimer?.cancel();
-    _metricsTimer?.cancel();
+    _cancelTimers();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
-      _heartbeatTimer?.cancel();
-      _metricsTimer?.cancel();
+      _cancelTimers();
     } else if (state == AppLifecycleState.resumed) {
-      _restartTimers();
+      // バックグラウンド復帰時はタイマーを作り直し、即時 sync も試みる
+      // (グローバル cooldown 内なら書き込みはスキップされる)。
+      _cancelTimers();
+      _startTimersIfNeeded(syncNow: true);
     }
   }
 
-  void _restartTimers() {
+  void _cancelTimers() {
     _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
     _metricsTimer?.cancel();
+    _metricsTimer = null;
+  }
+
+  /// タイマーが未生成のときだけ生成する。ルート遷移のたびに周期を
+  /// リセットしていた旧実装と違い、2分 heartbeat / 5分 metrics の周期を
+  /// 遷移頻度と無関係に保つ。
+  void _startTimersIfNeeded({required bool syncNow}) {
     if (!_service.isPresenceTrackingAvailable) return;
-    _syncPresenceImmediately();
-    _heartbeatTimer = Timer.periodic(const Duration(minutes: 2), (_) {
+    if (syncNow) {
+      _syncPresenceImmediately();
+    }
+    _heartbeatTimer ??= Timer.periodic(const Duration(minutes: 2), (_) {
       _runSafely(
         _service.syncPresence(pagePath: _currentPagePath),
         'syncPresence heartbeat',
       );
     });
-    _metricsTimer = Timer.periodic(const Duration(minutes: 5), (_) {
-      _runSafely(
-        _service.refreshAggregateMetrics(),
-        'refreshAggregateMetrics',
-      );
+    _metricsTimer ??= Timer.periodic(const Duration(minutes: 5), (_) {
+      _runSafely(_service.refreshAggregateMetrics(), 'refreshAggregateMetrics');
     });
   }
 
@@ -1477,10 +1557,7 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
   }
 
   @override
-  void didReplace({
-    Route<dynamic>? newRoute,
-    Route<dynamic>? oldRoute,
-  }) {
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
     if (newRoute != null) {
       _trackRoute(newRoute);
@@ -1488,7 +1565,17 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
   }
 
   void _trackRoute(Route<dynamic> route) {
-    _currentPagePath = _resolvePagePath(route);
+    final resolved = _resolvePagePath(route);
+    if (resolved == null ||
+        (_hasTrackedRoute && resolved == _currentPagePath)) {
+      // ダイアログ等の無名ルートや同一ページへの出入りでは presence 書き込み
+      // もタッチポイント記録も行わない (直前ページに滞在している扱い)。
+      // アプリ起動直後の初回ルートでまだタイマーが無い場合のみ起動する。
+      _startTimersIfNeeded(syncNow: _heartbeatTimer == null);
+      return;
+    }
+    _hasTrackedRoute = true;
+    _currentPagePath = resolved;
     _runSafely(
       _acquisitionService.recordTouchpointForPagePath(_currentPagePath),
       'recordTouchpointForPagePath',
@@ -1501,35 +1588,31 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
       _service.applyPendingReferralIfPossible(),
       'applyPendingReferralIfPossible',
     );
-    _restartTimers();
+    _syncPresenceImmediately();
+    _startTimersIfNeeded(syncNow: false);
   }
 
   void _syncPresenceImmediately() {
-    final pagePath = _currentPagePath;
-    final inFlight = _immediatePresenceSyncInFlight;
-    if (inFlight != null &&
-        _immediatePresenceSyncInFlightPagePath == pagePath) {
+    if (_immediatePresenceSyncInFlight != null) {
       return;
     }
 
+    // cooldown は pagePath 非依存 (グローバル)。cooldown 中の遷移は
+    // _currentPagePath の更新だけ行い、書き込みは次の heartbeat に委ねる。
     final lastSyncedAt = _lastImmediatePresenceSyncAt;
-    if (_lastImmediatePresenceSyncPagePath == pagePath &&
-        lastSyncedAt != null &&
+    if (lastSyncedAt != null &&
         DateTime.now().difference(lastSyncedAt) < _immediatePresenceCooldown) {
       return;
     }
 
-    final syncFuture = _service.syncPresence(pagePath: pagePath);
+    final syncFuture = _service.syncPresence(pagePath: _currentPagePath);
     _immediatePresenceSyncInFlight = syncFuture;
-    _immediatePresenceSyncInFlightPagePath = pagePath;
     _lastImmediatePresenceSyncAt = DateTime.now();
-    _lastImmediatePresenceSyncPagePath = pagePath;
 
     _runSafely(
       syncFuture.whenComplete(() {
         if (identical(_immediatePresenceSyncInFlight, syncFuture)) {
           _immediatePresenceSyncInFlight = null;
-          _immediatePresenceSyncInFlightPagePath = null;
         }
       }),
       'syncPresence',
@@ -1545,7 +1628,11 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
     );
   }
 
-  String _resolvePagePath(Route<dynamic> route) {
+  /// ルート名から page_path を解決する。ダイアログ等の無名ルートは null を
+  /// 返し、呼び出し側で「直前ページに滞在中」として扱う (旧実装の
+  /// runtimeType 文字列は 'minified:yL<dynamic>' のようなゴミ行を
+  /// user_presence に量産していた)。
+  String? _resolvePagePath(Route<dynamic> route) {
     final name = route.settings.name;
     if (name != null && name.trim().isNotEmpty) {
       final uri = Uri.tryParse(name);
@@ -1554,6 +1641,6 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
       }
       return name;
     }
-    return route.runtimeType.toString();
+    return null;
   }
 }

@@ -157,7 +157,8 @@
       "Bash(git ls-tree *)",
       "Bash(echo \"abort rc=$?\")",
       "Bash(echo \"rc=$?\")",
-      "Bash(git branch *)"
+      "Bash(git branch *)",
+      "mcp__bf7c680d-5fdc-5ef4-b4a0-abadb619bf0a__send_later"
     ]
   }
 }
