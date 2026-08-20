@@ -103,14 +103,14 @@ class FirstUserGrowthAttribution {
   }
 
   Map<String, Object> toJson() => <String, Object>{
-    'version': 1,
-    'visitor_id': visitorId,
-    'utm_source': utmSource,
-    'utm_medium': utmMedium,
-    'utm_campaign': utmCampaign,
-    'utm_content': utmContent,
-    'captured_at': capturedAt.toUtc().toIso8601String(),
-  };
+        'version': 1,
+        'visitor_id': visitorId,
+        'utm_source': utmSource,
+        'utm_medium': utmMedium,
+        'utm_campaign': utmCampaign,
+        'utm_content': utmContent,
+        'captured_at': capturedAt.toUtc().toIso8601String(),
+      };
 
   static String _token(Object? value, {String fallback = ''}) {
     final normalized = value?.toString().trim().toLowerCase() ?? '';
@@ -191,7 +191,7 @@ class GrowthAcquisitionService {
   final SupabaseClient? _clientOverride;
 
   const GrowthAcquisitionService({SupabaseClient? clientOverride})
-    : _clientOverride = clientOverride;
+      : _clientOverride = clientOverride;
 
   SupabaseClient? get _client {
     if (_clientOverride != null) {
@@ -307,8 +307,7 @@ class GrowthAcquisitionService {
     String pagePath, {
     Uri? currentUri,
   }) async {
-    final signalKey =
-        signalForIncomingUri(currentUri ?? Uri.base) ??
+    final signalKey = signalForIncomingUri(currentUri ?? Uri.base) ??
         signalForPagePath(pagePath);
     if (signalKey == null) {
       return;
@@ -582,8 +581,8 @@ class GrowthAcquisitionService {
 
       await client
           .from('app_analytics')
-          .update(<String, dynamic>{'source_details': sourceDetails})
-          .eq('date', dateKey);
+          .update(<String, dynamic>{'source_details': sourceDetails}).eq(
+              'date', dateKey);
     } catch (error, stackTrace) {
       debugPrint('Growth acquisition fallback failed: $error');
       debugPrintStack(stackTrace: stackTrace);
