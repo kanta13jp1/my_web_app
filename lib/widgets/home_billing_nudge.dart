@@ -80,16 +80,16 @@ class HomeBillingNudge extends StatelessWidget {
       key: const Key('home_billing_nudge'),
       color: scheme.primaryContainer.withValues(alpha: 0.55),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: LayoutBuilder(
           builder: (context, constraints) {
             if (constraints.maxWidth < 520) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  usage,
-                  const SizedBox(height: 12),
-                  Align(alignment: Alignment.centerLeft, child: billingChip),
+                  Expanded(child: usage),
+                  const SizedBox(width: 12),
+                  billingChip,
                 ],
               );
             }

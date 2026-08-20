@@ -1562,7 +1562,7 @@ void main() {
     }
   });
 
-  testWidgets('mobile treatment exposes and measures the sticky signup CTA', (
+  testWidgets('mobile treatment reveals the sticky signup CTA after the hero', (
     tester,
   ) async {
     final adapter = await pumpLanding(
@@ -1572,6 +1572,12 @@ void main() {
     );
 
     final sticky = find.byKey(const Key('landing_h09_mobile_sticky_cta'));
+    expect(sticky, findsNothing);
+    await tester.drag(
+      find.byType(SingleChildScrollView).first,
+      const Offset(0, -600),
+    );
+    await tester.pump();
     expect(sticky, findsOneWidget);
     await tester.tap(
       find.descendant(of: sticky, matching: find.text('無料で始める')),
@@ -1682,6 +1688,12 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    await tester.drag(
+      find.byType(SingleChildScrollView).first,
+      const Offset(0, -600),
+    );
+    await tester.pump();
+
     final sticky = find.byKey(const Key('landing_h09_mobile_sticky_cta'));
     final saveSticky = find.descendant(
       of: sticky,
@@ -1706,7 +1718,8 @@ void main() {
     expect(emailField.focusNode?.hasFocus, isTrue);
   });
 
-  testWidgets('mobile H03 keeps the trial action above the sticky CTA', (
+  testWidgets('mobile H03 does not cover the first-view trial with sticky CTA',
+      (
     tester,
   ) async {
     await pumpLanding(
@@ -1720,10 +1733,10 @@ void main() {
     );
     final stickyCta = find.byKey(const Key('landing_h09_mobile_sticky_cta'));
     expect(trialAction, findsOneWidget);
-    expect(stickyCta, findsOneWidget);
+    expect(stickyCta, findsNothing);
     expect(
       tester.getBottomRight(trialAction).dy,
-      lessThanOrEqualTo(tester.getTopLeft(stickyCta).dy),
+      lessThanOrEqualTo(727),
     );
   });
 }
