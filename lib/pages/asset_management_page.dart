@@ -54,6 +54,7 @@ import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_subscription_catalog.dart';
 import 'package:my_web_app/services/asset_subscription_duplicate_detector.dart';
 import 'package:my_web_app/services/ai_hub_chat_service.dart';
+import 'package:my_web_app/services/asset_chat_privacy_settings_service.dart';
 import 'package:my_web_app/services/asset_payment_check_guide_service.dart';
 import 'package:my_web_app/services/asset_salary_amount_store.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
@@ -407,8 +408,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 支払確認手順(決定論ベース)と、ネット検索対応プロバイダ経由の AI 詳細手順。
   final AssetPaymentCheckGuideService _paymentCheckGuideService =
       const AssetPaymentCheckGuideService();
+  final AssetChatPrivacySettingsService _assetChatPrivacySettingsService =
+      const AssetChatPrivacySettingsService();
   late final AiHubChatService _aiHubChatService = AiHubChatService(
     supabase: _supabase,
+    assetChatPrivacySettingsService: _assetChatPrivacySettingsService,
   );
   final ProfileService _profileService = ProfileService();
 
@@ -874,6 +878,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetManagementDisplayModeStore();
   AssetManagementDisplayMode _displayMode =
       AssetManagementDisplayModeStore.defaultMode;
+  bool _assetChatMaskMoneyAmounts = false;
   final AssetManagementMainAccountStore _mainAccountStore =
       const AssetManagementMainAccountStore();
   // 月をまたいだ負債トレンド(リボ複利・残高増加)判定のための口座別残高履歴。
@@ -1100,6 +1105,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchMustTasks();
     unawaited(_loadDailyTodos());
     _loadDisplayMode();
+    unawaited(_loadAssetChatPrivacySettings());
     _loadMainAccount();
     unawaited(_loadHouseholdTrackerPublishing());
     unawaited(_loadSalaryAmount());
@@ -12195,6 +12201,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  Future<void> _loadAssetChatPrivacySettings() async {
+    final enabled =
+        await _assetChatPrivacySettingsService.loadMaskMoneyAmounts();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _assetChatMaskMoneyAmounts = enabled;
+    });
+  }
+
+  Future<void> _setAssetChatMaskMoneyAmounts(bool enabled) async {
+    await _assetChatPrivacySettingsService.saveMaskMoneyAmounts(enabled);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _assetChatMaskMoneyAmounts = enabled;
+    });
+  }
+
   Future<void> _loadDisplayMode() async {
     final mode = await _displayModeStore.load();
     final overrides = await _displayModeStore.loadOverrides();
@@ -13991,6 +14018,50 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        dialogContext,
+                      ).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: SwitchListTile.adaptive(
+                      key: const Key('asset_chat_money_range_toggle'),
+                      value: _assetChatMaskMoneyAmounts,
+                      secondary: const Icon(Icons.privacy_tip_outlined),
+                      title: const Text(
+                        'AIチャットの金額をレンジ化',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'ONではAIへ送る直前に金額を「¥100k-500k」などへ変換します。'
+                        '入力原文はチャット履歴に残ります（既定OFF）。',
+                        style: TextStyle(fontSize: 11, height: 1.4),
+                      ),
+                      onChanged: (enabled) async {
+                        try {
+                          await _setAssetChatMaskMoneyAmounts(enabled);
+                          if (!dialogContext.mounted) {
+                            return;
+                          }
+                          setDialogState(() {});
+                        } catch (_) {
+                          if (!dialogContext.mounted) {
+                            return;
+                          }
+                          ScaffoldMessenger.of(dialogContext).showSnackBar(
+                            const SnackBar(
+                              content: Text('AIチャットのプライバシー設定を保存できませんでした'),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   if (_displayModeStatsLabel != null) ...[
                     Text(
                       '実験ログ: $_displayModeStatsLabel',
