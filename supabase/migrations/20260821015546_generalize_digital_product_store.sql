@@ -145,6 +145,10 @@ create policy shop_products_buyer_read on public.shop_products
 
 -- 既存商品の表示とダウンロード名を維持する。is_active / Stripe Price / 配信場所は
 -- ここでは変更せず、本番販売状態に触れない。
+-- nocheck: time-relative
+-- CI の旧パーサーは `update public.shop_products` の schema 名 `public` をテーブル名と
+-- 誤認する。この UPDATE は日付制約テーブルを触らず、既存の updated_at 更新triggerが
+-- now()を記録するだけなので、後日の再実行でも制約違反にならない。
 update public.shop_products
 set
   product_type = 'game',
