@@ -56,6 +56,15 @@
 > この 2 本は `deploy-prod.yml` の明示リストに載っている。新規 EF をそこへ足し忘れると
 > migration だけ本番へ入り CI は緑のまま半着地する ([`AI_DEV_PRINCIPLES.md`](AI_DEV_PRINCIPLES.md))。
 
+## 有償動画生成 EF (= 2026-08-20 追加)
+
+| Function | 用途 |
+| --- | --- |
+| `video-generation-hub` | 認証必須の自社 text-to-video API。前払いクレジットを原子的に予約して自社GPUキューへ登録し、完成動画の1時間限定URLだけを利用者へ返す。外部の動画生成APIは呼び出さない。 |
+| `video-worker-hub` | `VIDEO_WORKER_TOKEN` で認証した自社GPUワーカー専用API。ジョブの排他的リース、heartbeat、限定パスへの署名付きupload、出力検査、完了・再試行・失敗精算を担当する。service-role keyやモデル秘密情報をGPUホストへ渡さない。 |
+
+決済は `schedule-hub` の `billing.create_video_credit_checkout_session`、付与と全額返金時の回収は署名検証済み `stripe-webhook` が担当する。生成予約後は `VIDEO_WORKER_WAKE_TOKEN` で認証した自社Cloud Run controllerが固定のGCP GPU VMだけを起動し、起動不能なら未claimの予約を失敗確定してクレジットを即時返却する。Pro/Team の月額「無制限」には含めない。
+
 ## 統合済み旧 EF の hub action 対応表
 
 EF-CAP-50 に従い hub へ吸収された EF。**左列は EF 名ではなく履歴上の名前**で、

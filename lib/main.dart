@@ -222,6 +222,7 @@ import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
 import 'package:my_web_app/pages/video_ad_generator_page.dart';
 import 'package:my_web_app/pages/viral_video_generator_page.dart';
+import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
 import 'package:my_web_app/pages/youtube_stats_page.dart';
 import 'package:my_web_app/pages/audio_effects_processor_page.dart';
 import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
@@ -1318,6 +1319,11 @@ Route<dynamic> generateAppRoute(
     case '/viral-video-generator':
       return MaterialPageRoute(
         builder: (_) => const ViralVideoGeneratorPage(),
+      );
+    case '/video-studio':
+      return MaterialPageRoute(
+        builder: (_) => VideoStudioFeature(initialUri: uri),
+        settings: RouteSettings(name: settings.name),
       );
     case '/youtube-stats':
       return MaterialPageRoute(builder: (_) => const YoutubeStatsPage());

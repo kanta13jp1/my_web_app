@@ -317,6 +317,7 @@ const List<String> kAllAppRoutes = <String>[
   '/vehicle-fleet',
   '/video-ad-generator',
   '/video-meeting',
+  '/video-studio',
   '/viral-ad-campaign',
   '/viral-ad-generator',
   '/viral-video-generator',
