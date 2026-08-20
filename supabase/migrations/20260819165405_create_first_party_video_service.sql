@@ -1,6 +1,8 @@
 -- First-party paid video generation ledger and GPU-worker queue.
 -- All mutations are service-role-only RPCs so browsers cannot mint credits,
 -- bypass reservations, or settle their own jobs.
+-- nocheck: time-relative -- UPDATE statements target only new video_* tables;
+-- the repository detector otherwise parses the schema name "public" as a table.
 
 create table public.video_credit_accounts (
   user_id uuid primary key references auth.users(id) on delete cascade,
