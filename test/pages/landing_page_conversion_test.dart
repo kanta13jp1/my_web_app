@@ -1206,6 +1206,49 @@ void main() {
   );
 
   testWidgets(
+    'custom trial prompt hides the unrelated fixed sample',
+    (tester) async {
+      await pumpLanding(
+        tester,
+        assignment: _assignment('h01', LandingExperimentVariant.treatment),
+      );
+
+      expect(
+        find.byKey(const Key('landing_h11_answer_preview')),
+        findsOneWidget,
+      );
+      expect(find.text('入力例と提案サンプル'), findsOneWidget);
+      expect(
+        find.textContaining('実際の提案は、入力内容によって変わります'),
+        findsOneWidget,
+      );
+
+      await tester.enterText(
+        find.byKey(const Key('landing_trial_prompt_input')),
+        'サブスクで無駄な支払いが多い。サブスクを棚卸ししたい。',
+      );
+      await tester.pump();
+
+      expect(
+        find.byKey(const Key('landing_h11_answer_preview')),
+        findsNothing,
+      );
+      expect(find.text('提案例: 止まっている案件を1つ選ぶ'), findsNothing);
+
+      await tester.enterText(
+        find.byKey(const Key('landing_trial_prompt_input')),
+        '',
+      );
+      await tester.pump();
+
+      expect(
+        find.byKey(const Key('landing_h11_answer_preview')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'H11 shows proof before interaction and waits for the AI result',
     (tester) async {
       final adapter = await pumpLanding(
@@ -1218,7 +1261,9 @@ void main() {
         find.byKey(const Key('landing_h11_answer_preview')),
         findsOneWidget,
       );
-      expect(find.textContaining('止まっている案件を1つ開く'), findsOneWidget);
+      expect(find.textContaining('止まっている案件を1つ選ぶ'), findsOneWidget);
+      expect(find.text('入力例と提案サンプル'), findsOneWidget);
+      expect(find.textContaining('最初の10分'), findsNothing);
 
       await tester.tap(
         find.byKey(const Key('landing_h11_answer_preview_action')),
@@ -1226,6 +1271,10 @@ void main() {
       await tester.pump();
 
       expect(adapter.trialRuns, 1);
+      expect(
+        find.byKey(const Key('landing_h11_answer_preview')),
+        findsNothing,
+      );
       expect(
         find.byKey(const Key('landing_trial_result_action')),
         findsNothing,
