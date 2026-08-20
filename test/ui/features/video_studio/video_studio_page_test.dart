@@ -104,8 +104,8 @@ Widget _app({
   return MaterialApp(
     routes: {
       '/login': (_) => const Scaffold(
-        body: Text('Login page', key: Key('video-studio-login-page')),
-      ),
+            body: Text('Login page', key: Key('video-studio-login-page')),
+          ),
       '/terms': (_) => const SizedBox(),
       '/privacy': (_) => const SizedBox(),
       '/tokusho': (_) => const SizedBox(),

@@ -105,8 +105,7 @@ class VideoStudioViewModel extends ChangeNotifier {
       if (_activeJob != null) _startPolling();
     } catch (error) {
       _loadStatus = VideoStudioLoadStatus.failure;
-      _authenticationRequired =
-          error is VideoStudioException &&
+      _authenticationRequired = error is VideoStudioException &&
           error.code == 'authentication_required';
       _errorMessage = _friendlyError(error);
     }
