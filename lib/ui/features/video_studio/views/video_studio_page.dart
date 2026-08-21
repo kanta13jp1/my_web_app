@@ -436,8 +436,7 @@ class _JobCard extends StatelessWidget {
     };
     final activity = switch (job.status) {
       'queued' => '専用GPUを起動・準備しています。初回は3分前後かかります。',
-      'in_progress' =>
-        '専用GPUで推論中です。720p動画は十数分かかる場合があります。画面を閉じても処理は継続します。',
+      'in_progress' => '専用GPUで推論中です。720p動画は十数分かかる場合があります。画面を閉じても処理は継続します。',
       _ => null,
     };
     return Container(
