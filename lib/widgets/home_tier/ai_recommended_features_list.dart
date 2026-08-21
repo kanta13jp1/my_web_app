@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/home_feature_actions.dart';
+import 'home_feature_label_formatter.dart';
 import 'home_tier_styles.dart';
 
 class AiRecommendedFeaturesList extends StatefulWidget {
@@ -125,11 +126,12 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
                 _stringValue(item['id']) ??
                 '',
           );
-          final label = _stringValue(item['label']) ??
-              _stringValue(item['feature_label']) ??
-              _fallbackLabel(route) ??
-              _stringValue(item['title']) ??
-              'おすすめ機能';
+          final label = HomeFeatureLabelFormatter.resolve(
+            route: route,
+            label: _stringValue(item['label']),
+            featureLabel: _stringValue(item['feature_label']),
+            title: _stringValue(item['title']),
+          );
           final reason = _stringValue(item['reason']) ?? _fallbackReason(route);
           return HomeTierFeatureListTile(
             icon: Icons.auto_awesome,
@@ -152,11 +154,6 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
     final route = value.trim();
     if (route.isEmpty) return '';
     return route.startsWith('/') ? route : '/$route';
-  }
-
-  static String? _fallbackLabel(String route) {
-    if (route.isEmpty) return null;
-    return route.substring(1).replaceAll('-', ' ');
   }
 
   static String _fallbackReason(String route) {
