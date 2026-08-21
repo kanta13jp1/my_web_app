@@ -33,6 +33,8 @@ Deno.test("worker identifiers and lease tokens are narrowly validated", () => {
   assertEquals(isLeaseToken("ab".repeat(32)), true);
   assertEquals(isLeaseToken("z".repeat(64)), false);
   assertEquals(isWorkerErrorCode("inference_failed"), true);
+  assertEquals(isWorkerErrorCode("inference_memory_exhausted"), true);
+  assertEquals(isWorkerErrorCode("inference_process_failed"), true);
   assertEquals(isWorkerErrorCode("raw exception text"), false);
 });
 

@@ -35,6 +35,7 @@ type JobRow = {
   charged_credits: number;
   output_storage_path: string | null;
   error_code: string | null;
+  started_at: string | null;
   created_at: string;
   updated_at: string;
   completed_at: string | null;
@@ -53,6 +54,7 @@ const JOB_SELECT = [
   "charged_credits",
   "output_storage_path",
   "error_code",
+  "started_at",
   "created_at",
   "updated_at",
   "completed_at",
@@ -327,6 +329,7 @@ async function publicJob(
     error_code: job.error_code,
     output_url: outputUrl,
     output_expires_at: outputExpiresAt,
+    started_at: job.started_at,
     created_at: job.created_at,
     updated_at: job.updated_at,
     completed_at: job.completed_at,

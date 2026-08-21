@@ -43,6 +43,17 @@ class LeaseLost(WorkerError):
 
 class InferenceTimeout(WorkerError):
     error_code = "inference_timeout"
+    retryable = False
+
+
+class InferenceMemoryExhausted(WorkerError):
+    error_code = "inference_memory_exhausted"
+    retryable = False
+
+
+class InferenceProcessFailed(WorkerError):
+    error_code = "inference_process_failed"
+    retryable = False
 
 
 class OutputInvalid(WorkerError):
@@ -73,14 +84,21 @@ class Settings:
     @classmethod
     def from_env(cls) -> "Settings":
         worker_url = os.environ.get("VIDEO_WORKER_URL", "").strip()
-        worker_token = os.environ.get("VIDEO_WORKER_TOKEN", "").strip()
+        worker_token_file = os.environ.get("VIDEO_WORKER_TOKEN_FILE", "").strip()
+        if worker_token_file:
+            try:
+                worker_token = Path(worker_token_file).read_text(encoding="utf-8").strip()
+            except OSError as error:
+                raise ValueError("VIDEO_WORKER_TOKEN_FILE is unreadable") from error
+        else:
+            worker_token = os.environ.get("VIDEO_WORKER_TOKEN", "").strip()
         worker_id = os.environ.get("VIDEO_WORKER_ID", "gpu-worker-01").strip()
         source_dir = Path(os.environ.get("WAN_SOURCE_DIR", "/opt/Wan2.2"))
         model_dir = Path(os.environ.get("WAN_MODEL_DIR", "/models/Wan2.2-TI2V-5B"))
         output_dir = Path(os.environ.get("VIDEO_OUTPUT_DIR", "/work/output"))
         poll_seconds = float(os.environ.get("VIDEO_POLL_SECONDS", "5"))
         heartbeat_seconds = float(os.environ.get("VIDEO_HEARTBEAT_SECONDS", "60"))
-        timeout_seconds = int(os.environ.get("VIDEO_GENERATION_TIMEOUT_SECONDS", "1800"))
+        timeout_seconds = int(os.environ.get("VIDEO_GENERATION_TIMEOUT_SECONDS", "3600"))
         idle_exit_seconds = int(os.environ.get("VIDEO_IDLE_EXIT_SECONDS", "600"))
 
         parsed = urlparse(worker_url)
@@ -267,6 +285,35 @@ def build_wan_command(
     ]
 
 
+def classify_inference_failure(
+    return_code: int,
+    diagnostic_path: Path,
+) -> WorkerError:
+    """Classify a failed process without exposing its prompt-bearing output."""
+    diagnostic_tail = b""
+    try:
+        with diagnostic_path.open("rb") as diagnostic:
+            diagnostic.seek(0, os.SEEK_END)
+            diagnostic.seek(max(0, diagnostic.tell() - (2 * 1024 * 1024)))
+            diagnostic_tail = diagnostic.read().lower()
+    except OSError:
+        pass
+
+    memory_markers = (
+        b"cuda out of memory",
+        b"torch.outofmemoryerror",
+        b"out of memory",
+        b"cannot allocate memory",
+    )
+    sigkill = int(getattr(signal, "SIGKILL", 9))
+    killed_by_memory_pressure = return_code in {-sigkill, 128 + sigkill}
+    if killed_by_memory_pressure or any(
+        marker in diagnostic_tail for marker in memory_markers
+    ):
+        return InferenceMemoryExhausted("inference_memory_exhausted")
+    return InferenceProcessFailed("inference_process_failed")
+
+
 def generate_video(
     settings: Settings,
     api: WorkerApi,
@@ -279,6 +326,8 @@ def generate_video(
     output_path = settings.output_dir / f"{job_id}.mp4"
     output_path.unlink(missing_ok=True)
     prompt_file: Path | None = None
+    diagnostic_file: Any | None = None
+    diagnostic_path: Path | None = None
     process: subprocess.Popen[bytes] | None = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -292,6 +341,15 @@ def generate_video(
             temporary.write(prompt)
             prompt_file = Path(temporary.name)
         prompt_file.chmod(0o600)
+        diagnostic_file = tempfile.NamedTemporaryFile(
+            mode="w+b",
+            prefix="video-diagnostic-",
+            suffix=".log",
+            dir=settings.output_dir,
+            delete=False,
+        )
+        diagnostic_path = Path(diagnostic_file.name)
+        diagnostic_path.chmod(0o600)
         environment = os.environ.copy()
         environment.update(
             {
@@ -306,10 +364,11 @@ def generate_video(
             cwd=settings.wan_source_dir,
             env=environment,
             stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stdout=diagnostic_file,
+            stderr=subprocess.STDOUT,
             shell=False,
         )
+        print(f"started video inference {job_id}", flush=True)
         started = time.monotonic()
         next_heartbeat = started + settings.heartbeat_seconds
         while process.poll() is None:
@@ -324,10 +383,24 @@ def generate_video(
                 if not api.heartbeat(job_id, lease_token):
                     terminate(process)
                     raise LeaseLost("lease_lost")
+                elapsed_minutes = max(1, int((now - started) // 60))
+                print(
+                    f"video inference active {job_id}: {elapsed_minutes}m",
+                    flush=True,
+                )
                 next_heartbeat = now + settings.heartbeat_seconds
             time.sleep(2)
         if process.returncode != 0:
-            raise WorkerError("inference_failed")
+            diagnostic_file.flush()
+            failure = classify_inference_failure(
+                process.returncode,
+                diagnostic_path,
+            )
+            print(
+                f"video inference exited {job_id}: {failure.error_code}",
+                flush=True,
+            )
+            raise failure
         validate_output(output_path, job)
         return output_path
     finally:
@@ -335,6 +408,10 @@ def generate_video(
             terminate(process)
         if prompt_file is not None:
             prompt_file.unlink(missing_ok=True)
+        if diagnostic_file is not None:
+            diagnostic_file.close()
+        if diagnostic_path is not None:
+            diagnostic_path.unlink(missing_ok=True)
 
 
 def validate_output(output_path: Path, job: dict[str, Any]) -> None:

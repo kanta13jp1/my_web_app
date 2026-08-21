@@ -43,7 +43,9 @@ docker run --rm --gpus all \
 Required environment variables:
 
 - `VIDEO_WORKER_URL`: deployed `/functions/v1/video-worker-hub` HTTPS URL
-- `VIDEO_WORKER_TOKEN`: dedicated 32-256 character random secret
+- `VIDEO_WORKER_TOKEN_FILE`: preferred path to a mode-0400 file containing the
+  dedicated 32-256 character random secret
+- `VIDEO_WORKER_TOKEN`: local-development fallback when no token file is set
 - `VIDEO_WORKER_ID`: stable identifier such as `gpu-tokyo-01`
 - `VIDEO_IDLE_EXIT_SECONDS`: cleanly exit after an empty queue (300-1800;
   default 600), allowing the GCP host wrapper to power off the VM
@@ -51,9 +53,12 @@ Required environment variables:
 ## Security and operations
 
 - The worker never receives a Supabase service-role key.
+- Production mounts the worker token as a read-only file, so its value does not
+  appear in the systemd or Docker command line or the container environment.
 - Customer prompts are written to a mode-0600 temporary file and are not put in
   the OS process command line.
-- Each job has a 30-minute renewable lease and at most three attempts.
+- Each job has a 30-minute renewable lease. The worker renews it every minute,
+  allows up to 60 minutes for one L4 inference, and does not retry a timeout.
 - An empty queue shuts the worker down after 10 minutes; a clean worker exit
   powers off the GPU host, while the fixed startup auto-stop remains a backstop.
 - Output dimensions, duration, frame rate, codec, and size are checked with

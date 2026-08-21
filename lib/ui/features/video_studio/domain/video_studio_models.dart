@@ -116,6 +116,8 @@ class VideoGenerationJob {
     this.errorCode,
     this.outputUrl,
     this.outputExpiresAt,
+    this.startedAt,
+    this.updatedAt,
     this.completedAt,
   });
 
@@ -131,7 +133,9 @@ class VideoGenerationJob {
   final String? errorCode;
   final Uri? outputUrl;
   final DateTime? outputExpiresAt;
+  final DateTime? startedAt;
   final DateTime createdAt;
+  final DateTime? updatedAt;
   final DateTime? completedAt;
 
   bool get isTerminal =>
@@ -152,8 +156,10 @@ class VideoGenerationJob {
       errorCode: _nullableString(json['error_code']),
       outputUrl: _uri(json['output_url']),
       outputExpiresAt: _date(json['output_expires_at']),
+      startedAt: _date(json['started_at']),
       createdAt:
           _date(json['created_at']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      updatedAt: _date(json['updated_at']),
       completedAt: _date(json['completed_at']),
     );
   }
