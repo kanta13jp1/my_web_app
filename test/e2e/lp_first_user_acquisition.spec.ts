@@ -53,10 +53,32 @@ test.describe('LP first-user acquisition', () => {
     });
 
     await expect(sampleAction).toBeVisible();
-    await trialInput.fill(
-      'サブスクで無駄な支払いが多い。サブスクを棚卸ししたい。',
+    const inputBoxBeforeTyping = await trialInput.boundingBox();
+    const trialActionBox = await trialAction.boundingBox();
+    const prompt =
+      'サブスクで無駄な支払いが多い。サブスクを棚卸ししたい。';
+    expect(trialActionBox).not.toBeNull();
+    await page.mouse.click(
+      trialActionBox!.x + trialActionBox!.width / 2,
+      trialActionBox!.y - 20,
+    );
+    await expect(trialInput).toBeFocused();
+    for (const character of prompt) {
+      await page.keyboard.insertText(character);
+      await expect(trialInput).toBeFocused();
+    }
+
+    await expect(trialInput).toHaveValue(prompt);
+    const inputBoxAfterTyping = await trialInput.boundingBox();
+    expect(inputBoxBeforeTyping).not.toBeNull();
+    expect(inputBoxAfterTyping).not.toBeNull();
+    expect(inputBoxAfterTyping!.y).toBeCloseTo(
+      inputBoxBeforeTyping!.y,
+      1,
     );
 
+    await expect(sampleAction).toBeVisible();
+    await page.keyboard.press('Tab');
     await expect(sampleAction).toHaveCount(0);
     await expect(trialAction).toBeVisible();
   });
