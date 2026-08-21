@@ -14,6 +14,19 @@ Deno.test("billing funnel acquisition signals are supported", () => {
   }
 });
 
+Deno.test("first-user campaign signals support X and Zenn attribution", () => {
+  for (
+    const signal of [
+      "touch_x_first_user_growth",
+      "signup_submit_x_first_user_growth",
+      "touch_zenn_first_user_growth",
+      "signup_submit_zenn_first_user_growth",
+    ]
+  ) {
+    assertEquals(isSupportedAcquisitionSignal(signal), true);
+  }
+});
+
 Deno.test("acquisition signal allowlist rejects unknown funnel events", () => {
   assertEquals(isSupportedAcquisitionSignal("funnel_checkout_unknown"), false);
   assertEquals(isSupportedAcquisitionSignal("touch_comparison_notion"), true);
