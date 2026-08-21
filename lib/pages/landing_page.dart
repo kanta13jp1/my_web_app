@@ -89,6 +89,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   final _trialPromptController = TextEditingController();
   final _emailFocusNode = FocusNode();
   final _trialEmailFocusNode = FocusNode();
+  final _trialPromptFocusNode = FocusNode();
   final ScrollController _pageScrollController = ScrollController();
   final GlobalKey _trialSectionKey = GlobalKey();
   final GlobalKey _authSectionKey = GlobalKey();
@@ -104,6 +105,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   bool _showSaveCtaPrompt = false;
   bool _showInboxShortcut = false;
   bool _showAllUniqueFeatures = false;
+  bool _showTrialAnswerPreview = true;
   int _magicLinkCooldownSeconds = 0;
   int _achievementCount = 0;
   int _totalUsers = 0;
@@ -160,6 +162,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   void initState() {
     super.initState();
     _pageScrollController.addListener(_updateMobileStickyVisibility);
+    _trialPromptFocusNode.addListener(_handleTrialPromptFocusChanged);
     _oauthCallbackFailure = LandingOAuthCallbackFailure.fromUri(_landingUri);
     _experimentAssignment = widget.experimentAssignment;
     if (_experimentAssignment != null) {
@@ -348,6 +351,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     _trialPromptController.dispose();
     _emailFocusNode.dispose();
     _trialEmailFocusNode.dispose();
+    _trialPromptFocusNode
+      ..removeListener(_handleTrialPromptFocusChanged)
+      ..dispose();
     _pageScrollController.removeListener(_updateMobileStickyVisibility);
     _pageScrollController.dispose();
     super.dispose();
@@ -731,6 +737,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     unawaited(_recordTrialStages());
     setState(() {
       _isTrialLoading = true;
+      _showTrialAnswerPreview = false;
       _trialAction = null;
       _trialReason = null;
       _trialErrorTitle = null;
@@ -1090,8 +1097,20 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     return ('AIの回答を取得できませんでした', '通信状態を確認し、少し時間をおいてもう一度お試しください。');
   }
 
-  void _handleTrialPromptChanged(String _) {
-    if (_trialAction == null &&
+  void _handleTrialPromptFocusChanged() {
+    if (_trialPromptFocusNode.hasFocus ||
+        _trialPromptController.text.trim().isEmpty ||
+        !_showTrialAnswerPreview) {
+      return;
+    }
+    setState(() => _showTrialAnswerPreview = false);
+  }
+
+  void _handleTrialPromptChanged(String value) {
+    final shouldRestorePreview =
+        value.trim().isEmpty && !_showTrialAnswerPreview;
+    if (!shouldRestorePreview &&
+        _trialAction == null &&
         _trialReason == null &&
         _trialErrorTitle == null &&
         _trialErrorMessage == null &&
@@ -1104,6 +1123,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       _trialErrorTitle = null;
       _trialErrorMessage = null;
       _showSaveCtaPrompt = false;
+      if (shouldRestorePreview) {
+        _showTrialAnswerPreview = true;
+      }
     });
   }
 
@@ -4217,25 +4239,6 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   ),
                 ),
                 SizedBox(height: compactHero ? 6 : 12),
-                ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _trialPromptController,
-                  builder: (context, value, child) {
-                    if (value.text.trim().isNotEmpty) {
-                      return const SizedBox.shrink();
-                    }
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildTrialAnswerPreview(
-                          compact: compactHero,
-                          heroMode: heroMode,
-                          firstUserGrowthMode: firstUserGrowthMode,
-                        ),
-                        SizedBox(height: compactHero ? 8 : 12),
-                      ],
-                    );
-                  },
-                ),
                 Text(
                   firstUserGrowthMode ? '別の悩みで試す' : 'ほかの悩みを1タップで試す',
                   style: TextStyle(
@@ -4303,6 +4306,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 TextField(
                   key: const Key('landing_trial_prompt_input'),
                   controller: _trialPromptController,
+                  focusNode: _trialPromptFocusNode,
                   readOnly: _isTrialLoading,
                   onChanged: _handleTrialPromptChanged,
                   minLines: heroMode ? 1 : 2,
@@ -4351,6 +4355,14 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         : null,
                   ),
                 ),
+                if (_showTrialAnswerPreview) ...[
+                  SizedBox(height: compactHero ? 8 : 12),
+                  _buildTrialAnswerPreview(
+                    compact: compactHero,
+                    heroMode: heroMode,
+                    firstUserGrowthMode: firstUserGrowthMode,
+                  ),
+                ],
                 if (_isTrialLoading) ...[
                   const SizedBox(height: 10),
                   Semantics(
