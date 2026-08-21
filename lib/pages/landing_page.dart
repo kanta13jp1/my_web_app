@@ -926,6 +926,15 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     _showAuthModeAndScroll(isSignUp: false);
   }
 
+  void _selectInlineAuthMode(bool isSignUp) {
+    if (_isLoading || _isSignUp == isSignUp) return;
+    setState(() {
+      _isSignUp = isSignUp;
+      _magicLinkErrorMessage = null;
+      _showInboxShortcut = false;
+    });
+  }
+
   void _scrollToTrialMagicLink({bool requestFocus = true}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final captureContext = _trialEmailFocusNode.context;
@@ -5161,6 +5170,101 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     );
   }
 
+  Widget _buildAuthModeSelector() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Semantics(
+      container: true,
+      label: 'アカウント操作の切り替え',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            '利用方法を選ぶ',
+            key: Key('landing_auth_mode_selector_heading'),
+            style: TextStyle(
+              color: Color(0xFF334155),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SegmentedButton<bool>(
+            key: const Key('landing_auth_mode_selector'),
+            expandedInsets: EdgeInsets.zero,
+            showSelectedIcon: true,
+            selectedIcon: const Icon(Icons.check_circle, size: 18),
+            segments: const [
+              ButtonSegment<bool>(
+                value: true,
+                icon: Icon(Icons.person_add_alt_1_outlined, size: 18),
+                label: Text(
+                  '新規登録',
+                  key: Key('landing_auth_mode_signup_option'),
+                ),
+                tooltip: '初めて利用する方',
+              ),
+              ButtonSegment<bool>(
+                value: false,
+                icon: Icon(Icons.login, size: 18),
+                label: Text(
+                  'ログイン',
+                  key: Key('landing_auth_mode_login_option'),
+                ),
+                tooltip: 'アカウントをお持ちの方',
+              ),
+            ],
+            selected: {_isSignUp},
+            onSelectionChanged: _isLoading
+                ? null
+                : (selection) => _selectInlineAuthMode(selection.first),
+            style: SegmentedButton.styleFrom(
+              minimumSize: const Size.fromHeight(54),
+              backgroundColor: colorScheme.surface,
+              foregroundColor: colorScheme.onSurfaceVariant,
+              selectedBackgroundColor: colorScheme.primary,
+              selectedForegroundColor: colorScheme.onPrimary,
+              side: BorderSide(color: colorScheme.outline),
+              textStyle: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            child: Row(
+              key: ValueKey<bool>(_isSignUp),
+              children: [
+                Icon(
+                  _isSignUp
+                      ? Icons.person_add_alt_1_outlined
+                      : Icons.history_rounded,
+                  size: 17,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    _isSignUp ? '初めての方：無料アカウントを作成します' : '登録済みの方：続きから再開します',
+                    key: const Key('landing_auth_mode_status'),
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAuthSection() {
     final compactMagicLink = _hypothesisEnabled('h04');
     return KeyedSubtree(
@@ -5197,6 +5301,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
                 const SizedBox(height: 14),
               ],
+              _buildAuthModeSelector(),
+              const SizedBox(height: 18),
               Text(
                 _isSignUp ? '今すぐ無料ではじめる' : 'ログインして続きから再開',
                 key: const Key('landing_auth_mode_heading'),
@@ -5316,9 +5422,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                       ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                '新規登録もログインも、この1通で完了します。',
-                style: TextStyle(
+              Text(
+                _isSignUp ? 'メールを開くだけで新規登録が完了します。' : 'メールを開くだけでログインできます。',
+                key: const Key('landing_magic_link_mode_note'),
+                style: const TextStyle(
                   fontSize: 12,
                   color: Color(0xFF94A3B8),
                   height: 1.5,
@@ -5511,17 +5618,6 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   ),
                 ),
                 const SizedBox(height: 10),
-                TextButton(
-                  key: const Key('landing_auth_mode_toggle'),
-                  onPressed: _isLoading
-                      ? null
-                      : () {
-                          setState(() => _isSignUp = !_isSignUp);
-                        },
-                  child: Text(
-                    _isSignUp ? 'すでにアカウントがある場合はログイン' : 'アカウントがない場合は新規登録',
-                  ),
-                ),
               ] else ...[
                 TextButton.icon(
                   key: const Key('landing_h04_password_toggle'),

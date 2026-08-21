@@ -645,6 +645,62 @@ void main() {
   });
 
   testWidgets(
+    'mobile auth mode selector clearly switches signup and login copy',
+    (tester) async {
+      await pumpLanding(
+        tester,
+        assignment: _assignment('h04', LandingExperimentVariant.control),
+        size: const Size(390, 844),
+      );
+
+      final selectorFinder = find.byKey(
+        const Key('landing_auth_mode_selector'),
+      );
+      expect(selectorFinder, findsOneWidget);
+      expect(
+        tester.widget<SegmentedButton<bool>>(selectorFinder).selected,
+        <bool>{true},
+      );
+      expect(
+        find.text('初めての方：無料アカウントを作成します'),
+        findsOneWidget,
+      );
+      expect(find.text('メールを開くだけで新規登録が完了します。'), findsOneWidget);
+
+      await Scrollable.ensureVisible(
+        tester.element(selectorFinder),
+        alignment: 0.2,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('landing_auth_mode_login_option')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<SegmentedButton<bool>>(selectorFinder).selected,
+        <bool>{false},
+      );
+      expect(find.text('ログインして続きから再開'), findsOneWidget);
+      expect(find.text('Magic Linkでログイン'), findsOneWidget);
+      expect(find.text('登録済みの方：続きから再開します'), findsOneWidget);
+      expect(find.text('メールを開くだけでログインできます。'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const Key('landing_auth_mode_signup_option')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<SegmentedButton<bool>>(selectorFinder).selected,
+        <bool>{true},
+      );
+      expect(find.text('今すぐ無料ではじめる'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'lp_intent trial brings the promised trial into view for every H03 arm and viewport',
     (tester) async {
       for (final size in <Size>[const Size(1200, 900), const Size(390, 844)]) {
@@ -1610,7 +1666,17 @@ void main() {
     await tester.pump(const Duration(milliseconds: 350));
     await tester.tap(passwordToggle);
     await tester.pump();
-    await tester.tap(find.byKey(const Key('landing_auth_mode_toggle')));
+    final authModeSelector = find.byKey(
+      const Key('landing_auth_mode_selector'),
+    );
+    await Scrollable.ensureVisible(
+      tester.element(authModeSelector),
+      alignment: 0.2,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('landing_auth_mode_login_option')),
+    );
     await tester.pump();
     expect(find.text('ログインして続きから再開'), findsOneWidget);
 
