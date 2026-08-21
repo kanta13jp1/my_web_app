@@ -183,7 +183,6 @@ import 'package:my_web_app/pages/mindmap_diagram_page.dart';
 import 'package:my_web_app/pages/auction_marketplace_page.dart';
 import 'package:my_web_app/pages/qr_code_generator_page.dart';
 import 'package:my_web_app/pages/parking_reservation_page.dart';
-import 'package:my_web_app/pages/referral_program_page.dart';
 import 'package:my_web_app/pages/analytics_export_page.dart';
 import 'package:my_web_app/pages/workflow_templates_page.dart';
 import 'package:my_web_app/pages/customer_feedback_page.dart';
@@ -253,7 +252,6 @@ import 'package:my_web_app/pages/focus_capture_game_page.dart';
 import 'package:my_web_app/pages/code_playground_page.dart';
 import 'package:my_web_app/pages/real_estate_tracker_page.dart';
 import 'package:my_web_app/pages/spreadsheet_database_page.dart';
-import 'package:my_web_app/pages/travel_itinerary_planner_page.dart';
 import 'package:my_web_app/pages/changelog_manager_page.dart';
 import 'package:my_web_app/pages/release_notes_page.dart';
 import 'package:my_web_app/pages/pet_care_manager_page.dart';
@@ -324,7 +322,6 @@ import 'package:my_web_app/pages/cfo_cost_ledger_page.dart';
 import 'package:my_web_app/pages/compatibility_result_page.dart';
 import 'package:my_web_app/pages/leave_management_page.dart';
 import 'package:my_web_app/pages/performance_review_page.dart';
-import 'package:my_web_app/pages/pomodoro_timer_page.dart';
 import 'package:my_web_app/pages/health_check_page.dart';
 import 'package:my_web_app/pages/horseracing_race_detail_page.dart';
 import 'package:my_web_app/pages/monthly_kpi_dashboard_page.dart';
@@ -618,6 +615,7 @@ Route<dynamic> generateAppRoute(
         settings: const RouteSettings(name: '/growth-mission'),
       );
     case '/referral':
+    case '/referral-program':
       return MaterialPageRoute(
         builder: (_) => const ReferralPage(),
         settings: RouteSettings(name: settings.name),
@@ -1214,10 +1212,6 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const ParkingReservationPage(),
       );
-    case '/referral-program':
-      return MaterialPageRoute(
-        builder: (_) => const ReferralProgramPage(),
-      );
     case '/analytics-export':
       return MaterialPageRoute(
         builder: (_) => const AnalyticsExportPage(),
@@ -1255,6 +1249,7 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const WorkflowAutomationPage(),
       );
     case '/social-scheduler':
+    case '/social-media-scheduler':
       return MaterialPageRoute(
         builder: (_) => const SocialMediaSchedulerPage(),
       );
@@ -1297,6 +1292,7 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const DnsDomainManagerPage(),
       );
     case '/focus-timer':
+    case '/pomodoro-timer':
       return MaterialPageRoute(builder: (_) => const FocusTimerPage());
     case '/digital-wallet':
       return MaterialPageRoute(builder: (_) => const DigitalWalletPage());
@@ -1414,9 +1410,6 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const HorseProviderLeaderboardPage(),
       );
     case '/travel-itinerary':
-      return MaterialPageRoute(
-        builder: (_) => const TravelItineraryPlannerPage(),
-      );
     case '/travel-planner':
       return MaterialPageRoute(
         builder: (_) => const TravelItineraryPage(),
@@ -1719,10 +1712,6 @@ Route<dynamic> generateAppRoute(
       );
     case '/habit-tracker':
       return MaterialPageRoute(builder: (_) => const HabitTrackerPage());
-    case '/social-media-scheduler':
-      return MaterialPageRoute(
-        builder: (_) => const SocialMediaSchedulerPage(),
-      );
     case '/agent-department-manager':
       return MaterialPageRoute(
         builder: (_) => const AgentDepartmentManagerPage(),
@@ -1757,8 +1746,6 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const PerformanceReviewPage(),
       );
-    case '/pomodoro-timer':
-      return MaterialPageRoute(builder: (_) => const PomodoroTimerPage());
     case '/health-check':
       return MaterialPageRoute(builder: (_) => const HealthCheckPage());
     case '/memory-search':
