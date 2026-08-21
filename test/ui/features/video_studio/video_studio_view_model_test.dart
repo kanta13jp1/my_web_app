@@ -111,6 +111,26 @@ void main() {
     expect(gateway.refreshCount, 1);
     expect(viewModel.jobs.single.outputUrl, output);
   });
+
+  test('checkout failures use a purchase-specific error message', () async {
+    final gateway = _FakeVideoStudioGateway(
+      balance: _balance(0),
+      checkoutError: const VideoStudioException(
+        'video_credit_checkout_unavailable',
+      ),
+    );
+    final viewModel = VideoStudioViewModel(gateway: gateway);
+    addTearDown(viewModel.dispose);
+    await viewModel.load();
+
+    final checkout = await viewModel.createCheckout(
+      'starter',
+      'https://example.test/video-studio',
+    );
+
+    expect(checkout, isNull);
+    expect(viewModel.errorMessage, '購入画面を開けませんでした。時間をおいて再度お試しください。');
+  });
 }
 
 class _FakeVideoStudioGateway implements VideoStudioGateway {
@@ -119,12 +139,14 @@ class _FakeVideoStudioGateway implements VideoStudioGateway {
     this.initialJobs = const [],
     this.refreshedJob,
     this.loadError,
+    this.checkoutError,
   });
 
   VideoCreditBalance balance;
   final List<VideoGenerationJob> initialJobs;
   final VideoGenerationJob? refreshedJob;
   final Exception? loadError;
+  final Exception? checkoutError;
   String? createdIdempotencyKey;
   int refreshCount = 0;
 
@@ -171,8 +193,10 @@ class _FakeVideoStudioGateway implements VideoStudioGateway {
   Future<Uri> createCreditCheckout({
     required String packKey,
     required String returnUrl,
-  }) async =>
-      Uri.parse('https://checkout.stripe.test/session');
+  }) async {
+    if (checkoutError case final error?) throw error;
+    return Uri.parse('https://checkout.stripe.test/session');
+  }
 }
 
 const _catalog = VideoStudioCatalog(
