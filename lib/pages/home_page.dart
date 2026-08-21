@@ -1935,7 +1935,7 @@ abstinence_slip_details: $slipDetailsText
   Future<void> _openSiteGuideAi([String? initialQuestion]) async {
     await Navigator.of(
       context,
-    ).pushNamed('/site-guide-ai', arguments: initialQuestion);
+    ).pushReplacementNamed('/site-guide-ai', arguments: initialQuestion);
   }
 
   Future<void> _runTrackedAction(
@@ -5227,6 +5227,82 @@ abstinence_slip_details: $slipDetailsText
     );
   }
 
+  Widget _buildNotificationAction() {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined),
+          tooltip: '通知',
+          onPressed: () async {
+            await Navigator.of(context).pushNamed('/notifications');
+            _fetchNotifUnreadCount();
+          },
+        ),
+        if (_notifUnreadCount > 0)
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              width: 16,
+              height: 16,
+              decoration: const BoxDecoration(
+                color: Color(0xFFE53935),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  _notifUnreadCount > 9 ? '9+' : '$_notifUnreadCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _handleHomeMenuAction(String action, ThemeService themeService) {
+    switch (action) {
+      case 'timeline':
+        Navigator.pushNamed(context, '/project-gantt');
+        return;
+      case 'theme':
+        themeService.toggleTheme();
+        return;
+      case 'profile':
+        Navigator.of(context).pushNamed('/profile-settings');
+        return;
+      case 'settings':
+        Navigator.of(context).pushNamed('/settings');
+        return;
+      case 'logout':
+        _logout(context);
+        return;
+    }
+  }
+
+  PopupMenuItem<String> _homeMenuItem(
+    String value,
+    IconData icon,
+    String label,
+  ) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: ListTile(
+        dense: true,
+        leading: Icon(icon),
+        title: Text(label),
+        contentPadding: EdgeInsets.zero,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // 可視化ゲート: /admin 等の deep link で不可視のまま下に積まれている間は
@@ -5239,7 +5315,7 @@ abstinence_slip_details: $slipDetailsText
     final isDark = themeService.isDarkMode;
     final primaryColor = themeService.primaryColor;
     final screenWidth = MediaQuery.of(context).size.width;
-    final isCompact = screenWidth < 390;
+    final isCompact = screenWidth < 600;
     final isWide = screenWidth >= 1200;
     final contentHorizontalPadding = isCompact ? 12.0 : (isWide ? 24.0 : 16.0);
 
@@ -5248,7 +5324,7 @@ abstinence_slip_details: $slipDetailsText
       backgroundColor:
           isDark ? const Color(0xFF08111F) : const Color(0xFFE8F2F5),
       appBar: AppBar(
-        toolbarHeight: 74,
+        toolbarHeight: isCompact ? 60 : 74,
         title: const Column(
           key: Key('home_page_title'),
           mainAxisSize: MainAxisSize.min,
@@ -5272,72 +5348,55 @@ abstinence_slip_details: $slipDetailsText
         ),
         backgroundColor: const Color(0xFF102B43),
         foregroundColor: Colors.white,
-        centerTitle: true,
+        centerTitle: !isCompact,
         actions: [
           // Win版#131 part 11: WBS ガントチャート導線
-          IconButton(
-            icon: const Icon(Icons.timeline),
-            tooltip: 'WBS ガントチャート',
-            onPressed: () => Navigator.pushNamed(context, '/project-gantt'),
-          ),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_outlined),
-                tooltip: '通知',
-                onPressed: () async {
-                  await Navigator.of(context).pushNamed('/notifications');
-                  _fetchNotifUnreadCount();
-                },
-              ),
-              if (_notifUnreadCount > 0)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFE53935),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        _notifUnreadCount > 9 ? '9+' : '$_notifUnreadCount',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
+          if (!isCompact)
+            IconButton(
+              icon: const Icon(Icons.timeline),
+              tooltip: 'WBS ガントチャート',
+              onPressed: () => Navigator.pushNamed(context, '/project-gantt'),
+            ),
+          _buildNotificationAction(),
+          if (!isCompact) ...[
+            IconButton(
+              icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+              onPressed: () => themeService.toggleTheme(),
+              tooltip: 'テーマ切替',
+            ),
+            IconButton(
+              icon: const Icon(Icons.person_outline),
+              onPressed: () =>
+                  Navigator.of(context).pushNamed('/profile-settings'),
+              tooltip: 'プロフィール設定',
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () => Navigator.of(context).pushNamed('/settings'),
+              tooltip: '設定',
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () => _logout(context),
+              tooltip: 'ログアウト',
+            ),
+          ] else
+            PopupMenuButton<String>(
+              tooltip: 'その他',
+              onSelected: (action) =>
+                  _handleHomeMenuAction(action, themeService),
+              itemBuilder: (_) => [
+                _homeMenuItem('timeline', Icons.timeline, 'WBS ガントチャート'),
+                _homeMenuItem(
+                  'theme',
+                  isDark ? Icons.light_mode : Icons.dark_mode,
+                  'テーマ切替',
                 ),
-            ],
-          ),
-          IconButton(
-            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
-            onPressed: () => themeService.toggleTheme(),
-            tooltip: 'テーマ切替',
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            onPressed: () =>
-                Navigator.of(context).pushNamed('/profile-settings'),
-            tooltip: 'プロフィール設定',
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.of(context).pushNamed('/settings'),
-            tooltip: '設定',
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => _logout(context),
-            tooltip: 'ログアウト',
-          ),
+                _homeMenuItem('profile', Icons.person_outline, 'プロフィール'),
+                _homeMenuItem('settings', Icons.settings, '設定'),
+                _homeMenuItem('logout', Icons.logout, 'ログアウト'),
+              ],
+            ),
         ],
       ),
 
@@ -7033,6 +7092,8 @@ abstinence_slip_details: $slipDetailsText
   Widget _buildSiteGuideAiCard(bool isDark, bool isCompact) {
     final theme = Theme.of(context);
     final cardColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final titleColor = isDark ? Colors.white : const Color(0xFF172033);
+    final bodyColor = isDark ? Colors.white70 : const Color(0xFF475569);
     final outlineColor =
         isDark ? Colors.white.withValues(alpha: 0.12) : const Color(0xFFDDE8E4);
     const quickQuestions = <String>['まず何から使えばいい？', '資産管理はどこ？', 'AI大学の始め方は？'];
@@ -7065,7 +7126,7 @@ abstinence_slip_details: $slipDetailsText
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -7074,38 +7135,54 @@ abstinence_slip_details: $slipDetailsText
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
+                          color: titleColor,
                           height: 1.5,
                         ),
                       ),
-                      SizedBox(height: 2),
-                      Text(
-                        '使い方が分からないときに、このサイトの機能名と入口をそのまま案内します。',
-                        style: TextStyle(fontSize: 12, height: 1.5),
-                      ),
+                      if (!isCompact) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          '使い方が分からないときに、このサイトの機能名と入口をそのまま案内します。',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: bodyColor,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color:
-                    isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
+            if (!isCompact) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF0F172A)
+                      : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '「どこを開けばいい？」「何から始める？」「この機能の違いは？」をそのまま質問できます。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: bodyColor,
+                    height: 1.6,
+                  ),
+                ),
               ),
-              child: const Text(
-                '「どこを開けばいい？」「何から始める？」「この機能の違いは？」をそのまま質問できます。',
-                style: TextStyle(fontSize: 12, height: 1.6),
-              ),
-            ),
+            ],
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: quickQuestions.map((question) {
+              children: quickQuestions
+                  .take(isCompact ? 2 : quickQuestions.length)
+                  .map((question) {
                 return ActionChip(
                   label: Text(question),
                   onPressed: () => _runTrackedAction(
@@ -7116,7 +7193,9 @@ abstinence_slip_details: $slipDetailsText
               }).toList(),
             ),
             const SizedBox(height: 14),
-            Row(
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
               children: [
                 FilledButton.icon(
                   onPressed: () => _runTrackedAction(
@@ -7126,7 +7205,6 @@ abstinence_slip_details: $slipDetailsText
                   icon: const Icon(Icons.chat_bubble_outline),
                   label: const Text('AIに聞く'),
                 ),
-                const SizedBox(width: 10),
                 OutlinedButton.icon(
                   onPressed: () =>
                       Navigator.of(context).pushNamed('/user-manual'),

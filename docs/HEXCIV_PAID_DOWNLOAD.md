@@ -1,5 +1,9 @@
 # HexCiv 有料ダウンロード販売
 
+> 汎用デジタル商品ストアへの商品追加は
+> [`docs/DIGITAL_PRODUCT_STORE.md`](DIGITAL_PRODUCT_STORE.md) を参照してください。
+> HexCiv固有のビルド・配布情報は本書に残します。
+
 自分株式会社のサイトから HexCiv (Unity 製 Windows ゲーム) を買い切りで配布する仕組み。
 
 - 価格: **¥500** (税込)

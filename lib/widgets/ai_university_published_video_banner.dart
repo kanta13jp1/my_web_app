@@ -47,29 +47,51 @@ class AiUniversityPublishedVideoBanner extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final compact = constraints.maxWidth < 620;
-              final itemWidth = compact
-                  ? constraints.maxWidth
-                  : (constraints.maxWidth - 12) / 2;
+              final itemWidth = (constraints.maxWidth - 12) / 2;
 
               return Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _VideoBannerHeader(videoCount: videos.length),
                   const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      for (var index = 0; index < videos.length; index++)
-                        SizedBox(
-                          width: itemWidth,
-                          child: _VideoLessonTile(
-                            index: index,
-                            video: videos[index],
+                  if (compact)
+                    SizedBox(
+                      key: const Key('published-video-mobile-carousel'),
+                      height: 104,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: videos.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 10),
+                        itemBuilder: (context, index) {
+                          return SizedBox(
+                            width: (constraints.maxWidth * 0.82).clamp(
+                              220.0,
+                              340.0,
+                            ),
+                            child: _VideoLessonTile(
+                              index: index,
+                              video: videos[index],
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                  else
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        for (var index = 0; index < videos.length; index++)
+                          SizedBox(
+                            width: itemWidth,
+                            child: _VideoLessonTile(
+                              index: index,
+                              video: videos[index],
+                            ),
                           ),
-                        ),
-                    ],
-                  ),
+                      ],
+                    ),
                 ],
               );
             },

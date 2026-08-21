@@ -389,6 +389,7 @@ class SitemapTest(unittest.TestCase):
         self.assertIn(f"<loc>{BASE}/</loc>", doc)
         self.assertIn(f"<loc>{BASE}/vs-notion</loc>", doc)
         self.assertIn(f"<loc>{BASE}/competitors</loc>", doc)
+        self.assertIn(f"<loc>{BASE}/shop</loc>", doc)
         self.assertIn("<lastmod>2026-07-09</lastmod>", doc)
         # doorway 化していた routeless URL は含まれない
         self.assertNotIn("/vs-yamato", doc)

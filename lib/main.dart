@@ -32,6 +32,7 @@ import 'package:my_web_app/pages/local_smart_cleanup_page.dart';
 import 'package:my_web_app/pages/windows_app_install_page.dart';
 import 'package:my_web_app/pages/payment_reminder_page.dart';
 import 'package:my_web_app/pages/shopping_list_page.dart';
+import 'package:my_web_app/pages/digital_product_store_pages.dart';
 import 'package:my_web_app/pages/hexciv_shop_page.dart';
 import 'package:my_web_app/services/shop_funnel_service.dart';
 import 'package:my_web_app/pages/digest_queue_page.dart';
@@ -221,6 +222,7 @@ import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
 import 'package:my_web_app/pages/video_ad_generator_page.dart';
 import 'package:my_web_app/pages/viral_video_generator_page.dart';
+import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
 import 'package:my_web_app/pages/youtube_stats_page.dart';
 import 'package:my_web_app/pages/audio_effects_processor_page.dart';
 import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
@@ -527,13 +529,30 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const AgiFireworksPage(),
         settings: settings,
       );
-    // HexCiv ダウンロード版の商品ページ (2026-07-28 追加)。
-    // Stripe Checkout の success_url / cancel_url がこの URL に
-    // `?purchase=success` / `?purchase=canceled` を付けて戻ってくる。
+    case '/shop':
+      return MaterialPageRoute(
+        builder: (_) => const DigitalProductStorePage(),
+        settings: settings,
+      );
+    case '/shop/product':
+      return MaterialPageRoute(
+        builder: (_) => DigitalProductPage(
+          productId: uri.queryParameters['product_id'] ?? '',
+          purchaseResult: uri.queryParameters['purchase'],
+          funnel: ShopFunnelService(),
+        ),
+        settings: settings,
+      );
+    case '/shop/downloads':
+      return MaterialPageRoute(
+        builder: (_) => const ShopDownloadsPage(),
+        settings: settings,
+      );
+    // 既存の共有URL・Stripe戻りURLを壊さない後方互換ルート。
     case '/shop/hexciv':
       return MaterialPageRoute(
         builder: (_) => HexcivShopPage(
-          purchaseResult: Uri.base.queryParameters['purchase'],
+          purchaseResult: uri.queryParameters['purchase'],
           // 計測 (2026-07-29 追加)。閲覧・購入ボタン押下・Checkout 到達を数える。
           // ここを渡し忘れると計測だけが黙って止まるので、route に直書きする。
           funnel: ShopFunnelService(),
@@ -1300,6 +1319,11 @@ Route<dynamic> generateAppRoute(
     case '/viral-video-generator':
       return MaterialPageRoute(
         builder: (_) => const ViralVideoGeneratorPage(),
+      );
+    case '/video-studio':
+      return MaterialPageRoute(
+        builder: (_) => VideoStudioFeature(initialUri: uri),
+        settings: RouteSettings(name: settings.name),
       );
     case '/youtube-stats':
       return MaterialPageRoute(builder: (_) => const YoutubeStatsPage());

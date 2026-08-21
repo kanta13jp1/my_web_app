@@ -159,9 +159,11 @@ import '../pages/semantic_search_page.dart';
 import '../pages/smart_inbox_triage_page.dart';
 import '../pages/social_feed_page.dart';
 import '../pages/subscription_billing_page.dart';
+import '../pages/digital_product_store_pages.dart';
 import '../pages/video_ad_generator_page.dart';
 import '../pages/viral_ad_generator_page.dart';
 import '../pages/viral_video_generator_page.dart';
+import '../ui/features/video_studio/video_studio_feature.dart';
 import '../pages/youtube_stats_page.dart';
 import '../pages/virtual_pet_page.dart';
 import '../pages/work_menu_page.dart';
@@ -1907,6 +1909,27 @@ List<HomeToolEntry> buildHomeToolCatalog({
     ),
     // office セクション
     HomeToolEntry(
+      id: 'shop',
+      sectionId: 'office',
+      title: 'デジタル作品ストア',
+      subtitle: '制作した画像・音声・動画・文章・ゲーム等を販売',
+      icon: Icons.storefront_outlined,
+      color: const Color(0xFFE65100),
+      keywords: const <String>[
+        '販売',
+        '商品',
+        'ストア',
+        '画像',
+        '音声',
+        '動画',
+        'プロンプト',
+        'ゲーム',
+        'テンプレート',
+        'shop',
+      ],
+      onOpen: (context) => _pushPage(context, const DigitalProductStorePage()),
+    ),
+    HomeToolEntry(
       id: 'subscription-billing',
       sectionId: 'office',
       title: 'サブスクリプション管理',
@@ -2263,6 +2286,22 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF283593),
       keywords: const <String>['ABテスト', 'ランディング', 'LP', 'CVR', 'コンバージョン'],
       onOpen: (context) => _pushPage(context, const LandingAbTestPage()),
+    ),
+    HomeToolEntry(
+      id: 'video-studio',
+      sectionId: 'growth',
+      title: 'AI動画スタジオ',
+      subtitle: '前払いクレジットで使う、当サイト運営GPUの非公開動画生成',
+      icon: Icons.movie_filter_outlined,
+      color: const Color(0xFF5C6BC0),
+      keywords: const <String>[
+        'AI動画',
+        'テキスト動画',
+        '動画生成',
+        'video studio',
+        'text to video',
+      ],
+      onOpen: (context) => _pushPage(context, const VideoStudioFeature()),
     ),
     HomeToolEntry(
       id: 'viral-ad-generator',

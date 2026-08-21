@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/home_feature_actions.dart';
+import 'home_tier_styles.dart';
 
 class AiRecommendedFeaturesList extends StatefulWidget {
   const AiRecommendedFeaturesList({super.key});
@@ -75,21 +76,22 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = HomeTierPalette.of(context);
     if (_loading) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
+      return Padding(
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            SizedBox(
+            const SizedBox(
               width: 16,
               height: 16,
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Text(
               'AIがおすすめ機能を分析中...',
               style: TextStyle(
-                color: Color(0xFF94A3B8),
+                color: palette.secondaryText,
                 fontSize: 12,
                 height: 1.5,
               ),
@@ -102,14 +104,14 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
     return Column(
       children: [
         if (_error != null)
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 'おすすめの取得に失敗したため、固定候補を表示しています。',
                 style: TextStyle(
-                  color: Color(0xFF94A3B8),
+                  color: palette.secondaryText,
                   fontSize: 12,
                   height: 1.5,
                 ),
@@ -129,37 +131,11 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
               _stringValue(item['title']) ??
               'おすすめ機能';
           final reason = _stringValue(item['reason']) ?? _fallbackReason(route);
-          return ListTile(
-            dense: true,
-            leading: const Icon(
-              Icons.auto_awesome,
-              size: 18,
-              color: Color(0xFF6366F1),
-            ),
-            title: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-                height: 1.5,
-              ),
-            ),
-            subtitle: reason.isNotEmpty
-                ? Text(
-                    reason,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF94A3B8),
-                      height: 1.5,
-                    ),
-                  )
-                : null,
-            trailing: const Icon(
-              Icons.chevron_right,
-              size: 16,
-              color: Color(0xFF64748B),
-            ),
+          return HomeTierFeatureListTile(
+            icon: Icons.auto_awesome,
+            iconColor: const Color(0xFF6366F1),
+            label: label,
+            description: reason,
             onTap: route.isEmpty
                 ? null
                 : () => openHomeFeature(context, route, label),

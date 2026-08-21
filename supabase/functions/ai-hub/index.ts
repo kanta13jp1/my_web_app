@@ -38,6 +38,11 @@ import {
   normalizeAiRoutingTask,
 } from "../_shared/ai_router_cost_optimization.ts";
 import {
+  buildTaskClarityPrompt,
+  evaluateTaskClarityHeuristically,
+  normalizeTaskClarityResult,
+} from "../_shared/task_clarity.ts";
+import {
   getUniversityContentByFaculty,
   getUniversityDepartmentList,
   getUniversityFacultyList,
@@ -4201,6 +4206,7 @@ serve(async (req: Request) => {
     // Actions that require authentication
     const authRequired = [
       "search.query",
+      "task.clarity.evaluate",
       "secretary.task",
       "secretary.history",
       "summarize.text",
@@ -4411,6 +4417,48 @@ serve(async (req: Request) => {
             error: error instanceof Error ? error.message : String(error),
           });
         }
+      }
+
+      case "task.clarity.evaluate": {
+        const title = asString(body.title);
+        const description = asString(body.description);
+        if (!title) {
+          return json({ success: false, error: "title is required." }, 400);
+        }
+
+        const input = { title, description };
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        let evaluation = evaluateTaskClarityHeuristically(input);
+        if (geminiKey) {
+          try {
+            const text = await callGemini(
+              buildTaskClarityPrompt(input),
+              geminiKey,
+            );
+            evaluation = normalizeTaskClarityResult(
+              extractJsonObject(text),
+              input,
+              "gemini",
+            );
+          } catch (error) {
+            console.warn(
+              "task.clarity.evaluate Gemini fallback:",
+              error instanceof Error ? error.message : "unknown error",
+            );
+            evaluation = evaluateTaskClarityHeuristically(
+              input,
+              "heuristic_fallback",
+            );
+          }
+        }
+
+        return json({
+          success: true,
+          evaluation: {
+            ...evaluation,
+            evaluated_at: new Date().toISOString(),
+          },
+        });
       }
 
       case "search.query": {

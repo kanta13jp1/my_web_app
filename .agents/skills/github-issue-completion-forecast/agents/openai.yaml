@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitHub Issue Completion Forecast"
+  short_description: "Issue完了ごとに残件数と全件完了見込みを再計算"
+  default_prompt: "Use $github-issue-completion-forecast after completing an Issue to report the current open count and forecast."
