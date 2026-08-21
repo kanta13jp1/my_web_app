@@ -43,6 +43,7 @@ class LeaseLost(WorkerError):
 
 class InferenceTimeout(WorkerError):
     error_code = "inference_timeout"
+    retryable = False
 
 
 class OutputInvalid(WorkerError):
@@ -73,14 +74,21 @@ class Settings:
     @classmethod
     def from_env(cls) -> "Settings":
         worker_url = os.environ.get("VIDEO_WORKER_URL", "").strip()
-        worker_token = os.environ.get("VIDEO_WORKER_TOKEN", "").strip()
+        worker_token_file = os.environ.get("VIDEO_WORKER_TOKEN_FILE", "").strip()
+        if worker_token_file:
+            try:
+                worker_token = Path(worker_token_file).read_text(encoding="utf-8").strip()
+            except OSError as error:
+                raise ValueError("VIDEO_WORKER_TOKEN_FILE is unreadable") from error
+        else:
+            worker_token = os.environ.get("VIDEO_WORKER_TOKEN", "").strip()
         worker_id = os.environ.get("VIDEO_WORKER_ID", "gpu-worker-01").strip()
         source_dir = Path(os.environ.get("WAN_SOURCE_DIR", "/opt/Wan2.2"))
         model_dir = Path(os.environ.get("WAN_MODEL_DIR", "/models/Wan2.2-TI2V-5B"))
         output_dir = Path(os.environ.get("VIDEO_OUTPUT_DIR", "/work/output"))
         poll_seconds = float(os.environ.get("VIDEO_POLL_SECONDS", "5"))
         heartbeat_seconds = float(os.environ.get("VIDEO_HEARTBEAT_SECONDS", "60"))
-        timeout_seconds = int(os.environ.get("VIDEO_GENERATION_TIMEOUT_SECONDS", "1800"))
+        timeout_seconds = int(os.environ.get("VIDEO_GENERATION_TIMEOUT_SECONDS", "3600"))
         idle_exit_seconds = int(os.environ.get("VIDEO_IDLE_EXIT_SECONDS", "600"))
 
         parsed = urlparse(worker_url)
@@ -310,6 +318,7 @@ def generate_video(
             stderr=subprocess.DEVNULL,
             shell=False,
         )
+        print(f"started video inference {job_id}", flush=True)
         started = time.monotonic()
         next_heartbeat = started + settings.heartbeat_seconds
         while process.poll() is None:
@@ -324,6 +333,11 @@ def generate_video(
                 if not api.heartbeat(job_id, lease_token):
                     terminate(process)
                     raise LeaseLost("lease_lost")
+                elapsed_minutes = max(1, int((now - started) // 60))
+                print(
+                    f"video inference active {job_id}: {elapsed_minutes}m",
+                    flush=True,
+                )
                 next_heartbeat = now + settings.heartbeat_seconds
             time.sleep(2)
         if process.returncode != 0:

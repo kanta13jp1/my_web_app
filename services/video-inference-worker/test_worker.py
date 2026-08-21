@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import os
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 from worker import (
+    InferenceTimeout,
     LeaseLost,
     Settings,
     WorkerApi,
@@ -16,6 +18,41 @@ from worker import (
 
 
 class WorkerContractTest(unittest.TestCase):
+    def test_settings_prefers_mounted_worker_token_and_uses_l4_timeout(self) -> None:
+        with tempfile.TemporaryDirectory() as root_value:
+            root = Path(root_value)
+            source = root / "source"
+            model = root / "model"
+            output = root / "output"
+            source.mkdir()
+            model.mkdir()
+            (source / "generate.py").write_text("", encoding="utf-8")
+            token_file = root / "worker-token"
+            token_file.write_text("z" * 48, encoding="utf-8")
+            environment = {
+                "VIDEO_WORKER_URL": "https://example.test/functions/v1/video-worker-hub",
+                "VIDEO_WORKER_TOKEN": "must-not-win" * 4,
+                "VIDEO_WORKER_TOKEN_FILE": str(token_file),
+                "VIDEO_WORKER_ID": "gpu-worker-01",
+                "WAN_SOURCE_DIR": str(source),
+                "WAN_MODEL_DIR": str(model),
+                "VIDEO_OUTPUT_DIR": str(output),
+            }
+            with patch.dict(os.environ, environment, clear=True):
+                settings = Settings.from_env()
+
+            self.assertEqual(settings.worker_token, "z" * 48)
+            self.assertEqual(settings.generation_timeout_seconds, 3600)
+            self.assertFalse(InferenceTimeout.retryable)
+
+    def test_gcp_startup_mounts_secret_file_instead_of_token_environment(self) -> None:
+        startup = (Path(__file__).parent / "gcp" / "startup.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("VIDEO_WORKER_TOKEN_FILE=/run/secrets/video-worker-token", startup)
+        self.assertIn("dst=/run/secrets/video-worker-token,readonly", startup)
+        self.assertNotIn('--env "VIDEO_WORKER_TOKEN=${token}"', startup)
+
     def test_valid_job_contract_and_landscape_command(self) -> None:
         job = {
             "job_id": "11111111-1111-4111-8111-111111111111",

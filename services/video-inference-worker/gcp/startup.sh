@@ -119,24 +119,40 @@ install -m 0755 /dev/stdin /usr/local/sbin/run-video-worker <<'WORKER_SCRIPT'
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-token="$(gcloud secrets versions access latest \
+readonly token_directory="/run/video-worker-secrets"
+readonly token_file="${token_directory}/video-worker-token"
+
+cleanup_worker_secret() {
+  rm -f "${token_file}"
+  rmdir "${token_directory}" 2>/dev/null || true
+}
+trap cleanup_worker_secret EXIT
+
+install -d -m 0700 "${token_directory}"
+gcloud secrets versions access latest \
   --secret=video-worker-token \
   --project=mighty-link-ai-connect \
-  --quiet)"
+  --quiet | tr -d '\r\n' > "${token_file}"
+if ! LC_ALL=C grep -Eq '^[A-Za-z0-9._~-]{32,256}$' "${token_file}"; then
+  echo "video-worker-token has an invalid format" >&2
+  exit 1
+fi
+chown 10001:10001 "${token_file}"
+chmod 0400 "${token_file}"
 
 set +e
 docker run --rm \
   --name video-worker \
   --gpus all \
   --env "VIDEO_WORKER_URL=${VIDEO_WORKER_URL}" \
-  --env "VIDEO_WORKER_TOKEN=${token}" \
+  --env VIDEO_WORKER_TOKEN_FILE=/run/secrets/video-worker-token \
   --env "VIDEO_WORKER_ID=${VIDEO_WORKER_ID}" \
   --env "VIDEO_IDLE_EXIT_SECONDS=${VIDEO_IDLE_EXIT_SECONDS}" \
+  --mount "type=bind,src=${token_file},dst=/run/secrets/video-worker-token,readonly" \
   --mount "type=bind,src=/srv/models/Wan2.2-TI2V-5B,dst=/models/Wan2.2-TI2V-5B,readonly" \
   "${VIDEO_CONTAINER_IMAGE}"
 exit_code=$?
 set -e
-unset token
 
 if [[ ${exit_code} -eq 0 ]]; then
   shutdown --poweroff now

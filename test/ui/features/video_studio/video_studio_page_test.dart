@@ -77,6 +77,39 @@ void main() {
     );
   });
 
+  testWidgets('active history explains GPU latency and shows worker activity', (
+    tester,
+  ) async {
+    final job = VideoGenerationJob(
+      id: '11111111-1111-4111-8111-111111111111',
+      modelKey: 'studio-video-v1',
+      prompt: 'A paper city wakes at sunrise',
+      durationSeconds: 5,
+      aspectRatio: '16:9',
+      resolution: '720p',
+      status: 'in_progress',
+      quotedCredits: 300,
+      chargedCredits: 0,
+      createdAt: DateTime.utc(2026, 8, 20, 10),
+      startedAt: DateTime.utc(2026, 8, 20, 10, 3),
+      updatedAt: DateTime.utc(2026, 8, 20, 10, 8),
+    );
+
+    await tester.pumpWidget(_app(jobs: [job]));
+    await tester.pump();
+
+    expect(
+      find.byKey(
+        const Key('video-progress-11111111-1111-4111-8111-111111111111'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('専用GPUで推論中です'), findsOneWidget);
+    expect(find.textContaining('最終処理確認'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('authentication failure offers a direct login action', (
     tester,
   ) async {

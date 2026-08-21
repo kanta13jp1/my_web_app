@@ -434,6 +434,12 @@ class _JobCard extends StatelessWidget {
       'cancelled' => 'キャンセル',
       _ => job.status,
     };
+    final activity = switch (job.status) {
+      'queued' => '専用GPUを起動・準備しています。初回は3分前後かかります。',
+      'in_progress' =>
+        '専用GPUで推論中です。720p動画は十数分かかる場合があります。画面を閉じても処理は継続します。',
+      _ => null,
+    };
     return Container(
       margin: const EdgeInsets.only(bottom: DesignTokens.space8),
       padding: const EdgeInsets.all(DesignTokens.space12),
@@ -470,6 +476,25 @@ class _JobCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(color: DesignTokens.textOnDark),
           ),
+          if (activity != null) ...[
+            const SizedBox(height: DesignTokens.space12),
+            LinearProgressIndicator(
+              key: Key('video-progress-${job.id}'),
+              minHeight: 4,
+              color: DesignTokens.orange,
+              backgroundColor: DesignTokens.surface2,
+            ),
+            const SizedBox(height: DesignTokens.space8),
+            Text(activity, style: _secondaryStyle),
+            if (job.updatedAt != null) ...[
+              const SizedBox(height: DesignTokens.space4),
+              Text(
+                '最終処理確認 ${_clock(job.updatedAt!)}'
+                '${job.startedAt == null ? '' : '・生成開始 ${_clock(job.startedAt!)}'}',
+                style: _secondaryStyle,
+              ),
+            ],
+          ],
           if (job.isSuccessful) ...[
             const SizedBox(height: DesignTokens.space8),
             FilledButton.icon(
@@ -493,6 +518,12 @@ class _JobCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _clock(DateTime value) {
+    final local = value.toLocal();
+    String twoDigits(int number) => number.toString().padLeft(2, '0');
+    return '${twoDigits(local.hour)}:${twoDigits(local.minute)}';
   }
 
   Future<void> _openOutput(BuildContext context) async {

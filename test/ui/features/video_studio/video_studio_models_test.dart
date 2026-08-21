@@ -45,11 +45,15 @@ void main() {
       'charged_credits': 300,
       'output_url': 'https://example.test/signed.mp4',
       'output_expires_at': '2026-08-20T12:00:00Z',
+      'started_at': '2026-08-20T10:03:00Z',
       'created_at': '2026-08-20T10:00:00Z',
+      'updated_at': '2026-08-20T10:08:00Z',
     });
 
     expect(job.isTerminal, isTrue);
     expect(job.isSuccessful, isTrue);
     expect(job.outputUrl?.host, 'example.test');
+    expect(job.startedAt, DateTime.utc(2026, 8, 20, 10, 3));
+    expect(job.updatedAt, DateTime.utc(2026, 8, 20, 10, 8));
   });
 }
