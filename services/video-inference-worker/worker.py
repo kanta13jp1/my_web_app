@@ -29,11 +29,12 @@ JOB_ID_RE = re.compile(
 )
 WORKER_ID_RE = re.compile(r"^[A-Za-z0-9._-]{3,80}$")
 LEASE_TOKEN_RE = re.compile(r"^[a-f0-9]{64}$", re.IGNORECASE)
+SAFE_ERROR_DETAIL_RE = re.compile(r"^[a-z0-9_]{1,120}$")
 
 
 class WorkerError(RuntimeError):
     error_code = "inference_failed"
-    retryable = True
+    retryable = False
 
 
 class LeaseLost(WorkerError):
@@ -62,10 +63,12 @@ class OutputInvalid(WorkerError):
 
 class UploadFailed(WorkerError):
     error_code = "upload_failed"
+    retryable = True
 
 
 class WorkerShutdown(WorkerError):
     error_code = "worker_shutdown"
+    retryable = True
 
 
 @dataclass(frozen=True)
@@ -314,6 +317,12 @@ def classify_inference_failure(
     return InferenceProcessFailed("inference_process_failed")
 
 
+def safe_worker_error_detail(error: WorkerError) -> str:
+    """Return only an allowlisted diagnostic code, never raw exception text."""
+    detail = str(error).strip().lower()
+    return detail if SAFE_ERROR_DETAIL_RE.fullmatch(detail) else error.error_code
+
+
 def generate_video(
     settings: Settings,
     api: WorkerApi,
@@ -330,6 +339,7 @@ def generate_video(
     diagnostic_path: Path | None = None
     process: subprocess.Popen[bytes] | None = None
     try:
+        print(f"preparing video inference {job_id}", flush=True)
         with tempfile.NamedTemporaryFile(
             mode="w",
             encoding="utf-8",
@@ -359,6 +369,7 @@ def generate_video(
                 "TRANSFORMERS_OFFLINE": "1",
             }
         )
+        print(f"launching video inference {job_id}", flush=True)
         process = subprocess.Popen(
             build_wan_command(settings, job, output_path),
             cwd=settings.wan_source_dir,
@@ -534,7 +545,11 @@ def run() -> None:
         except LeaseLost:
             print(f"discarded expired video lease {job_id}", flush=True)
         except WorkerError as error:
-            print(f"video job failed: {error.error_code}", flush=True)
+            print(
+                "video job failed: "
+                f"{error.error_code} ({safe_worker_error_detail(error)})",
+                flush=True,
+            )
             if job_id and lease_token:
                 try:
                     api.fail(job_id, lease_token, error.error_code, error.retryable)

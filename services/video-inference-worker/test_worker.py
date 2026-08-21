@@ -12,9 +12,13 @@ from worker import (
     InferenceTimeout,
     LeaseLost,
     Settings,
+    UploadFailed,
     WorkerApi,
+    WorkerError,
+    WorkerShutdown,
     build_wan_command,
     classify_inference_failure,
+    safe_worker_error_detail,
     validate_job,
     validate_output,
 )
@@ -47,6 +51,18 @@ class WorkerContractTest(unittest.TestCase):
             self.assertEqual(settings.worker_token, "z" * 48)
             self.assertEqual(settings.generation_timeout_seconds, 3600)
             self.assertFalse(InferenceTimeout.retryable)
+
+    def test_control_errors_do_not_consume_all_paid_job_attempts(self) -> None:
+        self.assertFalse(WorkerError.retryable)
+        self.assertTrue(UploadFailed.retryable)
+        self.assertTrue(WorkerShutdown.retryable)
+
+    def test_worker_error_detail_allows_codes_and_redacts_other_text(self) -> None:
+        coded = WorkerError("worker_hub_http_500")
+        unsafe = WorkerError("customer prompt or upstream response: private")
+
+        self.assertEqual(safe_worker_error_detail(coded), "worker_hub_http_500")
+        self.assertEqual(safe_worker_error_detail(unsafe), "inference_failed")
 
     def test_gcp_startup_mounts_secret_file_instead_of_token_environment(self) -> None:
         startup = (Path(__file__).parent / "gcp" / "startup.sh").read_text(
