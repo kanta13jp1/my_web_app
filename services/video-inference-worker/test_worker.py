@@ -7,11 +7,14 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from worker import (
+    InferenceMemoryExhausted,
+    InferenceProcessFailed,
     InferenceTimeout,
     LeaseLost,
     Settings,
     WorkerApi,
     build_wan_command,
+    classify_inference_failure,
     validate_job,
     validate_output,
 )
@@ -87,6 +90,30 @@ class WorkerContractTest(unittest.TestCase):
             )
         self.assertIn("704*1280", command)
         self.assertIn("ti2v-5B", command)
+
+    def test_inference_failure_is_classified_without_exposing_diagnostics(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            diagnostic = Path(root) / "diagnostic.log"
+            diagnostic.write_text(
+                "Namespace(prompt='private customer prompt') CUDA out of memory",
+                encoding="utf-8",
+            )
+            memory_error = classify_inference_failure(1, diagnostic)
+            process_error = classify_inference_failure(2, Path(root) / "missing.log")
+
+        self.assertIsInstance(memory_error, InferenceMemoryExhausted)
+        self.assertFalse(memory_error.retryable)
+        self.assertNotIn("private customer prompt", str(memory_error))
+        self.assertIsInstance(process_error, InferenceProcessFailed)
+        self.assertFalse(process_error.retryable)
+
+    def test_sigkill_is_treated_as_memory_pressure(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            diagnostic = Path(root) / "diagnostic.log"
+            diagnostic.write_bytes(b"")
+            error = classify_inference_failure(-9, diagnostic)
+
+        self.assertIsInstance(error, InferenceMemoryExhausted)
 
     def test_rejects_an_unsupported_runtime_contract(self) -> None:
         with self.assertRaisesRegex(RuntimeError, "unsupported_model"):
