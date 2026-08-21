@@ -216,7 +216,8 @@ void main() {
       expect(find.text('年間合計 ¥24,000'), findsOneWidget);
       expect(find.text('未判定 1件'), findsOneWidget);
 
-      await tester.tap(find.byKey(const Key('subscription_statement_scan_open')));
+      await tester
+          .tap(find.byKey(const Key('subscription_statement_scan_open')));
       expect(scanPressed, isTrue);
 
       await tester.tap(find.byKey(const Key('subscription_review_sub_notion')));

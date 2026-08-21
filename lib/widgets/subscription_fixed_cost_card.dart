@@ -46,8 +46,7 @@ class SubscriptionFixedCostCard extends StatelessWidget {
   final void Function(
     AssetRecurringFixedCost cost,
     AssetSubscriptionReviewDecision decision,
-  )
-  onReviewDecisionChanged;
+  ) onReviewDecisionChanged;
 
   static final NumberFormat _yen = NumberFormat('#,##0');
 
