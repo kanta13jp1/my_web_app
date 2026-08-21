@@ -1262,7 +1262,7 @@ void main() {
   );
 
   testWidgets(
-    'custom trial prompt hides the unrelated fixed sample',
+    'custom trial prompt hides the unrelated fixed sample after editing',
     (tester) async {
       await pumpLanding(
         tester,
@@ -1287,6 +1287,14 @@ void main() {
 
       expect(
         find.byKey(const Key('landing_h11_answer_preview')),
+        findsOneWidget,
+      );
+
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pump();
+
+      expect(
+        find.byKey(const Key('landing_h11_answer_preview')),
         findsNothing,
       );
       expect(find.text('提案例: 止まっている案件を1つ選ぶ'), findsNothing);
@@ -1300,6 +1308,55 @@ void main() {
       expect(
         find.byKey(const Key('landing_h11_answer_preview')),
         findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'trial prompt keeps focus while characters are entered one at a time',
+    (tester) async {
+      await pumpLanding(
+        tester,
+        assignment: _assignment('h01', LandingExperimentVariant.treatment),
+      );
+
+      final promptInput = find.byKey(
+        const Key('landing_trial_prompt_input'),
+      );
+      await Scrollable.ensureVisible(tester.element(promptInput));
+      await tester.tap(promptInput);
+      await tester.pump();
+
+      final focusedNode = FocusManager.instance.primaryFocus;
+      expect(focusedNode, isNotNull);
+      expect(focusedNode!.hasFocus, isTrue);
+      final inputTopLeft = tester.getTopLeft(promptInput);
+
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'あ',
+          selection: TextSelection.collapsed(offset: 1),
+        ),
+      );
+      await tester.pump();
+
+      expect(FocusManager.instance.primaryFocus, same(focusedNode));
+      expect(focusedNode.hasFocus, isTrue);
+      expect(tester.getTopLeft(promptInput), inputTopLeft);
+
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'あい',
+          selection: TextSelection.collapsed(offset: 2),
+        ),
+      );
+      await tester.pump();
+
+      expect(FocusManager.instance.primaryFocus, same(focusedNode));
+      expect(focusedNode.hasFocus, isTrue);
+      expect(
+        tester.widget<TextField>(promptInput).controller!.text,
+        'あい',
       );
     },
   );
