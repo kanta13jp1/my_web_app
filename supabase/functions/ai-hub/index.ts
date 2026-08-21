@@ -123,6 +123,10 @@ import {
 } from "./company_a2a.ts";
 import { rankBm25 } from "../memory-search-hub/search/bm25.ts";
 import { embedTextWithGemini } from "../memory-search-hub/search/vector.ts";
+import {
+  buildSubscriptionStatementPrompt,
+  parseSubscriptionStatementResponse,
+} from "./subscription_statement_scan.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -4245,6 +4249,7 @@ serve(async (req: Request) => {
       "ai_hub.fetch_market_price",
       "asset.monthly_report.generate",
       "asset_liability.monthly_report.generate",
+      "asset_subscription.analyze_statement",
       "asset.chat",
       "ai_hub.asset_chat",
       "department_finance_summary",
@@ -6140,6 +6145,55 @@ serve(async (req: Request) => {
           detected_annual_rate_percent: detectedPercent,
           summary,
           confidence: asNumber(parsed.confidence, 0),
+        });
+      }
+
+      case "asset_subscription.analyze_statement": {
+        const parsedImage = parseInlineImage(body);
+        if (parsedImage.error) {
+          return json({ error: parsedImage.error }, parsedImage.status ?? 400);
+        }
+        const image = parsedImage.image;
+        if (!image) {
+          return json({ error: "imageBase64 required" }, 400);
+        }
+        if (
+          !["image/png", "image/jpeg", "image/webp"].includes(image.mimeType)
+        ) {
+          return json({ error: "PNG, JPEG, or WebP image required" }, 400);
+        }
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action: "asset_subscription.analyze_statement",
+              provider: "google",
+            }),
+            409,
+          );
+        }
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        if (!geminiKey) {
+          return json({
+            success: false,
+            status: "apiKeyRequired",
+            secret_needed: "GEMINI_API_KEY",
+            message: "Supabase Secret GEMINI_API_KEY is required.",
+          });
+        }
+        const raw = await callGemini(
+          buildSubscriptionStatementPrompt(),
+          geminiKey,
+          image,
+        );
+        const candidates = parseSubscriptionStatementResponse(raw);
+        return json({
+          success: true,
+          provider: "google",
+          model: "gemini-2.5-flash",
+          candidates,
+          candidate_count: candidates.length,
+          image_persisted: false,
         });
       }
 
