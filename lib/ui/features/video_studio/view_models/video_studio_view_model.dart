@@ -277,6 +277,7 @@ class VideoStudioViewModel extends ChangeNotifier {
       'worker_temporarily_unavailable' => '生成状況を確認できませんでした。少し待って再試行します。',
       'prompt_not_allowed' => 'この内容は生成できません。プロンプトを変更してください。',
       'output_not_ready' => '完成動画を取得できませんでした。少し待って再度お試しください。',
+      'video_credit_checkout_unavailable' => '購入画面を開けませんでした。時間をおいて再度お試しください。',
       _ => '動画サービスに接続できませんでした。時間をおいて再度お試しください。',
     };
   }
