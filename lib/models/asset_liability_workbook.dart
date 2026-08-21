@@ -283,6 +283,14 @@ enum AssetRecurringFixedCostCategory {
   subscription,
 }
 
+/// サブスク棚卸しでユーザーが付けた判断。
+enum AssetSubscriptionReviewDecision {
+  unreviewed,
+  keep,
+  hold,
+  cancelCandidate,
+}
+
 /// 定期固定費の入力通貨。既定は円 (jpy)。ドル建て (usd) の場合は毎月の為替で
 /// 円換算額が変動するため、原資の USD 額を保持し、最新レートで円へ materialize する。
 enum AssetRecurringFixedCostCurrency {
@@ -344,6 +352,9 @@ class AssetRecurringFixedCost {
   /// 区分 (固定費 / サブスク)。既定は utility で、表示セクションの振り分けにのみ使う。
   final AssetRecurringFixedCostCategory category;
 
+  /// 棚卸し判定。サブスク以外では常に [AssetSubscriptionReviewDecision.unreviewed]。
+  final AssetSubscriptionReviewDecision subscriptionReviewDecision;
+
   /// 請求経路 (Apple/Google/au 経由 or 直接)。既定は direct。棚卸しでの集約請求との
   /// 突き合わせ表示に使い、資金繰りの計上額には影響しない。
   final AssetSubscriptionBillingGateway billingGateway;
@@ -365,6 +376,8 @@ class AssetRecurringFixedCost {
     this.cadence = AssetRecurringFixedCostCadence.monthly,
     this.sourceAccountId,
     this.category = AssetRecurringFixedCostCategory.utility,
+    this.subscriptionReviewDecision =
+        AssetSubscriptionReviewDecision.unreviewed,
     this.billingGateway = AssetSubscriptionBillingGateway.direct,
     this.currency = AssetRecurringFixedCostCurrency.jpy,
     this.usdAmount,
@@ -404,6 +417,7 @@ class AssetRecurringFixedCost {
     String? sourceAccountId,
     bool clearSourceAccountId = false,
     AssetRecurringFixedCostCategory? category,
+    AssetSubscriptionReviewDecision? subscriptionReviewDecision,
     AssetSubscriptionBillingGateway? billingGateway,
     AssetRecurringFixedCostCurrency? currency,
     double? usdAmount,
@@ -419,6 +433,8 @@ class AssetRecurringFixedCost {
           ? null
           : (sourceAccountId ?? this.sourceAccountId),
       category: category ?? this.category,
+      subscriptionReviewDecision:
+          subscriptionReviewDecision ?? this.subscriptionReviewDecision,
       billingGateway: billingGateway ?? this.billingGateway,
       currency: currency ?? this.currency,
       usdAmount: clearUsdAmount ? null : (usdAmount ?? this.usdAmount),
@@ -437,6 +453,9 @@ class AssetRecurringFixedCost {
         'sourceAccountId': sourceAccountId,
       if (category != AssetRecurringFixedCostCategory.utility)
         'category': category.name,
+      if (subscriptionReviewDecision !=
+          AssetSubscriptionReviewDecision.unreviewed)
+        'subscriptionReviewDecision': subscriptionReviewDecision.name,
       if (billingGateway != AssetSubscriptionBillingGateway.direct)
         'billingGateway': billingGateway.name,
       // 通貨は既定 (jpy) のとき出力しない (既存ペイロードと互換を保つ)。
@@ -480,6 +499,14 @@ class AssetRecurringFixedCost {
       (value) => value.name == categoryName,
       orElse: () => AssetRecurringFixedCostCategory.utility,
     );
+    final reviewDecisionName = json['subscriptionReviewDecision']?.toString();
+    final reviewDecision =
+        category == AssetRecurringFixedCostCategory.subscription
+            ? AssetSubscriptionReviewDecision.values.firstWhere(
+                (value) => value.name == reviewDecisionName,
+                orElse: () => AssetSubscriptionReviewDecision.unreviewed,
+              )
+            : AssetSubscriptionReviewDecision.unreviewed;
     final gatewayName = json['billingGateway']?.toString();
     final billingGateway = AssetSubscriptionBillingGateway.values.firstWhere(
       (value) => value.name == gatewayName,
@@ -501,6 +528,7 @@ class AssetRecurringFixedCost {
       sourceAccountId:
           rawSource == null || rawSource.isEmpty ? null : rawSource,
       category: category,
+      subscriptionReviewDecision: reviewDecision,
       billingGateway: billingGateway,
       currency: currency,
       usdAmount: usdAmount != null && usdAmount > 0 ? usdAmount : null,
