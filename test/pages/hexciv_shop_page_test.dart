@@ -146,6 +146,8 @@ void main() {
       expect(find.text('¥500 で購入'), findsOneWidget);
       expect(find.text('ダウンロード'), findsNothing);
 
+      await tester.ensureVisible(find.text('¥500 で購入'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('¥500 で購入'));
       await tester.pump();
       expect(gateway.startCheckoutCalls, 1);
@@ -193,6 +195,41 @@ void main() {
 
       expect(find.text('商品情報を読み込めませんでした'), findsOneWidget);
       expect(find.text('再試行'), findsOneWidget);
+    });
+
+    testWidgets('実ゲーム画面3枚を購入ボタンより先に表示する', (tester) async {
+      await _pump(tester, _FakeGateway(product: _product(), signedIn: true));
+
+      expect(find.text('ゲーム画面'), findsOneWidget);
+      expect(find.text('ターン30'), findsOneWidget);
+      expect(find.text('ターン80'), findsOneWidget);
+      expect(find.text('ターン150'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('ゲーム画面')).dy,
+        lessThan(tester.getTopLeft(find.text('¥500 で購入')).dy),
+      );
+    });
+
+    testWidgets('スクリーンショットのサムネイルで説明を切り替えられる', (tester) async {
+      await _pump(tester, _FakeGateway(product: _product(), signedIn: true));
+
+      expect(find.textContaining('序盤。'), findsOneWidget);
+      expect(find.textContaining('終盤。'), findsNothing);
+
+      await tester.ensureVisible(find.text('ターン150'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ターン150'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('終盤。'), findsOneWidget);
+      expect(find.textContaining('序盤。'), findsNothing);
+    });
+
+    testWidgets('非公開商品ではゲーム画面を表示しない', (tester) async {
+      await _pump(tester, _FakeGateway(product: null));
+
+      expect(find.text('ゲーム画面'), findsNothing);
+      expect(find.text('ターン30'), findsNothing);
     });
 
     testWidgets('製品情報に SHA256 と容量を出す', (tester) async {
