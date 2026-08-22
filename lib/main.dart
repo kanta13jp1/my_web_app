@@ -742,16 +742,12 @@ Route<dynamic> generateAppRoute(
         settings: const RouteSettings(name: '/election-dashboard'),
       );
     case '/local-election-700':
+    case '/local-election-schedule':
       return MaterialPageRoute(
         builder: (_) => ElectionVictoryPage(
           publicView: supabase.auth.currentSession == null,
         ),
         settings: RouteSettings(name: settings.name),
-      );
-    case '/local-election-schedule':
-      return MaterialPageRoute(
-        builder: (_) => const ElectionVictoryPage(),
-        settings: const RouteSettings(name: '/local-election-schedule'),
       );
     case '/public/local-election-700':
       return MaterialPageRoute(
