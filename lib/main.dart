@@ -139,7 +139,6 @@ import 'package:my_web_app/pages/settings_page.dart';
 import 'package:my_web_app/pages/theme_selector_page.dart';
 import 'package:my_web_app/pages/ai_university_faculty_select_page.dart';
 import 'package:my_web_app/pages/ai_university_department_select_page.dart';
-import 'package:my_web_app/pages/stats_page.dart';
 import 'package:my_web_app/pages/team_workspace_page.dart';
 import 'package:my_web_app/pages/ai_status_page.dart';
 import 'package:my_web_app/pages/ai_provider_status_page.dart';
@@ -858,6 +857,7 @@ Route<dynamic> generateAppRoute(
     case '/activity-feed':
       return MaterialPageRoute(builder: (_) => const ActivityFeedPage());
     case '/rewards':
+    case '/stats':
       return MaterialPageRoute(builder: (_) => const RewardsPage());
     case '/life-goals':
       return MaterialPageRoute(builder: (_) => const GoalCenterPage());
@@ -1023,8 +1023,6 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const SettingsPage());
     case '/settings/theme':
       return MaterialPageRoute(builder: (_) => const ThemeSelectorPage());
-    case '/stats':
-      return MaterialPageRoute(builder: (_) => const StatsPage());
     case '/health':
       return MaterialPageRoute(builder: (_) => const HealthPage());
     case '/mental-check':

@@ -96,7 +96,6 @@ import '../pages/health_page.dart';
 import '../pages/medical_notes_page.dart';
 import '../pages/mental_check_page.dart';
 import '../pages/settings_page.dart';
-import '../pages/stats_page.dart';
 import '../pages/cmo_page.dart';
 import '../pages/team_workspace_page.dart';
 import '../pages/workflow_automation_page.dart';
@@ -519,16 +518,6 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFFB0B0B0),
       keywords: const <String>['設定', 'settings', 'テーマ', 'プロフィール', 'フィードバック'],
       onOpen: (context) => _pushPage(context, const SettingsPage()),
-    ),
-    HomeToolEntry(
-      id: 'stats',
-      sectionId: 'personal',
-      title: '統計 & 実績',
-      subtitle: 'ゲーミフィケーション進捗とバッジを確認する',
-      icon: Icons.emoji_events_outlined,
-      color: const Color(0xFFFFC107),
-      keywords: const <String>['統計', '実績', 'バッジ', 'ゲーミフィケーション', 'レベル'],
-      onOpen: (context) => _pushPage(context, const StatsPage()),
     ),
     HomeToolEntry(
       id: 'my-struggle',
@@ -2145,11 +2134,21 @@ List<HomeToolEntry> buildHomeToolCatalog({
     HomeToolEntry(
       id: 'rewards',
       sectionId: 'growth',
-      title: 'リワード',
-      subtitle: '実績報酬・バッジ・ランキング',
+      title: '実績・リワード',
+      subtitle: '実データのポイント・レベル・獲得バッジを確認する',
       icon: Icons.emoji_events_outlined,
       color: const Color(0xFFFF8F00),
-      keywords: const <String>['リワード', '報酬', 'バッジ', 'ランキング', 'rewards'],
+      keywords: const <String>[
+        '統計',
+        '実績',
+        'ゲーミフィケーション',
+        'レベル',
+        'リワード',
+        '報酬',
+        'バッジ',
+        'ランキング',
+        'rewards',
+      ],
       onOpen: (context) => _pushPage(context, const RewardsPage()),
     ),
     HomeToolEntry(

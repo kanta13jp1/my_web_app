@@ -51,6 +51,7 @@ void main() {
       'local-election-schedule',
       'mindmap',
       'referral-program',
+      'stats',
       'video-ad-generator',
       'viral-video-generator',
       'wip-limit',
@@ -69,6 +70,7 @@ void main() {
         'daily-habits',
         'life-goals',
         'local-election-700',
+        'rewards',
       ]),
     );
   });

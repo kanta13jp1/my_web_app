@@ -36,6 +36,7 @@ void main() {
       expect(featureLabelForRoute('/wip-limit'), '消化してから次へ');
       expect(featureLabelForRoute('/habit-gamification'), '毎日の習慣');
       expect(featureLabelForRoute('/goal-tracker'), '人生目標管理');
+      expect(featureLabelForRoute('/stats'), '実績・リワード');
       expect(
         featureLabelForRoute('/local-election-schedule'),
         '2027 統一地方選 700必達管理室',
@@ -64,6 +65,7 @@ void main() {
       expect(canonicalFeatureRoutePath('/wip-limit'), '/digest-queue');
       expect(canonicalFeatureRoutePath('/habit-gamification'), '/daily-habits');
       expect(canonicalFeatureRoutePath('/goal-tracker'), '/life-goals');
+      expect(canonicalFeatureRoutePath('/stats'), '/rewards');
       expect(
         canonicalFeatureRoutePath('/local-election-schedule'),
         '/local-election-700',
