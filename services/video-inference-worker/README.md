@@ -59,6 +59,9 @@ Required environment variables:
   the OS process command line.
 - Each job has a 30-minute renewable lease. The worker renews it every minute,
   allows up to 60 minutes for one L4 inference, and does not retry a timeout.
+- Before VAE decode, the worker releases the DiT and decodes six overlapping
+  spatial tiles on the GPU. It blends those tiles in CPU memory so the fixed
+  720p contract remains within a single 24 GB L4's VRAM budget.
 - An empty queue shuts the worker down after 10 minutes; a clean worker exit
   powers off the GPU host, while the fixed startup auto-stop remains a backstop.
 - Output dimensions, duration, frame rate, codec, and size are checked with

@@ -73,6 +73,18 @@ class WorkerContractTest(unittest.TestCase):
         self.assertIn("dst=/run/secrets/video-worker-token,readonly", startup)
         self.assertNotIn('--env "VIDEO_WORKER_TOKEN=${token}"', startup)
 
+    def test_wan_patch_enables_cpu_blended_tiled_vae_decode(self) -> None:
+        root = Path(__file__).parent
+        dockerfile = (root / "Dockerfile").read_text(encoding="utf-8")
+        vae_patch = (root / "patches" / "wan22-tiled-vae-decode.patch").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("wan22-tiled-vae-decode.patch", dockerfile)
+        self.assertIn("def decode_tiled", vae_patch)
+        self.assertIn('device="cpu", dtype=torch.float32', vae_patch)
+        self.assertIn("tile_size=32, tile_overlap=8", vae_patch)
+
     def test_valid_job_contract_and_landscape_command(self) -> None:
         job = {
             "job_id": "11111111-1111-4111-8111-111111111111",

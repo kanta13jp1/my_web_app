@@ -44,6 +44,13 @@ RUN cd /opt/Wan2.2 \
     && git apply /tmp/wan22-release-dit-before-vae.patch \
     && rm -f /tmp/wan22-release-dit-before-vae.patch
 
+COPY patches/wan22-tiled-vae-decode.patch /tmp/wan22-tiled-vae-decode.patch
+RUN cd /opt/Wan2.2 \
+    && git apply --check /tmp/wan22-tiled-vae-decode.patch \
+    && git apply /tmp/wan22-tiled-vae-decode.patch \
+    && python3 -m py_compile wan/modules/vae2_2.py wan/textimage2video.py \
+    && rm -f /tmp/wan22-tiled-vae-decode.patch
+
 COPY wan_init.py /opt/Wan2.2/wan/__init__.py
 
 COPY requirements.txt /tmp/worker-requirements.txt
