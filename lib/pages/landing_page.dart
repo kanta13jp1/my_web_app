@@ -13,6 +13,7 @@ import '../services/landing_conversion_experiment_service.dart';
 import '../services/landing_oauth_callback_failure.dart';
 import '../services/landing_page_adapter.dart';
 import '../services/landing_signup_completion_service.dart';
+import '../services/landing_trial_instant_preview.dart';
 import '../services/pending_landing_trial_service.dart';
 import '../services/route_visibility_observer.dart';
 import '../utils/route_document_title.dart';
@@ -103,6 +104,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   bool _obscurePassword = true;
   bool _showPasswordAuth = false;
   bool _showSaveCtaPrompt = false;
+  bool _trialUsesInstantPreview = false;
   bool _showInboxShortcut = false;
   bool _showAllUniqueFeatures = false;
   bool _showTrialAnswerPreview = true;
@@ -730,6 +732,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         _trialErrorTitle = '入力内容を確認してください';
         _trialErrorMessage = 'いま詰まっていることを1行入力してください。';
         _showSaveCtaPrompt = false;
+        _trialUsesInstantPreview = false;
       });
       return;
     }
@@ -743,6 +746,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       _trialErrorTitle = null;
       _trialErrorMessage = null;
       _showSaveCtaPrompt = false;
+      _trialUsesInstantPreview = false;
     });
     try {
       final result = await widget.adapter.improveTrialPrompt(prompt: input);
@@ -754,11 +758,30 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         _trialErrorTitle = null;
         _trialErrorMessage = null;
         _showSaveCtaPrompt = true;
+        _trialUsesInstantPreview = false;
       });
       _scrollToTrialMagicLink(requestFocus: false);
     } catch (e) {
       debugPrint('Trial preview failed: $e');
       unawaited(_recordConversionStage('trial_fallback'));
+      final canUseInstantPreview = e is LandingPageAuthUnavailableException ||
+          (e is LandingTrialPreviewException &&
+              e.code == 'trial_ai_unavailable' &&
+              e.canUseInstantPreview);
+      if (canUseInstantPreview) {
+        final preview = buildLandingTrialInstantPreview(input);
+        if (!mounted) return;
+        setState(() {
+          _trialAction = preview.action;
+          _trialReason = preview.reason;
+          _trialErrorTitle = null;
+          _trialErrorMessage = null;
+          _showSaveCtaPrompt = false;
+          _trialUsesInstantPreview = true;
+        });
+        _scrollToTrialMagicLink(requestFocus: false);
+        return;
+      }
       final failure = _resolveTrialPreviewError(e);
       if (!mounted) return;
       setState(() {
@@ -767,6 +790,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         _trialErrorTitle = failure.$1;
         _trialErrorMessage = failure.$2;
         _showSaveCtaPrompt = false;
+        _trialUsesInstantPreview = false;
       });
     } finally {
       if (mounted) {
@@ -967,7 +991,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
   void _handleStickySignup() {
     unawaited(_recordConversionStage('sticky_cta'));
-    if (_trialAction != null && _hypothesisEnabled('h04')) {
+    if (_trialAction != null &&
+        !_trialUsesInstantPreview &&
+        _hypothesisEnabled('h04')) {
       unawaited(_recordSaveStages());
       setState(() {
         _showSaveCtaPrompt = true;
@@ -1114,7 +1140,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         _trialReason == null &&
         _trialErrorTitle == null &&
         _trialErrorMessage == null &&
-        !_showSaveCtaPrompt) {
+        !_showSaveCtaPrompt &&
+        !_trialUsesInstantPreview) {
       return;
     }
     setState(() {
@@ -1123,6 +1150,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       _trialErrorTitle = null;
       _trialErrorMessage = null;
       _showSaveCtaPrompt = false;
+      _trialUsesInstantPreview = false;
       if (shouldRestorePreview) {
         _showTrialAnswerPreview = true;
       }
@@ -4471,7 +4499,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'AIからの提案',
+                          _trialUsesInstantPreview
+                              ? '簡易プレビュー（AI未使用）'
+                              : 'AIからの提案',
+                          key: const Key('landing_trial_result_source'),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -4504,7 +4535,39 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                             ),
                           ),
                         ],
-                        if (_hypothesisEnabled('h10')) ...[
+                        if (_trialUsesInstantPreview) ...[
+                          const SizedBox(height: 10),
+                          Container(
+                            key: const Key(
+                              'landing_trial_instant_preview_notice',
+                            ),
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: heroMode
+                                  ? const Color(0xFF142431)
+                                  : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: heroMode
+                                    ? const Color(0x665B7181)
+                                    : const Color(0xFFCBD5E1),
+                              ),
+                            ),
+                            child: Text(
+                              'AIに接続できなかったため、入力内容を端末内のルールで整理した簡易案です。登録や保存は行いません。',
+                              style: TextStyle(
+                                color: heroMode
+                                    ? const Color(0xFFBCC6CE)
+                                    : const Color(0xFF475569),
+                                fontSize: 12,
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (!_trialUsesInstantPreview &&
+                            _hypothesisEnabled('h10')) ...[
                           const SizedBox(height: 10),
                           Text(
                             '登録すると、今回の入力・提案・理由を同じブラウザから引き継げます。',
@@ -4520,7 +4583,17 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                           ),
                         ],
                         const SizedBox(height: 12),
-                        if (_hypothesisEnabled('h04'))
+                        if (_trialUsesInstantPreview)
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              key: const Key('landing_trial_ai_retry'),
+                              onPressed: _runTrialActionPreview,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('AIの提案をもう一度試す'),
+                            ),
+                          )
+                        else if (_hypothesisEnabled('h04'))
                           _buildInlineTrialMagicLink()
                         else
                           SizedBox(
