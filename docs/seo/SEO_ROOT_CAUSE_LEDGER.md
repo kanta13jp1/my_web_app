@@ -30,7 +30,7 @@
 
 ## 変更の評価方法
 
-- 成功: sitemap生成物に47 canonical URLが残り、`date_modified`を明示した`/philosophy`だけが`lastmod=2026-08-19`を持つ。
+- 成功: sitemap生成物に現行のcanonical URL一覧（2026-08-22時点で`/shop`を含む48 URL）が残り、`date_modified`を明示した`/philosophy`だけが`lastmod=2026-08-19`を持つ。
 - 継続確認: 無関係な本番デプロイ後も理念ページの`lastmod`が変わらない。
 - 失敗の解釈: sitemapが正確になっても未検出が続く場合、H2単独原因説は弱まり、H1のクロール実績とH3/H4のインデックス品質を優先して検証する。
 - ロールバック: `scripts/generate_sitemap.py`の明示日付マッピングと生成済み`web/sitemap.xml`を直前実装へ戻す。URL一覧やページ本文には影響しない。
