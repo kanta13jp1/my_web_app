@@ -11,19 +11,17 @@ void main() {
       dotAll: true,
     ).allMatches(html).map((match) => jsonDecode(match.group(1)!)).toList();
     final softwareApplication = blocks.cast<dynamic>().firstWhere(
-      (block) => block is Map && block['@type'] == 'SoftwareApplication',
-    ) as Map<String, dynamic>;
+          (block) => block is Map && block['@type'] == 'SoftwareApplication',
+        ) as Map<String, dynamic>;
     final entityGraph = blocks.cast<dynamic>().firstWhere(
-      (block) => block is Map && block['@graph'] is List,
-    ) as Map<String, dynamic>;
-    const organizationId =
-        'https://my-web-app-b67f4.web.app/#organization';
+          (block) => block is Map && block['@graph'] is List,
+        ) as Map<String, dynamic>;
+    const organizationId = 'https://my-web-app-b67f4.web.app/#organization';
     final organizationNodes = (entityGraph['@graph'] as List<dynamic>)
         .whereType<Map<String, dynamic>>()
         .where(
           (node) =>
-              node['@type'] == 'Organization' &&
-              node['@id'] == organizationId,
+              node['@type'] == 'Organization' && node['@id'] == organizationId,
         )
         .toList();
 
