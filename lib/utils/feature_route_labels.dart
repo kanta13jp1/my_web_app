@@ -19,18 +19,21 @@ const Set<String> _nonFeatureRoutes = <String>{
 /// 旧 URL のまま保存すると「最近使った機能 / よく使われる機能」に同じ機能が
 /// 複数表示されるため、計測上は必ず正規 route に寄せる。
 const Map<String, String> kCanonicalFeatureRouteAliases = <String, String>{
+  '/ai-summarizer': '/ai-writing-assistant',
   '/autonomous-ops': '/autonomous-ops-console',
   '/billing': '/subscription-billing',
   '/expense-tracker': '/asset-management',
   '/gemini-university': '/ai-university',
   '/goal-tracker': '/life-goals',
   '/habit-gamification': '/daily-habits',
+  '/local-election-schedule': '/local-election-700',
   '/mindmap': '/mind-map',
   '/musubi': '/social-feed',
   '/notes': '/note-list',
   '/one-in-two-out': '/one-in-two-out-assist',
   '/pomodoro-timer': '/focus-timer',
   '/referral-program': '/referral',
+  '/stats': '/rewards',
   '/social-media-scheduler': '/social-scheduler',
   '/travel-itinerary': '/travel-planner',
   '/video-ad-generator': '/viral-ad-generator',
@@ -39,14 +42,17 @@ const Map<String, String> kCanonicalFeatureRouteAliases = <String, String>{
 };
 
 const Map<String, String> _consolidatedFeatureLabels = <String, String>{
+  '/ai-writing-assistant': 'AI文章・要約アシスタント',
   '/asset-management': '資産・家計管理',
   '/autonomous-ops-console': '自律オペレーションコンソール',
   '/focus-timer': '集中タイマー',
   '/life-goals': '人生目標管理',
+  '/local-election-700': '2027 統一地方選 700必達管理室',
   '/daily-habits': '毎日の習慣',
   '/mind-map': 'マインドマップ',
   '/one-in-two-out-assist': '1 In 2 Out UI整理アシスト',
   '/referral': '友達招待・紹介プログラム',
+  '/rewards': '実績・リワード',
   '/social-feed': 'MUSUBI ソーシャル',
   '/social-scheduler': 'SNS投稿スケジューラー',
   '/subscription-billing': 'サブスクリプション管理',

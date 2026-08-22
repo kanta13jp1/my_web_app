@@ -1184,39 +1184,78 @@ void main() {
   });
 
   testWidgets(
-    'trial result reveals the inline save path without forcing keyboard focus',
+    'trial results stay visible instead of jumping to the save form',
     (tester) async {
-      for (final size in <Size>[const Size(1200, 720), const Size(390, 844)]) {
-        await pumpLanding(
-          tester,
-          assignment: _assignment('h04', LandingExperimentVariant.treatment),
-          size: size,
-        );
+      for (final useInstantPreview in <bool>[false, true]) {
+        for (final size in <Size>[
+          const Size(1200, 720),
+          const Size(390, 844),
+        ]) {
+          final adapter = await pumpLanding(
+            tester,
+            assignment: _assignment(
+              'h04',
+              LandingExperimentVariant.treatment,
+            ),
+            size: size,
+          );
+          if (useInstantPreview) {
+            adapter.trialError = const LandingTrialPreviewException(
+              'trial_ai_unavailable',
+              statusCode: 503,
+              canUseInstantPreview: true,
+            );
+          }
 
-        final trialButton = find.byKey(
-          const Key('landing_trial_sample_priority'),
-        );
-        await Scrollable.ensureVisible(
-          tester.element(trialButton),
-          alignment: 0.5,
-        );
-        await tester.pump();
-        await tester.tap(trialButton);
-        await tester.pumpAndSettle();
+          final promptInput = find.byKey(
+            const Key('landing_trial_prompt_input'),
+          );
+          final trialButton = find.byKey(
+            const Key('landing_h03_inline_trial_action'),
+          );
+          await Scrollable.ensureVisible(
+            tester.element(trialButton),
+            alignment: 0.5,
+          );
+          await tester.enterText(promptInput, '今日の最優先タスクを1件に絞りたい');
+          await tester.pump();
+          await Scrollable.ensureVisible(
+            tester.element(trialButton),
+            alignment: 0.5,
+          );
+          await tester.pump();
+          await tester.tap(trialButton);
+          await tester.pump();
+          await _completeGuidedTrialWithQuickAnswers(tester);
 
-        final email = find.byKey(const Key('landing_h04_inline_email'));
-        final saveButton = find.byKey(
-          const Key('landing_h04_inline_magic_link'),
-        );
-        expect(tester.getTopLeft(email).dy, greaterThanOrEqualTo(0));
-        expect(
-          tester.getBottomRight(saveButton).dy,
-          lessThanOrEqualTo(size.height),
-        );
-        expect(tester.widget<TextField>(email).focusNode?.hasFocus, isFalse);
+          final resultAction = find.byKey(
+            const Key('landing_trial_result_action'),
+          );
+          expect(
+            resultAction,
+            findsOneWidget,
+            reason:
+                'result missing for instantPreview=$useInstantPreview at $size; '
+                'submitted=${adapter.lastTrialPrompt}',
+          );
+          expect(tester.getTopLeft(resultAction).dy, greaterThanOrEqualTo(0));
+          expect(
+            tester.getBottomRight(resultAction).dy,
+            lessThanOrEqualTo(size.height),
+          );
+          final email = find.byKey(const Key('landing_h04_inline_email'));
+          if (useInstantPreview) {
+            expect(email, findsNothing);
+          } else {
+            expect(
+              tester.widget<TextField>(email).focusNode?.hasFocus,
+              isFalse,
+            );
+          }
 
-        await tester.pumpWidget(const SizedBox.shrink());
-        await tester.pump();
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump();
+        }
       }
     },
   );
