@@ -1,0 +1,34 @@
+diff --git a/wan/textimage2video.py b/wan/textimage2video.py
+--- a/wan/textimage2video.py
++++ b/wan/textimage2video.py
+@@ -392,19 +392,27 @@ class WanTI2V:
+                     return_dict=False,
+                     generator=seed_g)[0]
+                 latents = [temp_x0.squeeze(0)]
+             x0 = latents
++
++            # The first-party worker runs one generation per subprocess. Release
++            # diffusion-only tensors before VAE decode, and drop the DiT instead
++            # of copying its full parameter set from GPU back to host memory.
++            del context, context_null, mask1, mask2, arg_c, arg_null
++            del latent_model_input, timestep, temp_ts
++            del noise_pred_cond, noise_pred_uncond, noise_pred, temp_x0
++            del noise, latents, timesteps, sample_scheduler
+             if offload_model:
+-                self.model.cpu()
+                 torch.cuda.synchronize()
++                del self.model
++                gc.collect()
+                 torch.cuda.empty_cache()
+             if self.rank == 0:
+                 videos = self.vae.decode(x0)
+ 
+-        del noise, latents
+-        del sample_scheduler
+         if offload_model:
+             gc.collect()
+             torch.cuda.synchronize()
++            torch.cuda.empty_cache()
+         if dist.is_initialized():
+             dist.barrier()
+ 

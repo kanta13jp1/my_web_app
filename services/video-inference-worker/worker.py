@@ -47,8 +47,13 @@ class InferenceTimeout(WorkerError):
     retryable = False
 
 
-class InferenceMemoryExhausted(WorkerError):
-    error_code = "inference_memory_exhausted"
+class InferenceGpuMemoryExhausted(WorkerError):
+    error_code = "inference_gpu_memory_exhausted"
+    retryable = False
+
+
+class InferenceHostMemoryExhausted(WorkerError):
+    error_code = "inference_host_memory_exhausted"
     retryable = False
 
 
@@ -302,18 +307,23 @@ def classify_inference_failure(
     except OSError:
         pass
 
-    memory_markers = (
+    gpu_memory_markers = (
         b"cuda out of memory",
         b"torch.outofmemoryerror",
-        b"out of memory",
+        b"cublas_status_alloc_failed",
+    )
+    host_memory_markers = (
+        b"memoryerror",
+        b"std::bad_alloc",
         b"cannot allocate memory",
     )
     sigkill = int(getattr(signal, "SIGKILL", 9))
-    killed_by_memory_pressure = return_code in {-sigkill, 128 + sigkill}
-    if killed_by_memory_pressure or any(
-        marker in diagnostic_tail for marker in memory_markers
+    if any(marker in diagnostic_tail for marker in gpu_memory_markers):
+        return InferenceGpuMemoryExhausted("inference_gpu_memory_exhausted")
+    if return_code in {-sigkill, 128 + sigkill} or any(
+        marker in diagnostic_tail for marker in host_memory_markers
     ):
-        return InferenceMemoryExhausted("inference_memory_exhausted")
+        return InferenceHostMemoryExhausted("inference_host_memory_exhausted")
     return InferenceProcessFailed("inference_process_failed")
 
 
