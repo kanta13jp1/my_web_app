@@ -79,18 +79,19 @@ class _FakeGateway implements ShopGateway {
 }
 
 ShopProduct _product({bool purchasable = true}) => ShopProduct(
-  id: 'hexciv-win64',
-  nameJa: 'HexCiv (Windows 版)',
-  summaryJa: '4X ストラテジー。',
-  priceJpy: 500,
-  version: '1.0',
-  fileSizeBytes: 37572177,
-  sha256: 'cc0e5caae732fa123d26ed62c1827a923c4ccd777823190ed714ba178e97ed93',
-  isPurchasable: purchasable,
-  requirementsJa: 'Windows 10 / 11 (64bit)',
-  formatLabel: 'Windows / ZIP',
-  downloadFileName: 'HexCiv-v1.0-win64.zip',
-);
+      id: 'hexciv-win64',
+      nameJa: 'HexCiv (Windows 版)',
+      summaryJa: '4X ストラテジー。',
+      priceJpy: 500,
+      version: '1.0',
+      fileSizeBytes: 37572177,
+      sha256:
+          'cc0e5caae732fa123d26ed62c1827a923c4ccd777823190ed714ba178e97ed93',
+      isPurchasable: purchasable,
+      requirementsJa: 'Windows 10 / 11 (64bit)',
+      formatLabel: 'Windows / ZIP',
+      downloadFileName: 'HexCiv-v1.0-win64.zip',
+    );
 
 Future<void> _pump(
   WidgetTester tester,

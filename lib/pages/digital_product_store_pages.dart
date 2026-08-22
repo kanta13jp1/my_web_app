@@ -688,9 +688,8 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
                   decoration: BoxDecoration(
                     color: DesignTokens.surface2,
                     border: Border.all(
-                      color: selected
-                          ? DesignTokens.orange
-                          : DesignTokens.divider,
+                      color:
+                          selected ? DesignTokens.orange : DesignTokens.divider,
                       width: selected ? 2 : 1,
                     ),
                     borderRadius: BorderRadius.circular(8),
@@ -708,9 +707,8 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
             Text(
               screenshot.labelJa,
               style: TextStyle(
-                color: selected
-                    ? DesignTokens.orange
-                    : DesignTokens.textSecondary,
+                color:
+                    selected ? DesignTokens.orange : DesignTokens.textSecondary,
                 fontSize: 12,
                 fontWeight: selected ? FontWeight.bold : FontWeight.normal,
               ),
@@ -762,8 +760,7 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
         icon: Icons.hourglass_top,
         color: DesignTokens.indigo,
         title: '決済を確認しています',
-        body:
-            'お支払いは完了しています。反映まで数秒かかることがあります。'
+        body: 'お支払いは完了しています。反映まで数秒かかることがあります。'
             '購入ボタンは再表示せず、確認後にダウンロードへ切り替えます。',
         action: TextButton(
           onPressed: _viewModel.load,
@@ -1000,9 +997,8 @@ class _ShopDownloadsPageState extends State<ShopDownloadsPage> {
                             ],
                           );
                           final button = FilledButton.icon(
-                            onPressed: working
-                                ? null
-                                : () => _download(product.id),
+                            onPressed:
+                                working ? null : () => _download(product.id),
                             icon: const Icon(Icons.download),
                             label: Text(working ? '準備中…' : 'ダウンロード'),
                           );
