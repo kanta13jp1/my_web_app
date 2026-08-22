@@ -7,7 +7,8 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from worker import (
-    InferenceMemoryExhausted,
+    InferenceGpuMemoryExhausted,
+    InferenceHostMemoryExhausted,
     InferenceProcessFailed,
     InferenceTimeout,
     LeaseLost,
@@ -117,7 +118,7 @@ class WorkerContractTest(unittest.TestCase):
             memory_error = classify_inference_failure(1, diagnostic)
             process_error = classify_inference_failure(2, Path(root) / "missing.log")
 
-        self.assertIsInstance(memory_error, InferenceMemoryExhausted)
+        self.assertIsInstance(memory_error, InferenceGpuMemoryExhausted)
         self.assertFalse(memory_error.retryable)
         self.assertNotIn("private customer prompt", str(memory_error))
         self.assertIsInstance(process_error, InferenceProcessFailed)
@@ -129,7 +130,15 @@ class WorkerContractTest(unittest.TestCase):
             diagnostic.write_bytes(b"")
             error = classify_inference_failure(-9, diagnostic)
 
-        self.assertIsInstance(error, InferenceMemoryExhausted)
+        self.assertIsInstance(error, InferenceHostMemoryExhausted)
+
+    def test_host_allocation_failure_is_classified_separately(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            diagnostic = Path(root) / "diagnostic.log"
+            diagnostic.write_bytes(b"std::bad_alloc")
+            error = classify_inference_failure(1, diagnostic)
+
+        self.assertIsInstance(error, InferenceHostMemoryExhausted)
 
     def test_rejects_an_unsupported_runtime_contract(self) -> None:
         with self.assertRaisesRegex(RuntimeError, "unsupported_model"):

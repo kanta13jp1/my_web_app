@@ -38,6 +38,12 @@ RUN git clone https://github.com/Wan-Video/Wan2.2.git /opt/Wan2.2 \
         "flash_attn==${FLASH_ATTN_VERSION}" \
     && rm -f /tmp/wan-requirements.txt
 
+COPY patches/wan22-release-dit-before-vae.patch /tmp/wan22-release-dit-before-vae.patch
+RUN cd /opt/Wan2.2 \
+    && git apply --check /tmp/wan22-release-dit-before-vae.patch \
+    && git apply /tmp/wan22-release-dit-before-vae.patch \
+    && rm -f /tmp/wan22-release-dit-before-vae.patch
+
 COPY wan_init.py /opt/Wan2.2/wan/__init__.py
 
 COPY requirements.txt /tmp/worker-requirements.txt

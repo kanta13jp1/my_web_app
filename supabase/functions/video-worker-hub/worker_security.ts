@@ -37,6 +37,8 @@ export function isJobId(value: string): boolean {
 export function isWorkerErrorCode(value: string): boolean {
   return [
     "inference_failed",
+    "inference_gpu_memory_exhausted",
+    "inference_host_memory_exhausted",
     "inference_memory_exhausted",
     "inference_process_failed",
     "inference_timeout",
