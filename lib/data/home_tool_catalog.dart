@@ -555,11 +555,11 @@ List<HomeToolEntry> buildHomeToolCatalog({
     HomeToolEntry(
       id: 'prison-mode',
       sectionId: 'personal',
-      title: '刑務所モード',
-      subtitle: '借金完済まで生活規律を引き締める',
+      title: '完済ガード',
+      subtitle: '借金完済まで禁止事項・衝動・違反を記録する',
       icon: Icons.lock_clock_outlined,
       color: const Color(0xFF607D8B),
-      keywords: const <String>['刑務所', '借金', '規律'],
+      keywords: const <String>['完済', '刑務所', '借金', '禁止事項', '衝動', '規律'],
       onOpen: (context) => _pushPage(context, const PrisonModePage()),
     ),
     HomeToolEntry(
