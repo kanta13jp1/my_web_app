@@ -39,12 +39,29 @@ void main() {
       'asset-management',
       'budget-financial-planner',
       'expense-tracker',
+      'habit-gamification',
+      'goal-tracker',
       'mindmap',
       'referral-program',
+      'video-ad-generator',
+      'viral-video-generator',
+      'wip-limit',
     };
 
     expect(ids.intersection(retiredHomeEntries), isEmpty);
-    expect(ids, containsAll(<String>['cfo-office', 'mind-map', 'referral']));
+    expect(
+      ids,
+      containsAll(<String>[
+        'cfo-office',
+        'mind-map',
+        'referral',
+        'viral-ad-generator',
+        'video-studio',
+        'digest-queue',
+        'daily-habits',
+        'life-goals',
+      ]),
+    );
   });
 }
 

@@ -20,12 +20,11 @@ import 'package:my_web_app/pages/ai_company_builder_page.dart';
 import 'package:my_web_app/pages/agi_fireworks_page.dart';
 import 'package:my_web_app/pages/ai_agent_page.dart';
 import 'package:my_web_app/pages/behavior_review_page.dart';
-import 'package:my_web_app/pages/daily_habits_page.dart';
+import 'package:my_web_app/pages/habit_center_page.dart';
 import 'package:my_web_app/pages/my_struggle_page.dart';
 import 'package:my_web_app/pages/prison_mode_page.dart';
 import 'package:my_web_app/pages/bookmark_folders_page.dart';
 import 'package:my_web_app/pages/behavior_log_page.dart';
-import 'package:my_web_app/pages/wip_limit_page.dart';
 import 'package:my_web_app/pages/danshari_page.dart';
 import 'package:my_web_app/pages/email_cleanup_page.dart';
 import 'package:my_web_app/pages/local_smart_cleanup_page.dart';
@@ -80,7 +79,7 @@ import 'package:my_web_app/pages/admin/blog_draft_editor_page.dart';
 import 'package:my_web_app/pages/admin/maintenance_management_page.dart';
 import 'package:my_web_app/pages/home_insights_page.dart';
 import 'package:my_web_app/pages/career_monthly_kpi_page.dart';
-import 'package:my_web_app/pages/life_goals_page.dart';
+import 'package:my_web_app/pages/goal_center_page.dart';
 import 'package:my_web_app/pages/thought_capture_page.dart';
 import 'package:my_web_app/pages/decision_check_page.dart';
 import 'package:my_web_app/pages/eval_approval_page.dart';
@@ -219,8 +218,6 @@ import 'package:my_web_app/pages/loyalty_points_page.dart';
 import 'package:my_web_app/pages/viral_ad_generator_page.dart';
 import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
-import 'package:my_web_app/pages/video_ad_generator_page.dart';
-import 'package:my_web_app/pages/viral_video_generator_page.dart';
 import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
 import 'package:my_web_app/pages/youtube_stats_page.dart';
 import 'package:my_web_app/pages/audio_effects_processor_page.dart';
@@ -247,7 +244,6 @@ import 'package:my_web_app/pages/recipe_meal_planner_page.dart';
 import 'package:my_web_app/pages/meal_log_page.dart';
 import 'package:my_web_app/pages/life_goals_kpi_page.dart';
 import 'package:my_web_app/pages/language_learning_page.dart';
-import 'package:my_web_app/pages/habit_gamification_page.dart';
 import 'package:my_web_app/pages/focus_capture_game_page.dart';
 import 'package:my_web_app/pages/code_playground_page.dart';
 import 'package:my_web_app/pages/real_estate_tracker_page.dart';
@@ -273,7 +269,6 @@ import 'package:my_web_app/pages/sitemap_analytics_page.dart';
 import 'package:my_web_app/pages/access_control_page.dart';
 import 'package:my_web_app/pages/personal_dashboard_page.dart';
 import 'package:my_web_app/pages/my_skills_page.dart';
-import 'package:my_web_app/pages/goal_tracker_page.dart';
 import 'package:my_web_app/pages/bookmark_sync_page.dart';
 import 'package:my_web_app/pages/jibun_api_page.dart';
 import 'package:my_web_app/pages/ui_design_status_page.dart';
@@ -608,6 +603,7 @@ Route<dynamic> generateAppRoute(
     case '/memory-drill':
       return MaterialPageRoute(builder: (_) => const MemoryDrillPage());
     case '/digest-queue':
+    case '/wip-limit':
       return MaterialPageRoute(builder: (_) => const DigestQueuePage());
     case '/growth-mission':
       return MaterialPageRoute(
@@ -788,7 +784,7 @@ Route<dynamic> generateAppRoute(
     case '/shopping-list':
       return MaterialPageRoute(builder: (_) => const ShoppingListPage());
     case '/daily-habits':
-      return MaterialPageRoute(builder: (_) => const DailyHabitsPage());
+      return MaterialPageRoute(builder: (_) => const HabitCenterPage());
     case '/self-touch-tracker':
       return MaterialPageRoute(
         builder: (_) => SelfTouchTrackerPage(
@@ -810,8 +806,6 @@ Route<dynamic> generateAppRoute(
       );
     case '/behavior-log':
       return MaterialPageRoute(builder: (_) => const BehaviorLogPage());
-    case '/wip-limit':
-      return MaterialPageRoute(builder: (_) => const WipLimitPage());
     case '/feature-requests':
       return MaterialPageRoute(
         builder: (_) => const FeatureRequestsPage(),
@@ -869,7 +863,7 @@ Route<dynamic> generateAppRoute(
     case '/rewards':
       return MaterialPageRoute(builder: (_) => const RewardsPage());
     case '/life-goals':
-      return MaterialPageRoute(builder: (_) => const LifeGoalsPage());
+      return MaterialPageRoute(builder: (_) => const GoalCenterPage());
     case '/thought-capture':
       return MaterialPageRoute(
         builder: (_) => const ThoughtCapturePage(),
@@ -1299,6 +1293,8 @@ Route<dynamic> generateAppRoute(
     case '/loyalty-points':
       return MaterialPageRoute(builder: (_) => const LoyaltyPointsPage());
     case '/viral-ad-generator':
+    case '/video-ad-generator':
+    case '/viral-video-generator':
       return MaterialPageRoute(
         builder: (_) => const ViralAdGeneratorPage(),
       );
@@ -1308,14 +1304,6 @@ Route<dynamic> generateAppRoute(
       );
     case '/landing-ab-test':
       return MaterialPageRoute(builder: (_) => const LandingAbTestPage());
-    case '/video-ad-generator':
-      return MaterialPageRoute(
-        builder: (_) => const VideoAdGeneratorPage(),
-      );
-    case '/viral-video-generator':
-      return MaterialPageRoute(
-        builder: (_) => const ViralVideoGeneratorPage(),
-      );
     case '/video-studio':
       return MaterialPageRoute(
         builder: (_) => VideoStudioFeature(initialUri: uri),
@@ -1466,7 +1454,9 @@ Route<dynamic> generateAppRoute(
       );
     case '/habit-gamification':
       return MaterialPageRoute(
-        builder: (_) => const HabitGamificationPage(),
+        builder: (_) => const HabitCenterPage(
+          initialSection: HabitCenterSection.rewards,
+        ),
       );
     case '/focus-capture':
       return MaterialPageRoute(
@@ -1521,7 +1511,11 @@ Route<dynamic> generateAppRoute(
     case '/my-skills':
       return MaterialPageRoute(builder: (_) => const MySkillsPage());
     case '/goal-tracker':
-      return MaterialPageRoute(builder: (_) => const GoalTrackerPage());
+      return MaterialPageRoute(
+        builder: (_) => const GoalCenterPage(
+          initialSection: GoalCenterSection.legacyGoals,
+        ),
+      );
     case '/career-monthly-kpi':
       return MaterialPageRoute(
         builder: (_) => const CareerMonthlyKpiPage(),

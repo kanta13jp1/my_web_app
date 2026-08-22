@@ -121,8 +121,13 @@ void main() {
     const expectedPageByLegacyRoute = <String, String>{
       '/pomodoro-timer': 'FocusTimerPage',
       '/referral-program': 'ReferralPage',
+      '/habit-gamification': 'HabitCenterPage',
+      '/goal-tracker': 'GoalCenterPage',
       '/social-media-scheduler': 'SocialMediaSchedulerPage',
       '/travel-itinerary': 'TravelItineraryPage',
+      '/video-ad-generator': 'ViralAdGeneratorPage',
+      '/viral-video-generator': 'ViralAdGeneratorPage',
+      '/wip-limit': 'DigestQueuePage',
     };
     final cases = _routeCases();
 

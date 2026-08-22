@@ -29,7 +29,7 @@ import '../pages/cho_office_page.dart';
 import '../pages/chro_office_page.dart';
 import '../pages/cmo_office_page.dart';
 import '../pages/conveni_store_page.dart';
-import '../pages/daily_habits_page.dart';
+import '../pages/habit_center_page.dart';
 import '../pages/danshari_page.dart';
 import '../pages/decision_check_page.dart';
 import '../pages/deployment_monitoring_setup_page.dart';
@@ -45,7 +45,7 @@ import '../pages/growth_mission_page.dart';
 import '../pages/home_insights_page.dart';
 import '../pages/import_page.dart';
 import '../pages/kanban_board_page.dart';
-import '../pages/life_goals_page.dart';
+import '../pages/goal_center_page.dart';
 import '../pages/local_smart_cleanup_page.dart';
 import '../pages/windows_app_install_page.dart';
 import '../pages/memory_drill_page.dart';
@@ -73,7 +73,6 @@ import '../pages/wardrobe_page.dart';
 import '../pages/personality_test_questions_page.dart';
 import '../pages/iq_test_page.dart';
 import '../pages/iq_training_page.dart';
-import '../pages/wip_limit_page.dart';
 import '../pages/ai_suggest_tags_page.dart';
 import '../pages/analyze_reality_page.dart';
 import '../pages/support_tickets_page.dart';
@@ -158,9 +157,7 @@ import '../pages/smart_inbox_triage_page.dart';
 import '../pages/social_feed_page.dart';
 import '../pages/subscription_billing_page.dart';
 import '../pages/digital_product_store_pages.dart';
-import '../pages/video_ad_generator_page.dart';
 import '../pages/viral_ad_generator_page.dart';
-import '../pages/viral_video_generator_page.dart';
 import '../ui/features/video_studio/video_studio_feature.dart';
 import '../pages/youtube_stats_page.dart';
 import '../pages/virtual_pet_page.dart';
@@ -171,10 +168,8 @@ import '../pages/travel_itinerary_page.dart';
 import '../pages/virtual_whiteboard_page.dart';
 import '../pages/recipe_meal_planner_page.dart';
 import '../pages/language_learning_page.dart';
-import '../pages/habit_gamification_page.dart';
 import '../pages/code_playground_page.dart';
 import '../pages/real_estate_tracker_page.dart';
-import '../pages/goal_tracker_page.dart';
 import '../pages/bookmark_sync_page.dart';
 import '../pages/jibun_api_page.dart';
 import '../pages/ui_design_status_page.dart';
@@ -409,7 +404,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
       icon: Icons.repeat,
       color: const Color(0xFF4338CA),
       keywords: const <String>['習慣', 'ルーティン', 'daily'],
-      onOpen: (context) => _pushPage(context, const DailyHabitsPage()),
+      onOpen: (context) => _pushPage(context, const HabitCenterPage()),
     ),
     HomeToolEntry(
       id: 'abstinence-guard',
@@ -591,16 +586,6 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF607D8B),
       keywords: const <String>['行動', '発言', '振り返り'],
       onOpen: (context) => _pushPage(context, const BehaviorLogPage()),
-    ),
-    HomeToolEntry(
-      id: 'wip-limit',
-      sectionId: 'personal',
-      title: '消化してから次を食え',
-      subtitle: 'WIP 制限で詰め込みすぎを防ぐ',
-      icon: Icons.restaurant_menu,
-      color: const Color(0xFF795548),
-      keywords: const <String>['WIP', '制限', '消化'],
-      onOpen: (context) => _pushPage(context, const WipLimitPage()),
     ),
     HomeToolEntry(
       id: 'digital-danshari',
@@ -1105,7 +1090,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
       icon: Icons.flag_circle_outlined,
       color: const Color(0xFF3D5AFE),
       keywords: const <String>['人生目標', 'goal', 'vision'],
-      onOpen: (context) => _pushPage(context, const LifeGoalsPage()),
+      onOpen: (context) => _pushPage(context, const GoalCenterPage()),
     ),
     HomeToolEntry(
       id: 'career-monthly-kpi',
@@ -2268,33 +2253,6 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const ViralAdGeneratorPage()),
     ),
     HomeToolEntry(
-      id: 'video-ad-generator',
-      sectionId: 'growth',
-      title: '動画広告ジェネレーター',
-      subtitle: '動画広告の自動生成・テンプレート管理',
-      icon: Icons.videocam_outlined,
-      color: const Color(0xFFBF360C),
-      keywords: const <String>['動画', '広告', 'ビデオ', 'video ad', 'ジェネレーター'],
-      onOpen: (context) => _pushPage(context, const VideoAdGeneratorPage()),
-    ),
-    HomeToolEntry(
-      id: 'viral-video-generator',
-      sectionId: 'growth',
-      title: 'バイラル動画ジェネレーター',
-      subtitle: 'SNS拡散用ショート動画の自動生成',
-      icon: Icons.slow_motion_video_outlined,
-      color: const Color(0xFFE65100),
-      keywords: const <String>[
-        'バイラル',
-        '動画',
-        'ショート',
-        'TikTok',
-        'Reels',
-        'viral video',
-      ],
-      onOpen: (context) => _pushPage(context, const ViralVideoGeneratorPage()),
-    ),
-    HomeToolEntry(
       id: 'youtube-stats',
       sectionId: 'growth',
       title: 'YouTube 統計管理',
@@ -2527,28 +2485,6 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const LanguageLearningPage()),
     ),
     HomeToolEntry(
-      id: 'habit-gamification',
-      sectionId: 'personal',
-      title: '習慣ゲーミフィケーション',
-      subtitle: 'Duolingo/Forest/Habitica競合。デイリーチャレンジ・XP・バッジ・ストリーク',
-      icon: Icons.local_fire_department,
-      color: const Color(0xFFFF6F00),
-      keywords: const <String>[
-        'ゲーミフィケーション',
-        '習慣',
-        'ストリーク',
-        'バッジ',
-        'XP',
-        'チャレンジ',
-        'ランキング',
-        'Duolingo',
-        'Forest',
-        'Habitica',
-        'レベル',
-      ],
-      onOpen: (context) => _pushPage(context, const HabitGamificationPage()),
-    ),
-    HomeToolEntry(
       id: 'code-playground',
       sectionId: 'knowledge',
       title: 'コードプレイグラウンド',
@@ -2590,30 +2526,6 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'MoneyForward',
       ],
       onOpen: (context) => _pushPage(context, const RealEstateTrackerPage()),
-    ),
-    HomeToolEntry(
-      id: 'goal-tracker',
-      sectionId: 'personal',
-      title: '目標管理',
-      subtitle: 'Notion/Liven競合。短期/中期/長期目標・マイルストーン管理・進捗追跡・達成記録',
-      icon: Icons.flag,
-      color: const Color(0xFF7B1FA2),
-      keywords: const <String>[
-        '目標',
-        'ゴール',
-        'マイルストーン',
-        '進捗',
-        '達成',
-        'OKR',
-        '短期',
-        '中期',
-        '長期',
-        'Notion',
-        'Liven',
-        'KPI',
-        '目標管理',
-      ],
-      onOpen: (context) => _pushPage(context, const GoalTrackerPage()),
     ),
     HomeToolEntry(
       id: 'bookmark-sync',

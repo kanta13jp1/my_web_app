@@ -32,6 +32,10 @@ void main() {
         featureLabelForRoute('/referral-program?from=legacy'),
         '友達招待・紹介プログラム',
       );
+      expect(featureLabelForRoute('/video-ad-generator'), 'バイラル広告ジェネレーター');
+      expect(featureLabelForRoute('/wip-limit'), '消化してから次へ');
+      expect(featureLabelForRoute('/habit-gamification'), '毎日の習慣');
+      expect(featureLabelForRoute('/goal-tracker'), '人生目標管理');
     });
   });
 
@@ -45,6 +49,17 @@ void main() {
         '/social-scheduler',
       );
       expect(canonicalFeatureRoutePath('/travel-itinerary'), '/travel-planner');
+      expect(
+        canonicalFeatureRoutePath('/video-ad-generator'),
+        '/viral-ad-generator',
+      );
+      expect(
+        canonicalFeatureRoutePath('/viral-video-generator'),
+        '/viral-ad-generator',
+      );
+      expect(canonicalFeatureRoutePath('/wip-limit'), '/digest-queue');
+      expect(canonicalFeatureRoutePath('/habit-gamification'), '/daily-habits');
+      expect(canonicalFeatureRoutePath('/goal-tracker'), '/life-goals');
     });
 
     test('正規 route と未知 route は変更しない', () {
