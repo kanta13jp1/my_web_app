@@ -5,10 +5,23 @@
 
 - 商品ID: `jibun-spreadsheet-win64`
 - 版: `1.0.0`
-- 価格案: **税込980円・買い切り**（公開前の人手承認で確定）
+- 価格: **税込980円・買い切り**（2026-08-23承認済み）
 - 配信: 非公開Supabase Storage + 5分間の署名付きURL
 - 対応OS: Windows 10 / 11（64bit）
 - ビルド対象: `lib/main_spreadsheet_windows.dart`
+
+## 承認済みの販売条件
+
+2026-08-23に、権限者から次の条件が承認された。
+
+- 税込980円の買い切り商品とする
+- 本アプリの商用配布権限を確認済みとする
+- コード署名後のバイナリだけを販売候補とする
+- `codex/paid-spreadsheet-windows-20260822`のpushとPR作成を許可する
+
+この承認には、Stripe本番Price作成、Storageアップロード、
+DB/Edge Function/Webの本番反映、`is_active=true`、または販売開始は含まない。
+これらは署名済み候補の検証後に、対象とロールバックを示して改めて承認を得る。
 
 ## 販売・保存・改善ループ
 
@@ -64,7 +77,8 @@ product-downloads/jibun-spreadsheet-win64/v1.0.0/JibunSpreadsheet-v1.0.0-win64.z
 ## 公開直前のハードゲート
 
 1. Windows 10 / 11実機で起動、セル編集、保存、再起動復元、CSV入出力を確認
-2. コード署名の有無とSmartScreen表示を商品ページへ明記
+2. 販売用EXEが信頼できるコード署名証明書で署名済みであることと、
+   署名と改ざん防止の検証結果を保存したことを確認
 3. ZIPの実測容量・SHA-256がmanifest、Storage、DBで一致
 4. Stripe本番Priceが税込表示価格・JPY・一回払いと一致
 5. 未購入者の`shop-download`が403、購入者だけが5分URLを取得
@@ -76,4 +90,3 @@ product-downloads/jibun-spreadsheet-win64/v1.0.0/JibunSpreadsheet-v1.0.0-win64.z
 ロールバックは商品を削除せず、最初に`shop_products.is_active = false`として
 新規販売を止めます。購入記録、購入済み権利、配信ZIPは監査と再ダウンロードのため
 保持します。
-
