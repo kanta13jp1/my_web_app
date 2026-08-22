@@ -110,7 +110,7 @@ import '../pages/public_guitar_gallery_page.dart';
 import '../pages/music_collaboration_page.dart';
 import '../ui/features/beatles_guitar_tabs/beatles_guitar_tabs_feature.dart';
 import '../pages/focus_timer_page.dart';
-import '../pages/ai_writing_assistant_page.dart';
+import '../pages/writing_center_page.dart';
 import '../pages/wiki_database_page.dart';
 import '../pages/time_tracker_page.dart';
 import '../pages/voice_memo_transcriber_page.dart';
@@ -172,7 +172,6 @@ import '../pages/real_estate_tracker_page.dart';
 import '../pages/bookmark_sync_page.dart';
 import '../pages/jibun_api_page.dart';
 import '../pages/ui_design_status_page.dart';
-import '../pages/ai_summarizer_page.dart';
 import '../pages/revenue_forecaster_page.dart';
 import '../pages/weather_widget_page.dart';
 import '../pages/personal_dashboard_page.dart';
@@ -1547,8 +1546,8 @@ List<HomeToolEntry> buildHomeToolCatalog({
     HomeToolEntry(
       id: 'ai-writing-assistant',
       sectionId: 'growth',
-      title: 'AI文章アシスタント',
-      subtitle: 'Grammarly/Notion AI競合。文章改善・要約・翻訳・タイトル提案',
+      title: 'AI文章・要約アシスタント',
+      subtitle: '文章作成・改善・翻訳と、履歴付きAI要約を1か所で使う',
       icon: Icons.auto_fix_high_outlined,
       color: const Color(0xFF8B5CF6),
       keywords: const <String>[
@@ -1557,11 +1556,20 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'Grammarly',
         '校正',
         '要約',
+        'サマリー',
+        '議事録',
+        '要点',
+        '短縮',
+        'まとめ',
+        'テキスト',
+        '記事',
+        'ノート',
+        '自動',
         '翻訳',
         'ライティング',
         'Notion AI',
       ],
-      onOpen: (context) => _pushPage(context, const AiWritingAssistantPage()),
+      onOpen: (context) => _pushPage(context, const WritingCenterPage()),
     ),
     HomeToolEntry(
       id: 'wiki-database',
@@ -2567,28 +2575,6 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'トークン',
       ],
       onOpen: (context) => _pushPage(context, const JibunApiPage()),
-    ),
-    HomeToolEntry(
-      id: 'ai-summarizer',
-      sectionId: 'knowledge',
-      title: 'AI要約',
-      subtitle: 'AIが長文テキストを自動要約。議事録・記事・メモを素早く整理',
-      icon: Icons.auto_awesome,
-      color: const Color(0xFF6D28D9),
-      keywords: const <String>[
-        'AI',
-        '要約',
-        'サマリー',
-        '議事録',
-        '要点',
-        '短縮',
-        'まとめ',
-        'テキスト',
-        '記事',
-        'ノート',
-        '自動',
-      ],
-      onOpen: (context) => _pushPage(context, const AiSummarizerPage()),
     ),
     HomeToolEntry(
       id: 'revenue-forecaster',

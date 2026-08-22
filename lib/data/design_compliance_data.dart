@@ -379,7 +379,7 @@ const List<PageComplianceRecord> kDesignComplianceData = [
   ),
   PageComplianceRecord(
     route: '/ai-writing-assistant',
-    name: 'AI文章支援',
+    name: 'AI文章・要約アシスタント',
     category: DesignCategory.ai,
     compliance: [true, true, false, false, true, true, false],
     auditDate: '2026-04-03',
