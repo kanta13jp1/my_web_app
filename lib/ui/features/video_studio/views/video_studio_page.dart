@@ -174,13 +174,45 @@ class _Hero extends StatelessWidget {
   }
 }
 
-class _Composer extends StatelessWidget {
+class _Composer extends StatefulWidget {
   const _Composer({required this.viewModel});
 
   final VideoStudioViewModel viewModel;
 
   @override
+  State<_Composer> createState() => _ComposerState();
+}
+
+class _ComposerState extends State<_Composer> {
+  late final TextEditingController _promptController;
+
+  @override
+  void initState() {
+    super.initState();
+    _promptController = TextEditingController(text: widget.viewModel.prompt);
+  }
+
+  @override
+  void didUpdateWidget(covariant _Composer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final prompt = widget.viewModel.prompt;
+    if (_promptController.text != prompt) {
+      _promptController.value = TextEditingValue(
+        text: prompt,
+        selection: TextSelection.collapsed(offset: prompt.length),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _promptController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final viewModel = widget.viewModel;
     final model = viewModel.selectedModel!;
     return _Panel(
       title: '動画をつくる',
@@ -188,9 +220,45 @@ class _Composer extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(model.description, style: _secondaryStyle),
+          if (viewModel.hasAppliedImprovement) ...[
+            const SizedBox(height: DesignTokens.space12),
+            Container(
+              key: const Key('video-improvement-applied'),
+              padding: const EdgeInsets.all(DesignTokens.space12),
+              decoration: BoxDecoration(
+                color: DesignTokens.indigo.withValues(alpha: .18),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+                border: Border.all(
+                  color: DesignTokens.indigoLight.withValues(alpha: .7),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.loop, color: DesignTokens.indigoLight),
+                  const SizedBox(width: DesignTokens.space8),
+                  Expanded(
+                    child: Text(
+                      'レビュー「${viewModel.appliedImprovementTitle ?? '前回動画'}」の改善案を反映中',
+                      style: const TextStyle(color: DesignTokens.textOnDark),
+                    ),
+                  ),
+                  IconButton(
+                    key: const Key('video-improvement-clear'),
+                    tooltip: '改善履歴の関連付けを外す',
+                    onPressed: viewModel.clearAppliedImprovement,
+                    icon: const Icon(
+                      Icons.close,
+                      color: DesignTokens.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: DesignTokens.space16),
           TextField(
             key: const Key('video-studio-prompt'),
+            controller: _promptController,
             minLines: 5,
             maxLines: 9,
             maxLength: 1000,
@@ -513,6 +581,31 @@ class _JobCard extends StatelessWidget {
                     : '動画を開く・保存',
               ),
             ),
+            if (job.artifact != null) ...[
+              const SizedBox(height: DesignTokens.space8),
+              _ArtifactStatus(artifact: job.artifact!),
+              const SizedBox(height: DesignTokens.space8),
+              OutlinedButton.icon(
+                key: Key('video-review-${job.id}'),
+                onPressed: viewModel.reviewingArtifactId == null
+                    ? () => unawaited(_openReview(context))
+                    : null,
+                icon: viewModel.reviewingArtifactId == job.artifact!.id
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.rate_review_outlined),
+                label: Text(
+                  job.artifact!.latestReview == null
+                      ? 'レビューして次回を改善'
+                      : 'レビューを追加して改善',
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: DesignTokens.space8),
+              const Text('素材台帳への保存を確認中です。', style: _secondaryStyle),
+            ],
           ],
         ],
       ),
@@ -533,10 +626,354 @@ class _JobCard extends StatelessWidget {
       mode: LaunchMode.externalApplication,
     );
     if (!opened && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('完成動画を開けませんでした。')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('完成動画を開けませんでした。')));
     }
+  }
+
+  Future<void> _openReview(BuildContext context) async {
+    final artifact = job.artifact;
+    if (artifact == null) return;
+    final review = await showDialog<VideoArtifactReviewDraft>(
+      context: context,
+      builder: (context) =>
+          _VideoArtifactReviewDialog(job: job, artifact: artifact),
+    );
+    if (review == null || !context.mounted) return;
+    await viewModel.reviewArtifact(
+      job,
+      review,
+      applyToNextGeneration: review.decision == 'improve',
+    );
+  }
+}
+
+class _ArtifactStatus extends StatelessWidget {
+  const _ArtifactStatus({required this.artifact});
+
+  final VideoArtifact artifact;
+
+  @override
+  Widget build(BuildContext context) {
+    final review = artifact.latestReview;
+    return Wrap(
+      key: Key('video-artifact-${artifact.id}'),
+      spacing: DesignTokens.space8,
+      runSpacing: DesignTokens.space8,
+      children: [
+        const _ArtifactBadge(
+          icon: Icons.inventory_2_outlined,
+          label: '素材として保存済み',
+          color: DesignTokens.green,
+        ),
+        if (artifact.isSaleCandidate)
+          const _ArtifactBadge(
+            icon: Icons.storefront_outlined,
+            label: '販売候補',
+            color: DesignTokens.orange,
+          ),
+        if (artifact.needsRightsReview)
+          const _ArtifactBadge(
+            icon: Icons.fact_check_outlined,
+            label: '権利・プライバシー確認待ち',
+            color: DesignTokens.amber,
+          ),
+        if (review != null)
+          _ArtifactBadge(
+            icon: Icons.star_outline,
+            label: 'レビュー${review.iteration}回・品質${review.qualityScore}/5',
+            color: DesignTokens.indigoLight,
+          ),
+      ],
+    );
+  }
+}
+
+class _ArtifactBadge extends StatelessWidget {
+  const _ArtifactBadge({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: .13),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VideoArtifactReviewDialog extends StatefulWidget {
+  const _VideoArtifactReviewDialog({required this.job, required this.artifact});
+
+  final VideoGenerationJob job;
+  final VideoArtifact artifact;
+
+  @override
+  State<_VideoArtifactReviewDialog> createState() =>
+      _VideoArtifactReviewDialogState();
+}
+
+class _VideoArtifactReviewDialogState
+    extends State<_VideoArtifactReviewDialog> {
+  late int _quality;
+  late int _alignment;
+  late int _motion;
+  late int _commercial;
+  late String _decision;
+  late bool _rightsCleared;
+  late bool _privacyCleared;
+  late final TextEditingController _strengths;
+  late final TextEditingController _improvement;
+  late final TextEditingController _suggestedPrompt;
+  late final TextEditingController _notes;
+
+  @override
+  void initState() {
+    super.initState();
+    final previous = widget.artifact.latestReview;
+    _quality = previous?.qualityScore ?? 3;
+    _alignment = previous?.promptAlignmentScore ?? 3;
+    _motion = previous?.motionQualityScore ?? 3;
+    _commercial = previous?.commercialValueScore ?? 3;
+    _decision = previous?.decision ?? 'improve';
+    _rightsCleared = widget.artifact.rightsStatus == 'allowed';
+    _privacyCleared = widget.artifact.privacyStatus == 'cleared';
+    _strengths = TextEditingController(text: previous?.strengths ?? '');
+    _improvement = TextEditingController(
+      text: previous?.improvementRequest ?? '',
+    );
+    _suggestedPrompt = TextEditingController(
+      text: previous?.suggestedPrompt ?? widget.job.prompt,
+    );
+    _notes = TextEditingController(text: previous?.notes ?? '');
+  }
+
+  @override
+  void dispose() {
+    _strengths.dispose();
+    _improvement.dispose();
+    _suggestedPrompt.dispose();
+    _notes.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      key: const Key('video-artifact-review-dialog'),
+      backgroundColor: DesignTokens.surface1,
+      title: const Text(
+        '動画レビューと次回改善',
+        style: TextStyle(color: DesignTokens.textPrimary),
+      ),
+      content: SizedBox(
+        width: 620,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                '原本は変更せず保存されます。評価と改善案は履歴として追加され、改善判定では次回プロンプトへ反映されます。',
+                style: _secondaryStyle,
+              ),
+              const SizedBox(height: DesignTokens.space12),
+              Wrap(
+                spacing: DesignTokens.space12,
+                runSpacing: DesignTokens.space12,
+                children: [
+                  _ReviewScoreField(
+                    label: '映像品質',
+                    value: _quality,
+                    onChanged: (value) => setState(() => _quality = value),
+                  ),
+                  _ReviewScoreField(
+                    label: '指示との一致',
+                    value: _alignment,
+                    onChanged: (value) => setState(() => _alignment = value),
+                  ),
+                  _ReviewScoreField(
+                    label: '動きの自然さ',
+                    value: _motion,
+                    onChanged: (value) => setState(() => _motion = value),
+                  ),
+                  _ReviewScoreField(
+                    label: '販売価値',
+                    value: _commercial,
+                    onChanged: (value) => setState(() => _commercial = value),
+                  ),
+                ],
+              ),
+              const SizedBox(height: DesignTokens.space12),
+              DropdownButtonFormField<String>(
+                key: const Key('video-review-decision'),
+                initialValue: _decision,
+                dropdownColor: DesignTokens.surface2,
+                decoration: _inputDecoration('判定'),
+                style: const TextStyle(color: DesignTokens.textPrimary),
+                items: const [
+                  DropdownMenuItem(value: 'keep', child: Text('採用・保持')),
+                  DropdownMenuItem(value: 'improve', child: Text('改善して再生成')),
+                  DropdownMenuItem(value: 'reject', child: Text('不採用')),
+                ],
+                onChanged: (value) =>
+                    setState(() => _decision = value ?? 'improve'),
+              ),
+              const SizedBox(height: DesignTokens.space12),
+              TextField(
+                controller: _strengths,
+                maxLength: 1000,
+                minLines: 2,
+                maxLines: 4,
+                style: const TextStyle(color: DesignTokens.textPrimary),
+                decoration: _inputDecoration('良かった点'),
+              ),
+              TextField(
+                key: const Key('video-review-improvement'),
+                controller: _improvement,
+                maxLength: 1500,
+                minLines: 2,
+                maxLines: 4,
+                style: const TextStyle(color: DesignTokens.textPrimary),
+                decoration: _inputDecoration('改善したい点'),
+              ),
+              TextField(
+                key: const Key('video-review-suggested-prompt'),
+                controller: _suggestedPrompt,
+                onChanged: (_) => setState(() {}),
+                maxLength: 1000,
+                minLines: 3,
+                maxLines: 6,
+                style: const TextStyle(color: DesignTokens.textPrimary),
+                decoration: _inputDecoration('次回生成に使う改善版プロンプト'),
+              ),
+              TextField(
+                controller: _notes,
+                maxLength: 2000,
+                minLines: 2,
+                maxLines: 4,
+                style: const TextStyle(color: DesignTokens.textPrimary),
+                decoration: _inputDecoration('販売・編集メモ（任意）'),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _rightsCleared,
+                activeColor: DesignTokens.orange,
+                onChanged: (value) =>
+                    setState(() => _rightsCleared = value ?? false),
+                title: const Text(
+                  '販売に必要な権利・許諾を確認しました',
+                  style: TextStyle(color: DesignTokens.textOnDark),
+                ),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _privacyCleared,
+                activeColor: DesignTokens.orange,
+                onChanged: (value) =>
+                    setState(() => _privacyCleared = value ?? false),
+                title: const Text(
+                  '人物・個人情報・プライバシーを確認しました',
+                  style: TextStyle(color: DesignTokens.textOnDark),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('キャンセル'),
+        ),
+        FilledButton.icon(
+          key: const Key('video-review-save'),
+          onPressed: _suggestedPrompt.text.trim().length >= 3 ? _save : null,
+          icon: const Icon(Icons.save_outlined),
+          label: Text(_decision == 'improve' ? '保存して次回へ反映' : 'レビューを保存'),
+        ),
+      ],
+    );
+  }
+
+  void _save() {
+    Navigator.of(context).pop(
+      VideoArtifactReviewDraft(
+        qualityScore: _quality,
+        promptAlignmentScore: _alignment,
+        motionQualityScore: _motion,
+        commercialValueScore: _commercial,
+        decision: _decision,
+        strengths: _strengths.text.trim(),
+        improvementRequest: _improvement.text.trim(),
+        suggestedPrompt: _suggestedPrompt.text.trim(),
+        notes: _notes.text.trim(),
+        rightsStatus: _rightsCleared ? 'allowed' : 'review_required',
+        privacyStatus: _privacyCleared ? 'cleared' : 'review_required',
+      ),
+    );
+  }
+}
+
+class _ReviewScoreField extends StatelessWidget {
+  const _ReviewScoreField({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 145,
+      child: DropdownButtonFormField<int>(
+        isExpanded: true,
+        initialValue: value,
+        dropdownColor: DesignTokens.surface2,
+        decoration: _inputDecoration(label),
+        style: const TextStyle(color: DesignTokens.textPrimary),
+        items: List.generate(
+          5,
+          (index) => DropdownMenuItem(
+            value: index + 1,
+            child: Text('${index + 1} / 5'),
+          ),
+        ),
+        onChanged: (next) {
+          if (next != null) onChanged(next);
+        },
+      ),
+    );
   }
 }
 

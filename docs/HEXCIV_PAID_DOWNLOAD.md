@@ -77,37 +77,68 @@ checkout session に `payment_status` が無く、`checkoutPaymentDecision()` �
 > 「旧形はもう来ないから」と fallback を消すと、既定バージョンが古いままの
 > `stripeGet()` 経路が先に壊れる。消す前に Workbench で既定バージョンを確認すること。
 
-## 公開までに残っている手順
+## 本番稼働状況 (2026-08-22確認)
 
-以下は**こちら側では実行できない**、または本人の判断が要るもの。
+HexCiv の有料ダウンロード販売は既に本番で稼働している。
 
-### 1. Stripe で Price を作る
+| 項目 | 確認結果 |
+|---|---|
+| 商品ページ | `https://my-web-app-b67f4.web.app/shop/hexciv` で表示 |
+| 商品 | `hexciv-win64` / HexCiv (Windows 版) |
+| 価格 | **¥500 税込・買い切り** |
+| Stripe | Price ID 設定済み。購入ボタンはログイン後に Checkout を開始 |
+| 配信 | 非公開 `product-downloads` バケットから購入者へ5分間の署名URLを発行 |
+| 商品状態 | `is_active = true` |
+| Edge Function | `shop-checkout` / `shop-download` / `stripe-webhook` は ACTIVE |
+| 認証境界 | 未認証の購入・取得は401、署名なし webhook は400 |
 
-Stripe ダッシュボードで HexCiv 用の商品と Price (¥500 / 一回払い) を作成し、
-その Price ID を DB に設定する。
+現在の配布ファイルは次の内容でカタログに登録されている。
 
-```sql
-update public.shop_products
-set stripe_price_id = 'price_xxxxxxxxxxxx'
-where id = 'hexciv-win64';
+| フィールド | 現在値 |
+|---|---|
+| `storage_path` | `hexciv/HexCiv-v1.0-win64.zip` |
+| `version` | `1.0` |
+| `file_size_bytes` | `37,572,177` |
+| `sha256` | `cc0e5caae732fa123d26ed62c1827a923c4ccd777823190ed714ba178e97ed93` |
+
+## 最新版へ安全に切り替える手順
+
+配信中オブジェクトを直接上書き・削除しない。新しいZIPを一意なパスへ置き、
+ハッシュと容量を確認してから商品行の参照先だけを切り替える。
+
+### 1. 候補を検証する
+
+HexCiv 側の `sales_candidate.json` と manifest を正本として、ZIPの SHA-256・容量、
+Windows起動、スモークテスト、同梱ライセンスを確認する。
+
+### 2. 一意なパスへアップロードする
+
+同名ファイルの上書きはせず、候補IDを含むパスを使う。例:
+
+```text
+product-downloads/hexciv/releases/stage4m-20260814/HexCiv-v1.0-win64.zip
 ```
 
-> 既存の `STRIPE_SECRET_KEY` がテストモードか本番モードかを必ず確認すること。
-> テスト鍵のまま公開すると、購入は成立するのに入金されない。
+アップロード後にリモート側の容量と SHA-256 が候補 manifest と一致するまで
+カタログを変更しない。
 
-### 2. 配信ファイルを置く
+### 3. 商品行を一度に切り替える
 
-```bash
-pwsh -File scripts/pack_release.ps1     # HexCiv リポジトリ側で実行
-```
+トランザクション内で `storage_path` / `version` / `sha256` /
+`file_size_bytes` を同時更新する。`price_jpy`、`stripe_price_id`、`is_active` は
+変更しない。
 
-生成された `dist/HexCiv-v1.0-win64.zip` を `product-downloads` バケットの
-`hexciv/HexCiv-v1.0-win64.zip` へ配置する。
+### 4. 購入済みテストアカウントで確認する
 
-manifest の `sha256` と `sizeBytes` が `shop_products` の値と**一致しているか**を
-確認すること。ズレていたら、それは配信予定と違うファイルを置いている。
+新規の実課金は行わず、既存の購入済みテストアカウントで署名URLを発行し、
+ダウンロードしたZIPの容量と SHA-256 を照合する。
 
-### 3. 特定商取引法に基づく表記 (対応済み・要確認)
+### 5. ロールバック可能なまま保持する
+
+検証期間中は旧オブジェクトを削除しない。不具合時は商品行の4フィールドを
+上表の現在値へ戻すだけで旧版へ復旧できる。
+
+## 特定商取引法に基づく表記 (対応済み・要確認)
 
 **このページは既に存在する** (`/tokusho` → `assets/legal/tokushoho.md`)。事業者名・連絡先・
 支払方法・返品の方針は記載済みで、住所と電話番号は「請求があれば遅滞なく開示」という
@@ -126,17 +157,6 @@ manifest の `sha256` と `sizeBytes` が `shop_products` の値と**一致し�
 > 記載内容が実態と合っているか、返品不可の方針でよいかは**本人の確認が必要**。
 > 税務 (消費税の課税事業者かどうか、インボイス登録の要否) も売上規模により関係する。
 > ここは税理士に確認するのが確実。
-
-### 4. 販売を開始する
-
-上の3つが揃ってから初めて有効化する。
-
-```sql
-update public.shop_products set is_active = true where id = 'hexciv-win64';
-```
-
-`is_active` を既定 false にしてあるのは、**「買えたのに落とせない」事故を防ぐため**。
-ファイルも価格も揃っていない状態で購入導線が出るのが最悪の順序になる。
 
 ## 運用上の注意
 
@@ -159,7 +179,7 @@ update public.shop_products set is_active = true where id = 'hexciv-win64';
 
 ## まだ無いもの
 
-- 購入・ダウンロードの UI (商品ページ / マイダウンロードページ)
 - 部分返金の扱い (現状は権利を残すだけで、記録もしていない)
 - 領収書の発行 (Stripe の領収書メールで代替可能かは要判断)
 - Windows 以外のビルド
+- Windows実行ファイルのコード署名。SmartScreen警告を減らすには別途証明書が必要

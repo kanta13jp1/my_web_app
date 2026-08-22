@@ -83,6 +83,44 @@ test.describe('LP first-user acquisition', () => {
     await expect(trialAction).toBeVisible();
   });
 
+  test('trial action reveals the generated result without jumping to the save form', async ({
+    page,
+  }) => {
+    await openLanding(page, treatmentPath);
+
+    const trialInput = page.getByRole('textbox', { name: /登録なしで試す/ });
+    const trialAction = page.getByRole('button', {
+      name: '今やる1件を試す',
+      exact: true,
+    });
+    const trialActionBox = await trialAction.boundingBox();
+    expect(trialActionBox).not.toBeNull();
+    await page.mouse.click(
+      trialActionBox!.x + trialActionBox!.width / 2,
+      trialActionBox!.y - 20,
+    );
+    await page.keyboard.insertText('今日の最優先タスクを1件に絞りたい');
+    await trialAction.click();
+    await completeGuidedTrial(page);
+
+    const trialResultCard = page.getByRole('group', {
+      name: /登録なしで試す:.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
+    });
+    await expect(trialResultCard).toBeVisible();
+    await expect(trialAction).toBeVisible();
+    const triggerBoxAfterResult = await trialAction.boundingBox();
+    const viewport = page.viewportSize();
+    expect(triggerBoxAfterResult).not.toBeNull();
+    expect(viewport).not.toBeNull();
+    expect(triggerBoxAfterResult!.y).toBeGreaterThanOrEqual(0);
+    expect(triggerBoxAfterResult!.y + triggerBoxAfterResult!.height).toBeLessThan(
+      viewport!.height * 0.7,
+    );
+    await expect(
+      page.getByRole('textbox', { name: 'メールアドレス', exact: true }),
+    ).toHaveCount(0);
+  });
+
   test('H04 treatment reveals Google save and Magic Link fallback after value', async ({
     page,
   }) => {
@@ -95,12 +133,13 @@ test.describe('LP first-user acquisition', () => {
       })
       .click();
 
-    await expect(
-      page.getByRole('group', { name: /提案された1件/ }),
-    ).toBeVisible();
+    const trialResultCard = page.getByRole('group', {
+      name: /登録なしで試す:.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
+    });
+    await expect(trialResultCard).toBeVisible();
     await expect(
       page.getByRole('button', {
-        name: 'Googleで無料登録して保存',
+        name: 'Googleで無料登録して引き継ぐ',
         exact: true,
       }),
     ).toBeVisible();
@@ -109,15 +148,13 @@ test.describe('LP first-user acquisition', () => {
     ).toBeVisible();
     await expect(
       page.getByRole('button', {
-        name: '無料で保存して始める',
+        name: '無料登録して提案を引き継ぐ',
         exact: true,
       }),
     ).toBeVisible();
-    await expect(
-      page.getByRole('group', {
-        name: /パスワード・カード入力は不要です。/,
-      }),
-    ).toBeVisible();
+    await expect(trialResultCard).toHaveAccessibleName(
+      /パスワード・カード入力はありません。/,
+    );
   });
 
   test('Google callback failure exposes safe retry and Magic Link recovery', async ({
@@ -235,6 +272,36 @@ test.describe('LP first-user acquisition', () => {
     await expect(googleAction).toBeVisible();
   });
 });
+
+async function completeGuidedTrial(page: Page) {
+  for (let step = 0; step < 5; step += 1) {
+    await expect(
+      page.getByRole('group', {
+        name: new RegExp(`登録なしで試す:.*質問 ${step + 1} / 5`),
+      }),
+    ).toBeVisible();
+    const quickAnswer = page.getByRole('button', { name: /迷ったら/ });
+    await expect(quickAnswer).toBeVisible();
+    await quickAnswer.click();
+    const next = page.getByRole('button', {
+      name: step === 4 ? '送る内容を確認' : '次の質問へ',
+      exact: true,
+    });
+    await expect(next).toBeEnabled();
+    await next.click();
+  }
+  await expect(
+    page.getByRole('group', {
+      name: /登録なしで試す:.*AIに送る内容を確認/,
+    }),
+  ).toBeVisible();
+  const submit = page.getByRole('button', {
+    name: 'この内容でAIに提案してもらう',
+    exact: true,
+  });
+  await expect(submit).toBeVisible();
+  await submit.click();
+}
 
 async function openLanding(page: Page, path: string) {
   await page.route('**/rest/v1/app_analytics*', async (route) => {

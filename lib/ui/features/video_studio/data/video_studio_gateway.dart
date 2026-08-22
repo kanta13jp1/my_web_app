@@ -36,9 +36,16 @@ abstract class VideoStudioGateway {
     required int durationSeconds,
     required String aspectRatio,
     required String resolution,
+    String? parentArtifactId,
+    String? appliedReviewId,
   });
 
   Future<VideoGenerationJob> refreshJob(String jobId);
+
+  Future<VideoArtifactReviewResult> reviewArtifact({
+    required String artifactId,
+    required VideoArtifactReviewDraft review,
+  });
 
   Future<Uri> createCreditCheckout({
     required String packKey,
@@ -80,6 +87,8 @@ class SupabaseVideoStudioGateway implements VideoStudioGateway {
     required int durationSeconds,
     required String aspectRatio,
     required String resolution,
+    String? parentArtifactId,
+    String? appliedReviewId,
   }) async {
     final data = await _invokeVideo({
       'action': 'create',
@@ -91,6 +100,8 @@ class SupabaseVideoStudioGateway implements VideoStudioGateway {
       'resolution': resolution,
       'rights_confirmed': true,
       'adult_confirmed': true,
+      if (parentArtifactId != null) 'parent_artifact_id': parentArtifactId,
+      if (appliedReviewId != null) 'applied_review_id': appliedReviewId,
     });
     return VideoCreateResult(
       job: VideoGenerationJob.fromJson(videoStudioMap(data['job'])),
@@ -102,6 +113,32 @@ class SupabaseVideoStudioGateway implements VideoStudioGateway {
   Future<VideoGenerationJob> refreshJob(String jobId) async {
     final data = await _invokeVideo({'action': 'status', 'job_id': jobId});
     return VideoGenerationJob.fromJson(videoStudioMap(data['job']));
+  }
+
+  @override
+  Future<VideoArtifactReviewResult> reviewArtifact({
+    required String artifactId,
+    required VideoArtifactReviewDraft review,
+  }) async {
+    final data = await _invokeVideo({
+      'action': 'review_artifact',
+      'artifact_id': artifactId,
+      'quality_score': review.qualityScore,
+      'prompt_alignment_score': review.promptAlignmentScore,
+      'motion_quality_score': review.motionQualityScore,
+      'commercial_value_score': review.commercialValueScore,
+      'decision': review.decision,
+      'strengths': review.strengths,
+      'improvement_request': review.improvementRequest,
+      'suggested_prompt': review.suggestedPrompt,
+      'notes': review.notes,
+      'rights_status': review.rightsStatus,
+      'privacy_status': review.privacyStatus,
+    });
+    return VideoArtifactReviewResult(
+      artifact: VideoArtifact.fromJson(videoStudioMap(data['artifact'])),
+      review: VideoArtifactReview.fromJson(videoStudioMap(data['review'])),
+    );
   }
 
   @override

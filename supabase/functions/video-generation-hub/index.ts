@@ -6,6 +6,11 @@ import {
   validateVideoRequest,
   VIDEO_MODELS,
 } from "./catalog.ts";
+import {
+  validateArtifactReview,
+  validateImprovementLink,
+} from "./artifact_review.ts";
+import type { VideoImprovementLink } from "./artifact_review.ts";
 import { loadWorkerWakeConfiguration, wakeVideoWorker } from "./worker_wake.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -39,7 +44,47 @@ type JobRow = {
   created_at: string;
   updated_at: string;
   completed_at: string | null;
+  parent_artifact_id: string | null;
+  applied_review_id: string | null;
 };
+
+type ArtifactRow = {
+  id: string;
+  user_id: string;
+  job_id: string;
+  parent_artifact_id: string | null;
+  title: string;
+  file_size_bytes: number | null;
+  sha256: string | null;
+  lifecycle_stage: string;
+  rights_status: string;
+  privacy_status: string;
+  commerce_status: string;
+  intended_for_sale: boolean;
+  shop_product_id: string | null;
+  iteration: number;
+  latest_review_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type ReviewRow = {
+  id: string;
+  artifact_id: string;
+  iteration: number;
+  quality_score: number;
+  prompt_alignment_score: number;
+  motion_quality_score: number;
+  commercial_value_score: number;
+  decision: string;
+  strengths: string;
+  improvement_request: string;
+  suggested_prompt: string;
+  notes: string;
+  created_at: string;
+};
+
+type ArtifactWithReview = ArtifactRow & { latest_review: ReviewRow | null };
 
 const JOB_SELECT = [
   "id",
@@ -58,6 +103,44 @@ const JOB_SELECT = [
   "created_at",
   "updated_at",
   "completed_at",
+  "parent_artifact_id",
+  "applied_review_id",
+].join(",");
+
+const ARTIFACT_SELECT = [
+  "id",
+  "user_id",
+  "job_id",
+  "parent_artifact_id",
+  "title",
+  "file_size_bytes",
+  "sha256",
+  "lifecycle_stage",
+  "rights_status",
+  "privacy_status",
+  "commerce_status",
+  "intended_for_sale",
+  "shop_product_id",
+  "iteration",
+  "latest_review_id",
+  "created_at",
+  "updated_at",
+].join(",");
+
+const REVIEW_SELECT = [
+  "id",
+  "artifact_id",
+  "iteration",
+  "quality_score",
+  "prompt_alignment_score",
+  "motion_quality_score",
+  "commercial_value_score",
+  "decision",
+  "strengths",
+  "improvement_request",
+  "suggested_prompt",
+  "notes",
+  "created_at",
 ].join(",");
 
 serve(async (req: Request) => {
@@ -105,6 +188,8 @@ serve(async (req: Request) => {
         return await statusResponse(admin, user.id, asString(input.job_id));
       case "list":
         return await listJobs(admin, user.id);
+      case "review_artifact":
+        return await reviewArtifactResponse(admin, user.id, input);
       default:
         return jsonResponse({ error: "unknown_action" }, 400);
     }
@@ -170,6 +255,14 @@ async function createJob(
   if (!/^[a-z0-9_-]{8,128}$/i.test(idempotencyKey)) {
     return jsonResponse({ error: "invalid_idempotency_key" }, 400);
   }
+  const lineageValidation = validateImprovementLink(body);
+  if (!lineageValidation.ok) {
+    return jsonResponse({ error: lineageValidation.code }, 400);
+  }
+  const lineage = lineageValidation.value;
+  if (lineage && !await isOwnedImprovement(admin, userId, lineage)) {
+    return jsonResponse({ error: "improvement_review_not_found" }, 404);
+  }
 
   const value = validation.value;
   const { data: reservation, error: reserveError } = await admin.rpc(
@@ -200,6 +293,35 @@ async function createJob(
   const jobId = asString(asRecord(reservation).job_id);
   if (!jobId) throw new Error("reservation_missing_job_id");
   let job = await loadOwnedJob(admin, userId, jobId);
+  if (lineage) {
+    const alreadyLinked = job.parent_artifact_id === lineage.parentArtifactId &&
+      job.applied_review_id === lineage.appliedReviewId;
+    if (!alreadyLinked) {
+      if (isTerminal(job.status)) {
+        return jsonResponse({ error: "generation_iteration_conflict" }, 409);
+      }
+      const { error: linkError } = await admin.rpc(
+        "video_link_generation_iteration",
+        {
+          p_user_id: userId,
+          p_job_id: jobId,
+          p_parent_artifact_id: lineage.parentArtifactId,
+          p_applied_review_id: lineage.appliedReviewId,
+        },
+      );
+      if (linkError) {
+        const cancelled = await cancelUnclaimedJob(admin, userId, jobId);
+        if (cancelled) {
+          return jsonResponse(
+            { error: "generation_iteration_unavailable" },
+            503,
+          );
+        }
+        throw linkError;
+      }
+      job = await loadOwnedJob(admin, userId, jobId);
+    }
+  }
   if (!isTerminal(job.status)) {
     const wakeConfiguration = loadWorkerWakeConfiguration();
     try {
@@ -220,7 +342,12 @@ async function createJob(
   return jsonResponse({
     success: true,
     idempotent_replay: asRecord(reservation).idempotent_replay === true,
-    job: await publicJob(admin, job, false),
+    job: await publicJob(
+      admin,
+      job,
+      false,
+      await loadArtifactForJob(admin, userId, job.id),
+    ),
     balance: publicBalance(reservation),
   }, isTerminal(job.status) ? 200 : 202);
 }
@@ -249,7 +376,12 @@ async function statusResponse(
   if (!job) return jsonResponse({ error: "job_not_found" }, 404);
   return jsonResponse({
     success: true,
-    job: await publicJob(admin, job, true),
+    job: await publicJob(
+      admin,
+      job,
+      true,
+      await loadArtifactForJob(admin, userId, job.id),
+    ),
   });
 }
 
@@ -264,12 +396,58 @@ async function listJobs(
     .order("created_at", { ascending: false })
     .limit(20);
   if (error) throw error;
+  const rows = (data ?? []) as unknown as JobRow[];
+  const artifacts = await loadArtifactsForJobs(
+    admin,
+    userId,
+    rows.map((row) => row.id),
+  );
   const jobs = await Promise.all(
-    (data ?? []).map((row) =>
-      publicJob(admin, row as unknown as JobRow, false)
+    rows.map((row) =>
+      publicJob(admin, row, false, artifacts.get(row.id) ?? null)
     ),
   );
   return jsonResponse({ success: true, jobs });
+}
+
+async function reviewArtifactResponse(
+  admin: SupabaseClient,
+  userId: string,
+  body: Record<string, unknown>,
+): Promise<Response> {
+  const validation = validateArtifactReview(body);
+  if (!validation.ok) {
+    return jsonResponse({ error: validation.code }, 400);
+  }
+  const value = validation.value;
+  const { error } = await admin.rpc("video_record_artifact_review", {
+    p_user_id: userId,
+    p_artifact_id: value.artifactId,
+    p_quality_score: value.qualityScore,
+    p_prompt_alignment_score: value.promptAlignmentScore,
+    p_motion_quality_score: value.motionQualityScore,
+    p_commercial_value_score: value.commercialValueScore,
+    p_decision: value.decision,
+    p_strengths: value.strengths,
+    p_improvement_request: value.improvementRequest,
+    p_suggested_prompt: value.suggestedPrompt,
+    p_notes: value.notes,
+    p_rights_status: value.rightsStatus,
+    p_privacy_status: value.privacyStatus,
+  });
+  if (error) {
+    if (error.message.includes("video_artifact_not_found")) {
+      return jsonResponse({ error: "artifact_not_found" }, 404);
+    }
+    throw error;
+  }
+  const artifact = await loadArtifactById(admin, userId, value.artifactId);
+  if (!artifact) throw new Error("reviewed_artifact_missing");
+  return jsonResponse({
+    success: true,
+    artifact: publicArtifact(artifact),
+    review: publicReview(artifact.latest_review),
+  });
 }
 
 async function loadOwnedJob(
@@ -301,6 +479,7 @@ async function publicJob(
   admin: SupabaseClient,
   job: JobRow,
   includeSignedUrl: boolean,
+  artifact: ArtifactWithReview | null,
 ) {
   let outputUrl: string | null = null;
   let outputExpiresAt: string | null = null;
@@ -333,7 +512,157 @@ async function publicJob(
     created_at: job.created_at,
     updated_at: job.updated_at,
     completed_at: job.completed_at,
+    parent_artifact_id: job.parent_artifact_id,
+    applied_review_id: job.applied_review_id,
+    artifact: artifact ? publicArtifact(artifact) : null,
   };
+}
+
+function publicArtifact(artifact: ArtifactWithReview) {
+  return {
+    id: artifact.id,
+    job_id: artifact.job_id,
+    parent_artifact_id: artifact.parent_artifact_id,
+    title: artifact.title,
+    file_size_bytes: artifact.file_size_bytes,
+    sha256: artifact.sha256,
+    lifecycle_stage: artifact.lifecycle_stage,
+    rights_status: artifact.rights_status,
+    privacy_status: artifact.privacy_status,
+    commerce_status: artifact.commerce_status,
+    intended_for_sale: artifact.intended_for_sale,
+    shop_product_id: artifact.shop_product_id,
+    iteration: artifact.iteration,
+    latest_review: publicReview(artifact.latest_review),
+    created_at: artifact.created_at,
+    updated_at: artifact.updated_at,
+  };
+}
+
+function publicReview(review: ReviewRow | null) {
+  if (!review) return null;
+  return {
+    id: review.id,
+    artifact_id: review.artifact_id,
+    iteration: review.iteration,
+    quality_score: review.quality_score,
+    prompt_alignment_score: review.prompt_alignment_score,
+    motion_quality_score: review.motion_quality_score,
+    commercial_value_score: review.commercial_value_score,
+    decision: review.decision,
+    strengths: review.strengths,
+    improvement_request: review.improvement_request,
+    suggested_prompt: review.suggested_prompt,
+    notes: review.notes,
+    created_at: review.created_at,
+  };
+}
+
+async function loadArtifactForJob(
+  admin: SupabaseClient,
+  userId: string,
+  jobId: string,
+): Promise<ArtifactWithReview | null> {
+  const { data, error } = await admin
+    .from("video_artifacts")
+    .select(ARTIFACT_SELECT)
+    .eq("user_id", userId)
+    .eq("job_id", jobId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return await attachLatestReview(admin, data as unknown as ArtifactRow);
+}
+
+async function loadArtifactById(
+  admin: SupabaseClient,
+  userId: string,
+  artifactId: string,
+): Promise<ArtifactWithReview | null> {
+  const { data, error } = await admin
+    .from("video_artifacts")
+    .select(ARTIFACT_SELECT)
+    .eq("user_id", userId)
+    .eq("id", artifactId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return await attachLatestReview(admin, data as unknown as ArtifactRow);
+}
+
+async function attachLatestReview(
+  admin: SupabaseClient,
+  artifact: ArtifactRow,
+): Promise<ArtifactWithReview> {
+  if (!artifact.latest_review_id) return { ...artifact, latest_review: null };
+  const { data, error } = await admin
+    .from("video_artifact_reviews")
+    .select(REVIEW_SELECT)
+    .eq("id", artifact.latest_review_id)
+    .eq("user_id", artifact.user_id)
+    .maybeSingle();
+  if (error) throw error;
+  return {
+    ...artifact,
+    latest_review: data ? data as unknown as ReviewRow : null,
+  };
+}
+
+async function loadArtifactsForJobs(
+  admin: SupabaseClient,
+  userId: string,
+  jobIds: string[],
+): Promise<Map<string, ArtifactWithReview>> {
+  const result = new Map<string, ArtifactWithReview>();
+  if (jobIds.length === 0) return result;
+  const { data, error } = await admin
+    .from("video_artifacts")
+    .select(ARTIFACT_SELECT)
+    .eq("user_id", userId)
+    .in("job_id", jobIds);
+  if (error) throw error;
+  const artifacts = (data ?? []) as unknown as ArtifactRow[];
+  const reviewIds = artifacts
+    .map((artifact) => artifact.latest_review_id)
+    .filter((id): id is string => Boolean(id));
+  const reviews = new Map<string, ReviewRow>();
+  if (reviewIds.length > 0) {
+    const { data: reviewRows, error: reviewError } = await admin
+      .from("video_artifact_reviews")
+      .select(REVIEW_SELECT)
+      .eq("user_id", userId)
+      .in("id", reviewIds);
+    if (reviewError) throw reviewError;
+    for (const review of (reviewRows ?? []) as unknown as ReviewRow[]) {
+      reviews.set(review.id, review);
+    }
+  }
+  for (const artifact of artifacts) {
+    result.set(artifact.job_id, {
+      ...artifact,
+      latest_review: artifact.latest_review_id
+        ? reviews.get(artifact.latest_review_id) ?? null
+        : null,
+    });
+  }
+  return result;
+}
+
+async function isOwnedImprovement(
+  admin: SupabaseClient,
+  userId: string,
+  lineage: VideoImprovementLink,
+): Promise<boolean> {
+  const { data, error } = await admin
+    .from("video_artifact_reviews")
+    .select("id")
+    .eq("id", lineage.appliedReviewId)
+    .eq("artifact_id", lineage.parentArtifactId)
+    .eq("user_id", userId)
+    .eq("decision", "improve")
+    .maybeSingle();
+  if (error) throw error;
+  return data != null;
 }
 
 async function authenticatedUser(

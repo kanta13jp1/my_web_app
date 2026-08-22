@@ -121,8 +121,16 @@ void main() {
     const expectedPageByLegacyRoute = <String, String>{
       '/pomodoro-timer': 'FocusTimerPage',
       '/referral-program': 'ReferralPage',
+      '/habit-gamification': 'HabitCenterPage',
+      '/goal-tracker': 'GoalCenterPage',
       '/social-media-scheduler': 'SocialMediaSchedulerPage',
       '/travel-itinerary': 'TravelItineraryPage',
+      '/video-ad-generator': 'ViralAdGeneratorPage',
+      '/viral-video-generator': 'ViralAdGeneratorPage',
+      '/wip-limit': 'DigestQueuePage',
+      '/local-election-schedule': 'ElectionVictoryPage',
+      '/stats': 'RewardsPage',
+      '/ai-summarizer': 'WritingCenterPage',
     };
     final cases = _routeCases();
 
@@ -256,6 +264,32 @@ void main() {
       reason: 'URL の無いトップ画面機能:\n${offenders.join('\n')}',
     );
   });
+
+  test('distinct home catalog features do not share a route', () {
+    final catalog = File('lib/data/home_tool_catalog.dart').readAsStringSync();
+    final ids = RegExp(
+      r"^      id: '([^']+)',",
+      multiLine: true,
+    ).allMatches(catalog).map((match) => match.group(1)!).toList();
+    final idsByRoute = <String, List<String>>{};
+
+    for (final id in ids) {
+      final route = _catalogRouteForId(id);
+      if (route == null) continue;
+      idsByRoute.putIfAbsent(route, () => <String>[]).add(id);
+    }
+
+    final duplicates = idsByRoute.entries
+        .where((entry) => entry.value.length > 1)
+        .map((entry) => '${entry.key}: ${entry.value.join(', ')}')
+        .toList(growable: false);
+
+    expect(
+      duplicates,
+      isEmpty,
+      reason: '異なるホーム機能が同じ URL を共有している:\n${duplicates.join('\n')}',
+    );
+  });
 }
 
 /// 引数が無いと画面を復元できないため、意図的に別 route へ落とすもの。
@@ -270,7 +304,7 @@ const Map<String?, String> _intentionalFallbacks = <String?, String>{
 
 /// `_homeToolRoutePathForId` (home_tool_catalog.dart) と同じ対応表。
 String? _catalogRouteForId(String id) => switch (id) {
-      'digital-danshari' => '/real-world-danshari',
+      'digital-danshari' => '/digital-danshari',
       'agent-org' => '/agents',
       'admin-analytics' => '/admin',
       'edge-function-status' => '/edge-functions',
