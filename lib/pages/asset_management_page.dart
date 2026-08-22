@@ -111,6 +111,7 @@ import 'package:my_web_app/widgets/asset_dashboard_grid.dart';
 import 'package:my_web_app/widgets/asset_net_worth_panel_card.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
 import 'package:my_web_app/widgets/asset_subscription_statement_scan_dialog.dart';
+import 'package:my_web_app/widgets/asset_subscription_login_dialog.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
 import 'package:my_web_app/widgets/subscription_audit_card.dart';
@@ -11660,8 +11661,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         viewModel: viewModel,
         sourceAccountNames: sourceAccountNames,
         onImport: _importSubscriptionStatementCosts,
+        onLogin: _openAssetSubscriptionLoginDialog,
       ),
     );
+  }
+
+  Future<bool> _openAssetSubscriptionLoginDialog() async {
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const AssetSubscriptionLoginDialog(),
+        ) ??
+        false;
   }
 
   void _importSubscriptionStatementCosts(

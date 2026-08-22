@@ -21,10 +21,19 @@ abstract interface class AssetSubscriptionStatementImagePicker {
   Future<AssetSubscriptionStatementImage?> pickImage();
 }
 
+enum AssetSubscriptionStatementScanFailure { general, authenticationRequired }
+
 class AssetSubscriptionStatementScanException implements Exception {
   final String message;
+  final AssetSubscriptionStatementScanFailure failure;
 
-  const AssetSubscriptionStatementScanException(this.message);
+  const AssetSubscriptionStatementScanException(
+    this.message, {
+    this.failure = AssetSubscriptionStatementScanFailure.general,
+  });
+
+  bool get requiresLogin =>
+      failure == AssetSubscriptionStatementScanFailure.authenticationRequired;
 
   @override
   String toString() => message;
@@ -104,6 +113,7 @@ class AssetSubscriptionStatementScanService
       if (client.auth.currentUser == null) {
         throw const AssetSubscriptionStatementScanException(
           '明細のAI解析にはログインが必要です。',
+          failure: AssetSubscriptionStatementScanFailure.authenticationRequired,
         );
       }
     }

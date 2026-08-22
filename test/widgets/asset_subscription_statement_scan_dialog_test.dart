@@ -77,6 +77,46 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('opens inline login after an authentication failure', (
+    tester,
+  ) async {
+    var loginCalls = 0;
+    final viewModel = AssetSubscriptionStatementScanViewModel(
+      imagePicker: const _FakePicker(),
+      analyzer: const _AuthenticationRequiredAnalyzer(),
+      existingSubscriptions: const <AssetRecurringFixedCost>[],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AssetSubscriptionStatementScanDialog(
+            viewModel: viewModel,
+            sourceAccountNames: const <String, String>{},
+            onImport: (_) {},
+            onLogin: () async {
+              loginCalls++;
+              return true;
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('subscription_statement_pick')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('subscription_statement_login')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('subscription_statement_login')));
+    await tester.pumpAndSettle();
+
+    expect(loginCalls, 1);
+    expect(find.textContaining('ログインしました'), findsOneWidget);
+    expect(viewModel.loginRequired, isFalse);
+  });
 }
 
 AssetSubscriptionStatementScanViewModel _viewModel() {
@@ -120,5 +160,20 @@ class _FakeAnalyzer implements AssetSubscriptionStatementAnalyzer {
         evidence: '同額の定期請求',
       ),
     ];
+  }
+}
+
+class _AuthenticationRequiredAnalyzer
+    implements AssetSubscriptionStatementAnalyzer {
+  const _AuthenticationRequiredAnalyzer();
+
+  @override
+  Future<List<AssetSubscriptionStatementCandidate>> analyze(
+    AssetSubscriptionStatementImage image,
+  ) {
+    throw const AssetSubscriptionStatementScanException(
+      '明細のAI解析にはログインが必要です。',
+      failure: AssetSubscriptionStatementScanFailure.authenticationRequired,
+    );
   }
 }
