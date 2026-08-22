@@ -58,13 +58,17 @@ void main() {
     expect(secondPlayCount, 1);
   });
 
-  testWidgets('狭い幅では各動画を横幅いっぱいに配置してオーバーフローしない', (tester) async {
+  testWidgets('狭い幅では動画を固定高の横カルーセルにして本文を押し出さない', (tester) async {
     await tester.pumpWidget(
       subject(onFirstPlay: () {}, onSecondPlay: () {}, width: 320),
     );
 
     final banner = tester.getRect(
       find.byKey(const Key('published-video-banner')),
+    );
+    expect(
+      find.byKey(const Key('published-video-mobile-carousel')),
+      findsOneWidget,
     );
     final firstButton = tester.getRect(
       find.byKey(const Key('published-video-play-button-0')),
@@ -73,11 +77,13 @@ void main() {
       find.byKey(const Key('published-video-play-button-1')),
     );
 
-    expect(firstButton.width, greaterThan(250));
-    expect(secondButton.width, greaterThan(250));
+    expect(firstButton.width, greaterThan(200));
+    expect(secondButton.width, greaterThan(200));
     expect(firstButton.left, greaterThanOrEqualTo(banner.left));
     expect(firstButton.right, lessThanOrEqualTo(banner.right));
-    expect(secondButton.top, greaterThan(firstButton.bottom));
+    expect(secondButton.left, greaterThan(firstButton.right));
+    expect(secondButton.top, firstButton.top);
+    expect(banner.height, lessThan(240));
     expect(tester.takeException(), isNull);
   });
 }

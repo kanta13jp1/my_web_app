@@ -9,6 +9,11 @@ Function work without using production Supabase credentials.
   `testcontainers-python`.
 - Applies the fixture migrations in `test/fixtures/testcontainers/sql/`.
 - Seeds representative `profiles`, `wbs_tasks`, and `ai_circuit_breaker` rows.
+- Applies the real Issue #2773 migration and verifies fail-closed RLS for the
+  six production tables identified by Supabase Security Advisor.
+- Impersonates `anon` and `authenticated` roles to prove that a missing tenant
+  claim returns no rows, cross-tenant writes fail with SQLSTATE `42501`, and an
+  authenticated user sees only their own rows.
 - Runs `scripts/check_edge_function_imports.py` so real Edge Functions keep the
   ADR-required `npm:@supabase/supabase-js@2` import rule.
 - Runs `deno check` for `supabase/functions/health-check/index.ts`.

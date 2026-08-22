@@ -253,10 +253,24 @@ class AssetAdvisoryBriefingService {
 
     // ── CHRO: 「借金しない宣言」規律(習慣設計は人事の管掌) ──
     if (disciplineReport != null && disciplineReport.isRelevant) {
+      // 誓約①(追加借入ゼロ)は前月残高が 1 件も無いと評価ループに入らず
+      // (asset_debt_discipline_monitor.dart の `prior != null` ガード)、
+      // newBorrowingViolations が必ず空 = zeroNewBorrowingAchieved が無条件 true になる。
+      // 「評価していない」を「達成」と書くと、同じ画面の規律カードのチップ
+      // (evaluated: hasPriorMonthData → 判定保留) と正面から矛盾するので、
+      // 規律カード・AI プロンプトと同じく hasPriorMonthData で表現を分ける。
+      final pledgeOneEvaluated = disciplineReport.hasPriorMonthData;
       if (disciplineReport.hasViolations) {
         final violation = disciplineReport.allViolations.first;
         final hasCritical = disciplineReport.allViolations
             .any((v) => v.severity == AssetDebtTrendSeverity.critical);
+        final String pledgeOneLabel;
+        if (!pledgeOneEvaluated) {
+          pledgeOneLabel = '判定保留';
+        } else {
+          pledgeOneLabel =
+              disciplineReport.zeroNewBorrowingAchieved ? '達成' : '未達';
+        }
         actions.add(
           AdvisoryAction(
             department: AdvisoryDepartment.chro,
@@ -266,8 +280,19 @@ class AssetAdvisoryBriefingService {
             signalKey: 'discipline_violation',
             headline: '「借金しない宣言」に違反',
             detail: '${violation.action}'
-                '（誓約①追加借入ゼロ: ${disciplineReport.zeroNewBorrowingAchieved ? '達成' : '未達'} / '
+                '（誓約①追加借入ゼロ: $pledgeOneLabel / '
                 '誓約②カード一括: ${disciplineReport.lumpSumAchieved ? '達成' : '未達'}）',
+          ),
+        );
+      } else if (pledgeOneEvaluated) {
+        actions.add(
+          const AdvisoryAction(
+            department: AdvisoryDepartment.chro,
+            severity: AdvisorySeverity.info,
+            signalKey: 'discipline_ok',
+            headline: '規律を維持',
+            detail: '今月は追加借入ゼロ・カード一括返済を達成。'
+                '習慣として来月も固定費の自動引落を月初に点検する。',
           ),
         );
       } else {
@@ -276,8 +301,9 @@ class AssetAdvisoryBriefingService {
             department: AdvisoryDepartment.chro,
             severity: AdvisorySeverity.info,
             signalKey: 'discipline_ok',
-            headline: '規律を維持',
-            detail: '今月は追加借入ゼロ・カード一括返済を達成。'
+            headline: 'カード一括は維持（追加借入は判定保留）',
+            detail: '今月はカードの繰越（リボ/分割）はありません。'
+                '追加借入ゼロは前月残高が未蓄積のため判定しておらず、来月以降に有効化されます。'
                 '習慣として来月も固定費の自動引落を月初に点検する。',
           ),
         );

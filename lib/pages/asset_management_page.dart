@@ -2,9 +2,6 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:js_interop'
-    // ignore: uri_does_not_exist
-    if (dart.library.io) 'package:my_web_app/utils/js_interop_vm_stub.dart';
 import 'dart:math'; // ← ★この1行を追加してください！
 
 import 'package:file_picker/file_picker.dart';
@@ -56,7 +53,9 @@ import 'package:my_web_app/services/asset_subscription_audit_catalog.dart';
 import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_subscription_catalog.dart';
 import 'package:my_web_app/services/asset_subscription_duplicate_detector.dart';
+import 'package:my_web_app/services/asset_subscription_statement_scan_service.dart';
 import 'package:my_web_app/services/ai_hub_chat_service.dart';
+import 'package:my_web_app/services/asset_chat_privacy_settings_service.dart';
 import 'package:my_web_app/services/asset_payment_check_guide_service.dart';
 import 'package:my_web_app/services/asset_salary_amount_store.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
@@ -85,9 +84,11 @@ import 'package:my_web_app/services/asset_unknown_expense_rule_service.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:my_web_app/services/asset_waste_training_snapshot_inputs.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
+import 'package:my_web_app/services/csv_bytes_decoder.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_progress_card_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
+import 'package:my_web_app/view_models/asset_subscription_statement_scan_view_model.dart';
 import 'package:my_web_app/services/disposable_balance_asset_liability_adapter.dart';
 import 'package:my_web_app/services/disposable_balance_service.dart';
 import 'package:my_web_app/services/drink_challenge_service.dart';
@@ -102,12 +103,15 @@ import 'package:my_web_app/services/waste_tracking_service.dart';
 import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
+import 'package:my_web_app/widgets/asset_chat_widget.dart';
 import 'package:my_web_app/widgets/debt_progress_share_dialog.dart';
 import 'package:my_web_app/widgets/asset_alert_center_card.dart';
 import 'package:my_web_app/widgets/asset_cashflow_statement_card.dart';
 import 'package:my_web_app/widgets/asset_dashboard_grid.dart';
 import 'package:my_web_app/widgets/asset_net_worth_panel_card.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
+import 'package:my_web_app/widgets/asset_subscription_statement_scan_dialog.dart';
+import 'package:my_web_app/widgets/asset_subscription_login_dialog.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
 import 'package:my_web_app/widgets/subscription_audit_card.dart';
@@ -408,8 +412,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 支払確認手順(決定論ベース)と、ネット検索対応プロバイダ経由の AI 詳細手順。
   final AssetPaymentCheckGuideService _paymentCheckGuideService =
       const AssetPaymentCheckGuideService();
+  final AssetChatPrivacySettingsService _assetChatPrivacySettingsService =
+      const AssetChatPrivacySettingsService();
   late final AiHubChatService _aiHubChatService = AiHubChatService(
     supabase: _supabase,
+    assetChatPrivacySettingsService: _assetChatPrivacySettingsService,
   );
   final ProfileService _profileService = ProfileService();
 
@@ -875,6 +882,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetManagementDisplayModeStore();
   AssetManagementDisplayMode _displayMode =
       AssetManagementDisplayModeStore.defaultMode;
+  bool _assetChatMaskMoneyAmounts = false;
   final AssetManagementMainAccountStore _mainAccountStore =
       const AssetManagementMainAccountStore();
   // 月をまたいだ負債トレンド(リボ複利・残高増加)判定のための口座別残高履歴。
@@ -1101,6 +1109,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchMustTasks();
     unawaited(_loadDailyTodos());
     _loadDisplayMode();
+    unawaited(_loadAssetChatPrivacySettings());
     _loadMainAccount();
     unawaited(_loadHouseholdTrackerPublishing());
     unawaited(_loadSalaryAmount());
@@ -7711,7 +7720,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         throw Exception('CSVデータを読み込めませんでした');
       }
 
-      final text = _decodeSmbcCsvBytes(bytes);
+      final text = const CsvBytesDecoder().decode(
+        bytes,
+        looksValid: SmbcCsvImportService.looksLikeCsv,
+        formatName: '三井住友銀行CSV',
+      );
       final parsed = const SmbcCsvImportService().parse(text);
       if (parsed.transactions.isEmpty) {
         throw Exception('登録できる三井住友銀行の入出金明細が見つかりませんでした');
@@ -7838,32 +7851,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debugPrint('Expense classification failed: $e');
     }
   }
-
-  String _decodeSmbcCsvBytes(Uint8List bytes) {
-    try {
-      final text = utf8.decode(bytes);
-      if (_looksLikeSmbcCsv(text)) return text;
-    } catch (_) {
-      // SMBC exports are commonly CP932/Shift_JIS. Fall through to TextDecoder.
-    }
-
-    try {
-      final text = web.TextDecoder('shift_jis').decode(bytes.toJS);
-      if (_looksLikeSmbcCsv(text)) return text;
-    } catch (e) {
-      debugPrint('Shift_JIS decode failed: $e');
-    }
-
-    final malformed = utf8.decode(bytes, allowMalformed: true);
-    if (_looksLikeSmbcCsv(malformed)) return malformed;
-    throw const FormatException('三井住友銀行CSVの列名を判定できませんでした');
-  }
-
-  bool _looksLikeSmbcCsv(String text) =>
-      text.contains('年月日') &&
-      text.contains('お引出し') &&
-      text.contains('お預入れ') &&
-      text.contains('お取り扱い内容');
 
   String _flowSourceForAssetType(String assetType) {
     final normalized = assetType.trim().isEmpty ? '口座' : assetType.trim();
@@ -9506,6 +9493,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
       backgroundColor: const Color(0xFF64748B),
+      floatingActionButton: AssetChatWidget(service: _aiHubChatService),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SingleChildScrollView(
         controller: _scrollController,
         padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
@@ -9660,6 +9649,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       mode: _displayMode,
       override: override,
     );
+  }
+
+  /// 月次資産ダッシュボード内の個別パネルの可視性。
+  ///
+  /// 親セクション [AssetManagementSectionId.monthlyDashboard] のゲートを既に
+  /// 通った後に呼ぶので、`auto` は「親の判断に従う」= 表示のままとし、ユーザーが
+  /// 明示した「隠す」「常に表示」だけを反映する。[_isSectionShown] をそのまま
+  /// 使うと、子パネルも親と同じ full tier のため、親を「常に表示」に固定した
+  /// 標準モードで子が全部消えてしまう。
+  bool _isDashboardPanelShown(AssetManagementSectionId section) {
+    final override = _sectionOverrides[section] ??
+        AssetManagementSectionVisibilityOverride.auto;
+    return override != AssetManagementSectionVisibilityOverride.hidden;
   }
 
   /// メイン口座IDの集約ミラー pref_key (1 行 jsonb / MIRROR_PREF_SCHEMA.md)。
@@ -11612,6 +11614,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return SubscriptionFixedCostCard(
       costs: subscriptionCosts,
       sourceAccountNames: sourceNames,
+      onScanStatement: () => unawaited(
+        _openSubscriptionStatementScanDialog(subscriptionCosts, sourceNames),
+      ),
       onAddPreset: (preset) => unawaited(
         _openRecurringFixedCostEditor(
           prefill: preset.toPrefill(
@@ -11634,7 +11639,87 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       ),
       onDelete: (cost) => unawaited(_confirmDeleteRecurringFixedCost(cost)),
+      onReviewDecisionChanged: (cost, decision) => _saveRecurringFixedCost(
+        cost.copyWith(subscriptionReviewDecision: decision),
+      ),
     );
+  }
+
+  Future<void> _openSubscriptionStatementScanDialog(
+    List<AssetRecurringFixedCost> existingSubscriptions,
+    Map<String, String> sourceAccountNames,
+  ) async {
+    final viewModel = AssetSubscriptionStatementScanViewModel(
+      imagePicker: const FilePickerAssetSubscriptionStatementImagePicker(),
+      analyzer: const AssetSubscriptionStatementScanService(),
+      existingSubscriptions: existingSubscriptions,
+    );
+    await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AssetSubscriptionStatementScanDialog(
+        viewModel: viewModel,
+        sourceAccountNames: sourceAccountNames,
+        onImport: _importSubscriptionStatementCosts,
+        onLogin: _openAssetSubscriptionLoginDialog,
+      ),
+    );
+  }
+
+  Future<bool> _openAssetSubscriptionLoginDialog() async {
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const AssetSubscriptionLoginDialog(),
+        ) ??
+        false;
+  }
+
+  void _importSubscriptionStatementCosts(
+    List<AssetRecurringFixedCost> importedCosts,
+  ) {
+    if (importedCosts.isEmpty) return;
+    final next = List<AssetRecurringFixedCost>.from(_recurringFixedCosts);
+    final existingNames = <String>{
+      for (final cost in next) _normalizeSubscriptionName(cost.name),
+    };
+    final added = <AssetRecurringFixedCost>[];
+    for (final cost in importedCosts) {
+      final normalized = _normalizeSubscriptionName(cost.name);
+      if (normalized.isEmpty || existingNames.contains(normalized)) continue;
+      next.add(cost);
+      added.add(cost);
+      existingNames.add(normalized);
+    }
+    if (added.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('追加できる新しいサブスクはありませんでした。')),
+      );
+      return;
+    }
+    next.sort(_compareRecurringFixedCostsByPaymentDay);
+    setState(() => _recurringFixedCosts = next);
+    _persistInBackground(
+      _recurringFixedCostStore.save(next),
+      'subscription statement import',
+    );
+    for (final cost in added) {
+      unawaited(_recordRecurringFixedCostTombstone(cost.id, deleted: false));
+      unawaited(
+        _syncDirtyKeysStore.markDirty(_recurringFixedCostsMirrorKey, cost.id),
+      );
+    }
+    unawaited(_mirrorRecurringFixedCosts());
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${added.length}件のサブスクを棚卸しに追加しました。')),
+    );
+  }
+
+  String _normalizeSubscriptionName(String value) {
+    return value.toLowerCase().replaceAll(
+          RegExp(r'[\s\-_./・（）()]+'),
+          '',
+        );
   }
 
   /// `_recentFlows`(複数月分の収支履歴)から、支出のみを description パースして
@@ -12201,6 +12286,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         creditLimit: amount < 0 ? 0 : amount,
       ),
     );
+  }
+
+  Future<void> _loadAssetChatPrivacySettings() async {
+    final enabled =
+        await _assetChatPrivacySettingsService.loadMaskMoneyAmounts();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _assetChatMaskMoneyAmounts = enabled;
+    });
+  }
+
+  Future<void> _setAssetChatMaskMoneyAmounts(bool enabled) async {
+    await _assetChatPrivacySettingsService.saveMaskMoneyAmounts(enabled);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _assetChatMaskMoneyAmounts = enabled;
+    });
   }
 
   Future<void> _loadDisplayMode() async {
@@ -13999,6 +14105,50 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        dialogContext,
+                      ).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: SwitchListTile.adaptive(
+                      key: const Key('asset_chat_money_range_toggle'),
+                      value: _assetChatMaskMoneyAmounts,
+                      secondary: const Icon(Icons.privacy_tip_outlined),
+                      title: const Text(
+                        'AIチャットの金額をレンジ化',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'ONではAIへ送る直前に金額を「¥100k-500k」などへ変換します。'
+                        '入力原文はチャット履歴に残ります（既定OFF）。',
+                        style: TextStyle(fontSize: 11, height: 1.4),
+                      ),
+                      onChanged: (enabled) async {
+                        try {
+                          await _setAssetChatMaskMoneyAmounts(enabled);
+                          if (!dialogContext.mounted) {
+                            return;
+                          }
+                          setDialogState(() {});
+                        } catch (_) {
+                          if (!dialogContext.mounted) {
+                            return;
+                          }
+                          ScaffoldMessenger.of(dialogContext).showSnackBar(
+                            const SnackBar(
+                              content: Text('AIチャットのプライバシー設定を保存できませんでした'),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   if (_displayModeStatsLabel != null) ...[
                     Text(
                       '実験ログ: $_displayModeStatsLabel',
@@ -15245,8 +15395,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildMonthlyDashboardGrid(AssetLiabilityWorkbook? workbook) {
     final panels = <AssetDashboardPanel>[];
 
+    // 各パネルは表示設定ダイアログに専用の項目 (純資産パネル / 月次キャッシュフロー /
+    // アラートセンター) を持つ。ダイアログは「『常に表示』『隠す』はモードより優先されます」
+    // と明示しているので、grid 側でもユーザーの上書きを必ず通す。通さないと設定項目が
+    // 操作できるのに一切効かない (= 設定が嘘をつく) 状態になる。
+    // 投資パネルは対応するセクション ID を持たないため、従来どおり常に含める。
     final netWorth = _assetNetWorthPanelChild(workbook);
-    if (netWorth != null) {
+    if (netWorth != null &&
+        _isDashboardPanelShown(AssetManagementSectionId.netWorthPanel)) {
       panels.add(
         AssetDashboardPanel(
           title: '純資産',
@@ -15257,7 +15413,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     final cashflow = _cashflowStatementPanelChild(workbook);
-    if (cashflow != null) {
+    if (cashflow != null &&
+        _isDashboardPanelShown(AssetManagementSectionId.cashflowStatement)) {
       panels.add(
         AssetDashboardPanel(
           title: 'キャッシュフロー',
@@ -15279,7 +15436,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
 
     final alerts = _assetAlertCenterPanelChild(workbook);
-    if (alerts != null) {
+    if (alerts != null &&
+        _isDashboardPanelShown(AssetManagementSectionId.alertCenter)) {
       panels.add(
         AssetDashboardPanel(
           title: 'アラート',
@@ -22152,6 +22310,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 「借金しない宣言」の遵守状況（達成は緑で称賛、違反は赤で具体指摘）を描画する。
   Widget _buildAssetManagementDisciplineCard(AssetDebtDisciplineReport report) {
     final compliant = report.isCompliant;
+    // 一覧の打ち切り件数。ヘッダーのバッジは総数を出すので、超過分は
+    // 姉妹カード (月次負債トレンド) と同じく「ほか N件」で必ず示す。
+    // 同一負債行が誓約①と②の両方で違反しうるため、カード数枚でも超過する。
+    const violationDisplayLimit = 6;
+    final hiddenViolationCount =
+        report.allViolations.length - violationDisplayLimit;
     final headerColor =
         compliant ? const Color(0xFF0D9488) : const Color(0xFFB91C1C);
     final bgColor =
@@ -22234,11 +22398,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               style: const TextStyle(fontSize: 12, height: 1.5),
             )
           else
-            for (final violation in report.allViolations.take(6))
+            for (final violation
+                in report.allViolations.take(violationDisplayLimit))
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: _buildAssetDisciplineViolationTile(violation),
               ),
+          if (!compliant && hiddenViolationCount > 0)
+            Text(
+              'ほか $hiddenViolationCount件',
+              key: const Key('asset_discipline_violation_overflow'),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12,
+              ),
+            ),
         ],
       ),
     );

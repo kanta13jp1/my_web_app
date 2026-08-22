@@ -752,9 +752,9 @@ const List<PageComplianceRecord> kDesignComplianceData = [
     category: DesignCategory.personal,
   ),
   PageComplianceRecord(
-    route: '/stats',
-    name: '統計・分析',
-    category: DesignCategory.admin,
+    route: '/rewards',
+    name: '実績・リワード',
+    category: DesignCategory.personal,
   ),
   PageComplianceRecord(
     route: '/activity-feed',

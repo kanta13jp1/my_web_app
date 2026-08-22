@@ -22,9 +22,8 @@ class LocalElectionRealityService {
 
   final SupabaseClient? _client;
 
-  const LocalElectionRealityService({
-    SupabaseClient? client,
-  }) : _client = client;
+  const LocalElectionRealityService({SupabaseClient? client})
+      : _client = client;
 
   SupabaseClient? get _resolvedClient {
     if (_client != null) {
@@ -187,8 +186,10 @@ class LocalElectionRealityService {
         _memorySnapshot?.electionIntelligence.selectedMode == mode
             ? _memorySnapshot
             : null;
-    final LocalElectionRealitySnapshot? fallbackSnapshot =
-        _pickNewerSnapshot(memorySnapshot, cachedSnapshot);
+    final LocalElectionRealitySnapshot? fallbackSnapshot = _pickNewerSnapshot(
+      memorySnapshot,
+      cachedSnapshot,
+    );
 
     if (!forceRefresh &&
         fallbackSnapshot != null &&
@@ -308,9 +309,7 @@ class LocalElectionRealityService {
       );
     }
 
-    return LocalElectionRealitySnapshot.fromJson(
-      _toMap(data['snapshot']),
-    );
+    return LocalElectionRealitySnapshot.fromJson(_toMap(data['snapshot']));
   }
 
   bool _isSnapshotFresh(LocalElectionRealitySnapshot snapshot) {
@@ -339,8 +338,11 @@ class LocalElectionRealityService {
       if (voteDate == null || schedule.kokuminCandidateCount <= 0) {
         continue;
       }
-      final electionDate =
-          DateTime(voteDate.year, voteDate.month, voteDate.day);
+      final electionDate = DateTime(
+        voteDate.year,
+        voteDate.month,
+        voteDate.day,
+      );
       if (electionDate.isAfter(today) || electionDate.isBefore(cutoff)) {
         continue;
       }

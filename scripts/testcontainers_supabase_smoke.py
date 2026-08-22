@@ -2,10 +2,11 @@
 """Run a deterministic Testcontainers smoke for DB + Edge runtime work.
 
 The smoke intentionally avoids production Supabase credentials. It starts a
-disposable Postgres container, applies a small migration/seed fixture, checks
-the real Edge Function import policy, and runs a Deno HTTP fixture against the
-container. Logs are written as artifacts so CI failures point to the migration,
-function, or seed boundary that broke.
+disposable Postgres container, applies a small migration/seed fixture, verifies
+the Issue #2773 fail-closed RLS migration and Issue #2484 asset-chat isolation,
+checks the real Edge Function import policy, and runs a Deno HTTP fixture against
+the container. Logs are written as artifacts so CI failures point to the
+migration, function, or seed boundary that broke.
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import socket
 import subprocess
 import sys
@@ -31,6 +33,42 @@ DEFAULT_EDGE_FIXTURE = ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-
 DEFAULT_ARTIFACTS_DIR = ROOT / ".testcontainers-logs"
 DEFAULT_ACTUAL_EDGE_FUNCTION = ROOT / "supabase" / "functions" / "health-check" / "index.ts"
 REQUIRED_TABLES = ("profiles", "wbs_tasks", "ai_circuit_breaker")
+ISSUE_2773_RLS_MIGRATION = (
+    ROOT / "supabase" / "migrations" / "20260815124052_fail_closed_rls_issue_2773.sql"
+)
+ISSUE_2773_RLS_TABLES = (
+    "ab_assignments",
+    "ab_experiments",
+    "ai_benchmark_results",
+    "competitor_feature_status",
+    "referral_tracking",
+    "viral_ad_generations",
+)
+ISSUE_2773_USER_1 = "00000000-0000-4000-8000-000000002773"
+ISSUE_2773_USER_2 = "00000000-0000-4000-8000-000000002774"
+ISSUE_2773_EXPERIMENT_1 = "00000000-0000-4000-8000-000000002775"
+ISSUE_2773_EXPERIMENT_2 = "00000000-0000-4000-8000-000000002776"
+ASSET_CHAT_MIGRATION = (
+    ROOT / "supabase" / "migrations" / "20260817151738_create_asset_chat_tables.sql"
+)
+ASSET_CHAT_TABLES = ("asset_chat_messages", "asset_chat_threads")
+ASSET_CHAT_THREAD_1 = "00000000-0000-4000-8000-000000002484"
+ASSET_CHAT_THREAD_2 = "00000000-0000-4000-8000-000000002485"
+ASSET_CHAT_TEMP_THREAD = "00000000-0000-4000-8000-000000002486"
+TAX_RECORDS_MIGRATION = (
+    ROOT / "supabase" / "migrations" / "20260820023000_create_tax_records.sql"
+)
+TAX_RECORDS_TABLES = ("tax_records",)
+TAX_RECORD_1 = "00000000-0000-4000-8000-000000002489"
+TAX_RECORD_2 = "00000000-0000-4000-8000-000000002490"
+VIDEO_ARTIFACT_SQL_FILES = (
+    ROOT / "supabase" / "tests" / "video_service_bootstrap.sql",
+    ROOT / "supabase" / "migrations" / "20260819165405_create_first_party_video_service.sql",
+    ROOT / "supabase" / "tests" / "video_artifact_review_loop_pre_migration.sql",
+    ROOT / "supabase" / "migrations" / "20260822084126_add_video_artifact_review_loop.sql",
+    ROOT / "supabase" / "tests" / "first_party_video_service_contract.sql",
+    ROOT / "supabase" / "tests" / "video_artifact_review_loop_contract.sql",
+)
 EDGE_FIXTURE_ENV_ALLOW = (
     "DATABASE_URL",
     "PORT",
@@ -78,7 +116,108 @@ def sql_files(sql_dir: Path) -> list[Path]:
 
 
 def sql_statements(sql: str) -> list[str]:
-    return [statement.strip() for statement in sql.split(";") if statement.strip()]
+    statements: list[str] = []
+    current: list[str] = []
+    index = 0
+    state = "normal"
+    dollar_tag = ""
+
+    while index < len(sql):
+        char = sql[index]
+        next_char = sql[index + 1] if index + 1 < len(sql) else ""
+
+        if state == "single_quote":
+            current.append(char)
+            if char == "'" and next_char == "'":
+                current.append(next_char)
+                index += 2
+                continue
+            if char == "'":
+                state = "normal"
+            index += 1
+            continue
+
+        if state == "double_quote":
+            current.append(char)
+            if char == '"' and next_char == '"':
+                current.append(next_char)
+                index += 2
+                continue
+            if char == '"':
+                state = "normal"
+            index += 1
+            continue
+
+        if state == "line_comment":
+            current.append(char)
+            if char == "\n":
+                state = "normal"
+            index += 1
+            continue
+
+        if state == "block_comment":
+            current.append(char)
+            if char == "*" and next_char == "/":
+                current.append(next_char)
+                index += 2
+                state = "normal"
+                continue
+            index += 1
+            continue
+
+        if state == "dollar_quote":
+            if sql.startswith(dollar_tag, index):
+                current.append(dollar_tag)
+                index += len(dollar_tag)
+                state = "normal"
+                continue
+            current.append(char)
+            index += 1
+            continue
+
+        if char == "-" and next_char == "-":
+            current.extend((char, next_char))
+            index += 2
+            state = "line_comment"
+            continue
+        if char == "/" and next_char == "*":
+            current.extend((char, next_char))
+            index += 2
+            state = "block_comment"
+            continue
+        if char == "'":
+            current.append(char)
+            index += 1
+            state = "single_quote"
+            continue
+        if char == '"':
+            current.append(char)
+            index += 1
+            state = "double_quote"
+            continue
+        if char == "$":
+            match = re.match(r"\$(?:[A-Za-z_][A-Za-z0-9_]*)?\$", sql[index:])
+            if match:
+                dollar_tag = match.group(0)
+                current.append(dollar_tag)
+                index += len(dollar_tag)
+                state = "dollar_quote"
+                continue
+        if char == ";":
+            statement = "".join(current).strip()
+            if statement:
+                statements.append(statement)
+            current.clear()
+            index += 1
+            continue
+
+        current.append(char)
+        index += 1
+
+    trailing = "".join(current).strip()
+    if trailing:
+        statements.append(trailing)
+    return statements
 
 
 def free_tcp_port() -> int:
@@ -130,6 +269,39 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
         "container": "postgres:16-alpine via testcontainers-python",
         "production_credentials_required": False,
         "sql_fixtures": [path.relative_to(ROOT).as_posix() for path in sql_files(sql_dir)],
+        "tenant_rls_migration": ISSUE_2773_RLS_MIGRATION.relative_to(ROOT).as_posix(),
+        "tenant_rls_checks": [
+            "all six audited public tables have RLS enabled",
+            "anon keeps no table privileges",
+            "authenticated privileges are policy-backed and least-privilege",
+            "missing tenant claims see zero rows and cannot write",
+            "authenticated users see only their own tenant rows",
+        ],
+        "asset_chat_migration": ASSET_CHAT_MIGRATION.relative_to(ROOT).as_posix(),
+        "asset_chat_checks": [
+            "threads and messages have owner-only RLS",
+            "anon has no table privileges",
+            "authenticated users cannot insert across tenants",
+            "message ownership follows the parent thread",
+            "deleting an owned thread cascades to its messages",
+        ],
+        "tax_records_migration": TAX_RECORDS_MIGRATION.relative_to(ROOT).as_posix(),
+        "tax_records_checks": [
+            "tax_records has owner-only RLS",
+            "anon has no table privileges",
+            "authenticated users see only their own tax records",
+            "authenticated users cannot forge another owner",
+            "authenticated owner CRUD succeeds",
+        ],
+        "video_artifact_contract": [
+            path.relative_to(ROOT).as_posix() for path in VIDEO_ARTIFACT_SQL_FILES
+        ],
+        "video_artifact_checks": [
+            "existing successful jobs are backfilled as private sale candidates",
+            "reviews advance rights/privacy readiness without auto-publishing",
+            "next-generation jobs preserve source artifact and review lineage",
+            "original provenance is immutable and lifecycle evidence is append-only",
+        ],
         "edge_db_fixture": edge_fixture.relative_to(ROOT).as_posix(),
         "actual_edge_checks": [
             "scripts/check_edge_function_imports.py --root supabase/functions",
@@ -166,6 +338,665 @@ def table_count(conn: Any, table_name: str) -> int:
         cur.execute(f"select count(*) from {table_name}")
         row = cur.fetchone()
     return int(row[0])
+
+
+def seed_issue_2773_fixture(conn: Any) -> None:
+    with conn.cursor() as cur:
+        cur.executemany(
+            "insert into auth.users (id) values (%s::uuid)",
+            [(ISSUE_2773_USER_1,), (ISSUE_2773_USER_2,)],
+        )
+        cur.executemany(
+            "insert into public.ab_experiments (id, name, status) "
+            "values (%s::uuid, %s, 'active')",
+            [
+                (ISSUE_2773_EXPERIMENT_1, "tenant isolation one"),
+                (ISSUE_2773_EXPERIMENT_2, "tenant isolation two"),
+            ],
+        )
+        cur.executemany(
+            "insert into public.ab_assignments "
+            "(experiment_id, user_id, variant) values (%s::uuid, %s::uuid, %s)",
+            [
+                (ISSUE_2773_EXPERIMENT_1, ISSUE_2773_USER_1, "control"),
+                (ISSUE_2773_EXPERIMENT_1, ISSUE_2773_USER_2, "variant_a"),
+            ],
+        )
+        cur.executemany(
+            "insert into public.ai_benchmark_results "
+            "(user_id, model_name, provider, vision_score, latency_ms) "
+            "values (%s::uuid, %s, 'fixture', 90, 100)",
+            [
+                (ISSUE_2773_USER_1, "tenant-model-one"),
+                (ISSUE_2773_USER_2, "tenant-model-two"),
+            ],
+        )
+        cur.execute(
+            "insert into public.referral_tracking "
+            "(referrer_user_id, referred_user_id, referral_code) values (%s, %s, %s)",
+            (ISSUE_2773_USER_1, ISSUE_2773_USER_2, "ISSUE2773"),
+        )
+        cur.execute(
+            "insert into public.competitor_feature_status "
+            "(competitor_id, feature_name) values ('fixture', 'tenant isolation')"
+        )
+        cur.execute(
+            "insert into public.viral_ad_generations (template_key) values ('fixture')"
+        )
+    conn.commit()
+
+
+def issue_2773_role_count(
+    conn: Any,
+    role: str,
+    user_id: str | None,
+    table: str,
+) -> int:
+    if role not in {"anon", "authenticated", "service_role"}:
+        raise ValueError(f"unexpected role for tenant RLS query: {role}")
+    if table not in ISSUE_2773_RLS_TABLES:
+        raise ValueError(f"unexpected table for tenant RLS query: {table}")
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute(f"set local role {role}")
+            cur.execute(
+                "select set_config('request.jwt.claim.sub', %s, true)",
+                (user_id or "",),
+            )
+            cur.execute(f"select count(*) from public.{table}")
+            row = cur.fetchone()
+    return int(row[0])
+
+
+def issue_2773_expect_denied(
+    conn: Any,
+    *,
+    role: str,
+    user_id: str | None,
+    statement: str,
+    params: tuple[Any, ...] = (),
+) -> str:
+    try:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(f"set local role {role}")
+                cur.execute(
+                    "select set_config('request.jwt.claim.sub', %s, true)",
+                    (user_id or "",),
+                )
+                cur.execute(statement, params)
+    except Exception as exc:  # psycopg is loaded only for the integration run.
+        sqlstate = getattr(exc, "sqlstate", None)
+        if sqlstate != "42501":
+            raise AssertionError(
+                f"expected SQLSTATE 42501, got {sqlstate}: {exc}"
+            ) from exc
+        return sqlstate
+    raise AssertionError("tenant RLS operation unexpectedly succeeded")
+
+
+def check_issue_2773_rls(conn: Any) -> dict[str, Any]:
+    with conn.cursor() as cur:
+        cur.execute(
+            "select c.relname from pg_class c "
+            "join pg_namespace n on n.oid = c.relnamespace "
+            "where n.nspname = 'public' and c.relname = any(%s) "
+            "and c.relrowsecurity order by c.relname",
+            (list(ISSUE_2773_RLS_TABLES),),
+        )
+        enabled_tables = [row[0] for row in cur.fetchall()]
+        cur.execute(
+            "select policyname from pg_policies where schemaname = 'public' "
+            "and tablename = any(%s) order by policyname",
+            (list(ISSUE_2773_RLS_TABLES),),
+        )
+        policy_names = [row[0] for row in cur.fetchall()]
+    conn.commit()
+
+    if enabled_tables != sorted(ISSUE_2773_RLS_TABLES):
+        raise AssertionError(
+            f"RLS was not enabled on every audited table: {enabled_tables}"
+        )
+
+    expected_policies = {
+        "ab_assignments_delete_own",
+        "ab_assignments_insert_own",
+        "ab_assignments_select_own",
+        "ab_assignments_update_own",
+        "ab_experiments_authenticated_read",
+        "ai_benchmark_results_select_own",
+        "referral_tracking_select_participant",
+    }
+    if set(policy_names) != expected_policies:
+        raise AssertionError(f"unexpected tenant RLS policy set: {policy_names}")
+
+    authenticated_grants = {
+        "ab_assignments": {"SELECT", "INSERT", "UPDATE", "DELETE"},
+        "ab_experiments": {"SELECT"},
+        "ai_benchmark_results": {"SELECT"},
+        "competitor_feature_status": set(),
+        "referral_tracking": {"SELECT"},
+        "viral_ad_generations": set(),
+    }
+    table_privileges = (
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "TRUNCATE",
+        "REFERENCES",
+        "TRIGGER",
+    )
+    with conn.cursor() as cur:
+        for table in ISSUE_2773_RLS_TABLES:
+            for privilege in table_privileges:
+                cur.execute(
+                    "select has_table_privilege(%s, %s, %s)",
+                    ("anon", f"public.{table}", privilege),
+                )
+                if bool(cur.fetchone()[0]):
+                    raise AssertionError(f"anon retained {privilege} on {table}")
+                cur.execute(
+                    "select has_table_privilege(%s, %s, %s)",
+                    ("authenticated", f"public.{table}", privilege),
+                )
+                actual = bool(cur.fetchone()[0])
+                expected = privilege in authenticated_grants[table]
+                if actual != expected:
+                    raise AssertionError(
+                        f"authenticated {privilege} on {table}: "
+                        f"expected {expected}, got {actual}"
+                    )
+    conn.commit()
+
+    missing_claim_counts = {
+        table: issue_2773_role_count(conn, "authenticated", None, table)
+        for table in (
+            "ab_assignments",
+            "ab_experiments",
+            "ai_benchmark_results",
+            "referral_tracking",
+        )
+    }
+    if any(missing_claim_counts.values()):
+        raise AssertionError(f"missing tenant claim exposed rows: {missing_claim_counts}")
+
+    owner_counts = {
+        table: issue_2773_role_count(
+            conn,
+            "authenticated",
+            ISSUE_2773_USER_1,
+            table,
+        )
+        for table in (
+            "ab_assignments",
+            "ab_experiments",
+            "ai_benchmark_results",
+            "referral_tracking",
+        )
+    }
+    expected_owner_counts = {
+        "ab_assignments": 1,
+        "ab_experiments": 2,
+        "ai_benchmark_results": 1,
+        "referral_tracking": 1,
+    }
+    if owner_counts != expected_owner_counts:
+        raise AssertionError(
+            f"tenant filtering returned unexpected counts: {owner_counts}"
+        )
+
+    missing_write_sqlstate = issue_2773_expect_denied(
+        conn,
+        role="authenticated",
+        user_id=None,
+        statement=(
+            "insert into public.ab_assignments "
+            "(experiment_id, user_id, variant) values (%s::uuid, %s::uuid, 'control')"
+        ),
+        params=(ISSUE_2773_EXPERIMENT_2, ISSUE_2773_USER_1),
+    )
+    cross_tenant_sqlstate = issue_2773_expect_denied(
+        conn,
+        role="authenticated",
+        user_id=ISSUE_2773_USER_2,
+        statement=(
+            "insert into public.ab_assignments "
+            "(experiment_id, user_id, variant) values (%s::uuid, %s::uuid, 'control')"
+        ),
+        params=(ISSUE_2773_EXPERIMENT_2, ISSUE_2773_USER_1),
+    )
+
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute("set local role authenticated")
+            cur.execute(
+                "select set_config('request.jwt.claim.sub', %s, true)",
+                (ISSUE_2773_USER_1,),
+            )
+            cur.execute(
+                "insert into public.ab_assignments "
+                "(experiment_id, user_id, variant) values (%s::uuid, %s::uuid, 'control')",
+                (ISSUE_2773_EXPERIMENT_2, ISSUE_2773_USER_1),
+            )
+
+    for table in ISSUE_2773_RLS_TABLES:
+        issue_2773_expect_denied(
+            conn,
+            role="anon",
+            user_id=None,
+            statement=f"select count(*) from public.{table}",
+        )
+
+    return {
+        "enabled_tables": enabled_tables,
+        "policies": policy_names,
+        "missing_claim_counts": missing_claim_counts,
+        "owner_counts": owner_counts,
+        "missing_write_sqlstate": missing_write_sqlstate,
+        "cross_tenant_sqlstate": cross_tenant_sqlstate,
+        "anon_access": "denied on all audited tables",
+    }
+
+
+def seed_asset_chat_fixture(conn: Any) -> None:
+    with conn.cursor() as cur:
+        cur.executemany(
+            "insert into public.asset_chat_threads (id, user_id, title) "
+            "values (%s::uuid, %s::uuid, %s)",
+            [
+                (ASSET_CHAT_THREAD_1, ISSUE_2773_USER_1, "owner one thread"),
+                (ASSET_CHAT_THREAD_2, ISSUE_2773_USER_2, "owner two thread"),
+            ],
+        )
+        cur.executemany(
+            "insert into public.asset_chat_messages "
+            "(thread_id, role, content, tokens_in, tokens_out, model) "
+            "values (%s::uuid, %s, %s, %s, %s, %s)",
+            [
+                (ASSET_CHAT_THREAD_1, "user", "owner one message", 12, 0, None),
+                (
+                    ASSET_CHAT_THREAD_2,
+                    "assistant",
+                    "owner two response",
+                    20,
+                    8,
+                    "fixture-model",
+                ),
+            ],
+        )
+    conn.commit()
+
+
+def asset_chat_role_count(
+    conn: Any,
+    role: str,
+    user_id: str | None,
+    table: str,
+) -> int:
+    if role not in {"anon", "authenticated", "service_role"}:
+        raise ValueError(f"unexpected role for asset chat query: {role}")
+    if table not in ASSET_CHAT_TABLES:
+        raise ValueError(f"unexpected table for asset chat query: {table}")
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute(f"set local role {role}")
+            cur.execute(
+                "select set_config('request.jwt.claim.sub', %s, true)",
+                (user_id or "",),
+            )
+            cur.execute(f"select count(*) from public.{table}")
+            row = cur.fetchone()
+    return int(row[0])
+
+
+def check_asset_chat_rls(conn: Any) -> dict[str, Any]:
+    with conn.cursor() as cur:
+        cur.execute(
+            "select c.relname from pg_class c "
+            "join pg_namespace n on n.oid = c.relnamespace "
+            "where n.nspname = 'public' and c.relname = any(%s) "
+            "and c.relrowsecurity order by c.relname",
+            (list(ASSET_CHAT_TABLES),),
+        )
+        enabled_tables = [row[0] for row in cur.fetchall()]
+        cur.execute(
+            "select policyname from pg_policies where schemaname = 'public' "
+            "and tablename = any(%s) order by policyname",
+            (list(ASSET_CHAT_TABLES),),
+        )
+        policy_names = [row[0] for row in cur.fetchall()]
+    conn.commit()
+
+    if enabled_tables != sorted(ASSET_CHAT_TABLES):
+        raise AssertionError(
+            f"asset chat RLS was not enabled on every table: {enabled_tables}"
+        )
+
+    expected_policies = {
+        f"{table}_{operation}_own"
+        for table in ASSET_CHAT_TABLES
+        for operation in ("select", "insert", "update", "delete")
+    }
+    if set(policy_names) != expected_policies:
+        raise AssertionError(f"unexpected asset chat policy set: {policy_names}")
+
+    authenticated_grants = {"SELECT", "INSERT", "UPDATE", "DELETE"}
+    table_privileges = (
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "TRUNCATE",
+        "REFERENCES",
+        "TRIGGER",
+    )
+    with conn.cursor() as cur:
+        for table in ASSET_CHAT_TABLES:
+            for privilege in table_privileges:
+                cur.execute(
+                    "select has_table_privilege(%s, %s, %s)",
+                    ("anon", f"public.{table}", privilege),
+                )
+                if bool(cur.fetchone()[0]):
+                    raise AssertionError(
+                        f"anon retained {privilege} on asset chat table {table}"
+                    )
+                cur.execute(
+                    "select has_table_privilege(%s, %s, %s)",
+                    ("authenticated", f"public.{table}", privilege),
+                )
+                actual = bool(cur.fetchone()[0])
+                expected = privilege in authenticated_grants
+                if actual != expected:
+                    raise AssertionError(
+                        f"authenticated {privilege} on {table}: "
+                        f"expected {expected}, got {actual}"
+                    )
+    conn.commit()
+
+    missing_claim_counts = {
+        table: asset_chat_role_count(conn, "authenticated", None, table)
+        for table in ASSET_CHAT_TABLES
+    }
+    if any(missing_claim_counts.values()):
+        raise AssertionError(
+            f"missing tenant claim exposed asset chat rows: {missing_claim_counts}"
+        )
+
+    owner_counts = {
+        table: asset_chat_role_count(
+            conn,
+            "authenticated",
+            ISSUE_2773_USER_1,
+            table,
+        )
+        for table in ASSET_CHAT_TABLES
+    }
+    expected_owner_counts = {
+        "asset_chat_messages": 1,
+        "asset_chat_threads": 1,
+    }
+    if owner_counts != expected_owner_counts:
+        raise AssertionError(f"asset chat tenant filtering failed: {owner_counts}")
+
+    cross_thread_sqlstate = issue_2773_expect_denied(
+        conn,
+        role="authenticated",
+        user_id=ISSUE_2773_USER_1,
+        statement=(
+            "insert into public.asset_chat_messages (thread_id, role, content) "
+            "values (%s::uuid, 'user', 'cross-tenant write')"
+        ),
+        params=(ASSET_CHAT_THREAD_2,),
+    )
+    forged_owner_sqlstate = issue_2773_expect_denied(
+        conn,
+        role="authenticated",
+        user_id=ISSUE_2773_USER_1,
+        statement=(
+            "insert into public.asset_chat_threads (user_id, title) "
+            "values (%s::uuid, 'forged owner')"
+        ),
+        params=(ISSUE_2773_USER_2,),
+    )
+
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute("set local role authenticated")
+            cur.execute(
+                "select set_config('request.jwt.claim.sub', %s, true)",
+                (ISSUE_2773_USER_1,),
+            )
+            cur.execute(
+                "insert into public.asset_chat_threads (id, user_id, title) "
+                "values (%s::uuid, %s::uuid, 'cascade smoke')",
+                (ASSET_CHAT_TEMP_THREAD, ISSUE_2773_USER_1),
+            )
+            cur.execute(
+                "insert into public.asset_chat_messages (thread_id, role, content) "
+                "values (%s::uuid, 'user', 'delete with thread')",
+                (ASSET_CHAT_TEMP_THREAD,),
+            )
+            cur.execute(
+                "delete from public.asset_chat_threads where id = %s::uuid",
+                (ASSET_CHAT_TEMP_THREAD,),
+            )
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "select count(*) from public.asset_chat_messages "
+            "where thread_id = %s::uuid",
+            (ASSET_CHAT_TEMP_THREAD,),
+        )
+        cascade_remaining = int(cur.fetchone()[0])
+    conn.commit()
+    if cascade_remaining != 0:
+        raise AssertionError("asset chat thread deletion left orphan messages")
+
+    for table in ASSET_CHAT_TABLES:
+        issue_2773_expect_denied(
+            conn,
+            role="anon",
+            user_id=None,
+            statement=f"select count(*) from public.{table}",
+        )
+
+    return {
+        "enabled_tables": enabled_tables,
+        "policies": policy_names,
+        "missing_claim_counts": missing_claim_counts,
+        "owner_counts": owner_counts,
+        "cross_thread_sqlstate": cross_thread_sqlstate,
+        "forged_owner_sqlstate": forged_owner_sqlstate,
+        "cascade_remaining": cascade_remaining,
+        "anon_access": "denied on both asset chat tables",
+    }
+
+
+def seed_tax_records_fixture(conn: Any) -> None:
+    with conn.cursor() as cur:
+        cur.executemany(
+            "insert into public.tax_records "
+            "(id, user_id, year, type, amount, category, evidence_url) "
+            "values (%s::uuid, %s::uuid, %s, %s, %s, %s, %s)",
+            [
+                (
+                    TAX_RECORD_1,
+                    ISSUE_2773_USER_1,
+                    2026,
+                    "business",
+                    "120000.0000",
+                    "consulting",
+                    "https://example.invalid/evidence/owner-one",
+                ),
+                (
+                    TAX_RECORD_2,
+                    ISSUE_2773_USER_2,
+                    2026,
+                    "furusato",
+                    "20000.0000",
+                    "donation",
+                    None,
+                ),
+            ],
+        )
+    conn.commit()
+
+
+def tax_records_role_count(
+    conn: Any,
+    role: str,
+    user_id: str | None,
+    table: str,
+) -> int:
+    if role not in {"anon", "authenticated", "service_role"}:
+        raise ValueError(f"unexpected role for tax records query: {role}")
+    if table not in TAX_RECORDS_TABLES:
+        raise ValueError(f"unexpected table for tax records query: {table}")
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute(f"set local role {role}")
+            cur.execute(
+                "select set_config('request.jwt.claim.sub', %s, true)",
+                (user_id or "",),
+            )
+            cur.execute(f"select count(*) from public.{table}")
+            row = cur.fetchone()
+    return int(row[0])
+
+
+def check_tax_records_rls(conn: Any) -> dict[str, Any]:
+    with conn.cursor() as cur:
+        cur.execute(
+            "select c.relname from pg_class c "
+            "join pg_namespace n on n.oid = c.relnamespace "
+            "where n.nspname = 'public' and c.relname = any(%s) "
+            "and c.relrowsecurity order by c.relname",
+            (list(TAX_RECORDS_TABLES),),
+        )
+        enabled_tables = [row[0] for row in cur.fetchall()]
+        cur.execute(
+            "select policyname from pg_policies where schemaname = 'public' "
+            "and tablename = 'tax_records' order by policyname"
+        )
+        policy_names = [row[0] for row in cur.fetchall()]
+    conn.commit()
+
+    if enabled_tables != ["tax_records"]:
+        raise AssertionError(f"tax records RLS was not enabled: {enabled_tables}")
+
+    expected_policies = {
+        f"tax_records_{operation}_own"
+        for operation in ("select", "insert", "update", "delete")
+    }
+    if set(policy_names) != expected_policies:
+        raise AssertionError(f"unexpected tax records policy set: {policy_names}")
+
+    authenticated_grants = {"SELECT", "INSERT", "UPDATE", "DELETE"}
+    table_privileges = (
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "TRUNCATE",
+        "REFERENCES",
+        "TRIGGER",
+    )
+    with conn.cursor() as cur:
+        for privilege in table_privileges:
+            cur.execute(
+                "select has_table_privilege(%s, %s, %s)",
+                ("anon", "public.tax_records", privilege),
+            )
+            if bool(cur.fetchone()[0]):
+                raise AssertionError(f"anon retained {privilege} on tax_records")
+            cur.execute(
+                "select has_table_privilege(%s, %s, %s)",
+                ("authenticated", "public.tax_records", privilege),
+            )
+            actual = bool(cur.fetchone()[0])
+            expected = privilege in authenticated_grants
+            if actual != expected:
+                raise AssertionError(
+                    "authenticated privilege mismatch on tax_records: "
+                    f"{privilege} expected {expected}, got {actual}"
+                )
+    conn.commit()
+
+    missing_claim_count = tax_records_role_count(
+        conn,
+        "authenticated",
+        None,
+        "tax_records",
+    )
+    if missing_claim_count != 0:
+        raise AssertionError(
+            f"missing tenant claim exposed tax records: {missing_claim_count}"
+        )
+
+    owner_count = tax_records_role_count(
+        conn,
+        "authenticated",
+        ISSUE_2773_USER_1,
+        "tax_records",
+    )
+    if owner_count != 1:
+        raise AssertionError(f"tax record tenant filtering failed: {owner_count}")
+
+    forged_owner_sqlstate = issue_2773_expect_denied(
+        conn,
+        role="authenticated",
+        user_id=ISSUE_2773_USER_1,
+        statement=(
+            "insert into public.tax_records "
+            "(user_id, year, type, amount, category) "
+            "values (%s::uuid, 2026, 'medical', 1000, 'forged owner')"
+        ),
+        params=(ISSUE_2773_USER_2,),
+    )
+
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute("set local role authenticated")
+            cur.execute(
+                "select set_config('request.jwt.claim.sub', %s, true)",
+                (ISSUE_2773_USER_1,),
+            )
+            cur.execute(
+                "insert into public.tax_records "
+                "(user_id, year, type, amount, category) "
+                "values (%s::uuid, 2026, 'medical', 0, 'owner smoke') "
+                "returning id",
+                (ISSUE_2773_USER_1,),
+            )
+            temporary_record = cur.fetchone()[0]
+            cur.execute(
+                "update public.tax_records set category = 'owner updated' "
+                "where id = %s",
+                (temporary_record,),
+            )
+            cur.execute(
+                "delete from public.tax_records where id = %s",
+                (temporary_record,),
+            )
+
+    issue_2773_expect_denied(
+        conn,
+        role="anon",
+        user_id=None,
+        statement="select count(*) from public.tax_records",
+    )
+
+    return {
+        "enabled_tables": enabled_tables,
+        "policies": policy_names,
+        "missing_claim_count": missing_claim_count,
+        "owner_count": owner_count,
+        "forged_owner_sqlstate": forged_owner_sqlstate,
+        "owner_crud": "passed",
+        "anon_access": "denied",
+    }
 
 
 def check_actual_edge_function(args: argparse.Namespace, artifacts_dir: Path) -> None:
@@ -305,6 +1136,17 @@ def run_smoke(args: argparse.Namespace) -> int:
         with psycopg.connect(connection_url) as conn:
             for fixture in sql_files(args.sql_dir):
                 apply_sql_fixture(conn, fixture, artifacts_dir)
+            apply_sql_fixture(conn, ISSUE_2773_RLS_MIGRATION, artifacts_dir)
+            seed_issue_2773_fixture(conn)
+            tenant_rls = check_issue_2773_rls(conn)
+            apply_sql_fixture(conn, ASSET_CHAT_MIGRATION, artifacts_dir)
+            seed_asset_chat_fixture(conn)
+            asset_chat_rls = check_asset_chat_rls(conn)
+            apply_sql_fixture(conn, TAX_RECORDS_MIGRATION, artifacts_dir)
+            seed_tax_records_fixture(conn)
+            tax_records_rls = check_tax_records_rls(conn)
+            for video_sql in VIDEO_ARTIFACT_SQL_FILES:
+                apply_sql_fixture(conn, video_sql, artifacts_dir)
             counts = {table: table_count(conn, table) for table in REQUIRED_TABLES}
 
         edge_result = run_edge_db_fixture(connection_url, args, artifacts_dir)
@@ -314,6 +1156,10 @@ def run_smoke(args: argparse.Namespace) -> int:
         "database": {
             "url": redact_url(connection_url),
             "tables": counts,
+            "tenant_rls": tenant_rls,
+            "asset_chat_rls": asset_chat_rls,
+            "tax_records_rls": tax_records_rls,
+            "video_artifact_contract": "passed",
         },
         "edge_fixture": {
             "path": args.edge_fixture.relative_to(ROOT).as_posix(),
