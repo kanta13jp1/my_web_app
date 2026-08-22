@@ -40,6 +40,22 @@ class CicdEfficiencyTest(unittest.TestCase):
             deploy,
         )
 
+        tag_step = deploy.split("- name: Push Release Tag", 1)[1].split(
+            "- name: Create GitHub Release", 1
+        )[0]
+        self.assertNotIn("continue-on-error", tag_step)
+        self.assertIn(
+            'gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs"',
+            tag_step,
+        )
+        self.assertIn('-f sha="$GITHUB_SHA"', tag_step)
+        self.assertIn("target_commitish: ${{ github.sha }}", deploy)
+        self.assertIn("- name: Verify Release Tag Target", deploy)
+        self.assertIn(
+            "Release tag $TAG points to $REF_SHA, expected $GITHUB_SHA",
+            deploy,
+        )
+
     def test_minimal_gate_does_not_poll_ci(self) -> None:
         workflow = self.read(".github/workflows/minimal-e2e-gate.yml")
         self.assertNotIn("Wait for deterministic CI checks", workflow)
