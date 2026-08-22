@@ -128,6 +128,7 @@ void main() {
       '/video-ad-generator': 'ViralAdGeneratorPage',
       '/viral-video-generator': 'ViralAdGeneratorPage',
       '/wip-limit': 'DigestQueuePage',
+      '/local-election-schedule': 'ElectionVictoryPage',
     };
     final cases = _routeCases();
 
