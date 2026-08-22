@@ -8,8 +8,8 @@ import '../models/asset_liability_workbook.dart';
 import '../models/asset_subscription_statement_scan.dart';
 import 'offline_secure_mode_settings_service.dart';
 
-typedef AssetSubscriptionStatementInvoker =
-    Future<Map<String, dynamic>> Function(Map<String, dynamic> body);
+typedef AssetSubscriptionStatementInvoker = Future<Map<String, dynamic>>
+    Function(Map<String, dynamic> body);
 
 abstract interface class AssetSubscriptionStatementAnalyzer {
   Future<List<AssetSubscriptionStatementCandidate>> analyze(
@@ -110,9 +110,9 @@ class AssetSubscriptionStatementScanService
     AssetSubscriptionStatementInvoker? invoker,
     OfflineSecureModeSettingsService offlineSettingsService =
         const OfflineSecureModeSettingsService(),
-  }) : _supabase = supabase,
-       _invoker = invoker,
-       _offlineSettingsService = offlineSettingsService;
+  })  : _supabase = supabase,
+        _invoker = invoker,
+        _offlineSettingsService = offlineSettingsService;
 
   @override
   Future<List<AssetSubscriptionStatementCandidate>> analyze(
@@ -145,11 +145,9 @@ class AssetSubscriptionStatementScanService
     final rawCandidates = data['candidates'];
     if (rawCandidates is! List) return const [];
     final result = <AssetSubscriptionStatementCandidate>[];
-    for (
-      var i = 0;
-      i < rawCandidates.length && result.length < maxCandidates;
-      i++
-    ) {
+    for (var i = 0;
+        i < rawCandidates.length && result.length < maxCandidates;
+        i++) {
       final raw = rawCandidates[i];
       if (raw is! Map) continue;
       final candidate = _candidateFromMap(Map<String, dynamic>.from(raw), i);

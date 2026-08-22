@@ -209,11 +209,11 @@ class _FakePicker implements AssetSubscriptionStatementImagePicker {
   final List<AssetSubscriptionStatementImage> images;
 
   _FakePicker(Object? value)
-    : images = value is AssetSubscriptionStatementImage
-          ? <AssetSubscriptionStatementImage>[value]
-          : List<AssetSubscriptionStatementImage>.of(
-              value as List<AssetSubscriptionStatementImage>? ?? const [],
-            );
+      : images = value is AssetSubscriptionStatementImage
+            ? <AssetSubscriptionStatementImage>[value]
+            : List<AssetSubscriptionStatementImage>.of(
+                value as List<AssetSubscriptionStatementImage>? ?? const [],
+              );
 
   @override
   Future<List<AssetSubscriptionStatementImage>> pickImages() async => images;
@@ -227,7 +227,8 @@ class _FakeAnalyzer implements AssetSubscriptionStatementAnalyzer {
   @override
   Future<List<AssetSubscriptionStatementCandidate>> analyze(
     AssetSubscriptionStatementImage image,
-  ) async => candidates;
+  ) async =>
+      candidates;
 }
 
 class _PerImageAnalyzer implements AssetSubscriptionStatementAnalyzer {
