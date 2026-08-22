@@ -164,6 +164,7 @@ import '../pages/work_menu_page.dart';
 import '../pages/workflow_templates_page.dart';
 import '../pages/crm_sales_pipeline_page.dart';
 import '../pages/travel_itinerary_page.dart';
+import '../pages/art_museum_directory_page.dart';
 import '../pages/virtual_whiteboard_page.dart';
 import '../pages/recipe_meal_planner_page.dart';
 import '../pages/language_learning_page.dart';
@@ -2415,6 +2416,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'TripAdvisor',
       ],
       onOpen: (context) => _pushPage(context, const TravelItineraryPage()),
+    ),
+    HomeToolEntry(
+      id: 'art-museums',
+      sectionId: 'knowledge',
+      title: '全国の美術館',
+      subtitle: '文化庁データから全国の美術館を地域・都道府県・名称で探す',
+      icon: Icons.museum_outlined,
+      color: const Color(0xFF7C3AED),
+      keywords: const <String>[
+        '美術館',
+        'アート',
+        '博物館',
+        '文化',
+        '展覧会',
+        '都道府県',
+        'museum',
+        'art',
+      ],
+      onOpen: (context) => _pushPage(context, const ArtMuseumDirectoryPage()),
     ),
     HomeToolEntry(
       id: 'virtual-whiteboard',
