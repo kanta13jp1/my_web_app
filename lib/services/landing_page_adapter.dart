@@ -134,10 +134,10 @@ class LandingPageViewStats {
   });
 
   const LandingPageViewStats.empty()
-    : todayViews = 0,
-      monthViews = 0,
-      totalViews = 0,
-      series = const <LandingPageViewPoint>[];
+      : todayViews = 0,
+        monthViews = 0,
+        totalViews = 0,
+        series = const <LandingPageViewPoint>[];
 }
 
 class LandingSocialProofStats {
@@ -149,7 +149,9 @@ class LandingSocialProofStats {
     required this.publicMemoCount,
   });
 
-  const LandingSocialProofStats.empty() : totalUsers = 0, publicMemoCount = 0;
+  const LandingSocialProofStats.empty()
+      : totalUsers = 0,
+        publicMemoCount = 0;
 }
 
 abstract interface class LandingPageAdapter {
@@ -274,12 +276,10 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
 
     try {
       final dynamic raw = await client.rpc('get_lp_view_stats');
-      final data = raw is Map
-          ? Map<String, dynamic>.from(raw)
-          : <String, dynamic>{};
-      final seriesRaw = data['series'] is List
-          ? data['series'] as List
-          : const <dynamic>[];
+      final data =
+          raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+      final seriesRaw =
+          data['series'] is List ? data['series'] as List : const <dynamic>[];
 
       final series = <LandingPageViewPoint>[];
       for (final rowRaw in seriesRaw) {
@@ -372,9 +372,8 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
       );
     } on FunctionException catch (error) {
       final details = error.details;
-      final errorCode = details is Map
-          ? details['error']?.toString().trim()
-          : null;
+      final errorCode =
+          details is Map ? details['error']?.toString().trim() : null;
       final canUseInstantPreview =
           details is Map && details['canUseInstantPreview'] == true;
       throw LandingTrialPreviewException(
