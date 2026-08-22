@@ -33489,3 +33489,11 @@ watcher が名指しできるのはスナップショット時点で**生存し�
 - 前回の「再クロール待ち」から発見シグナル生成まで掘り下げ、全47 URLの`lastmod`をページ更新と無関係なデプロイ日に揃える実装を確認した。
 - Googleが検証可能な重要更新日のみを利用できるよう、`date_modified`を明示した`/philosophy`だけに`lastmod=2026-08-19`を出し、未確認46 URLでは省略するよう修正した。URL一覧・本文・導線は変更していない。
 - 検証: SEO生成テスト17件、Python構文確認、`flutter analyze --no-pub`、Web release build、47 URL/1 lastmodの生成物監査、ローカルブラウザ描画が成功。順位への寄与は未断定で、次回は無関係デプロイ後の日付維持と週次のクロール／インデックス変化を確認する。
+
+### 販売基盤セッション記録: AI成果物の公開ループ (2026-08-22 JST)
+
+- ChatGPTの明示exportとCodex・Claude Code・Antigravityの指定workspace成果物を、画像・音声・動画・デザイン・文章・プロンプト・アイデア・ゲーム・テンプレート・bundleの商品候補として扱う管理ループを追加した。
+- 取込は指定pathだけをlocal scanし、SHA-256でdedupする。秘密情報・PIIのmatched valueやファイル本文はDBへ送らず、出所、権利・同意、人間の寄与、価格、private object、size、hashの9 hard gateをstage別に記録する。
+- `ready`とlive公開を分離し、linked商品は全gateと人手承認が揃うまで`is_active=true`をDB triggerで拒否する。問題時は販売停止、stage rollback、修正版の再取込で閉ループに戻す。
+- 管理画面、migration contract、local intake test、responsive widget test、運用docs、repository skillを同じ設計へ同期した。既存購入・download・Stripe Priceをrollbackで削除しない。
+- 検証はFlutter 12件、local intake 5件、変更対象の静的解析、linked Supabaseのmigration dry-run、1440px/390pxブラウザ表示で実施し、live商品自体はactive化していない。

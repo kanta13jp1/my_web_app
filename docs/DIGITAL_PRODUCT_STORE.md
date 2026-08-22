@@ -2,6 +2,11 @@
 
 Issue: [#4627](https://github.com/kanta13jp1/my_web_app/issues/4627)
 
+AI支援の中間成果物を商品候補へ変える場合は、先に
+[AI支援成果物のデジタル商品公開ループ](ARTIFACT_PUBLISHING_LOOP.md)で出所、秘密情報、
+PII、権利、人間の寄与、価格、private object、SHA-256をレビューしてください。
+`/admin/artifact-publishing`の`ready`はlive公開の許可ではなく、最終判断の準備完了です。
+
 画像、音声、動画、デザイン、文章、プロンプト、アイデア、ゲーム、テンプレートを、
 運営者本人が買い切り商品として販売するための手順です。第三者出品や売上分配は扱いません。
 
@@ -144,6 +149,10 @@ values (
 ## 7. 販売を開始・停止する
 
 法務表示と検証が完了した後だけ公開します。
+
+`artifact_candidates.product_id`にlinkした商品は、候補が`ready`で全hard gateと人手承認を
+満たすまで、DB triggerが`is_active = true`を拒否します。次のSQLは対象、環境、価格、
+Storage実測値、rollback手順を人が再確認し、live DB変更を明示承認した後だけ実行します。
 
 ```sql
 update public.shop_products
