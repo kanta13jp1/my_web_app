@@ -29,6 +29,17 @@ class CicdEfficiencyTest(unittest.TestCase):
         self.assertIn("if: steps.changes.outputs.edge == 'true'", deploy)
         self.assertIn("if: steps.changes.outputs.migration == 'true'", deploy)
 
+    def test_deploy_uses_global_semver_and_rejects_tag_mismatch(self) -> None:
+        deploy = self.read(".github/workflows/deploy-prod.yml")
+        self.assertNotIn("git describe --tags", deploy)
+        self.assertIn("git tag --list 'v[0-9]*.[0-9]*.[0-9]*'", deploy)
+        self.assertIn("grep -E '^v[0-9]+\\.[0-9]+\\.[0-9]+$'", deploy)
+        self.assertIn("sort -V", deploy)
+        self.assertIn(
+            "Existing tag $TAG points to $EXISTING_TARGET, expected $GITHUB_SHA",
+            deploy,
+        )
+
     def test_minimal_gate_does_not_poll_ci(self) -> None:
         workflow = self.read(".github/workflows/minimal-e2e-gate.yml")
         self.assertNotIn("Wait for deterministic CI checks", workflow)
