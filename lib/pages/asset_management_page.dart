@@ -1906,8 +1906,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .fold<int>(
             0,
             (total, cost) =>
-                total +
-                cost.resolveJpyAmount(_usdJpyRate?.jpyPerUnit).round(),
+                total + cost.resolveJpyAmount(_usdJpyRate?.jpyPerUnit).round(),
           );
       totals[key] = (totals[key] ?? 0) + recurringTotal;
     }
@@ -18461,8 +18460,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
                 _buildOverviewStatChip(
                   label: '負債合計',
-                  value:
-                      hasAssetLiabilityData ? _formatYen(totalDebt) : '未登録',
+                  value: hasAssetLiabilityData ? _formatYen(totalDebt) : '未登録',
                   color: const Color(0xFFFF6B35),
                 ),
               ],
