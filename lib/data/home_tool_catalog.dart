@@ -321,7 +321,7 @@ Future<void> _pushPage(BuildContext context, Widget page) {
 String? _homeToolRoutePathForId(String id) {
   switch (id) {
     case 'digital-danshari':
-      return '/real-world-danshari';
+      return '/digital-danshari';
     case 'agent-org':
       return '/agents';
     case 'admin-analytics':

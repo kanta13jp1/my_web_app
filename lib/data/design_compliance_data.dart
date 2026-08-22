@@ -717,7 +717,7 @@ const List<PageComplianceRecord> kDesignComplianceData = [
     category: DesignCategory.ai,
   ),
   PageComplianceRecord(
-    route: '/danshari',
+    route: '/digital-danshari',
     name: '断捨離ガイド',
     category: DesignCategory.personal,
   ),

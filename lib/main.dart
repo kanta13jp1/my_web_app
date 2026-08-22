@@ -598,6 +598,7 @@ Route<dynamic> generateAppRoute(
         ),
       );
     case '/danshari':
+    case '/digital-danshari':
       return MaterialPageRoute(builder: (_) => const DanshariPage());
     case '/memory-drill':
       return MaterialPageRoute(builder: (_) => const MemoryDrillPage());
