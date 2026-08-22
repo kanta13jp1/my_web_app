@@ -129,6 +129,7 @@ void main() {
       '/viral-video-generator': 'ViralAdGeneratorPage',
       '/wip-limit': 'DigestQueuePage',
       '/local-election-schedule': 'ElectionVictoryPage',
+      '/stats': 'RewardsPage',
     };
     final cases = _routeCases();
 
