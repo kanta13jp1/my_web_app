@@ -70,12 +70,10 @@ class EvaluateSpreadsheetFormulaUseCase {
           final values = <double>[];
           final firstRow = start.row < end.row ? start.row : end.row;
           final lastRow = start.row > end.row ? start.row : end.row;
-          final firstColumn = start.column < end.column
-              ? start.column
-              : end.column;
-          final lastColumn = start.column > end.column
-              ? start.column
-              : end.column;
+          final firstColumn =
+              start.column < end.column ? start.column : end.column;
+          final lastColumn =
+              start.column > end.column ? start.column : end.column;
           for (var row = firstRow; row <= lastRow; row++) {
             for (var column = firstColumn; column <= lastColumn; column++) {
               final cell = CellAddress(row: row, column: column);
@@ -119,17 +117,19 @@ class _FormulaException implements Exception {
 }
 
 typedef _CellResolver = double Function(CellAddress address);
-typedef _RangeResolver =
-    List<double> Function(CellAddress start, CellAddress end);
+typedef _RangeResolver = List<double> Function(
+  CellAddress start,
+  CellAddress end,
+);
 
 class _FormulaParser {
   _FormulaParser(
     String source, {
     required _CellResolver resolveCell,
     required _RangeResolver resolveRange,
-  }) : _tokens = _FormulaLexer(source).scan(),
-       _resolveCell = resolveCell,
-       _resolveRange = resolveRange;
+  })  : _tokens = _FormulaLexer(source).scan(),
+        _resolveCell = resolveCell,
+        _resolveRange = resolveRange;
 
   final List<_FormulaToken> _tokens;
   final _CellResolver _resolveCell;
@@ -152,9 +152,8 @@ class _FormulaParser {
     ])) {
       final operator = _previous.type;
       final right = _term();
-      value = operator == _FormulaTokenType.plus
-          ? value + right
-          : value - right;
+      value =
+          operator == _FormulaTokenType.plus ? value + right : value - right;
     }
     return value;
   }
@@ -170,9 +169,8 @@ class _FormulaParser {
       if (operator == _FormulaTokenType.slash && right == 0) {
         throw const _FormulaException('#DIV/0!');
       }
-      value = operator == _FormulaTokenType.star
-          ? value * right
-          : value / right;
+      value =
+          operator == _FormulaTokenType.star ? value * right : value / right;
     }
     return value;
   }
@@ -231,19 +229,15 @@ class _FormulaParser {
 
     return switch (name) {
       'SUM' => values.fold<double>(0, (sum, value) => sum + value),
-      'AVERAGE' =>
-        values.isEmpty
-            ? throw const _FormulaException('#DIV/0!')
-            : values.fold<double>(0, (sum, value) => sum + value) /
-                  values.length,
-      'MIN' =>
-        values.isEmpty
-            ? 0
-            : values.reduce((left, right) => left < right ? left : right),
-      'MAX' =>
-        values.isEmpty
-            ? 0
-            : values.reduce((left, right) => left > right ? left : right),
+      'AVERAGE' => values.isEmpty
+          ? throw const _FormulaException('#DIV/0!')
+          : values.fold<double>(0, (sum, value) => sum + value) / values.length,
+      'MIN' => values.isEmpty
+          ? 0
+          : values.reduce((left, right) => left < right ? left : right),
+      'MAX' => values.isEmpty
+          ? 0
+          : values.reduce((left, right) => left > right ? left : right),
       _ => throw const _FormulaException('#NAME?'),
     };
   }
