@@ -6,8 +6,11 @@ $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $containerName = "mwa-video-sql-test-$PID"
 $postgresPassword = 'local-video-contract-only'
 $migrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260819165405_create_first_party_video_service.sql'
+$artifactFixturePath = Join-Path $repositoryRoot 'supabase/tests/video_artifact_review_loop_pre_migration.sql'
+$artifactMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260822084126_add_video_artifact_review_loop.sql'
 $bootstrapPath = Join-Path $repositoryRoot 'supabase/tests/video_service_bootstrap.sql'
 $contractPath = Join-Path $repositoryRoot 'supabase/tests/first_party_video_service_contract.sql'
+$artifactContractPath = Join-Path $repositoryRoot 'supabase/tests/video_artifact_review_loop_contract.sql'
 
 try {
   docker run --detach --rm `
@@ -34,7 +37,14 @@ try {
     throw 'Temporary PostgreSQL did not become ready.'
   }
 
-  foreach ($sqlPath in @($bootstrapPath, $migrationPath, $contractPath)) {
+  foreach ($sqlPath in @(
+      $bootstrapPath,
+      $migrationPath,
+      $artifactFixturePath,
+      $artifactMigrationPath,
+      $contractPath,
+      $artifactContractPath
+    )) {
     Get-Content -LiteralPath $sqlPath -Raw |
       docker exec --interactive $containerName `
         psql --username postgres --dbname postgres --set ON_ERROR_STOP=1

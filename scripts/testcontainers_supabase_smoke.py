@@ -61,6 +61,14 @@ TAX_RECORDS_MIGRATION = (
 TAX_RECORDS_TABLES = ("tax_records",)
 TAX_RECORD_1 = "00000000-0000-4000-8000-000000002489"
 TAX_RECORD_2 = "00000000-0000-4000-8000-000000002490"
+VIDEO_ARTIFACT_SQL_FILES = (
+    ROOT / "supabase" / "tests" / "video_service_bootstrap.sql",
+    ROOT / "supabase" / "migrations" / "20260819165405_create_first_party_video_service.sql",
+    ROOT / "supabase" / "tests" / "video_artifact_review_loop_pre_migration.sql",
+    ROOT / "supabase" / "migrations" / "20260822084126_add_video_artifact_review_loop.sql",
+    ROOT / "supabase" / "tests" / "first_party_video_service_contract.sql",
+    ROOT / "supabase" / "tests" / "video_artifact_review_loop_contract.sql",
+)
 EDGE_FIXTURE_ENV_ALLOW = (
     "DATABASE_URL",
     "PORT",
@@ -284,6 +292,15 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "authenticated users see only their own tax records",
             "authenticated users cannot forge another owner",
             "authenticated owner CRUD succeeds",
+        ],
+        "video_artifact_contract": [
+            path.relative_to(ROOT).as_posix() for path in VIDEO_ARTIFACT_SQL_FILES
+        ],
+        "video_artifact_checks": [
+            "existing successful jobs are backfilled as private sale candidates",
+            "reviews advance rights/privacy readiness without auto-publishing",
+            "next-generation jobs preserve source artifact and review lineage",
+            "original provenance is immutable and lifecycle evidence is append-only",
         ],
         "edge_db_fixture": edge_fixture.relative_to(ROOT).as_posix(),
         "actual_edge_checks": [
@@ -1128,6 +1145,8 @@ def run_smoke(args: argparse.Namespace) -> int:
             apply_sql_fixture(conn, TAX_RECORDS_MIGRATION, artifacts_dir)
             seed_tax_records_fixture(conn)
             tax_records_rls = check_tax_records_rls(conn)
+            for video_sql in VIDEO_ARTIFACT_SQL_FILES:
+                apply_sql_fixture(conn, video_sql, artifacts_dir)
             counts = {table: table_count(conn, table) for table in REQUIRED_TABLES}
 
         edge_result = run_edge_db_fixture(connection_url, args, artifacts_dir)
@@ -1140,6 +1159,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "tenant_rls": tenant_rls,
             "asset_chat_rls": asset_chat_rls,
             "tax_records_rls": tax_records_rls,
+            "video_artifact_contract": "passed",
         },
         "edge_fixture": {
             "path": args.edge_fixture.relative_to(ROOT).as_posix(),
