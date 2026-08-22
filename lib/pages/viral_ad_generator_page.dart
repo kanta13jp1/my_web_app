@@ -1390,8 +1390,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
               )
             else
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: _statusColor(status).withAlpha(25),
                   borderRadius: BorderRadius.circular(12),
