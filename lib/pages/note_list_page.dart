@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/note_semantic_search_service.dart';
 import '../services/public_memo_service.dart';
 import 'note_editor_page.dart';
 
@@ -38,11 +40,13 @@ class _LocalDraftEntry {
 class NoteListPage extends StatefulWidget {
   final bool prioritizeShareCandidates;
   final SupabaseClient? supabaseClient;
+  final NoteSemanticSearchDataSource? semanticSearchService;
 
   const NoteListPage({
     super.key,
     this.prioritizeShareCandidates = false,
     this.supabaseClient,
+    this.semanticSearchService,
   });
 
   @override
@@ -52,7 +56,9 @@ class NoteListPage extends StatefulWidget {
 class _NoteListPageState extends State<NoteListPage> {
   late final SupabaseClient _supabase;
   late final PublicMemoService _publicMemoService;
+  late final NoteSemanticSearchDataSource _semanticSearchService;
   static const String _draftKeyPrefix = 'note_editor_draft_';
+  static const int _notesPageSize = 500;
   bool _isLoading = true;
   bool _showFavoritesOnly = false;
   List<Map<String, dynamic>> _notes = [];
@@ -62,17 +68,27 @@ class _NoteListPageState extends State<NoteListPage> {
   // Win版#108: メモ検索 (title + content 部分一致・case insensitive)
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  Timer? _searchDebounce;
+  List<NoteSearchResult> _semanticSearchResults = const <NoteSearchResult>[];
+  String _semanticSearchMode = 'text_fallback';
+  String? _semanticSearchError;
+  bool _isSemanticSearching = false;
+  bool _semanticSearchCompleted = false;
+  int _semanticSearchRequestId = 0;
 
   @override
   void initState() {
     super.initState();
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
     _publicMemoService = PublicMemoService(_supabase);
+    _semanticSearchService =
+        widget.semanticSearchService ?? NoteSemanticSearchService(_supabase);
     _fetchNotes();
   }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -84,6 +100,107 @@ class _NoteListPageState extends State<NoteListPage> {
     final title = (note['title'] as String? ?? '').toLowerCase();
     final content = (note['content'] as String? ?? '').toLowerCase();
     return title.contains(q) || content.contains(q);
+  }
+
+  void _handleSearchChanged(String value) {
+    final query = value.trim();
+    _searchDebounce?.cancel();
+    final requestId = ++_semanticSearchRequestId;
+    setState(() {
+      _searchQuery = query;
+      _semanticSearchResults = const <NoteSearchResult>[];
+      _semanticSearchMode = 'text_fallback';
+      _semanticSearchError = null;
+      _semanticSearchCompleted = false;
+      _isSemanticSearching = query.isNotEmpty;
+    });
+    if (query.isEmpty) return;
+
+    _searchDebounce = Timer(
+      const Duration(milliseconds: 350),
+      () => unawaited(_runSemanticSearch(query, requestId)),
+    );
+  }
+
+  void _submitSearch(String value) {
+    final query = value.trim();
+    _searchDebounce?.cancel();
+    if (query.isEmpty) {
+      _handleSearchChanged('');
+      return;
+    }
+    final requestId = ++_semanticSearchRequestId;
+    setState(() {
+      _searchQuery = query;
+      _semanticSearchResults = const <NoteSearchResult>[];
+      _semanticSearchMode = 'text_fallback';
+      _semanticSearchError = null;
+      _semanticSearchCompleted = false;
+      _isSemanticSearching = true;
+    });
+    unawaited(_runSemanticSearch(query, requestId));
+  }
+
+  Future<void> _runSemanticSearch(String query, int requestId) async {
+    try {
+      final response = await _semanticSearchService.search(query);
+      if (!mounted ||
+          requestId != _semanticSearchRequestId ||
+          query != _searchQuery) {
+        return;
+      }
+      setState(() {
+        _semanticSearchResults = response.results;
+        _semanticSearchMode = response.searchMode;
+        _semanticSearchCompleted = true;
+        _isSemanticSearching = false;
+      });
+    } catch (error) {
+      if (!mounted ||
+          requestId != _semanticSearchRequestId ||
+          query != _searchQuery) {
+        return;
+      }
+      setState(() {
+        _semanticSearchError = error.toString();
+        _semanticSearchCompleted = false;
+        _isSemanticSearching = false;
+      });
+    }
+  }
+
+  List<Map<String, dynamic>> _visibleNotesForSearch(
+    List<Map<String, dynamic>> notes,
+  ) {
+    final locallyFiltered = _showFavoritesOnly
+        ? notes.where(_isFavorite).toList(growable: false)
+        : notes;
+    if (_searchQuery.isEmpty) return locallyFiltered;
+    if (!_semanticSearchCompleted || _semanticSearchError != null) {
+      return locallyFiltered.where(_matchesSearch).toList();
+    }
+
+    final notesById = <String, Map<String, dynamic>>{
+      for (final note in notes) _noteId(note): note,
+    };
+    return _semanticSearchResults
+        .map(
+          (result) => result.toNoteRow(localNote: notesById[result.id]),
+        )
+        .where((note) => !_showFavoritesOnly || _isFavorite(note))
+        .toList(growable: false);
+  }
+
+  String _searchStatusText(int resultCount) {
+    if (_isSemanticSearching) return '意味検索中...';
+    if (_semanticSearchError != null) {
+      return 'オンライン検索を利用できないため端末内の一致を表示';
+    }
+    if (_semanticSearchCompleted) {
+      final mode = _semanticSearchMode == 'ai' ? '意味検索' : 'あいまい検索';
+      return '$resultCount件 / $mode';
+    }
+    return '$resultCount件';
   }
 
   Future<void> _fetchNotes() async {
@@ -102,17 +219,7 @@ class _NoteListPageState extends State<NoteListPage> {
         return;
       }
 
-      final data = await _supabase
-          .from('notes')
-          .select(
-            'id, title, content, created_at, is_pinned, is_favorite, reminder_date',
-          )
-          .eq('user_id', userId)
-          .eq('is_archived', false)
-          .order('is_pinned', ascending: false)
-          .order('is_favorite', ascending: false)
-          .order('created_at', ascending: false);
-      final notes = List<Map<String, dynamic>>.from(data);
+      final notes = await _fetchAllNotes(userId);
       final results = await Future.wait<dynamic>([
         _loadDraftEntries(notes),
         _loadPublishedNoteIds(userId),
@@ -138,6 +245,28 @@ class _NoteListPageState extends State<NoteListPage> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchAllNotes(String userId) async {
+    final notes = <Map<String, dynamic>>[];
+    for (var from = 0;; from += _notesPageSize) {
+      final data = await _supabase
+          .from('notes')
+          .select(
+            'id, title, content, created_at, is_pinned, is_favorite, reminder_date',
+          )
+          .eq('user_id', userId)
+          .eq('is_archived', false)
+          .order('is_pinned', ascending: false)
+          .order('is_favorite', ascending: false)
+          .order('created_at', ascending: false)
+          .order('id', ascending: false)
+          .range(from, from + _notesPageSize - 1);
+      final page = List<Map<String, dynamic>>.from(data);
+      notes.addAll(page);
+      if (page.length < _notesPageSize) break;
+    }
+    return notes;
   }
 
   Future<Set<String>> _loadPublishedNoteIds(String userId) async {
@@ -1054,12 +1183,7 @@ class _NoteListPageState extends State<NoteListPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Win版#108: お気に入り → 検索 の順でフィルタ適用
-    final favoritesFiltered =
-        _showFavoritesOnly ? _notes.where(_isFavorite).toList() : _notes;
-    final visibleNotes = _searchQuery.isEmpty
-        ? favoritesFiltered
-        : favoritesFiltered.where(_matchesSearch).toList();
+    final visibleNotes = _visibleNotesForSearch(_notes);
     final reminderEntries = _reminderEntries(visibleNotes);
     final reminderIds =
         reminderEntries.map(_noteId).where((id) => id.isNotEmpty).toSet();
@@ -1078,7 +1202,8 @@ class _NoteListPageState extends State<NoteListPage> {
             .where((note) => !shareCandidateIds.contains(_noteId(note)))
             .toList()
         : reminderExcludedNotes;
-    final hasAnyEntries = _draftEntries.isNotEmpty || visibleNotes.isNotEmpty;
+    final hasAnyEntries = (_searchQuery.isEmpty && _draftEntries.isNotEmpty) ||
+        visibleNotes.isNotEmpty;
     final pageTitle =
         _showFavoritesOnly ? 'CKO OFFICE (お気に入り)' : 'CKO OFFICE (メモ一覧)';
 
@@ -1123,14 +1248,15 @@ class _NoteListPageState extends State<NoteListPage> {
             child: TextField(
               key: const Key('note_list_page_search_field'),
               controller: _searchController,
-              onChanged: (value) => setState(() => _searchQuery = value.trim()),
+              onChanged: _handleSearchChanged,
+              onSubmitted: _submitSearch,
               style: const TextStyle(
                 color: Color(0xFFE5E7EB),
                 fontSize: 14,
                 height: 1.5,
               ),
               decoration: InputDecoration(
-                hintText: 'タイトル・本文で検索...',
+                hintText: '自然な言葉でメモを検索...',
                 hintStyle: const TextStyle(
                   color: Color(0xFF94A3B8),
                   height: 1.5,
@@ -1150,7 +1276,7 @@ class _NoteListPageState extends State<NoteListPage> {
                         tooltip: '検索クリア',
                         onPressed: () {
                           _searchController.clear();
-                          setState(() => _searchQuery = '');
+                          _handleSearchChanged('');
                         },
                       )
                     : null,
@@ -1180,18 +1306,24 @@ class _NoteListPageState extends State<NoteListPage> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.filter_list,
-                    color: Color(0xFF6366F1),
+                  Icon(
+                    _isSemanticSearching
+                        ? Icons.hourglass_top
+                        : Icons.auto_awesome_outlined,
+                    color: const Color(0xFF6366F1),
                     size: 14,
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    '${visibleNotes.length} 件 ヒット',
-                    style: const TextStyle(
-                      color: Color(0xFF94A3B8),
-                      fontSize: 12,
-                      height: 1.5,
+                  Expanded(
+                    child: Text(
+                      _searchStatusText(visibleNotes.length),
+                      style: const TextStyle(
+                        color: Color(0xFF94A3B8),
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -1252,7 +1384,8 @@ class _NoteListPageState extends State<NoteListPage> {
                     : ListView(
                         padding: const EdgeInsets.all(16),
                         children: [
-                          if (_draftEntries.isNotEmpty) ...[
+                          if (_searchQuery.isEmpty &&
+                              _draftEntries.isNotEmpty) ...[
                             _buildSectionHeader(
                               '下書き',
                               'X の下書きのように、書きかけのメモを一覧からすぐ再開できます。',
@@ -1332,7 +1465,11 @@ class _NoteListPageState extends State<NoteListPage> {
       context,
       MaterialPageRoute(
         settings: const RouteSettings(name: '/note-editor'),
-        builder: (_) => NoteEditorPage(noteId: noteId),
+        builder: (_) => NoteEditorPage(
+          noteId: noteId,
+          supabaseClient: _supabase,
+          semanticSearchService: _semanticSearchService,
+        ),
       ),
     );
     _fetchNotes();
