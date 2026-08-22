@@ -336,6 +336,36 @@ class DigitalProductPage extends StatefulWidget {
   State<DigitalProductPage> createState() => _DigitalProductPageState();
 }
 
+class _ProductScreenshot {
+  const _ProductScreenshot({
+    required this.asset,
+    required this.labelJa,
+    required this.captionJa,
+  });
+
+  final String asset;
+  final String labelJa;
+  final String captionJa;
+}
+
+const _hexcivScreenshots = <_ProductScreenshot>[
+  _ProductScreenshot(
+    asset: 'assets/landing_journey/hexciv_turn30.png',
+    labelJa: 'ターン30',
+    captionJa: '序盤。各文明の小さな領域が点在し、地図の大半には開拓の余地が残っています。',
+  ),
+  _ProductScreenshot(
+    asset: 'assets/landing_journey/hexciv_turn80.png',
+    labelJa: 'ターン80',
+    captionJa: '中盤。国境が接し、都市と部隊が増えて文明ごとの勢力差が現れます。',
+  ),
+  _ProductScreenshot(
+    asset: 'assets/landing_journey/hexciv_turn150.png',
+    labelJa: 'ターン150',
+    captionJa: '終盤。広い版図と多数の部隊が並び、序盤からの発展を一望できます。',
+  ),
+];
+
 class _DigitalProductPageState extends State<DigitalProductPage> {
   late final ShopProductViewModel _viewModel = ShopProductViewModel(
     gateway: widget.service ?? ShopService(),
@@ -345,6 +375,7 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
       widget.urlLauncher ?? _launchShopUrl;
   late final String _source = ShopFunnelService.sourceFromUri(Uri.base);
   late final String _campaign = ShopFunnelService.campaignFromUri(Uri.base);
+  int _selectedProductScreenshotIndex = 0;
 
   @override
   void initState() {
@@ -492,6 +523,10 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
           },
         ),
         const SizedBox(height: 24),
+        if (product.id == ShopService.hexcivProductId) ...[
+          _productScreenshotGallery(),
+          const SizedBox(height: 24),
+        ],
         _actionArea(product),
         if (_viewModel.actionError != null) ...[
           const SizedBox(height: 16),
@@ -569,6 +604,123 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
     );
   }
 
+  Widget _productScreenshotGallery() {
+    final selected = _hexcivScreenshots[_selectedProductScreenshotIndex];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'ゲーム画面',
+          style: TextStyle(
+            color: DesignTokens.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: ColoredBox(
+              color: DesignTokens.surface2,
+              child: Image.asset(
+                selected.asset,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => const Center(
+                  child: Text(
+                    '画像を読み込めませんでした',
+                    style: TextStyle(color: DesignTokens.textSecondary),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          selected.captionJa,
+          style: const TextStyle(
+            color: DesignTokens.textSecondary,
+            fontSize: 13,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            for (var index = 0; index < _hexcivScreenshots.length; index++) ...[
+              if (index > 0) const SizedBox(width: 10),
+              Expanded(child: _productScreenshotThumbnail(index)),
+            ],
+          ],
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          '同じ世界（seed 42）がターンを追って発展する様子です。観戦モードでも変化を楽しめます。',
+          style: TextStyle(
+            color: DesignTokens.textSecondary,
+            fontSize: 12,
+            height: 1.6,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _productScreenshotThumbnail(int index) {
+    final screenshot = _hexcivScreenshots[index];
+    final selected = index == _selectedProductScreenshotIndex;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '${screenshot.labelJa}のスクリーンショットを表示',
+      child: InkWell(
+        onTap: () => setState(() => _selectedProductScreenshotIndex = index),
+        borderRadius: BorderRadius.circular(8),
+        child: Column(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: DesignTokens.surface2,
+                    border: Border.all(
+                      color: selected
+                          ? DesignTokens.orange
+                          : DesignTokens.divider,
+                      width: selected ? 2 : 1,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Image.asset(
+                    screenshot.asset,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const SizedBox(),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              screenshot.labelJa,
+              style: TextStyle(
+                color: selected
+                    ? DesignTokens.orange
+                    : DesignTokens.textSecondary,
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _actionArea(ShopProduct product) {
     if (_viewModel.purchased) {
       return Column(
@@ -610,7 +762,8 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
         icon: Icons.hourglass_top,
         color: DesignTokens.indigo,
         title: '決済を確認しています',
-        body: 'お支払いは完了しています。反映まで数秒かかることがあります。'
+        body:
+            'お支払いは完了しています。反映まで数秒かかることがあります。'
             '購入ボタンは再表示せず、確認後にダウンロードへ切り替えます。',
         action: TextButton(
           onPressed: _viewModel.load,
@@ -847,8 +1000,9 @@ class _ShopDownloadsPageState extends State<ShopDownloadsPage> {
                             ],
                           );
                           final button = FilledButton.icon(
-                            onPressed:
-                                working ? null : () => _download(product.id),
+                            onPressed: working
+                                ? null
+                                : () => _download(product.id),
                             icon: const Icon(Icons.download),
                             label: Text(working ? '準備中…' : 'ダウンロード'),
                           );
