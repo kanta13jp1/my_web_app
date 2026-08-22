@@ -130,6 +130,7 @@ void main() {
       '/wip-limit': 'DigestQueuePage',
       '/local-election-schedule': 'ElectionVictoryPage',
       '/stats': 'RewardsPage',
+      '/ai-summarizer': 'WritingCenterPage',
     };
     final cases = _routeCases();
 

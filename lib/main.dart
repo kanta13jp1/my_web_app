@@ -228,7 +228,7 @@ import 'package:my_web_app/pages/music_collaboration_page.dart';
 import 'package:my_web_app/ui/features/beatles_guitar_tabs/beatles_guitar_tabs_feature.dart';
 import 'package:my_web_app/pages/event_ticketing_page.dart';
 import 'package:my_web_app/pages/ai_assistant_chat_page.dart';
-import 'package:my_web_app/pages/ai_writing_assistant_page.dart';
+import 'package:my_web_app/pages/writing_center_page.dart';
 import 'package:my_web_app/pages/wiki_database_page.dart';
 import 'package:my_web_app/pages/time_tracker_page.dart';
 import 'package:my_web_app/pages/voice_memo_transcriber_page.dart';
@@ -272,7 +272,6 @@ import 'package:my_web_app/pages/my_skills_page.dart';
 import 'package:my_web_app/pages/bookmark_sync_page.dart';
 import 'package:my_web_app/pages/jibun_api_page.dart';
 import 'package:my_web_app/pages/ui_design_status_page.dart';
-import 'package:my_web_app/pages/ai_summarizer_page.dart';
 import 'package:my_web_app/pages/revenue_forecaster_page.dart';
 import 'package:my_web_app/pages/weather_widget_page.dart';
 import 'package:my_web_app/pages/team_chat_page.dart';
@@ -1351,7 +1350,7 @@ Route<dynamic> generateAppRoute(
       );
     case '/ai-writing-assistant':
       return MaterialPageRoute(
-        builder: (_) => const AiWritingAssistantPage(),
+        builder: (_) => const WritingCenterPage(),
       );
     case '/wiki-database':
       return MaterialPageRoute(builder: (_) => const WikiDatabasePage());
@@ -1534,7 +1533,9 @@ Route<dynamic> generateAppRoute(
       );
     case '/ai-summarizer':
       return MaterialPageRoute(
-        builder: (_) => const AiSummarizerPage(),
+        builder: (_) => const WritingCenterPage(
+          initialSection: WritingCenterSection.summaries,
+        ),
         settings: const RouteSettings(name: '/ai-summarizer'),
       );
     case '/revenue-forecaster':
