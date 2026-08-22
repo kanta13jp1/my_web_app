@@ -119,6 +119,9 @@ class VideoGenerationJob {
     this.startedAt,
     this.updatedAt,
     this.completedAt,
+    this.parentArtifactId,
+    this.appliedReviewId,
+    this.artifact,
   });
 
   final String id;
@@ -137,6 +140,9 @@ class VideoGenerationJob {
   final DateTime createdAt;
   final DateTime? updatedAt;
   final DateTime? completedAt;
+  final String? parentArtifactId;
+  final String? appliedReviewId;
+  final VideoArtifact? artifact;
 
   bool get isTerminal =>
       status == 'succeeded' || status == 'failed' || status == 'cancelled';
@@ -161,8 +167,193 @@ class VideoGenerationJob {
           _date(json['created_at']) ?? DateTime.fromMillisecondsSinceEpoch(0),
       updatedAt: _date(json['updated_at']),
       completedAt: _date(json['completed_at']),
+      parentArtifactId: _nullableString(json['parent_artifact_id']),
+      appliedReviewId: _nullableString(json['applied_review_id']),
+      artifact: json['artifact'] == null
+          ? null
+          : VideoArtifact.fromJson(_map(json['artifact'])),
     );
   }
+
+  VideoGenerationJob withArtifact(VideoArtifact value) {
+    return VideoGenerationJob(
+      id: id,
+      modelKey: modelKey,
+      prompt: prompt,
+      durationSeconds: durationSeconds,
+      aspectRatio: aspectRatio,
+      resolution: resolution,
+      status: status,
+      quotedCredits: quotedCredits,
+      chargedCredits: chargedCredits,
+      createdAt: createdAt,
+      errorCode: errorCode,
+      outputUrl: outputUrl,
+      outputExpiresAt: outputExpiresAt,
+      startedAt: startedAt,
+      updatedAt: updatedAt,
+      completedAt: completedAt,
+      parentArtifactId: parentArtifactId,
+      appliedReviewId: appliedReviewId,
+      artifact: value,
+    );
+  }
+}
+
+class VideoArtifact {
+  const VideoArtifact({
+    required this.id,
+    required this.jobId,
+    required this.title,
+    required this.lifecycleStage,
+    required this.rightsStatus,
+    required this.privacyStatus,
+    required this.commerceStatus,
+    required this.intendedForSale,
+    required this.iteration,
+    required this.createdAt,
+    this.parentArtifactId,
+    this.fileSizeBytes,
+    this.sha256,
+    this.shopProductId,
+    this.latestReview,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String jobId;
+  final String? parentArtifactId;
+  final String title;
+  final int? fileSizeBytes;
+  final String? sha256;
+  final String lifecycleStage;
+  final String rightsStatus;
+  final String privacyStatus;
+  final String commerceStatus;
+  final bool intendedForSale;
+  final String? shopProductId;
+  final int iteration;
+  final VideoArtifactReview? latestReview;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+
+  bool get isSaleCandidate =>
+      intendedForSale && commerceStatus == 'sale_candidate';
+  bool get needsRightsReview =>
+      rightsStatus == 'review_required' || privacyStatus == 'review_required';
+
+  factory VideoArtifact.fromJson(Map<String, dynamic> json) {
+    return VideoArtifact(
+      id: _string(json['id']),
+      jobId: _string(json['job_id']),
+      parentArtifactId: _nullableString(json['parent_artifact_id']),
+      title: _string(json['title']),
+      fileSizeBytes: _nullableInteger(json['file_size_bytes']),
+      sha256: _nullableString(json['sha256']),
+      lifecycleStage: _string(json['lifecycle_stage']),
+      rightsStatus: _string(json['rights_status']),
+      privacyStatus: _string(json['privacy_status']),
+      commerceStatus: _string(json['commerce_status']),
+      intendedForSale: json['intended_for_sale'] == true,
+      shopProductId: _nullableString(json['shop_product_id']),
+      iteration: _integer(json['iteration']),
+      latestReview: json['latest_review'] == null
+          ? null
+          : VideoArtifactReview.fromJson(_map(json['latest_review'])),
+      createdAt:
+          _date(json['created_at']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      updatedAt: _date(json['updated_at']),
+    );
+  }
+}
+
+class VideoArtifactReview {
+  const VideoArtifactReview({
+    required this.id,
+    required this.artifactId,
+    required this.iteration,
+    required this.qualityScore,
+    required this.promptAlignmentScore,
+    required this.motionQualityScore,
+    required this.commercialValueScore,
+    required this.decision,
+    required this.strengths,
+    required this.improvementRequest,
+    required this.suggestedPrompt,
+    required this.notes,
+    required this.createdAt,
+  });
+
+  final String id;
+  final String artifactId;
+  final int iteration;
+  final int qualityScore;
+  final int promptAlignmentScore;
+  final int motionQualityScore;
+  final int commercialValueScore;
+  final String decision;
+  final String strengths;
+  final String improvementRequest;
+  final String suggestedPrompt;
+  final String notes;
+  final DateTime createdAt;
+
+  factory VideoArtifactReview.fromJson(Map<String, dynamic> json) {
+    return VideoArtifactReview(
+      id: _string(json['id']),
+      artifactId: _string(json['artifact_id']),
+      iteration: _integer(json['iteration']),
+      qualityScore: _integer(json['quality_score']),
+      promptAlignmentScore: _integer(json['prompt_alignment_score']),
+      motionQualityScore: _integer(json['motion_quality_score']),
+      commercialValueScore: _integer(json['commercial_value_score']),
+      decision: _string(json['decision']),
+      strengths: _string(json['strengths']),
+      improvementRequest: _string(json['improvement_request']),
+      suggestedPrompt: _string(json['suggested_prompt']),
+      notes: _string(json['notes']),
+      createdAt:
+          _date(json['created_at']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+    );
+  }
+}
+
+class VideoArtifactReviewDraft {
+  const VideoArtifactReviewDraft({
+    required this.qualityScore,
+    required this.promptAlignmentScore,
+    required this.motionQualityScore,
+    required this.commercialValueScore,
+    required this.decision,
+    required this.strengths,
+    required this.improvementRequest,
+    required this.suggestedPrompt,
+    required this.notes,
+    required this.rightsStatus,
+    required this.privacyStatus,
+  });
+
+  final int qualityScore;
+  final int promptAlignmentScore;
+  final int motionQualityScore;
+  final int commercialValueScore;
+  final String decision;
+  final String strengths;
+  final String improvementRequest;
+  final String suggestedPrompt;
+  final String notes;
+  final String rightsStatus;
+  final String privacyStatus;
+}
+
+class VideoArtifactReviewResult {
+  const VideoArtifactReviewResult({
+    required this.artifact,
+    required this.review,
+  });
+
+  final VideoArtifact artifact;
+  final VideoArtifactReview review;
 }
 
 class VideoCreateResult {
@@ -197,6 +388,12 @@ int _integer(Object? value) {
   if (value is int) return value;
   if (value is num) return value.round();
   return int.tryParse(_string(value)) ?? 0;
+}
+
+int? _nullableInteger(Object? value) {
+  if (value == null) return null;
+  final parsed = _integer(value);
+  return parsed > 0 ? parsed : null;
 }
 
 DateTime? _date(Object? value) {

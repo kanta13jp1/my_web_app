@@ -19,10 +19,7 @@ void main() {
       expect(find.byKey(const Key('video-studio-compact')), findsOneWidget);
       expect(find.byKey(const Key('video-studio-prompt')), findsOneWidget);
       expect(find.byKey(const Key('video-studio-generate')), findsOneWidget);
-      expect(
-        find.textContaining('月額Pro/Teamとは別料金です。'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('月額Pro/Teamとは別料金です。'), findsOneWidget);
     },
   );
 
@@ -69,9 +66,7 @@ void main() {
     expect(find.text('動画を開く・保存'), findsOneWidget);
     expect(
       find.byKey(
-        const Key(
-          'video-output-11111111-1111-4111-8111-111111111111',
-        ),
+        const Key('video-output-11111111-1111-4111-8111-111111111111'),
       ),
       findsOneWidget,
     );
@@ -113,11 +108,7 @@ void main() {
   testWidgets('authentication failure offers a direct login action', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      _app(
-        gateway: _AuthenticationRequiredGateway(),
-      ),
-    );
+    await tester.pumpWidget(_app(gateway: _AuthenticationRequiredGateway()));
     await tester.pumpAndSettle();
 
     expect(find.text('この機能を使うにはログインしてください。'), findsOneWidget);
@@ -127,6 +118,57 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('video-studio-login-page')), findsOneWidget);
+  });
+
+  testWidgets('completed artifact is marked for reuse and opens its review', (
+    tester,
+  ) async {
+    final artifact = VideoArtifact(
+      id: '22222222-2222-4222-8222-222222222222',
+      jobId: '11111111-1111-4111-8111-111111111111',
+      title: 'Office scene',
+      lifecycleStage: 'captured',
+      rightsStatus: 'review_required',
+      privacyStatus: 'review_required',
+      commerceStatus: 'sale_candidate',
+      intendedForSale: true,
+      iteration: 1,
+      createdAt: DateTime.utc(2026, 8, 20),
+    );
+    final job = VideoGenerationJob(
+      id: '11111111-1111-4111-8111-111111111111',
+      modelKey: 'studio-video-v1',
+      prompt: 'Office scene',
+      durationSeconds: 5,
+      aspectRatio: '16:9',
+      resolution: '720p',
+      status: 'succeeded',
+      quotedCredits: 300,
+      chargedCredits: 300,
+      createdAt: DateTime.utc(2026, 8, 20),
+      artifact: artifact,
+    );
+
+    await tester.pumpWidget(_app(jobs: [job]));
+    await tester.pumpAndSettle();
+
+    expect(find.text('素材として保存済み'), findsOneWidget);
+    expect(find.text('販売候補'), findsOneWidget);
+    expect(find.text('権利・プライバシー確認待ち'), findsOneWidget);
+
+    final reviewButton = find.byKey(
+      const Key('video-review-11111111-1111-4111-8111-111111111111'),
+    );
+    await tester.ensureVisible(reviewButton);
+    await tester.pumpAndSettle();
+    await tester.tap(reviewButton);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('video-artifact-review-dialog')),
+      findsOneWidget,
+    );
+    expect(find.text('保存して次回へ反映'), findsOneWidget);
   });
 }
 
@@ -196,11 +238,20 @@ class _PageGateway implements VideoStudioGateway {
     required int durationSeconds,
     required String aspectRatio,
     required String resolution,
+    String? parentArtifactId,
+    String? appliedReviewId,
   }) =>
       throw UnimplementedError();
 
   @override
   Future<VideoGenerationJob> refreshJob(String jobId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<VideoArtifactReviewResult> reviewArtifact({
+    required String artifactId,
+    required VideoArtifactReviewDraft review,
+  }) =>
       throw UnimplementedError();
 
   @override
@@ -213,7 +264,6 @@ class _PageGateway implements VideoStudioGateway {
 
 class _AuthenticationRequiredGateway extends _PageGateway {
   @override
-  Future<VideoStudioCatalog> loadCatalog() => Future.error(
-        const VideoStudioException('authentication_required'),
-      );
+  Future<VideoStudioCatalog> loadCatalog() =>
+      Future.error(const VideoStudioException('authentication_required'));
 }

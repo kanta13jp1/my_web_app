@@ -71,12 +71,25 @@ export function isExpectedVideoObject(
 ): boolean {
   const object = asRecord(value);
   const metadata = asRecord(object.metadata);
-  const size = Number(metadata.size ?? object.size ?? 0);
+  const size = videoObjectSize(value) ?? 0;
   const contentType = String(
     metadata.mimetype ?? metadata.contentType ?? object.mimetype ?? "",
   ).toLowerCase();
   return object.name === expectedName && Number.isFinite(size) && size > 0 &&
     size <= MAX_VIDEO_BYTES && contentType === "video/mp4";
+}
+
+export function videoObjectSize(value: unknown): number | null {
+  const object = asRecord(value);
+  const metadata = asRecord(object.metadata);
+  const size = Number(metadata.size ?? object.size ?? 0);
+  return Number.isSafeInteger(size) && size > 0 && size <= MAX_VIDEO_BYTES
+    ? size
+    : null;
+}
+
+export function isVideoSha256(value: string): boolean {
+  return /^[0-9a-f]{64}$/.test(value);
 }
 
 function constantTimeEqual(left: Uint8Array, right: Uint8Array): boolean {

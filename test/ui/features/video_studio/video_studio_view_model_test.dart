@@ -93,24 +93,29 @@ void main() {
     expect(viewModel.errorMessage, 'この機能を使うにはログインしてください。');
   });
 
-  test('completed history refreshes an expired or missing signed URL',
-      () async {
-    final completedWithoutUrl = _job(status: 'succeeded', includeOutput: false);
-    final gateway = _FakeVideoStudioGateway(
-      balance: _balance(500),
-      initialJobs: [completedWithoutUrl],
-      refreshedJob: _job(status: 'succeeded'),
-    );
-    final viewModel = VideoStudioViewModel(gateway: gateway);
-    addTearDown(viewModel.dispose);
-    await viewModel.load();
+  test(
+    'completed history refreshes an expired or missing signed URL',
+    () async {
+      final completedWithoutUrl = _job(
+        status: 'succeeded',
+        includeOutput: false,
+      );
+      final gateway = _FakeVideoStudioGateway(
+        balance: _balance(500),
+        initialJobs: [completedWithoutUrl],
+        refreshedJob: _job(status: 'succeeded'),
+      );
+      final viewModel = VideoStudioViewModel(gateway: gateway);
+      addTearDown(viewModel.dispose);
+      await viewModel.load();
 
-    final output = await viewModel.loadOutputUrl(completedWithoutUrl);
+      final output = await viewModel.loadOutputUrl(completedWithoutUrl);
 
-    expect(output, Uri.parse('https://example.test/signed.mp4'));
-    expect(gateway.refreshCount, 1);
-    expect(viewModel.jobs.single.outputUrl, output);
-  });
+      expect(output, Uri.parse('https://example.test/signed.mp4'));
+      expect(gateway.refreshCount, 1);
+      expect(viewModel.jobs.single.outputUrl, output);
+    },
+  );
 
   test('checkout failures use a purchase-specific error message', () async {
     final gateway = _FakeVideoStudioGateway(
@@ -131,6 +136,48 @@ void main() {
     expect(checkout, isNull);
     expect(viewModel.errorMessage, '購入画面を開けませんでした。時間をおいて再度お試しください。');
   });
+
+  test(
+    'an improve review is visibly applied to the next paid generation',
+    () async {
+      final gateway = _FakeVideoStudioGateway(
+        balance: _balance(500),
+        initialJobs: [_job(status: 'succeeded', artifact: _artifact())],
+      );
+      final viewModel = VideoStudioViewModel(gateway: gateway);
+      addTearDown(viewModel.dispose);
+      await viewModel.load();
+
+      final reviewed = await viewModel.reviewArtifact(
+        viewModel.jobs.single,
+        const VideoArtifactReviewDraft(
+          qualityScore: 4,
+          promptAlignmentScore: 3,
+          motionQualityScore: 3,
+          commercialValueScore: 4,
+          decision: 'improve',
+          strengths: '構図が明快',
+          improvementRequest: '手元の動きを自然にする',
+          suggestedPrompt: 'Natural hand movement in a bright office',
+          notes: '',
+          rightsStatus: 'confirmed',
+          privacyStatus: 'confirmed',
+        ),
+      );
+
+      expect(reviewed, isTrue);
+      expect(viewModel.prompt, 'Natural hand movement in a bright office');
+      expect(viewModel.hasAppliedImprovement, isTrue);
+      viewModel
+        ..setRightsConfirmed(true)
+        ..setAdultConfirmed(true);
+
+      expect(await viewModel.generate(), isTrue);
+      expect(gateway.createdParentArtifactId, _artifactId);
+      expect(gateway.createdAppliedReviewId, _reviewId);
+      expect(viewModel.hasAppliedImprovement, isFalse);
+    },
+  );
 }
 
 class _FakeVideoStudioGateway implements VideoStudioGateway {
@@ -148,6 +195,8 @@ class _FakeVideoStudioGateway implements VideoStudioGateway {
   final Exception? loadError;
   final Exception? checkoutError;
   String? createdIdempotencyKey;
+  String? createdParentArtifactId;
+  String? createdAppliedReviewId;
   int refreshCount = 0;
 
   @override
@@ -174,8 +223,12 @@ class _FakeVideoStudioGateway implements VideoStudioGateway {
     required int durationSeconds,
     required String aspectRatio,
     required String resolution,
+    String? parentArtifactId,
+    String? appliedReviewId,
   }) async {
     createdIdempotencyKey = idempotencyKey;
+    createdParentArtifactId = parentArtifactId;
+    createdAppliedReviewId = appliedReviewId;
     balance = _balance(balance.availableCredits - durationSeconds * 60);
     return VideoCreateResult(
       job: _job(status: 'succeeded', prompt: prompt),
@@ -187,6 +240,18 @@ class _FakeVideoStudioGateway implements VideoStudioGateway {
   Future<VideoGenerationJob> refreshJob(String jobId) async {
     refreshCount += 1;
     return refreshedJob ?? _job(status: 'succeeded');
+  }
+
+  @override
+  Future<VideoArtifactReviewResult> reviewArtifact({
+    required String artifactId,
+    required VideoArtifactReviewDraft review,
+  }) async {
+    final savedReview = _review(suggestedPrompt: review.suggestedPrompt);
+    return VideoArtifactReviewResult(
+      artifact: _artifact(latestReview: savedReview),
+      review: savedReview,
+    );
   }
 
   @override
@@ -231,6 +296,7 @@ VideoGenerationJob _job({
   String status = 'queued',
   String prompt = 'paper city',
   bool includeOutput = true,
+  VideoArtifact? artifact,
 }) {
   return VideoGenerationJob(
     id: '11111111-1111-4111-8111-111111111111',
@@ -249,5 +315,42 @@ VideoGenerationJob _job({
     outputExpiresAt: status == 'succeeded' && includeOutput
         ? DateTime.now().add(const Duration(hours: 1))
         : null,
+    artifact: artifact,
   );
 }
+
+const _artifactId = '22222222-2222-4222-8222-222222222222';
+const _reviewId = '33333333-3333-4333-8333-333333333333';
+
+VideoArtifact _artifact({VideoArtifactReview? latestReview}) => VideoArtifact(
+      id: _artifactId,
+      jobId: '11111111-1111-4111-8111-111111111111',
+      title: 'paper city',
+      lifecycleStage: latestReview == null ? 'captured' : 'productizing',
+      rightsStatus: latestReview == null ? 'review_required' : 'allowed',
+      privacyStatus: latestReview == null ? 'review_required' : 'cleared',
+      commerceStatus: 'sale_candidate',
+      intendedForSale: true,
+      iteration: 1,
+      latestReview: latestReview,
+      createdAt: DateTime.utc(2026, 8, 20),
+    );
+
+VideoArtifactReview _review({
+  String suggestedPrompt = 'Natural hand movement in a bright office',
+}) =>
+    VideoArtifactReview(
+      id: _reviewId,
+      artifactId: _artifactId,
+      iteration: 1,
+      qualityScore: 4,
+      promptAlignmentScore: 3,
+      motionQualityScore: 3,
+      commercialValueScore: 4,
+      decision: 'improve',
+      strengths: '構図が明快',
+      improvementRequest: '手元の動きを自然にする',
+      suggestedPrompt: suggestedPrompt,
+      notes: '',
+      createdAt: DateTime.utc(2026, 8, 20, 1),
+    );

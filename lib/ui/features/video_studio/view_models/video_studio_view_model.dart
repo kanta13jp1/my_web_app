@@ -36,6 +36,10 @@ class VideoStudioViewModel extends ChangeNotifier {
   bool _isRefreshing = false;
   String? _openingOutputJobId;
   bool _isOpeningCheckout = false;
+  String? _reviewingArtifactId;
+  String? _parentArtifactId;
+  String? _appliedReviewId;
+  String? _appliedImprovementTitle;
   bool _authenticationRequired = false;
   String? _errorMessage;
   String? _noticeMessage;
@@ -57,6 +61,12 @@ class VideoStudioViewModel extends ChangeNotifier {
   bool get isRefreshing => _isRefreshing;
   String? get openingOutputJobId => _openingOutputJobId;
   bool get isOpeningCheckout => _isOpeningCheckout;
+  String? get reviewingArtifactId => _reviewingArtifactId;
+  String? get parentArtifactId => _parentArtifactId;
+  String? get appliedReviewId => _appliedReviewId;
+  String? get appliedImprovementTitle => _appliedImprovementTitle;
+  bool get hasAppliedImprovement =>
+      _parentArtifactId != null && _appliedReviewId != null;
   bool get authenticationRequired => _authenticationRequired;
   String? get errorMessage => _errorMessage;
   String? get noticeMessage => _noticeMessage;
@@ -167,11 +177,16 @@ class VideoStudioViewModel extends ChangeNotifier {
         durationSeconds: _durationSeconds,
         aspectRatio: _aspectRatio,
         resolution: _resolution,
+        parentArtifactId: _parentArtifactId,
+        appliedReviewId: _appliedReviewId,
       );
       _activeJob = result.job;
       _balance = result.balance;
       _replaceJob(result.job);
       _idempotencyKey = null;
+      _parentArtifactId = null;
+      _appliedReviewId = null;
+      _appliedImprovementTitle = null;
       _noticeMessage = '生成を受け付けました。完了までこの画面で自動更新します。';
       if (!result.job.isTerminal) _startPolling();
       return true;
@@ -255,6 +270,56 @@ class VideoStudioViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> reviewArtifact(
+    VideoGenerationJob job,
+    VideoArtifactReviewDraft review, {
+    bool applyToNextGeneration = true,
+  }) async {
+    final artifact = job.artifact;
+    if (artifact == null || _reviewingArtifactId != null) return false;
+    _reviewingArtifactId = artifact.id;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final result = await _gateway.reviewArtifact(
+        artifactId: artifact.id,
+        review: review,
+      );
+      final updatedJob = job.withArtifact(result.artifact);
+      _replaceJob(updatedJob);
+      if (_activeJob?.id == updatedJob.id) _activeJob = updatedJob;
+      if (applyToNextGeneration && review.decision == 'improve') {
+        _prompt = result.review.suggestedPrompt;
+        _durationSeconds = job.durationSeconds;
+        _aspectRatio = job.aspectRatio;
+        _resolution = job.resolution;
+        _parentArtifactId = result.artifact.id;
+        _appliedReviewId = result.review.id;
+        _appliedImprovementTitle = result.artifact.title;
+        _idempotencyKey = null;
+        _noticeMessage = 'レビューを保存し、改善版プロンプトを次回生成へ反映しました。';
+      } else {
+        _noticeMessage = 'レビューを保存しました。動画は販売候補の素材として保管されています。';
+      }
+      return true;
+    } catch (error) {
+      _errorMessage = _friendlyError(error);
+      return false;
+    } finally {
+      _reviewingArtifactId = null;
+      notifyListeners();
+    }
+  }
+
+  void clearAppliedImprovement() {
+    if (!hasAppliedImprovement) return;
+    _parentArtifactId = null;
+    _appliedReviewId = null;
+    _appliedImprovementTitle = null;
+    _idempotencyKey = null;
+    notifyListeners();
+  }
+
   void _replaceJob(VideoGenerationJob job) {
     _jobs = [job, ..._jobs.where((existing) => existing.id != job.id)];
   }
@@ -277,6 +342,14 @@ class VideoStudioViewModel extends ChangeNotifier {
       'worker_temporarily_unavailable' => '生成状況を確認できませんでした。少し待って再試行します。',
       'prompt_not_allowed' => 'この内容は生成できません。プロンプトを変更してください。',
       'output_not_ready' => '完成動画を取得できませんでした。少し待って再度お試しください。',
+      'artifact_not_found' => '保存済み動画素材を確認できませんでした。再読み込みしてください。',
+      'invalid_review_score' ||
+      'invalid_review_decision' ||
+      'invalid_review_clearance' ||
+      'invalid_review_text' =>
+        'レビュー内容を確認してください。点数は1〜5、次回プロンプトは1000文字以内です。',
+      'generation_iteration_unavailable' =>
+        '改善履歴を生成ジョブへ関連付けられませんでした。クレジットは返却済みです。',
       'video_credit_checkout_unavailable' => '購入画面を開けませんでした。時間をおいて再度お試しください。',
       _ => '動画サービスに接続できませんでした。時間をおいて再度お試しください。',
     };

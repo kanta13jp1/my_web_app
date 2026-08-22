@@ -56,4 +56,59 @@ void main() {
     expect(job.startedAt, DateTime.utc(2026, 8, 20, 10, 3));
     expect(job.updatedAt, DateTime.utc(2026, 8, 20, 10, 8));
   });
+
+  test('job parses its durable artifact, review, and improvement lineage', () {
+    final job = VideoGenerationJob.fromJson({
+      'id': 'job-2',
+      'model_key': 'studio-video-v1',
+      'prompt': 'improved office scene',
+      'duration_seconds': 5,
+      'aspect_ratio': '16:9',
+      'resolution': '720p',
+      'status': 'succeeded',
+      'quoted_credits': 300,
+      'charged_credits': 300,
+      'created_at': '2026-08-20T10:00:00Z',
+      'parent_artifact_id': 'artifact-1',
+      'applied_review_id': 'review-1',
+      'artifact': {
+        'id': 'artifact-2',
+        'job_id': 'job-2',
+        'parent_artifact_id': 'artifact-1',
+        'title': 'improved office scene',
+        'file_size_bytes': 1024,
+        'sha256': List.filled(64, 'a').join(),
+        'lifecycle_stage': 'original',
+        'rights_status': 'confirmed',
+        'privacy_status': 'confirmed',
+        'commerce_status': 'sale_candidate',
+        'intended_for_sale': true,
+        'iteration': 2,
+        'created_at': '2026-08-20T10:08:00Z',
+        'latest_review': {
+          'id': 'review-2',
+          'artifact_id': 'artifact-2',
+          'iteration': 1,
+          'quality_score': 4,
+          'prompt_alignment_score': 5,
+          'motion_quality_score': 4,
+          'commercial_value_score': 4,
+          'decision': 'keep',
+          'strengths': '動きが自然',
+          'improvement_request': '',
+          'suggested_prompt': '',
+          'notes': '',
+          'created_at': '2026-08-20T10:09:00Z',
+        },
+      },
+    });
+
+    expect(job.parentArtifactId, 'artifact-1');
+    expect(job.appliedReviewId, 'review-1');
+    expect(job.artifact?.isSaleCandidate, isTrue);
+    expect(job.artifact?.iteration, 2);
+    expect(job.artifact?.fileSizeBytes, 1024);
+    expect(job.artifact?.latestReview?.decision, 'keep');
+    expect(job.artifact?.latestReview?.promptAlignmentScore, 5);
+  });
 }
