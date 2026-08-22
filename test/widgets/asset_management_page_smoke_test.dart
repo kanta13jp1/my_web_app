@@ -3019,6 +3019,106 @@ void main() {
     );
 
     testWidgets(
+      'three-month overview includes current recurring subscription costs',
+      (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.standard.storageId,
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: AssetManagementPage(
+              debugInitialRecurringFixedCosts: <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'subscription_total_regression',
+                  name: 'AI・クラウドサブスク',
+                  amount: 104648,
+                  paymentDay: 15,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+              ],
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.text('3ヶ月俯瞰（先月・今月・来月）'), findsOneWidget);
+        expect(find.text('固定費: ¥104,648'), findsNWidgets(3));
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'missing asset data does not claim debt release or payoff',
+      (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.minimum.storageId,
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          const MaterialApp(home: AssetManagementPage()),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.text('判定不可'), findsNWidgets(2));
+        expect(
+          find.text('資産・負債が未登録のため、完済状態を判定できません。まず残高を登録してください。'),
+          findsNWidgets(2),
+        );
+        expect(find.text('釈放'), findsNothing);
+        expect(
+          find.text('借金は完済済みです。収監モードは解除されました。'),
+          findsNothing,
+        );
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'registered zero-debt snapshot still shows the paid-off state',
+      (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.minimum.storageId,
+        });
+        final dateKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{'財布(現金)': 10000},
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.text('判定不可'), findsNothing);
+        expect(find.text('釈放'), findsNWidgets(2));
+        expect(
+          find.text('借金は完済済みです。収監モードは解除されました。'),
+          findsOneWidget,
+        );
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
       'subscription audit lists アコムショッピング枠 (shoppingDebt) as a source',
       (tester) async {
         final now = DateTime.now();
