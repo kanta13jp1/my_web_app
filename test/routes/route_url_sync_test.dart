@@ -278,7 +278,7 @@ const Map<String?, String> _intentionalFallbacks = <String?, String>{
 
 /// `_homeToolRoutePathForId` (home_tool_catalog.dart) と同じ対応表。
 String? _catalogRouteForId(String id) => switch (id) {
-      'digital-danshari' => '/real-world-danshari',
+      'digital-danshari' => '/digital-danshari',
       'agent-org' => '/agents',
       'admin-analytics' => '/admin',
       'edge-function-status' => '/edge-functions',

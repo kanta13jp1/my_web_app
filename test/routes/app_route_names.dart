@@ -103,6 +103,7 @@ const List<String> kAllAppRoutes = <String>[
   '/dev/claude-design-importer',
   '/development-achievements',
   '/digest-queue',
+  '/digital-danshari',
   '/digital-wallet',
   '/discord-notifications',
   '/dns-domain-manager',
