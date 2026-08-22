@@ -5,10 +5,12 @@ import {
   isExpectedVideoObject,
   isJobId,
   isLeaseToken,
+  isVideoSha256,
   isWorkerErrorCode,
   isWorkerId,
   MAX_VIDEO_BYTES,
   validVideoOutputPaths,
+  videoObjectSize,
   videoOutputObject,
 } from "./worker_security.ts";
 
@@ -141,6 +143,14 @@ async function completeResponse(
   const active = await activeLease(admin, workerId, lease);
   if (!active) return response({ error: "lease_lost" }, 409);
   const storagePath = asString(active.storage_path);
+  const reportedSize = asInteger(body.output_size_bytes);
+  const reportedSha256 = asString(body.output_sha256);
+  if (
+    reportedSize === null || reportedSize < 1 ||
+    reportedSize > MAX_VIDEO_BYTES || !isVideoSha256(reportedSha256)
+  ) {
+    return response({ error: "invalid_output_provenance" }, 400);
+  }
   const outputObject = videoOutputObject(storagePath);
   if (!outputObject) throw new Error("invalid_output_storage_path");
   const { data: objects, error: listError } = await admin.storage
@@ -153,6 +163,9 @@ async function completeResponse(
   if (!isExpectedVideoObject(uploaded, outputObject.name)) {
     return response({ error: "output_not_ready" }, 409);
   }
+  if (videoObjectSize(uploaded) !== reportedSize) {
+    return response({ error: "output_size_mismatch" }, 409);
+  }
 
   const { data, error } = await admin.rpc(
     "video_complete_claimed_generation",
@@ -164,6 +177,19 @@ async function completeResponse(
     },
   );
   if (error) throw error;
+  const { error: artifactError } = await admin
+    .from("video_artifacts")
+    .update({ file_size_bytes: reportedSize, sha256: reportedSha256 })
+    .eq("job_id", lease.jobId)
+    .eq("user_id", asString(active.user_id));
+  if (artifactError) {
+    // Job settlement and immutable capture already succeeded. Missing technical
+    // metadata must not turn a paid success into a retry or refund race.
+    console.error(
+      "[video-worker-hub] artifact provenance update failed",
+      safeCode(artifactError),
+    );
+  }
   return response({ success: true, result: data });
 }
 
@@ -264,6 +290,11 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function asString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function asInteger(value: unknown): number | null {
+  const number = typeof value === "number" ? value : Number(value);
+  return Number.isSafeInteger(number) ? number : null;
 }
 
 function safeCode(error: unknown): string {

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -218,6 +219,7 @@ class WorkerApi:
         upload_url = str(prepared.get("upload_url", ""))
         maximum = int(prepared.get("max_bytes", 0))
         size = output_path.stat().st_size
+        digest = sha256_file(output_path)
         if not upload_url.startswith("https://") or not 0 < size <= maximum:
             raise UploadFailed("invalid_signed_upload")
         with output_path.open("rb") as video:
@@ -237,7 +239,13 @@ class WorkerApi:
             # or a retry can observe that the immutable object already exists.
             # Let the hub verify the exact object before scheduling a retry.
             try:
-                self.call("complete", job_id=job_id, lease_token=lease_token)
+                self.call(
+                    "complete",
+                    job_id=job_id,
+                    lease_token=lease_token,
+                    output_size_bytes=size,
+                    output_sha256=digest,
+                )
                 return
             except LeaseLost:
                 raise
@@ -245,7 +253,13 @@ class WorkerApi:
                 raise UploadFailed(
                     f"signed_upload_http_{response.status_code}"
                 ) from error
-        self.call("complete", job_id=job_id, lease_token=lease_token)
+        self.call(
+            "complete",
+            job_id=job_id,
+            lease_token=lease_token,
+            output_size_bytes=size,
+            output_sha256=digest,
+        )
 
 
 def validate_job(job: dict[str, Any]) -> tuple[str, str, str]:
@@ -493,6 +507,14 @@ def validate_output(output_path: Path, job: dict[str, Any]) -> None:
         raise OutputInvalid("output_duration_invalid") from error
     if abs(duration - EXPECTED_DURATION_SECONDS) > 0.35:
         raise OutputInvalid("output_duration_invalid")
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _frame_rate(value: Any) -> float:

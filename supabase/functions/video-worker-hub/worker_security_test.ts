@@ -4,10 +4,12 @@ import {
   isExpectedVideoObject,
   isJobId,
   isLeaseToken,
+  isVideoSha256,
   isWorkerErrorCode,
   isWorkerId,
   MAX_VIDEO_BYTES,
   validVideoOutputPaths,
+  videoObjectSize,
   videoOutputObject,
 } from "./worker_security.ts";
 
@@ -46,6 +48,9 @@ Deno.test("only the exact bounded mp4 output is accepted", () => {
     metadata: { size: 1024, mimetype: "video/mp4" },
   };
   assertEquals(isExpectedVideoObject(valid, "job.mp4"), true);
+  assertEquals(videoObjectSize(valid), 1024);
+  assertEquals(isVideoSha256("a".repeat(64)), true);
+  assertEquals(isVideoSha256("A".repeat(64)), false);
   assertEquals(isExpectedVideoObject(valid, "other.mp4"), false);
   assertEquals(
     isExpectedVideoObject(

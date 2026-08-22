@@ -20,6 +20,7 @@ from worker import (
     build_wan_command,
     classify_inference_failure,
     safe_worker_error_detail,
+    sha256_file,
     validate_job,
     validate_output,
 )
@@ -190,6 +191,15 @@ class WorkerContractTest(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "dimensions"):
                     validate_output(output, {"aspect_ratio": "16:9"})
 
+    def test_sha256_file_records_immutable_output_digest(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            output = Path(root) / "job.mp4"
+            output.write_bytes(b"video")
+            self.assertEqual(
+                sha256_file(output),
+                "0cab1c9617404faf2b24e221e189ca5945813e14d3f766345b09ca13bbe28ffc",
+            )
+
     def test_worker_api_maps_expired_lease_without_retrying_the_job(self) -> None:
         with tempfile.TemporaryDirectory() as root:
             api = WorkerApi(self._settings(Path(root)))
@@ -227,6 +237,12 @@ class WorkerContractTest(unittest.TestCase):
                     output,
                 )
             self.assertEqual(api.call.call_count, 2)
+            _, complete_kwargs = api.call.call_args_list[1]
+            self.assertEqual(complete_kwargs["output_size_bytes"], 5)
+            self.assertEqual(
+                complete_kwargs["output_sha256"],
+                "0cab1c9617404faf2b24e221e189ca5945813e14d3f766345b09ca13bbe28ffc",
+            )
 
     @staticmethod
     def _settings(root: Path) -> Settings:
