@@ -94,6 +94,31 @@ class ArtifactIntakeTest(unittest.TestCase):
             entry = json.loads(output.read_text(encoding="utf-8"))["entries"][0]
             self.assertEqual(entry["artifact_kind"], "idea")
 
+    def test_explicit_kind_supports_application_bundles(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            artifact = root / "windows-app.zip"
+            artifact.write_bytes(b"PK\x03\x04application")
+            output = root / "manifest.json"
+
+            exit_code = artifact_intake.main(
+                [
+                    str(artifact),
+                    "--source-tool",
+                    "codex",
+                    "--intake-method",
+                    "local_workspace",
+                    "--artifact-kind",
+                    "application",
+                    "--output",
+                    str(output),
+                ]
+            )
+
+            self.assertEqual(exit_code, 0)
+            entry = json.loads(output.read_text(encoding="utf-8"))["entries"][0]
+            self.assertEqual(entry["artifact_kind"], "application")
+
     def test_chatgpt_local_workspace_intake_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             artifact = Path(temporary_directory) / "export.txt"
