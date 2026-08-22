@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:my_web_app/data/home_tool_catalog.dart';
 import 'package:my_web_app/utils/feature_route_labels.dart';
 import 'package:my_web_app/utils/route_url_sync.dart';
+import 'package:my_web_app/utils/route_document_title.dart';
 import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/abstinence_guard_page.dart';
 import 'package:my_web_app/pages/self_touch_tracker_page.dart';
@@ -16,6 +17,7 @@ import 'package:my_web_app/pages/agent_org_page.dart';
 import 'package:my_web_app/pages/agent_board_page.dart';
 import 'package:my_web_app/pages/autonomous_ops_console_page.dart';
 import 'package:my_web_app/pages/ai_company_builder_page.dart';
+import 'package:my_web_app/pages/agi_fireworks_page.dart';
 import 'package:my_web_app/pages/ai_agent_page.dart';
 import 'package:my_web_app/pages/behavior_review_page.dart';
 import 'package:my_web_app/pages/daily_habits_page.dart';
@@ -30,6 +32,7 @@ import 'package:my_web_app/pages/local_smart_cleanup_page.dart';
 import 'package:my_web_app/pages/windows_app_install_page.dart';
 import 'package:my_web_app/pages/payment_reminder_page.dart';
 import 'package:my_web_app/pages/shopping_list_page.dart';
+import 'package:my_web_app/pages/digital_product_store_pages.dart';
 import 'package:my_web_app/pages/hexciv_shop_page.dart';
 import 'package:my_web_app/services/shop_funnel_service.dart';
 import 'package:my_web_app/pages/digest_queue_page.dart';
@@ -141,6 +144,7 @@ import 'package:my_web_app/pages/team_workspace_page.dart';
 import 'package:my_web_app/pages/ai_status_page.dart';
 import 'package:my_web_app/pages/ai_provider_status_page.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/pages/asset_chat_history_page.dart';
 import 'package:my_web_app/pages/cfo_office_page.dart';
 import 'package:my_web_app/pages/cho_office_page.dart';
 import 'package:my_web_app/pages/chro_office_page.dart';
@@ -179,7 +183,6 @@ import 'package:my_web_app/pages/mindmap_diagram_page.dart';
 import 'package:my_web_app/pages/auction_marketplace_page.dart';
 import 'package:my_web_app/pages/qr_code_generator_page.dart';
 import 'package:my_web_app/pages/parking_reservation_page.dart';
-import 'package:my_web_app/pages/referral_program_page.dart';
 import 'package:my_web_app/pages/analytics_export_page.dart';
 import 'package:my_web_app/pages/workflow_templates_page.dart';
 import 'package:my_web_app/pages/customer_feedback_page.dart';
@@ -218,12 +221,14 @@ import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
 import 'package:my_web_app/pages/video_ad_generator_page.dart';
 import 'package:my_web_app/pages/viral_video_generator_page.dart';
+import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
 import 'package:my_web_app/pages/youtube_stats_page.dart';
 import 'package:my_web_app/pages/audio_effects_processor_page.dart';
 import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
 import 'package:my_web_app/pages/guitar_recording_studio_page.dart';
 import 'package:my_web_app/pages/public_guitar_gallery_page.dart';
 import 'package:my_web_app/pages/music_collaboration_page.dart';
+import 'package:my_web_app/ui/features/beatles_guitar_tabs/beatles_guitar_tabs_feature.dart';
 import 'package:my_web_app/pages/event_ticketing_page.dart';
 import 'package:my_web_app/pages/ai_assistant_chat_page.dart';
 import 'package:my_web_app/pages/ai_writing_assistant_page.dart';
@@ -247,7 +252,6 @@ import 'package:my_web_app/pages/focus_capture_game_page.dart';
 import 'package:my_web_app/pages/code_playground_page.dart';
 import 'package:my_web_app/pages/real_estate_tracker_page.dart';
 import 'package:my_web_app/pages/spreadsheet_database_page.dart';
-import 'package:my_web_app/pages/travel_itinerary_planner_page.dart';
 import 'package:my_web_app/pages/changelog_manager_page.dart';
 import 'package:my_web_app/pages/release_notes_page.dart';
 import 'package:my_web_app/pages/pet_care_manager_page.dart';
@@ -318,7 +322,6 @@ import 'package:my_web_app/pages/cfo_cost_ledger_page.dart';
 import 'package:my_web_app/pages/compatibility_result_page.dart';
 import 'package:my_web_app/pages/leave_management_page.dart';
 import 'package:my_web_app/pages/performance_review_page.dart';
-import 'package:my_web_app/pages/pomodoro_timer_page.dart';
 import 'package:my_web_app/pages/health_check_page.dart';
 import 'package:my_web_app/pages/horseracing_race_detail_page.dart';
 import 'package:my_web_app/pages/monthly_kpi_dashboard_page.dart';
@@ -335,6 +338,7 @@ import 'utils/app_logger.dart';
 import 'utils/error_reporter.dart';
 
 import 'services/supabase_client_provider.dart';
+import 'services/supabase_runtime_config.dart';
 
 export 'services/supabase_client_provider.dart';
 
@@ -353,11 +357,11 @@ Future<void> main() async {
   usePathUrlStrategy();
 
   final NotificationService notificationService = NotificationService();
+  final supabaseConfig = SupabaseRuntimeConfig.fromCompileTimeEnvironment();
 
   await Supabase.initialize(
-    url: 'https://smmkxxavexumewbfaqpy.supabase.co',
-    publishableKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtbWt4eGF2ZXh1bWV3YmZhcXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTExNzYsImV4cCI6MjA3NjI2NzE3Nn0.U2OsYRYFvbpu2QjTwXulJ67v9wouMMpn0y9B9K5-WHw',
+    url: supabaseConfig.url,
+    publishableKey: supabaseConfig.publishableKey,
   );
 
   // Flutter/Dart エラーを自動で Sentry + フィードバックEF に送信
@@ -474,7 +478,8 @@ class _AuthenticatedHomePageState extends State<_AuthenticatedHomePage> {
 String _initialRouteName() {
   final uri = Uri.base;
   if (uri.path.isNotEmpty && uri.path != '/') {
-    return uri.hasQuery ? '${uri.path}?${uri.query}' : uri.path;
+    final path = normalizeRoutePath(uri.path);
+    return uri.hasQuery ? '$path?${uri.query}' : path;
   }
   if (uri.fragment.startsWith('/')) {
     return uri.fragment;
@@ -493,12 +498,13 @@ Route<dynamic> generateAppRoute(
   required LandingSignupCompletionService signupCompletionService,
 }) {
   final uri = Uri.parse(settings.name ?? '/');
+  final routePath = normalizeRoutePath(uri.path);
   // 全ての named route 遷移を利用履歴に記録する単一チョークポイント。
   // 主要導線の直叩き pushNamed が記録されず、最近使った / よく使われる
   // 機能が「サイト案内AI」しか並ばなかった機能不全 (#3279) を解消する。
   recordFeatureRouteNavigation(settings.name);
 
-  switch (uri.path) {
+  switch (routePath) {
     case '/':
       return MaterialPageRoute(
         builder: (_) => supabase.auth.currentSession != null
@@ -515,13 +521,35 @@ Route<dynamic> generateAppRoute(
           signupCompletionService: signupCompletionService,
         ),
       );
-    // HexCiv ダウンロード版の商品ページ (2026-07-28 追加)。
-    // Stripe Checkout の success_url / cancel_url がこの URL に
-    // `?purchase=success` / `?purchase=canceled` を付けて戻ってくる。
+    case '/agi-fireworks':
+      return MaterialPageRoute(
+        builder: (_) => const AgiFireworksPage(),
+        settings: settings,
+      );
+    case '/shop':
+      return MaterialPageRoute(
+        builder: (_) => const DigitalProductStorePage(),
+        settings: settings,
+      );
+    case '/shop/product':
+      return MaterialPageRoute(
+        builder: (_) => DigitalProductPage(
+          productId: uri.queryParameters['product_id'] ?? '',
+          purchaseResult: uri.queryParameters['purchase'],
+          funnel: ShopFunnelService(),
+        ),
+        settings: settings,
+      );
+    case '/shop/downloads':
+      return MaterialPageRoute(
+        builder: (_) => const ShopDownloadsPage(),
+        settings: settings,
+      );
+    // 既存の共有URL・Stripe戻りURLを壊さない後方互換ルート。
     case '/shop/hexciv':
       return MaterialPageRoute(
         builder: (_) => HexcivShopPage(
-          purchaseResult: Uri.base.queryParameters['purchase'],
+          purchaseResult: uri.queryParameters['purchase'],
           // 計測 (2026-07-29 追加)。閲覧・購入ボタン押下・Checkout 到達を数える。
           // ここを渡し忘れると計測だけが黙って止まるので、route に直書きする。
           funnel: ShopFunnelService(),
@@ -587,6 +615,7 @@ Route<dynamic> generateAppRoute(
         settings: const RouteSettings(name: '/growth-mission'),
       );
     case '/referral':
+    case '/referral-program':
       return MaterialPageRoute(
         builder: (_) => const ReferralPage(),
         settings: RouteSettings(name: settings.name),
@@ -1086,6 +1115,10 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const AssetManagementPage(),
       );
+    case '/asset-chat-history':
+      return MaterialPageRoute(
+        builder: (_) => const AssetChatHistoryPage(),
+      );
     case '/cfo-office':
       return MaterialPageRoute(builder: (_) => const CfoOfficePage());
     case '/cho-office':
@@ -1120,6 +1153,7 @@ Route<dynamic> generateAppRoute(
       );
     case '/mcp-file-search':
       return MaterialPageRoute(builder: (_) => const McpFileSearchPage());
+    case '/musubi':
     case '/social-feed':
       return MaterialPageRoute(builder: (_) => const SocialFeedPage());
     case '/sobriety-campaign':
@@ -1178,10 +1212,6 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const ParkingReservationPage(),
       );
-    case '/referral-program':
-      return MaterialPageRoute(
-        builder: (_) => const ReferralProgramPage(),
-      );
     case '/analytics-export':
       return MaterialPageRoute(
         builder: (_) => const AnalyticsExportPage(),
@@ -1219,6 +1249,7 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const WorkflowAutomationPage(),
       );
     case '/social-scheduler':
+    case '/social-media-scheduler':
       return MaterialPageRoute(
         builder: (_) => const SocialMediaSchedulerPage(),
       );
@@ -1261,6 +1292,7 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const DnsDomainManagerPage(),
       );
     case '/focus-timer':
+    case '/pomodoro-timer':
       return MaterialPageRoute(builder: (_) => const FocusTimerPage());
     case '/digital-wallet':
       return MaterialPageRoute(builder: (_) => const DigitalWalletPage());
@@ -1284,6 +1316,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const ViralVideoGeneratorPage(),
       );
+    case '/video-studio':
+      return MaterialPageRoute(
+        builder: (_) => VideoStudioFeature(initialUri: uri),
+        settings: RouteSettings(name: settings.name),
+      );
     case '/youtube-stats':
       return MaterialPageRoute(builder: (_) => const YoutubeStatsPage());
     case '/audio-effects-processor':
@@ -1293,6 +1330,10 @@ Route<dynamic> generateAppRoute(
     case '/guitar-recording-studio':
       return MaterialPageRoute(
         builder: (_) => const GuitarRecordingStudioPage(),
+      );
+    case '/beatles-guitar-tabs':
+      return MaterialPageRoute(
+        builder: (_) => const BeatlesGuitarTabsFeature(),
       );
     case '/public-guitar-gallery':
       return MaterialPageRoute(
@@ -1369,9 +1410,6 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const HorseProviderLeaderboardPage(),
       );
     case '/travel-itinerary':
-      return MaterialPageRoute(
-        builder: (_) => const TravelItineraryPlannerPage(),
-      );
     case '/travel-planner':
       return MaterialPageRoute(
         builder: (_) => const TravelItineraryPage(),
@@ -1674,10 +1712,6 @@ Route<dynamic> generateAppRoute(
       );
     case '/habit-tracker':
       return MaterialPageRoute(builder: (_) => const HabitTrackerPage());
-    case '/social-media-scheduler':
-      return MaterialPageRoute(
-        builder: (_) => const SocialMediaSchedulerPage(),
-      );
     case '/agent-department-manager':
       return MaterialPageRoute(
         builder: (_) => const AgentDepartmentManagerPage(),
@@ -1712,8 +1746,6 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const PerformanceReviewPage(),
       );
-    case '/pomodoro-timer':
-      return MaterialPageRoute(builder: (_) => const PomodoroTimerPage());
     case '/health-check':
       return MaterialPageRoute(builder: (_) => const HealthCheckPage());
     case '/memory-search':
@@ -1778,10 +1810,10 @@ Route<dynamic> generateAppRoute(
         builder: (_) => HorseracingRaceDetailPage(race: race),
       );
     default:
-      if (uri.path.startsWith('/vs-')) {
+      if (routePath.startsWith('/vs-')) {
         return MaterialPageRoute(
           builder: (_) => ComparisonPage(
-            competitorKey: uri.path.replaceFirst('/vs-', ''),
+            competitorKey: routePath.replaceFirst('/vs-', ''),
           ),
           settings: settings,
         );
@@ -1843,60 +1875,67 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final themeService = Provider.of<ThemeService>(context);
 
-    return MaterialApp(
-      title: '自分株式会社', //  旧: マイメモ -> 新: 自分株式会社
-      debugShowCheckedModeBanner: false,
-      scaffoldMessengerKey: _scaffoldMessengerKey,
-      navigatorKey: _navigatorKey,
-      initialRoute: _initialRouteName(),
-      theme: themeService.overrideTheme ?? themeService.getLightTheme(),
-      darkTheme: themeService.overrideTheme ?? themeService.getDarkTheme(),
-      themeMode: themeService.overrideTheme != null
-          ? ThemeMode.light
-          : themeService.getFlutterThemeMode(),
-      builder: (context, child) {
-        return GlobalHeaderClockShell(
-          navigatorKey: _navigatorKey,
-          child: UniversalAiShareShell(
+    return ValueListenableBuilder(
+      valueListenable: universalAiShareRouteObserver.currentPage,
+      builder: (context, currentPage, _) => MaterialApp(
+        title: documentTitleForRoute(currentPage.routePath),
+        debugShowCheckedModeBanner: false,
+        scaffoldMessengerKey: _scaffoldMessengerKey,
+        navigatorKey: _navigatorKey,
+        initialRoute: _initialRouteName(),
+        theme: themeService.overrideTheme ?? themeService.getLightTheme(),
+        darkTheme: themeService.overrideTheme ?? themeService.getDarkTheme(),
+        themeMode: themeService.overrideTheme != null
+            ? ThemeMode.light
+            : themeService.getFlutterThemeMode(),
+        builder: (context, child) {
+          return GlobalHeaderClockShell(
             navigatorKey: _navigatorKey,
-            child: MaintenanceShell(
-              routeListenable: universalAiShareRouteObserver.currentPage,
-              child: Column(
-                children: [
-                  if (_showUpdateBanner)
-                    UpdateBanner(
-                      onDismiss: () =>
-                          setState(() => _showUpdateBanner = false),
-                    ),
-                  Expanded(child: child ?? const SizedBox.shrink()),
-                ],
+            // 時計とビルド番号はログイン後の業務用クロームに限定する。
+            // 公開LPに内部ステータス風の帯を出すと、未完成・デバッグ中に
+            // 見えるうえ、狭幅ではラベルが切れて信頼を損なう。
+            showClockBar: supabase.auth.currentSession != null,
+            child: UniversalAiShareShell(
+              navigatorKey: _navigatorKey,
+              child: MaintenanceShell(
+                routeListenable: universalAiShareRouteObserver.currentPage,
+                child: Column(
+                  children: [
+                    if (_showUpdateBanner)
+                      UpdateBanner(
+                        onDismiss: () =>
+                            setState(() => _showUpdateBanner = false),
+                      ),
+                    Expanded(child: child ?? const SizedBox.shrink()),
+                  ],
+                ),
               ),
             ),
+          );
+        },
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('ja'), Locale('en')],
+        locale: const Locale('ja'),
+        navigatorObservers: <NavigatorObserver>[
+          _growthPresenceObserver,
+          universalAiShareRouteObserver,
+          // deep link 直開き時に下へ積まれた HomePage / LandingPage の fetch・
+          // LP View 計測を可視化まで遅延させる (可視化ゲート)。
+          deepLinkVisibilityRouteObserver,
+          if (MyApp._sentryNavigatorObserver != null)
+            MyApp._sentryNavigatorObserver!,
+        ],
+        onGenerateRoute: (settings) => ensureRouteAnnouncesUrl(
+          generateAppRoute(
+            settings,
+            signupCompletionService: widget.signupCompletionService,
           ),
-        );
-      },
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('ja'), Locale('en')],
-      locale: const Locale('ja'),
-      navigatorObservers: <NavigatorObserver>[
-        _growthPresenceObserver,
-        universalAiShareRouteObserver,
-        // deep link 直開き時に下へ積まれた HomePage / LandingPage の fetch・
-        // LP View 計測を可視化まで遅延させる (可視化ゲート)。
-        deepLinkVisibilityRouteObserver,
-        if (MyApp._sentryNavigatorObserver != null)
-          MyApp._sentryNavigatorObserver!,
-      ],
-      onGenerateRoute: (settings) => ensureRouteAnnouncesUrl(
-        generateAppRoute(
           settings,
-          signupCompletionService: widget.signupCompletionService,
         ),
-        settings,
       ),
     );
   }

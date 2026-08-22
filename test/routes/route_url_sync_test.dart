@@ -117,6 +117,27 @@ void main() {
     );
   });
 
+  test('legacy duplicate routes resolve to the consolidated page', () {
+    const expectedPageByLegacyRoute = <String, String>{
+      '/pomodoro-timer': 'FocusTimerPage',
+      '/referral-program': 'ReferralPage',
+      '/social-media-scheduler': 'SocialMediaSchedulerPage',
+      '/travel-itinerary': 'TravelItineraryPage',
+    };
+    final cases = _routeCases();
+
+    for (final expected in expectedPageByLegacyRoute.entries) {
+      final routeCase = cases.singleWhere(
+        (candidate) => candidate.labels.contains(expected.key),
+      );
+      expect(
+        routeCase.body,
+        contains(expected.value),
+        reason: '${expected.key} が統合先 ${expected.value} を開いていない',
+      );
+    }
+  });
+
   // 直叩き Navigator.push は onGenerateRoute を通らないので wrapper の対象外。
   // これらは各サイトで settings を持っていないと URL が変わらない。
   test('every direct Navigator.push of a page route passes settings', () {

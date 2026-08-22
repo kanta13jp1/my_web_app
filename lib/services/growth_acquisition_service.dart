@@ -18,6 +18,7 @@ class FirstUserGrowthAttribution {
     r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
   );
   static final RegExp _tokenPattern = RegExp(r'^[a-z0-9_-]{1,64}$');
+  static const Set<String> supportedSources = <String>{'x', 'zenn'};
 
   final String visitorId;
   final String utmSource;
@@ -36,7 +37,7 @@ class FirstUserGrowthAttribution {
     final source = _token(params['utm_source']);
     final campaign = _token(params['utm_campaign']);
     if (!_visitorIdPattern.hasMatch(normalizedVisitorId) ||
-        source != 'x' ||
+        !supportedSources.contains(source) ||
         campaign != 'first_user_growth') {
       return null;
     }
@@ -67,7 +68,7 @@ class FirstUserGrowthAttribution {
       json['captured_at']?.toString() ?? '',
     )?.toUtc();
     if (!_visitorIdPattern.hasMatch(visitorId) ||
-        source != 'x' ||
+        !supportedSources.contains(source) ||
         campaign != 'first_user_growth' ||
         !_tokenPattern.hasMatch(medium) ||
         !_tokenPattern.hasMatch(content) ||
@@ -121,6 +122,7 @@ class GrowthAcquisitionService {
   static const String touchLanding = 'touch_landing';
   static const String touchProfile = 'touch_profile';
   static const String touchXFirstUserGrowth = 'touch_x_first_user_growth';
+  static const String touchZennFirstUserGrowth = 'touch_zenn_first_user_growth';
   static const String touchImport = 'touch_import';
   static const String touchPublicMemo = 'touch_public_memo';
   static const String touchReferral = 'touch_referral';
@@ -145,12 +147,25 @@ class GrowthAcquisitionService {
   static const String signupSubmitProfile = 'signup_submit_profile';
   static const String signupSubmitXFirstUserGrowth =
       'signup_submit_x_first_user_growth';
+  static const String signupSubmitZennFirstUserGrowth =
+      'signup_submit_zenn_first_user_growth';
   static const String signupSubmitImport = 'signup_submit_import';
   static const String signupSubmitPublicMemo = 'signup_submit_public_memo';
   static const String signupSubmitReferral = 'signup_submit_referral';
   static const String signupSubmitComparison = 'signup_submit_comparison';
   static const String signupSubmitPublicTracker =
       'signup_submit_public_tracker';
+
+  static const String funnelBillingView = 'funnel_billing_view';
+  static const String funnelUpgradeClick = 'funnel_upgrade_click';
+  static const String funnelCheckoutSuccess = 'funnel_checkout_success';
+  static const String funnelCheckoutCancel = 'funnel_checkout_cancel';
+  static const Set<String> billingFunnelStages = <String>{
+    funnelBillingView,
+    funnelUpgradeClick,
+    funnelCheckoutSuccess,
+    funnelCheckoutCancel,
+  };
 
   static const String _latestTouchpointKey = 'growth_latest_touchpoint';
   static const String _latestTouchpointUpdatedAtKey =
@@ -175,9 +190,8 @@ class GrowthAcquisitionService {
 
   final SupabaseClient? _clientOverride;
 
-  const GrowthAcquisitionService({
-    SupabaseClient? clientOverride,
-  }) : _clientOverride = clientOverride;
+  const GrowthAcquisitionService({SupabaseClient? clientOverride})
+      : _clientOverride = clientOverride;
 
   SupabaseClient? get _client {
     if (_clientOverride != null) {
@@ -218,13 +232,18 @@ class GrowthAcquisitionService {
 
   static bool isFirstUserGrowthUri(Uri uri) {
     final params = uri.queryParameters;
-    return _lowerParam(params, 'utm_source') == 'x' &&
+    return FirstUserGrowthAttribution.supportedSources.contains(
+          _lowerParam(params, 'utm_source'),
+        ) &&
         _lowerParam(params, 'utm_campaign') == 'first_user_growth';
   }
 
   static String? signalForIncomingUri(Uri uri) {
     if (!isFirstUserGrowthUri(uri)) {
       return null;
+    }
+    if (_lowerParam(uri.queryParameters, 'utm_source') == 'zenn') {
+      return touchZennFirstUserGrowth;
     }
     switch (_lowerParam(uri.queryParameters, 'utm_medium')) {
       case 'profile':
@@ -253,6 +272,8 @@ class GrowthAcquisitionService {
         return signupSubmitProfile;
       case touchXFirstUserGrowth:
         return signupSubmitXFirstUserGrowth;
+      case touchZennFirstUserGrowth:
+        return signupSubmitZennFirstUserGrowth;
       case touchImport:
         return signupSubmitImport;
       case touchPublicMemo:
@@ -338,6 +359,17 @@ class GrowthAcquisitionService {
     await _recordSignal(resolveSignupSubmitSignal(latestTouchpoint));
   }
 
+  Future<void> recordBillingFunnelStage({required String stage}) async {
+    if (!billingFunnelStages.contains(stage)) {
+      throw ArgumentError.value(
+        stage,
+        'stage',
+        'Unsupported billing funnel stage',
+      );
+    }
+    await _recordSignal(stage);
+  }
+
   Future<bool> recordFirstUserFunnelStage({
     required String stage,
     String? visitorId,
@@ -369,7 +401,7 @@ class GrowthAcquisitionService {
         jsonEncode(attribution.toJson()),
       );
     } else {
-      // A direct/non-campaign LP visit must not inherit an older X campaign.
+      // A direct/non-campaign LP visit must not inherit an older campaign.
       // Post-auth activation and billing routes intentionally load the stored
       // seven-day attribution because auth redirects strip the original UTM.
       if (_landingFirstUserFunnelStages.contains(stage)) {
@@ -434,9 +466,7 @@ class GrowthAcquisitionService {
     return attribution;
   }
 
-  Future<void> notifySignupSuccess({
-    required String? signupUserId,
-  }) async {
+  Future<void> notifySignupSuccess({required String? signupUserId}) async {
     final userId = signupUserId?.trim();
     if (userId == null || userId.isEmpty) {
       return;
@@ -484,10 +514,7 @@ class GrowthAcquisitionService {
     }
   }
 
-  Future<void> _recordSignal(
-    String signalKey, {
-    DateTime? now,
-  }) async {
+  Future<void> _recordSignal(String signalKey, {DateTime? now}) async {
     final client = _client;
     if (client == null) {
       return;
@@ -516,10 +543,7 @@ class GrowthAcquisitionService {
       debugPrintStack(stackTrace: stackTrace);
     }
 
-    await _recordSignalFallback(
-      signalKey: signalKey,
-      dateKey: dateKey,
-    );
+    await _recordSignalFallback(signalKey: signalKey, dateKey: dateKey);
   }
 
   Future<void> _recordSignalFallback({
@@ -555,9 +579,12 @@ class GrowthAcquisitionService {
       final sourceDetails = _normalizeSourceDetails(row['source_details'])
         ..update(signalKey, (count) => count + 1, ifAbsent: () => 1);
 
-      await client.from('app_analytics').update(<String, dynamic>{
-        'source_details': sourceDetails,
-      }).eq('date', dateKey);
+      await client
+          .from('app_analytics')
+          .update(<String, dynamic>{'source_details': sourceDetails}).eq(
+        'date',
+        dateKey,
+      );
     } catch (error, stackTrace) {
       debugPrint('Growth acquisition fallback failed: $error');
       debugPrintStack(stackTrace: stackTrace);

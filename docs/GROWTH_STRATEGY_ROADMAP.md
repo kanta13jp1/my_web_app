@@ -33462,3 +33462,30 @@ watcher が名指しできるのはスナップショット時点で**生存し�
 
 - 該当原則: 4 (商品=価値 / 競合を観測し自社の差別化を更新する) / 6 (資本=時間 / 自動化で調査時間をゼロトークンへ) / 8 (KPI / ユーザー 61人→次の milestone へ向けた施策立案)
 - ネットワークポリシー制約: Supabase Edge Function / REST への直接 HTTP アクセス不可 → GHA 経路が正規パス (既知・継続)
+
+### Rule 17 WF health check (2026-08-14 01:41 JST)
+
+- 直近30 run: success 10 / failure 2 / cancelled 2 / active 0（結論未確定のscheduled runを除く）
+- 失敗 WF: Minimal E2E Gate 2件 — アプリ変更のないDependabot Actions更新にもPR本文宣言を要求した誤判定
+- 不要処理を削減: 非アプリ変更はMinimal E2E宣言不要、PR時の未デプロイ公開URL smoke runnerを廃止、docs-only PRのCI起動を除外、ローカルSDK差のあるDart formatは固定SDKのCIへ集約
+- 維持する証明: アプリ変更のFlutter analyze/test/Web build、main反映後の公開Playwright、変更種別ごとのWeb/Edge/DBデプロイ
+- orphan branch: blog-publish 2 / daily-report 2 / その他 0（削除閾値5以下）
+
+### 収益化セッション記録: Google登録コールバック復旧 (2026-08-19 JST)
+
+**対象ファネル**: `trial/save CTA -> Google OAuth start -> signup_complete`
+
+- 最新のLP集計では trial 39件、save CTA 3件、Google OAuth start 2件に対し、検証済み signup_complete は0件。10仮説の勝敗は引き続き `insufficient_data` とする。
+- 本番Supabase OAuth開始URLはGoogleへHTTP 302し、client IDとSupabase callback URLが付くことを確認。入口ではなく、同意後の失敗復旧と原因計測を次の最小ボトルネックと判断した。
+- Google callbackの失敗を6つの匿名カテゴリへ分類し、raw description、メール、tokenを保存せず集計する。失敗時は古いsignup pendingを削除し、第一画面にGoogle再試行とMagic Link復旧を表示する。
+- 集計レポートはcallback失敗の総数とカテゴリを出し、登録完了0件のまま失敗が観測された場合は `repair_google_oauth_callback_failure` を次の行動として返す。
+- 検証: Flutter対象テスト、390px mobile widget、Python report 15件、`flutter analyze`、コミット前品質ゲートが成功。P0 WBSは #4617、親の着金タスクは #4129。
+- 獲得側の公開候補は承認済みだが、X APIが一時ロックでHTTP 403を返したため未投稿。オーナーがXで解除を確認するまで再試行しない。
+- 完了条件は変更しない。未知の外部ユーザーの登録・初回価値・実決済、Stripe paid payout、銀行口座への1円以上の着金がすべて未確認のため、収益化ゴールはOPENを維持する。
+
+### SEO根本原因セッション記録: sitemap更新日精度 (2026-08-20 JST)
+
+- 週次順位は2026-08-19の検証済み結果（`自分株式会社`で自然検索96件まで対象ドメイン未検出）を継続参照し、7日未満の重複計測は行わなかった。
+- 前回の「再クロール待ち」から発見シグナル生成まで掘り下げ、全47 URLの`lastmod`をページ更新と無関係なデプロイ日に揃える実装を確認した。
+- Googleが検証可能な重要更新日のみを利用できるよう、`date_modified`を明示した`/philosophy`だけに`lastmod=2026-08-19`を出し、未確認46 URLでは省略するよう修正した。URL一覧・本文・導線は変更していない。
+- 検証: SEO生成テスト17件、Python構文確認、`flutter analyze --no-pub`、Web release build、47 URL/1 lastmodの生成物監査、ローカルブラウザ描画が成功。順位への寄与は未断定で、次回は無関係デプロイ後の日付維持と週次のクロール／インデックス変化を確認する。
