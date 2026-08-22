@@ -96,6 +96,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   final GlobalKey _trialSectionKey = GlobalKey();
   final GlobalKey _guidedTrialKey = GlobalKey();
   final GlobalKey _authSectionKey = GlobalKey();
+  final GlobalKey _trialResultKey = GlobalKey();
 
   StreamSubscription<AuthState>? _authSubscription;
   Timer? _magicLinkCooldownTimer;
@@ -813,7 +814,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         _showSaveCtaPrompt = true;
         _trialUsesInstantPreview = false;
       });
-      _scrollToTrialMagicLink(requestFocus: false);
+      _scrollToTrialResult();
     } catch (e) {
       debugPrint('Trial preview failed: $e');
       unawaited(_recordConversionStage('trial_fallback'));
@@ -832,7 +833,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           _showSaveCtaPrompt = false;
           _trialUsesInstantPreview = true;
         });
-        _scrollToTrialMagicLink(requestFocus: false);
+        _scrollToTrialResult();
         return;
       }
       final failure = _resolveTrialPreviewError(e);
@@ -1033,6 +1034,22 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           duration: const Duration(milliseconds: 320),
           curve: Curves.easeOut,
           alignment: 0.12,
+        ),
+      );
+    });
+  }
+
+  void _scrollToTrialResult() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final resultContext = _trialResultKey.currentContext;
+      if (!mounted || resultContext == null) return;
+      unawaited(
+        Scrollable.ensureVisible(
+          resultContext,
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOut,
+          alignment: 0.5,
+          alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
         ),
       );
     });
@@ -4597,13 +4614,16 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                           ),
                         ),
                         const SizedBox(height: 6),
-                        Text(
-                          _trialAction!,
-                          key: const Key('landing_trial_result_action'),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            height: 1.5,
+                        KeyedSubtree(
+                          key: _trialResultKey,
+                          child: Text(
+                            _trialAction!,
+                            key: const Key('landing_trial_result_action'),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              height: 1.5,
+                            ),
                           ),
                         ),
                         if (_trialReason != null) ...[
