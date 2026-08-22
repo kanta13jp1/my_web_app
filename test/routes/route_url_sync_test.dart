@@ -264,6 +264,32 @@ void main() {
       reason: 'URL の無いトップ画面機能:\n${offenders.join('\n')}',
     );
   });
+
+  test('distinct home catalog features do not share a route', () {
+    final catalog = File('lib/data/home_tool_catalog.dart').readAsStringSync();
+    final ids = RegExp(
+      r"^      id: '([^']+)',",
+      multiLine: true,
+    ).allMatches(catalog).map((match) => match.group(1)!).toList();
+    final idsByRoute = <String, List<String>>{};
+
+    for (final id in ids) {
+      final route = _catalogRouteForId(id);
+      if (route == null) continue;
+      idsByRoute.putIfAbsent(route, () => <String>[]).add(id);
+    }
+
+    final duplicates = idsByRoute.entries
+        .where((entry) => entry.value.length > 1)
+        .map((entry) => '${entry.key}: ${entry.value.join(', ')}')
+        .toList(growable: false);
+
+    expect(
+      duplicates,
+      isEmpty,
+      reason: '異なるホーム機能が同じ URL を共有している:\n${duplicates.join('\n')}',
+    );
+  });
 }
 
 /// 引数が無いと画面を復元できないため、意図的に別 route へ落とすもの。
