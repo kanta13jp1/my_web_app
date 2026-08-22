@@ -14,6 +14,7 @@ import {
   invoiceSubscriptionId,
   subscriptionCurrentPeriodEnd,
 } from "./stripe_api_compat.ts";
+import { verifyStripeEvent } from "./stripe_signature.ts";
 import {
   isExternalRevenueCandidate,
   normalizeSupporterBuyerContext,
@@ -85,67 +86,6 @@ function asInteger(value: unknown): number | null {
     return Number.isFinite(parsed) ? Math.trunc(parsed) : null;
   }
   return null;
-}
-
-function parseStripeSignature(header: string): {
-  timestamp: string;
-  signatures: string[];
-} {
-  const parts = header.split(",");
-  let timestamp = "";
-  const signatures: string[] = [];
-  for (const part of parts) {
-    const [key, value] = part.split("=", 2);
-    if (key === "t") timestamp = value ?? "";
-    if (key === "v1" && value) signatures.push(value);
-  }
-  return { timestamp, signatures };
-}
-
-async function hmacSha256Hex(secret: string, payload: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const signature = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    encoder.encode(payload),
-  );
-  return Array.from(new Uint8Array(signature))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function safeEqualHex(left: string, right: string): boolean {
-  if (left.length !== right.length) return false;
-  let diff = 0;
-  for (let index = 0; index < left.length; index++) {
-    diff |= left.charCodeAt(index) ^ right.charCodeAt(index);
-  }
-  return diff === 0;
-}
-
-async function verifyStripeEvent(rawBody: string, signatureHeader: string) {
-  if (!STRIPE_WEBHOOK_SECRET) {
-    throw new Error("STRIPE_WEBHOOK_SECRET not configured");
-  }
-  const { timestamp, signatures } = parseStripeSignature(signatureHeader);
-  if (!timestamp || signatures.length === 0) {
-    throw new Error("invalid signature header");
-  }
-  const expected = await hmacSha256Hex(
-    STRIPE_WEBHOOK_SECRET,
-    `${timestamp}.${rawBody}`,
-  );
-  if (!signatures.some((sig) => safeEqualHex(sig, expected))) {
-    throw new Error("invalid signature");
-  }
-  return JSON.parse(rawBody) as Record<string, unknown>;
 }
 
 async function stripeGet(path: string): Promise<Record<string, unknown>> {
@@ -645,7 +585,11 @@ serve(async (req: Request) => {
     const signature = req.headers.get("stripe-signature") ?? "";
     if (!signature) return json({ error: "missing stripe-signature" }, 400);
     const rawBody = await req.text();
-    const event = await verifyStripeEvent(rawBody, signature);
+    const event = await verifyStripeEvent(
+      rawBody,
+      signature,
+      STRIPE_WEBHOOK_SECRET,
+    );
     const eventId = asString(event.id);
     const type = asString(event.type);
     if (!eventId || !type) throw new Error("invalid Stripe event envelope");
