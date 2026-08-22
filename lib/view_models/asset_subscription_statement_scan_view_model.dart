@@ -51,6 +51,8 @@ class AssetSubscriptionStatementScanViewModel extends ChangeNotifier {
 
   bool _isAnalyzing = false;
   String? _errorMessage;
+  String? _infoMessage;
+  bool _loginRequired = false;
   String? _analyzedFileName;
   String? _sourceAccountId;
   List<AssetSubscriptionStatementCandidateReview> _reviews = const [];
@@ -58,6 +60,8 @@ class AssetSubscriptionStatementScanViewModel extends ChangeNotifier {
 
   bool get isAnalyzing => _isAnalyzing;
   String? get errorMessage => _errorMessage;
+  String? get infoMessage => _infoMessage;
+  bool get loginRequired => _loginRequired;
   String? get analyzedFileName => _analyzedFileName;
   String? get sourceAccountId => _sourceAccountId;
   List<AssetSubscriptionStatementCandidateReview> get reviews =>
@@ -92,6 +96,8 @@ class AssetSubscriptionStatementScanViewModel extends ChangeNotifier {
   Future<void> pickAndAnalyze() async {
     if (_isAnalyzing) return;
     _errorMessage = null;
+    _infoMessage = null;
+    _loginRequired = false;
     _notifyListeners();
 
     AssetSubscriptionStatementImage? image;
@@ -137,6 +143,7 @@ class AssetSubscriptionStatementScanViewModel extends ChangeNotifier {
       ];
     } on AssetSubscriptionStatementScanException catch (error) {
       _errorMessage = error.message;
+      _loginRequired = error.requiresLogin;
     } catch (_) {
       _errorMessage = '明細画像を解析できませんでした。時間をおいて再試行してください。';
     } finally {
@@ -145,6 +152,14 @@ class AssetSubscriptionStatementScanViewModel extends ChangeNotifier {
       _isAnalyzing = false;
       _notifyListeners();
     }
+  }
+
+  void markSignedIn() {
+    _errorMessage = null;
+    _loginRequired = false;
+    _analyzedFileName = null;
+    _infoMessage = 'ログインしました。安全のため、明細画像をもう一度選んでください。';
+    _notifyListeners();
   }
 
   void setSourceAccountId(String? value) {

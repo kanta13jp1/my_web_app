@@ -11,11 +11,13 @@ class AssetSubscriptionStatementScanDialog extends StatefulWidget {
     required this.viewModel,
     required this.sourceAccountNames,
     required this.onImport,
+    this.onLogin,
   });
 
   final AssetSubscriptionStatementScanViewModel viewModel;
   final Map<String, String> sourceAccountNames;
   final void Function(List<AssetRecurringFixedCost> costs) onImport;
+  final Future<bool> Function()? onLogin;
 
   @override
   State<AssetSubscriptionStatementScanDialog> createState() =>
@@ -78,6 +80,9 @@ class _AssetSubscriptionStatementScanDialogState
     if (!vm.hasResults) {
       return _UploadState(
         errorMessage: vm.errorMessage,
+        infoMessage: vm.infoMessage,
+        loginRequired: vm.loginRequired,
+        onLogin: widget.onLogin == null ? null : _openLogin,
         onPick: vm.pickAndAnalyze,
       );
     }
@@ -108,6 +113,14 @@ class _AssetSubscriptionStatementScanDialogState
         );
       },
     );
+  }
+
+  Future<void> _openLogin() async {
+    final onLogin = widget.onLogin;
+    if (onLogin == null) return;
+    final signedIn = await onLogin();
+    if (!mounted || !signedIn) return;
+    widget.viewModel.markSignedIn();
   }
 
   Widget _buildFooter(BuildContext context) {
@@ -196,9 +209,18 @@ class _Header extends StatelessWidget {
 }
 
 class _UploadState extends StatelessWidget {
-  const _UploadState({required this.errorMessage, required this.onPick});
+  const _UploadState({
+    required this.errorMessage,
+    required this.infoMessage,
+    required this.loginRequired,
+    required this.onLogin,
+    required this.onPick,
+  });
 
   final String? errorMessage;
+  final String? infoMessage;
+  final bool loginRequired;
+  final Future<void> Function()? onLogin;
   final Future<void> Function() onPick;
 
   @override
@@ -248,17 +270,63 @@ class _UploadState extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
                     padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: scheme.onErrorContainer,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                errorMessage!,
+                                style: TextStyle(
+                                  color: scheme.onErrorContainer,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (loginRequired && onLogin != null) ...[
+                          const SizedBox(height: 10),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: FilledButton.icon(
+                              key: const Key('subscription_statement_login'),
+                              onPressed: onLogin,
+                              icon: const Icon(Icons.login),
+                              label: const Text('この画面でログイン'),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              if (infoMessage != null) ...[
+                const SizedBox(height: 16),
+                Material(
+                  color: scheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
                     child: Row(
                       children: [
                         Icon(
-                          Icons.error_outline,
-                          color: scheme.onErrorContainer,
+                          Icons.check_circle_outline,
+                          color: scheme.onSecondaryContainer,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            errorMessage!,
-                            style: TextStyle(color: scheme.onErrorContainer),
+                            infoMessage!,
+                            style: TextStyle(
+                              color: scheme.onSecondaryContainer,
+                            ),
                           ),
                         ),
                       ],
