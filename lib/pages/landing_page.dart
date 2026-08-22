@@ -18,6 +18,7 @@ import '../services/pending_landing_trial_service.dart';
 import '../services/route_visibility_observer.dart';
 import '../utils/route_document_title.dart';
 import '../widgets/live_growth_banner.dart';
+import '../widgets/landing_trial_guided_intake.dart';
 import '../widgets/landing_story_journey.dart';
 
 enum _LandingIntent { work, learning, money }
@@ -93,6 +94,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   final _trialPromptFocusNode = FocusNode();
   final ScrollController _pageScrollController = ScrollController();
   final GlobalKey _trialSectionKey = GlobalKey();
+  final GlobalKey _guidedTrialKey = GlobalKey();
   final GlobalKey _authSectionKey = GlobalKey();
 
   StreamSubscription<AuthState>? _authSubscription;
@@ -108,6 +110,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   bool _showInboxShortcut = false;
   bool _showAllUniqueFeatures = false;
   bool _showTrialAnswerPreview = true;
+  bool _showGuidedTrialIntake = false;
   int _magicLinkCooldownSeconds = 0;
   int _achievementCount = 0;
   int _totalUsers = 0;
@@ -116,6 +119,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
   String? _trialAction;
   String? _trialReason;
+  String? _lastGeneratedTrialPrompt;
   String? _trialErrorTitle;
   String? _trialErrorMessage;
   String? _magicLinkErrorMessage;
@@ -723,9 +727,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     });
   }
 
-  Future<void> _runTrialActionPreview() async {
-    final input = _trialPromptController.text.trim();
-    if (input.isEmpty) {
+  void _openGuidedTrialIntake({bool recordHeroCta = false}) {
+    final concern = _trialPromptController.text.trim();
+    if (concern.isEmpty) {
       setState(() {
         _trialAction = null;
         _trialReason = null;
@@ -736,6 +740,55 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       });
       return;
     }
+
+    if (recordHeroCta) {
+      unawaited(_recordConversionStage('hero_cta'));
+    }
+    _trialPromptFocusNode.unfocus();
+    setState(() {
+      _showGuidedTrialIntake = true;
+      _showTrialAnswerPreview = false;
+      _lastGeneratedTrialPrompt = null;
+      _trialAction = null;
+      _trialReason = null;
+      _trialErrorTitle = null;
+      _trialErrorMessage = null;
+      _showSaveCtaPrompt = false;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final guidedContext = _guidedTrialKey.currentContext;
+      if (!mounted || guidedContext == null) return;
+      unawaited(
+        Scrollable.ensureVisible(
+          guidedContext,
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOut,
+          alignment: 0.16,
+        ),
+      );
+    });
+  }
+
+  void _cancelGuidedTrialIntake() {
+    setState(() {
+      _showGuidedTrialIntake = false;
+      _showTrialAnswerPreview = _trialPromptController.text.trim().isEmpty;
+    });
+  }
+
+  void _submitGuidedTrialPrompt(String generatedPrompt) {
+    setState(() {
+      _lastGeneratedTrialPrompt = generatedPrompt;
+      _showGuidedTrialIntake = false;
+    });
+    unawaited(_runTrialActionPreview());
+  }
+
+  Future<void> _runTrialActionPreview() async {
+    final input = _lastGeneratedTrialPrompt?.trim().isNotEmpty == true
+        ? _lastGeneratedTrialPrompt!.trim()
+        : _trialPromptController.text.trim();
+    if (input.isEmpty) return;
 
     unawaited(_recordTrialStages());
     setState(() {
@@ -881,12 +934,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     _trialPromptController
       ..text = prompt
       ..selection = TextSelection.collapsed(offset: prompt.length);
+    _lastGeneratedTrialPrompt = null;
+    _showGuidedTrialIntake = false;
     unawaited(_runTrialActionPreview());
   }
 
   void _runHeroTrialActionPreview() {
-    unawaited(_recordConversionStage('hero_cta'));
-    unawaited(_runTrialActionPreview());
+    _openGuidedTrialIntake(recordHeroCta: true);
   }
 
   void _scrollToTrialSection() {
@@ -1151,6 +1205,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       _trialErrorMessage = null;
       _showSaveCtaPrompt = false;
       _trialUsesInstantPreview = false;
+      _showGuidedTrialIntake = false;
+      _lastGeneratedTrialPrompt = null;
       if (shouldRestorePreview) {
         _showTrialAnswerPreview = true;
       }
@@ -1276,6 +1332,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     final prompt = _promptForIntent(intent);
     setState(() {
       _selectedIntent = intent;
+      _showGuidedTrialIntake = false;
+      _lastGeneratedTrialPrompt = null;
       _trialPromptController
         ..text = prompt
         ..selection = TextSelection.collapsed(offset: prompt.length);
@@ -4254,10 +4312,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   firstUserGrowthMode
                       ? '入力・登録・カードは不要です。下のボタンだけで「今やる1件」を確認し、役立った時だけ保存できます。'
                       : compactHero
-                          ? '登録不要。例を押すか1行書くと「今やる1件」を返します。'
+                          ? '登録不要。1行書いて5問に答えると、AIが「今やる1件」を返します。'
                           : heroMode
-                              ? '登録はまだ不要です。1行書くか、下の例を押すと「今やる1件」を返します。'
-                              : 'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
+                              ? '登録はまだ不要です。5つの短い質問で状況を整理してから、AIが「今やる1件」を返します。'
+                              : '5つの短い質問で状況を整理し、AIへの送信内容を確認してから「今やる1件」を受け取れます。',
                   style: TextStyle(
                     color: heroMode
                         ? const Color(0xFFBCC6CE)
@@ -4290,7 +4348,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                       visualDensity: compactHero ? VisualDensity.compact : null,
                       materialTapTargetSize:
                           compactHero ? MaterialTapTargetSize.shrinkWrap : null,
-                      onPressed: _isTrialLoading
+                      onPressed: _isTrialLoading || _showGuidedTrialIntake
                           ? null
                           : () => _runQuickTrialSample(
                                 '今日の最優先タスクを1件に絞りたい',
@@ -4307,7 +4365,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                       visualDensity: compactHero ? VisualDensity.compact : null,
                       materialTapTargetSize:
                           compactHero ? MaterialTapTargetSize.shrinkWrap : null,
-                      onPressed: _isTrialLoading
+                      onPressed: _isTrialLoading || _showGuidedTrialIntake
                           ? null
                           : () => _runQuickTrialSample(
                                 '今日1日の計画を立てて、最も重要なことに集中したい',
@@ -4321,7 +4379,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                       visualDensity: compactHero ? VisualDensity.compact : null,
                       materialTapTargetSize:
                           compactHero ? MaterialTapTargetSize.shrinkWrap : null,
-                      onPressed: _isTrialLoading
+                      onPressed: _isTrialLoading || _showGuidedTrialIntake
                           ? null
                           : () => _runQuickTrialSample(
                                 '今いちばん先送りしていることを片付けたい',
@@ -4335,7 +4393,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   key: const Key('landing_trial_prompt_input'),
                   controller: _trialPromptController,
                   focusNode: _trialPromptFocusNode,
-                  readOnly: _isTrialLoading,
+                  readOnly: _isTrialLoading || _showGuidedTrialIntake,
                   onChanged: _handleTrialPromptChanged,
                   minLines: heroMode ? 1 : 2,
                   maxLines: heroMode ? 2 : 3,
@@ -4361,11 +4419,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                           ? 'landing_h03_inline_trial_action'
                           : 'landing_h03_lower_trial_action',
                     ),
-                    onPressed: _isTrialLoading
+                    onPressed: _isTrialLoading || _showGuidedTrialIntake
                         ? null
                         : heroMode
                             ? _runHeroTrialActionPreview
-                            : _runTrialActionPreview,
+                            : _openGuidedTrialIntake,
                     icon: _isTrialLoading
                         ? const SizedBox(
                             width: 20,
@@ -4374,7 +4432,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                           )
                         : const Icon(Icons.play_arrow),
                     label: Text(
-                      _isTrialLoading ? 'AIが具体的な1件を考えています…' : '今やる1件を試す',
+                      _isTrialLoading
+                          ? 'AIが具体的な1件を考えています…'
+                          : _showGuidedTrialIntake
+                              ? '5つの質問に回答中'
+                              : '今やる1件を試す',
                     ),
                     style: compactHero
                         ? FilledButton.styleFrom(
@@ -4383,6 +4445,28 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         : null,
                   ),
                 ),
+                if (_showGuidedTrialIntake) ...[
+                  SizedBox(height: compactHero ? 10 : 14),
+                  LandingTrialGuidedIntake(
+                    key: _guidedTrialKey,
+                    concern: _trialPromptController.text.trim(),
+                    compact: compactHero,
+                    onCancel: _cancelGuidedTrialIntake,
+                    onSubmit: _submitGuidedTrialPrompt,
+                  ),
+                ] else if (!_isTrialLoading) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'AIへの送信は、5問の回答を確認してから1回だけ行います。',
+                    style: TextStyle(
+                      color: heroMode
+                          ? const Color(0xFF9FADB8)
+                          : const Color(0xFF64748B),
+                      fontSize: 11,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
                 if (_showTrialAnswerPreview) ...[
                   SizedBox(height: compactHero ? 8 : 12),
                   _buildTrialAnswerPreview(
