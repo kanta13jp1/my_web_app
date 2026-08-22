@@ -63,6 +63,7 @@ import '../pages/reality_check_page.dart';
 import '../pages/real_world_danshari_page.dart';
 import '../pages/referral_page.dart';
 import '../pages/shopping_list_page.dart';
+import '../pages/spreadsheet_database_page.dart';
 import '../pages/stock_tasks_page.dart';
 import '../pages/table_data_page.dart';
 import '../pages/tech_blog_tracker_page.dart';
@@ -1867,6 +1868,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
           _pushPage(context, const AudioEffectsProcessorPage()),
     ),
     // office セクション
+    HomeToolEntry(
+      id: 'spreadsheet-database',
+      sectionId: 'office',
+      title: '表計算',
+      subtitle: 'セル編集・基本数式・自動保存に対応したデスクトップ表計算',
+      icon: Icons.grid_on_outlined,
+      color: const Color(0xFF107C41),
+      keywords: const <String>['表計算', 'スプレッドシート', 'Excel', '数式', '集計', 'SUM'],
+      onOpen: (context) => _pushPage(context, const SpreadsheetDatabasePage()),
+    ),
     HomeToolEntry(
       id: 'shop',
       sectionId: 'office',
