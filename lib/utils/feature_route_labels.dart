@@ -23,6 +23,8 @@ const Map<String, String> kCanonicalFeatureRouteAliases = <String, String>{
   '/billing': '/subscription-billing',
   '/expense-tracker': '/asset-management',
   '/gemini-university': '/ai-university',
+  '/goal-tracker': '/life-goals',
+  '/habit-gamification': '/daily-habits',
   '/mindmap': '/mind-map',
   '/musubi': '/social-feed',
   '/notes': '/note-list',
@@ -31,12 +33,17 @@ const Map<String, String> kCanonicalFeatureRouteAliases = <String, String>{
   '/referral-program': '/referral',
   '/social-media-scheduler': '/social-scheduler',
   '/travel-itinerary': '/travel-planner',
+  '/video-ad-generator': '/viral-ad-generator',
+  '/viral-video-generator': '/viral-ad-generator',
+  '/wip-limit': '/digest-queue',
 };
 
 const Map<String, String> _consolidatedFeatureLabels = <String, String>{
   '/asset-management': '資産・家計管理',
   '/autonomous-ops-console': '自律オペレーションコンソール',
   '/focus-timer': '集中タイマー',
+  '/life-goals': '人生目標管理',
+  '/daily-habits': '毎日の習慣',
   '/mind-map': 'マインドマップ',
   '/one-in-two-out-assist': '1 In 2 Out UI整理アシスト',
   '/referral': '友達招待・紹介プログラム',
@@ -44,6 +51,8 @@ const Map<String, String> _consolidatedFeatureLabels = <String, String>{
   '/social-scheduler': 'SNS投稿スケジューラー',
   '/subscription-billing': 'サブスクリプション管理',
   '/travel-planner': '旅行プランナー',
+  '/viral-ad-generator': 'バイラル広告ジェネレーター',
+  '/digest-queue': '消化してから次へ',
 };
 
 /// 別名 route を、履歴・おすすめ・表示名で共通利用する正規 route に変換する。
