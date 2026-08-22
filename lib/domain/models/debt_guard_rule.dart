@@ -40,6 +40,191 @@ class DebtGuardRule {
   final String? requiredAction;
 }
 
+/// Shared ordering and safety boundary for the payoff guard.
+///
+/// The guard may defer nonessential expansion, but it never defers the actions
+/// needed to keep a person safe and able to continue daily life.
+class DebtGuardFoundationPolicy {
+  const DebtGuardFoundationPolicy._();
+
+  static const motto = '整える → 生き抜く → 一歩進む';
+
+  static const essentialActions = <String>[
+    '睡眠',
+    '食事',
+    '水分補給',
+    '医療',
+    '衛生',
+    '仕事',
+    '緊急対応',
+    '借金返済',
+    '必要な連絡',
+  ];
+
+  static const dailyFoundationCopy = '今日を生き抜くために考え、必要なことを行い、'
+      'してはいけない衝動はやり過ごします。'
+      '責めるためではなく、今日の生活の土台を取り戻すための順番です。';
+
+  static const expansionCopy = '新しい挑戦・事業拡大・必須でない買い物などは、'
+      '今日の土台が整ってから最小の一歩だけ進めます。';
+
+  static const routineCopy = '完璧を求めず、毎日すべてを確認して、'
+      'その日に必要な項目を最小単位で行います。'
+      '体調不良や危険があるときは、達成数より休息・食事・医療を優先します。';
+
+  static const safetyCopy = '睡眠・食事・水分補給・医療・衛生・仕事・緊急対応・'
+      '借金返済・必要な連絡は、このガードより常に優先し、'
+      '決して制限しません。危険・強い痛み・体調不良がある場合は、'
+      '休息・医療・支援を優先してください。';
+}
+
+enum DebtGuardFoundationCadence { daily, whenDue, recoveryAware }
+
+extension DebtGuardFoundationCadenceCopy on DebtGuardFoundationCadence {
+  String get label => switch (this) {
+        DebtGuardFoundationCadence.daily => '毎日行う',
+        DebtGuardFoundationCadence.whenDue => '毎日確認し、必要日に行う',
+        DebtGuardFoundationCadence.recoveryAware => '体調と回復に合わせて行う',
+      };
+}
+
+class DebtGuardFoundationTask {
+  const DebtGuardFoundationTask({
+    required this.id,
+    required this.title,
+    required this.cadence,
+    required this.minimumAction,
+  });
+
+  final String id;
+  final String title;
+  final DebtGuardFoundationCadence cadence;
+  final String minimumAction;
+}
+
+const debtGuardFoundationTasks = <DebtGuardFoundationTask>[
+  DebtGuardFoundationTask(
+    id: 'cleaning',
+    title: '掃除',
+    cadence: DebtGuardFoundationCadence.daily,
+    minimumAction: '床・机・水回りのどれか1か所を2分だけ掃除する',
+  ),
+  DebtGuardFoundationTask(
+    id: 'laundry',
+    title: '洗濯',
+    cadence: DebtGuardFoundationCadence.whenDue,
+    minimumAction: '洗濯物を確認し、必要なら洗濯機を回す',
+  ),
+  DebtGuardFoundationTask(
+    id: 'dishes',
+    title: '洗い物',
+    cadence: DebtGuardFoundationCadence.daily,
+    minimumAction: '皿かコップを1つだけ洗う',
+  ),
+  DebtGuardFoundationTask(
+    id: 'tidying',
+    title: '整理整頓',
+    cadence: DebtGuardFoundationCadence.daily,
+    minimumAction: '物を1つだけ元の場所へ戻す',
+  ),
+  DebtGuardFoundationTask(
+    id: 'bath',
+    title: '風呂',
+    cadence: DebtGuardFoundationCadence.daily,
+    minimumAction: '体調に合わせて入浴かシャワーの準備を始める',
+  ),
+  DebtGuardFoundationTask(
+    id: 'home_cooking',
+    title: '自炊',
+    cadence: DebtGuardFoundationCadence.daily,
+    minimumAction: '米を炊くか、次の食事の食材を1つ準備する',
+  ),
+  DebtGuardFoundationTask(
+    id: 'meals',
+    title: '食事',
+    cadence: DebtGuardFoundationCadence.daily,
+    minimumAction: '食事を抜かず、必要な栄養と水分を確保する',
+  ),
+  DebtGuardFoundationTask(
+    id: 'expiry_management',
+    title: '食料品・調味料の賞味期限管理',
+    cadence: DebtGuardFoundationCadence.whenDue,
+    minimumAction: '食品を1つ確認し、期限が近いものを手前に置く',
+  ),
+  DebtGuardFoundationTask(
+    id: 'discard_unused_items',
+    title: '不用品の廃棄',
+    cadence: DebtGuardFoundationCadence.whenDue,
+    minimumAction: '不要な物を1つだけ分別する',
+  ),
+  DebtGuardFoundationTask(
+    id: 'brush_teeth',
+    title: '歯磨き',
+    cadence: DebtGuardFoundationCadence.daily,
+    minimumAction: '歯ブラシを手に取り、30秒だけ磨き始める',
+  ),
+  DebtGuardFoundationTask(
+    id: 'change_clothes',
+    title: '毎日着替える',
+    cadence: DebtGuardFoundationCadence.daily,
+    minimumAction: '清潔な服を1組用意して着替える',
+  ),
+  DebtGuardFoundationTask(
+    id: 'shave',
+    title: '髭を剃る',
+    cadence: DebtGuardFoundationCadence.whenDue,
+    minimumAction: '鏡で確認し、必要なら髭剃りを準備する',
+  ),
+  DebtGuardFoundationTask(
+    id: 'haircut',
+    title: '髪を切る',
+    cadence: DebtGuardFoundationCadence.whenDue,
+    minimumAction: '長さを確認し、必要なら予約か日程決めをする',
+  ),
+  DebtGuardFoundationTask(
+    id: 'trim_nails',
+    title: '爪を切る',
+    cadence: DebtGuardFoundationCadence.whenDue,
+    minimumAction: '爪を確認し、必要なら爪切りを用意する',
+  ),
+  DebtGuardFoundationTask(
+    id: 'asset_management',
+    title: '資産管理',
+    cadence: DebtGuardFoundationCadence.daily,
+    minimumAction: '残高・支払予定・当日の利用を1分だけ確認する',
+  ),
+  DebtGuardFoundationTask(
+    id: 'journal',
+    title: '日記をつける',
+    cadence: DebtGuardFoundationCadence.daily,
+    minimumAction: '今日の事実を1行だけ書く',
+  ),
+  DebtGuardFoundationTask(
+    id: 'reading',
+    title: '読書',
+    cadence: DebtGuardFoundationCadence.daily,
+    minimumAction: '本を開き、1ページだけ読む',
+  ),
+  DebtGuardFoundationTask(
+    id: 'learning',
+    title: '学習',
+    cadence: DebtGuardFoundationCadence.daily,
+    minimumAction: '教材を開き、2分だけ取り組む',
+  ),
+  DebtGuardFoundationTask(
+    id: 'exercise',
+    title: '運動',
+    cadence: DebtGuardFoundationCadence.daily,
+    minimumAction: '体調に合わせて歩くか、軽くストレッチする',
+  ),
+  DebtGuardFoundationTask(
+    id: 'strength_training',
+    title: '筋トレ',
+    cadence: DebtGuardFoundationCadence.recoveryAware,
+    minimumAction: '痛みや疲労を確認し、回復していれば1種目だけ行う',
+  ),
+];
+
 /// The canonical payoff-guard catalog.
 ///
 /// The user's duplicate gambling entries are intentionally represented by one
