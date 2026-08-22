@@ -100,11 +100,17 @@ String landingGoogleOAuthFailureEventKey(
 class LandingTrialPreviewException implements Exception {
   final String code;
   final int? statusCode;
+  final bool canUseInstantPreview;
 
-  const LandingTrialPreviewException(this.code, {this.statusCode});
+  const LandingTrialPreviewException(
+    this.code, {
+    this.statusCode,
+    this.canUseInstantPreview = false,
+  });
 
   @override
-  String toString() => 'LandingTrialPreviewException($code, $statusCode)';
+  String toString() =>
+      'LandingTrialPreviewException($code, $statusCode, $canUseInstantPreview)';
 }
 
 class LandingPageViewPoint {
@@ -368,11 +374,14 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
       final details = error.details;
       final errorCode =
           details is Map ? details['error']?.toString().trim() : null;
+      final canUseInstantPreview =
+          details is Map && details['canUseInstantPreview'] == true;
       throw LandingTrialPreviewException(
         (errorCode == null || errorCode.isEmpty)
             ? 'trial_ai_unavailable'
             : errorCode,
         statusCode: error.status,
+        canUseInstantPreview: canUseInstantPreview,
       );
     }
     final data = response.data is Map<String, dynamic>
@@ -389,6 +398,7 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
           ? data['error'].toString().trim()
           : 'trial_ai_unavailable',
       statusCode: response.status,
+      canUseInstantPreview: data['canUseInstantPreview'] == true,
     );
   }
 

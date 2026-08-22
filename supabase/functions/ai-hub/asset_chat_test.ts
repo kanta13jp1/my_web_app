@@ -4,6 +4,7 @@ import {
   type AssetChatExchange,
   type AssetChatHistoryRow,
   type AssetChatMessage,
+  assetChatMoneyRange,
   type AssetChatProviderRequest,
   type AssetChatSnapshotRow,
   type AssetChatStore,
@@ -32,8 +33,17 @@ Deno.test("asset chat action aliases and PII defaults are stable", () => {
   const masked = maskAssetChatSensitiveNumbers(
     "口座123-456、残高1,234,567円、全角１２３万円、mail=user123@example.com",
   );
-  assert(!/\p{Number}/u.test(masked), `digits leaked: ${masked}`);
+  assert(masked.includes("[masked-number]-[masked-number]"), masked);
+  assert(masked.includes("¥1m-5m"), masked);
+  assert(!masked.includes("1,234,567"), `raw amount leaked: ${masked}`);
+  assert(!masked.includes("１２３"), `full-width amount leaked: ${masked}`);
   assert(!masked.includes("user123@example.com"), `email leaked: ${masked}`);
+
+  assertEquals(assetChatMoneyRange(0), "¥0-10k");
+  assertEquals(assetChatMoneyRange(123_456), "¥100k-500k");
+  assertEquals(assetChatMoneyRange(1_234_567), "¥1m-5m");
+  assertEquals(assetChatMoneyRange(-500_000), "-¥500k-1m");
+  assertEquals(assetChatMoneyRange(100_000_000), "¥100m+");
 });
 
 Deno.test("creates a thread, calls the provider, and persists one exchange", async () => {
@@ -186,7 +196,7 @@ Deno.test("reuses snapshot context for one hour but always reloads history", asy
   assertEquals(store.snapshotReads, 2);
 });
 
-Deno.test("mask mode hides all digits from provider input and stored reply", async () => {
+Deno.test("mask mode sends money ranges without raw sensitive values", async () => {
   const store = new FakeStore({
     snapshots: [snapshot("2026-08", 1_234_567, 456_789)],
   });
@@ -203,19 +213,37 @@ Deno.test("mask mode hides all digits from provider input and stored reply", asy
     },
   });
 
-  for (const item of providerMessages) {
+  const providerInput = providerMessages.map((item) => item.content).join("\n");
+  for (
+    const rawValue of [
+      "123456",
+      "1,234,567",
+      "1234567",
+      "456789",
+      "2026-08",
+      "user9@example.com",
+    ]
+  ) {
     assert(
-      !/\p{Number}/u.test(item.content),
-      `provider input leaked digits: ${item.content}`,
-    );
-    assert(
-      !item.content.includes("user9@example.com"),
-      `provider input leaked email: ${item.content}`,
+      !providerInput.includes(rawValue),
+      `provider input leaked ${rawValue}: ${providerInput}`,
     );
   }
-  assert(!/\d/.test(result.reply), `reply leaked digits: ${result.reply}`);
+  assert(
+    providerInput.includes('"positive_asset_total":"¥1m-5m"'),
+    providerInput,
+  );
+  assert(
+    providerInput.includes('"liability_total":"¥100k-500k"'),
+    providerInput,
+  );
+  assert(providerInput.includes("残高¥100k-500k"), providerInput);
+  assertEquals(result.reply, "残高¥500k-1mを確認しました");
   assertEquals(store.exchanges[0].exchange.user.content, rawMessage);
-  assert(!/\d/.test(store.exchanges[0].exchange.assistant.content));
+  assertEquals(
+    store.exchanges[0].exchange.assistant.content,
+    "残高¥500k-1mを確認しました",
+  );
 });
 
 Deno.test("provider failures do not create a new thread or persist messages", async () => {

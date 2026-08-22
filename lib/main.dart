@@ -32,6 +32,7 @@ import 'package:my_web_app/pages/local_smart_cleanup_page.dart';
 import 'package:my_web_app/pages/windows_app_install_page.dart';
 import 'package:my_web_app/pages/payment_reminder_page.dart';
 import 'package:my_web_app/pages/shopping_list_page.dart';
+import 'package:my_web_app/pages/digital_product_store_pages.dart';
 import 'package:my_web_app/pages/hexciv_shop_page.dart';
 import 'package:my_web_app/services/shop_funnel_service.dart';
 import 'package:my_web_app/pages/digest_queue_page.dart';
@@ -182,7 +183,6 @@ import 'package:my_web_app/pages/mindmap_diagram_page.dart';
 import 'package:my_web_app/pages/auction_marketplace_page.dart';
 import 'package:my_web_app/pages/qr_code_generator_page.dart';
 import 'package:my_web_app/pages/parking_reservation_page.dart';
-import 'package:my_web_app/pages/referral_program_page.dart';
 import 'package:my_web_app/pages/analytics_export_page.dart';
 import 'package:my_web_app/pages/workflow_templates_page.dart';
 import 'package:my_web_app/pages/customer_feedback_page.dart';
@@ -221,6 +221,7 @@ import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
 import 'package:my_web_app/pages/video_ad_generator_page.dart';
 import 'package:my_web_app/pages/viral_video_generator_page.dart';
+import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
 import 'package:my_web_app/pages/youtube_stats_page.dart';
 import 'package:my_web_app/pages/audio_effects_processor_page.dart';
 import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
@@ -251,7 +252,6 @@ import 'package:my_web_app/pages/focus_capture_game_page.dart';
 import 'package:my_web_app/pages/code_playground_page.dart';
 import 'package:my_web_app/pages/real_estate_tracker_page.dart';
 import 'package:my_web_app/pages/spreadsheet_database_page.dart';
-import 'package:my_web_app/pages/travel_itinerary_planner_page.dart';
 import 'package:my_web_app/pages/changelog_manager_page.dart';
 import 'package:my_web_app/pages/release_notes_page.dart';
 import 'package:my_web_app/pages/pet_care_manager_page.dart';
@@ -322,7 +322,6 @@ import 'package:my_web_app/pages/cfo_cost_ledger_page.dart';
 import 'package:my_web_app/pages/compatibility_result_page.dart';
 import 'package:my_web_app/pages/leave_management_page.dart';
 import 'package:my_web_app/pages/performance_review_page.dart';
-import 'package:my_web_app/pages/pomodoro_timer_page.dart';
 import 'package:my_web_app/pages/health_check_page.dart';
 import 'package:my_web_app/pages/horseracing_race_detail_page.dart';
 import 'package:my_web_app/pages/monthly_kpi_dashboard_page.dart';
@@ -527,13 +526,30 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const AgiFireworksPage(),
         settings: settings,
       );
-    // HexCiv ダウンロード版の商品ページ (2026-07-28 追加)。
-    // Stripe Checkout の success_url / cancel_url がこの URL に
-    // `?purchase=success` / `?purchase=canceled` を付けて戻ってくる。
+    case '/shop':
+      return MaterialPageRoute(
+        builder: (_) => const DigitalProductStorePage(),
+        settings: settings,
+      );
+    case '/shop/product':
+      return MaterialPageRoute(
+        builder: (_) => DigitalProductPage(
+          productId: uri.queryParameters['product_id'] ?? '',
+          purchaseResult: uri.queryParameters['purchase'],
+          funnel: ShopFunnelService(),
+        ),
+        settings: settings,
+      );
+    case '/shop/downloads':
+      return MaterialPageRoute(
+        builder: (_) => const ShopDownloadsPage(),
+        settings: settings,
+      );
+    // 既存の共有URL・Stripe戻りURLを壊さない後方互換ルート。
     case '/shop/hexciv':
       return MaterialPageRoute(
         builder: (_) => HexcivShopPage(
-          purchaseResult: Uri.base.queryParameters['purchase'],
+          purchaseResult: uri.queryParameters['purchase'],
           // 計測 (2026-07-29 追加)。閲覧・購入ボタン押下・Checkout 到達を数える。
           // ここを渡し忘れると計測だけが黙って止まるので、route に直書きする。
           funnel: ShopFunnelService(),
@@ -599,6 +615,7 @@ Route<dynamic> generateAppRoute(
         settings: const RouteSettings(name: '/growth-mission'),
       );
     case '/referral':
+    case '/referral-program':
       return MaterialPageRoute(
         builder: (_) => const ReferralPage(),
         settings: RouteSettings(name: settings.name),
@@ -1195,10 +1212,6 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const ParkingReservationPage(),
       );
-    case '/referral-program':
-      return MaterialPageRoute(
-        builder: (_) => const ReferralProgramPage(),
-      );
     case '/analytics-export':
       return MaterialPageRoute(
         builder: (_) => const AnalyticsExportPage(),
@@ -1236,6 +1249,7 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const WorkflowAutomationPage(),
       );
     case '/social-scheduler':
+    case '/social-media-scheduler':
       return MaterialPageRoute(
         builder: (_) => const SocialMediaSchedulerPage(),
       );
@@ -1278,6 +1292,7 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const DnsDomainManagerPage(),
       );
     case '/focus-timer':
+    case '/pomodoro-timer':
       return MaterialPageRoute(builder: (_) => const FocusTimerPage());
     case '/digital-wallet':
       return MaterialPageRoute(builder: (_) => const DigitalWalletPage());
@@ -1300,6 +1315,11 @@ Route<dynamic> generateAppRoute(
     case '/viral-video-generator':
       return MaterialPageRoute(
         builder: (_) => const ViralVideoGeneratorPage(),
+      );
+    case '/video-studio':
+      return MaterialPageRoute(
+        builder: (_) => VideoStudioFeature(initialUri: uri),
+        settings: RouteSettings(name: settings.name),
       );
     case '/youtube-stats':
       return MaterialPageRoute(builder: (_) => const YoutubeStatsPage());
@@ -1390,9 +1410,6 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const HorseProviderLeaderboardPage(),
       );
     case '/travel-itinerary':
-      return MaterialPageRoute(
-        builder: (_) => const TravelItineraryPlannerPage(),
-      );
     case '/travel-planner':
       return MaterialPageRoute(
         builder: (_) => const TravelItineraryPage(),
@@ -1695,10 +1712,6 @@ Route<dynamic> generateAppRoute(
       );
     case '/habit-tracker':
       return MaterialPageRoute(builder: (_) => const HabitTrackerPage());
-    case '/social-media-scheduler':
-      return MaterialPageRoute(
-        builder: (_) => const SocialMediaSchedulerPage(),
-      );
     case '/agent-department-manager':
       return MaterialPageRoute(
         builder: (_) => const AgentDepartmentManagerPage(),
@@ -1733,8 +1746,6 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const PerformanceReviewPage(),
       );
-    case '/pomodoro-timer':
-      return MaterialPageRoute(builder: (_) => const PomodoroTimerPage());
     case '/health-check':
       return MaterialPageRoute(builder: (_) => const HealthCheckPage());
     case '/memory-search':

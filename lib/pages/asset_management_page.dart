@@ -53,7 +53,9 @@ import 'package:my_web_app/services/asset_subscription_audit_catalog.dart';
 import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_subscription_catalog.dart';
 import 'package:my_web_app/services/asset_subscription_duplicate_detector.dart';
+import 'package:my_web_app/services/asset_subscription_statement_scan_service.dart';
 import 'package:my_web_app/services/ai_hub_chat_service.dart';
+import 'package:my_web_app/services/asset_chat_privacy_settings_service.dart';
 import 'package:my_web_app/services/asset_payment_check_guide_service.dart';
 import 'package:my_web_app/services/asset_salary_amount_store.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
@@ -86,6 +88,7 @@ import 'package:my_web_app/services/csv_bytes_decoder.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_progress_card_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
+import 'package:my_web_app/view_models/asset_subscription_statement_scan_view_model.dart';
 import 'package:my_web_app/services/disposable_balance_asset_liability_adapter.dart';
 import 'package:my_web_app/services/disposable_balance_service.dart';
 import 'package:my_web_app/services/drink_challenge_service.dart';
@@ -107,6 +110,7 @@ import 'package:my_web_app/widgets/asset_cashflow_statement_card.dart';
 import 'package:my_web_app/widgets/asset_dashboard_grid.dart';
 import 'package:my_web_app/widgets/asset_net_worth_panel_card.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
+import 'package:my_web_app/widgets/asset_subscription_statement_scan_dialog.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
 import 'package:my_web_app/widgets/subscription_audit_card.dart';
@@ -407,8 +411,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 支払確認手順(決定論ベース)と、ネット検索対応プロバイダ経由の AI 詳細手順。
   final AssetPaymentCheckGuideService _paymentCheckGuideService =
       const AssetPaymentCheckGuideService();
+  final AssetChatPrivacySettingsService _assetChatPrivacySettingsService =
+      const AssetChatPrivacySettingsService();
   late final AiHubChatService _aiHubChatService = AiHubChatService(
     supabase: _supabase,
+    assetChatPrivacySettingsService: _assetChatPrivacySettingsService,
   );
   final ProfileService _profileService = ProfileService();
 
@@ -874,6 +881,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetManagementDisplayModeStore();
   AssetManagementDisplayMode _displayMode =
       AssetManagementDisplayModeStore.defaultMode;
+  bool _assetChatMaskMoneyAmounts = false;
   final AssetManagementMainAccountStore _mainAccountStore =
       const AssetManagementMainAccountStore();
   // 月をまたいだ負債トレンド(リボ複利・残高増加)判定のための口座別残高履歴。
@@ -1100,6 +1108,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchMustTasks();
     unawaited(_loadDailyTodos());
     _loadDisplayMode();
+    unawaited(_loadAssetChatPrivacySettings());
     _loadMainAccount();
     unawaited(_loadHouseholdTrackerPublishing());
     unawaited(_loadSalaryAmount());
@@ -11604,6 +11613,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return SubscriptionFixedCostCard(
       costs: subscriptionCosts,
       sourceAccountNames: sourceNames,
+      onScanStatement: () => unawaited(
+        _openSubscriptionStatementScanDialog(subscriptionCosts, sourceNames),
+      ),
       onAddPreset: (preset) => unawaited(
         _openRecurringFixedCostEditor(
           prefill: preset.toPrefill(
@@ -11626,7 +11638,77 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       ),
       onDelete: (cost) => unawaited(_confirmDeleteRecurringFixedCost(cost)),
+      onReviewDecisionChanged: (cost, decision) => _saveRecurringFixedCost(
+        cost.copyWith(subscriptionReviewDecision: decision),
+      ),
     );
+  }
+
+  Future<void> _openSubscriptionStatementScanDialog(
+    List<AssetRecurringFixedCost> existingSubscriptions,
+    Map<String, String> sourceAccountNames,
+  ) async {
+    final viewModel = AssetSubscriptionStatementScanViewModel(
+      imagePicker: const FilePickerAssetSubscriptionStatementImagePicker(),
+      analyzer: const AssetSubscriptionStatementScanService(),
+      existingSubscriptions: existingSubscriptions,
+    );
+    await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AssetSubscriptionStatementScanDialog(
+        viewModel: viewModel,
+        sourceAccountNames: sourceAccountNames,
+        onImport: _importSubscriptionStatementCosts,
+      ),
+    );
+  }
+
+  void _importSubscriptionStatementCosts(
+    List<AssetRecurringFixedCost> importedCosts,
+  ) {
+    if (importedCosts.isEmpty) return;
+    final next = List<AssetRecurringFixedCost>.from(_recurringFixedCosts);
+    final existingNames = <String>{
+      for (final cost in next) _normalizeSubscriptionName(cost.name),
+    };
+    final added = <AssetRecurringFixedCost>[];
+    for (final cost in importedCosts) {
+      final normalized = _normalizeSubscriptionName(cost.name);
+      if (normalized.isEmpty || existingNames.contains(normalized)) continue;
+      next.add(cost);
+      added.add(cost);
+      existingNames.add(normalized);
+    }
+    if (added.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('追加できる新しいサブスクはありませんでした。')),
+      );
+      return;
+    }
+    next.sort(_compareRecurringFixedCostsByPaymentDay);
+    setState(() => _recurringFixedCosts = next);
+    _persistInBackground(
+      _recurringFixedCostStore.save(next),
+      'subscription statement import',
+    );
+    for (final cost in added) {
+      unawaited(_recordRecurringFixedCostTombstone(cost.id, deleted: false));
+      unawaited(
+        _syncDirtyKeysStore.markDirty(_recurringFixedCostsMirrorKey, cost.id),
+      );
+    }
+    unawaited(_mirrorRecurringFixedCosts());
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${added.length}件のサブスクを棚卸しに追加しました。')),
+    );
+  }
+
+  String _normalizeSubscriptionName(String value) {
+    return value.toLowerCase().replaceAll(
+          RegExp(r'[\s\-_./・（）()]+'),
+          '',
+        );
   }
 
   /// `_recentFlows`(複数月分の収支履歴)から、支出のみを description パースして
@@ -12193,6 +12275,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         creditLimit: amount < 0 ? 0 : amount,
       ),
     );
+  }
+
+  Future<void> _loadAssetChatPrivacySettings() async {
+    final enabled =
+        await _assetChatPrivacySettingsService.loadMaskMoneyAmounts();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _assetChatMaskMoneyAmounts = enabled;
+    });
+  }
+
+  Future<void> _setAssetChatMaskMoneyAmounts(bool enabled) async {
+    await _assetChatPrivacySettingsService.saveMaskMoneyAmounts(enabled);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _assetChatMaskMoneyAmounts = enabled;
+    });
   }
 
   Future<void> _loadDisplayMode() async {
@@ -13991,6 +14094,50 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        dialogContext,
+                      ).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: SwitchListTile.adaptive(
+                      key: const Key('asset_chat_money_range_toggle'),
+                      value: _assetChatMaskMoneyAmounts,
+                      secondary: const Icon(Icons.privacy_tip_outlined),
+                      title: const Text(
+                        'AIチャットの金額をレンジ化',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'ONではAIへ送る直前に金額を「¥100k-500k」などへ変換します。'
+                        '入力原文はチャット履歴に残ります（既定OFF）。',
+                        style: TextStyle(fontSize: 11, height: 1.4),
+                      ),
+                      onChanged: (enabled) async {
+                        try {
+                          await _setAssetChatMaskMoneyAmounts(enabled);
+                          if (!dialogContext.mounted) {
+                            return;
+                          }
+                          setDialogState(() {});
+                        } catch (_) {
+                          if (!dialogContext.mounted) {
+                            return;
+                          }
+                          ScaffoldMessenger.of(dialogContext).showSnackBar(
+                            const SnackBar(
+                              content: Text('AIチャットのプライバシー設定を保存できませんでした'),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   if (_displayModeStatsLabel != null) ...[
                     Text(
                       '実験ログ: $_displayModeStatsLabel',

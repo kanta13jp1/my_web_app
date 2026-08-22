@@ -56,8 +56,8 @@ class LandingStoryJourney extends StatefulWidget {
       label: '実行',
       eyebrow: '04 · 今日の1件',
       title: 'いま動かす、\n1件だけが見える。',
-      body: '最初の10分で終わる一手から始め、結果を保存して明日へつなぐ。前進が、毎日の履歴になります。',
-      note: '登録前に体験 · 登録時カード不要',
+      body: '短時間で着手できる一手から始め、結果を保存して明日へつなぐ。前進が、毎日の履歴になります。',
+      note: '登録前に体験 · 無料登録時カード不要',
       assetPath: 'assets/landing_journey/04-action.webp',
     ),
   ];

@@ -207,10 +207,58 @@ export function normalizeAssetChatPiiMode(value: unknown): AssetChatPiiMode {
   );
 }
 
+export function assetChatMoneyRange(value: number): string {
+  if (!Number.isFinite(value)) return "[masked-number]";
+  const prefix = value < 0 ? "-" : "";
+  const amount = Math.abs(value);
+  if (amount < 10_000) return `${prefix}¥0-10k`;
+  if (amount < 50_000) return `${prefix}¥10k-50k`;
+  if (amount < 100_000) return `${prefix}¥50k-100k`;
+  if (amount < 500_000) return `${prefix}¥100k-500k`;
+  if (amount < 1_000_000) return `${prefix}¥500k-1m`;
+  if (amount < 5_000_000) return `${prefix}¥1m-5m`;
+  if (amount < 10_000_000) return `${prefix}¥5m-10m`;
+  if (amount < 50_000_000) return `${prefix}¥10m-50m`;
+  if (amount < 100_000_000) return `${prefix}¥50m-100m`;
+  return `${prefix}¥100m+`;
+}
+
 export function maskAssetChatSensitiveNumbers(value: string): string {
-  return value
+  const moneyRanges: Array<{ token: string; range: string }> = [];
+  const keepRange = (range: string): string => {
+    const token = `__ASSET_CHAT_MONEY_${alphabeticToken(moneyRanges.length)}__`;
+    moneyRanges.push({ token, range });
+    return token;
+  };
+  let masked = normalizeNumericWidth(value)
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[masked-email]")
-    .replace(/\p{Number}+(?:[.,，．]\p{Number}+)*/gu, "[masked-number]");
+    // Keep already-bucketed values stable when a structured snapshot is serialized.
+    .replace(
+      /-?¥\s*\d+(?:\.\d+)?(?:k|m)?(?:-\d+(?:\.\d+)?(?:k|m)?)?\+?/gi,
+      (match) => keepRange(match.replace(/\s+/g, "")),
+    )
+    .replace(
+      /¥\s*([+-]?\d+(?:,\d{3})*(?:\.\d+)?)\s*(億|万|千)?(?:円)?|([+-]?\d+(?:,\d{3})*(?:\.\d+)?)\s*(億|万|千)?\s*円/gu,
+      (_match, prefixed, prefixedUnit, suffixed, suffixedUnit) => {
+        const amount = parseMoneyAmount(
+          prefixed ?? suffixed,
+          prefixedUnit ?? suffixedUnit,
+        );
+        return keepRange(assetChatMoneyRange(amount));
+      },
+    )
+    // Comma-grouped bare values are overwhelmingly monetary in this feature.
+    .replace(
+      /[+-]?\d{1,3}(?:,\d{3})+(?:\.\d+)?/g,
+      (match) => keepRange(assetChatMoneyRange(parseMoneyAmount(match))),
+    )
+    // Account numbers, dates, counts, and other raw numbers remain fully masked.
+    .replace(/\d+(?:[.,]\d+)*/g, "[masked-number]");
+
+  for (const entry of moneyRanges) {
+    masked = masked.replaceAll(entry.token, entry.range);
+  }
+  return masked;
 }
 
 export async function handleAssetChatAction(options: {
@@ -402,8 +450,11 @@ export function buildAssetChatMessages(options: {
   snapshots: AssetChatSnapshotContext[];
   piiMode: AssetChatPiiMode;
 }): AssetChatMessage[] {
+  const snapshots = options.piiMode === "mask"
+    ? options.snapshots.map(rangeSnapshotMoneyAmounts)
+    : options.snapshots;
   const contextJson = applyPiiMode(
-    JSON.stringify(options.snapshots),
+    JSON.stringify(snapshots),
     options.piiMode,
   );
   const history = options.history.map((row) => ({
@@ -419,7 +470,7 @@ export function buildAssetChatMessages(options: {
         "不明な値は不明と明示し、説明と次に確認すべき行動だけを簡潔に示してください。",
         "投資・税務・法務の断定的助言や売買指示は行わないでください。",
         options.piiMode === "mask"
-          ? "プライバシーモード中です。[masked-number] を具体値へ推測しないでください。"
+          ? "プライバシーモード中です。金額レンジ（例: ¥100k-500k）や [masked-number] を具体値へ推測しないでください。"
           : "プライバシーモードはOFFです。受け取った値を必要以上に繰り返さないでください。",
       ].join("\n"),
     },
@@ -433,6 +484,40 @@ export function buildAssetChatMessages(options: {
       content: applyPiiMode(options.message, options.piiMode),
     },
   ];
+}
+
+function rangeSnapshotMoneyAmounts(
+  snapshot: AssetChatSnapshotContext,
+): Record<string, string | number | null> {
+  const moneyRange = (value: number | null): string | null =>
+    value === null ? null : assetChatMoneyRange(value);
+  return {
+    month_key: snapshot.month_key,
+    positive_asset_total: moneyRange(snapshot.positive_asset_total),
+    liability_total: moneyRange(snapshot.liability_total),
+    net_worth: moneyRange(snapshot.net_worth),
+    cash_like_total: moneyRange(snapshot.cash_like_total),
+    monthly_received_income_total: moneyRange(
+      snapshot.monthly_received_income_total,
+    ),
+    monthly_scheduled_payment_total: moneyRange(
+      snapshot.monthly_scheduled_payment_total,
+    ),
+    monthly_paid_payment_total: moneyRange(
+      snapshot.monthly_paid_payment_total,
+    ),
+    monthly_unpaid_payment_total: moneyRange(
+      snapshot.monthly_unpaid_payment_total,
+    ),
+    monthly_actual_payment_total: moneyRange(
+      snapshot.monthly_actual_payment_total,
+    ),
+    monthly_payment_difference_total: moneyRange(
+      snapshot.monthly_payment_difference_total,
+    ),
+    overdue_payment_count: snapshot.overdue_payment_count,
+    securities_total: moneyRange(snapshot.securities_total),
+  };
 }
 
 function toSnapshotContext(
@@ -528,6 +613,41 @@ function providerFailureStatus(error: unknown): number {
 
 function applyPiiMode(value: string, mode: AssetChatPiiMode): string {
   return mode === "mask" ? maskAssetChatSensitiveNumbers(value) : value;
+}
+
+function normalizeNumericWidth(value: string): string {
+  return value
+    .replace(
+      /[０-９]/g,
+      (character) => String(character.charCodeAt(0) - "０".charCodeAt(0)),
+    )
+    .replaceAll("，", ",")
+    .replaceAll("．", ".")
+    .replaceAll("￥", "¥")
+    .replaceAll("＋", "+")
+    .replaceAll("－", "-");
+}
+
+function parseMoneyAmount(value: string, unit?: string): number {
+  const parsed = Number(value.replaceAll(",", ""));
+  const multiplier = unit === "億"
+    ? 100_000_000
+    : unit === "万"
+    ? 10_000
+    : unit === "千"
+    ? 1_000
+    : 1;
+  return parsed * multiplier;
+}
+
+function alphabeticToken(index: number): string {
+  let current = index;
+  let result = "";
+  do {
+    result = String.fromCharCode(65 + (current % 26)) + result;
+    current = Math.floor(current / 26) - 1;
+  } while (current >= 0);
+  return result;
 }
 
 function estimateTokens(characters: number): number {

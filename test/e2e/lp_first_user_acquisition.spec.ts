@@ -37,13 +37,62 @@ test.describe('LP first-user acquisition', () => {
     expect(inputBox!.y).toBeLessThan(actionBox!.y);
   });
 
+  test('custom input hides the unrelated fixed sample without hiding the trial action', async ({
+    page,
+  }) => {
+    await openLanding(page, treatmentPath);
+
+    const trialInput = page.getByRole('textbox', { name: /登録なしで試す/ });
+    const sampleAction = page.getByRole('button', {
+      name: 'この入力例でAIに提案させる',
+      exact: true,
+    });
+    const trialAction = page.getByRole('button', {
+      name: '今やる1件を試す',
+      exact: true,
+    });
+
+    await expect(sampleAction).toBeVisible();
+    const inputBoxBeforeTyping = await trialInput.boundingBox();
+    const trialActionBox = await trialAction.boundingBox();
+    const prompt =
+      'サブスクで無駄な支払いが多い。サブスクを棚卸ししたい。';
+    expect(trialActionBox).not.toBeNull();
+    await page.mouse.click(
+      trialActionBox!.x + trialActionBox!.width / 2,
+      trialActionBox!.y - 20,
+    );
+    await expect(trialInput).toBeFocused();
+    for (const character of prompt) {
+      await page.keyboard.insertText(character);
+      await expect(trialInput).toBeFocused();
+    }
+
+    await expect(trialInput).toHaveValue(prompt);
+    const inputBoxAfterTyping = await trialInput.boundingBox();
+    expect(inputBoxBeforeTyping).not.toBeNull();
+    expect(inputBoxAfterTyping).not.toBeNull();
+    expect(inputBoxAfterTyping!.y).toBeCloseTo(
+      inputBoxBeforeTyping!.y,
+      1,
+    );
+
+    await expect(sampleAction).toBeVisible();
+    await page.keyboard.press('Tab');
+    await expect(sampleAction).toHaveCount(0);
+    await expect(trialAction).toBeVisible();
+  });
+
   test('H04 treatment reveals Google save and Magic Link fallback after value', async ({
     page,
   }) => {
     await openLanding(page, treatmentPath);
 
     await page
-      .getByRole('button', { name: 'この例で即試す', exact: true })
+      .getByRole('button', {
+        name: 'この入力例でAIに提案させる',
+        exact: true,
+      })
       .click();
 
     await expect(

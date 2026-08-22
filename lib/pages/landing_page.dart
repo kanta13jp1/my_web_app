@@ -13,6 +13,7 @@ import '../services/landing_conversion_experiment_service.dart';
 import '../services/landing_oauth_callback_failure.dart';
 import '../services/landing_page_adapter.dart';
 import '../services/landing_signup_completion_service.dart';
+import '../services/landing_trial_instant_preview.dart';
 import '../services/pending_landing_trial_service.dart';
 import '../services/route_visibility_observer.dart';
 import '../utils/route_document_title.dart';
@@ -89,6 +90,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   final _trialPromptController = TextEditingController();
   final _emailFocusNode = FocusNode();
   final _trialEmailFocusNode = FocusNode();
+  final _trialPromptFocusNode = FocusNode();
   final ScrollController _pageScrollController = ScrollController();
   final GlobalKey _trialSectionKey = GlobalKey();
   final GlobalKey _authSectionKey = GlobalKey();
@@ -102,8 +104,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   bool _obscurePassword = true;
   bool _showPasswordAuth = false;
   bool _showSaveCtaPrompt = false;
+  bool _trialUsesInstantPreview = false;
   bool _showInboxShortcut = false;
   bool _showAllUniqueFeatures = false;
+  bool _showTrialAnswerPreview = true;
   int _magicLinkCooldownSeconds = 0;
   int _achievementCount = 0;
   int _totalUsers = 0;
@@ -124,6 +128,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   Future<String>? _experimentVisitorIdFuture;
   final Set<String> _recordedExperimentStages = <String>{};
   bool _landingIntentHandled = false;
+  bool _showMobileStickyCta = false;
 
   Uri? get _landingUri => widget.landingUri ?? (kIsWeb ? Uri.base : null);
   GrowthAcquisitionService get _acquisitionService => widget.acquisitionService;
@@ -158,6 +163,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   @override
   void initState() {
     super.initState();
+    _pageScrollController.addListener(_updateMobileStickyVisibility);
+    _trialPromptFocusNode.addListener(_handleTrialPromptFocusChanged);
     _oauthCallbackFailure = LandingOAuthCallbackFailure.fromUri(_landingUri);
     _experimentAssignment = widget.experimentAssignment;
     if (_experimentAssignment != null) {
@@ -346,6 +353,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     _trialPromptController.dispose();
     _emailFocusNode.dispose();
     _trialEmailFocusNode.dispose();
+    _trialPromptFocusNode
+      ..removeListener(_handleTrialPromptFocusChanged)
+      ..dispose();
+    _pageScrollController.removeListener(_updateMobileStickyVisibility);
     _pageScrollController.dispose();
     super.dispose();
   }
@@ -363,6 +374,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
   bool get _usesHeroTrial {
     return _isFirstUserGrowthTraffic || _hypothesisEnabled('h03');
+  }
+
+  void _updateMobileStickyVisibility() {
+    if (!_pageScrollController.hasClients) return;
+    final shouldShow = _pageScrollController.offset >= 520;
+    if (shouldShow == _showMobileStickyCta || !mounted) return;
+    setState(() => _showMobileStickyCta = shouldShow);
   }
 
   void _goToAuthenticatedEntry() {
@@ -714,6 +732,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         _trialErrorTitle = '入力内容を確認してください';
         _trialErrorMessage = 'いま詰まっていることを1行入力してください。';
         _showSaveCtaPrompt = false;
+        _trialUsesInstantPreview = false;
       });
       return;
     }
@@ -721,11 +740,13 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     unawaited(_recordTrialStages());
     setState(() {
       _isTrialLoading = true;
+      _showTrialAnswerPreview = false;
       _trialAction = null;
       _trialReason = null;
       _trialErrorTitle = null;
       _trialErrorMessage = null;
       _showSaveCtaPrompt = false;
+      _trialUsesInstantPreview = false;
     });
     try {
       final result = await widget.adapter.improveTrialPrompt(prompt: input);
@@ -737,11 +758,30 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         _trialErrorTitle = null;
         _trialErrorMessage = null;
         _showSaveCtaPrompt = true;
+        _trialUsesInstantPreview = false;
       });
       _scrollToTrialMagicLink(requestFocus: false);
     } catch (e) {
       debugPrint('Trial preview failed: $e');
       unawaited(_recordConversionStage('trial_fallback'));
+      final canUseInstantPreview = e is LandingPageAuthUnavailableException ||
+          (e is LandingTrialPreviewException &&
+              e.code == 'trial_ai_unavailable' &&
+              e.canUseInstantPreview);
+      if (canUseInstantPreview) {
+        final preview = buildLandingTrialInstantPreview(input);
+        if (!mounted) return;
+        setState(() {
+          _trialAction = preview.action;
+          _trialReason = preview.reason;
+          _trialErrorTitle = null;
+          _trialErrorMessage = null;
+          _showSaveCtaPrompt = false;
+          _trialUsesInstantPreview = true;
+        });
+        _scrollToTrialMagicLink(requestFocus: false);
+        return;
+      }
       final failure = _resolveTrialPreviewError(e);
       if (!mounted) return;
       setState(() {
@@ -750,6 +790,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         _trialErrorTitle = failure.$1;
         _trialErrorMessage = failure.$2;
         _showSaveCtaPrompt = false;
+        _trialUsesInstantPreview = false;
       });
     } finally {
       if (mounted) {
@@ -916,6 +957,15 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     _showAuthModeAndScroll(isSignUp: false);
   }
 
+  void _selectInlineAuthMode(bool isSignUp) {
+    if (_isLoading || _isSignUp == isSignUp) return;
+    setState(() {
+      _isSignUp = isSignUp;
+      _magicLinkErrorMessage = null;
+      _showInboxShortcut = false;
+    });
+  }
+
   void _scrollToTrialMagicLink({bool requestFocus = true}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final captureContext = _trialEmailFocusNode.context;
@@ -941,7 +991,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
   void _handleStickySignup() {
     unawaited(_recordConversionStage('sticky_cta'));
-    if (_trialAction != null && _hypothesisEnabled('h04')) {
+    if (_trialAction != null &&
+        !_trialUsesInstantPreview &&
+        _hypothesisEnabled('h04')) {
       unawaited(_recordSaveStages());
       setState(() {
         _showSaveCtaPrompt = true;
@@ -1035,7 +1087,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     if (action != null && action.isNotEmpty) {
       return (
         action,
-        (reason != null && reason.isNotEmpty) ? reason : 'AIが最短の1件として判断しました。',
+        (reason != null && reason.isNotEmpty)
+            ? reason
+            : '入力内容をもとに、最初の候補として提案しました。',
       );
     }
 
@@ -1069,12 +1123,25 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     return ('AIの回答を取得できませんでした', '通信状態を確認し、少し時間をおいてもう一度お試しください。');
   }
 
-  void _handleTrialPromptChanged(String _) {
-    if (_trialAction == null &&
+  void _handleTrialPromptFocusChanged() {
+    if (_trialPromptFocusNode.hasFocus ||
+        _trialPromptController.text.trim().isEmpty ||
+        !_showTrialAnswerPreview) {
+      return;
+    }
+    setState(() => _showTrialAnswerPreview = false);
+  }
+
+  void _handleTrialPromptChanged(String value) {
+    final shouldRestorePreview =
+        value.trim().isEmpty && !_showTrialAnswerPreview;
+    if (!shouldRestorePreview &&
+        _trialAction == null &&
         _trialReason == null &&
         _trialErrorTitle == null &&
         _trialErrorMessage == null &&
-        !_showSaveCtaPrompt) {
+        !_showSaveCtaPrompt &&
+        !_trialUsesInstantPreview) {
       return;
     }
     setState(() {
@@ -1083,6 +1150,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       _trialErrorTitle = null;
       _trialErrorMessage = null;
       _showSaveCtaPrompt = false;
+      _trialUsesInstantPreview = false;
+      if (shouldRestorePreview) {
+        _showTrialAnswerPreview = true;
+      }
     });
   }
 
@@ -1488,7 +1559,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   Widget? _buildMobileStickyCta(double screenWidth) {
-    if (screenWidth >= 720 || !_hypothesisEnabled('h09')) {
+    if (screenWidth >= 720 ||
+        !_hypothesisEnabled('h09') ||
+        !_showMobileStickyCta) {
       return null;
     }
     final hasTrialResult = _trialAction != null && _hypothesisEnabled('h04');
@@ -1506,7 +1579,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           children: [
             const Expanded(
               child: Text(
-                '登録前に体験・登録時カード不要',
+                '登録前に体験・無料登録時カード不要',
                 style: TextStyle(
                   color: Color(0xFFB5C0CA),
                   fontSize: 12,
@@ -1735,7 +1808,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               _BenefitChip(icon: Icons.visibility_outlined, label: '登録前に体験'),
               _BenefitChip(
                 icon: Icons.credit_card_off_outlined,
-                label: '登録時カード不要',
+                label: '無料登録時カード不要',
               ),
               _BenefitChip(icon: Icons.auto_awesome, label: 'AIが提案'),
               _BenefitChip(icon: Icons.how_to_reg_outlined, label: '決めるのはあなた'),
@@ -4194,12 +4267,6 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   ),
                 ),
                 SizedBox(height: compactHero ? 6 : 12),
-                _buildTrialAnswerPreview(
-                  compact: compactHero,
-                  heroMode: heroMode,
-                  firstUserGrowthMode: firstUserGrowthMode,
-                ),
-                SizedBox(height: compactHero ? 8 : 12),
                 Text(
                   firstUserGrowthMode ? '別の悩みで試す' : 'ほかの悩みを1タップで試す',
                   style: TextStyle(
@@ -4267,6 +4334,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 TextField(
                   key: const Key('landing_trial_prompt_input'),
                   controller: _trialPromptController,
+                  focusNode: _trialPromptFocusNode,
                   readOnly: _isTrialLoading,
                   onChanged: _handleTrialPromptChanged,
                   minLines: heroMode ? 1 : 2,
@@ -4315,6 +4383,14 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         : null,
                   ),
                 ),
+                if (_showTrialAnswerPreview) ...[
+                  SizedBox(height: compactHero ? 8 : 12),
+                  _buildTrialAnswerPreview(
+                    compact: compactHero,
+                    heroMode: heroMode,
+                    firstUserGrowthMode: firstUserGrowthMode,
+                  ),
+                ],
                 if (_isTrialLoading) ...[
                   const SizedBox(height: 10),
                   Semantics(
@@ -4333,7 +4409,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        '入力内容から、10分以内に完了できる具体的な1件を作成しています。',
+                        '入力内容から、短時間で着手できる具体的な1件を作成しています。',
                         style: TextStyle(
                           color: heroMode
                               ? const Color(0xFFBCC6CE)
@@ -4423,7 +4499,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'AIからの提案',
+                          _trialUsesInstantPreview
+                              ? '簡易プレビュー（AI未使用）'
+                              : 'AIからの提案',
+                          key: const Key('landing_trial_result_source'),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -4456,7 +4535,39 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                             ),
                           ),
                         ],
-                        if (_hypothesisEnabled('h10')) ...[
+                        if (_trialUsesInstantPreview) ...[
+                          const SizedBox(height: 10),
+                          Container(
+                            key: const Key(
+                              'landing_trial_instant_preview_notice',
+                            ),
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: heroMode
+                                  ? const Color(0xFF142431)
+                                  : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: heroMode
+                                    ? const Color(0x665B7181)
+                                    : const Color(0xFFCBD5E1),
+                              ),
+                            ),
+                            child: Text(
+                              'AIに接続できなかったため、入力内容を端末内のルールで整理した簡易案です。登録や保存は行いません。',
+                              style: TextStyle(
+                                color: heroMode
+                                    ? const Color(0xFFBCC6CE)
+                                    : const Color(0xFF475569),
+                                fontSize: 12,
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (!_trialUsesInstantPreview &&
+                            _hypothesisEnabled('h10')) ...[
                           const SizedBox(height: 10),
                           Text(
                             '登録すると、今回の入力・提案・理由を同じブラウザから引き継げます。',
@@ -4472,7 +4583,17 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                           ),
                         ],
                         const SizedBox(height: 12),
-                        if (_hypothesisEnabled('h04'))
+                        if (_trialUsesInstantPreview)
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              key: const Key('landing_trial_ai_retry'),
+                              onPressed: _runTrialActionPreview,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('AIの提案をもう一度試す'),
+                            ),
+                          )
+                        else if (_hypothesisEnabled('h04'))
                           _buildInlineTrialMagicLink()
                         else
                           SizedBox(
@@ -4518,7 +4639,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            '実際の回答例',
+            '入力例と提案サンプル',
             style: TextStyle(
               color: Color(0xFF1D4ED8),
               fontSize: 11,
@@ -4526,18 +4647,21 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            '入力: 「$samplePrompt」',
-            style: TextStyle(
-              color: const Color(0xFF64748B),
-              fontSize: compact ? 11 : 12,
-              height: 1.45,
+          if (!compact) ...[
+            const SizedBox(height: 4),
+            const Text(
+              '入力例: 「$samplePrompt」',
+              style: TextStyle(
+                color: Color(0xFF64748B),
+                fontSize: 12,
+                height: 1.45,
+              ),
             ),
-          ),
-          const SizedBox(height: 7),
+            const SizedBox(height: 7),
+          ] else
+            const SizedBox(height: 3),
           Text(
-            '今やる1件: 止まっている案件を1つ開く',
+            '提案例: 止まっている案件を1つ選ぶ',
             style: TextStyle(
               color: const Color(0xFF172033),
               fontSize: compact ? 13 : 14,
@@ -4545,12 +4669,23 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 2),
+          if (!compact) ...[
+            const SizedBox(height: 2),
+            const Text(
+              '次の一手例: 確認先を1人決め、連絡文の下書きを作る',
+              style: TextStyle(
+                color: Color(0xFF475569),
+                fontSize: 12,
+                height: 1.45,
+              ),
+            ),
+          ],
+          const SizedBox(height: 3),
           Text(
-            '最初の10分: 確認先を1人決め、連絡文の下書きを作る',
+            '実際の提案は、入力内容によって変わります。',
             style: TextStyle(
-              color: const Color(0xFF475569),
-              fontSize: compact ? 11 : 12,
+              color: const Color(0xFF64748B),
+              fontSize: compact ? 10 : 11,
               height: 1.45,
             ),
           ),
@@ -4585,7 +4720,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         recordHeroCta: heroMode,
                       ),
               icon: const Icon(Icons.bolt, size: 17),
-              label: const Text('この例で即試す'),
+              label: const Text('この入力例でAIに提案させる'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF1F7AE0),
                 minimumSize: Size.fromHeight(compact ? 40 : 44),
@@ -4609,7 +4744,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
                 _TrustPoint(
                   icon: Icons.credit_card_off_outlined,
-                  label: 'カード不要',
+                  label: '無料登録時カード不要',
                 ),
               ],
             ),
@@ -5120,6 +5255,101 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     );
   }
 
+  Widget _buildAuthModeSelector() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Semantics(
+      container: true,
+      label: 'アカウント操作の切り替え',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            '利用方法を選ぶ',
+            key: Key('landing_auth_mode_selector_heading'),
+            style: TextStyle(
+              color: Color(0xFF334155),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SegmentedButton<bool>(
+            key: const Key('landing_auth_mode_selector'),
+            expandedInsets: EdgeInsets.zero,
+            showSelectedIcon: true,
+            selectedIcon: const Icon(Icons.check_circle, size: 18),
+            segments: const [
+              ButtonSegment<bool>(
+                value: true,
+                icon: Icon(Icons.person_add_alt_1_outlined, size: 18),
+                label: Text(
+                  '新規登録',
+                  key: Key('landing_auth_mode_signup_option'),
+                ),
+                tooltip: '初めて利用する方',
+              ),
+              ButtonSegment<bool>(
+                value: false,
+                icon: Icon(Icons.login, size: 18),
+                label: Text(
+                  'ログイン',
+                  key: Key('landing_auth_mode_login_option'),
+                ),
+                tooltip: 'アカウントをお持ちの方',
+              ),
+            ],
+            selected: {_isSignUp},
+            onSelectionChanged: _isLoading
+                ? null
+                : (selection) => _selectInlineAuthMode(selection.first),
+            style: SegmentedButton.styleFrom(
+              minimumSize: const Size.fromHeight(54),
+              backgroundColor: colorScheme.surface,
+              foregroundColor: colorScheme.onSurfaceVariant,
+              selectedBackgroundColor: colorScheme.primary,
+              selectedForegroundColor: colorScheme.onPrimary,
+              side: BorderSide(color: colorScheme.outline),
+              textStyle: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            child: Row(
+              key: ValueKey<bool>(_isSignUp),
+              children: [
+                Icon(
+                  _isSignUp
+                      ? Icons.person_add_alt_1_outlined
+                      : Icons.history_rounded,
+                  size: 17,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    _isSignUp ? '初めての方：無料アカウントを作成します' : '登録済みの方：続きから再開します',
+                    key: const Key('landing_auth_mode_status'),
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAuthSection() {
     final compactMagicLink = _hypothesisEnabled('h04');
     return KeyedSubtree(
@@ -5156,6 +5386,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
                 const SizedBox(height: 14),
               ],
+              _buildAuthModeSelector(),
+              const SizedBox(height: 18),
               Text(
                 _isSignUp ? '今すぐ無料ではじめる' : 'ログインして続きから再開',
                 key: const Key('landing_auth_mode_heading'),
@@ -5275,9 +5507,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                       ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                '新規登録もログインも、この1通で完了します。',
-                style: TextStyle(
+              Text(
+                _isSignUp ? 'メールを開くだけで新規登録が完了します。' : 'メールを開くだけでログインできます。',
+                key: const Key('landing_magic_link_mode_note'),
+                style: const TextStyle(
                   fontSize: 12,
                   color: Color(0xFF94A3B8),
                   height: 1.5,
@@ -5470,17 +5703,6 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   ),
                 ),
                 const SizedBox(height: 10),
-                TextButton(
-                  key: const Key('landing_auth_mode_toggle'),
-                  onPressed: _isLoading
-                      ? null
-                      : () {
-                          setState(() => _isSignUp = !_isSignUp);
-                        },
-                  child: Text(
-                    _isSignUp ? 'すでにアカウントがある場合はログイン' : 'アカウントがない場合は新規登録',
-                  ),
-                ),
               ] else ...[
                 TextButton.icon(
                   key: const Key('landing_h04_password_toggle'),
@@ -6477,29 +6699,41 @@ class _WorkflowLandingHero extends StatelessWidget {
                       ),
                     ],
                     if (showRiskReversal) ...[
-                      const SizedBox(height: 28),
-                      const Wrap(
-                        key: Key('landing_h05_risk_reversal'),
-                        spacing: 16,
-                        runSpacing: 10,
-                        children: [
-                          _TrustPoint(
-                            icon: Icons.check_circle_outline,
-                            label: '登録前に1件体験',
-                            dark: true,
+                      SizedBox(height: compactTrial ? 16 : 28),
+                      if (compactTrial)
+                        const Text(
+                          '登録不要・無料登録時カード不要・結果を見てから保存',
+                          key: Key('landing_h05_risk_reversal'),
+                          style: TextStyle(
+                            color: Color(0xFFC9D1D7),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            height: 1.5,
                           ),
-                          _TrustPoint(
-                            icon: Icons.credit_card_off_outlined,
-                            label: '登録時カード不要',
-                            dark: true,
-                          ),
-                          _TrustPoint(
-                            icon: Icons.how_to_reg_outlined,
-                            label: '最終判断はあなた',
-                            dark: true,
-                          ),
-                        ],
-                      ),
+                        )
+                      else
+                        const Wrap(
+                          key: Key('landing_h05_risk_reversal'),
+                          spacing: 16,
+                          runSpacing: 10,
+                          children: [
+                            _TrustPoint(
+                              icon: Icons.check_circle_outline,
+                              label: '登録前に1件体験',
+                              dark: true,
+                            ),
+                            _TrustPoint(
+                              icon: Icons.credit_card_off_outlined,
+                              label: '無料登録時カード不要',
+                              dark: true,
+                            ),
+                            _TrustPoint(
+                              icon: Icons.how_to_reg_outlined,
+                              label: '最終判断はあなた',
+                              dark: true,
+                            ),
+                          ],
+                        ),
                     ],
                   ],
                 ),

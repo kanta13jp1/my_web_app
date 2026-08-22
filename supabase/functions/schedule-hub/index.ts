@@ -42,6 +42,15 @@ import {
   type SupporterBuyerContext,
   supporterBuyerStripeParams,
 } from "../_shared/supporter_buyer.ts";
+import {
+  videoCreditPack,
+  videoCreditPackMetadata,
+} from "../_shared/video_credit_packs.ts";
+import {
+  isMissingStripeCustomer,
+  stripeApiErrorDetails,
+  stripeApiErrorFromResponse,
+} from "./stripe_api_error.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -355,10 +364,7 @@ async function stripePostForm(
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const err = asRecord(data.error) ?? {};
-    throw new Error(
-      asString(err.message) || `Stripe API failed: ${response.status}`,
-    );
+    throw stripeApiErrorFromResponse(response.status, data);
   }
   return asRecord(data) ?? {};
 }
@@ -379,10 +385,7 @@ async function stripeGet(
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const err = asRecord(data.error) ?? {};
-    throw new Error(
-      asString(err.message) || `Stripe API failed: ${response.status}`,
-    );
+    throw stripeApiErrorFromResponse(response.status, data);
   }
   return asRecord(data) ?? {};
 }
@@ -403,10 +406,11 @@ async function getBillingSubscription(
 async function getOrCreateStripeCustomer(
   admin: SupabaseClient,
   userId: string,
+  replaceExisting = false,
 ): Promise<string> {
   const current = await getBillingSubscription(admin, userId);
   const existingCustomer = asString(current?.stripe_customer_id);
-  if (existingCustomer) return existingCustomer;
+  if (existingCustomer && !replaceExisting) return existingCustomer;
 
   const { data: userData, error: userError } = await admin.auth.admin
     .getUserById(userId);
@@ -424,7 +428,10 @@ async function getOrCreateStripeCustomer(
     stripe_customer_id: customerId,
     tier: asString(current?.tier, "free"),
     status: asString(current?.status, "active"),
-    metadata: { ...(asRecord(current?.metadata) ?? {}), source: "checkout" },
+    metadata: {
+      ...(asRecord(current?.metadata) ?? {}),
+      source: replaceExisting ? "checkout_customer_repair" : "checkout",
+    },
   }, { onConflict: "user_id" });
   if (error) throw new Error(error.message);
   return customerId;
@@ -1843,6 +1850,78 @@ serve(async (req: Request) => {
           checkout_url: session.url,
           amount_jpy: amountJpy,
         });
+      }
+
+      case "billing.create_video_credit_checkout_session": {
+        const pack = videoCreditPack(body.pack_key);
+        if (!pack) {
+          return json({ error: "invalid_video_credit_pack" }, 400);
+        }
+        try {
+          let customerId = await getOrCreateStripeCustomer(admin, userId!);
+          const returnUrl = billingReturnUrl(body.return_url, "/video-studio");
+          const metadata = videoCreditPackMetadata(userId!, pack);
+          const createSession = (stripeCustomerId: string) =>
+            stripePostForm("/checkout/sessions", {
+              mode: "payment",
+              locale: "ja",
+              customer: stripeCustomerId,
+              success_url: withBillingParam(
+                returnUrl,
+                "video_credits_success",
+              ),
+              cancel_url: withBillingParam(returnUrl, "video_credits_cancel"),
+              "line_items[0][price_data][currency]": "jpy",
+              "line_items[0][price_data][product_data][name]":
+                `AI動画クレジット ${pack.name}`,
+              "line_items[0][price_data][product_data][description]":
+                pack.description,
+              "line_items[0][price_data][unit_amount]": String(pack.amountJpy),
+              "line_items[0][quantity]": "1",
+              "metadata[offer]": metadata.offer,
+              "metadata[user_id]": metadata.user_id,
+              "metadata[video_credit_pack_key]": metadata.video_credit_pack_key,
+              "metadata[video_credits]": metadata.video_credits,
+              "metadata[amount_jpy]": metadata.amount_jpy,
+              "payment_intent_data[metadata][offer]": metadata.offer,
+              "payment_intent_data[metadata][user_id]": metadata.user_id,
+              "payment_intent_data[metadata][video_credit_pack_key]":
+                metadata.video_credit_pack_key,
+              "payment_intent_data[metadata][video_credits]":
+                metadata.video_credits,
+              "payment_intent_data[metadata][amount_jpy]": metadata.amount_jpy,
+            });
+
+          let session: Record<string, unknown>;
+          try {
+            session = await createSession(customerId);
+          } catch (error) {
+            if (!isMissingStripeCustomer(error)) throw error;
+            console.warn(
+              "[schedule-hub] repairing stale Stripe customer",
+              stripeApiErrorDetails(error),
+            );
+            customerId = await getOrCreateStripeCustomer(admin, userId!, true);
+            session = await createSession(customerId);
+          }
+
+          return json({
+            success: true,
+            id: session.id,
+            checkout_url: session.url,
+            pack: {
+              key: pack.key,
+              credits: pack.credits,
+              amount_jpy: pack.amountJpy,
+            },
+          });
+        } catch (error) {
+          console.error(
+            "[schedule-hub] video credit checkout failed",
+            stripeApiErrorDetails(error) ?? { code: "internal_error" },
+          );
+          return json({ error: "video_credit_checkout_unavailable" }, 502);
+        }
       }
 
       case "billing.create_portal_session": {

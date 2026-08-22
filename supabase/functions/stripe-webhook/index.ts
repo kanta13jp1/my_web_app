@@ -18,6 +18,10 @@ import {
   isExternalRevenueCandidate,
   normalizeSupporterBuyerContext,
 } from "../_shared/supporter_buyer.ts";
+import {
+  fulfillVideoCreditCheckout,
+  revokeRefundedVideoCredits,
+} from "./video_credit_fulfillment.ts";
 
 // .trim(): Supabase secret に紛れ込んだ前後の空白/改行を吸収 (署名検証や
 // Stripe API 呼び出しがコピペ事故で失敗しないよう防御)。
@@ -476,6 +480,12 @@ async function handleCheckoutCompleted(
   admin: SupabaseClient,
   session: Record<string, unknown>,
 ): Promise<void> {
+  const videoCreditFulfillment = await fulfillVideoCreditCheckout(
+    admin,
+    session,
+  );
+  if (videoCreditFulfillment.handled) return;
+
   const metadata = asRecord(session.metadata) ?? {};
   if (
     asString(metadata.offer) === "founding_supporter" ||
@@ -529,6 +539,22 @@ async function handleCheckoutCompleted(
       createBalanceTransaction: createReferralBalanceTransaction,
     });
   }
+}
+
+async function handleChargeRefunded(
+  admin: SupabaseClient,
+  charge: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const decision = chargeRefundDecision(charge);
+  const shop = await markShopPurchaseRefunded(admin, charge);
+  if (!decision.shouldRevoke || !decision.paymentIntentId) {
+    return { ...shop, video_credit_refund: { matched: false } };
+  }
+  const videoCreditRefund = await revokeRefundedVideoCredits(
+    admin,
+    decision.paymentIntentId,
+  );
+  return { ...shop, video_credit_refund: videoCreditRefund };
 }
 
 /**
@@ -656,7 +682,7 @@ serve(async (req: Request) => {
         } else if (type === "invoice.payment_failed") {
           await markPastDue(admin, data);
         } else if (type === "charge.refunded") {
-          result = await markShopPurchaseRefunded(admin, data);
+          result = await handleChargeRefunded(admin, data);
         }
 
         return result;

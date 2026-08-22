@@ -580,6 +580,22 @@ jobs:
       - name: Deploy Supabase Edge Functions
         if: steps.changes.outputs.edge == 'true'
         run: |
+          required_video_secrets=(
+            VIDEO_WORKER_TOKEN
+            VIDEO_WORKER_WAKE_TOKEN
+            VIDEO_WORKER_WAKE_URL
+          )
+          available_secret_names="$(
+            supabase secrets list --output json |
+              jq -r '.[] | .name // empty'
+          )"
+          for secret_name in "${required_video_secrets[@]}"; do
+            if ! grep -qx "${secret_name}" <<<"${available_secret_names}"; then
+              echo "::error::Required first-party video secret is missing: ${secret_name}"
+              exit 1
+            fi
+          done
+
           # EFハードキャップ: 50本以下 (Tier1/Tier2廃止 — 2026-04-12 VSCode版#61)
           # 全250本を16本のhubにaction分岐統合 (11 hub + 5 standalone)。新規機能は既存hubへのaction追加のみ。
           # 新しいEFを作成する場合は必ず既存hubの数を減らして50本以下を維持すること。
@@ -672,6 +688,12 @@ jobs:
           # 認証は要求せず、書き込める内容を列挙値に限定して守っている。
           deploy_function shop-funnel --no-verify-jwt
 
+          # --- 自社GPUによる有償AI動画生成 ---
+          # 利用者APIはCORSを通し、関数内auth.getUser()でJWTを必須化する。
+          # worker APIは用途を分けた専用tokenで認証する。
+          deploy_function video-generation-hub --no-verify-jwt
+          deploy_function video-worker-hub --no-verify-jwt
+
           # --- Mega-Hub (5本: 旧Tier2全統合) ---
           deploy_function tools-hub --no-verify-jwt
           deploy_function media-hub --no-verify-jwt
@@ -687,7 +709,7 @@ jobs:
           deploy_function memory-search-hub --no-verify-jwt
           deploy_function mcp-well-known --no-verify-jwt
 
-          # Total: 23 functions deployed (ハードキャップ50本に対し23本 — 余裕27本)
+          # Total: 25 functions deployed (ハードキャップ50本に対し25本 — 余裕25本)
           # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
           #
           # Hub対応表:

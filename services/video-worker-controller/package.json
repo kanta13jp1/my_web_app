@@ -1,0 +1,14 @@
+{
+  "name": "video-worker-controller",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Authenticated GCP Compute wake controller for the first-party video worker.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test server.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

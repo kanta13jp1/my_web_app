@@ -378,9 +378,7 @@ void main() {
       ),
     );
 
-    final notice = find.byKey(
-      const Key('landing_google_oauth_callback_error'),
-    );
+    final notice = find.byKey(const Key('landing_google_oauth_callback_error'));
     expect(notice, findsOneWidget);
     expect(find.byKey(const Key('landing_google_oauth_retry')), findsOneWidget);
     expect(
@@ -643,6 +641,62 @@ void main() {
     expect(emailField.focusNode?.hasFocus, isTrue);
     expect(adapter.conversionEvents, contains('lp_exp_h04_control_hero_cta'));
   });
+
+  testWidgets(
+    'mobile auth mode selector clearly switches signup and login copy',
+    (tester) async {
+      await pumpLanding(
+        tester,
+        assignment: _assignment('h04', LandingExperimentVariant.control),
+        size: const Size(390, 844),
+      );
+
+      final selectorFinder = find.byKey(
+        const Key('landing_auth_mode_selector'),
+      );
+      expect(selectorFinder, findsOneWidget);
+      expect(
+        tester.widget<SegmentedButton<bool>>(selectorFinder).selected,
+        <bool>{true},
+      );
+      expect(
+        find.text('初めての方：無料アカウントを作成します'),
+        findsOneWidget,
+      );
+      expect(find.text('メールを開くだけで新規登録が完了します。'), findsOneWidget);
+
+      await Scrollable.ensureVisible(
+        tester.element(selectorFinder),
+        alignment: 0.2,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('landing_auth_mode_login_option')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<SegmentedButton<bool>>(selectorFinder).selected,
+        <bool>{false},
+      );
+      expect(find.text('ログインして続きから再開'), findsOneWidget);
+      expect(find.text('Magic Linkでログイン'), findsOneWidget);
+      expect(find.text('登録済みの方：続きから再開します'), findsOneWidget);
+      expect(find.text('メールを開くだけでログインできます。'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const Key('landing_auth_mode_signup_option')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<SegmentedButton<bool>>(selectorFinder).selected,
+        <bool>{true},
+      );
+      expect(find.text('今すぐ無料ではじめる'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'lp_intent trial brings the promised trial into view for every H03 arm and viewport',
@@ -965,10 +1019,7 @@ void main() {
       find.byKey(const Key('landing_h10_continuity_value')),
       findsOneWidget,
     );
-    expect(
-      find.textContaining('今回の入力・提案・理由を同じブラウザから引き継げます'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('今回の入力・提案・理由を同じブラウザから引き継げます'), findsOneWidget);
     expect(find.textContaining('実行履歴'), findsNothing);
     expect(
       find.byKey(const Key('landing_h04_inline_magic_capture')),
@@ -1009,34 +1060,25 @@ void main() {
     expect(find.textContaining('21サービス分'), findsNothing);
   });
 
-  testWidgets(
-    'pricing disclosure keeps verified trust essentials visible',
-    (tester) async {
-      await pumpLanding(
-        tester,
-        assignment: _assignment('h01', LandingExperimentVariant.treatment),
-      );
+  testWidgets('pricing disclosure keeps verified trust essentials visible', (
+    tester,
+  ) async {
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.treatment),
+    );
 
-      expect(
-        find.byKey(const Key('landing_pricing_trust_summary')),
-        findsOneWidget,
-      );
-      expect(
-        find.text(
-          '無料登録: カード不要 / 有料プラン: 内容・料金を事前確認',
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const Key('landing_pricing_disclosure_link')),
-        findsOneWidget,
-      );
-      expect(
-        find.text('競合サービスとの料金比較を見る'),
-        findsNothing,
-      );
-    },
-  );
+    expect(
+      find.byKey(const Key('landing_pricing_trust_summary')),
+      findsOneWidget,
+    );
+    expect(find.text('無料登録: カード不要 / 有料プラン: 内容・料金を事前確認'), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_pricing_disclosure_link')),
+      findsOneWidget,
+    );
+    expect(find.text('競合サービスとの料金比較を見る'), findsNothing);
+  });
 
   testWidgets('hero media keeps a readable fallback contract', (tester) async {
     await pumpLanding(
@@ -1197,10 +1239,108 @@ void main() {
       );
       expect(find.textContaining('134機能'), findsNothing);
       expect(
-        find.text(
-          '悩みを1文入力すると、AIが最初の一手を提案します。実行するかはあなたが決め、役立つ提案だけ登録後に引き継げます。',
-        ),
+        find.text('悩みを1文入力すると、AIが最初の一手を提案します。実行するかはあなたが決め、役立つ提案だけ登録後に引き継げます。'),
         findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'custom trial prompt hides the unrelated fixed sample after editing',
+    (tester) async {
+      await pumpLanding(
+        tester,
+        assignment: _assignment('h01', LandingExperimentVariant.treatment),
+      );
+
+      expect(
+        find.byKey(const Key('landing_h11_answer_preview')),
+        findsOneWidget,
+      );
+      expect(find.text('入力例と提案サンプル'), findsOneWidget);
+      expect(
+        find.textContaining('実際の提案は、入力内容によって変わります'),
+        findsOneWidget,
+      );
+
+      await tester.enterText(
+        find.byKey(const Key('landing_trial_prompt_input')),
+        'サブスクで無駄な支払いが多い。サブスクを棚卸ししたい。',
+      );
+      await tester.pump();
+
+      expect(
+        find.byKey(const Key('landing_h11_answer_preview')),
+        findsOneWidget,
+      );
+
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pump();
+
+      expect(
+        find.byKey(const Key('landing_h11_answer_preview')),
+        findsNothing,
+      );
+      expect(find.text('提案例: 止まっている案件を1つ選ぶ'), findsNothing);
+
+      await tester.enterText(
+        find.byKey(const Key('landing_trial_prompt_input')),
+        '',
+      );
+      await tester.pump();
+
+      expect(
+        find.byKey(const Key('landing_h11_answer_preview')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'trial prompt keeps focus while characters are entered one at a time',
+    (tester) async {
+      await pumpLanding(
+        tester,
+        assignment: _assignment('h01', LandingExperimentVariant.treatment),
+      );
+
+      final promptInput = find.byKey(
+        const Key('landing_trial_prompt_input'),
+      );
+      await Scrollable.ensureVisible(tester.element(promptInput));
+      await tester.tap(promptInput);
+      await tester.pump();
+
+      final focusedNode = FocusManager.instance.primaryFocus;
+      expect(focusedNode, isNotNull);
+      expect(focusedNode!.hasFocus, isTrue);
+      final inputTopLeft = tester.getTopLeft(promptInput);
+
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'あ',
+          selection: TextSelection.collapsed(offset: 1),
+        ),
+      );
+      await tester.pump();
+
+      expect(FocusManager.instance.primaryFocus, same(focusedNode));
+      expect(focusedNode.hasFocus, isTrue);
+      expect(tester.getTopLeft(promptInput), inputTopLeft);
+
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'あい',
+          selection: TextSelection.collapsed(offset: 2),
+        ),
+      );
+      await tester.pump();
+
+      expect(FocusManager.instance.primaryFocus, same(focusedNode));
+      expect(focusedNode.hasFocus, isTrue);
+      expect(
+        tester.widget<TextField>(promptInput).controller!.text,
+        'あい',
       );
     },
   );
@@ -1218,7 +1358,9 @@ void main() {
         find.byKey(const Key('landing_h11_answer_preview')),
         findsOneWidget,
       );
-      expect(find.textContaining('止まっている案件を1つ開く'), findsOneWidget);
+      expect(find.textContaining('止まっている案件を1つ選ぶ'), findsOneWidget);
+      expect(find.text('入力例と提案サンプル'), findsOneWidget);
+      expect(find.textContaining('最初の10分'), findsNothing);
 
       await tester.tap(
         find.byKey(const Key('landing_h11_answer_preview_action')),
@@ -1226,6 +1368,10 @@ void main() {
       await tester.pump();
 
       expect(adapter.trialRuns, 1);
+      expect(
+        find.byKey(const Key('landing_h11_answer_preview')),
+        findsNothing,
+      );
       expect(
         find.byKey(const Key('landing_trial_result_action')),
         findsNothing,
@@ -1307,6 +1453,101 @@ void main() {
     );
   });
 
+  testWidgets('trial provider fallback shows an honest instant preview', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.treatment),
+    );
+    adapter.trialError = const LandingTrialPreviewException(
+      'trial_ai_unavailable',
+      statusCode: 503,
+      canUseInstantPreview: true,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('landing_h11_answer_preview_action')),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byKey(const Key('landing_trial_error')), findsNothing);
+    expect(find.text('簡易プレビュー（AI未使用）'), findsOneWidget);
+    expect(find.textContaining('止まっている作業を1件開き'), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_trial_instant_preview_notice')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('landing_trial_ai_retry')), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_h04_inline_magic_capture')),
+      findsNothing,
+    );
+    expect(
+      adapter.conversionEvents,
+      contains('lp_exp_h01_treatment_trial_fallback'),
+    );
+
+    adapter.trialError = null;
+    final retry = find.byKey(const Key('landing_trial_ai_retry'));
+    await tester.ensureVisible(retry);
+    await tester.tap(retry);
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('簡易プレビュー（AI未使用）'), findsNothing);
+    expect(find.text('AIからの提案'), findsOneWidget);
+    expect(find.text('重要な案件を1件選ぶ'), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_h04_inline_magic_capture')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+      'instant preview stays usable without becoming a mobile save path', (
+    tester,
+  ) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.treatment),
+      size: const Size(390, 844),
+    );
+    adapter.trialError = const LandingTrialPreviewException(
+      'trial_ai_unavailable',
+      statusCode: 503,
+      canUseInstantPreview: true,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('landing_h11_answer_preview_action')),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    final notice = find.byKey(
+      const Key('landing_trial_instant_preview_notice'),
+    );
+    await tester.ensureVisible(notice);
+    await tester.pumpAndSettle();
+
+    expect(notice, findsOneWidget);
+    expect(find.byKey(const Key('landing_trial_ai_retry')), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_h04_inline_magic_capture')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(
+      find.byKey(const Key('landing_h09_mobile_sticky_cta')),
+    );
+    await tester.pump();
+
+    expect(adapter.saveCtas, 0);
+  });
+
   testWidgets('trial quota exhaustion explains the daily limit', (
     tester,
   ) async {
@@ -1317,6 +1558,7 @@ void main() {
     adapter.trialError = const LandingTrialPreviewException(
       'trial_quota_exhausted',
       statusCode: 429,
+      canUseInstantPreview: true,
     );
 
     await tester.tap(
@@ -1513,7 +1755,7 @@ void main() {
     }
   });
 
-  testWidgets('mobile treatment exposes and measures the sticky signup CTA', (
+  testWidgets('mobile treatment reveals the sticky signup CTA after the hero', (
     tester,
   ) async {
     final adapter = await pumpLanding(
@@ -1523,6 +1765,12 @@ void main() {
     );
 
     final sticky = find.byKey(const Key('landing_h09_mobile_sticky_cta'));
+    expect(sticky, findsNothing);
+    await tester.drag(
+      find.byType(SingleChildScrollView).first,
+      const Offset(0, -600),
+    );
+    await tester.pump();
     expect(sticky, findsOneWidget);
     await tester.tap(
       find.descendant(of: sticky, matching: find.text('無料で始める')),
@@ -1555,7 +1803,17 @@ void main() {
     await tester.pump(const Duration(milliseconds: 350));
     await tester.tap(passwordToggle);
     await tester.pump();
-    await tester.tap(find.byKey(const Key('landing_auth_mode_toggle')));
+    final authModeSelector = find.byKey(
+      const Key('landing_auth_mode_selector'),
+    );
+    await Scrollable.ensureVisible(
+      tester.element(authModeSelector),
+      alignment: 0.2,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('landing_auth_mode_login_option')),
+    );
     await tester.pump();
     expect(find.text('ログインして続きから再開'), findsOneWidget);
 
@@ -1633,6 +1891,12 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    await tester.drag(
+      find.byType(SingleChildScrollView).first,
+      const Offset(0, -600),
+    );
+    await tester.pump();
+
     final sticky = find.byKey(const Key('landing_h09_mobile_sticky_cta'));
     final saveSticky = find.descendant(
       of: sticky,
@@ -1657,7 +1921,8 @@ void main() {
     expect(emailField.focusNode?.hasFocus, isTrue);
   });
 
-  testWidgets('mobile H03 keeps the trial action above the sticky CTA', (
+  testWidgets('mobile H03 does not cover the first-view trial with sticky CTA',
+      (
     tester,
   ) async {
     await pumpLanding(
@@ -1671,10 +1936,10 @@ void main() {
     );
     final stickyCta = find.byKey(const Key('landing_h09_mobile_sticky_cta'));
     expect(trialAction, findsOneWidget);
-    expect(stickyCta, findsOneWidget);
+    expect(stickyCta, findsNothing);
     expect(
       tester.getBottomRight(trialAction).dy,
-      lessThanOrEqualTo(tester.getTopLeft(stickyCta).dy),
+      lessThanOrEqualTo(727),
     );
   });
 }

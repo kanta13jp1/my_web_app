@@ -54,6 +54,8 @@ import '../widgets/api_key_status_banner.dart';
 import '../widgets/feature_strategy_monitor_panel.dart';
 import '../widgets/grow_together_share_card.dart';
 import '../widgets/home_billing_nudge.dart';
+import '../widgets/home_primary_action_card.dart';
+import '../widgets/home_visibility_policy.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
 import '../widgets/life_waste_elimination_panel.dart';
 import '../widgets/referral_share_card.dart';
@@ -536,9 +538,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            success
-                ? '追加要望をGitHub IssueとWBSに登録しました'
-                : '追加要望を登録しました。一部の外部連携は設定確認が必要です',
+            success ? '改善内容を受け付けました' : '改善内容を受け付けました。受付処理の一部を確認中です',
           ),
         ),
       );
@@ -1935,7 +1935,7 @@ abstinence_slip_details: $slipDetailsText
   Future<void> _openSiteGuideAi([String? initialQuestion]) async {
     await Navigator.of(
       context,
-    ).pushNamed('/site-guide-ai', arguments: initialQuestion);
+    ).pushReplacementNamed('/site-guide-ai', arguments: initialQuestion);
   }
 
   Future<void> _runTrackedAction(
@@ -2113,152 +2113,21 @@ abstinence_slip_details: $slipDetailsText
       };
     }
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = Color.alphaBlend(
-      command.color.withValues(alpha: isDark ? 0.2 : 0.12),
-      isDark ? const Color(0xFF1A1A1A) : Colors.white,
-    );
-    final textColor = isDark ? Colors.white : const Color(0xDE000000);
-
-    return Container(
+    return HomePrimaryActionCard(
       key: Key('home_next_action_${command.type.name}'),
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            baseColor,
-            Color.alphaBlend(
-              Colors.white.withValues(alpha: isDark ? 0.02 : 0.55),
-              baseColor,
-            ),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: command.color.withValues(alpha: 0.65)),
-        boxShadow: [
-          BoxShadow(
-            color: command.color.withValues(alpha: isDark ? 0.16 : 0.18),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: isDark ? 0.14 : 0.92),
-              shape: BoxShape.circle,
-              border: Border.all(color: command.color.withValues(alpha: 0.35)),
-            ),
-            child: Icon(command.icon, color: command.color),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '次に実施すべきアクション',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: textColor.withValues(alpha: 0.8),
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  command.title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    color: textColor,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'AI推奨: ${command.detail}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: textColor.withValues(alpha: 0.88),
-                    height: 1.5,
-                  ),
-                ),
-                if (isAiNudgeLoading &&
-                    command.type != _HomeActionType.none) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'AI補足を生成中...',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textColor.withValues(alpha: 0.72),
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-                if (aiNudge != null && aiNudge.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'AI補足: $aiNudge',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textColor.withValues(alpha: 0.9),
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-                if (snapshot.pendingCriticalTaskCount > 0) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    '未完了の必須タスク: ${snapshot.pendingCriticalTaskCount}件',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: textColor,
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-                if (command.type == _HomeActionType.stockReview &&
-                    snapshot.pendingStockTaskCount > 0) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    '未完了の週末ストック: ${snapshot.pendingStockTaskCount}件',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: textColor,
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 10),
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: command.color,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                  ),
-                  onPressed: onPressed,
-                  icon: const Icon(Icons.arrow_forward, size: 16),
-                  label: Text(buttonLabel),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      accentColor: command.color,
+      icon: command.icon,
+      title: command.title,
+      detail: command.detail,
+      buttonLabel: buttonLabel,
+      onPressed: onPressed,
+      aiNudge: aiNudge,
+      isAiNudgeLoading:
+          isAiNudgeLoading && command.type != _HomeActionType.none,
+      pendingCriticalTaskCount: snapshot.pendingCriticalTaskCount,
+      pendingStockTaskCount: command.type == _HomeActionType.stockReview
+          ? snapshot.pendingStockTaskCount
+          : 0,
     );
   }
 
@@ -5227,6 +5096,82 @@ abstinence_slip_details: $slipDetailsText
     );
   }
 
+  Widget _buildNotificationAction() {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined),
+          tooltip: '通知',
+          onPressed: () async {
+            await Navigator.of(context).pushNamed('/notifications');
+            _fetchNotifUnreadCount();
+          },
+        ),
+        if (_notifUnreadCount > 0)
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              width: 16,
+              height: 16,
+              decoration: const BoxDecoration(
+                color: Color(0xFFE53935),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  _notifUnreadCount > 9 ? '9+' : '$_notifUnreadCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _handleHomeMenuAction(String action, ThemeService themeService) {
+    switch (action) {
+      case 'timeline':
+        Navigator.pushNamed(context, '/project-gantt');
+        return;
+      case 'theme':
+        themeService.toggleTheme();
+        return;
+      case 'profile':
+        Navigator.of(context).pushNamed('/profile-settings');
+        return;
+      case 'settings':
+        Navigator.of(context).pushNamed('/settings');
+        return;
+      case 'logout':
+        _logout(context);
+        return;
+    }
+  }
+
+  PopupMenuItem<String> _homeMenuItem(
+    String value,
+    IconData icon,
+    String label,
+  ) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: ListTile(
+        dense: true,
+        leading: Icon(icon),
+        title: Text(label),
+        contentPadding: EdgeInsets.zero,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // 可視化ゲート: /admin 等の deep link で不可視のまま下に積まれている間は
@@ -5239,7 +5184,7 @@ abstinence_slip_details: $slipDetailsText
     final isDark = themeService.isDarkMode;
     final primaryColor = themeService.primaryColor;
     final screenWidth = MediaQuery.of(context).size.width;
-    final isCompact = screenWidth < 390;
+    final isCompact = screenWidth < 600;
     final isWide = screenWidth >= 1200;
     final contentHorizontalPadding = isCompact ? 12.0 : (isWide ? 24.0 : 16.0);
 
@@ -5248,7 +5193,7 @@ abstinence_slip_details: $slipDetailsText
       backgroundColor:
           isDark ? const Color(0xFF08111F) : const Color(0xFFE8F2F5),
       appBar: AppBar(
-        toolbarHeight: 74,
+        toolbarHeight: isCompact ? 60 : 74,
         title: const Column(
           key: Key('home_page_title'),
           mainAxisSize: MainAxisSize.min,
@@ -5272,72 +5217,55 @@ abstinence_slip_details: $slipDetailsText
         ),
         backgroundColor: const Color(0xFF102B43),
         foregroundColor: Colors.white,
-        centerTitle: true,
+        centerTitle: !isCompact,
         actions: [
           // Win版#131 part 11: WBS ガントチャート導線
-          IconButton(
-            icon: const Icon(Icons.timeline),
-            tooltip: 'WBS ガントチャート',
-            onPressed: () => Navigator.pushNamed(context, '/project-gantt'),
-          ),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_outlined),
-                tooltip: '通知',
-                onPressed: () async {
-                  await Navigator.of(context).pushNamed('/notifications');
-                  _fetchNotifUnreadCount();
-                },
-              ),
-              if (_notifUnreadCount > 0)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFE53935),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        _notifUnreadCount > 9 ? '9+' : '$_notifUnreadCount',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
+          if (!isCompact)
+            IconButton(
+              icon: const Icon(Icons.timeline),
+              tooltip: 'WBS ガントチャート',
+              onPressed: () => Navigator.pushNamed(context, '/project-gantt'),
+            ),
+          _buildNotificationAction(),
+          if (!isCompact) ...[
+            IconButton(
+              icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+              onPressed: () => themeService.toggleTheme(),
+              tooltip: 'テーマ切替',
+            ),
+            IconButton(
+              icon: const Icon(Icons.person_outline),
+              onPressed: () =>
+                  Navigator.of(context).pushNamed('/profile-settings'),
+              tooltip: 'プロフィール設定',
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () => Navigator.of(context).pushNamed('/settings'),
+              tooltip: '設定',
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () => _logout(context),
+              tooltip: 'ログアウト',
+            ),
+          ] else
+            PopupMenuButton<String>(
+              tooltip: 'その他',
+              onSelected: (action) =>
+                  _handleHomeMenuAction(action, themeService),
+              itemBuilder: (_) => [
+                _homeMenuItem('timeline', Icons.timeline, 'WBS ガントチャート'),
+                _homeMenuItem(
+                  'theme',
+                  isDark ? Icons.light_mode : Icons.dark_mode,
+                  'テーマ切替',
                 ),
-            ],
-          ),
-          IconButton(
-            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
-            onPressed: () => themeService.toggleTheme(),
-            tooltip: 'テーマ切替',
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            onPressed: () =>
-                Navigator.of(context).pushNamed('/profile-settings'),
-            tooltip: 'プロフィール設定',
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.of(context).pushNamed('/settings'),
-            tooltip: '設定',
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => _logout(context),
-            tooltip: 'ログアウト',
-          ),
+                _homeMenuItem('profile', Icons.person_outline, 'プロフィール'),
+                _homeMenuItem('settings', Icons.settings, '設定'),
+                _homeMenuItem('logout', Icons.logout, 'ログアウト'),
+              ],
+            ),
         ],
       ),
 
@@ -5408,6 +5336,11 @@ abstinence_slip_details: $slipDetailsText
                     highlightAbstinence: highlightAbstinence,
                     opsSnapshot: opsSnapshot,
                   );
+                  final showInternalOperations =
+                      HomeVisibilityPolicy.showInternalOperations(
+                    showLegacyOperations: widget.showLegacyOperations,
+                    showLegacyHomeSections: _showLegacyHomeSections,
+                  );
 
                   return SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -5423,6 +5356,22 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            if (!showInternalOperations) ...[
+                              _buildSectionHeader(
+                                '今日の1件',
+                                Icons.ads_click_outlined,
+                                const Color(0xFF4F46E5),
+                                key: const Key('home_section_today_action'),
+                              ),
+                              _buildNextActionBubble(
+                                context,
+                                nextAction,
+                                opsSnapshot,
+                                aiNudge: aiNudge,
+                                isAiNudgeLoading: isAiLoading,
+                              ),
+                              const SizedBox(height: 12),
+                            ],
                             FutureBuilder<BillingStatus?>(
                               future: _billingStatusFuture,
                               builder: (context, billingSnapshot) {
@@ -5440,20 +5389,19 @@ abstinence_slip_details: $slipDetailsText
                             ..._buildCuratedHomeSections(
                               isDark: isDark,
                               isCompact: isCompact,
+                              showInternalOperations: showInternalOperations,
                             ),
-                            if (!widget.showLegacyOperations &&
-                                !_showLegacyHomeSections) ...[
+                            if (!showInternalOperations) ...[
                               const SizedBox(height: 24),
                               _buildSectionHeader(
-                                '追加要望フォーム',
+                                '改善を送る',
                                 Icons.add_task_outlined,
                                 const Color(0xFF0F766E),
                                 key: const Key('home_section_feature_request'),
                               ),
                               _buildHomeFeatureRequestForm(isDark, isCompact),
                             ],
-                            if (widget.showLegacyOperations ||
-                                _showLegacyHomeSections) ...[
+                            if (showInternalOperations) ...[
                               const SizedBox(height: 40),
                               _buildHopsonInspiredHomeHero(
                                 context,
@@ -5792,7 +5740,7 @@ abstinence_slip_details: $slipDetailsText
                               _buildSiteGuideAiCard(isDark, isCompact),
                               const SizedBox(height: 24),
                               _buildSectionHeader(
-                                '追加要望フォーム',
+                                '改善を送る',
                                 Icons.add_task_outlined,
                                 const Color(0xFF0F766E),
                                 key: const Key('home_section_feature_request'),
@@ -6055,17 +6003,20 @@ abstinence_slip_details: $slipDetailsText
   List<Widget> _buildCuratedHomeSections({
     required bool isDark,
     required bool isCompact,
+    required bool showInternalOperations,
   }) {
     return [
       _buildSectionHeader(
-        'SITE GUIDE AI',
+        '使い方に迷ったら',
         Icons.support_agent_outlined,
         const Color(0xFF4F46E5),
         key: const Key('home_section_site_guide_ai'),
       ),
       _buildSiteGuideAiCard(isDark, isCompact),
-      const SizedBox(height: 8),
-      const GaReadinessGatePanel(),
+      if (showInternalOperations) ...[
+        const SizedBox(height: 8),
+        const GaReadinessGatePanel(),
+      ],
       const SizedBox(height: 16),
       const CollapsibleHomeSection(
         key: Key('home_tier_recent'),
@@ -6798,7 +6749,7 @@ abstinence_slip_details: $slipDetailsText
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '追加要望をIssue/WBS化',
+                          '改善内容を送る',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -6807,7 +6758,7 @@ abstinence_slip_details: $slipDetailsText
                         ),
                         SizedBox(height: 2),
                         Text(
-                          '登録するとGitHub Issueを発行し、WBSのユーザー要望タスクにも追加します。',
+                          '送信内容はサービス改善の検討に利用し、受付番号を発行します。',
                           style: TextStyle(fontSize: 12, height: 1.5),
                         ),
                       ],
@@ -6928,17 +6879,15 @@ abstinence_slip_details: $slipDetailsText
                       const SizedBox(height: 6),
                       Text(
                         issueNumber == null
-                            ? 'GitHub Issue: 外部連携設定を確認してください'
-                            : 'GitHub Issue: #$issueNumber',
+                            ? '受付番号を発行しています'
+                            : '受付番号: #$issueNumber',
                         style: const TextStyle(
                           color: Color(0xFF065F46),
                           height: 1.5,
                         ),
                       ),
                       Text(
-                        hasWbsTask
-                            ? 'WBS: $wbsTaskTitle'
-                            : 'WBS: 登録状況を確認してください',
+                        hasWbsTask ? '改善タスクに登録済み' : '改善タスクへの登録を確認中',
                         style: const TextStyle(
                           color: Color(0xFF065F46),
                           height: 1.5,
@@ -6953,13 +6902,11 @@ abstinence_slip_details: $slipDetailsText
                             );
                             if (!mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Issue URLをコピーしました'),
-                              ),
+                              const SnackBar(content: Text('受付URLをコピーしました')),
                             );
                           },
                           icon: const Icon(Icons.copy, size: 16),
-                          label: const Text('Issue URLコピー'),
+                          label: const Text('受付URLをコピー'),
                         ),
                       ],
                       const SizedBox(height: 10),
@@ -7033,6 +6980,8 @@ abstinence_slip_details: $slipDetailsText
   Widget _buildSiteGuideAiCard(bool isDark, bool isCompact) {
     final theme = Theme.of(context);
     final cardColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final titleColor = isDark ? Colors.white : const Color(0xFF172033);
+    final bodyColor = isDark ? Colors.white70 : const Color(0xFF475569);
     final outlineColor =
         isDark ? Colors.white.withValues(alpha: 0.12) : const Color(0xFFDDE8E4);
     const quickQuestions = <String>['まず何から使えばいい？', '資産管理はどこ？', 'AI大学の始め方は？'];
@@ -7065,7 +7014,7 @@ abstinence_slip_details: $slipDetailsText
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -7074,38 +7023,54 @@ abstinence_slip_details: $slipDetailsText
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
+                          color: titleColor,
                           height: 1.5,
                         ),
                       ),
-                      SizedBox(height: 2),
-                      Text(
-                        '使い方が分からないときに、このサイトの機能名と入口をそのまま案内します。',
-                        style: TextStyle(fontSize: 12, height: 1.5),
-                      ),
+                      if (!isCompact) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          '使い方が分からないときに、このサイトの機能名と入口をそのまま案内します。',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: bodyColor,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color:
-                    isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
+            if (!isCompact) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF0F172A)
+                      : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '「どこを開けばいい？」「何から始める？」「この機能の違いは？」をそのまま質問できます。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: bodyColor,
+                    height: 1.6,
+                  ),
+                ),
               ),
-              child: const Text(
-                '「どこを開けばいい？」「何から始める？」「この機能の違いは？」をそのまま質問できます。',
-                style: TextStyle(fontSize: 12, height: 1.6),
-              ),
-            ),
+            ],
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: quickQuestions.map((question) {
+              children: quickQuestions
+                  .take(isCompact ? 2 : quickQuestions.length)
+                  .map((question) {
                 return ActionChip(
                   label: Text(question),
                   onPressed: () => _runTrackedAction(
@@ -7116,7 +7081,9 @@ abstinence_slip_details: $slipDetailsText
               }).toList(),
             ),
             const SizedBox(height: 14),
-            Row(
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
               children: [
                 FilledButton.icon(
                   onPressed: () => _runTrackedAction(
@@ -7126,7 +7093,6 @@ abstinence_slip_details: $slipDetailsText
                   icon: const Icon(Icons.chat_bubble_outline),
                   label: const Text('AIに聞く'),
                 ),
-                const SizedBox(width: 10),
                 OutlinedButton.icon(
                   onPressed: () =>
                       Navigator.of(context).pushNamed('/user-manual'),

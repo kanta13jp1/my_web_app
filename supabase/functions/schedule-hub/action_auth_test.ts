@@ -60,6 +60,13 @@ Deno.test("digest.run は user レベルへ降格 (public から削除)", () => 
   assertEquals(SERVICE_ROLE_ONLY_ACTIONS.includes("digest.run"), false);
 });
 
+Deno.test("動画クレジット購入はログイン user JWT 必須", () => {
+  const action = "billing.create_video_credit_checkout_session";
+  assertEquals(requiredAuthLevel(action), "user");
+  assertEquals(PUBLIC_ACTIONS.includes(action), false);
+  assertEquals(SERVICE_ROLE_ONLY_ACTIONS.includes(action), false);
+});
+
 Deno.test("未知 / user 向け action は user JWT 必須", () => {
   assertEquals(requiredAuthLevel("billing.status"), "user");
   assertEquals(requiredAuthLevel("blog.list"), "user");

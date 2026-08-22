@@ -26,6 +26,7 @@ from pathlib import Path
 # doorway 化していた routeless URL は含めない。(path, priority, changefreq)
 PUBLIC_ROUTES: list[tuple[str, str, str]] = [
     ("/", "1.0", "daily"),
+    ("/shop", "0.9", "weekly"),
     ("/competitors", "0.8", "weekly"),
     ("/public-memos", "0.7", "daily"),
     ("/ai-university", "0.7", "weekly"),
