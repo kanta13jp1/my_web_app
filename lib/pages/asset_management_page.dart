@@ -1899,6 +1899,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       totals[key] = (totals[key] ?? 0) + ((sub['price'] as num?)?.toInt() ?? 0);
     }
 
+    for (final month in months) {
+      final key = _monthKey(month);
+      final recurringTotal = _recurringFixedCosts
+          .where((cost) => cost.appliesToMonth(month.month))
+          .fold<int>(
+            0,
+            (total, cost) =>
+                total +
+                cost.resolveJpyAmount(_usdJpyRate?.jpyPerUnit).round(),
+          );
+      totals[key] = (totals[key] ?? 0) + recurringTotal;
+    }
+
     return totals;
   }
 
@@ -18374,11 +18387,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   // 借金返済プランカード
   Widget _buildDebtPlannerCard(AssetLiabilityWorkbook? workbook) {
-    final latestSnapshot = _sortedDates.isEmpty
+    final hasAssetLiabilityData =
+        _assetData.isNotEmpty || _effectiveAssetDataByDate.isNotEmpty;
+    final latestSnapshot = !hasAssetLiabilityData
         ? const <String, double>{}
-        : (_effectiveAssetDataByDate[_sortedDates.last] ??
-            _assetData[_sortedDates.last] ??
-            const <String, double>{});
+        : _latestSnapshotForDisplay();
 
     final liabilities = latestSnapshot.entries
         .where((e) => e.value < 0)
@@ -18400,8 +18413,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
           );
-    _ensureDebtLockdownSnapshotLoaded(totalDebt);
-    _ensureKonbiniUdonSnapshotLoaded(totalDebt);
+    if (hasAssetLiabilityData) {
+      _ensureDebtLockdownSnapshotLoaded(totalDebt);
+      _ensureKonbiniUdonSnapshotLoaded(totalDebt);
+    }
 
     return Card(
       elevation: 2,
@@ -18440,12 +18455,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               children: [
                 _buildOverviewStatChip(
                   label: '負債件数',
-                  value: '${liabilities.length}件',
+                  value:
+                      hasAssetLiabilityData ? '${liabilities.length}件' : '未登録',
                   color: const Color(0xFFB91C1C),
                 ),
                 _buildOverviewStatChip(
                   label: '負債合計',
-                  value: _formatYen(totalDebt),
+                  value:
+                      hasAssetLiabilityData ? _formatYen(totalDebt) : '未登録',
                   color: const Color(0xFFFF6B35),
                 ),
               ],
@@ -18456,9 +18473,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildDebtSafetyPanel(debtSafetySnapshot),
               const SizedBox(height: 12),
             ],
-            _buildDebtLockdownPanel(totalDebt),
+            _buildDebtLockdownPanel(
+              totalDebt,
+              hasDebtData: hasAssetLiabilityData,
+            ),
             const SizedBox(height: 12),
-            _buildKonbiniUdonChallengePanel(totalDebt, workbook),
+            _buildKonbiniUdonChallengePanel(
+              totalDebt,
+              workbook,
+              hasDebtData: hasAssetLiabilityData,
+            ),
             const SizedBox(height: 12),
             _isCompact
                 ? Column(
@@ -18853,35 +18877,50 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     ).showSnackBar(SnackBar(content: Text('URLを開けませんでした: $url')));
   }
 
-  Widget _buildDebtLockdownPanel(double remainingDebt) {
+  Widget _buildDebtLockdownPanel(
+    double remainingDebt, {
+    required bool hasDebtData,
+  }) {
     final snapshot = _debtLockdownSnapshot;
-    final isReleased = remainingDebt <= 0;
-    final isEnabled = snapshot?.isActive == true && !isReleased;
+    final isReleased = hasDebtData && remainingDebt <= 0;
+    final isEnabled = snapshot?.isActive == true && hasDebtData && !isReleased;
     final rules = snapshot?.rules ?? DebtLockdownService.builtinRules;
     final completedRuleIds = snapshot?.completedRuleIds ?? const <String>{};
     final todayViolations =
         snapshot?.todayViolations ?? const <DebtLockdownViolation>[];
     final recentViolations =
         snapshot?.recentViolations ?? const <DebtLockdownViolation>[];
-    final statusLabel = isReleased
-        ? '釈放'
-        : isEnabled
-            ? '収監中'
-            : '未開始';
-    final statusColor = isReleased
-        ? const Color(0xFF0D9488)
-        : isEnabled
-            ? const Color(0xFFB91C1C)
-            : const Color(0xFF475569);
+    final statusLabel = !hasDebtData
+        ? '判定不可'
+        : isReleased
+            ? '釈放'
+            : isEnabled
+                ? '収監中'
+                : '未開始';
+    final statusColor = !hasDebtData
+        ? const Color(0xFF64748B)
+        : isReleased
+            ? const Color(0xFF0D9488)
+            : isEnabled
+                ? const Color(0xFFB91C1C)
+                : const Color(0xFF475569);
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isReleased ? const Color(0xFFF0FDFA) : const Color(0xFFFFF1F2),
+        color: !hasDebtData
+            ? const Color(0xFFF8FAFC)
+            : isReleased
+                ? const Color(0xFFF0FDFA)
+                : const Color(0xFFFFF1F2),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isReleased ? const Color(0xFF99F6E4) : const Color(0xFFFCA5A5),
+          color: !hasDebtData
+              ? const Color(0xFFCBD5E1)
+              : isReleased
+                  ? const Color(0xFF99F6E4)
+                  : const Color(0xFFFCA5A5),
         ),
       ),
       child: Column(
@@ -18890,7 +18929,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           Row(
             children: [
               Icon(
-                isReleased ? Icons.lock_open : Icons.lock_outline,
+                !hasDebtData
+                    ? Icons.help_outline
+                    : isReleased
+                        ? Icons.lock_open
+                        : Icons.lock_outline,
                 color: statusColor,
               ),
               const SizedBox(width: 8),
@@ -18908,9 +18951,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           const SizedBox(height: 6),
           Text(
-            isReleased
-                ? '借金は完済済みです。収監モードは解除されました。'
-                : '借金がゼロになるまでは、生活を最小化し、返済以外の逃避と浪費を止める前提で毎日を管理します。',
+            !hasDebtData
+                ? '資産・負債が未登録のため、完済状態を判定できません。まず残高を登録してください。'
+                : isReleased
+                    ? '借金は完済済みです。収監モードは解除されました。'
+                    : '借金がゼロになるまでは、生活を最小化し、返済以外の逃避と浪費を止める前提で毎日を管理します。',
             style: TextStyle(
               fontSize: 12,
               color: Theme.of(context).colorScheme.onSurface,
@@ -18950,7 +18995,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ],
           ),
-          if (snapshot?.startedAt != null && !isReleased) ...[
+          if (snapshot?.startedAt != null && hasDebtData && !isReleased) ...[
             const SizedBox(height: 8),
             Text(
               '開始日: ${DateFormat('yyyy/MM/dd').format(snapshot!.startedAt!)}',
@@ -18967,7 +19012,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     ElevatedButton.icon(
-                      onPressed: isReleased
+                      onPressed: !hasDebtData || isReleased
                           ? null
                           : () => _setDebtLockdownEnabled(
                                 !isEnabled,
@@ -18991,7 +19036,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: isReleased
+                        onPressed: !hasDebtData || isReleased
                             ? null
                             : () => _setDebtLockdownEnabled(
                                   !isEnabled,
@@ -19063,7 +19108,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             Text(
               isEnabled
                   ? 'まだ違反記録はありません。今日も浪費と逃避を止めて返済だけに集中します。'
-                  : '収監モードを開始すると、ここに違反ログが溜まります。',
+                  : hasDebtData
+                      ? '収監モードを開始すると、ここに違反ログが溜まります。'
+                      : '資産・負債を登録すると、収監モードを開始できます。',
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -19094,11 +19141,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildKonbiniUdonChallengePanel(
     double remainingDebt,
-    AssetLiabilityWorkbook? workbook,
-  ) {
+    AssetLiabilityWorkbook? workbook, {
+    required bool hasDebtData,
+  }) {
     final snapshot = _konbiniUdonSnapshot;
-    final isReleased = remainingDebt <= 0;
-    final isEnabled = snapshot?.isActive == true && !isReleased;
+    final isReleased = hasDebtData && remainingDebt <= 0;
+    final isEnabled = snapshot?.isActive == true && hasDebtData && !isReleased;
     final config = snapshot?.config ?? KonbiniUdonChallengeConfig.defaults;
     final savings = KonbiniUdonChallengeService.estimateSavings(config);
     final udonSlots = snapshot?.todayUdonSlots ?? const <KonbiniUdonMealSlot>{};
@@ -19108,16 +19156,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final totalCompliantDays = snapshot?.totalCompliantDays ?? 0;
     final cumulativeSavings = snapshot?.cumulativeSavings ?? 0;
     final advisory = KonbiniUdonChallengeService.healthAdvisoryFor(streakDays);
-    final statusLabel = isReleased
-        ? '釈放'
-        : isEnabled
-            ? '縛り中'
-            : '未開始';
-    final statusColor = isReleased
-        ? const Color(0xFF0D9488)
-        : isEnabled
-            ? const Color(0xFFB45309)
-            : const Color(0xFF475569);
+    final statusLabel = !hasDebtData
+        ? '判定不可'
+        : isReleased
+            ? '釈放'
+            : isEnabled
+                ? '縛り中'
+                : '未開始';
+    final statusColor = !hasDebtData
+        ? const Color(0xFF64748B)
+        : isReleased
+            ? const Color(0xFF0D9488)
+            : isEnabled
+                ? const Color(0xFFB45309)
+                : const Color(0xFF475569);
 
     int? payoffMonthsWithUdon;
     int? monthsSaved;
@@ -19181,10 +19233,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isReleased ? const Color(0xFFF0FDFA) : const Color(0xFFFFFBEB),
+        color: !hasDebtData
+            ? const Color(0xFFF8FAFC)
+            : isReleased
+                ? const Color(0xFFF0FDFA)
+                : const Color(0xFFFFFBEB),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isReleased ? const Color(0xFF99F6E4) : const Color(0xFFFCD34D),
+          color: !hasDebtData
+              ? const Color(0xFFCBD5E1)
+              : isReleased
+                  ? const Color(0xFF99F6E4)
+                  : const Color(0xFFFCD34D),
         ),
       ),
       child: Column(
@@ -19208,15 +19268,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 key: const Key('konbini_udon_config_button'),
                 tooltip: '節約前提を調整',
                 icon: const Icon(Icons.tune, size: 18),
-                onPressed: () => _showKonbiniUdonConfigDialog(remainingDebt),
+                onPressed: hasDebtData
+                    ? () => _showKonbiniUdonConfigDialog(remainingDebt)
+                    : null,
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
-            isReleased
-                ? KonbiniUdonChallengeService.releaseMessage
-                : '借金を完済するまで、食事はコンビニのうどんのみ。浮いた食費(月 ${_formatYen(savings.monthlySavings)} 想定)は全額返済へ回します。',
+            !hasDebtData
+                ? '資産・負債が未登録のため、完済状態を判定できません。まず残高を登録してください。'
+                : isReleased
+                    ? KonbiniUdonChallengeService.releaseMessage
+                    : '借金を完済するまで、食事はコンビニのうどんのみ。浮いた食費(月 ${_formatYen(savings.monthlySavings)} 想定)は全額返済へ回します。',
             style: TextStyle(
               fontSize: 12,
               color: Theme.of(context).colorScheme.onSurface,
@@ -19254,7 +19318,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ],
           ),
-          if (snapshot?.startedAt != null && !isReleased) ...[
+          if (snapshot?.startedAt != null && hasDebtData && !isReleased) ...[
             const SizedBox(height: 8),
             Text(
               '誓約日: ${DateFormat('yyyy/MM/dd').format(snapshot!.startedAt!)}',
@@ -19277,7 +19341,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
           ],
-          if (!isReleased) ...[
+          if (hasDebtData && !isReleased) ...[
             const SizedBox(height: 10),
             if (savings.hasSavings)
               Wrap(
