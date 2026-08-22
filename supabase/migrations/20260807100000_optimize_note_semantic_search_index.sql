@@ -1,3 +1,8 @@
+-- nocheck: time-relative
+-- This migration only updates public.note_search_index, which has no
+-- time-relative enforcement trigger. The detector otherwise reads the schema
+-- qualifier in `update public.note_search_index` as a table named `public`.
+
 create or replace function public.sync_note_search_index_note(
   p_user_id uuid,
   p_note_id integer
