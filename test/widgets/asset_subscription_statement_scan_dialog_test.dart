@@ -28,7 +28,7 @@ void main() {
       ),
     );
 
-    expect(find.text('支払い明細のキャプチャーを1枚選ぶだけ'), findsOneWidget);
+    expect(find.text('支払い明細のキャプチャーを最大5枚まとめて選択'), findsOneWidget);
     await tester.tap(find.byKey(const Key('subscription_statement_pick')));
     await tester.pumpAndSettle();
 
@@ -117,6 +117,36 @@ void main() {
     expect(find.textContaining('ログインしました'), findsOneWidget);
     expect(viewModel.loginRequired, isFalse);
   });
+
+  testWidgets('shows merged results and image count for a multi-image batch', (
+    tester,
+  ) async {
+    final viewModel = AssetSubscriptionStatementScanViewModel(
+      imagePicker: const _MultiImagePicker(),
+      analyzer: const _MultiImageAnalyzer(),
+      existingSubscriptions: const <AssetRecurringFixedCost>[],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AssetSubscriptionStatementScanDialog(
+            viewModel: viewModel,
+            sourceAccountNames: const <String, String>{},
+            onImport: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('subscription_statement_pick')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Netflix'), findsOneWidget);
+    expect(find.text('Notion'), findsOneWidget);
+    expect(find.text('2 / 2枚'), findsOneWidget);
+    expect(find.textContaining('画像間の重複 1件'), findsOneWidget);
+    expect(find.text('画像を追加解析'), findsOneWidget);
+  });
 }
 
 AssetSubscriptionStatementScanViewModel _viewModel() {
@@ -132,13 +162,33 @@ class _FakePicker implements AssetSubscriptionStatementImagePicker {
   const _FakePicker();
 
   @override
-  Future<AssetSubscriptionStatementImage?> pickImage() async {
-    return AssetSubscriptionStatementImage(
-      fileName: 'statement.png',
-      mimeType: 'image/png',
-      bytes: Uint8List.fromList(<int>[1, 2, 3]),
-    );
-  }
+  Future<List<AssetSubscriptionStatementImage>> pickImages() async =>
+      <AssetSubscriptionStatementImage>[
+        AssetSubscriptionStatementImage(
+          fileName: 'statement.png',
+          mimeType: 'image/png',
+          bytes: Uint8List.fromList(<int>[1, 2, 3]),
+        ),
+      ];
+}
+
+class _MultiImagePicker implements AssetSubscriptionStatementImagePicker {
+  const _MultiImagePicker();
+
+  @override
+  Future<List<AssetSubscriptionStatementImage>> pickImages() async =>
+      <AssetSubscriptionStatementImage>[
+        AssetSubscriptionStatementImage(
+          fileName: 'statement-1.png',
+          mimeType: 'image/png',
+          bytes: Uint8List.fromList(<int>[1]),
+        ),
+        AssetSubscriptionStatementImage(
+          fileName: 'statement-2.png',
+          mimeType: 'image/png',
+          bytes: Uint8List.fromList(<int>[2]),
+        ),
+      ];
 }
 
 class _FakeAnalyzer implements AssetSubscriptionStatementAnalyzer {
@@ -174,6 +224,42 @@ class _AuthenticationRequiredAnalyzer
     throw const AssetSubscriptionStatementScanException(
       '明細のAI解析にはログインが必要です。',
       failure: AssetSubscriptionStatementScanFailure.authenticationRequired,
+    );
+  }
+}
+
+class _MultiImageAnalyzer implements AssetSubscriptionStatementAnalyzer {
+  const _MultiImageAnalyzer();
+
+  @override
+  Future<List<AssetSubscriptionStatementCandidate>> analyze(
+    AssetSubscriptionStatementImage image,
+  ) async {
+    if (image.fileName == 'statement-1.png') {
+      return <AssetSubscriptionStatementCandidate>[
+        _candidate('netflix', 'Netflix', 1980),
+        _candidate('notion', 'Notion', 1650),
+      ];
+    }
+    return <AssetSubscriptionStatementCandidate>[
+      _candidate('notion-again', 'NOTION', 1650),
+    ];
+  }
+
+  AssetSubscriptionStatementCandidate _candidate(
+    String id,
+    String name,
+    double amount,
+  ) {
+    return AssetSubscriptionStatementCandidate(
+      id: id,
+      serviceName: name,
+      chargedAmountJpy: amount,
+      chargedAt: DateTime(2026, 8, 10),
+      billingCycle: AssetSubscriptionBillingCycle.monthly,
+      billingGateway: AssetSubscriptionBillingGateway.direct,
+      confidence: 0.9,
+      evidence: '同額の定期請求',
     );
   }
 }

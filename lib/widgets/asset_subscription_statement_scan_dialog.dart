@@ -75,7 +75,7 @@ class _AssetSubscriptionStatementScanDialogState
   Widget _buildBody(BuildContext context) {
     final vm = widget.viewModel;
     if (vm.isAnalyzing) {
-      return const _AnalyzingState();
+      return _AnalyzingState(viewModel: vm);
     }
     if (!vm.hasResults) {
       return _UploadState(
@@ -106,9 +106,9 @@ class _AssetSubscriptionStatementScanDialogState
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            summary,
+            Expanded(flex: 2, child: summary),
             const Divider(height: 1),
-            Expanded(child: candidates),
+            Expanded(flex: 3, child: candidates),
           ],
         );
       },
@@ -138,7 +138,14 @@ class _AssetSubscriptionStatementScanDialogState
               key: const Key('subscription_statement_rescan'),
               onPressed: vm.isAnalyzing ? null : vm.pickAndAnalyze,
               icon: const Icon(Icons.add_photo_alternate_outlined),
-              label: const Text('別の画像を解析'),
+              label: const Text('画像を追加解析'),
+            ),
+          if (vm.hasResults && vm.loginRequired && widget.onLogin != null)
+            TextButton.icon(
+              key: const Key('subscription_statement_login'),
+              onPressed: _openLogin,
+              icon: const Icon(Icons.login),
+              label: const Text('この画面でログイン'),
             ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -248,7 +255,7 @@ class _UploadState extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               Text(
-                '支払い明細のキャプチャーを1枚選ぶだけ',
+                '支払い明細のキャプチャーを最大5枚まとめて選択',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
@@ -339,7 +346,7 @@ class _UploadState extends StatelessWidget {
                 key: const Key('subscription_statement_pick'),
                 onPressed: onPick,
                 icon: const Icon(Icons.upload_file_outlined),
-                label: const Text('明細画像を選んで解析'),
+                label: const Text('明細画像を選んでまとめて解析'),
               ),
               const SizedBox(height: 16),
               Row(
@@ -354,7 +361,8 @@ class _UploadState extends StatelessWidget {
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
-                      'PNG・JPEG・WebP / 4MB以下。画像はAI解析時だけ送信し、アプリのStorageやDBには保存しません。'
+                      'PNG・JPEG・WebP / 1枚4MB以下・最大5枚。画像は1枚ずつAI解析時だけ送信し、'
+                      'アプリのStorageやDBには保存しません。'
                       'カード番号・名義・住所・生のOCR全文も保存しません。',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
@@ -372,7 +380,9 @@ class _UploadState extends StatelessWidget {
 }
 
 class _AnalyzingState extends StatelessWidget {
-  const _AnalyzingState();
+  const _AnalyzingState({required this.viewModel});
+
+  final AssetSubscriptionStatementScanViewModel viewModel;
 
   @override
   Widget build(BuildContext context) {
@@ -385,12 +395,35 @@ class _AnalyzingState extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const LinearProgressIndicator(),
+              LinearProgressIndicator(
+                value: viewModel.processingImageTotal == 0
+                    ? null
+                    : (viewModel.processingImageNumber - 1) /
+                        viewModel.processingImageTotal,
+              ),
               const SizedBox(height: 20),
               Text('サブスク候補を抽出しています', style: theme.textTheme.titleMedium),
               const SizedBox(height: 6),
               Text(
-                '金額や周期は解析後に確認・修正できます。',
+                '${viewModel.processingImageNumber} / '
+                '${viewModel.processingImageTotal}枚目',
+                style: theme.textTheme.labelLarge,
+              ),
+              if (viewModel.currentFileName != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  viewModel.currentFileName!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 6),
+              Text(
+                '画像を1枚ずつ解析しています。金額や周期は解析後に確認・修正できます。',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -431,6 +464,11 @@ class _SummaryPanel extends StatelessWidget {
           const SizedBox(height: 12),
           _Metric(label: '選択中', value: '${viewModel.selectedCount}件'),
           _Metric(
+            label: '解析済み画像',
+            value:
+                '${viewModel.analyzedImageCount} / ${viewModel.selectedImageCount}枚',
+          ),
+          _Metric(
             label: '月額換算',
             value: '¥${_yen.format(viewModel.selectedMonthlyTotal)}',
           ),
@@ -451,6 +489,69 @@ class _SummaryPanel extends StatelessWidget {
                 '登録済み ${viewModel.duplicateCount}件は選択から外しました。',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          if (viewModel.mergedDuplicateCount > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                '画像間の重複 ${viewModel.mergedDuplicateCount}件をまとめました。',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          if (viewModel.infoMessage != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                viewModel.infoMessage!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          if (viewModel.errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                viewModel.errorMessage!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.error,
+                ),
+              ),
+            ),
+          if (viewModel.fileFailures.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Material(
+                color: scheme.errorContainer,
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '解析できなかった画像 ${viewModel.fileFailures.length}枚',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: scheme.onErrorContainer,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      for (final failure in viewModel.fileFailures)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            '・${failure.fileName}: ${failure.message}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onErrorContainer,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),

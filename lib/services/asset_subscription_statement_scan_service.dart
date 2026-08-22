@@ -18,8 +18,10 @@ abstract interface class AssetSubscriptionStatementAnalyzer {
 }
 
 abstract interface class AssetSubscriptionStatementImagePicker {
-  Future<AssetSubscriptionStatementImage?> pickImage();
+  Future<List<AssetSubscriptionStatementImage>> pickImages();
 }
+
+const int assetSubscriptionStatementMaxImageCount = 5;
 
 enum AssetSubscriptionStatementScanFailure { general, authenticationRequired }
 
@@ -39,26 +41,35 @@ class AssetSubscriptionStatementScanException implements Exception {
   String toString() => message;
 }
 
-/// PNG/JPEG/WebP のカード明細キャプチャを選択する。画像はファイル保存せず、
-/// [PlatformFile.bytes] を解析サービスへ一度だけ渡す。
+/// PNG/JPEG/WebP のカード明細キャプチャを最大5枚選択する。画像はファイル保存せず、
+/// [PlatformFile.bytes] を解析サービスへ一度ずつ渡す。
 class FilePickerAssetSubscriptionStatementImagePicker
     implements AssetSubscriptionStatementImagePicker {
   const FilePickerAssetSubscriptionStatementImagePicker();
 
   @override
-  Future<AssetSubscriptionStatementImage?> pickImage() async {
+  Future<List<AssetSubscriptionStatementImage>> pickImages() async {
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: const <String>['png', 'jpg', 'jpeg', 'webp'],
-      allowMultiple: false,
+      allowMultiple: true,
       withData: true,
     );
-    final file = result?.files.singleOrNull;
-    if (file == null) return null;
+    final files = result?.files ?? const <PlatformFile>[];
+    if (files.isEmpty) return const <AssetSubscriptionStatementImage>[];
+    if (files.length > assetSubscriptionStatementMaxImageCount) {
+      throw const AssetSubscriptionStatementScanException('画像は一度に5枚まで選択できます。');
+    }
+    return <AssetSubscriptionStatementImage>[
+      for (final file in files) _toStatementImage(file),
+    ];
+  }
+
+  AssetSubscriptionStatementImage _toStatementImage(PlatformFile file) {
     final bytes = file.bytes;
     if (bytes == null) {
-      throw const AssetSubscriptionStatementScanException(
-        '画像を読み込めませんでした。別の画像を選んでください。',
+      throw AssetSubscriptionStatementScanException(
+        '${file.name}を読み込めませんでした。別の画像を選んでください。',
       );
     }
     final extension = (file.extension ?? '').toLowerCase();

@@ -95,6 +95,96 @@ void main() {
     expect(viewModel.hasResults, isFalse);
     expect(viewModel.errorMessage, contains('候補を特定できませんでした'));
   });
+
+  test('analyzes multiple images sequentially and merges duplicates', () async {
+    final secondImage = AssetSubscriptionStatementImage(
+      fileName: 'statement-2.png',
+      mimeType: 'image/png',
+      bytes: Uint8List.fromList(<int>[4, 5, 6]),
+    );
+    final analyzer = _PerImageAnalyzer(
+      <String, List<AssetSubscriptionStatementCandidate>>{
+        'statement.png': <AssetSubscriptionStatementCandidate>[
+          _candidate('notion', 'Notion', 1650),
+          _candidate('netflix', 'Netflix', 1980),
+        ],
+        'statement-2.png': <AssetSubscriptionStatementCandidate>[
+          _candidate('notion-again', 'NOTION', 1650),
+          _candidate('github', 'GitHub', 600),
+        ],
+      },
+    );
+    final viewModel = AssetSubscriptionStatementScanViewModel(
+      imagePicker: _FakePicker(<AssetSubscriptionStatementImage>[
+        image,
+        secondImage,
+      ]),
+      analyzer: analyzer,
+      existingSubscriptions: const <AssetRecurringFixedCost>[],
+    );
+
+    await viewModel.pickAndAnalyze();
+
+    expect(analyzer.analyzedFileNames, <String>[
+      'statement.png',
+      'statement-2.png',
+    ]);
+    expect(
+      viewModel.reviews.map((review) => review.candidate.serviceName),
+      <String>['Notion', 'Netflix', 'GitHub'],
+    );
+    expect(viewModel.selectedImageCount, 2);
+    expect(viewModel.analyzedImageCount, 2);
+    expect(viewModel.mergedDuplicateCount, 1);
+    expect(viewModel.fileFailures, isEmpty);
+  });
+
+  test('keeps successful results when one image fails', () async {
+    final failedImage = AssetSubscriptionStatementImage(
+      fileName: 'blurred.png',
+      mimeType: 'image/png',
+      bytes: Uint8List.fromList(<int>[7, 8, 9]),
+    );
+    final viewModel = AssetSubscriptionStatementScanViewModel(
+      imagePicker: _FakePicker(<AssetSubscriptionStatementImage>[
+        image,
+        failedImage,
+      ]),
+      analyzer: _PartiallyFailingAnalyzer(),
+      existingSubscriptions: const <AssetRecurringFixedCost>[],
+    );
+
+    await viewModel.pickAndAnalyze();
+
+    expect(viewModel.reviews, hasLength(1));
+    expect(viewModel.reviews.single.candidate.serviceName, 'Netflix');
+    expect(viewModel.analyzedImageCount, 1);
+    expect(viewModel.fileFailures, hasLength(1));
+    expect(viewModel.fileFailures.single.fileName, 'blurred.png');
+    expect(viewModel.infoMessage, contains('解析結果を保持'));
+  });
+
+  test('rejects more than five selected images before analysis', () async {
+    final images = <AssetSubscriptionStatementImage>[
+      for (var index = 0; index < 6; index++)
+        AssetSubscriptionStatementImage(
+          fileName: 'statement-$index.png',
+          mimeType: 'image/png',
+          bytes: Uint8List.fromList(<int>[index]),
+        ),
+    ];
+    final analyzer = _PerImageAnalyzer(const {});
+    final viewModel = AssetSubscriptionStatementScanViewModel(
+      imagePicker: _FakePicker(images),
+      analyzer: analyzer,
+      existingSubscriptions: const <AssetRecurringFixedCost>[],
+    );
+
+    await viewModel.pickAndAnalyze();
+
+    expect(viewModel.errorMessage, contains('5枚まで'));
+    expect(analyzer.analyzedFileNames, isEmpty);
+  });
 }
 
 AssetSubscriptionStatementCandidate _candidate(
@@ -116,12 +206,17 @@ AssetSubscriptionStatementCandidate _candidate(
 }
 
 class _FakePicker implements AssetSubscriptionStatementImagePicker {
-  final AssetSubscriptionStatementImage? image;
+  final List<AssetSubscriptionStatementImage> images;
 
-  const _FakePicker(this.image);
+  _FakePicker(Object? value)
+      : images = value is AssetSubscriptionStatementImage
+            ? <AssetSubscriptionStatementImage>[value]
+            : List<AssetSubscriptionStatementImage>.of(
+                value as List<AssetSubscriptionStatementImage>? ?? const [],
+              );
 
   @override
-  Future<AssetSubscriptionStatementImage?> pickImage() async => image;
+  Future<List<AssetSubscriptionStatementImage>> pickImages() async => images;
 }
 
 class _FakeAnalyzer implements AssetSubscriptionStatementAnalyzer {
@@ -134,4 +229,33 @@ class _FakeAnalyzer implements AssetSubscriptionStatementAnalyzer {
     AssetSubscriptionStatementImage image,
   ) async =>
       candidates;
+}
+
+class _PerImageAnalyzer implements AssetSubscriptionStatementAnalyzer {
+  final Map<String, List<AssetSubscriptionStatementCandidate>> candidatesByFile;
+  final List<String> analyzedFileNames = <String>[];
+
+  _PerImageAnalyzer(this.candidatesByFile);
+
+  @override
+  Future<List<AssetSubscriptionStatementCandidate>> analyze(
+    AssetSubscriptionStatementImage image,
+  ) async {
+    analyzedFileNames.add(image.fileName);
+    return candidatesByFile[image.fileName] ?? const [];
+  }
+}
+
+class _PartiallyFailingAnalyzer implements AssetSubscriptionStatementAnalyzer {
+  @override
+  Future<List<AssetSubscriptionStatementCandidate>> analyze(
+    AssetSubscriptionStatementImage image,
+  ) async {
+    if (image.fileName == 'blurred.png') {
+      throw const AssetSubscriptionStatementScanException('画像が不鮮明です。');
+    }
+    return <AssetSubscriptionStatementCandidate>[
+      _candidate('netflix', 'Netflix', 1980),
+    ];
+  }
 }
