@@ -30,6 +30,16 @@ class AssetSubscriptionStatementCandidateReview {
   }
 }
 
+class AssetSubscriptionStatementFileFailure {
+  final String fileName;
+  final String message;
+
+  const AssetSubscriptionStatementFileFailure({
+    required this.fileName,
+    required this.message,
+  });
+}
+
 /// 明細画像の選択・解析・重複除外・ユーザー判断を管理するViewModel。
 class AssetSubscriptionStatementScanViewModel extends ChangeNotifier {
   final AssetSubscriptionStatementImagePicker _imagePicker;
@@ -53,16 +63,36 @@ class AssetSubscriptionStatementScanViewModel extends ChangeNotifier {
   String? _errorMessage;
   String? _infoMessage;
   bool _loginRequired = false;
-  String? _analyzedFileName;
+  String? _currentFileName;
   String? _sourceAccountId;
   List<AssetSubscriptionStatementCandidateReview> _reviews = const [];
+  List<AssetSubscriptionStatementFileFailure> _fileFailures = const [];
+  int _selectedImageCount = 0;
+  int _analyzedImageCount = 0;
+  int _processingImageNumber = 0;
+  int _processingImageTotal = 0;
+  int _mergedDuplicateCount = 0;
+  int _analysisBatchSequence = 0;
   bool _disposed = false;
 
   bool get isAnalyzing => _isAnalyzing;
   String? get errorMessage => _errorMessage;
   String? get infoMessage => _infoMessage;
   bool get loginRequired => _loginRequired;
-  String? get analyzedFileName => _analyzedFileName;
+  String? get analyzedFileName {
+    if (_currentFileName != null) return _currentFileName;
+    if (_selectedImageCount == 0) return null;
+    return '$_analyzedImageCount / $_selectedImageCount枚を解析';
+  }
+
+  String? get currentFileName => _currentFileName;
+  int get selectedImageCount => _selectedImageCount;
+  int get analyzedImageCount => _analyzedImageCount;
+  int get processingImageNumber => _processingImageNumber;
+  int get processingImageTotal => _processingImageTotal;
+  int get mergedDuplicateCount => _mergedDuplicateCount;
+  List<AssetSubscriptionStatementFileFailure> get fileFailures =>
+      List<AssetSubscriptionStatementFileFailure>.unmodifiable(_fileFailures);
   String? get sourceAccountId => _sourceAccountId;
   List<AssetSubscriptionStatementCandidateReview> get reviews =>
       List<AssetSubscriptionStatementCandidateReview>.unmodifiable(_reviews);
@@ -100,9 +130,9 @@ class AssetSubscriptionStatementScanViewModel extends ChangeNotifier {
     _loginRequired = false;
     _notifyListeners();
 
-    AssetSubscriptionStatementImage? image;
+    List<AssetSubscriptionStatementImage>? selectedImages;
     try {
-      image = await _imagePicker.pickImage();
+      selectedImages = await _imagePicker.pickImages();
     } on AssetSubscriptionStatementScanException catch (error) {
       _errorMessage = error.message;
       _notifyListeners();
@@ -112,43 +142,124 @@ class AssetSubscriptionStatementScanViewModel extends ChangeNotifier {
       _notifyListeners();
       return;
     }
-    if (image == null) return;
+    if (selectedImages.isEmpty) return;
+    if (selectedImages.length > assetSubscriptionStatementMaxImageCount) {
+      _errorMessage = '画像は一度に5枚まで選択できます。';
+      _notifyListeners();
+      return;
+    }
 
+    final pendingImages = List<AssetSubscriptionStatementImage>.of(
+      selectedImages,
+    );
+    selectedImages = null;
+    final batchImageCount = pendingImages.length;
+    final batchSequence = ++_analysisBatchSequence;
+    final existingNames =
+        _existingSubscriptions.map((cost) => _normalizeName(cost.name)).toSet();
+    final seenNames = _reviews
+        .map((review) => _normalizeName(review.candidate.serviceName))
+        .toSet();
+    final usedCandidateIds =
+        _reviews.map((review) => review.candidate.id).toSet();
+    final accumulatedReviews =
+        List<AssetSubscriptionStatementCandidateReview>.of(_reviews);
+    final accumulatedFailures = List<AssetSubscriptionStatementFileFailure>.of(
+      _fileFailures,
+    );
     _isAnalyzing = true;
-    _analyzedFileName = image.fileName;
-    _reviews = const [];
+    _selectedImageCount += batchImageCount;
+    _processingImageNumber = 1;
+    _processingImageTotal = batchImageCount;
     _notifyListeners();
     try {
-      final candidates = await _analyzer.analyze(image);
-      if (candidates.isEmpty) {
-        _errorMessage = 'サブスク候補を特定できませんでした。明細部分が鮮明な画像で再試行してください。';
-        return;
+      for (var imageIndex = 0; pendingImages.isNotEmpty; imageIndex++) {
+        final image = pendingImages.removeAt(0);
+        _processingImageNumber = imageIndex + 1;
+        _currentFileName = image.fileName;
+        _notifyListeners();
+        try {
+          final candidates = await _analyzer.analyze(image);
+          if (candidates.isEmpty) {
+            accumulatedFailures.add(
+              AssetSubscriptionStatementFileFailure(
+                fileName: image.fileName,
+                message: 'サブスク候補を特定できませんでした。',
+              ),
+            );
+            continue;
+          }
+          _analyzedImageCount++;
+          for (var candidateIndex = 0;
+              candidateIndex < candidates.length;
+              candidateIndex++) {
+            final candidate = candidates[candidateIndex];
+            final normalizedName = _normalizeName(candidate.serviceName);
+            if (seenNames.contains(normalizedName)) {
+              _mergedDuplicateCount++;
+              continue;
+            }
+            seenNames.add(normalizedName);
+            final uniqueCandidate = _withUniqueId(
+              candidate,
+              usedCandidateIds: usedCandidateIds,
+              fallbackSuffix: '${batchSequence}_${imageIndex}_$candidateIndex',
+            );
+            final alreadyRegistered = existingNames.contains(normalizedName);
+            accumulatedReviews.add(
+              AssetSubscriptionStatementCandidateReview(
+                candidate: uniqueCandidate,
+                alreadyRegistered: alreadyRegistered,
+                selected: !alreadyRegistered,
+                // 明細だけでは利用頻度を判断できないため、AIに残す/解約を決めさせない。
+                decision: AssetSubscriptionReviewDecision.hold,
+              ),
+            );
+          }
+        } on AssetSubscriptionStatementScanException catch (error) {
+          if (error.requiresLogin) {
+            // 認証前の画像は解析件数に含めず、ログイン後に安全のため再選択する。
+            _selectedImageCount -= pendingImages.length + 1;
+            _errorMessage = error.message;
+            _loginRequired = true;
+            break;
+          }
+          accumulatedFailures.add(
+            AssetSubscriptionStatementFileFailure(
+              fileName: image.fileName,
+              message: error.message,
+            ),
+          );
+        } catch (_) {
+          accumulatedFailures.add(
+            AssetSubscriptionStatementFileFailure(
+              fileName: image.fileName,
+              message: '時間をおいて再試行してください。',
+            ),
+          );
+        } finally {
+          _reviews = List<AssetSubscriptionStatementCandidateReview>.of(
+            accumulatedReviews,
+          );
+          _fileFailures = List<AssetSubscriptionStatementFileFailure>.of(
+            accumulatedFailures,
+          );
+          _notifyListeners();
+        }
       }
-      final existingNames = _existingSubscriptions
-          .map((cost) => _normalizeName(cost.name))
-          .toSet();
-      _reviews = <AssetSubscriptionStatementCandidateReview>[
-        for (final candidate in candidates)
-          AssetSubscriptionStatementCandidateReview(
-            candidate: candidate,
-            alreadyRegistered: existingNames.contains(
-              _normalizeName(candidate.serviceName),
-            ),
-            selected: !existingNames.contains(
-              _normalizeName(candidate.serviceName),
-            ),
-            // 明細だけでは利用頻度を判断できないため、AIに残す/解約を決めさせない。
-            decision: AssetSubscriptionReviewDecision.hold,
-          ),
-      ];
-    } on AssetSubscriptionStatementScanException catch (error) {
-      _errorMessage = error.message;
-      _loginRequired = error.requiresLogin;
-    } catch (_) {
-      _errorMessage = '明細画像を解析できませんでした。時間をおいて再試行してください。';
+
+      if (_reviews.isEmpty && !_loginRequired) {
+        _errorMessage = 'サブスク候補を特定できませんでした。明細部分が鮮明な画像で再試行してください。';
+      } else if (_fileFailures.isNotEmpty && !_loginRequired) {
+        _infoMessage =
+            '$_analyzedImageCount枚の解析結果を保持しました。解析できなかった画像は下記で確認できます。';
+      }
     } finally {
-      // 画像バイト列はローカル変数だけで保持し、ここで参照を手放す。
-      image = null;
+      // 処理済み画像は逐次リストから外し、残りもここで参照を手放す。
+      pendingImages.clear();
+      _currentFileName = null;
+      _processingImageNumber = 0;
+      _processingImageTotal = 0;
       _isAnalyzing = false;
       _notifyListeners();
     }
@@ -157,7 +268,7 @@ class AssetSubscriptionStatementScanViewModel extends ChangeNotifier {
   void markSignedIn() {
     _errorMessage = null;
     _loginRequired = false;
-    _analyzedFileName = null;
+    _currentFileName = null;
     _infoMessage = 'ログインしました。安全のため、明細画像をもう一度選んでください。';
     _notifyListeners();
   }
@@ -211,6 +322,31 @@ class AssetSubscriptionStatementScanViewModel extends ChangeNotifier {
 
   static String _normalizeName(String value) {
     return value.toLowerCase().replaceAll(RegExp(r'[\s\-_./・（）()]+'), '');
+  }
+
+  static AssetSubscriptionStatementCandidate _withUniqueId(
+    AssetSubscriptionStatementCandidate candidate, {
+    required Set<String> usedCandidateIds,
+    required String fallbackSuffix,
+  }) {
+    final originalId = candidate.id.trim().isEmpty
+        ? 'statement_candidate'
+        : candidate.id.trim();
+    final id = usedCandidateIds.add(originalId)
+        ? originalId
+        : '${originalId}_$fallbackSuffix';
+    usedCandidateIds.add(id);
+    if (id == candidate.id) return candidate;
+    return AssetSubscriptionStatementCandidate(
+      id: id,
+      serviceName: candidate.serviceName,
+      chargedAmountJpy: candidate.chargedAmountJpy,
+      chargedAt: candidate.chargedAt,
+      billingCycle: candidate.billingCycle,
+      billingGateway: candidate.billingGateway,
+      confidence: candidate.confidence,
+      evidence: candidate.evidence,
+    );
   }
 
   void _notifyListeners() {

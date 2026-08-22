@@ -8,8 +8,8 @@ import '../models/asset_liability_workbook.dart';
 import '../models/asset_subscription_statement_scan.dart';
 import 'offline_secure_mode_settings_service.dart';
 
-typedef AssetSubscriptionStatementInvoker = Future<Map<String, dynamic>>
-    Function(Map<String, dynamic> body);
+typedef AssetSubscriptionStatementInvoker =
+    Future<Map<String, dynamic>> Function(Map<String, dynamic> body);
 
 abstract interface class AssetSubscriptionStatementAnalyzer {
   Future<List<AssetSubscriptionStatementCandidate>> analyze(
@@ -18,8 +18,10 @@ abstract interface class AssetSubscriptionStatementAnalyzer {
 }
 
 abstract interface class AssetSubscriptionStatementImagePicker {
-  Future<AssetSubscriptionStatementImage?> pickImage();
+  Future<List<AssetSubscriptionStatementImage>> pickImages();
 }
+
+const int assetSubscriptionStatementMaxImageCount = 5;
 
 enum AssetSubscriptionStatementScanFailure { general, authenticationRequired }
 
@@ -39,26 +41,35 @@ class AssetSubscriptionStatementScanException implements Exception {
   String toString() => message;
 }
 
-/// PNG/JPEG/WebP のカード明細キャプチャを選択する。画像はファイル保存せず、
-/// [PlatformFile.bytes] を解析サービスへ一度だけ渡す。
+/// PNG/JPEG/WebP のカード明細キャプチャを最大5枚選択する。画像はファイル保存せず、
+/// [PlatformFile.bytes] を解析サービスへ一度ずつ渡す。
 class FilePickerAssetSubscriptionStatementImagePicker
     implements AssetSubscriptionStatementImagePicker {
   const FilePickerAssetSubscriptionStatementImagePicker();
 
   @override
-  Future<AssetSubscriptionStatementImage?> pickImage() async {
+  Future<List<AssetSubscriptionStatementImage>> pickImages() async {
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: const <String>['png', 'jpg', 'jpeg', 'webp'],
-      allowMultiple: false,
+      allowMultiple: true,
       withData: true,
     );
-    final file = result?.files.singleOrNull;
-    if (file == null) return null;
+    final files = result?.files ?? const <PlatformFile>[];
+    if (files.isEmpty) return const <AssetSubscriptionStatementImage>[];
+    if (files.length > assetSubscriptionStatementMaxImageCount) {
+      throw const AssetSubscriptionStatementScanException('画像は一度に5枚まで選択できます。');
+    }
+    return <AssetSubscriptionStatementImage>[
+      for (final file in files) _toStatementImage(file),
+    ];
+  }
+
+  AssetSubscriptionStatementImage _toStatementImage(PlatformFile file) {
     final bytes = file.bytes;
     if (bytes == null) {
-      throw const AssetSubscriptionStatementScanException(
-        '画像を読み込めませんでした。別の画像を選んでください。',
+      throw AssetSubscriptionStatementScanException(
+        '${file.name}を読み込めませんでした。別の画像を選んでください。',
       );
     }
     final extension = (file.extension ?? '').toLowerCase();
@@ -99,9 +110,9 @@ class AssetSubscriptionStatementScanService
     AssetSubscriptionStatementInvoker? invoker,
     OfflineSecureModeSettingsService offlineSettingsService =
         const OfflineSecureModeSettingsService(),
-  })  : _supabase = supabase,
-        _invoker = invoker,
-        _offlineSettingsService = offlineSettingsService;
+  }) : _supabase = supabase,
+       _invoker = invoker,
+       _offlineSettingsService = offlineSettingsService;
 
   @override
   Future<List<AssetSubscriptionStatementCandidate>> analyze(
@@ -134,9 +145,11 @@ class AssetSubscriptionStatementScanService
     final rawCandidates = data['candidates'];
     if (rawCandidates is! List) return const [];
     final result = <AssetSubscriptionStatementCandidate>[];
-    for (var i = 0;
-        i < rawCandidates.length && result.length < maxCandidates;
-        i++) {
+    for (
+      var i = 0;
+      i < rawCandidates.length && result.length < maxCandidates;
+      i++
+    ) {
       final raw = rawCandidates[i];
       if (raw is! Map) continue;
       final candidate = _candidateFromMap(Map<String, dynamic>.from(raw), i);
