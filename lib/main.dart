@@ -72,6 +72,7 @@ import 'package:my_web_app/pages/tech_blog_tracker_page.dart';
 import 'package:my_web_app/pages/thought_anchor_page.dart';
 import 'package:my_web_app/pages/rewards_page.dart';
 import 'package:my_web_app/pages/admin_analytics_page.dart';
+import 'package:my_web_app/pages/admin_artifact_publishing_page.dart';
 import 'package:my_web_app/pages/admin/feedback_list_page.dart';
 import 'package:my_web_app/pages/admin/quota_dashboard_page.dart';
 import 'package:my_web_app/pages/admin/blog_management_page.dart';
@@ -901,6 +902,11 @@ Route<dynamic> generateAppRoute(
     case '/admin':
       return MaterialPageRoute(
         builder: (_) => const AdminAnalyticsPage(),
+      );
+    case '/admin/artifact-publishing':
+      return MaterialPageRoute(
+        builder: (_) => const AdminArtifactPublishingPage(),
+        settings: settings,
       );
     case '/templates':
       return MaterialPageRoute(

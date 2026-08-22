@@ -2195,6 +2195,39 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       color: const Color(0xFF1A1A2E),
                       child: ListTile(
                         leading: const Icon(
+                          Icons.published_with_changes_outlined,
+                          color: Color(0xFFFF6B35),
+                        ),
+                        title: const Text(
+                          'AI成果物 公開ループ',
+                          style: TextStyle(
+                            color: Color(0xFFE5E7EB),
+                            fontWeight: FontWeight.bold,
+                            height: 1.5,
+                          ),
+                        ),
+                        subtitle: const Text(
+                          '候補、権利、検査、商品ステージを人手承認つきで管理',
+                          style: TextStyle(
+                            color: Color(0xB3E5E7EB),
+                            height: 1.5,
+                          ),
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right,
+                          color: Color(0x8AE5E7EB),
+                        ),
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          '/admin/artifact-publishing',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Card(
+                      color: const Color(0xFF1A1A2E),
+                      child: ListTile(
+                        leading: const Icon(
                           Icons.edit_note,
                           color: Color(0xFFFF6B35),
                         ),
