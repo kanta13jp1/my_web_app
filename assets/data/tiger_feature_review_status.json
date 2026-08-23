@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-23T07:30:49.914416+00:00",
+  "generated_at": "2026-08-23T08:32:50.740445+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -13,11 +13,11 @@
   "pool": {
     "total": 13,
     "eligible": 13,
-    "provisional": 10,
+    "provisional": 13,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 12,
-    "division_4": 1,
+    "division_3": 13,
+    "division_4": 0,
     "division_5": 0,
     "eliminated": 0
   },
@@ -29,61 +29,80 @@
     "operating_efficiency": 10
   },
   "latest_review": {
-    "cycle_id": "20260823T153734+0900",
-    "started_at": "2026-08-23T15:38:16.4383006+09:00",
-    "source_format": "legacy_combined",
+    "cycle_id": "20260823T172138+0900",
+    "started_at": "2026-08-23T17:21:38+09:00",
+    "source_format": "feature_review",
     "surface": {
-      "slug": "comparison",
-      "url": "https://my-web-app-b67f4.web.app/competitors"
+      "slug": "ai_university",
+      "url": "https://my-web-app-b67f4.web.app/ai-university"
     },
     "reviewer": {
-      "seat": 7,
-      "name": "榊󠄀原 清一",
-      "selection_score": 74.4337,
-      "division": 1,
-      "cycle_utility": 90.17,
-      "aggregate_utility": 90.17
+      "seat": 11,
+      "name": "野口 功司",
+      "selection_score": 78.0406,
+      "division": 3,
+      "cycle_utility": 95.5,
+      "aggregate_utility": 95.5
     },
-    "status": "review_only",
+    "status": "fixed",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "競合比較の公開主張に出典・確認時点を一貫して結び付ける必要がある。",
+        "summary": "読み込み中のspinnerが支援技術へ状態を通知しない",
         "severity": "p1",
         "business_dimensions": [
-          "competitive_advantage",
+          "customer_pain",
+          "go_to_market",
+          "trust_risk"
+        ]
+      },
+      {
+        "summary": "SEOシェルから実AI大学画面への切り替えが遅い",
+        "severity": "p1",
+        "business_dimensions": [
+          "customer_pain",
+          "go_to_market",
           "unit_economics"
         ]
       },
       {
-        "summary": "比較流入から登録までの実測根拠が今回のレビュー入力にない。",
+        "summary": "8千行超の単一ページと専用widget test不足が改善速度を下げる",
         "severity": "p2",
         "business_dimensions": [
-          "market_demand",
+          "founder_execution",
+          "scalability",
           "unit_economics"
-        ]
-      },
-      {
-        "summary": "比較ページの巨大な単一ソースと専用試験不足が訴求変更の検証コストを高めている。",
-        "severity": "p2",
-        "business_dimensions": [
-          "competitive_advantage",
-          "founder_execution"
         ]
       }
     ],
     "feature": {
-      "slug": "comparison",
-      "title": "comparison",
+      "slug": "ai_university",
+      "title": "AI大学入口ページ",
       "kind": "page",
-      "reason": "競合別の検索流入・CTA・タッチ計測の実装を確認した。実利用分析、ブラウザ画面、コンソール、ネットワーク証拠は取得できないため、観測利用は中立50点として明示した。",
-      "cycle_utility": 57.55,
-      "aggregate_utility": 57.55,
+      "reason": "個別講座の内容ではなく、AI大学の公開入口、初期読み込み、教材発見、継続学習導線だけを機能として評価した。利用分析データはなく、観測利用は中立50点とした。",
+      "cycle_utility": 65.8,
+      "aggregate_utility": 65.8,
       "division": 3
     }
   },
   "features": [
+    {
+      "slug": "home",
+      "kind": "page",
+      "title": "home",
+      "path": "/",
+      "source": "lib/pages/home_page.dart",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 66.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 66.75,
+      "last_reviewed_at": "2026-08-23T08:13:00+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
     {
       "slug": "ai_university",
       "kind": "page",
@@ -92,13 +111,13 @@
       "source": "lib/pages/gemini_university_v2_page.dart",
       "priority": "high",
       "division": 3,
-      "provisional": false,
+      "provisional": true,
       "eligible": true,
-      "utility_score": 64.15,
-      "completed_cycles": 4,
-      "last_cycle_utility": 63.5,
-      "last_reviewed_at": "2026-08-23T06:24:30+00:00",
-      "reason": "機能レビュー4回・効用64.2点で3部"
+      "utility_score": 65.8,
+      "completed_cycles": 1,
+      "last_cycle_utility": 65.8,
+      "last_reviewed_at": "2026-08-23T08:21:38+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
       "slug": "admin_analytics",
@@ -122,6 +141,22 @@
       "title": "ai-hub",
       "path": "",
       "source": "supabase/functions/ai-hub/index.ts",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "last_cycle_utility": null,
+      "last_reviewed_at": null,
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "comparison",
+      "kind": "page",
+      "title": "comparison",
+      "path": "/competitors",
+      "source": "lib/pages/comparison_page.dart",
       "priority": "high",
       "division": 3,
       "provisional": true,
@@ -259,38 +294,6 @@
       "last_cycle_utility": null,
       "last_reviewed_at": null,
       "reason": "機能レビュー実績が2回未満のため暫定3部"
-    },
-    {
-      "slug": "comparison",
-      "kind": "page",
-      "title": "comparison",
-      "path": "/competitors",
-      "source": "lib/pages/comparison_page.dart",
-      "priority": "high",
-      "division": 3,
-      "provisional": false,
-      "eligible": true,
-      "utility_score": 57.55,
-      "completed_cycles": 2,
-      "last_cycle_utility": 57.55,
-      "last_reviewed_at": "2026-08-23T06:38:16.438300+00:00",
-      "reason": "機能レビュー2回・効用57.5点で3部"
-    },
-    {
-      "slug": "home",
-      "kind": "page",
-      "title": "home",
-      "path": "/",
-      "source": "lib/pages/home_page.dart",
-      "priority": "high",
-      "division": 4,
-      "provisional": false,
-      "eligible": true,
-      "utility_score": 47.0,
-      "completed_cycles": 2,
-      "last_cycle_utility": 47.0,
-      "last_reviewed_at": "2026-08-23T06:02:31+00:00",
-      "reason": "機能レビュー2回・効用47.0点で4部"
     }
   ]
 }

@@ -6901,7 +6901,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             style: TextStyle(color: Color(0xFFE5E7EB)),
           ),
         ),
-        body: const Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: Semantics(
+            label: 'AI大学のコンテンツを読み込んでいます',
+            liveRegion: true,
+            child: const CircularProgressIndicator(),
+          ),
+        ),
       );
     }
 
