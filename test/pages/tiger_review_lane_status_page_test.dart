@@ -152,6 +152,54 @@ void main() {
     expect(find.textContaining('flutter test: passed'), findsOneWidget);
     expect(find.byKey(const Key('tiger-review-issue-4734')), findsOneWidget);
   });
+
+  testWidgets('site history remains visible when the lane has no standings', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.site,
+          loader: () async => _status(
+            lane: 'site_review',
+            history: <TigerReviewHistoryEntry>[_historyEntry()],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('レビュー履歴・対策トレース'), findsOneWidget);
+    expect(find.text('サイト全体の虎レビュー 1〜5部'), findsNothing);
+  });
+}
+
+TigerReviewHistoryEntry _historyEntry() {
+  return TigerReviewHistoryEntry(
+    cycleId: 'site-cycle-1',
+    startedAt: DateTime.utc(2026, 8, 23, 9),
+    subject: const TigerReviewHistorySubject(
+      kind: 'site',
+      id: 'comparison',
+      title: '競合比較',
+    ),
+    reviewer: const TigerReviewHistoryReviewer(seat: 7, name: '榊原 清一'),
+    reviewStatus: 'review_only',
+    validationStatus: 'passed',
+    findings: const <TigerReviewHistoryFinding>[],
+    countermeasure: const TigerCountermeasureTrace(
+      state: 'issue_tracking',
+      label: '未対策・Issue #4739 追跡中',
+      detail: '',
+      summary: '',
+      files: <String>[],
+      validationStatus: 'passed',
+      validationMessages: <String>[],
+      findingsWithoutIndividualTrace: <String>[],
+      issue: null,
+      implementation: null,
+    ),
+  );
 }
 
 TigerReviewLaneStatus _status({
