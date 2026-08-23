@@ -31432,127 +31432,121 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             )
           else if (visibleSubscriptions.isNotEmpty)
             ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: visibleSubscriptions.length,
-                      itemBuilder: (context, index) {
-                        final item = visibleSubscriptions[index];
-                        final due = item['due_date'] as String?;
-                        final dueDate =
-                            due != null ? DateTime.parse(due) : null;
-                        final isPaid = (item['is_paid'] as bool?) == true;
-                        final src =
-                            (item['payment_source'] ?? '').toString().trim();
-                        return ListTile(
-                          dense: true,
-                          leading: Checkbox(
-                            value: isPaid,
-                            onChanged: (_) =>
-                                _toggleSubscriptionPaid(item['id'], isPaid),
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: visibleSubscriptions.length,
+              itemBuilder: (context, index) {
+                final item = visibleSubscriptions[index];
+                final due = item['due_date'] as String?;
+                final dueDate = due != null ? DateTime.parse(due) : null;
+                final isPaid = (item['is_paid'] as bool?) == true;
+                final src = (item['payment_source'] ?? '').toString().trim();
+                return ListTile(
+                  dense: true,
+                  leading: Checkbox(
+                    value: isPaid,
+                    onChanged: (_) =>
+                        _toggleSubscriptionPaid(item['id'], isPaid),
+                  ),
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item['service_name'] ?? '',
+                          style: TextStyle(
+                            decoration:
+                                isPaid ? TextDecoration.lineThrough : null,
+                            color: isPaid ? const Color(0xFF9CA3AF) : null,
+                            fontWeight:
+                                isPaid ? FontWeight.normal : FontWeight.bold,
+                            height: 1.5,
                           ),
-                          title: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  item['service_name'] ?? '',
-                                  style: TextStyle(
-                                    decoration: isPaid
-                                        ? TextDecoration.lineThrough
-                                        : null,
-                                    color:
-                                        isPaid ? const Color(0xFF9CA3AF) : null,
-                                    fontWeight: isPaid
-                                        ? FontWeight.normal
-                                        : FontWeight.bold,
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '¥${NumberFormat('#,###').format(item['price'])}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: isPaid
-                                      ? const Color(0xFF9CA3AF)
-                                      : Theme.of(context).colorScheme.onSurface,
-                                  height: 1.5,
-                                ),
-                              ),
-                            ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '¥${NumberFormat('#,###').format(item['price'])}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isPaid
+                              ? const Color(0xFF9CA3AF)
+                              : Theme.of(context).colorScheme.onSurface,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        dueDate != null
+                            ? '支払日: ${DateFormat('yyyy/M/d(E)', 'ja_JP').format(dueDate)}'
+                            : '支払日: 未設定',
+                        style: TextStyle(
+                          color: isPaid
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFFB91C1C),
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                      ),
+                      if (src.isNotEmpty)
+                        Text(
+                          '引落先: $src',
+                          style: TextStyle(
+                            color: isPaid
+                                ? const Color(0xFF9CA3AF)
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                            fontSize: 12,
+                            height: 1.5,
                           ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                dueDate != null
-                                    ? '支払日: ${DateFormat('yyyy/M/d(E)', 'ja_JP').format(dueDate)}'
-                                    : '支払日: 未設定',
-                                style: TextStyle(
-                                  color: isPaid
-                                      ? const Color(0xFF9CA3AF)
-                                      : const Color(0xFFB91C1C),
-                                  fontSize: 12,
-                                  height: 1.5,
-                                ),
-                              ),
-                              if (src.isNotEmpty)
-                                Text(
-                                  '引落先: $src',
-                                  style: TextStyle(
-                                    color: isPaid
-                                        ? const Color(0xFF9CA3AF)
-                                        : Theme.of(
-                                            context,
-                                          ).colorScheme.onSurfaceVariant,
-                                    fontSize: 12,
-                                    height: 1.5,
-                                  ),
-                                ),
-                            ],
-                          ),
-                          trailing: PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert),
-                            onSelected: (value) async {
-                              if (value == 'due') {
-                                await _editSubscriptionDueDate(item);
-                              } else if (value == 'source') {
-                                await _editSubscriptionPaymentSource(item);
-                              } else if (value == 'delete') {
-                                final serviceName =
-                                    (item['service_name'] ?? '').toString();
-                                final shouldDelete =
-                                    await _confirmDeleteSubscription(
-                                  serviceName: serviceName,
-                                );
-                                if (!shouldDelete) return;
-                                await _deleteSubscription(item['id']);
-                              }
-                            },
-                            itemBuilder: (context) => [
-                              const PopupMenuItem<String>(
-                                value: 'due',
-                                child: Text('支払日を編集'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'source',
-                                child: Text('引落先を編集'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'delete',
-                                child: Text(
-                                  '削除',
-                                  style: TextStyle(
-                                    color: Color(0xFFB91C1C),
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        ),
+                    ],
+                  ),
+                  trailing: PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (value) async {
+                      if (value == 'due') {
+                        await _editSubscriptionDueDate(item);
+                      } else if (value == 'source') {
+                        await _editSubscriptionPaymentSource(item);
+                      } else if (value == 'delete') {
+                        final serviceName =
+                            (item['service_name'] ?? '').toString();
+                        final shouldDelete = await _confirmDeleteSubscription(
+                          serviceName: serviceName,
                         );
-                      },
-                    ),
+                        if (!shouldDelete) return;
+                        await _deleteSubscription(item['id']);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem<String>(
+                        value: 'due',
+                        child: Text('支払日を編集'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'source',
+                        child: Text('引落先を編集'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Text(
+                          '削除',
+                          style: TextStyle(
+                            color: Color(0xFFB91C1C),
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: TextButton.icon(
