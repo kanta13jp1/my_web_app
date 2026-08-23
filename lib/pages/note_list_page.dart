@@ -210,19 +210,18 @@ class _NoteListPageState extends State<NoteListPage> {
     };
     final semanticMatches = _semanticSearchResults
         .map(
-          (result) => result.toNoteRow(localNote: notesById[result.id]),
-        )
+      (result) => result.toNoteRow(localNote: notesById[result.id]),
+    )
         .where(
-          (note) {
-            final matchesView = _showInboxOnly
-                ? _isInbox(note)
-                : (!_showFavoritesOnly || _isFavorite(note));
-            return matchesView &&
-                (selectedTag == null ||
-                    NoteTagService.containsTag(note['tags'], selectedTag));
-          },
-        )
-        .toList(growable: false);
+      (note) {
+        final matchesView = _showInboxOnly
+            ? _isInbox(note)
+            : (!_showFavoritesOnly || _isFavorite(note));
+        return matchesView &&
+            (selectedTag == null ||
+                NoteTagService.containsTag(note['tags'], selectedTag));
+      },
+    ).toList(growable: false);
     final semanticIds = semanticMatches.map(_noteId).toSet();
     final localMatches = locallyFiltered
         .where(_matchesSearch)
@@ -1393,12 +1392,11 @@ class _NoteListPageState extends State<NoteListPage> {
             .where((note) => !shareCandidateIds.contains(_noteId(note)))
             .toList()
         : reminderExcludedNotes;
-    final hasAnyEntries =
-        (!_showInboxOnly &&
-                _searchQuery.isEmpty &&
-                _selectedTag == null &&
-                _draftEntries.isNotEmpty) ||
-            visibleNotes.isNotEmpty;
+    final hasAnyEntries = (!_showInboxOnly &&
+            _searchQuery.isEmpty &&
+            _selectedTag == null &&
+            _draftEntries.isNotEmpty) ||
+        visibleNotes.isNotEmpty;
     final pageTitle = _showInboxOnly
         ? 'CKO OFFICE (Inbox)'
         : (_showFavoritesOnly ? 'CKO OFFICE (お気に入り)' : 'CKO OFFICE (メモ一覧)');
@@ -1630,10 +1628,10 @@ class _NoteListPageState extends State<NoteListPage> {
                               _selectedTag != null
                                   ? '「$_selectedTag」のメモはありません'
                                   : _showInboxOnly
-                                  ? 'Inboxは空です'
-                                  : (_showFavoritesOnly
-                                      ? 'お気に入りのメモはまだありません'
-                                      : 'まだメモがありません'),
+                                      ? 'Inboxは空です'
+                                      : (_showFavoritesOnly
+                                          ? 'お気に入りのメモはまだありません'
+                                          : 'まだメモがありません'),
                               style: const TextStyle(
                                 fontSize: 18,
                                 color: Color(0xFFB0B0B0),
@@ -1651,7 +1649,8 @@ class _NoteListPageState extends State<NoteListPage> {
                                 icon: const Icon(Icons.clear),
                                 label: const Text('タグ絞り込みを解除'),
                               ),
-                            ] else if (_showFavoritesOnly || _showInboxOnly) ...[
+                            ] else if (_showFavoritesOnly ||
+                                _showInboxOnly) ...[
                               const SizedBox(height: 12),
                               TextButton.icon(
                                 onPressed: _showInboxOnly
