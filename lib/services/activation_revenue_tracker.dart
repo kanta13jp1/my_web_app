@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'activation_revenue_experiment_service.dart';
@@ -12,9 +13,13 @@ abstract interface class ActivationRevenueEventTracker {
 
 class SupabaseActivationRevenueEventTracker
     implements ActivationRevenueEventTracker {
-  const SupabaseActivationRevenueEventTracker({this.clientOverride});
+  const SupabaseActivationRevenueEventTracker({
+    this.clientOverride,
+    this.uniqueEventRecorderOverride,
+  });
 
   final SupabaseClient? clientOverride;
+  final Future<void> Function(String eventKey)? uniqueEventRecorderOverride;
 
   SupabaseClient? get _client {
     if (clientOverride != null) return clientOverride;
@@ -31,11 +36,30 @@ class SupabaseActivationRevenueEventTracker
   Future<void> record({
     required ActivationRevenueAssignment assignment,
     required String stage,
-  }) {
-    return LandingShareService.recordFunnelEvent(
-      eventKey: assignment.eventKey(stage),
-      client: _client,
+  }) async {
+    final eventKey = assignment.eventKey(stage);
+    final client = _client;
+    await LandingShareService.recordFunnelEvent(
+      eventKey: eventKey,
+      client: client,
     );
+
+    try {
+      final override = uniqueEventRecorderOverride;
+      if (override != null) {
+        await override(eventKey);
+        return;
+      }
+      if (client == null) {
+        return;
+      }
+      await client.rpc(
+        'record_activation_experiment_event',
+        params: <String, dynamic>{'p_event_key': eventKey},
+      );
+    } catch (error) {
+      debugPrint('Unique activation experiment event failed: $error');
+    }
   }
 }
 

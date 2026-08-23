@@ -1,0 +1,4 @@
+interface:
+  display_name: "Digital Product Publishing Loop"
+  short_description: "Review AI artifacts before safe product release"
+  default_prompt: "Use $digital-product-publishing-loop to prepare an explicit local artifact for reviewed staging."

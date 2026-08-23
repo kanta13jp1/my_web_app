@@ -32,10 +32,25 @@ import {
   summarizePlatformFailures,
 } from "./upstream_error.ts";
 import { requiredAuthLevel } from "./action_auth.ts";
+import { summarizeStripeAccountReadiness } from "./stripe_account_readiness.ts";
 import {
   billingAllowedHosts,
   resolveBillingReturnUrl,
 } from "./billing_return_url.ts";
+import {
+  classifySupporterBuyer,
+  type SupporterBuyerContext,
+  supporterBuyerStripeParams,
+} from "../_shared/supporter_buyer.ts";
+import {
+  videoCreditPack,
+  videoCreditPackMetadata,
+} from "../_shared/video_credit_packs.ts";
+import {
+  isMissingStripeCustomer,
+  stripeApiErrorDetails,
+  stripeApiErrorFromResponse,
+} from "./stripe_api_error.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -349,10 +364,28 @@ async function stripePostForm(
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const err = asRecord(data.error) ?? {};
-    throw new Error(
-      asString(err.message) || `Stripe API failed: ${response.status}`,
-    );
+    throw stripeApiErrorFromResponse(response.status, data);
+  }
+  return asRecord(data) ?? {};
+}
+
+async function stripeGet(
+  path: string,
+): Promise<Record<string, unknown>> {
+  const key = stripeSecretKey();
+  if (!key) {
+    throw new Error("STRIPE_SECRET_KEY not configured");
+  }
+  const response = await fetch(`https://api.stripe.com/v1${path}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Stripe-Version": "2026-06-24.dahlia",
+    },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw stripeApiErrorFromResponse(response.status, data);
   }
   return asRecord(data) ?? {};
 }
@@ -373,10 +406,11 @@ async function getBillingSubscription(
 async function getOrCreateStripeCustomer(
   admin: SupabaseClient,
   userId: string,
+  replaceExisting = false,
 ): Promise<string> {
   const current = await getBillingSubscription(admin, userId);
   const existingCustomer = asString(current?.stripe_customer_id);
-  if (existingCustomer) return existingCustomer;
+  if (existingCustomer && !replaceExisting) return existingCustomer;
 
   const { data: userData, error: userError } = await admin.auth.admin
     .getUserById(userId);
@@ -394,10 +428,41 @@ async function getOrCreateStripeCustomer(
     stripe_customer_id: customerId,
     tier: asString(current?.tier, "free"),
     status: asString(current?.status, "active"),
-    metadata: { ...(asRecord(current?.metadata) ?? {}), source: "checkout" },
+    metadata: {
+      ...(asRecord(current?.metadata) ?? {}),
+      source: replaceExisting ? "checkout_customer_repair" : "checkout",
+    },
   }, { onConflict: "user_id" });
   if (error) throw new Error(error.message);
   return customerId;
+}
+
+async function resolveSupporterBuyerContext(
+  admin: SupabaseClient,
+  userId: string | null,
+): Promise<SupporterBuyerContext> {
+  if (!userId) return classifySupporterBuyer({ userId: null });
+
+  const [authResult, profileResult] = await Promise.all([
+    admin.auth.admin.getUserById(userId),
+    admin
+      .from("user_profiles")
+      .select("is_admin, role")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+  if (authResult.error) throw new Error(authResult.error.message);
+  if (profileResult.error) throw new Error(profileResult.error.message);
+
+  const profile = asRecord(profileResult.data) ?? {};
+  const authMetadata = asRecord(authResult.data.user?.app_metadata) ?? {};
+  return classifySupporterBuyer({
+    userId,
+    isAnonymous: authResult.data.user?.is_anonymous === true,
+    profileIsAdmin: profile.is_admin === true,
+    profileRole: asString(profile.role) || null,
+    authRole: asString(authMetadata.role) || null,
+  });
 }
 
 function defaultNewsSignalFeeds(): Array<Record<string, string>> {
@@ -1670,8 +1735,25 @@ serve(async (req: Request) => {
       userId = await getUserId(req);
       if (!userId) return json({ error: "Unauthorized" }, 401);
     }
+    if (
+      authLevel === "public" &&
+      !serviceRoleRequest &&
+      action === "billing.create_supporter_checkout_session"
+    ) {
+      userId = await getUserId(req);
+    }
 
     switch (action) {
+      case "billing.get_stripe_account_readiness": {
+        const key = stripeSecretKey();
+        const account = await stripeGet("/account");
+        return json({
+          success: true,
+          checked_at: new Date().toISOString(),
+          account: summarizeStripeAccountReadiness(account, key),
+        });
+      }
+
       case "billing.status": {
         const billing = await getBillingSubscription(admin, userId!);
         const periodStart = currentBillingPeriodStart();
@@ -1736,6 +1818,7 @@ serve(async (req: Request) => {
 
       case "billing.create_supporter_checkout_session": {
         const amountJpy = supporterAmountJpy();
+        const buyerContext = await resolveSupporterBuyerContext(admin, userId);
         const returnUrl = billingReturnUrl(
           body.return_url,
           "/subscription-billing",
@@ -1758,6 +1841,7 @@ serve(async (req: Request) => {
           "payment_intent_data[metadata][offer]": "founding_supporter",
           "payment_intent_data[metadata][milestone_code]": "first-yen-revenue",
           "payment_intent_data[metadata][amount_jpy]": String(amountJpy),
+          ...supporterBuyerStripeParams(buyerContext),
           ...supporterAttributionParams(body),
         });
         return json({
@@ -1766,6 +1850,78 @@ serve(async (req: Request) => {
           checkout_url: session.url,
           amount_jpy: amountJpy,
         });
+      }
+
+      case "billing.create_video_credit_checkout_session": {
+        const pack = videoCreditPack(body.pack_key);
+        if (!pack) {
+          return json({ error: "invalid_video_credit_pack" }, 400);
+        }
+        try {
+          let customerId = await getOrCreateStripeCustomer(admin, userId!);
+          const returnUrl = billingReturnUrl(body.return_url, "/video-studio");
+          const metadata = videoCreditPackMetadata(userId!, pack);
+          const createSession = (stripeCustomerId: string) =>
+            stripePostForm("/checkout/sessions", {
+              mode: "payment",
+              locale: "ja",
+              customer: stripeCustomerId,
+              success_url: withBillingParam(
+                returnUrl,
+                "video_credits_success",
+              ),
+              cancel_url: withBillingParam(returnUrl, "video_credits_cancel"),
+              "line_items[0][price_data][currency]": "jpy",
+              "line_items[0][price_data][product_data][name]":
+                `AI動画クレジット ${pack.name}`,
+              "line_items[0][price_data][product_data][description]":
+                pack.description,
+              "line_items[0][price_data][unit_amount]": String(pack.amountJpy),
+              "line_items[0][quantity]": "1",
+              "metadata[offer]": metadata.offer,
+              "metadata[user_id]": metadata.user_id,
+              "metadata[video_credit_pack_key]": metadata.video_credit_pack_key,
+              "metadata[video_credits]": metadata.video_credits,
+              "metadata[amount_jpy]": metadata.amount_jpy,
+              "payment_intent_data[metadata][offer]": metadata.offer,
+              "payment_intent_data[metadata][user_id]": metadata.user_id,
+              "payment_intent_data[metadata][video_credit_pack_key]":
+                metadata.video_credit_pack_key,
+              "payment_intent_data[metadata][video_credits]":
+                metadata.video_credits,
+              "payment_intent_data[metadata][amount_jpy]": metadata.amount_jpy,
+            });
+
+          let session: Record<string, unknown>;
+          try {
+            session = await createSession(customerId);
+          } catch (error) {
+            if (!isMissingStripeCustomer(error)) throw error;
+            console.warn(
+              "[schedule-hub] repairing stale Stripe customer",
+              stripeApiErrorDetails(error),
+            );
+            customerId = await getOrCreateStripeCustomer(admin, userId!, true);
+            session = await createSession(customerId);
+          }
+
+          return json({
+            success: true,
+            id: session.id,
+            checkout_url: session.url,
+            pack: {
+              key: pack.key,
+              credits: pack.credits,
+              amount_jpy: pack.amountJpy,
+            },
+          });
+        } catch (error) {
+          console.error(
+            "[schedule-hub] video credit checkout failed",
+            stripeApiErrorDetails(error) ?? { code: "internal_error" },
+          );
+          return json({ error: "video_credit_checkout_unavailable" }, 502);
+        }
       }
 
       case "billing.create_portal_session": {
@@ -1997,7 +2153,8 @@ serve(async (req: Request) => {
           text,
           mediaIds: uploadedMedia ? [uploadedMedia.mediaId] : undefined,
         });
-        const log = await addItem(admin, "x_post", userId!, {
+        const logOwnerUserId = userId ?? `gha`;
+        const log = await addItem(admin, `x_post`, logOwnerUserId, {
           ...baseLog,
           status: "posted",
           tweet_id: result.tweetId,

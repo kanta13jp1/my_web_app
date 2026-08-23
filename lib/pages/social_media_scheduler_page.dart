@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/scheduled_post_entry.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// SNS投稿スケジュール管理ページ
 /// social-media-scheduler Edge Function と連携
@@ -14,7 +15,14 @@ class SocialMediaSchedulerPage extends StatefulWidget {
 }
 
 class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['scheduled', 'published', 'drafts'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late TabController _tabController;
   bool _isLoading = false;

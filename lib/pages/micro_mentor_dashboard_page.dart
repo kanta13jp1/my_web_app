@@ -342,6 +342,7 @@ class _MicroMentorDashboardPageState extends State<MicroMentorDashboardPage> {
             enabled: !_busy,
             minLines: 1,
             maxLines: 3,
+            maxLength: microMentorFocusMaxLength,
             decoration: const InputDecoration(
               labelText: 'テーマ',
               hintText: '例: 来週の運動と学習の時間を整えたい',
@@ -743,6 +744,7 @@ class _MentorEditorDialogState extends State<_MentorEditorDialog> {
                 TextFormField(
                   key: const Key('mentor-name-field'),
                   controller: _nameController,
+                  maxLength: microMentorNameMaxLength,
                   decoration: const InputDecoration(labelText: '名前'),
                   validator: _required,
                 ),
@@ -750,6 +752,7 @@ class _MentorEditorDialogState extends State<_MentorEditorDialog> {
                 TextFormField(
                   key: const Key('mentor-domain-field'),
                   controller: _domainController,
+                  maxLength: microMentorDomainMaxLength,
                   decoration: const InputDecoration(labelText: '担当領域'),
                   validator: _required,
                 ),
@@ -759,6 +762,7 @@ class _MentorEditorDialogState extends State<_MentorEditorDialog> {
                   controller: _roleController,
                   minLines: 2,
                   maxLines: 3,
+                  maxLength: microMentorRoleMaxLength,
                   decoration: const InputDecoration(labelText: '役割'),
                   validator: _required,
                 ),
@@ -779,6 +783,7 @@ class _MentorEditorDialogState extends State<_MentorEditorDialog> {
                 TextFormField(
                   key: const Key('mentor-values-field'),
                   controller: _valuesController,
+                  maxLength: microMentorValuesInputMaxLength,
                   decoration: const InputDecoration(
                     labelText: '大切な価値観',
                     hintText: '継続、健康、家族',
@@ -889,6 +894,7 @@ class _ProposalEditorDialogState extends State<_ProposalEditorDialog> {
                 TextFormField(
                   key: const Key('proposal-title-field'),
                   controller: _titleController,
+                  maxLength: microMentorProposalTitleMaxLength,
                   decoration: const InputDecoration(labelText: '見出し'),
                   validator: _required,
                 ),
@@ -898,6 +904,7 @@ class _ProposalEditorDialogState extends State<_ProposalEditorDialog> {
                   controller: _descriptionController,
                   minLines: 3,
                   maxLines: 6,
+                  maxLength: microMentorProposalDescriptionMaxLength,
                   decoration: const InputDecoration(labelText: '内容'),
                   validator: _required,
                 ),

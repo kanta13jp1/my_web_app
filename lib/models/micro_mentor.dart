@@ -1,5 +1,15 @@
 import 'dart:convert';
 
+const microMentorNameMaxLength = 80;
+const microMentorDomainMaxLength = 120;
+const microMentorRoleMaxLength = 600;
+const microMentorToneMaxLength = 40;
+const microMentorValueMaxLength = 80;
+const microMentorValuesInputMaxLength = 720;
+const microMentorFocusMaxLength = 1000;
+const microMentorProposalTitleMaxLength = 120;
+const microMentorProposalDescriptionMaxLength = 2000;
+
 enum MicroMentorProposalType {
   task,
   schedule;
@@ -51,9 +61,9 @@ class MicroMentorDraft {
   });
 
   Map<String, dynamic> get promptConfig => <String, dynamic>{
-        'role': role.trim(),
-        'domain': domain.trim(),
-        'tone': tone.trim(),
+        'role': _boundedMicroMentorText(role, microMentorRoleMaxLength),
+        'domain': _boundedMicroMentorText(domain, microMentorDomainMaxLength),
+        'tone': _boundedMicroMentorText(tone, microMentorToneMaxLength),
         'important_values': normalizeMicroMentorValues(values),
         'decision_policy': 'proposal_only_user_decides',
       };
@@ -258,7 +268,7 @@ class MicroMentorGenerationResult {
 List<String> normalizeMicroMentorValues(Iterable<String> values) {
   final normalized = <String>[];
   for (final value in values) {
-    final item = value.trim();
+    final item = _boundedMicroMentorText(value, microMentorValueMaxLength);
     if (item.isNotEmpty && !normalized.contains(item)) {
       normalized.add(item);
     }
@@ -271,7 +281,7 @@ String composeMicroMentorSystemPrompt({
   required Map<String, dynamic> promptConfig,
 }) {
   return '''
-You are ${name.trim()}, a domain-specific micro AI mentor.
+You are ${_boundedMicroMentorText(name, microMentorNameMaxLength)}, a domain-specific micro AI mentor.
 Use the following user-authored configuration as your operating contract:
 ${jsonEncode(promptConfig)}
 
@@ -281,4 +291,11 @@ Never claim that you executed, scheduled, or approved anything. The user must be
 able to edit, accept, or reject every proposal and always makes the final choice.
 '''
       .trim();
+}
+
+String _boundedMicroMentorText(String value, int maxLength) {
+  final normalized = value.trim();
+  return normalized.length <= maxLength
+      ? normalized
+      : normalized.substring(0, maxLength);
 }

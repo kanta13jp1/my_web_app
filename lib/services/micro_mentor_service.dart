@@ -50,12 +50,16 @@ class MicroMentorGenerationException implements Exception {
 class MicroMentorProposalGenerator {
   final EdgeLlmPlaygroundService _llm;
   final MicroMentorLlmInvoker? _invoker;
+  final int _maxConcurrentMentors;
 
   const MicroMentorProposalGenerator({
     EdgeLlmPlaygroundService llm = const EdgeLlmPlaygroundService(),
     MicroMentorLlmInvoker? invoker,
+    int maxConcurrentMentors = 4,
   })  : _llm = llm,
-        _invoker = invoker;
+        _invoker = invoker,
+        _maxConcurrentMentors = maxConcurrentMentors,
+        assert(maxConcurrentMentors > 0);
 
   Future<GeneratedMicroMentorProposalBatch> generate({
     required List<MicroMentor> mentors,
@@ -65,22 +69,45 @@ class MicroMentorProposalGenerator {
     if (normalizedFocus.isEmpty) {
       throw const MicroMentorGenerationException('相談したいテーマを入力してください。');
     }
+    if (normalizedFocus.length > microMentorFocusMaxLength) {
+      throw const MicroMentorGenerationException(
+        '相談テーマは1000文字以内で入力してください。',
+      );
+    }
 
     final activeMentors = mentors.where((mentor) => mentor.enabled).toList();
     if (activeMentors.isEmpty) {
       throw const MicroMentorGenerationException('有効なメンターを1人以上登録してください。');
     }
 
-    final attempts = await Future.wait(
-      activeMentors.map(
-        (mentor) => _generateOne(mentor: mentor, focus: normalizedFocus),
-      ),
+    final attempts = List<_GenerationAttempt?>.filled(
+      activeMentors.length,
+      null,
     );
-    final proposals = attempts
+    var nextMentorIndex = 0;
+
+    Future<void> runWorker() async {
+      while (nextMentorIndex < activeMentors.length) {
+        final mentorIndex = nextMentorIndex++;
+        attempts[mentorIndex] = await _generateOne(
+          mentor: activeMentors[mentorIndex],
+          focus: normalizedFocus,
+        );
+      }
+    }
+
+    final workerCount = activeMentors.length < _maxConcurrentMentors
+        ? activeMentors.length
+        : _maxConcurrentMentors;
+    await Future.wait(
+      List<Future<void>>.generate(workerCount, (_) => runWorker()),
+    );
+    final completedAttempts = attempts.whereType<_GenerationAttempt>().toList();
+    final proposals = completedAttempts
         .map((attempt) => attempt.proposal)
         .whereType<GeneratedMicroMentorProposal>()
         .toList(growable: false);
-    final failedCount = attempts.length - proposals.length;
+    final failedCount = completedAttempts.length - proposals.length;
     if (proposals.isEmpty) {
       throw const MicroMentorGenerationException(
         '提案を生成できませんでした。時間をおいて再試行してください。',
@@ -160,11 +187,13 @@ class MicroMentorProposalGenerator {
     }
     final type = MicroMentorProposalType.fromValue(payload['proposal_type']);
     final rawScheduledFor = payload['scheduled_for']?.toString().trim();
-    final scheduledFor = rawScheduledFor == null ||
+    final parsedScheduledFor = rawScheduledFor == null ||
             rawScheduledFor.isEmpty ||
             rawScheduledFor == 'null'
         ? null
         : DateTime.tryParse(rawScheduledFor);
+    final scheduledFor =
+        type == MicroMentorProposalType.schedule ? parsedScheduledFor : null;
     return GeneratedMicroMentorProposal(
       mentorId: mentor.id,
       focus: focus,
@@ -340,6 +369,11 @@ class MicroMentorService implements MicroMentorServiceContract {
     if (normalizedTitle.isEmpty || normalizedDescription.isEmpty) {
       throw ArgumentError('提案の見出しと内容は必須です。');
     }
+    if (normalizedTitle.length > microMentorProposalTitleMaxLength ||
+        normalizedDescription.length >
+            microMentorProposalDescriptionMaxLength) {
+      throw ArgumentError('提案の見出しは120文字、内容は2000文字以内で入力してください。');
+    }
     final dynamic row = await _supabase
         .from(_proposalTable)
         .update(<String, dynamic>{
@@ -371,12 +405,20 @@ class MicroMentorService implements MicroMentorServiceContract {
   }
 
   void _validateDraft(MicroMentorDraft draft) {
+    final values = draft.values.map((value) => value.trim()).toList();
     if (draft.name.trim().isEmpty ||
         draft.domain.trim().isEmpty ||
         draft.role.trim().isEmpty ||
         draft.tone.trim().isEmpty ||
-        normalizeMicroMentorValues(draft.values).isEmpty) {
+        normalizeMicroMentorValues(values).isEmpty) {
       throw ArgumentError('名前、領域、役割、口調、大切な価値観を入力してください。');
+    }
+    if (draft.name.trim().length > microMentorNameMaxLength ||
+        draft.domain.trim().length > microMentorDomainMaxLength ||
+        draft.role.trim().length > microMentorRoleMaxLength ||
+        draft.tone.trim().length > microMentorToneMaxLength ||
+        values.any((value) => value.length > microMentorValueMaxLength)) {
+      throw ArgumentError('メンター設定が入力可能な文字数を超えています。');
     }
   }
 

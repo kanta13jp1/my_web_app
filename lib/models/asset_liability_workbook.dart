@@ -283,6 +283,14 @@ enum AssetRecurringFixedCostCategory {
   subscription,
 }
 
+/// サブスク棚卸しでユーザーが付けた判断。
+enum AssetSubscriptionReviewDecision {
+  unreviewed,
+  keep,
+  hold,
+  cancelCandidate,
+}
+
 /// 定期固定費の入力通貨。既定は円 (jpy)。ドル建て (usd) の場合は毎月の為替で
 /// 円換算額が変動するため、原資の USD 額を保持し、最新レートで円へ materialize する。
 enum AssetRecurringFixedCostCurrency {
@@ -344,6 +352,9 @@ class AssetRecurringFixedCost {
   /// 区分 (固定費 / サブスク)。既定は utility で、表示セクションの振り分けにのみ使う。
   final AssetRecurringFixedCostCategory category;
 
+  /// 棚卸し判定。サブスク以外では常に [AssetSubscriptionReviewDecision.unreviewed]。
+  final AssetSubscriptionReviewDecision subscriptionReviewDecision;
+
   /// 請求経路 (Apple/Google/au 経由 or 直接)。既定は direct。棚卸しでの集約請求との
   /// 突き合わせ表示に使い、資金繰りの計上額には影響しない。
   final AssetSubscriptionBillingGateway billingGateway;
@@ -365,6 +376,8 @@ class AssetRecurringFixedCost {
     this.cadence = AssetRecurringFixedCostCadence.monthly,
     this.sourceAccountId,
     this.category = AssetRecurringFixedCostCategory.utility,
+    this.subscriptionReviewDecision =
+        AssetSubscriptionReviewDecision.unreviewed,
     this.billingGateway = AssetSubscriptionBillingGateway.direct,
     this.currency = AssetRecurringFixedCostCurrency.jpy,
     this.usdAmount,
@@ -404,6 +417,7 @@ class AssetRecurringFixedCost {
     String? sourceAccountId,
     bool clearSourceAccountId = false,
     AssetRecurringFixedCostCategory? category,
+    AssetSubscriptionReviewDecision? subscriptionReviewDecision,
     AssetSubscriptionBillingGateway? billingGateway,
     AssetRecurringFixedCostCurrency? currency,
     double? usdAmount,
@@ -419,6 +433,8 @@ class AssetRecurringFixedCost {
           ? null
           : (sourceAccountId ?? this.sourceAccountId),
       category: category ?? this.category,
+      subscriptionReviewDecision:
+          subscriptionReviewDecision ?? this.subscriptionReviewDecision,
       billingGateway: billingGateway ?? this.billingGateway,
       currency: currency ?? this.currency,
       usdAmount: clearUsdAmount ? null : (usdAmount ?? this.usdAmount),
@@ -437,6 +453,9 @@ class AssetRecurringFixedCost {
         'sourceAccountId': sourceAccountId,
       if (category != AssetRecurringFixedCostCategory.utility)
         'category': category.name,
+      if (subscriptionReviewDecision !=
+          AssetSubscriptionReviewDecision.unreviewed)
+        'subscriptionReviewDecision': subscriptionReviewDecision.name,
       if (billingGateway != AssetSubscriptionBillingGateway.direct)
         'billingGateway': billingGateway.name,
       // 通貨は既定 (jpy) のとき出力しない (既存ペイロードと互換を保つ)。
@@ -480,6 +499,14 @@ class AssetRecurringFixedCost {
       (value) => value.name == categoryName,
       orElse: () => AssetRecurringFixedCostCategory.utility,
     );
+    final reviewDecisionName = json['subscriptionReviewDecision']?.toString();
+    final reviewDecision =
+        category == AssetRecurringFixedCostCategory.subscription
+            ? AssetSubscriptionReviewDecision.values.firstWhere(
+                (value) => value.name == reviewDecisionName,
+                orElse: () => AssetSubscriptionReviewDecision.unreviewed,
+              )
+            : AssetSubscriptionReviewDecision.unreviewed;
     final gatewayName = json['billingGateway']?.toString();
     final billingGateway = AssetSubscriptionBillingGateway.values.firstWhere(
       (value) => value.name == gatewayName,
@@ -501,6 +528,7 @@ class AssetRecurringFixedCost {
       sourceAccountId:
           rawSource == null || rawSource.isEmpty ? null : rawSource,
       category: category,
+      subscriptionReviewDecision: reviewDecision,
       billingGateway: billingGateway,
       currency: currency,
       usdAmount: usdAmount != null && usdAmount > 0 ? usdAmount : null,
@@ -886,6 +914,15 @@ class AssetLiabilityMonthlySnapshot {
   final double monthlyPaymentDifferenceTotal;
   final int overduePaymentCount;
 
+  /// その月末時点の証券 (securities 口座) 評価額合計。
+  ///
+  /// 従来スナップショットに保存されておらず、旧データ / Supabase 同期分は
+  /// null (= 未追跡) になる。投資評価額の時系列グラフ (#2469) は
+  /// 「未追跡」と「評価額 0 円」を区別する必要があるため nullable のままにし、
+  /// null の月はグラフの点として描かない (0 円へ落とすと保有していたはずの
+  /// 資産が消えたように見えるため)。
+  final double? securitiesTotal;
+
   /// その月に受領済み (received=true) となった収入の合計。
   ///
   /// 収入は従来スナップショットに保存されておらず、旧データ / Supabase 同期分は
@@ -909,6 +946,7 @@ class AssetLiabilityMonthlySnapshot {
     this.monthlyPaymentDifferenceTotal = 0,
     required this.overduePaymentCount,
     this.monthlyReceivedIncomeTotal,
+    this.securitiesTotal,
   });
 }
 
@@ -1389,12 +1427,23 @@ class AssetLiabilityWorkbook {
     );
   }
 
+  /// 支払原資が未設定の支払い。支払済み行は除く。
+  ///
+  /// 原資未設定を警告する根拠は「どの口座の見込み残高からも差し引かれず、
+  /// 残高不足を先読みできない」ことだが、口座別見込み残高は支払済み行を
+  /// 最初から控除対象外にしている (`_buildAccountCashflowSummaries` の
+  /// `!row.paid`) ため、支払済み行にその盲点は存在しない。`!row.paid` が
+  /// 無いと支払済みにしてもバナー・アラート・合計金額が残り続け、「払い
+  /// 終わった支払いに引落口座を後付けする」以外に消す手段が無くなる。
+  /// 兄弟の [paymentSourceInvalidRows] / [billingConfirmationPendingRows] と
+  /// 述語を揃える。
   List<AssetLiabilityDebtRow> get paymentSourceMissingRows {
     return debtMasterRows
         .where(
           (row) =>
               row.isDirectCashflowTarget &&
               row.scheduledPaymentAmount > 0 &&
+              !row.paid &&
               (row.paymentSourceAccountId == null ||
                   row.paymentSourceAccountId!.trim().isEmpty),
         )

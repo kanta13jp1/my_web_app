@@ -28,6 +28,16 @@ void main() {
       expect(sql, contains("status in ('proposed', 'accepted', 'rejected')"));
       expect(sql, contains('original_payload jsonb not null'));
       expect(sql, contains('scheduled_for timestamptz'));
+      expect(
+        sql,
+        contains(
+          'focus text not null check (char_length(focus) between 1 and 1000)',
+        ),
+      );
+      expect(
+        sql,
+        contains("check (proposal_type = 'schedule' or scheduled_for is null)"),
+      );
     });
 
     test('limits every authenticated operation to the owning user', () {
@@ -42,14 +52,28 @@ void main() {
       expect(sql, contains('micro_mentor_proposals_update_own'));
       expect(sql, contains('micro_mentor_proposals_delete_own'));
       expect(
-        RegExp(r'auth\.uid\(\) = user_id').allMatches(sql).length,
+        RegExp(r'\(select auth\.uid\(\)\) = user_id').allMatches(sql).length,
         greaterThanOrEqualTo(4),
+      );
+    });
+
+    test('explicitly exposes the table only to authenticated Data API users',
+        () {
+      expect(
+        sql,
+        contains('revoke all on table public.micro_mentor_proposals from anon'),
+      );
+      expect(
+        sql,
+        contains(
+          'grant select, insert, update, delete\n  on table public.micro_mentor_proposals to authenticated',
+        ),
       );
     });
 
     test('only accepts proposals for an owned micro mentor profile', () {
       expect(sql, contains('agents.id = mentor_id'));
-      expect(sql, contains('agents.user_id = auth.uid()'));
+      expect(sql, contains('agents.user_id = (select auth.uid())'));
       expect(
         sql,
         contains("agents.metadata ->> 'profile_type' = 'micro_mentor'"),

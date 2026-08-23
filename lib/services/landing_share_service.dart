@@ -38,7 +38,33 @@ class LandingShareService {
   static const String channelCopy = 'copy';
   static const String funnelTrialRun = 'funnel_trial_run';
   static const String funnelSaveCta = 'funnel_save_cta';
+  static const String funnelMagicLinkAttempt = 'funnel_magic_link_attempt';
   static const String funnelMagicLinkSend = 'funnel_magic_link_send';
+  static const String funnelMagicLinkFailInvalidEmail =
+      'funnel_magic_link_fail_invalid_email';
+  static const String funnelMagicLinkFailRateLimit =
+      'funnel_magic_link_fail_rate_limit';
+  static const String funnelMagicLinkFailDeliveryConfig =
+      'funnel_magic_link_fail_delivery_config';
+  static const String funnelMagicLinkFailRedirect =
+      'funnel_magic_link_fail_redirect';
+  static const String funnelMagicLinkFailNetwork =
+      'funnel_magic_link_fail_network';
+  static const String funnelMagicLinkFailUnknown =
+      'funnel_magic_link_fail_unknown';
+  static const String funnelGoogleOAuthStart = 'funnel_google_oauth_start';
+  static const String funnelGoogleOAuthFailCancelled =
+      'funnel_google_oauth_fail_cancelled';
+  static const String funnelGoogleOAuthFailRateLimit =
+      'funnel_google_oauth_fail_rate_limit';
+  static const String funnelGoogleOAuthFailProviderConfig =
+      'funnel_google_oauth_fail_provider_config';
+  static const String funnelGoogleOAuthFailRedirect =
+      'funnel_google_oauth_fail_redirect';
+  static const String funnelGoogleOAuthFailCallbackExchange =
+      'funnel_google_oauth_fail_callback_exchange';
+  static const String funnelGoogleOAuthFailUnknown =
+      'funnel_google_oauth_fail_unknown';
   static const String funnelInboxOpen = 'funnel_inbox_open';
 
   static const List<String> supportedChannels = <String>[
@@ -228,8 +254,10 @@ $shareUrl
       return;
     }
 
+    var shareCountRecorded = false;
     try {
       await client.rpc('increment_share_count');
+      shareCountRecorded = true;
     } catch (error) {
       debugPrint('Share count rpc failed: $error');
     }
@@ -238,7 +266,7 @@ $shareUrl
       client: client,
       sourceKey: _shareActionKeys[channel]!,
       now: now,
-      fallbackShareCount: 1,
+      fallbackShareCount: shareCountRecorded ? 0 : 1,
     );
   }
 
@@ -253,6 +281,20 @@ $shareUrl
     }
 
     final dateKey = _formatDate(now ?? DateTime.now());
+    try {
+      await client.rpc(
+        'increment_app_analytics_source_detail',
+        params: <String, dynamic>{
+          'p_source_key': sourceKey,
+          'p_event_date': dateKey,
+          'p_share_increment': fallbackShareCount,
+        },
+      );
+      return;
+    } catch (error) {
+      debugPrint('Atomic funnel analytics rpc failed: $error');
+    }
+
     final currentRow = await _fetchAnalyticsRow(
       client: client,
       dateKey: dateKey,
@@ -370,7 +412,21 @@ $shareUrl
     switch (eventKey) {
       case funnelTrialRun:
       case funnelSaveCta:
+      case funnelMagicLinkAttempt:
       case funnelMagicLinkSend:
+      case funnelMagicLinkFailInvalidEmail:
+      case funnelMagicLinkFailRateLimit:
+      case funnelMagicLinkFailDeliveryConfig:
+      case funnelMagicLinkFailRedirect:
+      case funnelMagicLinkFailNetwork:
+      case funnelMagicLinkFailUnknown:
+      case funnelGoogleOAuthStart:
+      case funnelGoogleOAuthFailCancelled:
+      case funnelGoogleOAuthFailRateLimit:
+      case funnelGoogleOAuthFailProviderConfig:
+      case funnelGoogleOAuthFailRedirect:
+      case funnelGoogleOAuthFailCallbackExchange:
+      case funnelGoogleOAuthFailUnknown:
       case funnelInboxOpen:
         return true;
       default:
