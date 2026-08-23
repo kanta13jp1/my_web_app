@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-23T11:27:44.526671+00:00",
+  "generated_at": "2026-08-23T12:56:34.020590+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "site_review",
   "publication_state": "latest_review",
@@ -12,8 +12,8 @@
   },
   "review_count": 6,
   "latest_review": {
-    "cycle_id": "20260823T201159+0900",
-    "started_at": "2026-08-23T20:11:59+09:00",
+    "cycle_id": "20260823T214617+0900",
+    "started_at": "2026-08-23T21:46:17+09:00",
     "source_format": "site_review",
     "surface": {
       "slug": "whole_site",
@@ -22,17 +22,17 @@
     "reviewer": {
       "seat": 12,
       "name": "迫 佑樹",
-      "selection_score": 83.761,
+      "selection_score": 78.0832,
       "division": 1,
-      "cycle_utility": 92.0,
-      "aggregate_utility": 91.6
+      "cycle_utility": 92.04,
+      "aggregate_utility": 91.62
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 6,
+    "finding_count": 7,
     "top_findings": [
       {
-        "summary": "個人CEOの価値提案は具体的だが、最優先顧客と、その課題が継続利用・支払いに至る需要証拠がない。",
+        "summary": "登録前AI体験と個人CEOの価値提案は具体的だが、最優先顧客と、その課題が継続利用・支払いに至る需要証拠がない。",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
@@ -41,12 +41,12 @@
         ]
       },
       {
-        "summary": "獲得・activation・課金イベントと継続導線はあるが、LPからD30継続・paidまでを結ぶ実測cohort証拠がない。",
+        "summary": "trial・登録・billing・checkoutの段階計測はあるが、流入元からD30継続とpaidまでを同一cohortで結ぶ実測証拠がない。",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
           "revenue_model",
-          "scalability"
+          "go_to_market"
         ]
       },
       {
@@ -61,8 +61,8 @@
     ],
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4747 追跡中",
-      "detail": "6指摘は実利用cohortと原価集計、顧客・価格・ポートフォリオ判断、成果比較、または法務・プライバシー専門レビューを必要とし、共有の低リスク条件を満たす修正はない。",
+      "label": "未対策・Issue #4755 追跡中",
+      "detail": "内部401露出はbilling/auth保護領域であり、他の6指摘は実利用cohort、原価集計、顧客・ポートフォリオ判断、成果比較、または法務・プライバシー専門レビューを要するため、共有の低リスク自動修正条件を満たす変更はない。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
@@ -71,27 +71,28 @@
       "validation_messages": [
         "validate_roster.py: passed (125 profiles)",
         "validate_personas.py: passed (125 profiles)",
-        "fresh production journey inspection: passed (root, billing, privacy)",
-        "select_reviewer.py: selection file created once (125 profiles; seat 12; stdout encoding failed after write; no reroll)",
-        "flutter test acquisition/conversion/billing suite: passed (60 tests)",
-        "flutter test Tiger lane model/page suite: passed (10 tests)",
-        "flutter analyze scoped whole-site and Tiger files: passed (11 items; 231.1s; no issues)",
-        "review_issue.py --execute: passed (Issue #4747; cycle dedupe evidence recorded)",
-        "validate_cycle_report.py: passed (schema 4; lane=site_review; one reviewer; six proposals)",
-        "build_lane_status.py --lane site_review: passed (site-only status; six retained cycles)"
+        "fresh isolated anonymous production journey inspection: passed (root, subscription-billing, privacy)",
+        "select_reviewer.py: passed once (125 profiles; seat 12; selection score 78.0832)",
+        "flutter test --no-pub web handoff, landing conversion, and subscription billing suite: passed (60 tests)",
+        "flutter test --no-pub Tiger lane model/page suite: passed (11 tests)",
+        "flutter analyze --no-pub scoped whole-site and Tiger files: passed (11 items; 202.3s; no issues)",
+        "review_issue.py --execute: passed (Issue #4755; cycle dedupe evidence recorded)",
+        "validate_cycle_report.py: passed (schema 4; lane=site_review; one reviewer; seven proposals)",
+        "build_lane_status.py --lane site_review: passed (site-only status; six retained cycles; no unissued passed review_only record)"
       ],
       "issue": {
-        "number": 4747,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4747",
+        "number": 4755,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4755",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-site-review:20260823T201159+0900:whole_site"
+        "dedupe_key": "tiger-site-review:20260823T214617+0900:whole_site"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "site-priority-segment-demand-proof",
-        "site-funnel-retention-cohort-proof",
+        "site-priority-segment-retained-demand",
+        "site-acquisition-retention-paid-cohort",
         "site-plan-unit-economics-proof",
+        "site-anonymous-billing-error-boundary",
         "site-portfolio-focus-scalability",
         "site-differentiation-outcome-proof",
         "site-ai-data-trust-map"
@@ -100,8 +101,8 @@
   },
   "history": [
     {
-      "cycle_id": "20260823T201159+0900",
-      "started_at": "2026-08-23T20:11:59+09:00",
+      "cycle_id": "20260823T214617+0900",
+      "started_at": "2026-08-23T21:46:17+09:00",
       "source_format": "site_review",
       "subject": {
         "kind": "site",
@@ -112,23 +113,23 @@
       "reviewer": {
         "seat": 12,
         "name": "迫 佑樹",
-        "selection_score": 83.761
+        "selection_score": 78.0832
       },
       "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
       "findings": [
         {
-          "finding_id": "site-priority-segment-demand-proof",
-          "summary": "個人CEOの価値提案は具体的だが、最優先顧客と、その課題が継続利用・支払いに至る需要証拠がない。",
+          "finding_id": "site-priority-segment-retained-demand",
+          "summary": "登録前AI体験と個人CEOの価値提案は具体的だが、最優先顧客と、その課題が継続利用・支払いに至る需要証拠がない。",
           "severity": "p1",
-          "suggested_action": "最優先顧客を1セグメントに定め、trial・保存登録・D7継続・paid結果を母数と期間付きで示す。"
+          "suggested_action": "最優先顧客を1セグメントに定め、trial・保存登録・D7/D30継続・paid結果を母数と期間付きで比較する。"
         },
         {
-          "finding_id": "site-funnel-retention-cohort-proof",
-          "summary": "獲得・activation・課金イベントと継続導線はあるが、LPからD30継続・paidまでを結ぶ実測cohort証拠がない。",
+          "finding_id": "site-acquisition-retention-paid-cohort",
+          "summary": "trial・登録・billing・checkoutの段階計測はあるが、流入元からD30継続とpaidまでを同一cohortで結ぶ実測証拠がない。",
           "severity": "p1",
-          "suggested_action": "LP→trial→保存登録→初回価値→D7/D30→billing→paidを匿名の同一cohortで集計する。"
+          "suggested_action": "流入→trial→保存登録→初回価値→D7/D30→billing→paidを、個人特定しない同一cohortで週次集計する。"
         },
         {
           "finding_id": "site-plan-unit-economics-proof",
@@ -137,10 +138,16 @@
           "suggested_action": "ARPU、AI・決済・サポート変動費、粗利、CAC、回収期間、churn、LTV/CACをプラン別に月次集計する。"
         },
         {
+          "finding_id": "site-anonymous-billing-error-boundary",
+          "summary": "未ログインの課金ページが内部FunctionException 401を利用者へ露出し、価格確認時の信頼と転換を損なう。",
+          "severity": "p1",
+          "suggested_action": "billing/auth保護領域の担当レビューで、匿名閲覧を正常なFree前提として扱い、内部例外を非表示にする回帰テストを追加する。"
+        },
+        {
           "finding_id": "site-portfolio-focus-scalability",
-          "summary": "361 routeと巨大なlanding/homeソースは統合性を示す一方、価値が未測定のまま発見・保守・品質保証コストを広げる。",
+          "summary": "362 routeと巨大なlanding・home・analyticsソースは統合性を示す一方、価値が未測定のまま発見・保守・品質保証コストを広げる。",
           "severity": "p2",
-          "suggested_action": "route別到達・D7継続・paid寄与で核機能を選び、低価値入口の統合基準と巨大ページ分割計画を定める。"
+          "suggested_action": "route別到達・D7継続・paid寄与で核機能を選び、低価値入口の統合基準と巨大ページの段階分割計画を定める。"
         },
         {
           "finding_id": "site-differentiation-outcome-proof",
@@ -150,15 +157,15 @@
         },
         {
           "finding_id": "site-ai-data-trust-map",
-          "summary": "共通ポリシーとStripe説明はあるが、AI機能別の外部送信、保存、保持、削除、学習利用を比較できる運用マップがない。",
+          "summary": "公開プライバシーポリシーはあるが、AI機能カテゴリ別の外部送信、保存、保持、削除、学習利用を比較できる運用マップがない。",
           "severity": "p2",
-          "suggested_action": "法務文言を直接変更せず、専門レビュー後に機能カテゴリ別の入力、外部送信、保存期間、削除、学習利用を整理する。"
+          "suggested_action": "法務文言を直接変更せず、専門レビュー後に機能カテゴリ別の入力、外部送信、保存期間、削除、学習利用有無を整理する。"
         }
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4747 追跡中",
-        "detail": "6指摘は実利用cohortと原価集計、顧客・価格・ポートフォリオ判断、成果比較、または法務・プライバシー専門レビューを必要とし、共有の低リスク条件を満たす修正はない。",
+        "label": "未対策・Issue #4755 追跡中",
+        "detail": "内部401露出はbilling/auth保護領域であり、他の6指摘は実利用cohort、原価集計、顧客・ポートフォリオ判断、成果比較、または法務・プライバシー専門レビューを要するため、共有の低リスク自動修正条件を満たす変更はない。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -167,27 +174,28 @@
         "validation_messages": [
           "validate_roster.py: passed (125 profiles)",
           "validate_personas.py: passed (125 profiles)",
-          "fresh production journey inspection: passed (root, billing, privacy)",
-          "select_reviewer.py: selection file created once (125 profiles; seat 12; stdout encoding failed after write; no reroll)",
-          "flutter test acquisition/conversion/billing suite: passed (60 tests)",
-          "flutter test Tiger lane model/page suite: passed (10 tests)",
-          "flutter analyze scoped whole-site and Tiger files: passed (11 items; 231.1s; no issues)",
-          "review_issue.py --execute: passed (Issue #4747; cycle dedupe evidence recorded)",
-          "validate_cycle_report.py: passed (schema 4; lane=site_review; one reviewer; six proposals)",
-          "build_lane_status.py --lane site_review: passed (site-only status; six retained cycles)"
+          "fresh isolated anonymous production journey inspection: passed (root, subscription-billing, privacy)",
+          "select_reviewer.py: passed once (125 profiles; seat 12; selection score 78.0832)",
+          "flutter test --no-pub web handoff, landing conversion, and subscription billing suite: passed (60 tests)",
+          "flutter test --no-pub Tiger lane model/page suite: passed (11 tests)",
+          "flutter analyze --no-pub scoped whole-site and Tiger files: passed (11 items; 202.3s; no issues)",
+          "review_issue.py --execute: passed (Issue #4755; cycle dedupe evidence recorded)",
+          "validate_cycle_report.py: passed (schema 4; lane=site_review; one reviewer; seven proposals)",
+          "build_lane_status.py --lane site_review: passed (site-only status; six retained cycles; no unissued passed review_only record)"
         ],
         "issue": {
-          "number": 4747,
-          "url": "https://github.com/kanta13jp1/my_web_app/issues/4747",
+          "number": 4755,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4755",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-site-review:20260823T201159+0900:whole_site"
+          "dedupe_key": "tiger-site-review:20260823T214617+0900:whole_site"
         },
         "implementation": null,
         "findings_without_individual_trace": [
-          "site-priority-segment-demand-proof",
-          "site-funnel-retention-cohort-proof",
+          "site-priority-segment-retained-demand",
+          "site-acquisition-retention-paid-cohort",
           "site-plan-unit-economics-proof",
+          "site-anonymous-billing-error-boundary",
           "site-portfolio-focus-scalability",
           "site-differentiation-outcome-proof",
           "site-ai-data-trust-map"
