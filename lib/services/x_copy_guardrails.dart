@@ -175,6 +175,59 @@ bool hasFeatureAnchor(String title, String body) {
   return kFeatureNames.any(haystack.contains);
 }
 
+/// R27: 生成物に含まれる「今日ではありえない年」を返す(空=クリーン)。
+///
+/// なぜプロンプトだけでは足りないか: 年号の指示は
+/// `universal_x_share_service.dart` のプロンプトに 2 箇所ある
+/// (`Today's real date (JST)` と "never invent another year (e.g. never write
+/// 2024)")。それでも実際に `デイリーブリーフィング — 2024/07/05 朝` が X へ
+/// 出荷された (2026-07-04 実測 / 2,019 imp)。LLM への指示は事後検査の代わりに
+/// ならない — 本ファイルが [detectSlop] で既に採っている立場と同じ。
+///
+/// 対象は「完全な日付」(YYYY/MM/DD・YYYY-MM-DD・YYYY年M月D日) だけで、裸の年は
+/// 見ない。この区別が判定の要になる:
+///   - 「2023年統一地方選実績: 62 + 121」… 裸の年 = 過去実績への正当な言及。見ない。
+///   - 「デイリーブリーフィング — 2024/07/05 朝」… 完全な日付 = その日を主張して
+///     いる。本アプリの投稿で完全な日付が出るのは日付行・取得日時・次の節目の
+///     3 つだけなので、当年から大きく外れたら誤り。
+///
+/// 許容は当年 -1 〜 +2 年。-1 は年跨ぎ直後、+2 は将来の節目
+/// (例「次回統一地方選(2027/04/11目安)」) を潰さないため。
+///
+/// 既知の割り切り: 「2023/04/09 統一地方選」のような**過去の完全な日付**は
+/// 誤検出しうる。ただし本検出は投稿をブロックせず警告を出すだけなので、
+/// 見逃し (実際に 2024 が出荷された) より誤検出側に倒す。
+List<String> detectStaleYears(String text, {DateTime? now}) {
+  final today = (now ?? DateTime.now().toUtc().add(const Duration(hours: 9)));
+  final current = today.year;
+  final seen = <String>{};
+  final fullDate = RegExp(
+    r'(?<!\d)(\d{4})\s*[/\-年]\s*(\d{1,2})\s*[/\-月]\s*(\d{1,2})',
+  );
+  for (final match in fullDate.allMatches(text)) {
+    final raw = match.group(1)!;
+    final year = int.tryParse(raw);
+    final month = int.tryParse(match.group(2) ?? '');
+    final day = int.tryParse(match.group(3) ?? '');
+    if (year == null || month == null || day == null) continue;
+    // 日付として成立しない組み合わせは対象外(実数の並びの誤検出を避ける)。
+    if (month < 1 || month > 12 || day < 1 || day > 31) continue;
+    if (year >= current - 1 && year <= current + 2) continue;
+    seen.add(raw);
+  }
+  return seen.toList(growable: false);
+}
+
+/// 年号誤りの非ブロッキング警告文(空なら null)。[composeSlopWarning] と同じく
+/// 投稿は止めない。日付は事実主張なので、スロップより強い文面にする。
+String? composeStaleYearWarning(List<String> years, {DateTime? now}) {
+  if (years.isEmpty) return null;
+  final today = (now ?? DateTime.now().toUtc().add(const Duration(hours: 9)));
+  final shown = years.take(3).join(' / ');
+  return '年号を確認してください: 本文に $shown が含まれます'
+      '(今日は${today.year}年)。過去に 2024年 と誤記したまま投稿された実例があります。';
+}
+
 /// 検出結果から非ブロッキング警告文を作る(空なら null)。投稿は止めず、
 /// 再生成を促すだけ(自動再生成は有償生成の foot-gun なのでしない)。
 String? composeSlopWarning(List<String> hits) {

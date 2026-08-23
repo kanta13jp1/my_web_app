@@ -5,6 +5,28 @@ import '../services/personality_test_service.dart';
 import '../services/compatibility_service.dart';
 import '../models/compatibility_match.dart';
 
+/// `/compatibility-result` の URL 定義。
+/// URL を組み立てる遷移元と、URL を解析する `generateAppRoute` (main.dart) が
+/// 同じキーを使うよう、ここを唯一の定義とする。
+const String compatibilityResultRoutePath = '/compatibility-result';
+const String compatibilityResultMyTypeParam = 'my';
+const String compatibilityResultPartnerTypeParam = 'partner';
+
+/// 相性結果ページの URL を組み立てる。診断結果は 2 つの型だけで再現できるので
+/// query に載せ、リロードや共有リンクからでも同じ画面に復元できるようにする。
+String compatibilityResultRoute({
+  required String myType,
+  required String partnerType,
+}) {
+  final query = Uri(
+    queryParameters: <String, String>{
+      compatibilityResultMyTypeParam: myType,
+      compatibilityResultPartnerTypeParam: partnerType,
+    },
+  ).query;
+  return '$compatibilityResultRoutePath?$query';
+}
+
 /// 恋愛相性診断の結果表示ページ
 class CompatibilityResultPage extends StatefulWidget {
   final String myType;

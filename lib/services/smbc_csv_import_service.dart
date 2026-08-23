@@ -83,10 +83,24 @@ class SmbcCsvImportService {
   static const _memoHeader = 'メモ';
   static const _labelHeader = 'ラベル';
 
+  static bool looksLikeCsv(String text) {
+    final rows = _parseCsvRows(
+      text,
+    ).where((row) => row.any((cell) => cell.trim().isNotEmpty)).toList();
+    if (rows.isEmpty) return false;
+    final header = rows.first.map(_normalizeHeader).toList();
+    return <String>[
+      _dateHeader,
+      _withdrawalHeader,
+      _depositHeader,
+      _contentHeader,
+    ].every(header.contains);
+  }
+
   SmbcCsvImportResult parse(final String csvText) {
-    final rows = _parseCsvRows(csvText)
-        .where((row) => row.any((cell) => cell.trim().isNotEmpty))
-        .toList();
+    final rows = _parseCsvRows(
+      csvText,
+    ).where((row) => row.any((cell) => cell.trim().isNotEmpty)).toList();
     if (rows.isEmpty) {
       throw const FormatException('CSVに明細行がありません');
     }

@@ -114,6 +114,7 @@ class _PersonalityTestQuestionsPageState
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
+            settings: const RouteSettings(name: '/personality-test-result'),
             builder: (context) => PersonalityTestResultPage(
               testId: widget.testId,
             ),

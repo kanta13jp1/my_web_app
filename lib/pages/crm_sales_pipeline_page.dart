@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// CRM 営業パイプラインページ
 /// crm-sales-pipeline Edge Function と連携
@@ -12,7 +13,13 @@ class CrmSalesPipelinePage extends StatefulWidget {
 }
 
 class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['pipeline', 'leads', 'stats'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 

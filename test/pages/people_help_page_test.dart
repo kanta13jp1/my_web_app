@@ -99,7 +99,7 @@ void main() {
 
     final scrollable = find.byType(Scrollable).first;
     await tester.scrollUntilVisible(
-      find.byKey(const Key('people_help_quick_stats')),
+      find.byKey(const Key('people_help_quick_rewards')),
       200,
       scrollable: scrollable,
     );
@@ -117,7 +117,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const Key('people_help_quick_rewards')), findsOneWidget);
-    expect(find.byKey(const Key('people_help_quick_stats')), findsOneWidget);
+    expect(find.byKey(const Key('people_help_quick_stats')), findsNothing);
     expect(
       find.byKey(const Key('people_help_leave_requests_section')),
       findsOneWidget,

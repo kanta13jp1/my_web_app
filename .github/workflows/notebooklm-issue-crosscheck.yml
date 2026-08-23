@@ -26,7 +26,7 @@ permissions:
 
 concurrency:
   group: notebooklm-issue-crosscheck
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-07-27 ci-audit: daily cron + dispatch 重複時のキュー積み防止
 
 jobs:
   crosscheck:

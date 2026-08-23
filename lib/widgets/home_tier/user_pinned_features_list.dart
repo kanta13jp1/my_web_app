@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/home_feature_actions.dart';
+import 'home_tier_styles.dart';
 
 class UserPinnedFeaturesList extends StatefulWidget {
   const UserPinnedFeaturesList({super.key});
@@ -62,6 +63,7 @@ class _UserPinnedFeaturesListState extends State<UserPinnedFeaturesList> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = HomeTierPalette.of(context);
     if (_loading) {
       return const Padding(
         padding: EdgeInsets.all(16),
@@ -69,11 +71,15 @@ class _UserPinnedFeaturesListState extends State<UserPinnedFeaturesList> {
       );
     }
     if (_items.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
+      return Padding(
+        padding: const EdgeInsets.all(16),
         child: Text(
           '各セクションの機能チップを長押しすると、ここにお気に入りとして表示されます。',
-          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, height: 1.5),
+          style: TextStyle(
+            color: palette.secondaryText,
+            fontSize: 13,
+            height: 1.5,
+          ),
         ),
       );
     }
@@ -89,9 +95,15 @@ class _UserPinnedFeaturesListState extends State<UserPinnedFeaturesList> {
           return InputChip(
             label: Text(
               label,
-              style: const TextStyle(fontSize: 12, height: 1.5),
+              style: TextStyle(
+                fontSize: 12,
+                color: palette.primaryText,
+                height: 1.5,
+              ),
             ),
-            backgroundColor: const Color(0xFF1E1E2E),
+            backgroundColor: palette.tintedChipBackground(
+              const Color(0xFF6366F1),
+            ),
             side: const BorderSide(color: Color(0xFF6366F1), width: 0.8),
             deleteIcon: const Icon(
               Icons.push_pin,
