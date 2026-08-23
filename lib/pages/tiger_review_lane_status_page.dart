@@ -147,10 +147,7 @@ class _TigerReviewLaneStatusPageState extends State<TigerReviewLaneStatusPage> {
     return _TigerLanePageData(status: status, profiles: profiles);
   }
 
-  Future<String> _loadAsset(
-    String asset, {
-    required int schemaVersion,
-  }) async {
+  Future<String> _loadAsset(String asset, {required int schemaVersion}) async {
     if (!kIsWeb) return rootBundle.loadString(asset);
 
     // These JSON snapshots are refreshed by independent review automations.
@@ -275,6 +272,12 @@ class _LaneContent extends StatelessWidget {
                           if (status.history.isNotEmpty) ...<Widget>[
                             const SizedBox(height: 18),
                             _HistorySection(history: status.history),
+                          ],
+                          if (kind == TigerReviewLane.reviewers &&
+                              profiles != null &&
+                              profiles!.enrichmentRound > 0) ...<Widget>[
+                            const SizedBox(height: 18),
+                            _ProfileEnrichmentCard(catalog: profiles!),
                           ],
                           if (status.entries.isNotEmpty) ...<Widget>[
                             const SizedBox(height: 18),
@@ -811,6 +814,54 @@ class _ReviewerStandingTile extends StatelessWidget {
   }
 }
 
+class _ProfileEnrichmentCard extends StatelessWidget {
+  const _ProfileEnrichmentCard({required this.catalog});
+
+  final TigerReviewerProfileCatalog catalog;
+
+  @override
+  Widget build(BuildContext context) {
+    final nextBatch = catalog.nextBatchNames;
+    return Card(
+      color: Theme.of(context).colorScheme.secondaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              'プロフィール拡充ループ 第${catalog.enrichmentRound}回',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 18,
+              runSpacing: 8,
+              children: <Widget>[
+                Text(
+                  '平均充実度 ${catalog.averageProfileCompletenessPercent.toStringAsFixed(1)}%',
+                ),
+                Text(
+                  '平均レビュー反映度 ${catalog.averageReviewReflectionPercent.toStringAsFixed(1)}%',
+                ),
+                Text('生年月日確認済み ${catalog.verifiedBirthDates}名'),
+              ],
+            ),
+            if (nextBatch.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 8),
+              Text('次回の優先調査: ${nextBatch.join('、')}'),
+            ],
+            const SizedBox(height: 6),
+            const Text('一次公開情報が増えるほど、虎固有の重点観点をレビューへ段階的に反映します。'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ReviewerProfileDetails extends StatelessWidget {
   const _ReviewerProfileDetails({
     required this.profile,
@@ -846,6 +897,37 @@ class _ReviewerProfileDetails extends StatelessWidget {
           label: '在籍区分',
           value: profile.rosterStatus == 'current' ? '現役虎' : '歴代虎',
         ),
+        _ProfileFact(
+          label: '充実度',
+          value: '${profile.profileCompletenessPercent}%',
+        ),
+        _ProfileFact(
+          label: 'レビュー反映',
+          value:
+              '${profile.reviewReflectionPercent}%（${profile.reviewReflectionLabel}）',
+        ),
+        if (profile.reviewFocusLabels.isNotEmpty)
+          _ProfileFact(
+            label: '重点確認',
+            value: profile.reviewFocusLabels.join('・'),
+          ),
+        if (profile.reviewApplicationRule.isNotEmpty)
+          _ProfileFact(label: '適用ルール', value: profile.reviewApplicationRule),
+        if (profile.reviewQuestions.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 8),
+          Text('レビュー質問例', style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 4),
+          for (final question in profile.reviewQuestions.take(3))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text('• $question'),
+            ),
+        ],
+        if (profile.nextResearchTargets.isNotEmpty)
+          _ProfileFact(
+            label: '次回調査',
+            value: profile.nextResearchTargets.join('・'),
+          ),
         if (profile.businessDomains.isNotEmpty) ...<Widget>[
           const SizedBox(height: 8),
           Text('事業分野', style: Theme.of(context).textTheme.labelLarge),
@@ -855,28 +937,20 @@ class _ReviewerProfileDetails extends StatelessWidget {
             runSpacing: 4,
             children: <Widget>[
               for (final domain in profile.businessDomains)
-                Chip(
-                  visualDensity: VisualDensity.compact,
-                  label: Text(domain),
-                ),
+                Chip(visualDensity: VisualDensity.compact, label: Text(domain)),
             ],
           ),
         ],
         if (profile.publicViewpointSummary.isNotEmpty) ...<Widget>[
           const SizedBox(height: 8),
-          _ProfileFact(
-            label: '審査姿勢',
-            value: profile.publicViewpointSummary,
-          ),
+          _ProfileFact(label: '審査姿勢', value: profile.publicViewpointSummary),
         ],
         if (profileUrl != null && profileUrl.hasScheme) ...<Widget>[
           const SizedBox(height: 8),
           TextButton.icon(
             key: Key('tiger-profile-source-${profile.seat}'),
-            onPressed: () => launchUrl(
-              profileUrl,
-              mode: LaunchMode.externalApplication,
-            ),
+            onPressed: () =>
+                launchUrl(profileUrl, mode: LaunchMode.externalApplication),
             icon: const Icon(Icons.open_in_new, size: 18),
             label: const Text('公開プロフィールを開く'),
           ),
