@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-23T07:30:49.914416+00:00",
+  "generated_at": "2026-08-23T09:36:35.581494+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "site_review",
   "publication_state": "latest_review",
@@ -10,7 +10,7 @@
     "status": "ACTIVE",
     "schedule": "毎時25分（1時間ごと）"
   },
-  "review_count": 8,
+  "review_count": 4,
   "latest_review": {
     "cycle_id": "20260823T153734+0900",
     "started_at": "2026-08-23T15:38:16.4383006+09:00",
@@ -23,7 +23,7 @@
       "seat": 7,
       "name": "榊󠄀原 清一",
       "selection_score": 74.4337,
-      "division": 1,
+      "division": 3,
       "cycle_utility": 90.17,
       "aggregate_utility": 90.17
     },
@@ -55,6 +55,274 @@
           "founder_execution"
         ]
       }
-    ]
-  }
+    ],
+    "countermeasure": {
+      "state": "issue_tracking",
+      "label": "未対策・Issue #4739 追跡中",
+      "detail": "3件はいずれも再現可能な証拠を持つが、公開比較主張、分析データ、または大規模な構造変更に関わる。安全な自動修正、低リスク、3ファイル・200行以内の全条件を満たす変更はない。",
+      "summary": "",
+      "files": [],
+      "lines_changed": 0,
+      "resolved_finding_ids": [],
+      "validation_status": "passed",
+      "validation_messages": [
+        "validate_roster.py: passed",
+        "validate_personas.py: passed",
+        "select_feature.py: passed (13 features)",
+        "select_reviewer.py: passed (125 profiles; JSON output saved)",
+        "public Data API catalog export: passed (active=1071, reviewable=526, excluded source URL=536)",
+        "select_course.py: passed",
+        "01.AI source URL inspection: reachable; only generic documentation navigation was observable",
+        "comparison source and test filename inspection: completed"
+      ],
+      "issue": {
+        "number": 4739,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4739",
+        "status": "existing",
+        "github_state": "OPEN",
+        "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison"
+      },
+      "implementation": null,
+      "findings_without_individual_trace": [
+        "comparison-claim-evidence",
+        "comparison-funnel-evidence",
+        "comparison-maintainability"
+      ]
+    }
+  },
+  "history": [
+    {
+      "cycle_id": "20260823T153734+0900",
+      "started_at": "2026-08-23T15:38:16.4383006+09:00",
+      "source_format": "legacy_combined",
+      "subject": {
+        "kind": "site",
+        "id": "comparison",
+        "title": "comparison",
+        "url": "https://my-web-app-b67f4.web.app/competitors"
+      },
+      "reviewer": {
+        "seat": 7,
+        "name": "榊󠄀原 清一",
+        "selection_score": 74.4337
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "findings": [
+        {
+          "finding_id": "comparison-claim-evidence",
+          "summary": "競合比較の公開主張に出典・確認時点を一貫して結び付ける必要がある。",
+          "severity": "p1",
+          "suggested_action": "競合別の価格・機能主張について、出典URLと最終確認日を管理する別レビューを行う。"
+        },
+        {
+          "finding_id": "comparison-funnel-evidence",
+          "summary": "比較流入から登録までの実測根拠が今回のレビュー入力にない。",
+          "severity": "p2",
+          "suggested_action": "既存計測の匿名集計を別運用で確認し、比較到達・CTA・登録のファネルを根拠化する。"
+        },
+        {
+          "finding_id": "comparison-maintainability",
+          "summary": "比較ページの巨大な単一ソースと専用試験不足が訴求変更の検証コストを高めている。",
+          "severity": "p2",
+          "suggested_action": "別タスクで競合データと表示部を分離し、代表ルートのCTA・比較表をウィジェット試験で固定する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4739 追跡中",
+        "detail": "3件はいずれも再現可能な証拠を持つが、公開比較主張、分析データ、または大規模な構造変更に関わる。安全な自動修正、低リスク、3ファイル・200行以内の全条件を満たす変更はない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed",
+          "validate_personas.py: passed",
+          "select_feature.py: passed (13 features)",
+          "select_reviewer.py: passed (125 profiles; JSON output saved)",
+          "public Data API catalog export: passed (active=1071, reviewable=526, excluded source URL=536)",
+          "select_course.py: passed",
+          "01.AI source URL inspection: reachable; only generic documentation navigation was observable",
+          "comparison source and test filename inspection: completed"
+        ],
+        "issue": {
+          "number": 4739,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4739",
+          "status": "existing",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "comparison-claim-evidence",
+          "comparison-funnel-evidence",
+          "comparison-maintainability"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T152316+0900",
+      "started_at": "2026-08-23T15:24:30+09:00",
+      "source_format": "legacy_combined",
+      "subject": {
+        "kind": "site",
+        "id": "ai_university",
+        "title": "ai_university",
+        "url": "https://my-web-app-b67f4.web.app/#/ai-university"
+      },
+      "reviewer": {
+        "seat": 1,
+        "name": "ドラゴン細井",
+        "selection_score": 79.5059
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "findings": [
+        {
+          "finding_id": "course-freshness-review",
+          "summary": "選出講座に出典更新確認の運用が必要。",
+          "severity": "p2",
+          "suggested_action": "公式出典の確認日と更新検知を講座運用で記録し、再確認対象を明示する。"
+        },
+        {
+          "finding_id": "course-outcome-evidence",
+          "summary": "講座選定データに学習成果の根拠がない。",
+          "severity": "p2",
+          "suggested_action": "講座編集の別タスクで、対象者・到達行動・確認方法を根拠付きで管理する。"
+        },
+        {
+          "finding_id": "content-failure-observability",
+          "summary": "教材取得失敗時の事業影響を測定できない。",
+          "severity": "p2",
+          "suggested_action": "別の計測設計レビューで、失敗・再試行・フォールバック表示を匿名かつ最小限に観測する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4738 追跡中",
+        "detail": "3件はいずれも証拠に基づくが、講座運用・計測設計または利用データを要し、低リスク自動修正の条件を満たす変更はない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed",
+          "validate_personas.py: passed",
+          "public Data API catalog export: passed (active=1071, reviewable=526)",
+          "select_feature.py: passed",
+          "select_reviewer.py: passed (125 profiles)",
+          "select_course.py: passed",
+          "AI University browser inspection: blocked by browser URL safety policy; no workaround attempted"
+        ],
+        "issue": {
+          "number": 4738,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4738",
+          "status": "existing",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-freshness-review",
+          "course-outcome-evidence",
+          "content-failure-observability"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T152239+0900",
+      "started_at": "2026-08-23T15:22:47+09:00",
+      "source_format": "legacy_combined",
+      "subject": {
+        "kind": "site",
+        "id": "ai_university",
+        "title": "ai_university",
+        "url": "https://my-web-app-b67f4.web.app/ai-university"
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 73.5265
+      },
+      "status": "implemented",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "findings": [
+        {
+          "finding_id": "ai_university_catalog_pagination",
+          "summary": "AI大学の主カタログ取得をページングし、PostgRESTの1,000行上限を超える有効講座も表示対象にする。",
+          "severity": "p2",
+          "suggested_action": "sort_orderとidで安定順序を付け、1,000件単位で全有効行を取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "implemented",
+        "label": "対策実施・検証済み",
+        "detail": "個別の指摘IDとの紐付けも記録済みです。",
+        "summary": "主カタログに安定順序のページングを追加し、回帰契約テストを更新した。",
+        "files": [
+          "lib/pages/gemini_university_v2_page.dart",
+          "test/pages/ai_university_published_video_fetch_contract_test.dart"
+        ],
+        "lines_changed": 27,
+        "resolved_finding_ids": [
+          "ai_university_catalog_pagination"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed",
+          "validate_personas.py: passed",
+          "flutter test test/pages/ai_university_published_video_fetch_contract_test.dart: passed",
+          "dart analyze changed files: passed"
+        ],
+        "issue": {},
+        "implementation": null,
+        "findings_without_individual_trace": []
+      }
+    },
+    {
+      "cycle_id": "20260823T150231+0900",
+      "started_at": "2026-08-23T15:02:31+09:00",
+      "source_format": "legacy_combined",
+      "subject": {
+        "kind": "site",
+        "id": "home",
+        "title": "home",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 77.7529
+      },
+      "status": "blocked",
+      "review_status": "blocked",
+      "validation_status": "not_applicable",
+      "findings": [],
+      "countermeasure": {
+        "state": "blocked",
+        "label": "対策状況を確認できません",
+        "detail": "origin/main への fast-forward 同期不能と、アクティブ講座カタログの取得不能。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "not_applicable",
+        "validation_messages": [
+          "validate_roster.py: passed",
+          "validate_personas.py: passed",
+          "course catalog export: unavailable",
+          "worktree fast-forward: unavailable"
+        ],
+        "issue": {},
+        "implementation": null,
+        "findings_without_individual_trace": []
+      }
+    }
+  ]
 }

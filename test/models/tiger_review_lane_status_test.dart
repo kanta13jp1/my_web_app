@@ -25,6 +25,23 @@ void main() {
 
       expect(status.schemaVersion, 3);
       expect(status.lane, testCase.$2);
+      expect(status.history, isNotEmpty);
+      expect(
+        status.history.first['cycle_id'],
+        status.latest?['cycle_id'],
+      );
+      for (final review in status.history) {
+        final countermeasure = review['countermeasure'];
+        expect(countermeasure, isA<Map>());
+        if (review['review_status'] == 'review_only' &&
+            review['validation_status'] == 'passed') {
+          expect(
+            (countermeasure as Map)['issue'],
+            isNotEmpty,
+            reason: '${review['cycle_id']} must have follow-up Issue evidence',
+          );
+        }
+      }
       if (testCase.$3 == 'reviewers') {
         expect(status.entries, hasLength(125));
       }

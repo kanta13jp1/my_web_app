@@ -56,6 +56,77 @@ void main() {
     expect(find.text('公開データの系統が一致しません。'), findsOneWidget);
   });
 
+  testWidgets('lane exposes every review and its countermeasure Issue', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.courses,
+          loader: () async => _status(
+            lane: 'course_review',
+            history: <Map<String, dynamic>>[
+              _history(
+                cycleId: 'cycle-new',
+                state: 'follow_up_issued',
+                issueNumber: 4737,
+              ),
+              _history(
+                cycleId: 'cycle-old',
+                state: 'implemented',
+                resolved: true,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('全2件'), findsOneWidget);
+    expect(
+      find.byKey(const Key('tiger-history-course_review-cycle-new')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('tiger-history-course_review-cycle-old')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('tiger-history-course_review-cycle-new')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('未対策'), findsOneWidget);
+    expect(find.text('対応Issue #4737を開く'), findsOneWidget);
+  });
+
+  testWidgets('untracked countermeasure is surfaced as a data error', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.site,
+          loader: () async => _status(
+            lane: 'site_review',
+            history: <Map<String, dynamic>>[
+              _history(cycleId: 'missing-issue', state: 'issue_required'),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('tiger-history-site_review-missing-issue')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Issue未発行（公開データ不整合）'), findsOneWidget);
+  });
+
   testWidgets('narrow lane reloads without a layout exception', (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
@@ -69,7 +140,16 @@ void main() {
           kind: TigerReviewLane.features,
           loader: () async {
             loadCount += 1;
-            return _status(lane: 'feature_review');
+            return _status(
+              lane: 'feature_review',
+              history: <Map<String, dynamic>>[
+                _history(
+                  cycleId: 'narrow-history',
+                  state: 'follow_up_issued',
+                  issueNumber: 99,
+                ),
+              ],
+            );
           },
         ),
       ),
@@ -86,12 +166,19 @@ void main() {
 
     expect(loadCount, 2);
     expect(tester.takeException(), isNull);
+
+    await tester.tap(
+      find.byKey(const Key('tiger-history-feature_review-narrow-history')),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
   });
 }
 
 TigerReviewLaneStatus _status({
   required String lane,
   List<Map<String, dynamic>> entries = const <Map<String, dynamic>>[],
+  List<Map<String, dynamic>> history = const <Map<String, dynamic>>[],
 }) {
   return TigerReviewLaneStatus(
     schemaVersion: 3,
@@ -114,7 +201,52 @@ TigerReviewLaneStatus _status({
       'division_5': 0,
     },
     latest: null,
+    history: history,
     entries: entries,
     disclaimer: 'simulation',
   );
+}
+
+Map<String, dynamic> _history({
+  required String cycleId,
+  required String state,
+  int? issueNumber,
+  bool resolved = false,
+}) {
+  return <String, dynamic>{
+    'cycle_id': cycleId,
+    'started_at': '2026-08-23T18:00:00+09:00',
+    'subject': <String, dynamic>{
+      'kind': 'course',
+      'id': 'course-1',
+      'title': 'レビュー対象',
+    },
+    'reviewer': <String, dynamic>{'seat': 12, 'name': '担当虎'},
+    'review_status': resolved ? 'fixed' : 'review_only',
+    'validation_status': 'passed',
+    'findings': <Map<String, dynamic>>[
+      <String, dynamic>{
+        'finding_id': 'finding-1',
+        'summary': '改善が必要です。',
+        'suggested_action': '根拠を追加する。',
+      },
+    ],
+    'countermeasure': <String, dynamic>{
+      'state': state,
+      'label': switch (state) {
+        'implemented' => '対策実施・検証済み',
+        'follow_up_issued' => '未実施・Issue起票済み',
+        _ => '未対策・Issue未発行',
+      },
+      'detail': '対策状況の詳細',
+      'resolved_finding_ids': resolved ? <String>['finding-1'] : <String>[],
+      'validation_messages': <String>['flutter test: passed'],
+      if (issueNumber != null)
+        'issue': <String, dynamic>{
+          'number': issueNumber,
+          'url': 'https://github.com/kanta13jp1/my_web_app/issues/$issueNumber',
+          'status': 'created',
+        },
+    },
+  };
 }

@@ -9,6 +9,7 @@ class TigerReviewLaneStatus {
     required this.automation,
     required this.pool,
     required this.latest,
+    required this.history,
     required this.entries,
     required this.disclaimer,
   });
@@ -20,6 +21,7 @@ class TigerReviewLaneStatus {
   final TigerLaneAutomation automation;
   final Map<String, dynamic> pool;
   final Map<String, dynamic>? latest;
+  final List<Map<String, dynamic>> history;
   final List<Map<String, dynamic>> entries;
   final String disclaimer;
 
@@ -58,6 +60,7 @@ class TigerReviewLaneStatus {
             ? json['latest_assignment']
             : json['latest_review'],
       ),
+      history: _mapList(json['history']),
       entries: rawEntries is List
           ? rawEntries
               .whereType<Map>()
@@ -67,6 +70,15 @@ class TigerReviewLaneStatus {
       disclaimer: json['disclaimer']?.toString() ?? '',
     );
   }
+}
+
+List<Map<String, dynamic>> _mapList(Object? value) {
+  return value is List
+      ? value
+          .whereType<Map>()
+          .map((entry) => Map<String, dynamic>.from(entry))
+          .toList(growable: false)
+      : const <Map<String, dynamic>>[];
 }
 
 class TigerLaneAutomation {
