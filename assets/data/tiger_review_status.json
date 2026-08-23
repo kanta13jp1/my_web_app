@@ -1,39 +1,39 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-08-23T04:53:19.290380+00:00",
-  "publication_state": "waiting_for_first_cycle",
+  "generated_at": "2026-08-23T06:29:14.989704+00:00",
+  "publication_state": "latest_cycle",
   "automation": {
     "id": "125",
     "name": "機能・講座・虎レビュー5部リーグ",
-    "status": "ACTIVE",
+    "status": "PAUSED",
     "schedule": "1時間ごと"
   },
   "pool": {
     "total": 125,
     "eligible": 125,
-    "provisional": 125,
+    "provisional": 124,
     "division_1": 0,
-    "division_2": 0,
-    "division_3": 125,
+    "division_2": 1,
+    "division_3": 124,
     "division_4": 0,
     "division_5": 0,
     "eliminated": 0,
     "minimum_eligible_pool": 12
   },
   "course_pool": {
-    "total": 0,
-    "eligible": 0,
+    "total": 1,
+    "eligible": 1,
     "provisional": 0,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 0,
+    "division_3": 1,
     "division_4": 0,
     "division_5": 0
   },
   "feature_pool": {
     "total": 13,
     "eligible": 13,
-    "provisional": 13,
+    "provisional": 12,
     "division_1": 0,
     "division_2": 0,
     "division_3": 13,
@@ -72,9 +72,104 @@
       "operating_efficiency": 10
     }
   },
-  "latest_cycle": null,
-  "courses": [],
+  "latest_cycle": {
+    "cycle_id": "20260823T152316+0900",
+    "started_at": "2026-08-23T15:24:30+09:00",
+    "surface": {
+      "slug": "ai_university",
+      "url": "https://my-web-app-b67f4.web.app/#/ai-university"
+    },
+    "reviewer": {
+      "seat": 1,
+      "name": "ドラゴン細井",
+      "selection_score": 79.5059,
+      "tier": "division_3",
+      "division": 3,
+      "cycle_utility": 89.75,
+      "aggregate_utility": 89.75
+    },
+    "status": "review_only",
+    "validation": "passed",
+    "finding_count": 3,
+    "top_findings": [
+      {
+        "summary": "選出講座に出典更新確認の運用が必要。",
+        "severity": "p2",
+        "business_dimensions": [
+          "trust_risk",
+          "market_demand"
+        ]
+      },
+      {
+        "summary": "講座選定データに学習成果の根拠がない。",
+        "severity": "p2",
+        "business_dimensions": [
+          "customer_pain",
+          "revenue_model"
+        ]
+      },
+      {
+        "summary": "教材取得失敗時の事業影響を測定できない。",
+        "severity": "p2",
+        "business_dimensions": [
+          "trust_risk",
+          "customer_pain"
+        ]
+      }
+    ],
+    "course_review": {
+      "content_id": "22befb67-6147-4a4b-999c-ee1ad6fa9615",
+      "provider": "01ai",
+      "title": "01.AI (Yi) モデル一覧",
+      "source_url": "https://platform.01.ai/docs",
+      "cycle_utility": 47.15,
+      "aggregate_utility": 50.18,
+      "division": 3,
+      "reason": "公開Data APIで有効かつHTTP(S)出典付きで確認した。参照先は到達可能だったが、応答ヘッダーのLast-Modifiedは2024-08-23であり、学習者成果の実測は取得できなかった。"
+    },
+    "feature_review": {
+      "slug": "ai_university",
+      "title": "ai_university",
+      "kind": "page",
+      "cycle_utility": 63.5,
+      "aggregate_utility": 64.8,
+      "division": 3,
+      "reason": "公開カタログ取得とローカル実装から教材提示・ページング・フォールバックを確認した。実利用分析とブラウザ画面読取は利用不能のため、中立値を明示して評価した。"
+    }
+  },
+  "courses": [
+    {
+      "content_id": "22befb67-6147-4a4b-999c-ee1ad6fa9615",
+      "provider": "01ai",
+      "title": "01.AI (Yi) モデル一覧",
+      "source_url": "https://platform.01.ai/docs",
+      "division": 3,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 50.18,
+      "completed_cycles": 2,
+      "last_cycle_utility": 47.15,
+      "last_reviewed_at": "2026-08-23T06:24:30+00:00",
+      "reason": "講座レビュー2回・効用50.2点で3部"
+    }
+  ],
   "features": [
+    {
+      "slug": "ai_university",
+      "kind": "page",
+      "title": "ai_university",
+      "path": "/ai-university",
+      "source": "lib/pages/gemini_university_v2_page.dart",
+      "priority": "high",
+      "division": 3,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 64.8,
+      "completed_cycles": 2,
+      "last_cycle_utility": 63.5,
+      "last_reviewed_at": "2026-08-23T06:24:30+00:00",
+      "reason": "機能レビュー2回・効用64.8点で3部"
+    },
     {
       "slug": "admin_analytics",
       "kind": "page",
@@ -97,22 +192,6 @@
       "title": "ai-hub",
       "path": "",
       "source": "supabase/functions/ai-hub/index.ts",
-      "priority": "high",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "last_cycle_utility": null,
-      "last_reviewed_at": null,
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
-    },
-    {
-      "slug": "ai_university",
-      "kind": "page",
-      "title": "ai_university",
-      "path": "/ai-university",
-      "source": "lib/pages/ai_university_v2_page.dart",
       "priority": "high",
       "division": 3,
       "provisional": true,
@@ -178,22 +257,6 @@
       "path": "",
       "source": "supabase/functions/growth-weekly-digest/index.ts",
       "priority": "medium",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "last_cycle_utility": null,
-      "last_reviewed_at": null,
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
-    },
-    {
-      "slug": "home",
-      "kind": "page",
-      "title": "home",
-      "path": "/",
-      "source": "lib/pages/home_dashboard_page.dart",
-      "priority": "high",
       "division": 3,
       "provisional": true,
       "eligible": true,
@@ -282,6 +345,22 @@
       "last_cycle_utility": null,
       "last_reviewed_at": null,
       "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "home",
+      "kind": "page",
+      "title": "home",
+      "path": "/",
+      "source": "lib/pages/home_page.dart",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 47.0,
+      "completed_cycles": 1,
+      "last_cycle_utility": 47.0,
+      "last_reviewed_at": "2026-08-23T06:02:31+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
     }
   ],
   "reviewers": [
@@ -293,12 +372,27 @@
       "provisional": true,
       "eligible": true,
       "floor_protected": false,
-      "utility_score": null,
-      "completed_cycles": 0,
+      "utility_score": 89.75,
+      "completed_cycles": 1,
       "low_utility_streak": 0,
-      "last_cycle_utility": null,
-      "last_selected_at": null,
+      "last_cycle_utility": 89.75,
+      "last_selected_at": "2026-08-23T06:24:30+00:00",
       "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 11,
+      "name": "野口 功司",
+      "tier": "division_2",
+      "division": 2,
+      "provisional": false,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 79.17,
+      "completed_cycles": 2,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 96.25,
+      "last_selected_at": "2026-08-23T06:22:47+00:00",
+      "reason": "担当2回・効用79.2点で2部"
     },
     {
       "seat": 2,
@@ -423,21 +517,6 @@
     {
       "seat": 10,
       "name": "島田 隆史",
-      "tier": "division_3",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "floor_protected": false,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "low_utility_streak": 0,
-      "last_cycle_utility": null,
-      "last_selected_at": null,
-      "reason": "担当実績が2回未満のため暫定3部"
-    },
-    {
-      "seat": 11,
-      "name": "野口 功司",
       "tier": "division_3",
       "division": 3,
       "provisional": true,

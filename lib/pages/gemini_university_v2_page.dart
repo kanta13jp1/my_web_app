@@ -6269,12 +6269,21 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   Future<void> _fetchContent() async {
     try {
-      final contentRows = await _supabase
-          .from('ai_university_content')
-          .select()
-          .eq('is_active', true)
-          .order('sort_order')
-          .timeout(const Duration(seconds: 10));
+      const pageSize = 1000;
+      final contentRows = <Map<String, dynamic>>[];
+      for (var offset = 0;; offset += pageSize) {
+        final page = await _supabase
+            .from('ai_university_content')
+            .select()
+            .eq('is_active', true)
+            .order('sort_order')
+            .order('id')
+            .range(offset, offset + pageSize - 1)
+            .timeout(const Duration(seconds: 10));
+        final typedPage = (page as List).cast<Map<String, dynamic>>();
+        contentRows.addAll(typedPage);
+        if (typedPage.length < pageSize) break;
+      }
 
       // PostgREST limits one response to 1,000 rows. Fetch video lessons
       // separately so the provider-independent banner never loses published
@@ -6289,7 +6298,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
       final rows =
           AiUniversityVideoLessonService.mergeContentRowsByProviderCategory(
-        (contentRows as List).cast<Map<String, dynamic>>(),
+        contentRows,
         (publishedVideoRows as List).cast<Map<String, dynamic>>(),
       );
 
