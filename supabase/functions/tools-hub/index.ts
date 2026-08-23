@@ -60,6 +60,7 @@ import {
   publicMcpFileConnector,
 } from "../_shared/mcp_external_file.ts";
 import { callExternalMcpTool } from "../_shared/mcp_external_file_client.ts";
+import { fetchLocalBusinessReferences } from "../_shared/local_business_reference.ts";
 import {
   createSupabaseJibunApiStore,
   handleJibunApiAction,
@@ -1031,6 +1032,7 @@ async function handleMcpFacade(
           "mcp.wbs.list",
           "mcp.feature_request.create",
           "mcp.user_tasks.list",
+          "mcp.public_businesses.reference_list",
           "mcp.notes.list",
           "mcp.notes.create",
         ],
@@ -1165,6 +1167,41 @@ async function handleMcpFacade(
       },
       content: mcpTextResult(`Found ${enriched.length} user task(s).`),
     });
+  }
+
+  if (toolName === "public_businesses.reference_list") {
+    const targetId = String(args.target_id ?? "fuchu-honmachi-1").trim();
+    if (targetId !== "fuchu-honmachi-1") {
+      await logMcpInvocation(auth.ctx, toolName, args, 400, req);
+      return mcpToolResponse(body, {
+        success: false,
+        tool: toolName,
+        error: "unsupported_target",
+      }, 400);
+    }
+    try {
+      const payload = await fetchLocalBusinessReferences({
+        limit: args.limit ?? 30,
+      });
+      await logMcpInvocation(auth.ctx, toolName, args, 200, req);
+      return mcpToolResponse(body, {
+        success: true,
+        tool: toolName,
+        structuredContent: payload,
+        content: mcpTextResult(
+          `Found ${payload.publicReference.count} public reference place(s). ` +
+            "Ownership type is unknown and the list does not identify the census aggregate.",
+        ),
+      });
+    } catch (error) {
+      console.error("MCP public business reference failed", error);
+      await logMcpInvocation(auth.ctx, toolName, args, 502, req);
+      return mcpToolResponse(body, {
+        success: false,
+        tool: toolName,
+        error: "public_reference_unavailable",
+      }, 502);
+    }
   }
 
   if (toolName === "feature_request.create") {
@@ -10870,6 +10907,7 @@ ${reportText ? `> ${reportText}` : ""}`,
             "mcp.wbs.list",
             "mcp.feature_request.create",
             "mcp.user_tasks.list",
+            "mcp.public_businesses.reference_list",
             "mcp.notes.list",
             "mcp.notes.create",
             "mcp_file.connectors",

@@ -110,6 +110,7 @@ import '../pages/public_guitar_gallery_page.dart';
 import '../pages/music_collaboration_page.dart';
 import '../ui/features/beatles_guitar_tabs/beatles_guitar_tabs_feature.dart';
 import '../ui/features/custom_task_list/custom_task_list_feature.dart';
+import '../ui/features/local_business_map/local_business_map_feature.dart';
 import '../pages/focus_timer_page.dart';
 import '../pages/writing_center_page.dart';
 import '../pages/wiki_database_page.dart';
@@ -2598,6 +2599,28 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'sandbox',
       ],
       onOpen: (context) => _pushPage(context, const CodePlaygroundPage()),
+    ),
+    HomeToolEntry(
+      id: 'local-business-map',
+      sectionId: 'office',
+      title: '地域事業者マップ',
+      subtitle: 'e-Statの公式集計とOpenStreetMapの公開参考事業者を分離して地図表示',
+      icon: Icons.location_city,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        '東京都',
+        '府中市',
+        '本町1丁目',
+        '事業所',
+        '個人経営',
+        '経済センサス',
+        'e-Stat',
+        'OpenStreetMap',
+        'MCP',
+        '地図',
+      ],
+      onOpen: (context) =>
+          _pushPage(context, const LocalBusinessMapFeature()),
     ),
     HomeToolEntry(
       id: 'real-estate',
