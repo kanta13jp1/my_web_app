@@ -491,7 +491,8 @@ void main() {
       expect(calendar.subscriptionTotal, 3712);
       expect(
         calendar.dayFor(DateTime(2026, 8, 17))!.events.where(
-            (event) => event.kind == AssetCalendarEventKind.subscription),
+              (event) => event.kind == AssetCalendarEventKind.subscription,
+            ),
         hasLength(1),
       );
       expect(calendar.dayFor(DateTime(2026, 8, 17))!.scheduledOutflow, 3712);
