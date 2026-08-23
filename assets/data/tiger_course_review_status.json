@@ -1,22 +1,22 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-23T09:32:26.830479+00:00",
+  "generated_at": "2026-08-23T14:31:15.338040+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
   "automation": {
     "id": "ai-2",
     "name": "AI大学講座の虎レビュー",
-    "status": "ACTIVE",
+    "status": "PAUSED",
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 3,
-    "eligible": 3,
-    "provisional": 2,
+    "total": 4,
+    "eligible": 4,
+    "provisional": 3,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 3,
+    "division_3": 4,
     "division_4": 0,
     "division_5": 0
   },
@@ -28,27 +28,27 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260823T175240+0900",
-    "started_at": "2026-08-23T17:54:10+09:00",
+    "cycle_id": "20260823T232120+0900",
+    "started_at": "2026-08-23T23:21:20+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-525273ba-539f-4dd4-b436-a6a74a5e8cc5",
+      "slug": "course-e1712bb5-2bca-4fc0-8347-0529513411d3",
       "url": "https://www.01.ai/"
     },
     "reviewer": {
       "seat": 9,
       "name": "平出 心",
-      "selection_score": 68.8967,
+      "selection_score": 74.9711,
       "division": 1,
-      "cycle_utility": 90.25,
-      "aggregate_utility": 85.5
+      "cycle_utility": 90.75,
+      "aggregate_utility": 88.12
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 2,
     "top_findings": [
       {
-        "summary": "『最新情報』講座として、確認日・主要差分・日付付き一次情報を結ぶ講座固有の要約がない。",
+        "summary": "『01.AI (Yi) とは』という講座名に対し、現在の会社・Yiモデル・WorldWise基盤・TrueNorth製品群の関係を日付付きで示す講座固有の導入マップがない。",
         "severity": "p1",
         "business_dimensions": [
           "trust_risk",
@@ -57,7 +57,7 @@
         ]
       },
       {
-        "summary": "最新情報を実務判断へ変換できたかを示す実在学習者の課題・成果証拠がない。",
+        "summary": "入門講座が会社・モデル・現行製品の区別に役立ったことを示す実在学習者の課題・完了・成果証拠がない。",
         "severity": "p2",
         "business_dimensions": [
           "market_demand",
@@ -68,8 +68,8 @@
     ],
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4734 追跡中",
-      "detail": "両指摘は公開講座データまたは外部教材の内容・計測設計に関わり、共有の低リスク自動修正境界と保護対象の制約を満たさない。",
+      "label": "未対策・Issue #4757 追跡中",
+      "detail": "両指摘は公開講座データまたは外部教材の内容・学習計測設計に関わり、共有の低リスク自動修正境界と保護対象の制約を満たさない。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
@@ -78,46 +78,107 @@
       "validation_messages": [
         "validate_roster.py: passed (125 profiles)",
         "validate_personas.py: passed (125 profiles)",
-        "public Data API catalog export: passed (active=1071, reviewable=526)",
+        "public Data API catalog export: passed (active=1072, reviewable=527)",
         "select_course.py: passed (division-5 excluded; deterministic winner preserved)",
         "target validation: passed (active row; HTTPS source; HTTP 200)",
-        "select_reviewer.py: passed once (125 profiles; seat 9)",
-        "course_review_issue.py --execute: passed (Issue #4734; cycle dedupe evidence recorded)",
+        "select_reviewer.py: selection JSON saved once (125 profiles; seat 9; stdout encoding warning did not alter output)",
+        "course_review_issue.py --execute: passed (Issue #4757; cycle dedupe evidence recorded)",
         "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; two proposals)",
-        "build_lane_status.py --lane course_review: passed (course-only status; latest cycle 20260823T175240+0900)",
-        "flutter test test/models/tiger_review_lane_status_test.dart: passed (4 tests)",
-        "deploy_lane_to_production.py --lane course_review --execute: passed (workflow 32629724865; public JSON equality verified)"
+        "build_lane_status.py --lane course_review: passed (course-only status; latest cycle 20260823T232120+0900)",
+        "flutter test --no-pub --concurrency=1 test/models/tiger_review_lane_status_test.dart: passed (5 tests)"
       ],
       "issue": {
-        "number": 4734,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4734",
-        "status": "existing",
-        "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260823T175240+0900:525273ba-539f-4dd4-b436-a6a74a5e8cc5"
+        "number": 4757,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4757",
+        "status": "created",
+        "github_state": null,
+        "dedupe_key": "tiger-course-review:20260823T232120+0900:e1712bb5-2bca-4fc0-8347-0529513411d3"
       },
-      "implementation": {
-        "commit_sha": "20b20d3ce18515752a09e11beb6efd32cee12e49",
-        "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32629724865",
-        "production_url": "https://my-web-app-b67f4.web.app/assets/assets/data/tiger_course_review_status.json",
-        "release_status": "passed"
-      },
+      "implementation": null,
       "findings_without_individual_trace": [
-        "course-latest-dated-synthesis",
-        "course-latest-learner-proof"
+        "course-intro-current-scope-map",
+        "course-intro-learner-outcome-proof"
       ]
     },
     "course": {
-      "content_id": "525273ba-539f-4dd4-b436-a6a74a5e8cc5",
+      "content_id": "e1712bb5-2bca-4fc0-8347-0529513411d3",
       "provider": "01ai",
-      "title": "01.AI (Yi) 最新情報",
+      "title": "01.AI (Yi) とは",
       "source_url": "https://www.01.ai/",
-      "reason": "fresh公開Data APIで有効かつHTTPS出典付きと確認し、公式サイトはHTTP 200で2026-08-10更新、会社年表は2026-07のTrueNorthと2026-01のWorldWise 2.5まで明示しているため、現在の事業・製品方向を把握する一次情報として有用である。一方、講座固有の学習目標、更新差分、演習はなく、ニュース一覧にも表示上の日付がないため『最新情報』を再現可能に学ぶ導線は弱い。実在学習者の成果・完了・評価証拠は観測できないため、learner_evidenceは中立50点とした。",
-      "cycle_utility": 65.1,
-      "aggregate_utility": 65.1,
+      "reason": "fresh公開Data APIで有効かつHTTPS出典付きと確認し、公式サイトはHTTP 200、Last-Modified 2026-08-10、会社年表は2026-07のTrueNorthまで更新されている。現行ページは企業AI変革、意思決定製品、産業別活用を具体的に示し、01.AIの現在像を把握する一次情報として実務性と独自性がある。一方、講座タイトルが中心に置くYiモデルと現在の製品体系の関係、学習目標、演習、到達確認は講座固有に示されず、入門としての明瞭性は限定的である。実在学習者の完了・課題・成果証拠は観測できないため、learner_evidenceは中立50点とした。",
+      "cycle_utility": 67.4,
+      "aggregate_utility": 67.4,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260823T232120+0900",
+      "started_at": "2026-08-23T23:21:20+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "e1712bb5-2bca-4fc0-8347-0529513411d3",
+        "title": "01.AI (Yi) とは",
+        "url": "https://www.01.ai/"
+      },
+      "reviewer": {
+        "seat": 9,
+        "name": "平出 心",
+        "selection_score": 74.9711
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "findings": [
+        {
+          "finding_id": "course-intro-current-scope-map",
+          "summary": "『01.AI (Yi) とは』という講座名に対し、現在の会社・Yiモデル・WorldWise基盤・TrueNorth製品群の関係を日付付きで示す講座固有の導入マップがない。",
+          "severity": "p1",
+          "suggested_action": "講座冒頭に確認日、会社、Yiモデル群、WorldWise基盤、TrueNorth製品群の4層マップと、学習後に説明できるべき3項目を追加する。"
+        },
+        {
+          "finding_id": "course-intro-learner-outcome-proof",
+          "summary": "入門講座が会社・モデル・現行製品の区別に役立ったことを示す実在学習者の課題・完了・成果証拠がない。",
+          "severity": "p2",
+          "suggested_action": "5分の分類課題と次に調べる公式ページを選ぶ到達確認を設け、匿名の完了率・初回正答率・受講後自己評価を集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4757 追跡中",
+        "detail": "両指摘は公開講座データまたは外部教材の内容・学習計測設計に関わり、共有の低リスク自動修正境界と保護対象の制約を満たさない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed (125 profiles)",
+          "validate_personas.py: passed (125 profiles)",
+          "public Data API catalog export: passed (active=1072, reviewable=527)",
+          "select_course.py: passed (division-5 excluded; deterministic winner preserved)",
+          "target validation: passed (active row; HTTPS source; HTTP 200)",
+          "select_reviewer.py: selection JSON saved once (125 profiles; seat 9; stdout encoding warning did not alter output)",
+          "course_review_issue.py --execute: passed (Issue #4757; cycle dedupe evidence recorded)",
+          "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; two proposals)",
+          "build_lane_status.py --lane course_review: passed (course-only status; latest cycle 20260823T232120+0900)",
+          "flutter test --no-pub --concurrency=1 test/models/tiger_review_lane_status_test.dart: passed (5 tests)"
+        ],
+        "issue": {
+          "number": 4757,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4757",
+          "status": "created",
+          "github_state": null,
+          "dedupe_key": "tiger-course-review:20260823T232120+0900:e1712bb5-2bca-4fc0-8347-0529513411d3"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-intro-current-scope-map",
+          "course-intro-learner-outcome-proof"
+        ]
+      }
+    },
     {
       "cycle_id": "20260823T175240+0900",
       "started_at": "2026-08-23T17:54:10+09:00",
@@ -459,6 +520,20 @@
     }
   ],
   "courses": [
+    {
+      "content_id": "e1712bb5-2bca-4fc0-8347-0529513411d3",
+      "provider": "01ai",
+      "title": "01.AI (Yi) とは",
+      "source_url": "https://www.01.ai/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 67.4,
+      "completed_cycles": 1,
+      "last_cycle_utility": 67.4,
+      "last_reviewed_at": "2026-08-23T14:21:20+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
     {
       "content_id": "525273ba-539f-4dd4-b436-a6a74a5e8cc5",
       "provider": "01ai",
