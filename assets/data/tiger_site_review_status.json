@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-23T12:56:34.020590+00:00",
+  "generated_at": "2026-08-23T13:00:09.176383+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "site_review",
   "publication_state": "latest_review",
@@ -78,7 +78,9 @@
         "flutter analyze --no-pub scoped whole-site and Tiger files: passed (11 items; 202.3s; no issues)",
         "review_issue.py --execute: passed (Issue #4755; cycle dedupe evidence recorded)",
         "validate_cycle_report.py: passed (schema 4; lane=site_review; one reviewer; seven proposals)",
-        "build_lane_status.py --lane site_review: passed (site-only status; six retained cycles; no unissued passed review_only record)"
+        "build_lane_status.py --lane site_review: passed (site-only status; six retained cycles; no unissued passed review_only record)",
+        "post-origin/main-merge Tiger lane model/page suite: passed (12 tests)",
+        "post-origin/main-merge flutter analyze --no-pub Tiger lane files: passed (3 items; 30.2s; no issues)"
       ],
       "issue": {
         "number": 4755,
@@ -181,7 +183,9 @@
           "flutter analyze --no-pub scoped whole-site and Tiger files: passed (11 items; 202.3s; no issues)",
           "review_issue.py --execute: passed (Issue #4755; cycle dedupe evidence recorded)",
           "validate_cycle_report.py: passed (schema 4; lane=site_review; one reviewer; seven proposals)",
-          "build_lane_status.py --lane site_review: passed (site-only status; six retained cycles; no unissued passed review_only record)"
+          "build_lane_status.py --lane site_review: passed (site-only status; six retained cycles; no unissued passed review_only record)",
+          "post-origin/main-merge Tiger lane model/page suite: passed (12 tests)",
+          "post-origin/main-merge flutter analyze --no-pub Tiger lane files: passed (3 items; 30.2s; no issues)"
         ],
         "issue": {
           "number": 4755,
