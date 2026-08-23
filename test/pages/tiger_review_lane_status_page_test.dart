@@ -135,8 +135,13 @@ void main() {
               ],
             ),
             profileLoader: () async => TigerReviewerProfileCatalog(
-              schemaVersion: 1,
+              schemaVersion: 2,
               snapshotDate: DateTime(2026, 8, 23),
+              enrichmentRound: 1,
+              averageProfileCompletenessPercent: 62.8,
+              averageReviewReflectionPercent: 68,
+              verifiedBirthDates: 1,
+              nextBatchNames: const <String>['追加調査が必要な虎'],
               profilesBySeat: <int, TigerReviewerProfile>{
                 21: TigerReviewerProfile(
                   seat: 21,
@@ -155,6 +160,14 @@ void main() {
                   birthDateSourceUrl: Uri.parse(
                     'https://reiwanotora.jp/tiger/endo-yuki/',
                   ),
+                  evidenceConfidence: 5,
+                  profileCompletenessPercent: 100,
+                  reviewReflectionPercent: 100,
+                  reviewReflectionMode: 'profile_guided',
+                  reviewApplicationRule: '確認済み観点を優先順位づけに反映します。',
+                  reviewFocusLabels: const <String>['市場需要', '収益モデル'],
+                  reviewQuestions: const <String>['実在する顧客は誰か。', '誰が何に支払うのか。'],
+                  nextResearchTargets: const <String>['最新肩書きの再確認'],
                 ),
               },
               disclaimer: '公開情報から構成したプロフィールです。',
@@ -164,7 +177,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('tiger-reviewer_league-21')));
+      final reviewerTile = find.byKey(
+        const Key('tiger-reviewer_league-21'),
+      );
+      await tester.scrollUntilVisible(
+        reviewerTile,
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(reviewerTile);
       await tester.pumpAndSettle();
 
       expect(find.text('36歳（2026年8月23日時点）'), findsOneWidget);
@@ -172,6 +193,11 @@ void main() {
       expect(find.text('学習塾、美容エステサロン、顧問事業'), findsOneWidget);
       expect(find.text('教育・スクール'), findsOneWidget);
       expect(find.text('出演 64回・出資 17回'), findsOneWidget);
+      expect(find.text('プロフィール拡充ループ 第1回'), findsOneWidget);
+      expect(find.text('100%（確認済みプロフィール観点を強く反映）'), findsOneWidget);
+      expect(find.text('市場需要・収益モデル'), findsOneWidget);
+      expect(find.text('• 実在する顧客は誰か。'), findsOneWidget);
+      expect(find.text('最新肩書きの再確認'), findsOneWidget);
       expect(find.byKey(const Key('tiger-profile-source-21')), findsOneWidget);
       expect(tester.takeException(), isNull);
     },

@@ -14,8 +14,13 @@ void main() {
       );
       final catalog = TigerReviewerProfileCatalog.fromJsonString(source);
 
-      expect(catalog.schemaVersion, 1);
+      expect(catalog.schemaVersion, 2);
       expect(catalog.profilesBySeat, hasLength(125));
+      expect(catalog.enrichmentRound, 2);
+      expect(catalog.averageProfileCompletenessPercent, greaterThan(0));
+      expect(catalog.averageReviewReflectionPercent, greaterThan(0));
+      expect(catalog.verifiedBirthDates, 2);
+      expect(catalog.nextBatchNames, hasLength(5));
       expect(catalog.profilesBySeat.keys.toSet(), hasLength(125));
       expect(
         catalog.profilesBySeat.values.every(
@@ -24,6 +29,10 @@ void main() {
               profile.companyRole.isNotEmpty &&
               profile.businessSummary.isNotEmpty &&
               profile.businessDomains.isNotEmpty &&
+              profile.profileCompletenessPercent > 0 &&
+              profile.reviewReflectionPercent > 0 &&
+              profile.reviewFocusLabels.isNotEmpty &&
+              profile.reviewQuestions.isNotEmpty &&
               profile.profileUrl?.hasScheme == true,
         ),
         isTrue,
@@ -43,6 +52,15 @@ void main() {
         final seat = standing['seat'] as int;
         expect(catalog.profilesBySeat[seat]?.name, standing['name']);
       }
+
+      final sengoku = catalog.profilesBySeat[118]!;
+      expect(sengoku.name, '仙石実');
+      expect(sengoku.ageLabel(DateTime(2026, 8, 23)), '52歳（2026年8月23日時点）');
+      expect(sengoku.companyRole, contains('代表'));
+      expect(sengoku.businessDomains, contains('法務・会計・士業'));
+      expect(sengoku.profileCompletenessPercent, 65);
+      expect(sengoku.reviewReflectionPercent, 50);
+      expect(sengoku.reviewReflectionMode, 'profile_balanced');
     },
   );
 
