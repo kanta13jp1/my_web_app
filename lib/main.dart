@@ -141,6 +141,7 @@ import 'package:my_web_app/pages/ai_university_faculty_select_page.dart';
 import 'package:my_web_app/pages/ai_university_department_select_page.dart';
 import 'package:my_web_app/pages/team_workspace_page.dart';
 import 'package:my_web_app/pages/ai_status_page.dart';
+import 'package:my_web_app/pages/tiger_review_status_page.dart';
 import 'package:my_web_app/pages/ai_provider_status_page.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/pages/asset_chat_history_page.dart';
@@ -1094,6 +1095,11 @@ Route<dynamic> generateAppRoute(
       );
     case '/ai-status':
       return MaterialPageRoute(builder: (_) => const AiStatusPage());
+    case '/tiger-review-status':
+      return MaterialPageRoute(
+        builder: (_) => const TigerReviewStatusPage(),
+        settings: const RouteSettings(name: TigerReviewStatusPage.routeName),
+      );
     case '/ai-provider-status':
       return MaterialPageRoute(
         builder: (_) => const AiProviderStatusPage(),

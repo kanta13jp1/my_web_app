@@ -306,6 +306,7 @@ const List<String> kAllAppRoutes = <String>[
   '/thought-anchor',
   '/thought-capture',
   '/thought-interrupt-diagnosis',
+  '/tiger-review-status',
   '/time-tracker',
   '/tokusho',
   '/tome-deck-studio',
