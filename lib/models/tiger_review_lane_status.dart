@@ -9,6 +9,7 @@ class TigerReviewLaneStatus {
     required this.automation,
     required this.pool,
     required this.latest,
+    required this.history,
     required this.entries,
     required this.disclaimer,
   });
@@ -20,6 +21,7 @@ class TigerReviewLaneStatus {
   final TigerLaneAutomation automation;
   final Map<String, dynamic> pool;
   final Map<String, dynamic>? latest;
+  final List<TigerReviewHistoryEntry> history;
   final List<Map<String, dynamic>> entries;
   final String disclaimer;
 
@@ -46,8 +48,9 @@ class TigerReviewLaneStatus {
     };
     final rawEntries = listKey == null ? const <dynamic>[] : json[listKey];
     return TigerReviewLaneStatus(
-      schemaVersion:
-          json['schema_version'] is int ? json['schema_version'] as int : 0,
+      schemaVersion: json['schema_version'] is int
+          ? json['schema_version'] as int
+          : 0,
       lane: lane,
       generatedAt: DateTime.tryParse(json['generated_at']?.toString() ?? ''),
       publicationState: json['publication_state']?.toString() ?? '',
@@ -58,13 +61,151 @@ class TigerReviewLaneStatus {
             ? json['latest_assignment']
             : json['latest_review'],
       ),
+      history: _list(
+        json['history'],
+      ).map(TigerReviewHistoryEntry.fromJson).toList(growable: false),
       entries: rawEntries is List
           ? rawEntries
-              .whereType<Map>()
-              .map((entry) => Map<String, dynamic>.from(entry))
-              .toList(growable: false)
+                .whereType<Map>()
+                .map((entry) => Map<String, dynamic>.from(entry))
+                .toList(growable: false)
           : const <Map<String, dynamic>>[],
       disclaimer: json['disclaimer']?.toString() ?? '',
+    );
+  }
+}
+
+class TigerReviewHistoryEntry {
+  const TigerReviewHistoryEntry({
+    required this.cycleId,
+    required this.startedAt,
+    required this.subject,
+    required this.reviewer,
+    required this.reviewStatus,
+    required this.validationStatus,
+    required this.findings,
+    required this.countermeasure,
+  });
+
+  final String cycleId;
+  final DateTime? startedAt;
+  final TigerReviewHistorySubject subject;
+  final TigerReviewHistoryReviewer reviewer;
+  final String reviewStatus;
+  final String validationStatus;
+  final List<TigerReviewHistoryFinding> findings;
+  final TigerCountermeasureTrace countermeasure;
+
+  factory TigerReviewHistoryEntry.fromJson(Map<String, dynamic> json) {
+    return TigerReviewHistoryEntry(
+      cycleId: json['cycle_id']?.toString() ?? '',
+      startedAt: DateTime.tryParse(json['started_at']?.toString() ?? ''),
+      subject: TigerReviewHistorySubject.fromJson(_map(json['subject'])),
+      reviewer: TigerReviewHistoryReviewer.fromJson(_map(json['reviewer'])),
+      reviewStatus: json['review_status']?.toString() ?? '',
+      validationStatus: json['validation_status']?.toString() ?? '',
+      findings: _list(
+        json['findings'],
+      ).map(TigerReviewHistoryFinding.fromJson).toList(growable: false),
+      countermeasure: TigerCountermeasureTrace.fromJson(
+        _map(json['countermeasure']),
+      ),
+    );
+  }
+}
+
+class TigerReviewHistorySubject {
+  const TigerReviewHistorySubject({
+    required this.kind,
+    required this.id,
+    required this.title,
+  });
+
+  final String kind;
+  final String id;
+  final String title;
+
+  factory TigerReviewHistorySubject.fromJson(Map<String, dynamic> json) {
+    return TigerReviewHistorySubject(
+      kind: json['kind']?.toString() ?? '',
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+    );
+  }
+}
+
+class TigerReviewHistoryReviewer {
+  const TigerReviewHistoryReviewer({required this.seat, required this.name});
+
+  final int? seat;
+  final String name;
+
+  factory TigerReviewHistoryReviewer.fromJson(Map<String, dynamic> json) {
+    return TigerReviewHistoryReviewer(
+      seat: json['seat'] is int ? json['seat'] as int : null,
+      name: json['name']?.toString() ?? '',
+    );
+  }
+}
+
+class TigerReviewHistoryFinding {
+  const TigerReviewHistoryFinding({
+    required this.id,
+    required this.summary,
+    required this.severity,
+    required this.suggestedAction,
+  });
+
+  final String id;
+  final String summary;
+  final String severity;
+  final String suggestedAction;
+
+  factory TigerReviewHistoryFinding.fromJson(Map<String, dynamic> json) {
+    return TigerReviewHistoryFinding(
+      id: json['finding_id']?.toString() ?? '',
+      summary: json['summary']?.toString() ?? '',
+      severity: json['severity']?.toString() ?? '',
+      suggestedAction: json['suggested_action']?.toString() ?? '',
+    );
+  }
+}
+
+class TigerCountermeasureTrace {
+  const TigerCountermeasureTrace({
+    required this.state,
+    required this.label,
+    required this.detail,
+    required this.summary,
+    required this.files,
+    required this.validationStatus,
+    required this.validationMessages,
+    required this.findingsWithoutIndividualTrace,
+  });
+
+  final String state;
+  final String label;
+  final String detail;
+  final String summary;
+  final List<String> files;
+  final String validationStatus;
+  final List<String> validationMessages;
+  final List<String> findingsWithoutIndividualTrace;
+
+  factory TigerCountermeasureTrace.fromJson(Map<String, dynamic> json) {
+    return TigerCountermeasureTrace(
+      state: json['state']?.toString() ?? 'unverified',
+      label: json['label']?.toString() ?? '対策状況を確認できません',
+      detail: json['detail']?.toString() ?? '',
+      summary: json['summary']?.toString() ?? '',
+      files: _list(json['files']).map((value) => value.toString()).toList(),
+      validationStatus: json['validation_status']?.toString() ?? '',
+      validationMessages: _list(
+        json['validation_messages'],
+      ).map((value) => value.toString()).toList(),
+      findingsWithoutIndividualTrace: _list(
+        json['findings_without_individual_trace'],
+      ).map((value) => value.toString()).toList(),
     );
   }
 }
@@ -98,4 +239,12 @@ Map<String, dynamic> _map(Object? value) {
 
 Map<String, dynamic>? _nullableMap(Object? value) {
   return value is Map ? Map<String, dynamic>.from(value) : null;
+}
+
+List<Map<String, dynamic>> _list(Object? value) {
+  if (value is! List) return const <Map<String, dynamic>>[];
+  return value
+      .whereType<Map>()
+      .map((item) => Map<String, dynamic>.from(item))
+      .toList(growable: false);
 }

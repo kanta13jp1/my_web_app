@@ -70,9 +70,9 @@ class TigerReviewHubPage extends StatelessWidget {
         children: <Widget>[
           Text(
             '4系統は独立して実行・集計・公開されます',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           const Text('各レビューは125名から現在の状況に合う虎1名だけを選出します。'),
@@ -95,11 +95,7 @@ class TigerReviewHubPage extends StatelessWidget {
 }
 
 class TigerReviewLaneStatusPage extends StatefulWidget {
-  const TigerReviewLaneStatusPage({
-    super.key,
-    required this.kind,
-    this.loader,
-  });
+  const TigerReviewLaneStatusPage({super.key, required this.kind, this.loader});
 
   final TigerReviewLane kind;
   final TigerLaneStatusLoader? loader;
@@ -218,13 +214,15 @@ class _LaneContent extends StatelessWidget {
                           if (status.pool.isNotEmpty)
                             const SizedBox(height: 12),
                           _LatestCard(kind: kind, latest: status.latest),
+                          if (status.history.isNotEmpty) ...<Widget>[
+                            const SizedBox(height: 18),
+                            _HistorySection(history: status.history),
+                          ],
                           if (status.entries.isNotEmpty) ...<Widget>[
                             const SizedBox(height: 18),
                             Text(
                               _entriesTitle(kind),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
+                              style: Theme.of(context).textTheme.titleLarge
                                   ?.copyWith(fontWeight: FontWeight.w800),
                             ),
                             const SizedBox(height: 8),
@@ -272,6 +270,157 @@ class _LaneContent extends StatelessWidget {
   }
 }
 
+class _HistorySection extends StatelessWidget {
+  const _HistorySection({required this.history});
+
+  final List<TigerReviewHistoryEntry> history;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              'レビュー履歴・対策トレース',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
+            Text('過去 ${history.length} 件。各指摘と、実施・検証の記録を確認できます。'),
+            const SizedBox(height: 8),
+            for (var index = 0; index < history.length; index++)
+              _HistoryEntry(
+                entry: history[index],
+                initiallyExpanded: index == 0,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HistoryEntry extends StatelessWidget {
+  const _HistoryEntry({required this.entry, required this.initiallyExpanded});
+
+  final TigerReviewHistoryEntry entry;
+  final bool initiallyExpanded;
+
+  @override
+  Widget build(BuildContext context) {
+    final subject = entry.subject.title.isNotEmpty
+        ? entry.subject.title
+        : entry.subject.id;
+    final reviewer = entry.reviewer.name.isEmpty
+        ? '担当虎の記録なし'
+        : '${entry.reviewer.name}（席 ${entry.reviewer.seat ?? '—'}）';
+    final trace = entry.countermeasure;
+    return ExpansionTile(
+      key: Key('tiger-history-entry-${entry.cycleId}'),
+      initiallyExpanded: initiallyExpanded,
+      tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+      title: Text(
+        '${_historyDate(entry.startedAt)} ${subject.isEmpty ? 'レビュー' : subject}',
+      ),
+      subtitle: Text('${trace.label}・$reviewer'),
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              _TraceBadge(trace: trace),
+              const SizedBox(height: 8),
+              Text(
+                'レビュー結果: ${entry.reviewStatus.isEmpty ? '—' : entry.reviewStatus} / 検証: ${entry.validationStatus.isEmpty ? '—' : entry.validationStatus}',
+              ),
+              if (trace.summary.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 6),
+                Text('実施内容: ${trace.summary}'),
+              ],
+              if (trace.files.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 6),
+                Text('変更ファイル: ${trace.files.join('、')}'),
+              ],
+              if (entry.findings.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 12),
+                Text(
+                  '指摘',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                ),
+                for (final finding in entry.findings) ...<Widget>[
+                  const SizedBox(height: 6),
+                  Text(
+                    '• ${finding.severity.toUpperCase()} ${finding.summary}',
+                  ),
+                  if (finding.suggestedAction.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12, top: 2),
+                      child: Text('対応案: ${finding.suggestedAction}'),
+                    ),
+                ],
+              ],
+              if (trace.findingsWithoutIndividualTrace.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 8),
+                Text(
+                  '個別の対応状況が未記録: ${trace.findingsWithoutIndividualTrace.join('、')}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+              if (trace.validationMessages.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 12),
+                Text(
+                  '検証記録',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                ),
+                for (final message in trace.validationMessages)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text('• $message'),
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TraceBadge extends StatelessWidget {
+  const _TraceBadge({required this.trace});
+
+  final TigerCountermeasureTrace trace;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = switch (trace.state) {
+      'implemented' => Colors.green,
+      'follow_up_required' => Colors.orange,
+      'blocked' => Colors.red,
+      _ => Colors.blueGrey,
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Chip(
+          avatar: Icon(Icons.track_changes_outlined, color: color),
+          label: Text(trace.label),
+        ),
+        if (trace.detail.isNotEmpty) Text(trace.detail),
+      ],
+    );
+  }
+}
+
 class _Hero extends StatelessWidget {
   const _Hero({required this.kind, required this.status});
 
@@ -296,8 +445,8 @@ class _Hero extends StatelessWidget {
                   child: Text(
                     kind.title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
                 Chip(label: Text(active ? '稼働中' : status.automation.status)),
@@ -355,9 +504,9 @@ class _Metric extends StatelessWidget {
           Text(label, style: Theme.of(context).textTheme.bodySmall),
           Text(
             value?.toString() ?? '—',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
           ),
         ],
       ),
@@ -462,12 +611,18 @@ class _StandingTile extends StatelessWidget {
 }
 
 String _entriesTitle(TigerReviewLane kind) => switch (kind) {
-      TigerReviewLane.reviewers => '虎レビュアー 1〜5部',
-      TigerReviewLane.courses => 'AI大学講座 1〜5部',
-      TigerReviewLane.features => '機能 1〜5部',
-      TigerReviewLane.site => '',
-    };
+  TigerReviewLane.reviewers => '虎レビュアー 1〜5部',
+  TigerReviewLane.courses => 'AI大学講座 1〜5部',
+  TigerReviewLane.features => '機能 1〜5部',
+  TigerReviewLane.site => '',
+};
 
 Map<String, dynamic> _asMap(Object? value) {
   return value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{};
+}
+
+String _historyDate(DateTime? value) {
+  if (value == null) return '日時不明';
+  final local = value.toLocal();
+  return '${local.year}/${local.month.toString().padLeft(2, '0')}/${local.day.toString().padLeft(2, '0')} ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
 }

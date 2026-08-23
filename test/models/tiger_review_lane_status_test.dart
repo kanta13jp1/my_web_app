@@ -25,6 +25,8 @@ void main() {
 
       expect(status.schemaVersion, 3);
       expect(status.lane, testCase.$2);
+      expect(status.history, isNotEmpty);
+      expect(status.history.first.countermeasure.label, isNotEmpty);
       if (testCase.$3 == 'reviewers') {
         expect(status.entries, hasLength(125));
       }

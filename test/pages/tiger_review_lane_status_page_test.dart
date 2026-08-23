@@ -87,11 +87,68 @@ void main() {
     expect(loadCount, 2);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('history shows findings and countermeasure trace', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.features,
+          loader: () async => _status(
+            lane: 'feature_review',
+            history: <TigerReviewHistoryEntry>[
+              TigerReviewHistoryEntry(
+                cycleId: 'cycle-1',
+                startedAt: DateTime.utc(2026, 8, 23, 9),
+                subject: const TigerReviewHistorySubject(
+                  kind: 'feature',
+                  id: 'home',
+                  title: 'ホーム',
+                ),
+                reviewer: const TigerReviewHistoryReviewer(
+                  seat: 7,
+                  name: '榊原 清一',
+                ),
+                reviewStatus: 'fixed',
+                validationStatus: 'passed',
+                findings: const <TigerReviewHistoryFinding>[
+                  TigerReviewHistoryFinding(
+                    id: 'loading-state',
+                    summary: '読み込み状態を通知する',
+                    severity: 'p1',
+                    suggestedAction: 'Semanticsを追加する',
+                  ),
+                ],
+                countermeasure: const TigerCountermeasureTrace(
+                  state: 'implemented',
+                  label: '対策実施・検証済み',
+                  detail: '個別の指摘IDとの紐付けも記録済みです。',
+                  summary: 'Semanticsを追加した。',
+                  files: <String>['lib/pages/home.dart'],
+                  validationStatus: 'passed',
+                  validationMessages: <String>['flutter test: passed'],
+                  findingsWithoutIndividualTrace: <String>[],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('レビュー履歴・対策トレース'), findsOneWidget);
+    expect(find.text('対策実施・検証済み'), findsOneWidget);
+    expect(find.textContaining('読み込み状態を通知する'), findsOneWidget);
+    expect(find.textContaining('flutter test: passed'), findsOneWidget);
+  });
 }
 
 TigerReviewLaneStatus _status({
   required String lane,
   List<Map<String, dynamic>> entries = const <Map<String, dynamic>>[],
+  List<TigerReviewHistoryEntry> history = const <TigerReviewHistoryEntry>[],
 }) {
   return TigerReviewLaneStatus(
     schemaVersion: 3,
@@ -114,6 +171,7 @@ TigerReviewLaneStatus _status({
       'division_5': 0,
     },
     latest: null,
+    history: history,
     entries: entries,
     disclaimer: 'simulation',
   );
