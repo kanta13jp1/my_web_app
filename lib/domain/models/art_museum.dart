@@ -84,9 +84,7 @@ enum JapanRegion {
   bool contains(String prefecture) => prefectures.contains(prefecture);
 
   static JapanRegion forPrefecture(String prefecture) {
-    return JapanRegion.values
-        .skip(1)
-        .firstWhere(
+    return JapanRegion.values.skip(1).firstWhere(
           (region) => region.contains(prefecture),
           orElse: () => JapanRegion.all,
         );
