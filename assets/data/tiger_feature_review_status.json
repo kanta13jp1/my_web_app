@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-23T09:23:35.976451+00:00",
+  "generated_at": "2026-08-23T09:32:26.830479+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -76,6 +76,38 @@
         ]
       }
     ],
+    "countermeasure": {
+      "state": "production_verified",
+      "label": "本番対策済み",
+      "detail": "変更・検証・本番反映の証拠が記録されています。",
+      "summary": "",
+      "files": [
+        "lib/pages/gemini_university_v2_page.dart",
+        "test/pages/gemini_university_loading_semantics_test.dart"
+      ],
+      "lines_changed": 30,
+      "resolved_finding_ids": [
+        "ai-university-loading-semantics"
+      ],
+      "validation_status": "passed",
+      "validation_messages": [
+        "passed: 1 test",
+        "passed: No issues found",
+        "passed: 0 files changed",
+        "passed"
+      ],
+      "issue": {},
+      "implementation": {
+        "commit_sha": "087271567f2312c718f9695d0a81c51de07f5888",
+        "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32628679913",
+        "production_url": "https://my-web-app-b67f4.web.app/",
+        "release_status": "passed"
+      },
+      "findings_without_individual_trace": [
+        "ai-university-cold-entry-latency",
+        "ai-university-monolith-test-cost"
+      ]
+    },
     "feature": {
       "slug": "ai_university",
       "title": "AI大学入口ページ",
@@ -102,7 +134,7 @@
         "name": "野口 功司",
         "selection_score": 78.0406
       },
-      "status": "implemented",
+      "status": "production_verified",
       "review_status": "fixed",
       "validation_status": "passed",
       "findings": [
@@ -126,16 +158,18 @@
         }
       ],
       "countermeasure": {
-        "state": "implemented",
-        "label": "対策実施・検証済み",
-        "detail": "修正は記録されていますが、個別の指摘IDとの紐付けは記録されていません。",
+        "state": "production_verified",
+        "label": "本番対策済み",
+        "detail": "変更・検証・本番反映の証拠が記録されています。",
         "summary": "",
         "files": [
           "lib/pages/gemini_university_v2_page.dart",
           "test/pages/gemini_university_loading_semantics_test.dart"
         ],
         "lines_changed": 30,
-        "resolved_finding_ids": [],
+        "resolved_finding_ids": [
+          "ai-university-loading-semantics"
+        ],
         "validation_status": "passed",
         "validation_messages": [
           "passed: 1 test",
@@ -143,8 +177,14 @@
           "passed: 0 files changed",
           "passed"
         ],
+        "issue": {},
+        "implementation": {
+          "commit_sha": "087271567f2312c718f9695d0a81c51de07f5888",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32628679913",
+          "production_url": "https://my-web-app-b67f4.web.app/",
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
-          "ai-university-loading-semantics",
           "ai-university-cold-entry-latency",
           "ai-university-monolith-test-cost"
         ]
@@ -189,6 +229,8 @@
           "passed: No issues found",
           "failed: browser test did not finish loading and exited 1"
         ],
+        "issue": {},
+        "implementation": null,
         "findings_without_individual_trace": [
           "home-route-surface-alignment"
         ]
@@ -209,7 +251,7 @@
         "name": "榊󠄀原 清一",
         "selection_score": 74.4337
       },
-      "status": "follow_up_required",
+      "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
       "findings": [
@@ -233,8 +275,8 @@
         }
       ],
       "countermeasure": {
-        "state": "follow_up_required",
-        "label": "未実施（フォローアップが必要）",
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4739 追跡中",
         "detail": "3件はいずれも再現可能な証拠を持つが、公開比較主張、分析データ、または大規模な構造変更に関わる。安全な自動修正、低リスク、3ファイル・200行以内の全条件を満たす変更はない。",
         "summary": "",
         "files": [],
@@ -251,6 +293,14 @@
           "01.AI source URL inspection: reachable; only generic documentation navigation was observable",
           "comparison source and test filename inspection: completed"
         ],
+        "issue": {
+          "number": 4739,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4739",
+          "status": "existing",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison"
+        },
+        "implementation": null,
         "findings_without_individual_trace": [
           "comparison-claim-evidence",
           "comparison-funnel-evidence",
@@ -273,7 +323,7 @@
         "name": "ドラゴン細井",
         "selection_score": 79.5059
       },
-      "status": "follow_up_required",
+      "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
       "findings": [
@@ -297,8 +347,8 @@
         }
       ],
       "countermeasure": {
-        "state": "follow_up_required",
-        "label": "未実施（フォローアップが必要）",
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4738 追跡中",
         "detail": "3件はいずれも証拠に基づくが、講座運用・計測設計または利用データを要し、低リスク自動修正の条件を満たす変更はない。",
         "summary": "",
         "files": [],
@@ -314,6 +364,14 @@
           "select_course.py: passed",
           "AI University browser inspection: blocked by browser URL safety policy; no workaround attempted"
         ],
+        "issue": {
+          "number": 4738,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4738",
+          "status": "existing",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university"
+        },
+        "implementation": null,
         "findings_without_individual_trace": [
           "course-freshness-review",
           "course-outcome-evidence",
@@ -350,14 +408,16 @@
       "countermeasure": {
         "state": "implemented",
         "label": "対策実施・検証済み",
-        "detail": "修正は記録されていますが、個別の指摘IDとの紐付けは記録されていません。",
+        "detail": "個別の指摘IDとの紐付けも記録済みです。",
         "summary": "主カタログに安定順序のページングを追加し、回帰契約テストを更新した。",
         "files": [
           "lib/pages/gemini_university_v2_page.dart",
           "test/pages/ai_university_published_video_fetch_contract_test.dart"
         ],
         "lines_changed": 27,
-        "resolved_finding_ids": [],
+        "resolved_finding_ids": [
+          "ai_university_catalog_pagination"
+        ],
         "validation_status": "passed",
         "validation_messages": [
           "validate_roster.py: passed",
@@ -365,9 +425,9 @@
           "flutter test test/pages/ai_university_published_video_fetch_contract_test.dart: passed",
           "dart analyze changed files: passed"
         ],
-        "findings_without_individual_trace": [
-          "ai_university_catalog_pagination"
-        ]
+        "issue": {},
+        "implementation": null,
+        "findings_without_individual_trace": []
       }
     },
     {
@@ -404,6 +464,8 @@
           "course catalog export: unavailable",
           "worktree fast-forward: unavailable"
         ],
+        "issue": {},
+        "implementation": null,
         "findings_without_individual_trace": []
       }
     }

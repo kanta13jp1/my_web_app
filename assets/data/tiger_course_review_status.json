@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-23T09:23:35.976451+00:00",
+  "generated_at": "2026-08-23T09:32:26.830479+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -66,6 +66,46 @@
         ]
       }
     ],
+    "countermeasure": {
+      "state": "issue_tracking",
+      "label": "未対策・Issue #4734 追跡中",
+      "detail": "両指摘は公開講座データまたは外部教材の内容・計測設計に関わり、共有の低リスク自動修正境界と保護対象の制約を満たさない。",
+      "summary": "",
+      "files": [],
+      "lines_changed": 0,
+      "resolved_finding_ids": [],
+      "validation_status": "passed",
+      "validation_messages": [
+        "validate_roster.py: passed (125 profiles)",
+        "validate_personas.py: passed (125 profiles)",
+        "public Data API catalog export: passed (active=1071, reviewable=526)",
+        "select_course.py: passed (division-5 excluded; deterministic winner preserved)",
+        "target validation: passed (active row; HTTPS source; HTTP 200)",
+        "select_reviewer.py: passed once (125 profiles; seat 9)",
+        "course_review_issue.py --execute: passed (Issue #4734; cycle dedupe evidence recorded)",
+        "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; two proposals)",
+        "build_lane_status.py --lane course_review: passed (course-only status; latest cycle 20260823T175240+0900)",
+        "flutter test test/models/tiger_review_lane_status_test.dart: passed (4 tests)",
+        "deploy_lane_to_production.py --lane course_review --execute: passed (workflow 32629724865; public JSON equality verified)"
+      ],
+      "issue": {
+        "number": 4734,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4734",
+        "status": "existing",
+        "github_state": "OPEN",
+        "dedupe_key": "tiger-course-review:20260823T175240+0900:525273ba-539f-4dd4-b436-a6a74a5e8cc5"
+      },
+      "implementation": {
+        "commit_sha": "20b20d3ce18515752a09e11beb6efd32cee12e49",
+        "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32629724865",
+        "production_url": "https://my-web-app-b67f4.web.app/assets/assets/data/tiger_course_review_status.json",
+        "release_status": "passed"
+      },
+      "findings_without_individual_trace": [
+        "course-latest-dated-synthesis",
+        "course-latest-learner-proof"
+      ]
+    },
     "course": {
       "content_id": "525273ba-539f-4dd4-b436-a6a74a5e8cc5",
       "provider": "01ai",
@@ -93,7 +133,7 @@
         "name": "平出 心",
         "selection_score": 68.8967
       },
-      "status": "follow_up_required",
+      "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
       "findings": [
@@ -111,8 +151,8 @@
         }
       ],
       "countermeasure": {
-        "state": "follow_up_required",
-        "label": "未実施（フォローアップが必要）",
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4734 追跡中",
         "detail": "両指摘は公開講座データまたは外部教材の内容・計測設計に関わり、共有の低リスク自動修正境界と保護対象の制約を満たさない。",
         "summary": "",
         "files": [],
@@ -132,6 +172,19 @@
           "flutter test test/models/tiger_review_lane_status_test.dart: passed (4 tests)",
           "deploy_lane_to_production.py --lane course_review --execute: passed (workflow 32629724865; public JSON equality verified)"
         ],
+        "issue": {
+          "number": 4734,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4734",
+          "status": "existing",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260823T175240+0900:525273ba-539f-4dd4-b436-a6a74a5e8cc5"
+        },
+        "implementation": {
+          "commit_sha": "20b20d3ce18515752a09e11beb6efd32cee12e49",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32629724865",
+          "production_url": "https://my-web-app-b67f4.web.app/assets/assets/data/tiger_course_review_status.json",
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-latest-dated-synthesis",
           "course-latest-learner-proof"
@@ -153,7 +206,7 @@
         "name": "迫 佑樹",
         "selection_score": 73.0376
       },
-      "status": "follow_up_required",
+      "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
       "findings": [
@@ -171,8 +224,8 @@
         }
       ],
       "countermeasure": {
-        "state": "follow_up_required",
-        "label": "未実施（フォローアップが必要）",
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4737 追跡中",
         "detail": "両指摘とも公開講座データまたは外部教材の内容・計測設計に関わり、共有の低リスク自動修正境界を満たさない。",
         "summary": "",
         "files": [],
@@ -191,6 +244,19 @@
           "flutter test test/models/tiger_review_lane_status_test.dart: passed (4 tests)",
           "deploy_lane_to_production.py --lane course_review --execute: passed (workflow 32627164504; public JSON equality verified)"
         ],
+        "issue": {
+          "number": 4737,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4737",
+          "status": "existing",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260823T165404+0900:22befb67-6147-4a4b-999c-ee1ad6fa9615"
+        },
+        "implementation": {
+          "commit_sha": "18eedc47ea0769b871ba191b7ff9162252afb8f3",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32627164504",
+          "production_url": "https://my-web-app-b67f4.web.app/assets/assets/data/tiger_course_review_status.json",
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-model-list-freshness",
           "course-model-list-learner-proof"
@@ -212,7 +278,7 @@
         "name": "榊󠄀原 清一",
         "selection_score": 74.4337
       },
-      "status": "follow_up_required",
+      "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
       "findings": [
@@ -236,8 +302,8 @@
         }
       ],
       "countermeasure": {
-        "state": "follow_up_required",
-        "label": "未実施（フォローアップが必要）",
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4739 追跡中",
         "detail": "3件はいずれも再現可能な証拠を持つが、公開比較主張、分析データ、または大規模な構造変更に関わる。安全な自動修正、低リスク、3ファイル・200行以内の全条件を満たす変更はない。",
         "summary": "",
         "files": [],
@@ -254,6 +320,14 @@
           "01.AI source URL inspection: reachable; only generic documentation navigation was observable",
           "comparison source and test filename inspection: completed"
         ],
+        "issue": {
+          "number": 4739,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4739",
+          "status": "existing",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison"
+        },
+        "implementation": null,
         "findings_without_individual_trace": [
           "comparison-claim-evidence",
           "comparison-funnel-evidence",
@@ -276,7 +350,7 @@
         "name": "ドラゴン細井",
         "selection_score": 79.5059
       },
-      "status": "follow_up_required",
+      "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
       "findings": [
@@ -300,8 +374,8 @@
         }
       ],
       "countermeasure": {
-        "state": "follow_up_required",
-        "label": "未実施（フォローアップが必要）",
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4738 追跡中",
         "detail": "3件はいずれも証拠に基づくが、講座運用・計測設計または利用データを要し、低リスク自動修正の条件を満たす変更はない。",
         "summary": "",
         "files": [],
@@ -317,6 +391,14 @@
           "select_course.py: passed",
           "AI University browser inspection: blocked by browser URL safety policy; no workaround attempted"
         ],
+        "issue": {
+          "number": 4738,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4738",
+          "status": "existing",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university"
+        },
+        "implementation": null,
         "findings_without_individual_trace": [
           "course-freshness-review",
           "course-outcome-evidence",
@@ -353,14 +435,16 @@
       "countermeasure": {
         "state": "implemented",
         "label": "対策実施・検証済み",
-        "detail": "修正は記録されていますが、個別の指摘IDとの紐付けは記録されていません。",
+        "detail": "個別の指摘IDとの紐付けも記録済みです。",
         "summary": "主カタログに安定順序のページングを追加し、回帰契約テストを更新した。",
         "files": [
           "lib/pages/gemini_university_v2_page.dart",
           "test/pages/ai_university_published_video_fetch_contract_test.dart"
         ],
         "lines_changed": 27,
-        "resolved_finding_ids": [],
+        "resolved_finding_ids": [
+          "ai_university_catalog_pagination"
+        ],
         "validation_status": "passed",
         "validation_messages": [
           "validate_roster.py: passed",
@@ -368,9 +452,9 @@
           "flutter test test/pages/ai_university_published_video_fetch_contract_test.dart: passed",
           "dart analyze changed files: passed"
         ],
-        "findings_without_individual_trace": [
-          "ai_university_catalog_pagination"
-        ]
+        "issue": {},
+        "implementation": null,
+        "findings_without_individual_trace": []
       }
     }
   ],

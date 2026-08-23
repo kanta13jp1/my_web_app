@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/tiger_review_lane_status.dart';
 
@@ -222,7 +223,9 @@ class _LaneContent extends StatelessWidget {
                             const SizedBox(height: 18),
                             Text(
                               _entriesTitle(kind),
-                              style: Theme.of(context).textTheme.titleLarge
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
                                   ?.copyWith(fontWeight: FontWeight.w800),
                             ),
                             const SizedBox(height: 8),
@@ -312,9 +315,8 @@ class _HistoryEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subject = entry.subject.title.isNotEmpty
-        ? entry.subject.title
-        : entry.subject.id;
+    final subject =
+        entry.subject.title.isNotEmpty ? entry.subject.title : entry.subject.id;
     final reviewer = entry.reviewer.name.isEmpty
         ? '担当虎の記録なし'
         : '${entry.reviewer.name}（席 ${entry.reviewer.seat ?? '—'}）';
@@ -345,6 +347,22 @@ class _HistoryEntry extends StatelessWidget {
               if (trace.files.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 6),
                 Text('変更ファイル: ${trace.files.join('、')}'),
+              ],
+              if (trace.implementation case final implementation?) ...<Widget>[
+                if (implementation.commitSha.isNotEmpty) ...<Widget>[
+                  const SizedBox(height: 6),
+                  Text(
+                    '${_releasePrefix(trace)}コミット: ${implementation.commitSha}',
+                  ),
+                ],
+                if (implementation.workflowRun.isNotEmpty)
+                  Text(
+                    '${_releasePrefix(trace)}workflow: ${implementation.workflowRun}',
+                  ),
+              ],
+              if (trace.issue case final issue?) ...<Widget>[
+                const SizedBox(height: 8),
+                _IssueLink(issue: issue),
               ],
               if (entry.findings.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 12),
@@ -395,6 +413,12 @@ class _HistoryEntry extends StatelessWidget {
   }
 }
 
+String _releasePrefix(TigerCountermeasureTrace trace) {
+  return trace.state == 'implemented' || trace.state == 'production_verified'
+      ? '対策反映'
+      : 'レビュー公開';
+}
+
 class _TraceBadge extends StatelessWidget {
   const _TraceBadge({required this.trace});
 
@@ -403,8 +427,10 @@ class _TraceBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (trace.state) {
+      'production_verified' => Colors.green,
       'implemented' => Colors.green,
-      'follow_up_required' => Colors.orange,
+      'issue_tracking' || 'follow_up_issued' => Colors.orange,
+      'missing_issue' || 'issue_required' => Colors.red,
       'blocked' => Colors.red,
       _ => Colors.blueGrey,
     };
@@ -417,6 +443,32 @@ class _TraceBadge extends StatelessWidget {
         ),
         if (trace.detail.isNotEmpty) Text(trace.detail),
       ],
+    );
+  }
+}
+
+class _IssueLink extends StatelessWidget {
+  const _IssueLink({required this.issue});
+
+  final TigerFollowUpIssue issue;
+
+  @override
+  Widget build(BuildContext context) {
+    final number = issue.number;
+    final url = issue.url;
+    if (number == null || url == null || !url.hasScheme) {
+      return const Text('Issue情報の形式を確認できません。');
+    }
+    final stateLabel = issue.isOpen
+        ? '未対策・追跡中'
+        : issue.isClosed
+            ? '終了・対策確認待ち'
+            : '状態確認待ち';
+    return OutlinedButton.icon(
+      key: Key('tiger-review-issue-$number'),
+      onPressed: () => launchUrl(url, mode: LaunchMode.externalApplication),
+      icon: const Icon(Icons.open_in_new, size: 18),
+      label: Text('Issue #$numberを開く（$stateLabel）'),
     );
   }
 }
@@ -445,8 +497,8 @@ class _Hero extends StatelessWidget {
                   child: Text(
                     kind.title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
+                          fontWeight: FontWeight.w900,
+                        ),
                   ),
                 ),
                 Chip(label: Text(active ? '稼働中' : status.automation.status)),
@@ -611,11 +663,11 @@ class _StandingTile extends StatelessWidget {
 }
 
 String _entriesTitle(TigerReviewLane kind) => switch (kind) {
-  TigerReviewLane.reviewers => '虎レビュアー 1〜5部',
-  TigerReviewLane.courses => 'AI大学講座 1〜5部',
-  TigerReviewLane.features => '機能 1〜5部',
-  TigerReviewLane.site => '',
-};
+      TigerReviewLane.reviewers => '虎レビュアー 1〜5部',
+      TigerReviewLane.courses => 'AI大学講座 1〜5部',
+      TigerReviewLane.features => '機能 1〜5部',
+      TigerReviewLane.site => '',
+    };
 
 Map<String, dynamic> _asMap(Object? value) {
   return value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{};

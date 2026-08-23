@@ -120,7 +120,7 @@ void main() {
                     suggestedAction: 'Semanticsを追加する',
                   ),
                 ],
-                countermeasure: const TigerCountermeasureTrace(
+                countermeasure: TigerCountermeasureTrace(
                   state: 'implemented',
                   label: '対策実施・検証済み',
                   detail: '個別の指摘IDとの紐付けも記録済みです。',
@@ -129,6 +129,14 @@ void main() {
                   validationStatus: 'passed',
                   validationMessages: <String>['flutter test: passed'],
                   findingsWithoutIndividualTrace: <String>[],
+                  issue: TigerFollowUpIssue(
+                    number: 4734,
+                    url: Uri.parse(
+                      'https://github.com/kanta13jp1/my_web_app/issues/4734',
+                    ),
+                    githubState: 'OPEN',
+                  ),
+                  implementation: null,
                 ),
               ),
             ],
@@ -142,6 +150,7 @@ void main() {
     expect(find.text('対策実施・検証済み'), findsOneWidget);
     expect(find.textContaining('読み込み状態を通知する'), findsOneWidget);
     expect(find.textContaining('flutter test: passed'), findsOneWidget);
+    expect(find.byKey(const Key('tiger-review-issue-4734')), findsOneWidget);
   });
 }
 

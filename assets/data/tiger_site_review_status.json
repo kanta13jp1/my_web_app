@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-23T09:23:35.976451+00:00",
+  "generated_at": "2026-08-23T09:32:26.830479+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "site_review",
   "publication_state": "latest_review",
@@ -55,7 +55,40 @@
           "founder_execution"
         ]
       }
-    ]
+    ],
+    "countermeasure": {
+      "state": "issue_tracking",
+      "label": "未対策・Issue #4739 追跡中",
+      "detail": "3件はいずれも再現可能な証拠を持つが、公開比較主張、分析データ、または大規模な構造変更に関わる。安全な自動修正、低リスク、3ファイル・200行以内の全条件を満たす変更はない。",
+      "summary": "",
+      "files": [],
+      "lines_changed": 0,
+      "resolved_finding_ids": [],
+      "validation_status": "passed",
+      "validation_messages": [
+        "validate_roster.py: passed",
+        "validate_personas.py: passed",
+        "select_feature.py: passed (13 features)",
+        "select_reviewer.py: passed (125 profiles; JSON output saved)",
+        "public Data API catalog export: passed (active=1071, reviewable=526, excluded source URL=536)",
+        "select_course.py: passed",
+        "01.AI source URL inspection: reachable; only generic documentation navigation was observable",
+        "comparison source and test filename inspection: completed"
+      ],
+      "issue": {
+        "number": 4739,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4739",
+        "status": "existing",
+        "github_state": "OPEN",
+        "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison"
+      },
+      "implementation": null,
+      "findings_without_individual_trace": [
+        "comparison-claim-evidence",
+        "comparison-funnel-evidence",
+        "comparison-maintainability"
+      ]
+    }
   },
   "history": [
     {
@@ -73,7 +106,7 @@
         "name": "榊󠄀原 清一",
         "selection_score": 74.4337
       },
-      "status": "follow_up_required",
+      "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
       "findings": [
@@ -97,8 +130,8 @@
         }
       ],
       "countermeasure": {
-        "state": "follow_up_required",
-        "label": "未実施（フォローアップが必要）",
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4739 追跡中",
         "detail": "3件はいずれも再現可能な証拠を持つが、公開比較主張、分析データ、または大規模な構造変更に関わる。安全な自動修正、低リスク、3ファイル・200行以内の全条件を満たす変更はない。",
         "summary": "",
         "files": [],
@@ -115,6 +148,14 @@
           "01.AI source URL inspection: reachable; only generic documentation navigation was observable",
           "comparison source and test filename inspection: completed"
         ],
+        "issue": {
+          "number": 4739,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4739",
+          "status": "existing",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison"
+        },
+        "implementation": null,
         "findings_without_individual_trace": [
           "comparison-claim-evidence",
           "comparison-funnel-evidence",
@@ -137,7 +178,7 @@
         "name": "ドラゴン細井",
         "selection_score": 79.5059
       },
-      "status": "follow_up_required",
+      "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
       "findings": [
@@ -161,8 +202,8 @@
         }
       ],
       "countermeasure": {
-        "state": "follow_up_required",
-        "label": "未実施（フォローアップが必要）",
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4738 追跡中",
         "detail": "3件はいずれも証拠に基づくが、講座運用・計測設計または利用データを要し、低リスク自動修正の条件を満たす変更はない。",
         "summary": "",
         "files": [],
@@ -178,6 +219,14 @@
           "select_course.py: passed",
           "AI University browser inspection: blocked by browser URL safety policy; no workaround attempted"
         ],
+        "issue": {
+          "number": 4738,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4738",
+          "status": "existing",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university"
+        },
+        "implementation": null,
         "findings_without_individual_trace": [
           "course-freshness-review",
           "course-outcome-evidence",
@@ -214,14 +263,16 @@
       "countermeasure": {
         "state": "implemented",
         "label": "対策実施・検証済み",
-        "detail": "修正は記録されていますが、個別の指摘IDとの紐付けは記録されていません。",
+        "detail": "個別の指摘IDとの紐付けも記録済みです。",
         "summary": "主カタログに安定順序のページングを追加し、回帰契約テストを更新した。",
         "files": [
           "lib/pages/gemini_university_v2_page.dart",
           "test/pages/ai_university_published_video_fetch_contract_test.dart"
         ],
         "lines_changed": 27,
-        "resolved_finding_ids": [],
+        "resolved_finding_ids": [
+          "ai_university_catalog_pagination"
+        ],
         "validation_status": "passed",
         "validation_messages": [
           "validate_roster.py: passed",
@@ -229,9 +280,9 @@
           "flutter test test/pages/ai_university_published_video_fetch_contract_test.dart: passed",
           "dart analyze changed files: passed"
         ],
-        "findings_without_individual_trace": [
-          "ai_university_catalog_pagination"
-        ]
+        "issue": {},
+        "implementation": null,
+        "findings_without_individual_trace": []
       }
     },
     {
@@ -268,6 +319,8 @@
           "course catalog export: unavailable",
           "worktree fast-forward: unavailable"
         ],
+        "issue": {},
+        "implementation": null,
         "findings_without_individual_trace": []
       }
     }

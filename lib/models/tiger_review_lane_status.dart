@@ -48,9 +48,8 @@ class TigerReviewLaneStatus {
     };
     final rawEntries = listKey == null ? const <dynamic>[] : json[listKey];
     return TigerReviewLaneStatus(
-      schemaVersion: json['schema_version'] is int
-          ? json['schema_version'] as int
-          : 0,
+      schemaVersion:
+          json['schema_version'] is int ? json['schema_version'] as int : 0,
       lane: lane,
       generatedAt: DateTime.tryParse(json['generated_at']?.toString() ?? ''),
       publicationState: json['publication_state']?.toString() ?? '',
@@ -66,9 +65,9 @@ class TigerReviewLaneStatus {
       ).map(TigerReviewHistoryEntry.fromJson).toList(growable: false),
       entries: rawEntries is List
           ? rawEntries
-                .whereType<Map>()
-                .map((entry) => Map<String, dynamic>.from(entry))
-                .toList(growable: false)
+              .whereType<Map>()
+              .map((entry) => Map<String, dynamic>.from(entry))
+              .toList(growable: false)
           : const <Map<String, dynamic>>[],
       disclaimer: json['disclaimer']?.toString() ?? '',
     );
@@ -181,6 +180,8 @@ class TigerCountermeasureTrace {
     required this.validationStatus,
     required this.validationMessages,
     required this.findingsWithoutIndividualTrace,
+    required this.issue,
+    required this.implementation,
   });
 
   final String state;
@@ -191,6 +192,8 @@ class TigerCountermeasureTrace {
   final String validationStatus;
   final List<String> validationMessages;
   final List<String> findingsWithoutIndividualTrace;
+  final TigerFollowUpIssue? issue;
+  final TigerReviewImplementation? implementation;
 
   factory TigerCountermeasureTrace.fromJson(Map<String, dynamic> json) {
     return TigerCountermeasureTrace(
@@ -206,6 +209,55 @@ class TigerCountermeasureTrace {
       findingsWithoutIndividualTrace: _list(
         json['findings_without_individual_trace'],
       ).map((value) => value.toString()).toList(),
+      issue: _followUpIssue(json['issue']),
+      implementation: _implementation(json['implementation']),
+    );
+  }
+}
+
+class TigerFollowUpIssue {
+  const TigerFollowUpIssue({
+    required this.number,
+    required this.url,
+    required this.githubState,
+  });
+
+  final int? number;
+  final Uri? url;
+  final String githubState;
+
+  bool get isOpen => githubState.toUpperCase() == 'OPEN';
+  bool get isClosed => githubState.toUpperCase() == 'CLOSED';
+
+  factory TigerFollowUpIssue.fromJson(Map<String, dynamic> json) {
+    return TigerFollowUpIssue(
+      number: json['number'] is int ? json['number'] as int : null,
+      url: Uri.tryParse(json['url']?.toString() ?? ''),
+      githubState:
+          (json['github_state'] ?? json['issue_state'])?.toString() ?? '',
+    );
+  }
+}
+
+class TigerReviewImplementation {
+  const TigerReviewImplementation({
+    required this.commitSha,
+    required this.workflowRun,
+    required this.productionUrl,
+    required this.releaseStatus,
+  });
+
+  final String commitSha;
+  final String workflowRun;
+  final Uri? productionUrl;
+  final String releaseStatus;
+
+  factory TigerReviewImplementation.fromJson(Map<String, dynamic> json) {
+    return TigerReviewImplementation(
+      commitSha: json['commit_sha']?.toString() ?? '',
+      workflowRun: json['workflow_run']?.toString() ?? '',
+      productionUrl: Uri.tryParse(json['production_url']?.toString() ?? ''),
+      releaseStatus: json['release_status']?.toString() ?? '',
     );
   }
 }
@@ -247,4 +299,14 @@ List<Map<String, dynamic>> _list(Object? value) {
       .whereType<Map>()
       .map((item) => Map<String, dynamic>.from(item))
       .toList(growable: false);
+}
+
+TigerFollowUpIssue? _followUpIssue(Object? value) {
+  final data = _nullableMap(value);
+  return data == null ? null : TigerFollowUpIssue.fromJson(data);
+}
+
+TigerReviewImplementation? _implementation(Object? value) {
+  final data = _nullableMap(value);
+  return data == null ? null : TigerReviewImplementation.fromJson(data);
 }
