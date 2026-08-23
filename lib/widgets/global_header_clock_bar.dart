@@ -9,6 +9,12 @@ import '../pages/release_notes_page.dart';
 class GlobalHeaderClockShell extends StatelessWidget {
   final Widget child;
 
+  /// 公開ページでは内部アプリ向けの時計・ビルド情報を表示しない。
+  ///
+  /// 既定値は既存の認証済み画面と単体利用を壊さないため `true` のままにし、
+  /// アプリ直下で認証状態に応じて明示的に切り替える。
+  final bool showClockBar;
+
   /// アプリ直下の Navigator を指す key。本シェルは `MaterialApp.builder` で
   /// Navigator より上に置かれるため、`Navigator.of(context)` は祖先 Navigator を
   /// 見つけられず release ビルドで null-check 例外になる。バージョンバッジ等の
@@ -19,6 +25,7 @@ class GlobalHeaderClockShell extends StatelessWidget {
     super.key,
     required this.child,
     this.navigatorKey,
+    this.showClockBar = true,
   });
 
   @override
@@ -27,7 +34,7 @@ class GlobalHeaderClockShell extends StatelessWidget {
       color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         children: [
-          GlobalHeaderClockBar(navigatorKey: navigatorKey),
+          if (showClockBar) GlobalHeaderClockBar(navigatorKey: navigatorKey),
           Expanded(
             child: MediaQuery.removePadding(
               context: context,
@@ -90,6 +97,10 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
 
   @override
   Widget build(BuildContext context) {
+    if (MediaQuery.sizeOf(context).width < 600) {
+      return const SizedBox.shrink();
+    }
+
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final accent = theme.colorScheme.primary;

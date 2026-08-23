@@ -16,6 +16,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { buildShopReturnUrls } from "./shop_urls.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -108,8 +109,9 @@ serve(async (req) => {
     form.set("mode", "payment");
     form.set("line_items[0][price]", asString(product.stripe_price_id));
     form.set("line_items[0][quantity]", "1");
-    form.set("success_url", `${SITE_URL}/shop/hexciv?purchase=success`);
-    form.set("cancel_url", `${SITE_URL}/shop/hexciv?purchase=canceled`);
+    const returnUrls = buildShopReturnUrls(SITE_URL, productId);
+    form.set("success_url", returnUrls.successUrl);
+    form.set("cancel_url", returnUrls.cancelUrl);
     form.set("client_reference_id", user.id);
     // webhook が購入行を作るのに必要な情報。ここが欠けると支払いは通るのに
     // 権利が付与されない (= 客からは「金だけ取られた」に見える) 事故になる。

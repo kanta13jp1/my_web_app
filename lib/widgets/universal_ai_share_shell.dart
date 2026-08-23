@@ -87,7 +87,10 @@ class UniversalAiShareRouteObserver extends NavigatorObserver {
   }
 
   void _update(String? routeName) {
-    currentPage.value = UniversalSharePageContext.fromRouteName(routeName);
+    final nextPage = UniversalSharePageContext.fromRouteName(routeName);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      currentPage.value = nextPage;
+    });
   }
 }
 
@@ -99,18 +102,25 @@ class UniversalAiShareRouteObserver extends NavigatorObserver {
 const double kAiShareFabTopOffset = kToolbarHeight + 20;
 const double kAiShareFabDefaultBottomOffset = 20;
 const double kAiShareFabLandingBottomOffset = 88;
+const double kAiShareFabMusubiBottomOffset = 88;
+const double kAiShareFabMinScreenWidth = 600;
 
 bool shouldShowUniversalAiShareFab({
   required String routePath,
   required bool isLoggedIn,
+  double screenWidth = double.infinity,
 }) {
-  return routePath != '/' || isLoggedIn;
+  return screenWidth >= kAiShareFabMinScreenWidth &&
+      (routePath != '/' || isLoggedIn);
 }
 
 double resolveAiShareFabBottomOffset({
   required String routePath,
   required double screenWidth,
 }) {
+  final isMusubi = routePath == '/musubi' || routePath == '/social-feed';
+  if (isMusubi) return kAiShareFabMusubiBottomOffset;
+
   final isLandingMobile = routePath == '/' && screenWidth < 720;
   return isLandingMobile
       ? kAiShareFabLandingBottomOffset
@@ -344,6 +354,7 @@ class _UniversalAiShareFab extends StatelessWidget {
         shouldShowUniversalAiShareFab(
           routePath: page.routePath,
           isLoggedIn: isLoggedIn,
+          screenWidth: MediaQuery.sizeOf(context).width,
         );
     if (!showInbox && !showShareAction) {
       return const SizedBox.shrink();

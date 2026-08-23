@@ -15,10 +15,14 @@ import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_fsrs_service.dart';
 import '../services/ai_learner_profile_service.dart';
 import '../services/ai_university_rlhf_service.dart';
+import '../services/ai_university_video_lesson_service.dart';
 import '../services/ai_university_x_post_service.dart';
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 import '../services/user_data_finetune_readiness_service.dart';
+import '../widgets/ai_university_published_video_banner.dart';
+import '../widgets/ai_university_youtube_embed.dart';
+import '../widgets/ai_university_youtube_viewer_route.dart';
 import 'ai_university_ranking_page.dart';
 import 'api_playground_page.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
@@ -6265,15 +6269,41 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   Future<void> _fetchContent() async {
     try {
-      final rows = await _supabase
+      const pageSize = 1000;
+      final contentRows = <Map<String, dynamic>>[];
+      for (var offset = 0;; offset += pageSize) {
+        final page = await _supabase
+            .from('ai_university_content')
+            .select()
+            .eq('is_active', true)
+            .order('sort_order')
+            .order('id')
+            .range(offset, offset + pageSize - 1)
+            .timeout(const Duration(seconds: 10));
+        final typedPage = (page as List).cast<Map<String, dynamic>>();
+        contentRows.addAll(typedPage);
+        if (typedPage.length < pageSize) break;
+      }
+
+      // PostgREST limits one response to 1,000 rows. Fetch video lessons
+      // separately so the provider-independent banner never loses published
+      // videos as the general AI University catalog grows.
+      final publishedVideoRows = await _supabase
           .from('ai_university_content')
           .select()
           .eq('is_active', true)
-          .order('sort_order')
+          .like('category', 'video_%')
+          .order('published_at', ascending: false)
           .timeout(const Duration(seconds: 10));
 
+      final rows =
+          AiUniversityVideoLessonService.mergeContentRowsByProviderCategory(
+        contentRows,
+        (publishedVideoRows as List).cast<Map<String, dynamic>>(),
+      );
+
       final Map<String, List<Map<String, dynamic>>> grouped = {};
-      for (final row in (rows as List).cast<Map<String, dynamic>>()) {
+      for (final row in rows) {
         final provider =
             (row['provider'] as String?) ?? (row['provider_id'] as String?);
         if (provider == null) continue;
@@ -6340,6 +6370,164 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     if (controller == null || index < 0) return;
     controller.animateTo(index);
     _loadFsrsDue(providerId);
+  }
+
+  List<AiUniversityVideoLessonTopic> _publishedVideoTopics() {
+    final topics = <AiUniversityVideoLessonTopic>[];
+    for (final rows in _content.values) {
+      topics.addAll(
+        AiUniversityVideoLessonService.topicsFromRows(rows).where(
+          (topic) => topic.youtubeVideoId != null,
+        ),
+      );
+    }
+    topics.sort((a, b) => a.title.compareTo(b.title));
+    return topics;
+  }
+
+  Future<void> _showPublishedVideoLesson(
+    AiUniversityVideoLessonTopic topic,
+  ) async {
+    final videoId = topic.youtubeVideoId;
+    if (videoId == null) return;
+    final provider = _meta(topic.provider);
+
+    await showAiUniversityYoutubeViewer<void>(
+      context: context,
+      viewerBuilder: (dialogContext) {
+        final windowHeight = MediaQuery.sizeOf(dialogContext).height;
+        return Dialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: const Color(0xFFFF6B35).withValues(alpha: 0.28),
+            ),
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 840,
+              maxHeight: windowHeight - 48,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color:
+                              const Color(0xFFFF6B35).withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.smart_display_rounded,
+                          color: Color(0xFFFF6B35),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              topic.title,
+                              style: const TextStyle(
+                                color: Color(0xFFF5F5F5),
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '${provider.emoji} ${provider.name}・公開動画',
+                              style: const TextStyle(
+                                color: Color(0xFFB0B0B0),
+                                fontSize: 12,
+                                height: 1.6,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        tooltip: '閉じる',
+                        icon: const Icon(Icons.close),
+                        color: const Color(0xFFE5E7EB),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  AiUniversityYoutubeEmbed(
+                    videoId: videoId,
+                    title: topic.title,
+                    onOpen: () => _launchUrl(topic.sourceUrl ?? ''),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    AiUniversityVideoLessonService.previewText(topic.content),
+                    style: const TextStyle(
+                      color: Color(0xFFCCCCCC),
+                      fontSize: 13,
+                      height: 1.7,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                        _selectProvider(topic.provider);
+                      },
+                      icon: const Icon(Icons.school_outlined, size: 18),
+                      label: Text('${provider.name}の教材一覧へ'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFFFA07A),
+                        minimumSize: const Size(0, 44),
+                        side: BorderSide(
+                          color:
+                              const Color(0xFFFF6B35).withValues(alpha: 0.46),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPublishedVideoBanner() {
+    final topics = _publishedVideoTopics();
+    if (topics.isEmpty) return const SizedBox.shrink();
+
+    return AiUniversityPublishedVideoBanner(
+      videos: [
+        for (final topic in topics)
+          AiUniversityPublishedVideoBannerItem(
+            title: topic.title,
+            providerLabel: _meta(topic.provider).name,
+            onPlay: () => _showPublishedVideoLesson(topic),
+          ),
+      ],
+    );
   }
 
   // 351 タブの到達性改善: 検索 + カテゴリ別一覧から選択したタブへジャンプする。
@@ -6566,11 +6754,144 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     ).ignore();
   }
 
+  void _refreshUniversityContent() {
+    setState(() => _loading = true);
+    _fetchContent();
+  }
+
+  void _openVideoLessonGenerator() {
+    final controller = _tabController;
+    final provider = controller != null &&
+            controller.index >= 0 &&
+            controller.index < _providers.length
+        ? _providers[controller.index]
+        : (_providers.isNotEmpty ? _providers.first : null);
+    Navigator.pushNamed(
+      context,
+      '/ai-university-video',
+      arguments: {
+        if (provider != null) 'provider': provider,
+      },
+    );
+  }
+
+  void _handleUniversityMenuAction(String action) {
+    switch (action) {
+      case 'reading':
+        Navigator.pushNamed(context, '/english-reading-curriculum');
+        return;
+      case 'ranking':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            settings: const RouteSettings(name: '/ai-university-ranking'),
+            builder: (_) => const AiUniversityRankingPage(),
+          ),
+        );
+        return;
+      case 'api':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            settings: const RouteSettings(name: '/api-playground'),
+            builder: (_) => const ApiPlaygroundPage(),
+          ),
+        );
+        return;
+      case 'status':
+        Navigator.pushNamed(context, '/ai-provider-status');
+        return;
+      case 'video':
+        _openVideoLessonGenerator();
+        return;
+      case 'share':
+        _showShareCardDialog();
+        return;
+      case 'refresh':
+        _refreshUniversityContent();
+        return;
+    }
+  }
+
+  PopupMenuItem<String> _universityMenuItem(
+    String value,
+    IconData icon,
+    String label,
+  ) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: ListTile(
+        dense: true,
+        leading: Icon(icon),
+        title: Text(label),
+        contentPadding: EdgeInsets.zero,
+      ),
+    );
+  }
+
+  Widget _buildMobileProviderSelector(TabController controller) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final index = controller.index.clamp(0, _providers.length - 1);
+        final provider = _providers[index];
+        final meta = _meta(provider);
+        return Material(
+          key: const Key('ai_university_mobile_provider_selector'),
+          color: const Color(0xFF202020),
+          child: InkWell(
+            onTap: _showProviderSearch,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${meta.emoji} ${meta.name}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFFE5E7EB),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'プロバイダーを変更',
+                    style: TextStyle(color: Color(0xFFFFA07A), fontSize: 12),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.expand_more,
+                    color: Color(0xFFFFA07A),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCurrentProviderTab(TabController controller, bool isDark) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final index = controller.index.clamp(0, _providers.length - 1);
+        return _buildProviderTab(_providers[index], isDark);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeService = Provider.of<ThemeService>(context);
     final isDark = themeService.isDarkMode;
     final tc = _tabController;
+    final isCompact = MediaQuery.sizeOf(context).width < 700;
 
     if (_loading || tc == null) {
       return Scaffold(
@@ -6601,87 +6922,81 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             tooltip: 'プロバイダーを検索',
             onPressed: _providers.isEmpty ? null : _showProviderSearch,
           ),
-          IconButton(
-            icon: const Icon(Icons.menu_book_outlined),
-            tooltip: '英語速読カリキュラム',
-            onPressed: () => Navigator.pushNamed(
-              context,
-              '/english-reading-curriculum',
+          if (isCompact)
+            PopupMenuButton<String>(
+              key: const Key('ai_university_mobile_overflow_menu'),
+              tooltip: 'その他',
+              onSelected: _handleUniversityMenuAction,
+              itemBuilder: (_) => [
+                _universityMenuItem(
+                  'reading',
+                  Icons.menu_book_outlined,
+                  '英語速読カリキュラム',
+                ),
+                _universityMenuItem('ranking', Icons.leaderboard, 'ランキング'),
+                _universityMenuItem('video', Icons.videocam_outlined, '動画レッスン'),
+                _universityMenuItem(
+                  'status',
+                  Icons.fact_check_outlined,
+                  '実装ステータス',
+                ),
+                _universityMenuItem('api', Icons.science, 'API実験室'),
+                _universityMenuItem('share', Icons.share, 'シェアカード'),
+                _universityMenuItem('refresh', Icons.refresh, '更新'),
+              ],
+            )
+          else ...[
+            IconButton(
+              icon: const Icon(Icons.menu_book_outlined),
+              tooltip: '英語速読カリキュラム',
+              onPressed: () => _handleUniversityMenuAction('reading'),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.leaderboard),
-            tooltip: 'ランキング',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                settings: const RouteSettings(name: '/ai-university-ranking'),
-                builder: (_) => const AiUniversityRankingPage(),
-              ),
+            IconButton(
+              icon: const Icon(Icons.leaderboard),
+              tooltip: 'ランキング',
+              onPressed: () => _handleUniversityMenuAction('ranking'),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.science),
-            tooltip: 'API実験室',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                settings: const RouteSettings(name: '/api-playground'),
-                builder: (_) => const ApiPlaygroundPage(),
-              ),
+            IconButton(
+              icon: const Icon(Icons.science),
+              tooltip: 'API実験室',
+              onPressed: () => _handleUniversityMenuAction('api'),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.fact_check_outlined),
-            tooltip: '実装ステータス一覧',
-            onPressed: () =>
-                Navigator.pushNamed(context, '/ai-provider-status'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.videocam_outlined),
-            tooltip: '動画レッスン',
-            onPressed: () {
-              final controller = _tabController;
-              final provider = controller != null &&
-                      controller.index >= 0 &&
-                      controller.index < _providers.length
-                  ? _providers[controller.index]
-                  : (_providers.isNotEmpty ? _providers.first : null);
-              Navigator.pushNamed(
-                context,
-                '/ai-university-video',
-                arguments: {
-                  if (provider != null) 'provider': provider,
-                },
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.share),
-            tooltip: 'シェアカード',
-            onPressed: _showShareCardDialog,
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'コンテンツを更新',
-            onPressed: () {
-              setState(() => _loading = true);
-              _fetchContent();
-            },
-          ),
+            IconButton(
+              icon: const Icon(Icons.fact_check_outlined),
+              tooltip: '実装ステータス一覧',
+              onPressed: () => _handleUniversityMenuAction('status'),
+            ),
+            IconButton(
+              icon: const Icon(Icons.videocam_outlined),
+              tooltip: 'AI動画レッスンを生成',
+              onPressed: _openVideoLessonGenerator,
+            ),
+            IconButton(
+              icon: const Icon(Icons.share),
+              tooltip: 'シェアカード',
+              onPressed: _showShareCardDialog,
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'コンテンツを更新',
+              onPressed: _refreshUniversityContent,
+            ),
+          ],
         ],
-        bottom: TabBar(
-          controller: tc,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          indicatorColor: const Color(0xFFE5E7EB),
-          labelColor: const Color(0xFFE5E7EB),
-          unselectedLabelColor: const Color(0xFFB0B0B0),
-          tabs: _providers.map((id) {
-            final m = _meta(id);
-            return Tab(text: '${m.emoji} ${m.name}');
-          }).toList(),
-        ),
+        bottom: isCompact
+            ? null
+            : TabBar(
+                controller: tc,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                indicatorColor: const Color(0xFFE5E7EB),
+                labelColor: const Color(0xFFE5E7EB),
+                unselectedLabelColor: const Color(0xFFB0B0B0),
+                tabs: _providers.map((id) {
+                  final m = _meta(id);
+                  return Tab(text: '${m.emoji} ${m.name}');
+                }).toList(),
+              ),
       ),
       body: Column(
         children: [
@@ -6708,22 +7023,25 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   ),
                   TextButton(
                     onPressed: () {
-                      setState(() => _loading = true);
-                      _fetchContent();
+                      _refreshUniversityContent();
                     },
                     child: const Text('再試行'),
                   ),
                 ],
               ),
             ),
+          if (isCompact) _buildMobileProviderSelector(tc),
+          _buildPublishedVideoBanner(),
           _buildGenreShelf(),
           Expanded(
-            child: TabBarView(
-              controller: tc,
-              children: _providers
-                  .map((id) => _buildProviderTab(id, isDark))
-                  .toList(),
-            ),
+            child: isCompact
+                ? _buildCurrentProviderTab(tc, isDark)
+                : TabBarView(
+                    controller: tc,
+                    children: _providers
+                        .map((id) => _buildProviderTab(id, isDark))
+                        .toList(),
+                  ),
           ),
         ],
       ),
@@ -7588,6 +7906,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final title = row['title'] as String? ?? '';
     final content = row['content'] as String? ?? '';
     final sourceUrl = row['source_url'] as String?;
+    final youtubeVideoId =
+        AiUniversityVideoLessonService.youtubeVideoIdFromUrl(sourceUrl);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -7627,7 +7947,17 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                     },
                   ),
                 ),
-                if (sourceUrl != null && sourceUrl.isNotEmpty) ...[
+                if (youtubeVideoId != null) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityYoutubeEmbed(
+                    videoId: youtubeVideoId,
+                    title: title,
+                    onOpen: () => _launchUrl(sourceUrl ?? ''),
+                  ),
+                ],
+                if (sourceUrl != null &&
+                    sourceUrl.isNotEmpty &&
+                    youtubeVideoId == null) ...[
                   const SizedBox(height: 8),
                   TextButton.icon(
                     icon: const Icon(Icons.open_in_new, size: 14),
@@ -7921,6 +8251,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       'pricing': '料金',
       'news': '最新ニュース',
       'tutorial': 'チュートリアル',
+      'video_codex_record_replay': '動画レッスン',
     };
     return labels[category] ?? category;
   }

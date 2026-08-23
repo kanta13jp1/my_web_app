@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1120" viewBox="0 0 1600 1120" role="img" aria-labelledby="title desc">
+  <title id="title">Hedraとfalを使わない動画生成サービスの現状構成</title>
+  <desc id="desc">Flutter Web、Supabase、Stripe、Cloud Run起動制御、GCP上のNVIDIA L4とWan2.2 workerの接続、および現在未公開・GPU停止中の状態を示す。</desc>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/></marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#7c3aed"/></marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#059669"/></marker>
+    <marker id="arrow-amber" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#d97706"/></marker>
+    <style>
+      text{font-family:"Noto Sans JP","Yu Gothic UI","Meiryo",sans-serif;fill:#0f172a}
+      .title{font-size:25px;font-weight:700}.lane-title{font-size:18px;font-weight:700}.node-title{font-size:15px;font-weight:700}.node-text{font-size:13px}.edge-label{font-size:12px;font-weight:600}.status{font-size:15px}.small{font-size:12px}.boundary{stroke-width:2;stroke-dasharray:8 6}.node{stroke-width:2}.edge{fill:none;stroke-width:2.5}.edge-thin{fill:none;stroke-width:2}
+    </style>
+  </defs>
+  <rect width="1600" height="1120" fill="#ffffff"/>
+  <text x="60" y="48" class="title">Hedra / falを使わない、プロバイダー中立の動画生成サービス — 現状構成</text>
+  <rect x="60" y="75" width="1480" height="65" rx="10" fill="#fff7ed" stroke="#f59e0b" stroke-width="2"/>
+  <text x="82" y="102" class="status" font-weight="700" fill="#7c2d12">現在の状態（2026-08-21）</text>
+  <text x="82" y="126" class="status" fill="#7c2d12">GCP専用L4・コンテナ・Wan2.2モデルは構築済み ／ VMは停止中 ／ 本番ワーカーは無効 ／ サイト・Supabaseの新機能は未デプロイ</text>
+
+  <rect x="60" y="175" width="300" height="810" rx="14" fill="#eff6ff" stroke="#60a5fa" class="boundary"/>
+  <text x="80" y="208" class="lane-title" fill="#1e3a8a">利用者・既存Web・決済</text>
+  <rect x="410" y="175" width="480" height="810" rx="14" fill="#faf5ff" stroke="#a78bfa" class="boundary"/>
+  <text x="430" y="208" class="lane-title" fill="#581c87">Supabase（所有するAPI・DB・Storage）</text>
+  <rect x="940" y="175" width="600" height="810" rx="14" fill="#f0fdf4" stroke="#4ade80" class="boundary"/>
+  <text x="960" y="208" class="lane-title" fill="#14532d">GCP推論基盤（このサイトがプロバイダー）</text>
+
+  <rect x="105" y="245" width="210" height="70" rx="10" fill="#dbeafe" stroke="#3b82f6" class="node"/>
+  <text x="210" y="274" text-anchor="middle" class="node-title" fill="#1e3a8a">利用者</text><text x="210" y="297" text-anchor="middle" class="node-text">ブラウザ</text>
+  <rect x="95" y="365" width="230" height="100" rx="10" fill="#dbeafe" stroke="#3b82f6" class="node"/>
+  <text x="210" y="393" text-anchor="middle" class="node-title" fill="#1e3a8a">Flutter Web</text><text x="210" y="417" text-anchor="middle" class="node-text">/video-studio</text><text x="210" y="440" text-anchor="middle" class="node-text">生成・履歴・購入UI</text>
+  <rect x="95" y="600" width="230" height="100" rx="10" fill="#fef3c7" stroke="#f59e0b" class="node"/>
+  <text x="210" y="629" text-anchor="middle" class="node-title" fill="#78350f">Stripe</text><text x="210" y="653" text-anchor="middle" class="node-text">クレジット事前購入</text><text x="210" y="676" text-anchor="middle" class="node-text">外部サービスは決済のみ</text>
+  <path d="M100 790 h210 l15 15 v95 h-230 v-110 z" fill="#ffffff" stroke="#60a5fa" stroke-width="2"/>
+  <text x="115" y="821" class="node-title" fill="#1e3a8a">公開状態</text><text x="115" y="847" class="node-text">既存サイトは稼働中</text><text x="115" y="872" class="node-text">動画Studioの変更は未公開</text>
+
+  <rect x="660" y="235" width="190" height="75" rx="10" fill="#ede9fe" stroke="#8b5cf6" class="node"/>
+  <text x="755" y="265" text-anchor="middle" class="node-title" fill="#4c1d95">Supabase Auth</text><text x="755" y="290" text-anchor="middle" class="node-text">利用者JWT</text>
+  <rect x="445" y="365" width="185" height="95" rx="10" fill="#ede9fe" stroke="#8b5cf6" class="node"/>
+  <text x="537" y="394" text-anchor="middle" class="node-title" fill="#4c1d95">video-generation-hub</text><text x="537" y="419" text-anchor="middle" class="node-text">生成受付・履歴</text><text x="537" y="442" text-anchor="middle" class="node-text">download署名URL</text>
+  <ellipse cx="758" cy="367" rx="92" ry="17" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2"/><rect x="666" y="367" width="184" height="96" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2"/><ellipse cx="758" cy="463" rx="92" ry="17" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="758" y="396" text-anchor="middle" class="node-title" fill="#4c1d95">PostgreSQL</text><text x="758" y="419" text-anchor="middle" class="node-text">queue・credits・lease</text><text x="758" y="442" text-anchor="middle" class="node-text">最大3試行 / 返還</text>
+  <rect x="445" y="545" width="185" height="85" rx="10" fill="#ede9fe" stroke="#8b5cf6" class="node"/>
+  <text x="537" y="576" text-anchor="middle" class="node-title" fill="#4c1d95">Stripe Webhook</text><text x="537" y="602" text-anchor="middle" class="node-text">購入付与・返金取消</text>
+  <rect x="445" y="705" width="185" height="110" rx="10" fill="#ede9fe" stroke="#8b5cf6" class="node"/>
+  <text x="537" y="735" text-anchor="middle" class="node-title" fill="#4c1d95">video-worker-hub</text><text x="537" y="759" text-anchor="middle" class="node-text">claim / heartbeat</text><text x="537" y="783" text-anchor="middle" class="node-text">upload / complete / fail</text>
+  <ellipse cx="758" cy="718" rx="92" ry="17" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2"/><rect x="666" y="718" width="184" height="80" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2"/><ellipse cx="758" cy="798" rx="92" ry="17" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="758" y="747" text-anchor="middle" class="node-title" fill="#4c1d95">Private Storage</text><text x="758" y="770" text-anchor="middle" class="node-text">生成MP4・署名URL</text>
+  <path d="M450 865 h380 l20 20 v70 h-405 v-90 z" fill="#ffffff" stroke="#a78bfa" stroke-width="2"/>
+  <text x="465" y="895" class="node-title" fill="#581c87">現在：未デプロイ</text><text x="465" y="920" class="node-text">DB / Edge Functions / UI / GPU起動連携は</text><text x="465" y="943" class="node-text">ローカル実装・テスト済み</text>
+
+  <rect x="985" y="235" width="220" height="100" rx="10" fill="#dcfce7" stroke="#22c55e" class="node"/>
+  <text x="1095" y="264" text-anchor="middle" class="node-title" fill="#14532d">Artifact Registry</text><text x="1095" y="289" text-anchor="middle" class="node-text">Wan2.2 worker image</text><text x="1095" y="313" text-anchor="middle" class="node-text">固定digest / immutable</text>
+  <rect x="1260" y="235" width="220" height="100" rx="10" fill="#dcfce7" stroke="#22c55e" class="node"/>
+  <text x="1370" y="264" text-anchor="middle" class="node-title" fill="#14532d">Secret Manager</text><text x="1370" y="289" text-anchor="middle" class="node-text">WORKER / WAKE token</text><text x="1370" y="313" text-anchor="middle" class="node-text">用途別の専用secret</text>
+  <rect x="1095" y="350" width="290" height="70" rx="10" fill="#dcfce7" stroke="#22c55e" class="node"/>
+  <text x="1240" y="373" text-anchor="middle" class="node-title" fill="#14532d">Cloud Run wake controller</text><text x="1240" y="395" text-anchor="middle" class="small">対象VM固定・start/getのみ</text><text x="1240" y="413" text-anchor="middle" class="small">コード実装済み ／ 未デプロイ</text>
+  <rect x="980" y="440" width="520" height="345" rx="12" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+  <text x="1000" y="470" class="node-title" fill="#14532d">Compute Engine：video-gpu-tokyo-01（現在 TERMINATED）</text>
+  <rect x="1010" y="495" width="215" height="125" rx="10" fill="#dcfce7" stroke="#22c55e" class="node"/>
+  <text x="1118" y="522" text-anchor="middle" class="node-title" fill="#14532d">g2-standard-8</text><text x="1118" y="546" text-anchor="middle" class="node-text">NVIDIA L4 24GB ×1</text><text x="1118" y="570" text-anchor="middle" class="node-text">8 vCPU / 32GB RAM</text><text x="1118" y="594" text-anchor="middle" class="node-text">Tokyo asia-northeast1-c</text>
+  <ellipse cx="1362" cy="514" rx="103" ry="17" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/><rect x="1259" y="514" width="206" height="94" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/><ellipse cx="1362" cy="608" rx="103" ry="17" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+  <text x="1362" y="544" text-anchor="middle" class="node-title" fill="#14532d">Model cache 100GB</text><text x="1362" y="568" text-anchor="middle" class="node-text">Wan2.2-TI2V-5B</text><text x="1362" y="592" text-anchor="middle" class="node-text">約32GiB / revision固定</text>
+  <rect x="1010" y="650" width="455" height="105" rx="10" fill="#bbf7d0" stroke="#16a34a" class="node"/>
+  <text x="1238" y="679" text-anchor="middle" class="node-title" fill="#14532d">自社Workerコンテナ（TI2V専用）</text><text x="1238" y="703" text-anchor="middle" class="node-text">720p・5秒・24fps ／ 50MB上限</text><text x="1238" y="727" text-anchor="middle" class="node-text">GPU推論 → ffprobe厳密検証 → upload ／ idle終了</text>
+  <path d="M990 825 h485 l20 20 v105 h-510 v-125 z" fill="#ffffff" stroke="#4ade80" stroke-width="2"/>
+  <text x="1005" y="854" class="node-title" fill="#14532d">運用ガード</text><text x="1005" y="880" class="node-text">IAP SSHのみ・一般公開ポートなし ／ 10分idle停止 + 120分上限</text><text x="1005" y="905" class="node-text">月額5,000円予算アラート ／ 現在worker-enabled=false</text>
+
+  <path d="M210 315 V365" stroke="#2563eb" class="edge" marker-end="url(#arrow-blue)"/>
+  <path d="M325 380 H380 V320 H610 V272 H660" stroke="#7c3aed" class="edge-thin" marker-end="url(#arrow-purple)"/><text x="500" y="307" class="edge-label" fill="#7c3aed">JWT</text>
+  <path d="M325 450 H445" stroke="#7c3aed" class="edge" marker-end="url(#arrow-purple)"/><text x="337" y="440" class="edge-label" fill="#7c3aed">① 生成依頼・履歴</text>
+  <path d="M630 380 H646 V340 H758 V350" stroke="#7c3aed" class="edge" marker-end="url(#arrow-purple)"/><text x="650" y="332" class="edge-label" fill="#7c3aed">② credits予約 + queue</text>
+  <path d="M210 465 V600" stroke="#d97706" class="edge" marker-end="url(#arrow-amber)"/><text x="220" y="535" class="edge-label" fill="#d97706">A. checkout</text>
+  <path d="M325 650 H390 V588 H445" stroke="#d97706" class="edge" marker-end="url(#arrow-amber)"/><text x="350" y="638" class="edge-label" fill="#d97706">B. 決済完了</text>
+  <path d="M630 587 H758 V480" stroke="#7c3aed" class="edge" marker-end="url(#arrow-purple)"/><text x="665" y="575" class="edge-label" fill="#7c3aed">C. credits</text>
+  <path d="M537 705 V630 H758 V480" stroke="#7c3aed" class="edge-thin" marker-end="url(#arrow-purple)"/><text x="600" y="650" class="edge-label" fill="#7c3aed">lease RPC</text>
+  <path d="M630 412 H645 V340 H950 V385 H1095" stroke="#059669" class="edge" marker-end="url(#arrow-green)"/><text x="820" y="355" class="edge-label" fill="#059669">③ 予約後wake（専用token）</text>
+  <path d="M1240 420 V440" stroke="#059669" class="edge" marker-end="url(#arrow-green)"/><text x="1250" y="437" class="small" fill="#059669">start</text>
+  <path d="M630 720 H645 V685 H1010" stroke="#059669" class="edge" marker-end="url(#arrow-green)"/><text x="665" y="675" class="edge-label" fill="#059669">④ claim / heartbeat / complete（HTTPS + token）</text>
+  <path d="M1095 335 V340 H960 V665 H1010" stroke="#059669" class="edge-thin" marker-end="url(#arrow-green)"/><text x="968" y="637" class="edge-label" fill="#059669">固定digest pull</text>
+  <path d="M1370 335 V350" stroke="#059669" class="edge-thin" marker-end="url(#arrow-green)"/><text x="1380" y="347" class="small" fill="#059669">WAKE</text>
+  <path d="M1480 285 H1520 V703 H1465" stroke="#059669" class="edge-thin" marker-end="url(#arrow-green)"/><text x="1460" y="690" class="edge-label" fill="#059669">WORKER token</text>
+  <path d="M1362 625 V650" stroke="#059669" class="edge-thin" marker-end="url(#arrow-green)"/>
+  <path d="M1010 735 H900 V775 H850" stroke="#059669" class="edge" marker-end="url(#arrow-green)"/><text x="868" y="760" class="edge-label" fill="#059669">⑤ MP4 signed upload</text>
+  <path d="M666 750 H630" stroke="#7c3aed" class="edge-thin" marker-end="url(#arrow-purple)"/><text x="635" y="738" class="small" fill="#7c3aed">署名URL</text>
+  <path d="M758 718 V500 H537 V460" stroke="#7c3aed" class="edge-thin" marker-end="url(#arrow-purple)"/><text x="575" y="495" class="edge-label" fill="#7c3aed">⑥ download署名URL</text>
+
+  <rect x="410" y="1010" width="1130" height="70" rx="10" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
+  <text x="975" y="1039" text-anchor="middle" class="node-title" fill="#065f46">推論経路に Hedra / fal / Runway API は存在しない</text>
+  <text x="975" y="1065" text-anchor="middle" class="node-text" fill="#065f46">Wan2.2の重みとGPU計算を自社GCP上で直接運用する</text>
+</svg>

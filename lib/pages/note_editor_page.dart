@@ -14,6 +14,7 @@ import '../services/attachment_service.dart';
 import '../services/auto_save_service.dart';
 import '../services/note_comments_service.dart';
 import '../services/note_prompt_library_service.dart';
+import '../services/note_semantic_search_service.dart';
 import '../services/public_memo_service.dart';
 import '../services/undo_redo_service.dart';
 import '../utils/note_image_clipboard.dart';
@@ -24,6 +25,7 @@ import '../widgets/markdown_preview.dart';
 import '../widgets/note_comments_panel.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
 import '../widgets/note_editor/editor_dialogs.dart';
+import '../widgets/related_notes_strip.dart';
 
 class NoteEditorPage extends StatefulWidget {
   final String? noteId;
@@ -31,6 +33,7 @@ class NoteEditorPage extends StatefulWidget {
   final String? initialContent;
   final SupabaseClient? supabaseClient;
   final AIService? aiService;
+  final NoteSemanticSearchDataSource? semanticSearchService;
   final AiModelPreferenceService modelPreferenceService;
   final NotePromptLibraryService promptLibraryService;
 
@@ -41,6 +44,7 @@ class NoteEditorPage extends StatefulWidget {
     this.initialContent,
     this.supabaseClient,
     this.aiService,
+    this.semanticSearchService,
     this.modelPreferenceService = const AiModelPreferenceService(),
     this.promptLibraryService = const NotePromptLibraryService(),
   });
@@ -143,8 +147,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   late final SupabaseClient _supabase;
   late final AIService _aiService;
   late final NoteCommentsService _noteCommentsService;
+  late final NoteSemanticSearchDataSource _semanticSearchService;
   NoteImagePasteRegistration? _imagePasteRegistration;
-  StreamSubscription<void>? _commentSubscription;
 
   String? _currentNoteId;
   DateTime? _reminderDate;
@@ -168,6 +172,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   String? _selectedAiModel;
   List<NotePromptTemplate> _savedPromptTemplates = const <NotePromptTemplate>[];
   List<Attachment> _attachments = const <Attachment>[];
+  List<NoteSearchResult> _relatedNotes = const <NoteSearchResult>[];
+  bool _isLoadingRelatedNotes = false;
+  bool _relatedNotesHasError = false;
+  int _relatedNotesRequestId = 0;
   static const String _draftKeyPrefix = 'note_editor_draft_';
   static const String _aiStylePreferenceKey = 'note_editor_ai_style';
   static const String _slashBarExpandedKey = 'note_editor_slash_bar_expanded';
@@ -214,6 +222,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
     _aiService = widget.aiService ?? AIService(_supabase);
     _noteCommentsService = SupabaseNoteCommentsService(_supabase);
+    _semanticSearchService =
+        widget.semanticSearchService ?? NoteSemanticSearchService(_supabase);
     _currentNoteId = widget.noteId;
     _titleController = TextEditingController(text: widget.initialTitle ?? '');
     _contentController =
@@ -241,8 +251,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     await _loadPromptTemplates();
     if (_currentNoteId != null) {
       await _loadNote(_currentNoteId!);
-      _startCommentCountSubscription();
       unawaited(_loadCommentCount());
+      unawaited(_loadRelatedNotes());
     }
     await _loadAttachments();
     await _restoreDraftFromLocal();
@@ -564,7 +574,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
 
     _currentNoteId = createdNoteId.toString();
-    _startCommentCountSubscription();
     unawaited(_loadCommentCount());
     _autoSaveService.markAsSaved();
     await _clearDraftFromLocal();
@@ -1375,6 +1384,73 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
   }
 
+  Future<void> _loadRelatedNotes() async {
+    final noteId = _currentNoteId;
+    if (noteId == null || !mounted) return;
+    final requestId = ++_relatedNotesRequestId;
+
+    setState(() {
+      _isLoadingRelatedNotes = true;
+      _relatedNotesHasError = false;
+    });
+    try {
+      final notes = await _semanticSearchService.relatedNotes(
+        noteId: noteId,
+        title: _titleController.text,
+        content: _contentController.text,
+        limit: 5,
+      );
+      if (!mounted ||
+          requestId != _relatedNotesRequestId ||
+          noteId != _currentNoteId) {
+        return;
+      }
+      setState(() {
+        _relatedNotes = notes;
+        _isLoadingRelatedNotes = false;
+      });
+    } catch (_) {
+      if (!mounted ||
+          requestId != _relatedNotesRequestId ||
+          noteId != _currentNoteId) {
+        return;
+      }
+      setState(() {
+        _isLoadingRelatedNotes = false;
+        _relatedNotesHasError = true;
+      });
+    }
+  }
+
+  Future<void> _indexAndRefreshRelatedNotes() async {
+    final noteId = _currentNoteId;
+    if (noteId == null) return;
+    try {
+      await _semanticSearchService.indexNote(noteId);
+    } catch (_) {
+      // Related search still provides a text fallback when vector indexing fails.
+    }
+    if (mounted && noteId == _currentNoteId) {
+      await _loadRelatedNotes();
+    }
+  }
+
+  Future<void> _openRelatedNote(NoteSearchResult note) async {
+    await Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/note-editor'),
+        builder: (_) => NoteEditorPage(
+          noteId: note.id,
+          supabaseClient: _supabase,
+          semanticSearchService: _semanticSearchService,
+          modelPreferenceService: widget.modelPreferenceService,
+          promptLibraryService: widget.promptLibraryService,
+        ),
+      ),
+    );
+    if (mounted) unawaited(_loadRelatedNotes());
+  }
+
   Future<void> _saveNoteWithoutClosing() async {
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
@@ -1429,7 +1505,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
       if (inserted is Map && inserted['id'] != null) {
         _currentNoteId = inserted['id'].toString();
-        _startCommentCountSubscription();
         unawaited(_loadCommentCount());
         if (mounted) {
           setState(() {});
@@ -1471,6 +1546,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     try {
       await _autoSaveService.saveImmediately(_saveNoteWithoutClosing);
       await _saveVersionSnapshot();
+      unawaited(_indexAndRefreshRelatedNotes());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('手動保存しました')),
@@ -1555,19 +1631,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         const SnackBar(content: Text('公開に失敗しました')),
       );
     }
-  }
-
-  void _startCommentCountSubscription() {
-    final noteId = int.tryParse(_currentNoteId ?? '');
-    if (noteId == null) return;
-    _commentSubscription?.cancel();
-    _commentSubscription =
-        _noteCommentsService.watchCommentChanges(noteId: noteId).listen(
-      (_) => unawaited(_loadCommentCount()),
-      onError: (Object error) {
-        debugPrint('Note comment realtime stream error: $error');
-      },
-    );
   }
 
   Future<void> _loadCommentCount() async {
@@ -2218,7 +2281,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     );
   }
 
-  Widget _buildEditorBody() {
+  Widget _buildEditorSurface() {
     final theme = Theme.of(context);
     final isNarrow = MediaQuery.of(context).size.width < 600;
     final outerPadding =
@@ -2374,6 +2437,28 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     );
   }
 
+  Widget _buildEditorBody() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compactRelatedNotes = constraints.maxHeight < 620;
+        return Column(
+          children: [
+            Expanded(child: _buildEditorSurface()),
+            if (_currentNoteId != null)
+              RelatedNotesStrip(
+                notes: _relatedNotes,
+                isLoading: _isLoadingRelatedNotes,
+                hasError: _relatedNotesHasError,
+                compact: compactRelatedNotes,
+                onRetry: () => unawaited(_loadRelatedNotes()),
+                onNoteTap: (note) => unawaited(_openRelatedNote(note)),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
   /// デバウンス待ち (入力後 2 秒以内) にエディタを閉じると、`dispose()` で
   /// タイマーが破棄され未保存の編集がサーバーに届かない。破棄前に確定値を
   /// 取り出して投げ切る (State には触れないので dispose 後も安全)。
@@ -2416,7 +2501,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   @override
   void dispose() {
     _flushPendingSaveOnExit();
-    _commentSubscription?.cancel();
     _imagePasteRegistration?.dispose();
     _contentFocusNode.dispose();
     _detachTextListeners();
@@ -2601,334 +2685,4 @@ class _RedoIntent extends Intent {
 
 class _SaveIntent extends Intent {
   const _SaveIntent();
-}
-
-// ── Note Comments Bottom Sheet ────────────────────────────────────────────────
-
-class _NoteCommentsSheet extends StatefulWidget {
-  final int noteId;
-  final SupabaseClient supabase;
-  final String commentsUrl;
-  final void Function(int count) onCountChanged;
-
-  const _NoteCommentsSheet({
-    required this.noteId,
-    required this.supabase,
-    required this.commentsUrl,
-    required this.onCountChanged,
-  });
-
-  @override
-  State<_NoteCommentsSheet> createState() => _NoteCommentsSheetState();
-}
-
-class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
-  final _inputController = TextEditingController();
-  List<Map<String, dynamic>> _comments = [];
-  bool _loading = true;
-  bool _submitting = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  @override
-  void dispose() {
-    _inputController.dispose();
-    super.dispose();
-  }
-
-  Future<String?> _getToken() async {
-    return widget.supabase.auth.currentSession?.accessToken;
-  }
-
-  Future<void> _load() async {
-    setState(() => _loading = true);
-    try {
-      final res = await widget.supabase
-          .from('note_comments')
-          .select('id, content, created_at')
-          .eq('note_id', widget.noteId)
-          .order('created_at', ascending: true);
-      final list = List<Map<String, dynamic>>.from(
-        (res as List).map((e) => Map<String, dynamic>.from(e as Map)),
-      );
-      if (mounted) {
-        setState(() {
-          _comments = list;
-          _loading = false;
-        });
-        widget.onCountChanged(list.length);
-      }
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _submit() async {
-    final content = _inputController.text.trim();
-    if (content.isEmpty || _submitting) return;
-
-    final token = await _getToken();
-    if (token == null) return;
-
-    if (!mounted) return;
-    setState(() => _submitting = true);
-    try {
-      final response = await widget.supabase
-          .from('note_comments')
-          .insert({
-            'note_id': widget.noteId,
-            'user_id': widget.supabase.auth.currentUser?.id ?? '',
-            'content': content,
-          })
-          .select('id, content, created_at')
-          .single();
-      final newComment = Map<String, dynamic>.from(response as Map);
-      if (mounted) {
-        setState(() {
-          _comments.add(newComment);
-          _inputController.clear();
-        });
-        widget.onCountChanged(_comments.length);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('送信に失敗しました: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
-  }
-
-  Future<void> _delete(String commentId) async {
-    try {
-      await widget.supabase
-          .from('note_comments')
-          .delete()
-          .eq('id', commentId)
-          .eq('user_id', widget.supabase.auth.currentUser?.id ?? '')
-          .select();
-      if (mounted) {
-        setState(() => _comments.removeWhere((c) => c['id'] == commentId));
-        widget.onCountChanged(_comments.length);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('削除に失敗しました: $e')),
-        );
-      }
-    }
-  }
-
-  String _formatDate(String? isoString) {
-    final dt = DateTime.tryParse(isoString ?? '')?.toLocal();
-    if (dt == null) return '';
-    return '${dt.month}/${dt.day} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.55,
-      maxChildSize: 0.9,
-      minChildSize: 0.3,
-      builder: (_, scrollCtrl) => Column(
-        children: [
-          const SizedBox(height: 8),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                const Icon(Icons.comment_outlined, size: 18),
-                const SizedBox(width: 8),
-                const Text(
-                  'コメント',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    height: 1.5,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '${_comments.length}件',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(),
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _comments.isEmpty
-                    ? Center(
-                        child: Text(
-                          'コメントはまだありません\n最初のメモを追加しましょう',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                            height: 1.5,
-                          ),
-                        ),
-                      )
-                    : ListView.separated(
-                        controller: scrollCtrl,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        itemCount: _comments.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
-                        itemBuilder: (_, i) {
-                          final c = _comments[i];
-                          return Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF6366F1)
-                                  .withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: const Color(0xFF6366F1)
-                                    .withValues(alpha: 0.15),
-                              ),
-                            ),
-                            child: ListTile(
-                              dense: true,
-                              leading: const CircleAvatar(
-                                radius: 14,
-                                backgroundColor: Color(0xFF6366F1),
-                                child: Icon(
-                                  Icons.person,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              title: Text(
-                                c['content'] as String? ?? '',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  height: 1.5,
-                                ),
-                              ),
-                              subtitle: Text(
-                                _formatDate(c['created_at']?.toString()),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                  height: 1.5,
-                                ),
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(
-                                  Icons.delete_outline,
-                                  size: 18,
-                                  color: Color(0xFFB91C1C),
-                                ),
-                                tooltip: '削除',
-                                onPressed: () async {
-                                  final id = c['id']?.toString() ?? '';
-                                  if (id.isEmpty) return;
-                                  final ok = await showDialog<bool>(
-                                    context: context,
-                                    builder: (_) => AlertDialog(
-                                      title: const Text('コメントを削除しますか？'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, false),
-                                          child: const Text('キャンセル'),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, true),
-                                          child: const Text(
-                                            '削除',
-                                            style: TextStyle(
-                                              color: Color(0xFFB91C1C),
-                                              height: 1.5,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  if (ok == true) await _delete(id);
-                                },
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-          ),
-          const Divider(height: 1),
-          Padding(
-            padding: EdgeInsets.only(
-              left: 12,
-              right: 12,
-              top: 8,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 12,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _inputController,
-                    maxLength: 2000,
-                    maxLines: null,
-                    textInputAction: TextInputAction.newline,
-                    decoration: InputDecoration(
-                      hintText: 'コメントを追加…',
-                      counterText: '',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _submitting
-                    ? const SizedBox(
-                        width: 36,
-                        height: 36,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : IconButton(
-                        icon: const Icon(Icons.send, color: Color(0xFF6366F1)),
-                        tooltip: '送信',
-                        onPressed: _submit,
-                      ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

@@ -13,8 +13,8 @@ export type ActionAuthLevel = "public" | "service_role" | "user";
 // 認証不要 action。
 // billing.create_supporter_checkout_session は非ログイン支援者導線
 // (subscription_billing_page は未ログインで到達可能) のため public 維持:
-// handler は userId 不使用 / 金額はサーバ側 env 固定 / attribution metadata は
-// 160 字切詰のみ Stripe metadata へ透過。
+// handler は任意の user JWT を自己購入除外の証跡にだけ使う。金額はサーバ側
+// env 固定 / attribution metadata は 160 字切詰のみ Stripe metadata へ透過。
 export const PUBLIC_ACTIONS: readonly string[] = [
   "health.check",
   "blog.recent_posted", // Win版#132 part 124: tech-blog-tracker page 用 public read
@@ -36,6 +36,7 @@ export const PUBLIC_ACTIONS: readonly string[] = [
 //   (app_notifications insert / handler 内 service-role チェックも維持)
 // anon key・ログイン user JWT では 401 (匿名 signup JWT でも通せない)。
 export const SERVICE_ROLE_ONLY_ACTIONS: readonly string[] = [
+  "billing.get_stripe_account_readiness",
   "blog.auto_publish",
   "blog.create",
   "blog.backfill_from_apis",

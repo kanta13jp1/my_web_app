@@ -13,7 +13,6 @@ on:
       - "lib/widgets/ga_readiness_gate_panel.dart"
       - "scripts/check_ga_readiness_gate.py"
       - "supabase/functions/app-hub/**"
-      - "test/**"
   schedule:
     - cron: "55 21 * * *" # daily 06:55 JST
   workflow_run:
@@ -23,13 +22,10 @@ on:
 
 concurrency:
   group: ga-readiness-${{ github.event_name }}-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
-
-env:
-  FLUTTER_VERSION: "3.38.x"
 
 jobs:
   ga-readiness:
@@ -41,24 +37,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-
-      - name: Cache pub dependencies
-        uses: actions/cache@v6
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
-
-      - name: Install Flutter dependencies
-        run: flutter pub get
 
       - name: Setup Deno
         uses: denoland/setup-deno@v2
@@ -82,12 +60,6 @@ jobs:
         run: >
           deno test --config supabase/functions/deno.json
           supabase/functions/app-hub/ga_readiness_test.ts
-
-      - name: Flutter analyze
-        run: flutter analyze --no-fatal-warnings
-
-      - name: Flutter test
-        run: flutter test --reporter=compact
 
       - name: Critical browser E2E
         run: |

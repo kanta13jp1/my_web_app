@@ -1,0 +1,109 @@
+{
+  "schema_version": 3,
+  "generated_at": "2026-08-23T07:59:56.125963+00:00",
+  "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
+  "lane": "course_review",
+  "publication_state": "latest_review",
+  "automation": {
+    "id": "ai-2",
+    "name": "AI大学講座の虎レビュー",
+    "status": "ACTIVE",
+    "schedule": "毎時50分（1時間ごと）"
+  },
+  "pool": {
+    "total": 2,
+    "eligible": 2,
+    "provisional": 1,
+    "division_1": 0,
+    "division_2": 0,
+    "division_3": 2,
+    "division_4": 0,
+    "division_5": 0
+  },
+  "utility_weights": {
+    "practical_actionability": 30,
+    "source_freshness": 20,
+    "learning_clarity": 20,
+    "distinctiveness": 15,
+    "learner_evidence": 15
+  },
+  "latest_review": {
+    "cycle_id": "20260823T165404+0900",
+    "started_at": "2026-08-23T16:54:04+09:00",
+    "source_format": "course_review",
+    "surface": {
+      "slug": "course-22befb67-6147-4a4b-999c-ee1ad6fa9615",
+      "url": "https://platform.01.ai/docs"
+    },
+    "reviewer": {
+      "seat": 12,
+      "name": "迫 佑樹",
+      "selection_score": 73.0376,
+      "division": 3,
+      "cycle_utility": 90.0,
+      "aggregate_utility": 90.0
+    },
+    "status": "review_only",
+    "validation": "passed",
+    "finding_count": 2,
+    "top_findings": [
+      {
+        "summary": "モデル一覧の現行性を検証できる更新日・稼働モデル証拠が講座出典にない。",
+        "severity": "p1",
+        "business_dimensions": [
+          "unit_economics",
+          "competitive_advantage",
+          "trust_risk"
+        ]
+      },
+      {
+        "summary": "モデル比較後に学習者が適切なモデルを選べたかを示す実在学習者証拠がない。",
+        "severity": "p2",
+        "business_dimensions": [
+          "market_demand",
+          "go_to_market"
+        ]
+      }
+    ],
+    "course": {
+      "content_id": "22befb67-6147-4a4b-999c-ee1ad6fa9615",
+      "provider": "01ai",
+      "title": "01.AI (Yi) モデル一覧",
+      "source_url": "https://platform.01.ai/docs",
+      "reason": "公開Data APIで有効かつHTTP(S)出典付きと確認した。公式出典の検索インデックスにはOpenAI互換のquickstart、モデル比較表、価格、GET /v1/models例があり実践の入口になる。一方、現在取得できるページ本体は2024表記の汎用シェルで講座固有の更新日を示さず、現行モデル一覧としての鮮度を保証できない。実在学習者の成果・完了・評価証拠は観測できないため、learner_evidenceは中立50点とした。",
+      "cycle_utility": 56.25,
+      "aggregate_utility": 53.22,
+      "division": 3
+    }
+  },
+  "courses": [
+    {
+      "content_id": "22befb67-6147-4a4b-999c-ee1ad6fa9615",
+      "provider": "01ai",
+      "title": "01.AI (Yi) モデル一覧",
+      "source_url": "https://platform.01.ai/docs",
+      "division": 3,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 53.22,
+      "completed_cycles": 3,
+      "last_cycle_utility": 56.25,
+      "last_reviewed_at": "2026-08-23T07:54:04+00:00",
+      "reason": "講座レビュー3回・効用53.2点で3部"
+    },
+    {
+      "content_id": "4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
+      "provider": "01ai",
+      "title": "01.AI (Yi) API 利用方法",
+      "source_url": "https://platform.01.ai/docs",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 43.25,
+      "completed_cycles": 1,
+      "last_cycle_utility": 43.25,
+      "last_reviewed_at": "2026-08-23T06:38:16.438300+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    }
+  ]
+}
