@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-08-23T06:33:30.712008+00:00",
+  "generated_at": "2026-08-23T06:41:39.214584+00:00",
   "publication_state": "latest_cycle",
   "automation": {
     "id": "125",
@@ -21,12 +21,12 @@
     "minimum_eligible_pool": 12
   },
   "course_pool": {
-    "total": 1,
-    "eligible": 1,
-    "provisional": 0,
+    "total": 2,
+    "eligible": 2,
+    "provisional": 1,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 1,
+    "division_3": 2,
     "division_4": 0,
     "division_5": 0
   },
@@ -73,68 +73,68 @@
     }
   },
   "latest_cycle": {
-    "cycle_id": "20260823T152316+0900",
-    "started_at": "2026-08-23T15:24:30+09:00",
+    "cycle_id": "20260823T153734+0900",
+    "started_at": "2026-08-23T15:38:16.4383006+09:00",
     "surface": {
-      "slug": "ai_university",
-      "url": "https://my-web-app-b67f4.web.app/#/ai-university"
+      "slug": "comparison",
+      "url": "https://my-web-app-b67f4.web.app/competitors"
     },
     "reviewer": {
-      "seat": 1,
-      "name": "ドラゴン細井",
-      "selection_score": 79.5059,
+      "seat": 7,
+      "name": "榊󠄀原 清一",
+      "selection_score": 74.4337,
       "tier": "division_3",
       "division": 3,
-      "cycle_utility": 89.75,
-      "aggregate_utility": 89.75
+      "cycle_utility": 90.17,
+      "aggregate_utility": 90.17
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "選出講座に出典更新確認の運用が必要。",
-        "severity": "p2",
+        "summary": "競合比較の公開主張に出典・確認時点を一貫して結び付ける必要がある。",
+        "severity": "p1",
         "business_dimensions": [
-          "trust_risk",
-          "market_demand"
+          "competitive_advantage",
+          "unit_economics"
         ]
       },
       {
-        "summary": "講座選定データに学習成果の根拠がない。",
+        "summary": "比較流入から登録までの実測根拠が今回のレビュー入力にない。",
         "severity": "p2",
         "business_dimensions": [
-          "customer_pain",
-          "revenue_model"
+          "market_demand",
+          "unit_economics"
         ]
       },
       {
-        "summary": "教材取得失敗時の事業影響を測定できない。",
+        "summary": "比較ページの巨大な単一ソースと専用試験不足が訴求変更の検証コストを高めている。",
         "severity": "p2",
         "business_dimensions": [
-          "trust_risk",
-          "customer_pain"
+          "competitive_advantage",
+          "founder_execution"
         ]
       }
     ],
     "course_review": {
-      "content_id": "22befb67-6147-4a4b-999c-ee1ad6fa9615",
+      "content_id": "4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
       "provider": "01ai",
-      "title": "01.AI (Yi) モデル一覧",
+      "title": "01.AI (Yi) API 利用方法",
       "source_url": "https://platform.01.ai/docs",
-      "cycle_utility": 47.15,
-      "aggregate_utility": 50.18,
+      "cycle_utility": 43.25,
+      "aggregate_utility": 43.25,
       "division": 3,
-      "reason": "公開Data APIで有効かつHTTP(S)出典付きで確認した。参照先は到達可能だったが、応答ヘッダーのLast-Modifiedは2024-08-23であり、学習者成果の実測は取得できなかった。"
+      "reason": "公開Data APIで有効かつHTTP(S)出典付きとして確認した。参照先は到達可能だが、取得できた公開ページはAPIプラットフォームの汎用ナビゲーションで、講座固有の学習手順・更新日・成果証拠は確認できなかった。学習者証拠は未取得のため中立50点とした。"
     },
     "feature_review": {
-      "slug": "ai_university",
-      "title": "ai_university",
+      "slug": "comparison",
+      "title": "comparison",
       "kind": "page",
-      "cycle_utility": 63.5,
-      "aggregate_utility": 64.8,
+      "cycle_utility": 57.55,
+      "aggregate_utility": 57.55,
       "division": 3,
-      "reason": "公開カタログ取得とローカル実装から教材提示・ページング・フォールバックを確認した。実利用分析とブラウザ画面読取は利用不能のため、中立値を明示して評価した。"
+      "reason": "競合別の検索流入・CTA・タッチ計測の実装を確認した。実利用分析、ブラウザ画面、コンソール、ネットワーク証拠は取得できないため、観測利用は中立50点として明示した。"
     }
   },
   "courses": [
@@ -151,6 +151,20 @@
       "last_cycle_utility": 47.15,
       "last_reviewed_at": "2026-08-23T06:24:30+00:00",
       "reason": "講座レビュー2回・効用50.2点で3部"
+    },
+    {
+      "content_id": "4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
+      "provider": "01ai",
+      "title": "01.AI (Yi) API 利用方法",
+      "source_url": "https://platform.01.ai/docs",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 43.25,
+      "completed_cycles": 1,
+      "last_cycle_utility": 43.25,
+      "last_reviewed_at": "2026-08-23T06:38:16.438300+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
     }
   ],
   "features": [
@@ -192,22 +206,6 @@
       "title": "ai-hub",
       "path": "",
       "source": "supabase/functions/ai-hub/index.ts",
-      "priority": "high",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "last_cycle_utility": null,
-      "last_reviewed_at": null,
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
-    },
-    {
-      "slug": "comparison",
-      "kind": "page",
-      "title": "comparison",
-      "path": "/competitors",
-      "source": "lib/pages/comparison_page.dart",
       "priority": "high",
       "division": 3,
       "provisional": true,
@@ -347,6 +345,22 @@
       "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
+      "slug": "comparison",
+      "kind": "page",
+      "title": "comparison",
+      "path": "/competitors",
+      "source": "lib/pages/comparison_page.dart",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 57.55,
+      "completed_cycles": 1,
+      "last_cycle_utility": 57.55,
+      "last_reviewed_at": "2026-08-23T06:38:16.438300+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
       "slug": "home",
       "kind": "page",
       "title": "home",
@@ -364,6 +378,21 @@
     }
   ],
   "reviewers": [
+    {
+      "seat": 7,
+      "name": "榊󠄀原 清一",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 90.17,
+      "completed_cycles": 1,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 90.17,
+      "last_selected_at": "2026-08-23T06:38:16.438300+00:00",
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
     {
       "seat": 1,
       "name": "ドラゴン細井",
@@ -457,21 +486,6 @@
     {
       "seat": 6,
       "name": "三浦 哲郎",
-      "tier": "division_3",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "floor_protected": false,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "low_utility_streak": 0,
-      "last_cycle_utility": null,
-      "last_selected_at": null,
-      "reason": "担当実績が2回未満のため暫定3部"
-    },
-    {
-      "seat": 7,
-      "name": "榊󠄀原 清一",
       "tier": "division_3",
       "division": 3,
       "provisional": true,
