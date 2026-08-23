@@ -638,11 +638,11 @@ List<HomeToolEntry> buildHomeToolCatalog({
     HomeToolEntry(
       id: 'real-world-danshari',
       sectionId: 'personal',
-      title: '断捨離 (リアル)',
-      subtitle: '現実の持ち物を写真付きで整理する',
-      icon: Icons.camera_alt_outlined,
+      title: 'AIフォト行動アドバイザー',
+      subtitle: '写真から今すべきことを優先順に整理する',
+      icon: Icons.auto_awesome_outlined,
       color: const Color(0xFFFF6B35),
-      keywords: const <String>['断捨離', 'リアル', '持ち物'],
+      keywords: const <String>['AI', '写真', '行動', '片付け', '断捨離', 'リアル', '持ち物'],
       onOpen: (context) => _pushPage(
         context,
         RealWorldDanshariPage(supabaseClient: supabaseClient),
