@@ -1,22 +1,22 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-23T09:32:26.830479+00:00",
+  "generated_at": "2026-08-23T15:26:00.053231+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
   "automation": {
     "id": "automation-4",
     "name": "機能の虎レビュー",
-    "status": "ACTIVE",
+    "status": "PAUSED",
     "schedule": "毎時15分（1時間ごと）"
   },
   "pool": {
     "total": 13,
     "eligible": 13,
-    "provisional": 11,
+    "provisional": 10,
     "division_1": 0,
-    "division_2": 1,
-    "division_3": 12,
+    "division_2": 2,
+    "division_3": 11,
     "division_4": 0,
     "division_5": 0,
     "eliminated": 0
@@ -29,27 +29,27 @@
     "operating_efficiency": 10
   },
   "latest_review": {
-    "cycle_id": "20260823T172138+0900",
-    "started_at": "2026-08-23T17:21:38+09:00",
+    "cycle_id": "20260824T002432+0900",
+    "started_at": "2026-08-24T00:24:32+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "ai_university",
-      "url": "https://my-web-app-b67f4.web.app/ai-university"
+      "slug": "comparison",
+      "url": "https://my-web-app-b67f4.web.app/competitors"
     },
     "reviewer": {
       "seat": 11,
       "name": "野口 功司",
-      "selection_score": 78.0406,
+      "selection_score": 74.61,
       "division": 1,
-      "cycle_utility": 95.5,
-      "aggregate_utility": 87.33
+      "cycle_utility": 95.42,
+      "aggregate_utility": 95.58
     },
     "status": "fixed",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "読み込み中のspinnerが支援技術へ状態を通知しない",
+        "summary": "競合データ取得失敗を正常な0件として表示し、利用者が復旧できない",
         "severity": "p1",
         "business_dimensions": [
           "customer_pain",
@@ -58,36 +58,35 @@
         ]
       },
       {
-        "summary": "SEOシェルから実AI大学画面への切り替えが遅い",
-        "severity": "p1",
-        "business_dimensions": [
-          "customer_pain",
-          "go_to_market",
-          "unit_economics"
-        ]
-      },
-      {
-        "summary": "8千行超の単一ページと専用widget test不足が改善速度を下げる",
+        "summary": "レビュー設定のsourceが実際の一覧routeと一致しない",
         "severity": "p2",
         "business_dimensions": [
           "founder_execution",
-          "scalability",
-          "unit_economics"
+          "trust_risk"
+        ]
+      },
+      {
+        "summary": "競合一覧入口の利用と個別比較への転換を直接観測できない",
+        "severity": "p2",
+        "business_dimensions": [
+          "go_to_market",
+          "market_demand",
+          "revenue_model"
         ]
       }
     ],
     "countermeasure": {
-      "state": "production_verified",
-      "label": "本番対策済み",
-      "detail": "変更・検証・本番反映の証拠が記録されています。",
+      "state": "implemented",
+      "label": "対策実施・検証済み",
+      "detail": "個別の指摘IDとの紐付けも記録済みです。",
       "summary": "",
       "files": [
-        "lib/pages/gemini_university_v2_page.dart",
-        "test/pages/gemini_university_loading_semantics_test.dart"
+        "lib/pages/competitor_browse_page.dart",
+        "test/pages/competitor_browse_page_test.dart"
       ],
-      "lines_changed": 30,
+      "lines_changed": 176,
       "resolved_finding_ids": [
-        "ai-university-loading-semantics"
+        "comparison-load-failure-recovery"
       ],
       "validation_status": "passed",
       "validation_messages": [
@@ -98,27 +97,98 @@
       ],
       "issue": {},
       "implementation": {
-        "commit_sha": "087271567f2312c718f9695d0a81c51de07f5888",
-        "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32628679913",
-        "production_url": "https://my-web-app-b67f4.web.app/",
-        "release_status": "passed"
+        "commit_sha": null,
+        "workflow_run": null,
+        "production_url": null,
+        "release_status": "pending"
       },
       "findings_without_individual_trace": [
-        "ai-university-cold-entry-latency",
-        "ai-university-monolith-test-cost"
+        "comparison-review-source-drift",
+        "comparison-browse-observability-gap"
       ]
     },
     "feature": {
-      "slug": "ai_university",
-      "title": "AI大学入口ページ",
+      "slug": "comparison",
+      "title": "競合比較一覧",
       "kind": "page",
-      "reason": "個別講座の内容ではなく、AI大学の公開入口、初期読み込み、教材発見、継続学習導線だけを機能として評価した。利用分析データはなく、観測利用は中立50点とした。",
-      "cycle_utility": 65.8,
-      "aggregate_utility": 65.3,
+      "reason": "個別の競合主張を採点せず、/competitors の一覧取得、絞り込み、個別比較への遷移、障害時の状態提示だけを機能として評価した。利用分析データはなく、観測利用は中立50点とした。",
+      "cycle_utility": 74.1,
+      "aggregate_utility": 68.58,
       "division": 2
     }
   },
   "history": [
+    {
+      "cycle_id": "20260824T002432+0900",
+      "started_at": "2026-08-24T00:24:32+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "comparison",
+        "title": "競合比較一覧",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 74.61
+      },
+      "status": "implemented",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "findings": [
+        {
+          "finding_id": "comparison-load-failure-recovery",
+          "summary": "競合データ取得失敗を正常な0件として表示し、利用者が復旧できない",
+          "severity": "p1",
+          "suggested_action": "取得失敗を独立したlive-regionエラー状態として表示し、同じ画面から再読み込みできる操作を提供する。"
+        },
+        {
+          "finding_id": "comparison-review-source-drift",
+          "summary": "レビュー設定のsourceが実際の一覧routeと一致しない",
+          "severity": "p2",
+          "suggested_action": "保護されたレビュー設定のcomparison.sourceを実routeに合わせ、個別 /vs-* ページは別対象として管理する。"
+        },
+        {
+          "finding_id": "comparison-browse-observability-gap",
+          "summary": "競合一覧入口の利用と個別比較への転換を直接観測できない",
+          "severity": "p2",
+          "suggested_action": "プライバシー境界を確認した上で、一覧表示、フィルター利用、個別比較遷移を集計可能な最小イベントとして設計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "implemented",
+        "label": "対策実施・検証済み",
+        "detail": "個別の指摘IDとの紐付けも記録済みです。",
+        "summary": "",
+        "files": [
+          "lib/pages/competitor_browse_page.dart",
+          "test/pages/competitor_browse_page_test.dart"
+        ],
+        "lines_changed": 176,
+        "resolved_finding_ids": [
+          "comparison-load-failure-recovery"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 1 test",
+          "passed: No issues found",
+          "passed: 0 files changed",
+          "passed"
+        ],
+        "issue": {},
+        "implementation": {
+          "commit_sha": null,
+          "workflow_run": null,
+          "production_url": null,
+          "release_status": "pending"
+        },
+        "findings_without_individual_trace": [
+          "comparison-review-source-drift",
+          "comparison-browse-observability-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260823T172138+0900",
       "started_at": "2026-08-23T17:21:38+09:00",
@@ -472,6 +542,22 @@
   ],
   "features": [
     {
+      "slug": "comparison",
+      "kind": "page",
+      "title": "comparison",
+      "path": "/competitors",
+      "source": "lib/pages/comparison_page.dart",
+      "priority": "high",
+      "division": 2,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 68.58,
+      "completed_cycles": 2,
+      "last_cycle_utility": 74.1,
+      "last_reviewed_at": "2026-08-23T15:24:32+00:00",
+      "reason": "機能レビュー2回・効用68.6点で2部"
+    },
+    {
       "slug": "ai_university",
       "kind": "page",
       "title": "ai_university",
@@ -661,22 +747,6 @@
       "completed_cycles": 0,
       "last_cycle_utility": null,
       "last_reviewed_at": null,
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
-    },
-    {
-      "slug": "comparison",
-      "kind": "page",
-      "title": "comparison",
-      "path": "/competitors",
-      "source": "lib/pages/comparison_page.dart",
-      "priority": "high",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": 57.55,
-      "completed_cycles": 1,
-      "last_cycle_utility": 57.55,
-      "last_reviewed_at": "2026-08-23T06:38:16.438300+00:00",
       "reason": "機能レビュー実績が2回未満のため暫定3部"
     }
   ]
