@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-23T14:31:15.338040+00:00",
+  "generated_at": "2026-08-23T16:19:38.805889+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -11,12 +11,12 @@
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 4,
-    "eligible": 4,
-    "provisional": 3,
+    "total": 5,
+    "eligible": 5,
+    "provisional": 4,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 4,
+    "division_3": 5,
     "division_4": 0,
     "division_5": 0
   },
@@ -28,48 +28,57 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260823T232120+0900",
-    "started_at": "2026-08-23T23:21:20+09:00",
+    "cycle_id": "20260824T011146+0900",
+    "started_at": "2026-08-24T01:11:46+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-e1712bb5-2bca-4fc0-8347-0529513411d3",
-      "url": "https://www.01.ai/"
+      "slug": "course-647dc452-f75d-4dd9-8292-332bada2e2f9",
+      "url": "https://en.wikipedia.org/wiki/Large_language_model"
     },
     "reviewer": {
-      "seat": 9,
-      "name": "平出 心",
-      "selection_score": 74.9711,
+      "seat": 12,
+      "name": "迫 佑樹",
+      "selection_score": 75.0278,
       "division": 1,
-      "cycle_utility": 90.75,
-      "aggregate_utility": 88.12
+      "cycle_utility": 90.92,
+      "aggregate_utility": 91.44
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 2,
+    "finding_count": 3,
     "top_findings": [
       {
-        "summary": "『01.AI (Yi) とは』という講座名に対し、現在の会社・Yiモデル・WorldWise基盤・TrueNorth製品群の関係を日付付きで示す講座固有の導入マップがない。",
+        "summary": "10/10完結編の名称に対し、Transformer・Attention・創発的現象を結ぶ講座固有の到達目標、読解順序、演習、到達確認が公開面にない。",
         "severity": "p1",
         "business_dimensions": [
-          "trust_risk",
           "market_demand",
+          "customer_pain",
           "competitive_advantage"
         ]
       },
       {
-        "summary": "入門講座が会社・モデル・現行製品の区別に役立ったことを示す実在学習者の課題・完了・成果証拠がない。",
+        "summary": "可変な二次資料だけを講座出典にしているが、revision固定、確認日、変化しやすい2026年の主張を一次資料で再確認する境界がない。",
+        "severity": "p1",
+        "business_dimensions": [
+          "trust_risk",
+          "unit_economics",
+          "competitive_advantage"
+        ]
+      },
+      {
+        "summary": "講座完了後に実在学習者がTransformer・Attention・創発的現象を区別し統合できたことを示す成果証拠がない。",
         "severity": "p2",
         "business_dimensions": [
           "market_demand",
-          "customer_pain",
-          "unit_economics"
+          "unit_economics",
+          "scalability"
         ]
       }
     ],
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4757 追跡中",
-      "detail": "両指摘は公開講座データまたは外部教材の内容・学習計測設計に関わり、共有の低リスク自動修正境界と保護対象の制約を満たさない。",
+      "label": "未対策・Issue #4763 追跡中",
+      "detail": "指摘はいずれも公開講座データまたは外部教材の内容・評価設計に関わり、共有契約が許可する低リスクなリポジトリ内自動修正境界を満たさない。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
@@ -77,41 +86,122 @@
       "validation_status": "passed",
       "validation_messages": [
         "validate_roster.py: passed (125 profiles)",
-        "validate_personas.py: passed (125 profiles)",
-        "public Data API catalog export: passed (active=1072, reviewable=527)",
+        "validate_personas.py: passed (125 profiles; 99 unique weight profiles)",
+        "public Data API catalog export: passed (active=1073, reviewable=528)",
         "select_course.py: passed (division-5 excluded; deterministic winner preserved)",
-        "target validation: passed (active row; HTTPS source; HTTP 200)",
-        "select_reviewer.py: selection JSON saved once (125 profiles; seat 9; stdout encoding warning did not alter output)",
-        "course_review_issue.py --execute: passed (Issue #4757; cycle dedupe evidence recorded)",
-        "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; two proposals)",
-        "build_lane_status.py --lane course_review: passed (course-only status; latest cycle 20260823T232120+0900)",
-        "flutter test --no-pub --concurrency=1 test/models/tiger_review_lane_status_test.dart: passed (5 tests)"
+        "target validation: passed (one active row; HTTPS source; HTTP 200; revision 1370470611)",
+        "select_reviewer.py: executed exactly once (125 profiles; seat 12; deterministic output saved)",
+        "course_review_issue.py --execute: passed (Issue #4763; cycle dedupe evidence recorded)",
+        "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; three proposals)",
+        "build_lane_status.py --lane course_review: passed (course-only history=7; latest cycle 20260824T011146+0900; no missing Issue evidence)",
+        "test_course_review_continuity.py: passed (4 tests)",
+        "test_reviewer_selection.py: passed (14 tests)",
+        "direct Dart TigerReviewLaneStatus contract check: passed (history=7; courses=5; all review_only entries have Issue evidence)",
+        "git diff --check: passed"
       ],
       "issue": {
-        "number": 4757,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4757",
+        "number": 4763,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4763",
         "status": "created",
         "github_state": null,
-        "dedupe_key": "tiger-course-review:20260823T232120+0900:e1712bb5-2bca-4fc0-8347-0529513411d3"
+        "dedupe_key": "tiger-course-review:20260824T011146+0900:647dc452-f75d-4dd9-8292-332bada2e2f9"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-intro-current-scope-map",
-        "course-intro-learner-outcome-proof"
+        "course-llm-capstone-learning-path",
+        "course-llm-source-revision-boundary",
+        "course-llm-learner-outcome-proof"
       ]
     },
     "course": {
-      "content_id": "e1712bb5-2bca-4fc0-8347-0529513411d3",
-      "provider": "01ai",
-      "title": "01.AI (Yi) とは",
-      "source_url": "https://www.01.ai/",
-      "reason": "fresh公開Data APIで有効かつHTTPS出典付きと確認し、公式サイトはHTTP 200、Last-Modified 2026-08-10、会社年表は2026-07のTrueNorthまで更新されている。現行ページは企業AI変革、意思決定製品、産業別活用を具体的に示し、01.AIの現在像を把握する一次情報として実務性と独自性がある。一方、講座タイトルが中心に置くYiモデルと現在の製品体系の関係、学習目標、演習、到達確認は講座固有に示されず、入門としての明瞭性は限定的である。実在学習者の完了・課題・成果証拠は観測できないため、learner_evidenceは中立50点とした。",
-      "cycle_utility": 67.4,
-      "aggregate_utility": 67.4,
+      "content_id": "647dc452-f75d-4dd9-8292-332bada2e2f9",
+      "provider": "academic",
+      "title": "LLM理論：大規模言語モデルの仕組み — Transformer・Attention・創発的現象 完全解説 (10/10)",
+      "source_url": "https://en.wikipedia.org/wiki/Large_language_model",
+      "reason": "fresh公開Data APIで有効かつHTTPS出典付きと確認し、出典はHTTP 200、Last-Modified 2026-08-23、MediaWiki最終revision 1370470611（2026-08-21）だった。記事はTransformer、Attention、創発的能力とその測定依存性の反論まで引用付きで広く扱い、参照資料としての鮮度と明瞭性はある。一方、英語の可変な百科事典記事を直接示すだけで、10/10完結編としての到達目標、読解順序、演習、評価、一次出典の確認境界が講座固有に見えず、実務行動性と独自性は限定的である。実在学習者の完了・課題・成果証拠は観測できないため、learner_evidenceは中立50点とした。",
+      "cycle_utility": 57.0,
+      "aggregate_utility": 57.0,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260824T011146+0900",
+      "started_at": "2026-08-24T01:11:46+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "647dc452-f75d-4dd9-8292-332bada2e2f9",
+        "title": "LLM理論：大規模言語モデルの仕組み — Transformer・Attention・創発的現象 完全解説 (10/10)",
+        "url": "https://en.wikipedia.org/wiki/Large_language_model"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 75.0278
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "findings": [
+        {
+          "finding_id": "course-llm-capstone-learning-path",
+          "summary": "10/10完結編の名称に対し、Transformer・Attention・創発的現象を結ぶ講座固有の到達目標、読解順序、演習、到達確認が公開面にない。",
+          "severity": "p1",
+          "suggested_action": "冒頭に3つの到達目標と対象節の読解順序を示し、Attentionの情報流と創発性の測定論争を説明する短い概念マップ課題・採点基準を追加する。"
+        },
+        {
+          "finding_id": "course-llm-source-revision-boundary",
+          "summary": "可変な二次資料だけを講座出典にしているが、revision固定、確認日、変化しやすい2026年の主張を一次資料で再確認する境界がない。",
+          "severity": "p1",
+          "suggested_action": "講座に確認日とMediaWiki revision IDを保存し、Transformer原論文、創発性と測定依存性の主要論文など、採点対象の核心主張ごとに一次資料を固定する。"
+        },
+        {
+          "finding_id": "course-llm-learner-outcome-proof",
+          "summary": "講座完了後に実在学習者がTransformer・Attention・創発的現象を区別し統合できたことを示す成果証拠がない。",
+          "severity": "p2",
+          "suggested_action": "匿名の概念マップ課題、反論を含む短答問題、完了後自己評価を設け、初回正答率と再学習率を継続集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4763 追跡中",
+        "detail": "指摘はいずれも公開講座データまたは外部教材の内容・評価設計に関わり、共有契約が許可する低リスクなリポジトリ内自動修正境界を満たさない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed (125 profiles)",
+          "validate_personas.py: passed (125 profiles; 99 unique weight profiles)",
+          "public Data API catalog export: passed (active=1073, reviewable=528)",
+          "select_course.py: passed (division-5 excluded; deterministic winner preserved)",
+          "target validation: passed (one active row; HTTPS source; HTTP 200; revision 1370470611)",
+          "select_reviewer.py: executed exactly once (125 profiles; seat 12; deterministic output saved)",
+          "course_review_issue.py --execute: passed (Issue #4763; cycle dedupe evidence recorded)",
+          "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; three proposals)",
+          "build_lane_status.py --lane course_review: passed (course-only history=7; latest cycle 20260824T011146+0900; no missing Issue evidence)",
+          "test_course_review_continuity.py: passed (4 tests)",
+          "test_reviewer_selection.py: passed (14 tests)",
+          "direct Dart TigerReviewLaneStatus contract check: passed (history=7; courses=5; all review_only entries have Issue evidence)",
+          "git diff --check: passed"
+        ],
+        "issue": {
+          "number": 4763,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4763",
+          "status": "created",
+          "github_state": null,
+          "dedupe_key": "tiger-course-review:20260824T011146+0900:647dc452-f75d-4dd9-8292-332bada2e2f9"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-llm-capstone-learning-path",
+          "course-llm-source-revision-boundary",
+          "course-llm-learner-outcome-proof"
+        ]
+      }
+    },
     {
       "cycle_id": "20260823T232120+0900",
       "started_at": "2026-08-23T23:21:20+09:00",
@@ -546,6 +636,20 @@
       "completed_cycles": 1,
       "last_cycle_utility": 65.1,
       "last_reviewed_at": "2026-08-23T08:54:10+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "647dc452-f75d-4dd9-8292-332bada2e2f9",
+      "provider": "academic",
+      "title": "LLM理論：大規模言語モデルの仕組み — Transformer・Attention・創発的現象 完全解説 (10/10)",
+      "source_url": "https://en.wikipedia.org/wiki/Large_language_model",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 57.0,
+      "completed_cycles": 1,
+      "last_cycle_utility": 57.0,
+      "last_reviewed_at": "2026-08-23T16:11:46+00:00",
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
