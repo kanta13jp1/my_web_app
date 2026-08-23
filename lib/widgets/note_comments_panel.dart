@@ -73,6 +73,7 @@ class _NoteCommentsPanelState extends State<NoteCommentsPanel> {
   List<NoteComment> _comments = const <NoteComment>[];
   bool _isLoading = true;
   bool _isSubmitting = false;
+  bool _isRealtimeAvailable = true;
   String? _errorMessage;
 
   ScrollController get _effectiveScrollController =>
@@ -119,9 +120,21 @@ class _NoteCommentsPanelState extends State<NoteCommentsPanel> {
   void _attachRealtime() {
     _watchSubscription =
         _service.watchCommentChanges(noteId: widget.noteId).listen(
-      (_) => unawaited(_loadComments(showSpinner: false)),
+      (_) {
+        if (mounted && !_isRealtimeAvailable) {
+          setState(() => _isRealtimeAvailable = true);
+        }
+        unawaited(_loadComments(showSpinner: false));
+      },
       onError: (Object error) {
-        debugPrint('Note comment realtime stream error: $error');
+        if (!mounted) return;
+        if (_isRealtimeAvailable) {
+          setState(() => _isRealtimeAvailable = false);
+        }
+        unawaited(_loadComments(showSpinner: false));
+        if (!isExpectedNoteCommentRealtimeDisconnect(error)) {
+          debugPrint('Note comment realtime stream error: $error');
+        }
       },
     );
   }
@@ -297,12 +310,25 @@ class _NoteCommentsPanelState extends State<NoteCommentsPanel> {
                   ),
                 ),
                 const Spacer(),
-                Text(
-                  'リアルタイム',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                if (_isRealtimeAvailable)
+                  Text(
+                    'リアルタイム',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  )
+                else
+                  TextButton.icon(
+                    onPressed: () => unawaited(
+                      _loadComments(showSpinner: false),
+                    ),
+                    icon: const Icon(Icons.refresh, size: 16),
+                    label: const Text('手動更新'),
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
                   ),
-                ),
               ],
             ),
           ),

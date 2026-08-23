@@ -95,4 +95,23 @@ void main() {
     expect(find.text('multilingual-dubbing.mp3'), findsOneWidget);
     expect(find.byTooltip('ダウンロード'), findsOneWidget);
   });
+
+  testWidgets('keeps the dubbing controls usable at a mobile width', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(home: ContentDubbingPage(api: _FakeVoiceDubbingApi())),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('dubbing-language')), findsOneWidget);
+    expect(find.byKey(const Key('dubbing-voice')), findsOneWidget);
+    expect(find.byKey(const Key('generate-dubbing')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

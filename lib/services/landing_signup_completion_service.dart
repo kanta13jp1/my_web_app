@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'growth_acquisition_service.dart';
+import 'landing_conversion_analytics.dart';
 import 'landing_conversion_experiment_service.dart';
 import 'landing_page_adapter.dart';
 
@@ -68,10 +69,13 @@ class LandingSignupCompletionService {
   const LandingSignupCompletionService({
     this.ttl = const Duration(hours: 48),
     LandingPageAdapter? landingPageAdapter,
+    LandingConversionAnalytics? conversionAnalytics,
     GrowthAcquisitionService? acquisitionService,
     DateTime Function()? clock,
   })  : _landingPageAdapter =
             landingPageAdapter ?? const SupabaseLandingPageAdapter(),
+        _conversionAnalytics =
+            conversionAnalytics ?? const PostHogLandingConversionAnalytics(),
         _acquisitionService =
             acquisitionService ?? const GrowthAcquisitionService(),
         _clock = clock;
@@ -82,6 +86,7 @@ class LandingSignupCompletionService {
 
   final Duration ttl;
   final LandingPageAdapter _landingPageAdapter;
+  final LandingConversionAnalytics _conversionAnalytics;
   final GrowthAcquisitionService _acquisitionService;
   final DateTime Function()? _clock;
 
@@ -184,6 +189,11 @@ class LandingSignupCompletionService {
       await _landingPageAdapter.recordConversionEvent(
         eventKey: pending.eventKey,
         visitorId: pending.visitorId,
+      );
+      unawaited(
+        _conversionAnalytics.captureExperimentEvent(
+          eventKey: pending.eventKey,
+        ),
       );
       try {
         await _acquisitionService.recordFirstUserFunnelStage(

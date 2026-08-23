@@ -1,0 +1,4 @@
+interface:
+  display_name: "Video Artifact Improvement Loop"
+  short_description: "Preserve, review, and improve generated videos safely"
+  default_prompt: "Apply the site's private video artifact, review, and explicit next-generation improvement workflow."

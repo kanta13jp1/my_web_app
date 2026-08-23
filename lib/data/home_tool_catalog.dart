@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../utils/feature_route_labels.dart';
 import '../utils/feature_tap_logger.dart';
 
 import '../pages/abstinence_guard_page.dart';
@@ -28,7 +29,7 @@ import '../pages/cho_office_page.dart';
 import '../pages/chro_office_page.dart';
 import '../pages/cmo_office_page.dart';
 import '../pages/conveni_store_page.dart';
-import '../pages/daily_habits_page.dart';
+import '../pages/habit_center_page.dart';
 import '../pages/danshari_page.dart';
 import '../pages/decision_check_page.dart';
 import '../pages/deployment_monitoring_setup_page.dart';
@@ -44,7 +45,7 @@ import '../pages/growth_mission_page.dart';
 import '../pages/home_insights_page.dart';
 import '../pages/import_page.dart';
 import '../pages/kanban_board_page.dart';
-import '../pages/life_goals_page.dart';
+import '../pages/goal_center_page.dart';
 import '../pages/local_smart_cleanup_page.dart';
 import '../pages/windows_app_install_page.dart';
 import '../pages/memory_drill_page.dart';
@@ -72,7 +73,6 @@ import '../pages/wardrobe_page.dart';
 import '../pages/personality_test_questions_page.dart';
 import '../pages/iq_test_page.dart';
 import '../pages/iq_training_page.dart';
-import '../pages/wip_limit_page.dart';
 import '../pages/ai_suggest_tags_page.dart';
 import '../pages/analyze_reality_page.dart';
 import '../pages/support_tickets_page.dart';
@@ -96,8 +96,6 @@ import '../pages/health_page.dart';
 import '../pages/medical_notes_page.dart';
 import '../pages/mental_check_page.dart';
 import '../pages/settings_page.dart';
-import '../pages/stats_page.dart';
-import '../pages/asset_management_page.dart';
 import '../pages/cmo_page.dart';
 import '../pages/team_workspace_page.dart';
 import '../pages/workflow_automation_page.dart';
@@ -112,7 +110,7 @@ import '../pages/public_guitar_gallery_page.dart';
 import '../pages/music_collaboration_page.dart';
 import '../ui/features/beatles_guitar_tabs/beatles_guitar_tabs_feature.dart';
 import '../pages/focus_timer_page.dart';
-import '../pages/ai_writing_assistant_page.dart';
+import '../pages/writing_center_page.dart';
 import '../pages/wiki_database_page.dart';
 import '../pages/time_tracker_page.dart';
 import '../pages/voice_memo_transcriber_page.dart';
@@ -147,21 +145,20 @@ import '../pages/landing_ab_test_page.dart';
 import '../pages/loyalty_points_page.dart';
 import '../pages/market_intelligence_page.dart';
 import '../pages/meeting_manager_page.dart';
-import '../pages/mindmap_diagram_page.dart';
 import '../pages/news_rss_aggregator_page.dart';
 import '../pages/parking_reservation_page.dart';
 import '../pages/qr_code_generator_page.dart';
 import '../pages/reading_list_page.dart';
-import '../pages/referral_program_page.dart';
 import '../pages/rewards_page.dart';
 import '../pages/mcp_file_search_page.dart';
 import '../pages/semantic_search_page.dart';
 import '../pages/smart_inbox_triage_page.dart';
 import '../pages/social_feed_page.dart';
 import '../pages/subscription_billing_page.dart';
-import '../pages/video_ad_generator_page.dart';
+import '../pages/digital_product_store_pages.dart';
 import '../pages/viral_ad_generator_page.dart';
-import '../pages/viral_video_generator_page.dart';
+import '../ui/features/video_studio/video_studio_feature.dart';
+import '../ui/features/notion_migration/notion_migration_feature.dart';
 import '../pages/youtube_stats_page.dart';
 import '../pages/virtual_pet_page.dart';
 import '../pages/work_menu_page.dart';
@@ -171,14 +168,11 @@ import '../pages/travel_itinerary_page.dart';
 import '../pages/virtual_whiteboard_page.dart';
 import '../pages/recipe_meal_planner_page.dart';
 import '../pages/language_learning_page.dart';
-import '../pages/habit_gamification_page.dart';
 import '../pages/code_playground_page.dart';
 import '../pages/real_estate_tracker_page.dart';
-import '../pages/goal_tracker_page.dart';
 import '../pages/bookmark_sync_page.dart';
 import '../pages/jibun_api_page.dart';
 import '../pages/ui_design_status_page.dart';
-import '../pages/ai_summarizer_page.dart';
 import '../pages/revenue_forecaster_page.dart';
 import '../pages/weather_widget_page.dart';
 import '../pages/personal_dashboard_page.dart';
@@ -294,15 +288,17 @@ HomeToolOpenCallback _wrapRouteAwareHomeToolOpen(
   String? routePath,
 ) {
   return (context) async {
+    final canonicalRoutePath =
+        routePath == null ? null : canonicalFeatureRoutePath(routePath);
     final previous = _pendingHomeToolRoutePath;
-    _pendingHomeToolRoutePath = routePath;
+    _pendingHomeToolRoutePath = canonicalRoutePath;
     // ホームの「最近使った機能 / よく使われる機能」は user_feature_usage を参照する。
     // 業務メニュー・ホームタイルなどカタログ経由の全機能起動はこのラッパーを通るため、
     // ここで DB へ記録する (個別の起動口での記録漏れを一掃する単一チョークポイント)。
-    if (routePath != null && routePath.isNotEmpty) {
-      final label = _routeTitleMap()[routePath] ??
-          routePath.substring(1).replaceAll('-', ' ');
-      unawaited(recordFeatureTap(routePath, label));
+    if (canonicalRoutePath != null && canonicalRoutePath.isNotEmpty) {
+      final label = _routeTitleMap()[canonicalRoutePath] ??
+          featureLabelForRoute(canonicalRoutePath);
+      unawaited(recordFeatureTap(canonicalRoutePath, label));
     }
     try {
       await onOpen(context);
@@ -326,7 +322,7 @@ Future<void> _pushPage(BuildContext context, Widget page) {
 String? _homeToolRoutePathForId(String id) {
   switch (id) {
     case 'digital-danshari':
-      return '/real-world-danshari';
+      return '/digital-danshari';
     case 'agent-org':
       return '/agents';
     case 'admin-analytics':
@@ -407,7 +403,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
       icon: Icons.repeat,
       color: const Color(0xFF4338CA),
       keywords: const <String>['習慣', 'ルーティン', 'daily'],
-      onOpen: (context) => _pushPage(context, const DailyHabitsPage()),
+      onOpen: (context) => _pushPage(context, const HabitCenterPage()),
     ),
     HomeToolEntry(
       id: 'abstinence-guard',
@@ -423,11 +419,24 @@ List<HomeToolEntry> buildHomeToolCatalog({
     HomeToolEntry(
       id: 'cfo-office',
       sectionId: 'today',
-      title: '財務管理 (CFO)',
-      subtitle: '口座・資産・月次収支を確認する',
+      title: '財務・資産管理 (CFO)',
+      subtitle: '口座・資産・予算・支出・固定費・月次収支を一つの窓口で管理',
       icon: Icons.account_balance_wallet,
       color: Colors.green,
-      keywords: const <String>['財務', '資産', '収支', 'cfo'],
+      keywords: const <String>[
+        '財務',
+        '資産',
+        '投資',
+        '貯蓄',
+        '予算',
+        '支出',
+        '家計簿',
+        '固定費',
+        '決済',
+        '収支',
+        'MoneyForward',
+        'cfo',
+      ],
       onOpen: openCfoOffice ??
           (context) => _pushPage(context, const CfoOfficePage()),
     ),
@@ -476,20 +485,13 @@ List<HomeToolEntry> buildHomeToolCatalog({
       id: 'local-election-700',
       sectionId: 'special',
       title: '2027 統一地方選 700必達管理室',
-      subtitle: '県連別のKPIと最新実データを工程管理する',
+      subtitle: '県連KPI・AI取得日程・候補者アラートを一つの管理室で確認する',
       icon: Icons.how_to_vote,
       color: Colors.green,
-      keywords: const <String>['統一地方選', '700', '地方議員'],
-      onOpen: (context) => _pushPage(context, const ElectionVictoryPage()),
-    ),
-    HomeToolEntry(
-      id: 'local-election-schedule',
-      sectionId: 'special',
-      title: 'Local Election Schedule Room',
-      subtitle: 'Review AI-fetched schedules and candidate alert colors',
-      icon: Icons.event_note,
-      color: const Color(0xFFFF6B35),
       keywords: const <String>[
+        '統一地方選',
+        '700',
+        '地方議員',
         'local election',
         'schedule',
         'candidate',
@@ -518,16 +520,6 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const SettingsPage()),
     ),
     HomeToolEntry(
-      id: 'stats',
-      sectionId: 'personal',
-      title: '統計 & 実績',
-      subtitle: 'ゲーミフィケーション進捗とバッジを確認する',
-      icon: Icons.emoji_events_outlined,
-      color: const Color(0xFFFFC107),
-      keywords: const <String>['統計', '実績', 'バッジ', 'ゲーミフィケーション', 'レベル'],
-      onOpen: (context) => _pushPage(context, const StatsPage()),
-    ),
-    HomeToolEntry(
       id: 'my-struggle',
       sectionId: 'personal',
       title: '我が闘争',
@@ -540,11 +532,11 @@ List<HomeToolEntry> buildHomeToolCatalog({
     HomeToolEntry(
       id: 'prison-mode',
       sectionId: 'personal',
-      title: '刑務所モード',
-      subtitle: '借金完済まで生活規律を引き締める',
+      title: '完済ガード',
+      subtitle: '借金完済まで禁止事項・衝動・違反を記録する',
       icon: Icons.lock_clock_outlined,
       color: const Color(0xFF607D8B),
-      keywords: const <String>['刑務所', '借金', '規律'],
+      keywords: const <String>['完済', '刑務所', '借金', '禁止事項', '衝動', '規律'],
       onOpen: (context) => _pushPage(context, const PrisonModePage()),
     ),
     HomeToolEntry(
@@ -576,16 +568,6 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF607D8B),
       keywords: const <String>['行動', '発言', '振り返り'],
       onOpen: (context) => _pushPage(context, const BehaviorLogPage()),
-    ),
-    HomeToolEntry(
-      id: 'wip-limit',
-      sectionId: 'personal',
-      title: '消化してから次を食え',
-      subtitle: 'WIP 制限で詰め込みすぎを防ぐ',
-      icon: Icons.restaurant_menu,
-      color: const Color(0xFF795548),
-      keywords: const <String>['WIP', '制限', '消化'],
-      onOpen: (context) => _pushPage(context, const WipLimitPage()),
     ),
     HomeToolEntry(
       id: 'digital-danshari',
@@ -657,11 +639,11 @@ List<HomeToolEntry> buildHomeToolCatalog({
     HomeToolEntry(
       id: 'real-world-danshari',
       sectionId: 'personal',
-      title: '断捨離 (リアル)',
-      subtitle: '現実の持ち物を写真付きで整理する',
-      icon: Icons.camera_alt_outlined,
+      title: 'AIフォト行動アドバイザー',
+      subtitle: '写真から今すべきことを優先順に整理する',
+      icon: Icons.auto_awesome_outlined,
       color: const Color(0xFFFF6B35),
-      keywords: const <String>['断捨離', 'リアル', '持ち物'],
+      keywords: const <String>['AI', '写真', '行動', '片付け', '断捨離', 'リアル', '持ち物'],
       onOpen: (context) => _pushPage(
         context,
         RealWorldDanshariPage(supabaseClient: supabaseClient),
@@ -944,10 +926,19 @@ List<HomeToolEntry> buildHomeToolCatalog({
       id: 'mind-map',
       sectionId: 'knowledge',
       title: 'マインドマップ',
-      subtitle: '思考構造を視覚的に整理する',
+      subtitle: 'AI生成・画像保存・保存済みマップ確認を一つに集約',
       icon: Icons.hub_outlined,
       color: const Color(0xFF3D5AFE),
-      keywords: const <String>['マインドマップ', '思考整理', 'map'],
+      keywords: const <String>[
+        'マインドマップ',
+        '思考整理',
+        'アイデア',
+        'ブレスト',
+        '保存済み',
+        'mindmap',
+        'map',
+        '図',
+      ],
       onOpen: (context) => _pushPage(context, const MindMapPage()),
       requiresClearDeck: true,
     ),
@@ -1064,6 +1055,26 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const ImportPage()),
     ),
     HomeToolEntry(
+      id: 'notion-migration',
+      sectionId: 'knowledge',
+      title: 'Notion移行センター',
+      subtitle: '全件棚卸し・段階移行・7項目照合・Notion側削除を追跡する',
+      icon: Icons.move_to_inbox_outlined,
+      color: const Color(0xFF4F46E5),
+      keywords: const <String>[
+        'Notion',
+        '移行',
+        'インポート',
+        'バックアップ',
+        '検証',
+        '解約',
+      ],
+      onOpen: (context) => _pushPage(
+        context,
+        const NotionMigrationFeature(),
+      ),
+    ),
+    HomeToolEntry(
       id: 'growth-mission',
       sectionId: 'growth',
       title: '成長ミッション',
@@ -1081,7 +1092,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
       icon: Icons.flag_circle_outlined,
       color: const Color(0xFF3D5AFE),
       keywords: const <String>['人生目標', 'goal', 'vision'],
-      onOpen: (context) => _pushPage(context, const LifeGoalsPage()),
+      onOpen: (context) => _pushPage(context, const GoalCenterPage()),
     ),
     HomeToolEntry(
       id: 'career-monthly-kpi',
@@ -1224,11 +1235,18 @@ List<HomeToolEntry> buildHomeToolCatalog({
     HomeToolEntry(
       id: 'referral',
       sectionId: 'growth',
-      title: '友達招待',
-      subtitle: '紹介導線と特典を管理する',
+      title: '友達招待・紹介プログラム',
+      subtitle: '紹介コード・招待リンク・実績・特典を一つの画面で管理',
       icon: Icons.people_alt_outlined,
       color: const Color(0xFFFF6B35),
-      keywords: const <String>['招待', '紹介', 'referral'],
+      keywords: const <String>[
+        '招待',
+        '紹介',
+        'リファラル',
+        '紹介コード',
+        '報酬',
+        'referral',
+      ],
       onOpen: (context) => _pushPage(context, const ReferralPage()),
     ),
     HomeToolEntry(
@@ -1405,16 +1423,6 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const CmoPage()),
     ),
     HomeToolEntry(
-      id: 'asset-management',
-      sectionId: 'office',
-      title: '資産管理',
-      subtitle: '投資・貯蓄・資産ポートフォリオを一元管理',
-      icon: Icons.pie_chart_outline,
-      color: const Color(0xFF3D5AFE),
-      keywords: const <String>['資産', '投資', '貯蓄', 'ポートフォリオ', '資産管理'],
-      onOpen: (context) => _pushPage(context, const AssetManagementPage()),
-    ),
-    HomeToolEntry(
       id: 'workflow-automation',
       sectionId: 'growth',
       title: 'AIワークフロー自動化',
@@ -1559,8 +1567,8 @@ List<HomeToolEntry> buildHomeToolCatalog({
     HomeToolEntry(
       id: 'ai-writing-assistant',
       sectionId: 'growth',
-      title: 'AI文章アシスタント',
-      subtitle: 'Grammarly/Notion AI競合。文章改善・要約・翻訳・タイトル提案',
+      title: 'AI文章・要約アシスタント',
+      subtitle: '文章作成・改善・翻訳と、履歴付きAI要約を1か所で使う',
       icon: Icons.auto_fix_high_outlined,
       color: const Color(0xFF8B5CF6),
       keywords: const <String>[
@@ -1569,11 +1577,20 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'Grammarly',
         '校正',
         '要約',
+        'サマリー',
+        '議事録',
+        '要点',
+        '短縮',
+        'まとめ',
+        'テキスト',
+        '記事',
+        'ノート',
+        '自動',
         '翻訳',
         'ライティング',
         'Notion AI',
       ],
-      onOpen: (context) => _pushPage(context, const AiWritingAssistantPage()),
+      onOpen: (context) => _pushPage(context, const WritingCenterPage()),
     ),
     HomeToolEntry(
       id: 'wiki-database',
@@ -1739,51 +1756,6 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const CalendarEventsPage()),
     ),
     HomeToolEntry(
-      id: 'expense-tracker',
-      sectionId: 'personal',
-      title: '支出トラッカー',
-      subtitle: '資産管理に統合。支出記録・浪費カテゴリ・月次収支を一画面で確認',
-      icon: Icons.receipt_long_outlined,
-      color: const Color(0xFF2E7D32),
-      keywords: const <String>[
-        '支出',
-        '家計簿',
-        'お金',
-        '経費',
-        'expense',
-        'MoneyForward',
-      ],
-      onOpen: (context) => _pushPage(
-        context,
-        const AssetManagementPage(
-          initialFocus: AssetManagementInitialFocus.flow,
-          emphasizeMonthlyFlow: true,
-          entryLabel: '支出トラッカー',
-          entryDescription:
-              '支出記録、浪費カテゴリ、月次収支の確認は資産管理に統合しました。AIが現状を分析し、KGI / CSF / KPI で浪費削減を継続監視します。',
-        ),
-      ),
-    ),
-    HomeToolEntry(
-      id: 'budget-financial-planner',
-      sectionId: 'personal',
-      title: '予算・財務プランナー',
-      subtitle: '資産管理に統合。予算・固定費・収支・借金ロックダウンを一つに集約',
-      icon: Icons.savings_outlined,
-      color: const Color(0xFF00695C),
-      keywords: const <String>['予算', '財務', 'プランナー', '資産', '計画', 'budget'],
-      onOpen: (context) => _pushPage(
-        context,
-        const AssetManagementPage(
-          initialFocus: AssetManagementInitialFocus.flow,
-          emphasizeMonthlyFlow: true,
-          entryLabel: '予算・財務プランナー',
-          entryDescription:
-              '月次予算、固定費、収支、借金ロックダウンは資産管理に統合しました。お金の判断を一画面に集約して、時間と集中力の浪費も減らします。',
-        ),
-      ),
-    ),
-    HomeToolEntry(
       id: 'reading-list',
       sectionId: 'personal',
       title: '読書リスト',
@@ -1907,6 +1879,27 @@ List<HomeToolEntry> buildHomeToolCatalog({
     ),
     // office セクション
     HomeToolEntry(
+      id: 'shop',
+      sectionId: 'office',
+      title: 'デジタル作品ストア',
+      subtitle: '制作した画像・音声・動画・文章・ゲーム等を販売',
+      icon: Icons.storefront_outlined,
+      color: const Color(0xFFE65100),
+      keywords: const <String>[
+        '販売',
+        '商品',
+        'ストア',
+        '画像',
+        '音声',
+        '動画',
+        'プロンプト',
+        'ゲーム',
+        'テンプレート',
+        'shop',
+      ],
+      onOpen: (context) => _pushPage(context, const DigitalProductStorePage()),
+    ),
+    HomeToolEntry(
       id: 'subscription-billing',
       sectionId: 'office',
       title: 'サブスクリプション管理',
@@ -2027,16 +2020,6 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF00796B),
       keywords: const <String>['外部ファイル', 'MCP', '検索', 'コンテキスト', 'file search'],
       onOpen: (context) => _pushPage(context, const McpFileSearchPage()),
-    ),
-    HomeToolEntry(
-      id: 'mindmap',
-      sectionId: 'knowledge',
-      title: 'マインドマップ',
-      subtitle: 'アイデアの可視化・ブレインストーミング',
-      icon: Icons.hub_outlined,
-      color: const Color(0xFF6A1B9A),
-      keywords: const <String>['マインドマップ', 'アイデア', 'ブレスト', 'mindmap', '図'],
-      onOpen: (context) => _pushPage(context, const MindmapDiagramPage()),
     ),
     HomeToolEntry(
       id: 'news-rss',
@@ -2178,23 +2161,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const SobrietyCampaignPage()),
     ),
     HomeToolEntry(
-      id: 'referral-program',
-      sectionId: 'growth',
-      title: '紹介プログラム',
-      subtitle: '紹介コード・紹介追跡・報酬管理',
-      icon: Icons.share_outlined,
-      color: const Color(0xFF2E7D32),
-      keywords: const <String>['紹介', 'リファラル', '招待', 'referral', '報酬'],
-      onOpen: (context) => _pushPage(context, const ReferralProgramPage()),
-    ),
-    HomeToolEntry(
       id: 'rewards',
       sectionId: 'growth',
-      title: 'リワード',
-      subtitle: '実績報酬・バッジ・ランキング',
+      title: '実績・リワード',
+      subtitle: '実データのポイント・レベル・獲得バッジを確認する',
       icon: Icons.emoji_events_outlined,
       color: const Color(0xFFFF8F00),
-      keywords: const <String>['リワード', '報酬', 'バッジ', 'ランキング', 'rewards'],
+      keywords: const <String>[
+        '統計',
+        '実績',
+        'ゲーミフィケーション',
+        'レベル',
+        'リワード',
+        '報酬',
+        'バッジ',
+        'ランキング',
+        'rewards',
+      ],
       onOpen: (context) => _pushPage(context, const RewardsPage()),
     ),
     HomeToolEntry(
@@ -2265,6 +2248,22 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const LandingAbTestPage()),
     ),
     HomeToolEntry(
+      id: 'video-studio',
+      sectionId: 'growth',
+      title: 'AI動画スタジオ',
+      subtitle: '前払いクレジットで使う、当サイト運営GPUの非公開動画生成',
+      icon: Icons.movie_filter_outlined,
+      color: const Color(0xFF5C6BC0),
+      keywords: const <String>[
+        'AI動画',
+        'テキスト動画',
+        '動画生成',
+        'video studio',
+        'text to video',
+      ],
+      onOpen: (context) => _pushPage(context, const VideoStudioFeature()),
+    ),
+    HomeToolEntry(
       id: 'viral-ad-generator',
       sectionId: 'growth',
       title: 'バイラル広告ジェネレーター',
@@ -2273,33 +2272,6 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFFD84315),
       keywords: const <String>['バイラル', '広告', 'クリエイティブ', '動画', 'viral', 'ad'],
       onOpen: (context) => _pushPage(context, const ViralAdGeneratorPage()),
-    ),
-    HomeToolEntry(
-      id: 'video-ad-generator',
-      sectionId: 'growth',
-      title: '動画広告ジェネレーター',
-      subtitle: '動画広告の自動生成・テンプレート管理',
-      icon: Icons.videocam_outlined,
-      color: const Color(0xFFBF360C),
-      keywords: const <String>['動画', '広告', 'ビデオ', 'video ad', 'ジェネレーター'],
-      onOpen: (context) => _pushPage(context, const VideoAdGeneratorPage()),
-    ),
-    HomeToolEntry(
-      id: 'viral-video-generator',
-      sectionId: 'growth',
-      title: 'バイラル動画ジェネレーター',
-      subtitle: 'SNS拡散用ショート動画の自動生成',
-      icon: Icons.slow_motion_video_outlined,
-      color: const Color(0xFFE65100),
-      keywords: const <String>[
-        'バイラル',
-        '動画',
-        'ショート',
-        'TikTok',
-        'Reels',
-        'viral video',
-      ],
-      onOpen: (context) => _pushPage(context, const ViralVideoGeneratorPage()),
     ),
     HomeToolEntry(
       id: 'youtube-stats',
@@ -2534,28 +2506,6 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const LanguageLearningPage()),
     ),
     HomeToolEntry(
-      id: 'habit-gamification',
-      sectionId: 'personal',
-      title: '習慣ゲーミフィケーション',
-      subtitle: 'Duolingo/Forest/Habitica競合。デイリーチャレンジ・XP・バッジ・ストリーク',
-      icon: Icons.local_fire_department,
-      color: const Color(0xFFFF6F00),
-      keywords: const <String>[
-        'ゲーミフィケーション',
-        '習慣',
-        'ストリーク',
-        'バッジ',
-        'XP',
-        'チャレンジ',
-        'ランキング',
-        'Duolingo',
-        'Forest',
-        'Habitica',
-        'レベル',
-      ],
-      onOpen: (context) => _pushPage(context, const HabitGamificationPage()),
-    ),
-    HomeToolEntry(
       id: 'code-playground',
       sectionId: 'knowledge',
       title: 'コードプレイグラウンド',
@@ -2597,30 +2547,6 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'MoneyForward',
       ],
       onOpen: (context) => _pushPage(context, const RealEstateTrackerPage()),
-    ),
-    HomeToolEntry(
-      id: 'goal-tracker',
-      sectionId: 'personal',
-      title: '目標管理',
-      subtitle: 'Notion/Liven競合。短期/中期/長期目標・マイルストーン管理・進捗追跡・達成記録',
-      icon: Icons.flag,
-      color: const Color(0xFF7B1FA2),
-      keywords: const <String>[
-        '目標',
-        'ゴール',
-        'マイルストーン',
-        '進捗',
-        '達成',
-        'OKR',
-        '短期',
-        '中期',
-        '長期',
-        'Notion',
-        'Liven',
-        'KPI',
-        '目標管理',
-      ],
-      onOpen: (context) => _pushPage(context, const GoalTrackerPage()),
     ),
     HomeToolEntry(
       id: 'bookmark-sync',
@@ -2670,28 +2596,6 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'トークン',
       ],
       onOpen: (context) => _pushPage(context, const JibunApiPage()),
-    ),
-    HomeToolEntry(
-      id: 'ai-summarizer',
-      sectionId: 'knowledge',
-      title: 'AI要約',
-      subtitle: 'AIが長文テキストを自動要約。議事録・記事・メモを素早く整理',
-      icon: Icons.auto_awesome,
-      color: const Color(0xFF6D28D9),
-      keywords: const <String>[
-        'AI',
-        '要約',
-        'サマリー',
-        '議事録',
-        '要点',
-        '短縮',
-        'まとめ',
-        'テキスト',
-        '記事',
-        'ノート',
-        '自動',
-      ],
-      onOpen: (context) => _pushPage(context, const AiSummarizerPage()),
     ),
     HomeToolEntry(
       id: 'revenue-forecaster',
@@ -2796,6 +2700,55 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => Navigator.of(context).pushNamed('/release-notes'),
     ),
     HomeToolEntry(
+      id: 'tiger-reviewers',
+      sectionId: 'ai',
+      title: '虎レビュアー成績',
+      subtitle: '125名のレビュー効用・所属部・選出可否を確認',
+      icon: Icons.groups_2_outlined,
+      color: const Color(0xFFD97706),
+      keywords: const <String>[
+        '令和の虎',
+        '虎成績',
+        '脱落',
+        '1部',
+        '5部',
+      ],
+      onOpen: (context) => Navigator.of(context).pushNamed('/tiger-reviewers'),
+    ),
+    HomeToolEntry(
+      id: 'tiger-site-reviews',
+      sectionId: 'ai',
+      title: 'サイト全体の虎レビュー',
+      subtitle: '選出虎1名による事業全体の評価・指摘・反映状況',
+      icon: Icons.public_outlined,
+      color: const Color(0xFFB45309),
+      keywords: const <String>['令和の虎', 'サイトレビュー', '事業性', '収益'],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/tiger-site-reviews'),
+    ),
+    HomeToolEntry(
+      id: 'tiger-course-reviews',
+      sectionId: 'ai',
+      title: 'AI大学講座の虎レビュー',
+      subtitle: '選出虎1名による講座評価と1〜5部リーグ',
+      icon: Icons.school_outlined,
+      color: const Color(0xFF7C3AED),
+      keywords: const <String>['令和の虎', 'AI大学', '講座レビュー', '教育'],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/tiger-course-reviews'),
+    ),
+    HomeToolEntry(
+      id: 'tiger-feature-reviews',
+      sectionId: 'ai',
+      title: '機能の虎レビュー',
+      subtitle: '選出虎1名による機能評価と1〜5部リーグ',
+      icon: Icons.extension_outlined,
+      color: const Color(0xFF0F766E),
+      keywords: const <String>['令和の虎', '機能レビュー', '有用性', '事業価値'],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/tiger-feature-reviews'),
+    ),
+    HomeToolEntry(
       id: 'edge-llm-playground',
       sectionId: 'ai',
       title: 'Edge LLM Playground',
@@ -2814,6 +2767,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'observability',
       ],
       onOpen: (context) => _pushPage(context, const EdgeLlmPlaygroundPage()),
+    ),
+    HomeToolEntry(
+      id: 'agi-fireworks',
+      sectionId: 'ai',
+      title: 'AGI Fireworks',
+      subtitle: 'AIエージェントとの1か月を、打ち上げ花火の動画で振り返る',
+      icon: Icons.auto_awesome_outlined,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        'AGI',
+        '花火',
+        '動画',
+        'fireworks',
+        'Claude',
+        'Codex',
+        'tool calls',
+        'セッション',
+      ],
+      onOpen: (context) => Navigator.of(context).pushNamed('/agi-fireworks'),
     ),
     HomeToolEntry(
       id: 'tome-deck-studio',

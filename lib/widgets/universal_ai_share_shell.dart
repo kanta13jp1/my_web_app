@@ -3,9 +3,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../services/ai_share_button_preferences_service.dart';
+import '../services/inbox_capture_service.dart';
 import '../services/universal_x_share_service.dart';
 import '../services/x_copy_guardrails.dart';
 import 'ai_share_button_settings_panel.dart';
+import 'inbox_quick_capture_dialog.dart';
 
 /// 投稿済みツイートの URL を組み立てる純関数。ハンドル名は不要な
 /// `https://x.com/i/status/<id>` 形式(アカウント名の @ 付き/表記ゆれに非依存)。
@@ -85,7 +87,10 @@ class UniversalAiShareRouteObserver extends NavigatorObserver {
   }
 
   void _update(String? routeName) {
-    currentPage.value = UniversalSharePageContext.fromRouteName(routeName);
+    final nextPage = UniversalSharePageContext.fromRouteName(routeName);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      currentPage.value = nextPage;
+    });
   }
 }
 
@@ -98,12 +103,15 @@ const double kAiShareFabTopOffset = kToolbarHeight + 20;
 const double kAiShareFabDefaultBottomOffset = 20;
 const double kAiShareFabLandingBottomOffset = 88;
 const double kAiShareFabMusubiBottomOffset = 88;
+const double kAiShareFabMinScreenWidth = 600;
 
 bool shouldShowUniversalAiShareFab({
   required String routePath,
   required bool isLoggedIn,
+  double screenWidth = double.infinity,
 }) {
-  return routePath != '/' || isLoggedIn;
+  return screenWidth >= kAiShareFabMinScreenWidth &&
+      (routePath != '/' || isLoggedIn);
 }
 
 double resolveAiShareFabBottomOffset({
@@ -122,11 +130,15 @@ double resolveAiShareFabBottomOffset({
 class UniversalAiShareShell extends StatefulWidget {
   final Widget child;
   final GlobalKey<NavigatorState> navigatorKey;
+  final bool? isLoggedInOverride;
+  final Future<void> Function(String text)? onInboxSave;
 
   const UniversalAiShareShell({
     super.key,
     required this.child,
     required this.navigatorKey,
+    this.isLoggedInOverride,
+    this.onInboxSave,
   });
 
   @override
@@ -202,7 +214,6 @@ class _UniversalAiShareShellState extends State<UniversalAiShareShell> {
       animation: _preferencesController,
       builder: (context, _) {
         final preferences = _preferencesController.preferences;
-        if (!preferences.visible) return const SizedBox.shrink();
 
         return ValueListenableBuilder<UniversalSharePageContext>(
           valueListenable: universalAiShareRouteObserver.currentPage,
@@ -213,6 +224,9 @@ class _UniversalAiShareShellState extends State<UniversalAiShareShell> {
                 child: _UniversalAiShareFab(
                   page: page,
                   navigatorKey: widget.navigatorKey,
+                  showShare: preferences.visible,
+                  isLoggedInOverride: widget.isLoggedInOverride,
+                  onInboxSave: widget.onInboxSave,
                 ),
               ),
               bottomOffset: resolveAiShareFabBottomOffset(
@@ -247,10 +261,20 @@ class _UniversalAiShareShellState extends State<UniversalAiShareShell> {
 class _UniversalAiShareFab extends StatelessWidget {
   final UniversalSharePageContext page;
   final GlobalKey<NavigatorState> navigatorKey;
+  final bool showShare;
+  final bool? isLoggedInOverride;
+  final Future<void> Function(String text)? onInboxSave;
 
-  const _UniversalAiShareFab({required this.page, required this.navigatorKey});
+  const _UniversalAiShareFab({
+    required this.page,
+    required this.navigatorKey,
+    required this.showShare,
+    this.isLoggedInOverride,
+    this.onInboxSave,
+  });
 
   bool get _isLoggedIn {
+    if (isLoggedInOverride != null) return isLoggedInOverride!;
     try {
       return Supabase.instance.client.auth.currentSession != null;
     } catch (_) {
@@ -268,6 +292,41 @@ class _UniversalAiShareFab extends StatelessWidget {
         builder: (_) => UniversalAiShareDialog(page: page),
       );
     });
+  }
+
+  void _openInboxDialog() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final overlayContext = navigatorKey.currentState?.overlay?.context;
+      if (overlayContext == null || !overlayContext.mounted) return;
+
+      final save = onInboxSave ?? _saveInboxWithSupabase;
+      final saved = await showDialog<bool>(
+        context: overlayContext,
+        useRootNavigator: true,
+        builder: (_) => InboxQuickCaptureDialog(onSave: save),
+      );
+      if (saved != true || !overlayContext.mounted) return;
+
+      final isAlreadyOnNotes =
+          page.routePath == '/notes' || page.routePath == '/note-list';
+      ScaffoldMessenger.maybeOf(overlayContext)?.showSnackBar(
+        SnackBar(
+          content: const Text('Inboxに保存しました'),
+          action: isAlreadyOnNotes
+              ? null
+              : SnackBarAction(
+                  label: 'Inboxを見る',
+                  onPressed: () =>
+                      navigatorKey.currentState?.pushNamed('/notes'),
+                ),
+        ),
+      );
+    });
+  }
+
+  Future<void> _saveInboxWithSupabase(String text) async {
+    final service = InboxCaptureService(Supabase.instance.client);
+    await service.save(text);
   }
 
   void _openSettingsSheet() {
@@ -290,10 +349,14 @@ class _UniversalAiShareFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = _isLoggedIn;
-    if (!shouldShowUniversalAiShareFab(
-      routePath: page.routePath,
-      isLoggedIn: isLoggedIn,
-    )) {
+    final showInbox = isLoggedIn;
+    final showShareAction = showShare &&
+        shouldShowUniversalAiShareFab(
+          routePath: page.routePath,
+          isLoggedIn: isLoggedIn,
+          screenWidth: MediaQuery.sizeOf(context).width,
+        );
+    if (!showInbox && !showShareAction) {
       return const SizedBox.shrink();
     }
 
@@ -313,44 +376,70 @@ class _UniversalAiShareFab extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Tooltip(
-            message: 'AIシェア',
-            child: InkWell(
-              onTap: _openShareDialog,
-              child: Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 12, 12),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.auto_awesome, color: foregroundColor),
-                    const SizedBox(width: 8),
-                    Text(
-                      'AIシェア',
-                      style: TextStyle(
-                        color: foregroundColor,
-                        fontWeight: FontWeight.w700,
+          if (showInbox)
+            Tooltip(
+              message: 'Inboxへメモ',
+              child: IconButton(
+                key: const Key('universal_inbox_capture_button'),
+                onPressed: _openInboxDialog,
+                icon: const Icon(Icons.inbox_outlined),
+                color: foregroundColor,
+                constraints: const BoxConstraints.tightFor(
+                  width: 48,
+                  height: 48,
+                ),
+                padding: EdgeInsets.zero,
+              ),
+            ),
+          if (showInbox && showShareAction)
+            Container(
+              width: 1,
+              height: 28,
+              color: colorScheme.outlineVariant.withValues(alpha: 0.78),
+            ),
+          if (showShareAction) ...[
+            Tooltip(
+              message: 'AIシェア',
+              child: InkWell(
+                onTap: _openShareDialog,
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 12, 12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.auto_awesome, color: foregroundColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        'AIシェア',
+                        style: TextStyle(
+                          color: foregroundColor,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          Container(
-            width: 1,
-            height: 28,
-            color: colorScheme.outlineVariant.withValues(alpha: 0.78),
-          ),
-          Tooltip(
-            message: 'AIシェアボタン設定',
-            child: IconButton(
-              onPressed: _openSettingsSheet,
-              icon: const Icon(Icons.tune),
-              color: foregroundColor,
-              constraints: const BoxConstraints.tightFor(width: 44, height: 48),
-              padding: EdgeInsets.zero,
+            Container(
+              width: 1,
+              height: 28,
+              color: colorScheme.outlineVariant.withValues(alpha: 0.78),
             ),
-          ),
+            Tooltip(
+              message: 'AIシェアボタン設定',
+              child: IconButton(
+                onPressed: _openSettingsSheet,
+                icon: const Icon(Icons.tune),
+                color: foregroundColor,
+                constraints: const BoxConstraints.tightFor(
+                  width: 44,
+                  height: 48,
+                ),
+                padding: EdgeInsets.zero,
+              ),
+            ),
+          ],
         ],
       ),
     );

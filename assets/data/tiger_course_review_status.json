@@ -1,0 +1,124 @@
+{
+  "schema_version": 3,
+  "generated_at": "2026-08-23T08:57:36.644418+00:00",
+  "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
+  "lane": "course_review",
+  "publication_state": "latest_review",
+  "automation": {
+    "id": "ai-2",
+    "name": "AI大学講座の虎レビュー",
+    "status": "ACTIVE",
+    "schedule": "毎時50分（1時間ごと）"
+  },
+  "pool": {
+    "total": 3,
+    "eligible": 3,
+    "provisional": 2,
+    "division_1": 0,
+    "division_2": 0,
+    "division_3": 3,
+    "division_4": 0,
+    "division_5": 0
+  },
+  "utility_weights": {
+    "practical_actionability": 30,
+    "source_freshness": 20,
+    "learning_clarity": 20,
+    "distinctiveness": 15,
+    "learner_evidence": 15
+  },
+  "latest_review": {
+    "cycle_id": "20260823T175240+0900",
+    "started_at": "2026-08-23T17:54:10+09:00",
+    "source_format": "course_review",
+    "surface": {
+      "slug": "course-525273ba-539f-4dd4-b436-a6a74a5e8cc5",
+      "url": "https://www.01.ai/"
+    },
+    "reviewer": {
+      "seat": 9,
+      "name": "平出 心",
+      "selection_score": 68.8967,
+      "division": 1,
+      "cycle_utility": 90.25,
+      "aggregate_utility": 85.5
+    },
+    "status": "review_only",
+    "validation": "passed",
+    "finding_count": 2,
+    "top_findings": [
+      {
+        "summary": "『最新情報』講座として、確認日・主要差分・日付付き一次情報を結ぶ講座固有の要約がない。",
+        "severity": "p1",
+        "business_dimensions": [
+          "trust_risk",
+          "market_demand",
+          "competitive_advantage"
+        ]
+      },
+      {
+        "summary": "最新情報を実務判断へ変換できたかを示す実在学習者の課題・成果証拠がない。",
+        "severity": "p2",
+        "business_dimensions": [
+          "market_demand",
+          "customer_pain",
+          "unit_economics"
+        ]
+      }
+    ],
+    "course": {
+      "content_id": "525273ba-539f-4dd4-b436-a6a74a5e8cc5",
+      "provider": "01ai",
+      "title": "01.AI (Yi) 最新情報",
+      "source_url": "https://www.01.ai/",
+      "reason": "fresh公開Data APIで有効かつHTTPS出典付きと確認し、公式サイトはHTTP 200で2026-08-10更新、会社年表は2026-07のTrueNorthと2026-01のWorldWise 2.5まで明示しているため、現在の事業・製品方向を把握する一次情報として有用である。一方、講座固有の学習目標、更新差分、演習はなく、ニュース一覧にも表示上の日付がないため『最新情報』を再現可能に学ぶ導線は弱い。実在学習者の成果・完了・評価証拠は観測できないため、learner_evidenceは中立50点とした。",
+      "cycle_utility": 65.1,
+      "aggregate_utility": 65.1,
+      "division": 3
+    }
+  },
+  "courses": [
+    {
+      "content_id": "525273ba-539f-4dd4-b436-a6a74a5e8cc5",
+      "provider": "01ai",
+      "title": "01.AI (Yi) 最新情報",
+      "source_url": "https://www.01.ai/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 65.1,
+      "completed_cycles": 1,
+      "last_cycle_utility": 65.1,
+      "last_reviewed_at": "2026-08-23T08:54:10+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "22befb67-6147-4a4b-999c-ee1ad6fa9615",
+      "provider": "01ai",
+      "title": "01.AI (Yi) モデル一覧",
+      "source_url": "https://platform.01.ai/docs",
+      "division": 3,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 53.22,
+      "completed_cycles": 3,
+      "last_cycle_utility": 56.25,
+      "last_reviewed_at": "2026-08-23T07:54:04+00:00",
+      "reason": "講座レビュー3回・効用53.2点で3部"
+    },
+    {
+      "content_id": "4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
+      "provider": "01ai",
+      "title": "01.AI (Yi) API 利用方法",
+      "source_url": "https://platform.01.ai/docs",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 43.25,
+      "completed_cycles": 1,
+      "last_cycle_utility": 43.25,
+      "last_reviewed_at": "2026-08-23T06:38:16.438300+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    }
+  ]
+}

@@ -1,0 +1,299 @@
+{
+  "schema_version": 3,
+  "generated_at": "2026-08-23T08:32:50.740445+00:00",
+  "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
+  "lane": "feature_review",
+  "publication_state": "latest_review",
+  "automation": {
+    "id": "automation-4",
+    "name": "機能の虎レビュー",
+    "status": "ACTIVE",
+    "schedule": "毎時15分（1時間ごと）"
+  },
+  "pool": {
+    "total": 13,
+    "eligible": 13,
+    "provisional": 13,
+    "division_1": 0,
+    "division_2": 0,
+    "division_3": 13,
+    "division_4": 0,
+    "division_5": 0,
+    "eliminated": 0
+  },
+  "utility_weights": {
+    "user_value": 30,
+    "business_impact": 25,
+    "observed_usage": 20,
+    "reliability_trust": 15,
+    "operating_efficiency": 10
+  },
+  "latest_review": {
+    "cycle_id": "20260823T172138+0900",
+    "started_at": "2026-08-23T17:21:38+09:00",
+    "source_format": "feature_review",
+    "surface": {
+      "slug": "ai_university",
+      "url": "https://my-web-app-b67f4.web.app/ai-university"
+    },
+    "reviewer": {
+      "seat": 11,
+      "name": "野口 功司",
+      "selection_score": 78.0406,
+      "division": 3,
+      "cycle_utility": 95.5,
+      "aggregate_utility": 95.5
+    },
+    "status": "fixed",
+    "validation": "passed",
+    "finding_count": 3,
+    "top_findings": [
+      {
+        "summary": "読み込み中のspinnerが支援技術へ状態を通知しない",
+        "severity": "p1",
+        "business_dimensions": [
+          "customer_pain",
+          "go_to_market",
+          "trust_risk"
+        ]
+      },
+      {
+        "summary": "SEOシェルから実AI大学画面への切り替えが遅い",
+        "severity": "p1",
+        "business_dimensions": [
+          "customer_pain",
+          "go_to_market",
+          "unit_economics"
+        ]
+      },
+      {
+        "summary": "8千行超の単一ページと専用widget test不足が改善速度を下げる",
+        "severity": "p2",
+        "business_dimensions": [
+          "founder_execution",
+          "scalability",
+          "unit_economics"
+        ]
+      }
+    ],
+    "feature": {
+      "slug": "ai_university",
+      "title": "AI大学入口ページ",
+      "kind": "page",
+      "reason": "個別講座の内容ではなく、AI大学の公開入口、初期読み込み、教材発見、継続学習導線だけを機能として評価した。利用分析データはなく、観測利用は中立50点とした。",
+      "cycle_utility": 65.8,
+      "aggregate_utility": 65.8,
+      "division": 3
+    }
+  },
+  "features": [
+    {
+      "slug": "home",
+      "kind": "page",
+      "title": "home",
+      "path": "/",
+      "source": "lib/pages/home_page.dart",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 66.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 66.75,
+      "last_reviewed_at": "2026-08-23T08:13:00+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "ai_university",
+      "kind": "page",
+      "title": "ai_university",
+      "path": "/ai-university",
+      "source": "lib/pages/gemini_university_v2_page.dart",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 65.8,
+      "completed_cycles": 1,
+      "last_cycle_utility": 65.8,
+      "last_reviewed_at": "2026-08-23T08:21:38+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "admin_analytics",
+      "kind": "page",
+      "title": "admin_analytics",
+      "path": "/admin/analytics",
+      "source": "lib/pages/admin_analytics_page.dart",
+      "priority": "low",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "last_cycle_utility": null,
+      "last_reviewed_at": null,
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "ai_hub",
+      "kind": "edge_function",
+      "title": "ai-hub",
+      "path": "",
+      "source": "supabase/functions/ai-hub/index.ts",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "last_cycle_utility": null,
+      "last_reviewed_at": null,
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "comparison",
+      "kind": "page",
+      "title": "comparison",
+      "path": "/competitors",
+      "source": "lib/pages/comparison_page.dart",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "last_cycle_utility": null,
+      "last_reviewed_at": null,
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "core_hub",
+      "kind": "edge_function",
+      "title": "core-hub",
+      "path": "",
+      "source": "supabase/functions/core-hub/index.ts",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "last_cycle_utility": null,
+      "last_reviewed_at": null,
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "gemini_university",
+      "kind": "page",
+      "title": "gemini_university",
+      "path": "/gemini-university",
+      "source": "lib/pages/gemini_university_v2_page.dart",
+      "priority": "medium",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "last_cycle_utility": null,
+      "last_reviewed_at": null,
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "growth_weekly_digest",
+      "kind": "edge_function",
+      "title": "growth-weekly-digest",
+      "path": "",
+      "source": "supabase/functions/growth-weekly-digest/index.ts",
+      "priority": "medium",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "last_cycle_utility": null,
+      "last_reviewed_at": null,
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "horse_racing",
+      "kind": "page",
+      "title": "horse_racing",
+      "path": "/horse-racing",
+      "source": "lib/pages/horse_racing_predictor_page.dart",
+      "priority": "medium",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "last_cycle_utility": null,
+      "last_reviewed_at": null,
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "landing",
+      "kind": "page",
+      "title": "landing",
+      "path": "/lp",
+      "source": "lib/pages/landing_page.dart",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "last_cycle_utility": null,
+      "last_reviewed_at": null,
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "philosophy",
+      "kind": "page",
+      "title": "philosophy",
+      "path": "/philosophy",
+      "source": "lib/pages/philosophy_page.dart",
+      "priority": "medium",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "last_cycle_utility": null,
+      "last_reviewed_at": null,
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "schedule_hub",
+      "kind": "edge_function",
+      "title": "schedule-hub",
+      "path": "",
+      "source": "supabase/functions/schedule-hub/index.ts",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "last_cycle_utility": null,
+      "last_reviewed_at": null,
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "user_manual",
+      "kind": "page",
+      "title": "user_manual",
+      "path": "/manual",
+      "source": "lib/pages/user_manual_page.dart",
+      "priority": "low",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "last_cycle_utility": null,
+      "last_reviewed_at": null,
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    }
+  ]
+}

@@ -12,7 +12,7 @@ name: Notion Mirror Sync (hourly)
 
 on:
   schedule:
-    - cron: "10 */2 * * *" # 2時間ごと10分 (2026-06-10 ci-audit: 毎時→2時間, 360runs/月削減)
+    - cron: "10 */4 * * *" # 4時間ごと10分 (2026-06-10 ci-audit: 毎時→2時間 / 2026-07-21 ci-audit: 2時間→4時間, 180runs/月削減)
   workflow_dispatch:
     inputs:
       offset:

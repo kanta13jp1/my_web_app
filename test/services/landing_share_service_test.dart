@@ -11,9 +11,11 @@ import 'package:my_web_app/models/agent_task.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
 import 'package:my_web_app/services/agent_org_service.dart';
+import 'package:my_web_app/services/task_clarity_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:my_web_app/services/landing_conversion_experiment_service.dart';
+import 'package:my_web_app/services/landing_oauth_callback_failure.dart';
 import 'package:my_web_app/services/landing_page_adapter.dart';
 import 'package:my_web_app/services/landing_share_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -116,6 +118,11 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
       Future<bool>.value(true);
 
   @override
+  Future<void> recordGoogleOAuthCallbackFailure({
+    required LandingOAuthCallbackFailureCategory category,
+  }) async {}
+
+  @override
   Future<AuthResponse> signUp({
     required String email,
     required String password,
@@ -175,6 +182,7 @@ class _FakeAgentOrgService extends Fake implements AgentOrgService {
     String? conversationId,
     bool createMessage = true,
     String? actorAgentId,
+    Map<String, dynamic> metadata = const <String, dynamic>{},
   }) async {
     delegatedTasks.add(<String, String>{
       'supervisorAgentId': supervisorAgentId,
@@ -200,6 +208,7 @@ class _FakeAgentOrgService extends Fake implements AgentOrgService {
       source: source,
       createdAt: now,
       updatedAt: now,
+      metadata: metadata,
     );
 
     final nextTaskCounts = <String, int>{
@@ -219,6 +228,33 @@ class _FakeAgentOrgService extends Fake implements AgentOrgService {
     );
 
     return task;
+  }
+
+  @override
+  Future<AgentTask> updateTaskClarity({
+    required String taskId,
+    required Map<String, dynamic> clarity,
+  }) async {
+    final current = snapshot.tasks.firstWhere((task) => task.id == taskId);
+    final updated = AgentTask.fromJson(<String, dynamic>{
+      ...current.toJson(),
+      'metadata': <String, dynamic>{
+        ...current.metadata,
+        'clarity': clarity,
+      },
+    });
+    snapshot = AgentOrgSnapshot(
+      agents: snapshot.agents,
+      tasks: snapshot.tasks
+          .map((task) => task.id == taskId ? updated : task)
+          .toList(growable: false),
+      recentMemories: snapshot.recentMemories,
+      relationships: snapshot.relationships,
+      recentMessages: snapshot.recentMessages,
+      openTaskCountsByAgent: snapshot.openTaskCountsByAgent,
+      memoryCountsByAgent: snapshot.memoryCountsByAgent,
+    );
+    return updated;
   }
 
   @override
@@ -447,6 +483,20 @@ AgentOrgSnapshot _snapshotWithMessages(List<AgentMessage> messages) {
   );
 }
 
+class _FixedTaskClarityEvaluator implements TaskClarityEvaluator {
+  final TaskClarityEvaluation evaluation;
+
+  const _FixedTaskClarityEvaluator(this.evaluation);
+
+  @override
+  Future<TaskClarityEvaluation> evaluate({
+    required String title,
+    String description = '',
+  }) async {
+    return evaluation;
+  }
+}
+
 void main() {
   const watchlistService = AssetWatchlistService();
 
@@ -632,6 +682,7 @@ void main() {
         home: LandingPage(
           adapter: adapter,
           experimentAssignment: assignment,
+          showUnverifiedMarketingForQa: true,
         ),
       ),
     );
@@ -643,6 +694,28 @@ void main() {
     expect(find.byKey(const Key('landing_trial_section')), findsOneWidget);
     expect(find.byKey(const Key('landing_auth_section')), findsOneWidget);
     expect(find.byKey(const Key('landing_social_proof_stats')), findsOneWidget);
+    expect(find.byKey(const Key('landing_editorial_prologue')), findsOneWidget);
+    for (var chapter = 1; chapter <= 4; chapter++) {
+      expect(
+        find.byKey(Key('landing_editorial_chapter_$chapter')),
+        findsOneWidget,
+      );
+    }
+    expect(
+      find.byKey(const Key('landing_editorial_archive_toggle')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('landing_migration_guide')), findsNothing);
+    expect(find.byKey(const Key('landing_comparison_links')), findsNothing);
+
+    final archiveToggle = find.byKey(
+      const Key('landing_editorial_archive_toggle'),
+    );
+    await tester.ensureVisible(archiveToggle);
+    await tester.pump();
+    await tester.tap(archiveToggle);
+    await tester.pump(const Duration(milliseconds: 300));
+
     expect(find.byKey(const Key('landing_migration_guide')), findsOneWidget);
     expect(find.byKey(const Key('landing_comparison_links')), findsOneWidget);
     expect(adapter.loadShareSnapshotCallCount, 0);
@@ -826,6 +899,67 @@ void main() {
       'Outline scope, pricing assumptions, open questions, and a proposed response plan for the customer.',
     );
     expect(find.text('Prepare estimate response'), findsOneWidget);
+  });
+
+  testWidgets(
+      'AgentOrgPage clarifies a vague task before returning to the dashboard',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final service = _FakeAgentOrgService(
+      _snapshotWithMessages(const <AgentMessage>[]),
+    );
+    final evaluator = _FixedTaskClarityEvaluator(
+      TaskClarityEvaluation(
+        score: 3,
+        threshold: 6,
+        status: 'needs_clarification',
+        source: 'test',
+        questions: const <String>['いつまでに完了しますか？'],
+        ambiguities: const <String>['期限が未指定です'],
+        evaluatedAt: DateTime.utc(2026, 7, 20),
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AgentOrgPage(
+          service: service,
+          clarityEvaluator: evaluator,
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await tester.enterText(
+      find.byKey(const Key('agent_org_task_title_field')),
+      '売上を改善する',
+    );
+    final scrollable = find.byType(Scrollable).first;
+    final submitButton =
+        find.byKey(const Key('agent_org_delegation_submit_button'));
+    await tester.scrollUntilVisible(submitButton, 200, scrollable: scrollable);
+    await tester.tap(submitButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('タスクの曖昧さを確認'), findsOneWidget);
+    expect(service.snapshot.tasks.single.needsClarification, isTrue);
+
+    await tester.enterText(
+      find.byKey(const Key('task_clarity_answer_0')),
+      '7月31日まで',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('task_clarity_submit_button')));
+    await tester.pumpAndSettle();
+
+    expect(
+      service.snapshot.tasks.single.clarityStatus,
+      'clarified',
+    );
+    expect(find.text('明確化済み 3/10'), findsOneWidget);
   });
 
   testWidgets(
