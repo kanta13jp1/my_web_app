@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-23T08:02:51.371867+00:00",
+  "generated_at": "2026-08-23T09:02:53.991646+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "reviewer_league",
   "publication_state": "latest_assignment",
@@ -13,10 +13,10 @@
   "pool": {
     "total": 125,
     "eligible": 125,
-    "provisional": 122,
-    "division_1": 3,
+    "provisional": 121,
+    "division_1": 4,
     "division_2": 0,
-    "division_3": 122,
+    "division_3": 121,
     "division_4": 0,
     "division_5": 0,
     "eliminated": 0,
@@ -33,45 +33,61 @@
     }
   },
   "latest_assignment": {
-    "cycle_id": "20260823T165404+0900",
-    "started_at": "2026-08-23T16:54:04+09:00",
+    "cycle_id": "20260823T175240+0900",
+    "started_at": "2026-08-23T17:54:10+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-22befb67-6147-4a4b-999c-ee1ad6fa9615",
-      "url": "https://platform.01.ai/docs"
+      "slug": "course-525273ba-539f-4dd4-b436-a6a74a5e8cc5",
+      "url": "https://www.01.ai/"
     },
     "reviewer": {
-      "seat": 12,
-      "name": "迫 佑樹",
-      "selection_score": 73.0376,
-      "division": 3,
-      "cycle_utility": 90.0,
-      "aggregate_utility": 90.0
+      "seat": 9,
+      "name": "平出 心",
+      "selection_score": 68.8967,
+      "division": 1,
+      "cycle_utility": 90.25,
+      "aggregate_utility": 85.5
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 2,
     "top_findings": [
       {
-        "summary": "モデル一覧の現行性を検証できる更新日・稼働モデル証拠が講座出典にない。",
+        "summary": "『最新情報』講座として、確認日・主要差分・日付付き一次情報を結ぶ講座固有の要約がない。",
         "severity": "p1",
         "business_dimensions": [
-          "unit_economics",
-          "competitive_advantage",
-          "trust_risk"
+          "trust_risk",
+          "market_demand",
+          "competitive_advantage"
         ]
       },
       {
-        "summary": "モデル比較後に学習者が適切なモデルを選べたかを示す実在学習者証拠がない。",
+        "summary": "最新情報を実務判断へ変換できたかを示す実在学習者の課題・成果証拠がない。",
         "severity": "p2",
         "business_dimensions": [
           "market_demand",
-          "go_to_market"
+          "customer_pain",
+          "unit_economics"
         ]
       }
     ]
   },
   "reviewers": [
+    {
+      "seat": 11,
+      "name": "野口 功司",
+      "tier": "division_1",
+      "division": 1,
+      "provisional": false,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 95.88,
+      "completed_cycles": 5,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 95.5,
+      "last_selected_at": "2026-08-23T08:21:38+00:00",
+      "reason": "担当5回・効用95.9点で1部"
+    },
     {
       "seat": 7,
       "name": "榊󠄀原 清一",
@@ -118,19 +134,19 @@
       "reason": "担当2回・効用89.8点で1部"
     },
     {
-      "seat": 11,
-      "name": "野口 功司",
+      "seat": 9,
+      "name": "平出 心",
       "tier": "division_1",
       "division": 1,
       "provisional": false,
       "eligible": true,
       "floor_protected": false,
-      "utility_score": 87.71,
-      "completed_cycles": 4,
+      "utility_score": 85.5,
+      "completed_cycles": 2,
       "low_utility_streak": 0,
-      "last_cycle_utility": 96.25,
-      "last_selected_at": "2026-08-23T06:22:47+00:00",
-      "reason": "担当4回・効用87.7点で1部"
+      "last_cycle_utility": 90.25,
+      "last_selected_at": "2026-08-23T08:54:10+00:00",
+      "reason": "担当2回・効用85.5点で1部"
     },
     {
       "seat": 2,
@@ -210,21 +226,6 @@
     {
       "seat": 8,
       "name": "関口 ケント",
-      "tier": "division_3",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "floor_protected": false,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "low_utility_streak": 0,
-      "last_cycle_utility": null,
-      "last_selected_at": null,
-      "reason": "担当実績が2回未満のため暫定3部"
-    },
-    {
-      "seat": 9,
-      "name": "平出 心",
       "tier": "division_3",
       "division": 3,
       "provisional": true,
