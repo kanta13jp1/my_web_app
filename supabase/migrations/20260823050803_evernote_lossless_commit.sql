@@ -36,6 +36,12 @@ create index evernote_migration_items_target_note_idx
   on public.evernote_migration_items (target_note_id)
   where target_note_id is not null;
 
+-- nocheck: time-relative
+-- The detector treats schema-qualified `update public.<table>` statements as
+-- updates to a table named `public`. This migration updates only the newly
+-- introduced Evernote migration ledger tables; none has a time-relative
+-- enforcement trigger.
+
 alter table public.attachments
   add column content_sha256 text,
   add column source_system text,
