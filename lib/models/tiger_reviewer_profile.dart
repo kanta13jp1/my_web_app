@@ -27,13 +27,13 @@ class TigerReviewerProfileCatalog {
     final profiles = json['profiles'];
     final parsed = profiles is List
         ? profiles
-              .whereType<Map>()
-              .map(
-                (profile) => TigerReviewerProfile.fromJson(
-                  Map<String, dynamic>.from(profile),
-                ),
-              )
-              .toList(growable: false)
+            .whereType<Map>()
+            .map(
+              (profile) => TigerReviewerProfile.fromJson(
+                Map<String, dynamic>.from(profile),
+              ),
+            )
+            .toList(growable: false)
         : const <TigerReviewerProfile>[];
     return TigerReviewerProfileCatalog(
       schemaVersion: json['schema_version'] is int
