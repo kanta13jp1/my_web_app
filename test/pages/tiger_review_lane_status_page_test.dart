@@ -5,6 +5,21 @@ import 'package:my_web_app/models/tiger_reviewer_profile.dart';
 import 'package:my_web_app/pages/tiger_review_lane_status_page.dart';
 
 void main() {
+  test('profile schema invalidates the browser asset cache', () {
+    final uri = buildTigerReviewAssetUri(
+      Uri.parse('https://example.com/tiger-reviewers'),
+      'assets/data/tiger_reviewer_profiles.json',
+      schemaVersion: tigerReviewerProfileSchemaVersion,
+    );
+
+    expect(tigerReviewerProfileSchemaVersion, 2);
+    expect(
+      uri.toString(),
+      'https://example.com/assets/assets/data/tiger_reviewer_profiles.json'
+      '?review_status_schema=2',
+    );
+  });
+
   testWidgets('hub exposes four independent review lanes', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: TigerReviewHubPage()));
 
