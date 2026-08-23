@@ -448,7 +448,26 @@ class _ImportPageState extends State<ImportPage> {
                     Text('File: ${preview.fileName}'),
                     const SizedBox(height: 4),
                     Text('Notes ready to import: ${preview.notes.length}'),
-                    if (currentUser == null) ...[
+                    if (preview.sourceExportSha256 != null) ...[
+                      const SizedBox(height: 4),
+                      Text('Attachments detected: ${preview.resourceCount}'),
+                      const SizedBox(height: 4),
+                      SelectableText(
+                        'Export SHA-256: ${preview.sourceExportSha256}',
+                      ),
+                    ],
+                    if (!preview.canCommit) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        preview.commitBlockedReason!,
+                        key: const Key('import-commit-safety-gate'),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontWeight: FontWeight.w700,
+                          height: 1.5,
+                        ),
+                      ),
+                    ] else if (currentUser == null) ...[
                       const SizedBox(height: 12),
                       const Text(
                         'Preview is ready. Sign in or create an account from the landing page, then come back to import the full batch.',
@@ -476,7 +495,10 @@ class _ImportPageState extends State<ImportPage> {
                     ],
                     const SizedBox(height: 16),
                     FilledButton.icon(
-                      onPressed: _isImporting || preview.notes.isEmpty
+                      onPressed:
+                          _isImporting ||
+                              preview.notes.isEmpty ||
+                              !preview.canCommit
                           ? null
                           : currentUser == null
                               ? _openLandingPage
@@ -487,9 +509,11 @@ class _ImportPageState extends State<ImportPage> {
                       label: Text(
                         _isImporting
                             ? 'Importing...'
-                            : currentUser == null
-                                ? 'Open sign-up to import'
-                                : 'Import these notes',
+                            : !preview.canCommit
+                                ? 'Migration safety gate active'
+                                : currentUser == null
+                                    ? 'Open sign-up to import'
+                                    : 'Import these notes',
                       ),
                     ),
                   ],
