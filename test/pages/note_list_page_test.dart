@@ -226,6 +226,7 @@ Map<String, dynamic> _noteRow({
   required String id,
   required String title,
   required bool isFavorite,
+  String captureStatus = 'organized',
   String userId = 'test-user-id',
 }) {
   return <String, dynamic>{
@@ -238,6 +239,11 @@ Map<String, dynamic> _noteRow({
     'is_favorite': isFavorite,
     'is_archived': false,
     'reminder_date': null,
+    'tags': captureStatus == 'inbox' ? <String>['inbox'] : <String>[],
+    'capture_status': captureStatus,
+    'capture_source': captureStatus == 'inbox' ? 'quick_inbox' : 'editor',
+    'inbox_saved_at':
+        captureStatus == 'inbox' ? '2026-03-18T09:00:00.000Z' : null,
   };
 }
 
@@ -299,7 +305,80 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Regular note'), findsNothing);
-    expect(find.byIcon(Icons.list_alt), findsOneWidget);
+    expect(find.text('すべてのメモを見る'), findsOneWidget);
+  });
+
+  testWidgets('lists Inbox notes first and filters out organized notes', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(360, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final client = _FakeSupabaseClient(
+      noteRows: <Map<String, dynamic>>[
+        _noteRow(
+          id: 'inbox-note',
+          title: 'Captured thought',
+          isFavorite: false,
+          captureStatus: 'inbox',
+        ),
+        _noteRow(
+          id: 'organized-note',
+          title: 'Organized note',
+          isFavorite: false,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: NoteListPage(supabaseClient: client)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Inbox（未整理）'), findsOneWidget);
+    expect(find.text('Captured thought'), findsOneWidget);
+    expect(find.text('Organized note'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('note_list_page_inbox_filter')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Captured thought'), findsOneWidget);
+    expect(find.text('Organized note'), findsNothing);
+    final title = tester.widget<Text>(
+      find.byKey(const Key('note_list_page_title')),
+    );
+    expect(title.data, contains('Inbox'));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('moves an Inbox note to the organized list', (
+    WidgetTester tester,
+  ) async {
+    final rows = <Map<String, dynamic>>[
+      _noteRow(
+        id: 'inbox-note',
+        title: 'Sort this later',
+        isFavorite: false,
+        captureStatus: 'inbox',
+      ),
+    ];
+    final client = _FakeSupabaseClient(noteRows: rows);
+
+    await tester.pumpWidget(
+      MaterialApp(home: NoteListPage(supabaseClient: client)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byWidgetPredicate((widget) => widget is PopupMenuButton).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('整理済みにする'));
+    await tester.pumpAndSettle();
+
+    expect(rows.first['capture_status'], 'organized');
+    expect(rows.first['tags'], isEmpty);
+    expect(find.text('Inbox（未整理）'), findsNothing);
+    expect(find.text('Sort this later'), findsOneWidget);
   });
 
   testWidgets('archives a note from the popup delete action', (
