@@ -222,6 +222,7 @@ const List<String> kAllAppRoutes = <String>[
   '/music-playlist-manager',
   '/musubi',
   '/my-ai-agent',
+  '/my-knowledge-graph',
   '/my-skills',
   '/my-struggle',
   '/news-rss',
