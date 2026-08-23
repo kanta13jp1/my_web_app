@@ -247,6 +247,15 @@ export function sanitizeSearchQuery(input: unknown): string {
     .slice(0, 100);
 }
 
+export function normalizeIntegrationRegistryKey(input: unknown): string {
+  return String(input ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
 // x-forwarded-for の先頭ホップが有効な IP リテラルの時のみ返す。
 // inet カラムへ不正値を渡すと INSERT 全体が失敗し audit / rate limit が
 // 静かに壊れるため、パースできない値は null に落とす。
@@ -1655,8 +1664,8 @@ async function dispatchExternalApiAction(
       if (denied) return { response: denied, workerId: null };
       const rows = await store.listIntegrationRegistry(userId);
       const reference = buildLatestIntegrationRegistryReference(rows);
-      const interfaceKey = String(body.interface_key ?? "").trim();
-      const mappingKey = String(body.mapping_key ?? "").trim();
+      const interfaceKey = normalizeIntegrationRegistryKey(body.interface_key);
+      const mappingKey = normalizeIntegrationRegistryKey(body.mapping_key);
       const interfaces = interfaceKey === ""
         ? reference.interfaces
         : reference.interfaces.filter((item) =>

@@ -156,7 +156,7 @@ function nextVersion(
 
 function sanitizeFields(value: unknown): Record<string, unknown>[] {
   if (!Array.isArray(value)) return [];
-  return value.slice(0, MAX_FIELDS).map((raw) => {
+  return value.map((raw) => {
     const field = raw && typeof raw === "object"
       ? raw as Record<string, unknown>
       : {};
@@ -173,7 +173,7 @@ function sanitizeMappingEntries(value: unknown): Record<string, unknown>[] {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();
   const entries: Record<string, unknown>[] = [];
-  for (const raw of value.slice(0, MAX_MAPPING_ENTRIES)) {
+  for (const raw of value) {
     const item = raw && typeof raw === "object"
       ? raw as Record<string, unknown>
       : {};
@@ -218,12 +218,14 @@ export function buildIntegrationImpactReport(
     adjacency.get(from)!.add(to);
   };
 
-  for (
-    const item of [
-      ...snapshot.interfaces,
-      ...snapshot.mappings,
-    ]
-  ) {
+  const activeInterfaces = snapshot.interfaces.filter((item) =>
+    text(item.status, "active").toLowerCase() === "active"
+  );
+  const activeMappings = snapshot.mappings.filter((item) =>
+    text(item.status, "active").toLowerCase() === "active"
+  );
+
+  for (const item of [...activeInterfaces, ...activeMappings]) {
     const endpoints = connectedKeys(item);
     if (!endpoints) continue;
     addEdge(endpoints[0], endpoints[1]);
@@ -244,12 +246,12 @@ export function buildIntegrationImpactReport(
 
   const affectedSystemKeys = [...distances.keys()];
   const affectedSet = new Set(affectedSystemKeys);
-  const affectedInterfaces = snapshot.interfaces.filter((item) => {
+  const affectedInterfaces = activeInterfaces.filter((item) => {
     const endpoints = connectedKeys(item);
     return endpoints &&
       (affectedSet.has(endpoints[0]) || affectedSet.has(endpoints[1]));
   });
-  const affectedMappings = snapshot.mappings.filter((item) => {
+  const affectedMappings = activeMappings.filter((item) => {
     const endpoints = connectedKeys(item);
     return endpoints &&
       (affectedSet.has(endpoints[0]) || affectedSet.has(endpoints[1]));
@@ -376,6 +378,15 @@ export async function handleIntegrationRegistryAction(
           error: "source_system_key and target_system_key must exist",
         }, 409);
       }
+      if (
+        Array.isArray(deps.body.fields) &&
+        deps.body.fields.length > MAX_FIELDS
+      ) {
+        return json({
+          error: `fields supports at most ${MAX_FIELDS} entries`,
+          received: deps.body.fields.length,
+        }, 400);
+      }
       const fields = sanitizeFields(deps.body.fields);
       const version = nextVersion(
         snapshot.interface_versions,
@@ -410,6 +421,15 @@ export async function handleIntegrationRegistryAction(
       const mappingKey = normalizeRegistryKey(
         deps.body.mapping_key ?? `${sourceKey}-${targetKey}-${name}`,
       );
+      if (
+        Array.isArray(deps.body.entries) &&
+        deps.body.entries.length > MAX_MAPPING_ENTRIES
+      ) {
+        return json({
+          error: `entries supports at most ${MAX_MAPPING_ENTRIES} entries`,
+          received: deps.body.entries.length,
+        }, 400);
+      }
       const entries = sanitizeMappingEntries(deps.body.entries);
       if (
         name === "" || mappingKey === "" || sourceKey === "" ||

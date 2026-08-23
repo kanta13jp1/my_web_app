@@ -21,6 +21,7 @@ import {
   type JibunApiStore,
   MAX_KEYS_PER_USER,
   MAX_WEBHOOKS_PER_USER,
+  normalizeIntegrationRegistryKey,
   normalizeScopes,
   normalizeWorkerSlug,
   type NoteRow,
@@ -48,6 +49,15 @@ Deno.test("normalizeScopes rejects unknown scope / empty / non-array", () => {
   assertEquals(normalizeScopes([]), null);
   assertEquals(normalizeScopes("notes.read"), null);
   assertEquals(normalizeScopes([42]), null);
+});
+
+Deno.test("normalizeIntegrationRegistryKey matches registry write keys", () => {
+  assertEquals(
+    normalizeIntegrationRegistryKey(" Core Billing / v2 "),
+    "core-billing-v2",
+  );
+  assertEquals(normalizeIntegrationRegistryKey("___"), "___");
+  assertEquals(normalizeIntegrationRegistryKey(null), "");
 });
 
 Deno.test("generateApiKey format and uniqueness", () => {
@@ -967,6 +977,17 @@ Deno.test("api.integrations.snapshot returns latest user-owned definitions", asy
       created_at: "2026-07-23T00:00:00Z",
     },
     {
+      id: "interface-1",
+      source: "integration_registry_interface",
+      metadata: {
+        user_id: "user-1",
+        interface_key: "billing-ledger",
+        name: "Journal export",
+        version: 1,
+      },
+      created_at: "2026-07-23T00:00:00Z",
+    },
+    {
       id: "mapping-1",
       source: "integration_registry_mapping",
       metadata: {
@@ -1007,6 +1028,21 @@ Deno.test("api.integrations.snapshot returns latest user-owned definitions", asy
   assertEquals(data.systems[0].user_id, undefined);
   assertEquals(data.mappings.length, 1);
   assertEquals(data.counts.mappings, 1);
+
+  const filtered = await handleJibunApiAction({
+    req: makeRequest({ bearer: key }),
+    action: "api.integrations.snapshot",
+    body: {
+      interface_key: "Billing Ledger",
+      mapping_key: "Account Codes",
+    },
+    store,
+    getUserId: () => Promise.resolve(null),
+  });
+  assertEquals(filtered!.status, 200);
+  const filteredData = await filtered!.json();
+  assertEquals(filteredData.counts.interfaces, 1);
+  assertEquals(filteredData.counts.mappings, 1);
 
   const deniedKey = await issueKey(store, "user-1", ["notes.read"]);
   const denied = await handleJibunApiAction({

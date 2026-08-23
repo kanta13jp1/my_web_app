@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/integration_registry.dart';
 import 'package:my_web_app/pages/integration_registry_page.dart';
+import 'package:my_web_app/services/csv_bytes_decoder.dart';
 import 'package:my_web_app/services/integration_registry_service.dart';
 
 class _FakeIntegrationRegistryService
@@ -181,12 +184,18 @@ class _FakeIntegrationRegistryService
 
 Future<void> _pumpPage(
   WidgetTester tester,
-  _FakeIntegrationRegistryService service,
-) async {
+  _FakeIntegrationRegistryService service, {
+  IntegrationMappingCsvPicker? mappingCsvPicker,
+  CsvBytesDecoder? csvBytesDecoder,
+}) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: ThemeData(useMaterial3: true),
-      home: IntegrationRegistryPage(service: service),
+      home: IntegrationRegistryPage(
+        service: service,
+        mappingCsvPicker: mappingCsvPicker,
+        csvBytesDecoder: csvBytesDecoder,
+      ),
     ),
   );
   await tester.pumpAndSettle();
@@ -245,6 +254,33 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(service.importedMappings, 1);
+  });
+
+  testWidgets('decodes a Shift_JIS mapping file and shows its preview', (
+    tester,
+  ) async {
+    final service = _FakeIntegrationRegistryService();
+    final bytes = Uint8List.fromList(const <int>[0x82, 0xa0]);
+    await _pumpPage(
+      tester,
+      service,
+      mappingCsvPicker: () async => bytes,
+      csvBytesDecoder: CsvBytesDecoder(
+        shiftJisDecoder: (_) =>
+            'old_code,new_code,description\n100,A100,Revenue',
+      ),
+    );
+
+    await _tapTab(tester, 'Code mappings');
+    await tester.tap(find.byKey(const Key('import-mapping-button')));
+    await tester.pumpAndSettle();
+    final pickButton = find.byKey(const Key('pick-mapping-csv-button'));
+    await tester.ensureVisible(pickButton);
+    await tester.tap(pickButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 valid mapping rows'), findsOneWidget);
+    expect(find.textContaining('FormatException'), findsNothing);
   });
 
   testWidgets('calculates and displays dependency impact', (tester) async {

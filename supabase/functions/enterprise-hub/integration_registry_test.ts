@@ -145,6 +145,39 @@ Deno.test("publish interface validates systems and increments version", async ()
   assertEquals(missing?.status, 409);
 });
 
+Deno.test("publish interface rejects field lists above the limit", async () => {
+  const store = new FakeIntegrationRegistryStore([
+    row("system-1", INTEGRATION_REGISTRY_SOURCES.system, {
+      system_key: "billing",
+      name: "Billing",
+      version: 1,
+    }),
+    row("system-2", INTEGRATION_REGISTRY_SOURCES.system, {
+      system_key: "ledger",
+      name: "Ledger",
+      version: 1,
+    }),
+  ]);
+
+  const response = await handleIntegrationRegistryAction({
+    action: "integration.registry.interface.publish",
+    userId: "user-1",
+    store,
+    body: {
+      interface_key: "billing-ledger",
+      name: "Journal export",
+      source_system_key: "billing",
+      target_system_key: "ledger",
+      fields: Array.from({ length: 101 }, (_, index) => ({
+        name: `field-${index}`,
+      })),
+    },
+  });
+
+  assertEquals(response?.status, 400);
+  assertEquals((await response!.json()).received, 101);
+});
+
 Deno.test("mapping import removes invalid and duplicate entries", async () => {
   const store = new FakeIntegrationRegistryStore([
     row("system-1", INTEGRATION_REGISTRY_SOURCES.system, {
@@ -182,6 +215,40 @@ Deno.test("mapping import removes invalid and duplicate entries", async () => {
   assertEquals(data.mapping.entries[0].new_code, "A100");
 });
 
+Deno.test("mapping import rejects entry lists above the limit", async () => {
+  const store = new FakeIntegrationRegistryStore([
+    row("system-1", INTEGRATION_REGISTRY_SOURCES.system, {
+      system_key: "legacy",
+      name: "Legacy",
+      version: 1,
+    }),
+    row("system-2", INTEGRATION_REGISTRY_SOURCES.system, {
+      system_key: "next",
+      name: "Next",
+      version: 1,
+    }),
+  ]);
+
+  const response = await handleIntegrationRegistryAction({
+    action: "integration.registry.mapping.import",
+    userId: "user-1",
+    store,
+    body: {
+      mapping_key: "account-codes",
+      name: "Account codes",
+      source_system_key: "legacy",
+      target_system_key: "next",
+      entries: Array.from({ length: 2_001 }, (_, index) => ({
+        old_code: String(index),
+        new_code: `A${index}`,
+      })),
+    },
+  });
+
+  assertEquals(response?.status, 400);
+  assertEquals((await response!.json()).received, 2_001);
+});
+
 Deno.test("impact report follows transitive system dependencies", () => {
   const systems = ["a", "b", "c", "isolated"].map((key, index) =>
     row(`system-${index}`, INTEGRATION_REGISTRY_SOURCES.system, {
@@ -205,6 +272,13 @@ Deno.test("impact report follows transitive system dependencies", () => {
       version: 1,
       entries: [],
     }),
+    row("interface-a-isolated", INTEGRATION_REGISTRY_SOURCES.interface, {
+      interface_key: "a-isolated",
+      source_system_key: "a",
+      target_system_key: "isolated",
+      status: "deprecated",
+      version: 1,
+    }),
   ]);
 
   const impact = buildIntegrationImpactReport(snapshot, "a");
@@ -214,5 +288,11 @@ Deno.test("impact report follows transitive system dependencies", () => {
     ["a", "b", "c"],
   );
   assertEquals(affected.map((item) => item.distance), [0, 1, 2]);
+  assertEquals(
+    (impact.interfaces as Record<string, unknown>[]).map((item) =>
+      item.interface_key
+    ),
+    ["a-b"],
+  );
   assertExists(impact.counts);
 });

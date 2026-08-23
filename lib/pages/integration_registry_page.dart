@@ -1,16 +1,33 @@
-import 'dart:convert';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../models/integration_registry.dart';
+import '../services/csv_bytes_decoder.dart';
 import '../services/integration_registry_service.dart';
 
+typedef IntegrationMappingCsvPicker = Future<Uint8List?> Function();
+
+Future<Uint8List?> _pickIntegrationMappingCsv() async {
+  final result = await FilePicker.pickFiles(
+    withData: true,
+    type: FileType.custom,
+    allowedExtensions: const <String>['csv'],
+  );
+  return result?.files.single.bytes;
+}
+
 class IntegrationRegistryPage extends StatefulWidget {
-  const IntegrationRegistryPage({super.key, this.service});
+  const IntegrationRegistryPage({
+    super.key,
+    this.service,
+    this.mappingCsvPicker,
+    this.csvBytesDecoder,
+  });
 
   final IntegrationRegistryServiceContract? service;
+  final IntegrationMappingCsvPicker? mappingCsvPicker;
+  final CsvBytesDecoder? csvBytesDecoder;
 
   @override
   State<IntegrationRegistryPage> createState() =>
@@ -20,6 +37,10 @@ class IntegrationRegistryPage extends StatefulWidget {
 class _IntegrationRegistryPageState extends State<IntegrationRegistryPage> {
   late final IntegrationRegistryServiceContract _service =
       widget.service ?? const SupabaseIntegrationRegistryService();
+  late final IntegrationMappingCsvPicker _mappingCsvPicker =
+      widget.mappingCsvPicker ?? _pickIntegrationMappingCsv;
+  late final CsvBytesDecoder _csvBytesDecoder =
+      widget.csvBytesDecoder ?? const CsvBytesDecoder();
   final IntegrationCodeMappingCsvParser _csvParser =
       const IntegrationCodeMappingCsvParser();
 
@@ -519,15 +540,28 @@ Content-Type: application/json
                     child: OutlinedButton.icon(
                       key: const Key('pick-mapping-csv-button'),
                       onPressed: () async {
-                        final result = await FilePicker.pickFiles(
-                          withData: true,
-                          type: FileType.custom,
-                          allowedExtensions: const <String>['csv'],
-                        );
-                        final bytes = result?.files.single.bytes;
+                        final bytes = await _mappingCsvPicker();
                         if (bytes == null) return;
-                        csv.text = utf8.decode(bytes);
-                        parsePreview(setDialogState);
+                        try {
+                          csv.text = _csvBytesDecoder.decode(
+                            bytes,
+                            looksValid: (text) {
+                              try {
+                                _csvParser.parse(text);
+                                return true;
+                              } on FormatException {
+                                return false;
+                              }
+                            },
+                            formatName: 'Code mapping CSV',
+                          );
+                          parsePreview(setDialogState);
+                        } on FormatException catch (error) {
+                          setDialogState(() {
+                            preview = <IntegrationCodeMappingEntry>[];
+                            parseError = error.toString();
+                          });
+                        }
                       },
                       icon: const Icon(Icons.upload_file),
                       label: const Text('Choose CSV'),
