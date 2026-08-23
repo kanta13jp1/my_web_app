@@ -53,8 +53,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install external smoke dependency
-        run: python -m pip install --quiet notebooklm-py
+      - name: Install validation dependencies
+        run: python -m pip install --quiet notebooklm-py PyYAML==6.0.3
 
       - name: Test validator
         run: python test/scripts/test_validate_agent_skills.py

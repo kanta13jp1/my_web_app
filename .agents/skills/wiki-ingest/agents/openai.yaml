@@ -1,4 +1,4 @@
 interface:
   display_name: "Wiki Ingest"
-  short_description: "‘—¿‚ğƒŒƒrƒ…[‰Â”\‚ÈAtomic Note‰º‘‚«‚ÖˆÀ‘S‚É•ÏŠ·E•Û‘¶"
+  short_description: "è³‡æ–™ã‚’ãƒ¬ãƒ“ãƒ¥ãƒ¼å¯èƒ½ãªAtomic Noteä¸‹æ›¸ãã¸å®‰å…¨ã«å¤‰æ›ãƒ»ä¿å­˜"
   default_prompt: "Use $wiki-ingest to draft and review an atomic note from this source."

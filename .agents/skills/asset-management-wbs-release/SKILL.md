@@ -120,7 +120,7 @@ Proceed only through the release stage the user has authorized.
 5. Wait for required CI and gates. Diagnose failures from logs and rerun only affected gates.
 6. Mark Ready only after Draft CI and the diff review pass.
 7. Recheck CI and mergeability. Squash merge only when authorized and all required gates permit it.
-8. Confirm the GitHub PR is actually `MERGED`, capture merge and head commits, and delete the remote branch.
+8. Confirm the GitHub PR is actually `MERGED`, capture merge and head commits, and report the remote branch state. Do not delete a remote branch unless the user separately names the exact branch and explicitly authorizes deletion after merge proof.
 9. Treat a nonzero local `gh pr merge` exit as inconclusive; GitHub PR state is the source of truth.
 
 Do not claim deployment success from a merge alone. Verify the deployment workflow and production route separately when deployment is in scope.
@@ -145,6 +145,6 @@ Report the task complete only when every authorized stage is proven:
 - Financial calculations are deterministic and persistence/fallback behavior is tested.
 - Supabase and Storage changes satisfy the egress, security, and cost checklist.
 - Required local checks, responsive QA, CI, and review gates pass.
-- PR state, merge commit, remote branch cleanup, Issue state, and WBS UUID state agree.
+- PR state, merge commit, reported remote branch state, Issue state, and WBS UUID state agree.
 - Attributable heavy processes are stopped and cleanup did not touch unrelated work.
 - Wrap-up and the next-session prompt are produced.

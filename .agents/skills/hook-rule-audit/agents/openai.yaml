@@ -1,4 +1,4 @@
 interface:
   display_name: "Hook Rule Audit"
-  short_description: "注入ルールのドリフト・重複・陳腐化・危険操作を安全に監査"
+  short_description: "豕ｨ蜈･繝ｫ繝ｼ繝ｫ縺ｮ繝峨Μ繝輔ヨ繝ｻ驥崎､�繝ｻ髯ｳ閻仙喧繝ｻ蜊ｱ髯ｺ謫堺ｽ懊ｒ螳牙�ｨ縺ｫ逶｣譟ｻ"
   default_prompt: "Use $hook-rule-audit to audit injected rules and propose reviewed updates."

@@ -14,6 +14,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+import yaml
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MANIFEST = REPO_ROOT / ".agents" / "skills" / "ci-manifest.json"
@@ -30,6 +32,7 @@ ALLOWED_EXTERNAL_SMOKES = {
 class ValidationReport:
     skills: int = 0
     grade_counts: dict[str, int] = field(default_factory=lambda: {"A": 0, "B": 0})
+    ui_metadata_checked: int = 0
     links_checked: int = 0
     smokes_run: int = 0
     smokes_skipped: int = 0
@@ -127,6 +130,75 @@ def validate_frontmatter(skill_name: str, skill_file: Path) -> list[str]:
         errors.append(f"{skill_name}: description must not be empty")
     if not body:
         errors.append(f"{skill_name}: SKILL.md body must not be empty")
+    return errors
+
+
+def validate_openai_metadata(skill_name: str, metadata_file: Path) -> list[str]:
+    try:
+        text = metadata_file.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return [f"{skill_name}: missing agents/openai.yaml"]
+    except UnicodeDecodeError as exc:
+        return [f"{skill_name}: agents/openai.yaml must be valid UTF-8: {exc}"]
+    except OSError as exc:
+        return [f"{skill_name}: agents/openai.yaml could not be read: {exc}"]
+
+    try:
+        metadata = yaml.safe_load(text)
+    except yaml.YAMLError as exc:
+        return [f"{skill_name}: invalid agents/openai.yaml: {exc}"]
+    if not isinstance(metadata, dict):
+        return [f"{skill_name}: agents/openai.yaml must contain a mapping"]
+
+    interface = metadata.get("interface")
+    if not isinstance(interface, dict):
+        return [f"{skill_name}: agents/openai.yaml requires an interface mapping"]
+
+    errors: list[str] = []
+    required_fields = ("display_name", "short_description", "default_prompt")
+    for field_name in required_fields:
+        value = interface.get(field_name)
+        if not isinstance(value, str) or not value.strip():
+            errors.append(
+                f"{skill_name}: interface.{field_name} must be a non-empty string"
+            )
+
+    short_description = interface.get("short_description")
+    if isinstance(short_description, str) and not 25 <= len(short_description) <= 64:
+        errors.append(
+            f"{skill_name}: interface.short_description must be 25..64 characters"
+        )
+
+    default_prompt = interface.get("default_prompt")
+    if isinstance(default_prompt, str) and f"${skill_name}" not in default_prompt:
+        errors.append(
+            f"{skill_name}: interface.default_prompt must mention ${skill_name}"
+        )
+
+    quoted_fields: set[str] = set()
+    field_pattern = re.compile(
+        r'^\s{2}(display_name|short_description|default_prompt):\s*(".*")\s*$'
+    )
+    for line in text.splitlines():
+        match = field_pattern.fullmatch(line)
+        if match:
+            quoted_fields.add(match.group(1))
+    unquoted_fields = sorted(set(required_fields) - quoted_fields)
+    if unquoted_fields:
+        errors.append(
+            f"{skill_name}: quote UI string fields: {', '.join(unquoted_fields)}"
+        )
+
+    policy = metadata.get("policy")
+    if policy is not None:
+        if not isinstance(policy, dict):
+            errors.append(f"{skill_name}: policy must be a mapping")
+        elif "allow_implicit_invocation" in policy and not isinstance(
+            policy["allow_implicit_invocation"], bool
+        ):
+            errors.append(
+                f"{skill_name}: policy.allow_implicit_invocation must be boolean"
+            )
     return errors
 
 
@@ -317,6 +389,10 @@ def validate_repository(repo_root: Path, manifest_path: Path) -> ValidationRepor
             continue
         report.skills += 1
         report.errors.extend(validate_frontmatter(name, skill_file))
+        report.ui_metadata_checked += 1
+        report.errors.extend(
+            validate_openai_metadata(name, skill_dir / "agents" / "openai.yaml")
+        )
         checked, link_errors = validate_links(repo_root, skill_dir)
         report.links_checked += checked
         report.errors.extend(link_errors)
@@ -347,7 +423,8 @@ def main(argv: list[str] | None = None) -> int:
     print(
         "summary: "
         f"skills={report.skills} A={report.grade_counts['A']} B={report.grade_counts['B']} "
-        f"links={report.links_checked} smoke_run={report.smokes_run} "
+        f"ui={report.ui_metadata_checked} links={report.links_checked} "
+        f"smoke_run={report.smokes_run} "
         f"smoke_skipped={report.smokes_skipped} errors={len(report.errors)}"
     )
     for error in report.errors:

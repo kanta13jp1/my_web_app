@@ -1,4 +1,4 @@
 interface:
   display_name: "Wiki Query"
-  short_description: "NotebookLM‚Ü‚½‚Íƒ[ƒJƒ‹ŒŸõ‚Å‰ß‹”»’f‚ğˆø—p•t‚«Šm”FE‰ñ“š"
+  short_description: "NotebookLMã¾ãŸã¯ãƒ­ãƒ¼ã‚«ãƒ«æ¤œç´¢ã§éå»åˆ¤æ–­ã‚’å¼•ç”¨ä»˜ãç¢ºèªãƒ»å›ç­”"
   default_prompt: "Use $wiki-query to answer this question from the project knowledge base."

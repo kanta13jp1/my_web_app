@@ -1,4 +1,4 @@
 interface:
   display_name: "Session Start Check"
-  short_description: "ì‹ÆŠJn‘O‚ÉGitEworktreeEƒc[ƒ‹Eƒ‹[ƒ‹ó‘Ô‚ğˆÀ‘S‚ÉŠm”F"
+  short_description: "ä½œæ¥­é–‹å§‹å‰ã«Gitãƒ»worktreeãƒ»ãƒ„ãƒ¼ãƒ«ãƒ»ãƒ«ãƒ¼ãƒ«çŠ¶æ…‹ã‚’å®‰å…¨ã«ç¢ºèª"
   default_prompt: "Use $session-start-check to run a read-only repository intake before work."

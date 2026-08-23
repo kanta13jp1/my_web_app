@@ -1,4 +1,4 @@
 interface:
   display_name: "Wiki Orphan Batch"
-  short_description: "孤立ノートを小さなレビュー済みbatchで安全に索引化・検証"
+  short_description: "蟄､遶九ヮ繝ｼ繝医ｒ蟆上＆縺ｪ繝ｬ繝薙Η繝ｼ貂医∩batch縺ｧ螳牙�ｨ縺ｫ邏｢蠑募喧繝ｻ讀懆ｨｼ"
   default_prompt: "Use $wiki-orphan-batch to preview and index a bounded set of orphan notes."

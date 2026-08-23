@@ -1,4 +1,4 @@
 interface:
   display_name: "Wiki Duplicate-H1 Cleanup"
-  short_description: "d•¡MarkdownŒ©o‚µ‚ðˆÓ–¡‚ð•Û‚¿‚È‚ª‚çˆÀ‘S‚É®—EŒŸØ"
+  short_description: "é‡è¤‡Markdownè¦‹å‡ºã—ã‚’æ„å‘³ã‚’ä¿ã¡ãªãŒã‚‰å®‰å…¨ã«æ•´ç†ãƒ»æ¤œè¨¼"
   default_prompt: "Use $wiki-dup-h1-cleanup to review and resolve duplicate H1 titles."

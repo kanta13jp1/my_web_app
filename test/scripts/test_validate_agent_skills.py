@@ -32,6 +32,15 @@ class ValidateAgentSkillsTest(unittest.TestCase):
             f"{body}",
             encoding="utf-8",
         )
+        agents_dir = skill_dir / "agents"
+        agents_dir.mkdir()
+        (agents_dir / "openai.yaml").write_text(
+            "interface:\n"
+            f'  display_name: "{name.title()} Skill"\n'
+            f'  short_description: "Deterministic metadata for the {name} test skill"\n'
+            f'  default_prompt: "Use ${name} to run a deterministic test."\n',
+            encoding="utf-8",
+        )
         return skill_dir
 
     def write_manifest(self, entries: list[dict[str, object]]) -> Path:
@@ -61,8 +70,44 @@ class ValidateAgentSkillsTest(unittest.TestCase):
 
         self.assertTrue(report.ok, report.errors)
         self.assertEqual(report.skills, 1)
+        self.assertEqual(report.ui_metadata_checked, 1)
         self.assertEqual(report.links_checked, 1)
         self.assertEqual(report.smokes_run, 1)
+
+    def test_ui_metadata_requires_utf8(self) -> None:
+        skill_dir = self.write_skill("alpha")
+        (skill_dir / "agents" / "openai.yaml").write_bytes(
+            "interface:\n  display_name: テスト\n".encode("cp932")
+        )
+        (self.root / "scripts" / "smoke.py").write_text("print('ok')\n", encoding="utf-8")
+        manifest = self.write_manifest(
+            [{"name": "alpha", "grade": "B", "cli_smoke": [self.python_smoke()]}]
+        )
+
+        report = validate_agent_skills.validate_repository(self.root, manifest)
+
+        self.assertFalse(report.ok)
+        self.assertTrue(any("must be valid UTF-8" in error for error in report.errors))
+
+    def test_ui_metadata_validates_prompt_and_length(self) -> None:
+        skill_dir = self.write_skill("alpha")
+        (skill_dir / "agents" / "openai.yaml").write_text(
+            "interface:\n"
+            '  display_name: "Alpha"\n'
+            '  short_description: "too short"\n'
+            '  default_prompt: "Run the skill."\n',
+            encoding="utf-8",
+        )
+        (self.root / "scripts" / "smoke.py").write_text("print('ok')\n", encoding="utf-8")
+        manifest = self.write_manifest(
+            [{"name": "alpha", "grade": "B", "cli_smoke": [self.python_smoke()]}]
+        )
+
+        report = validate_agent_skills.validate_repository(self.root, manifest)
+
+        self.assertFalse(report.ok)
+        self.assertTrue(any("25..64 characters" in error for error in report.errors))
+        self.assertTrue(any("must mention $alpha" in error for error in report.errors))
 
     def test_frontmatter_rejects_extra_key_and_name_mismatch(self) -> None:
         skill_dir = self.write_skill("alpha")
