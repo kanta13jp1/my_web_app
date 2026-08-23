@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/tiger_review_lane_status.dart';
@@ -123,14 +126,20 @@ class _TigerReviewLaneStatusPageState extends State<TigerReviewLaneStatusPage> {
     ).then(TigerReviewLaneStatus.fromJsonString);
   }
 
-  Future<String> _loadStatusAsset(String asset) {
+  Future<String> _loadStatusAsset(String asset) async {
     if (!kIsWeb) return rootBundle.loadString(asset);
 
     // These JSON snapshots are refreshed by independent review automations.
     // Do not reuse a browser's previous asset response after a new release.
-    return NetworkAssetBundle(
-      Uri.base.resolve('assets/'),
-    ).loadString('$asset?review_status_schema=3');
+    final uri = Uri.base.resolve('assets/$asset?review_status_schema=3');
+    final response = await http.get(uri);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw FlutterError(
+        'Failed to load Tiger review status '
+        '(${response.statusCode}): $uri',
+      );
+    }
+    return utf8.decode(response.bodyBytes);
   }
 
   Future<void> _reload() async {
