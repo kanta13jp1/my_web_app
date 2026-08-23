@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -12,6 +12,17 @@ import '../models/tiger_reviewer_profile.dart';
 typedef TigerLaneStatusLoader = Future<TigerReviewLaneStatus> Function();
 typedef TigerReviewerProfileLoader = Future<TigerReviewerProfileCatalog>
     Function();
+
+@visibleForTesting
+const int tigerReviewerProfileSchemaVersion = 2;
+
+@visibleForTesting
+Uri buildTigerReviewAssetUri(
+  Uri base,
+  String asset, {
+  required int schemaVersion,
+}) =>
+    base.resolve('assets/$asset?review_status_schema=$schemaVersion');
 
 enum TigerReviewLane {
   reviewers(
@@ -139,7 +150,7 @@ class _TigerReviewLaneStatusPageState extends State<TigerReviewLaneStatusPage> {
         ? (widget.profileLoader?.call() ??
             _loadAsset(
               'assets/data/tiger_reviewer_profiles.json',
-              schemaVersion: 1,
+              schemaVersion: tigerReviewerProfileSchemaVersion,
             ).then(TigerReviewerProfileCatalog.fromJsonString))
         : Future<TigerReviewerProfileCatalog?>.value();
     final status = await statusFuture;
@@ -152,8 +163,10 @@ class _TigerReviewLaneStatusPageState extends State<TigerReviewLaneStatusPage> {
 
     // These JSON snapshots are refreshed by independent review automations.
     // Do not reuse a browser's previous asset response after a new release.
-    final uri = Uri.base.resolve(
-      'assets/$asset?review_status_schema=$schemaVersion',
+    final uri = buildTigerReviewAssetUri(
+      Uri.base,
+      asset,
+      schemaVersion: schemaVersion,
     );
     final response = await http.get(uri);
     if (response.statusCode < 200 || response.statusCode >= 300) {
