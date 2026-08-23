@@ -26,8 +26,7 @@ class _AiFormAssistantPageState extends State<AiFormAssistantPage> {
   void initState() {
     super.initState();
     _ownsViewModel = widget.viewModel == null;
-    _viewModel =
-        widget.viewModel ??
+    _viewModel = widget.viewModel ??
         AiFormAssistantViewModel(
           gateway: AiHubFormAssistantGateway(),
           settingsStore: const SharedPreferencesAiFormSettingsStore(),
@@ -166,11 +165,9 @@ class _AiFormAssistantPageState extends State<AiFormAssistantPage> {
                 style: theme.textTheme.bodyMedium,
               ),
               const SizedBox(height: 20),
-              for (
-                var index = 0;
-                index < _viewModel.fields.length;
-                index++
-              ) ...[
+              for (var index = 0;
+                  index < _viewModel.fields.length;
+                  index++) ...[
                 _buildField(_viewModel.fields[index]),
                 if (index < _viewModel.fields.length - 1)
                   const SizedBox(height: 16),
