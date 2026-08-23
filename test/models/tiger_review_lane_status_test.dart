@@ -5,6 +5,14 @@ import 'package:my_web_app/models/tiger_review_lane_status.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('treats an empty Issue trace as not applicable', () {
+    final trace = TigerCountermeasureTrace.fromJson(<String, dynamic>{
+      'issue': <String, dynamic>{},
+    });
+
+    expect(trace.issue, isNull);
+  });
+
   for (final testCase in <(String, String, String)>[
     (
       'assets/data/tiger_reviewer_league_status.json',
