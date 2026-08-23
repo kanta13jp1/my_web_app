@@ -41,44 +41,43 @@ class TigerReviewerProfileCatalog {
     final nextBatch = enrichment['next_batch'];
     final parsed = profiles is List
         ? profiles
-              .whereType<Map>()
-              .map(
-                (profile) => TigerReviewerProfile.fromJson(
-                  Map<String, dynamic>.from(profile),
-                ),
-              )
-              .toList(growable: false)
+            .whereType<Map>()
+            .map(
+              (profile) => TigerReviewerProfile.fromJson(
+                Map<String, dynamic>.from(profile),
+              ),
+            )
+            .toList(growable: false)
         : const <TigerReviewerProfile>[];
     return TigerReviewerProfileCatalog(
-      schemaVersion: json['schema_version'] is int
-          ? json['schema_version'] as int
-          : 0,
+      schemaVersion:
+          json['schema_version'] is int ? json['schema_version'] as int : 0,
       snapshotDate: DateTime.tryParse(json['snapshot_date']?.toString() ?? ''),
       profilesBySeat: <int, TigerReviewerProfile>{
         for (final profile in parsed) profile.seat: profile,
       },
       disclaimer: json['disclaimer']?.toString() ?? '',
-      enrichmentRound: enrichment['round'] is num
-          ? (enrichment['round'] as num).toInt()
-          : 0,
+      enrichmentRound:
+          enrichment['round'] is num ? (enrichment['round'] as num).toInt() : 0,
       averageProfileCompletenessPercent:
           enrichment['average_profile_completeness_percent'] is num
-          ? (enrichment['average_profile_completeness_percent'] as num)
-                .toDouble()
-          : 0,
+              ? (enrichment['average_profile_completeness_percent'] as num)
+                  .toDouble()
+              : 0,
       averageReviewReflectionPercent:
           enrichment['average_review_reflection_percent'] is num
-          ? (enrichment['average_review_reflection_percent'] as num).toDouble()
-          : 0,
+              ? (enrichment['average_review_reflection_percent'] as num)
+                  .toDouble()
+              : 0,
       verifiedBirthDates: enrichment['verified_birth_dates'] is num
           ? (enrichment['verified_birth_dates'] as num).toInt()
           : 0,
       nextBatchNames: nextBatch is List
           ? nextBatch
-                .whereType<Map>()
-                .map((item) => item['name']?.toString() ?? '')
-                .where((name) => name.isNotEmpty)
-                .toList(growable: false)
+              .whereType<Map>()
+              .map((item) => item['name']?.toString() ?? '')
+              .where((name) => name.isNotEmpty)
+              .toList(growable: false)
           : const <String>[],
     );
   }
@@ -130,16 +129,15 @@ class TigerReviewerProfile {
   final List<String> nextResearchTargets;
 
   String get reviewReflectionLabel => switch (reviewReflectionMode) {
-    'profile_guided' => '確認済みプロフィール観点を強く反映',
-    'profile_balanced' => '中立評価とプロフィール観点を併用',
-    _ => '中立評価を優先',
-  };
+        'profile_guided' => '確認済みプロフィール観点を強く反映',
+        'profile_balanced' => '中立評価とプロフィール観点を併用',
+        _ => '中立評価を優先',
+      };
 
   String ageLabel(DateTime? asOf) {
     if (birthDate == null || asOf == null) return '公開情報未確認';
     var age = asOf.year - birthDate!.year;
-    final birthdayPassed =
-        asOf.month > birthDate!.month ||
+    final birthdayPassed = asOf.month > birthDate!.month ||
         (asOf.month == birthDate!.month && asOf.day >= birthDate!.day);
     if (!birthdayPassed) age -= 1;
     return '$age歳（${asOf.year}年${asOf.month}月${asOf.day}日時点）';
@@ -150,9 +148,9 @@ class TigerReviewerProfile {
     final rawFocus = json['review_focus_dimensions'];
     final focus = rawFocus is List
         ? rawFocus
-              .whereType<Map>()
-              .map((item) => Map<String, dynamic>.from(item))
-              .toList(growable: false)
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList(growable: false)
         : const <Map<String, dynamic>>[];
     final rawResearchTargets = json['next_research_targets'];
     return TigerReviewerProfile(
@@ -165,9 +163,8 @@ class TigerReviewerProfile {
       businessDomains: rawDomains is List
           ? rawDomains.map((value) => value.toString()).toList(growable: false)
           : const <String>[],
-      appearances: json['appearances'] is num
-          ? (json['appearances'] as num).toInt()
-          : 0,
+      appearances:
+          json['appearances'] is num ? (json['appearances'] as num).toInt() : 0,
       investmentCount: json['investment_count'] is num
           ? (json['investment_count'] as num).toInt()
           : 0,
@@ -198,9 +195,9 @@ class TigerReviewerProfile {
           .toList(growable: false),
       nextResearchTargets: rawResearchTargets is List
           ? rawResearchTargets
-                .map((item) => item.toString())
-                .where((item) => item.isNotEmpty)
-                .toList(growable: false)
+              .map((item) => item.toString())
+              .where((item) => item.isNotEmpty)
+              .toList(growable: false)
           : const <String>[],
     );
   }
