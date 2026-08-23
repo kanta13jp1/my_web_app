@@ -141,7 +141,7 @@ import 'package:my_web_app/pages/ai_university_faculty_select_page.dart';
 import 'package:my_web_app/pages/ai_university_department_select_page.dart';
 import 'package:my_web_app/pages/team_workspace_page.dart';
 import 'package:my_web_app/pages/ai_status_page.dart';
-import 'package:my_web_app/pages/tiger_review_status_page.dart';
+import 'package:my_web_app/pages/tiger_review_lane_status_page.dart';
 import 'package:my_web_app/pages/ai_provider_status_page.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/pages/asset_chat_history_page.dart';
@@ -1097,8 +1097,36 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const AiStatusPage());
     case '/tiger-review-status':
       return MaterialPageRoute(
-        builder: (_) => const TigerReviewStatusPage(),
-        settings: const RouteSettings(name: TigerReviewStatusPage.routeName),
+        builder: (_) => const TigerReviewHubPage(),
+        settings: const RouteSettings(name: TigerReviewHubPage.routeName),
+      );
+    case '/tiger-reviewers':
+      return MaterialPageRoute(
+        builder: (_) => const TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.reviewers,
+        ),
+        settings: const RouteSettings(name: '/tiger-reviewers'),
+      );
+    case '/tiger-site-reviews':
+      return MaterialPageRoute(
+        builder: (_) => const TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.site,
+        ),
+        settings: const RouteSettings(name: '/tiger-site-reviews'),
+      );
+    case '/tiger-course-reviews':
+      return MaterialPageRoute(
+        builder: (_) => const TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.courses,
+        ),
+        settings: const RouteSettings(name: '/tiger-course-reviews'),
+      );
+    case '/tiger-feature-reviews':
+      return MaterialPageRoute(
+        builder: (_) => const TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.features,
+        ),
+        settings: const RouteSettings(name: '/tiger-feature-reviews'),
       );
     case '/ai-provider-status':
       return MaterialPageRoute(
