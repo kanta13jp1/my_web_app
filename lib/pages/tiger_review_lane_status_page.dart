@@ -4,8 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/tiger_review_lane_status.dart';
+import '../models/tiger_reviewer_profile.dart';
 
 typedef TigerLaneStatusLoader = Future<TigerReviewLaneStatus> Function();
+typedef TigerReviewerProfileLoader = Future<TigerReviewerProfileCatalog>
+    Function();
 
 enum TigerReviewLane {
   reviewers(
@@ -97,10 +100,16 @@ class TigerReviewHubPage extends StatelessWidget {
 }
 
 class TigerReviewLaneStatusPage extends StatefulWidget {
-  const TigerReviewLaneStatusPage({super.key, required this.kind, this.loader});
+  const TigerReviewLaneStatusPage({
+    super.key,
+    required this.kind,
+    this.loader,
+    this.profileLoader,
+  });
 
   final TigerReviewLane kind;
   final TigerLaneStatusLoader? loader;
+  final TigerReviewerProfileLoader? profileLoader;
 
   @override
   State<TigerReviewLaneStatusPage> createState() =>
@@ -108,35 +117,44 @@ class TigerReviewLaneStatusPage extends StatefulWidget {
 }
 
 class _TigerReviewLaneStatusPageState extends State<TigerReviewLaneStatusPage> {
-  late Future<TigerReviewLaneStatus> _status;
+  late Future<_TigerLanePageData> _data;
 
   @override
   void initState() {
     super.initState();
-    _status = _load();
+    _data = _load();
   }
 
-  Future<TigerReviewLaneStatus> _load() {
-    if (widget.loader != null) return widget.loader!();
-    return _loadStatusAsset(
-      widget.kind.asset,
-    ).then(TigerReviewLaneStatus.fromJsonString);
+  Future<_TigerLanePageData> _load() async {
+    final status = widget.loader != null
+        ? await widget.loader!()
+        : TigerReviewLaneStatus.fromJsonString(
+            await _loadAsset(widget.kind.asset, schemaVersion: 3),
+          );
+    final profiles = widget.kind == TigerReviewLane.reviewers
+        ? await (widget.profileLoader?.call() ??
+            _loadAsset(
+              'assets/data/tiger_reviewer_profiles.json',
+              schemaVersion: 1,
+            ).then(TigerReviewerProfileCatalog.fromJsonString))
+        : null;
+    return _TigerLanePageData(status: status, profiles: profiles);
   }
 
-  Future<String> _loadStatusAsset(String asset) {
+  Future<String> _loadAsset(String asset, {required int schemaVersion}) {
     if (!kIsWeb) return rootBundle.loadString(asset);
 
     // These JSON snapshots are refreshed by independent review automations.
     // Do not reuse a browser's previous asset response after a new release.
     return NetworkAssetBundle(
       Uri.base.resolve('assets/'),
-    ).loadString('$asset?review_status_schema=3');
+    ).loadString('$asset?review_status_schema=$schemaVersion');
   }
 
   Future<void> _reload() async {
     final next = _load();
     setState(() {
-      _status = next;
+      _data = next;
     });
     await next;
   }
@@ -155,8 +173,8 @@ class _TigerReviewLaneStatusPageState extends State<TigerReviewLaneStatusPage> {
           ),
         ],
       ),
-      body: FutureBuilder<TigerReviewLaneStatus>(
-        future: _status,
+      body: FutureBuilder<_TigerLanePageData>(
+        future: _data,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -170,13 +188,15 @@ class _TigerReviewLaneStatusPageState extends State<TigerReviewLaneStatusPage> {
               ),
             );
           }
-          final status = snapshot.requireData;
+          final data = snapshot.requireData;
+          final status = data.status;
           if (status.lane != widget.kind.lane) {
             return const Center(child: Text('公開データの系統が一致しません。'));
           }
           return _LaneContent(
             kind: widget.kind,
             status: status,
+            profiles: data.profiles,
             onRefresh: _reload,
           );
         },
@@ -185,15 +205,24 @@ class _TigerReviewLaneStatusPageState extends State<TigerReviewLaneStatusPage> {
   }
 }
 
+class _TigerLanePageData {
+  const _TigerLanePageData({required this.status, required this.profiles});
+
+  final TigerReviewLaneStatus status;
+  final TigerReviewerProfileCatalog? profiles;
+}
+
 class _LaneContent extends StatelessWidget {
   const _LaneContent({
     required this.kind,
     required this.status,
+    required this.profiles,
     required this.onRefresh,
   });
 
   final TigerReviewLane kind;
   final TigerReviewLaneStatus status;
+  final TigerReviewerProfileCatalog? profiles;
   final Future<void> Function() onRefresh;
 
   @override
@@ -254,22 +283,47 @@ class _LaneContent extends StatelessWidget {
                           itemBuilder: (context, index) => _StandingTile(
                             kind: kind,
                             entry: status.entries[index],
+                            profile: profiles
+                                ?.profilesBySeat[status.entries[index]['seat']],
+                            profileSnapshotDate: profiles?.snapshotDate,
                           ),
                         ),
                       ),
                     SliverPadding(
                       padding: EdgeInsets.fromLTRB(
                         horizontalPadding,
-                        status.disclaimer.isEmpty ? 8 : 16,
+                        status.disclaimer.isEmpty &&
+                                (profiles?.disclaimer.isEmpty ?? true)
+                            ? 8
+                            : 16,
                         horizontalPadding,
                         24,
                       ),
                       sliver: SliverToBoxAdapter(
-                        child: status.disclaimer.isEmpty
+                        child: status.disclaimer.isEmpty &&
+                                (profiles?.disclaimer.isEmpty ?? true)
                             ? const SizedBox.shrink()
-                            : Text(
-                                status.disclaimer,
-                                style: Theme.of(context).textTheme.bodySmall,
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  if (status.disclaimer.isNotEmpty)
+                                    Text(
+                                      status.disclaimer,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
+                                    ),
+                                  if (profiles?.disclaimer case final text?)
+                                    if (text.isNotEmpty) ...<Widget>[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        text,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
+                                      ),
+                                    ],
+                                ],
                               ),
                       ),
                     ),
@@ -633,22 +687,35 @@ class _LatestCard extends StatelessWidget {
 }
 
 class _StandingTile extends StatelessWidget {
-  const _StandingTile({required this.kind, required this.entry});
+  const _StandingTile({
+    required this.kind,
+    required this.entry,
+    required this.profile,
+    required this.profileSnapshotDate,
+  });
 
   final TigerReviewLane kind;
   final Map<String, dynamic> entry;
+  final TigerReviewerProfile? profile;
+  final DateTime? profileSnapshotDate;
 
   @override
   Widget build(BuildContext context) {
+    if (kind == TigerReviewLane.reviewers) {
+      return _ReviewerStandingTile(
+        entry: entry,
+        profile: profile,
+        profileSnapshotDate: profileSnapshotDate,
+      );
+    }
     final title = switch (kind) {
-      TigerReviewLane.reviewers => entry['name'],
+      TigerReviewLane.reviewers => '',
       TigerReviewLane.courses => entry['title'],
       TigerReviewLane.features => entry['title'],
       TigerReviewLane.site => '',
     };
     final detail = switch (kind) {
-      TigerReviewLane.reviewers =>
-        '席 ${entry['seat']}・担当 ${entry['completed_cycles']}回',
+      TigerReviewLane.reviewers => '',
       TigerReviewLane.courses =>
         '${entry['provider']}・レビュー ${entry['completed_cycles']}回',
       TigerReviewLane.features =>
@@ -668,6 +735,160 @@ class _StandingTile extends StatelessWidget {
               ? '選出外'
               : '${entry['utility_score'] ?? '暫定'}点',
         ),
+      ),
+    );
+  }
+}
+
+class _ReviewerStandingTile extends StatelessWidget {
+  const _ReviewerStandingTile({
+    required this.entry,
+    required this.profile,
+    required this.profileSnapshotDate,
+  });
+
+  final Map<String, dynamic> entry;
+  final TigerReviewerProfile? profile;
+  final DateTime? profileSnapshotDate;
+
+  @override
+  Widget build(BuildContext context) {
+    final seat = entry['seat'];
+    final score = entry['eligible'] == false
+        ? '選出外'
+        : '${entry['utility_score'] ?? '暫定'}点';
+    return Card(
+      child: ExpansionTile(
+        key: Key('tiger-reviewer_league-$seat'),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+        leading: CircleAvatar(child: Text('${entry['division'] ?? 3}')),
+        title: Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                entry['name']?.toString() ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(score, style: Theme.of(context).textTheme.bodySmall),
+          ],
+        ),
+        subtitle: Text('席 $seat・担当 ${entry['completed_cycles']}回'),
+        children: <Widget>[
+          if (profile == null)
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text('公開プロフィール情報を確認できません。'),
+            )
+          else
+            _ReviewerProfileDetails(
+              profile: profile!,
+              snapshotDate: profileSnapshotDate,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReviewerProfileDetails extends StatelessWidget {
+  const _ReviewerProfileDetails({
+    required this.profile,
+    required this.snapshotDate,
+  });
+
+  final TigerReviewerProfile profile;
+  final DateTime? snapshotDate;
+
+  @override
+  Widget build(BuildContext context) {
+    final profileUrl = profile.profileUrl;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        const Divider(),
+        _ProfileFact(label: '年齢', value: profile.ageLabel(snapshotDate)),
+        _ProfileFact(
+          label: '肩書き',
+          value: profile.companyRole.isEmpty ? '公開情報未確認' : profile.companyRole,
+        ),
+        _ProfileFact(
+          label: '事業内容',
+          value: profile.businessSummary.isEmpty
+              ? '公開情報未確認'
+              : profile.businessSummary,
+        ),
+        _ProfileFact(
+          label: '出演実績',
+          value: '出演 ${profile.appearances}回・出資 ${profile.investmentCount}回',
+        ),
+        _ProfileFact(
+          label: '在籍区分',
+          value: profile.rosterStatus == 'current' ? '現役虎' : '歴代虎',
+        ),
+        if (profile.businessDomains.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 8),
+          Text('事業分野', style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: <Widget>[
+              for (final domain in profile.businessDomains)
+                Chip(
+                  visualDensity: VisualDensity.compact,
+                  label: Text(domain),
+                ),
+            ],
+          ),
+        ],
+        if (profile.publicViewpointSummary.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 8),
+          _ProfileFact(
+            label: '審査姿勢',
+            value: profile.publicViewpointSummary,
+          ),
+        ],
+        if (profileUrl != null && profileUrl.hasScheme) ...<Widget>[
+          const SizedBox(height: 8),
+          TextButton.icon(
+            key: Key('tiger-profile-source-${profile.seat}'),
+            onPressed: () => launchUrl(
+              profileUrl,
+              mode: LaunchMode.externalApplication,
+            ),
+            icon: const Icon(Icons.open_in_new, size: 18),
+            label: const Text('公開プロフィールを開く'),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ProfileFact extends StatelessWidget {
+  const _ProfileFact({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SizedBox(
+            width: 76,
+            child: Text(label, style: Theme.of(context).textTheme.labelLarge),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: Text(value)),
+        ],
       ),
     );
   }

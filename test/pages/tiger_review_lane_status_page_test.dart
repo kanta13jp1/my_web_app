@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/tiger_review_lane_status.dart';
+import 'package:my_web_app/models/tiger_reviewer_profile.dart';
 import 'package:my_web_app/pages/tiger_review_lane_status_page.dart';
 
 void main() {
@@ -87,6 +88,74 @@ void main() {
     expect(loadCount, 2);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'reviewer lane expands age, business, and title on narrow screens',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: TigerReviewLaneStatusPage(
+            kind: TigerReviewLane.reviewers,
+            loader: () async => _status(
+              lane: 'reviewer_league',
+              entries: const <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'seat': 21,
+                  'name': '遠藤 悠記',
+                  'division': 2,
+                  'eligible': true,
+                  'completed_cycles': 2,
+                  'utility_score': 78.5,
+                },
+              ],
+            ),
+            profileLoader: () async => TigerReviewerProfileCatalog(
+              schemaVersion: 1,
+              snapshotDate: DateTime(2026, 8, 23),
+              profilesBySeat: <int, TigerReviewerProfile>{
+                21: TigerReviewerProfile(
+                  seat: 21,
+                  name: '遠藤 悠記',
+                  rosterStatus: 'current',
+                  birthDate: DateTime(1990, 3, 17),
+                  companyRole: '株式会社えん代表',
+                  businessSummary: '学習塾、美容エステサロン、顧問事業',
+                  businessDomains: const <String>['教育・スクール'],
+                  appearances: 64,
+                  investmentCount: 17,
+                  publicViewpointSummary: '最後は人情を重視する。',
+                  profileUrl: Uri.parse(
+                    'https://reiwanotora.jp/tiger/endo-yuki/',
+                  ),
+                  birthDateSourceUrl: Uri.parse(
+                    'https://reiwanotora.jp/tiger/endo-yuki/',
+                  ),
+                ),
+              },
+              disclaimer: '公開情報から構成したプロフィールです。',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('tiger-reviewer_league-21')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('36歳（2026年8月23日時点）'), findsOneWidget);
+      expect(find.text('株式会社えん代表'), findsOneWidget);
+      expect(find.text('学習塾、美容エステサロン、顧問事業'), findsOneWidget);
+      expect(find.text('教育・スクール'), findsOneWidget);
+      expect(find.text('出演 64回・出資 17回'), findsOneWidget);
+      expect(find.byKey(const Key('tiger-profile-source-21')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('history shows findings and countermeasure trace', (
     tester,
