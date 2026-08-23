@@ -2681,14 +2681,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
     HomeToolEntry(
       id: 'tiger-review-status',
       sectionId: 'ai',
-      title: 'AI大学・虎レビューリーグ',
-      subtitle: '毎時の担当虎・講座レビューと、双方の1〜5部所属を確認',
+      title: '機能・講座・虎 5部リーグ',
+      subtitle: '毎時の対象機能・AI大学講座・担当虎と、1〜5部の所属を確認',
       icon: Icons.emoji_events_outlined,
       color: const Color(0xFFD97706),
       keywords: const <String>[
         '令和の虎',
         '虎レビュー',
         'レビュー状況',
+        'サイト機能',
+        '機能レビュー',
         '担当者',
         '候補',
         '脱落',

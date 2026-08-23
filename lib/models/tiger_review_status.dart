@@ -8,8 +8,10 @@ class TigerReviewStatusSnapshot {
     required this.automation,
     required this.pool,
     required this.coursePool,
+    required this.featurePool,
     required this.latestCycle,
     required this.courses,
+    required this.features,
     required this.reviewers,
     required this.disclaimer,
   });
@@ -19,9 +21,11 @@ class TigerReviewStatusSnapshot {
   final TigerReviewAutomation automation;
   final TigerReviewPool pool;
   final TigerReviewPool coursePool;
+  final TigerReviewPool featurePool;
   final String publicationState;
   final TigerReviewCycle? latestCycle;
   final List<TigerReviewedCourse> courses;
+  final List<TigerReviewedFeature> features;
   final List<TigerReviewerStanding> reviewers;
   final String disclaimer;
 
@@ -41,6 +45,7 @@ class TigerReviewStatusSnapshot {
       automation: TigerReviewAutomation.fromJson(_asMap(json['automation'])),
       pool: TigerReviewPool.fromJson(_asMap(json['pool'])),
       coursePool: TigerReviewPool.fromJson(_asMap(json['course_pool'])),
+      featurePool: TigerReviewPool.fromJson(_asMap(json['feature_pool'])),
       latestCycle: json['latest_cycle'] is Map<String, dynamic>
           ? TigerReviewCycle.fromJson(_asMap(json['latest_cycle']))
           : null,
@@ -51,6 +56,10 @@ class TigerReviewStatusSnapshot {
       courses: _asList(json['courses'])
           .whereType<Map<String, dynamic>>()
           .map(TigerReviewedCourse.fromJson)
+          .toList(growable: false),
+      features: _asList(json['features'])
+          .whereType<Map<String, dynamic>>()
+          .map(TigerReviewedFeature.fromJson)
           .toList(growable: false),
       disclaimer: _asString(json['disclaimer']),
     );
@@ -135,6 +144,7 @@ class TigerReviewCycle {
     required this.tier,
     required this.division,
     required this.courseReview,
+    required this.featureReview,
     required this.status,
     required this.validation,
     required this.findingCount,
@@ -153,6 +163,7 @@ class TigerReviewCycle {
   final String tier;
   final int division;
   final TigerCourseReviewCycle? courseReview;
+  final TigerFeatureReviewCycle? featureReview;
   final String status;
   final String validation;
   final int findingCount;
@@ -175,6 +186,9 @@ class TigerReviewCycle {
       division: _asInt(reviewer['division']),
       courseReview: json['course_review'] is Map<String, dynamic>
           ? TigerCourseReviewCycle.fromJson(_asMap(json['course_review']))
+          : null,
+      featureReview: json['feature_review'] is Map<String, dynamic>
+          ? TigerFeatureReviewCycle.fromJson(_asMap(json['feature_review']))
           : null,
       status: _asString(json['status']),
       validation: _asString(json['validation']),
@@ -279,6 +293,91 @@ class TigerReviewedCourse {
       provider: _asString(json['provider']),
       title: _asString(json['title']),
       sourceUrl: _asString(json['source_url']),
+      division: _asInt(json['division']),
+      provisional: json['provisional'] == true,
+      eligible: json['eligible'] == true,
+      utilityScore: _asDoubleOrNull(json['utility_score']),
+      completedCycles: _asInt(json['completed_cycles']),
+      lastCycleUtility: _asDoubleOrNull(json['last_cycle_utility']),
+      lastReviewedAt: DateTime.tryParse(_asString(json['last_reviewed_at'])),
+      reason: _asString(json['reason']),
+    );
+  }
+}
+
+class TigerFeatureReviewCycle {
+  const TigerFeatureReviewCycle({
+    required this.slug,
+    required this.title,
+    required this.kind,
+    required this.cycleUtility,
+    required this.aggregateUtility,
+    required this.division,
+    required this.reason,
+  });
+
+  final String slug;
+  final String title;
+  final String kind;
+  final double? cycleUtility;
+  final double? aggregateUtility;
+  final int division;
+  final String reason;
+
+  factory TigerFeatureReviewCycle.fromJson(Map<String, dynamic> json) {
+    return TigerFeatureReviewCycle(
+      slug: _asString(json['slug']),
+      title: _asString(json['title']),
+      kind: _asString(json['kind']),
+      cycleUtility: _asDoubleOrNull(json['cycle_utility']),
+      aggregateUtility: _asDoubleOrNull(json['aggregate_utility']),
+      division: _asInt(json['division']),
+      reason: _asString(json['reason']),
+    );
+  }
+}
+
+class TigerReviewedFeature {
+  const TigerReviewedFeature({
+    required this.slug,
+    required this.title,
+    required this.kind,
+    required this.path,
+    required this.source,
+    required this.priority,
+    required this.division,
+    required this.provisional,
+    required this.eligible,
+    required this.utilityScore,
+    required this.completedCycles,
+    required this.lastCycleUtility,
+    required this.lastReviewedAt,
+    required this.reason,
+  });
+
+  final String slug;
+  final String title;
+  final String kind;
+  final String path;
+  final String source;
+  final String priority;
+  final int division;
+  final bool provisional;
+  final bool eligible;
+  final double? utilityScore;
+  final int completedCycles;
+  final double? lastCycleUtility;
+  final DateTime? lastReviewedAt;
+  final String reason;
+
+  factory TigerReviewedFeature.fromJson(Map<String, dynamic> json) {
+    return TigerReviewedFeature(
+      slug: _asString(json['slug']),
+      title: _asString(json['title']),
+      kind: _asString(json['kind']),
+      path: _asString(json['path']),
+      source: _asString(json['source']),
+      priority: _asString(json['priority']),
       division: _asInt(json['division']),
       provisional: json['provisional'] == true,
       eligible: json['eligible'] == true,

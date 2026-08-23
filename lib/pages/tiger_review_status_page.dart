@@ -46,7 +46,7 @@ class _TigerReviewStatusPageState extends State<TigerReviewStatusPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI大学・虎レビューリーグ'),
+        title: const Text('機能・講座・虎 5部リーグ'),
         actions: <Widget>[
           IconButton(
             key: const Key('tiger-review-refresh'),
@@ -106,7 +106,15 @@ class _TigerReviewStatusPageState extends State<TigerReviewStatusPage> {
                           const SizedBox(height: 16),
                           _LatestCycleCard(cycle: snapshot.latestCycle),
                           const SizedBox(height: 16),
-                          _PolicyCard(pool: snapshot.pool),
+                          _PolicyCard(
+                            reviewerPool: snapshot.pool,
+                            featurePool: snapshot.featurePool,
+                          ),
+                          const SizedBox(height: 20),
+                          _FeatureLeague(
+                            features: snapshot.features,
+                            pool: snapshot.featurePool,
+                          ),
                           const SizedBox(height: 20),
                           _CourseLeague(
                             courses: snapshot.courses,
@@ -281,7 +289,7 @@ class _Hero extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'AI講座も、担当する虎も、成果で1〜5部へ。',
+              'サイト機能も、AI講座も、担当する虎も、成果で1〜5部へ。',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -289,8 +297,8 @@ class _Hero extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              '1時間ごとに講座1件と虎1名をレビューし、有用性を実績で採点。'
-              '実績2回から所属を確定し、5部は次回候補から外れます。',
+              '1時間ごとに機能1件・講座1件・虎1名をレビューし、有用性を実績で採点。'
+              '実績2回から所属を確定し、5部は次回レビュー候補から外れます。',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Colors.white.withValues(alpha: 0.82),
                     height: 1.55,
@@ -449,6 +457,10 @@ class _LatestCycleCard extends StatelessWidget {
                 ),
               ),
             ],
+            if (cycle!.featureReview != null) ...<Widget>[
+              const SizedBox(height: 14),
+              _FeatureCycleCard(feature: cycle!.featureReview!),
+            ],
             if (cycle!.courseReview != null) ...<Widget>[
               const SizedBox(height: 14),
               _CourseCycleCard(course: cycle!.courseReview!),
@@ -484,6 +496,51 @@ class _Fact extends StatelessWidget {
           Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
           const SizedBox(height: 3),
           Text(detail, style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeatureCycleCard extends StatelessWidget {
+  const _FeatureCycleCard({required this.feature});
+
+  final TigerFeatureReviewCycle feature;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _divisionColor(feature.division);
+    return Container(
+      key: const Key('tiger-review-latest-feature'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: <Widget>[
+              const Text('対象機能', style: TextStyle(fontWeight: FontWeight.w800)),
+              _DivisionBadge(division: feature.division, provisional: false),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            feature.title,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          Text(
+            '今回効用 ${_score(feature.cycleUtility)} / '
+            '累積 ${_score(feature.aggregateUtility)}',
+          ),
+          if (feature.reason.isNotEmpty) Text(feature.reason),
         ],
       ),
     );
@@ -527,6 +584,74 @@ class _CourseCycleCard extends StatelessWidget {
           if (course.reason.isNotEmpty) Text(course.reason),
         ],
       ),
+    );
+  }
+}
+
+class _FeatureLeague extends StatelessWidget {
+  const _FeatureLeague({required this.features, required this.pool});
+
+  final List<TigerReviewedFeature> features;
+  final TigerReviewPool pool;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          'サイト機能 1〜5部',
+          style: Theme.of(context)
+              .textTheme
+              .headlineSmall
+              ?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          '毎時1機能を採点し、実績2回から所属を確定します。'
+          '5部は次回レビュー対象外となり、停止・統合・再設計の候補になります。',
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            for (var division = 1; division <= 5; division += 1)
+              Chip(
+                avatar: CircleAvatar(
+                  backgroundColor: _divisionColor(division),
+                  foregroundColor: Colors.white,
+                  child: Text('$division'),
+                ),
+                label: Text('${_divisionCount(pool, division)}機能'),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Card(
+          key: const Key('tiger-review-feature-league'),
+          margin: EdgeInsets.zero,
+          child: Column(
+            children: <Widget>[
+              for (final feature in features)
+                ListTile(
+                  key: Key('tiger-reviewed-feature-${feature.slug}'),
+                  leading: CircleAvatar(
+                    backgroundColor: _divisionColor(feature.division)
+                        .withValues(alpha: 0.12),
+                    foregroundColor: _divisionColor(feature.division),
+                    child: Text('${feature.division}'),
+                  ),
+                  title: Text(_featureLabel(feature)),
+                  subtitle: Text(
+                    '${_featureKind(feature.kind)} / ${feature.reason}',
+                  ),
+                  trailing: Text(_score(feature.utilityScore)),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -619,9 +744,10 @@ int _divisionCount(TigerReviewPool pool, int division) => switch (division) {
     };
 
 class _PolicyCard extends StatelessWidget {
-  const _PolicyCard({required this.pool});
+  const _PolicyCard({required this.reviewerPool, required this.featurePool});
 
-  final TigerReviewPool pool;
+  final TigerReviewPool reviewerPool;
+  final TigerReviewPool featurePool;
 
   @override
   Widget build(BuildContext context) {
@@ -643,7 +769,13 @@ class _PolicyCard extends StatelessWidget {
               '35点以上=4部、35点未満=5部です。実績2回未満は暫定3部です。',
             ),
             const SizedBox(height: 8),
-            Text('候補枯渇を防ぐ安全下限は${pool.minimumEligiblePool}名です。'),
+            Text(
+              '現在は${featurePool.eligible}/${featurePool.total}機能と、'
+              '${reviewerPool.eligible}/${reviewerPool.total}名の虎が選出可能です。'
+              '虎の候補枯渇を防ぐ安全下限は${reviewerPool.minimumEligiblePool}名です。',
+            ),
+            const SizedBox(height: 8),
+            const Text('5部入りだけで機能を自動削除せず、停止・統合は別途レビューします。'),
           ],
         ),
       ),
@@ -866,6 +998,19 @@ String _statusLabel(String status) => switch (status) {
       'review_only' => '指摘のみ',
       'blocked' => '停止',
       _ => status,
+    };
+
+String _featureLabel(TigerReviewedFeature feature) {
+  if (feature.title.isNotEmpty && feature.title != feature.slug) {
+    return feature.title;
+  }
+  return feature.slug.replaceAll('_', ' ');
+}
+
+String _featureKind(String kind) => switch (kind) {
+      'page' => '公開ページ',
+      'edge_function' => 'バックエンド機能',
+      _ => kind,
     };
 
 String _score(double? value) =>

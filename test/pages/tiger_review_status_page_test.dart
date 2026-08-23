@@ -19,15 +19,20 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('AI大学・虎レビューリーグ'), findsOneWidget);
+    expect(find.text('機能・講座・虎 5部リーグ'), findsOneWidget);
     expect(find.text('最新レビュー'), findsOneWidget);
     expect(find.text('虎A（席1）'), findsOneWidget);
+    expect(find.text('サイト機能 1〜5部'), findsOneWidget);
+    expect(
+      find.byKey(const Key('tiger-reviewed-feature-home')),
+      findsOneWidget,
+    );
     expect(find.text('3名を表示'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     final division5Filter =
         find.byKey(const Key('tiger-review-filter-division_5'));
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -700));
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -1400));
     await tester.pumpAndSettle();
     await tester.ensureVisible(division5Filter);
     await tester.tap(division5Filter);
@@ -116,6 +121,18 @@ TigerReviewStatusSnapshot _snapshot() {
       eliminated: 0,
       minimumEligiblePool: 0,
     ),
+    featurePool: const TigerReviewPool(
+      total: 2,
+      eligible: 1,
+      provisional: 1,
+      division1: 0,
+      division2: 0,
+      division3: 1,
+      division4: 0,
+      division5: 1,
+      eliminated: 1,
+      minimumEligiblePool: 0,
+    ),
     latestCycle: TigerReviewCycle(
       cycleId: 'cycle-1',
       startedAt: DateTime(2026, 8, 23, 12),
@@ -137,6 +154,15 @@ TigerReviewStatusSnapshot _snapshot() {
         aggregateUtility: 76,
         division: 3,
         reason: '実践課題を確認',
+      ),
+      featureReview: const TigerFeatureReviewCycle(
+        slug: 'home',
+        title: 'ホーム',
+        kind: 'page',
+        cycleUtility: 72,
+        aggregateUtility: 72,
+        division: 3,
+        reason: '利用価値と事業導線を確認',
       ),
       status: 'review_only',
       validation: 'not_applicable',
@@ -210,6 +236,40 @@ TigerReviewStatusSnapshot _snapshot() {
         lastCycleUtility: 76,
         lastReviewedAt: null,
         reason: '講座レビュー実績が2回未満のため暫定3部',
+      ),
+    ],
+    features: const <TigerReviewedFeature>[
+      TigerReviewedFeature(
+        slug: 'home',
+        title: 'ホーム',
+        kind: 'page',
+        path: '/',
+        source: 'lib/pages/home_dashboard_page.dart',
+        priority: 'high',
+        division: 3,
+        provisional: true,
+        eligible: true,
+        utilityScore: 72,
+        completedCycles: 1,
+        lastCycleUtility: 72,
+        lastReviewedAt: null,
+        reason: '機能レビュー実績が2回未満のため暫定3部',
+      ),
+      TigerReviewedFeature(
+        slug: 'legacy',
+        title: '旧機能',
+        kind: 'page',
+        path: '/legacy',
+        source: 'lib/pages/legacy_page.dart',
+        priority: 'low',
+        division: 5,
+        provisional: false,
+        eligible: false,
+        utilityScore: 25,
+        completedCycles: 2,
+        lastCycleUtility: 20,
+        lastReviewedAt: null,
+        reason: '機能レビュー2回・効用25.0点で5部（次回候補外）',
       ),
     ],
     disclaimer: '本人による実レビューではありません。',
