@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "snapshot_date": "2026-08-23",
-  "source_snapshot": "canonical tiger-personas.json (2026-08-23)",
+  "source_snapshot": "canonical tiger-personas.json (2026-08-24)",
   "reviewer_count": 125,
   "disclaimer": "年齢は生年月日を公開一次情報で確認できた場合のみ、スナップショット日時点で表示します。未確認の年齢は推測していません。肩書き・事業内容・出演実績は公開情報から構成したスナップショットです。",
   "profiles": [
@@ -7345,7 +7345,7 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "株式会社トゥモロー代表。飲食・小売ブランド、地域SNS、FC事業を展開",
+      "company_role": "株式会社トゥモロー代表取締役。地域SNS・地域創生プラットフォーム「まちアカ」などを展開",
       "business_summary": "飲食・宿泊・接客、フランチャイズ・多店舗展開、マーケティング・メディア",
       "business_domains": [
         "飲食・宿泊・接客",
@@ -7354,13 +7354,13 @@
       ],
       "appearances": 1,
       "investment_count": 0,
-      "public_viewpoint_summary": "一時的なバズより地域の信用を積み上げ、店舗売上と継続収入へつなげる再現性を重視する。",
-      "profile_url": "https://reiwanotoramatome.com/tomoya-suzuki/",
-      "evidence_confidence": 2.0,
-      "profile_completeness_percent": 45,
-      "review_reflection_percent": 43,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "本人発信では、一時的なバズより地域で顔の見える信用を積み上げ、店舗支援と継続収入へつなげる再現性を重視している。",
+      "profile_url": "https://jp.linkedin.com/in/tomoroo",
+      "evidence_confidence": 3.0,
+      "profile_completeness_percent": 62,
+      "review_reflection_percent": 68,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "unit_economics",
@@ -7537,7 +7537,7 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "アパレルブランドADRERのプロデュース・運営を経験",
+      "company_role": "アパレルブランドADRERのデザイナー兼ディレクター、インフルエンサー",
       "business_summary": "小売・通販・EC、マーケティング・メディア、エンタメ・クリエイター",
       "business_domains": [
         "小売・通販・EC",
@@ -7546,13 +7546,13 @@
       ],
       "appearances": 1,
       "investment_count": 1,
-      "public_viewpoint_summary": "ブランドの世界観、ファン需要、商品企画、SNSから購買へ転換する力を重視する。",
-      "profile_url": "https://ja.everybodywiki.com/%E4%BB%A4%E5%92%8C%E3%81%AE%E8%99%8E",
-      "evidence_confidence": 2.0,
-      "profile_completeness_percent": 45,
-      "review_reflection_percent": 43,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "本人の公式チャンネルでは、誠実な品質と独自デザインを通じ、着る人がありのままの自分を好きになれる商品づくりを掲げている。",
+      "profile_url": "https://www.youtube.com/@kei_adrer",
+      "evidence_confidence": 3.0,
+      "profile_completeness_percent": 62,
+      "review_reflection_percent": 68,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "go_to_market",
@@ -7592,7 +7592,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S048",
+        "S062",
         "S004"
       ]
     },
@@ -7602,7 +7602,7 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "生ごみ処理機NAXLU事業の起業家。志願者から虎へ転じた経歴を持つ",
+      "company_role": "株式会社伝然 代表取締役。家庭用生ごみ処理機NAXLUを企画・販売",
       "business_summary": "製造・エネルギー・環境、小売・通販・EC、営業・販売組織",
       "business_domains": [
         "製造・エネルギー・環境",
@@ -7611,13 +7611,13 @@
       ],
       "appearances": 1,
       "investment_count": 1,
-      "public_viewpoint_summary": "会社を社会への価値提供と人の成長の器と捉え、単独企業より協業で提供価値を高めることを重視する。",
-      "profile_url": "https://matsugeblog.com/householdgoods/18905",
-      "evidence_confidence": 2.0,
-      "profile_completeness_percent": 45,
-      "review_reflection_percent": 43,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "会社発信では、環境性だけを前面に出すのではなく、生活を快適にする製品として顧客需要を満たし、その結果として社会・環境へ貢献することを重視している。",
+      "profile_url": "https://www.wantedly.com/projects/805001",
+      "evidence_confidence": 3.0,
+      "profile_completeness_percent": 62,
+      "review_reflection_percent": 68,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "unit_economics",
@@ -7646,7 +7646,6 @@
       ],
       "review_style_tags": [
         "customer_first",
-        "growth_first",
         "balanced_risk",
         "gross_margin_and_repeat_purchase"
       ],
@@ -7658,7 +7657,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S062",
+        "S063",
         "S004"
       ]
     },
@@ -7723,7 +7722,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S063",
+        "S064",
         "S004"
       ]
     },
@@ -7789,7 +7788,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S064"
+        "S065"
       ]
     },
     {
@@ -7915,27 +7914,16 @@
     }
   ],
   "enrichment": {
-    "round": 2,
+    "round": 3,
     "batch_size": 5,
     "policy": "一次公開情報を優先し、未確認情報は推測しない。プロフィール由来のレビュー観点は証拠強度に応じて段階反映する。",
-    "average_profile_completeness_percent": 63.0,
-    "average_review_reflection_percent": 68.1,
+    "average_profile_completeness_percent": 63.4,
+    "average_review_reflection_percent": 68.7,
     "verified_birth_dates": 2,
     "next_batch": [
       {
         "seat": 116,
         "name": "渡正行",
-        "profile_completeness_percent": 45,
-        "research_targets": [
-          "生年月日の一次公開情報",
-          "現職肩書き・事業内容の一次公開情報",
-          "本人の審査姿勢が確認できる一次公開情報",
-          "出演・出資実績の追加検証"
-        ]
-      },
-      {
-        "seat": 117,
-        "name": "鈴木智哉",
         "profile_completeness_percent": 45,
         "research_targets": [
           "生年月日の一次公開情報",
@@ -7956,8 +7944,8 @@
         ]
       },
       {
-        "seat": 120,
-        "name": "犬飼 京",
+        "seat": 123,
+        "name": "山本 優斗",
         "profile_completeness_percent": 45,
         "research_targets": [
           "生年月日の一次公開情報",
@@ -7967,8 +7955,19 @@
         ]
       },
       {
-        "seat": 121,
-        "name": "尾賀裕一",
+        "seat": 124,
+        "name": "前迫 潤哉",
+        "profile_completeness_percent": 45,
+        "research_targets": [
+          "生年月日の一次公開情報",
+          "現職肩書き・事業内容の一次公開情報",
+          "本人の審査姿勢が確認できる一次公開情報",
+          "出演・出資実績の追加検証"
+        ]
+      },
+      {
+        "seat": 125,
+        "name": "ゆとりくん（片石貴展）",
         "profile_completeness_percent": 45,
         "research_targets": [
           "生年月日の一次公開情報",
