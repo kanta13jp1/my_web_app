@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-23T09:32:26.830479+00:00",
+  "generated_at": "2026-08-23T10:53:08.518424+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "site_review",
   "publication_state": "latest_review",
@@ -10,87 +10,198 @@
     "status": "ACTIVE",
     "schedule": "毎時25分（1時間ごと）"
   },
-  "review_count": 4,
+  "review_count": 5,
   "latest_review": {
-    "cycle_id": "20260823T153734+0900",
-    "started_at": "2026-08-23T15:38:16.4383006+09:00",
-    "source_format": "legacy_combined",
+    "cycle_id": "20260823T194058+0900",
+    "started_at": "2026-08-23T19:40:58+09:00",
+    "source_format": "site_review",
     "surface": {
-      "slug": "comparison",
-      "url": "https://my-web-app-b67f4.web.app/competitors"
+      "slug": "whole_site",
+      "url": "https://my-web-app-b67f4.web.app/"
     },
     "reviewer": {
-      "seat": 7,
-      "name": "榊󠄀原 清一",
-      "selection_score": 74.4337,
-      "division": 3,
-      "cycle_utility": 90.17,
-      "aggregate_utility": 90.17
+      "seat": 12,
+      "name": "迫 佑樹",
+      "selection_score": 84.0825,
+      "division": 1,
+      "cycle_utility": 91.54,
+      "aggregate_utility": 91.03
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 3,
+    "finding_count": 7,
     "top_findings": [
       {
-        "summary": "競合比較の公開主張に出典・確認時点を一貫して結び付ける必要がある。",
+        "summary": "価値提案は具体化したが、最優先顧客セグメントと、その課題が継続利用・支払いに至る需要証拠が公開導線にない。",
         "severity": "p1",
         "business_dimensions": [
-          "competitive_advantage",
-          "unit_economics"
+          "market_demand",
+          "revenue_model",
+          "competitive_advantage"
         ]
       },
       {
-        "summary": "比較流入から登録までの実測根拠が今回のレビュー入力にない。",
-        "severity": "p2",
+        "summary": "登録なしAI提案という低摩擦の獲得導線はあるが、trialから保存登録・課金までの実測転換証拠が公開レビュー入力にない。",
+        "severity": "p1",
         "business_dimensions": [
           "market_demand",
-          "unit_economics"
+          "go_to_market",
+          "revenue_model"
         ]
       },
       {
-        "summary": "比較ページの巨大な単一ソースと専用試験不足が訴求変更の検証コストを高めている。",
-        "severity": "p2",
+        "summary": "Free・Pro・Team・100円応援の収益経路は明確だが、AI原価、粗利、CAC、回収期間、LTV、churnの成立証拠がない。",
+        "severity": "p1",
         "business_dimensions": [
-          "competitive_advantage",
-          "founder_execution"
+          "unit_economics",
+          "revenue_model",
+          "scalability"
         ]
       }
     ],
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4739 追跡中",
-      "detail": "3件はいずれも再現可能な証拠を持つが、公開比較主張、分析データ、または大規模な構造変更に関わる。安全な自動修正、低リスク、3ファイル・200行以内の全条件を満たす変更はない。",
+      "label": "未対策・Issue #4744 追跡中",
+      "detail": "7指摘はいずれも実利用データの集計、顧客・価格戦略、機能ポートフォリオ判断、または法務・プライバシー専門レビューを必要とする。共有の低リスク条件、3 product files・200 source linesの境界、保護対象変更禁止を同時に満たす修正はない。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "validate_roster.py: passed",
-        "validate_personas.py: passed",
-        "select_feature.py: passed (13 features)",
-        "select_reviewer.py: passed (125 profiles; JSON output saved)",
-        "public Data API catalog export: passed (active=1071, reviewable=526, excluded source URL=536)",
-        "select_course.py: passed",
-        "01.AI source URL inspection: reachable; only generic documentation navigation was observable",
-        "comparison source and test filename inspection: completed"
+        "validate_roster.py: passed (125 profiles)",
+        "validate_personas.py: passed (125 profiles)",
+        "production journey inspection: passed (root, billing, privacy; HTTP 200; no console warnings or errors)",
+        "select_reviewer.py: selection file created once (125 profiles; seat 12; stdout encoding failed after write; no reroll)",
+        "flutter test target acquisition suite: passed (60 tests)",
+        "flutter test target billing and Tiger status suite: passed (17 tests)",
+        "flutter analyze target whole-site and Tiger status files: passed (11 items; no issues)",
+        "review_issue.py --execute: passed (Issue #4744; cycle dedupe evidence recorded)",
+        "validate_cycle_report.py: passed (schema 4; lane=site_review; one reviewer; seven proposals)",
+        "build_lane_status.py --lane site_review: passed (site-only status; five retained cycles; no unissued passed review_only record)"
       ],
       "issue": {
-        "number": 4739,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4739",
-        "status": "existing",
+        "number": 4744,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4744",
+        "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison"
+        "dedupe_key": "tiger-site-review:20260823T194058+0900:whole_site"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "comparison-claim-evidence",
-        "comparison-funnel-evidence",
-        "comparison-maintainability"
+        "site-segment-demand-proof",
+        "site-acquisition-conversion-proof",
+        "site-unit-economics-evidence",
+        "site-retention-cohort-proof",
+        "site-breadth-focus-cost",
+        "site-differentiation-outcome-proof",
+        "site-ai-data-trust-map"
       ]
     }
   },
   "history": [
+    {
+      "cycle_id": "20260823T194058+0900",
+      "started_at": "2026-08-23T19:40:58+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 84.0825
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "findings": [
+        {
+          "finding_id": "site-segment-demand-proof",
+          "summary": "価値提案は具体化したが、最優先顧客セグメントと、その課題が継続利用・支払いに至る需要証拠が公開導線にない。",
+          "severity": "p1",
+          "suggested_action": "最優先セグメントを1つ定義し、登録なし提案から継続利用・支払いまでの匿名集計と代表的成果を、母数・期間付きで提示する。"
+        },
+        {
+          "finding_id": "site-acquisition-conversion-proof",
+          "summary": "登録なしAI提案という低摩擦の獲得導線はあるが、trialから保存登録・課金までの実測転換証拠が公開レビュー入力にない。",
+          "severity": "p1",
+          "suggested_action": "既存イベントを個人特定しないcohort集計へ接続し、LP→trial→保存登録→初回価値→billing→paidの母数、率、期間を運営KPIとして定期公開する。"
+        },
+        {
+          "finding_id": "site-unit-economics-evidence",
+          "summary": "Free・Pro・Team・100円応援の収益経路は明確だが、AI原価、粗利、CAC、回収期間、LTV、churnの成立証拠がない。",
+          "severity": "p1",
+          "suggested_action": "プラン別にpaid件数、ARPU、AI・決済・サポート変動費、粗利、CAC、回収期間、churnを月次で集計し、拡張判断の停止条件を設定する。"
+        },
+        {
+          "finding_id": "site-retention-cohort-proof",
+          "summary": "日次行動、最近・人気・ピン止め、AI案内など継続ループはあるが、7日・30日cohort継続と価値到達の証拠がない。",
+          "severity": "p2",
+          "suggested_action": "最初の価値到達を1イベントに定義し、入口・初回行動別のD1/D7/D30継続と再訪時の主要行動をcohortで測る。"
+        },
+        {
+          "finding_id": "site-breadth-focus-cost",
+          "summary": "361 routeと巨大なlanding/homeソースは統合性を示す一方、利用価値が未測定のまま発見・保守・品質保証コストを拡大させる。",
+          "severity": "p2",
+          "suggested_action": "routeごとの到達・継続・paid寄与を測り、価値の弱い入口を統合または非表示にするポートフォリオ基準と、巨大ページの段階分割計画を定める。"
+        },
+        {
+          "finding_id": "site-differentiation-outcome-proof",
+          "summary": "『自分株式会社』と統合cockpitは記憶に残るが、専門アプリより選ばれ続ける成果差を示す比較可能な実績がない。",
+          "severity": "p2",
+          "suggested_action": "核となる1つの利用成果を定義し、導入前後または代替手段との匿名比較を、条件・母数・期間・限界付きで公開する。"
+        },
+        {
+          "finding_id": "site-ai-data-trust-map",
+          "summary": "利用規約・プライバシー・Stripe説明は揃うが、広いAI機能群ごとの送信先、保存、保持、削除、学習利用の要点を比較できる公開マップがない。",
+          "severity": "p2",
+          "suggested_action": "法務文言を直接変更せず、専門レビューを経て、機能カテゴリ別に入力データ、外部送信先、保存期間、削除方法、学習利用有無をまとめる運用マップを設計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4744 追跡中",
+        "detail": "7指摘はいずれも実利用データの集計、顧客・価格戦略、機能ポートフォリオ判断、または法務・プライバシー専門レビューを必要とする。共有の低リスク条件、3 product files・200 source linesの境界、保護対象変更禁止を同時に満たす修正はない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed (125 profiles)",
+          "validate_personas.py: passed (125 profiles)",
+          "production journey inspection: passed (root, billing, privacy; HTTP 200; no console warnings or errors)",
+          "select_reviewer.py: selection file created once (125 profiles; seat 12; stdout encoding failed after write; no reroll)",
+          "flutter test target acquisition suite: passed (60 tests)",
+          "flutter test target billing and Tiger status suite: passed (17 tests)",
+          "flutter analyze target whole-site and Tiger status files: passed (11 items; no issues)",
+          "review_issue.py --execute: passed (Issue #4744; cycle dedupe evidence recorded)",
+          "validate_cycle_report.py: passed (schema 4; lane=site_review; one reviewer; seven proposals)",
+          "build_lane_status.py --lane site_review: passed (site-only status; five retained cycles; no unissued passed review_only record)"
+        ],
+        "issue": {
+          "number": 4744,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4744",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260823T194058+0900:whole_site"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-segment-demand-proof",
+          "site-acquisition-conversion-proof",
+          "site-unit-economics-evidence",
+          "site-retention-cohort-proof",
+          "site-breadth-focus-cost",
+          "site-differentiation-outcome-proof",
+          "site-ai-data-trust-map"
+        ]
+      }
+    },
     {
       "cycle_id": "20260823T153734+0900",
       "started_at": "2026-08-23T15:38:16.4383006+09:00",
