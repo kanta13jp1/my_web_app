@@ -490,6 +490,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => const ResourceOptimizationPage(),
+                settings: const RouteSettings(name: '/daily-habits'),
               ),
             ),
           ),
