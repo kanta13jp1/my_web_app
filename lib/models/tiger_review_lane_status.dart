@@ -303,7 +303,9 @@ List<Map<String, dynamic>> _list(Object? value) {
 
 TigerFollowUpIssue? _followUpIssue(Object? value) {
   final data = _nullableMap(value);
-  return data == null ? null : TigerFollowUpIssue.fromJson(data);
+  return data == null || data.isEmpty
+      ? null
+      : TigerFollowUpIssue.fromJson(data);
 }
 
 TigerReviewImplementation? _implementation(Object? value) {
