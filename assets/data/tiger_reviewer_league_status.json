@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-23T07:30:49.914416+00:00",
+  "generated_at": "2026-08-23T08:02:51.371867+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "reviewer_league",
   "publication_state": "latest_assignment",
@@ -33,47 +33,40 @@
     }
   },
   "latest_assignment": {
-    "cycle_id": "20260823T153734+0900",
-    "started_at": "2026-08-23T15:38:16.4383006+09:00",
-    "source_format": "legacy_combined",
+    "cycle_id": "20260823T165404+0900",
+    "started_at": "2026-08-23T16:54:04+09:00",
+    "source_format": "course_review",
     "surface": {
-      "slug": "comparison",
-      "url": "https://my-web-app-b67f4.web.app/competitors"
+      "slug": "course-22befb67-6147-4a4b-999c-ee1ad6fa9615",
+      "url": "https://platform.01.ai/docs"
     },
     "reviewer": {
-      "seat": 7,
-      "name": "榊󠄀原 清一",
-      "selection_score": 74.4337,
-      "division": 1,
-      "cycle_utility": 90.17,
-      "aggregate_utility": 90.17
+      "seat": 12,
+      "name": "迫 佑樹",
+      "selection_score": 73.0376,
+      "division": 3,
+      "cycle_utility": 90.0,
+      "aggregate_utility": 90.0
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 3,
+    "finding_count": 2,
     "top_findings": [
       {
-        "summary": "競合比較の公開主張に出典・確認時点を一貫して結び付ける必要がある。",
+        "summary": "モデル一覧の現行性を検証できる更新日・稼働モデル証拠が講座出典にない。",
         "severity": "p1",
         "business_dimensions": [
+          "unit_economics",
           "competitive_advantage",
-          "unit_economics"
+          "trust_risk"
         ]
       },
       {
-        "summary": "比較流入から登録までの実測根拠が今回のレビュー入力にない。",
+        "summary": "モデル比較後に学習者が適切なモデルを選べたかを示す実在学習者証拠がない。",
         "severity": "p2",
         "business_dimensions": [
           "market_demand",
-          "unit_economics"
-        ]
-      },
-      {
-        "summary": "比較ページの巨大な単一ソースと専用試験不足が訴求変更の検証コストを高めている。",
-        "severity": "p2",
-        "business_dimensions": [
-          "competitive_advantage",
-          "founder_execution"
+          "go_to_market"
         ]
       }
     ]
@@ -93,6 +86,21 @@
       "last_cycle_utility": 90.17,
       "last_selected_at": "2026-08-23T06:38:16.438300+00:00",
       "reason": "担当2回・効用90.2点で1部"
+    },
+    {
+      "seat": 12,
+      "name": "迫 佑樹",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 90.0,
+      "completed_cycles": 1,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 90.0,
+      "last_selected_at": "2026-08-23T07:54:04+00:00",
+      "reason": "担当実績が2回未満のため暫定3部"
     },
     {
       "seat": 1,
@@ -232,21 +240,6 @@
     {
       "seat": 10,
       "name": "島田 隆史",
-      "tier": "division_3",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "floor_protected": false,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "low_utility_streak": 0,
-      "last_cycle_utility": null,
-      "last_selected_at": null,
-      "reason": "担当実績が2回未満のため暫定3部"
-    },
-    {
-      "seat": 12,
-      "name": "迫 佑樹",
       "tier": "division_3",
       "division": 3,
       "provisional": true,
