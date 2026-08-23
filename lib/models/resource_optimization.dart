@@ -122,10 +122,10 @@ class ResourceOptimizationReport {
       generatedBy: (json['generated_by'] ?? 'deterministic').toString(),
       windowDays: _asInt(json['window_days']).clamp(7, 365),
       sampleCount: _asInt(json['sample_count']).clamp(0, 1000000),
-      timePerformanceCorrelation: _asNullableDouble(
+      timePerformanceCorrelation: _asCorrelation(
         correlations['time_to_performance'],
       ),
-      fatiguePerformanceCorrelation: _asNullableDouble(
+      fatiguePerformanceCorrelation: _asCorrelation(
         correlations['fatigue_to_performance'],
       ),
       metrics: _mapList(json['metrics'], HabitResourceMetric.fromJson),
@@ -162,12 +162,20 @@ int _asInt(Object? value) {
 }
 
 double _asDouble(Object? value) {
-  if (value is num) return value.toDouble();
-  return double.tryParse(value?.toString() ?? '') ?? 0;
+  final parsed = value is num
+      ? value.toDouble()
+      : double.tryParse(value?.toString() ?? '') ?? 0;
+  return parsed.isFinite ? parsed : 0;
 }
 
 double? _asNullableDouble(Object? value) {
   if (value == null) return null;
-  if (value is num) return value.toDouble();
-  return double.tryParse(value.toString());
+  final parsed =
+      value is num ? value.toDouble() : double.tryParse(value.toString());
+  return parsed != null && parsed.isFinite ? parsed : null;
+}
+
+double? _asCorrelation(Object? value) {
+  final parsed = _asNullableDouble(value);
+  return parsed?.clamp(-1, 1);
 }

@@ -40,14 +40,29 @@ const numberOr = (value: unknown, fallback = 0): number => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-const nullableNumber = (value: unknown): number | null => {
+const correlationOrNull = (value: unknown): number | null => {
   if (value === null || value === undefined || value === "") return null;
   const parsed = numberOr(value, Number.NaN);
-  return Number.isFinite(parsed) ? parsed : null;
+  return Number.isFinite(parsed) ? clamp(parsed, -1, 1) : null;
 };
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
+
+const boundedText = (
+  value: unknown,
+  fallback: string,
+  maxLength = 120,
+): string => {
+  const text = String(value ?? "").trim();
+  return (text || fallback).slice(0, maxLength);
+};
+
+const optionalBoundedText = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim().slice(0, 120);
+  return text || null;
+};
 
 export function normalizeMetrics(rows: unknown): HabitResourceMetric[] {
   if (!Array.isArray(rows)) return [];
@@ -57,8 +72,8 @@ export function normalizeMetrics(rows: unknown): HabitResourceMetric[] {
     )
     .map((row) => ({
       habit_id: String(row.habit_id ?? ""),
-      habit_title: String(row.habit_title ?? "名称未設定の習慣"),
-      goal_title: row.goal_title == null ? null : String(row.goal_title),
+      habit_title: boundedText(row.habit_title, "名称未設定の習慣"),
+      goal_title: optionalBoundedText(row.goal_title),
       sample_count: Math.max(0, Math.trunc(numberOr(row.sample_count))),
       avg_time_minutes: clamp(numberOr(row.avg_time_minutes), 0, 1440),
       avg_fatigue_score: clamp(numberOr(row.avg_fatigue_score), 0, 10),
@@ -69,16 +84,16 @@ export function normalizeMetrics(rows: unknown): HabitResourceMetric[] {
       ),
       resource_cost_index: Math.max(0, numberOr(row.resource_cost_index)),
       efficiency_score: Math.max(0, numberOr(row.efficiency_score)),
-      time_performance_correlation: nullableNumber(
+      time_performance_correlation: correlationOrNull(
         row.time_performance_correlation,
       ),
-      fatigue_performance_correlation: nullableNumber(
+      fatigue_performance_correlation: correlationOrNull(
         row.fatigue_performance_correlation,
       ),
-      overall_time_performance_correlation: nullableNumber(
+      overall_time_performance_correlation: correlationOrNull(
         row.overall_time_performance_correlation,
       ),
-      overall_fatigue_performance_correlation: nullableNumber(
+      overall_fatigue_performance_correlation: correlationOrNull(
         row.overall_fatigue_performance_correlation,
       ),
       is_pareto_optimal: row.is_pareto_optimal === true,

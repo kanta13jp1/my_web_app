@@ -20,6 +20,16 @@ alter table public.daily_habit_logs
   add column if not exists goal_contribution_score numeric(5, 2)
     check (goal_contribution_score between 0 and 100);
 
+-- PostgreSQL does not automatically index referencing foreign-key columns.
+-- These indexes keep hub_data deletes from scanning every user's habit rows.
+create index if not exists idx_daily_habits_goal_id
+  on public.daily_habits (goal_id)
+  where goal_id is not null;
+
+create index if not exists idx_daily_habit_logs_goal_id
+  on public.daily_habit_logs (goal_id)
+  where goal_id is not null;
+
 comment on column public.daily_habit_logs.time_cost_minutes is
   'Actual minutes spent on this habit completion.';
 comment on column public.daily_habit_logs.fatigue_score is
@@ -32,6 +42,83 @@ create index if not exists idx_daily_habit_logs_resource_analysis
   where time_cost_minutes is not null
     and fatigue_score is not null
     and goal_contribution_score is not null;
+
+-- Keep every relationship inside the authenticated user's tenant. Foreign-key
+-- checks alone only prove that a UUID exists; they do not enforce ownership.
+drop policy if exists "users_own_daily_habits" on public.daily_habits;
+create policy "users_own_daily_habits"
+  on public.daily_habits for all
+  to authenticated
+  using (
+    user_id = (select auth.uid())
+    and (
+      goal_id is null
+      or exists (
+        select 1
+        from public.hub_data goal
+        where goal.id = daily_habits.goal_id
+          and goal.source = 'goal'
+          and goal.metadata ->> 'user_id' = daily_habits.user_id::text
+      )
+    )
+  )
+  with check (
+    user_id = (select auth.uid())
+    and (
+      goal_id is null
+      or exists (
+        select 1
+        from public.hub_data goal
+        where goal.id = daily_habits.goal_id
+          and goal.source = 'goal'
+          and goal.metadata ->> 'user_id' = daily_habits.user_id::text
+      )
+    )
+  );
+
+drop policy if exists "users_own_daily_habit_logs"
+  on public.daily_habit_logs;
+create policy "users_own_daily_habit_logs"
+  on public.daily_habit_logs for all
+  to authenticated
+  using (
+    user_id = (select auth.uid())
+    and exists (
+      select 1
+      from public.daily_habits habit
+      where habit.id = daily_habit_logs.habit_id
+        and habit.user_id = daily_habit_logs.user_id
+    )
+    and (
+      goal_id is null
+      or exists (
+        select 1
+        from public.hub_data goal
+        where goal.id = daily_habit_logs.goal_id
+          and goal.source = 'goal'
+          and goal.metadata ->> 'user_id' = daily_habit_logs.user_id::text
+      )
+    )
+  )
+  with check (
+    user_id = (select auth.uid())
+    and exists (
+      select 1
+      from public.daily_habits habit
+      where habit.id = daily_habit_logs.habit_id
+        and habit.user_id = daily_habit_logs.user_id
+    )
+    and (
+      goal_id is null
+      or exists (
+        select 1
+        from public.hub_data goal
+        where goal.id = daily_habit_logs.goal_id
+          and goal.source = 'goal'
+          and goal.metadata ->> 'user_id' = daily_habit_logs.user_id::text
+      )
+    )
+  );
 
 create or replace function public.analyze_habit_resource_efficiency(
   p_days integer default 90
@@ -54,7 +141,7 @@ returns table (
 )
 language sql
 security invoker
-set search_path = public
+set search_path = ''
 as $$
   with scoped_logs as (
     select
@@ -66,8 +153,8 @@ as $$
       l.goal_contribution_score::double precision as goal_contribution_score
     from public.daily_habit_logs l
     join public.daily_habits h on h.id = l.habit_id
-    where l.user_id = auth.uid()
-      and h.user_id = auth.uid()
+    where l.user_id = (select auth.uid())
+      and h.user_id = (select auth.uid())
       and l.completed_date >=
         current_date - least(greatest(coalesce(p_days, 90), 7), 365)
       and l.time_cost_minutes is not null
@@ -145,7 +232,7 @@ $$;
 revoke all on function public.analyze_habit_resource_efficiency(integer)
   from public;
 grant execute on function public.analyze_habit_resource_efficiency(integer)
-  to authenticated, service_role;
+  to authenticated;
 
 comment on function public.analyze_habit_resource_efficiency(integer) is
   'Returns authenticated-user habit cost/performance correlations and Pareto frontier membership.';

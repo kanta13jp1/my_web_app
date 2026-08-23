@@ -48,7 +48,9 @@ const requestMentorPlan = async (
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${
+        encodeURIComponent(apiKey)
+      }`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -106,7 +108,11 @@ serve(async (req) => {
     { p_days: days },
   );
   if (error) {
-    return json({ success: false, error: error.message }, 500);
+    console.error("resource optimizer RPC failed", { code: error.code });
+    return json(
+      { success: false, error: "分析データを取得できませんでした" },
+      500,
+    );
   }
 
   const metrics = normalizeMetrics(data);

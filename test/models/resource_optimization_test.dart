@@ -86,4 +86,17 @@ void main() {
     expect(step.durationDays, 30);
     expect(step.loadMultiplier, 1.25);
   });
+
+  test('correlations are finite and clamped to their mathematical range', () {
+    final report = ResourceOptimizationReport.fromJson({
+      'window_days': 90,
+      'correlations': {
+        'time_to_performance': 4,
+        'fatigue_to_performance': double.nan,
+      },
+    });
+
+    expect(report.timePerformanceCorrelation, 1);
+    expect(report.fatiguePerformanceCorrelation, isNull);
+  });
 }

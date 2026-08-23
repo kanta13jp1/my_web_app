@@ -61,6 +61,23 @@ Deno.test("normalizes numeric RPC strings and clamps scores", () => {
   assertEquals(result[0].avg_goal_contribution_score, 100);
 });
 
+Deno.test("bounds prompt text and correlations from RPC rows", () => {
+  const longTitle = `  ${"x".repeat(200)}  `;
+  const result = normalizeMetrics([{
+    habit_id: "one",
+    habit_title: longTitle,
+    goal_title: " ",
+    time_performance_correlation: 5,
+    fatigue_performance_correlation: Number.NaN,
+    overall_time_performance_correlation: -5,
+  }]);
+  assertEquals(result[0].habit_title.length, 120);
+  assertEquals(result[0].goal_title, null);
+  assertEquals(result[0].time_performance_correlation, 1);
+  assertEquals(result[0].fatigue_performance_correlation, null);
+  assertEquals(result[0].overall_time_performance_correlation, -1);
+});
+
 Deno.test("finds the three-dimensional Pareto frontier", () => {
   assertEquals(
     findParetoFrontier(metrics).map((metric) => metric.habit_id),
