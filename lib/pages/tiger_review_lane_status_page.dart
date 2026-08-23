@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -117,9 +118,19 @@ class _TigerReviewLaneStatusPageState extends State<TigerReviewLaneStatusPage> {
 
   Future<TigerReviewLaneStatus> _load() {
     if (widget.loader != null) return widget.loader!();
-    return rootBundle
-        .loadString(widget.kind.asset)
-        .then(TigerReviewLaneStatus.fromJsonString);
+    return _loadStatusAsset(
+      widget.kind.asset,
+    ).then(TigerReviewLaneStatus.fromJsonString);
+  }
+
+  Future<String> _loadStatusAsset(String asset) {
+    if (!kIsWeb) return rootBundle.loadString(asset);
+
+    // These JSON snapshots are refreshed by independent review automations.
+    // Do not reuse a browser's previous asset response after a new release.
+    return NetworkAssetBundle(
+      Uri.base.resolve('assets/'),
+    ).loadString('$asset?review_status_schema=3');
   }
 
   Future<void> _reload() async {
