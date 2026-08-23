@@ -678,6 +678,9 @@ jobs:
           deploy_function growth-weekly-digest --no-verify-jwt
           deploy_function guitar-recording-studio --no-verify-jwt
           deploy_function autonomous-ops --no-verify-jwt
+          # Owner-only Notion inventory. Browser JWT + user_profiles.is_admin
+          # are both checked in-function before NOTION_API_TOKEN is used.
+          deploy_function notion-migration-hub --no-verify-jwt
 
           # --- Macro-Hub (6本: 旧Tier1全統合) ---
           deploy_function core-hub --no-verify-jwt
@@ -719,7 +722,7 @@ jobs:
           deploy_function memory-search-hub --no-verify-jwt
           deploy_function mcp-well-known --no-verify-jwt
 
-          # Total: 25 functions deployed (ハードキャップ50本に対し25本 — 余裕25本)
+          # Total: 26 functions deployed (ハードキャップ50本に対し26本 — 余裕24本)
           # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
           #
           # Hub対応表:
