@@ -229,6 +229,7 @@ const List<String> kAllAppRoutes = <String>[
   '/note-editor',
   '/note-list',
   '/notes',
+  '/notion-migration',
   '/notification-digest',
   '/notifications',
   '/offline-secure-mode',

@@ -158,6 +158,7 @@ import '../pages/subscription_billing_page.dart';
 import '../pages/digital_product_store_pages.dart';
 import '../pages/viral_ad_generator_page.dart';
 import '../ui/features/video_studio/video_studio_feature.dart';
+import '../ui/features/notion_migration/notion_migration_feature.dart';
 import '../pages/youtube_stats_page.dart';
 import '../pages/virtual_pet_page.dart';
 import '../pages/work_menu_page.dart';
@@ -1052,6 +1053,26 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF3D5AFE),
       keywords: const <String>['インポート', '移行', 'import'],
       onOpen: (context) => _pushPage(context, const ImportPage()),
+    ),
+    HomeToolEntry(
+      id: 'notion-migration',
+      sectionId: 'knowledge',
+      title: 'Notion移行センター',
+      subtitle: '全件棚卸し・段階移行・7項目照合・Notion側削除を追跡する',
+      icon: Icons.move_to_inbox_outlined,
+      color: const Color(0xFF4F46E5),
+      keywords: const <String>[
+        'Notion',
+        '移行',
+        'インポート',
+        'バックアップ',
+        '検証',
+        '解約',
+      ],
+      onOpen: (context) => _pushPage(
+        context,
+        const NotionMigrationFeature(),
+      ),
     ),
     HomeToolEntry(
       id: 'growth-mission',

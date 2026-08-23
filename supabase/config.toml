@@ -203,6 +203,14 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/autonomous-ops/index.ts"
 
+[functions.notion-migration-hub]
+enabled = true
+# Browser CORS preflight has no JWT, so gateway verification is disabled.
+# The handler still requires auth.getUser() plus user_profiles.is_admin before
+# using the owner-only NOTION_API_TOKEN or writing migration inventory rows.
+verify_jwt = false
+entrypoint = "./functions/notion-migration-hub/index.ts"
+
 [functions.video-generation-hub]
 enabled = true
 # Browser CORS preflight has no JWT, so gateway verification is disabled.
