@@ -160,8 +160,11 @@ class ImportExecutionResult {
 
   bool get usedEdgeFunction => importMode == 'edge-function';
 
-  String get importModeLabel =>
-      usedEdgeFunction ? 'Edge Function import' : 'Local fallback import';
+  String get importModeLabel => switch (importMode) {
+        'edge-function' => 'Edge Function import',
+        'evernote-lossless' => 'Lossless Evernote import + verification',
+        _ => 'Local fallback import',
+      };
 }
 
 class ImportService {
@@ -382,13 +385,15 @@ class ImportService {
   }
 
   List<ImportedNoteDraft> parseEvernoteEnexBytes(Uint8List bytes) {
-    return parseEvernoteEnexExportBytes(bytes).notes
+    return parseEvernoteEnexExportBytes(bytes)
+        .notes
         .map(_toImportedEvernoteDraft)
         .toList(growable: false);
   }
 
   List<ImportedNoteDraft> parseEvernoteEnexText(String enexText) {
-    return parseEvernoteEnexExportText(enexText).notes
+    return parseEvernoteEnexExportText(enexText)
+        .notes
         .map(_toImportedEvernoteDraft)
         .toList(growable: false);
   }
@@ -405,6 +410,13 @@ class ImportService {
     String? fallbackWarning,
   }) {
     final export = parseEvernoteEnexExportBytes(bytes);
+    final hasEmptyResource = export.notes.any(
+      (note) => note.resources.any((resource) => resource.data.isEmpty),
+    );
+    final commitBlockedReason = export.warnings.isNotEmpty || hasEmptyResource
+        ? 'Evernote commit remains paused because at least one attachment '
+            'could not be decoded without warnings.'
+        : null;
     return ImportPreviewResult(
       sourceType: 'evernote',
       sourceLabel: 'Evernote',
@@ -419,8 +431,7 @@ class ImportService {
       previewMode: 'local-fallback',
       sourceExportSha256: export.exportSha256,
       resourceCount: export.resourceCount,
-      commitBlockedReason:
-          'Evernote commit is paused until attachment upload and migration-ledger verification are enabled.',
+      commitBlockedReason: commitBlockedReason,
     );
   }
 

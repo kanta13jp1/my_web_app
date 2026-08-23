@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/landing_page.dart';
 import '../services/external_format_service.dart';
 import '../services/evernote_migration_ledger_service.dart';
+import '../services/evernote_migration_commit_service.dart';
 import '../services/gamification_service.dart';
 import '../services/growth_acquisition_service.dart';
 import '../services/import_service.dart';
@@ -27,12 +28,14 @@ class _ImportPageState extends State<ImportPage> {
       const GrowthAcquisitionService();
   late ImportService _importService;
   late EvernoteMigrationLedgerService _evernoteMigrationLedgerService;
+  late EvernoteMigrationCommitService _evernoteMigrationCommitService;
   bool _migrationLedgerInitialized = false;
   bool _isMigrationLedgerLoading = false;
   String? _migrationLedgerError;
   List<EvernoteMigrationBatch> _evernoteMigrationBatches =
       const <EvernoteMigrationBatch>[];
   ImportPreviewResult? _preview;
+  Uint8List? _selectedFileBytes;
   ImportExecutionResult? _lastImportResult;
   String? _selectedSource;
   final TextEditingController _notionTokenController = TextEditingController();
@@ -64,6 +67,8 @@ class _ImportPageState extends State<ImportPage> {
       listen: false,
     );
     _importService = ImportService(gamificationService);
+    _evernoteMigrationCommitService =
+        EvernoteMigrationCommitService.supabase(Supabase.instance.client);
     if (!_migrationLedgerInitialized) {
       _migrationLedgerInitialized = true;
       _evernoteMigrationLedgerService = EvernoteMigrationLedgerService();
@@ -149,6 +154,7 @@ class _ImportPageState extends State<ImportPage> {
       }
       setState(() {
         _preview = preview;
+        _selectedFileBytes = bytes;
       });
       await _recordEvernotePreview(preview);
       unawaited(_acquisitionService.recordImportPreview(sourceType));
@@ -236,7 +242,10 @@ class _ImportPageState extends State<ImportPage> {
         pageLimit: dialogPageLimit,
       );
       if (!mounted) return;
-      setState(() => _preview = preview);
+      setState(() {
+        _preview = preview;
+        _selectedFileBytes = null;
+      });
       unawaited(_acquisitionService.recordImportPreview('notion_api'));
     } catch (error) {
       if (!mounted) return;
@@ -259,10 +268,28 @@ class _ImportPageState extends State<ImportPage> {
 
     setState(() => _isImporting = true);
     try {
-      final result = await _importService.importNotes(
-        userId: user.id,
-        notes: preview.notes,
-      );
+      final ImportExecutionResult result;
+      if (preview.sourceType == 'evernote') {
+        final bytes = _selectedFileBytes;
+        if (bytes == null) {
+          throw StateError('Select the ENEX file again before importing.');
+        }
+        final evernoteResult = await _evernoteMigrationCommitService.commit(
+          userId: user.id,
+          exportBytes: bytes,
+          preview: preview,
+        );
+        result = ImportExecutionResult(
+          insertedCount: evernoteResult.importedNoteCount,
+          importMode: 'evernote-lossless',
+        );
+        await _loadEvernoteMigrationLedger();
+      } else {
+        result = await _importService.importNotes(
+          userId: user.id,
+          notes: preview.notes,
+        );
+      }
       if (!mounted) {
         return;
       }
@@ -271,6 +298,7 @@ class _ImportPageState extends State<ImportPage> {
       );
       setState(() {
         _preview = null;
+        _selectedFileBytes = null;
         _lastImportResult = result;
       });
     } catch (error) {
@@ -278,6 +306,9 @@ class _ImportPageState extends State<ImportPage> {
         return;
       }
       _showMessage('Import failed: $error');
+      if (preview.sourceType == 'evernote') {
+        unawaited(_loadEvernoteMigrationLedger());
+      }
     } finally {
       if (mounted) {
         setState(() => _isImporting = false);
@@ -436,7 +467,7 @@ class _ImportPageState extends State<ImportPage> {
                 sourceType: 'evernote',
                 title: 'Evernote (ENEX)',
                 subtitle:
-                    'Preview ENEX exports and convert them into plain-text notes.',
+                    'Archive ENEX, import notes and attachments, then verify hashes before source deletion.',
                 icon: Icons.note_alt,
               ),
               _sourceCard(
@@ -533,8 +564,10 @@ class _ImportPageState extends State<ImportPage> {
                       ),
                     ] else ...[
                       const SizedBox(height: 12),
-                      const Text(
-                        'When you confirm import, the full batch will use the Edge Function pipeline first and fall back locally only if needed.',
+                      Text(
+                        preview.sourceType == 'evernote'
+                            ? 'Import stores a private ENEX recovery archive, commits each note with all attachments, and verifies downloaded hashes before marking the batch verified.'
+                            : 'When you confirm import, the full batch will use the Edge Function pipeline first and fall back locally only if needed.',
                       ),
                     ],
                     if (preview.warnings.isNotEmpty) ...[

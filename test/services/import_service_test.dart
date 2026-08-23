@@ -56,7 +56,7 @@ void main() {
       expect(drafts.first.sourceMetadata['enml'], contains('<en-note>'));
     });
 
-    test('Evernote preview stays local and blocks lossy commit', () async {
+    test('Evernote preview enables only the lossless commit path', () async {
       const enex = '''
 <en-export export-date="20260823T034500Z" application="Evernote" version="10">
   <note>
@@ -78,8 +78,8 @@ void main() {
       );
 
       expect(preview.usedEdgeFunction, isFalse);
-      expect(preview.canCommit, isFalse);
-      expect(preview.commitBlockedReason, isNotEmpty);
+      expect(preview.canCommit, isTrue);
+      expect(preview.commitBlockedReason, isNull);
       expect(preview.sourceExportSha256, hasLength(64));
       expect(preview.resourceCount, 1);
       expect(preview.notes.single.sourceResourceCount, 1);
