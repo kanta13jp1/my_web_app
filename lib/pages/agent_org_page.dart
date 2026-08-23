@@ -8,7 +8,10 @@ import '../models/agent_task.dart';
 import '../services/agent_org_service.dart';
 import '../services/lrm_self_correction_planner_service.dart';
 import '../services/manus_like_task_service.dart';
+import '../services/task_clarity_service.dart';
 import '../widgets/agent_gpa_badge.dart';
+import '../widgets/task_clarity_badge.dart';
+import '../widgets/task_clarity_dialog.dart';
 
 class AgentTaskTemplate {
   final String id;
@@ -36,11 +39,14 @@ class AgentBoardReactionOption {
 
 class AgentOrgPage extends StatefulWidget {
   final AgentOrgService service;
+  final TaskClarityEvaluator clarityEvaluator;
 
   AgentOrgPage({
     super.key,
     AgentOrgService? service,
-  }) : service = service ?? AgentOrgService();
+    TaskClarityEvaluator? clarityEvaluator,
+  })  : service = service ?? AgentOrgService(),
+        clarityEvaluator = clarityEvaluator ?? const TaskClarityService();
 
   @override
   State<AgentOrgPage> createState() => _AgentOrgPageState();
@@ -363,23 +369,63 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
       return;
     }
 
+    final description = _taskDescriptionController.text.trim();
+
     setState(() => _isSubmitting = true);
     try {
-      await widget.service.delegateTask(
+      final evaluation = await widget.clarityEvaluator.evaluate(
+        title: title,
+        description: description,
+      );
+      final task = await widget.service.delegateTask(
         supervisorAgentId: ceoAgent.id,
         assigneeAgentId: assigneeId,
         title: title,
-        description: _taskDescriptionController.text.trim(),
+        description: description,
+        metadata: <String, dynamic>{
+          'clarity': evaluation.toMetadata(),
+        },
       );
       if (!mounted) {
         return;
       }
+
+      String? clarityWarning;
+      if (evaluation.needsClarification) {
+        final answers = await showTaskClarityDialog(
+          context: context,
+          evaluation: evaluation,
+        );
+        if (!mounted) {
+          return;
+        }
+        if (answers != null) {
+          try {
+            await widget.service.updateTaskClarity(
+              taskId: task.id,
+              clarity: evaluation.toMetadata(answers: answers),
+            );
+          } catch (error) {
+            clarityWarning = 'タスクは作成されましたが、明確化回答の保存に失敗しました: $error';
+          }
+        }
+      }
+
+      if (!mounted) {
+        return;
+      }
+
       _taskTitleController.clear();
       _taskDescriptionController.clear();
       setState(() => _selectedTaskTemplateId = null);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('CEOから役員へタスクを委任しました。')),
       );
+      if (clarityWarning != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(clarityWarning)),
+        );
+      }
       await _loadSnapshot();
     } catch (error) {
       if (!mounted) {
@@ -902,6 +948,8 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
   Widget build(BuildContext context) {
     final activeAgents =
         _snapshot.agents.where((agent) => agent.isActive).length;
+    final unclearTasks =
+        _snapshot.tasks.where((task) => task.needsClarification).length;
 
     return Scaffold(
       appBar: AppBar(
@@ -947,6 +995,11 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                                 label: '未完了タスク',
                                 value: '${_snapshot.tasks.length}',
                                 color: const Color(0xFF3D5AFE),
+                              ),
+                              _buildSummaryChip(
+                                label: '要明確化',
+                                value: '$unclearTasks',
+                                color: const Color(0xFFD84315),
                               ),
                               _buildSummaryChip(
                                 label: '記憶ログ',
@@ -1586,6 +1639,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                   label: task.taskType,
                   color: const Color(0xFF3D5AFE),
                 ),
+                TaskClarityBadge(task: task),
               ],
             ),
             const SizedBox(height: 12),

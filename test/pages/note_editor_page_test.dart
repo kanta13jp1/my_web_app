@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/note_editor_page.dart';
+import 'package:my_web_app/services/note_semantic_search_service.dart';
 import 'package:my_web_app/services/theme_service.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -278,6 +279,38 @@ class _FakeMaybeSingleBuilder extends Fake
   }
 }
 
+class _RecordingSemanticSearchService implements NoteSemanticSearchDataSource {
+  int indexCalls = 0;
+  int relatedCalls = 0;
+
+  @override
+  Future<void> indexNote(String noteId) async {
+    indexCalls += 1;
+  }
+
+  @override
+  Future<List<NoteSearchResult>> relatedNotes({
+    required String noteId,
+    required String title,
+    required String content,
+    int limit = 5,
+  }) async {
+    relatedCalls += 1;
+    return const <NoteSearchResult>[];
+  }
+
+  @override
+  Future<NoteSemanticSearchResponse> search(
+    String query, {
+    int limit = 20,
+  }) async {
+    return const NoteSemanticSearchResponse(
+      results: <NoteSearchResult>[],
+      searchMode: 'text_fallback',
+    );
+  }
+}
+
 Map<String, dynamic> _noteRow({
   String title = '読書について',
   String content = '思索\n\n1\n\n数量がいかに豊かでも',
@@ -296,13 +329,18 @@ Map<String, dynamic> _noteRow({
 
 Future<void> _pumpPage(
   WidgetTester tester,
-  _RecordingSupabaseClient client,
-) async {
+  _RecordingSupabaseClient client, {
+  NoteSemanticSearchDataSource? semanticSearchService,
+}) async {
   await tester.pumpWidget(
     ChangeNotifierProvider<ThemeService>(
       create: (_) => ThemeService(),
       child: MaterialApp(
-        home: NoteEditorPage(noteId: '429', supabaseClient: client),
+        home: NoteEditorPage(
+          noteId: '429',
+          supabaseClient: client,
+          semanticSearchService: semanticSearchService,
+        ),
       ),
     ),
   );
@@ -365,6 +403,34 @@ void main() {
 
       expect(client.updates, hasLength(1));
       expect(client.updates.single['content'], '編集後の本文');
+    });
+
+    testWidgets('autosave does not embed while manual save indexes once', (
+      tester,
+    ) async {
+      final client = _RecordingSupabaseClient(noteRow: _noteRow());
+      final semanticSearch = _RecordingSemanticSearchService();
+      await _pumpPage(
+        tester,
+        client,
+        semanticSearchService: semanticSearch,
+      );
+      client.updates.clear();
+
+      await tester.enterText(
+        find.byKey(const Key('note_editor_content_field')),
+        'updated content for semantic indexing',
+      );
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      expect(client.updates, hasLength(1));
+      expect(semanticSearch.indexCalls, 0);
+
+      await tester.tap(find.byIcon(Icons.save));
+      await tester.pumpAndSettle();
+
+      expect(semanticSearch.indexCalls, 1);
     });
 
     testWidgets('保存後にキャレットを動かしても PATCH は重複しない', (tester) async {

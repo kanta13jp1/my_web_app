@@ -93,6 +93,36 @@ void main() {
       );
     });
 
+    test('subscription review decision round-trips through json', () {
+      const cost = AssetRecurringFixedCost(
+        id: 'sub_claude',
+        name: 'Anthropic (Claude)',
+        amount: 3000,
+        paymentDay: 1,
+        category: AssetRecurringFixedCostCategory.subscription,
+        subscriptionReviewDecision:
+            AssetSubscriptionReviewDecision.cancelCandidate,
+      );
+      final json = cost.toJson();
+      expect(json['subscriptionReviewDecision'], 'cancelCandidate');
+      final restored = AssetRecurringFixedCost.fromJson('sub_claude', json);
+      expect(
+        restored!.subscriptionReviewDecision,
+        AssetSubscriptionReviewDecision.cancelCandidate,
+      );
+    });
+
+    test('legacy subscription defaults review decision to unreviewed', () {
+      final restored = AssetRecurringFixedCost.fromJson(
+        'sub_legacy',
+        {..._validJson(), 'category': 'subscription'},
+      );
+      expect(
+        restored!.subscriptionReviewDecision,
+        AssetSubscriptionReviewDecision.unreviewed,
+      );
+    });
+
     test('fromJson without category defaults to utility (back-compat)', () {
       // category キーが無い旧データ。
       final restored = AssetRecurringFixedCost.fromJson('x', _validJson());
