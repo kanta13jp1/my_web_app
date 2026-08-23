@@ -47,12 +47,13 @@ const GENERIC_ACTION_PATTERNS = [
   /計画を立て/,
   /情報を集め/,
   /まず.{0,4}(?:考え|確認|整理)する/,
+  /(?:アイデア|案|方法|施策)を.{0,6}考え/,
 ];
 
 // Japanese action copy commonly uses a verbal noun as an imperative
 // (for example, "1件をメモ" or "固定費を1件特定").
 const ACTION_VERB_PATTERN =
-  /(?:開く|書く|追記|削除|比較|送る|予約|設定|計測|選ぶ|分ける|作る|試す|止める|決める|入力|登録|更新|調べる|並べる|閉じる|返信|共有|変更|追加|外す|読む|数える|見直す|確認|メモ|記録|特定|絞る|洗い出す|印を付ける|チェック|分類|解約|停止)/;
+  /(?:開く|書く|追記|削除|比較|送る|予約|設定|計測|選ぶ|分ける|作る|試す|止める|決める|入力|登録|更新|調べる|並べる|閉じる|返信|共有|変更|追加|外す|読む|数える|見直す|確認|メモ|記録|特定|絞る|洗い出す|印を付ける|チェック|分類|解約|停止|公開|出品|販売|設計|作成|掲載|選定|収益化)/;
 const COMPLETION_BOUNDARY_PATTERN =
   /(?:\d+|[一二三四五六七八九十]|ひとつ|1つ|一つ|1件|一件|一文|1行|一行|10分|今日|直前|最初|末尾)/;
 const CAUSAL_REASON_PATTERN =
@@ -78,6 +79,7 @@ const PROMPT_ANCHOR_STOPWORDS = new Set([
 
 const PROMPT_DOMAIN_PATTERNS = [
   /(?:支出|出費|家計|固定費|変動費|予算|浪費|お金|請求|明細|サブスク|収入|貯金|資産|借金|返済|税金|投資|削減)/,
+  /(?:収益|売上|利益|販売|有料|商品|課金|料金|代金|月額|収益化|マネタイズ|稼ぐ|広告収入|副業)/,
   /(?:仕事|タスク|案件|締切|優先順位|会議|メール|返信|作業|プロジェクト|業務|顧客)/,
   /(?:学習|勉強|英語|読書|復習|試験|資格|暗記|教材|授業)/,
   /(?:LP|ランディング|登録|サインアップ|フォーム|CTA|ボタン|申込|コンバージョン|離脱)/i,
@@ -230,10 +232,12 @@ export async function generateLandingTrialSuggestion(args: {
     "reason must connect that step to the user's stated bottleneck and explain the immediate benefit, at most 100 Japanese characters.",
     "Keep the action and reason in the same concern domain as the input; incidental words such as 見直す do not make an unrelated work answer relevant to a household-spending concern.",
     "Never answer with contact forms, requests for more detail, generic task listing, generic prioritization, generic organizing, or generic research.",
+    "Never stop at idea generation; choose one sellable item or offer and one concrete setup or publishing step.",
     "Do not include URLs, markdown, sales copy, or claims about completing work you cannot perform.",
     'Good example for "LPから登録されない": {"action":"登録ボタン直前に無料で得る物を1文追記","reason":"登録後の価値が見えない離脱要因を10分で減らせるため"}',
     'Good example for "仕事が多く優先順位を決められない": {"action":"今日締切の仕事を1件開き次の操作を1行書く","reason":"対象と次の動作を固定すると迷いを止めて着手できるため"}',
     'Good example for "毎月の支出をどこから見直すか分からない": {"action":"先月の明細で最大の固定費を1件特定","reason":"固定費の最大項目を先に決めると削減効果が見えるため"}',
+    'Good example for "サイト収益でAIの月額代をまかないたい": {"action":"このサイトの有料商品候補を1件決める","reason":"販売対象を1つ固定すると月額代を賄う収益検証を始められるため"}',
   ].join(" ");
 
   const requestSuggestion = async (

@@ -17,6 +17,10 @@ void main() {
       'is_archived': false,
       'archived_at': null,
       'is_pinned': true,
+      'capture_status': 'inbox',
+      'capture_source': 'quick_inbox',
+      'inbox_saved_at': now.toIso8601String(),
+      'tags': <String>['Evernote', '移行済み'],
     };
 
     test('Note can be created from JSON', () {
@@ -30,6 +34,10 @@ void main() {
       expect(note.isPinned, isTrue);
       expect(note.categoryId, 'cat1');
       expect(note.reminderDate, isNotNull);
+      expect(note.isInbox, isTrue);
+      expect(note.captureSource, 'quick_inbox');
+      expect(note.inboxSavedAt, isNotNull);
+      expect(note.tags, <String>['Evernote', '移行済み']);
     });
 
     test('Note can be converted to JSON', () {
@@ -42,6 +50,10 @@ void main() {
       expect(json['is_favorite'], sampleJson['is_favorite']);
       expect(json['is_pinned'], sampleJson['is_pinned']);
       expect(json['reminder_date'], sampleJson['reminder_date']);
+      expect(json['capture_status'], sampleJson['capture_status']);
+      expect(json['capture_source'], sampleJson['capture_source']);
+      expect(json['inbox_saved_at'], sampleJson['inbox_saved_at']);
+      expect(json['tags'], sampleJson['tags']);
     });
 
     test('isOverdue getter works correctly', () {
@@ -170,6 +182,11 @@ void main() {
       expect(note.isArchived, isFalse);
       expect(note.archivedAt, isNull);
       expect(note.isPinned, isFalse);
+      expect(note.captureStatus, 'organized');
+      expect(note.captureSource, 'editor');
+      expect(note.inboxSavedAt, isNull);
+      expect(note.isInbox, isFalse);
+      expect(note.tags, isEmpty);
     });
   });
 }

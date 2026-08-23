@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/local_election_reality.dart';
+import 'package:my_web_app/models/election_intelligence.dart';
 import 'package:my_web_app/services/local_election_reality_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -155,6 +156,63 @@ void main() {
     expect(history, hasLength(1));
     expect(history.single.officialCurrentLocalMembers, 352);
     expect(history.single.actualNetIncreaseRequired, 348);
+  });
+
+  test('keeps future election mode caches isolated from the local snapshot',
+      () async {
+    final prefs = await SharedPreferences.getInstance();
+    const service = LocalElectionRealityService(client: null);
+    final snapshot = LocalElectionRealitySnapshot.fromJson(
+      <String, dynamic>{
+        'fetchedAt': '2026-08-07T00:00:00.000Z',
+        'officialCurrentLocalMembers': 0,
+        'electionIntelligence': <String, dynamic>{
+          'schemaVersion': 1,
+          'selectedMode': 'house_of_representatives',
+          'modes': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'house_of_representatives',
+              'label': '衆院選',
+              'shortLabel': '衆院',
+              'availability': 'active',
+              'description': '衆院選を追跡',
+              'collectors': <String>['official_candidates'],
+            },
+          ],
+          'goals': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'house_goal',
+              'mode': 'house_of_representatives',
+              'title': '公式目標',
+              'metric': 'seats',
+              'currentValue': 0,
+              'targetValue': 1,
+              'unit': '議席',
+              'deadlineLabel': '次期衆院選',
+              'sourceUrl': 'https://example.com/goal',
+              'sourcePublishedAt': '2026-08-07',
+              'verificationStatus': 'verified',
+            },
+          ],
+          'achievements': <Map<String, dynamic>>[],
+          'officialEndorsements': <String, dynamic>{},
+        },
+      },
+    );
+
+    expect(snapshot.hasData, isTrue);
+    await service.cacheSnapshot(snapshot, prefs: prefs);
+
+    expect(await service.loadCachedSnapshot(prefs: prefs), isNull);
+    final loaded = await service.loadCachedSnapshot(
+      prefs: prefs,
+      mode: ElectionModeId.houseOfRepresentatives,
+    );
+    expect(loaded, isNotNull);
+    expect(
+      loaded!.electionIntelligence.selectedMode,
+      ElectionModeId.houseOfRepresentatives,
+    );
   });
 
   test('caches and reloads member profile details', () async {

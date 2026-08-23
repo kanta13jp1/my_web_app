@@ -1,0 +1,4 @@
+interface:
+  display_name: "Life Foundations Improvement Loop"
+  short_description: "Prioritize safe, incremental service foundations"
+  default_prompt: "Use $life-foundations-improvement-loop to improve one smallest foundational gap in this service."

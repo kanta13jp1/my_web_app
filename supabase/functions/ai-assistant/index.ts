@@ -392,7 +392,116 @@ serve(async (req) => {
       }
     }
 
-    // --- 2. リアル断捨離クエスト ---
+    // --- 2. AIフォト行動アドバイザー ---
+    if (action === "analyze_photo_actions") {
+      const imageBase64 = requestData.imageBase64?.trim();
+      if (!imageBase64) throw new Error("Image required");
+      if (imageBase64.length > 11_200_000) {
+        throw new Error("Image must be 8MB or smaller");
+      }
+      const mimeType = requestData.mimeType?.toLowerCase().trim() ||
+        "image/jpeg";
+      if (!["image/jpeg", "image/png", "image/webp"].includes(mimeType)) {
+        throw new Error("JPEG, PNG, or WebP image required");
+      }
+
+      const prompt = `
+あなたは、写真から「今すべき行動」を整理する生活支援アシスタントです。
+添付写真に実際に見えているものだけを観察し、日本語で優先順位付きの具体的な行動を3〜5件提案してください。
+
+必須ルール:
+- 写真にない事実、賞味期限、故障、衛生状態、所有者の意図を断定しない。不鮮明な点は不確実だと明記する。
+- 人物の特定、属性推測、医療診断はしない。顔、住所、書類などの個人情報を回答に書き起こさない。
+- 食品、電気、火気、薬品、カビ、害虫、構造物などの危険が疑われる場合は、無理に触らず表示や取扱説明書を確認し、必要なら専門家へ相談する注意を含める。
+- 行動は「何を」「どの順で」「なぜ行うか」が分かる短い表現にする。画像だけでは判断できない確認作業も行動としてよい。
+- JSON以外の文章やMarkdownコードフェンスを出力しない。
+
+出力JSON:
+{
+  "scene_summary": "写真から確認できる状況の短い要約",
+  "observations": ["目視できる事実（最大5件）"],
+  "actions": [
+    {
+      "priority": 1,
+      "title": "具体的な行動",
+      "reason": "この順番で行う理由",
+      "estimated_minutes": 5,
+      "caution": "注意が必要な場合のみ。なければnull"
+    }
+  ],
+  "confidence_note": "写真だけでは判断できない点を含む短い注記",
+  "safety_note": "安全上の注意があれば記載。なければnull"
+}
+
+priorityは1（最優先）、2（優先）、3（できれば）のいずれか、estimated_minutesは1〜180の整数にしてください。
+`;
+
+      const resultStr = await runFallbackChain(prompt, {
+        base64: imageBase64,
+        mime: mimeType,
+      });
+      const cleanJson = resultStr.replace(/```json|```/g, "").trim();
+      const parsed: unknown = JSON.parse(cleanJson);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new Error("AI returned an invalid action plan");
+      }
+      const raw = parsed as Record<string, unknown>;
+      const cleanText = (value: unknown, fallback = ""): string =>
+        typeof value === "string" && value.trim()
+          ? value.trim().slice(0, 600)
+          : fallback;
+      const rawActions = Array.isArray(raw.actions) ? raw.actions : [];
+      const actions = rawActions.slice(0, 6).flatMap((value, index) => {
+        if (!value || typeof value !== "object" || Array.isArray(value)) {
+          return [];
+        }
+        const row = value as Record<string, unknown>;
+        const title = cleanText(row.title);
+        const reason = cleanText(row.reason);
+        if (!title || !reason) return [];
+        const parsedPriority = Number(row.priority);
+        const priority = Number.isFinite(parsedPriority)
+          ? Math.max(1, Math.min(3, Math.round(parsedPriority)))
+          : Math.min(index + 1, 3);
+        const parsedMinutes = Number(row.estimated_minutes);
+        const estimatedMinutes = Number.isFinite(parsedMinutes)
+          ? Math.max(1, Math.min(180, Math.round(parsedMinutes)))
+          : 5;
+        return [{
+          priority,
+          title,
+          reason,
+          estimated_minutes: estimatedMinutes,
+          caution: cleanText(row.caution) || null,
+        }];
+      }).sort((a, b) => a.priority - b.priority);
+      if (actions.length === 0) {
+        throw new Error("AI did not return actionable suggestions");
+      }
+      const observations =
+        (Array.isArray(raw.observations) ? raw.observations : []).map((value) =>
+          cleanText(value)
+        ).filter(Boolean).slice(0, 5);
+      const result = {
+        scene_summary: cleanText(
+          raw.scene_summary,
+          "写真に写っている状況を確認しました。",
+        ),
+        observations,
+        actions,
+        confidence_note: cleanText(
+          raw.confidence_note,
+          "写真に写っている範囲だけをもとにした提案です。",
+        ),
+        safety_note: cleanText(raw.safety_note) || null,
+      };
+      return new Response(
+        JSON.stringify({ success: true, result, image_persisted: false }),
+        { headers: corsHeaders },
+      );
+    }
+
+    // --- 2b. リアル断捨離クエスト（後方互換） ---
     if (action === "analyze_danshari_item") {
       if (!requestData.imageBase64) throw new Error("Image required");
 
@@ -1096,6 +1205,7 @@ ${entryData}`;
           "get_models",
           "test_model",
           "generate",
+          "analyze_photo_actions",
           "analyze_danshari_item",
           "hold_board_meeting",
           "my_struggle_column",
