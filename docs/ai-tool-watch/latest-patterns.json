@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-30T22:28:24Z",
+  "generated_at": "2026-08-14T21:42:29Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -20,18 +20,18 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-817a777a34f4",
+        "entry_id": "nf-af7d43749622",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.220 / July 25, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.220 July 25, 2026 Bug fixes and reliability improvements ​ 2.1.219 July 24, 2026 Added Claude Opus 5 ( claude-opus-5 ), now the default Opus model — 1M context, fast mode...",
+        "text": "Claude Code changelog 2.1.232 / August 13, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.232 August 13, 2026 Subagent forking is now on by default: a subagent_type: \"fork\" subagent inherits the full conversation and prompt cache, and non-teammate agent spawns...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "cd3805c012788e10c829872d14c7ea7a680a934c19ca71fad3bcb800d701ca95",
+          "hash": "ef5ed59000ef000cb398de8c8a3c155e8b61f189627e3bad5314a032bbe59814",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -75,22 +75,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.220 / July 25, 2026",
+          "latest_signal": "2.1.232 / August 13, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "cd3805c012788e10c829872d14c7ea7a680a934c19ca71fad3bcb800d701ca95",
+          "previous_hash": "ae973f95c841c1e6cd721a08f731554a63507148c3004296dbd4ac8abeec6cc1",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.220 July 25, 2026 Bug fixes and reliability improvements ​ 2.1.219 July 24, 2026 Added Claude Opus 5 ( claude-opus-5 ), now the default Opus model — 1M context, fast mode..."
+            "​ 2.1.232 August 13, 2026 Subagent forking is now on by default: a subagent_type: \"fork\" subagent inherits the full conversation and prompt cache, and non-teammate agent spawns..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-817a777a34f4",
+        "entry_id": "nf-af7d43749622",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -116,10 +116,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "ccf1d043f0d7308687b4c1f7d02323c9b866bb9c555ded4905d1bce587d8a40a",
+          "hash": "68b553a0d18b67e7ba26e4d100af5a8803b93be507da1440355f5d221b6d764d",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -137,7 +137,8 @@
             "integration": [
               "MCP",
               "connector",
-              "GitHub"
+              "GitHub",
+              "IDE extension"
             ],
             "quality-cost": [
               "OpenTelemetry",
@@ -157,7 +158,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "ccf1d043f0d7308687b4c1f7d02323c9b866bb9c555ded4905d1bce587d8a40a",
+          "previous_hash": "25d7d4f9fe758ae28905d5cf0108cb18ce660278e9e58dea70384b8dd8b4998b",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -187,18 +188,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-b4df2736dc00",
+        "entry_id": "nf-5490163ff7d5",
         "title": "Claude Code GitHub Actions",
-        "text": "Claude Code GitHub Actions Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before... Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting... Claude Code Action Setup Quick setup Manual setup Upgrading from Beta Essential changes Breaking Changes Reference Before and After Example Example use cases Basic workflow...",
+        "text": "Claude Code GitHub Actions Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before... Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting... You can also give the Claude Code GitHub Action a prompt to run automatically on any GitHub event.",
         "url": "https://code.claude.com/docs/en/github-actions",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "a5545fd180009614613298fe94c3aa1fc9f83db6d3b478d0683f10f81f8c8e11",
+          "hash": "0c0ca421e0052172b163f600672402e3fd43da924406e0542fc0e92fc6bcbfcb",
           "keyword_groups": {
             "codex-runtime": [
               "computer use"
@@ -232,19 +233,19 @@
           "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume",
           "name": "Claude Code GitHub Actions",
           "owner": "Claude Code",
-          "previous_hash": "a5545fd180009614613298fe94c3aa1fc9f83db6d3b478d0683f10f81f8c8e11",
+          "previous_hash": "16169570e6d5b7464fa84bf9a60ba6e09af666e83cf5973d556f37ea81c414a8",
           "slug": "claude-code-github-actions",
           "snippets": [
             "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before...",
             "Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...",
-            "Claude Code Action Setup Quick setup Manual setup Upgrading from Beta Essential changes Breaking Changes Reference Before and After Example Example use cases Basic workflow..."
+            "You can also give the Claude Code GitHub Action a prompt to run automatically on any GitHub event."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/github-actions"
         }
       },
       "filter": {
-        "entry_id": "nf-b4df2736dc00",
+        "entry_id": "nf-5490163ff7d5",
         "title": "Claude Code GitHub Actions",
         "url": "https://code.claude.com/docs/en/github-actions",
         "source": "Claude Code",
@@ -262,9 +263,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-3b779d02197d",
+        "entry_id": "nf-39c1e4db19e6",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-07-30 / Browser upgrades, multi-repository review, and image editing 26.727 The latest ChatGPT desk ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources... Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)... All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How...",
+        "text": "Codex changelog 2026-08-13 / Computer History Computer History is an opt-in feature in the ChatGPT desktop app on macOS ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources... Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)... All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How...",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -273,7 +274,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "2e1daca679792bededbc94f9b51facb444e11f416d7b48807a7bf8195bbd52c0",
+          "hash": "9f9d8def9bc43b713ccd54237c8dfa1eb48dc8475dadaa9365ad51b20226368a",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -316,10 +317,10 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-07-30 / Browser upgrades, multi-repository review, and image editing 26.727 The latest ChatGPT desk",
+          "latest_signal": "2026-08-13 / Computer History Computer History is an opt-in feature in the ChatGPT desktop app on macOS",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "b6a5c9261274a08a80b7b7992e3983c486c7c8ef695cdb0ba2d3558b314062ad",
+          "previous_hash": "b49807688d0ee0e85e4e8d25e628e591dfef36406def106ea17095613ccef9e5",
           "slug": "codex-changelog",
           "snippets": [
             "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -331,7 +332,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-3b779d02197d",
+        "entry_id": "nf-39c1e4db19e6",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -363,7 +364,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "6f33db1e9b589488628b09e7da17c92d858dbddc9dae723af1e68dcd34b3613f",
+          "hash": "554104a900c0f9d762a3088f5517f1bf13f6cabe64ebf7cc0d81bbb5c016e028",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.4",
@@ -402,7 +403,7 @@
           "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "27c9b253114b649f96051a906c2874b46a11793e8d439ef6b17bdb6ea5153633",
+          "previous_hash": "32ad39e015f35a19d5e24c8edb13a38b5eb1ca8938498ac16e073fe7ccb80c95",
           "slug": "codex-use-cases",
           "snippets": [
             "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -478,9 +479,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-4397017eb8b4",
+        "entry_id": "nf-291db8ed96d2",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.11 / Jul 10, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review... New to both iPhone and iPad: an inbox to stay organized, and a review experience that covers the full PR. Create, review, and merge from anywhere.",
+        "text": "Cursor changelog New in Cursor What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review... Builds are included with Cloud Agents at no additional cost. Or click Run setup agent first to test the migration and review any proposed config changes.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
@@ -489,20 +490,14 @@
           "changed": false,
           "error": null,
           "first_seen": false,
-          "hash": "70d69c3a9016f203c71da2423468d2d749cb023a20ce074251fe90bccbe3645a",
+          "hash": "ae74337e03614eb31784f983251beef3857d6a30b0d9f3734294d6e8c5d8ef73",
           "keyword_groups": {
-            "codex-runtime": [
-              "subagents"
-            ],
             "hooks": [
               "hook",
-              "hooks",
-              "Stop"
+              "hooks"
             ],
             "integration": [
-              "MCP",
-              "Slack",
-              "GitHub"
+              "MCP"
             ],
             "quality-cost": [
               "cost",
@@ -512,25 +507,26 @@
             "schedule": [
               "automation",
               "automations",
+              "schedule",
               "workflow"
             ]
           },
-          "latest_signal": "3.11 / Jul 10, 2026",
+          "latest_signal": "New in Cursor",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "70d69c3a9016f203c71da2423468d2d749cb023a20ce074251fe90bccbe3645a",
+          "previous_hash": "ae74337e03614eb31784f983251beef3857d6a30b0d9f3734294d6e8c5d8ef73",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...",
-            "New to both iPhone and iPad: an inbox to stay organized, and a review experience that covers the full PR.",
-            "Create, review, and merge from anywhere."
+            "Builds are included with Cloud Agents at no additional cost.",
+            "Or click Run setup agent first to test the migration and review any proposed config changes."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-4397017eb8b4",
+        "entry_id": "nf-291db8ed96d2",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -548,9 +544,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-7592fe59dddc",
+        "entry_id": "nf-09aa9d51f465",
         "title": "Gemini Code Assist release notes",
-        "text": "Gemini Code Assist release notes VS Code Gemini Code Assist 2.87.0 / June 19, 2026 Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application... Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra... April 13, 2026 VS Code Gemini Code Assist 2.77.3 Fixed Quota issues fixed in VS Code Various bug fixes related to quota issues.",
+        "text": "Gemini Code Assist release notes VS Code Gemini Code Assist 2.95.0 / August 10, 2026 Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application... Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra... April 13, 2026 VS Code Gemini Code Assist 2.77.3 Fixed Quota issues fixed in VS Code Various bug fixes related to quota issues.",
         "url": "https://developers.google.com/gemini-code-assist/resources/release-notes",
         "source": "Gemini Code Assist",
         "source_label": "ai-tool-watch",
@@ -559,7 +555,7 @@
           "changed": false,
           "error": null,
           "first_seen": false,
-          "hash": "a7513a88ed2c096b719cc9346c81413d92d42394be154e295dc6299794c9c00c",
+          "hash": "26aadac92b37e4dba989ec21d669ed9e59ae4ee05b67a6ffff38a4ceeb4c903d",
           "keyword_groups": {
             "hooks": [
               "Stop"
@@ -581,10 +577,10 @@
               "workflow"
             ]
           },
-          "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
+          "latest_signal": "VS Code Gemini Code Assist 2.95.0 / August 10, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
-          "previous_hash": "a7513a88ed2c096b719cc9346c81413d92d42394be154e295dc6299794c9c00c",
+          "previous_hash": "26aadac92b37e4dba989ec21d669ed9e59ae4ee05b67a6ffff38a4ceeb4c903d",
           "slug": "gemini-code-assist-release-notes",
           "snippets": [
             "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",
@@ -596,7 +592,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-7592fe59dddc",
+        "entry_id": "nf-09aa9d51f465",
         "title": "Gemini Code Assist release notes",
         "url": "https://developers.google.com/gemini-code-assist/resources/release-notes",
         "source": "Gemini Code Assist",
@@ -614,18 +610,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-ed91645bd484",
+        "entry_id": "nf-70df26554c32",
         "title": "Devin release notes",
-        "text": "Devin release notes July 29, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines... Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Stacked PRs Devin... Link Preview Cards in Chat Links shared in your messages and in Devin’s replies now render as rich preview cards.",
+        "text": "Devin release notes August 12, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines... Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Stacked PRs Devin... Side chats open in a panel next to the worklog and support stopping in-flight responses.",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
-          "hash": "4e1694ec20ecdde154cfa94c822c315dad5c8a7b29115f08126a1b6d8f1ac9c7",
+          "hash": "10926c02ec24c81fb0b9ab573da2d02c439a02fb1124fb872c65876cf8e7a30a",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -634,6 +630,7 @@
             ],
             "hooks": [
               "hook",
+              "hooks",
               "Stop"
             ],
             "integration": [
@@ -658,22 +655,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "July 29, 2026",
+          "latest_signal": "August 12, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "0ef814097e44863a31524eb86c88ca1eefb2eaee011113f21816e154a35b724d",
+          "previous_hash": "10926c02ec24c81fb0b9ab573da2d02c439a02fb1124fb872c65876cf8e7a30a",
           "slug": "devin-release-notes",
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
             "Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Stacked PRs Devin...",
-            "Link Preview Cards in Chat Links shared in your messages and in Devin’s replies now render as rich preview cards."
+            "Side chats open in a panel next to the worklog and support stopping in-flight responses."
           ],
           "status": 200,
           "url": "https://docs.devin.ai/release-notes"
         }
       },
       "filter": {
-        "entry_id": "nf-ed91645bd484",
+        "entry_id": "nf-70df26554c32",
         "title": "Devin release notes",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",

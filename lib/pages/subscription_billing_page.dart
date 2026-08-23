@@ -59,11 +59,28 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     setState(() => _assignment = assignment);
     unawaited(_record('billing_view'));
     unawaited(
+      widget.acquisitionService.recordBillingFunnelStage(
+        stage: GrowthAcquisitionService.funnelBillingView,
+      ),
+    );
+    unawaited(
       widget.acquisitionService.recordFirstUserFunnelStage(
         stage: 'billing_view',
       ),
     );
-    if (_returnNotice != null) unawaited(_record('checkout_return'));
+    final returnNotice = _returnNotice;
+    if (returnNotice != null) {
+      unawaited(_record('checkout_return'));
+      if (returnNotice.isPlanCheckout) {
+        unawaited(
+          widget.acquisitionService.recordBillingFunnelStage(
+            stage: returnNotice.isSuccess
+                ? GrowthAcquisitionService.funnelCheckoutSuccess
+                : GrowthAcquisitionService.funnelCheckoutCancel,
+          ),
+        );
+      }
+    }
     await _fetchBillingInfo();
   }
 
@@ -96,6 +113,9 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
 
   Future<void> _openCheckout(String tier) async {
     await _record('pro_checkout');
+    await widget.acquisitionService.recordBillingFunnelStage(
+      stage: GrowthAcquisitionService.funnelUpgradeClick,
+    );
     await _openStripeSession(() {
       return widget.acquisitionService.loadLatestTouchpoint().then(
             (latestTouchpoint) => _service.createCheckoutSession(
@@ -354,6 +374,9 @@ class _BillingReturnNotice {
   bool get isSuccess =>
       kind == _BillingReturnKind.success ||
       kind == _BillingReturnKind.supporterSuccess;
+
+  bool get isPlanCheckout =>
+      kind == _BillingReturnKind.success || kind == _BillingReturnKind.cancel;
 
   IconData get icon =>
       isSuccess ? Icons.check_circle_outline : Icons.info_outline;
@@ -701,7 +724,9 @@ class _UsageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isUnlimited = status.isPro;
     return Card(
+      key: const Key('billing_usage_card'),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -718,13 +743,47 @@ class _UsageCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
+            if (isUnlimited)
+              const Row(
+                key: Key('billing_ai_usage_unlimited'),
+                children: [
+                  Icon(Icons.all_inclusive, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'AI質問: 無制限',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ],
+              )
+            else ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'AI質問 今月 ${status.aiQueryCount}/${BillingStatus.freeAiQueryLimit}',
+                      key: const Key('billing_ai_usage_label'),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  Text(
+                    '残り ${status.remainingAiQueries}回',
+                    key: const Key('billing_ai_usage_remaining'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              LinearProgressIndicator(
+                key: const Key('billing_ai_usage_progress'),
+                value: status.aiQueryUsageRatio,
+                minHeight: 8,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ],
+            const SizedBox(height: 12),
             Wrap(
               spacing: 12,
               runSpacing: 12,
-              children: [
-                _UsageChip(label: 'AI利用', value: status.aiQueryCount),
-                _UsageChip(label: '処理実行', value: status.efCallCount),
-              ],
+              children: [_UsageChip(label: '処理実行', value: status.efCallCount)],
             ),
           ],
         ),

@@ -22,6 +22,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { safeDownloadFileName } from "./download_file_name.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -95,7 +96,7 @@ serve(async (req) => {
     const { data: product, error: productError } = await admin
       .from("shop_products")
       .select(
-        "id, storage_bucket, storage_path, version, file_size_bytes, sha256",
+        "id, storage_bucket, storage_path, version, file_size_bytes, sha256, download_file_name",
       )
       .eq("id", productId)
       .maybeSingle();
@@ -112,8 +113,11 @@ serve(async (req) => {
     const { data: signed, error: signError } = await admin.storage
       .from(bucket)
       .createSignedUrl(path, SIGNED_URL_TTL_SECONDS, {
-        // ブラウザで開かれたときに版番号付きの名前で保存されるようにする
-        download: `HexCiv-v${asString(product.version, "1.0")}-win64.zip`,
+        download: safeDownloadFileName(
+          asString(product.download_file_name),
+          productId,
+          asString(product.version, "1.0"),
+        ),
       });
     if (signError) throw new Error(signError.message);
     const signedUrl = asString(signed?.signedUrl);
@@ -146,6 +150,11 @@ serve(async (req) => {
       file_size_bytes: product.file_size_bytes,
       // 落としたファイルの同一性を購入者自身が確認できるようにする
       sha256: asString(product.sha256),
+      file_name: safeDownloadFileName(
+        asString(product.download_file_name),
+        productId,
+        asString(product.version, "1.0"),
+      ),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

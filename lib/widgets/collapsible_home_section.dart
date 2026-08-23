@@ -49,8 +49,8 @@ class _CollapsibleHomeSectionState extends State<CollapsibleHomeSection>
   String get _effectiveTitle {
     return switch (widget.storageKey) {
       'home_tier_recent' => '最近使った機能',
-      'home_tier_popular' => 'よく使われる機能（ユーザー全体）',
-      'home_tier_system' => 'システム固定機能',
+      'home_tier_popular' => '人気の機能',
+      'home_tier_system' => '基本機能',
       'home_tier_pinned' => 'お気に入り（ピン止め）',
       'home_tier_new' => '最近追加された機能',
       'home_tier_recommend' => 'AIおすすめ機能',

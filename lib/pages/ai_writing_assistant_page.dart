@@ -25,7 +25,6 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
 
   static const _actions = {
     'improve': ('文章改善', Icons.auto_fix_high, Color(0xFF6366F1)),
-    'summarize': ('要約', Icons.compress, Color(0xFF10B981)),
     'continue': ('続きを書く', Icons.arrow_forward, Color(0xFF3B82F6)),
     'translate': ('翻訳', Icons.translate, Color(0xFFF59E0B)),
     'tone': ('トーン変換', Icons.tune, Color(0xFFEC4899)),

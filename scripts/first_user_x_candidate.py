@@ -10,9 +10,11 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 
-CANDIDATE_KEY = "first-user-launch/outcome-first-a/v1"
+CANDIDATE_KEY = "first-user-launch/outcome-first-hook-b/v2"
 CANDIDATE_TYPE = "first_user_launch"
 SOURCE_KIND = "x-first-user-launch-candidate.yml"
+VARIANT = "outcome_first_b_failure_numbers_hook"
+PROMPT_PROFILE = "first_user_failure_numbers_hook_v2"
 MEDIA_URL = (
     "https://my-web-app-b67f4.web.app/"
     "lp-og-first-action-20260720.png"
@@ -26,10 +28,14 @@ TARGET_URL = (
     "&utm_campaign=first_user_growth"
     "&utm_content=outcome_first_a"
 )
-PARENT_TEXT = """仕事・学習・お金の情報が散らかって、
+CONTROL_HOOK = """仕事・学習・お金の情報が散らかって、
 「結局、今日なにをやる？」で止まる人へ。
+"""
+HOOK = """フォロワー3,698人のXで個人開発を告知。
+24時間後、13表示・クリック0でした。
 
-悩みを1行入れると、AIが
+作っただけでは、誰にも届かない。"""
+FIXED_PARENT_BODY = """悩みを1行入れると、AIが
 ・今日やる1件
 ・その理由
 ・最初の10分行動
@@ -39,6 +45,8 @@ PARENT_TEXT = """仕事・学習・お金の情報が散らかって、
 使って迷ったところを1つ教えてください。
 
 #個人開発 #AI活用"""
+CONTROL_PARENT_TEXT = f"{CONTROL_HOOK.strip()}\n\n{FIXED_PARENT_BODY}"
+PARENT_TEXT = f"{HOOK}\n\n{FIXED_PARENT_BODY}"
 REPLY_TEXT = f"無料で30秒試す:\n{TARGET_URL}"
 MEDIA_ALT = (
     "自分株式会社のランディングページ。悩みを1行入力すると、"
@@ -82,12 +90,12 @@ def build_candidate_request(
             "source": SOURCE_KIND,
             "route": "/",
             "experimentKey": "x_first_user_growth_10k",
-            "variant": "outcome_first_a",
+            "variant": VARIANT,
             "utmContent": "outcome_first_a",
-            "promptProfile": "first_user_outcome_first_v1",
+            "promptProfile": PROMPT_PROFILE,
             "fallbackUsed": False,
             "contentKind": CANDIDATE_TYPE,
-            "contentArchetype": "product_promo",
+            "contentArchetype": "build_in_public_learning",
             "linkInReply": True,
         },
         "context": {
@@ -98,7 +106,7 @@ def build_candidate_request(
             "actor": actor,
             "ref": ref,
             "sha": sha,
-            "selected_variant": "outcome_first_a",
+            "selected_variant": VARIANT,
             "target_url": TARGET_URL,
         },
         "dryRun": dry_run,
