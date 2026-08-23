@@ -25,6 +25,16 @@ void main() {
 
       expect(status.schemaVersion, 3);
       expect(status.lane, testCase.$2);
+      expect(status.history, isNotEmpty);
+      expect(status.history.first.countermeasure.label, isNotEmpty);
+      final reviewOnly = status.history.where(
+        (entry) => entry.reviewStatus == 'review_only',
+      );
+      expect(
+        reviewOnly.every((entry) => entry.countermeasure.issue != null),
+        isTrue,
+        reason: '未対策レビューにはIssue追跡情報が必要です。',
+      );
       if (testCase.$3 == 'reviewers') {
         expect(status.entries, hasLength(125));
       }
