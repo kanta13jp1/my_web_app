@@ -36,9 +36,8 @@ class TigerReviewerProfileCatalog {
             .toList(growable: false)
         : const <TigerReviewerProfile>[];
     return TigerReviewerProfileCatalog(
-      schemaVersion: json['schema_version'] is int
-          ? json['schema_version'] as int
-          : 0,
+      schemaVersion:
+          json['schema_version'] is int ? json['schema_version'] as int : 0,
       snapshotDate: DateTime.tryParse(json['snapshot_date']?.toString() ?? ''),
       profilesBySeat: <int, TigerReviewerProfile>{
         for (final profile in parsed) profile.seat: profile,
@@ -80,8 +79,7 @@ class TigerReviewerProfile {
   String ageLabel(DateTime? asOf) {
     if (birthDate == null || asOf == null) return '公開情報未確認';
     var age = asOf.year - birthDate!.year;
-    final birthdayPassed =
-        asOf.month > birthDate!.month ||
+    final birthdayPassed = asOf.month > birthDate!.month ||
         (asOf.month == birthDate!.month && asOf.day >= birthDate!.day);
     if (!birthdayPassed) age -= 1;
     return '$age歳（${asOf.year}年${asOf.month}月${asOf.day}日時点）';
@@ -99,9 +97,8 @@ class TigerReviewerProfile {
       businessDomains: rawDomains is List
           ? rawDomains.map((value) => value.toString()).toList(growable: false)
           : const <String>[],
-      appearances: json['appearances'] is num
-          ? (json['appearances'] as num).toInt()
-          : 0,
+      appearances:
+          json['appearances'] is num ? (json['appearances'] as num).toInt() : 0,
       investmentCount: json['investment_count'] is num
           ? (json['investment_count'] as num).toInt()
           : 0,
