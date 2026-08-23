@@ -57,6 +57,26 @@ void main() {
     expect(find.text('公開データの系統が一致しません。'), findsOneWidget);
   });
 
+  testWidgets('reviewer lane loads its bundled status without a boot error', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: TigerReviewLaneStatusPage(kind: TigerReviewLane.reviewers),
+      ),
+    );
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pump();
+
+    expect(
+      find.byKey(const Key('tiger-lane-content-reviewer_league')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('narrow lane reloads without a layout exception', (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;

@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/tiger_review_lane_status.dart';
@@ -126,29 +129,43 @@ class _TigerReviewLaneStatusPageState extends State<TigerReviewLaneStatusPage> {
   }
 
   Future<_TigerLanePageData> _load() async {
-    final status = widget.loader != null
-        ? await widget.loader!()
-        : TigerReviewLaneStatus.fromJsonString(
-            await _loadAsset(widget.kind.asset, schemaVersion: 3),
-          );
-    final profiles = widget.kind == TigerReviewLane.reviewers
-        ? await (widget.profileLoader?.call() ??
+    final statusFuture = widget.loader != null
+        ? widget.loader!()
+        : _loadAsset(
+            widget.kind.asset,
+            schemaVersion: 3,
+          ).then(TigerReviewLaneStatus.fromJsonString);
+    final profilesFuture = widget.kind == TigerReviewLane.reviewers
+        ? (widget.profileLoader?.call() ??
             _loadAsset(
               'assets/data/tiger_reviewer_profiles.json',
               schemaVersion: 1,
             ).then(TigerReviewerProfileCatalog.fromJsonString))
-        : null;
+        : Future<TigerReviewerProfileCatalog?>.value();
+    final status = await statusFuture;
+    final profiles = await profilesFuture;
     return _TigerLanePageData(status: status, profiles: profiles);
   }
 
-  Future<String> _loadAsset(String asset, {required int schemaVersion}) {
+  Future<String> _loadAsset(
+    String asset, {
+    required int schemaVersion,
+  }) async {
     if (!kIsWeb) return rootBundle.loadString(asset);
 
     // These JSON snapshots are refreshed by independent review automations.
     // Do not reuse a browser's previous asset response after a new release.
-    return NetworkAssetBundle(
-      Uri.base.resolve('assets/'),
-    ).loadString('$asset?review_status_schema=$schemaVersion');
+    final uri = Uri.base.resolve(
+      'assets/$asset?review_status_schema=$schemaVersion',
+    );
+    final response = await http.get(uri);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw FlutterError(
+        'Failed to load Tiger review asset '
+        '(${response.statusCode}): $uri',
+      );
+    }
+    return utf8.decode(response.bodyBytes);
   }
 
   Future<void> _reload() async {
