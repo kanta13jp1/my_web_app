@@ -29,6 +29,7 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "pubspec.lock",
         "analysis_options.yaml",
         "l10n.yaml",
+        "firebase.json",
     ),
     "edge": (
         "supabase/functions/**",

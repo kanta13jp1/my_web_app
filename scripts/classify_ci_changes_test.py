@@ -30,6 +30,13 @@ class ClassifyCiChangesTest(unittest.TestCase):
         self.assertTrue(result["flutter"])
         self.assertTrue(result["web"])
 
+    def test_hosting_config_needs_web_deploy(self) -> None:
+        result = classify(["firebase.json"])
+
+        self.assertFalse(result["flutter"])
+        self.assertTrue(result["web"])
+        self.assertTrue(result["deployable"])
+
     def test_edge_and_caption_are_independent(self) -> None:
         edge = classify(["supabase/functions/app-hub/index.ts"])
         caption = classify(["services/caption-transcoder/test.js"])
