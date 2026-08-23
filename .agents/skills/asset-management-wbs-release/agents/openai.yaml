@@ -1,0 +1,6 @@
+interface:
+  display_name: "Asset Management WBS Release"
+  short_description: "資産管理タスクをWBS順に安全に実装・検証・マージ"
+  default_prompt: "Use $asset-management-wbs-release to complete the next due asset-management WBS task through low-load validation, merge, WBS sync, cleanup, and wrap-up."
+policy:
+  allow_implicit_invocation: true

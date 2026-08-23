@@ -209,6 +209,12 @@ class _RecurringFixedCostEditorDialogState
       cadence: _cadence,
       sourceAccountId: _sourceAccountId,
       category: _category,
+      subscriptionReviewDecision:
+          _category == AssetRecurringFixedCostCategory.subscription
+              ? (widget.existing?.subscriptionReviewDecision ??
+                  widget.prefill?.subscriptionReviewDecision ??
+                  AssetSubscriptionReviewDecision.unreviewed)
+              : AssetSubscriptionReviewDecision.unreviewed,
       // 請求経路は区分=サブスクのときだけ意味を持つ。固定費では direct に固定する。
       billingGateway: _category == AssetRecurringFixedCostCategory.subscription
           ? _gateway

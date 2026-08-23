@@ -507,7 +507,7 @@ jobs:
             -H "Content-Type: application/json" \
             -H "Prefer: return=minimal" \
             -d "{\"task_id\":\"blog-publish\",\"status\":\"$STATUS\",\"summary\":$(echo "$SUMMARY" | jq -R .)}" \
-            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule_task_runs" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/schedule_task_runs" \
             --max-time 10 || true
 
       - name: Job Summary
