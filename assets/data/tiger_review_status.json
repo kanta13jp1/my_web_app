@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-08-23T06:29:14.989704+00:00",
+  "generated_at": "2026-08-23T06:33:30.712008+00:00",
   "publication_state": "latest_cycle",
   "automation": {
     "id": "125",
     "name": "機能・講座・虎レビュー5部リーグ",
-    "status": "PAUSED",
+    "status": "ACTIVE",
     "schedule": "1時間ごと"
   },
   "pool": {
