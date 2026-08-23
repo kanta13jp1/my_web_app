@@ -17,6 +17,7 @@ import {
 import { buildQueryRouteDecision } from "./query_report.ts";
 import { rerankWithHaiku } from "./search/rerank.ts";
 import { embedTextWithGemini, vectorSearch } from "./search/vector.ts";
+import { buildCitationEvidence } from "./citation_evidence.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ??
@@ -327,19 +328,31 @@ async function memorySearch(body: Body) {
   });
 }
 
-function citationFor(doc: ScoredMemoryDocument, maxScore: number) {
+function citationFor(
+  doc: ScoredMemoryDocument,
+  maxScore: number,
+  query: string,
+  index: number,
+) {
   const metadata = doc.metadata ?? {};
   const sourceType = String(metadata.source_type ?? "memory");
   const sourceUrl = String(metadata.source_url ?? doc.file_path);
   const confidence = maxScore <= 0 ? 0 : doc.score / maxScore;
-  return {
-    source_type: sourceType,
-    source_url: sourceUrl,
+  return buildCitationEvidence({
+    citationId: String(index + 1),
+    query,
+    filePath: doc.file_path,
     title: doc.title ?? doc.file_path,
-    excerpt: trimText(doc.snippet ?? doc.content, 280),
-    confidence: Number(Math.max(0, Math.min(1, confidence)).toFixed(4)),
-    last_synced_at: doc.updated_at ?? metadata.last_synced_at ?? null,
-  };
+    content: doc.content,
+    snippet: doc.snippet ?? "",
+    sourceType,
+    sourceUrl,
+    metadata,
+    confidence,
+    lastSyncedAt: doc.updated_at == null
+      ? metadata.last_synced_at == null ? null : String(metadata.last_synced_at)
+      : String(doc.updated_at),
+  });
 }
 
 function citationsAreStale(
@@ -527,7 +540,9 @@ async function memoryRagQuery(body: Body, ctx: McpAuthContext | null) {
   }
   const results = mergeHybridResults(bm25, vector, topK);
   const maxScore = Math.max(...results.map((item) => item.score), 0.0001);
-  const citations = results.map((doc) => citationFor(doc, maxScore));
+  const citations = results.map((doc, index) =>
+    citationFor(doc, maxScore, query, index)
+  );
 
   let answerStatus = citations.length === 0
     ? "no_results"
