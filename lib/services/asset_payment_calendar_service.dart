@@ -268,10 +268,8 @@ class AssetPaymentCalendarService {
     }
 
     String fixedCostKey(String name, DateTime date, double amount) {
-      final normalizedName = name
-          .trim()
-          .toLowerCase()
-          .replaceAll(RegExp(r'\s+'), '');
+      final normalizedName =
+          name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '');
       return '$normalizedName|${_dateKey(date)}|${amount.toStringAsFixed(2)}';
     }
 
