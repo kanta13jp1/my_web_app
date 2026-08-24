@@ -22,9 +22,9 @@ class CustomTaskListRepositoryImpl implements CustomTaskListRepository {
     CustomTaskListGenerator generator = const AiCustomTaskListGenerator(),
     CustomTaskListStore store = const SharedPreferencesCustomTaskListStore(),
     DateTime Function()? now,
-  }) : _generator = generator,
-       _store = store,
-       _now = now ?? DateTime.now;
+  })  : _generator = generator,
+        _store = store,
+        _now = now ?? DateTime.now;
 
   @override
   Future<CustomTaskListSnapshot?> load() => _store.load();

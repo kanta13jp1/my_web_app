@@ -10,7 +10,7 @@ class CustomTaskListViewModel extends ChangeNotifier {
   final CustomTaskListRepository _repository;
 
   CustomTaskListViewModel({required CustomTaskListRepository repository})
-    : _repository = repository;
+      : _repository = repository;
 
   CustomTaskListSnapshot? _snapshot;
   bool _isLoading = false;

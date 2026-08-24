@@ -26,10 +26,10 @@ class CustomTaskItem {
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'id': id,
-    'title': title,
-    'is_completed': isCompleted,
-  };
+        'id': id,
+        'title': title,
+        'is_completed': isCompleted,
+      };
 }
 
 class CustomTaskListSnapshot {
@@ -64,26 +64,25 @@ class CustomTaskListSnapshot {
       situation: json['situation']?.toString() ?? '',
       items: rawItems is List
           ? rawItems
-                .whereType<Map>()
-                .map(
-                  (item) =>
-                      CustomTaskItem.fromJson(Map<String, dynamic>.from(item)),
-                )
-                .where((item) => item.id.isNotEmpty && item.title.isNotEmpty)
-                .toList(growable: false)
+              .whereType<Map>()
+              .map(
+                (item) =>
+                    CustomTaskItem.fromJson(Map<String, dynamic>.from(item)),
+              )
+              .where((item) => item.id.isNotEmpty && item.title.isNotEmpty)
+              .toList(growable: false)
           : const <CustomTaskItem>[],
       source: json['source']?.toString() ?? '',
-      generatedAt:
-          DateTime.tryParse(json['generated_at']?.toString() ?? '') ??
+      generatedAt: DateTime.tryParse(json['generated_at']?.toString() ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'goal': goal,
-    'situation': situation,
-    'items': items.map((item) => item.toJson()).toList(growable: false),
-    'source': source,
-    'generated_at': generatedAt.toIso8601String(),
-  };
+        'goal': goal,
+        'situation': situation,
+        'items': items.map((item) => item.toJson()).toList(growable: false),
+        'source': source,
+        'generated_at': generatedAt.toIso8601String(),
+      };
 }
