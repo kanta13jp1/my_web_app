@@ -121,7 +121,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Upload first-user funnel evidence
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: first-user-funnel-${{ github.run_id }}
           path: ${{ runner.temp }}/first-user-funnel.json

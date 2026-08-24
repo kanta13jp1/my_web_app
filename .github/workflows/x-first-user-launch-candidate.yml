@@ -25,7 +25,7 @@ jobs:
       MEDIA_URL: https://my-web-app-b67f4.web.app/lp-og-first-action-20260720.png
     steps:
       - name: Check out source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Validate service credential
         shell: bash
@@ -138,7 +138,7 @@ jobs:
           echo "candidate_id=${candidate_id}" >> "${GITHUB_OUTPUT}"
 
       - name: Upload review evidence
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: x-first-user-launch-candidate-${{ github.run_id }}
           path: |

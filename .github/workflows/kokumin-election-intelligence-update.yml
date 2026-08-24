@@ -34,7 +34,7 @@ jobs:
           token: ${{ secrets.GH_PAT || secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
