@@ -6365,9 +6365,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           .ignore();
       _contentAnalytics.record(AiUniversityContentEvent.fallbackShown).ignore();
       if (isRetry) {
-        _contentAnalytics
-            .record(AiUniversityContentEvent.retryFailed)
-            .ignore();
+        _contentAnalytics.record(AiUniversityContentEvent.retryFailed).ignore();
       }
       if (mounted) {
         final providers = _providerMeta.keys.toList();
@@ -7948,8 +7946,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final sourceUrl = row['source_url'] as String?;
     final targetAudience = row['target_audience'] as String?;
     final learningOutcome = row['observable_learning_outcome'] as String?;
-    final verificationMethod =
-        row['assessment_verification_method'] as String?;
+    final verificationMethod = row['assessment_verification_method'] as String?;
     final evidenceSourceUrl = row['evidence_source_url'] as String?;
     final evidenceVerifiedAt = row['evidence_verified_at'] as String?;
     final hasCourseEvidence = <String?>[
@@ -8024,7 +8021,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                             '対象: $targetAudience',
                             style: const TextStyle(color: Color(0xFFE5E7EB)),
                           ),
-                        if (learningOutcome != null && learningOutcome.isNotEmpty)
+                        if (learningOutcome != null &&
+                            learningOutcome.isNotEmpty)
                           Text(
                             '観察可能な成果: $learningOutcome',
                             style: const TextStyle(color: Color(0xFFE5E7EB)),
@@ -8044,7 +8042,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                         if (evidenceSourceUrl != null &&
                             evidenceSourceUrl.isNotEmpty)
                           TextButton.icon(
-                            icon: const Icon(Icons.fact_check_outlined, size: 14),
+                            icon:
+                                const Icon(Icons.fact_check_outlined, size: 14),
                             label: const Text('学習設計の根拠を開く'),
                             onPressed: () => _launchUrl(evidenceSourceUrl),
                           ),

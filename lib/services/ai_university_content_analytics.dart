@@ -13,8 +13,8 @@ enum AiUniversityContentEvent {
   final String databaseValue;
 }
 
-typedef AiUniversityAnalyticsWriter =
-    Future<void> Function(Map<String, Object> row);
+typedef AiUniversityAnalyticsWriter = Future<void> Function(
+    Map<String, Object> row);
 
 /// Anonymous, best-effort operational analytics for AI University content.
 ///
@@ -23,7 +23,7 @@ typedef AiUniversityAnalyticsWriter =
 /// An instance without a writer is disabled and is a no-op.
 class AiUniversityContentAnalytics {
   const AiUniversityContentAnalytics({AiUniversityAnalyticsWriter? writer})
-    : _writer = writer;
+      : _writer = writer;
 
   factory AiUniversityContentAnalytics.supabase(SupabaseClient client) {
     return AiUniversityContentAnalytics(
