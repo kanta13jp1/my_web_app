@@ -14,7 +14,8 @@ enum AiUniversityContentEvent {
 }
 
 typedef AiUniversityAnalyticsWriter = Future<void> Function(
-    Map<String, Object> row);
+  Map<String, Object> row,
+);
 
 /// Anonymous, best-effort operational analytics for AI University content.
 ///
