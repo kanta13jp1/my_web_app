@@ -19,6 +19,16 @@ abstract class NoteCommentsService {
   Stream<void> watchCommentChanges({required int noteId});
 }
 
+bool isExpectedNoteCommentRealtimeDisconnect(Object error) {
+  final message = error.toString();
+  if (!message.contains('RealtimeSubscribeException') ||
+      !message.contains('RealtimeSubscribeStatus.channelError')) {
+    return false;
+  }
+  return message.contains('RealtimeCloseEvent(code: 1000') ||
+      message.contains('details: null');
+}
+
 class SupabaseNoteCommentsService implements NoteCommentsService {
   SupabaseNoteCommentsService(this._supabase);
 

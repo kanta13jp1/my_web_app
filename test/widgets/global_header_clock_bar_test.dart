@@ -22,6 +22,46 @@ void main() {
     expect(find.text('dummy page'), findsOneWidget);
   });
 
+  testWidgets('public shell omits internal clock and build chrome', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: GlobalHeaderClockShell(
+          showClockBar: false,
+          child: Scaffold(
+            body: Center(child: Text('public landing page')),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('global_header_clock_bar')), findsNothing);
+    expect(find.byKey(const Key('global_header_clock_text')), findsNothing);
+    expect(find.text('public landing page'), findsOneWidget);
+  });
+
+  testWidgets('compact viewport omits internal clock and build chrome', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: GlobalHeaderClockShell(
+          child: Scaffold(body: Text('mobile page')),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('global_header_clock_bar')), findsNothing);
+    expect(find.byKey(const Key('global_header_version_badge')), findsNothing);
+    expect(find.text('mobile page'), findsOneWidget);
+  });
+
   testWidgets(
     'version badge opens the release notes dialog via navigatorKey when the '
     'header is mounted above the Navigator (MaterialApp.builder)',

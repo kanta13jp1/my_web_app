@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/digest_queue_service.dart';
+import '../services/wip_limit_legacy_bridge_service.dart';
 
 class DigestQueuePage extends StatefulWidget {
   const DigestQueuePage({
     super.key,
     this.service,
+    this.legacyService,
   });
 
   final DigestQueueService? service;
+  final WipLimitLegacyBridgeService? legacyService;
 
   @override
   State<DigestQueuePage> createState() => _DigestQueuePageState();
@@ -16,24 +20,32 @@ class DigestQueuePage extends StatefulWidget {
 
 class _DigestQueuePageState extends State<DigestQueuePage> {
   late final DigestQueueService _service;
+  late final WipLimitLegacyBridgeService _legacyService;
 
   List<DigestQueueItem> _items = const <DigestQueueItem>[];
+  List<LegacyWipItem> _legacyItems = const <LegacyWipItem>[];
+  String? _legacyWarning;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _service = widget.service ?? const DigestQueueService();
+    _legacyService = widget.legacyService ??
+        WipLimitLegacyBridgeService(client: Supabase.instance.client);
     _loadItems();
   }
 
   Future<void> _loadItems() async {
     final items = await _service.loadItems();
+    final legacyResult = await _legacyService.load();
     if (!mounted) {
       return;
     }
     setState(() {
       _items = items;
+      _legacyItems = legacyResult.items;
+      _legacyWarning = legacyResult.warning;
       _isLoading = false;
     });
   }
@@ -367,6 +379,22 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                   ),
                   const SizedBox(height: 12),
                   _buildCompletedSection(),
+                  if (_legacyItems.isNotEmpty || _legacyWarning != null) ...[
+                    const SizedBox(height: 24),
+                    Text(
+                      '統合前のWIP項目',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '旧「消化してから次を食え」で保存した項目です。ここから進捗を更新できます。',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildLegacyWipSection(),
+                  ],
                 ],
               ),
             ),
@@ -749,6 +777,116 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
         );
       }).toList(),
     );
+  }
+
+  Widget _buildLegacyWipSection() {
+    return Column(
+      children: [
+        if (_legacyWarning != null)
+          Card(
+            child: ListTile(
+              leading: Icon(
+                Icons.warning_amber_rounded,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              title: const Text('旧WIP項目の取得に失敗しました'),
+              subtitle: Text(_legacyWarning!),
+            ),
+          ),
+        for (final item in _legacyItems)
+          Card(
+            margin: const EdgeInsets.only(bottom: 10),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Text(item.emoji, style: const TextStyle(fontSize: 24)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      Text('${item.progressPercent}%'),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  LinearProgressIndicator(value: item.progressPercent / 100),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${item.category}'
+                    '${item.note.isEmpty ? '' : ' ・ ${item.note}'}'
+                    '${item.createdAt == null ? '' : ' ・ ${_formatDate(item.createdAt!)}'}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  if (!item.isCompleted) ...[
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _updateLegacyProgress(item),
+                        icon: const Icon(Icons.update),
+                        label: const Text('進捗を更新'),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _updateLegacyProgress(LegacyWipItem item) async {
+    var progress = item.progressPercent;
+    final selected = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: Text('進捗更新: ${item.title}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Slider(
+                value: progress.toDouble(),
+                max: 100,
+                divisions: 20,
+                label: '$progress%',
+                onChanged: (value) =>
+                    setDialogState(() => progress = value.toInt()),
+              ),
+              Text('$progress%'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, progress),
+              child: Text(progress == 100 ? '完了にする' : '更新'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (selected == null) return;
+
+    try {
+      await _legacyService.updateProgress(item.id, selected);
+      await _loadItems();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('旧WIP項目を更新できませんでした: $error')),
+      );
+    }
   }
 
   IconData _iconForDomain(String domain) {

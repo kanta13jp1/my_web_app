@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../models/asset_liability_workbook.dart';
 import '../services/asset_subscription_catalog.dart';
@@ -18,8 +19,10 @@ class SubscriptionFixedCostCard extends StatelessWidget {
     required this.sourceAccountNames,
     required this.onAddPreset,
     required this.onAddCustom,
+    required this.onScanStatement,
     required this.onEdit,
     required this.onDelete,
+    required this.onReviewDecisionChanged,
     this.presets = AssetSubscriptionCatalog.presets,
   });
 
@@ -37,8 +40,15 @@ class SubscriptionFixedCostCard extends StatelessWidget {
 
   /// テンプレートに無いサブスクを手入力で追加。
   final VoidCallback onAddCustom;
+  final VoidCallback onScanStatement;
   final void Function(AssetRecurringFixedCost cost) onEdit;
   final void Function(AssetRecurringFixedCost cost) onDelete;
+  final void Function(
+    AssetRecurringFixedCost cost,
+    AssetSubscriptionReviewDecision decision,
+  ) onReviewDecisionChanged;
+
+  static final NumberFormat _yen = NumberFormat('#,##0');
 
   static String _normalize(String value) =>
       value.replaceAll(RegExp(r'\s+'), '').toLowerCase();
@@ -77,11 +87,38 @@ class SubscriptionFixedCostCard extends StatelessWidget {
     ];
   }
 
+  static String reviewDecisionLabel(AssetSubscriptionReviewDecision decision) {
+    return switch (decision) {
+      AssetSubscriptionReviewDecision.unreviewed => '未判定',
+      AssetSubscriptionReviewDecision.keep => '残す',
+      AssetSubscriptionReviewDecision.hold => '保留',
+      AssetSubscriptionReviewDecision.cancelCandidate => '解約候補',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final availablePresets = _unregisteredPresets();
+    final monthlyTotal = costs.fold<double>(
+      0,
+      (sum, cost) => sum + cost.amount,
+    );
+    final cancelMonthly = costs
+        .where(
+          (cost) =>
+              cost.subscriptionReviewDecision ==
+              AssetSubscriptionReviewDecision.cancelCandidate,
+        )
+        .fold<double>(0, (sum, cost) => sum + cost.amount);
+    final unreviewedCount = costs
+        .where(
+          (cost) =>
+              cost.subscriptionReviewDecision ==
+              AssetSubscriptionReviewDecision.unreviewed,
+        )
+        .length;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(
@@ -102,6 +139,19 @@ class SubscriptionFixedCostCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.icon(
+                    key: const Key('subscription_statement_scan_open'),
+                    onPressed: onScanStatement,
+                    icon: const Icon(Icons.document_scanner_outlined),
+                    label: const Text('明細画像から棚卸し'),
+                  ),
                   TextButton.icon(
                     onPressed: onAddCustom,
                     icon: const Icon(Icons.add),
@@ -118,6 +168,37 @@ class SubscriptionFixedCostCard extends StatelessWidget {
                   color: scheme.onSurfaceVariant,
                 ),
               ),
+              if (costs.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _SummaryChip(
+                      label: '月額合計',
+                      value: '¥${_yen.format(monthlyTotal)}',
+                    ),
+                    _SummaryChip(
+                      label: '年間合計',
+                      value: '¥${_yen.format(monthlyTotal * 12)}',
+                    ),
+                    if (cancelMonthly > 0)
+                      _SummaryChip(
+                        label: '解約候補',
+                        value: '月 ¥${_yen.format(cancelMonthly)}',
+                        color: scheme.errorContainer,
+                        foregroundColor: scheme.onErrorContainer,
+                      ),
+                    if (unreviewedCount > 0)
+                      _SummaryChip(
+                        label: '未判定',
+                        value: '$unreviewedCount件',
+                        color: scheme.secondaryContainer,
+                        foregroundColor: scheme.onSecondaryContainer,
+                      ),
+                  ],
+                ),
+              ],
               if (availablePresets.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(
@@ -187,6 +268,35 @@ class SubscriptionFixedCostCard extends StatelessWidget {
                             ),
                           ),
                         ),
+                        PopupMenuButton<AssetSubscriptionReviewDecision>(
+                          key: Key('subscription_review_${cost.id}'),
+                          tooltip: '${cost.name} の棚卸し判定',
+                          initialValue: cost.subscriptionReviewDecision,
+                          onSelected: (decision) =>
+                              onReviewDecisionChanged(cost, decision),
+                          itemBuilder: (context) => [
+                            for (final decision
+                                in AssetSubscriptionReviewDecision.values)
+                              PopupMenuItem(
+                                value: decision,
+                                child: Text(reviewDecisionLabel(decision)),
+                              ),
+                          ],
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            child: Chip(
+                              visualDensity: VisualDensity.compact,
+                              label: Text(
+                                reviewDecisionLabel(
+                                  cost.subscriptionReviewDecision,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                         IconButton(
                           tooltip: '${cost.name} を編集',
                           icon: const Icon(Icons.edit_outlined),
@@ -203,6 +313,44 @@ class SubscriptionFixedCostCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SummaryChip extends StatelessWidget {
+  const _SummaryChip({
+    required this.label,
+    required this.value,
+    this.color,
+    this.foregroundColor,
+  });
+
+  final String label;
+  final String value;
+  final Color? color;
+  final Color? foregroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color ?? theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(text: '$label '),
+            TextSpan(
+              text: value,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        style: theme.textTheme.labelMedium?.copyWith(color: foregroundColor),
       ),
     );
   }
