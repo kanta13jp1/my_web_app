@@ -97,6 +97,7 @@ class TigerReviewerProfile {
     required this.publicViewpointSummary,
     required this.profileUrl,
     required this.birthDateSourceUrl,
+    this.evidenceLinks = const <TigerReviewerEvidenceLink>[],
     this.evidenceConfidence = 0,
     this.profileCompletenessPercent = 0,
     this.reviewReflectionPercent = 0,
@@ -119,6 +120,7 @@ class TigerReviewerProfile {
   final String publicViewpointSummary;
   final Uri? profileUrl;
   final Uri? birthDateSourceUrl;
+  final List<TigerReviewerEvidenceLink> evidenceLinks;
   final double evidenceConfidence;
   final int profileCompletenessPercent;
   final int reviewReflectionPercent;
@@ -153,6 +155,7 @@ class TigerReviewerProfile {
             .toList(growable: false)
         : const <Map<String, dynamic>>[];
     final rawResearchTargets = json['next_research_targets'];
+    final rawEvidenceLinks = json['evidence_links'];
     return TigerReviewerProfile(
       seat: json['seat'] is num ? (json['seat'] as num).toInt() : 0,
       name: json['name']?.toString() ?? '',
@@ -174,6 +177,17 @@ class TigerReviewerProfile {
       birthDateSourceUrl: Uri.tryParse(
         json['birth_date_source_url']?.toString() ?? '',
       ),
+      evidenceLinks: rawEvidenceLinks is List
+          ? rawEvidenceLinks
+              .whereType<Map>()
+              .map(
+                (item) => TigerReviewerEvidenceLink.fromJson(
+                  Map<String, dynamic>.from(item),
+                ),
+              )
+              .where((link) => link.label.isNotEmpty && link.url.hasScheme)
+              .toList(growable: false)
+          : const <TigerReviewerEvidenceLink>[],
       evidenceConfidence: json['evidence_confidence'] is num
           ? (json['evidence_confidence'] as num).toDouble()
           : 0,
@@ -199,6 +213,20 @@ class TigerReviewerProfile {
               .where((item) => item.isNotEmpty)
               .toList(growable: false)
           : const <String>[],
+    );
+  }
+}
+
+class TigerReviewerEvidenceLink {
+  const TigerReviewerEvidenceLink({required this.label, required this.url});
+
+  final String label;
+  final Uri url;
+
+  factory TigerReviewerEvidenceLink.fromJson(Map<String, dynamic> json) {
+    return TigerReviewerEvidenceLink(
+      label: json['label']?.toString().trim() ?? '',
+      url: Uri.tryParse(json['url']?.toString() ?? '') ?? Uri(),
     );
   }
 }
