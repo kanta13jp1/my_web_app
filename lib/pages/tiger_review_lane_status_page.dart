@@ -14,7 +14,7 @@ typedef TigerReviewerProfileLoader = Future<TigerReviewerProfileCatalog>
     Function();
 
 @visibleForTesting
-const int tigerReviewerProfileSchemaVersion = 2;
+const int tigerReviewerProfileSchemaVersion = 3;
 
 @visibleForTesting
 Uri buildTigerReviewAssetUri(
