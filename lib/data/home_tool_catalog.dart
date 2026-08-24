@@ -1816,6 +1816,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const VirtualPetPage()),
     ),
     HomeToolEntry(
+      id: 'procrastination-reset',
+      sectionId: 'personal',
+      title: '先延ばしリセット',
+      subtitle: '大きなタスクを5分の行動と最初の一手に変える',
+      icon: Icons.bolt_outlined,
+      color: const Color(0xFF7C3AED),
+      keywords: const <String>[
+        '先延ばし',
+        '行動',
+        '5分',
+        'タスク分解',
+        '集中',
+        'スマホ',
+        'procrastination',
+      ],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/procrastination-reset'),
+    ),
+    HomeToolEntry(
       id: 'focus-capture',
       sectionId: 'personal',
       title: 'フォーカス捕獲ゲーム',
