@@ -16,7 +16,7 @@ void main() {
 
       expect(catalog.schemaVersion, 2);
       expect(catalog.profilesBySeat, hasLength(125));
-      expect(catalog.enrichmentRound, 2);
+      expect(catalog.enrichmentRound, greaterThanOrEqualTo(3));
       expect(catalog.averageProfileCompletenessPercent, greaterThan(0));
       expect(catalog.averageReviewReflectionPercent, greaterThan(0));
       expect(catalog.verifiedBirthDates, 2);
@@ -43,6 +43,12 @@ void main() {
             .every((profile) => profile.birthDateSourceUrl?.hasScheme == true),
         isTrue,
       );
+      for (final seat in <int>[117, 120, 121]) {
+        final profile = catalog.profilesBySeat[seat]!;
+        expect(profile.profileCompletenessPercent, greaterThanOrEqualTo(62));
+        expect(profile.reviewReflectionPercent, greaterThanOrEqualTo(68));
+        expect(profile.reviewReflectionMode, isNot('neutral_guarded'));
+      }
 
       final standingsSource = await rootBundle.loadString(
         'assets/data/tiger_reviewer_league_status.json',
