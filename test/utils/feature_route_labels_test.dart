@@ -8,6 +8,7 @@ void main() {
       expect(featureLabelForRoute('/site-guide-ai'), 'サイト案内AI');
       expect(featureLabelForRoute('/ai-university'), 'AI大学');
       expect(featureLabelForRoute('/release-notes'), 'Release Notes');
+      expect(featureLabelForRoute('/procrastination-reset'), '先延ばしリセット');
     });
 
     test('未知ルートは slug を Title Case に整形してフォールバックする', () {

@@ -254,6 +254,7 @@ const List<String> kAllAppRoutes = <String>[
   '/price-tracker',
   '/prison-mode',
   '/privacy',
+  '/procrastination-reset',
   '/profile-settings',
   '/project-gantt',
   '/public-guitar-gallery',
