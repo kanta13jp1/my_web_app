@@ -113,6 +113,7 @@ void main() {
       // Assert
       expect(find.byType(LandingPage), findsOneWidget);
       expect(find.byType(HomePage), findsNothing);
+      expect(find.byKey(const Key('global_header_clock_bar')), findsNothing);
     });
 
     testWidgets('ログイン済みでオンボーディング未完了時は OnboardingPage が表示されること',
@@ -207,6 +208,7 @@ void main() {
 
       // Assert
       expect(find.byType(HomePage), findsOneWidget);
+      expect(find.byKey(const Key('global_header_clock_bar')), findsOneWidget);
     });
 
     testWidgets('オンボーディングは保存済みページから再開できること', (WidgetTester tester) async {
@@ -291,7 +293,8 @@ void main() {
       expect(find.byType(AiUniversityPage), findsOneWidget);
     });
 
-    testWidgets('ルーティング: /danshari へ遷移できること', (WidgetTester tester) async {
+    testWidgets('ルーティング: /digital-danshari へ遷移できること',
+        (WidgetTester tester) async {
       // Arrange
       when(mockGoTrueClient.currentSession).thenReturn(null);
 
@@ -322,7 +325,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final BuildContext context = tester.element(find.byType(LandingPage));
-      Navigator.of(context).pushNamed('/danshari');
+      Navigator.of(context).pushNamed('/digital-danshari');
       await tester.pumpAndSettle();
 
       // Assert

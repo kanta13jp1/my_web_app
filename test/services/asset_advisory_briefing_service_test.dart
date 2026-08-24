@@ -86,11 +86,12 @@ void main() {
     List<AssetDebtDisciplineViolation> revolving =
         const <AssetDebtDisciplineViolation>[],
     int monitored = 2,
+    bool hasPriorMonthData = true,
   }) {
     return AssetDebtDisciplineReport(
       newBorrowingViolations: newBorrowing,
       revolvingCardViolations: revolving,
-      hasPriorMonthData: true,
+      hasPriorMonthData: hasPriorMonthData,
       totalNewBorrowing: newBorrowing.isEmpty ? 0 : 30000,
       totalCarriedOver: revolving.isEmpty ? 0 : 20000,
       monitoredAccountCount: monitored,
@@ -200,6 +201,39 @@ void main() {
       final chro = actionFor(briefing, 'discipline_ok');
       expect(chro, isNotNull);
       expect(chro!.severity, AdvisorySeverity.info);
+      expect(chro.detail, contains('達成'));
+    });
+
+    test('never claims 追加借入ゼロ was achieved when it was never evaluated', () {
+      // 前月残高が無いと誓約①の評価ループに入らず違反リストが必ず空になる。
+      // その状態を「達成」と書くと規律カードの「判定保留」チップと矛盾する。
+      final briefing = service.build(
+        now: now,
+        disciplineReport: discipline(hasPriorMonthData: false),
+      );
+      final chro = actionFor(briefing, 'discipline_ok');
+      expect(chro, isNotNull);
+      expect(chro!.severity, AdvisorySeverity.info);
+      expect(chro.detail, contains('判定'));
+      expect(chro.detail.contains('追加借入ゼロ・カード一括返済を達成'), isFalse);
+      expect(chro.headline.contains('規律を維持'), isFalse);
+    });
+
+    test('marks pledge 1 as 判定保留 in the violation detail when unevaluated', () {
+      final briefing = service.build(
+        now: now,
+        disciplineReport: discipline(
+          revolving: [
+            violation(type: AssetDebtDisciplineViolationType.revolvingCard),
+          ],
+          hasPriorMonthData: false,
+        ),
+      );
+      final chro = actionFor(briefing, 'discipline_violation');
+      expect(chro, isNotNull);
+      expect(chro!.detail, contains('誓約①追加借入ゼロ: 判定保留'));
+      // 誓約②は前月データ不要なので、そのまま未達と出る。
+      expect(chro.detail, contains('誓約②カード一括: 未達'));
     });
 
     test('two criticals trigger a CEO priority ruling sorted to the top', () {

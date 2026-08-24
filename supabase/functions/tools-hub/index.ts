@@ -10181,32 +10181,84 @@ ${reportText ? `> ${reportText}` : ""}`,
       case "focus.stats": {
         const days = parseInt(String(body.days ?? "30"), 10);
         const since = new Date(Date.now() - days * 86400000).toISOString();
-        const allItems = await listItems(admin, "focus_timer", userId, 200);
-        const recent = allItems.filter((i: Record<string, unknown>) =>
-          String(i.created_at ?? "") >= since
+        const [focusItems, legacyPomodoroItems] = await Promise.all([
+          listItems(admin, "focus_timer", userId, 200),
+          listItems(admin, "pomodoro", userId, 200),
+        ]);
+        const normalizedFocus = focusItems.map(
+          (item: Record<string, unknown>) => ({
+            ...(item.metadata as Record<string, unknown>),
+            id: item.id,
+            created_at: item.created_at,
+          }),
         );
+        // 旧 `/pomodoro-timer` は `source=pomodoro` に保存していた。
+        // 統合後の集中タイマーで過去実績を失わないよう、新形式へ読み替える。
+        const normalizedLegacy = legacyPomodoroItems.map(
+          (item: Record<string, unknown>) => {
+            const metadata = (item.metadata ?? {}) as Record<string, unknown>;
+            const completedAt = String(
+              metadata.completed_at ?? item.created_at ?? "",
+            );
+            return {
+              id: item.id,
+              task_label: metadata.task_name ?? "ポモドーロ",
+              duration_minutes: metadata.duration_minutes ??
+                metadata.duration_min ?? 25,
+              status: metadata.status === "done"
+                ? "completed"
+                : metadata.status ?? "completed",
+              started_at: metadata.started_at ?? completedAt,
+              completed_at: completedAt,
+              created_at: item.created_at,
+              legacy_source: "pomodoro",
+            };
+          },
+        );
+        const recent = [...normalizedFocus, ...normalizedLegacy]
+          .filter((item: Record<string, unknown>) =>
+            String(item.started_at ?? item.created_at ?? "") >= since
+          )
+          .sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
+            String(b.started_at ?? b.created_at ?? "").localeCompare(
+              String(a.started_at ?? a.created_at ?? ""),
+            )
+          );
         const completed = recent.filter((i: Record<string, unknown>) =>
-          (i.metadata as Record<string, unknown>)?.status === "completed"
+          i.status === "completed"
         );
         const totalMinutes = completed.reduce(
           (s: number, i: Record<string, unknown>) =>
-            s +
-            (Number(
-              (i.metadata as Record<string, unknown>)?.duration_minutes,
-            ) || 25),
+            s + (Number(i.duration_minutes) || 25),
           0,
         );
+        const completedDays = new Set(
+          completed.map((item: Record<string, unknown>) =>
+            String(
+              item.completed_at ?? item.started_at ?? item.created_at ?? "",
+            )
+              .slice(0, 10)
+          ),
+        );
+        const cursor = new Date();
+        cursor.setUTCHours(0, 0, 0, 0);
+        if (!completedDays.has(cursor.toISOString().slice(0, 10))) {
+          cursor.setUTCDate(cursor.getUTCDate() - 1);
+        }
+        let streakDays = 0;
+        while (completedDays.has(cursor.toISOString().slice(0, 10))) {
+          streakDays += 1;
+          cursor.setUTCDate(cursor.getUTCDate() - 1);
+        }
         const focusScore = Math.min(100, Math.round(completed.length * 10));
         return json({
           success: true,
-          sessions: recent.map((i: Record<string, unknown>) => ({
-            ...(i.metadata as Record<string, unknown>),
-            id: i.id,
-            created_at: i.created_at,
-          })),
+          sessions: recent,
           stats: {
-            total_sessions: completed.length,
+            total_sessions: recent.length,
+            completed_sessions: completed.length,
             total_minutes: totalMinutes,
+            streak_days: streakDays,
             focus_score: focusScore,
           },
         });

@@ -19,6 +19,11 @@ import {
   type XTweetMetrics,
 } from "../_shared/x-client.ts";
 import {
+  isExternalRevenueCandidate,
+  normalizeSupporterBuyerContext,
+} from "../_shared/supporter_buyer.ts";
+import { isSupportedAcquisitionSignal } from "./acquisition_signals.ts";
+import {
   extractPostedTexts,
   findDuplicateContent,
   resolveDuplicateGuardConfig,
@@ -509,41 +514,6 @@ const IMPORT_PREVIEW_DEFS = [
   },
 ];
 
-const SUPPORTED_ACQUISITION_SIGNALS = new Set([
-  "touch_landing",
-  "touch_profile",
-  "touch_import",
-  "touch_public_memo",
-  "touch_referral",
-  "touch_comparison",
-  "touch_guitar_gallery",
-  "touch_x_first_user_growth",
-  "import_preview_notion",
-  "import_preview_evernote",
-  "import_preview_markdown",
-  "import_signup_cta",
-  "public_memo_signup_cta",
-  "x_first_user_trial_intent",
-  "x_first_user_feedback_summary",
-  "x_first_user_feedback_memo",
-  "x_first_user_feedback_search",
-  "x_first_user_feedback_x_intent",
-  "signup_submit_landing",
-  "signup_submit_profile",
-  "signup_submit_x_first_user_growth",
-  "signup_submit_import",
-  "signup_submit_public_memo",
-  "signup_submit_referral",
-  "signup_submit_comparison",
-  "signup_submit_guitar",
-  // R24: 公開データトラッカー (/public/local-election-700) の着地と CTA。
-  // 実測でサイトへの URL クリック 304 件中 286 件 (94%) がこの着地点だった。
-  // 許可リストに無いと EF が 400 を返し、クライアントが送っても計上されない。
-  "touch_public_tracker",
-  "public_tracker_signup_cta",
-  "signup_submit_public_tracker",
-]);
-
 function formatDateKey(date: Date): string {
   return `${date.getFullYear()}-${
     String(date.getMonth() + 1).padStart(2, "0")
@@ -555,11 +525,6 @@ function resolveDateKey(rawDateKey: unknown): string {
       /^\d{4}-\d{2}-\d{2}$/.test(rawDateKey)
     ? rawDateKey
     : formatDateKey(new Date());
-}
-
-function isSupportedAcquisitionSignal(signalKey: string): boolean {
-  return SUPPORTED_ACQUISITION_SIGNALS.has(signalKey) ||
-    /^touch_comparison_[a-z0-9_-]{1,64}$/i.test(signalKey);
 }
 
 async function recordAcquisitionSignal(
@@ -612,6 +577,7 @@ async function recordAcquisitionSignal(
 }
 
 const firstUserFunnelStageSet = new Set<string>(FIRST_USER_FUNNEL_STAGES);
+const firstUserAcquisitionSourceSet = new Set(["x", "zenn"]);
 const firstUserTokenPattern = /^[a-z0-9_-]{1,64}$/;
 
 async function recordFirstUserFunnelSignal(
@@ -641,7 +607,7 @@ async function recordFirstUserFunnelSignal(
   if (
     !isUuid(visitorId) ||
     !firstUserFunnelStageSet.has(stage) ||
-    utmSource !== "x" ||
+    !firstUserAcquisitionSourceSet.has(utmSource) ||
     utmCampaign !== "first_user_growth" ||
     !firstUserTokenPattern.test(utmMedium) ||
     !firstUserTokenPattern.test(utmContent)
@@ -1707,14 +1673,19 @@ async function buildRevenueFunnelReport(
     .limit(limit);
   if (error) throw new Error(error.message);
 
-  const paidPayments = (payments ?? [])
+  const allPaidPayments = (payments ?? [])
     .map((item) => {
       const metadata = asRecord(item.metadata);
+      const buyerContext = normalizeSupporterBuyerContext(
+        metadata.auth_user_id,
+        metadata.buyer_classification,
+      );
       return {
-        id: String(item.id),
         createdAt: String(item.created_at),
         amountJpy: firstNumber(metadata.amount_jpy, metadata.amount_total) ?? 0,
         paymentStatus: firstString(metadata.payment_status),
+        buyerClassification: buyerContext.classification,
+        externalRevenueCandidate: isExternalRevenueCandidate(buyerContext),
         variant: firstString(metadata.variant, "unknown"),
         experimentKey: firstString(metadata.experiment_key),
         sourceLogId: firstString(metadata.source_log_id),
@@ -1722,12 +1693,14 @@ async function buildRevenueFunnelReport(
         utmMedium: firstString(metadata.utm_medium),
         utmCampaign: firstString(metadata.utm_campaign),
         utmContent: firstString(metadata.utm_content),
-        stripeCheckoutSessionId: firstString(
-          metadata.stripe_checkout_session_id,
-        ),
       };
     })
     .filter((row) => row.paymentStatus === "paid");
+  const externalPaidPayments = allPaidPayments.filter((row) =>
+    row.externalRevenueCandidate &&
+    row.utmSource === "x" &&
+    row.utmCampaign === "first_user_growth"
+  );
 
   const xRows = performance.rows as Array<{
     id: string;
@@ -1770,7 +1743,7 @@ async function buildRevenueFunnelReport(
     current.score += firstNumber(row.rankingImpressions) ?? row.score;
     byVariant.set(key, current);
   }
-  for (const payment of paidPayments) {
+  for (const payment of externalPaidPayments) {
     const key = payment.variant || "unknown";
     const current = byVariant.get(key) ?? {
       variant: key,
@@ -1803,8 +1776,17 @@ async function buildRevenueFunnelReport(
       comparisonWindow: performance.comparisonWindow,
       comparisonLabel: performance.comparisonLabel,
       comparisonSampleCount: performance.comparisonSampleCount,
-      latestPaidSupporters: paidPayments.length,
-      revenueJpy: paidPayments.reduce(
+      allPaidSupporters: allPaidPayments.length,
+      excludedAdminSupporters:
+        allPaidPayments.filter((payment) =>
+          payment.buyerClassification === "admin_self"
+        ).length,
+      excludedUnclassifiedSupporters:
+        allPaidPayments.filter((payment) =>
+          payment.buyerClassification === "anonymous_unclassified"
+        ).length,
+      latestPaidSupporters: externalPaidPayments.length,
+      revenueJpy: externalPaidPayments.reduce(
         (sum, payment) => sum + payment.amountJpy,
         0,
       ),
@@ -1812,16 +1794,16 @@ async function buildRevenueFunnelReport(
       bestVariantForReach: performance.bestVariant,
     },
     variants,
-    payments: paidPayments,
+    payments: externalPaidPayments,
     xPerformance: {
       winners: performance.winners,
       underperformers: performance.underperformers,
       promptContext: performance.promptContext,
     },
-    nextActions: paidPayments.length === 0
+    nextActions: externalPaidPayments.length === 0
       ? [
         "Post the next high-information X variant with link-in-reply enabled.",
-        "Use the Founding Supporter checkout URL from the billing page for one real supporter payment.",
+        "Acquire one signed-in non-admin supporter through the measured first_user_growth URL.",
         "After payment, rerun revenue.funnel_report and first_supporter_webhook_evidence.sql.",
       ]
       : [
@@ -1834,24 +1816,37 @@ async function buildRevenueFunnelReport(
 async function buildFirstUserAcquisitionReport(
   admin: SupabaseClient,
   userId: string,
+  rawUtmSource: unknown,
   rawUtmMedium: unknown,
   rawUtmContent: unknown,
+  rawCampaignStartedAt: unknown,
   rawLimit: unknown,
 ) {
+  const utmSource = firstString(rawUtmSource, "x").toLowerCase();
   const utmMedium = firstString(rawUtmMedium, "organic").toLowerCase();
   const utmContent = firstString(rawUtmContent, "outcome_first_a")
     .toLowerCase();
   if (
+    !firstUserAcquisitionSourceSet.has(utmSource) ||
     !firstUserTokenPattern.test(utmMedium) ||
     !firstUserTokenPattern.test(utmContent)
   ) {
     throw new Error("invalid first-user UTM");
   }
+  const campaignStartedAtInput = firstString(rawCampaignStartedAt);
+  if (
+    campaignStartedAtInput !== "" &&
+    !Number.isFinite(Date.parse(campaignStartedAtInput))
+  ) {
+    throw new Error("invalid first-user campaign start");
+  }
   const limit = Math.max(
     10,
     Math.min(100, Math.trunc(firstNumber(rawLimit) ?? 50)),
   );
-  const logs = (await listXPostLogs(admin, userId, limit)) as XPostLogItem[];
+  const logs = utmSource === "x"
+    ? (await listXPostLogs(admin, userId, limit)) as XPostLogItem[]
+    : [];
   const matchingLogs = logs.filter((item) => {
     const metadata = asRecord(item.metadata);
     const variants = [
@@ -1885,17 +1880,18 @@ async function buildFirstUserAcquisitionReport(
       normalized: normalized[0] ?? null,
     };
   }
+  const campaignStartedAt = post?.postedAt || campaignStartedAtInput || null;
 
   let eventQuery = admin
     .from("first_user_acquisition_events")
     .select("visitor_id,stage,first_occurred_at")
-    .eq("utm_source", "x")
+    .eq("utm_source", utmSource)
     .eq("utm_medium", utmMedium)
     .eq("utm_campaign", "first_user_growth")
     .eq("utm_content", utmContent)
     .order("first_occurred_at", { ascending: true });
-  if (post?.postedAt) {
-    eventQuery = eventQuery.gte("first_occurred_at", post.postedAt);
+  if (campaignStartedAt) {
+    eventQuery = eventQuery.gte("first_occurred_at", campaignStartedAt);
   }
   const { data: eventData, error: eventError } = await eventQuery;
   if (eventError) throw new Error(eventError.message);
@@ -1905,13 +1901,19 @@ async function buildFirstUserAcquisitionReport(
     .select("metadata,created_at")
     .eq("source", "stripe_supporter_payment")
     .filter("metadata->>payment_status", "eq", "paid")
-    .filter("metadata->>utm_source", "eq", "x")
+    .filter("metadata->>utm_source", "eq", utmSource)
     .filter("metadata->>utm_medium", "eq", utmMedium)
     .filter("metadata->>utm_campaign", "eq", "first_user_growth")
     .filter("metadata->>utm_content", "eq", utmContent)
+    .filter(
+      "metadata->>buyer_classification",
+      "eq",
+      "authenticated_non_admin",
+    )
+    .filter("metadata->>external_revenue_candidate", "eq", "true")
     .order("created_at", { ascending: true });
-  if (post?.postedAt) {
-    paymentQuery = paymentQuery.gte("created_at", post.postedAt);
+  if (campaignStartedAt) {
+    paymentQuery = paymentQuery.gte("created_at", campaignStartedAt);
   }
   const { data: paymentData, error: paymentError } = await paymentQuery;
   if (paymentError) throw new Error(paymentError.message);
@@ -1924,15 +1926,17 @@ async function buildFirstUserAcquisitionReport(
     };
   });
   const report = buildFirstUserFunnelReport({
+    utmSource,
     utmMedium,
     utmContent,
+    campaignStartedAt,
     post,
     events: (eventData ?? []) as FirstUserAcquisitionEvent[],
     payments,
   });
   return {
     ...report,
-    issue: 3883,
+    issue: utmSource === "zenn" ? 3749 : 3883,
     reportGeneratedAt: new Date().toISOString(),
   };
 }
@@ -3009,7 +3013,8 @@ serve(async (req: Request) => {
         );
       }
 
-      case "x.first_user_funnel": {
+      case "x.first_user_funnel":
+      case "acquisition.first_user_funnel": {
         if (!await isXOperator(admin, userId!)) {
           return json({ error: "Forbidden: X operator role required" }, 403);
         }
@@ -3017,8 +3022,10 @@ serve(async (req: Request) => {
           await buildFirstUserAcquisitionReport(
             admin,
             "service_role",
+            body.utmSource ?? body.utm_source,
             body.utmMedium ?? body.utm_medium,
             body.utmContent ?? body.utm_content,
+            body.campaignStartedAt ?? body.campaign_started_at,
             body.limit,
           ),
         );
@@ -3145,8 +3152,11 @@ serve(async (req: Request) => {
       }
 
       case "revenue.funnel_report": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
         return json(
-          await buildRevenueFunnelReport(admin, userId!, body.limit),
+          await buildRevenueFunnelReport(admin, "service_role", body.limit),
         );
       }
 

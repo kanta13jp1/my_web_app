@@ -103,8 +103,9 @@ class AssetWasteTrainingAiReview {
     required DateTime generatedAt,
     String? reason,
   }) {
-    final reasonText =
-        reason == null || reason.trim().isEmpty ? '' : ' $reason';
+    final normalizedReason =
+        reason?.trim().replaceFirst(RegExp(r'[。．.!！?？]+$'), '') ?? '';
+    final reasonText = normalizedReason.isEmpty ? '' : ' $normalizedReason';
     final focus = snapshot.wasteExpense > 0
         ? '今月の浪費額を次の1件から止め、浪費カテゴリを記録ログとして見直してください。'
         : '支出のたびに「能力を伸ばす支出か」を確認し、浪費ゼロ日の精度を上げてください。';

@@ -848,24 +848,24 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     // 追加 (cs-check 自動連携 2026-07-29)
     _FnDef(
       'shop-funnel',
-      'HexCiv ショップファネル (商品一覧・購入フロー)',
+      'デジタル商品ストアのファネル (商品一覧・購入フロー)',
       true,
-      '/shop/hexciv',
-      'HexCiv ショップページ > 商品確認・購入フロー開始',
+      '/shop',
+      'デジタル作品ストア > 商品確認・購入フロー開始',
     ),
     _FnDef(
       'shop-checkout',
-      'Stripe Checkout セッション作成 (HexCiv 購入フロー)',
+      'Stripe Checkout セッション作成 (デジタル商品購入)',
       true,
-      '/shop/hexciv',
-      'HexCiv ショップページ > 購入ボタン → Stripe Checkout へ遷移',
+      '/shop',
+      '商品詳細ページ > 購入ボタン → Stripe Checkout へ遷移',
     ),
     _FnDef(
       'shop-download',
-      '購入済みコンテンツ署名付きURL発行 (HexCiv ダウンロード)',
+      '購入済みデジタル商品の署名付きURL発行',
       true,
-      '/shop/hexciv',
-      'HexCiv ショップページ > 購入済み状態でダウンロードボタンを押す',
+      '/shop/downloads',
+      '購入済みページ > ダウンロードボタンを押す',
     ),
   ];
 
