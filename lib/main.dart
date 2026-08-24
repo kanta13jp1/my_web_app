@@ -221,6 +221,7 @@ import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
 import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
 import 'package:my_web_app/ui/features/notion_migration/notion_migration_feature.dart';
+import 'package:my_web_app/ui/features/procrastination_reset/procrastination_reset_feature.dart';
 import 'package:my_web_app/pages/youtube_stats_page.dart';
 import 'package:my_web_app/pages/audio_effects_processor_page.dart';
 import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
@@ -1547,6 +1548,13 @@ Route<dynamic> generateAppRoute(
     case '/personal-dashboard':
       return MaterialPageRoute(
         builder: (_) => const PersonalDashboardPage(),
+      );
+    case '/procrastination-reset':
+      return MaterialPageRoute(
+        builder: (_) => const ProcrastinationResetFeature(),
+        settings: const RouteSettings(
+          name: ProcrastinationResetFeature.routeName,
+        ),
       );
     case '/my-skills':
       return MaterialPageRoute(builder: (_) => const MySkillsPage());
