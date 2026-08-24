@@ -27,11 +27,11 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
     with SingleTickerProviderStateMixin, TabRouteUrlSync {
   @override
   List<String> get tabUrlSlugs => const <String>[
-    'health',
-    'heatmap',
-    'sessions',
-    'guardrails',
-  ];
+        'health',
+        'heatmap',
+        'sessions',
+        'guardrails',
+      ];
 
   @override
   TabController get tabUrlController => _tab;
@@ -182,10 +182,10 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
     final color = isFlaky
         ? const Color(0xFFEF4444)
         : successRate >= 99
-        ? const Color(0xFF22C55E)
-        : successRate >= 95
-        ? const Color(0xFFF97316)
-        : const Color(0xFFEAB308);
+            ? const Color(0xFF22C55E)
+            : successRate >= 95
+                ? const Color(0xFFF97316)
+                : const Color(0xFFEAB308);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -337,7 +337,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
     final cost = (s['total_cost_usd'] as num?)?.toDouble() ?? 0.0;
     final providers =
         (s['provider_chain'] as List?)?.cast<String>().toSet().join(', ') ??
-        '?';
+            '?';
     final hasError = errorSteps > 0;
     final color = hasError ? const Color(0xFFEF4444) : const Color(0xFF6366F1);
     return InkWell(
@@ -776,17 +776,19 @@ class _SessionStepsSheetState extends State<_SessionStepsSheet> {
                       ),
                     )
                   : _steps.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'ステップなし',
-                        style: TextStyle(color: Color(0xFF94A3B8), height: 1.5),
-                      ),
-                    )
-                  : ListView.separated(
-                      itemCount: _steps.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 6),
-                      itemBuilder: (_, i) => _stepCard(i + 1, _steps[i]),
-                    ),
+                      ? const Center(
+                          child: Text(
+                            'ステップなし',
+                            style: TextStyle(
+                                color: Color(0xFF94A3B8), height: 1.5),
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: _steps.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 6),
+                          itemBuilder: (_, i) => _stepCard(i + 1, _steps[i]),
+                        ),
             ),
           ],
         ),

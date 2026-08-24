@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-typedef AiGuardrailObservabilityInvoker =
-    Future<Map<String, dynamic>> Function(Map<String, dynamic> body);
+typedef AiGuardrailObservabilityInvoker = Future<Map<String, dynamic>> Function(
+    Map<String, dynamic> body);
 
 class AiGuardrailCategoryCount {
   final String category;
@@ -92,9 +92,9 @@ class AiGuardrailEvent {
       decision: data['decision']?.toString().trim() ?? '',
       categories: rawCategories is List
           ? rawCategories
-                .map((value) => value.toString().trim())
-                .where((value) => value.isNotEmpty)
-                .toList(growable: false)
+              .map((value) => value.toString().trim())
+              .where((value) => value.isNotEmpty)
+              .toList(growable: false)
           : const <String>[],
       redactionCount: _asInt(data['redaction_count']),
       latencyMs: _asInt(data['latency_ms']),
@@ -157,8 +157,8 @@ class AiGuardrailObservabilityService {
   const AiGuardrailObservabilityService({
     SupabaseClient? supabase,
     AiGuardrailObservabilityInvoker? invoker,
-  }) : _supabase = supabase,
-       _invoker = invoker;
+  })  : _supabase = supabase,
+        _invoker = invoker;
 
   Future<AiGuardrailOverview> fetchOverview({
     int windowDays = 7,
@@ -201,8 +201,8 @@ class AiGuardrailObservabilityService {
       adminRequired
           ? '管理者アカウントでログインしてください。'
           : (data['message']?.toString().trim().isNotEmpty == true
-                ? data['message'].toString().trim()
-                : 'ガードレール監査ログを取得できませんでした。'),
+              ? data['message'].toString().trim()
+              : 'ガードレール監査ログを取得できませんでした。'),
       adminRequired: adminRequired,
     );
   }

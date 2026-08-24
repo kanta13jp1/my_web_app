@@ -4,8 +4,8 @@ import '../models/asset_chat.dart';
 import 'asset_chat_privacy_settings_service.dart';
 import 'offline_secure_mode_settings_service.dart';
 
-typedef AiHubChatInvoker =
-    Future<Map<String, dynamic>> Function(Map<String, dynamic> body);
+typedef AiHubChatInvoker = Future<Map<String, dynamic>> Function(
+    Map<String, dynamic> body);
 
 class AiHubChatObservability {
   final String provider;
@@ -44,8 +44,8 @@ class AiHubChatObservability {
     final raw = nested is Map<String, dynamic>
         ? nested
         : nested is Map
-        ? Map<String, dynamic>.from(nested)
-        : data;
+            ? Map<String, dynamic>.from(nested)
+            : data;
 
     final provider =
         (raw['provider'] ?? fallbackProvider)?.toString().trim() ?? '';
@@ -58,13 +58,11 @@ class AiHubChatObservability {
     final outputChars = _asInt(raw['output_chars']);
     final statusCode = _asInt(raw['status_code']);
     final action = raw['action']?.toString().trim();
-    final providerChoiceReason = raw['provider_choice_reason']
-        ?.toString()
-        .trim();
+    final providerChoiceReason =
+        raw['provider_choice_reason']?.toString().trim();
     final routingUseCase = raw['routing_use_case']?.toString().trim();
 
-    final hasDetail =
-        provider.isNotEmpty ||
+    final hasDetail = provider.isNotEmpty ||
         model != null ||
         latencyMs != null ||
         estimatedCostUsd != null ||
@@ -137,9 +135,9 @@ class AiHubChatGuardrail {
     final rawCategories = raw['categories'];
     final categories = rawCategories is List
         ? rawCategories
-              .map((value) => value.toString().trim())
-              .where((value) => value.isNotEmpty)
-              .toList(growable: false)
+            .map((value) => value.toString().trim())
+            .where((value) => value.isNotEmpty)
+            .toList(growable: false)
         : const <String>[];
     return AiHubChatGuardrail(
       decision: decision,
@@ -207,10 +205,10 @@ class AiHubChatService {
         const OfflineSecureModeSettingsService(),
     AssetChatPrivacySettingsService assetChatPrivacySettingsService =
         const AssetChatPrivacySettingsService(),
-  }) : _supabase = supabase,
-       _invoker = invoker,
-       _offlineSettingsService = offlineSettingsService,
-       _assetChatPrivacySettingsService = assetChatPrivacySettingsService;
+  })  : _supabase = supabase,
+        _invoker = invoker,
+        _offlineSettingsService = offlineSettingsService,
+        _assetChatPrivacySettingsService = assetChatPrivacySettingsService;
 
   Future<AssetChatResponse> sendAssetChat({
     required String message,
@@ -235,8 +233,7 @@ class AiHubChatService {
     if (AiHubChatQuotaGuard.isCoolingDown()) {
       throw const AiHubChatException('AI quota cooldown');
     }
-    final resolvedPiiMode =
-        piiMode ??
+    final resolvedPiiMode = piiMode ??
         ((await _assetChatPrivacySettingsService.loadMaskMoneyAmounts())
             ? 'mask'
             : 'off');
