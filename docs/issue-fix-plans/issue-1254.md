@@ -77,3 +77,4 @@ must complete the checklist in [`docs/WRITER_CONTENT_GUARDRAILS.md`](../WRITER_C
 - Focused Flutter service, widget, schema-contract, and chat-service tests
 - Responsive widget coverage at 390px and 1200px
 - Full `flutter analyze`
+- Local Minimal E2E and High-risk PR-body contract validators
