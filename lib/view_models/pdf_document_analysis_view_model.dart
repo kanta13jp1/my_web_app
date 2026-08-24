@@ -7,7 +7,7 @@ class PdfDocumentAnalysisViewModel extends ChangeNotifier {
   final PdfDocumentAnalysisGateway _gateway;
 
   PdfDocumentAnalysisViewModel({required PdfDocumentAnalysisGateway gateway})
-    : _gateway = gateway;
+      : _gateway = gateway;
 
   PdfDocumentSelection? _selection;
   PdfDocumentAnalysisResult? _result;
