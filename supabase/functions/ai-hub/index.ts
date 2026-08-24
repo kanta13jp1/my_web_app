@@ -127,6 +127,16 @@ import {
   buildSubscriptionStatementPrompt,
   parseSubscriptionStatementResponse,
 } from "./subscription_statement_scan.ts";
+import { authorizeAutomationActor } from "../_shared/automation-auth.ts";
+import {
+  collectProviderInputText,
+  CONTENT_GUARDRAIL_POLICY_VERSION,
+  type ContentGuardrailDecision,
+  type ContentGuardrailResult,
+  type ContentGuardrailStage,
+  evaluateContentGuardrail,
+  parseWriterNativeGuardrailBlock,
+} from "./content_guardrails.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -157,6 +167,119 @@ function json(data: unknown, status = 200): Response {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+function writerContentGuardrailsEnabled(providerId: string): boolean {
+  if (providerId !== "writer") return false;
+  return (Deno.env.get("WRITER_CONTENT_GUARDRAILS_ENABLED") ?? "true")
+    .trim()
+    .toLowerCase() !== "false";
+}
+
+type GuardrailAuditInput = {
+  traceId: string;
+  userId: string | null;
+  provider: string;
+  action: string;
+  stage: ContentGuardrailStage;
+  decision: ContentGuardrailDecision;
+  categories: string[];
+  redactionCount: number;
+  latencyMs: number;
+  contentChars: number;
+};
+
+async function recordGuardrailAudit(
+  admin: SupabaseClient,
+  input: GuardrailAuditInput,
+): Promise<boolean> {
+  try {
+    const { error } = await admin.from("ai_guardrail_events").insert({
+      trace_id: input.traceId,
+      user_id: input.userId,
+      provider: input.provider,
+      action: input.action,
+      stage: input.stage,
+      decision: input.decision,
+      categories: input.categories.slice(0, 16),
+      redaction_count: Math.max(0, Math.min(1000, input.redactionCount)),
+      latency_ms: Math.max(0, Math.min(300000, input.latencyMs)),
+      content_chars: Math.max(0, Math.min(50000, input.contentChars)),
+      policy_version: CONTENT_GUARDRAIL_POLICY_VERSION,
+    });
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error(
+      `[guardrail] audit insert failed trace=${input.traceId} stage=${input.stage}: ${
+        error instanceof Error ? error.message : "unknown"
+      }`,
+    );
+    return false;
+  }
+}
+
+async function runAndAuditWriterGuardrail(
+  admin: SupabaseClient,
+  input: {
+    traceId: string;
+    userId: string | null;
+    text: string;
+    stage: "input" | "output";
+  },
+): Promise<{ result: ContentGuardrailResult; auditLogged: boolean }> {
+  const startedAt = performance.now();
+  const result = evaluateContentGuardrail(input.text, input.stage);
+  const auditLogged = await recordGuardrailAudit(admin, {
+    traceId: input.traceId,
+    userId: input.userId,
+    provider: "writer",
+    action: "provider.chat",
+    stage: input.stage,
+    decision: result.decision,
+    categories: result.categories,
+    redactionCount: result.redactionCount,
+    latencyMs: Math.round(performance.now() - startedAt),
+    contentChars: result.contentChars,
+  });
+  return { result, auditLogged };
+}
+
+function writerGuardrailFailure(
+  traceId: string,
+  result: ContentGuardrailResult,
+): Response {
+  const inputStage = result.stage === "input";
+  return json({
+    success: false,
+    status: "guardrailBlocked",
+    code: inputStage ? "unsafe_input" : "unsafe_output",
+    message: inputStage
+      ? "安全保護のため送信を停止しました。個人情報・秘密情報・危険な依頼を取り除いて再試行してください。"
+      : "AI応答が安全基準に抵触したため表示を停止しました。内容を変えて再試行してください。",
+    guardrail: {
+      decision: "block",
+      stage: result.stage,
+      categories: result.categories,
+      policy_version: CONTENT_GUARDRAIL_POLICY_VERSION,
+      trace_id: traceId,
+    },
+  }, 422);
+}
+
+function writerGuardrailAuditFailure(traceId: string): Response {
+  return json({
+    success: false,
+    status: "guardrailUnavailable",
+    code: "guardrail_audit_unavailable",
+    message:
+      "安全監査ログを記録できないため、AI呼び出しを停止しました。しばらくして再試行してください。",
+    guardrail: {
+      decision: "block",
+      policy_version: CONTENT_GUARDRAIL_POLICY_VERSION,
+      trace_id: traceId,
+    },
+  }, 503);
 }
 
 function a2aJson(
@@ -4314,6 +4437,11 @@ serve(async (req: Request) => {
       "voice.stt",
       "voice.cartesia_session.start",
       "voice.cartesia_session.finish",
+      "observability.provider_health",
+      "observability.heatmap",
+      "observability.sessions",
+      "observability.session_steps",
+      "observability.guardrails",
       // 英語速読カリキュラム (実力測定 / AI 生成は要認証 / 教材閲覧は公開)
       "english_reading.submit_attempt",
       "english_reading.ability",
@@ -6828,6 +6956,37 @@ serve(async (req: Request) => {
               // ignore logging errors
             }
           };
+          const guardrailsEnabled = writerContentGuardrailsEnabled(providerId);
+          if (guardrailsEnabled) {
+            const inputText = collectProviderInputText(
+              finalMessages,
+              userMsg,
+            );
+            const inputGuardrail = await runAndAuditWriterGuardrail(admin, {
+              traceId,
+              userId,
+              text: inputText,
+              stage: "input",
+            });
+            if (!inputGuardrail.auditLogged) {
+              await logProviderChat({
+                success: false,
+                statusCode: 503,
+                errorMessage: "guardrail_audit_unavailable:input",
+              });
+              return writerGuardrailAuditFailure(traceId);
+            }
+            if (inputGuardrail.result.decision === "block") {
+              await logProviderChat({
+                success: false,
+                statusCode: 422,
+                errorMessage: `guardrail_block:input:${
+                  inputGuardrail.result.categories.join(",")
+                }`.slice(0, 500),
+              });
+              return writerGuardrailFailure(traceId, inputGuardrail.result);
+            }
+          }
           const resp = await fetchWithProviderTimeout(fetchUrl, {
             method: "POST",
             headers: {
@@ -6845,6 +7004,49 @@ serve(async (req: Request) => {
           });
           const respText = await resp.text();
           if (!resp.ok) {
+            if (guardrailsEnabled) {
+              const nativeBlock = parseWriterNativeGuardrailBlock(respText);
+              if (nativeBlock.blocked) {
+                await recordGuardrailAudit(admin, {
+                  traceId,
+                  userId,
+                  provider: providerId,
+                  action: "provider.chat",
+                  stage: "provider",
+                  decision: "block",
+                  categories: nativeBlock.categories.length > 0
+                    ? nativeBlock.categories
+                    : ["writer_native_guardrail"],
+                  redactionCount: 0,
+                  latencyMs: Math.round(
+                    performance.now() - requestStartedAt,
+                  ),
+                  contentChars: 0,
+                });
+                await logProviderChat({
+                  success: false,
+                  statusCode: 422,
+                  errorMessage: `writer_native_guardrail_block:${
+                    nativeBlock.categories.join(",") || "policy"
+                  }`,
+                });
+                return json({
+                  success: false,
+                  status: "guardrailBlocked",
+                  code: "writer_guardrail_blocked",
+                  message:
+                    "Writerの安全基準に抵触したため処理を停止しました。個人情報や危険な内容を取り除いて再試行してください。",
+                  guardrail: {
+                    decision: "block",
+                    stage: "provider",
+                    categories: nativeBlock.categories,
+                    guardrail_name: nativeBlock.guardrailName,
+                    policy_version: CONTENT_GUARDRAIL_POLICY_VERSION,
+                    trace_id: traceId,
+                  },
+                }, 422);
+              }
+            }
             // Free tier / 課金制限検知
             if (isProviderPaymentRequired(resp.status, respText)) {
               await logProviderChat({
@@ -6878,7 +7080,54 @@ serve(async (req: Request) => {
           try {
             data = JSON.parse(respText);
           } catch {
-            const outputChars = respText.slice(0, 2000).length;
+            let safeResponseText = respText.slice(0, 2000);
+            let guardrailMetadata: Record<string, unknown> | undefined;
+            if (guardrailsEnabled) {
+              const outputGuardrail = await runAndAuditWriterGuardrail(admin, {
+                traceId,
+                userId,
+                text: safeResponseText,
+                stage: "output",
+              });
+              if (!outputGuardrail.auditLogged) {
+                await logProviderChat({
+                  success: false,
+                  statusCode: 503,
+                  errorMessage: "guardrail_audit_unavailable:output",
+                });
+                return writerGuardrailAuditFailure(traceId);
+              }
+              if (outputGuardrail.result.decision === "block") {
+                await logProviderChat({
+                  success: false,
+                  statusCode: 422,
+                  errorMessage: `guardrail_block:output:${
+                    outputGuardrail.result.categories.join(",")
+                  }`.slice(0, 500),
+                });
+                return writerGuardrailFailure(
+                  traceId,
+                  outputGuardrail.result,
+                );
+              }
+              safeResponseText = outputGuardrail.result.safeText ?? "";
+              guardrailMetadata = {
+                decision: outputGuardrail.result.decision,
+                stage: "output",
+                categories: outputGuardrail.result.categories,
+                redaction_count: outputGuardrail.result.redactionCount,
+                warning: outputGuardrail.result.decision === "redact"
+                  ? "AI応答内の個人情報または秘密情報を自動的に伏せました。"
+                  : null,
+                policy_version: CONTENT_GUARDRAIL_POLICY_VERSION,
+                trace_id: traceId,
+              };
+              if (outputGuardrail.result.decision === "redact") {
+                safeResponseText =
+                  `⚠️ 安全保護のため機密情報を伏せました。\n\n${safeResponseText}`;
+              }
+            }
+            const outputChars = safeResponseText.length;
             const estimatedCost = calculateApiCost(
               requestedModel,
               estimateTokensFromChars(inputChars),
@@ -6896,7 +7145,8 @@ serve(async (req: Request) => {
               success: true,
               provider: providerId,
               status: "implemented",
-              text: respText.slice(0, 2000),
+              text: safeResponseText,
+              ...(guardrailMetadata ? { guardrail: guardrailMetadata } : {}),
               observability: {
                 provider: providerId,
                 model: requestedModel,
@@ -6913,17 +7163,61 @@ serve(async (req: Request) => {
             });
           }
           const content = cfg.parseResponse(data);
+          let safeContent = content;
+          let guardrailMetadata: Record<string, unknown> | undefined;
+          if (guardrailsEnabled && content.trim()) {
+            const outputGuardrail = await runAndAuditWriterGuardrail(admin, {
+              traceId,
+              userId,
+              text: content,
+              stage: "output",
+            });
+            if (!outputGuardrail.auditLogged) {
+              await logProviderChat({
+                success: false,
+                statusCode: 503,
+                errorMessage: "guardrail_audit_unavailable:output",
+              });
+              return writerGuardrailAuditFailure(traceId);
+            }
+            if (outputGuardrail.result.decision === "block") {
+              await logProviderChat({
+                success: false,
+                statusCode: 422,
+                errorMessage: `guardrail_block:output:${
+                  outputGuardrail.result.categories.join(",")
+                }`.slice(0, 500),
+              });
+              return writerGuardrailFailure(traceId, outputGuardrail.result);
+            }
+            safeContent = outputGuardrail.result.safeText ?? "";
+            guardrailMetadata = {
+              decision: outputGuardrail.result.decision,
+              stage: "output",
+              categories: outputGuardrail.result.categories,
+              redaction_count: outputGuardrail.result.redactionCount,
+              warning: outputGuardrail.result.decision === "redact"
+                ? "AI応答内の個人情報または秘密情報を自動的に伏せました。"
+                : null,
+              policy_version: CONTENT_GUARDRAIL_POLICY_VERSION,
+              trace_id: traceId,
+            };
+            if (outputGuardrail.result.decision === "redact") {
+              safeContent =
+                `⚠️ 安全保護のため機密情報を伏せました。\n\n${safeContent}`;
+            }
+          }
           const finishReason = providerFinishReason(data);
           const modelUsed = pick(data, "model");
-          const outputChars = content.length;
+          const outputChars = safeContent.length;
           const usedModel = String(modelUsed ?? requestedModel);
           // 本文が空のレスポンスは成功扱いにしない。reasoning モデルが
           // 推論で予算を使い切ると finish_reason=length かつ本文が空になり、
           // 旧コードは success:true(空文字)で返してフォールバック連鎖を
           // 止め、無駄なコストだけ計上していた。
           const lengthLimited = isProviderOutputLengthLimited(finishReason);
-          if (!content.trim() || lengthLimited) {
-            const failureStatus = !content.trim()
+          if (!safeContent.trim() || lengthLimited) {
+            const failureStatus = !safeContent.trim()
               ? "emptyOutput"
               : "outputLengthLimited";
             await logProviderChat({
@@ -6960,8 +7254,9 @@ serve(async (req: Request) => {
             success: true,
             provider: providerId,
             status: "implemented",
-            text: content,
+            text: safeContent,
             model: usedModel,
+            ...(guardrailMetadata ? { guardrail: guardrailMetadata } : {}),
             observability: {
               provider: providerId,
               model: usedModel,
@@ -7957,6 +8252,85 @@ serve(async (req: Request) => {
       // ── Observability (Win版#131 part 4 / NotebookLM f56cc07c) ────────────────
       // SQL views (provider_health_view / provider_heatmap_view / session_trace_view)
       // を Flutter から安全に参照するためのラッパー
+      case "observability.guardrails": {
+        try {
+          await authorizeAutomationActor(admin, req);
+        } catch {
+          return json({
+            success: false,
+            error: "admin_required",
+            message: "ガードレール監査ログの閲覧には管理者権限が必要です。",
+          }, 403);
+        }
+        const windowDays = Math.max(
+          1,
+          Math.min(90, Number(body.window_days ?? 7) || 7),
+        );
+        const recentLimit = Math.max(
+          1,
+          Math.min(100, Number(body.limit ?? 30) || 30),
+        );
+        const sampleLimit = Math.max(200, Math.min(2000, recentLimit * 20));
+        const since = new Date(
+          Date.now() - windowDays * 24 * 60 * 60 * 1000,
+        ).toISOString();
+        const { data, error } = await admin
+          .from("ai_guardrail_events")
+          .select(
+            "trace_id, provider, action, stage, decision, categories, redaction_count, latency_ms, content_chars, policy_version, created_at",
+          )
+          .gte("created_at", since)
+          .order("created_at", { ascending: false })
+          .limit(sampleLimit);
+        if (error) return json({ error: error.message }, 400);
+        const rows = (data ?? []) as Array<Record<string, unknown>>;
+        const categoryCounts = new Map<string, number>();
+        let blocked = 0;
+        let redacted = 0;
+        let allowed = 0;
+        let totalLatencyMs = 0;
+        for (const row of rows) {
+          const decision = String(row.decision ?? "");
+          if (decision === "block") blocked += 1;
+          else if (decision === "redact") redacted += 1;
+          else if (decision === "allow") allowed += 1;
+          totalLatencyMs += Number(row.latency_ms ?? 0) || 0;
+          const categories = Array.isArray(row.categories)
+            ? row.categories
+            : [];
+          for (const category of categories) {
+            const key = String(category).slice(0, 64);
+            if (!key) continue;
+            categoryCounts.set(key, (categoryCounts.get(key) ?? 0) + 1);
+          }
+        }
+        const categories = [...categoryCounts.entries()]
+          .map(([category, count]) => ({ category, count }))
+          .sort((a, b) =>
+            b.count - a.count ||
+            a.category.localeCompare(b.category)
+          );
+        return json({
+          success: true,
+          summary: {
+            window_days: windowDays,
+            sampled_events: rows.length,
+            sample_limited: rows.length === sampleLimit,
+            allowed,
+            blocked,
+            redacted,
+            average_latency_ms: rows.length > 0
+              ? Math.round(totalLatencyMs / rows.length)
+              : 0,
+            categories,
+          },
+          recent_events: rows.slice(0, recentLimit),
+          privacy: {
+            raw_content_stored: false,
+            user_id_returned: false,
+          },
+        });
+      }
       case "observability.provider_health": {
         const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
         const { data, error } = await admin

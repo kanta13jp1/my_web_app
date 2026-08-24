@@ -51,7 +51,29 @@ Writer AI StudioのGuardrails機能を有効化し、APIリクエストに組み
 
 ## Checklist
 
-- [ ] Reproduction is clear
-- [ ] Smallest safe fix is implemented
-- [ ] Analyze/tests/CI are checked
-- [ ] PR notes explain the change and the remaining risk
+- [x] Reproduction is clear: Writer `provider.chat` had no deterministic input/output guardrail or privacy-safe decision log.
+- [x] Smallest safe fix is implemented for the Writer direct-chat lane.
+- [x] Local analyze and focused Deno/Flutter tests are checked; Draft PR CI remains the merge authority.
+- [x] PR notes explain the change and the remaining risk.
+
+## Implemented slice
+
+- Writer calls run a fail-closed input check before the provider request.
+- Writer text output is blocked for harmful content and masks detected PII/secrets before returning it.
+- Native Writer guardrail rejection responses are normalized to a user-safe error without returning provider detail.
+- `ai_guardrail_events` stores bounded decision metadata only; prompt, response, matched values, and user ID are never returned by Observability.
+- AI Observability includes an admin-authorized Guardrails tab with 7/30/90-day summaries.
+
+## Deployment gate
+
+This Draft PR does not configure the Writer tenant, run a production migration,
+deploy an Edge Function, or merge itself. Before release, an authorized operator
+must complete the checklist in [`docs/WRITER_CONTENT_GUARDRAILS.md`](../WRITER_CONTENT_GUARDRAILS.md).
+
+## Local validation
+
+- `deno test supabase/functions/ai-hub/content_guardrails_test.ts`
+- `deno lint` and `deno check` for the changed AI Hub modules
+- Focused Flutter service, widget, schema-contract, and chat-service tests
+- Responsive widget coverage at 390px and 1200px
+- Full `flutter analyze`

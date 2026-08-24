@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
+import 'package:my_web_app/widgets/ai_guardrail_observability_tab.dart';
 
-/// AI Observability — プロバイダーヘルス + ヒートマップ + セッショントレース
+/// AI Observability — プロバイダーヘルス + ヒートマップ + セッショントレース + ガードレール
 ///
 /// NotebookLM "TraceHawk vs Datadog: AI Agent Observability in 2026" (f56cc07c)
 /// の知見を統合 (Win版#131 part 4)。
@@ -25,8 +26,12 @@ class AiObservabilityPage extends StatefulWidget {
 class _AiObservabilityPageState extends State<AiObservabilityPage>
     with SingleTickerProviderStateMixin, TabRouteUrlSync {
   @override
-  List<String> get tabUrlSlugs =>
-      const <String>['health', 'heatmap', 'sessions'];
+  List<String> get tabUrlSlugs => const <String>[
+    'health',
+    'heatmap',
+    'sessions',
+    'guardrails',
+  ];
 
   @override
   TabController get tabUrlController => _tab;
@@ -42,7 +47,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 3, vsync: this);
+    _tab = TabController(length: 4, vsync: this);
     _loadHealth();
     _loadSessions();
   }
@@ -70,8 +75,9 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
       if (mounted) setState(() => _providers = list);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('プロバイダーヘルス取得失敗: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('プロバイダーヘルス取得失敗: $e')));
       }
     } finally {
       if (mounted) setState(() => _loadingHealth = false);
@@ -91,8 +97,9 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
       if (mounted) setState(() => _sessions = list);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('セッション取得失敗: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('セッション取得失敗: $e')));
       }
     } finally {
       if (mounted) setState(() => _loadingSessions = false);
@@ -116,6 +123,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
             Tab(icon: Icon(Icons.health_and_safety), text: 'ヘルス'),
             Tab(icon: Icon(Icons.grid_on), text: 'ヒートマップ'),
             Tab(icon: Icon(Icons.timeline), text: 'セッション'),
+            Tab(icon: Icon(Icons.shield_outlined), text: 'Guardrails'),
           ],
         ),
         actions: [
@@ -134,6 +142,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
           _buildHealth(),
           _HeatmapTab(supabase: _supabase),
           _buildSessions(),
+          const AiGuardrailObservabilityTab(),
         ],
       ),
     );
@@ -173,10 +182,10 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
     final color = isFlaky
         ? const Color(0xFFEF4444)
         : successRate >= 99
-            ? const Color(0xFF22C55E)
-            : successRate >= 95
-                ? const Color(0xFFF97316)
-                : const Color(0xFFEAB308);
+        ? const Color(0xFF22C55E)
+        : successRate >= 95
+        ? const Color(0xFFF97316)
+        : const Color(0xFFEAB308);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -205,8 +214,10 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
               ),
               if (isFlaky)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
@@ -326,7 +337,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
     final cost = (s['total_cost_usd'] as num?)?.toDouble() ?? 0.0;
     final providers =
         (s['provider_chain'] as List?)?.cast<String>().toSet().join(', ') ??
-            '?';
+        '?';
     final hasError = errorSteps > 0;
     final color = hasError ? const Color(0xFFEF4444) : const Color(0xFF6366F1);
     return InkWell(
@@ -337,9 +348,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
         decoration: BoxDecoration(
           color: const Color(0xFF141414),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: hasError ? color : const Color(0xFF1F1F1F),
-          ),
+          border: Border.all(color: hasError ? color : const Color(0xFF1F1F1F)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -645,9 +654,7 @@ class _HeatmapTabState extends State<_HeatmapTab> {
               height: 18,
               margin: const EdgeInsets.symmetric(horizontal: 1),
               decoration: BoxDecoration(
-                color: _color(
-                  _maxValue == 0 ? 0 : (hours[h] ?? 0) / _maxValue,
-                ),
+                color: _color(_maxValue == 0 ? 0 : (hours[h] ?? 0) / _maxValue),
                 borderRadius: BorderRadius.circular(2),
               ),
               child: (hours[h] ?? 0) == 0
@@ -769,21 +776,17 @@ class _SessionStepsSheetState extends State<_SessionStepsSheet> {
                       ),
                     )
                   : _steps.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'ステップなし',
-                            style: TextStyle(
-                              color: Color(0xFF94A3B8),
-                              height: 1.5,
-                            ),
-                          ),
-                        )
-                      : ListView.separated(
-                          itemCount: _steps.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 6),
-                          itemBuilder: (_, i) => _stepCard(i + 1, _steps[i]),
-                        ),
+                  ? const Center(
+                      child: Text(
+                        'ステップなし',
+                        style: TextStyle(color: Color(0xFF94A3B8), height: 1.5),
+                      ),
+                    )
+                  : ListView.separated(
+                      itemCount: _steps.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 6),
+                      itemBuilder: (_, i) => _stepCard(i + 1, _steps[i]),
+                    ),
             ),
           ],
         ),
