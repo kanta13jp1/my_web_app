@@ -104,6 +104,10 @@ revoke all on table public.ai_university_content_events
 grant insert (event_name, surface)
   on table public.ai_university_content_events to anon, authenticated;
 
+-- Keep the migration safely repeatable in an isolated pre-production proof.
+-- Supabase applies each migration transactionally, so replacement is atomic.
+drop policy if exists "anonymous clients insert allowlisted content events"
+  on public.ai_university_content_events;
 create policy "anonymous clients insert allowlisted content events"
   on public.ai_university_content_events
   for insert
