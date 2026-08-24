@@ -41,68 +41,71 @@ class _ProcrastinationResetPageState extends State<ProcrastinationResetPage> {
           builder: (context, _) {
             return switch (viewModel.loadStatus) {
               ProcrastinationResetLoadStatus.initial ||
-              ProcrastinationResetLoadStatus.loading => const Center(
-                child: CircularProgressIndicator(),
-              ),
+              ProcrastinationResetLoadStatus.loading =>
+                const Center(
+                  child: CircularProgressIndicator(),
+                ),
               ProcrastinationResetLoadStatus.failure => _LoadFailure(
-                message: viewModel.errorMessage,
-                onRetry: viewModel.load,
-              ),
+                  message: viewModel.errorMessage,
+                  onRetry: viewModel.load,
+                ),
               ProcrastinationResetLoadStatus.ready => Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: <Color>[
-                      colors.primaryContainer.withValues(alpha: 0.32),
-                      colors.surface,
-                      colors.tertiaryContainer.withValues(alpha: 0.24),
-                    ],
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: <Color>[
+                        colors.primaryContainer.withValues(alpha: 0.32),
+                        colors.surface,
+                        colors.tertiaryContainer.withValues(alpha: 0.24),
+                      ],
+                    ),
+                  ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final wide = constraints.maxWidth >= _wideBreakpoint;
+                      final intro = _buildIntro(context, viewModel);
+                      final action = viewModel.session == null
+                          ? _buildPlanner(context, viewModel)
+                          : _buildActiveSession(context, viewModel);
+                      return SingleChildScrollView(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: wide ? 32 : 16,
+                          vertical: 24,
+                        ),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 1180),
+                            child: wide
+                                ? Row(
+                                    key:
+                                        const Key('procrastination-reset-wide'),
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      SizedBox(width: 360, child: intro),
+                                      const SizedBox(width: 28),
+                                      Expanded(child: action),
+                                    ],
+                                  )
+                                : Column(
+                                    key: const Key(
+                                      'procrastination-reset-narrow',
+                                    ),
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: <Widget>[
+                                      intro,
+                                      const SizedBox(height: 20),
+                                      action,
+                                    ],
+                                  ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final wide = constraints.maxWidth >= _wideBreakpoint;
-                    final intro = _buildIntro(context, viewModel);
-                    final action = viewModel.session == null
-                        ? _buildPlanner(context, viewModel)
-                        : _buildActiveSession(context, viewModel);
-                    return SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: wide ? 32 : 16,
-                        vertical: 24,
-                      ),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1180),
-                          child: wide
-                              ? Row(
-                                  key: const Key('procrastination-reset-wide'),
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    SizedBox(width: 360, child: intro),
-                                    const SizedBox(width: 28),
-                                    Expanded(child: action),
-                                  ],
-                                )
-                              : Column(
-                                  key: const Key(
-                                    'procrastination-reset-narrow',
-                                  ),
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: <Widget>[
-                                    intro,
-                                    const SizedBox(height: 20),
-                                    action,
-                                  ],
-                                ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
             };
           },
         ),
@@ -279,16 +282,14 @@ class _ProcrastinationResetPageState extends State<ProcrastinationResetPage> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: DistractionBarrier.values
-                    .map((barrier) {
-                      return ChoiceChip(
-                        key: Key('barrier-${barrier.name}'),
-                        label: Text(_barrierLabel(barrier)),
-                        selected: _barrier == barrier,
-                        onSelected: (_) => setState(() => _barrier = barrier),
-                      );
-                    })
-                    .toList(growable: false),
+                children: DistractionBarrier.values.map((barrier) {
+                  return ChoiceChip(
+                    key: Key('barrier-${barrier.name}'),
+                    label: Text(_barrierLabel(barrier)),
+                    selected: _barrier == barrier,
+                    onSelected: (_) => setState(() => _barrier = barrier),
+                  );
+                }).toList(growable: false),
               ),
               if (viewModel.errorMessage != null) ...<Widget>[
                 const SizedBox(height: 16),
@@ -304,9 +305,8 @@ class _ProcrastinationResetPageState extends State<ProcrastinationResetPage> {
               const SizedBox(height: 24),
               FilledButton.icon(
                 key: const Key('create-procrastination-plan'),
-                onPressed: viewModel.isSaving
-                    ? null
-                    : () => _createPlan(viewModel),
+                onPressed:
+                    viewModel.isSaving ? null : () => _createPlan(viewModel),
                 icon: const Icon(Icons.bolt),
                 label: Text(viewModel.isSaving ? '保存中…' : '実行プランを作る'),
               ),
@@ -332,8 +332,7 @@ class _ProcrastinationResetPageState extends State<ProcrastinationResetPage> {
     final session = viewModel.session!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final progress =
-        1 -
+    final progress = 1 -
         (viewModel.remainingSeconds /
             ProcrastinationResetViewModel.sessionDurationSeconds);
     return Card(
@@ -370,9 +369,8 @@ class _ProcrastinationResetPageState extends State<ProcrastinationResetPage> {
                 ),
                 IconButton(
                   tooltip: 'プランを作り直す',
-                  onPressed: viewModel.isSaving
-                      ? null
-                      : () => _resetPlan(viewModel),
+                  onPressed:
+                      viewModel.isSaving ? null : () => _resetPlan(viewModel),
                   icon: const Icon(Icons.edit_outlined),
                 ),
               ],
@@ -443,9 +441,8 @@ class _ProcrastinationResetPageState extends State<ProcrastinationResetPage> {
             if (!session.hasStarted)
               FilledButton.icon(
                 key: const Key('start-procrastination-session'),
-                onPressed: viewModel.isSaving
-                    ? null
-                    : () => viewModel.startSession(),
+                onPressed:
+                    viewModel.isSaving ? null : () => viewModel.startSession(),
                 icon: const Icon(Icons.play_arrow),
                 label: Text('「${session.firstMove}」をやる'),
               )
@@ -464,9 +461,8 @@ class _ProcrastinationResetPageState extends State<ProcrastinationResetPage> {
                 ),
               FilledButton.icon(
                 key: const Key('complete-procrastination-session'),
-                onPressed: viewModel.isSaving
-                    ? null
-                    : () => _completePlan(viewModel),
+                onPressed:
+                    viewModel.isSaving ? null : () => _completePlan(viewModel),
                 icon: const Icon(Icons.check_circle_outline),
                 label: const Text('できた'),
               ),

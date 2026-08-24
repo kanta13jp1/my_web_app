@@ -12,9 +12,9 @@ class ProcrastinationResetViewModel extends ChangeNotifier {
     required ProcrastinationResetGateway gateway,
     BuildProcrastinationPlan planBuilder = const BuildProcrastinationPlan(),
     DateTime Function()? now,
-  }) : _gateway = gateway,
-       _planBuilder = planBuilder,
-       _now = now ?? DateTime.now;
+  })  : _gateway = gateway,
+        _planBuilder = planBuilder,
+        _now = now ?? DateTime.now;
 
   static const sessionDurationSeconds = 5 * 60;
 

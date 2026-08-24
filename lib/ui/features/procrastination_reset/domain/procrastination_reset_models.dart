@@ -27,8 +27,7 @@ class ProcrastinationResetSession {
       fiveMinuteAction: json['five_minute_action']?.toString() ?? '',
       firstMove: json['first_move']?.toString() ?? '',
       barrier: DistractionBarrier.fromStorage(json['barrier']?.toString()),
-      createdAt:
-          DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
       startedAt: DateTime.tryParse(json['started_at']?.toString() ?? ''),
     );
@@ -55,13 +54,13 @@ class ProcrastinationResetSession {
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'task': task,
-    'five_minute_action': fiveMinuteAction,
-    'first_move': firstMove,
-    'barrier': barrier.name,
-    'created_at': createdAt.toIso8601String(),
-    if (startedAt != null) 'started_at': startedAt!.toIso8601String(),
-  };
+        'task': task,
+        'five_minute_action': fiveMinuteAction,
+        'first_move': firstMove,
+        'barrier': barrier.name,
+        'created_at': createdAt.toIso8601String(),
+        if (startedAt != null) 'started_at': startedAt!.toIso8601String(),
+      };
 }
 
 class ProcrastinationResetSnapshot {
@@ -91,11 +90,11 @@ class ProcrastinationResetSnapshot {
   final DateTime? lastCompletedAt;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    if (session != null) 'session': session!.toJson(),
-    'completed_count': completedCount,
-    if (lastCompletedAt != null)
-      'last_completed_at': lastCompletedAt!.toIso8601String(),
-  };
+        if (session != null) 'session': session!.toJson(),
+        'completed_count': completedCount,
+        if (lastCompletedAt != null)
+          'last_completed_at': lastCompletedAt!.toIso8601String(),
+      };
 }
 
 class ProcrastinationPlanValidationException implements Exception {

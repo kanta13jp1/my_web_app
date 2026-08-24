@@ -13,7 +13,7 @@ abstract class ProcrastinationResetGateway {
 class SharedPreferencesProcrastinationResetGateway
     implements ProcrastinationResetGateway {
   SharedPreferencesProcrastinationResetGateway({SharedPreferences? preferences})
-    : _preferences = preferences;
+      : _preferences = preferences;
 
   static const storageKey = 'procrastination_reset_snapshot_v1';
 
