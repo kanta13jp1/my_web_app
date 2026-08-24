@@ -780,7 +780,9 @@ class _SessionStepsSheetState extends State<_SessionStepsSheet> {
                           child: Text(
                             'ステップなし',
                             style: TextStyle(
-                                color: Color(0xFF94A3B8), height: 1.5),
+                              color: Color(0xFF94A3B8),
+                              height: 1.5,
+                            ),
                           ),
                         )
                       : ListView.separated(

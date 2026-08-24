@@ -5,7 +5,8 @@ import 'asset_chat_privacy_settings_service.dart';
 import 'offline_secure_mode_settings_service.dart';
 
 typedef AiHubChatInvoker = Future<Map<String, dynamic>> Function(
-    Map<String, dynamic> body);
+  Map<String, dynamic> body,
+);
 
 class AiHubChatObservability {
   final String provider;

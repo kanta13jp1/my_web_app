@@ -1,7 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 typedef AiGuardrailObservabilityInvoker = Future<Map<String, dynamic>> Function(
-    Map<String, dynamic> body);
+  Map<String, dynamic> body,
+);
 
 class AiGuardrailCategoryCount {
   final String category;
