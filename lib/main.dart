@@ -1393,6 +1393,13 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const WritingCenterPage(),
       );
+    case '/pdf-document-analyzer':
+      return MaterialPageRoute(
+        builder: (_) => const WritingCenterPage(
+          initialSection: WritingCenterSection.documents,
+        ),
+        settings: const RouteSettings(name: '/pdf-document-analyzer'),
+      );
     case '/wiki-database':
       return MaterialPageRoute(builder: (_) => const WikiDatabasePage());
     case '/time-tracker':

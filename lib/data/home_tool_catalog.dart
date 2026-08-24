@@ -1567,8 +1567,8 @@ List<HomeToolEntry> buildHomeToolCatalog({
     HomeToolEntry(
       id: 'ai-writing-assistant',
       sectionId: 'growth',
-      title: 'AI文章・要約アシスタント',
-      subtitle: '文章作成・改善・翻訳と、履歴付きAI要約を1か所で使う',
+      title: 'AI文章・要約・PDFアシスタント',
+      subtitle: '文章作成・改善・翻訳、履歴付きAI要約、PDF解析を1か所で使う',
       icon: Icons.auto_fix_high_outlined,
       color: const Color(0xFF8B5CF6),
       keywords: const <String>[
@@ -1589,6 +1589,9 @@ List<HomeToolEntry> buildHomeToolCatalog({
         '翻訳',
         'ライティング',
         'Notion AI',
+        'PDF',
+        'ドキュメント解析',
+        'Markdown',
       ],
       onOpen: (context) => _pushPage(context, const WritingCenterPage()),
     ),

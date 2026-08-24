@@ -127,6 +127,10 @@ import {
   buildSubscriptionStatementPrompt,
   parseSubscriptionStatementResponse,
 } from "./subscription_statement_scan.ts";
+import {
+  handlePdfDocumentAnalysisAction,
+  type PdfAnalysisStorage,
+} from "./pdf_document_analysis.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -4261,6 +4265,7 @@ serve(async (req: Request) => {
       "secretary.task",
       "secretary.history",
       "summarize.text",
+      "document.pdf.analyze",
       "agent.list",
       "agent.create",
       "agent.run",
@@ -4757,6 +4762,28 @@ serve(async (req: Request) => {
           return json({ success: true, summary });
         }
         return json({ error: "No AI API key configured" }, 503);
+      }
+
+      case "document.pdf.analyze": {
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        const result = await handlePdfDocumentAnalysisAction({
+          storage: admin.storage as unknown as PdfAnalysisStorage,
+          userId: userId ?? "",
+          body,
+          enabled: (Deno.env.get("WRITER_PDF_PARSER_ENABLED") ?? "")
+            .trim().toLowerCase() === "true",
+          writerApiKey: Deno.env.get("WRITER_API_KEY") ?? "",
+          allowExternalProvider: !shouldBlockExternalProviderCall(
+            offlinePolicy,
+          ),
+          authorizeSpend: async (estimatedCostUsd) => {
+            const budget = await checkBudget("ef", "ai-hub");
+            return budget.ok && budget.remaining_usd >= estimatedCostUsd;
+          },
+          recordSpend: (estimatedCostUsd) =>
+            recordSpend("ef", "ai-hub", estimatedCostUsd),
+        });
+        return json(result.body, result.status);
       }
 
       case "agent.list": {

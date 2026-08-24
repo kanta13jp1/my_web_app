@@ -20,6 +20,7 @@ const Set<String> _nonFeatureRoutes = <String>{
 /// 複数表示されるため、計測上は必ず正規 route に寄せる。
 const Map<String, String> kCanonicalFeatureRouteAliases = <String, String>{
   '/ai-summarizer': '/ai-writing-assistant',
+  '/pdf-document-analyzer': '/ai-writing-assistant',
   '/autonomous-ops': '/autonomous-ops-console',
   '/billing': '/subscription-billing',
   '/expense-tracker': '/asset-management',
@@ -42,7 +43,7 @@ const Map<String, String> kCanonicalFeatureRouteAliases = <String, String>{
 };
 
 const Map<String, String> _consolidatedFeatureLabels = <String, String>{
-  '/ai-writing-assistant': 'AI文章・要約アシスタント',
+  '/ai-writing-assistant': 'AI文章・要約・PDFアシスタント',
   '/asset-management': '資産・家計管理',
   '/autonomous-ops-console': '自律オペレーションコンソール',
   '/focus-timer': '集中タイマー',

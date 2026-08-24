@@ -37,9 +37,10 @@ void main() {
       expect(featureLabelForRoute('/habit-gamification'), '毎日の習慣');
       expect(featureLabelForRoute('/goal-tracker'), '人生目標管理');
       expect(featureLabelForRoute('/stats'), '実績・リワード');
+      expect(featureLabelForRoute('/ai-summarizer'), 'AI文章・要約・PDFアシスタント');
       expect(
-        featureLabelForRoute('/ai-summarizer'),
-        'AI文章・要約アシスタント',
+        featureLabelForRoute('/pdf-document-analyzer'),
+        'AI文章・要約・PDFアシスタント',
       );
       expect(
         featureLabelForRoute('/local-election-schedule'),
@@ -72,6 +73,10 @@ void main() {
       expect(canonicalFeatureRoutePath('/stats'), '/rewards');
       expect(
         canonicalFeatureRoutePath('/ai-summarizer'),
+        '/ai-writing-assistant',
+      );
+      expect(
+        canonicalFeatureRoutePath('/pdf-document-analyzer'),
         '/ai-writing-assistant',
       );
       expect(
