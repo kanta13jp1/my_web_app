@@ -50,7 +50,26 @@
 
 ## Checklist
 
-- [ ] Reproduction is clear
-- [ ] Smallest safe fix is implemented
-- [ ] Analyze/tests/CI are checked
-- [ ] PR notes explain the change and the remaining risk
+- [x] Reproduction is clear
+- [x] Smallest safe fix is implemented
+- [x] Analyze/tests are checked (CI pending after push)
+- [x] PR notes explain the change and the remaining risk
+
+## Implementation Summary
+
+- Added `/custom-task-list` with separate goal and current-situation inputs.
+- Reused `ai-hub` `provider.chat_auto` and strictly parses a JSON task array.
+- Requires 3-8 unique actionable items before accepting an AI response.
+- Supports local edit, delete, completion toggles, and SharedPreferences restore.
+- Provides compact and wide layouts with route and home-catalog registration.
+
+## Validation
+
+- Focused Flutter tests: 32 passed.
+- Targeted Dart analysis for all new model, service, repository, ViewModel,
+  page, and test files: 0 issues.
+- Whole-repository `flutter analyze` and isolated analysis of the existing large
+  home catalog produced no findings but stalled without completing; required CI
+  remains the authoritative repository-wide gate.
+- Browser direct-path smoke reached the expected unauthenticated landing gate;
+  responsive feature behavior is covered at 390px and 1100px by widget tests.

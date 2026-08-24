@@ -109,6 +109,7 @@ import '../pages/guitar_recording_studio_page.dart';
 import '../pages/public_guitar_gallery_page.dart';
 import '../pages/music_collaboration_page.dart';
 import '../ui/features/beatles_guitar_tabs/beatles_guitar_tabs_feature.dart';
+import '../ui/features/custom_task_list/custom_task_list_feature.dart';
 import '../pages/focus_timer_page.dart';
 import '../pages/writing_center_page.dart';
 import '../pages/wiki_database_page.dart';
@@ -1527,6 +1528,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFFEF4444),
       keywords: const <String>['WBS', 'ユーザータスク', '手動操作', '進捗報告', 'Slack'],
       onOpen: (context) => _pushPage(context, const UserTasksPage()),
+    ),
+    HomeToolEntry(
+      id: 'custom-task-list',
+      sectionId: 'personal',
+      title: 'AI カスタムタスクリスト',
+      subtitle: '目標と現状から、編集・完了管理できる具体的な行動リストをAI生成',
+      icon: Icons.playlist_add_check_circle_outlined,
+      color: const Color(0xFF0F766E),
+      keywords: const <String>[
+        'AI',
+        'カスタムタスク',
+        'タスクリスト',
+        '目標分解',
+        'TODO',
+        '行動計画',
+      ],
+      onOpen: (context) => _pushPage(context, const CustomTaskListPage()),
     ),
     HomeToolEntry(
       id: 'gantt-timeline',

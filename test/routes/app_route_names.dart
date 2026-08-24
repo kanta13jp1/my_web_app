@@ -94,6 +94,7 @@ const List<String> kAllAppRoutes = <String>[
   '/corporate-bank-account-cost',
   '/crm-pipeline',
   '/customer-feedback',
+  '/custom-task-list',
   '/daily-habits',
   '/daily-judgment',
   '/danshari',
