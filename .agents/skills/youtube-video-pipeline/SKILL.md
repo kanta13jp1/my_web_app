@@ -1,6 +1,6 @@
 ---
 name: youtube-video-pipeline
-description: End-to-end reference-video workflow for fetching public captions and metadata, writing an original Japanese narration, recording the user's voice, rendering a verified 1080p video and thumbnail, uploading privately to a verified YouTube channel, publishing after a separate confirmation, registering the public video in my_web_app AI大学 as a discoverable embedded lesson, and monitoring the reviewed production deployment through live UI verification. Use for requests such as 「参考動画から解説動画を作って」, 「読み上げを録音して動画化」, 「YouTubeに非公開投稿して確認後に公開」, 「公開動画をAI大学に埋め込んで」, 「mainへマージしてデプロイを監視」, or the complete reference-video-to-AI大学 pipeline.
+description: End-to-end reference-video workflow for fetching public captions and metadata, writing an original Japanese narration, recording the user's voice, rendering a verified 1080p video and thumbnail, reviewing every candidate against all previously published channel videos, uploading privately to a verified YouTube channel, publishing after a separate confirmation, registering the public video in my_web_app AI大学 as a discoverable embedded lesson, and monitoring the reviewed production deployment through live UI verification. Use for requests such as 「参考動画から解説動画を作って」, 「読み上げを録音して動画化」, 「過去動画と比較して改善して」, 「YouTubeに非公開投稿して確認後に公開」, 「公開動画をAI大学に埋め込んで」, 「mainへマージしてデプロイを監視」, or the complete reference-video-to-AI大学 pipeline.
 ---
 
 # YouTube Video Pipeline
@@ -94,6 +94,28 @@ Never report completion until:
 - Full decoding finishes without errors.
 - The contact sheet shows readable opening, middle, and ending captions.
 - Duration and audio level are plausible.
+
+### 4A. Optionally improve selected shots with external providers
+
+Use Runway only when the user explicitly requests it and a short generative insert adds clear explanatory value. Read [references/runway-video-improvement.md](references/runway-video-improvement.md) before uploading an asset, consuming credits, or integrating a Runway result.
+
+Keep the verified deterministic MP4 as the baseline. Require a fresh paid-generation confirmation that states the model, duration, current official unit price, maximum credits or cost, and exact input before every paid test. Archive the request, input, output, provenance, verification, and cost inside the job directory. Accept a clip only after visual and technical review, then re-render and re-verify the complete 1920×1080 video.
+
+If the user asks to skip Runway, record `status: skipped` and the reason, consume no credits, and continue from the verified baseline without blocking the YouTube workflow.
+
+Treat HeyGen as another optional improvement candidate when a short presenter insert would materially improve comprehension or attention. Do not use it automatically. When the user selects HeyGen, read [references/heygen-video-improvement.md](references/heygen-video-improvement.md) before creating an avatar, uploading voice or image assets, consuming API funds, or integrating the result. Keep the user's original narration and the deterministic render as the authoritative baseline.
+
+Treat Adobe Firefly Services as an optional improvement candidate for a lesson-specific generated insert, reusable MOGRT-based motion graphics, reframing, or an approved avatar, speech, translation, and lip-sync workflow. Do not use it automatically. When the user selects Adobe Firefly Services, read [references/firefly-services-video-improvement.md](references/firefly-services-video-improvement.md) before authenticating, uploading assets, submitting an asynchronous job, consuming API entitlement or funds, or integrating the result. A Creative Cloud or Firefly web plan does not by itself prove API entitlement or unit pricing.
+
+Treat Luma Dream Machine as an optional improvement candidate for a short cinematic text-to-video, image-to-video, video-to-video, or reframe insert. Do not use it automatically. When the user selects Luma, read [references/luma-dream-machine-video-improvement.md](references/luma-dream-machine-video-improvement.md) before authenticating, uploading an asset, submitting a generation, consuming API funds, or integrating the result. Prefer the current Luma Agents API and Ray 3.2 when available; never infer API balance, commercial rights, or model entitlement from a Dream Machine Web or iOS subscription.
+
+### 4B. Review against every previous video
+
+Before preparing upload metadata for every generated candidate, read [references/historical-video-review.md](references/historical-video-review.md) and run its mandatory all-history review. Refresh the verified target-channel inventory and include every earlier published video, plus known unlisted, private, superseded, or duplicate pipeline release for which evidence remains. The review must contain one individually identified row per historical video. Cached metadata, storyboards, and local masters may be reused, but cache reuse never permits silently omitting a video.
+
+Write the required inventory, metrics, report, provenance, and visual comparison sheets under `$jobDir\comparison`. Compare the candidate numerically with its direct predecessor and qualitatively with every historical video. Separate confirmed improvements from unchanged or unproven gaps and regressions or tradeoffs; distinguish explanatory motion from merely moving decoration.
+
+Do not present the YouTube upload confirmation gate until the report summary and artifact paths have been shown to the user. If no material improvement is proven or a critical regression exists, revise the candidate and rerun the complete comparison. Do not bypass this gate by silently consuming a paid HEDRA, FAL, ElevenLabs, Runway, HeyGen, Adobe Firefly Services, or Luma Dream Machine operation.
 
 ### 5. Prepare YouTube metadata
 
@@ -267,4 +289,9 @@ Do not claim completion until the active database lesson, production version, di
 - `scripts/ai_university_content.py`: reusable UI-contract check and idempotent AI大学 video lesson migration generator.
 - `references/publishing-policy.md`: copyright, consent, OAuth, confirmation, provenance, and validation rules.
 - `references/ai-university-embedding.md`: `my_web_app` schema, reusable Flutter embed contract, tests, release, verification, and rollback.
+- `references/runway-video-improvement.md`: optional Runway shot generation, paid-call confirmation, preservation, verification, integration, and improvement-report rules.
+- `references/heygen-video-improvement.md`: optional HeyGen presenter generation using the user's approved image or avatar and selected narration segment, with consent, billing, preservation, and comparison gates.
+- `references/firefly-services-video-improvement.md`: optional Adobe Firefly Services routing for generated video, reusable motion graphics, reframing, avatars, speech, translation, and lip sync, with entitlement, billing, asset, integration, and comparison gates.
+- `references/luma-dream-machine-video-improvement.md`: optional Luma Ray 3.2 short-shot generation or transformation, with separate API billing, per-call approval, preservation, integration, and comparison gates.
+- `references/historical-video-review.md`: mandatory complete-history inventory, comparison rubric, evidence rules, acceptance gate, caching, and improvement reporting.
 - `references/narration-format.txt`: example of one subtitle-sized spoken unit per paragraph.
