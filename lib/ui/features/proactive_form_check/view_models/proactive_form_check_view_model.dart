@@ -96,8 +96,8 @@ class ProactiveFormCheckViewModel extends ChangeNotifier {
       _errorMessage = _status == ProactiveValidationStatus.failure
           ? '入力内容を検証できないため送信を中止しました。再試行してください。'
           : _draft.hasAllRequiredValues
-          ? '解決が必要な項目を修正してから送信してください。'
-          : '未入力の項目を入力してから送信してください。';
+              ? '解決が必要な項目を修正してから送信してください。'
+              : '未入力の項目を入力してから送信してください。';
       notifyListeners();
       return false;
     }

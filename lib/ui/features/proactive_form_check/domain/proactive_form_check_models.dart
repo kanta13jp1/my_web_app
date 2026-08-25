@@ -2,11 +2,11 @@ enum ProactiveFormField { title, email, destinationUrl, dailyBudget }
 
 extension ProactiveFormFieldLabel on ProactiveFormField {
   String get label => switch (this) {
-    ProactiveFormField.title => 'タイトル',
-    ProactiveFormField.email => '通知先メールアドレス',
-    ProactiveFormField.destinationUrl => '遷移先URL',
-    ProactiveFormField.dailyBudget => '1日の予算',
-  };
+        ProactiveFormField.title => 'タイトル',
+        ProactiveFormField.email => '通知先メールアドレス',
+        ProactiveFormField.destinationUrl => '遷移先URL',
+        ProactiveFormField.dailyBudget => '1日の予算',
+      };
 }
 
 class ProactiveFormDraft {
@@ -35,22 +35,20 @@ class ProactiveFormDraft {
       dailyBudget.trim().isNotEmpty;
 
   String valueFor(ProactiveFormField field) => switch (field) {
-    ProactiveFormField.title => title,
-    ProactiveFormField.email => email,
-    ProactiveFormField.destinationUrl => destinationUrl,
-    ProactiveFormField.dailyBudget => dailyBudget,
-  };
+        ProactiveFormField.title => title,
+        ProactiveFormField.email => email,
+        ProactiveFormField.destinationUrl => destinationUrl,
+        ProactiveFormField.dailyBudget => dailyBudget,
+      };
 
   ProactiveFormDraft withValue(ProactiveFormField field, String value) {
     return ProactiveFormDraft(
       title: field == ProactiveFormField.title ? value : title,
       email: field == ProactiveFormField.email ? value : email,
-      destinationUrl: field == ProactiveFormField.destinationUrl
-          ? value
-          : destinationUrl,
-      dailyBudget: field == ProactiveFormField.dailyBudget
-          ? value
-          : dailyBudget,
+      destinationUrl:
+          field == ProactiveFormField.destinationUrl ? value : destinationUrl,
+      dailyBudget:
+          field == ProactiveFormField.dailyBudget ? value : dailyBudget,
     );
   }
 }

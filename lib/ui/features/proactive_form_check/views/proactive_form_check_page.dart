@@ -17,9 +17,9 @@ class _ProactiveFormCheckPageState extends State<ProactiveFormCheckPage> {
 
   final Map<ProactiveFormField, TextEditingController> _controllers =
       <ProactiveFormField, TextEditingController>{
-        for (final field in ProactiveFormField.values)
-          field: TextEditingController(),
-      };
+    for (final field in ProactiveFormField.values)
+      field: TextEditingController(),
+  };
 
   @override
   void dispose() {
@@ -392,8 +392,8 @@ class _ValidationPanel extends StatelessWidget {
                 viewModel.hasBlockingFinding
                     ? '赤い項目を解決すると送信できます。'
                     : viewModel.canSubmit
-                    ? '送信の準備ができました。'
-                    : 'すべての必須項目を入力してください。',
+                        ? '送信の準備ができました。'
+                        : 'すべての必須項目を入力してください。',
                 key: const Key('proactive-submit-guidance'),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colors.onSurfaceVariant,
@@ -418,12 +418,10 @@ class _FindingCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final blocking = finding.blocksSubmission;
-    final background = blocking
-        ? colors.errorContainer
-        : colors.secondaryContainer;
-    final foreground = blocking
-        ? colors.onErrorContainer
-        : colors.onSecondaryContainer;
+    final background =
+        blocking ? colors.errorContainer : colors.secondaryContainer;
+    final foreground =
+        blocking ? colors.onErrorContainer : colors.onSecondaryContainer;
     return Container(
       key: Key('proactive-finding-${finding.id}'),
       padding: const EdgeInsets.all(16),
@@ -523,9 +521,8 @@ class _EmptyState extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: positive
-            ? colors.primaryContainer
-            : colors.surfaceContainerHighest,
+        color:
+            positive ? colors.primaryContainer : colors.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
