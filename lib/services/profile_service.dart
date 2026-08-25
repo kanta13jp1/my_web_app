@@ -1,6 +1,9 @@
 // lib/services/profile_service.dart
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:typed_data'; // 👈 Uint8Listのために必要
+
+import 'package:my_web_app/services/profile_egress_policy.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../models/user_profile.dart';
 import 'package:my_web_app/services/supabase_client_provider.dart';
 import '../utils/app_logger.dart';
@@ -10,6 +13,13 @@ class ProfileService {
   final SupabaseClient _supabase;
   // Supabase Storageのバケット名
   static const String _avatarBucket = 'avatars';
+  static const String _profileColumns =
+      'user_id,display_name,bio,avatar_url,website_url,location,'
+      'twitter_handle,github_handle,gender,occupation,annual_income,address,'
+      'education,career_history,hobbies,alcohol_use,smoking_use,'
+      'favorite_foods,is_public,birth_date,target_death_age,'
+      'disposable_time_ratio,created_at,updated_at';
+  static final ProfileReadCache _profileCache = ProfileReadCache();
 
   ProfileService([SupabaseClient? supabaseClient])
       : _supabase = supabaseClient ?? supabase;
@@ -29,7 +39,18 @@ class ProfileService {
     required String contentType, // 例: 'image/png', 'image/jpeg', 'image/webp'
   }) async {
     // ユーザーIDをファイル名として使用し、ファイルパスを決定
-    final filePath = '$userId.$fileExtension';
+    ProfileEgressPolicy.validateAvatar(
+      fileBytes: fileBytes,
+      fileExtension: fileExtension,
+      contentType: contentType,
+    );
+    final normalizedExtension = ProfileEgressPolicy.normalizeExtension(
+      fileExtension,
+    );
+    final normalizedContentType = ProfileEgressPolicy.normalizeContentType(
+      contentType,
+    );
+    final filePath = '$userId.$normalizedExtension';
 
     try {
       // 既存のファイルを上書きするようにアップロード
@@ -38,13 +59,19 @@ class ProfileService {
             fileBytes,
             fileOptions: FileOptions(
               upsert: true, // 既存のファイルがあれば上書き
-              contentType: contentType,
+              contentType: normalizedContentType,
+              cacheControl: ProfileEgressPolicy.avatarCacheControl,
             ),
           );
 
       // アップロード後、アバターの公開URLを取得して返す
-      final publicUrl =
-          _supabase.storage.from(_avatarBucket).getPublicUrl(filePath);
+      final publicUrl = ProfileEgressPolicy.versionedPublicUrl(
+        _supabase.storage.from(_avatarBucket).getPublicUrl(
+              filePath,
+              transform: ProfileEgressPolicy.avatarTransformOptions(),
+            ),
+        fileBytes,
+      );
 
       // DBの avatar_url も更新する必要があるため、ここで更新メソッドも呼び出します
       await updateAvatarUrl(userId, publicUrl);
@@ -54,11 +81,7 @@ class ProfileService {
       );
       return publicUrl;
     } on StorageException catch (e, stackTrace) {
-      AppLogger.error(
-        'Storage upload error',
-        error: e,
-        stackTrace: stackTrace,
-      );
+      AppLogger.error('Storage upload error', error: e, stackTrace: stackTrace);
       // Storage固有のエラーメッセージを分かりやすくして再スロー
       throw Exception('画像アップロードに失敗しました: ${e.message}');
     } catch (e, stackTrace) {
@@ -70,11 +93,20 @@ class ProfileService {
   // --- 以下、既存のメソッド ---
 
   /// プロフィールを取得
-  Future<UserProfile?> getProfile(String userId) async {
+  Future<UserProfile?> getProfile(
+    String userId, {
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = _profileCache.read(userId);
+      if (cached != null) {
+        return cached;
+      }
+    }
     try {
       final response = await _supabase
           .from('user_profiles')
-          .select()
+          .select(_profileColumns)
           .eq('user_id', userId)
           .maybeSingle();
 
@@ -83,7 +115,9 @@ class ProfileService {
         return await _createDefaultProfile(userId);
       }
 
-      return UserProfile.fromJson(response);
+      final profile = UserProfile.fromJson(response);
+      _profileCache.write(profile);
+      return profile;
     } catch (e, stackTrace) {
       AppLogger.error(
         'Error getting profile',
@@ -106,15 +140,14 @@ class ProfileService {
   /// プロフィールを更新
   Future<UserProfile?> updateProfile(UserProfile profile) async {
     try {
-      final response = await _supabase
+      await _supabase
           .from('user_profiles')
           .update(profile.toJson())
-          .eq('user_id', profile.userId)
-          .select()
-          .single();
+          .eq('user_id', profile.userId);
 
       AppLogger.info('Profile updated successfully for user ${profile.userId}');
-      return UserProfile.fromJson(response);
+      _profileCache.write(profile);
+      return profile;
     } catch (e, stackTrace) {
       AppLogger.error(
         'Error updating profile',
@@ -134,6 +167,7 @@ class ProfileService {
       }).eq('user_id', userId);
 
       AppLogger.info('Display name updated to "$displayName" for user $userId');
+      _profileCache.invalidate(userId);
       return true;
     } catch (e, stackTrace) {
       AppLogger.error(
@@ -148,12 +182,15 @@ class ProfileService {
   /// 自己紹介を更新
   Future<bool> updateBio(String userId, String bio) async {
     try {
-      await _supabase.from('user_profiles').update({
-        'bio': bio,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('user_id', userId);
+      final updatedAt = DateTime.now().toIso8601String();
+      final updates = {'bio': bio, 'updated_at': updatedAt};
+      await _supabase
+          .from('user_profiles')
+          .update(updates)
+          .eq('user_id', userId);
 
       AppLogger.info('Bio updated for user $userId');
+      _profileCache.invalidate(userId);
       return true;
     } catch (e, stackTrace) {
       AppLogger.error('Error updating bio', error: e, stackTrace: stackTrace);
@@ -170,6 +207,7 @@ class ProfileService {
       }).eq('user_id', userId);
 
       AppLogger.info('Avatar URL updated for user $userId');
+      _profileCache.invalidate(userId);
       return true;
     } catch (e, stackTrace) {
       AppLogger.error(
@@ -190,6 +228,7 @@ class ProfileService {
       }).eq('user_id', userId);
 
       AppLogger.info('Public status updated to $isPublic for user $userId');
+      _profileCache.invalidate(userId);
       return true;
     } catch (e, stackTrace) {
       AppLogger.error(
@@ -213,14 +252,11 @@ class ProfileService {
         isPublic: true,
       );
 
-      final response = await _supabase
-          .from('user_profiles')
-          .insert(profile.toJson())
-          .select()
-          .single();
+      await _supabase.from('user_profiles').insert(profile.toJson());
 
       AppLogger.info('Default profile created for user $userId');
-      return UserProfile.fromJson(response);
+      _profileCache.write(profile);
+      return profile;
     } catch (e, stackTrace) {
       AppLogger.error(
         'Error creating default profile',
@@ -234,13 +270,10 @@ class ProfileService {
   /// プロフィールを削除
   Future<bool> deleteProfile(String userId) async {
     try {
-      await _supabase
-          .from('user_profiles')
-          .delete()
-          .eq('user_id', userId)
-          .select();
+      await _supabase.from('user_profiles').delete().eq('user_id', userId);
 
       AppLogger.info('Profile deleted for user $userId');
+      _profileCache.invalidate(userId);
       return true;
     } catch (e, stackTrace) {
       AppLogger.error(
