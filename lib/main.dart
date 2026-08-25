@@ -219,6 +219,7 @@ import 'package:my_web_app/pages/loyalty_points_page.dart';
 import 'package:my_web_app/pages/viral_ad_generator_page.dart';
 import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
+import 'package:my_web_app/ui/features/live_captions/live_captions_feature.dart';
 import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
 import 'package:my_web_app/ui/features/notion_migration/notion_migration_feature.dart';
 import 'package:my_web_app/ui/features/procrastination_reset/procrastination_reset_feature.dart';
@@ -1340,6 +1341,11 @@ Route<dynamic> generateAppRoute(
       );
     case '/landing-ab-test':
       return MaterialPageRoute(builder: (_) => const LandingAbTestPage());
+    case '/live-captions':
+      return MaterialPageRoute(
+        builder: (_) => const LiveCaptionsFeature(),
+        settings: RouteSettings(name: settings.name),
+      );
     case '/video-studio':
       return MaterialPageRoute(
         builder: (_) => VideoStudioFeature(initialUri: uri),

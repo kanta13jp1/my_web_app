@@ -195,6 +195,7 @@ const List<String> kAllAppRoutes = <String>[
   '/legal-compliance',
   '/life-goals',
   '/life-goals-kpi',
+  '/live-captions',
   '/line-notifications',
   '/local-election-700',
   '/local-election-schedule',

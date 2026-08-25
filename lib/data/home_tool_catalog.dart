@@ -157,6 +157,7 @@ import '../pages/social_feed_page.dart';
 import '../pages/subscription_billing_page.dart';
 import '../pages/digital_product_store_pages.dart';
 import '../pages/viral_ad_generator_page.dart';
+import '../ui/features/live_captions/live_captions_feature.dart';
 import '../ui/features/video_studio/video_studio_feature.dart';
 import '../ui/features/notion_migration/notion_migration_feature.dart';
 import '../pages/youtube_stats_page.dart';
@@ -2265,6 +2266,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF283593),
       keywords: const <String>['ABテスト', 'ランディング', 'LP', 'CVR', 'コンバージョン'],
       onOpen: (context) => _pushPage(context, const LandingAbTestPage()),
+    ),
+    HomeToolEntry(
+      id: 'live-captions',
+      sectionId: 'growth',
+      title: 'ライブ多言語字幕',
+      subtitle: '配信音声をリアルタイム文字起こしし、視聴言語へ自動翻訳',
+      icon: Icons.closed_caption_outlined,
+      color: const Color(0xFF3949AB),
+      keywords: const <String>[
+        'ライブ配信',
+        '字幕',
+        '文字起こし',
+        '翻訳',
+        'caption',
+        'streaming',
+      ],
+      onOpen: (context) => _pushPage(context, const LiveCaptionsFeature()),
     ),
     HomeToolEntry(
       id: 'video-studio',
