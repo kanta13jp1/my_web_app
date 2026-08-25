@@ -19,6 +19,7 @@ import 'package:my_web_app/models/kgi_csf_kpi.dart';
 import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
 import 'package:my_web_app/services/asset_auto_debit_confirmation_service.dart';
+import 'package:my_web_app/services/asset_balance_timestamp_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service.dart';
 import 'package:my_web_app/services/asset_liability_card_statement_import_service.dart';
@@ -6278,8 +6279,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final Map<String, Map<String, double>> loadedData = {};
       final Set<String> loadedTypes = {'現金'};
       for (var item in data) {
-        final DateTime createdAt = DateTime.parse(item['created_at']).toLocal();
-        final String dateKey = DateFormat('yyyy-MM-dd').format(createdAt);
+        final createdAt = DateTime.parse(item['created_at']);
+        final recordDate = AssetBalanceTimestampService.localRecordDate(
+          createdAt,
+          now: DateTime.now(),
+        );
+        final String dateKey = DateFormat('yyyy-MM-dd').format(recordDate);
         final String title = item['title'];
         final double amount = (item['amount'] as num).toDouble();
         loadedTypes.add(title);
@@ -6768,7 +6773,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         'user_id': userId,
         'title': type,
         'amount': amount,
-        'created_at': DateTime.now().toIso8601String(),
+        'created_at': AssetBalanceTimestampService.encodeForDatabase(
+          DateTime.now(),
+        ),
       });
 
       setState(() {
@@ -6897,7 +6904,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     if (confirmed != true || !mounted) return;
 
-    final nowIso = DateTime.now().toIso8601String();
+    final nowIso = AssetBalanceTimestampService.encodeForDatabase(
+      DateTime.now(),
+    );
     try {
       await _supabase.from('cfo_assets').insert([
         for (final entry in amounts.entries)
@@ -6990,6 +6999,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!hasData) return;
 
     try {
+      final nowIso = AssetBalanceTimestampService.encodeForDatabase(
+        DateTime.now(),
+      );
       final previousAmounts = <String, double?>{
         for (final entry in todayData.entries)
           entry.key: _lastUpdatedDates[entry.key] == null
@@ -7001,7 +7013,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           'user_id': userId,
           'title': entry.key,
           'amount': entry.value,
-          'created_at': DateTime.now().toIso8601String(),
+          'created_at': nowIso,
         });
       }
       setState(() {
@@ -15621,15 +15633,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cycleEndExclusive,
     );
     final debtInputs = <AssetCalendarDebtInput>[
-      for (final row in debtRows)
-        AssetCalendarDebtInput(
-          id: row.id,
-          name: row.name,
-          balance: row.balance,
-          paymentDay: row.paymentDay,
-          scheduledPaymentAmount: row.scheduledPaymentAmount,
-          isDirectCashflowTarget: row.isDirectCashflowTarget,
-        ),
+      for (final row in debtRows) AssetCalendarDebtInput.fromDebtRow(row),
     ];
     final inflowInputs = <AssetCalendarInflowInput>[
       for (final inflow in monthInflowEntries)
