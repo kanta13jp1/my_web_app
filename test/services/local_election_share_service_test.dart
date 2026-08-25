@@ -2,6 +2,7 @@
 
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/data/dpj_official_endorsements.dart';
 import 'package:my_web_app/models/local_election_plan.dart';
 import 'package:my_web_app/models/local_election_reality.dart';
 import 'package:my_web_app/services/local_election_share_service.dart';
@@ -556,16 +557,31 @@ void main() {
 
     // 全国サマリー: 立憲だけでなく自民と公認予定候補も出す。
     expect(draft.content, contains('自民地方議員参考合計: 474人'));
-    expect(draft.content, contains('公認予定候補: 217件'));
-    expect(draft.content, contains('33/47都道府県に掲載'));
+    expect(
+      draft.content,
+      contains('公認予定候補: $dpjOfficialEndorsementTotal件'),
+    );
+    expect(
+      draft.content,
+      contains('$dpjOfficialEndorsementPrefectureCount/47都道府県に掲載'),
+    );
     // 県別行: 自民参考と地力差 (ラベルは自民であって立憲ではない)。
     expect(draft.content, contains('自民参考362人'));
     expect(draft.content, contains('自民+319'));
     // metadata にも機械可読で載る。
     expect(draft.metadata['totalLdpLocalMembers'], 474);
-    expect(draft.metadata['officialEndorsementTotal'], 217);
-    expect(draft.metadata['officialEndorsementAsOf'], '2026-08-10');
-    expect(draft.metadata['firstEndorsementTotal'], 217);
+    expect(
+      draft.metadata['officialEndorsementTotal'],
+      dpjOfficialEndorsementTotal,
+    );
+    expect(
+      draft.metadata['officialEndorsementAsOf'],
+      dpjOfficialEndorsementSourceAsOf,
+    );
+    expect(
+      draft.metadata['firstEndorsementTotal'],
+      dpjOfficialEndorsementTotal,
+    );
     final prefectures = draft.metadata['prefectures'] as List<dynamic>;
     final tokyo =
         Map<String, dynamic>.from(prefectures.first as Map<dynamic, dynamic>);

@@ -45,6 +45,15 @@
         ]
       },
       {
+        "regex": "^/assets/assets/data/tiger_(site_review_status|course_review_status|feature_review_status|reviewer_league_status|reviewer_profiles)\\.json$",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
+      {
         "source": "/icons/**",
         "headers": [
           {

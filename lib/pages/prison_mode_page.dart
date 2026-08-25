@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:my_web_app/data/repositories/debt_guard_repository.dart';
+import 'package:my_web_app/data/services/debt_guard_event_service.dart';
+import 'package:my_web_app/view_models/debt_guard_view_model.dart';
+import 'package:my_web_app/widgets/debt_guard_panel.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// 刑務所モード — 借金完済まで生活を律する
@@ -15,6 +19,7 @@ class PrisonModePage extends StatefulWidget {
 
 class _PrisonModePageState extends State<PrisonModePage> {
   final _supabase = Supabase.instance.client;
+  late final DebtGuardViewModel _debtGuardViewModel;
   bool _loading = true;
   Map<String, dynamic>? _prisonData;
   List<Map<String, dynamic>> _debts = [];
@@ -46,7 +51,20 @@ class _PrisonModePageState extends State<PrisonModePage> {
   @override
   void initState() {
     super.initState();
+    _debtGuardViewModel = DebtGuardViewModel(
+      repository: SupabaseDebtGuardRepository(
+        service: DebtGuardEventService(client: _supabase),
+      ),
+      userId: _supabase.auth.currentUser?.id,
+    );
+    _debtGuardViewModel.load();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _debtGuardViewModel.dispose();
+    super.dispose();
   }
 
   String get _todayStr => DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -228,6 +246,22 @@ class _PrisonModePageState extends State<PrisonModePage> {
         'remaining_amount': remaining < 0 ? 0 : remaining,
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', debt['id']);
+      final otherRemaining =
+          _debts.where((item) => item['id'] != debt['id']).fold<int>(
+                0,
+                (sum, item) => sum + (item['remaining_amount'] as int? ?? 0),
+              );
+      final isNowPaidOff =
+          otherRemaining + (remaining < 0 ? 0 : remaining) <= 0;
+      if (isNowPaidOff) {
+        final userId = _supabase.auth.currentUser?.id;
+        if (userId != null) {
+          await _supabase.from('prison_mode').update({
+            'is_active': false,
+            'released_at': DateTime.now().toIso8601String(),
+          }).eq('user_id', userId);
+        }
+      }
       await _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -300,7 +334,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isActive ? '🔒 収監中' : '刑務所モード'),
+        title: Text(isActive ? '🔒 完済ガード中' : '完済ガード'),
         backgroundColor:
             isActive ? Theme.of(context).colorScheme.onSurface : null,
         foregroundColor: isActive ? Colors.white : null,
@@ -347,6 +381,13 @@ class _PrisonModePageState extends State<PrisonModePage> {
                   onPressed: _addDebt,
                   icon: const Icon(Icons.add),
                   label: const Text('借金を登録'),
+                ),
+                const SizedBox(height: 24),
+
+                DebtGuardPanel(
+                  viewModel: _debtGuardViewModel,
+                  isLocked: isActive && !paidOff && _debts.isNotEmpty,
+                  isPaidOff: paidOff,
                 ),
                 const SizedBox(height: 24),
 

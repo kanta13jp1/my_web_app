@@ -1,3 +1,5 @@
+import '../services/note_tag_service.dart';
+
 class Note {
   final int id;
   final String userId;
@@ -11,6 +13,10 @@ class Note {
   final bool isArchived;
   final DateTime? archivedAt;
   final bool isPinned; // 追加
+  final String captureStatus;
+  final String captureSource;
+  final DateTime? inboxSavedAt;
+  final List<String> tags;
 
   Note({
     required this.id,
@@ -25,6 +31,10 @@ class Note {
     this.isArchived = false,
     this.archivedAt,
     this.isPinned = false, // 追加
+    this.captureStatus = 'organized',
+    this.captureSource = 'editor',
+    this.inboxSavedAt,
+    this.tags = const <String>[],
   });
 
   factory Note.fromJson(Map<String, dynamic> json) {
@@ -45,6 +55,12 @@ class Note {
           ? DateTime.parse(json['archived_at'] as String)
           : null,
       isPinned: json['is_pinned'] as bool? ?? false, // 追加
+      captureStatus: json['capture_status'] as String? ?? 'organized',
+      captureSource: json['capture_source'] as String? ?? 'editor',
+      inboxSavedAt: json['inbox_saved_at'] != null
+          ? DateTime.parse(json['inbox_saved_at'] as String)
+          : null,
+      tags: NoteTagService.normalize(json['tags']),
     );
   }
 
@@ -62,8 +78,14 @@ class Note {
       'is_archived': isArchived,
       'archived_at': archivedAt?.toIso8601String(),
       'is_pinned': isPinned, // 追加
+      'capture_status': captureStatus,
+      'capture_source': captureSource,
+      'inbox_saved_at': inboxSavedAt?.toIso8601String(),
+      'tags': tags,
     };
   }
+
+  bool get isInbox => captureStatus == 'inbox';
 
   // 期限切れかどうか
   bool get isOverdue {

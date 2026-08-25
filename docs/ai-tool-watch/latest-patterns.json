@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-10T21:59:54Z",
+  "generated_at": "2026-08-14T21:42:29Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -20,18 +20,18 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-4886def50078",
+        "entry_id": "nf-af7d43749622",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.226 / August 8, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.226 August 8, 2026 Bug fixes and reliability improvements ​ 2.1.225 August 8, 2026 Added gateway spend-limit support to Claude Code’s usage warning; the limit-reached...",
+        "text": "Claude Code changelog 2.1.232 / August 13, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.232 August 13, 2026 Subagent forking is now on by default: a subagent_type: \"fork\" subagent inherits the full conversation and prompt cache, and non-teammate agent spawns...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "7e17945d59eff4ba90cc42b4fd77c9ee3d6f7173818874135a7cb4a1178d40a5",
+          "hash": "ef5ed59000ef000cb398de8c8a3c155e8b61f189627e3bad5314a032bbe59814",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -75,22 +75,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.226 / August 8, 2026",
+          "latest_signal": "2.1.232 / August 13, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "7e17945d59eff4ba90cc42b4fd77c9ee3d6f7173818874135a7cb4a1178d40a5",
+          "previous_hash": "ae973f95c841c1e6cd721a08f731554a63507148c3004296dbd4ac8abeec6cc1",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.226 August 8, 2026 Bug fixes and reliability improvements ​ 2.1.225 August 8, 2026 Added gateway spend-limit support to Claude Code’s usage warning; the limit-reached..."
+            "​ 2.1.232 August 13, 2026 Subagent forking is now on by default: a subagent_type: \"fork\" subagent inherits the full conversation and prompt cache, and non-teammate agent spawns..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-4886def50078",
+        "entry_id": "nf-af7d43749622",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -116,10 +116,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "5a924f9a0790833cfeba54a374954e87f9ff437c7b941234ac4ca238087e03cb",
+          "hash": "68b553a0d18b67e7ba26e4d100af5a8803b93be507da1440355f5d221b6d764d",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -158,7 +158,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "5a924f9a0790833cfeba54a374954e87f9ff437c7b941234ac4ca238087e03cb",
+          "previous_hash": "25d7d4f9fe758ae28905d5cf0108cb18ce660278e9e58dea70384b8dd8b4998b",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -196,10 +196,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "16169570e6d5b7464fa84bf9a60ba6e09af666e83cf5973d556f37ea81c414a8",
+          "hash": "0c0ca421e0052172b163f600672402e3fd43da924406e0542fc0e92fc6bcbfcb",
           "keyword_groups": {
             "codex-runtime": [
               "computer use"
@@ -263,9 +263,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-dd6f74214325",
+        "entry_id": "nf-39c1e4db19e6",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-08-10 / Introducing Daybreak Blue and Daybreak Red Daybreak now offers two access tiers for approve ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources... Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)... All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How...",
+        "text": "Codex changelog 2026-08-13 / Computer History Computer History is an opt-in feature in the ChatGPT desktop app on macOS ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources... Home Quickstart Core concepts Plugin architecture Skills MCP server Plan Brainstorm use cases Define tools Build Build an MCP server Add UI to your MCP server (optional)... All posts Recent Custom Code Review rules for Codex Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How...",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -274,7 +274,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "cc9df9aa27783ad9b60c72d95b61b2e8c23bf534643149adfb1d7c06bd553a9d",
+          "hash": "9f9d8def9bc43b713ccd54237c8dfa1eb48dc8475dadaa9365ad51b20226368a",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -317,10 +317,10 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-08-10 / Introducing Daybreak Blue and Daybreak Red Daybreak now offers two access tiers for approve",
+          "latest_signal": "2026-08-13 / Computer History Computer History is an opt-in feature in the ChatGPT desktop app on macOS",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "3973609a2544add4191e51fd3126d3e82e992e9179d2892a2952949bc9c1b1b3",
+          "previous_hash": "b49807688d0ee0e85e4e8d25e628e591dfef36406def106ea17095613ccef9e5",
           "slug": "codex-changelog",
           "snippets": [
             "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -332,7 +332,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-dd6f74214325",
+        "entry_id": "nf-39c1e4db19e6",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -364,7 +364,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "6fd0858421374b81a1a30c27ab6ebaffe3b777f27218f0f5a47ec380b32e2a43",
+          "hash": "554104a900c0f9d762a3088f5517f1bf13f6cabe64ebf7cc0d81bbb5c016e028",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.4",
@@ -403,7 +403,7 @@
           "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "f6d18bc18ccedd8d17d6fb956082dafa1e80116f092b6c28f5102305e05221af",
+          "previous_hash": "32ad39e015f35a19d5e24c8edb13a38b5eb1ca8938498ac16e073fe7ccb80c95",
           "slug": "codex-use-cases",
           "snippets": [
             "ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use cases Resources...",
@@ -479,9 +479,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-ffdfada3b183",
+        "entry_id": "nf-291db8ed96d2",
         "title": "Cursor changelog",
-        "text": "Cursor changelog New in Cursor What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review... Install plugins to connect: Google Drive : search files and folders, open and download content, create and organize files Gmail : search and read mail, draft and send messages,... New to both iPhone and iPad: an inbox to stay organized, and a review experience that covers the full PR.",
+        "text": "Cursor changelog New in Cursor What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review... Builds are included with Cloud Agents at no additional cost. Or click Run setup agent first to test the migration and review any proposed config changes.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
@@ -490,15 +490,14 @@
           "changed": false,
           "error": null,
           "first_seen": false,
-          "hash": "a23bd552769066e3de658abf11d3553627ae135cd177078cd4c9cbac3f466ae3",
+          "hash": "ae74337e03614eb31784f983251beef3857d6a30b0d9f3734294d6e8c5d8ef73",
           "keyword_groups": {
             "hooks": [
               "hook",
               "hooks"
             ],
             "integration": [
-              "MCP",
-              "Slack"
+              "MCP"
             ],
             "quality-cost": [
               "cost",
@@ -515,19 +514,19 @@
           "latest_signal": "New in Cursor",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "a23bd552769066e3de658abf11d3553627ae135cd177078cd4c9cbac3f466ae3",
+          "previous_hash": "ae74337e03614eb31784f983251beef3857d6a30b0d9f3734294d6e8c5d8ef73",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Models Grok Composer Evals Product ↓ Agents Cloud Mobile Automations CLI Marketplace ↗ Review...",
-            "Install plugins to connect: Google Drive : search files and folders, open and download content, create and organize files Gmail : search and read mail, draft and send messages,...",
-            "New to both iPhone and iPad: an inbox to stay organized, and a review experience that covers the full PR."
+            "Builds are included with Cloud Agents at no additional cost.",
+            "Or click Run setup agent first to test the migration and review any proposed config changes."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-ffdfada3b183",
+        "entry_id": "nf-291db8ed96d2",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -545,9 +544,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-a9de0746fa95",
+        "entry_id": "nf-09aa9d51f465",
         "title": "Gemini Code Assist release notes",
-        "text": "Gemini Code Assist release notes VS Code Gemini Code Assist 2.92.0 / July 20, 2026 Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application... Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra... April 13, 2026 VS Code Gemini Code Assist 2.77.3 Fixed Quota issues fixed in VS Code Various bug fixes related to quota issues.",
+        "text": "Gemini Code Assist release notes VS Code Gemini Code Assist 2.95.0 / August 10, 2026 Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application... Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra... April 13, 2026 VS Code Gemini Code Assist 2.77.3 Fixed Quota issues fixed in VS Code Various bug fixes related to quota issues.",
         "url": "https://developers.google.com/gemini-code-assist/resources/release-notes",
         "source": "Gemini Code Assist",
         "source_label": "ai-tool-watch",
@@ -556,7 +555,7 @@
           "changed": false,
           "error": null,
           "first_seen": false,
-          "hash": "cd6e9ff8949d7c5fe4015a5b039261c21f1ecea5e73d18a972feed159ca159a1",
+          "hash": "26aadac92b37e4dba989ec21d669ed9e59ae4ee05b67a6ffff38a4ceeb4c903d",
           "keyword_groups": {
             "hooks": [
               "Stop"
@@ -578,10 +577,10 @@
               "workflow"
             ]
           },
-          "latest_signal": "VS Code Gemini Code Assist 2.92.0 / July 20, 2026",
+          "latest_signal": "VS Code Gemini Code Assist 2.95.0 / August 10, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
-          "previous_hash": "cd6e9ff8949d7c5fe4015a5b039261c21f1ecea5e73d18a972feed159ca159a1",
+          "previous_hash": "26aadac92b37e4dba989ec21d669ed9e59ae4ee05b67a6ffff38a4ceeb4c903d",
           "slug": "gemini-code-assist-release-notes",
           "snippets": [
             "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",
@@ -593,7 +592,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-a9de0746fa95",
+        "entry_id": "nf-09aa9d51f465",
         "title": "Gemini Code Assist release notes",
         "url": "https://developers.google.com/gemini-code-assist/resources/release-notes",
         "source": "Gemini Code Assist",
@@ -611,9 +610,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-aeacddf716b9",
+        "entry_id": "nf-70df26554c32",
         "title": "Devin release notes",
-        "text": "Devin release notes August 7, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines... Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Stacked PRs Devin... Automations API and Terraform Provider The automations API has been promoted from beta to the production v3 API spec, sessions can now be filtered by automation_id , and a...",
+        "text": "Devin release notes August 12, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines... Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Stacked PRs Devin... Side chats open in a panel next to the worklog and support stopping in-flight responses.",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
         "source_label": "ai-tool-watch",
@@ -622,7 +621,7 @@
           "changed": false,
           "error": null,
           "first_seen": false,
-          "hash": "6ede3f497bb664bdb01f1454286973a8e4ac5dc7e5338cf23b98d0ff3e4d8018",
+          "hash": "10926c02ec24c81fb0b9ab573da2d02c439a02fb1124fb872c65876cf8e7a30a",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -656,22 +655,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "August 7, 2026",
+          "latest_signal": "August 12, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "6ede3f497bb664bdb01f1454286973a8e4ac5dc7e5338cf23b98d0ff3e4d8018",
+          "previous_hash": "10926c02ec24c81fb0b9ab573da2d02c439a02fb1124fb872c65876cf8e7a30a",
           "slug": "devin-release-notes",
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
             "Onboarding Devin Environment configuration Devin Outposts Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Stacked PRs Devin...",
-            "Automations API and Terraform Provider The automations API has been promoted from beta to the production v3 API spec, sessions can now be filtered by automation_id , and a..."
+            "Side chats open in a panel next to the worklog and support stopping in-flight responses."
           ],
           "status": 200,
           "url": "https://docs.devin.ai/release-notes"
         }
       },
       "filter": {
-        "entry_id": "nf-aeacddf716b9",
+        "entry_id": "nf-70df26554c32",
         "title": "Devin release notes",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
