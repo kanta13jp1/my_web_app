@@ -215,7 +215,7 @@ jobs:
             echo "| Firebase channel | staging |"
             echo "| URL | https://my-web-app-b67f4--staging.web.app |"
             echo ""
-            echo "**Actor**: ${{ github.actor }} | **Branch**: \`${{ github.ref_name }}\`"
+            echo "**Actor**: $GITHUB_ACTOR | **Branch**: \`$GITHUB_REF_NAME\`"
           } >> $GITHUB_STEP_SUMMARY
 
   notify:

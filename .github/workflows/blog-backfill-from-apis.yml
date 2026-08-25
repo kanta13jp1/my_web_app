@@ -28,8 +28,9 @@ jobs:
 
     steps:
       - name: Call schedule-hub blog.backfill_from_apis
+        env:
+          DAYS: ${{ inputs.days }}
         run: |
-          DAYS="${{ inputs.days }}"
           PAYLOAD=$(jq -n --arg action "blog.backfill_from_apis" --argjson days "${DAYS:-60}" \
             '{action: $action, days: $days}')
           echo "Payload: $PAYLOAD"

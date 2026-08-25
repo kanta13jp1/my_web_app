@@ -77,12 +77,15 @@ jobs:
 
       - name: Determine target date and period
         id: period
+        env:
+          TARGET_DATE_INPUT: ${{ github.event.inputs.target_date }}
+          DAYS_INPUT: ${{ github.event.inputs.days || '1' }}
         run: |
-          TARGET_DATE="${{ github.event.inputs.target_date }}"
+          TARGET_DATE="$TARGET_DATE_INPUT"
           if [ -z "$TARGET_DATE" ]; then
             TARGET_DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
           fi
-          DAYS="${{ github.event.inputs.days || '1' }}"
+          DAYS="$DAYS_INPUT"
           SINCE=$(date -d "$TARGET_DATE -$DAYS days" +%Y-%m-%d 2>/dev/null || date -v-${DAYS}d -j -f %Y-%m-%d "$TARGET_DATE" +%Y-%m-%d 2>/dev/null || echo "$TARGET_DATE")
           echo "target_date=$TARGET_DATE" >> $GITHUB_OUTPUT
           echo "since=$SINCE" >> $GITHUB_OUTPUT

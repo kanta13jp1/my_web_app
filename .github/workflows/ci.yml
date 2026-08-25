@@ -301,6 +301,10 @@ jobs:
         run: python scripts/check_github_actions_powershell_splatting.py
         continue-on-error: false
 
+      - name: Check GitHub Actions script injection safety
+        run: python scripts/check_github_actions_script_injection.py
+        continue-on-error: false
+
       - name: Test tools-hub MCP smoke response compatibility
         shell: pwsh
         run: ./test/scripts/tools_hub_mcp_smoke_response_test.ps1
@@ -382,7 +386,7 @@ jobs:
           FLUTTER_WEB_TEST="${{ steps.flutter_web_test.outcome }}"
           DENO_TEST="${{ steps.deno_test.outcome }}"
           {
-            echo "## CI Results — \`${{ github.ref_name }}\` @ \`${GITHUB_SHA:0:7}\`"
+            echo "## CI Results — \`${GITHUB_REF_NAME}\` @ \`${GITHUB_SHA:0:7}\`"
             echo ""
             echo "| Scope | Required | Outcome |"
             echo "| --- | --- | --- |"
