@@ -53,8 +53,8 @@
 
 - [x] Reproduction is clear: invalid email, URL without HTTPS, and invalid budget were only discoverable after submit; the new flow surfaces them while typing.
 - [x] Smallest safe fix is implemented: isolated feature with a replaceable async validator, debounce, stale-response protection, and one-click suggestions.
-- [ ] Analyze/tests/CI are checked
-- [ ] PR notes explain the change and the remaining risk
+- [x] Analyze/tests/CI are checked
+- [x] PR notes explain the change and the remaining risk
 
 ## Implementation Notes
 
@@ -65,5 +65,16 @@
   non-blocking validation result.
 - The view model discards out-of-order async results so an older response cannot
   replace feedback for the user's latest input.
-- Remaining validation is delegated to CI while the local machine is above the
-  repository's safe memory threshold.
+- Heavy validation ran on GitHub-hosted CI while the local machine was above
+  the repository's safe memory threshold.
+
+## Subagent Review
+
+- Async-state reviewer (read-only): found a concurrent-submit race and dispose
+  guard gaps. Submission is now locked before revalidation, restored in a
+  `finally` block, and covered by a regression test.
+- UX/accessibility reviewer (read-only): found color/icon-only severity and an
+  over-broad live region. Findings now expose severity in text and Semantics,
+  while a short live region announces result counts.
+- Both reviewers ran without Flutter/Dart/build/browser/Git commands, edited no
+  files, and left no cleanup work.
