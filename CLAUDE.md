@@ -63,7 +63,7 @@
 
 ## Quota fallback
 
-Claude Code quota 超過 → Codex CLI / Gemini Code Assist Agent Mode (Gemini 3.1 Pro) / GitHub Copilot で継続. PR レビューは Gemini 1.5 Flash 自動 fallback. GHA cron 大半は Claude 非依存設計済 → 影響なし. 詳細: [`docs/AI_FALLBACK_RUNBOOK.md`](docs/AI_FALLBACK_RUNBOOK.md).
+Claude Code quota 超過 → Codex CLI / Antigravity / GitHub Copilot で継続し、Gemini Code Assist Agent Mode は Standard/Enterprise license 確認時のみ使用. Dart/Flutter widget・async/Isolate 作業は Dart 3.9+ の SDK 内蔵 `dart mcp-server` を `.gemini/settings.json` から接続し、`/mcp` で確認する. PR レビューは Gemini 1.5 Flash 自動 fallback. GHA cron 大半は Claude 非依存設計済 → 影響なし. 詳細: [`docs/AI_FALLBACK_RUNBOOK.md`](docs/AI_FALLBACK_RUNBOOK.md).
 
 ## Karpathy 4 サイクル (= 100% dogfood 達成 / part 132)
 
