@@ -51,7 +51,19 @@
 
 ## Checklist
 
-- [ ] Reproduction is clear
-- [ ] Smallest safe fix is implemented
+- [x] Reproduction is clear: invalid email, URL without HTTPS, and invalid budget were only discoverable after submit; the new flow surfaces them while typing.
+- [x] Smallest safe fix is implemented: isolated feature with a replaceable async validator, debounce, stale-response protection, and one-click suggestions.
 - [ ] Analyze/tests/CI are checked
 - [ ] PR notes explain the change and the remaining risk
+
+## Implementation Notes
+
+- Route: `/proactive-form-check`
+- Input remains on-device in the default rule-based validator. A remote policy
+  validator can be injected later without coupling it to the UI.
+- Submission remains disabled until every required value has a current,
+  non-blocking validation result.
+- The view model discards out-of-order async results so an older response cannot
+  replace feedback for the user's latest input.
+- Remaining validation is delegated to CI while the local machine is above the
+  repository's safe memory threshold.

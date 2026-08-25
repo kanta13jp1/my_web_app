@@ -1835,6 +1835,24 @@ List<HomeToolEntry> buildHomeToolCatalog({
           Navigator.of(context).pushNamed('/procrastination-reset'),
     ),
     HomeToolEntry(
+      id: 'proactive-form-check',
+      sectionId: 'personal',
+      title: '入力チェックアシスタント',
+      subtitle: '入力中にエラーを見つけ、具体的な修正案を反映',
+      icon: Icons.fact_check_outlined,
+      color: const Color(0xFF2563EB),
+      keywords: const <String>[
+        '入力チェック',
+        'フォーム',
+        'エラー',
+        '検証',
+        '修正案',
+        'validation',
+      ],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/proactive-form-check'),
+    ),
+    HomeToolEntry(
       id: 'focus-capture',
       sectionId: 'personal',
       title: 'フォーカス捕獲ゲーム',

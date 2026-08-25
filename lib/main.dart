@@ -222,6 +222,7 @@ import 'package:my_web_app/pages/landing_ab_test_page.dart';
 import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
 import 'package:my_web_app/ui/features/notion_migration/notion_migration_feature.dart';
 import 'package:my_web_app/ui/features/procrastination_reset/procrastination_reset_feature.dart';
+import 'package:my_web_app/ui/features/proactive_form_check/proactive_form_check_feature.dart';
 import 'package:my_web_app/pages/youtube_stats_page.dart';
 import 'package:my_web_app/pages/audio_effects_processor_page.dart';
 import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
@@ -1554,6 +1555,13 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const ProcrastinationResetFeature(),
         settings: const RouteSettings(
           name: ProcrastinationResetFeature.routeName,
+        ),
+      );
+    case '/proactive-form-check':
+      return MaterialPageRoute(
+        builder: (_) => const ProactiveFormCheckFeature(),
+        settings: const RouteSettings(
+          name: ProactiveFormCheckFeature.routeName,
         ),
       );
     case '/my-skills':

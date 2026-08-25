@@ -9,6 +9,10 @@ void main() {
       expect(featureLabelForRoute('/ai-university'), 'AI大学');
       expect(featureLabelForRoute('/release-notes'), 'Release Notes');
       expect(featureLabelForRoute('/procrastination-reset'), '先延ばしリセット');
+      expect(
+        featureLabelForRoute('/proactive-form-check'),
+        '入力チェックアシスタント',
+      );
     });
 
     test('未知ルートは slug を Title Case に整形してフォールバックする', () {
