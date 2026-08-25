@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import ctypes
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -17,12 +18,16 @@ from quality_gate import (
     AnalyzerLockTimeout,
     LOCK_TIMEOUT_EXIT_CODE,
     TIMEOUT_EXIT_CODE,
+    CommandResult,
     GateCommand,
     analyzer_lock_path,
+    classify_analyzer_result,
+    dart_analyze_fallback_command,
     flutter_vm_test_concurrency,
     full_commands,
     main,
     run_gate,
+    run_analyzer_gate,
     run_process,
     shared_git_dir,
     terminate_owned_process_tree,
@@ -167,7 +172,7 @@ class QualityGateTest(unittest.TestCase):
         self.assertNotEqual(LOCK_TIMEOUT_EXIT_CODE, TIMEOUT_EXIT_CODE)
 
     def test_analyze_files_cli_builds_bounded_serialized_command(self) -> None:
-        with patch("quality_gate.run_gate", return_value=0) as run:
+        with patch("quality_gate.run_analyzer_gate", return_value=0) as run:
             self.assertEqual(
                 main(["--analyze-files", "lib/example.dart", "test/example_test.dart"]),
                 0,
@@ -185,7 +190,105 @@ class QualityGateTest(unittest.TestCase):
             ],
         )
         self.assertTrue(command.serialize_analyzer)
+        self.assertTrue(command.capture_output)
         self.assertGreater(command.timeout_seconds, 0)
+
+    def test_analyze_only_cli_uses_same_analyzer_wrapper(self) -> None:
+        with patch("quality_gate.run_analyzer_gate", return_value=0) as run:
+            self.assertEqual(main(["--analyze-only"]), 0)
+
+        command = run.call_args.args[0]
+        self.assertEqual(command.args, ["flutter", "analyze"])
+        self.assertTrue(command.serialize_analyzer)
+
+    def test_analyzer_failure_classification_separates_code_and_infrastructure(self) -> None:
+        code_result = CommandResult(1, 1.0, False, "not_needed", "error - lib/a.dart:1")
+        crash_result = CommandResult(
+            -1073740791,
+            2.0,
+            False,
+            "not_needed",
+            "../../runtime/vm/zone.cc: 96: error: Out of memory.",
+        )
+        timeout_result = CommandResult(TIMEOUT_EXIT_CODE, 3.0, True, "taskkill_exit_0")
+
+        self.assertEqual(classify_analyzer_result(code_result), "code_findings")
+        self.assertEqual(classify_analyzer_result(crash_result), "infrastructure_crash")
+        self.assertEqual(classify_analyzer_result(timeout_result), "infrastructure_timeout")
+
+    def test_infrastructure_crash_runs_dart_fallback_and_writes_evidence(self) -> None:
+        primary = CommandResult(
+            -1073740791,
+            2.5,
+            False,
+            "not_needed",
+            "Analysis server exited. Out of memory.\n",
+        )
+        fallback = CommandResult(0, 1.25, False, "not_needed", "No issues found!\n")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            artifact_dir = Path(".ci-logs/analyzer")
+            with (
+                patch(
+                    "quality_gate.execute_gate",
+                    side_effect=[(primary, "acquired"), (fallback, "acquired")],
+                ) as execute,
+                patch("quality_gate.tool_version", side_effect=["Flutter test", "Dart test"]),
+            ):
+                code = run_analyzer_gate(
+                    GateCommand(
+                        "flutter analyze",
+                        ["flutter", "analyze"],
+                        "flutter",
+                        serialize_analyzer=True,
+                        capture_output=True,
+                    ),
+                    root,
+                    artifact_dir,
+                )
+
+            self.assertEqual(code, 0)
+            self.assertEqual(execute.call_count, 2)
+            self.assertEqual(execute.call_args_list[1].args[0], dart_analyze_fallback_command())
+            evidence = json.loads(
+                (root / artifact_dir / "result.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(evidence["status"], "degraded_pass")
+            self.assertEqual(evidence["primary"]["classification"], "infrastructure_crash")
+            self.assertEqual(evidence["fallback"]["classification"], "success")
+            self.assertTrue((root / artifact_dir / "comment.md").is_file())
+            self.assertIn(
+                "No issues found!",
+                (root / artifact_dir / "dart-analyze-fallback.log").read_text(
+                    encoding="utf-8"
+                ),
+            )
+
+    def test_code_findings_do_not_run_fallback(self) -> None:
+        primary = CommandResult(1, 0.5, False, "not_needed", "error - lib/a.dart:1\n")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            with (
+                patch("quality_gate.execute_gate", return_value=(primary, "acquired")) as execute,
+                patch("quality_gate.tool_version", side_effect=["Flutter test", "Dart test"]),
+            ):
+                code = run_analyzer_gate(
+                    GateCommand(
+                        "flutter analyze",
+                        ["flutter", "analyze"],
+                        "flutter",
+                        serialize_analyzer=True,
+                        capture_output=True,
+                    ),
+                    root,
+                    Path("evidence"),
+                )
+
+            self.assertEqual(code, 1)
+            execute.assert_called_once()
+            evidence = json.loads((root / "evidence/result.json").read_text(encoding="utf-8"))
+            self.assertEqual(evidence["status"], "code_findings")
+            self.assertIsNone(evidence["fallback"])
 
 
 if __name__ == "__main__":
