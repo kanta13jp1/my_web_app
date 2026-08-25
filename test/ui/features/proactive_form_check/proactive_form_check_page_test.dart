@@ -40,7 +40,10 @@ void main() {
       find.byKey(const Key('proactive-finding-email-format')),
       findsOneWidget,
     );
-    expect(find.textContaining('name@example.com'), findsOneWidget);
+    expect(
+      find.text('解決策: 「name@example.com」の形式で入力してください。'),
+      findsOneWidget,
+    );
     final submitButton = tester.widget<FilledButton>(
       find.byKey(const Key('proactive-form-submit')),
     );
