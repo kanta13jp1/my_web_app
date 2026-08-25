@@ -72,6 +72,28 @@ void main() {
     expect(find.byKey(const Key('live-captions-compact')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('supports the wide boundary with large text', (tester) async {
+    tester.view.physicalSize = const Size(980, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+          child: LiveCaptionsFeature(
+            translationGateway: _FakeTranslationGateway(),
+            speechRecognizer: _FakeSpeechRecognizer(),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('live-captions-wide')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _FakeTranslationGateway implements LiveCaptionTranslationGateway {

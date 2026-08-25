@@ -34,9 +34,11 @@ class LiveCaptionsViewModel extends ChangeNotifier {
   String? _errorMessage;
   Duration? _lastTranslationLatency;
   bool _isListening = false;
+  bool _isStarting = false;
   bool _disposed = false;
   int _pendingTranslations = 0;
   int _nextSegmentId = 1;
+  int _recognitionSession = 0;
 
   LiveCaptionStatus get status => _status;
   LiveCaptionLanguage get sourceLanguage =>
@@ -108,6 +110,7 @@ class LiveCaptionsViewModel extends ChangeNotifier {
       }
     } else {
       _targetLanguageTags.add(languageTag);
+      unawaited(_backfillTargetLanguage(languageTag));
     }
     _notify();
   }
@@ -121,7 +124,7 @@ class LiveCaptionsViewModel extends ChangeNotifier {
   }
 
   Future<bool> start() async {
-    if (_isListening) return true;
+    if (_isListening || _isStarting) return true;
     if (!_speechRecognizer.isSupported) {
       _status = LiveCaptionStatus.unsupported;
       _errorMessage = 'ChromeまたはEdgeの最新版でマイクを許可してください。';
@@ -130,21 +133,36 @@ class LiveCaptionsViewModel extends ChangeNotifier {
     }
 
     _errorMessage = null;
+    _isStarting = true;
+    _isListening = true;
+    final session = ++_recognitionSession;
+    _status = _pendingTranslations > 0
+        ? LiveCaptionStatus.translating
+        : LiveCaptionStatus.listening;
+    _notify();
     try {
       await _speechRecognizer.start(
         languageTag: _sourceLanguageTag,
         onResult: ({required transcript, required isFinal}) {
+          if (_disposed || session != _recognitionSession || !_isListening) {
+            return;
+          }
           unawaited(ingestTranscript(transcript, isFinal: isFinal));
         },
-        onError: _handleSpeechError,
+        onError: (message) => _handleSpeechError(session, message),
       );
-      _isListening = true;
+      if (_disposed || session != _recognitionSession || !_isListening) {
+        return false;
+      }
+      _isStarting = false;
       _status = _pendingTranslations > 0
           ? LiveCaptionStatus.translating
           : LiveCaptionStatus.listening;
       _notify();
       return true;
     } catch (error) {
+      if (_disposed || session != _recognitionSession) return false;
+      _isStarting = false;
       _isListening = false;
       _status = LiveCaptionStatus.error;
       _errorMessage = error.toString();
@@ -154,13 +172,15 @@ class LiveCaptionsViewModel extends ChangeNotifier {
   }
 
   Future<void> stop() async {
+    ++_recognitionSession;
+    _isStarting = false;
     _isListening = false;
-    await _speechRecognizer.stop();
     _interimText = '';
     _status = _pendingTranslations > 0
         ? LiveCaptionStatus.translating
         : LiveCaptionStatus.stopped;
     _notify();
+    await _speechRecognizer.stop();
   }
 
   Future<void> ingestTranscript(
@@ -210,12 +230,15 @@ class LiveCaptionsViewModel extends ChangeNotifier {
       ),
     );
     _pendingTranslations -= targets.length;
+    if (_disposed) return;
     _lastTranslationLatency = _now().difference(segment.receivedAt);
-    _status = _pendingTranslations > 0
-        ? LiveCaptionStatus.translating
-        : (_isListening
-            ? LiveCaptionStatus.listening
-            : LiveCaptionStatus.stopped);
+    if (_status != LiveCaptionStatus.error) {
+      _status = _pendingTranslations > 0
+          ? LiveCaptionStatus.translating
+          : (_isListening
+              ? LiveCaptionStatus.listening
+              : LiveCaptionStatus.stopped);
+    }
     _notify();
   }
 
@@ -238,6 +261,7 @@ class LiveCaptionsViewModel extends ChangeNotifier {
         sourceLanguage: source,
         targetLanguage: target,
       );
+      if (_disposed) return;
       final index = _segments.indexWhere((item) => item.id == segmentId);
       if (index < 0) return;
       _segments[index] = _segments[index].withTranslation(
@@ -246,16 +270,59 @@ class LiveCaptionsViewModel extends ChangeNotifier {
       );
       _notify();
     } catch (error) {
-      _errorMessage = '${target.label}字幕を生成できませんでした: $error';
+      if (_disposed) return;
+      if (_status != LiveCaptionStatus.error) {
+        _errorMessage = '${target.label}字幕を生成できませんでした: $error';
+      }
       _notify();
     }
   }
 
-  void _handleSpeechError(String message) {
+  Future<void> _backfillTargetLanguage(String languageTag) async {
+    final target = liveCaptionLanguageByTag(languageTag);
+    final missingSegments = _segments
+        .where((segment) => !segment.hasTranslation(languageTag))
+        .toList(growable: false);
+    if (missingSegments.isEmpty || _disposed) return;
+
+    _pendingTranslations += missingSegments.length;
+    if (_status != LiveCaptionStatus.error) {
+      _status = LiveCaptionStatus.translating;
+    }
+    _notify();
+
+    await Future.wait<void>(
+      missingSegments.map(
+        (segment) => _translateSegment(
+          segmentId: segment.id,
+          text: segment.sourceText,
+          source: liveCaptionLanguageByTag(segment.sourceLanguageTag),
+          target: target,
+        ),
+      ),
+    );
+    _pendingTranslations -= missingSegments.length;
+    if (_disposed) return;
+    if (_status != LiveCaptionStatus.error) {
+      _status = _pendingTranslations > 0
+          ? LiveCaptionStatus.translating
+          : (_isListening
+              ? LiveCaptionStatus.listening
+              : LiveCaptionStatus.stopped);
+    }
+    _notify();
+  }
+
+  void _handleSpeechError(int session, String message) {
+    if (_disposed || session != _recognitionSession) return;
+    ++_recognitionSession;
+    _isStarting = false;
     _isListening = false;
+    _interimText = '';
     _status = LiveCaptionStatus.error;
     _errorMessage = message;
     _notify();
+    unawaited(_speechRecognizer.stop());
   }
 
   void _notify() {
@@ -264,6 +331,9 @@ class LiveCaptionsViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    ++_recognitionSession;
+    _isStarting = false;
+    _isListening = false;
     _disposed = true;
     _speechRecognizer.dispose();
     super.dispose();

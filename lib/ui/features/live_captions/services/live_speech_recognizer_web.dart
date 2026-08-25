@@ -49,6 +49,7 @@ class _WebLiveSpeechRecognizer implements LiveSpeechRecognizer {
       ..maxAlternatives = 1;
 
     recognition.onresult = ((web.SpeechRecognitionEvent event) {
+      if (!_shouldListen) return;
       final results = event.results;
       for (var index = event.resultIndex; index < results.length; index++) {
         final result = results.item(index);
@@ -65,9 +66,8 @@ class _WebLiveSpeechRecognizer implements LiveSpeechRecognizer {
 
     recognition.onerror = ((web.SpeechRecognitionErrorEvent event) {
       final code = event.error;
-      if (code == 'not-allowed' || code == 'service-not-allowed') {
-        _shouldListen = false;
-      }
+      _shouldListen = false;
+      _restartTimer?.cancel();
       _onError?.call(_friendlySpeechError(code));
     }).toJS;
 
@@ -79,6 +79,7 @@ class _WebLiveSpeechRecognizer implements LiveSpeechRecognizer {
         try {
           _recognition?.start();
         } catch (_) {
+          _shouldListen = false;
           _onError?.call('音声認識の再開に失敗しました。もう一度開始してください。');
         }
       });

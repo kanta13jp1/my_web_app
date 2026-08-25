@@ -73,6 +73,9 @@ class _PreviewPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final viewerLanguage = liveCaptionLanguageByTag(
+      viewModel.viewerLanguageTag,
+    );
     final viewerLanguages = <LiveCaptionLanguage>[
       viewModel.sourceLanguage,
       ...kLiveCaptionLanguages.where(
@@ -123,7 +126,8 @@ class _PreviewPanel extends StatelessWidget {
                     alignment: Alignment.bottomCenter,
                     child: Semantics(
                       liveRegion: true,
-                      label: '現在の字幕: ${viewModel.currentViewerText}',
+                      label:
+                          '${viewerLanguage.label}、${viewModel.statusLabel}。現在の字幕: ${viewModel.currentViewerText}',
                       child: Container(
                         key: const Key('live-caption-overlay'),
                         width: double.infinity,
@@ -303,10 +307,13 @@ class _SettingsPanel extends StatelessWidget {
               message: '音声認識はChrome / EdgeのWeb版で利用できます。対応ブラウザーでマイクを許可してください。',
             ),
           if (viewModel.errorMessage case final message?)
-            _MessageBox(
-              key: const Key('live-caption-error'),
-              color: DesignTokens.red,
-              message: message,
+            Semantics(
+              liveRegion: true,
+              child: _MessageBox(
+                key: const Key('live-caption-error'),
+                color: DesignTokens.red,
+                message: message,
+              ),
             ),
           if (viewModel.isListening)
             OutlinedButton.icon(
