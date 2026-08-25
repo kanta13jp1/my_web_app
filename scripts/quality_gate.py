@@ -4,12 +4,24 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import shlex
 import shutil
+import signal
 import subprocess
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import BinaryIO
+
+
+DEFAULT_COMMAND_TIMEOUT_SECONDS = 300.0
+DEFAULT_ANALYZE_TIMEOUT_SECONDS = 180.0
+DEFAULT_ANALYZER_LOCK_TIMEOUT_SECONDS = 30.0
+TIMEOUT_EXIT_CODE = 124
+LOCK_TIMEOUT_EXIT_CODE = 75
 
 
 @dataclass(frozen=True)
@@ -17,6 +29,20 @@ class GateCommand:
     name: str
     args: list[str]
     required_binary: str | None = None
+    timeout_seconds: float = DEFAULT_COMMAND_TIMEOUT_SECONDS
+    serialize_analyzer: bool = False
+
+
+@dataclass(frozen=True)
+class CommandResult:
+    returncode: int
+    elapsed_seconds: float
+    timed_out: bool
+    cleanup_result: str
+
+
+class AnalyzerLockTimeout(RuntimeError):
+    pass
 
 
 def repo_root() -> Path:
@@ -41,6 +67,113 @@ def flutter_vm_test_concurrency(platform_name: str | None = None) -> int:
     """Keep the long Windows VM suite on one stable test worker."""
     resolved_platform = os.name if platform_name is None else platform_name
     return 1 if resolved_platform == "nt" else 2
+
+
+def env_seconds(name: str, default: float) -> float:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        return default
+    return value if value > 0 else default
+
+
+def shared_git_dir(root: Path) -> Path:
+    dot_git = root / ".git"
+    if dot_git.is_dir():
+        return dot_git
+    if dot_git.is_file():
+        first_line = dot_git.read_text(encoding="utf-8").splitlines()[0]
+        prefix = "gitdir:"
+        if first_line.lower().startswith(prefix):
+            git_dir = Path(first_line[len(prefix) :].strip())
+            if not git_dir.is_absolute():
+                git_dir = (root / git_dir).resolve()
+            if git_dir.parent.name == "worktrees":
+                return git_dir.parent.parent
+            return git_dir
+    return root / ".git"
+
+
+def analyzer_lock_path(root: Path) -> Path:
+    state_dir = shared_git_dir(root) / "codex-quality-gate"
+    state_dir.mkdir(parents=True, exist_ok=True)
+    return state_dir / "analyzer.lock"
+
+
+def _try_lock(handle: BinaryIO, platform_name: str) -> bool:
+    handle.seek(0)
+    if platform_name == "nt":
+        import msvcrt
+
+        try:
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+        except OSError:
+            return False
+        return True
+
+    import fcntl
+
+    try:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        return False
+    return True
+
+
+def _unlock(handle: BinaryIO, platform_name: str) -> None:
+    handle.seek(0)
+    if platform_name == "nt":
+        import msvcrt
+
+        msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+        return
+
+    import fcntl
+
+    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+class AnalyzerLock:
+    def __init__(
+        self,
+        path: Path,
+        timeout_seconds: float,
+        *,
+        platform_name: str | None = None,
+    ) -> None:
+        self.path = path
+        self.timeout_seconds = timeout_seconds
+        self.platform_name = os.name if platform_name is None else platform_name
+        self.handle: BinaryIO | None = None
+
+    def __enter__(self) -> "AnalyzerLock":
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        handle = self.path.open("a+b")
+        if self.path.stat().st_size == 0:
+            handle.write(b"\0")
+            handle.flush()
+        deadline = time.monotonic() + self.timeout_seconds
+        while not _try_lock(handle, self.platform_name):
+            if time.monotonic() >= deadline:
+                handle.close()
+                raise AnalyzerLockTimeout(
+                    f"analyzer lock unavailable after {self.timeout_seconds:.1f}s: {self.path}"
+                )
+            time.sleep(0.05)
+        self.handle = handle
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        if self.handle is None:
+            return
+        try:
+            _unlock(self.handle, self.platform_name)
+        finally:
+            self.handle.close()
+            self.handle = None
 
 
 def base_commands() -> list[GateCommand]:
@@ -120,7 +253,16 @@ def base_commands() -> list[GateCommand]:
 def fast_commands() -> list[GateCommand]:
     return [
         *base_commands(),
-        GateCommand("flutter analyze", ["flutter", "analyze"], "flutter"),
+        GateCommand(
+            "flutter analyze",
+            ["flutter", "analyze"],
+            "flutter",
+            timeout_seconds=env_seconds(
+                "QUALITY_GATE_ANALYZE_TIMEOUT_SECONDS",
+                DEFAULT_ANALYZE_TIMEOUT_SECONDS,
+            ),
+            serialize_analyzer=True,
+        ),
         GateCommand(
             "deno lint edge functions",
             [
@@ -152,6 +294,7 @@ def full_commands(root: Path) -> list[GateCommand]:
                 f"--concurrency={flutter_vm_test_concurrency()}",
             ],
             "flutter",
+            timeout_seconds=1800.0,
         ),
     ]
     if include_browser_smoke():
@@ -166,6 +309,7 @@ def full_commands(root: Path) -> list[GateCommand]:
                     "test/web_import_smoke_test.dart",
                 ],
                 "flutter",
+                timeout_seconds=900.0,
             )
         )
     if has_deno_tests(root):
@@ -213,16 +357,149 @@ def command_env() -> dict[str, str]:
     return env
 
 
+def terminate_owned_process_tree(
+    proc: subprocess.Popen[bytes],
+    *,
+    platform_name: str | None = None,
+) -> str:
+    resolved_platform = os.name if platform_name is None else platform_name
+    if proc.poll() is not None:
+        return "already_exited"
+    if resolved_platform == "nt":
+        cleanup = subprocess.run(
+            ["taskkill", "/PID", str(proc.pid), "/T", "/F"],
+            capture_output=True,
+            check=False,
+        )
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait(timeout=5)
+            return f"taskkill_exit_{cleanup.returncode}_then_parent_kill"
+        return f"taskkill_exit_{cleanup.returncode}"
+
+    try:
+        os.killpg(proc.pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return "process_group_already_exited"
+    try:
+        proc.wait(timeout=2)
+        return "process_group_terminated"
+    except subprocess.TimeoutExpired:
+        os.killpg(proc.pid, signal.SIGKILL)
+        proc.wait(timeout=5)
+        return "process_group_killed"
+
+
+def run_process(
+    args: list[str],
+    root: Path,
+    timeout_seconds: float,
+    *,
+    platform_name: str | None = None,
+) -> CommandResult:
+    resolved_platform = os.name if platform_name is None else platform_name
+    popen_kwargs: dict[str, object] = {
+        "cwd": root,
+        "env": command_env(),
+    }
+    if resolved_platform == "nt":
+        popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+    else:
+        popen_kwargs["start_new_session"] = True
+    started = time.monotonic()
+    proc = subprocess.Popen(args, **popen_kwargs)
+    try:
+        returncode = proc.wait(timeout=timeout_seconds)
+        return CommandResult(
+            returncode=returncode,
+            elapsed_seconds=time.monotonic() - started,
+            timed_out=False,
+            cleanup_result="not_needed",
+        )
+    except subprocess.TimeoutExpired:
+        cleanup_result = terminate_owned_process_tree(
+            proc,
+            platform_name=resolved_platform,
+        )
+        return CommandResult(
+            returncode=TIMEOUT_EXIT_CODE,
+            elapsed_seconds=time.monotonic() - started,
+            timed_out=True,
+            cleanup_result=cleanup_result,
+        )
+
+
+def emit_result(
+    command: GateCommand,
+    result: CommandResult,
+    *,
+    lock_status: str,
+) -> None:
+    print(
+        json.dumps(
+            {
+                "event": "quality_gate_command",
+                "name": command.name,
+                "command": shlex.join(command.args),
+                "elapsed_seconds": round(result.elapsed_seconds, 3),
+                "timeout_seconds": command.timeout_seconds,
+                "returncode": result.returncode,
+                "timed_out": result.timed_out,
+                "cleanup_result": result.cleanup_result,
+                "analyzer_lock": lock_status,
+                "recovery_command": shlex.join(command.args),
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+        ),
+        flush=True,
+    )
+
+
 def run_gate(command: GateCommand, root: Path) -> int:
     print(f"==> {command.name}", flush=True)
     resolved_args = resolve_args(command)
     if resolved_args is None:
         print(f"missing required command: {command.required_binary}", file=sys.stderr)
         return 127
-    proc = subprocess.run(resolved_args, cwd=root, env=command_env(), check=False)
-    if proc.returncode != 0:
-        print(f"gate failed: {command.name} (exit {proc.returncode})", file=sys.stderr)
-    return proc.returncode
+    lock_status = "not_required"
+    try:
+        if command.serialize_analyzer:
+            lock_timeout = env_seconds(
+                "QUALITY_GATE_ANALYZER_LOCK_TIMEOUT_SECONDS",
+                DEFAULT_ANALYZER_LOCK_TIMEOUT_SECONDS,
+            )
+            with AnalyzerLock(analyzer_lock_path(root), lock_timeout):
+                lock_status = "acquired"
+                result = run_process(
+                    resolved_args,
+                    root,
+                    command.timeout_seconds,
+                )
+        else:
+            result = run_process(
+                resolved_args,
+                root,
+                command.timeout_seconds,
+            )
+    except AnalyzerLockTimeout as error:
+        print(str(error), file=sys.stderr)
+        result = CommandResult(
+            returncode=LOCK_TIMEOUT_EXIT_CODE,
+            elapsed_seconds=lock_timeout,
+            timed_out=False,
+            cleanup_result="not_started",
+        )
+        lock_status = "timeout"
+    emit_result(command, result, lock_status=lock_status)
+    if result.returncode != 0:
+        print(
+            f"gate failed: {command.name} (exit {result.returncode})",
+            file=sys.stderr,
+        )
+    return result.returncode
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -231,13 +508,33 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     mode.add_argument("--fast", action="store_true", help="Run pre-commit quality gates.")
     mode.add_argument("--full", action="store_true", help="Run pre-push quality gates.")
     mode.add_argument("--list", action="store_true", help="Print the commands without running them.")
+    mode.add_argument(
+        "--analyze-files",
+        nargs="+",
+        metavar="PATH",
+        help="Run one bounded, serialized Flutter analysis over explicit paths.",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str]) -> int:
     args = parse_args(argv)
     root = repo_root()
-    commands = full_commands(root) if args.full else fast_commands()
+    if args.analyze_files:
+        commands = [
+            GateCommand(
+                "flutter analyze targeted",
+                ["flutter", "analyze", "--no-pub", *args.analyze_files],
+                "flutter",
+                timeout_seconds=env_seconds(
+                    "QUALITY_GATE_ANALYZE_TIMEOUT_SECONDS",
+                    DEFAULT_ANALYZE_TIMEOUT_SECONDS,
+                ),
+                serialize_analyzer=True,
+            )
+        ]
+    else:
+        commands = full_commands(root) if args.full else fast_commands()
 
     if args.list:
         for command in commands:
