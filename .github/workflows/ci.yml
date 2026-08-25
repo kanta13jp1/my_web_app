@@ -6,18 +6,6 @@ on:
       - main
       - staging
       - develop
-    paths-ignore:
-      - 'docs/**'
-      - 'memory/**'
-      - '.claude/**'
-      - '.codex/**'
-      - '.agents/**'
-      - '*.md'
-      - '**/*.md'
-      - '.github/*.md'
-      - '.github/**/*.md'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/PULL_REQUEST_TEMPLATE.md'
   push:
     branches:
       - staging   # main は deploy-prod.yml が workflow_call で CI を呼ぶため除外 (二重起動防止)
