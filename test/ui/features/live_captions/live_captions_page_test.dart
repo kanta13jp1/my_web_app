@@ -46,6 +46,13 @@ void main() {
       overlaySemantics.any((widget) => widget.properties.liveRegion == true),
       isTrue,
     );
+    expect(
+      overlaySemantics.any((widget) {
+        final label = widget.properties.label ?? '';
+        return label.contains('英語') && label.contains('音声認識中');
+      }),
+      isTrue,
+    );
 
     final koreanChip = find.byKey(const Key('live-caption-target-ko-KR'));
     expect(tester.widget<FilterChip>(koreanChip).selected, isFalse);
