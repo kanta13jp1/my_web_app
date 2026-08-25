@@ -12,13 +12,13 @@ class LiveCaptionsViewModel extends ChangeNotifier {
     required LiveSpeechRecognizer speechRecognizer,
     DateTime Function()? now,
     int maxSegments = 30,
-  }) : _translationGateway = translationGateway,
-       _speechRecognizer = speechRecognizer,
-       _now = now ?? DateTime.now,
-       _maxSegments = maxSegments,
-       _status = speechRecognizer.isSupported
-           ? LiveCaptionStatus.idle
-           : LiveCaptionStatus.unsupported;
+  })  : _translationGateway = translationGateway,
+        _speechRecognizer = speechRecognizer,
+        _now = now ?? DateTime.now,
+        _maxSegments = maxSegments,
+        _status = speechRecognizer.isSupported
+            ? LiveCaptionStatus.idle
+            : LiveCaptionStatus.unsupported;
 
   final LiveCaptionTranslationGateway _translationGateway;
   final LiveSpeechRecognizer _speechRecognizer;
@@ -113,8 +113,7 @@ class LiveCaptionsViewModel extends ChangeNotifier {
   }
 
   void setViewerLanguage(String languageTag) {
-    final isAvailable =
-        languageTag == _sourceLanguageTag ||
+    final isAvailable = languageTag == _sourceLanguageTag ||
         _targetLanguageTags.contains(languageTag);
     if (!isAvailable || languageTag == _viewerLanguageTag) return;
     _viewerLanguageTag = languageTag;
@@ -195,8 +194,8 @@ class LiveCaptionsViewModel extends ChangeNotifier {
     _pendingTranslations += targets.length;
     _status = targets.isEmpty
         ? (_isListening
-              ? LiveCaptionStatus.listening
-              : LiveCaptionStatus.stopped)
+            ? LiveCaptionStatus.listening
+            : LiveCaptionStatus.stopped)
         : LiveCaptionStatus.translating;
     _notify();
 
@@ -215,8 +214,8 @@ class LiveCaptionsViewModel extends ChangeNotifier {
     _status = _pendingTranslations > 0
         ? LiveCaptionStatus.translating
         : (_isListening
-              ? LiveCaptionStatus.listening
-              : LiveCaptionStatus.stopped);
+            ? LiveCaptionStatus.listening
+            : LiveCaptionStatus.stopped);
     _notify();
   }
 

@@ -202,9 +202,8 @@ class _PreviewPanel extends StatelessWidget {
               ),
               TextButton.icon(
                 key: const Key('live-caption-clear'),
-                onPressed: viewModel.segments.isEmpty
-                    ? null
-                    : viewModel.clearSegments,
+                onPressed:
+                    viewModel.segments.isEmpty ? null : viewModel.clearSegments,
                 icon: const Icon(Icons.delete_sweep_outlined),
                 label: const Text('クリア'),
               ),

@@ -11,7 +11,7 @@ abstract class LiveCaptionTranslationGateway {
 
 class AiLiveCaptionTranslationGateway implements LiveCaptionTranslationGateway {
   AiLiveCaptionTranslationGateway({AIService? aiService})
-    : _aiService = aiService ?? AIService();
+      : _aiService = aiService ?? AIService();
 
   final AIService _aiService;
 
