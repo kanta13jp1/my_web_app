@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 import os
 import shlex
@@ -20,8 +21,22 @@ from typing import BinaryIO
 DEFAULT_COMMAND_TIMEOUT_SECONDS = 300.0
 DEFAULT_ANALYZE_TIMEOUT_SECONDS = 180.0
 DEFAULT_ANALYZER_LOCK_TIMEOUT_SECONDS = 30.0
+DEFAULT_DART_ANALYZE_TIMEOUT_SECONDS = 180.0
 TIMEOUT_EXIT_CODE = 124
 LOCK_TIMEOUT_EXIT_CODE = 75
+
+ANALYZER_INFRASTRUCTURE_PATTERNS = (
+    "analysis server exited",
+    "analysis server crashed",
+    "analysis server terminated",
+    "could not start the analysis server",
+    "failed to start the analysis server",
+    "out of memory",
+    "zone.cc",
+    "unexpected extension byte",
+    "formatexception",
+    "crash report has been written",
+)
 
 
 @dataclass(frozen=True)
@@ -31,6 +46,7 @@ class GateCommand:
     required_binary: str | None = None
     timeout_seconds: float = DEFAULT_COMMAND_TIMEOUT_SECONDS
     serialize_analyzer: bool = False
+    capture_output: bool = False
 
 
 @dataclass(frozen=True)
@@ -39,6 +55,7 @@ class CommandResult:
     elapsed_seconds: float
     timed_out: bool
     cleanup_result: str
+    output: str = ""
 
 
 class AnalyzerLockTimeout(RuntimeError):
@@ -78,6 +95,41 @@ def env_seconds(name: str, default: float) -> float:
     except ValueError:
         return default
     return value if value > 0 else default
+
+
+def flutter_analyze_command(paths: list[str] | None = None) -> GateCommand:
+    targeted = bool(paths)
+    return GateCommand(
+        "flutter analyze targeted" if targeted else "flutter analyze",
+        [
+            "flutter",
+            "analyze",
+            *(["--no-pub", *paths] if paths else []),
+        ],
+        "flutter",
+        timeout_seconds=env_seconds(
+            "QUALITY_GATE_ANALYZE_TIMEOUT_SECONDS",
+            DEFAULT_ANALYZE_TIMEOUT_SECONDS,
+        ),
+        serialize_analyzer=True,
+        capture_output=True,
+    )
+
+
+def dart_analyze_fallback_command() -> GateCommand:
+    # Plain output is intentional. Windows machine output produced an encoding
+    # FormatException in the original #1780 incident.
+    return GateCommand(
+        "dart analyze fallback",
+        ["dart", "analyze"],
+        "dart",
+        timeout_seconds=env_seconds(
+            "QUALITY_GATE_DART_ANALYZE_TIMEOUT_SECONDS",
+            DEFAULT_DART_ANALYZE_TIMEOUT_SECONDS,
+        ),
+        serialize_analyzer=True,
+        capture_output=True,
+    )
 
 
 def shared_git_dir(root: Path) -> Path:
@@ -253,16 +305,7 @@ def base_commands() -> list[GateCommand]:
 def fast_commands() -> list[GateCommand]:
     return [
         *base_commands(),
-        GateCommand(
-            "flutter analyze",
-            ["flutter", "analyze"],
-            "flutter",
-            timeout_seconds=env_seconds(
-                "QUALITY_GATE_ANALYZE_TIMEOUT_SECONDS",
-                DEFAULT_ANALYZE_TIMEOUT_SECONDS,
-            ),
-            serialize_analyzer=True,
-        ),
+        flutter_analyze_command(),
         GateCommand(
             "deno lint edge functions",
             [
@@ -398,6 +441,7 @@ def run_process(
     timeout_seconds: float,
     *,
     platform_name: str | None = None,
+    capture_output: bool = False,
 ) -> CommandResult:
     resolved_platform = os.name if platform_name is None else platform_name
     popen_kwargs: dict[str, object] = {
@@ -408,26 +452,49 @@ def run_process(
         popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
     else:
         popen_kwargs["start_new_session"] = True
+    if capture_output:
+        popen_kwargs.update(
+            {
+                "stdout": subprocess.PIPE,
+                "stderr": subprocess.STDOUT,
+                "text": True,
+                "encoding": "utf-8",
+                "errors": "replace",
+            }
+        )
     started = time.monotonic()
     proc = subprocess.Popen(args, **popen_kwargs)
     try:
-        returncode = proc.wait(timeout=timeout_seconds)
+        if capture_output:
+            output, _ = proc.communicate(timeout=timeout_seconds)
+            returncode = proc.returncode
+        else:
+            output = ""
+            returncode = proc.wait(timeout=timeout_seconds)
         return CommandResult(
             returncode=returncode,
             elapsed_seconds=time.monotonic() - started,
             timed_out=False,
             cleanup_result="not_needed",
+            output=output or "",
         )
     except subprocess.TimeoutExpired:
         cleanup_result = terminate_owned_process_tree(
             proc,
             platform_name=resolved_platform,
         )
+        output = ""
+        if capture_output:
+            try:
+                output, _ = proc.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                output = ""
         return CommandResult(
             returncode=TIMEOUT_EXIT_CODE,
             elapsed_seconds=time.monotonic() - started,
             timed_out=True,
             cleanup_result=cleanup_result,
+            output=output or "",
         )
 
 
@@ -436,34 +503,42 @@ def emit_result(
     result: CommandResult,
     *,
     lock_status: str,
+    classification: str | None = None,
 ) -> None:
+    payload: dict[str, object] = {
+        "event": "quality_gate_command",
+        "name": command.name,
+        "command": shlex.join(command.args),
+        "elapsed_seconds": round(result.elapsed_seconds, 3),
+        "timeout_seconds": command.timeout_seconds,
+        "returncode": result.returncode,
+        "timed_out": result.timed_out,
+        "cleanup_result": result.cleanup_result,
+        "analyzer_lock": lock_status,
+        "recovery_command": shlex.join(command.args),
+    }
+    if classification is not None:
+        payload["classification"] = classification
     print(
-        json.dumps(
-            {
-                "event": "quality_gate_command",
-                "name": command.name,
-                "command": shlex.join(command.args),
-                "elapsed_seconds": round(result.elapsed_seconds, 3),
-                "timeout_seconds": command.timeout_seconds,
-                "returncode": result.returncode,
-                "timed_out": result.timed_out,
-                "cleanup_result": result.cleanup_result,
-                "analyzer_lock": lock_status,
-                "recovery_command": shlex.join(command.args),
-            },
-            ensure_ascii=False,
-            sort_keys=True,
-        ),
+        json.dumps(payload, ensure_ascii=False, sort_keys=True),
         flush=True,
     )
 
 
-def run_gate(command: GateCommand, root: Path) -> int:
-    print(f"==> {command.name}", flush=True)
+def execute_gate(command: GateCommand, root: Path) -> tuple[CommandResult, str]:
     resolved_args = resolve_args(command)
     if resolved_args is None:
-        print(f"missing required command: {command.required_binary}", file=sys.stderr)
-        return 127
+        message = f"missing required command: {command.required_binary}"
+        return (
+            CommandResult(
+                returncode=127,
+                elapsed_seconds=0.0,
+                timed_out=False,
+                cleanup_result="not_started",
+                output=message,
+            ),
+            "not_started",
+        )
     lock_status = "not_required"
     try:
         if command.serialize_analyzer:
@@ -477,12 +552,14 @@ def run_gate(command: GateCommand, root: Path) -> int:
                     resolved_args,
                     root,
                     command.timeout_seconds,
+                    capture_output=command.capture_output,
                 )
         else:
             result = run_process(
                 resolved_args,
                 root,
                 command.timeout_seconds,
+                capture_output=command.capture_output,
             )
     except AnalyzerLockTimeout as error:
         print(str(error), file=sys.stderr)
@@ -493,6 +570,19 @@ def run_gate(command: GateCommand, root: Path) -> int:
             cleanup_result="not_started",
         )
         lock_status = "timeout"
+    return result, lock_status
+
+
+def print_captured_output(result: CommandResult) -> None:
+    if not result.output:
+        return
+    print(result.output, end="" if result.output.endswith("\n") else "\n", flush=True)
+
+
+def run_gate(command: GateCommand, root: Path) -> int:
+    print(f"==> {command.name}", flush=True)
+    result, lock_status = execute_gate(command, root)
+    print_captured_output(result)
     emit_result(command, result, lock_status=lock_status)
     if result.returncode != 0:
         print(
@@ -502,6 +592,240 @@ def run_gate(command: GateCommand, root: Path) -> int:
     return result.returncode
 
 
+def classify_analyzer_result(result: CommandResult) -> str:
+    if result.returncode == 0:
+        return "success"
+    if result.returncode == LOCK_TIMEOUT_EXIT_CODE:
+        return "infrastructure_lock_timeout"
+    if result.timed_out or result.returncode == TIMEOUT_EXIT_CODE:
+        return "infrastructure_timeout"
+    lowered = result.output.lower()
+    if "missing required command" in lowered or result.returncode == 127:
+        return "infrastructure_tool_unavailable"
+    if (
+        result.returncode < 0
+        or result.returncode >= 0xC0000000
+        or any(pattern in lowered for pattern in ANALYZER_INFRASTRUCTURE_PATTERNS)
+    ):
+        return "infrastructure_crash"
+    return "code_findings"
+
+
+def tool_version(args: list[str], root: Path) -> str:
+    resolved = shutil.which(args[0])
+    if resolved is None:
+        return f"{args[0]} unavailable"
+    try:
+        completed = subprocess.run(
+            [resolved, *args[1:]],
+            cwd=root,
+            env=command_env(),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=15,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return f"{args[0]} version unavailable: {type(error).__name__}"
+    output = "\n".join(part.strip() for part in (completed.stdout, completed.stderr) if part.strip())
+    return output[:2000] or f"{args[0]} version exited {completed.returncode} without output"
+
+
+def analyzer_result_payload(
+    command: GateCommand,
+    result: CommandResult,
+    *,
+    classification: str,
+    lock_status: str,
+    log_path: Path,
+) -> dict[str, object]:
+    return {
+        "classification": classification,
+        "command": shlex.join(command.args),
+        "elapsed_seconds": round(result.elapsed_seconds, 3),
+        "timeout_seconds": command.timeout_seconds,
+        "returncode": result.returncode,
+        "timed_out": result.timed_out,
+        "cleanup_result": result.cleanup_result,
+        "analyzer_lock": lock_status,
+        "log_path": log_path.as_posix(),
+        "recovery_command": shlex.join(command.args),
+    }
+
+
+def recent_flutter_crash_logs(root: Path) -> list[str]:
+    paths = sorted(
+        root.glob("flutter_*.log"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    return [path.relative_to(root).as_posix() for path in paths[:5]]
+
+
+def write_analyzer_evidence(
+    root: Path,
+    artifact_dir: Path,
+    *,
+    status: str,
+    primary_command: GateCommand,
+    primary_result: CommandResult,
+    primary_classification: str,
+    primary_lock_status: str,
+    fallback_command: GateCommand | None,
+    fallback_result: CommandResult | None,
+    fallback_classification: str | None,
+    fallback_lock_status: str | None,
+) -> None:
+    resolved_dir = artifact_dir if artifact_dir.is_absolute() else root / artifact_dir
+    resolved_dir.mkdir(parents=True, exist_ok=True)
+    primary_log = resolved_dir / "flutter-analyze.log"
+    primary_log.write_text(primary_result.output, encoding="utf-8", errors="replace")
+
+    fallback_payload: dict[str, object] | None = None
+    fallback_log: Path | None = None
+    if fallback_command is not None and fallback_result is not None:
+        fallback_log = resolved_dir / "dart-analyze-fallback.log"
+        fallback_log.write_text(fallback_result.output, encoding="utf-8", errors="replace")
+        fallback_payload = analyzer_result_payload(
+            fallback_command,
+            fallback_result,
+            classification=fallback_classification or "unknown",
+            lock_status=fallback_lock_status or "unknown",
+            log_path=fallback_log.relative_to(root),
+        )
+
+    payload = {
+        "schema_version": 1,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "status": status,
+        "primary": analyzer_result_payload(
+            primary_command,
+            primary_result,
+            classification=primary_classification,
+            lock_status=primary_lock_status,
+            log_path=primary_log.relative_to(root),
+        ),
+        "fallback": fallback_payload,
+        "versions": {
+            "flutter": tool_version(["flutter", "--version", "--machine"], root),
+            "dart": tool_version(["dart", "--version"], root),
+        },
+        "flutter_crash_logs": recent_flutter_crash_logs(root),
+    }
+    evidence_path = resolved_dir / "result.json"
+    evidence_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    lines = [
+        "### Analyzer gate evidence",
+        f"- Status: `{status}`",
+        f"- Primary classification: `{primary_classification}`",
+        f"- Primary command: `{shlex.join(primary_command.args)}`",
+        f"- Primary exit/elapsed: `{primary_result.returncode}` / `{primary_result.elapsed_seconds:.3f}s`",
+        f"- Primary cleanup: `{primary_result.cleanup_result}`",
+        f"- Primary log: `{primary_log.relative_to(root).as_posix()}`",
+    ]
+    if fallback_command is not None and fallback_result is not None and fallback_log is not None:
+        lines.extend(
+            [
+                f"- Fallback classification: `{fallback_classification}`",
+                f"- Fallback command: `{shlex.join(fallback_command.args)}`",
+                f"- Fallback exit/elapsed: `{fallback_result.returncode}` / `{fallback_result.elapsed_seconds:.3f}s`",
+                f"- Fallback log: `{fallback_log.relative_to(root).as_posix()}`",
+            ]
+        )
+    lines.extend(
+        [
+            f"- Flutter version: `{str(payload['versions']['flutter']).splitlines()[0]}`",
+            f"- Dart version: `{str(payload['versions']['dart']).splitlines()[0]}`",
+            f"- Evidence JSON: `{evidence_path.relative_to(root).as_posix()}`",
+        ]
+    )
+    crash_logs = payload["flutter_crash_logs"]
+    if crash_logs:
+        lines.append(f"- Flutter crash logs: `{', '.join(crash_logs)}`")
+    summary = "\n".join(lines) + "\n"
+    (resolved_dir / "summary.md").write_text(summary, encoding="utf-8")
+
+    comment_path = resolved_dir / "comment.md"
+    if status == "success":
+        comment_path.unlink(missing_ok=True)
+    else:
+        comment_path.write_text(
+            "<!-- analyzer-fallback-evidence -->\n" + summary,
+            encoding="utf-8",
+        )
+
+    step_summary = os.environ.get("GITHUB_STEP_SUMMARY", "").strip()
+    if step_summary:
+        with Path(step_summary).open("a", encoding="utf-8", newline="\n") as handle:
+            handle.write("\n" + summary)
+
+
+def run_analyzer_gate(command: GateCommand, root: Path, artifact_dir: Path) -> int:
+    print(f"==> {command.name}", flush=True)
+    primary_result, primary_lock = execute_gate(command, root)
+    print_captured_output(primary_result)
+    primary_classification = classify_analyzer_result(primary_result)
+    emit_result(
+        command,
+        primary_result,
+        lock_status=primary_lock,
+        classification=primary_classification,
+    )
+
+    fallback_command: GateCommand | None = None
+    fallback_result: CommandResult | None = None
+    fallback_lock: str | None = None
+    fallback_classification: str | None = None
+    status = primary_classification
+    returncode = primary_result.returncode
+
+    if primary_classification in {
+        "infrastructure_crash",
+        "infrastructure_timeout",
+        "infrastructure_tool_unavailable",
+    }:
+        fallback_command = dart_analyze_fallback_command()
+        print(f"==> {fallback_command.name}", flush=True)
+        fallback_result, fallback_lock = execute_gate(fallback_command, root)
+        print_captured_output(fallback_result)
+        fallback_classification = classify_analyzer_result(fallback_result)
+        emit_result(
+            fallback_command,
+            fallback_result,
+            lock_status=fallback_lock,
+            classification=fallback_classification,
+        )
+        if fallback_result.returncode == 0:
+            status = "degraded_pass"
+            returncode = 0
+        else:
+            status = "fallback_failed"
+            returncode = fallback_result.returncode
+
+    write_analyzer_evidence(
+        root,
+        artifact_dir,
+        status=status,
+        primary_command=command,
+        primary_result=primary_result,
+        primary_classification=primary_classification,
+        primary_lock_status=primary_lock,
+        fallback_command=fallback_command,
+        fallback_result=fallback_result,
+        fallback_classification=fallback_classification,
+        fallback_lock_status=fallback_lock,
+    )
+    if returncode != 0:
+        print(f"gate failed: {command.name} ({status}, exit {returncode})", file=sys.stderr)
+    return returncode
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
@@ -509,10 +833,21 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     mode.add_argument("--full", action="store_true", help="Run pre-push quality gates.")
     mode.add_argument("--list", action="store_true", help="Print the commands without running them.")
     mode.add_argument(
+        "--analyze-only",
+        action="store_true",
+        help="Run the bounded repository-wide analyzer with crash fallback evidence.",
+    )
+    mode.add_argument(
         "--analyze-files",
         nargs="+",
         metavar="PATH",
         help="Run one bounded, serialized Flutter analysis over explicit paths.",
+    )
+    parser.add_argument(
+        "--analyzer-artifact-dir",
+        type=Path,
+        default=Path(".ci-logs/analyzer"),
+        help="Directory for analyzer logs, versions, JSON evidence, and PR comment markdown.",
     )
     return parser.parse_args(argv)
 
@@ -521,18 +856,9 @@ def main(argv: list[str]) -> int:
     args = parse_args(argv)
     root = repo_root()
     if args.analyze_files:
-        commands = [
-            GateCommand(
-                "flutter analyze targeted",
-                ["flutter", "analyze", "--no-pub", *args.analyze_files],
-                "flutter",
-                timeout_seconds=env_seconds(
-                    "QUALITY_GATE_ANALYZE_TIMEOUT_SECONDS",
-                    DEFAULT_ANALYZE_TIMEOUT_SECONDS,
-                ),
-                serialize_analyzer=True,
-            )
-        ]
+        commands = [flutter_analyze_command(args.analyze_files)]
+    elif args.analyze_only:
+        commands = [flutter_analyze_command()]
     else:
         commands = full_commands(root) if args.full else fast_commands()
 
@@ -542,7 +868,10 @@ def main(argv: list[str]) -> int:
         return 0
 
     for command in commands:
-        code = run_gate(command, root)
+        if command.name.startswith("flutter analyze"):
+            code = run_analyzer_gate(command, root, args.analyzer_artifact_dir)
+        else:
+            code = run_gate(command, root)
         if code != 0:
             return code
     return 0
