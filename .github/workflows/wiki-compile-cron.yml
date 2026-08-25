@@ -68,11 +68,20 @@ jobs:
 
       - name: Resolve params
         id: params
+        env:
+          DAYS_INPUT: ${{ inputs.days || '30' }}
+          MIN_SOURCES_INPUT: ${{ inputs.min_sources || '5' }}
+          LIMIT_INPUT: ${{ inputs.limit || '50' }}
+          APPLY_INPUT: ${{ inputs.apply }}
         run: |
-          DAYS="${{ inputs.days || '30' }}"
-          MIN_SRC="${{ inputs.min_sources || '5' }}"
-          LIMIT="${{ inputs.limit || '50' }}"
-          APPLY="${{ inputs.apply || 'true' }}"
+          DAYS="$DAYS_INPUT"
+          MIN_SRC="$MIN_SOURCES_INPUT"
+          LIMIT="$LIMIT_INPUT"
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            APPLY="true"
+          else
+            APPLY="$APPLY_INPUT"
+          fi
           echo "days=$DAYS"     >> $GITHUB_OUTPUT
           echo "min_src=$MIN_SRC" >> $GITHUB_OUTPUT
           echo "limit=$LIMIT"   >> $GITHUB_OUTPUT
