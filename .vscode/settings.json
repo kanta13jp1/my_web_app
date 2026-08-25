@@ -4,6 +4,7 @@
     "supabase"
   ],
   "cmake.ignoreCMakeListsMissing": true,
+  "dart.mcpServer": true,
   "deno.enable": true,
   "deno.lint": true,
   "deno.unstable": [],
