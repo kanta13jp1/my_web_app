@@ -41,6 +41,10 @@ void main() {
       findsOneWidget,
     );
     expect(
+      find.text('送信を妨げるエラー・通知先メールアドレス'),
+      findsOneWidget,
+    );
+    expect(
       find.text('解決策: 「name@example.com」の形式で入力してください。'),
       findsOneWidget,
     );

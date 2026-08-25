@@ -324,6 +324,18 @@ class _ValidationPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final findings = viewModel.visibleFindings;
+    final blockingCount =
+        findings.where((finding) => finding.blocksSubmission).length;
+    final warningCount = findings.length - blockingCount;
+    final announcement = switch (viewModel.status) {
+      ProactiveValidationStatus.idle => '入力チェックは待機中です。',
+      ProactiveValidationStatus.waiting ||
+      ProactiveValidationStatus.validating =>
+        '入力内容を確認しています。',
+      ProactiveValidationStatus.failure => '入力内容を確認できませんでした。',
+      ProactiveValidationStatus.ready =>
+        '入力チェック完了。送信を妨げるエラー$blockingCount件、改善の提案$warningCount件です。',
+    };
     return Card(
       elevation: 0,
       color: colors.surfaceContainerLow,
@@ -331,11 +343,15 @@ class _ValidationPanel extends StatelessWidget {
         padding: const EdgeInsets.all(22),
         child: Semantics(
           container: true,
-          liveRegion: true,
           label: '入力内容の検証結果',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
+              Semantics(
+                liveRegion: true,
+                label: announcement,
+                child: const SizedBox.shrink(),
+              ),
               Row(
                 children: <Widget>[
                   Icon(Icons.fact_check_outlined, color: colors.primary),
@@ -422,60 +438,66 @@ class _FindingCard extends StatelessWidget {
         blocking ? colors.errorContainer : colors.secondaryContainer;
     final foreground =
         blocking ? colors.onErrorContainer : colors.onSecondaryContainer;
-    return Container(
-      key: Key('proactive-finding-${finding.id}'),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Icon(
-                blocking ? Icons.error_outline : Icons.lightbulb_outline,
-                color: foreground,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      finding.field.label,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: foreground,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      finding.message,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: foreground,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
+    final severityLabel = blocking ? '送信を妨げるエラー' : '改善の提案';
+    return Semantics(
+      container: true,
+      label: severityLabel,
+      child: Container(
+        key: Key('proactive-finding-${finding.id}'),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Icon(
+                  blocking ? Icons.error_outline : Icons.lightbulb_outline,
+                  color: foreground,
                 ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        '$severityLabel・${finding.field.label}',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: foreground,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        finding.message,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: foreground,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text('解決策: ${finding.solution}',
+                style: TextStyle(color: foreground)),
+            if (onApply != null) ...<Widget>[
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                key: Key('apply-${finding.id}'),
+                onPressed: onApply,
+                icon: const Icon(Icons.auto_fix_high_outlined),
+                label: const Text('修正案を反映'),
               ),
             ],
-          ),
-          const SizedBox(height: 10),
-          Text('解決策: ${finding.solution}', style: TextStyle(color: foreground)),
-          if (onApply != null) ...<Widget>[
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              key: Key('apply-${finding.id}'),
-              onPressed: onApply,
-              icon: const Icon(Icons.auto_fix_high_outlined),
-              label: const Text('修正案を反映'),
-            ),
           ],
-        ],
+        ),
       ),
     );
   }

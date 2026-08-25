@@ -49,6 +49,7 @@ class ProactiveFormCheckViewModel extends ChangeNotifier {
       !_isSubmitting;
 
   void updateField(ProactiveFormField field, String value) {
+    if (_isDisposed) return;
     _draft = _draft.withValue(field, value);
     _touchedFields.add(field);
     _wasSubmitted = false;
@@ -70,12 +71,14 @@ class ProactiveFormCheckViewModel extends ChangeNotifier {
   }
 
   Future<void> validateNow() async {
+    if (_isDisposed) return;
     _debounce?.cancel();
     _revision += 1;
     await _validate(_revision);
   }
 
   Future<void> applySuggestion(ProactiveValidationFinding finding) async {
+    if (_isDisposed) return;
     final suggestion = finding.suggestedValue;
     if (suggestion == null) return;
     _draft = _draft.withValue(finding.field, suggestion);
@@ -85,36 +88,42 @@ class ProactiveFormCheckViewModel extends ChangeNotifier {
   }
 
   Future<bool> submit() async {
-    if (_isSubmitting) return false;
-    for (final field in ProactiveFormField.values) {
-      _touchedFields.add(field);
-    }
-    await validateNow();
-    if (_status != ProactiveValidationStatus.ready ||
-        !_draft.hasAllRequiredValues ||
-        _result.hasBlockingFinding) {
-      _errorMessage = _status == ProactiveValidationStatus.failure
-          ? '入力内容を検証できないため送信を中止しました。再試行してください。'
-          : _draft.hasAllRequiredValues
-              ? '解決が必要な項目を修正してから送信してください。'
-              : '未入力の項目を入力してから送信してください。';
-      notifyListeners();
-      return false;
-    }
-
+    if (_isDisposed || _isSubmitting) return false;
     _isSubmitting = true;
+    _wasSubmitted = false;
     _errorMessage = null;
     notifyListeners();
-    await Future<void>.delayed(const Duration(milliseconds: 180));
-    if (_isDisposed) return false;
-    _isSubmitting = false;
-    _wasSubmitted = true;
-    notifyListeners();
-    return true;
+    try {
+      for (final field in ProactiveFormField.values) {
+        _touchedFields.add(field);
+      }
+      await validateNow();
+      if (_isDisposed) return false;
+      if (_status != ProactiveValidationStatus.ready ||
+          !_draft.hasAllRequiredValues ||
+          _result.hasBlockingFinding) {
+        _errorMessage = _status == ProactiveValidationStatus.failure
+            ? '入力内容を検証できないため送信を中止しました。再試行してください。'
+            : _draft.hasAllRequiredValues
+                ? '解決が必要な項目を修正してから送信してください。'
+                : '未入力の項目を入力してから送信してください。';
+        return false;
+      }
+
+      await Future<void>.delayed(const Duration(milliseconds: 180));
+      if (_isDisposed) return false;
+      _wasSubmitted = true;
+      return true;
+    } finally {
+      _isSubmitting = false;
+      if (!_isDisposed) notifyListeners();
+    }
   }
 
   Future<void> _validate(int requestedRevision) async {
-    if (_draft.isEmpty || requestedRevision != _revision) return;
+    if (_isDisposed || _draft.isEmpty || requestedRevision != _revision) {
+      return;
+    }
     final snapshot = _draft;
     _status = ProactiveValidationStatus.validating;
     notifyListeners();

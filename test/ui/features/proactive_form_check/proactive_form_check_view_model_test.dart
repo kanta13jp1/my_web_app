@@ -92,6 +92,33 @@ void main() {
       expect(viewModel.visibleFindings, isEmpty);
       expect(viewModel.status, ProactiveValidationStatus.ready);
     });
+
+    test('再検証中の二重送信を1回に制限する', () async {
+      final viewModel = ProactiveFormCheckViewModel(
+        validator: const RuleBasedProactiveFormValidator(
+          simulatedLatency: Duration(milliseconds: 20),
+        ),
+        debounceDuration: Duration.zero,
+      );
+      addTearDown(viewModel.dispose);
+      viewModel
+        ..updateField(ProactiveFormField.title, '夏の新商品キャンペーン')
+        ..updateField(ProactiveFormField.email, 'owner@example.com')
+        ..updateField(
+          ProactiveFormField.destinationUrl,
+          'https://example.com/campaign',
+        )
+        ..updateField(ProactiveFormField.dailyBudget, '3000');
+      await viewModel.validateNow();
+
+      final first = viewModel.submit();
+      final second = viewModel.submit();
+
+      expect(await second, isFalse);
+      expect(await first, isTrue);
+      expect(viewModel.isSubmitting, isFalse);
+      expect(viewModel.wasSubmitted, isTrue);
+    });
   });
 }
 
