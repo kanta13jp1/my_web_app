@@ -47,6 +47,7 @@ const Map<String, String> _consolidatedFeatureLabels = <String, String>{
   '/autonomous-ops-console': '自律オペレーションコンソール',
   '/focus-timer': '集中タイマー',
   '/life-goals': '人生目標管理',
+  '/live-captions': 'ライブ多言語字幕',
   '/local-election-700': '2027 統一地方選 700必達管理室',
   '/daily-habits': '毎日の習慣',
   '/mind-map': 'マインドマップ',
