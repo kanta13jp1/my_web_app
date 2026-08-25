@@ -43,7 +43,7 @@ void main() {
       ),
     );
     expect(
-      overlaySemantics.any((widget) => widget.properties.liveRegion),
+      overlaySemantics.any((widget) => widget.properties.liveRegion == true),
       isTrue,
     );
 

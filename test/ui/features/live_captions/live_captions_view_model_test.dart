@@ -101,7 +101,7 @@ void main() {
 
 class _FakeTranslationGateway implements LiveCaptionTranslationGateway {
   final Map<String, String> responses = <String, String>{};
-  Object? error;
+  Exception? error;
 
   @override
   Future<String> translate({
