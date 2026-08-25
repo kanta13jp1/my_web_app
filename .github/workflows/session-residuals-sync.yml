@@ -65,10 +65,18 @@ jobs:
 
       - name: Resolve params
         id: params
+        env:
+          DAYS_INPUT: ${{ inputs.days || '1' }}
+          APPLY_INPUT: ${{ inputs.apply }}
+          LIMIT_INPUT: ${{ inputs.limit || '5' }}
         run: |
-          DAYS="${{ inputs.days || '1' }}"
-          APPLY="${{ inputs.apply || 'true' }}"   # cron run = true (= dispatch defaults to false for safety)
-          LIMIT="${{ inputs.limit || '5' }}"
+          DAYS="$DAYS_INPUT"
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            APPLY="true"
+          else
+            APPLY="$APPLY_INPUT"
+          fi
+          LIMIT="$LIMIT_INPUT"
           echo "days=$DAYS"   >> $GITHUB_OUTPUT
           echo "apply=$APPLY" >> $GITHUB_OUTPUT
           echo "limit=$LIMIT" >> $GITHUB_OUTPUT

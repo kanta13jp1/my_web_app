@@ -1,9 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/tiger_review_lane_status.dart';
+import 'package:my_web_app/models/tiger_reviewer_profile.dart';
 import 'package:my_web_app/pages/tiger_review_lane_status_page.dart';
 
 void main() {
+  test('profile schema invalidates the browser asset cache', () {
+    final uri = buildTigerReviewAssetUri(
+      Uri.parse('https://example.com/tiger-reviewers'),
+      'assets/data/tiger_reviewer_profiles.json',
+      schemaVersion: tigerReviewerProfileSchemaVersion,
+    );
+
+    expect(tigerReviewerProfileSchemaVersion, 3);
+    expect(
+      uri.toString(),
+      'https://example.com/assets/assets/data/tiger_reviewer_profiles.json'
+      '?review_status_schema=3',
+    );
+  });
+
   testWidgets('hub exposes four independent review lanes', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: TigerReviewHubPage()));
 
@@ -56,6 +72,26 @@ void main() {
     expect(find.text('公開データの系統が一致しません。'), findsOneWidget);
   });
 
+  testWidgets('reviewer lane loads its bundled status without a boot error', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: TigerReviewLaneStatusPage(kind: TigerReviewLane.reviewers),
+      ),
+    );
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pump();
+
+    expect(
+      find.byKey(const Key('tiger-lane-content-reviewer_league')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('narrow lane reloads without a layout exception', (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
@@ -87,11 +123,233 @@ void main() {
     expect(loadCount, 2);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'reviewer lane expands age, business, and title on narrow screens',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: TigerReviewLaneStatusPage(
+            kind: TigerReviewLane.reviewers,
+            loader: () async => _status(
+              lane: 'reviewer_league',
+              entries: const <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'seat': 21,
+                  'name': '遠藤 悠記',
+                  'division': 2,
+                  'eligible': true,
+                  'completed_cycles': 2,
+                  'utility_score': 78.5,
+                },
+              ],
+            ),
+            profileLoader: () async => TigerReviewerProfileCatalog(
+              schemaVersion: 2,
+              snapshotDate: DateTime(2026, 8, 23),
+              enrichmentRound: 1,
+              averageProfileCompletenessPercent: 62.8,
+              averageReviewReflectionPercent: 68,
+              verifiedBirthDates: 1,
+              nextBatchNames: const <String>['追加調査が必要な虎'],
+              profilesBySeat: <int, TigerReviewerProfile>{
+                21: TigerReviewerProfile(
+                  seat: 21,
+                  name: '遠藤 悠記',
+                  rosterStatus: 'current',
+                  birthDate: DateTime(1990, 3, 17),
+                  companyRole: '株式会社えん代表',
+                  businessSummary: '学習塾、美容エステサロン、顧問事業',
+                  businessDomains: const <String>['教育・スクール'],
+                  appearances: 64,
+                  investmentCount: 17,
+                  publicViewpointSummary: '最後は人情を重視する。',
+                  profileUrl: Uri.parse(
+                    'https://reiwanotora.jp/tiger/endo-yuki/',
+                  ),
+                  birthDateSourceUrl: Uri.parse(
+                    'https://reiwanotora.jp/tiger/endo-yuki/',
+                  ),
+                  evidenceLinks: <TigerReviewerEvidenceLink>[
+                    TigerReviewerEvidenceLink(
+                      label: '肩書き・事業内容',
+                      url: Uri.parse('https://example.com/company'),
+                    ),
+                    TigerReviewerEvidenceLink(
+                      label: '公開された事業方針',
+                      url: Uri.parse('https://example.com/policy'),
+                    ),
+                  ],
+                  evidenceConfidence: 5,
+                  profileCompletenessPercent: 100,
+                  reviewReflectionPercent: 100,
+                  reviewReflectionMode: 'profile_guided',
+                  reviewApplicationRule: '確認済み観点を優先順位づけに反映します。',
+                  reviewFocusLabels: const <String>['市場需要', '収益モデル'],
+                  reviewQuestions: const <String>['実在する顧客は誰か。', '誰が何に支払うのか。'],
+                  nextResearchTargets: const <String>['最新肩書きの再確認'],
+                ),
+              },
+              disclaimer: '公開情報から構成したプロフィールです。',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final reviewerTile = find.byKey(const Key('tiger-reviewer_league-21'));
+      await tester.scrollUntilVisible(
+        reviewerTile,
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(reviewerTile);
+      await tester.pumpAndSettle();
+
+      expect(find.text('36歳（2026年8月23日時点）'), findsOneWidget);
+      expect(find.text('株式会社えん代表'), findsOneWidget);
+      expect(find.text('学習塾、美容エステサロン、顧問事業'), findsOneWidget);
+      expect(find.text('教育・スクール'), findsOneWidget);
+      expect(find.text('出演 64回・出資 17回'), findsOneWidget);
+      expect(find.text('プロフィール拡充ループ 第1回'), findsOneWidget);
+      expect(find.text('100%（確認済みプロフィール観点を強く反映）'), findsOneWidget);
+      expect(find.text('市場需要・収益モデル'), findsOneWidget);
+      expect(find.text('• 実在する顧客は誰か。'), findsOneWidget);
+      expect(find.text('最新肩書きの再確認'), findsOneWidget);
+      expect(find.byKey(const Key('tiger-profile-source-21')), findsOneWidget);
+      expect(
+        find.byKey(const Key('tiger-profile-source-21-1')),
+        findsOneWidget,
+      );
+      expect(find.text('肩書き・事業内容の根拠を開く'), findsOneWidget);
+      expect(find.text('公開された事業方針の根拠を開く'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('history shows findings and countermeasure trace', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.features,
+          loader: () async => _status(
+            lane: 'feature_review',
+            history: <TigerReviewHistoryEntry>[
+              TigerReviewHistoryEntry(
+                cycleId: 'cycle-1',
+                startedAt: DateTime.utc(2026, 8, 23, 9),
+                subject: const TigerReviewHistorySubject(
+                  kind: 'feature',
+                  id: 'home',
+                  title: 'ホーム',
+                ),
+                reviewer: const TigerReviewHistoryReviewer(
+                  seat: 7,
+                  name: '榊原 清一',
+                ),
+                reviewStatus: 'fixed',
+                validationStatus: 'passed',
+                findings: const <TigerReviewHistoryFinding>[
+                  TigerReviewHistoryFinding(
+                    id: 'loading-state',
+                    summary: '読み込み状態を通知する',
+                    severity: 'p1',
+                    suggestedAction: 'Semanticsを追加する',
+                  ),
+                ],
+                countermeasure: TigerCountermeasureTrace(
+                  state: 'implemented',
+                  label: '対策実施・検証済み',
+                  detail: '個別の指摘IDとの紐付けも記録済みです。',
+                  summary: 'Semanticsを追加した。',
+                  files: <String>['lib/pages/home.dart'],
+                  validationStatus: 'passed',
+                  validationMessages: <String>['flutter test: passed'],
+                  findingsWithoutIndividualTrace: <String>[],
+                  issue: TigerFollowUpIssue(
+                    number: 4734,
+                    url: Uri.parse(
+                      'https://github.com/kanta13jp1/my_web_app/issues/4734',
+                    ),
+                    githubState: 'OPEN',
+                  ),
+                  implementation: null,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('レビュー履歴・対策トレース'), findsOneWidget);
+    expect(find.text('対策実施・検証済み'), findsOneWidget);
+    expect(find.textContaining('読み込み状態を通知する'), findsOneWidget);
+    expect(find.textContaining('flutter test: passed'), findsOneWidget);
+    expect(find.byKey(const Key('tiger-review-issue-4734')), findsOneWidget);
+  });
+
+  testWidgets('site history remains visible when the lane has no standings', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.site,
+          loader: () async => _status(
+            lane: 'site_review',
+            history: <TigerReviewHistoryEntry>[_historyEntry()],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('レビュー履歴・対策トレース'), findsOneWidget);
+    expect(find.text('サイト全体の虎レビュー 1〜5部'), findsNothing);
+  });
+}
+
+TigerReviewHistoryEntry _historyEntry() {
+  return TigerReviewHistoryEntry(
+    cycleId: 'site-cycle-1',
+    startedAt: DateTime.utc(2026, 8, 23, 9),
+    subject: const TigerReviewHistorySubject(
+      kind: 'site',
+      id: 'comparison',
+      title: '競合比較',
+    ),
+    reviewer: const TigerReviewHistoryReviewer(seat: 7, name: '榊原 清一'),
+    reviewStatus: 'review_only',
+    validationStatus: 'passed',
+    findings: const <TigerReviewHistoryFinding>[],
+    countermeasure: const TigerCountermeasureTrace(
+      state: 'issue_tracking',
+      label: '未対策・Issue #4739 追跡中',
+      detail: '',
+      summary: '',
+      files: <String>[],
+      validationStatus: 'passed',
+      validationMessages: <String>[],
+      findingsWithoutIndividualTrace: <String>[],
+      issue: null,
+      implementation: null,
+    ),
+  );
 }
 
 TigerReviewLaneStatus _status({
   required String lane,
   List<Map<String, dynamic>> entries = const <Map<String, dynamic>>[],
+  List<TigerReviewHistoryEntry> history = const <TigerReviewHistoryEntry>[],
 }) {
   return TigerReviewLaneStatus(
     schemaVersion: 3,
@@ -114,6 +372,7 @@ TigerReviewLaneStatus _status({
       'division_5': 0,
     },
     latest: null,
+    history: history,
     entries: entries,
     disclaimer: 'simulation',
   );

@@ -34,8 +34,9 @@ jobs:
       - name: Resolve apply mode
         id: mode
         shell: bash
+        env:
+          APPLY_INPUT: ${{ inputs.apply }}
         run: |
-          APPLY_INPUT="${{ inputs.apply }}"
           if [ -z "$APPLY_INPUT" ]; then
             APPLY_INPUT="true"
           fi
