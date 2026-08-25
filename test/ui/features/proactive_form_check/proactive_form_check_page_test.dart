@@ -53,7 +53,10 @@ void main() {
     await tester.ensureVisible(applyUrl);
     await tester.tap(applyUrl);
     await tester.pumpAndSettle();
-    expect(find.text('https://example.com/campaign'), findsOneWidget);
+    final urlField = tester.widget<TextField>(
+      find.byKey(const Key('proactive-destinationUrl-field')),
+    );
+    expect(urlField.controller?.text, 'https://example.com/campaign');
 
     await tester.enterText(
       find.byKey(const Key('proactive-email-field')),
