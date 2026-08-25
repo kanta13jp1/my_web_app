@@ -12,11 +12,11 @@ void main() {
       schemaVersion: tigerReviewerProfileSchemaVersion,
     );
 
-    expect(tigerReviewerProfileSchemaVersion, 2);
+    expect(tigerReviewerProfileSchemaVersion, 3);
     expect(
       uri.toString(),
       'https://example.com/assets/assets/data/tiger_reviewer_profiles.json'
-      '?review_status_schema=2',
+      '?review_status_schema=3',
     );
   });
 
