@@ -58,8 +58,8 @@
 - Run `/recap` when resuming a stale or handed-off session; disable away summaries with `CLAUDE_CODE_ENABLE_AWAY_SUMMARY=0` only when the summary itself is noisy.
 - Use `/focus` during parallel fleet work to reduce transcript clutter; keep task state in the issue, PR, or WBS entry so the focus view does not become the source of truth.
 - Use mobile push notifications only for actionable remote-control events such as CI completion, blocked secrets, or schedule tasks that need the user's decision.
-- If `ANTHROPIC_BASE_URL` points at a gateway with `/v1/models`, prefer the `/model` picker over hard-coded model names.
-- Before removing an abandoned worktree/session, run `claude project purge [path]` only after git status and pushed branch/PR state are verified.
+- Enable gateway model discovery only for an Anthropic-compatible Messages API gateway that implements `/v1/models`: set `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1`, then prefer the `/model` picker over hard-coded names. Do not treat discovery as an Azure OpenAI or Bedrock fallback.
+- `claude project purge [path]` deletes Claude project state, not the Git worktree. After verifying git status and the pushed branch/PR, preview with `claude project purge --dry-run [path]`, use the interactive confirmation, and perform Git cleanup separately.
 
 ## Quota fallback
 
