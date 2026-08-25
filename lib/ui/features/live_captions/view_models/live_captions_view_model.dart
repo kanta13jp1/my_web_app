@@ -133,7 +133,7 @@ class LiveCaptionsViewModel extends ChangeNotifier {
     try {
       await _speechRecognizer.start(
         languageTag: _sourceLanguageTag,
-        onResult: (transcript, isFinal) {
+        onResult: ({required transcript, required isFinal}) {
           unawaited(ingestTranscript(transcript, isFinal: isFinal));
         },
         onError: _handleSpeechError,

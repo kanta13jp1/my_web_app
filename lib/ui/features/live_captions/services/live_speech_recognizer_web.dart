@@ -55,7 +55,10 @@ class _WebLiveSpeechRecognizer implements LiveSpeechRecognizer {
         if (result.length == 0) continue;
         final transcript = result.item(0).transcript.trim();
         if (transcript.isNotEmpty) {
-          _onResult?.call(transcript, result.isFinal);
+          _onResult?.call(
+            transcript: transcript,
+            isFinal: result.isFinal,
+          );
         }
       }
     }).toJS;

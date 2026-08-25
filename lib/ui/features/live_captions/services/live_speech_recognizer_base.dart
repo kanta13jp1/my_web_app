@@ -1,4 +1,7 @@
-typedef LiveSpeechResultCallback = void Function(String transcript, bool isFinal);
+typedef LiveSpeechResultCallback = void Function({
+  required String transcript,
+  required bool isFinal,
+});
 typedef LiveSpeechErrorCallback = void Function(String message);
 
 abstract class LiveSpeechRecognizer {

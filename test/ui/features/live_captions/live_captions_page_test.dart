@@ -102,7 +102,7 @@ class _FakeSpeechRecognizer implements LiveSpeechRecognizer {
   }
 
   void emit(String text, {required bool isFinal}) =>
-      _onResult?.call(text, isFinal);
+      _onResult?.call(transcript: text, isFinal: isFinal);
 
   @override
   Future<void> stop() async {}
