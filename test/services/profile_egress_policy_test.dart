@@ -12,9 +12,13 @@ void main() {
         () => ProfileEgressPolicy.validateAvatar(
           fileBytes: Uint8List(ProfileEgressPolicy.maxAvatarBytes),
           fileExtension: '.JPG',
-          contentType: 'image/jpeg',
+          contentType: ' IMAGE/JPEG ',
         ),
         returnsNormally,
+      );
+      expect(
+        ProfileEgressPolicy.normalizeContentType(' IMAGE/JPEG '),
+        'image/jpeg',
       );
     });
 
@@ -129,7 +133,7 @@ void main() {
 
   test('avatar bucket migration enforces size and MIME restrictions', () {
     final migration = File(
-      'supabase/migrations/20260810100000_harden_avatar_storage_egress.sql',
+      'supabase/migrations/20260826083000_harden_avatar_storage_egress.sql',
     ).readAsStringSync();
     expect(migration, contains("where id = 'avatars'"));
     expect(migration, contains('file_size_limit = 5242880'));

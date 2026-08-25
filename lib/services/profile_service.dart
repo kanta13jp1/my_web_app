@@ -47,6 +47,9 @@ class ProfileService {
     final normalizedExtension = ProfileEgressPolicy.normalizeExtension(
       fileExtension,
     );
+    final normalizedContentType = ProfileEgressPolicy.normalizeContentType(
+      contentType,
+    );
     final filePath = '$userId.$normalizedExtension';
 
     try {
@@ -56,7 +59,7 @@ class ProfileService {
             fileBytes,
             fileOptions: FileOptions(
               upsert: true, // 既存のファイルがあれば上書き
-              contentType: contentType,
+              contentType: normalizedContentType,
               cacheControl: ProfileEgressPolicy.avatarCacheControl,
             ),
           );

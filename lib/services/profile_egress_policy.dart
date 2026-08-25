@@ -52,13 +52,16 @@ class ProfileEgressPolicy {
         'PNG、JPEG、WebP、GIF形式の画像を選択してください。',
       );
     }
-    if (contentType.trim().toLowerCase() != expectedContentType) {
+    if (normalizeContentType(contentType) != expectedContentType) {
       throw const ProfileAvatarValidationException('画像の拡張子とMIMEタイプが一致しません。');
     }
   }
 
   static String normalizeExtension(String extension) =>
       extension.trim().toLowerCase().replaceFirst(RegExp(r'^\.'), '');
+
+  static String normalizeContentType(String contentType) =>
+      contentType.trim().toLowerCase();
 
   static TransformOptions? avatarTransformOptions({bool? enabled}) {
     if (!(enabled ?? imageTransformEnabled)) {
