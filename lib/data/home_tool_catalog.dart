@@ -158,6 +158,7 @@ import '../pages/subscription_billing_page.dart';
 import '../pages/digital_product_store_pages.dart';
 import '../pages/viral_ad_generator_page.dart';
 import '../ui/features/video_studio/video_studio_feature.dart';
+import '../ui/features/notion_migration/notion_migration_feature.dart';
 import '../pages/youtube_stats_page.dart';
 import '../pages/virtual_pet_page.dart';
 import '../pages/work_menu_page.dart';
@@ -1054,6 +1055,26 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const ImportPage()),
     ),
     HomeToolEntry(
+      id: 'notion-migration',
+      sectionId: 'knowledge',
+      title: 'Notion移行センター',
+      subtitle: '全件棚卸し・段階移行・7項目照合・Notion側削除を追跡する',
+      icon: Icons.move_to_inbox_outlined,
+      color: const Color(0xFF4F46E5),
+      keywords: const <String>[
+        'Notion',
+        '移行',
+        'インポート',
+        'バックアップ',
+        '検証',
+        '解約',
+      ],
+      onOpen: (context) => _pushPage(
+        context,
+        const NotionMigrationFeature(),
+      ),
+    ),
+    HomeToolEntry(
       id: 'growth-mission',
       sectionId: 'growth',
       title: '成長ミッション',
@@ -1793,6 +1814,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFFFF6F00),
       keywords: const <String>['ペット', 'ゲーム', '育成', 'virtual pet', 'ゲーミフィケーション'],
       onOpen: (context) => _pushPage(context, const VirtualPetPage()),
+    ),
+    HomeToolEntry(
+      id: 'procrastination-reset',
+      sectionId: 'personal',
+      title: '先延ばしリセット',
+      subtitle: '大きなタスクを5分の行動と最初の一手に変える',
+      icon: Icons.bolt_outlined,
+      color: const Color(0xFF7C3AED),
+      keywords: const <String>[
+        '先延ばし',
+        '行動',
+        '5分',
+        'タスク分解',
+        '集中',
+        'スマホ',
+        'procrastination',
+      ],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/procrastination-reset'),
     ),
     HomeToolEntry(
       id: 'focus-capture',
@@ -2677,6 +2717,55 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'build',
       ],
       onOpen: (context) => Navigator.of(context).pushNamed('/release-notes'),
+    ),
+    HomeToolEntry(
+      id: 'tiger-reviewers',
+      sectionId: 'ai',
+      title: '虎レビュアー成績',
+      subtitle: '125名のレビュー効用・所属部・選出可否を確認',
+      icon: Icons.groups_2_outlined,
+      color: const Color(0xFFD97706),
+      keywords: const <String>[
+        '令和の虎',
+        '虎成績',
+        '脱落',
+        '1部',
+        '5部',
+      ],
+      onOpen: (context) => Navigator.of(context).pushNamed('/tiger-reviewers'),
+    ),
+    HomeToolEntry(
+      id: 'tiger-site-reviews',
+      sectionId: 'ai',
+      title: 'サイト全体の虎レビュー',
+      subtitle: '選出虎1名による事業全体の評価・指摘・反映状況',
+      icon: Icons.public_outlined,
+      color: const Color(0xFFB45309),
+      keywords: const <String>['令和の虎', 'サイトレビュー', '事業性', '収益'],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/tiger-site-reviews'),
+    ),
+    HomeToolEntry(
+      id: 'tiger-course-reviews',
+      sectionId: 'ai',
+      title: 'AI大学講座の虎レビュー',
+      subtitle: '選出虎1名による講座評価と1〜5部リーグ',
+      icon: Icons.school_outlined,
+      color: const Color(0xFF7C3AED),
+      keywords: const <String>['令和の虎', 'AI大学', '講座レビュー', '教育'],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/tiger-course-reviews'),
+    ),
+    HomeToolEntry(
+      id: 'tiger-feature-reviews',
+      sectionId: 'ai',
+      title: '機能の虎レビュー',
+      subtitle: '選出虎1名による機能評価と1〜5部リーグ',
+      icon: Icons.extension_outlined,
+      color: const Color(0xFF0F766E),
+      keywords: const <String>['令和の虎', '機能レビュー', '有用性', '事業価値'],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/tiger-feature-reviews'),
     ),
     HomeToolEntry(
       id: 'edge-llm-playground',

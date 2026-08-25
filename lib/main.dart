@@ -141,6 +141,7 @@ import 'package:my_web_app/pages/ai_university_faculty_select_page.dart';
 import 'package:my_web_app/pages/ai_university_department_select_page.dart';
 import 'package:my_web_app/pages/team_workspace_page.dart';
 import 'package:my_web_app/pages/ai_status_page.dart';
+import 'package:my_web_app/pages/tiger_review_lane_status_page.dart';
 import 'package:my_web_app/pages/ai_provider_status_page.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/pages/asset_chat_history_page.dart';
@@ -219,6 +220,8 @@ import 'package:my_web_app/pages/viral_ad_generator_page.dart';
 import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
 import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
+import 'package:my_web_app/ui/features/notion_migration/notion_migration_feature.dart';
+import 'package:my_web_app/ui/features/procrastination_reset/procrastination_reset_feature.dart';
 import 'package:my_web_app/pages/youtube_stats_page.dart';
 import 'package:my_web_app/pages/audio_effects_processor_page.dart';
 import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
@@ -1094,6 +1097,39 @@ Route<dynamic> generateAppRoute(
       );
     case '/ai-status':
       return MaterialPageRoute(builder: (_) => const AiStatusPage());
+    case '/tiger-review-status':
+      return MaterialPageRoute(
+        builder: (_) => const TigerReviewHubPage(),
+        settings: const RouteSettings(name: TigerReviewHubPage.routeName),
+      );
+    case '/tiger-reviewers':
+      return MaterialPageRoute(
+        builder: (_) => const TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.reviewers,
+        ),
+        settings: const RouteSettings(name: '/tiger-reviewers'),
+      );
+    case '/tiger-site-reviews':
+      return MaterialPageRoute(
+        builder: (_) => const TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.site,
+        ),
+        settings: const RouteSettings(name: '/tiger-site-reviews'),
+      );
+    case '/tiger-course-reviews':
+      return MaterialPageRoute(
+        builder: (_) => const TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.courses,
+        ),
+        settings: const RouteSettings(name: '/tiger-course-reviews'),
+      );
+    case '/tiger-feature-reviews':
+      return MaterialPageRoute(
+        builder: (_) => const TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.features,
+        ),
+        settings: const RouteSettings(name: '/tiger-feature-reviews'),
+      );
     case '/ai-provider-status':
       return MaterialPageRoute(
         builder: (_) => const AiProviderStatusPage(),
@@ -1309,6 +1345,11 @@ Route<dynamic> generateAppRoute(
         builder: (_) => VideoStudioFeature(initialUri: uri),
         settings: RouteSettings(name: settings.name),
       );
+    case '/notion-migration':
+      return MaterialPageRoute(
+        builder: (_) => const NotionMigrationFeature(),
+        settings: RouteSettings(name: settings.name),
+      );
     case '/youtube-stats':
       return MaterialPageRoute(builder: (_) => const YoutubeStatsPage());
     case '/audio-effects-processor':
@@ -1507,6 +1548,13 @@ Route<dynamic> generateAppRoute(
     case '/personal-dashboard':
       return MaterialPageRoute(
         builder: (_) => const PersonalDashboardPage(),
+      );
+    case '/procrastination-reset':
+      return MaterialPageRoute(
+        builder: (_) => const ProcrastinationResetFeature(),
+        settings: const RouteSettings(
+          name: ProcrastinationResetFeature.routeName,
+        ),
       );
     case '/my-skills':
       return MaterialPageRoute(builder: (_) => const MySkillsPage());

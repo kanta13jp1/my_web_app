@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart' as web_api;
 import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_fsrs_service.dart';
+import '../services/ai_university_content_analytics.dart';
 import '../services/ai_learner_profile_service.dart';
 import '../services/ai_university_rlhf_service.dart';
 import '../services/ai_university_video_lesson_service.dart';
@@ -5695,9 +5696,14 @@ Slack / Google Drive / Jira など 100+ データソースを横断する Work K
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AiUniversityPage extends StatefulWidget {
-  const AiUniversityPage({super.key, this.initialProviderId});
+  const AiUniversityPage({
+    super.key,
+    this.initialProviderId,
+    this.contentAnalytics,
+  });
 
   final String? initialProviderId;
+  final AiUniversityContentAnalytics? contentAnalytics;
 
   @override
   State<AiUniversityPage> createState() => _AiUniversityPageState();
@@ -5715,6 +5721,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   TabController? get tabUrlController => _tabController;
 
   final _supabase = Supabase.instance.client;
+  late final AiUniversityContentAnalytics _contentAnalytics;
 
   List<String> _providers = [];
   Map<String, List<Map<String, dynamic>>> _content = {};
@@ -5750,6 +5757,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   @override
   void initState() {
     super.initState();
+    _contentAnalytics = widget.contentAnalytics ??
+        AiUniversityContentAnalytics.supabase(_supabase);
     _fetchContent();
     _loadAnsweredQuizzes();
     _loadRlhfSnapshot();
@@ -6267,14 +6276,23 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     super.dispose();
   }
 
-  Future<void> _fetchContent() async {
+  Future<void> _fetchContent({bool isRetry = false}) async {
     try {
-      final contentRows = await _supabase
-          .from('ai_university_content')
-          .select()
-          .eq('is_active', true)
-          .order('sort_order')
-          .timeout(const Duration(seconds: 10));
+      const pageSize = 1000;
+      final contentRows = <Map<String, dynamic>>[];
+      for (var offset = 0;; offset += pageSize) {
+        final page = await _supabase
+            .from('ai_university_content')
+            .select()
+            .eq('is_active', true)
+            .order('sort_order')
+            .order('id')
+            .range(offset, offset + pageSize - 1)
+            .timeout(const Duration(seconds: 10));
+        final typedPage = (page as List).cast<Map<String, dynamic>>();
+        contentRows.addAll(typedPage);
+        if (typedPage.length < pageSize) break;
+      }
 
       // PostgREST limits one response to 1,000 rows. Fetch video lessons
       // separately so the provider-independent banner never loses published
@@ -6289,7 +6307,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
       final rows =
           AiUniversityVideoLessonService.mergeContentRowsByProviderCategory(
-        (contentRows as List).cast<Map<String, dynamic>>(),
+        contentRows,
         (publishedVideoRows as List).cast<Map<String, dynamic>>(),
       );
 
@@ -6304,6 +6322,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       // DB が空なら _providerMeta の全キーをフォールバックで表示
       final providers =
           grouped.isEmpty ? _providerMeta.keys.toList() : grouped.keys.toList();
+      if (grouped.isEmpty) {
+        _contentAnalytics
+            .record(AiUniversityContentEvent.fallbackShown)
+            .ignore();
+      }
       final requestedProvider = widget.initialProviderId;
       final requestedIndex =
           requestedProvider == null ? -1 : providers.indexOf(requestedProvider);
@@ -6331,13 +6354,25 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         });
         rebindTabUrlSync();
       }
-    } catch (e) {
+      if (isRetry) {
+        _contentAnalytics
+            .record(AiUniversityContentEvent.retrySucceeded)
+            .ignore();
+      }
+    } catch (_) {
+      _contentAnalytics
+          .record(AiUniversityContentEvent.contentFetchFailed)
+          .ignore();
+      _contentAnalytics.record(AiUniversityContentEvent.fallbackShown).ignore();
+      if (isRetry) {
+        _contentAnalytics.record(AiUniversityContentEvent.retryFailed).ignore();
+      }
       if (mounted) {
         final providers = _providerMeta.keys.toList();
         _tabController?.dispose();
         setState(() {
           _loading = false;
-          _error = e.toString();
+          _error = 'content_fetch_failed';
           _providers = providers;
           _tabController = TabController(length: providers.length, vsync: this);
         });
@@ -6746,8 +6781,14 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   }
 
   void _refreshUniversityContent() {
+    final isRetry = _error != null;
     setState(() => _loading = true);
-    _fetchContent();
+    if (isRetry) {
+      _contentAnalytics
+          .record(AiUniversityContentEvent.retryRequested)
+          .ignore();
+    }
+    _fetchContent(isRetry: isRetry);
   }
 
   void _openVideoLessonGenerator() {
@@ -6892,7 +6933,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             style: TextStyle(color: Color(0xFFE5E7EB)),
           ),
         ),
-        body: const Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: Semantics(
+            label: 'AI大学のコンテンツを読み込んでいます',
+            liveRegion: true,
+            child: const CircularProgressIndicator(),
+          ),
+        ),
       );
     }
 
@@ -7897,6 +7944,18 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final title = row['title'] as String? ?? '';
     final content = row['content'] as String? ?? '';
     final sourceUrl = row['source_url'] as String?;
+    final targetAudience = row['target_audience'] as String?;
+    final learningOutcome = row['observable_learning_outcome'] as String?;
+    final verificationMethod = row['assessment_verification_method'] as String?;
+    final evidenceSourceUrl = row['evidence_source_url'] as String?;
+    final evidenceVerifiedAt = row['evidence_verified_at'] as String?;
+    final hasCourseEvidence = <String?>[
+      targetAudience,
+      learningOutcome,
+      verificationMethod,
+      evidenceSourceUrl,
+      evidenceVerifiedAt,
+    ].any((value) => value != null && value.isNotEmpty);
     final youtubeVideoId =
         AiUniversityVideoLessonService.youtubeVideoIdFromUrl(sourceUrl);
 
@@ -7938,6 +7997,60 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                     },
                   ),
                 ),
+                if (hasCourseEvidence) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF111827),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '学習設計の根拠',
+                          style: TextStyle(
+                            color: Color(0xFFE5E7EB),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (targetAudience != null && targetAudience.isNotEmpty)
+                          Text(
+                            '対象: $targetAudience',
+                            style: const TextStyle(color: Color(0xFFE5E7EB)),
+                          ),
+                        if (learningOutcome != null &&
+                            learningOutcome.isNotEmpty)
+                          Text(
+                            '観察可能な成果: $learningOutcome',
+                            style: const TextStyle(color: Color(0xFFE5E7EB)),
+                          ),
+                        if (verificationMethod != null &&
+                            verificationMethod.isNotEmpty)
+                          Text(
+                            '確認方法: $verificationMethod',
+                            style: const TextStyle(color: Color(0xFFE5E7EB)),
+                          ),
+                        if (evidenceVerifiedAt != null &&
+                            evidenceVerifiedAt.isNotEmpty)
+                          Text(
+                            '根拠確認日時: $evidenceVerifiedAt',
+                            style: const TextStyle(color: Color(0xFFE5E7EB)),
+                          ),
+                        if (evidenceSourceUrl != null &&
+                            evidenceSourceUrl.isNotEmpty)
+                          TextButton.icon(
+                            icon:
+                                const Icon(Icons.fact_check_outlined, size: 14),
+                            label: const Text('学習設計の根拠を開く'),
+                            onPressed: () => _launchUrl(evidenceSourceUrl),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
                 if (youtubeVideoId != null) ...[
                   const SizedBox(height: 16),
                   AiUniversityYoutubeEmbed(

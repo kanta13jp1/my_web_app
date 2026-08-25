@@ -51,12 +51,19 @@ jobs:
 
       - name: Call schedule-hub:notion.sync_wbs
         id: sync
+        env:
+          LIMIT_INPUT: ${{ github.event.inputs.limit || '30' }}
+          OFFSET_INPUT: ${{ github.event.inputs.offset || '0' }}
         run: |
+          PAYLOAD=$(jq -n \
+            --arg limit "$LIMIT_INPUT" \
+            --arg offset "$OFFSET_INPUT" \
+            '{action: "notion.sync_wbs", limit: ($limit | tonumber), offset: ($offset | tonumber)}')
           RESP=$(curl -sS -X POST \
             "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json" \
-            -d "{\"action\":\"notion.sync_wbs\",\"limit\":${{ github.event.inputs.limit || '30' }},\"offset\":${{ github.event.inputs.offset || '0' }}}" \
+            -d "$PAYLOAD" \
             --max-time 600)
 
           echo "Response: $RESP"

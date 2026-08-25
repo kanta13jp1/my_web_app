@@ -51,6 +51,7 @@ const Map<String, String> _consolidatedFeatureLabels = <String, String>{
   '/daily-habits': '毎日の習慣',
   '/mind-map': 'マインドマップ',
   '/one-in-two-out-assist': '1 In 2 Out UI整理アシスト',
+  '/procrastination-reset': '先延ばしリセット',
   '/referral': '友達招待・紹介プログラム',
   '/rewards': '実績・リワード',
   '/social-feed': 'MUSUBI ソーシャル',

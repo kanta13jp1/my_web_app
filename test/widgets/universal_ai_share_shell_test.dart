@@ -40,6 +40,39 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('authenticated users can capture Inbox text from the overlay',
+      (tester) async {
+    String? savedText;
+    await tester.pumpWidget(
+      _buildShell(
+        isLoggedInOverride: true,
+        onInboxSave: (text) async {
+          savedText = text;
+        },
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Inboxへメモ'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('inbox_quick_capture_text_field')),
+      findsOneWidget,
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('inbox_quick_capture_text_field')),
+      'Capture from any screen',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('inbox_quick_capture_save_button')));
+    await tester.pumpAndSettle();
+
+    expect(savedText, 'Capture from any screen');
+    expect(find.text('Inboxに保存しました'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('mobile viewport hides the overlay so it cannot cover content', (
     tester,
   ) async {
@@ -93,13 +126,18 @@ void main() {
   });
 }
 
-Widget _buildShell() {
+Widget _buildShell({
+  bool? isLoggedInOverride,
+  Future<void> Function(String text)? onInboxSave,
+}) {
   final navigatorKey = GlobalKey<NavigatorState>();
   return MaterialApp(
     navigatorKey: navigatorKey,
     builder: (context, child) {
       return UniversalAiShareShell(
         navigatorKey: navigatorKey,
+        isLoggedInOverride: isLoggedInOverride,
+        onInboxSave: onInboxSave,
         child: child ?? const SizedBox.shrink(),
       );
     },

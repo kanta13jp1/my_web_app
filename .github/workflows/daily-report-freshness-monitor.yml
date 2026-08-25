@@ -31,8 +31,10 @@ jobs:
 
       - name: Resolve target date
         id: target
+        env:
+          DATE_INPUT: ${{ inputs.date || '' }}
         run: |
-          DATE="${{ inputs.date }}"
+          DATE="$DATE_INPUT"
           if [ -z "$DATE" ]; then
             DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
           fi
