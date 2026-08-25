@@ -485,8 +485,10 @@ class _FindingCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            Text('解決策: ${finding.solution}',
-                style: TextStyle(color: foreground)),
+            Text(
+              '解決策: ${finding.solution}',
+              style: TextStyle(color: foreground),
+            ),
             if (onApply != null) ...<Widget>[
               const SizedBox(height: 10),
               OutlinedButton.icon(
