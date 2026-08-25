@@ -74,6 +74,10 @@ Official source pointers:
 
 - https://docs.anthropic.com/en/docs/claude-code/settings
 - https://docs.anthropic.com/en/docs/claude-code/memory
+- https://code.claude.com/docs/en/changelog
+- https://code.claude.com/docs/en/tools-reference#powershell-tool
+- https://code.claude.com/docs/en/llm-gateway
+- https://code.claude.com/docs/en/mcp
 - https://developers.openai.com/codex/cloud
 - https://developers.openai.com/learn/docs-mcp
 - https://developers.google.com/gemini-code-assist/resources/release-notes
@@ -349,9 +353,12 @@ Codex CLI が **Memory** を持つようになり、past task の preference / p
 
 ### Claude Code 2026-05 (`/tui` + push notification + project purge + /resume PR URL)
 
-- `/tui` fullscreen — flicker-free 画面 (= 12 instance 並列で見やすさ向上)
+- `/tui fullscreen` — optional flicker-free interactive rendering. It is a
+  display preference, not a fleet concurrency control.
 - **Push notification tool** — Remote Control + "Push when Claude decides" でスマホ通知 (= スマホ版 instance 連携)
-- `claude project purge [path]` — project state 完全削除 (= worktree clean 自動化)
+- `claude project purge [path]` — Claude project state (transcripts, tasks,
+  file history, and the config entry) を削除する。Git worktree、branch、または
+  untracked file は削除しないため、worktree cleanup の代替にしない。
 - `/resume <PR URL>` — PR を作成した session に復帰 (= context 連続性向上)
 
 ### Claude Code v2.1.113–v2.1.126 追加機能 (PS#5 S118 2026-05-03)
@@ -369,29 +376,42 @@ Codex CLI が **Memory** を持つようになり、past task の preference / p
 - `/theme` command + `~/.claude/themes/*.json` — カスタムテーマ作成 (= テーマ切り替えUIとの連携)
 - `--from-pr` が GitLab / Bitbucket / GitHub Enterprise URL を受け付け
 
-**CI / 認証 (v2.1.126) → Issue #1767**
+**CI / 認証 (v2.1.126-v2.1.129) → Issue #1767**
 - `claude auth login` — WSL2/SSH/コンテナ環境で OAuth code をターミナルにペースト可能
-- `/model` picker が `ANTHROPIC_BASE_URL` の gateway `/v1/models` から動的にモデル一覧取得
+- `/model` picker の gateway discovery は v2.1.129+ かつ
+  `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1` の opt-in。対象は
+  `ANTHROPIC_BASE_URL` で指定した Anthropic-compatible Messages API gateway
+  の `/v1/models` であり、Azure OpenAI / Bedrock の一般的な fallback ではない。
 - `claude ultrareview [target]` — CI/スクリプトから非インタラクティブに `/ultrareview` 実行 (= GHA に組み込み可能)
-- `/recap` — セッション再開時に前回の context をサマリー提示 (= 12 instance fleet での session 引き継ぎ向上)
+- `/recap` — セッション再開時に前回の context をサマリー提示し、Issue/PR
+  に残した恒久証跡からの引き継ぎを補助する。
 
 **MCP 安定性改善 (v2.1.126) → Issue #1831**
-- MCP auto-retry: サーバー起動時の transient error を自動リトライ
+- 初期接続の transient 5xx / connection refused / timeout は最大3回 retry。
+- HTTP/SSE transport は切断時に指数 backoff で最大5回再接続するが、
+  stdio server は自動再起動しない。認証失敗と404もretry対象外。
 - SSE/HTTP transport で mid-response に connection drop した場合の hang 修正
 - 429 (rate limit) retry: exponential backoff を最低値として適用 (= 13秒で全試行消費するバグ修正)
 - API retry countdown が正確に表示されるよう修正
-- **fleet適用**: `MCP_TIMEOUT=60000` (S119で設定済み) と組み合わせて MCP 安定性が大幅向上
+- **fleet適用**: `MCP_TIMEOUT=60000` (S119で設定済み) は接続待ち時間を
+  延長する設定であり、全transportの自動復旧を保証しない。
 
 **session /recap (v2.1.126)**
 - `CLAUDE_CODE_ENABLE_AWAY_SUMMARY=0` または `/config` でオプトアウト可能
-- **fleet活用**: 12 instance で session 引き継ぎ時に `/recap` で前回 context 即把握
+- **運用**: 現行の2-owner構成で session を再開するときに使う。Issue/PR/WBSを
+  source of truth とし、recapだけに未保存の判断を残さない。
 
 **project purge (v2.1.126)**
-- `claude project purge [path]` — project の全 state (transcript・session) を削除
-- **fleet活用**: worktree cleanup スクリプトに追加でゾンビ session を掃除できる
+- `claude project purge [path]` — project の Claude state を削除する破壊的操作。
+- **運用**: 対象path、`git status`、push済みbranch/PRを確認し、最初に
+  `claude project purge --dry-run [path]`、次にinteractive確認を使う。
+  `--all` / `--yes` をcleanup automationへ組み込まず、Git worktree cleanupと
+  分離する。
 
 **Windows (v2.1.126)**
-- Git for Windows (Git Bash) が不要に — PowerShell を primary shell として使用 (= Win版 fleet の環境要件簡素化)
+- PowerShell tool が有効、または Git Bash が利用できない場合は PowerShell を
+  primary shell として使用できる。全Windows環境で無条件に Bash より優先する
+  仕様ではない。project hooks は既存どおり明示的な `powershell` command を使う。
 
 ### GitHub Copilot 2026-05: GPT-5.3-Codex 昇格
 
