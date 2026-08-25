@@ -8,6 +8,7 @@ void main() {
       expect(featureLabelForRoute('/site-guide-ai'), 'サイト案内AI');
       expect(featureLabelForRoute('/ai-university'), 'AI大学');
       expect(featureLabelForRoute('/release-notes'), 'Release Notes');
+      expect(featureLabelForRoute('/chat-highlights'), 'チャットハイライト');
       expect(featureLabelForRoute('/procrastination-reset'), '先延ばしリセット');
     });
 
