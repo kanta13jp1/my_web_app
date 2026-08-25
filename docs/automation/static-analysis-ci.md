@@ -35,6 +35,35 @@ The local hook flow is documented in
 runs the fuller local CI mirror. Browser smoke remains in GitHub Actions by
 default and can be included locally with `CODEX_INCLUDE_BROWSER_SMOKE=1`.
 
+## Bounded local analyzer runner
+
+Issue #4266 adds deterministic resource bounds to `scripts/quality_gate.py`.
+Every delegated command has an explicit timeout. Flutter analyzer commands also
+take one advisory lock stored under the repository's shared Git directory, so
+all local worktrees serialize analyzer startup instead of competing for Dart
+analysis-server processes.
+
+Automation that validates an explicit set of Dart files must use the shared
+entry point rather than invoking `flutter analyze` directly:
+
+```powershell
+py -3 scripts/quality_gate.py --analyze-files lib/pages/example_page.dart test/pages/example_page_test.dart
+```
+
+The runner emits one structured `quality_gate_command` JSON record with the
+command, elapsed time, timeout, exit code, lock result, child-process cleanup
+result, and recovery command. Exit code `124` means the owned command tree was
+terminated after its timeout. Exit code `75` means the shared analyzer lock was
+not acquired within its bounded wait; the analyzer was not started.
+
+Local defaults can be tuned without changing CI policy:
+
+- `QUALITY_GATE_ANALYZE_TIMEOUT_SECONDS` — analyzer runtime limit (default 180s)
+- `QUALITY_GATE_ANALYZER_LOCK_TIMEOUT_SECONDS` — cross-worktree lock wait (default 30s)
+
+Timeout cleanup targets only the process tree created by that command. It must
+never terminate unrelated Dart, Flutter, IDE, or user processes.
+
 ## Auto-Fix Path
 
 `ci-auto-fix.yml` listens to the `CI` workflow's failed PR runs. For PR branches,
