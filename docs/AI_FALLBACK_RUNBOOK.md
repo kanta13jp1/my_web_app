@@ -32,8 +32,18 @@ Adoption notes for this cycle:
   long-session recovery, but they do not change the top-level two-instance cap.
 - Claude Code v2.1.122 Bedrock service-tier selection and v2.1.108 prompt-cache
   flags are provider-configuration candidates, not default environment changes.
-- OpenAI Codex CLI rust-v0.128.0 persisted `/goal` workflows are a future
-  Codex #1 planning aid; normal WBS work still uses scoped branches and PRs.
+- OpenAI Codex persisted goals are available to Codex #1 when the active app or
+  CLI runtime exposes the goal APIs. Use them to retain the objective and
+  continuation state, but keep the durable proof in the linked Issue, scoped
+  branch, PR, and validation result. A goal never grants extra authority to
+  merge, deploy, or change production data.
+- Do not pin a task class to the historical GPT-5.5 name. Apply the configured
+  adaptive model router to the models and effort levels exposed by the current
+  runtime, while preserving any explicit user selection.
+- Thread Automations (#1837) and persisted goals solve different problems:
+  automations provide an explicit schedule, while a goal preserves the state of
+  one approved body of work. Neither is a reason to create an unattended
+  dependency-update-to-merge pipeline.
 - Cursor context-usage breakdown, Gemini Code Assist release notes, and Devin
   CI-aware auto-fix are advisory signals unless a local verified workflow is
   explicitly routed.
