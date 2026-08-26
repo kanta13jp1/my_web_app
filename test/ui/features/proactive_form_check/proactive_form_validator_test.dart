@@ -47,7 +47,20 @@ void main() {
     expect(result.hasBlockingFinding, isFalse);
     expect(
       result.findings.map((finding) => finding.suggestedValue),
-      containsAll(<String>['夏の 新商品キャンペーン', 'user@example.com', '3000']),
+      containsAll(<String>['夏の 新商品キャンペーン', 'USER@example.com', '3000']),
+    );
+  });
+
+  test('メールのローカル部は変更せずドメインだけを正規化する', () async {
+    final result = await validator.validate(
+      const ProactiveFormDraft(email: ' CaseSensitive@EXAMPLE.COM '),
+    );
+
+    expect(
+      result.findings
+          .singleWhere((finding) => finding.id == 'email-normalize')
+          .suggestedValue,
+      'CaseSensitive@example.com',
     );
   });
 }

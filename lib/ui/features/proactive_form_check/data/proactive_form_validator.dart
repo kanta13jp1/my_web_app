@@ -56,7 +56,6 @@ class RuleBasedProactiveFormValidator implements ProactiveFormValidator {
   Iterable<ProactiveValidationFinding> _validateEmail(String raw) sync* {
     final value = raw.trim();
     if (value.isEmpty) return;
-    final normalized = value.toLowerCase();
     final emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
     if (!emailPattern.hasMatch(value)) {
       yield const ProactiveValidationFinding(
@@ -68,13 +67,16 @@ class RuleBasedProactiveFormValidator implements ProactiveFormValidator {
       );
       return;
     }
+    final atIndex = value.lastIndexOf('@');
+    final normalized = '${value.substring(0, atIndex)}@'
+        '${value.substring(atIndex + 1).toLowerCase()}';
     if (normalized != raw) {
       yield ProactiveValidationFinding(
         id: 'email-normalize',
         field: ProactiveFormField.email,
         severity: ValidationFindingSeverity.warning,
-        message: 'メールアドレスに大文字または前後の空白があります。',
-        solution: '小文字に統一し、前後の空白を取り除けます。',
+        message: 'メールアドレスのドメインに大文字または前後の空白があります。',
+        solution: 'ローカル部を保ったままドメインを小文字にし、空白を取り除けます。',
         suggestedValue: normalized,
       );
     }

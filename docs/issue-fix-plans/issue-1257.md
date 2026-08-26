@@ -65,6 +65,8 @@
   non-blocking validation result.
 - The view model discards out-of-order async results so an older response cannot
   replace feedback for the user's latest input.
+- Email suggestions preserve the potentially case-sensitive local part and
+  normalize only surrounding whitespace and the domain.
 - Heavy validation ran on GitHub-hosted CI while the local machine was above
   the repository's safe memory threshold.
 
