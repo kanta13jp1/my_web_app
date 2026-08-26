@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-26T06:26:19.238784+00:00",
+  "generated_at": "2026-08-26T14:20:42.305940+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -11,12 +11,12 @@
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 7,
-    "eligible": 7,
-    "provisional": 5,
+    "total": 8,
+    "eligible": 8,
+    "provisional": 6,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 6,
+    "division_3": 7,
     "division_4": 1,
     "division_5": 0
   },
@@ -28,27 +28,27 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260826T151103+0900",
-    "started_at": "2026-08-26T15:11:03+09:00",
+    "cycle_id": "20260826T230834+0900",
+    "started_at": "2026-08-26T23:08:34+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-63c96c0b-834c-4979-b387-ff4d4393aced",
-      "url": "https://www.adept.ai/"
+      "slug": "course-fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
+      "url": "https://huggingface.co/adept/fuyu-8b"
     },
     "reviewer": {
       "seat": 12,
       "name": "迫 佑樹",
-      "selection_score": 76.4343,
+      "selection_score": 76.6278,
       "division": 1,
-      "cycle_utility": 87.58,
-      "aggregate_utility": 86.6
+      "cycle_utility": 82.83,
+      "aggregate_utility": 85.16
     },
-    "status": "fixed",
+    "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "tracked日本語overviewが、異なる時点のACT-1 / ACT-2、Fuyu-8B、Adept Agent Platform、Amazonとの関係を出典日と戦略変更の境界なしに現行事実として並べている。",
+        "summary": "講座名は『モデル一覧 (2026年)』を約束するが、選択先は2023年公開・最終更新のFuyu-8B単一モデルカードで、2026年時点の一覧や現行提供状況を裏づけない。",
         "severity": "p1",
         "business_dimensions": [
           "trust_risk",
@@ -57,7 +57,7 @@
         ]
       },
       {
-        "summary": "Adept AI とはという講座名に対し、学習者が公式情報から歴史、現行方針、利用可能な製品を検証する実習と合格条件がない。",
+        "summary": "モデルカードには推論例があるが、講座としての固定環境、入力サイズ、必要GPU・メモリ、実行時間、費用、成功・失敗判定を持つ小規模実習がない。",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
@@ -66,12 +66,12 @@
         ]
       },
       {
-        "summary": "講座固有価値と実在学習者の理解・検証成果を示す証拠が公開情報にない。",
+        "summary": "実在学習者がライセンス、現行性、モデル制約、再現手順を正しく判断できた証拠と、誰が何の成果に支払うかを示す講座固有データがない。",
         "severity": "p2",
         "business_dimensions": [
-          "competitive_advantage",
           "market_demand",
-          "revenue_model"
+          "revenue_model",
+          "scalability"
         ]
       }
     ],
@@ -90,60 +90,150 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After the bounded source-timeline repair, measure official-source click-through and timeline classification accuracy, then test one learner cohort for completion time and correct identification of unknown current product availability."
+      "next_cycle_experiment": "After adding a dated model inventory and a pinned small-input lab, measure source-table completion, first-run success, GPU memory, estimated cost, license classification accuracy, and completion time for one learner cohort."
     },
     "countermeasure": {
-      "state": "implemented",
-      "label": "対策実施・検証済み",
-      "detail": "個別の指摘IDとの紐付けも記録済みです。",
+      "state": "issue_tracking",
+      "label": "未対策・Issue #4905 追跡中",
+      "detail": "主要な不一致は公開講座データのタイトル・出典・カリキュラム境界にあり、production dataと新規教材設計を伴うため共有の低リスク自動修正範囲外。",
       "summary": "",
-      "files": [
-        "lib/pages/gemini_university_v2_page.dart",
-        "test/pages/gemini_university_provider_evidence_test.dart"
-      ],
-      "lines_changed": 48,
+      "files": [],
+      "lines_changed": 0,
       "resolved_finding_ids": [
-        "course-adept-undated-product-lifecycle"
+        "course-fuyu-2026-freshness-mismatch"
       ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: fast-forwarded to origin/main adca34ead",
+        "passed: fast-forwarded to origin/main f273d2253d34983f51a7996bd8a63ee05fe02a8b",
         "passed: 125 profiles",
         "passed: 125 personas",
-        "passed: active=1076, reviewable=531, excluded_missing_source_url=536",
-        "passed: division-5 excluded and deterministic winner preserved",
-        "passed: homepage HTTP 403 recorded; four dated official posts inspected",
+        "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
+        "passed: deterministic winner preserved",
+        "passed: Hugging Face HTTP 200; model card and API metadata inspected; Adept blog Cloudflare challenge disclosed",
         "executed exactly once against shared history root: 125 profiles, seat 12",
-        "passed: 94 tests",
+        "passed: 114 tests",
         "passed: READY with zero missing packages and no tracked dependency changes",
         "passed: 2 tests",
-        "passed"
+        "passed: no diff errors and clean worktree"
       ],
       "issue": {
-        "number": 4878,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4878",
+        "number": 4905,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4905",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260826T151103+0900:63c96c0b-834c-4979-b387-ff4d4393aced"
+        "dedupe_key": "tiger-course-review:20260826T230834+0900:fbf4eab5-f695-4ab4-bc54-b72c4abec19a"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-adept-verifiable-workflow-gap",
-        "course-adept-learner-outcome-proof-gap"
+        "course-fuyu-reproducible-evaluation-gap",
+        "course-fuyu-learner-and-commercial-proof-gap"
       ]
     },
     "course": {
-      "content_id": "63c96c0b-834c-4979-b387-ff4d4393aced",
+      "content_id": "fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
       "provider": "adept",
-      "title": "Adept AI とは",
-      "source_url": "https://www.adept.ai/",
-      "reason": "fresh公開Data APIで有効かつHTTPS出典付きの対象行を確認した。公式ホームはCloudflare challengeでHTTP 403だったが、公式の日付付きブログはACT-1、Fuyu-8B、2024年6月の戦略更新、AWLを個別に示す。tracked日本語overviewはこれらを無日付で現行機能のように並べ、実習、成功判定、誤り回復、学習者成果がないため、実在学習者証拠は契約どおり中立50点とした。",
-      "cycle_utility": 39.75,
-      "aggregate_utility": 39.75,
+      "title": "Adept AI モデル一覧 (2026年)",
+      "source_url": "https://huggingface.co/adept/fuyu-8b",
+      "reason": "fresh公開Data APIで有効かつHTTPS出典付きの対象行を確認した。選択先のHugging FaceモデルカードはHTTP 200で、raw base model、研究用途、CC-BY-NC-4.0、用途別fine-tuningの必要性を明示する一方、API上の最終更新は2023-11-04で、2026年という講座名を裏づける現行モデル一覧、再現可能な学習環境、計算資源・費用、合格条件、実在学習者成果は確認できなかった。実在学習者証拠は契約どおり中立50点とした。",
+      "cycle_utility": 42.75,
+      "aggregate_utility": 42.75,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260826T230834+0900",
+      "started_at": "2026-08-26T23:08:34+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
+        "title": "Adept AI モデル一覧 (2026年)",
+        "url": "https://huggingface.co/adept/fuyu-8b"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 76.6278
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After adding a dated model inventory and a pinned small-input lab, measure source-table completion, first-run success, GPU memory, estimated cost, license classification accuracy, and completion time for one learner cohort."
+      },
+      "findings": [
+        {
+          "finding_id": "course-fuyu-2026-freshness-mismatch",
+          "summary": "講座名は『モデル一覧 (2026年)』を約束するが、選択先は2023年公開・最終更新のFuyu-8B単一モデルカードで、2026年時点の一覧や現行提供状況を裏づけない。",
+          "severity": "p1",
+          "suggested_action": "講座名を証拠範囲に合わせるか、2026年確認日、対象モデル一覧、各モデルの更新日・ライセンス・提供状態、現行性が確認できない項目を明示した出典表へ置き換える。"
+        },
+        {
+          "finding_id": "course-fuyu-reproducible-evaluation-gap",
+          "summary": "モデルカードには推論例があるが、講座としての固定環境、入力サイズ、必要GPU・メモリ、実行時間、費用、成功・失敗判定を持つ小規模実習がない。",
+          "severity": "p1",
+          "suggested_action": "固定されたTransformers環境と小さな画像入力で、必要資源、期待出力、失敗例、fine-tuning不要の評価範囲を示す再現可能なラボと合格基準を設計する。"
+        },
+        {
+          "finding_id": "course-fuyu-learner-and-commercial-proof-gap",
+          "summary": "実在学習者がライセンス、現行性、モデル制約、再現手順を正しく判断できた証拠と、誰が何の成果に支払うかを示す講座固有データがない。",
+          "severity": "p2",
+          "suggested_action": "匿名の学習成果として、更新日・ライセンス分類、初回実行成功、制約説明、採用可否の根拠、完了時間を収集し、対象学習者別に公開する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4905 追跡中",
+        "detail": "主要な不一致は公開講座データのタイトル・出典・カリキュラム境界にあり、production dataと新規教材設計を伴うため共有の低リスク自動修正範囲外。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-fuyu-2026-freshness-mismatch"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded to origin/main f273d2253d34983f51a7996bd8a63ee05fe02a8b",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
+          "passed: deterministic winner preserved",
+          "passed: Hugging Face HTTP 200; model card and API metadata inspected; Adept blog Cloudflare challenge disclosed",
+          "executed exactly once against shared history root: 125 profiles, seat 12",
+          "passed: 114 tests",
+          "passed: READY with zero missing packages and no tracked dependency changes",
+          "passed: 2 tests",
+          "passed: no diff errors and clean worktree"
+        ],
+        "issue": {
+          "number": 4905,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4905",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260826T230834+0900:fbf4eab5-f695-4ab4-bc54-b72c4abec19a"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-fuyu-reproducible-evaluation-gap",
+          "course-fuyu-learner-and-commercial-proof-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260826T151103+0900",
       "started_at": "2026-08-26T15:11:03+09:00",
@@ -230,7 +320,7 @@
           "number": 4878,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4878",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260826T151103+0900:63c96c0b-834c-4979-b387-ff4d4393aced"
         },
         "implementation": null,
@@ -979,6 +1069,20 @@
       "last_cycle_utility": 56.25,
       "last_reviewed_at": "2026-08-23T07:54:04+00:00",
       "reason": "講座レビュー3回・効用53.2点で3部"
+    },
+    {
+      "content_id": "fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
+      "provider": "adept",
+      "title": "Adept AI モデル一覧 (2026年)",
+      "source_url": "https://huggingface.co/adept/fuyu-8b",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 42.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 42.75,
+      "last_reviewed_at": "2026-08-26T14:08:34+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
       "content_id": "63c96c0b-834c-4979-b387-ff4d4393aced",
