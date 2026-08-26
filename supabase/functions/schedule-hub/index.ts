@@ -1231,6 +1231,7 @@ async function notionFetch(
       retryStatuses: [408, 429, 500, 502, 503, 504],
       baseDelayMs: 1_000,
       maxDelayMs: 30_000,
+      jitterRatio: 0.2,
     },
   );
 

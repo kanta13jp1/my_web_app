@@ -104,6 +104,31 @@ Deno.test("externalFetch honors bounded Retry-After for opted-in 429", async () 
   assertEquals(delays, [1_500]);
 });
 
+Deno.test("externalFetch can add deterministic exponential jitter", async () => {
+  let calls = 0;
+  const delays: number[] = [];
+  await externalFetch("notion", "https://example.test/resource", {}, {
+    retries: 1,
+    baseDelayMs: 1_000,
+    jitterRatio: 0.2,
+    random: () => 0.5,
+    sleep: (ms) => {
+      delays.push(ms);
+      return Promise.resolve();
+    },
+    fetcher: () => {
+      calls += 1;
+      return Promise.resolve(
+        new Response(calls === 1 ? "temporary" : "ok", {
+          status: calls === 1 ? 503 : 200,
+        }),
+      );
+    },
+  });
+
+  assertEquals(delays, [1_100]);
+});
+
 Deno.test("externalFetch reports exhausted timeout as user-facing temporary error", async () => {
   const error = await assertRejects(
     () =>
