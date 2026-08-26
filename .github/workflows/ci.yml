@@ -336,7 +336,7 @@ jobs:
 
       - name: Test Windows terminal doctor fixtures
         shell: pwsh
-        run: ./test/scripts/windows_terminal_doctor_test.ps1
+        run: ./scripts/windows_terminal_doctor_test.ps1
         continue-on-error: false
 
       - name: Check duplicate dispose statements
