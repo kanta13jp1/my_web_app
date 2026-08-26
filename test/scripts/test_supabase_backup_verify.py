@@ -14,6 +14,9 @@ from scripts.supabase_backup_verify import (
     BACKUP_FILES,
     build_assertions_sql,
     build_manifest,
+    build_pgmq_bootstrap_sql,
+    build_pgmq_finalize_sql,
+    infer_pgmq_queue_names,
     parse_copy_row_counts,
     verify_manifest,
 )
@@ -54,6 +57,35 @@ COPY "public"."notes" ("id", "body") FROM stdin;
         self.assertIn('FROM "public"."odd""table";', sql)
         self.assertIn("actual_count <> 3", sql)
         self.assertIn("restore row-count mismatch: public.odd\"table", sql)
+
+    def test_builds_pgmq_bootstrap_and_sequence_finalize(self) -> None:
+        counts = {
+            "a_company_agent_runtime": 2,
+            "meta": 1,
+            "q_company_agent_runtime": 3,
+        }
+        queues = infer_pgmq_queue_names(counts)
+        self.assertEqual(queues, ["company_agent_runtime"])
+
+        bootstrap = build_pgmq_bootstrap_sql(queues, restore_meta=True)
+        self.assertIn("PERFORM pgmq.create('company_agent_runtime');", bootstrap)
+        self.assertIn('DELETE FROM "pgmq"."meta"', bootstrap)
+
+        finalize = build_pgmq_finalize_sql(queues, counts)
+        self.assertIn("pg_get_serial_sequence", finalize)
+        self.assertIn("source_is_partitioned OR source_is_unlogged", finalize)
+        self.assertIn('FROM "pgmq"."q_company_agent_runtime"', finalize)
+        self.assertEqual(finalize.count("DO $backup_restore_check$"), 3)
+
+    def test_rejects_incomplete_pgmq_queue_pair(self) -> None:
+        with self.assertRaisesRegex(ValueError, "missing archive table"):
+            infer_pgmq_queue_names({"q_jobs": 1, "meta": 1})
+
+    def test_pgmq_sql_quotes_queue_names(self) -> None:
+        queue_name = "odd'queue"
+        bootstrap = build_pgmq_bootstrap_sql([queue_name], restore_meta=True)
+        self.assertIn("pgmq.create('odd''queue')", bootstrap)
+        self.assertIn('"q_odd\'\'queue"', bootstrap)
 
     def test_manifest_verifies_hash_and_size(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

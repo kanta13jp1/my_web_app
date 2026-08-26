@@ -111,6 +111,8 @@ jobs:
           restore_input="$BACKUP_ROOT/restore-input"
           restore_target="$BACKUP_ROOT/restore-target"
           assertions="$BACKUP_ROOT/restore-assertions.sql"
+          pgmq_bootstrap="$BACKUP_ROOT/pgmq-bootstrap.sql"
+          pgmq_finalize="$BACKUP_ROOT/pgmq-finalize.sql"
 
           cleanup() {
             supabase stop --workdir "$restore_target" --no-backup >/dev/null 2>&1 || true
@@ -131,6 +133,10 @@ jobs:
             --data-sql "$restore_input/data.sql" \
             --output "$assertions" \
             --schema public
+          python scripts/supabase_backup_verify.py pgmq-restore \
+            --data-sql "$restore_input/data.sql" \
+            --bootstrap-output "$pgmq_bootstrap" \
+            --finalize-output "$pgmq_finalize"
 
           supabase init --workdir "$restore_target"
           sed -i 's/major_version = [0-9][0-9]*/major_version = 17/' \
@@ -148,6 +154,8 @@ jobs:
           docker cp "$restore_input/schema.sql" "$db_container:/tmp/schema.sql"
           docker cp "$restore_input/data.sql" "$db_container:/tmp/data.sql"
           docker cp "$assertions" "$db_container:/tmp/restore-assertions.sql"
+          docker cp "$pgmq_bootstrap" "$db_container:/tmp/pgmq-bootstrap.sql"
+          docker cp "$pgmq_finalize" "$db_container:/tmp/pgmq-finalize.sql"
           docker exec "$db_container" psql \
             --username postgres \
             --dbname postgres \
@@ -155,18 +163,22 @@ jobs:
             --variable ON_ERROR_STOP=1 \
             --file /tmp/roles.sql \
             --file /tmp/schema.sql \
+            --file /tmp/pgmq-bootstrap.sql \
             --command 'SET session_replication_role = replica' \
             --file /tmp/data.sql
           docker exec "$db_container" psql \
             --username postgres \
             --dbname postgres \
             --variable ON_ERROR_STOP=1 \
-            --file /tmp/restore-assertions.sql
+            --file /tmp/restore-assertions.sql \
+            --file /tmp/pgmq-finalize.sql
 
           python scripts/supabase_backup_verify.py evidence \
             --manifest "$restore_input/manifest.json" \
             --archive "$ARCHIVE" \
             --assertions "$assertions" \
+            --pgmq-bootstrap "$pgmq_bootstrap" \
+            --pgmq-finalize "$pgmq_finalize" \
             --output "$BACKUP_ROOT/bundle/restore-evidence.json" \
             --run-id "$GITHUB_RUN_ID" \
             --run-attempt "$GITHUB_RUN_ATTEMPT"
@@ -190,6 +202,8 @@ jobs:
           print(f"- Backup generated: `{evidence['backup_generated_at_utc']}`")
           print(f"- Restore target: `{evidence['restore_target']}`")
           print(f"- Public tables checked: `{evidence['public_table_assertions']}`")
+          print(f"- PGMQ tables checked: `{evidence['pgmq_table_assertions']}`")
+          print(f"- PGMQ queues recreated: `{evidence['pgmq_queues_recreated']}`")
           print("- Uploaded database bundle: encrypted; no plaintext data artifact")
           PY
 
