@@ -113,18 +113,22 @@ COPY "public"."notes" ("id", "body") FROM stdin;
             payload = build_manifest(root, "ref")
             self.assertIsInstance(json.dumps(payload), str)
 
-    def test_storage_compatibility_runs_as_local_storage_owner(self) -> None:
+    def test_storage_compatibility_connects_as_local_storage_owner(self) -> None:
         workflow = (
             ROOT / ".github" / "workflows" / "supabase-backup-restore.yml"
         ).read_text(encoding="utf-8")
-        set_role = "--command 'SET ROLE supabase_storage_admin'"
+        owner_login = "--username supabase_storage_admin"
         compatibility = "--file /tmp/storage-compat.sql"
-        reset_role = "--command 'RESET ROLE'"
+        postgres_login = "--username postgres"
         roles_restore = "--file /tmp/roles.sql"
 
-        self.assertLess(workflow.index(set_role), workflow.index(compatibility))
-        self.assertLess(workflow.index(compatibility), workflow.index(reset_role))
-        self.assertLess(workflow.index(reset_role), workflow.index(roles_restore))
+        owner_index = workflow.index(owner_login)
+        compatibility_index = workflow.index(compatibility)
+        postgres_index = workflow.index(postgres_login, compatibility_index)
+        self.assertLess(owner_index, compatibility_index)
+        self.assertLess(compatibility_index, postgres_index)
+        self.assertLess(postgres_index, workflow.index(roles_restore))
+        self.assertNotIn("SET ROLE supabase_storage_admin", workflow)
 
 
 if __name__ == "__main__":

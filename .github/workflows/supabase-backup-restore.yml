@@ -161,13 +161,16 @@ jobs:
           docker cp "$pgmq_bootstrap" "$db_container:/tmp/pgmq-bootstrap.sql"
           docker cp "$pgmq_finalize" "$db_container:/tmp/pgmq-finalize.sql"
           docker exec "$db_container" psql \
+            --username supabase_storage_admin \
+            --dbname postgres \
+            --single-transaction \
+            --variable ON_ERROR_STOP=1 \
+            --file /tmp/storage-compat.sql
+          docker exec "$db_container" psql \
             --username postgres \
             --dbname postgres \
             --single-transaction \
             --variable ON_ERROR_STOP=1 \
-            --command 'SET ROLE supabase_storage_admin' \
-            --file /tmp/storage-compat.sql \
-            --command 'RESET ROLE' \
             --file /tmp/roles.sql \
             --file /tmp/schema.sql \
             --file /tmp/pgmq-bootstrap.sql \
