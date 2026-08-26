@@ -53,8 +53,8 @@ ElevenLabsは文字数ベースでの従量課金（APIレートで100万文字�
 
 - [x] Reproduction is clear
 - [x] Smallest safe fix is implemented
-- [ ] Analyze/tests/CI are checked
-- [ ] PR notes explain the change and the remaining risk
+- [x] Analyze/tests/CI are checked
+- [x] PR notes explain the change and the remaining risk
 
 ## Implementation (Codex #1 / 2026-08-14)
 
@@ -105,15 +105,20 @@ Official API references:
 
 ## Validation
 
-- Pre-hardening baseline on the previous PR head: Deno domain tests/lint and
-  focused Flutter service/widget/route tests/analyze were green.
-- Current hardening diff: `git diff --check` passes.
-- Pending on the updated head: Deno test/lint/check, focused Flutter tests and
-  analyze, executable PostgreSQL state-transition coverage, and the full PR CI.
+- Current hardening head: Flutter analyze/format, 2,796 VM tests, web import
+  smoke, production web build, Deno lint/test, Security Check, migration guards,
+  and PR gates pass in GitHub Actions.
+- Testcontainers applies the migration twice and executes the PostgreSQL quota,
+  idempotency, terminal-conflict, RLS, and TTL-reconciliation contract.
+- `git diff --check` and the CI-matched Dart 3.6 formatter check pass.
 - Independent read-only lanes reviewed PR collision/staleness, acceptance scope,
   provider-account security, billing/idempotency, and the post-fix Edge state
   machine. They made no Git/external changes; the client and DB-test lanes own
   only their explicitly assigned files.
+- Claude ultrareview dispatch reached the configured subscription credential but
+  the organization has disabled Claude subscription access for Claude Code. No
+  review was fabricated; the workflow failure and independent-review exception
+  remain recorded on PR #3732.
 
 ## Operational Gate
 
