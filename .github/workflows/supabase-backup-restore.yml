@@ -227,8 +227,8 @@ jobs:
         with:
           name: supabase-production-backup-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            ${{ runner.temp }}/supabase-backup/bundle/*.7z
-            ${{ runner.temp }}/supabase-backup/bundle/restore-evidence.json
+            ${{ env.BACKUP_ROOT }}/bundle/*.7z
+            ${{ env.BACKUP_ROOT }}/bundle/restore-evidence.json
           if-no-files-found: error
           retention-days: 35
           compression-level: 0
