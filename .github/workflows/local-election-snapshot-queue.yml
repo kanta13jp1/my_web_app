@@ -14,11 +14,12 @@ concurrency:
   group: local-election-snapshot-queue
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   snapshot-and-queue:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:

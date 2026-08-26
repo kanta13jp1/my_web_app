@@ -28,7 +28,7 @@
       {
         "slug": "landing",
         "path": "/lp",
-        "source": "lib/pages/landing_page.dart",
+        "source": "lib/widgets/landing_page_content.dart",
         "priority": "high",
         "review_categories": ["ui_bug", "a11y", "outdated_docs"]
       },

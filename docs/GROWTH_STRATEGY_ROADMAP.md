@@ -33497,3 +33497,11 @@ watcher が名指しできるのはスナップショット時点で**生存し�
 - `ready`とlive公開を分離し、linked商品は全gateと人手承認が揃うまで`is_active=true`をDB triggerで拒否する。問題時は販売停止、stage rollback、修正版の再取込で閉ループに戻す。
 - 管理画面、migration contract、local intake test、responsive widget test、運用docs、repository skillを同じ設計へ同期した。既存購入・download・Stripe Priceをrollbackで削除しない。
 - 検証はFlutter 12件、local intake 5件、変更対象の静的解析、linked Supabaseのmigration dry-run、1440px/390pxブラウザ表示で実施し、live商品自体はactive化していない。
+
+### 資産管理セッション記録: Obsidian保管庫から残高一括取込 (2026-08-26 JST)
+
+- Issue #4868 として、ローカルObsidian保管庫の明示的な残高表を資産管理画面へ取り込むMVPを実装した。
+- Chromeのフォルダー選択権限内でMarkdownだけを読み、`.obsidian/` を除外する。本文はブラウザ内で解析し、確認後に選択された口座名・残高だけを既存の `cfo_assets` へ保存する。
+- 新規・更新・同額・古い・同日競合を差分表示し、新しい確認日の同額残高は口座鮮度の更新候補とする。古い残高と競合は自動反映しない。
+- 保管庫由来の残高更新では使途不明金を自動生成せず、取引履歴・給与・支払予定・カード明細・推定サブスクは誤更新防止のためMVP対象外とした。
+- 検証はパーサー5件、レスポンシブWidget 2件、既存資産管理ページのスモーク1件、変更対象ファイルの静的解析で実施した。全体解析とWeb buildはRAM保護のためCIへ委ねる。

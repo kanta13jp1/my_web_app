@@ -42,11 +42,12 @@ concurrency:
   group: x-daily-briefing-post
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   candidate:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:

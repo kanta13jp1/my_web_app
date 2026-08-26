@@ -1,23 +1,23 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-23T09:32:26.830479+00:00",
+  "generated_at": "2026-08-26T14:20:42.305940+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
   "automation": {
     "id": "ai-2",
     "name": "AI大学講座の虎レビュー",
-    "status": "ACTIVE",
+    "status": "PAUSED",
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 3,
-    "eligible": 3,
-    "provisional": 2,
+    "total": 8,
+    "eligible": 8,
+    "provisional": 6,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 3,
-    "division_4": 0,
+    "division_3": 7,
+    "division_4": 1,
     "division_5": 0
   },
   "utility_weights": {
@@ -28,96 +28,646 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260823T175240+0900",
-    "started_at": "2026-08-23T17:54:10+09:00",
+    "cycle_id": "20260826T230834+0900",
+    "started_at": "2026-08-26T23:08:34+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-525273ba-539f-4dd4-b436-a6a74a5e8cc5",
-      "url": "https://www.01.ai/"
+      "slug": "course-fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
+      "url": "https://huggingface.co/adept/fuyu-8b"
     },
     "reviewer": {
-      "seat": 9,
-      "name": "平出 心",
-      "selection_score": 68.8967,
+      "seat": 12,
+      "name": "迫 佑樹",
+      "selection_score": 76.6278,
       "division": 1,
-      "cycle_utility": 90.25,
-      "aggregate_utility": 85.5
+      "cycle_utility": 82.83,
+      "aggregate_utility": 85.16
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 2,
+    "finding_count": 3,
     "top_findings": [
       {
-        "summary": "『最新情報』講座として、確認日・主要差分・日付付き一次情報を結ぶ講座固有の要約がない。",
+        "summary": "講座名は『モデル一覧 (2026年)』を約束するが、選択先は2023年公開・最終更新のFuyu-8B単一モデルカードで、2026年時点の一覧や現行提供状況を裏づけない。",
         "severity": "p1",
         "business_dimensions": [
           "trust_risk",
           "market_demand",
-          "competitive_advantage"
+          "unit_economics"
         ]
       },
       {
-        "summary": "最新情報を実務判断へ変換できたかを示す実在学習者の課題・成果証拠がない。",
+        "summary": "モデルカードには推論例があるが、講座としての固定環境、入力サイズ、必要GPU・メモリ、実行時間、費用、成功・失敗判定を持つ小規模実習がない。",
+        "severity": "p1",
+        "business_dimensions": [
+          "market_demand",
+          "unit_economics",
+          "scalability"
+        ]
+      },
+      {
+        "summary": "実在学習者がライセンス、現行性、モデル制約、再現手順を正しく判断できた証拠と、誰が何の成果に支払うかを示す講座固有データがない。",
         "severity": "p2",
         "business_dimensions": [
           "market_demand",
-          "customer_pain",
-          "unit_economics"
+          "revenue_model",
+          "scalability"
         ]
       }
     ],
+    "quality": {
+      "framework": "TCE+CLEAR",
+      "overall_score": 100.0,
+      "scores": {
+        "complete": 100,
+        "logical": 100,
+        "evidence": 100,
+        "audience": 100,
+        "relevant": 100
+      },
+      "gate_passed": true,
+      "baseline_cycle_id": null,
+      "focus_dimension": "evidence",
+      "overall_delta": null,
+      "next_focus_dimension": "complete",
+      "next_cycle_experiment": "After adding a dated model inventory and a pinned small-input lab, measure source-table completion, first-run success, GPU memory, estimated cost, license classification accuracy, and completion time for one learner cohort."
+    },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4734 追跡中",
-      "detail": "両指摘は公開講座データまたは外部教材の内容・計測設計に関わり、共有の低リスク自動修正境界と保護対象の制約を満たさない。",
+      "label": "未対策・Issue #4905 追跡中",
+      "detail": "主要な不一致は公開講座データのタイトル・出典・カリキュラム境界にあり、production dataと新規教材設計を伴うため共有の低リスク自動修正範囲外。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
-      "resolved_finding_ids": [],
+      "resolved_finding_ids": [
+        "course-fuyu-2026-freshness-mismatch"
+      ],
       "validation_status": "passed",
       "validation_messages": [
-        "validate_roster.py: passed (125 profiles)",
-        "validate_personas.py: passed (125 profiles)",
-        "public Data API catalog export: passed (active=1071, reviewable=526)",
-        "select_course.py: passed (division-5 excluded; deterministic winner preserved)",
-        "target validation: passed (active row; HTTPS source; HTTP 200)",
-        "select_reviewer.py: passed once (125 profiles; seat 9)",
-        "course_review_issue.py --execute: passed (Issue #4734; cycle dedupe evidence recorded)",
-        "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; two proposals)",
-        "build_lane_status.py --lane course_review: passed (course-only status; latest cycle 20260823T175240+0900)",
-        "flutter test test/models/tiger_review_lane_status_test.dart: passed (4 tests)",
-        "deploy_lane_to_production.py --lane course_review --execute: passed (workflow 32629724865; public JSON equality verified)"
+        "passed: fast-forwarded to origin/main f273d2253d34983f51a7996bd8a63ee05fe02a8b",
+        "passed: 125 profiles",
+        "passed: 125 personas",
+        "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
+        "passed: deterministic winner preserved",
+        "passed: Hugging Face HTTP 200; model card and API metadata inspected; Adept blog Cloudflare challenge disclosed",
+        "executed exactly once against shared history root: 125 profiles, seat 12",
+        "passed: 114 tests",
+        "passed: READY with zero missing packages and no tracked dependency changes",
+        "passed: 2 tests",
+        "passed: no diff errors and clean worktree"
       ],
       "issue": {
-        "number": 4734,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4734",
-        "status": "existing",
+        "number": 4905,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4905",
+        "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260823T175240+0900:525273ba-539f-4dd4-b436-a6a74a5e8cc5"
+        "dedupe_key": "tiger-course-review:20260826T230834+0900:fbf4eab5-f695-4ab4-bc54-b72c4abec19a"
       },
-      "implementation": {
-        "commit_sha": "20b20d3ce18515752a09e11beb6efd32cee12e49",
-        "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32629724865",
-        "production_url": "https://my-web-app-b67f4.web.app/assets/assets/data/tiger_course_review_status.json",
-        "release_status": "passed"
-      },
+      "implementation": null,
       "findings_without_individual_trace": [
-        "course-latest-dated-synthesis",
-        "course-latest-learner-proof"
+        "course-fuyu-reproducible-evaluation-gap",
+        "course-fuyu-learner-and-commercial-proof-gap"
       ]
     },
     "course": {
-      "content_id": "525273ba-539f-4dd4-b436-a6a74a5e8cc5",
-      "provider": "01ai",
-      "title": "01.AI (Yi) 最新情報",
-      "source_url": "https://www.01.ai/",
-      "reason": "fresh公開Data APIで有効かつHTTPS出典付きと確認し、公式サイトはHTTP 200で2026-08-10更新、会社年表は2026-07のTrueNorthと2026-01のWorldWise 2.5まで明示しているため、現在の事業・製品方向を把握する一次情報として有用である。一方、講座固有の学習目標、更新差分、演習はなく、ニュース一覧にも表示上の日付がないため『最新情報』を再現可能に学ぶ導線は弱い。実在学習者の成果・完了・評価証拠は観測できないため、learner_evidenceは中立50点とした。",
-      "cycle_utility": 65.1,
-      "aggregate_utility": 65.1,
+      "content_id": "fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
+      "provider": "adept",
+      "title": "Adept AI モデル一覧 (2026年)",
+      "source_url": "https://huggingface.co/adept/fuyu-8b",
+      "reason": "fresh公開Data APIで有効かつHTTPS出典付きの対象行を確認した。選択先のHugging FaceモデルカードはHTTP 200で、raw base model、研究用途、CC-BY-NC-4.0、用途別fine-tuningの必要性を明示する一方、API上の最終更新は2023-11-04で、2026年という講座名を裏づける現行モデル一覧、再現可能な学習環境、計算資源・費用、合格条件、実在学習者成果は確認できなかった。実在学習者証拠は契約どおり中立50点とした。",
+      "cycle_utility": 42.75,
+      "aggregate_utility": 42.75,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260826T230834+0900",
+      "started_at": "2026-08-26T23:08:34+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
+        "title": "Adept AI モデル一覧 (2026年)",
+        "url": "https://huggingface.co/adept/fuyu-8b"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 76.6278
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After adding a dated model inventory and a pinned small-input lab, measure source-table completion, first-run success, GPU memory, estimated cost, license classification accuracy, and completion time for one learner cohort."
+      },
+      "findings": [
+        {
+          "finding_id": "course-fuyu-2026-freshness-mismatch",
+          "summary": "講座名は『モデル一覧 (2026年)』を約束するが、選択先は2023年公開・最終更新のFuyu-8B単一モデルカードで、2026年時点の一覧や現行提供状況を裏づけない。",
+          "severity": "p1",
+          "suggested_action": "講座名を証拠範囲に合わせるか、2026年確認日、対象モデル一覧、各モデルの更新日・ライセンス・提供状態、現行性が確認できない項目を明示した出典表へ置き換える。"
+        },
+        {
+          "finding_id": "course-fuyu-reproducible-evaluation-gap",
+          "summary": "モデルカードには推論例があるが、講座としての固定環境、入力サイズ、必要GPU・メモリ、実行時間、費用、成功・失敗判定を持つ小規模実習がない。",
+          "severity": "p1",
+          "suggested_action": "固定されたTransformers環境と小さな画像入力で、必要資源、期待出力、失敗例、fine-tuning不要の評価範囲を示す再現可能なラボと合格基準を設計する。"
+        },
+        {
+          "finding_id": "course-fuyu-learner-and-commercial-proof-gap",
+          "summary": "実在学習者がライセンス、現行性、モデル制約、再現手順を正しく判断できた証拠と、誰が何の成果に支払うかを示す講座固有データがない。",
+          "severity": "p2",
+          "suggested_action": "匿名の学習成果として、更新日・ライセンス分類、初回実行成功、制約説明、採用可否の根拠、完了時間を収集し、対象学習者別に公開する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4905 追跡中",
+        "detail": "主要な不一致は公開講座データのタイトル・出典・カリキュラム境界にあり、production dataと新規教材設計を伴うため共有の低リスク自動修正範囲外。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-fuyu-2026-freshness-mismatch"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded to origin/main f273d2253d34983f51a7996bd8a63ee05fe02a8b",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
+          "passed: deterministic winner preserved",
+          "passed: Hugging Face HTTP 200; model card and API metadata inspected; Adept blog Cloudflare challenge disclosed",
+          "executed exactly once against shared history root: 125 profiles, seat 12",
+          "passed: 114 tests",
+          "passed: READY with zero missing packages and no tracked dependency changes",
+          "passed: 2 tests",
+          "passed: no diff errors and clean worktree"
+        ],
+        "issue": {
+          "number": 4905,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4905",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260826T230834+0900:fbf4eab5-f695-4ab4-bc54-b72c4abec19a"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-fuyu-reproducible-evaluation-gap",
+          "course-fuyu-learner-and-commercial-proof-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260826T151103+0900",
+      "started_at": "2026-08-26T15:11:03+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "63c96c0b-834c-4979-b387-ff4d4393aced",
+        "title": "Adept AI とは",
+        "url": "https://www.adept.ai/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 76.4343
+      },
+      "status": "implemented",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the bounded source-timeline repair, measure official-source click-through and timeline classification accuracy, then test one learner cohort for completion time and correct identification of unknown current product availability."
+      },
+      "findings": [
+        {
+          "finding_id": "course-adept-undated-product-lifecycle",
+          "summary": "tracked日本語overviewが、異なる時点のACT-1 / ACT-2、Fuyu-8B、Adept Agent Platform、Amazonとの関係を出典日と戦略変更の境界なしに現行事実として並べている。",
+          "severity": "p1",
+          "suggested_action": "公式確認日と日付付き一次情報を追加し、ACT-1とFuyu-8Bを歴史的発表、2024年6月更新とAWLを後続戦略として分離し、現行提供は公式サイトで再確認するよう明示する。"
+        },
+        {
+          "finding_id": "course-adept-verifiable-workflow-gap",
+          "summary": "Adept AI とはという講座名に対し、学習者が公式情報から歴史、現行方針、利用可能な製品を検証する実習と合格条件がない。",
+          "severity": "p1",
+          "suggested_action": "4本の日付付き公式記事を用い、技術発表と現行戦略を分類し、不明点をunknownとして残す検証課題と合格基準を設計する。"
+        },
+        {
+          "finding_id": "course-adept-learner-outcome-proof-gap",
+          "summary": "講座固有価値と実在学習者の理解・検証成果を示す証拠が公開情報にない。",
+          "severity": "p2",
+          "suggested_action": "日付付きタイムラインと現行性検証の結果を匿名で収集し、正答率、完了時間、unknownを正しく残せた率を集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "implemented",
+        "label": "対策実施・検証済み",
+        "detail": "個別の指摘IDとの紐付けも記録済みです。",
+        "summary": "",
+        "files": [
+          "lib/pages/gemini_university_v2_page.dart",
+          "test/pages/gemini_university_provider_evidence_test.dart"
+        ],
+        "lines_changed": 48,
+        "resolved_finding_ids": [
+          "course-adept-undated-product-lifecycle"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded to origin/main adca34ead",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: active=1076, reviewable=531, excluded_missing_source_url=536",
+          "passed: division-5 excluded and deterministic winner preserved",
+          "passed: homepage HTTP 403 recorded; four dated official posts inspected",
+          "executed exactly once against shared history root: 125 profiles, seat 12",
+          "passed: 94 tests",
+          "passed: READY with zero missing packages and no tracked dependency changes",
+          "passed: 2 tests",
+          "passed"
+        ],
+        "issue": {
+          "number": 4878,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4878",
+          "status": "created",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-course-review:20260826T151103+0900:63c96c0b-834c-4979-b387-ff4d4393aced"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-adept-verifiable-workflow-gap",
+          "course-adept-learner-outcome-proof-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260826T071116+0900",
+      "started_at": "2026-08-26T07:11:16+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
+        "title": "01.AI (Yi) API 利用方法",
+        "url": "https://platform.01.ai/docs"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 75.3463
+      },
+      "status": "implemented",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the bounded trust repair, measure official-document click-through and authenticated model-list confirmation, then test one learner cohort for first-request success rate and median completion time."
+      },
+      "findings": [
+        {
+          "finding_id": "course-01ai-unversioned-provider-claims",
+          "summary": "tracked日本語overviewが検証日なしでYi-Lightningの価格・性能とOpenAI API完全互換を断定し、2024年更新の公式文書との差分や再確認手順を示していない。",
+          "severity": "p1",
+          "suggested_action": "未検証の価格・性能断定を削除し、公式文書の確認日、OpenAI互換形式の位置づけ、認証後のモデル一覧確認、仕様変更可能性を明示する。"
+        },
+        {
+          "finding_id": "course-01ai-verifiable-first-request-gap",
+          "summary": "API利用方法という講座名に対し、講座固有の前提条件、モデル確認、request、期待応答、代表エラー、合格条件が公開講座行にない。",
+          "severity": "p1",
+          "suggested_action": "認証後モデル一覧確認、1回のchat completion、期待応答、401/404境界、合格条件を版付き日本語実習として設計する。"
+        },
+        {
+          "finding_id": "course-01ai-learner-outcome-proof-gap",
+          "summary": "講座固有価値と実在学習者のAPI成果を示す証拠が公開情報にない。",
+          "severity": "p2",
+          "suggested_action": "検証可能な最小課題と匿名の結果提出を設け、初回成功率、完了時間、自己回復率を集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "implemented",
+        "label": "対策実施・検証済み",
+        "detail": "個別の指摘IDとの紐付けも記録済みです。",
+        "summary": "",
+        "files": [
+          "lib/pages/gemini_university_v2_page.dart",
+          "test/pages/gemini_university_provider_evidence_test.dart"
+        ],
+        "lines_changed": 51,
+        "resolved_finding_ids": [
+          "course-01ai-unversioned-provider-claims"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded to origin/main 2a3fcd288",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: active=1075, reviewable=530, excluded_missing_source_url=536",
+          "passed: division-5 excluded and deterministic winner preserved",
+          "passed: HTTP 200, Last-Modified 2024-08-23, current shell and cached quickstart inspected",
+          "executed exactly once against shared history root: 125 profiles, seat 12",
+          "passed: analyze, Dart format, full VM tests with coverage, web import smoke, and production web build",
+          "passed: squash merged to main at 42c0491d32b9f95445c0e83ce1cf0f9c0a42634b"
+        ],
+        "issue": {
+          "number": 4855,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4855",
+          "status": "created",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-course-review:20260826T071116+0900:4ec30eda-d8f5-4cef-b88d-b5e18a34e914"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-01ai-verifiable-first-request-gap",
+          "course-01ai-learner-outcome-proof-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260826T061027+0900",
+      "started_at": "2026-08-26T06:10:27+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "5b7e5f70-2652-4949-b00d-6bbc768fbb96",
+        "title": "Adept AI API 入門 (Fuyu-8B)",
+        "url": "https://www.adept.ai/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 74.9248
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Verify one current official Adept API endpoint or explicitly reclassify the course, then measure one anonymous cohort for first-request success rate and median completion time."
+      },
+      "findings": [
+        {
+          "finding_id": "course-adept-verifiable-api-path-gap",
+          "summary": "API入門という講座名に対し、講座固有のrequest、前提条件、実行順序、成功条件が公開証拠から確認できない。",
+          "severity": "p1",
+          "suggested_action": "検証可能なprovider APIが存在することを先に確認し、認証準備、1回のrequest、期待応答、代表的エラー、合格条件を日本語の短い実習にする。"
+        },
+        {
+          "finding_id": "course-adept-source-verification-gap",
+          "summary": "講座の出典URLがHTTP 403で、Fuyu-8Bを現在利用できるAPIとして裏付ける公式手順を独立検証できない。",
+          "severity": "p1",
+          "suggested_action": "providerの現行公式API文書、利用可否、モデル識別子、確認日を検証し、確認できない間は講座名と学習目標を断定しない。"
+        },
+        {
+          "finding_id": "course-adept-learner-outcome-proof-gap",
+          "summary": "講座固有価値と実在学習者のAPI成果を示す証拠が公開情報にない。",
+          "severity": "p2",
+          "suggested_action": "検証可能な最小課題と匿名の結果提出を設け、初回成功率、完了時間、自己回復率を集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4850 追跡中",
+        "detail": "指摘は本番講座データの学習設計・出典属性・成果計測に関わり、共有契約が自動変更を禁止するproduction data境界を越える。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded to origin/main f22061cce",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: active=1075, reviewable=530, excluded_missing_source_url=536",
+          "passed: division-5 excluded and deterministic winner preserved",
+          "passed as access evidence: HTTP 403 with Cloudflare challenge",
+          "executed exactly once against shared history root: 125 profiles, seat 12",
+          "passed: 92 shared Tiger tests",
+          "passed: 219 missing package roots hydrated once with enforce-lockfile; tracked files unchanged",
+          "passed: 21 tests",
+          "passed: clean, HEAD equals origin/main f22061cce"
+        ],
+        "issue": {
+          "number": 4850,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4850",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260826T061027+0900:5b7e5f70-2652-4949-b00d-6bbc768fbb96"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-adept-verifiable-api-path-gap",
+          "course-adept-source-verification-gap",
+          "course-adept-learner-outcome-proof-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260824T011146+0900",
+      "started_at": "2026-08-24T01:11:46+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "647dc452-f75d-4dd9-8292-332bada2e2f9",
+        "title": "LLM理論：大規模言語モデルの仕組み — Transformer・Attention・創発的現象 完全解説 (10/10)",
+        "url": "https://en.wikipedia.org/wiki/Large_language_model"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 75.0278
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "course-llm-capstone-learning-path",
+          "summary": "10/10完結編の名称に対し、Transformer・Attention・創発的現象を結ぶ講座固有の到達目標、読解順序、演習、到達確認が公開面にない。",
+          "severity": "p1",
+          "suggested_action": "冒頭に3つの到達目標と対象節の読解順序を示し、Attentionの情報流と創発性の測定論争を説明する短い概念マップ課題・採点基準を追加する。"
+        },
+        {
+          "finding_id": "course-llm-source-revision-boundary",
+          "summary": "可変な二次資料だけを講座出典にしているが、revision固定、確認日、変化しやすい2026年の主張を一次資料で再確認する境界がない。",
+          "severity": "p1",
+          "suggested_action": "講座に確認日とMediaWiki revision IDを保存し、Transformer原論文、創発性と測定依存性の主要論文など、採点対象の核心主張ごとに一次資料を固定する。"
+        },
+        {
+          "finding_id": "course-llm-learner-outcome-proof",
+          "summary": "講座完了後に実在学習者がTransformer・Attention・創発的現象を区別し統合できたことを示す成果証拠がない。",
+          "severity": "p2",
+          "suggested_action": "匿名の概念マップ課題、反論を含む短答問題、完了後自己評価を設け、初回正答率と再学習率を継続集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4763 追跡中",
+        "detail": "指摘はいずれも公開講座データまたは外部教材の内容・評価設計に関わり、共有契約が許可する低リスクなリポジトリ内自動修正境界を満たさない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed (125 profiles)",
+          "validate_personas.py: passed (125 profiles; 99 unique weight profiles)",
+          "public Data API catalog export: passed (active=1073, reviewable=528)",
+          "select_course.py: passed (division-5 excluded; deterministic winner preserved)",
+          "target validation: passed (one active row; HTTPS source; HTTP 200; revision 1370470611)",
+          "select_reviewer.py: executed exactly once (125 profiles; seat 12; deterministic output saved)",
+          "course_review_issue.py --execute: passed (Issue #4763; cycle dedupe evidence recorded)",
+          "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; three proposals)",
+          "build_lane_status.py --lane course_review: passed (course-only history=7; latest cycle 20260824T011146+0900; no missing Issue evidence)",
+          "test_course_review_continuity.py: passed (4 tests)",
+          "test_reviewer_selection.py: passed (14 tests)",
+          "direct Dart TigerReviewLaneStatus contract check: passed (history=7; courses=5; all review_only entries have Issue evidence)",
+          "git diff --check: passed",
+          "deploy_lane_to_production.py --lane course_review --execute: passed (workflow 32651352280; public JSON equality verified)"
+        ],
+        "issue": {
+          "number": 4763,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4763",
+          "status": "created",
+          "github_state": null,
+          "dedupe_key": "tiger-course-review:20260824T011146+0900:647dc452-f75d-4dd9-8292-332bada2e2f9"
+        },
+        "implementation": {
+          "commit_sha": "7b30251dc8cbd3398e7ad044f536670ba6c640ad",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32651352280",
+          "production_url": "https://my-web-app-b67f4.web.app/assets/assets/data/tiger_course_review_status.json",
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "course-llm-capstone-learning-path",
+          "course-llm-source-revision-boundary",
+          "course-llm-learner-outcome-proof"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T232120+0900",
+      "started_at": "2026-08-23T23:21:20+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "e1712bb5-2bca-4fc0-8347-0529513411d3",
+        "title": "01.AI (Yi) とは",
+        "url": "https://www.01.ai/"
+      },
+      "reviewer": {
+        "seat": 9,
+        "name": "平出 心",
+        "selection_score": 74.9711
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "course-intro-current-scope-map",
+          "summary": "『01.AI (Yi) とは』という講座名に対し、現在の会社・Yiモデル・WorldWise基盤・TrueNorth製品群の関係を日付付きで示す講座固有の導入マップがない。",
+          "severity": "p1",
+          "suggested_action": "講座冒頭に確認日、会社、Yiモデル群、WorldWise基盤、TrueNorth製品群の4層マップと、学習後に説明できるべき3項目を追加する。"
+        },
+        {
+          "finding_id": "course-intro-learner-outcome-proof",
+          "summary": "入門講座が会社・モデル・現行製品の区別に役立ったことを示す実在学習者の課題・完了・成果証拠がない。",
+          "severity": "p2",
+          "suggested_action": "5分の分類課題と次に調べる公式ページを選ぶ到達確認を設け、匿名の完了率・初回正答率・受講後自己評価を集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4757 追跡中",
+        "detail": "両指摘は公開講座データまたは外部教材の内容・学習計測設計に関わり、共有の低リスク自動修正境界と保護対象の制約を満たさない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed (125 profiles)",
+          "validate_personas.py: passed (125 profiles)",
+          "public Data API catalog export: passed (active=1072, reviewable=527)",
+          "select_course.py: passed (division-5 excluded; deterministic winner preserved)",
+          "target validation: passed (active row; HTTPS source; HTTP 200)",
+          "select_reviewer.py: selection JSON saved once (125 profiles; seat 9; stdout encoding warning did not alter output)",
+          "course_review_issue.py --execute: passed (Issue #4757; cycle dedupe evidence recorded)",
+          "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; two proposals)",
+          "build_lane_status.py --lane course_review: passed (course-only status; latest cycle 20260823T232120+0900)",
+          "flutter test --no-pub --concurrency=1 test/models/tiger_review_lane_status_test.dart: passed (5 tests)"
+        ],
+        "issue": {
+          "number": 4757,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4757",
+          "status": "created",
+          "github_state": null,
+          "dedupe_key": "tiger-course-review:20260823T232120+0900:e1712bb5-2bca-4fc0-8347-0529513411d3"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-intro-current-scope-map",
+          "course-intro-learner-outcome-proof"
+        ]
+      }
+    },
     {
       "cycle_id": "20260823T175240+0900",
       "started_at": "2026-08-23T17:54:10+09:00",
@@ -136,6 +686,7 @@
       "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
+      "quality": null,
       "findings": [
         {
           "finding_id": "course-latest-dated-synthesis",
@@ -209,6 +760,7 @@
       "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
+      "quality": null,
       "findings": [
         {
           "finding_id": "course-model-list-freshness",
@@ -281,6 +833,7 @@
       "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
+      "quality": null,
       "findings": [
         {
           "finding_id": "comparison-claim-evidence",
@@ -353,6 +906,7 @@
       "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
+      "quality": null,
       "findings": [
         {
           "finding_id": "course-freshness-review",
@@ -424,6 +978,7 @@
       "status": "implemented",
       "review_status": "fixed",
       "validation_status": "passed",
+      "quality": null,
       "findings": [
         {
           "finding_id": "ai_university_catalog_pagination",
@@ -460,6 +1015,20 @@
   ],
   "courses": [
     {
+      "content_id": "e1712bb5-2bca-4fc0-8347-0529513411d3",
+      "provider": "01ai",
+      "title": "01.AI (Yi) とは",
+      "source_url": "https://www.01.ai/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 67.4,
+      "completed_cycles": 1,
+      "last_cycle_utility": 67.4,
+      "last_reviewed_at": "2026-08-23T14:21:20+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
       "content_id": "525273ba-539f-4dd4-b436-a6a74a5e8cc5",
       "provider": "01ai",
       "title": "01.AI (Yi) 最新情報",
@@ -471,6 +1040,20 @@
       "completed_cycles": 1,
       "last_cycle_utility": 65.1,
       "last_reviewed_at": "2026-08-23T08:54:10+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "647dc452-f75d-4dd9-8292-332bada2e2f9",
+      "provider": "academic",
+      "title": "LLM理論：大規模言語モデルの仕組み — Transformer・Attention・創発的現象 完全解説 (10/10)",
+      "source_url": "https://en.wikipedia.org/wiki/Large_language_model",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 57.0,
+      "completed_cycles": 1,
+      "last_cycle_utility": 57.0,
+      "last_reviewed_at": "2026-08-23T16:11:46+00:00",
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
@@ -488,18 +1071,60 @@
       "reason": "講座レビュー3回・効用53.2点で3部"
     },
     {
+      "content_id": "fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
+      "provider": "adept",
+      "title": "Adept AI モデル一覧 (2026年)",
+      "source_url": "https://huggingface.co/adept/fuyu-8b",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 42.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 42.75,
+      "last_reviewed_at": "2026-08-26T14:08:34+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "63c96c0b-834c-4979-b387-ff4d4393aced",
+      "provider": "adept",
+      "title": "Adept AI とは",
+      "source_url": "https://www.adept.ai/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 39.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 39.75,
+      "last_reviewed_at": "2026-08-26T06:11:03+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "5b7e5f70-2652-4949-b00d-6bbc768fbb96",
+      "provider": "adept",
+      "title": "Adept AI API 入門 (Fuyu-8B)",
+      "source_url": "https://www.adept.ai/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 30.2,
+      "completed_cycles": 1,
+      "last_cycle_utility": 30.2,
+      "last_reviewed_at": "2026-08-25T21:10:27+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
       "content_id": "4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
       "provider": "01ai",
       "title": "01.AI (Yi) API 利用方法",
       "source_url": "https://platform.01.ai/docs",
-      "division": 3,
-      "provisional": true,
+      "division": 4,
+      "provisional": false,
       "eligible": true,
-      "utility_score": 43.25,
-      "completed_cycles": 1,
-      "last_cycle_utility": 43.25,
-      "last_reviewed_at": "2026-08-23T06:38:16.438300+00:00",
-      "reason": "講座レビュー実績が2回未満のため暫定3部"
+      "utility_score": 40.58,
+      "completed_cycles": 2,
+      "last_cycle_utility": 39.25,
+      "last_reviewed_at": "2026-08-25T22:11:16+00:00",
+      "reason": "講座レビュー2回・効用40.6点で4部"
     }
   ]
 }

@@ -48,12 +48,13 @@ concurrency:
 # workflows and needs one consistent change to an id verified via ListModels.
 # Keep logging the bodies: the status codes alone pointed at the wrong cause.
 
-permissions:
-  contents: read
-  pull-requests: write
+permissions: {}
 
 jobs:
   review:
+    permissions:
+      contents: read
+      pull-requests: write
     name: AI Agent Code Review
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -63,7 +64,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -223,7 +224,7 @@ jobs:
       - name: Post Review Comment
         if: steps.review.outputs.text != '' && !startsWith(steps.review.outputs.text, '✅ LGTM')
         continue-on-error: true
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           REVIEW_BODY: ${{ steps.review.outputs.text }}
           REVIEW_MODEL: ${{ steps.review.outputs.model }}
@@ -273,7 +274,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -305,7 +306,7 @@ jobs:
 
       - name: Upload gate evidence
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: high-risk-ultrareview-gate
           path: .ci-logs/high-risk-*.txt
@@ -349,14 +350,14 @@ jobs:
           echo "Reviewing PR #${PR_NUM}"
 
       - name: Checkout PR head
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           ref: refs/pull/${{ steps.pr.outputs.number }}/head
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '20'
 
@@ -434,7 +435,7 @@ jobs:
 
       - name: Post ultrareview comment
         if: steps.ultrareview.outputs.ran == 'true'
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           PR_NUMBER: ${{ steps.pr.outputs.number }}
         with:

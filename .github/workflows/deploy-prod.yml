@@ -38,9 +38,7 @@ concurrency:
   # group が同じため同時並行はゼロ・GitHub Actions リソース消費は変わらない。
   cancel-in-progress: false
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 env:
   ENVIRONMENT: production
@@ -93,7 +91,7 @@ jobs:
 
       - name: Collect pushed files
         if: github.event_name == 'push'
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const fs = require('fs');
@@ -126,6 +124,20 @@ jobs:
             --github-output "$GITHUB_OUTPUT" \
             "${args[@]}"
 
+      - name: Detect DB and Edge smoke scope
+        id: db_edge_smoke
+        shell: bash
+        env:
+          FORCE_ALL: ${{ github.event_name != 'push' }}
+        run: |
+          if [ "$FORCE_ALL" = "true" ] || grep -Eq \
+            '^(supabase/(migrations|functions)/|scripts/(testcontainers_supabase_smoke.py|requirements-testcontainers.txt)|test/fixtures/testcontainers/|test/scripts/test_testcontainers_supabase_smoke.py)' \
+            .deploy-logs/changed-files.txt; then
+            echo "required=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "required=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Setup Flutter
         if: steps.changes.outputs.web == 'true'
         uses: ./.github/actions/setup-flutter-sdk
@@ -134,7 +146,7 @@ jobs:
 
       - name: Cache Flutter pub
         if: steps.changes.outputs.web == 'true'
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
@@ -193,9 +205,44 @@ jobs:
         if: steps.changes.outputs.migration == 'true'
         run: python scripts/check_migration_timestamps.py
 
+      - name: Setup Python for DB and Edge smoke
+        if: steps.db_edge_smoke.outputs.required == 'true'
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Setup Deno for DB and Edge smoke
+        if: steps.db_edge_smoke.outputs.required == 'true'
+        shell: bash
+        env:
+          DENO_VERSION: v2.9.1
+        run: bash scripts/ci/install_deno_from_github.sh
+
+      - name: Install DB and Edge smoke dependencies
+        if: steps.db_edge_smoke.outputs.required == 'true'
+        run: python -m pip install --requirement scripts/requirements-testcontainers.txt
+
+      - name: Gate production changes with DB and Edge smoke
+        if: steps.db_edge_smoke.outputs.required == 'true'
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+        run: |
+          python test/scripts/test_testcontainers_supabase_smoke.py
+          python scripts/testcontainers_supabase_smoke.py --plan
+          python scripts/testcontainers_supabase_smoke.py --artifacts-dir .testcontainers-logs
+
+      - name: Upload production DB and Edge smoke artifacts
+        if: always() && steps.db_edge_smoke.outputs.required == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: production-testcontainers-smoke-logs
+          path: .testcontainers-logs/
+          if-no-files-found: ignore
+          include-hidden-files: true
+
       - name: Setup Supabase CLI
         if: steps.changes.outputs.migration == 'true' || steps.changes.outputs.edge == 'true'
-        uses: supabase/setup-cli@v3
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3
         with:
           version: 2.84.2
 
@@ -337,7 +384,7 @@ jobs:
 
       - name: Upload Supabase migration logs
         if: always() && steps.changes.outputs.migration == 'true' && hashFiles('.deploy-logs/**') != ''
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: supabase-migration-logs
           path: .deploy-logs/
@@ -759,6 +806,13 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
+      - name: Validate Flutter Supabase configuration
+        if: steps.changes.outputs.web == 'true'
+        run: python scripts/validate_flutter_supabase_env.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
+
       - name: Build Flutter Web (Production)
         if: steps.changes.outputs.web == 'true'
         run: |
@@ -769,7 +823,7 @@ jobs:
             --build-number=${{ github.run_number }} \
             --dart-define=ENVIRONMENT=production \
             --dart-define=SUPABASE_URL=$SUPABASE_URL \
-            --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY \
             --dart-define=APP_VERSION=${{ steps.version.outputs.version }} \
             --dart-define=BUILD_NUMBER=${{ github.run_number }} \
             --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true \
@@ -781,9 +835,15 @@ jobs:
             --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=${{ env.LANDING_GOOGLE_LOGIN_ENABLED }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
           POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
           POSTHOG_HOST: ${{ vars.POSTHOG_HOST || 'https://us.i.posthog.com' }}
+
+      - name: Render public Supabase URL into web shell
+        if: steps.changes.outputs.web == 'true'
+        run: python scripts/render_web_supabase_config.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
 
       - name: Write version.json
         if: steps.changes.outputs.web == 'true'
@@ -814,7 +874,7 @@ jobs:
 
       - name: Setup Node for Firebase CLI
         if: steps.changes.outputs.web == 'true'
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: "24"
           cache: npm
@@ -902,7 +962,7 @@ jobs:
 
       - name: Create GitHub Release
         if: steps.changes.outputs.web == 'true'
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
@@ -940,7 +1000,7 @@ jobs:
         if: steps.changes.outputs.web == 'true'
         continue-on-error: true
         env:
-          SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           curl -fsS -X POST \
@@ -974,6 +1034,7 @@ jobs:
   # 通知ジョブ
   # -----------------------------------------------------------------
   notify:
+    timeout-minutes: 5
     name: Notify Deployment Status
     runs-on: ubuntu-latest
     needs: [deploy]
@@ -985,82 +1046,60 @@ jobs:
     steps:
       - name: Notify Slack on Success
         if: needs.deploy.result == 'success' && needs.deploy.outputs.deployable == 'true'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
         run: |
-          cat <<EOF > payload.json
-          {
-            "text": "✅ Production Deployment Successful!",
-            "blocks": [
-              {
-                "type": "header",
-                "text": { "type": "plain_text", "text": "✅ Production Deployment Successful!" }
-              },
-              {
-                "type": "section",
-                "fields": [
-                  { "type": "mrkdwn", "text": "*Environment:*\nProduction" },
-                  { "type": "mrkdwn", "text": "*Branch:*\n\`${{ github.ref_name }}\`" },
-                  { "type": "mrkdwn", "text": "*Commit:*\n\`${{ github.sha }}\`" },
-                  { "type": "mrkdwn", "text": "*Author:*\n${{ github.actor }}" }
-                ]
-              },
-              {
-                "type": "actions",
-                "elements": [
-                  {
-                    "type": "button",
-                    "text": { "type": "plain_text", "text": "View Workflow" },
-                    "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                  },
-                  {
-                    "type": "button",
-                    "text": { "type": "plain_text", "text": "View Site" },
-                    "url": "https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app"
-                  }
-                ]
-              }
-            ]
-          }
-          EOF
-          curl -X POST -H 'Content-type: application/json' --data @payload.json ${{ secrets.SLACK_WEBHOOK_URL }} --max-time 10 || true
+          jq -n \
+            --arg branch "$GITHUB_REF_NAME" \
+            --arg commit "$GITHUB_SHA" \
+            --arg actor "$GITHUB_ACTOR" \
+            --arg workflow_url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --arg site_url "https://$FIREBASE_PROJECT_ID.web.app" \
+            '{
+              text: "✅ Production Deployment Successful!",
+              blocks: [
+                {type: "header", text: {type: "plain_text", text: "✅ Production Deployment Successful!"}},
+                {type: "section", fields: [
+                  {type: "mrkdwn", text: "*Environment:*\nProduction"},
+                  {type: "mrkdwn", text: ("*Branch:*\n`" + $branch + "`")},
+                  {type: "mrkdwn", text: ("*Commit:*\n`" + $commit + "`")},
+                  {type: "mrkdwn", text: ("*Author:*\n" + $actor)}
+                ]},
+                {type: "actions", elements: [
+                  {type: "button", text: {type: "plain_text", text: "View Workflow"}, url: $workflow_url},
+                  {type: "button", text: {type: "plain_text", text: "View Site"}, url: $site_url}
+                ]}
+              ]
+            }' > payload.json
+          curl -X POST -H 'Content-type: application/json' --data @payload.json "$SLACK_WEBHOOK_URL" --max-time 10 || true
 
       - name: Notify Slack on Failure
         if: needs.deploy.result == 'failure'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
         run: |
-          cat <<EOF > payload.json
-          {
-            "text": "❌ Production Deployment Failed!",
-            "blocks": [
-              {
-                "type": "header",
-                "text": { "type": "plain_text", "text": "❌ Production Deployment Failed!" }
-              },
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*Deploy Status:* \`${{ needs.deploy.result }}\`\n*Author:* ${{ github.actor }}"
-                }
-              },
-              {
-                "type": "actions",
-                "elements": [
-                  {
-                    "type": "button",
-                    "text": { "type": "plain_text", "text": "View Logs" },
-                    "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                    "style": "danger"
-                  }
-                ]
-              }
-            ]
-          }
-          EOF
-          curl -X POST -H 'Content-type: application/json' --data @payload.json ${{ secrets.SLACK_WEBHOOK_URL }} --max-time 10 || true
+          jq -n \
+            --arg result "$DEPLOY_RESULT" \
+            --arg actor "$GITHUB_ACTOR" \
+            --arg workflow_url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            '{
+              text: "❌ Production Deployment Failed!",
+              blocks: [
+                {type: "header", text: {type: "plain_text", text: "❌ Production Deployment Failed!"}},
+                {type: "section", text: {type: "mrkdwn", text: ("*Deploy Status:* `" + $result + "`\n*Author:* " + $actor)}},
+                {type: "actions", elements: [
+                  {type: "button", text: {type: "plain_text", text: "View Logs"}, url: $workflow_url, style: "danger"}
+                ]}
+              ]
+            }' > payload.json
+          curl -X POST -H 'Content-type: application/json' --data @payload.json "$SLACK_WEBHOOK_URL" --max-time 10 || true
 
       - name: Comment on commit
         if: needs.deploy.result == 'success' && needs.deploy.outputs.deployable == 'true'
         continue-on-error: true
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             github.rest.repos.createCommitComment({

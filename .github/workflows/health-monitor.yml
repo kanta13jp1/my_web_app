@@ -32,11 +32,12 @@ concurrency:
   group: health-monitor
   cancel-in-progress: true  # 2026-06-13 ci-audit: 毎30分モニタリングのキュー積み防止
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   monitor:
+    permissions:
+      contents: write
     name: Health Monitor
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -47,7 +48,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT || secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}

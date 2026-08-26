@@ -1,3 +1,5 @@
+import '../services/note_tag_service.dart';
+
 class Note {
   final int id;
   final String userId;
@@ -14,6 +16,7 @@ class Note {
   final String captureStatus;
   final String captureSource;
   final DateTime? inboxSavedAt;
+  final List<String> tags;
 
   Note({
     required this.id,
@@ -31,6 +34,7 @@ class Note {
     this.captureStatus = 'organized',
     this.captureSource = 'editor',
     this.inboxSavedAt,
+    this.tags = const <String>[],
   });
 
   factory Note.fromJson(Map<String, dynamic> json) {
@@ -56,6 +60,7 @@ class Note {
       inboxSavedAt: json['inbox_saved_at'] != null
           ? DateTime.parse(json['inbox_saved_at'] as String)
           : null,
+      tags: NoteTagService.normalize(json['tags']),
     );
   }
 
@@ -76,6 +81,7 @@ class Note {
       'capture_status': captureStatus,
       'capture_source': captureSource,
       'inbox_saved_at': inboxSavedAt?.toIso8601String(),
+      'tags': tags,
     };
   }
 

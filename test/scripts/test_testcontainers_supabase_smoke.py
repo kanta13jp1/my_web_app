@@ -115,6 +115,56 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
             plan["tax_records_checks"],
         )
 
+    def test_plan_includes_ai_university_migration_runtime_proof(self) -> None:
+        plan = module.build_plan(
+            ROOT / "test" / "fixtures" / "testcontainers" / "sql",
+            ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts",
+            ROOT / "supabase" / "functions" / "health-check" / "index.ts",
+        )
+        self.assertEqual(
+            plan["ai_university_migration"],
+            "supabase/migrations/20260824135127_add_ai_university_evidence_and_content_analytics.sql",
+        )
+        self.assertIn(
+            "migration applies twice without losing legacy rows",
+            plan["ai_university_checks"],
+        )
+
+    def test_plan_includes_app_analytics_write_boundary(self) -> None:
+        plan = module.build_plan(
+            ROOT / "test" / "fixtures" / "testcontainers" / "sql",
+            ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts",
+            ROOT / "supabase" / "functions" / "health-check" / "index.ts",
+        )
+        self.assertEqual(
+            plan["app_analytics_migration"],
+            "supabase/migrations/20260827003000_harden_app_analytics_writes.sql",
+        )
+        self.assertIn(
+            "raw browser INSERT, UPDATE, and DELETE are denied",
+            plan["app_analytics_checks"],
+        )
+        self.assertIn(
+            "deno check --config supabase/functions/deno.json "
+            "supabase/functions/growth-hub/index.ts",
+            plan["actual_edge_checks"],
+        )
+
+    def test_plan_includes_note_comments_authorization_boundary(self) -> None:
+        plan = module.build_plan(
+            ROOT / "test" / "fixtures" / "testcontainers" / "sql",
+            ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts",
+            ROOT / "supabase" / "functions" / "health-check" / "index.ts",
+        )
+        self.assertEqual(
+            plan["note_comments_migration"],
+            "supabase/migrations/20260827032000_harden_note_comments_authorization.sql",
+        )
+        checks = " ".join(plan["note_comments_checks"])
+        self.assertIn("body user_id forgery", checks)
+        self.assertIn("direct self-join", checks)
+        self.assertIn("applies twice", checks)
+
     def test_tenant_role_count_rejects_untrusted_identifiers(self) -> None:
         with self.assertRaisesRegex(ValueError, "unexpected role"):
             module.issue_2773_role_count(
@@ -125,6 +175,28 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
             )
         with self.assertRaisesRegex(ValueError, "unexpected table"):
             module.issue_2773_role_count(None, "authenticated", None, "pg_authid")
+
+    def test_note_comments_runner_rejects_untrusted_role(self) -> None:
+        with self.assertRaisesRegex(ValueError, "unexpected role"):
+            module.note_comments_run_as(
+                None,
+                role="postgres",
+                user_id=None,
+                statement="select 1",
+            )
+
+    def test_team_join_uses_authenticated_rpc_boundary(self) -> None:
+        source = (ROOT / "lib" / "pages" / "team_workspace_page.dart").read_text(
+            encoding="utf-8"
+        )
+        join_method = source.split("Future<void> _joinByInviteCode() async {", 1)[1]
+        join_method = join_method.split("Future<void> _deleteTeam", 1)[0]
+        self.assertIn("'join_team_with_invite_code'", join_method)
+        self.assertIn("'p_invite_code': code.trim()", join_method)
+        self.assertNotIn(".from('team_memberships').insert", join_method)
+        self.assertNotIn("'user_id'", join_method)
+        self.assertIn("招待コード (8文字または32文字)", source)
+        self.assertIn("LengthLimitingTextInputFormatter(32)", source)
 
     def test_asset_chat_role_count_rejects_untrusted_identifiers(self) -> None:
         with self.assertRaisesRegex(ValueError, "unexpected role"):
