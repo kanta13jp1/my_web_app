@@ -256,6 +256,7 @@ const List<String> kAllAppRoutes = <String>[
   '/prison-mode',
   '/privacy',
   '/procrastination-reset',
+  '/proactive-form-check',
   '/profile-settings',
   '/project-gantt',
   '/public-guitar-gallery',
