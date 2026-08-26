@@ -121,7 +121,7 @@ BEGIN
     GROUP BY period_start
   ), applied AS (
     UPDATE public.billing_usage_counters AS counters
-    SET voice_character_count = pg_catalog.greatest(
+    SET voice_character_count = greatest(
         counters.voice_character_count - released.recoverable,
         0
       )
@@ -130,7 +130,7 @@ BEGIN
       AND counters.period_start = released.period_start
     RETURNING released.recoverable
   )
-  SELECT pg_catalog.coalesce(pg_catalog.sum(recoverable), 0)
+  SELECT coalesce(pg_catalog.sum(recoverable), 0)
   INTO v_recovered
   FROM applied;
 
@@ -180,7 +180,7 @@ BEGIN
   FROM public.billing_subscriptions
   WHERE user_id = p_user_id;
 
-  v_tier := pg_catalog.coalesce(v_tier, 'free');
+  v_tier := coalesce(v_tier, 'free');
   v_limit := CASE v_tier
     WHEN 'team' THEN 300000
     WHEN 'pro' THEN 100000
@@ -243,7 +243,7 @@ BEGIN
       'tier', v_tier,
       'used', v_used,
       'limit', v_limit,
-      'remaining', pg_catalog.greatest(v_limit - v_used, 0),
+      'remaining', greatest(v_limit - v_used, 0),
       'generation_count', v_generation_count,
       'generation_limit', v_generation_limit,
       'period_start', v_period_start,
@@ -285,7 +285,7 @@ BEGIN
     'tier', v_tier,
     'used', v_used,
     'limit', v_limit,
-    'remaining', pg_catalog.greatest(v_limit - v_used, 0),
+    'remaining', greatest(v_limit - v_used, 0),
     'generation_count', v_generation_count,
     'generation_limit', v_generation_limit,
     'period_start', v_period_start
@@ -385,7 +385,7 @@ BEGIN
   v_release := v_job.reserved_characters - p_billed_characters;
 
   UPDATE public.billing_usage_counters
-  SET voice_character_count = pg_catalog.greatest(
+  SET voice_character_count = greatest(
     voice_character_count - v_release,
     0
   )
