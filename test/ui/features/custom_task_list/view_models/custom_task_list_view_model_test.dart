@@ -111,7 +111,8 @@ void main() {
     expect(viewModel.errorMessage, contains('保存できません'));
   });
 
-  test('finishing generation after dispose does not notify a dead model', () async {
+  test('finishing generation after dispose does not notify a dead model',
+      () async {
     final generator = _DeferredGenerator();
     final viewModel = CustomTaskListViewModel(
       repository: CustomTaskListRepositoryImpl(
