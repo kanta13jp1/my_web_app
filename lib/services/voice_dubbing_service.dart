@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../utils/voice_audio_downloader.dart';
 
@@ -222,23 +223,30 @@ class VoiceUsage {
   final int used;
   final int limit;
   final int remaining;
+  final int generationCount;
+  final int generationLimit;
 
   const VoiceUsage({
     required this.tier,
     required this.used,
     required this.limit,
     required this.remaining,
+    this.generationCount = 0,
+    this.generationLimit = 0,
   });
 
   factory VoiceUsage.fromJson(Map<String, dynamic> json) => VoiceUsage(
-        tier: json['tier']?.toString() ?? 'free',
-        used: _asInt(json['used']),
-        limit: _asInt(json['limit']),
-        remaining: _asInt(json['remaining']),
-      );
+    tier: json['tier']?.toString() ?? 'free',
+    used: _asInt(json['used']),
+    limit: _asInt(json['limit']),
+    remaining: _asInt(json['remaining']),
+    generationCount: _asInt(json['generation_count']),
+    generationLimit: _asInt(json['generation_limit']),
+  );
 }
 
 class VoiceDubbingRequest {
+  final String idempotencyKey;
   final String text;
   final String fileName;
   final VoiceDubbingModel model;
@@ -250,7 +258,8 @@ class VoiceDubbingRequest {
   final double speed;
   final bool speakerBoost;
 
-  const VoiceDubbingRequest({
+  VoiceDubbingRequest({
+    String? idempotencyKey,
     required this.text,
     required this.fileName,
     required this.model,
@@ -261,25 +270,24 @@ class VoiceDubbingRequest {
     required this.style,
     required this.speed,
     required this.speakerBoost,
-  });
+  }) : idempotencyKey = idempotencyKey ?? const Uuid().v4();
 
   Map<String, dynamic> toJson() => {
-        'action': 'voice.dubbing.generate',
-        'text': text,
-        'file_name': fileName,
-        'model_id': model.id,
-        'language': language.code,
-        'voice_id': voice.id,
-        if (voice.publicOwnerId.isNotEmpty)
-          'public_owner_id': voice.publicOwnerId,
-        'voice_settings': {
-          'stability': stability,
-          'similarity_boost': similarityBoost,
-          'style': style,
-          'speed': speed,
-          'use_speaker_boost': speakerBoost,
-        },
-      };
+    'action': 'voice.dubbing.generate',
+    'idempotency_key': idempotencyKey,
+    'text': text,
+    'file_name': fileName,
+    'model_id': model.id,
+    'language': language.code,
+    'voice_id': voice.id,
+    'voice_settings': {
+      'stability': stability,
+      'similarity_boost': similarityBoost,
+      'style': style,
+      'speed': speed,
+      'use_speaker_boost': speakerBoost,
+    },
+  };
 }
 
 class VoiceDubbingResult {
@@ -332,8 +340,8 @@ class SupabaseVoiceDubbingService implements VoiceDubbingApi {
   SupabaseVoiceDubbingService({
     SupabaseClient? client,
     AudioPlayer? audioPlayer,
-  })  : _client = client ?? Supabase.instance.client,
-        _audioPlayer = audioPlayer ?? AudioPlayer();
+  }) : _client = client ?? Supabase.instance.client,
+       _audioPlayer = audioPlayer ?? AudioPlayer();
 
   Future<Map<String, dynamic>> _invoke(Map<String, dynamic> body) async {
     final response = await _client.functions.invoke('ai-hub', body: body);

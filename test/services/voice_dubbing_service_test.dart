@@ -23,8 +23,9 @@ void main() {
     final flash = voiceDubbingModels.firstWhere(
       (model) => model.id == 'eleven_flash_v2_5',
     );
-    final multilingualCount =
-        voiceDubbingLanguages.where(multilingual.supports).length;
+    final multilingualCount = voiceDubbingLanguages
+        .where(multilingual.supports)
+        .length;
     final flashCount = voiceDubbingLanguages.where(flash.supports).length;
 
     expect(multilingualCount, 29);
@@ -61,6 +62,15 @@ void main() {
     expect(request['model_id'], 'eleven_v3');
     expect(request['language'], 'ja');
     expect(request['voice_id'], 'voice-123456');
+    expect(
+      request['idempotency_key'],
+      matches(
+        RegExp(
+          r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+        ),
+      ),
+    );
+    expect(request, isNot(contains('public_owner_id')));
     expect(request['voice_settings'], {
       'stability': 0.4,
       'similarity_boost': 0.8,
@@ -68,5 +78,20 @@ void main() {
       'speed': 1.1,
       'use_speaker_boost': false,
     });
+  });
+
+  test('usage parses character and generation limits', () {
+    final usage = VoiceUsage.fromJson({
+      'tier': 'pro',
+      'used': 1200,
+      'limit': 100000,
+      'remaining': 98800,
+      'generation_count': 12,
+      'generation_limit': 1000,
+    });
+
+    expect(usage.tier, 'pro');
+    expect(usage.generationCount, 12);
+    expect(usage.generationLimit, 1000);
   });
 }

@@ -3,10 +3,11 @@
 
 The smoke intentionally avoids production Supabase credentials. It starts a
 disposable Postgres container, applies a small migration/seed fixture, verifies
-the Issue #2773 fail-closed RLS migration, Issue #2484 asset-chat isolation, and
-Issue #4091 app-analytics write boundary, checks the real Edge Function import
-policy, Issue #2668 note-comment authorization, and runs a Deno HTTP fixture
-against the container. Logs are written as
+the Issue #2773 fail-closed RLS migration, Issue #2484 asset-chat isolation,
+Issue #4091 app-analytics write boundary, and Issue #1202 voice-dubbing quota
+state machine, checks the real Edge Function import policy, Issue #2668
+note-comment authorization, and runs a Deno HTTP fixture against the container.
+Logs are written as
 artifacts so CI failures point to the migration, function, or seed boundary that
 broke.
 """
@@ -97,6 +98,21 @@ AI_UNIVERSITY_MIGRATION = (
     / "20260824135127_add_ai_university_evidence_and_content_analytics.sql"
 )
 AI_UNIVERSITY_LEGACY_ROW = "00000000-0000-4000-8000-000000004738"
+VOICE_DUBBING_BOOTSTRAP = (
+    ROOT / "supabase" / "tests" / "voice_dubbing_bootstrap.sql"
+)
+BILLING_MIGRATION = (
+    ROOT / "supabase" / "migrations" / "20260505203000_create_billing_tables.sql"
+)
+VOICE_DUBBING_MIGRATION = (
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260814160000_add_voice_dubbing_usage.sql"
+)
+VOICE_DUBBING_CONTRACT = (
+    ROOT / "supabase" / "tests" / "voice_dubbing_quota_contract.sql"
+)
 VIDEO_ARTIFACT_SQL_FILES = (
     ROOT / "supabase" / "tests" / "video_service_bootstrap.sql",
     ROOT / "supabase" / "migrations" / "20260819165405_create_first_party_video_service.sql",
@@ -363,6 +379,21 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "anon and authenticated can insert only allowlisted event fields",
             "clients cannot select events or supply server-owned fields",
             "event table has RLS and no user/session/error payload columns",
+        ],
+        "voice_dubbing_sql": [
+            VOICE_DUBBING_BOOTSTRAP.relative_to(ROOT).as_posix(),
+            BILLING_MIGRATION.relative_to(ROOT).as_posix(),
+            VOICE_DUBBING_MIGRATION.relative_to(ROOT).as_posix(),
+            VOICE_DUBBING_CONTRACT.relative_to(ROOT).as_posix(),
+        ],
+        "voice_dubbing_checks": [
+            "migration applies twice in the disposable database",
+            "authenticated cannot execute service-role quota RPCs",
+            "duplicate in-progress claims do not consume quota twice",
+            "completed requests replay their stored result without rebilling",
+            "failed jobs release only unbilled reserved characters",
+            "TTL reconciliation bills started chunks and releases unstarted chunks",
+            "over-limit claims create no job and consume no additional quota",
         ],
         "video_artifact_contract": [
             path.relative_to(ROOT).as_posix() for path in VIDEO_ARTIFACT_SQL_FILES
@@ -2313,6 +2344,11 @@ def run_smoke(args: argparse.Namespace) -> int:
             apply_sql_fixture(conn, NOTE_COMMENTS_SECURITY_MIGRATION, artifacts_dir)
             apply_sql_fixture(conn, NOTE_COMMENTS_SECURITY_MIGRATION, artifacts_dir)
             note_comments_security = check_note_comments_security(conn)
+            apply_sql_fixture(conn, VOICE_DUBBING_BOOTSTRAP, artifacts_dir)
+            apply_sql_fixture(conn, BILLING_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, VOICE_DUBBING_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, VOICE_DUBBING_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, VOICE_DUBBING_CONTRACT, artifacts_dir)
             apply_sql_fixture(conn, ASSET_CHAT_MIGRATION, artifacts_dir)
             seed_asset_chat_fixture(conn)
             asset_chat_rls = check_asset_chat_rls(conn)
@@ -2336,6 +2372,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "asset_chat_rls": asset_chat_rls,
             "tax_records_rls": tax_records_rls,
             "ai_university": ai_university,
+            "voice_dubbing_quota_contract": "passed",
             "video_artifact_contract": "passed",
         },
         "edge_fixture": {

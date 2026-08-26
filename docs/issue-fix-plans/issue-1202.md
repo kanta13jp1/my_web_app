@@ -68,8 +68,22 @@ ElevenLabsは文字数ベースでの従量課金（APIレートで100万文字�
   supported models. Generated MP3 chunks are combined in order and stored in a
   private `voice-dubbing` bucket with a one-hour signed preview URL.
 - Added atomic monthly character quotas backed by `billing_usage_counters`:
-  free 5,000 / pro 100,000 / team 300,000 characters. Failed generations release
-  their reservation.
+  free 5,000 / pro 100,000 / team 300,000 characters. Known provider failures
+  release unbilled characters; interrupted requests recover never-started chunks.
+- Added a service-role-only idempotent job ledger with 15-minute reservation
+  expiry. Each provider-bound chunk is marked before transmission; reconciliation
+  releases only chunks that were never started and conservatively retains
+  started chunks after an interrupted Edge worker.
+- Removed the client-triggered `POST /v1/voices/add/...` path. Voice Library
+  selections are passed directly to TTS, so authenticated users cannot mutate or
+  exhaust the shared ElevenLabs account's saved-voice operations.
+- Added per-tier monthly generation-count limits (free 100 / pro 1,000 / team
+  3,000), fixed client-facing provider error codes, and server-side correlation
+  IDs for bounded diagnostics.
+- Treats provider transport/body-read ambiguity as attempted usage so an unknown
+  ElevenLabs charge cannot be released and spent again. If completion commit
+  acknowledgement is lost, the Edge Function re-reads the durable job before it
+  decides whether the uploaded audio can be deleted.
 
 Official API references:
 
@@ -77,6 +91,8 @@ Official API references:
 - https://elevenlabs.io/docs/api-reference/voices/voice-library/get-shared
 - https://elevenlabs.io/docs/eleven-api/guides/how-to/text-to-speech/request-stitching
 - https://elevenlabs.io/docs/api-reference/text-to-speech/convert
+- https://elevenlabs.io/docs/eleven-creative/voices/voice-library
+- https://supabase.com/docs/guides/functions/limits
 
 ## Acceptance Status
 
@@ -85,14 +101,19 @@ Official API references:
 - [x] Split long text on natural boundaries and stitch supported generations.
 - [x] Preview and download the generated private MP3.
 - [x] Track per-user monthly characters and enforce free/pro/team limits atomically.
+- [x] Prevent shared-provider account mutation and reconcile orphaned reservations.
 
 ## Validation
 
-- `deno test --no-lock supabase/functions/ai-hub/voice_dubbing_test.ts` (5 passed)
-- `deno lint` for the new domain module, tests, and `ai-hub/index.ts`
-- `flutter test --no-pub` for service, widget, and direct-route tests (6 passed)
-- `flutter analyze --no-pub` for all new Flutter files and tests (no issues)
-- `git diff --check`
+- Pre-hardening baseline on the previous PR head: Deno domain tests/lint and
+  focused Flutter service/widget/route tests/analyze were green.
+- Current hardening diff: `git diff --check` passes.
+- Pending on the updated head: Deno test/lint/check, focused Flutter tests and
+  analyze, executable PostgreSQL state-transition coverage, and the full PR CI.
+- Independent read-only lanes reviewed PR collision/staleness, acceptance scope,
+  provider-account security, billing/idempotency, and the post-fix Edge state
+  machine. They made no Git/external changes; the client and DB-test lanes own
+  only their explicitly assigned files.
 
 ## Operational Gate
 
@@ -100,3 +121,7 @@ Official API references:
 - Confirm `ELEVENLABS_API_KEY` belongs to a plan with Voice Library API access.
 - Run one authenticated live generation after deployment; provider calls were not
   made from the local test lane.
+- The synchronous endpoint is still bounded by Supabase's hosted request/runtime
+  limits. The production smoke must measure multi-chunk duration; workloads that
+  cannot begin a response within 150 seconds must be routed to a separate queued
+  worker in a follow-up before increasing the current model limits.

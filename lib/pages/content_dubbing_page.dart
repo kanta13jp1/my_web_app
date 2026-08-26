@@ -44,6 +44,8 @@ class _ContentDubbingPageState extends State<ContentDubbingPage> {
   double _speed = 1;
   bool _speakerBoost = true;
   String _status = '';
+  String? _pendingIdempotencyKey;
+  String? _pendingRequestFingerprint;
 
   List<VoiceDubbingLanguage> get _availableLanguages =>
       voiceDubbingLanguages.where(_model.supports).toList(growable: false);
@@ -144,30 +146,60 @@ class _ContentDubbingPageState extends State<ContentDubbingPage> {
       _result = null;
       _status = '音声を生成しています...';
     });
+    final requestFingerprint = <Object>[
+      text,
+      _fileNameController.text,
+      _model.id,
+      _language.code,
+      voice.id,
+      _stability,
+      _similarityBoost,
+      _style,
+      _speed,
+      _speakerBoost,
+    ].join('\u001f');
+    final request = VoiceDubbingRequest(
+      idempotencyKey: _pendingRequestFingerprint == requestFingerprint
+          ? _pendingIdempotencyKey
+          : null,
+      text: text,
+      fileName: _fileNameController.text,
+      model: _model,
+      language: _language,
+      voice: voice,
+      stability: _stability,
+      similarityBoost: _similarityBoost,
+      style: _style,
+      speed: _speed,
+      speakerBoost: _speakerBoost,
+    );
+    _pendingIdempotencyKey = request.idempotencyKey;
+    _pendingRequestFingerprint = requestFingerprint;
     try {
-      final result = await _api.generate(
-        VoiceDubbingRequest(
-          text: text,
-          fileName: _fileNameController.text,
-          model: _model,
-          language: _language,
-          voice: voice,
-          stability: _stability,
-          similarityBoost: _similarityBoost,
-          style: _style,
-          speed: _speed,
-          speakerBoost: _speakerBoost,
-        ),
-      );
+      final result = await _api.generate(request);
       if (!mounted) return;
       setState(() {
         _result = result;
         _usage = result.usage;
         _status = '生成が完了しました。';
+        _pendingIdempotencyKey = null;
+        _pendingRequestFingerprint = null;
       });
       await _api.preview(result);
     } catch (error) {
-      if (mounted) setState(() => _status = _message(error));
+      final message = _message(error);
+      if (mounted) {
+        setState(() {
+          _status = message;
+          if (message.contains('retry_with_new_request_id') ||
+              message.contains('idempotency_conflict') ||
+              message.contains('voice_generation_failed') ||
+              message.contains('voice_replay_unavailable')) {
+            _pendingIdempotencyKey = null;
+            _pendingRequestFingerprint = null;
+          }
+        });
+      }
     } finally {
       if (mounted) setState(() => _generating = false);
     }
@@ -465,6 +497,16 @@ class _ContentDubbingPageState extends State<ContentDubbingPage> {
             ),
           ],
         ),
+        if (usage != null && usage.generationLimit > 0) ...[
+          const SizedBox(height: DesignTokens.space4),
+          Text(
+            '生成回数 ${_formatNumber(usage.generationCount)} / ${_formatNumber(usage.generationLimit)}回',
+            style: const TextStyle(
+              color: DesignTokens.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+        ],
         const SizedBox(height: DesignTokens.space8),
         LinearProgressIndicator(
           minHeight: 6,
@@ -719,23 +761,23 @@ class _ContentDubbingPageState extends State<ContentDubbingPage> {
   }
 
   InputDecoration _inputDecoration(String label) => InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: DesignTokens.textSecondary),
-        filled: true,
-        fillColor: DesignTokens.surface2,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: DesignTokens.space12,
-          vertical: DesignTokens.space12,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: DesignTokens.divider),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: DesignTokens.indigo),
-        ),
-      );
+    labelText: label,
+    labelStyle: const TextStyle(color: DesignTokens.textSecondary),
+    filled: true,
+    fillColor: DesignTokens.surface2,
+    contentPadding: const EdgeInsets.symmetric(
+      horizontal: DesignTokens.space12,
+      vertical: DesignTokens.space12,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: DesignTokens.divider),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: DesignTokens.indigo),
+    ),
+  );
 
   String _message(Object error) => error
       .toString()
