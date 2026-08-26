@@ -117,14 +117,20 @@ COPY "public"."notes" ("id", "body") FROM stdin;
         workflow = (
             ROOT / ".github" / "workflows" / "supabase-backup-restore.yml"
         ).read_text(encoding="utf-8")
+        local_password = 'export PGPASSWORD="$POSTGRES_PASSWORD"'
+        loopback = "--host 127.0.0.1"
         owner_login = "--username supabase_storage_admin"
         compatibility = "--file /tmp/storage-compat.sql"
         postgres_login = "--username postgres"
         roles_restore = "--file /tmp/roles.sql"
 
+        password_index = workflow.index(local_password)
+        loopback_index = workflow.index(loopback, password_index)
         owner_index = workflow.index(owner_login)
         compatibility_index = workflow.index(compatibility)
         postgres_index = workflow.index(postgres_login, compatibility_index)
+        self.assertLess(password_index, loopback_index)
+        self.assertLess(loopback_index, owner_index)
         self.assertLess(owner_index, compatibility_index)
         self.assertLess(compatibility_index, postgres_index)
         self.assertLess(postgres_index, workflow.index(roles_restore))
