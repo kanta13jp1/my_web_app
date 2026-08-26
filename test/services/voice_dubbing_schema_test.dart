@@ -77,7 +77,7 @@ void main() {
       ),
     );
     expect(migration, contains('reserved_characters - started_characters'));
-    expect(migration, contains("expires_at < pg_catalog.now()"));
+    expect(migration, contains('expires_at < pg_catalog.now()'));
     expect(
       migration,
       contains("status not in ('completed', 'failed', 'expired')"),
