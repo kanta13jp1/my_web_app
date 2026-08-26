@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-26T01:39:56.524676+00:00",
+  "generated_at": "2026-08-26T06:26:19.238784+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -11,12 +11,12 @@
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 6,
-    "eligible": 6,
-    "provisional": 4,
+    "total": 7,
+    "eligible": 7,
+    "provisional": 5,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 5,
+    "division_3": 6,
     "division_4": 1,
     "division_5": 0
   },
@@ -28,27 +28,27 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260826T071116+0900",
-    "started_at": "2026-08-26T07:11:16+09:00",
+    "cycle_id": "20260826T151103+0900",
+    "started_at": "2026-08-26T15:11:03+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
-      "url": "https://platform.01.ai/docs"
+      "slug": "course-63c96c0b-834c-4979-b387-ff4d4393aced",
+      "url": "https://www.adept.ai/"
     },
     "reviewer": {
       "seat": 12,
       "name": "迫 佑樹",
-      "selection_score": 75.3463,
+      "selection_score": 76.4343,
       "division": 1,
-      "cycle_utility": 87.33,
-      "aggregate_utility": 85.31
+      "cycle_utility": 87.58,
+      "aggregate_utility": 86.6
     },
     "status": "fixed",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "tracked日本語overviewが検証日なしでYi-Lightningの価格・性能とOpenAI API完全互換を断定し、2024年更新の公式文書との差分や再確認手順を示していない。",
+        "summary": "tracked日本語overviewが、異なる時点のACT-1 / ACT-2、Fuyu-8B、Adept Agent Platform、Amazonとの関係を出典日と戦略変更の境界なしに現行事実として並べている。",
         "severity": "p1",
         "business_dimensions": [
           "trust_risk",
@@ -57,7 +57,7 @@
         ]
       },
       {
-        "summary": "API利用方法という講座名に対し、講座固有の前提条件、モデル確認、request、期待応答、代表エラー、合格条件が公開講座行にない。",
+        "summary": "Adept AI とはという講座名に対し、学習者が公式情報から歴史、現行方針、利用可能な製品を検証する実習と合格条件がない。",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
@@ -66,7 +66,7 @@
         ]
       },
       {
-        "summary": "講座固有価値と実在学習者のAPI成果を示す証拠が公開情報にない。",
+        "summary": "講座固有価値と実在学習者の理解・検証成果を示す証拠が公開情報にない。",
         "severity": "p2",
         "business_dimensions": [
           "competitive_advantage",
@@ -90,7 +90,7 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After the bounded trust repair, measure official-document click-through and authenticated model-list confirmation, then test one learner cohort for first-request success rate and median completion time."
+      "next_cycle_experiment": "After the bounded source-timeline repair, measure official-source click-through and timeline classification accuracy, then test one learner cohort for completion time and correct identification of unknown current product availability."
     },
     "countermeasure": {
       "state": "implemented",
@@ -101,47 +101,145 @@
         "lib/pages/gemini_university_v2_page.dart",
         "test/pages/gemini_university_provider_evidence_test.dart"
       ],
-      "lines_changed": 51,
+      "lines_changed": 48,
       "resolved_finding_ids": [
-        "course-01ai-unversioned-provider-claims"
+        "course-adept-undated-product-lifecycle"
       ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: fast-forwarded to origin/main 2a3fcd288",
+        "passed: fast-forwarded to origin/main adca34ead",
         "passed: 125 profiles",
         "passed: 125 personas",
-        "passed: active=1075, reviewable=530, excluded_missing_source_url=536",
+        "passed: active=1076, reviewable=531, excluded_missing_source_url=536",
         "passed: division-5 excluded and deterministic winner preserved",
-        "passed: HTTP 200, Last-Modified 2024-08-23, current shell and cached quickstart inspected",
+        "passed: homepage HTTP 403 recorded; four dated official posts inspected",
         "executed exactly once against shared history root: 125 profiles, seat 12",
-        "passed: analyze, Dart format, full VM tests with coverage, web import smoke, and production web build",
-        "passed: squash merged to main at 42c0491d32b9f95445c0e83ce1cf0f9c0a42634b"
+        "passed: 94 tests",
+        "passed: READY with zero missing packages and no tracked dependency changes",
+        "passed: 2 tests",
+        "passed"
       ],
       "issue": {
-        "number": 4855,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4855",
+        "number": 4878,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4878",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260826T071116+0900:4ec30eda-d8f5-4cef-b88d-b5e18a34e914"
+        "dedupe_key": "tiger-course-review:20260826T151103+0900:63c96c0b-834c-4979-b387-ff4d4393aced"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-01ai-verifiable-first-request-gap",
-        "course-01ai-learner-outcome-proof-gap"
+        "course-adept-verifiable-workflow-gap",
+        "course-adept-learner-outcome-proof-gap"
       ]
     },
     "course": {
-      "content_id": "4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
-      "provider": "01ai",
-      "title": "01.AI (Yi) API 利用方法",
-      "source_url": "https://platform.01.ai/docs",
-      "reason": "fresh公開Data APIで有効かつHTTPS出典付きの対象行を確認した。公式文書はHTTP 200で到達でき、OpenAI互換curl/Python quickstartを含む一方、Last-Modifiedは2024-08-23で、tracked日本語overviewには検証日なしの価格・性能・完全互換主張が残る。講座行自体には実習順序、前提条件、成功判定、誤り回復、学習者成果がないため、実在学習者証拠は契約どおり中立50点とした。",
-      "cycle_utility": 39.25,
-      "aggregate_utility": 40.58,
-      "division": 4
+      "content_id": "63c96c0b-834c-4979-b387-ff4d4393aced",
+      "provider": "adept",
+      "title": "Adept AI とは",
+      "source_url": "https://www.adept.ai/",
+      "reason": "fresh公開Data APIで有効かつHTTPS出典付きの対象行を確認した。公式ホームはCloudflare challengeでHTTP 403だったが、公式の日付付きブログはACT-1、Fuyu-8B、2024年6月の戦略更新、AWLを個別に示す。tracked日本語overviewはこれらを無日付で現行機能のように並べ、実習、成功判定、誤り回復、学習者成果がないため、実在学習者証拠は契約どおり中立50点とした。",
+      "cycle_utility": 39.75,
+      "aggregate_utility": 39.75,
+      "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260826T151103+0900",
+      "started_at": "2026-08-26T15:11:03+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "63c96c0b-834c-4979-b387-ff4d4393aced",
+        "title": "Adept AI とは",
+        "url": "https://www.adept.ai/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 76.4343
+      },
+      "status": "implemented",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the bounded source-timeline repair, measure official-source click-through and timeline classification accuracy, then test one learner cohort for completion time and correct identification of unknown current product availability."
+      },
+      "findings": [
+        {
+          "finding_id": "course-adept-undated-product-lifecycle",
+          "summary": "tracked日本語overviewが、異なる時点のACT-1 / ACT-2、Fuyu-8B、Adept Agent Platform、Amazonとの関係を出典日と戦略変更の境界なしに現行事実として並べている。",
+          "severity": "p1",
+          "suggested_action": "公式確認日と日付付き一次情報を追加し、ACT-1とFuyu-8Bを歴史的発表、2024年6月更新とAWLを後続戦略として分離し、現行提供は公式サイトで再確認するよう明示する。"
+        },
+        {
+          "finding_id": "course-adept-verifiable-workflow-gap",
+          "summary": "Adept AI とはという講座名に対し、学習者が公式情報から歴史、現行方針、利用可能な製品を検証する実習と合格条件がない。",
+          "severity": "p1",
+          "suggested_action": "4本の日付付き公式記事を用い、技術発表と現行戦略を分類し、不明点をunknownとして残す検証課題と合格基準を設計する。"
+        },
+        {
+          "finding_id": "course-adept-learner-outcome-proof-gap",
+          "summary": "講座固有価値と実在学習者の理解・検証成果を示す証拠が公開情報にない。",
+          "severity": "p2",
+          "suggested_action": "日付付きタイムラインと現行性検証の結果を匿名で収集し、正答率、完了時間、unknownを正しく残せた率を集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "implemented",
+        "label": "対策実施・検証済み",
+        "detail": "個別の指摘IDとの紐付けも記録済みです。",
+        "summary": "",
+        "files": [
+          "lib/pages/gemini_university_v2_page.dart",
+          "test/pages/gemini_university_provider_evidence_test.dart"
+        ],
+        "lines_changed": 48,
+        "resolved_finding_ids": [
+          "course-adept-undated-product-lifecycle"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded to origin/main adca34ead",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: active=1076, reviewable=531, excluded_missing_source_url=536",
+          "passed: division-5 excluded and deterministic winner preserved",
+          "passed: homepage HTTP 403 recorded; four dated official posts inspected",
+          "executed exactly once against shared history root: 125 profiles, seat 12",
+          "passed: 94 tests",
+          "passed: READY with zero missing packages and no tracked dependency changes",
+          "passed: 2 tests",
+          "passed"
+        ],
+        "issue": {
+          "number": 4878,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4878",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260826T151103+0900:63c96c0b-834c-4979-b387-ff4d4393aced"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-adept-verifiable-workflow-gap",
+          "course-adept-learner-outcome-proof-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260826T071116+0900",
       "started_at": "2026-08-26T07:11:16+09:00",
@@ -226,7 +324,7 @@
           "number": 4855,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4855",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260826T071116+0900:4ec30eda-d8f5-4cef-b88d-b5e18a34e914"
         },
         "implementation": null,
@@ -881,6 +979,20 @@
       "last_cycle_utility": 56.25,
       "last_reviewed_at": "2026-08-23T07:54:04+00:00",
       "reason": "講座レビュー3回・効用53.2点で3部"
+    },
+    {
+      "content_id": "63c96c0b-834c-4979-b387-ff4d4393aced",
+      "provider": "adept",
+      "title": "Adept AI とは",
+      "source_url": "https://www.adept.ai/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 39.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 39.75,
+      "last_reviewed_at": "2026-08-26T06:11:03+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
       "content_id": "5b7e5f70-2652-4949-b00d-6bbc768fbb96",

@@ -23,4 +23,28 @@ void main() {
     expect(overview, isNot(contains(r'$0.14/100万token')));
     expect(overview, isNot(contains('OpenAI API完全互換')));
   });
+
+  test('Adept provider overview separates history from current availability',
+      () {
+    final source = File(
+      'lib/pages/gemini_university_v2_page.dart',
+    ).readAsStringSync();
+    final match = RegExp(
+      r"'adept': '''([\s\S]*?)\n''',",
+    ).firstMatch(source);
+
+    expect(match, isNotNull);
+    final overview = match!.group(1)!;
+
+    expect(overview, contains('公式情報確認日: 2026-08-26'));
+    expect(overview, contains('2022-09-14 — ACT-1'));
+    expect(overview, contains('2023-10-17 — Fuyu-8B'));
+    expect(overview, contains('2024-06-28 — 戦略更新'));
+    expect(overview, contains('2024-08-23 — AWL'));
+    expect(overview, contains('https://www.adept.ai/blog/adept-update/'));
+    expect(overview, contains('技術ライセンスと人員の参加'));
+    expect(overview, contains('公式サイトで再確認'));
+    expect(overview, isNot(contains('ACT-1 / ACT-2')));
+    expect(overview, isNot(contains('Amazon連携を含む')));
+  });
 }
