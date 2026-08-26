@@ -10,10 +10,9 @@ void main() {
     late final String sql;
 
     setUpAll(() {
-      sql = File(_migrationPath)
-          .readAsStringSync()
-          .replaceAll('\r\n', '\n')
-          .toLowerCase();
+      sql = File(
+        _migrationPath,
+      ).readAsStringSync().replaceAll('\r\n', '\n').toLowerCase();
     });
 
     test('stores time, fatigue, and goal contribution on completion logs', () {
@@ -26,15 +25,36 @@ void main() {
         sql,
         contains('check (goal_contribution_score between 0 and 100)'),
       );
+      expect(
+        sql,
+        contains(
+          "goal_contribution_measurement_source text\n    not null default 'habit_default_proxy'",
+        ),
+      );
+      expect(sql, contains("'habit_default_proxy'"));
+      expect(sql, contains("'self_reported_goal_contribution_proxy'"));
+      expect(
+        sql,
+        contains(
+          'self-reported 0-100 proxy, not an observed change in actual goal progress',
+        ),
+      );
     });
 
     test('calculates correlations inside Supabase for the current user', () {
       expect(sql, contains('analyze_habit_resource_efficiency'));
+      expect(sql, contains('corr(goal_contribution_score, time_cost_minutes)'));
+      expect(sql, contains('corr(goal_contribution_score, fatigue_score)'));
+      expect(sql, contains('when count(*) >= 7'));
+      expect(sql, contains('count(distinct goal_contribution_score) >= 2'));
+      expect(sql, contains('count(distinct time_cost_minutes) >= 2'));
+      expect(sql, contains('count(distinct fatigue_score) >= 2'));
       expect(
         sql,
-        contains('corr(goal_contribution_score, time_cost_minutes)'),
+        contains(
+          "l.goal_contribution_measurement_source =\n        'self_reported_goal_contribution_proxy'",
+        ),
       );
-      expect(sql, contains('corr(goal_contribution_score, fatigue_score)'));
       expect(sql, contains('l.user_id = (select auth.uid())'));
       expect(sql, contains('h.user_id = (select auth.uid())'));
       expect(sql, contains('security invoker'));
@@ -48,17 +68,15 @@ void main() {
     });
 
     test('uses time, fatigue, and performance in Pareto dominance', () {
+      expect(sql, contains('candidate.has_sufficient_data and not exists'));
+      expect(sql, contains('and competitor.has_sufficient_data'));
       expect(
         sql,
-        contains(
-          'competitor.avg_time_minutes <= candidate.avg_time_minutes',
-        ),
+        contains('competitor.avg_time_minutes <= candidate.avg_time_minutes'),
       );
       expect(
         sql,
-        contains(
-          'competitor.avg_fatigue_score <= candidate.avg_fatigue_score',
-        ),
+        contains('competitor.avg_fatigue_score <= candidate.avg_fatigue_score'),
       );
       expect(
         sql,
@@ -68,6 +86,23 @@ void main() {
       );
       expect(sql, contains('to authenticated;'));
       expect(sql, isNot(contains('to authenticated, service_role')));
+    });
+
+    test('labels proxy provenance and explains insufficient evidence', () {
+      expect(sql, contains('performance_measurement_source text'));
+      expect(sql, contains('performance_is_proxy boolean'));
+      expect(sql, contains('performance_sample_stddev numeric'));
+      expect(sql, contains('has_sufficient_data boolean'));
+      expect(sql, contains("'minimum_7_samples_required'"));
+      expect(sql, contains("'insufficient_performance_variance'"));
+      expect(sql, contains("'insufficient_resource_variance'"));
+      expect(sql, contains('habit-default proxy rows are excluded'));
+      expect(
+        sql,
+        contains(
+          'hub_data goals have no timestamped progress history that can be joined safely',
+        ),
+      );
     });
 
     test('indexes both goal foreign keys used by on-delete cleanup', () {
@@ -82,9 +117,7 @@ void main() {
       expect(sql, contains('goal.id = daily_habits.goal_id'));
       expect(
         sql,
-        contains(
-          "goal.metadata ->> 'user_id' = daily_habits.user_id::text",
-        ),
+        contains("goal.metadata ->> 'user_id' = daily_habits.user_id::text"),
       );
       expect(sql, contains('habit.id = daily_habit_logs.habit_id'));
       expect(sql, contains('habit.user_id = daily_habit_logs.user_id'));

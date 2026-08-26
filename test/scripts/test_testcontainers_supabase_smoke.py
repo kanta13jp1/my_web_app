@@ -171,6 +171,34 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
         self.assertIn("TTL reconciliation", checks)
         self.assertIn("over-limit claims", checks.lower())
 
+    def test_plan_includes_issue_1233_resource_optimizer_contract(self) -> None:
+        plan = module.build_plan(
+            ROOT / "test" / "fixtures" / "testcontainers" / "sql",
+            ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts",
+            ROOT / "supabase" / "functions" / "health-check" / "index.ts",
+        )
+        self.assertEqual(
+            plan["issue_1233_resource_optimizer_sql"],
+            [
+                "supabase/tests/issue1233_resource_optimizer_bootstrap.sql",
+                "supabase/migrations/20260412025000_create_hub_data_table.sql",
+                "supabase/migrations/20260327000012_create_daily_habits.sql",
+                "supabase/migrations/20260721235500_add_habit_resource_optimization.sql",
+                "supabase/migrations/20260827040000_resource_optimizer_ai_quota.sql",
+                "supabase/tests/issue1233_resource_optimizer_contract.sql",
+            ],
+        )
+        checks = " ".join(plan["issue_1233_resource_optimizer_checks"])
+        self.assertIn("apply twice", checks)
+        self.assertIn("two authenticated users", checks)
+        self.assertIn("PUBLIC and anon", checks)
+        self.assertIn("default", checks)
+        self.assertIn("below seven", checks)
+        self.assertIn("without variance", checks)
+        self.assertIn("seven varied self-reported", checks)
+        self.assertIn("parallel", checks)
+        self.assertIn("daily limit", checks)
+
     def test_plan_includes_note_comments_authorization_boundary(self) -> None:
         plan = module.build_plan(
             ROOT / "test" / "fixtures" / "testcontainers" / "sql",

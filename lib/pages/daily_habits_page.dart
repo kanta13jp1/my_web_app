@@ -5,6 +5,26 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/habit_resource_metrics_dialog.dart';
 import 'resource_optimization_page.dart';
 
+const _habitDefaultMeasurementSource = 'habit_default_proxy';
+const _selfReportedMeasurementSource = 'self_reported_goal_contribution_proxy';
+
+@visibleForTesting
+Map<String, dynamic> buildHabitResourceMeasurementPayload(
+  HabitResourceEntry entry, {
+  required bool isSelfReported,
+}) {
+  return {
+    'time_cost_minutes': entry.timeCostMinutes,
+    'fatigue_score': entry.fatigueScore,
+    'goal_contribution_score': entry.goalContributionScore,
+    'goal_contribution_measurement_source': isSelfReported
+        ? _selfReportedMeasurementSource
+        : _habitDefaultMeasurementSource,
+    'goal_id': entry.goalId,
+    'goal_title': entry.goalTitle,
+  };
+}
+
 /// 毎日の定型タスク (習慣) リマインダーページ。
 /// マネーフォワード更新、財布残高入力、体重記録など毎日やるべきことを管理。
 class DailyHabitsPage extends StatefulWidget {
@@ -21,6 +41,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
   Set<String> _completedToday = {};
   Map<String, Map<String, dynamic>> _todayLogs = {};
   List<HabitGoalOption> _goals = [];
+  final Set<String> _savingHabitIds = {};
   final DateTime _selectedDate = DateTime.now();
   int _allClearStreak = 0; // 全習慣達成の連続日数
 
@@ -201,27 +222,10 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
     final habitId = habit['id']?.toString() ?? '';
+    if (habitId.isEmpty || _savingHabitIds.contains(habitId)) return;
     final isCompleted = _completedToday.contains(habitId);
-    HabitResourceEntry? resourceEntry;
 
-    if (!isCompleted) {
-      resourceEntry = await showDialog<HabitResourceEntry>(
-        context: context,
-        builder: (_) => HabitResourceMetricsDialog(
-          habitTitle: habit['title']?.toString() ?? '',
-          goals: _goals,
-          initialTimeCostMinutes:
-              (habit['default_time_cost_minutes'] as num?)?.toInt() ?? 15,
-          initialFatigueScore:
-              (habit['default_fatigue_score'] as num?)?.toDouble() ?? 3,
-          initialGoalContributionScore:
-              (habit['default_goal_contribution_score'] as num?)?.toDouble() ??
-                  50,
-          initialGoalId: habit['goal_id']?.toString(),
-        ),
-      );
-      if (resourceEntry == null) return;
-    }
+    setState(() => _savingHabitIds.add(habitId));
 
     try {
       if (isCompleted) {
@@ -243,15 +247,15 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
         }
       } else {
         // 完了記録
+        final resourceEntry = _defaultResourceEntry(habit);
         await _supabase.from('daily_habit_logs').insert({
           'user_id': userId,
           'habit_id': habitId,
           'completed_date': _todayStr,
-          'time_cost_minutes': resourceEntry!.timeCostMinutes,
-          'fatigue_score': resourceEntry.fatigueScore,
-          'goal_contribution_score': resourceEntry.goalContributionScore,
-          'goal_id': resourceEntry.goalId,
-          'goal_title': resourceEntry.goalTitle,
+          ...buildHabitResourceMeasurementPayload(
+            resourceEntry,
+            isSelfReported: false,
+          ),
         });
 
         // streak を加算
@@ -265,7 +269,19 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
         }).eq('id', habitId);
       }
       await _load();
+      if (!isCompleted && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('既定値で完了を記録しました'),
+            action: SnackBarAction(
+              label: '実績を修正',
+              onPressed: () async => _editTodayResource(habit),
+            ),
+          ),
+        );
+      }
     } catch (e) {
+      await _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -273,6 +289,97 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
             backgroundColor: const Color(0xFFE53935),
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _savingHabitIds.remove(habitId));
+      }
+    }
+  }
+
+  HabitResourceEntry _defaultResourceEntry(Map<String, dynamic> habit) {
+    final goalId = habit['goal_id']?.toString();
+    final goalTitle = habit['goal_title']?.toString();
+    return HabitResourceEntry(
+      timeCostMinutes:
+          (habit['default_time_cost_minutes'] as num?)?.toInt() ?? 15,
+      fatigueScore: (habit['default_fatigue_score'] as num?)?.toDouble() ?? 3,
+      goalContributionScore:
+          (habit['default_goal_contribution_score'] as num?)?.toDouble() ?? 50,
+      goalId: (goalId?.isEmpty ?? true) ? null : goalId,
+      goalTitle: (goalTitle?.isEmpty ?? true) ? null : goalTitle,
+    );
+  }
+
+  Future<void> _editTodayResource(Map<String, dynamic> habit) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    final habitId = habit['id']?.toString() ?? '';
+    if (habitId.isEmpty || _savingHabitIds.contains(habitId)) return;
+    final log = _todayLogs[habitId];
+    if (log == null || !_completedToday.contains(habitId)) return;
+
+    final initialGoalId = log['goal_id']?.toString();
+    final initialGoalTitle = log['goal_title']?.toString();
+    final goals = List<HabitGoalOption>.of(_goals);
+    if (initialGoalId != null &&
+        initialGoalId.isNotEmpty &&
+        initialGoalTitle != null &&
+        initialGoalTitle.isNotEmpty &&
+        !goals.any((goal) => goal.id == initialGoalId)) {
+      goals.add(HabitGoalOption(id: initialGoalId, title: initialGoalTitle));
+    }
+
+    final entry = await showDialog<HabitResourceEntry>(
+      context: context,
+      builder: (_) => HabitResourceMetricsDialog(
+        dialogTitle: '今日の実績を修正',
+        submitLabel: '更新',
+        habitTitle: habit['title']?.toString() ?? '',
+        goals: goals,
+        initialTimeCostMinutes:
+            (log['time_cost_minutes'] as num?)?.toInt() ?? 15,
+        initialFatigueScore: (log['fatigue_score'] as num?)?.toDouble() ?? 3,
+        initialGoalContributionScore:
+            (log['goal_contribution_score'] as num?)?.toDouble() ?? 50,
+        initialGoalId: initialGoalId,
+      ),
+    );
+    if (!mounted || entry == null || !_completedToday.contains(habitId)) return;
+
+    setState(() => _savingHabitIds.add(habitId));
+    try {
+      await _supabase
+          .from('daily_habit_logs')
+          .update(
+            buildHabitResourceMeasurementPayload(
+              entry,
+              isSelfReported: true,
+            ),
+          )
+          .eq('user_id', userId)
+          .eq('habit_id', habitId)
+          .eq('completed_date', _todayStr)
+          .select();
+      await _load();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('今日の実績を更新しました')),
+        );
+      }
+    } catch (e) {
+      await _load();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _savingHabitIds.remove(habitId));
       }
     }
   }
@@ -734,6 +841,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
     final streak = habit['streak'] as int? ?? 0;
     final bestStreak = habit['best_streak'] as int? ?? 0;
     final isCompleted = _completedToday.contains(habitId);
+    final isSaving = _savingHabitIds.contains(habitId);
     final todayLog = _todayLogs[habitId];
     final colorHex = habit['color_hex']?.toString() ?? '#4338CA';
     final color = Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
@@ -750,7 +858,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
         ),
       ),
       child: InkWell(
-        onTap: () => _toggleComplete(habit),
+        onTap: isSaving ? null : () => _toggleComplete(habit),
         borderRadius: BorderRadius.circular(14),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -847,7 +955,17 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                   ),
                 ),
               ],
+              if (isCompleted)
+                IconButton(
+                  key: ValueKey('edit_habit_resource_$habitId'),
+                  tooltip: '今日の実績を修正',
+                  visualDensity: VisualDensity.compact,
+                  iconSize: 19,
+                  onPressed: isSaving ? null : () => _editTodayResource(habit),
+                  icon: const Icon(Icons.edit_note),
+                ),
               PopupMenuButton<String>(
+                enabled: !isSaving,
                 onSelected: (v) {
                   if (v == 'delete') _deleteHabit(habit);
                 },

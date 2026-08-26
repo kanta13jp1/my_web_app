@@ -6,6 +6,11 @@ export type HabitResourceMetric = {
   avg_time_minutes: number;
   avg_fatigue_score: number;
   avg_goal_contribution_score: number;
+  performance_measurement_source: string;
+  performance_is_proxy: boolean;
+  performance_sample_stddev: number | null;
+  has_sufficient_data: boolean;
+  insufficient_data_reason: string | null;
   resource_cost_index: number;
   efficiency_score: number;
   time_performance_correlation: number | null;
@@ -14,6 +19,8 @@ export type HabitResourceMetric = {
   overall_fatigue_performance_correlation: number | null;
   is_pareto_optimal: boolean;
 };
+
+export const MIN_ANALYSIS_SAMPLE_COUNT = 7;
 
 export type MentorRecommendation = {
   habit_id: string;
@@ -70,42 +77,68 @@ export function normalizeMetrics(rows: unknown): HabitResourceMetric[] {
     .filter((row): row is Record<string, unknown> =>
       Boolean(row) && typeof row === "object"
     )
-    .map((row) => ({
-      habit_id: String(row.habit_id ?? ""),
-      habit_title: boundedText(row.habit_title, "名称未設定の習慣"),
-      goal_title: optionalBoundedText(row.goal_title),
-      sample_count: Math.max(0, Math.trunc(numberOr(row.sample_count))),
-      avg_time_minutes: clamp(numberOr(row.avg_time_minutes), 0, 1440),
-      avg_fatigue_score: clamp(numberOr(row.avg_fatigue_score), 0, 10),
-      avg_goal_contribution_score: clamp(
-        numberOr(row.avg_goal_contribution_score),
+    .map((row) => {
+      const sampleCount = Math.max(
         0,
-        100,
-      ),
-      resource_cost_index: Math.max(0, numberOr(row.resource_cost_index)),
-      efficiency_score: Math.max(0, numberOr(row.efficiency_score)),
-      time_performance_correlation: correlationOrNull(
-        row.time_performance_correlation,
-      ),
-      fatigue_performance_correlation: correlationOrNull(
-        row.fatigue_performance_correlation,
-      ),
-      overall_time_performance_correlation: correlationOrNull(
-        row.overall_time_performance_correlation,
-      ),
-      overall_fatigue_performance_correlation: correlationOrNull(
-        row.overall_fatigue_performance_correlation,
-      ),
-      is_pareto_optimal: row.is_pareto_optimal === true,
-    }))
+        Math.trunc(numberOr(row.sample_count)),
+      );
+      const performanceSampleStddev = row.performance_sample_stddev === null ||
+          row.performance_sample_stddev === undefined
+        ? null
+        : Math.max(0, numberOr(row.performance_sample_stddev));
+      const performanceMeasurementSource = boundedText(
+        row.performance_measurement_source,
+        "unknown",
+      );
+      return {
+        habit_id: String(row.habit_id ?? ""),
+        habit_title: boundedText(row.habit_title, "名称未設定の習慣"),
+        goal_title: optionalBoundedText(row.goal_title),
+        sample_count: sampleCount,
+        avg_time_minutes: clamp(numberOr(row.avg_time_minutes), 0, 1440),
+        avg_fatigue_score: clamp(numberOr(row.avg_fatigue_score), 0, 10),
+        avg_goal_contribution_score: clamp(
+          numberOr(row.avg_goal_contribution_score),
+          0,
+          100,
+        ),
+        performance_measurement_source: performanceMeasurementSource,
+        performance_is_proxy: row.performance_is_proxy === true,
+        performance_sample_stddev: performanceSampleStddev,
+        has_sufficient_data: row.has_sufficient_data === true &&
+          performanceMeasurementSource ===
+            "self_reported_goal_contribution_proxy" &&
+          sampleCount >= MIN_ANALYSIS_SAMPLE_COUNT &&
+          performanceSampleStddev !== null && performanceSampleStddev > 0,
+        insufficient_data_reason: optionalBoundedText(
+          row.insufficient_data_reason,
+        ),
+        resource_cost_index: Math.max(0, numberOr(row.resource_cost_index)),
+        efficiency_score: Math.max(0, numberOr(row.efficiency_score)),
+        time_performance_correlation: correlationOrNull(
+          row.time_performance_correlation,
+        ),
+        fatigue_performance_correlation: correlationOrNull(
+          row.fatigue_performance_correlation,
+        ),
+        overall_time_performance_correlation: correlationOrNull(
+          row.overall_time_performance_correlation,
+        ),
+        overall_fatigue_performance_correlation: correlationOrNull(
+          row.overall_fatigue_performance_correlation,
+        ),
+        is_pareto_optimal: row.is_pareto_optimal === true,
+      };
+    })
     .filter((metric) => metric.habit_id.length > 0);
 }
 
 export function findParetoFrontier(
   metrics: HabitResourceMetric[],
 ): HabitResourceMetric[] {
-  return metrics.filter((candidate) =>
-    !metrics.some((competitor) =>
+  const eligible = metrics.filter((metric) => metric.has_sufficient_data);
+  return eligible.filter((candidate) =>
+    !eligible.some((competitor) =>
       competitor.habit_id !== candidate.habit_id &&
       competitor.avg_time_minutes <= candidate.avg_time_minutes &&
       competitor.avg_fatigue_score <= candidate.avg_fatigue_score &&
@@ -128,9 +161,11 @@ export function buildFallbackMentorPlan(
     .sort((a, b) => b.efficiency_score - a.efficiency_score)
     .slice(0, 5);
   if (frontier.length === 0) {
+    const hasRecordedMetrics = metrics.length > 0;
     return {
-      mentor_summary:
-        "分析に必要な実績がまだありません。習慣を完了するときに時間、疲労度、目標貢献度を記録してください。",
+      mentor_summary: hasRecordedMetrics
+        ? "記録はありますが、分析には習慣ごとに7件以上かつ成果と時間または疲労度の変動が必要です。目標貢献度は実目標進捗ではなく自己申告proxyとして扱います。現時点では相関、パレート推奨、負荷拡大を断定できません。"
+        : "分析に必要な実績がまだありません。習慣を完了するときに時間、疲労度、目標貢献度を記録してください。目標貢献度は自己申告proxyとして扱われます。",
       recommendations: [],
       scaling_plan: [],
     };
@@ -144,7 +179,7 @@ export function buildFallbackMentorPlan(
       `平均${metric.avg_time_minutes.toFixed(0)}分・疲労度${
         metric.avg_fatigue_score.toFixed(1)
       }で` +
-      `目標貢献度${
+      `自己申告の目標貢献度proxy${
         metric.avg_goal_contribution_score.toFixed(0)
       }を記録し、他の候補に支配されない効率です。`,
   }));
@@ -206,6 +241,7 @@ export function normalizeMentorPlan(
 ): MentorPlan {
   const fallback = buildFallbackMentorPlan(metrics);
   if (!raw) return fallback;
+  if (findParetoFrontier(metrics).length === 0) return fallback;
   const frontier = new Map(
     findParetoFrontier(metrics).map((metric) => [metric.habit_id, metric]),
   );

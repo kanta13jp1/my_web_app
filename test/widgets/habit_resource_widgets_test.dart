@@ -2,12 +2,43 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/resource_optimization.dart';
+import 'package:my_web_app/pages/daily_habits_page.dart';
 import 'package:my_web_app/pages/resource_optimization_page.dart';
 import 'package:my_web_app/services/resource_optimization_service.dart';
 import 'package:my_web_app/widgets/habit_pareto_chart.dart';
 import 'package:my_web_app/widgets/habit_resource_metrics_dialog.dart';
 
 void main() {
+  test('resource payload distinguishes defaults from self-reported values', () {
+    const entry = HabitResourceEntry(
+      timeCostMinutes: 20,
+      fatigueScore: 4,
+      goalContributionScore: 70,
+      goalId: 'goal-1',
+      goalTitle: '英語力向上',
+    );
+
+    final defaultPayload = buildHabitResourceMeasurementPayload(
+      entry,
+      isSelfReported: false,
+    );
+    final selfReportedPayload = buildHabitResourceMeasurementPayload(
+      entry,
+      isSelfReported: true,
+    );
+
+    expect(
+      defaultPayload['goal_contribution_measurement_source'],
+      'habit_default_proxy',
+    );
+    expect(
+      selfReportedPayload['goal_contribution_measurement_source'],
+      'self_reported_goal_contribution_proxy',
+    );
+    expect(selfReportedPayload['goal_contribution_score'], 70);
+    expect(selfReportedPayload['goal_id'], 'goal-1');
+  });
+
   testWidgets('resource dialog returns measurable completion data', (
     tester,
   ) async {
@@ -80,6 +111,44 @@ void main() {
     await tester.pump();
 
     expect(find.text('1〜1440分で入力してください'), findsOneWidget);
+  });
+
+  testWidgets('cancelling resource edit returns no replacement data', (
+    tester,
+  ) async {
+    HabitResourceEntry? result;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => FilledButton(
+              onPressed: () async {
+                result = await showDialog<HabitResourceEntry>(
+                  context: context,
+                  builder: (_) => const HabitResourceMetricsDialog(
+                    dialogTitle: '今日の実績を修正',
+                    submitLabel: '更新',
+                    habitTitle: '読書',
+                    goals: [],
+                    initialTimeCostMinutes: 25,
+                    initialFatigueScore: 4,
+                    initialGoalContributionScore: 60,
+                  ),
+                );
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('キャンセル'));
+    await tester.pumpAndSettle();
+
+    expect(result, isNull);
   });
 
   testWidgets('Pareto chart renders frontier and comparison points', (
@@ -180,7 +249,12 @@ void main() {
 
     expect(find.text('リソース最適化'), findsOneWidget);
     expect(find.text('パレート境界'), findsOneWidget);
-    expect(find.text('AIメンター提案'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('メンター提案'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('メンター提案'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

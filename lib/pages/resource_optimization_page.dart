@@ -17,8 +17,10 @@ class ResourceOptimizationPage extends StatefulWidget {
 class _ResourceOptimizationPageState extends State<ResourceOptimizationPage> {
   late final ResourceOptimizationService _service;
   ResourceOptimizationReport? _report;
-  bool _loading = true;
+  bool _loading = false;
+  bool _requestingAi = false;
   String? _error;
+  String _aiStatus = 'not_requested';
   int _days = 90;
 
   @override
@@ -29,6 +31,7 @@ class _ResourceOptimizationPageState extends State<ResourceOptimizationPage> {
   }
 
   Future<void> _load() async {
+    if (_loading || _requestingAi) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -36,12 +39,41 @@ class _ResourceOptimizationPageState extends State<ResourceOptimizationPage> {
     try {
       final report = await _service.analyze(days: _days);
       if (!mounted) return;
-      setState(() => _report = report);
+      setState(() {
+        _report = report;
+        _aiStatus = 'not_requested';
+      });
     } catch (error) {
       if (!mounted) return;
       setState(() => _error = error.toString().replaceFirst('Bad state: ', ''));
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _loadAi() async {
+    if (_loading || _requestingAi) return;
+    setState(() {
+      _requestingAi = true;
+      _error = null;
+    });
+    try {
+      final analysis = await _service.analyzeWithAiConsent(days: _days);
+      if (!mounted) return;
+      setState(() {
+        _report = analysis.report;
+        _aiStatus = analysis.aiStatus;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _aiStatus = 'request_failed');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('AI提案を取得できませんでした。現在の統計分析を継続表示します。'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _requestingAi = false);
     }
   }
 
@@ -53,7 +85,7 @@ class _ResourceOptimizationPageState extends State<ResourceOptimizationPage> {
         actions: [
           IconButton(
             tooltip: '再分析',
-            onPressed: _loading ? null : _load,
+            onPressed: _loading || _requestingAi ? null : _load,
             icon: const Icon(Icons.refresh),
           ),
         ],
@@ -71,7 +103,7 @@ class _ResourceOptimizationPageState extends State<ResourceOptimizationPage> {
                   ButtonSegment(value: 180, label: Text('180日')),
                 ],
                 selected: {_days},
-                onSelectionChanged: _loading
+                onSelectionChanged: _loading || _requestingAi
                     ? null
                     : (selection) {
                         setState(() => _days = selection.first);
@@ -116,20 +148,27 @@ class _ResourceOptimizationPageState extends State<ResourceOptimizationPage> {
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(24),
-          children: const [
-            SizedBox(height: 100),
-            Icon(Icons.insights_outlined, size: 56),
-            SizedBox(height: 16),
-            Text(
+          children: [
+            const SizedBox(height: 80),
+            const Icon(Icons.insights_outlined, size: 56),
+            const SizedBox(height: 16),
+            const Text(
               '分析できる実績がまだありません',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
-            SizedBox(height: 8),
-            Text(
-              '習慣の完了時に所要時間・疲労度・目標貢献度を記録すると、ここに結果が表示されます。',
+            const SizedBox(height: 8),
+            const Text(
+              '習慣完了後に「実績を修正」から所要時間・疲労度・目標貢献度を自己申告で保存してください。'
+              '分析には各習慣7件以上かつ値の分散が必要です。',
               textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 20),
+            _buildMeasurementNotice(),
+            if (report != null) ...[
+              const SizedBox(height: 12),
+              _buildAiStatus(report),
+            ],
           ],
         ),
       );
@@ -142,6 +181,12 @@ class _ResourceOptimizationPageState extends State<ResourceOptimizationPage> {
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
           _buildSummary(report),
+          const SizedBox(height: 12),
+          _buildMeasurementNotice(),
+          const SizedBox(height: 12),
+          _buildAiStatus(report),
+          const SizedBox(height: 12),
+          _buildAiConsentCard(report),
           const SizedBox(height: 24),
           _SectionTitle(
             icon: Icons.scatter_plot,
@@ -157,8 +202,8 @@ class _ResourceOptimizationPageState extends State<ResourceOptimizationPage> {
           const SizedBox(height: 24),
           _SectionTitle(
             icon: Icons.psychology_outlined,
-            title: 'AIメンター提案',
-            trailing: report.generatedBy == 'gemini' ? 'AI分析' : '統計分析',
+            title: 'メンター提案',
+            trailing: report.generatedBy == 'gemini' ? 'Gemini生成' : '統計分析',
           ),
           const SizedBox(height: 10),
           Text(report.mentorSummary),
@@ -211,6 +256,123 @@ class _ResourceOptimizationPageState extends State<ResourceOptimizationPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildMeasurementNotice() {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        border: Border.all(color: colors.outlineVariant),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 20),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '目標貢献度は実際の目標達成率ではなく、習慣完了時の自己申告proxyです。'
+              '分析には習慣ごとに最低7件、かつ目標貢献度と時間または疲労度の値に分散が必要です。',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAiStatus(ResourceOptimizationReport report) {
+    final colors = Theme.of(context).colorScheme;
+    final generated =
+        report.generatedBy == 'gemini' && _aiStatus == 'generated';
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        key: const Key('resource_optimization_ai_status'),
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color:
+              generated ? colors.primaryContainer : colors.secondaryContainer,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(_aiStatusMessage(_aiStatus)),
+      ),
+    );
+  }
+
+  Widget _buildAiConsentCard(ResourceOptimizationReport report) {
+    final colors = Theme.of(context).colorScheme;
+    final generated =
+        report.generatedBy == 'gemini' && _aiStatus == 'generated';
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        border: Border.all(color: colors.outlineVariant),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Geminiへの外部送信',
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '下のボタンを押した場合のみ、Google Geminiに集計済みデータを外部送信します。'
+            '通常表示・期間変更・再分析では外部AIを使いません。',
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '送信項目: 分析期間、習慣ID・習慣名・目標名、記録件数、'
+            '時間・疲労度・自己申告目標貢献度の平均、'
+            '貢献度の測定元・proxy判定・分散・十分性と不足理由、'
+            '資源コスト・効率・相関・パレート判定（最大50習慣）。'
+            '個々の完了記録は送信しません。',
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            key: const Key('resource_optimization_ai_generate'),
+            onPressed: _requestingAi ? null : _loadAi,
+            icon: _requestingAi
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.auto_awesome),
+            label: Text(
+              _requestingAi
+                  ? 'AI提案を生成中'
+                  : generated
+                      ? '同意してAI提案を再生成'
+                      : '同意してAI提案を生成',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _aiStatusMessage(String status) {
+    return switch (status) {
+      'generated' => 'Google Geminiで生成したAI提案を表示しています。',
+      'cooldown' => 'AIの連続利用を防ぐ待機時間中のため、統計分析を表示しています。',
+      'daily_limit' => '本日のAI利用上限に達したため、統計分析を表示しています。',
+      'quota_unavailable' => 'AI利用枠を確認できなかったため、外部送信せず統計分析を表示しています。',
+      'upstream_unavailable' => 'Geminiから提案を取得できなかったため、統計分析を表示しています。',
+      'not_configured' => 'AI機能が未設定のため、統計分析を表示しています。',
+      'no_data' => '分析できる記録がないため、AIへ送信していません。',
+      'insufficient_data' => '7件以上・分散ありの条件を満たす習慣がないため、AIへ送信していません。',
+      'request_failed' => 'AI提案の通信に失敗したため、現在の統計分析を表示しています。',
+      'not_requested' => 'この結果は統計分析です。第三者AIへは送信していません。',
+      _ => 'AI提案は生成されていません。統計分析を表示しています。',
+    };
   }
 
   Widget _buildLegend() {
