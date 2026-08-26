@@ -13,7 +13,14 @@ class ShareNoteDialog extends StatelessWidget {
     final box = context.findRenderObject() as RenderBox?;
     // シェア実行前にポイント加算などを試行（失敗してもシェアは続行）
     try {
-      await supabase.rpc('increment_share_count');
+      await supabase.functions.invoke(
+        'growth-hub',
+        body: <String, dynamic>{
+          'action': 'acquisition.signal',
+          'signalKey': 'share_note',
+          'shareIncrement': 1,
+        },
+      );
     } catch (_) {
       // エラーは無視
     }

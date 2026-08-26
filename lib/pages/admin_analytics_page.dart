@@ -1862,7 +1862,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final statsFuture = Future.wait<dynamic>([
         _supabase
             .from('app_analytics')
-            .select()
+            .select(
+              'date, landing_views, conversions, share_count, source_details',
+            )
             .gte('date', startDateKey)
             .lte('date', endDateKey)
             .order('date', ascending: false),
@@ -1965,75 +1967,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
-  // ★追加: データリセット処理
-  Future<void> _resetAnalyticsData() async {
-    // 確認ダイアログを表示
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('データのリセット'),
-        content: const Text(
-          '分析データ(app_analytics)をすべて削除します。\nこの操作は元に戻せません。\n本当によろしいですか？',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('キャンセル'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFFB91C1C),
-            ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('リセット実行'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      // app_analytics には id 列がないため、日付キー単位で全件削除する。
-      final rows = await _supabase.from('app_analytics').select('date');
-      final dateKeys = rows
-          .whereType<Map>()
-          .map((row) => row['date']?.toString())
-          .whereType<String>()
-          .where((value) => value.isNotEmpty)
-          .toSet()
-          .toList();
-
-      for (final dateKey in dateKeys) {
-        await _supabase
-            .from('app_analytics')
-            .delete()
-            .eq('date', dateKey)
-            .select();
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('分析データをリセットしました')));
-        // 再読み込み
-        await _loadStats();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('エラーが発生しました: $e'),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     // データ集計
@@ -2127,12 +2060,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         elevation: 0,
         scrolledUnderElevation: 0,
         actions: [
-          // ★追加: リセットボタン（ゴミ箱アイコン）
-          IconButton(
-            icon: const Icon(Icons.delete_forever),
-            onPressed: _resetAnalyticsData,
-            tooltip: 'データをリセット',
-          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
@@ -3874,19 +3801,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   bool _isFunnelEventKey(String key) {
-    switch (key) {
-      case 'funnel_trial_run':
-      case 'funnel_save_cta':
-      case 'funnel_magic_link_send':
-      case 'funnel_inbox_open':
-      case 'funnel_billing_view':
-      case 'funnel_upgrade_click':
-      case 'funnel_checkout_success':
-      case 'funnel_checkout_cancel':
-        return true;
-      default:
-        return false;
-    }
+    return key.startsWith('funnel_') ||
+        key.startsWith('lp_exp_') ||
+        key.startsWith('activation_exp_');
   }
 
   bool _isShareActionKey(String key) {
@@ -3895,6 +3812,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       case 'share_line':
       case 'share_facebook':
       case 'share_copy':
+      case 'share_note':
       case 'public_memo_share':
       case 'public_memo_copy':
         return true;
@@ -3925,6 +3843,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return 'Facebook シェア';
       case 'share_copy':
         return 'リンクコピー';
+      case 'share_note':
+        return 'メモ共有';
       case 'public_memo_share':
         return 'Public memo share';
       case 'public_memo_copy':
@@ -3990,6 +3910,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return const Color(0xFF1877F2);
       case 'share_copy':
         return const Color(0xFF7C3AED);
+      case 'share_note':
+        return const Color(0xFF3D5AFE);
       case 'public_memo_share':
         return const Color(0xFFFF6B35);
       case 'public_memo_copy':

@@ -18,11 +18,12 @@ concurrency:
   group: wbs-user-tasks-notify
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   notify:
+    permissions:
+      contents: read
     name: Notify user tasks
     runs-on: ubuntu-latest
     timeout-minutes: 5

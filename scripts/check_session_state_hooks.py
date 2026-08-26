@@ -17,6 +17,7 @@ from pathlib import Path
 
 REQUIRED_FILES = [
     ".claude/hooks/pre-compact-backup.ps1",
+    ".claude/hooks/post-tool-use-ai-antipatterns.ps1",
     ".claude/hooks/pretooluse-compression-budget.ps1",
     ".claude/hooks/session-end-auto-compress.ps1",
     ".claude/hooks/session-start-hard-gate.ps1",
@@ -32,6 +33,7 @@ REQUIRED_FILES = [
     "memory/transcripts/.gitignore",
     "memory/transcripts/.gitkeep",
     "scripts/session_compression_guard.py",
+    "scripts/check_ai_code_antipatterns.py",
     "scripts/smartcleanup_task_guard.py",
 ]
 
@@ -105,6 +107,19 @@ def validate_settings(root: Path, errors: list[str]) -> None:
     ]
     if not any("pretooluse-compression-budget.ps1" in command for command in pretooluse_commands):
         errors.append("PreToolUse must run pretooluse-compression-budget.ps1")
+
+    posttooluse_hooks = settings.get("hooks", {}).get("PostToolUse", [])
+    posttooluse_commands = [
+        str(hook.get("command", ""))
+        for group in posttooluse_hooks
+        for hook in group.get("hooks", [])
+        if isinstance(group, dict)
+    ]
+    if not any(
+        "post-tool-use-ai-antipatterns.ps1" in command
+        for command in posttooluse_commands
+    ):
+        errors.append("PostToolUse must run post-tool-use-ai-antipatterns.ps1")
 
     stop_hooks = settings.get("hooks", {}).get("Stop", [])
     stop_commands = [

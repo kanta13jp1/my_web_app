@@ -23,11 +23,12 @@ concurrency:
   group: competitor-discovery
   cancel-in-progress: false
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   discover:
+    permissions:
+      contents: write
     name: Discover Trending Competitors
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -39,7 +40,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           token: ${{ secrets.BYPASS_RULES || github.token }}
 
@@ -59,11 +60,14 @@ jobs:
       # ── Step 2: カテゴリ別 Gemini 調査 ───────────────────────────────────
       - name: Step 2 - カテゴリ別 trending 競合発掘 (Gemini Flash)
         id: discover
+        env:
+          CATEGORIES_INPUT: ${{ github.event.inputs.categories || 'productivity,ai-coding,fintech,ai-platform,e-commerce,health,collaboration,hr-tech,legal-tech,data' }}
+          MAX_PER_CATEGORY_INPUT: ${{ github.event.inputs.max_per_category || '5' }}
         run: |
           WEEK=$(date +'%Y-%V')
           echo "discovery_week=$WEEK" >> $GITHUB_OUTPUT
-          CATEGORIES="${{ github.event.inputs.categories || 'productivity,ai-coding,fintech,ai-platform,e-commerce,health,collaboration,hr-tech,legal-tech,data' }}"
-          MAX_PER_CAT="${{ github.event.inputs.max_per_category || '5' }}"
+          CATEGORIES="$CATEGORIES_INPUT"
+          MAX_PER_CAT="$MAX_PER_CATEGORY_INPUT"
           python3 .github/scripts/competitor_discover.py \
             --categories="$CATEGORIES" \
             --max-per-cat="$MAX_PER_CAT" \

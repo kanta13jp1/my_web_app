@@ -44,7 +44,7 @@ class VideoPipelineSecretReadinessTest(unittest.TestCase):
                 (
                     "name: Video Pipeline Secret Readiness",
                     "run: python scripts/check_video_pipeline_secret_readiness.py --require-secrets",
-                    "uses: actions/upload-artifact@v7",
+                    "uses: actions/upload-artifact@0123456789012345678901234567890123456789 # v7",
                 )
             ),
         )

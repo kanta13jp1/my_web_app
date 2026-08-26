@@ -22,11 +22,12 @@ concurrency:
   group: competitor-monitoring
   cancel-in-progress: true  # 2026-06-24 ci-audit: 日次モニタリング concurrent 防止
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   generate-report:
+    permissions:
+      contents: write
     name: Competitor Intelligence Report
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -40,7 +41,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 10
           token: ${{ secrets.BYPASS_RULES || github.token }}
@@ -48,6 +49,9 @@ jobs:
       # ── Step 1: 日付・イベントカレンダー判定 ─────────────────────────────
       - name: Step 1 - 日付 + 特記イベント検出
         id: calendar
+        env:
+          EVENT_OVERRIDE_INPUT: ${{ github.event.inputs.event_override || '' }}
+          FOCUS_COMPETITOR_INPUT: ${{ github.event.inputs.focus_competitor || '' }}
         run: |
           TODAY=$(TZ=Asia/Tokyo date +'%Y-%m-%d')
           MONTH=$(TZ=Asia/Tokyo date +'%m')
@@ -78,14 +82,14 @@ jobs:
           esac
 
           # 手動 override
-          if [ -n "${{ github.event.inputs.event_override }}" ]; then
-            SPECIAL_EVENT="${{ github.event.inputs.event_override }}"
+          if [ -n "$EVENT_OVERRIDE_INPUT" ]; then
+            SPECIAL_EVENT="$EVENT_OVERRIDE_INPUT"
             EVENT_DESC="手動指定イベント: $SPECIAL_EVENT"
           fi
 
           echo "special_event=$SPECIAL_EVENT" >> $GITHUB_OUTPUT
           echo "event_desc=$EVENT_DESC" >> $GITHUB_OUTPUT
-          echo "focus=${{ github.event.inputs.focus_competitor || '' }}" >> $GITHUB_OUTPUT
+          echo "focus=$FOCUS_COMPETITOR_INPUT" >> $GITHUB_OUTPUT
 
           echo "📅 Today: $TODAY"
           echo "🎯 Special event: ${SPECIAL_EVENT:-なし}"

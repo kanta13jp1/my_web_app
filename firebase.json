@@ -45,7 +45,7 @@
         ]
       },
       {
-        "regex": "^/assets/assets/data/tiger_(reviewer_league_status|site_review_status|course_review_status|feature_review_status)\\.json$",
+        "regex": "^/assets/assets/data/tiger_(site_review_status|course_review_status|feature_review_status|reviewer_league_status|reviewer_profiles)\\.json$",
         "headers": [
           {
             "key": "Cache-Control",

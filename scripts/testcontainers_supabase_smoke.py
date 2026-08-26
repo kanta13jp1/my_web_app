@@ -3,10 +3,13 @@
 
 The smoke intentionally avoids production Supabase credentials. It starts a
 disposable Postgres container, applies a small migration/seed fixture, verifies
-the Issue #2773 fail-closed RLS migration and Issue #2484 asset-chat isolation,
-checks the real Edge Function import policy, and runs a Deno HTTP fixture against
-the container. Logs are written as artifacts so CI failures point to the
-migration, function, or seed boundary that broke.
+the Issue #2773 fail-closed RLS migration, Issue #2484 asset-chat isolation,
+Issue #4091 app-analytics write boundary, and Issue #1202 voice-dubbing quota
+state machine, checks the real Edge Function import policy, Issue #2668
+note-comment authorization, and runs a Deno HTTP fixture against the container.
+Logs are written as
+artifacts so CI failures point to the migration, function, or seed boundary that
+broke.
 """
 
 from __future__ import annotations
@@ -32,6 +35,11 @@ DEFAULT_SQL_DIR = ROOT / "test" / "fixtures" / "testcontainers" / "sql"
 DEFAULT_EDGE_FIXTURE = ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts"
 DEFAULT_ARTIFACTS_DIR = ROOT / ".testcontainers-logs"
 DEFAULT_ACTUAL_EDGE_FUNCTION = ROOT / "supabase" / "functions" / "health-check" / "index.ts"
+APP_ANALYTICS_EDGE_FUNCTION = ROOT / "supabase" / "functions" / "growth-hub" / "index.ts"
+APP_ANALYTICS_EDGE_TESTS = (
+    ROOT / "supabase" / "functions" / "growth-hub" / "acquisition_signals_test.ts",
+    ROOT / "supabase" / "functions" / "growth-hub" / "analytics_actor_test.ts",
+)
 REQUIRED_TABLES = ("profiles", "wbs_tasks", "ai_circuit_breaker")
 ISSUE_2773_RLS_MIGRATION = (
     ROOT / "supabase" / "migrations" / "20260815124052_fail_closed_rls_issue_2773.sql"
@@ -61,6 +69,50 @@ TAX_RECORDS_MIGRATION = (
 TAX_RECORDS_TABLES = ("tax_records",)
 TAX_RECORD_1 = "00000000-0000-4000-8000-000000002489"
 TAX_RECORD_2 = "00000000-0000-4000-8000-000000002490"
+APP_ANALYTICS_SECURITY_MIGRATION = (
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260827003000_harden_app_analytics_writes.sql"
+)
+NOTE_COMMENTS_SECURITY_MIGRATION = (
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260827032000_harden_note_comments_authorization.sql"
+)
+NOTE_OWNER = "00000000-0000-4000-8000-000000002668"
+NOTE_PUBLIC_VIEWER = "00000000-0000-4000-8000-000000002669"
+NOTE_TEAM_MEMBER = "00000000-0000-4000-8000-000000002670"
+NOTE_OUTSIDER = "00000000-0000-4000-8000-000000002671"
+NOTE_OWNER_ADDED_MEMBER = "00000000-0000-4000-8000-000000002672"
+NOTE_TEAM_ID = "00000000-0000-4000-8000-000000002673"
+NOTE_INVITE_CODE = "26682668266826682668266826682668"
+NOTE_PRIVATE_ID = 266801
+NOTE_PUBLIC_ID = 266802
+NOTE_TEAM_ID_VALUE = 266803
+AI_UNIVERSITY_MIGRATION = (
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260824135127_add_ai_university_evidence_and_content_analytics.sql"
+)
+AI_UNIVERSITY_LEGACY_ROW = "00000000-0000-4000-8000-000000004738"
+VOICE_DUBBING_BOOTSTRAP = (
+    ROOT / "supabase" / "tests" / "voice_dubbing_bootstrap.sql"
+)
+BILLING_MIGRATION = (
+    ROOT / "supabase" / "migrations" / "20260505203000_create_billing_tables.sql"
+)
+VOICE_DUBBING_MIGRATION = (
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260814160000_add_voice_dubbing_usage.sql"
+)
+VOICE_DUBBING_CONTRACT = (
+    ROOT / "supabase" / "tests" / "voice_dubbing_quota_contract.sql"
+)
 VIDEO_ARTIFACT_SQL_FILES = (
     ROOT / "supabase" / "tests" / "video_service_bootstrap.sql",
     ROOT / "supabase" / "migrations" / "20260819165405_create_first_party_video_service.sql",
@@ -293,6 +345,56 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "authenticated users cannot forge another owner",
             "authenticated owner CRUD succeeds",
         ],
+        "app_analytics_migration": APP_ANALYTICS_SECURITY_MIGRATION.relative_to(
+            ROOT
+        ).as_posix(),
+        "app_analytics_checks": [
+            "browser roles see aggregate rows and columns only",
+            "raw browser INSERT, UPDATE, and DELETE are denied",
+            "browser roles cannot execute analytics write RPCs",
+            "Edge service-role events are atomic and idempotent per actor/day",
+            "one actor cannot submit more than 32 source keys per JST day",
+            "unsupported source keys and oversized increments are rejected",
+            "poisoned legacy counters cannot overflow new event writes",
+            "service_role retains required aggregate DML privileges",
+            "migration applies twice without reopening public writes",
+        ],
+        "note_comments_migration": NOTE_COMMENTS_SECURITY_MIGRATION.relative_to(
+            ROOT
+        ).as_posix(),
+        "note_comments_checks": [
+            "all eight permissive legacy policies are replaced by four canonical policies",
+            "anonymous users can read only valid public-note comments",
+            "authenticated note owners and verified workspace members have scoped access",
+            "body user_id forgery and writes to unrelated private notes are denied",
+            "direct self-join and forged public/workspace shares cannot grant access",
+            "invite-code attempts are actor-scoped and rate-limited",
+            "comment authors can update content and delete only their own rows",
+            "migration applies twice without reopening legacy authorization paths",
+        ],
+        "ai_university_migration": AI_UNIVERSITY_MIGRATION.relative_to(ROOT).as_posix(),
+        "ai_university_checks": [
+            "migration applies twice without losing legacy rows",
+            "course evidence is nullable but all-or-none when populated",
+            "anon and authenticated can insert only allowlisted event fields",
+            "clients cannot select events or supply server-owned fields",
+            "event table has RLS and no user/session/error payload columns",
+        ],
+        "voice_dubbing_sql": [
+            VOICE_DUBBING_BOOTSTRAP.relative_to(ROOT).as_posix(),
+            BILLING_MIGRATION.relative_to(ROOT).as_posix(),
+            VOICE_DUBBING_MIGRATION.relative_to(ROOT).as_posix(),
+            VOICE_DUBBING_CONTRACT.relative_to(ROOT).as_posix(),
+        ],
+        "voice_dubbing_checks": [
+            "migration applies twice in the disposable database",
+            "authenticated cannot execute service-role quota RPCs",
+            "duplicate in-progress claims do not consume quota twice",
+            "completed requests replay their stored result without rebilling",
+            "failed jobs release only unbilled reserved characters",
+            "TTL reconciliation bills started chunks and releases unstarted chunks",
+            "over-limit claims create no job and consume no additional quota",
+        ],
         "video_artifact_contract": [
             path.relative_to(ROOT).as_posix() for path in VIDEO_ARTIFACT_SQL_FILES
         ],
@@ -306,12 +408,17 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
         "actual_edge_checks": [
             "scripts/check_edge_function_imports.py --root supabase/functions",
             f"deno check --config supabase/functions/deno.json {actual_edge_function.relative_to(ROOT).as_posix()}",
+            f"deno check --config supabase/functions/deno.json {APP_ANALYTICS_EDGE_FUNCTION.relative_to(ROOT).as_posix()}",
+            "deno test --config supabase/functions/deno.json "
+            + " ".join(path.relative_to(ROOT).as_posix() for path in APP_ANALYTICS_EDGE_TESTS),
             f"deno check {edge_fixture.relative_to(ROOT).as_posix()}",
         ],
         "artifacts": [
             ".testcontainers-logs/summary.json",
             ".testcontainers-logs/edge-imports.log",
             ".testcontainers-logs/deno-check-health-check.log",
+            ".testcontainers-logs/deno-check-app-analytics-edge.log",
+            ".testcontainers-logs/deno-test-app-analytics-edge.log",
             ".testcontainers-logs/deno-check-edge-db-smoke.log",
             ".testcontainers-logs/edge-db-smoke.log",
             ".testcontainers-logs/failure.json",
@@ -329,6 +436,168 @@ def apply_sql_fixture(conn: Any, path: Path, artifacts_dir: Path) -> None:
                 cur.execute(statement)
         conn.commit()
         log.write("ok\n")
+
+
+def seed_ai_university_legacy_fixture(conn: Any) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            "insert into public.ai_university_content (id, title) values (%s::uuid, %s)",
+            (AI_UNIVERSITY_LEGACY_ROW, "legacy course"),
+        )
+    conn.commit()
+
+
+def check_ai_university_migration(conn: Any) -> dict[str, Any]:
+    evidence_columns = {
+        "target_audience",
+        "observable_learning_outcome",
+        "assessment_verification_method",
+        "evidence_source_url",
+        "evidence_verified_at",
+    }
+    event_columns = {"id", "event_name", "surface", "occurred_at"}
+    with conn.cursor() as cur:
+        cur.execute(
+            "select column_name from information_schema.columns "
+            "where table_schema = 'public' and table_name = 'ai_university_content'"
+        )
+        actual_content_columns = {row[0] for row in cur.fetchall()}
+        cur.execute(
+            "select column_name from information_schema.columns "
+            "where table_schema = 'public' "
+            "and table_name = 'ai_university_content_events'"
+        )
+        actual_event_columns = {row[0] for row in cur.fetchall()}
+        cur.execute(
+            "select target_audience, observable_learning_outcome, "
+            "assessment_verification_method, evidence_source_url, evidence_verified_at "
+            "from public.ai_university_content where id = %s::uuid",
+            (AI_UNIVERSITY_LEGACY_ROW,),
+        )
+        legacy_evidence = cur.fetchone()
+        cur.execute(
+            "select c.relrowsecurity from pg_class c "
+            "join pg_namespace n on n.oid = c.relnamespace "
+            "where n.nspname = 'public' and c.relname = 'ai_university_content_events'"
+        )
+        rls_enabled = bool(cur.fetchone()[0])
+        cur.execute(
+            "select policyname from pg_policies where schemaname = 'public' "
+            "and tablename = 'ai_university_content_events' order by policyname"
+        )
+        policies = [row[0] for row in cur.fetchall()]
+    conn.commit()
+
+    if not evidence_columns.issubset(actual_content_columns):
+        raise AssertionError(
+            f"missing AI University evidence columns: {sorted(evidence_columns - actual_content_columns)}"
+        )
+    if actual_event_columns != event_columns:
+        raise AssertionError(f"unexpected event payload columns: {sorted(actual_event_columns)}")
+    if legacy_evidence is None or any(value is not None for value in legacy_evidence):
+        raise AssertionError(f"legacy evidence was manufactured: {legacy_evidence}")
+    if not rls_enabled:
+        raise AssertionError("AI University event table does not have RLS enabled")
+    expected_policy = "anonymous clients insert allowlisted content events"
+    if policies != [expected_policy]:
+        raise AssertionError(f"unexpected AI University event policies: {policies}")
+
+    try:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(
+                    "update public.ai_university_content set target_audience = 'learners' "
+                    "where id = %s::uuid",
+                    (AI_UNIVERSITY_LEGACY_ROW,),
+                )
+    except Exception as exc:
+        if getattr(exc, "sqlstate", None) != "23514":
+            raise AssertionError(f"partial evidence failed unexpectedly: {exc}") from exc
+        partial_evidence_sqlstate = "23514"
+    else:
+        raise AssertionError("partial AI University evidence unexpectedly succeeded")
+
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute(
+                "update public.ai_university_content set "
+                "target_audience = 'new AI learners', "
+                "observable_learning_outcome = 'build one verified workflow', "
+                "assessment_verification_method = 'review the produced workflow', "
+                "evidence_source_url = 'https://example.invalid/course', "
+                "evidence_verified_at = now() where id = %s::uuid",
+                (AI_UNIVERSITY_LEGACY_ROW,),
+            )
+
+    with conn.cursor() as cur:
+        for role in ("anon", "authenticated"):
+            for column in ("event_name", "surface"):
+                cur.execute(
+                    "select has_column_privilege(%s, %s, %s, 'INSERT')",
+                    (role, "public.ai_university_content_events", column),
+                )
+                if not bool(cur.fetchone()[0]):
+                    raise AssertionError(f"{role} lacks INSERT on allowlisted column {column}")
+            for column in ("id", "occurred_at"):
+                cur.execute(
+                    "select has_column_privilege(%s, %s, %s, 'INSERT')",
+                    (role, "public.ai_university_content_events", column),
+                )
+                if bool(cur.fetchone()[0]):
+                    raise AssertionError(f"{role} can INSERT server-owned column {column}")
+            cur.execute(
+                "select has_table_privilege(%s, %s, 'SELECT')",
+                (role, "public.ai_university_content_events"),
+            )
+            if bool(cur.fetchone()[0]):
+                raise AssertionError(f"{role} can SELECT anonymous event rows")
+    conn.commit()
+
+    for role, event_name in (("anon", "fallback_shown"), ("authenticated", "retry_succeeded")):
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(f"set local role {role}")
+                cur.execute(
+                    "insert into public.ai_university_content_events (event_name, surface) "
+                    "values (%s, 'ai_university_content')",
+                    (event_name,),
+                )
+
+    denied_select_sqlstate = issue_2773_expect_denied(
+        conn,
+        role="anon",
+        user_id=None,
+        statement="select count(*) from public.ai_university_content_events",
+    )
+    denied_server_field_sqlstate = issue_2773_expect_denied(
+        conn,
+        role="authenticated",
+        user_id=None,
+        statement=(
+            "insert into public.ai_university_content_events "
+            "(event_name, surface, occurred_at) "
+            "values ('retry_failed', 'ai_university_content', now())"
+        ),
+    )
+    with conn.cursor() as cur:
+        cur.execute("select count(*) from public.ai_university_content_events")
+        event_count = int(cur.fetchone()[0])
+    conn.commit()
+    if event_count != 2:
+        raise AssertionError(f"unexpected AI University event count: {event_count}")
+
+    return {
+        "evidence_columns": sorted(evidence_columns),
+        "event_columns": sorted(event_columns),
+        "legacy_evidence": "preserved as NULL",
+        "partial_evidence_sqlstate": partial_evidence_sqlstate,
+        "complete_evidence": "accepted",
+        "rls_enabled": rls_enabled,
+        "policies": policies,
+        "client_event_inserts": event_count,
+        "client_select_sqlstate": denied_select_sqlstate,
+        "server_field_insert_sqlstate": denied_server_field_sqlstate,
+    }
 
 
 def table_count(conn: Any, table_name: str) -> int:
@@ -596,6 +865,895 @@ def check_issue_2773_rls(conn: Any) -> dict[str, Any]:
         "missing_write_sqlstate": missing_write_sqlstate,
         "cross_tenant_sqlstate": cross_tenant_sqlstate,
         "anon_access": "denied on all audited tables",
+    }
+
+
+def note_comments_run_as(
+    conn: Any,
+    *,
+    role: str,
+    user_id: str | None,
+    statement: str,
+    params: tuple[Any, ...] = (),
+) -> list[tuple[Any, ...]]:
+    if role not in {"anon", "authenticated", "service_role"}:
+        raise ValueError(f"unexpected role for note-comments query: {role}")
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute(f"set local role {role}")
+            cur.execute(
+                "select set_config('request.jwt.claim.sub', %s, true)",
+                (user_id or "",),
+            )
+            cur.execute(statement, params)
+            if cur.description is None:
+                return []
+            return [tuple(row) for row in cur.fetchall()]
+
+
+def note_comments_expect_sqlstate(
+    conn: Any,
+    *,
+    role: str,
+    user_id: str | None,
+    statement: str,
+    expected: str,
+    params: tuple[Any, ...] = (),
+) -> str:
+    try:
+        note_comments_run_as(
+            conn,
+            role=role,
+            user_id=user_id,
+            statement=statement,
+            params=params,
+        )
+    except Exception as exc:  # psycopg is loaded only for the integration run.
+        sqlstate = getattr(exc, "sqlstate", None)
+        if sqlstate != expected:
+            raise AssertionError(
+                f"expected SQLSTATE {expected}, got {sqlstate}: {exc}"
+            ) from exc
+        return str(sqlstate)
+    raise AssertionError(f"note-comments operation unexpectedly succeeded ({expected})")
+
+
+def seed_note_comments_security_fixture(conn: Any) -> None:
+    with conn.cursor() as cur:
+        cur.executemany(
+            "insert into auth.users (id) values (%s::uuid)",
+            [
+                (NOTE_OWNER,),
+                (NOTE_PUBLIC_VIEWER,),
+                (NOTE_TEAM_MEMBER,),
+                (NOTE_OUTSIDER,),
+                (NOTE_OWNER_ADDED_MEMBER,),
+            ],
+        )
+        cur.executemany(
+            "insert into public.notes (id, user_id, content) "
+            "values (%s, %s::uuid, %s)",
+            [
+                (NOTE_PRIVATE_ID, NOTE_OWNER, "private note"),
+                (NOTE_PUBLIC_ID, NOTE_OWNER, "public note"),
+                (NOTE_TEAM_ID_VALUE, NOTE_OWNER, "team note"),
+            ],
+        )
+        cur.executemany(
+            "insert into public.public_memos "
+            "(note_id, user_id, title, is_public) values (%s, %s::uuid, %s, true)",
+            [
+                (NOTE_PUBLIC_ID, NOTE_OWNER, "valid public memo"),
+                (NOTE_PRIVATE_ID, NOTE_OUTSIDER, "legacy forged public memo"),
+            ],
+        )
+        cur.execute(
+            "insert into public.teams (id, name, owner_id, invite_code) "
+            "values (%s::uuid, 'Issue 2668 team', %s::uuid, %s)",
+            (NOTE_TEAM_ID, NOTE_OWNER, NOTE_INVITE_CODE),
+        )
+        cur.executemany(
+            "insert into public.team_memberships (team_id, user_id, role) "
+            "values (%s::uuid, %s::uuid, 'member')",
+            [
+                (NOTE_TEAM_ID, NOTE_TEAM_MEMBER),
+                (NOTE_TEAM_ID, NOTE_OUTSIDER),
+            ],
+        )
+        cur.executemany(
+            "insert into public.team_shared_notes (team_id, note_id, shared_by) "
+            "values (%s::uuid, %s, %s::uuid)",
+            [
+                (NOTE_TEAM_ID, NOTE_TEAM_ID_VALUE, NOTE_OWNER),
+                (NOTE_TEAM_ID, NOTE_PRIVATE_ID, NOTE_OUTSIDER),
+            ],
+        )
+        cur.executemany(
+            "insert into public.note_comments (note_id, user_id, content) "
+            "values (%s, %s::uuid, %s)",
+            [
+                (NOTE_PRIVATE_ID, NOTE_OWNER, "owner private comment"),
+                (NOTE_PRIVATE_ID, NOTE_OUTSIDER, "legacy forged private comment"),
+                (NOTE_PUBLIC_ID, NOTE_OWNER, "public comment"),
+                (NOTE_TEAM_ID_VALUE, NOTE_OWNER, "team comment"),
+            ],
+        )
+    conn.commit()
+
+
+def check_note_comments_security(conn: Any) -> dict[str, Any]:
+    with conn.cursor() as cur:
+        cur.execute(
+            "select policyname, cmd, roles from pg_policies "
+            "where schemaname = 'public' and tablename = 'note_comments' "
+            "order by policyname"
+        )
+        policies = [tuple(row) for row in cur.fetchall()]
+        cur.execute(
+            "select n.nspname, p.proname, p.prosecdef, "
+            "coalesce(p.proconfig, array[]::text[]), "
+            "not exists (select 1 from aclexplode(coalesce(p.proacl, "
+            "acldefault('f', p.proowner))) acl where acl.grantee = 0 "
+            "and acl.privilege_type = 'EXECUTE') "
+            "from pg_proc p join pg_namespace n on n.oid = p.pronamespace "
+            "where (n.nspname, p.proname) in "
+            "(('note_comments_private', 'owns_note'), "
+            "('note_comments_private', 'owns_team'), "
+            "('note_comments_private', 'can_participate_in_team'), "
+            "('note_comments_private', 'is_valid_team_note_share'), "
+            "('note_comments_private', 'can_access_note_comments'), "
+            "('note_comments_private', 'can_read_public_memo'), "
+            "('note_comments_private', 'stamp_owner_added_membership'), "
+            "('public', 'join_team_with_invite_code')) "
+            "order by n.nspname, p.proname"
+        )
+        functions = [tuple(row) for row in cur.fetchall()]
+        cur.execute(
+            "select coalesce(reloptions, array[]::text[]) from pg_class c "
+            "join pg_namespace n on n.oid = c.relnamespace "
+            "where n.nspname = 'public' and c.relname = 'note_comment_counts'"
+        )
+        view_options = list(cur.fetchone()[0])
+    conn.commit()
+
+    expected_policies = [
+        ("note_comments_delete_author", "DELETE", ("authenticated",)),
+        ("note_comments_insert_authorized", "INSERT", ("authenticated",)),
+        (
+            "note_comments_select_authorized",
+            "SELECT",
+            ("anon", "authenticated"),
+        ),
+        ("note_comments_update_author", "UPDATE", ("authenticated",)),
+    ]
+    normalized_policies = [
+        (name, command, tuple(roles)) for name, command, roles in policies
+    ]
+    if normalized_policies != expected_policies:
+        raise AssertionError(f"unexpected note_comments policies: {policies}")
+    if len(functions) != 8:
+        raise AssertionError(f"unexpected note authorization functions: {functions}")
+    for schema, name, security_definer, proconfig, public_revoked in functions:
+        if not security_definer:
+            raise AssertionError(f"{schema}.{name} is not SECURITY DEFINER")
+        if not any(str(item).startswith("search_path=") for item in proconfig):
+            raise AssertionError(f"{schema}.{name} search_path is not pinned: {proconfig}")
+        if not public_revoked:
+            raise AssertionError(f"PUBLIC retains EXECUTE on {schema}.{name}")
+    if "security_invoker=true" not in view_options:
+        raise AssertionError(f"note_comment_counts is not security_invoker: {view_options}")
+
+    table_privileges: dict[str, dict[str, bool]] = {}
+    with conn.cursor() as cur:
+        for role in ("anon", "authenticated"):
+            table_privileges[role] = {}
+            for privilege in ("SELECT", "INSERT", "UPDATE", "DELETE"):
+                cur.execute(
+                    "select has_table_privilege(%s, 'public.note_comments', %s)",
+                    (role, privilege),
+                )
+                table_privileges[role][privilege] = bool(cur.fetchone()[0])
+        cur.execute(
+            "select has_table_privilege('anon', 'public.note_comment_counts', 'SELECT'), "
+            "has_table_privilege('authenticated', 'public.note_comment_counts', 'SELECT')"
+        )
+        view_browser_access = tuple(bool(item) for item in cur.fetchone())
+        cur.execute(
+            "select has_function_privilege('anon', "
+            "'public.join_team_with_invite_code(text)', 'EXECUTE'), "
+            "has_function_privilege('authenticated', "
+            "'public.join_team_with_invite_code(text)', 'EXECUTE')"
+        )
+        rpc_access = tuple(bool(item) for item in cur.fetchone())
+        authenticated_columns: dict[str, dict[str, bool]] = {}
+        for column in ("id", "note_id", "user_id", "content", "created_at"):
+            authenticated_columns[column] = {}
+            for privilege in ("INSERT", "UPDATE"):
+                cur.execute(
+                    "select has_column_privilege('authenticated', "
+                    "'public.note_comments', %s, %s)",
+                    (column, privilege),
+                )
+                authenticated_columns[column][privilege] = bool(cur.fetchone()[0])
+    conn.commit()
+
+    expected_table_privileges = {
+        "anon": {"SELECT": True, "INSERT": False, "UPDATE": False, "DELETE": False},
+        "authenticated": {
+            "SELECT": True,
+            "INSERT": False,
+            "UPDATE": False,
+            "DELETE": True,
+        },
+    }
+    if table_privileges != expected_table_privileges:
+        raise AssertionError(f"unexpected note_comments ACL: {table_privileges}")
+    if view_browser_access != (False, False):
+        raise AssertionError(f"browser roles can read comment counts: {view_browser_access}")
+    if rpc_access != (False, True):
+        raise AssertionError(f"unexpected invite RPC ACL: {rpc_access}")
+    expected_columns = {
+        "id": {"INSERT": False, "UPDATE": False},
+        "note_id": {"INSERT": True, "UPDATE": False},
+        "user_id": {"INSERT": True, "UPDATE": False},
+        "content": {"INSERT": True, "UPDATE": True},
+        "created_at": {"INSERT": False, "UPDATE": False},
+    }
+    if authenticated_columns != expected_columns:
+        raise AssertionError(f"unexpected note_comments column ACL: {authenticated_columns}")
+
+    def comment_count(role: str, user_id: str | None, note_id: int) -> int:
+        rows = note_comments_run_as(
+            conn,
+            role=role,
+            user_id=user_id,
+            statement="select count(*) from public.note_comments where note_id = %s",
+            params=(note_id,),
+        )
+        return int(rows[0][0])
+
+    initial_counts = {
+        "anon_private": comment_count("anon", None, NOTE_PRIVATE_ID),
+        "anon_public": comment_count("anon", None, NOTE_PUBLIC_ID),
+        "owner_private": comment_count("authenticated", NOTE_OWNER, NOTE_PRIVATE_ID),
+        "outsider_private": comment_count(
+            "authenticated", NOTE_OUTSIDER, NOTE_PRIVATE_ID
+        ),
+        "unverified_member_team": comment_count(
+            "authenticated", NOTE_TEAM_MEMBER, NOTE_TEAM_ID_VALUE
+        ),
+    }
+    expected_initial_counts = {
+        "anon_private": 0,
+        "anon_public": 1,
+        "owner_private": 2,
+        "outsider_private": 0,
+        "unverified_member_team": 0,
+    }
+    if initial_counts != expected_initial_counts:
+        raise AssertionError(f"unexpected initial comment visibility: {initial_counts}")
+
+    unverified_team_rows = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OUTSIDER,
+        statement="select invite_code from public.teams where id = %s::uuid",
+        params=(NOTE_TEAM_ID,),
+    )
+    if unverified_team_rows:
+        raise AssertionError(
+            f"unverified legacy member can read invite code: {unverified_team_rows}"
+        )
+
+    denied_sqlstates = {
+        "anon_write": note_comments_expect_sqlstate(
+            conn,
+            role="anon",
+            user_id=None,
+            statement=(
+                "insert into public.note_comments (note_id, user_id, content) "
+                "values (%s, %s::uuid, 'anon write')"
+            ),
+            params=(NOTE_PUBLIC_ID, NOTE_PUBLIC_VIEWER),
+            expected="42501",
+        ),
+        "missing_claim_write": note_comments_expect_sqlstate(
+            conn,
+            role="authenticated",
+            user_id=None,
+            statement=(
+                "insert into public.note_comments (note_id, user_id, content) "
+                "values (%s, %s::uuid, 'missing claim')"
+            ),
+            params=(NOTE_PRIVATE_ID, NOTE_OWNER),
+            expected="42501",
+        ),
+        "forged_body_user": note_comments_expect_sqlstate(
+            conn,
+            role="authenticated",
+            user_id=NOTE_PUBLIC_VIEWER,
+            statement=(
+                "insert into public.note_comments (note_id, user_id, content) "
+                "values (%s, %s::uuid, 'forged user')"
+            ),
+            params=(NOTE_PUBLIC_ID, NOTE_OUTSIDER),
+            expected="42501",
+        ),
+        "unrelated_private_write": note_comments_expect_sqlstate(
+            conn,
+            role="authenticated",
+            user_id=NOTE_OUTSIDER,
+            statement=(
+                "insert into public.note_comments (note_id, user_id, content) "
+                "values (%s, %s::uuid, 'private write')"
+            ),
+            params=(NOTE_PRIVATE_ID, NOTE_OUTSIDER),
+            expected="42501",
+        ),
+        "direct_self_join": note_comments_expect_sqlstate(
+            conn,
+            role="authenticated",
+            user_id=NOTE_PUBLIC_VIEWER,
+            statement=(
+                "insert into public.team_memberships (team_id, user_id, role) "
+                "values (%s::uuid, %s::uuid, 'member')"
+            ),
+            params=(NOTE_TEAM_ID, NOTE_PUBLIC_VIEWER),
+            expected="42501",
+        ),
+        "forged_publication": note_comments_expect_sqlstate(
+            conn,
+            role="authenticated",
+            user_id=NOTE_OUTSIDER,
+            statement=(
+                "insert into public.public_memos "
+                "(note_id, user_id, title, is_public) "
+                "values (%s, %s::uuid, 'forged', true)"
+            ),
+            params=(NOTE_TEAM_ID_VALUE, NOTE_OUTSIDER),
+            expected="42501",
+        ),
+        "forged_team_share": note_comments_expect_sqlstate(
+            conn,
+            role="authenticated",
+            user_id=NOTE_OUTSIDER,
+            statement=(
+                "insert into public.team_shared_notes (team_id, note_id, shared_by) "
+                "values (%s::uuid, %s, %s::uuid)"
+            ),
+            params=(NOTE_TEAM_ID, NOTE_PUBLIC_ID, NOTE_OUTSIDER),
+            expected="42501",
+        ),
+    }
+
+    invalid_invite = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OUTSIDER,
+        statement="select * from public.join_team_with_invite_code('INVALID2668')",
+    )
+    if invalid_invite:
+        raise AssertionError(f"invalid invite returned a team: {invalid_invite}")
+    for attempt in range(2, 11):
+        repeated_invalid = note_comments_run_as(
+            conn,
+            role="authenticated",
+            user_id=NOTE_OUTSIDER,
+            statement="select * from public.join_team_with_invite_code(%s)",
+            params=(f"INVALID{attempt:04d}",),
+        )
+        if repeated_invalid:
+            raise AssertionError(
+                f"invalid invite attempt {attempt} returned a team: {repeated_invalid}"
+            )
+    rate_limit_sqlstate = note_comments_expect_sqlstate(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OUTSIDER,
+        statement="select * from public.join_team_with_invite_code('INVALID0011')",
+        expected="P0001",
+    )
+    with conn.cursor() as cur:
+        cur.execute(
+            "select attempt_count from note_comments_private.team_invite_attempts "
+            "where user_id = %s::uuid",
+            (NOTE_OUTSIDER,),
+        )
+        outsider_attempt_count = int(cur.fetchone()[0])
+    conn.commit()
+    if outsider_attempt_count != 10:
+        raise AssertionError(f"invite attempt was not recorded: {outsider_attempt_count}")
+    if comment_count("authenticated", NOTE_OUTSIDER, NOTE_TEAM_ID_VALUE) != 0:
+        raise AssertionError("invalid invite verified a legacy membership")
+
+    joined = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_TEAM_MEMBER,
+        statement="select * from public.join_team_with_invite_code(%s)",
+        params=(NOTE_INVITE_CODE,),
+    )
+    if (
+        len(joined) != 1
+        or str(joined[0][0]) != NOTE_TEAM_ID
+        or joined[0][1] != "Issue 2668 team"
+    ):
+        raise AssertionError(f"invite RPC returned unexpected team: {joined}")
+    if comment_count("authenticated", NOTE_TEAM_MEMBER, NOTE_TEAM_ID_VALUE) != 1:
+        raise AssertionError("verified member cannot read team comments")
+    verified_team_rows = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_TEAM_MEMBER,
+        statement="select invite_code from public.teams where id = %s::uuid",
+        params=(NOTE_TEAM_ID,),
+    )
+    if verified_team_rows != [(NOTE_INVITE_CODE,)]:
+        raise AssertionError(f"verified member cannot read team: {verified_team_rows}")
+    if comment_count("authenticated", NOTE_TEAM_MEMBER, NOTE_PRIVATE_ID) != 0:
+        raise AssertionError("forged legacy team share granted private access")
+
+    owner_added = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OWNER,
+        statement=(
+            "insert into public.team_memberships (team_id, user_id, role) "
+            "values (%s::uuid, %s::uuid, 'member') returning invite_verified_at"
+        ),
+        params=(NOTE_TEAM_ID, NOTE_OWNER_ADDED_MEMBER),
+    )
+    if not owner_added or owner_added[0][0] is None:
+        raise AssertionError("owner-added membership was not verified")
+    if comment_count(
+        "authenticated", NOTE_OWNER_ADDED_MEMBER, NOTE_TEAM_ID_VALUE
+    ) != 1:
+        raise AssertionError("owner-added member cannot read team comments")
+
+    member_insert = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_TEAM_MEMBER,
+        statement=(
+            "insert into public.note_comments (note_id, user_id, content) "
+            "values (%s, %s::uuid, 'member comment') returning id"
+        ),
+        params=(NOTE_TEAM_ID_VALUE, NOTE_TEAM_MEMBER),
+    )
+    if len(member_insert) != 1:
+        raise AssertionError("verified member could not create a team comment")
+
+    public_insert = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_PUBLIC_VIEWER,
+        statement=(
+            "insert into public.note_comments (note_id, user_id, content) "
+            "values (%s, %s::uuid, 'viewer comment') returning id"
+        ),
+        params=(NOTE_PUBLIC_ID, NOTE_PUBLIC_VIEWER),
+    )
+    public_comment_id = str(public_insert[0][0])
+    updated = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_PUBLIC_VIEWER,
+        statement=(
+            "update public.note_comments set content = 'viewer edited' "
+            "where id = %s::uuid returning content"
+        ),
+        params=(public_comment_id,),
+    )
+    if updated != [("viewer edited",)]:
+        raise AssertionError(f"author content update failed: {updated}")
+    owner_update = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OWNER,
+        statement=(
+            "update public.note_comments set content = 'owner overwrite' "
+            "where id = %s::uuid returning id"
+        ),
+        params=(public_comment_id,),
+    )
+    if owner_update:
+        raise AssertionError("note owner updated another author's comment")
+    denied_sqlstates["immutable_note_id"] = note_comments_expect_sqlstate(
+        conn,
+        role="authenticated",
+        user_id=NOTE_PUBLIC_VIEWER,
+        statement=(
+            "update public.note_comments set note_id = %s "
+            "where id = %s::uuid"
+        ),
+        params=(NOTE_PRIVATE_ID, public_comment_id),
+        expected="42501",
+    )
+    owner_delete = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OWNER,
+        statement="delete from public.note_comments where id = %s::uuid returning id",
+        params=(public_comment_id,),
+    )
+    if owner_delete:
+        raise AssertionError("note owner deleted another author's comment")
+    author_delete = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_PUBLIC_VIEWER,
+        statement="delete from public.note_comments where id = %s::uuid returning id",
+        params=(public_comment_id,),
+    )
+    if len(author_delete) != 1:
+        raise AssertionError("comment author could not delete own comment")
+
+    for key, content in (("blank_content", "   "), ("oversized_content", "x" * 2001)):
+        denied_sqlstates[key] = note_comments_expect_sqlstate(
+            conn,
+            role="authenticated",
+            user_id=NOTE_OWNER,
+            statement=(
+                "insert into public.note_comments (note_id, user_id, content) "
+                "values (%s, %s::uuid, %s)"
+            ),
+            params=(NOTE_PRIVATE_ID, NOTE_OWNER, content),
+            expected="23514",
+        )
+
+    service_rows = note_comments_run_as(
+        conn,
+        role="service_role",
+        user_id=None,
+        statement=(
+            "insert into public.note_comments (note_id, user_id, content) "
+            "values (%s, %s::uuid, 'service comment') returning id"
+        ),
+        params=(NOTE_PRIVATE_ID, NOTE_OWNER),
+    )
+    if len(service_rows) != 1:
+        raise AssertionError("service_role note comment DML regressed")
+
+    return {
+        "policies": normalized_policies,
+        "functions": [f"{schema}.{name}" for schema, name, *_ in functions],
+        "table_privileges": table_privileges,
+        "initial_visibility": initial_counts,
+        "unverified_member_team_visibility": len(unverified_team_rows),
+        "denied_sqlstates": denied_sqlstates,
+        "invalid_invite_attempts": outsider_attempt_count,
+        "rate_limit_sqlstate": rate_limit_sqlstate,
+        "verified_member_team_comments": comment_count(
+            "authenticated", NOTE_TEAM_MEMBER, NOTE_TEAM_ID_VALUE
+        ),
+        "service_role_dml": "passed",
+    }
+
+
+def seed_app_analytics_security_fixture(conn: Any) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            "insert into public.app_analytics "
+            "(date, landing_views, conversions, share_count, source_details) "
+            "values ((timezone('Asia/Tokyo', now()))::date, "
+            "10, 2, 2147483647, "
+            "jsonb_build_object('public_memo_share', '99999999999999999999'))"
+        )
+        cur.execute(
+            "insert into public.app_analytics "
+            "(date, user_id, source, metadata) values "
+            "(date '2000-01-02', %s::uuid, 'guitar-recording-studio', "
+            "jsonb_build_object('title', 'private title', "
+            "'filePath', 'private/path.wav', 'notes', 'private notes'))",
+            (ISSUE_2773_USER_1,),
+        )
+    conn.commit()
+
+
+def app_analytics_expect_event_rejected(
+    conn: Any,
+    *,
+    source_key: str,
+    share_increment: int,
+    actor_hash: str = "a" * 64,
+) -> str:
+    try:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute("set local role service_role")
+                cur.execute(
+                    "select public.record_app_analytics_event("
+                    "%s, (timezone('Asia/Tokyo', now()))::date, %s, %s)",
+                    (source_key, share_increment, actor_hash),
+                )
+    except Exception as exc:  # psycopg is loaded only for the integration run.
+        sqlstate = getattr(exc, "sqlstate", None)
+        if sqlstate != "P0001":
+            raise AssertionError(
+                f"expected analytics RPC SQLSTATE P0001, got {sqlstate}: {exc}"
+            ) from exc
+        return sqlstate
+    raise AssertionError("invalid analytics event unexpectedly succeeded")
+
+
+def check_app_analytics_security(conn: Any) -> dict[str, Any]:
+    table_privileges = (
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "TRUNCATE",
+        "REFERENCES",
+        "TRIGGER",
+    )
+    browser_roles = ("anon", "authenticated")
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "select policyname, cmd, roles::text from pg_policies "
+            "where schemaname = 'public' and tablename = 'app_analytics' "
+            "order by policyname"
+        )
+        policies = [tuple(row) for row in cur.fetchall()]
+        cur.execute(
+            "select p.proname, pg_get_function_identity_arguments(p.oid), "
+            "p.prosecdef, coalesce(p.proconfig, array[]::text[]), "
+            "pg_get_userbyid(p.proowner), "
+            "not exists (select 1 from aclexplode(coalesce(p.proacl, "
+            "acldefault('f', p.proowner))) acl where acl.grantee = 0 "
+            "and acl.privilege_type = 'EXECUTE') "
+            "from pg_proc p join pg_namespace n on n.oid = p.pronamespace "
+            "where n.nspname = 'public' and p.proname = any(%s) "
+            "order by p.proname, pg_get_function_identity_arguments(p.oid)",
+            (
+                [
+                    "increment_app_analytics_source_detail",
+                    "increment_share_count",
+                    "record_app_analytics_event",
+                ],
+            ),
+        )
+        function_security = [tuple(row) for row in cur.fetchall()]
+        cur.execute("select current_user")
+        migration_owner = str(cur.fetchone()[0])
+    conn.commit()
+
+    expected_policies = [
+        ("app_analytics_public_read", "SELECT", "{anon,authenticated}")
+    ]
+    if policies != expected_policies:
+        raise AssertionError(f"unexpected app_analytics policies: {policies}")
+    expected_signatures = {
+        "increment_app_analytics_source_detail": "p_source_key text, p_event_date date, p_share_increment integer",
+        "increment_share_count": "",
+        "record_app_analytics_event": "p_source_key text, p_event_date date, p_share_increment integer, p_actor_hash text",
+    }
+    if len(function_security) != len(expected_signatures):
+        raise AssertionError(f"unexpected analytics function overloads: {function_security}")
+    for name, arguments, security_definer, proconfig, owner, public_revoked in function_security:
+        if expected_signatures.get(name) != arguments:
+            raise AssertionError(f"unexpected {name} signature: {arguments}")
+        if not security_definer:
+            raise AssertionError(f"{name} is not SECURITY DEFINER")
+        if not any(str(item).startswith("search_path=") for item in proconfig):
+            raise AssertionError(f"{name} search_path is not pinned: {proconfig}")
+        if owner != migration_owner:
+            raise AssertionError(f"{name} owner {owner} != {migration_owner}")
+        if not public_revoked:
+            raise AssertionError(f"PUBLIC retains EXECUTE on {name}")
+
+    privileges: dict[str, dict[str, bool]] = {}
+    with conn.cursor() as cur:
+        for role in browser_roles:
+            privileges[role] = {}
+            for privilege in table_privileges:
+                cur.execute(
+                    "select has_table_privilege(%s, 'public.app_analytics', %s)",
+                    (role, privilege),
+                )
+                actual = bool(cur.fetchone()[0])
+                privileges[role][privilege] = actual
+                expected = False
+                if actual != expected:
+                    raise AssertionError(
+                        f"{role} {privilege} expected {expected}, got {actual}"
+                    )
+            for signature in (
+                "public.increment_share_count()",
+                "public.increment_app_analytics_source_detail(text,date,integer)",
+                "public.record_app_analytics_event(text,date,integer,text)",
+            ):
+                cur.execute(
+                    "select has_function_privilege(%s, %s, 'EXECUTE')",
+                    (role, signature),
+                )
+                if bool(cur.fetchone()[0]):
+                    raise AssertionError(f"{role} can execute {signature}")
+            for column in (
+                "date",
+                "landing_views",
+                "conversions",
+                "share_count",
+                "source_details",
+            ):
+                cur.execute(
+                    "select has_column_privilege(%s, "
+                    "'public.app_analytics', %s, 'SELECT')",
+                    (role, column),
+                )
+                if not bool(cur.fetchone()[0]):
+                    raise AssertionError(f"{role} cannot SELECT safe column {column}")
+            for column in ("id", "user_id", "source", "metadata", "created_at"):
+                cur.execute(
+                    "select has_column_privilege(%s, "
+                    "'public.app_analytics', %s, 'SELECT')",
+                    (role, column),
+                )
+                if bool(cur.fetchone()[0]):
+                    raise AssertionError(f"{role} can SELECT private column {column}")
+    conn.commit()
+
+    denied_sqlstates: dict[str, dict[str, str]] = {}
+    for role in browser_roles:
+        denied_sqlstates[role] = {
+            "insert": issue_2773_expect_denied(
+                conn,
+                role=role,
+                user_id=None,
+                statement=(
+                    "insert into public.app_analytics "
+                    "(date, landing_views, conversions, share_count) "
+                    "values (date '2000-01-01', 999, 999, 999)"
+                ),
+            ),
+            "update": issue_2773_expect_denied(
+                conn,
+                role=role,
+                user_id=None,
+                statement=(
+                    "update public.app_analytics set conversions = 999 "
+                    "where date = current_date"
+                ),
+            ),
+            "delete": issue_2773_expect_denied(
+                conn,
+                role=role,
+                user_id=None,
+                statement="delete from public.app_analytics where date = current_date",
+            ),
+        }
+
+    private_column_sqlstate = issue_2773_expect_denied(
+        conn,
+        role="anon",
+        user_id=None,
+        statement="select metadata from public.app_analytics",
+    )
+
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute("set local role anon")
+            cur.execute(
+                "select date, landing_views, conversions, share_count, source_details "
+                "from public.app_analytics"
+            )
+            anon_rows = list(cur.fetchall())
+
+    first_actor = "a" * 64
+    second_actor = "b" * 64
+    quota_actor = "c" * 64
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute("set local role service_role")
+            cur.execute(
+                "select public.record_app_analytics_event("
+                "'public_memo_share', "
+                "(timezone('Asia/Tokyo', now()))::date, 1, %s)",
+                (first_actor,),
+            )
+            first_recorded = bool(cur.fetchone()[0])
+            cur.execute(
+                "select public.record_app_analytics_event("
+                "'public_memo_share', "
+                "(timezone('Asia/Tokyo', now()))::date, 1, %s)",
+                (first_actor,),
+            )
+            duplicate_recorded = bool(cur.fetchone()[0])
+            cur.execute(
+                "select public.record_app_analytics_event("
+                "'public_memo_share', "
+                "(timezone('Asia/Tokyo', now()))::date, 1, %s)",
+                (second_actor,),
+            )
+            second_recorded = bool(cur.fetchone()[0])
+            cur.execute(
+                "select count(*) from public.app_analytics_event_receipts "
+                "where event_date = (timezone('Asia/Tokyo', now()))::date "
+                "and source_key = 'public_memo_share'"
+            )
+            receipt_count = int(cur.fetchone()[0])
+            cur.execute(
+                "insert into public.app_analytics_event_receipts "
+                "(event_date, source_key, actor_hash) "
+                "select (timezone('Asia/Tokyo', now()))::date, "
+                "'quota-fixture-' || value, %s "
+                "from generate_series(1, 32) value",
+                (quota_actor,),
+            )
+            cur.execute(
+                "select public.record_app_analytics_event("
+                "'public_memo_copy', "
+                "(timezone('Asia/Tokyo', now()))::date, 1, %s)",
+                (quota_actor,),
+            )
+            over_quota_recorded = bool(cur.fetchone()[0])
+
+    invalid_source_sqlstate = app_analytics_expect_event_rejected(
+        conn,
+        source_key="attacker_controlled_metric",
+        share_increment=0,
+    )
+    oversized_increment_sqlstate = app_analytics_expect_event_rejected(
+        conn,
+        source_key="public_memo_share",
+        share_increment=2,
+    )
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "select share_count, source_details ->> 'public_memo_share' "
+            "from public.app_analytics "
+            "where date = (timezone('Asia/Tokyo', now()))::date"
+        )
+        row = cur.fetchone()
+    conn.commit()
+    if row is None or int(row[0]) != 2147483647 or int(row[1]) != 2:
+        raise AssertionError(f"idempotent analytics RPC returned unexpected row: {row}")
+    if len(anon_rows) != 1:
+        raise AssertionError(f"anon SELECT returned unsafe rows: {anon_rows}")
+    if not first_recorded or duplicate_recorded or not second_recorded:
+        raise AssertionError(
+            "analytics receipt idempotency failed: "
+            f"{first_recorded=}, {duplicate_recorded=}, {second_recorded=}"
+        )
+    if receipt_count != 2:
+        raise AssertionError(f"expected two analytics receipts, got {receipt_count}")
+    if over_quota_recorded:
+        raise AssertionError("actor/day analytics quota was bypassed")
+
+    service_role_privileges: dict[str, bool] = {}
+    with conn.cursor() as cur:
+        for privilege in ("SELECT", "INSERT", "UPDATE", "DELETE"):
+            cur.execute(
+                "select has_table_privilege('service_role', "
+                "'public.app_analytics', %s)",
+                (privilege,),
+            )
+            service_role_privileges[privilege] = bool(cur.fetchone()[0])
+    conn.commit()
+    if not all(service_role_privileges.values()):
+        raise AssertionError(
+            f"service_role app_analytics DML regressed: {service_role_privileges}"
+        )
+
+    return {
+        "policies": policies,
+        "browser_privileges": privileges,
+        "raw_write_sqlstates": denied_sqlstates,
+        "function_security": function_security,
+        "private_column_sqlstate": private_column_sqlstate,
+        "public_row_count": len(anon_rows),
+        "service_role_privileges": service_role_privileges,
+        "event_receipts": {
+            "first_recorded": first_recorded,
+            "duplicate_recorded": duplicate_recorded,
+            "second_recorded": second_recorded,
+            "receipt_count": receipt_count,
+            "over_quota_recorded": over_quota_recorded,
+        },
+        "rpc_row": {"share_count": int(row[0]), "public_memo_share": int(row[1])},
+        "invalid_source_sqlstate": invalid_source_sqlstate,
+        "oversized_increment_sqlstate": oversized_increment_sqlstate,
     }
 
 
@@ -1023,6 +2181,41 @@ def check_actual_edge_function(args: argparse.Namespace, artifacts_dir: Path) ->
     if deno_result.returncode != 0:
         raise RuntimeError("Deno check failed; see deno-check-health-check.log")
 
+    analytics_check = run_command(
+        [
+            "deno",
+            "check",
+            "--config",
+            "supabase/functions/deno.json",
+            str(APP_ANALYTICS_EDGE_FUNCTION.relative_to(ROOT)),
+        ],
+        artifacts_dir=artifacts_dir,
+        log_name="deno-check-app-analytics-edge.log",
+        timeout_seconds=180,
+    )
+    if analytics_check.returncode != 0:
+        raise RuntimeError(
+            "App analytics Edge type-check failed; "
+            "see deno-check-app-analytics-edge.log"
+        )
+
+    analytics_tests = run_command(
+        [
+            "deno",
+            "test",
+            "--config",
+            "supabase/functions/deno.json",
+            *(str(path.relative_to(ROOT)) for path in APP_ANALYTICS_EDGE_TESTS),
+        ],
+        artifacts_dir=artifacts_dir,
+        log_name="deno-test-app-analytics-edge.log",
+        timeout_seconds=180,
+    )
+    if analytics_tests.returncode != 0:
+        raise RuntimeError(
+            "App analytics Edge tests failed; see deno-test-app-analytics-edge.log"
+        )
+
 
 def check_edge_db_fixture(args: argparse.Namespace, artifacts_dir: Path) -> None:
     deno_result = run_command(
@@ -1136,9 +2329,26 @@ def run_smoke(args: argparse.Namespace) -> int:
         with psycopg.connect(connection_url) as conn:
             for fixture in sql_files(args.sql_dir):
                 apply_sql_fixture(conn, fixture, artifacts_dir)
+            seed_ai_university_legacy_fixture(conn)
+            apply_sql_fixture(conn, AI_UNIVERSITY_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, AI_UNIVERSITY_MIGRATION, artifacts_dir)
+            ai_university = check_ai_university_migration(conn)
             apply_sql_fixture(conn, ISSUE_2773_RLS_MIGRATION, artifacts_dir)
             seed_issue_2773_fixture(conn)
             tenant_rls = check_issue_2773_rls(conn)
+            seed_app_analytics_security_fixture(conn)
+            apply_sql_fixture(conn, APP_ANALYTICS_SECURITY_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, APP_ANALYTICS_SECURITY_MIGRATION, artifacts_dir)
+            app_analytics_security = check_app_analytics_security(conn)
+            seed_note_comments_security_fixture(conn)
+            apply_sql_fixture(conn, NOTE_COMMENTS_SECURITY_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, NOTE_COMMENTS_SECURITY_MIGRATION, artifacts_dir)
+            note_comments_security = check_note_comments_security(conn)
+            apply_sql_fixture(conn, VOICE_DUBBING_BOOTSTRAP, artifacts_dir)
+            apply_sql_fixture(conn, BILLING_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, VOICE_DUBBING_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, VOICE_DUBBING_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, VOICE_DUBBING_CONTRACT, artifacts_dir)
             apply_sql_fixture(conn, ASSET_CHAT_MIGRATION, artifacts_dir)
             seed_asset_chat_fixture(conn)
             asset_chat_rls = check_asset_chat_rls(conn)
@@ -1157,8 +2367,12 @@ def run_smoke(args: argparse.Namespace) -> int:
             "url": redact_url(connection_url),
             "tables": counts,
             "tenant_rls": tenant_rls,
+            "app_analytics_security": app_analytics_security,
+            "note_comments_security": note_comments_security,
             "asset_chat_rls": asset_chat_rls,
             "tax_records_rls": tax_records_rls,
+            "ai_university": ai_university,
+            "voice_dubbing_quota_contract": "passed",
             "video_artifact_contract": "passed",
         },
         "edge_fixture": {

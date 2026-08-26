@@ -1,13 +1,13 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-23T09:32:26.830479+00:00",
+  "generated_at": "2026-08-26T19:35:48.160503+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
   "automation": {
     "id": "automation-4",
     "name": "機能の虎レビュー",
-    "status": "ACTIVE",
+    "status": "PAUSED",
     "schedule": "毎時15分（1時間ごと）"
   },
   "pool": {
@@ -15,8 +15,8 @@
     "eligible": 13,
     "provisional": 11,
     "division_1": 0,
-    "division_2": 1,
-    "division_3": 12,
+    "division_2": 2,
+    "division_3": 11,
     "division_4": 0,
     "division_5": 0,
     "eliminated": 0
@@ -29,96 +29,339 @@
     "operating_efficiency": 10
   },
   "latest_review": {
-    "cycle_id": "20260823T172138+0900",
-    "started_at": "2026-08-23T17:21:38+09:00",
+    "cycle_id": "20260827T033027+0900",
+    "started_at": "2026-08-27T03:30:27+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "ai_university",
-      "url": "https://my-web-app-b67f4.web.app/ai-university"
+      "slug": "home",
+      "url": "https://my-web-app-b67f4.web.app/"
     },
     "reviewer": {
       "seat": 11,
       "name": "野口 功司",
-      "selection_score": 78.0406,
+      "selection_score": 75.8089,
       "division": 1,
-      "cycle_utility": 95.5,
-      "aggregate_utility": 87.33
+      "cycle_utility": 81.0,
+      "aggregate_utility": 88.18
     },
-    "status": "fixed",
+    "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "読み込み中のspinnerが支援技術へ状態を通知しない",
+        "summary": "追加要望の3つの失敗経路が内部例外文字列を利用者へ直接表示する",
         "severity": "p1",
         "business_dimensions": [
           "customer_pain",
-          "go_to_market",
-          "trust_risk"
+          "trust_risk",
+          "go_to_market"
         ]
       },
       {
-        "summary": "SEOシェルから実AI大学画面への切り替えが遅い",
-        "severity": "p1",
-        "business_dimensions": [
-          "customer_pain",
-          "go_to_market",
-          "unit_economics"
-        ]
-      },
-      {
-        "summary": "8千行超の単一ページと専用widget test不足が改善速度を下げる",
+        "summary": "ホームの多数の非同期状態と導線が1万行の単一実装へ集中している",
         "severity": "p2",
         "business_dimensions": [
-          "founder_execution",
           "scalability",
-          "unit_economics"
+          "customer_pain",
+          "go_to_market"
+        ]
+      },
+      {
+        "summary": "ホーム導線と改善要望の実利用成果を機能単位で判断できない",
+        "severity": "p2",
+        "business_dimensions": [
+          "market_demand",
+          "go_to_market",
+          "revenue_model"
         ]
       }
     ],
+    "quality": {
+      "framework": "TCE+CLEAR",
+      "overall_score": 100.0,
+      "scores": {
+        "complete": 100,
+        "logical": 100,
+        "evidence": 100,
+        "audience": 100,
+        "relevant": 100
+      },
+      "gate_passed": true,
+      "baseline_cycle_id": null,
+      "focus_dimension": "evidence",
+      "overall_delta": null,
+      "next_focus_dimension": "complete",
+      "next_cycle_experiment": "追加要望の表示から送信完了までを匿名計測し、3失敗経路の分類済みcopyと再試行を依存注入widget testで固定した後、完了率を基準値と比較する。"
+    },
     "countermeasure": {
-      "state": "production_verified",
-      "label": "本番対策済み",
-      "detail": "変更・検証・本番反映の証拠が記録されています。",
+      "state": "issue_tracking",
+      "label": "未対策・Issue #4916 追跡中",
+      "detail": "提案のみで、対策実施の記録はありません。",
       "summary": "",
-      "files": [
-        "lib/pages/gemini_university_v2_page.dart",
-        "test/pages/gemini_university_loading_semantics_test.dart"
-      ],
-      "lines_changed": 30,
-      "resolved_finding_ids": [
-        "ai-university-loading-semantics"
-      ],
+      "files": [],
+      "lines_changed": 0,
+      "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: 1 test",
-        "passed: No issues found",
-        "passed: 0 files changed",
-        "passed"
+        "passed: 125 profiles",
+        "passed: 125 personas",
+        "passed: 121 tests",
+        "passed: no diff errors and clean worktree"
       ],
-      "issue": {},
-      "implementation": {
-        "commit_sha": "087271567f2312c718f9695d0a81c51de07f5888",
-        "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32628679913",
-        "production_url": "https://my-web-app-b67f4.web.app/",
-        "release_status": "passed"
+      "issue": {
+        "number": 4916,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4916",
+        "status": "created",
+        "github_state": "OPEN",
+        "dedupe_key": "tiger-feature-review:20260827T033027+0900:home"
       },
+      "implementation": null,
       "findings_without_individual_trace": [
-        "ai-university-cold-entry-latency",
-        "ai-university-monolith-test-cost"
+        "home-feature-request-error-disclosure",
+        "home-implementation-concentration",
+        "home-feature-observability-gap"
       ]
     },
     "feature": {
-      "slug": "ai_university",
-      "title": "AI大学入口ページ",
+      "slug": "home",
+      "title": "Home",
       "kind": "page",
-      "reason": "個別講座の内容ではなく、AI大学の公開入口、初期読み込み、教材発見、継続学習導線だけを機能として評価した。利用分析データはなく、観測利用は中立50点とした。",
-      "cycle_utility": 65.8,
-      "aggregate_utility": 65.3,
-      "division": 2
+      "reason": "The deterministic configured-feature selector chose the public home entrypoint for this single feature-review cycle; no feature-level usage analytics were available, so observed usage remains the neutral score of 50.",
+      "cycle_utility": 68.5,
+      "aggregate_utility": 68.5,
+      "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260827T033027+0900",
+      "started_at": "2026-08-27T03:30:27+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "home",
+        "title": "Home",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 75.8089
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "追加要望の表示から送信完了までを匿名計測し、3失敗経路の分類済みcopyと再試行を依存注入widget testで固定した後、完了率を基準値と比較する。"
+      },
+      "findings": [
+        {
+          "finding_id": "home-feature-request-error-disclosure",
+          "summary": "追加要望の3つの失敗経路が内部例外文字列を利用者へ直接表示する",
+          "severity": "p1",
+          "suggested_action": "FilePicker・AI診断・送信を許可済みの失敗分類へ分け、安定した案内と再試行導線を提供し、3経路の回帰テストを追加する。"
+        },
+        {
+          "finding_id": "home-implementation-concentration",
+          "summary": "ホームの多数の非同期状態と導線が1万行の単一実装へ集中している",
+          "severity": "p2",
+          "suggested_action": "まず追加要望、課金ナッジ、今日の1件を独立widgetと依存注入可能なcontrollerへ段階分割し、失敗状態を専用testで固定する。"
+        },
+        {
+          "finding_id": "home-feature-observability-gap",
+          "summary": "ホーム導線と改善要望の実利用成果を機能単位で判断できない",
+          "severity": "p2",
+          "suggested_action": "既存の同意・分析境界を確認し、今日の1件、課金ナッジ、追加要望の表示から完了までを匿名集計する最小ファネルを設計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4916 追跡中",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: 121 tests",
+          "passed: no diff errors and clean worktree"
+        ],
+        "issue": {
+          "number": 4916,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4916",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260827T033027+0900:home"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "home-feature-request-error-disclosure",
+          "home-implementation-concentration",
+          "home-feature-observability-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260824T220400+0900",
+      "started_at": "2026-08-24T22:04:00+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "landing",
+        "title": "ランディングページ",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 77.328
+      },
+      "status": "production_verified",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "landing-social-proof-failure-recovery",
+          "summary": "社会的証明の取得失敗を正常な初期状態と区別できず再試行できない",
+          "severity": "p1",
+          "suggested_action": "取得失敗をlive-regionで通知し、同じ場所から公開集計を再読み込みできる操作を提供する。"
+        },
+        {
+          "finding_id": "landing-implementation-concentration",
+          "summary": "多数の獲得実験と認証・体験状態が単一LP実装へ集中している",
+          "severity": "p2",
+          "suggested_action": "社会的証明、登録、体験結果を独立widgetへ段階分割し、それぞれの失敗状態を専用testで固定する。"
+        },
+        {
+          "finding_id": "landing-feature-observability-gap",
+          "summary": "本レビュー環境でLP機能別の実利用と社会的証明障害の転換影響を確認できない",
+          "severity": "p2",
+          "suggested_action": "既存の同意・分析境界を確認し、社会的証明の失敗・再試行と後続CTAを匿名集計できる最小計測を設計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "本番対策済み",
+        "detail": "変更・検証・本番反映の証拠が記録されています。",
+        "summary": "",
+        "files": [
+          "lib/pages/landing_page.dart",
+          "test/pages/landing_page_conversion_test.dart"
+        ],
+        "lines_changed": 87,
+        "resolved_finding_ids": [
+          "landing-social-proof-failure-recovery"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 50 tests",
+          "passed: No issues found",
+          "passed: 0 files changed",
+          "passed"
+        ],
+        "issue": {},
+        "implementation": {
+          "commit_sha": "dc307a7b28bfa33403e1673fc12f68a814f897ef",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32731548310",
+          "production_url": "https://my-web-app-b67f4.web.app/",
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "landing-implementation-concentration",
+          "landing-feature-observability-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260824T002432+0900",
+      "started_at": "2026-08-24T00:24:32+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "comparison",
+        "title": "競合比較一覧",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 74.61
+      },
+      "status": "production_verified",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "comparison-load-failure-recovery",
+          "summary": "競合データ取得失敗を正常な0件として表示し、利用者が復旧できない",
+          "severity": "p1",
+          "suggested_action": "取得失敗を独立したlive-regionエラー状態として表示し、同じ画面から再読み込みできる操作を提供する。"
+        },
+        {
+          "finding_id": "comparison-review-source-drift",
+          "summary": "レビュー設定のsourceが実際の一覧routeと一致しない",
+          "severity": "p2",
+          "suggested_action": "保護されたレビュー設定のcomparison.sourceを実routeに合わせ、個別 /vs-* ページは別対象として管理する。"
+        },
+        {
+          "finding_id": "comparison-browse-observability-gap",
+          "summary": "競合一覧入口の利用と個別比較への転換を直接観測できない",
+          "severity": "p2",
+          "suggested_action": "プライバシー境界を確認した上で、一覧表示、フィルター利用、個別比較遷移を集計可能な最小イベントとして設計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "本番対策済み",
+        "detail": "変更・検証・本番反映の証拠が記録されています。",
+        "summary": "",
+        "files": [
+          "lib/pages/competitor_browse_page.dart",
+          "test/pages/competitor_browse_page_test.dart"
+        ],
+        "lines_changed": 176,
+        "resolved_finding_ids": [
+          "comparison-load-failure-recovery"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 1 test",
+          "passed: No issues found",
+          "passed: 0 files changed",
+          "passed"
+        ],
+        "issue": {},
+        "implementation": {
+          "commit_sha": "23d97ae4aae6e8505f68a311ff9f008122565744",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32648607959",
+          "production_url": "https://my-web-app-b67f4.web.app/",
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "comparison-review-source-drift",
+          "comparison-browse-observability-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260823T172138+0900",
       "started_at": "2026-08-23T17:21:38+09:00",
@@ -137,6 +380,7 @@
       "status": "production_verified",
       "review_status": "fixed",
       "validation_status": "passed",
+      "quality": null,
       "findings": [
         {
           "finding_id": "ai-university-loading-semantics",
@@ -191,52 +435,6 @@
       }
     },
     {
-      "cycle_id": "20260823T171300+0900",
-      "started_at": "2026-08-23T17:13:00+09:00",
-      "source_format": "feature_review",
-      "subject": {
-        "kind": "feature",
-        "id": "home",
-        "title": "ホーム",
-        "url": null
-      },
-      "reviewer": {
-        "seat": 9,
-        "name": "平出 心",
-        "selection_score": 71.5964
-      },
-      "status": "blocked",
-      "review_status": "blocked",
-      "validation_status": "failed",
-      "findings": [
-        {
-          "finding_id": "home-route-surface-alignment",
-          "summary": "ホーム設定の公開URLと実装サーフェスが一致していない",
-          "severity": "p1",
-          "suggested_action": "公開LPと認証後HomePageを別サーフェスとして定義し、各々の到達・登録・継続の計測責任を分離する。認証ルーティング変更は別途設計レビューで扱う。"
-        }
-      ],
-      "countermeasure": {
-        "state": "blocked",
-        "label": "対策状況を確認できません",
-        "detail": "レビューまたは検証が完了していません。",
-        "summary": "",
-        "files": [],
-        "lines_changed": 0,
-        "resolved_finding_ids": [],
-        "validation_status": "failed",
-        "validation_messages": [
-          "passed: No issues found",
-          "failed: browser test did not finish loading and exited 1"
-        ],
-        "issue": {},
-        "implementation": null,
-        "findings_without_individual_trace": [
-          "home-route-surface-alignment"
-        ]
-      }
-    },
-    {
       "cycle_id": "20260823T153734+0900",
       "started_at": "2026-08-23T15:38:16.4383006+09:00",
       "source_format": "legacy_combined",
@@ -254,6 +452,7 @@
       "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
+      "quality": null,
       "findings": [
         {
           "finding_id": "comparison-claim-evidence",
@@ -326,6 +525,7 @@
       "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
+      "quality": null,
       "findings": [
         {
           "finding_id": "course-freshness-review",
@@ -397,6 +597,7 @@
       "status": "implemented",
       "review_status": "fixed",
       "validation_status": "passed",
+      "quality": null,
       "findings": [
         {
           "finding_id": "ai_university_catalog_pagination",
@@ -429,48 +630,25 @@
         "implementation": null,
         "findings_without_individual_trace": []
       }
-    },
-    {
-      "cycle_id": "20260823T150231+0900",
-      "started_at": "2026-08-23T15:02:31+09:00",
-      "source_format": "legacy_combined",
-      "subject": {
-        "kind": "feature",
-        "id": "home",
-        "title": "home",
-        "url": null
-      },
-      "reviewer": {
-        "seat": 11,
-        "name": "野口 功司",
-        "selection_score": 77.7529
-      },
-      "status": "blocked",
-      "review_status": "blocked",
-      "validation_status": "not_applicable",
-      "findings": [],
-      "countermeasure": {
-        "state": "blocked",
-        "label": "対策状況を確認できません",
-        "detail": "origin/main への fast-forward 同期不能と、アクティブ講座カタログの取得不能。",
-        "summary": "",
-        "files": [],
-        "lines_changed": 0,
-        "resolved_finding_ids": [],
-        "validation_status": "not_applicable",
-        "validation_messages": [
-          "validate_roster.py: passed",
-          "validate_personas.py: passed",
-          "course catalog export: unavailable",
-          "worktree fast-forward: unavailable"
-        ],
-        "issue": {},
-        "implementation": null,
-        "findings_without_individual_trace": []
-      }
     }
   ],
   "features": [
+    {
+      "slug": "comparison",
+      "kind": "page",
+      "title": "comparison",
+      "path": "/competitors",
+      "source": "lib/pages/comparison_page.dart",
+      "priority": "high",
+      "division": 2,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 68.58,
+      "completed_cycles": 2,
+      "last_cycle_utility": 74.1,
+      "last_reviewed_at": "2026-08-23T15:24:32+00:00",
+      "reason": "機能レビュー2回・効用68.6点で2部"
+    },
     {
       "slug": "ai_university",
       "kind": "page",
@@ -488,6 +666,22 @@
       "reason": "機能レビュー3回・効用65.3点で2部"
     },
     {
+      "slug": "landing",
+      "kind": "page",
+      "title": "landing",
+      "path": "/lp",
+      "source": "lib/widgets/landing_page_content.dart",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 75.9,
+      "completed_cycles": 1,
+      "last_cycle_utility": 75.9,
+      "last_reviewed_at": "2026-08-24T13:04:00+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
       "slug": "home",
       "kind": "page",
       "title": "home",
@@ -495,13 +689,13 @@
       "source": "lib/pages/home_page.dart",
       "priority": "high",
       "division": 3,
-      "provisional": false,
+      "provisional": true,
       "eligible": true,
-      "utility_score": 60.17,
-      "completed_cycles": 2,
-      "last_cycle_utility": 66.75,
-      "last_reviewed_at": "2026-08-23T08:13:00+00:00",
-      "reason": "機能レビュー2回・効用60.2点で3部"
+      "utility_score": 68.5,
+      "completed_cycles": 1,
+      "last_cycle_utility": 68.5,
+      "last_reviewed_at": "2026-08-26T18:30:27+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
       "slug": "admin_analytics",
@@ -600,22 +794,6 @@
       "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
-      "slug": "landing",
-      "kind": "page",
-      "title": "landing",
-      "path": "/lp",
-      "source": "lib/pages/landing_page.dart",
-      "priority": "high",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "last_cycle_utility": null,
-      "last_reviewed_at": null,
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
-    },
-    {
       "slug": "philosophy",
       "kind": "page",
       "title": "philosophy",
@@ -661,22 +839,6 @@
       "completed_cycles": 0,
       "last_cycle_utility": null,
       "last_reviewed_at": null,
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
-    },
-    {
-      "slug": "comparison",
-      "kind": "page",
-      "title": "comparison",
-      "path": "/competitors",
-      "source": "lib/pages/comparison_page.dart",
-      "priority": "high",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": 57.55,
-      "completed_cycles": 1,
-      "last_cycle_utility": 57.55,
-      "last_reviewed_at": "2026-08-23T06:38:16.438300+00:00",
       "reason": "機能レビュー実績が2回未満のため暫定3部"
     }
   ]
