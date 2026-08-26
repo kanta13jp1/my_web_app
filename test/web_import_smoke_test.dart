@@ -29,7 +29,7 @@ void main() {
   ) async {
     const dashboardWidth = 320.0;
     final spec = personalDashboardGridSpec(dashboardWidth);
-    final cardWidth = dashboardWidth - 32;
+    const cardWidth = dashboardWidth - 32;
     final cardHeight = cardWidth / spec.childAspectRatio;
 
     await tester.pumpWidget(
