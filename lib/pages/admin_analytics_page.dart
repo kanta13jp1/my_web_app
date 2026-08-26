@@ -1965,75 +1965,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
-  // ★追加: データリセット処理
-  Future<void> _resetAnalyticsData() async {
-    // 確認ダイアログを表示
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('データのリセット'),
-        content: const Text(
-          '分析データ(app_analytics)をすべて削除します。\nこの操作は元に戻せません。\n本当によろしいですか？',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('キャンセル'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFFB91C1C),
-            ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('リセット実行'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      // app_analytics には id 列がないため、日付キー単位で全件削除する。
-      final rows = await _supabase.from('app_analytics').select('date');
-      final dateKeys = rows
-          .whereType<Map>()
-          .map((row) => row['date']?.toString())
-          .whereType<String>()
-          .where((value) => value.isNotEmpty)
-          .toSet()
-          .toList();
-
-      for (final dateKey in dateKeys) {
-        await _supabase
-            .from('app_analytics')
-            .delete()
-            .eq('date', dateKey)
-            .select();
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('分析データをリセットしました')));
-        // 再読み込み
-        await _loadStats();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('エラーが発生しました: $e'),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     // データ集計
@@ -2127,12 +2058,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         elevation: 0,
         scrolledUnderElevation: 0,
         actions: [
-          // ★追加: リセットボタン（ゴミ箱アイコン）
-          IconButton(
-            icon: const Icon(Icons.delete_forever),
-            onPressed: _resetAnalyticsData,
-            tooltip: 'データをリセット',
-          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {

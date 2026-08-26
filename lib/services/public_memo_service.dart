@@ -120,7 +120,7 @@ class PublicMemoService {
       );
     }
 
-    await _recordShareSignalFallback(
+    await _recordShareSignalRpcFallback(
       signalKey: signalKey,
       dateKey: dateKey,
     );
@@ -512,41 +512,22 @@ class PublicMemoService {
     }
   }
 
-  Future<void> _recordShareSignalFallback({
+  Future<void> _recordShareSignalRpcFallback({
     required String signalKey,
     required String dateKey,
   }) async {
     try {
-      final existing = await _supabase
-          .from('app_analytics')
-          .select(
-            'date, landing_views, conversions, share_count, source_details',
-          )
-          .eq('date', dateKey)
-          .maybeSingle();
-
-      if (existing == null) {
-        await _supabase.from('app_analytics').upsert(<String, dynamic>{
-          'date': dateKey,
-          'landing_views': 0,
-          'conversions': 0,
-          'share_count': 1,
-          'source_details': <String, int>{signalKey: 1},
-        });
-        return;
-      }
-
-      final row = _asMap(existing);
-      final sourceDetails = _normalizeSourceDetails(row['source_details'])
-        ..update(signalKey, (count) => count + 1, ifAbsent: () => 1);
-
-      await _supabase.from('app_analytics').update(<String, dynamic>{
-        'share_count': _toInt(row['share_count']) + 1,
-        'source_details': sourceDetails,
-      }).eq('date', dateKey);
+      await _supabase.rpc(
+        'increment_app_analytics_source_detail',
+        params: <String, dynamic>{
+          'p_source_key': signalKey,
+          'p_event_date': dateKey,
+          'p_share_increment': 1,
+        },
+      );
     } catch (e, stackTrace) {
       AppLogger.error(
-        'Failed to record public memo share signal',
+        'Failed to record public memo share signal through RPC',
         error: e,
         stackTrace: stackTrace,
       );
@@ -561,32 +542,6 @@ class PublicMemoService {
       return Map<String, dynamic>.from(value);
     }
     return <String, dynamic>{};
-  }
-
-  Map<String, int> _normalizeSourceDetails(dynamic raw) {
-    if (raw is! Map) {
-      return <String, int>{};
-    }
-
-    final result = <String, int>{};
-    raw.forEach((key, value) {
-      result[key.toString()] = _toInt(value);
-    });
-    result.removeWhere((_, value) => value <= 0);
-    return result;
-  }
-
-  int _toInt(dynamic value) {
-    if (value is int) {
-      return value;
-    }
-    if (value is num) {
-      return value.toInt();
-    }
-    if (value is String) {
-      return int.tryParse(value) ?? 0;
-    }
-    return 0;
   }
 
   String _formatDate(DateTime date) {
