@@ -1,4 +1,5 @@
 -- Issue #2668: make note comment authorization fail closed.
+-- nocheck: time-relative -- UPDATE targets team_memberships only; no date trigger applies.
 --
 -- The original feature accumulated two generations of permissive policies.
 -- PostgreSQL ORs permissive policies, so adding a stricter policy without

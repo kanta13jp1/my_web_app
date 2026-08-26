@@ -985,13 +985,17 @@ def check_note_comments_security(conn: Any) -> dict[str, Any]:
     conn.commit()
 
     expected_policies = [
-        ("note_comments_delete_author", "DELETE", "{authenticated}"),
-        ("note_comments_insert_authorized", "INSERT", "{authenticated}"),
-        ("note_comments_select_authorized", "SELECT", "{anon,authenticated}"),
-        ("note_comments_update_author", "UPDATE", "{authenticated}"),
+        ("note_comments_delete_author", "DELETE", ("authenticated",)),
+        ("note_comments_insert_authorized", "INSERT", ("authenticated",)),
+        (
+            "note_comments_select_authorized",
+            "SELECT",
+            ("anon", "authenticated"),
+        ),
+        ("note_comments_update_author", "UPDATE", ("authenticated",)),
     ]
     normalized_policies = [
-        (name, command, str(roles)) for name, command, roles in policies
+        (name, command, tuple(roles)) for name, command, roles in policies
     ]
     if normalized_policies != expected_policies:
         raise AssertionError(f"unexpected note_comments policies: {policies}")
