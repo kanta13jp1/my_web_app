@@ -34,7 +34,7 @@ void main() {
     when(mockSupabaseClient.functions).thenReturn(mockFunctionsClient);
 
     when(mockFunctionsClient.invoke(any, body: anyNamed('body'))).thenAnswer(
-      (_) async => FunctionResponse(
+      (_) async => const FunctionResponse(
         status: 200,
         data: <String, dynamic>{'result': 'Improved content'},
       ),
@@ -100,7 +100,7 @@ void main() {
         ),
       ).thenAnswer((_) async {
         await Future<void>.delayed(const Duration(milliseconds: 100));
-        return FunctionResponse(
+        return const FunctionResponse(
           status: 200,
           data: <String, dynamic>{'result': 'Improved content'},
         );
@@ -138,7 +138,7 @@ void main() {
     when(mockFunctionsClient.invoke(any, body: anyNamed('body'))).thenAnswer(
       (_) async {
         await Future<void>.delayed(const Duration(milliseconds: 10));
-        return FunctionResponse(status: 500, data: 'Server Error');
+        return const FunctionResponse(status: 500, data: 'Server Error');
       },
     );
 
