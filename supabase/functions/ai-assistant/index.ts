@@ -2,6 +2,8 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { AI_CHARACTER_PREAMBLE } from "../_shared/ai_character_preamble.ts";
+import { AiAssistantChatError, handleAiAssistantChat } from "./chat.ts";
+import { createSupabaseAiAssistantChatStore } from "./chat_supabase.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1124,77 +1126,34 @@ ${entryData}`;
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       );
 
-      let conversationId: string = requestData.conversationId ?? "";
-
-      // 会話セッションが無ければ新規作成
-      if (!conversationId) {
-        const { data: conv, error: convErr } = await serviceClient
-          .from("user_conversations")
-          .insert({
-            user_id: user.id,
-            title: userMessage.slice(0, 50),
-            context: requestData.conversationContext ?? "general_chat",
-          })
-          .select("id")
-          .single();
-        if (convErr) {
-          throw new Error(`Failed to create conversation: ${convErr.message}`);
-        }
-        conversationId = conv.id as string;
-      }
-
-      // 直近10件の会話履歴を取得 (長期記憶注入)
-      const { data: history } = await serviceClient
-        .from("conversation_messages")
-        .select("role, content")
-        .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      const historyMessages = (history ?? []).reverse();
-      const historyText = historyMessages.length > 0
-        ? historyMessages.map((m: { role: string; content: string }) =>
-          `[${m.role}]: ${m.content}`
-        ).join("\n")
-        : "";
-
-      const prompt = historyText
-        ? `以下はこれまでの会話履歴です:\n${historyText}\n\n---\n[user]: ${userMessage}`
-        : userMessage;
-
-      // ユーザーメッセージを保存
-      await serviceClient.from("conversation_messages").insert({
-        conversation_id: conversationId,
-        role: "user",
-        content: userMessage,
-        voice_used: requestData.voiceUsed ?? false,
-      });
-
-      // AI応答生成
-      const reply = await runPromptWithStrategy(prompt);
-
-      // アシスタントメッセージを保存
-      const { data: savedMsg } = await serviceClient
-        .from("conversation_messages")
-        .insert({
-          conversation_id: conversationId,
-          role: "assistant",
-          content: reply,
+      try {
+        const result = await handleAiAssistantChat({
+          store: createSupabaseAiAssistantChatStore(serviceClient),
+          userId: user.id,
+          message: userMessage,
+          conversationId: requestData.conversationId,
+          conversationContext: requestData.conversationContext,
+          voiceUsed: requestData.voiceUsed,
           model: targetModel ?? DEFAULT_SYNTHESIS_MODEL,
-          voice_used: false,
-        })
-        .select("id")
-        .single();
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          reply,
-          conversationId,
-          messageId: savedMsg?.id ?? null,
-        }),
-        { headers: corsHeaders },
-      );
+          generateReply: runPromptWithStrategy,
+        });
+        return new Response(
+          JSON.stringify({ success: true, ...result }),
+          { headers: corsHeaders },
+        );
+      } catch (error) {
+        if (error instanceof AiAssistantChatError) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: error.message,
+              code: error.code,
+            }),
+            { headers: corsHeaders, status: error.status },
+          );
+        }
+        throw error;
+      }
     }
 
     return new Response(
