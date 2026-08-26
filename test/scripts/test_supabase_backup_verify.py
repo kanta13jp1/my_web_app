@@ -113,6 +113,19 @@ COPY "public"."notes" ("id", "body") FROM stdin;
             payload = build_manifest(root, "ref")
             self.assertIsInstance(json.dumps(payload), str)
 
+    def test_storage_compatibility_runs_as_local_storage_owner(self) -> None:
+        workflow = (
+            ROOT / ".github" / "workflows" / "supabase-backup-restore.yml"
+        ).read_text(encoding="utf-8")
+        set_role = "--command 'SET ROLE supabase_storage_admin'"
+        compatibility = "--file /tmp/storage-compat.sql"
+        reset_role = "--command 'RESET ROLE'"
+        roles_restore = "--file /tmp/roles.sql"
+
+        self.assertLess(workflow.index(set_role), workflow.index(compatibility))
+        self.assertLess(workflow.index(compatibility), workflow.index(reset_role))
+        self.assertLess(workflow.index(reset_role), workflow.index(roles_restore))
+
 
 if __name__ == "__main__":
     unittest.main()
