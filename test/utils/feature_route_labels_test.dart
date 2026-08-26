@@ -13,6 +13,7 @@ void main() {
         featureLabelForRoute('/proactive-form-check'),
         '入力チェックアシスタント',
       );
+      expect(featureLabelForRoute('/custom-task-list'), 'AI カスタムタスクリスト');
     });
 
     test('未知ルートは slug を Title Case に整形してフォールバックする', () {
