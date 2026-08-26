@@ -14,6 +14,7 @@ import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_management_ai_analysis_history.dart';
 import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/models/asset_obsidian_vault_import.dart';
 import 'package:my_web_app/models/debt_repayment_plan.dart';
 import 'package:my_web_app/models/kgi_csf_kpi.dart';
 import 'package:my_web_app/models/user_profile.dart';
@@ -111,6 +112,7 @@ import 'package:my_web_app/widgets/asset_alert_center_card.dart';
 import 'package:my_web_app/widgets/asset_cashflow_statement_card.dart';
 import 'package:my_web_app/widgets/asset_dashboard_grid.dart';
 import 'package:my_web_app/widgets/asset_net_worth_panel_card.dart';
+import 'package:my_web_app/widgets/asset_obsidian_vault_import_dialog.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
 import 'package:my_web_app/widgets/asset_subscription_statement_scan_dialog.dart';
 import 'package:my_web_app/widgets/asset_subscription_login_dialog.dart';
@@ -6944,6 +6946,90 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         const SnackBar(content: Text('一括記録に失敗しました。時間をおいて再試行してください')),
       );
     }
+  }
+
+  List<AssetObsidianExistingBalance> _obsidianImportExistingBalances() {
+    final balances = <AssetObsidianExistingBalance>[];
+    for (final type in _assetTypes) {
+      final dateKey = _lastUpdatedDates[type];
+      final date = dateKey == null ? null : DateTime.tryParse(dateKey);
+      final amount = dateKey == null ? null : _assetData[dateKey]?[type];
+      if (date == null || amount == null) continue;
+      balances.add(
+        AssetObsidianExistingBalance(
+          accountName: type,
+          observedDate: date,
+          amount: amount,
+        ),
+      );
+    }
+    return balances;
+  }
+
+  Future<void> _showObsidianVaultImportDialog() async {
+    final importedCount = await showDialog<int>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AssetObsidianVaultImportDialog(
+        existingBalances: _obsidianImportExistingBalances(),
+        onApply: _applyObsidianVaultBalances,
+      ),
+    );
+    if (!mounted || importedCount == null || importedCount == 0) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✅ Obsidian保管庫から$importedCount件の残高を反映しました'),
+        backgroundColor: const Color(0xFF047857),
+      ),
+    );
+  }
+
+  /// 確認済みのObsidian残高だけを本日のスナップショットとして一括保存する。
+  ///
+  /// 保管庫の記録は既存履歴の再分類を表す場合があるため、通常の手入力保存で行う
+  /// 残高減少→使途不明金の自動生成は実行しない。Markdown本文やローカルパスも
+  /// Supabaseへ送信しない。
+  Future<void> _applyObsidianVaultBalances(
+    List<AssetObsidianImportCandidate> candidates,
+  ) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('残高の反映にはログインが必要です。');
+    }
+    if (candidates.isEmpty) return;
+
+    final nowIso = AssetBalanceTimestampService.encodeForDatabase(
+      DateTime.now(),
+    );
+    await _supabase.from('cfo_assets').insert([
+      for (final candidate in candidates)
+        {
+          'user_id': userId,
+          'title': candidate.accountName,
+          'amount': candidate.amount,
+          'created_at': nowIso,
+        },
+    ]);
+
+    if (!mounted) return;
+    final today = _todayDateKey();
+    setState(() {
+      final todayMap = _assetData.putIfAbsent(
+        today,
+        () => <String, double>{},
+      );
+      for (final candidate in candidates) {
+        if (!_assetTypes.contains(candidate.accountName)) {
+          _assetTypes.add(candidate.accountName);
+        }
+        todayMap[candidate.accountName] = candidate.amount;
+      }
+      _initControllers();
+      _updateLastUpdatedDates();
+      _sortAssetTypes();
+      _updateChartData();
+    });
+    await _fetchTodayClosing();
   }
 
   Future<void> _saveSingleAssetData(String type) async {
@@ -29494,6 +29580,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   onPressed: _showAddAssetDialog,
                   icon: const Icon(Icons.add),
                   label: const Text('項目を追加'),
+                ),
+                TextButton.icon(
+                  onPressed: _showObsidianVaultImportDialog,
+                  icon: const Icon(
+                    Icons.folder_open,
+                    color: Color(0xFF7C3AED),
+                  ),
+                  label: const Text('Obsidian保管庫から取込'),
                 ),
                 TextButton.icon(
                   onPressed: _isFetchingSmbc ? null : _fetchSmbcDataFromSheet,
