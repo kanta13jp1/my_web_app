@@ -146,6 +146,17 @@ void main() {
     }
   });
 
+  test('retired analytics route resolves to canonical non-admin home', () {
+    final routeCase = _routeCases().singleWhere(
+      (candidate) => candidate.labels.contains('/app-analytics-dashboard'),
+    );
+
+    expect(routeCase.body, contains("RouteSettings(name: '/')"));
+    expect(routeCase.body, contains('_AuthenticatedHomePage'));
+    expect(routeCase.body, contains('LandingPage'));
+    expect(routeCase.body, isNot(contains('AdminAnalyticsPage')));
+  });
+
   // 直叩き Navigator.push は onGenerateRoute を通らないので wrapper の対象外。
   // これらは各サイトで settings を持っていないと URL が変わらない。
   test('every direct Navigator.push of a page route passes settings', () {
@@ -295,6 +306,8 @@ void main() {
 /// 引数が無いと画面を復元できないため、意図的に別 route へ落とすもの。
 /// URL は必ず変わるが、実際に表示する画面に合わせた URL を名乗る。
 const Map<String?, String> _intentionalFallbacks = <String?, String>{
+  // Retired analytics UI must not expose the unguarded admin analytics page.
+  '/app-analytics-dashboard': '/',
   // 出走表は race マップ全体が必要で URL からは復元できない。
   '/horse-racing/race': '/horse-racing/predictions',
   // `case` ラベルが定数なので識別子のまま照合する (= '/compatibility-result')。

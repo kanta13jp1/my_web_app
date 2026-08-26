@@ -318,7 +318,6 @@ import 'package:my_web_app/pages/habit_tracker_page.dart';
 import 'package:my_web_app/pages/agent_department_manager_page.dart';
 import 'package:my_web_app/pages/agent_performance_monitor_page.dart';
 import 'package:my_web_app/pages/ai_share_button_settings_page.dart';
-import 'package:my_web_app/pages/app_analytics_dashboard_page.dart';
 import 'package:my_web_app/pages/cfo_cost_ledger_page.dart';
 import 'package:my_web_app/pages/compatibility_result_page.dart';
 import 'package:my_web_app/pages/leave_management_page.dart';
@@ -1790,7 +1789,14 @@ Route<dynamic> generateAppRoute(
       );
     case '/app-analytics-dashboard':
       return MaterialPageRoute(
-        builder: (_) => const AppAnalyticsDashboardPage(),
+        settings: const RouteSettings(name: '/'),
+        builder: (_) => supabase.auth.currentSession != null
+            ? _AuthenticatedHomePage(
+                signupCompletionService: signupCompletionService,
+              )
+            : LandingPage(
+                signupCompletionService: signupCompletionService,
+              ),
       );
     case '/deployment-monitoring':
       return MaterialPageRoute(
