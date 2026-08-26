@@ -6,18 +6,6 @@ on:
       - main
       - staging
       - develop
-    paths-ignore:
-      - 'docs/**'
-      - 'memory/**'
-      - '.claude/**'
-      - '.codex/**'
-      - '.agents/**'
-      - '*.md'
-      - '**/*.md'
-      - '.github/*.md'
-      - '.github/**/*.md'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/PULL_REQUEST_TEMPLATE.md'
   push:
     branches:
       - staging   # main は deploy-prod.yml が workflow_call で CI を呼ぶため除外 (二重起動防止)
@@ -143,8 +131,16 @@ jobs:
 
       - name: Analyze code
         if: steps.changes.outputs.flutter == 'true'
-        run: flutter analyze
+        run: python scripts/quality_gate.py --analyze-only --analyzer-artifact-dir .ci-logs/analyzer
         # プロジェクトルール「flutter analyze 常に0エラー」をCIで強制 (continue-on-error 削除)
+
+      - name: Upload analyzer evidence
+        if: always() && steps.changes.outputs.flutter == 'true' && hashFiles('.ci-logs/analyzer/result.json') != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: analyzer-evidence
+          path: .ci-logs/analyzer
+          if-no-files-found: ignore
 
       - name: Setup Deno
         if: steps.changes.outputs.edge == 'true'
@@ -313,6 +309,10 @@ jobs:
         run: python scripts/check_github_actions_powershell_splatting.py
         continue-on-error: false
 
+      - name: Check GitHub Actions script injection safety
+        run: python scripts/check_github_actions_script_injection.py
+        continue-on-error: false
+
       - name: Test tools-hub MCP smoke response compatibility
         shell: pwsh
         run: ./test/scripts/tools_hub_mcp_smoke_response_test.ps1
@@ -394,7 +394,7 @@ jobs:
           FLUTTER_WEB_TEST="${{ steps.flutter_web_test.outcome }}"
           DENO_TEST="${{ steps.deno_test.outcome }}"
           {
-            echo "## CI Results — \`${{ github.ref_name }}\` @ \`${GITHUB_SHA:0:7}\`"
+            echo "## CI Results — \`${GITHUB_REF_NAME}\` @ \`${GITHUB_SHA:0:7}\`"
             echo ""
             echo "| Scope | Required | Outcome |"
             echo "| --- | --- | --- |"
@@ -474,18 +474,38 @@ jobs:
     name: PR Comment
     runs-on: ubuntu-latest
     needs: [lint-and-test, security-check]
-    if: github.event_name == 'pull_request' && success()
+    if: github.event_name == 'pull_request' && always()
     permissions:
       pull-requests: write
 
     steps:
+      - name: Download analyzer evidence
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: analyzer-evidence
+          path: .ci-logs/analyzer
+
       - name: Comment on PR
+        continue-on-error: true
         uses: actions/github-script@v9
         with:
+          retries: 3
           script: |
-            github.rest.issues.createComment({
+            const fs = require('fs');
+            const passed =
+              '${{ needs.lint-and-test.result }}' === 'success' &&
+              '${{ needs.security-check.result }}' === 'success';
+            let body = passed
+              ? '✅ 変更パスに対応するCIチェックが通過しました。不要なFlutter・Web・Deno処理はスキップされています。'
+              : '❌ 変更パスに対応するCIチェックが完了していません。失敗またはキャンセルされたジョブを確認してください。';
+            const analyzerComment = '.ci-logs/analyzer/comment.md';
+            if (fs.existsSync(analyzerComment)) {
+              body += `\n\n${fs.readFileSync(analyzerComment, 'utf8').trim()}`;
+            }
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ 変更パスに対応するCIチェックが通過しました。不要なFlutter・Web・Deno処理はスキップされています。'
-            })
+              body
+            });

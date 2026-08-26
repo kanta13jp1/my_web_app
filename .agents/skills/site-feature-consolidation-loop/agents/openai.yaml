@@ -1,0 +1,4 @@
+interface:
+  display_name: "Site Feature Consolidation Loop"
+  short_description: "類似するサイト機能を安全に統合し、本番確認まで反復して完了判定"
+  default_prompt: "Use $site-feature-consolidation-loop to consolidate overlapping site features in bounded batches until production-backed completion."

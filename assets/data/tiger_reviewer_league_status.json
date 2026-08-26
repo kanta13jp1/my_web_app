@@ -1,0 +1,3321 @@
+{
+  "schema_version": 3,
+  "generated_at": "2026-08-25T15:09:47.983564+00:00",
+  "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
+  "lane": "reviewer_league",
+  "publication_state": "latest_assignment",
+  "automation": {
+    "id": "not_configured",
+    "name": "虎レビュアー成績リーグ",
+    "status": "NOT_CONFIGURED",
+    "schedule": "1時間ごと"
+  },
+  "pool": {
+    "total": 125,
+    "eligible": 125,
+    "provisional": 121,
+    "division_1": 4,
+    "division_2": 0,
+    "division_3": 121,
+    "division_4": 0,
+    "division_5": 0,
+    "eliminated": 0,
+    "minimum_eligible_pool": 12
+  },
+  "policy": {
+    "minimum_cycles_for_placement": 2,
+    "division_thresholds": {
+      "1": 80.0,
+      "2": 65.0,
+      "3": 50.0,
+      "4": 35.0,
+      "5": 0.0
+    }
+  },
+  "latest_assignment": {
+    "cycle_id": "20260825T133307+0900",
+    "started_at": "2026-08-25T13:33:07+09:00",
+    "source_format": "site_review",
+    "surface": {
+      "slug": "whole_site",
+      "url": "https://my-web-app-b67f4.web.app/"
+    },
+    "reviewer": {
+      "seat": 1,
+      "name": "ドラゴン細井",
+      "selection_score": 77.3535,
+      "division": 1,
+      "cycle_utility": 85.9,
+      "aggregate_utility": 87.18
+    },
+    "status": "review_only",
+    "validation": "passed",
+    "finding_count": 5,
+    "top_findings": [
+      {
+        "summary": "獲得元別の継続利用と有料転換を結ぶ一次証拠がない",
+        "severity": "p1",
+        "business_dimensions": [
+          "market_demand",
+          "revenue_model",
+          "go_to_market"
+        ]
+      },
+      {
+        "summary": "プラン別のAI変動費と粗利・回収期間を判断できない",
+        "severity": "p1",
+        "business_dimensions": [
+          "unit_economics",
+          "revenue_model",
+          "scalability"
+        ]
+      },
+      {
+        "summary": "billing取得失敗時に内部例外文字列を利用者へ表示する",
+        "severity": "p1",
+        "business_dimensions": [
+          "trust_risk",
+          "revenue_model",
+          "customer_pain"
+        ]
+      }
+    ],
+    "quality": {
+      "framework": "TCE+CLEAR",
+      "overall_score": 100.0,
+      "scores": {
+        "complete": 100,
+        "logical": 100,
+        "evidence": 100,
+        "audience": 100,
+        "relevant": 100
+      },
+      "gate_passed": true,
+      "baseline_cycle_id": "20260825T124533+0900",
+      "focus_dimension": "complete",
+      "overall_delta": 0.0,
+      "next_focus_dimension": "complete",
+      "next_cycle_experiment": "獲得元別にD7/D30継続率と有料転換率を同じ匿名コホートで1回集計し、最上位チャネルと全体平均との差を記録する。"
+    },
+    "countermeasure": {
+      "state": "issue_tracking",
+      "label": "未対策・Issue #4811 追跡中",
+      "detail": "提案のみで、対策実施の記録はありません。",
+      "summary": "",
+      "files": [],
+      "lines_changed": 0,
+      "resolved_finding_ids": [],
+      "validation_status": "passed",
+      "validation_messages": [
+        "passed: fast-forwarded to origin/main dec2b5b01",
+        "passed: 3 fixed routes, HTTP 200 and SEO markers",
+        "passed: 125 profiles",
+        "passed: 125 personas"
+      ],
+      "issue": {
+        "number": 4811,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4811",
+        "status": "created",
+        "github_state": "OPEN",
+        "dedupe_key": "tiger-site-review:20260825T133307+0900:whole_site"
+      },
+      "implementation": null,
+      "findings_without_individual_trace": [
+        "site-acquisition-retention-paid-proof-gap",
+        "site-plan-unit-economics-gap",
+        "site-billing-error-disclosure-boundary",
+        "site-central-page-concentration",
+        "site-differentiation-outcome-proof-gap"
+      ]
+    }
+  },
+  "history": [
+    {
+      "cycle_id": "20260825T133307+0900",
+      "started_at": "2026-08-25T13:33:07+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 1,
+        "name": "ドラゴン細井",
+        "selection_score": 77.3535
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260825T124533+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "獲得元別にD7/D30継続率と有料転換率を同じ匿名コホートで1回集計し、最上位チャネルと全体平均との差を記録する。"
+      },
+      "findings": [
+        {
+          "finding_id": "site-acquisition-retention-paid-proof-gap",
+          "summary": "獲得元別の継続利用と有料転換を結ぶ一次証拠がない",
+          "severity": "p1",
+          "suggested_action": "既存の同意・分析境界を保ったまま、獲得元別のD7/D30継続と有料転換を結ぶ最小コホート集計を設計する。"
+        },
+        {
+          "finding_id": "site-plan-unit-economics-gap",
+          "summary": "プラン別のAI変動費と粗利・回収期間を判断できない",
+          "severity": "p1",
+          "suggested_action": "認証・決済・価格を変更せず、プラン別のAI変動費、粗利率、CAC、回収期間、churn、LTVを意思決定用に集計する。"
+        },
+        {
+          "finding_id": "site-billing-error-disclosure-boundary",
+          "summary": "billing取得失敗時に内部例外文字列を利用者へ表示する",
+          "severity": "p1",
+          "suggested_action": "決済境界の所有者が許可済みエラー分類だけを表示し、再試行導線とUnauthorized・FunctionException回帰テストを追加する。"
+        },
+        {
+          "finding_id": "site-central-page-concentration",
+          "summary": "主要ページへの実装集中が改善速度と回帰範囲を拡大している",
+          "severity": "p2",
+          "suggested_action": "計測で継続価値を確認した主要導線から、状態とwidgetを段階分割し専用回帰テストへ移す。"
+        },
+        {
+          "finding_id": "site-differentiation-outcome-proof-gap",
+          "summary": "統合型の差別化を比較継続成果で証明できていない",
+          "severity": "p2",
+          "suggested_action": "代表ユースケースを固定し、専門ツール併用群と比較した30日継続・完了成果・有料意向を測る。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4811 追跡中",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded to origin/main dec2b5b01",
+          "passed: 3 fixed routes, HTTP 200 and SEO markers",
+          "passed: 125 profiles",
+          "passed: 125 personas"
+        ],
+        "issue": {
+          "number": 4811,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4811",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260825T133307+0900:whole_site"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-acquisition-retention-paid-proof-gap",
+          "site-plan-unit-economics-gap",
+          "site-billing-error-disclosure-boundary",
+          "site-central-page-concentration",
+          "site-differentiation-outcome-proof-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260825T124533+0900",
+      "started_at": "2026-08-25T12:45:33+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 78.1432
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260825T090429+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "獲得元別にD7/D30継続率と有料転換率を同じ匿名コホートで1回集計し、最上位チャネルと全体平均との差を記録する。"
+      },
+      "findings": [
+        {
+          "finding_id": "site-acquisition-retention-paid-proof-gap",
+          "summary": "獲得元別の継続利用と有料転換を結ぶ一次証拠がない",
+          "severity": "p1",
+          "suggested_action": "既存の同意・分析境界を保ったまま、獲得元別のD7/D30継続と有料転換を結ぶ最小コホート集計を設計する。"
+        },
+        {
+          "finding_id": "site-plan-unit-economics-gap",
+          "summary": "プラン別のAI変動費と粗利・回収期間を判断できない",
+          "severity": "p1",
+          "suggested_action": "認証・決済・価格を変更せず、プラン別のAI変動費、粗利率、CAC、回収期間、churn、LTVを意思決定用に集計する。"
+        },
+        {
+          "finding_id": "site-billing-error-disclosure-boundary",
+          "summary": "billing取得失敗時に内部例外文字列を利用者へ表示する",
+          "severity": "p1",
+          "suggested_action": "決済境界の所有者が許可済みエラー分類だけを表示し、再試行導線とUnauthorized・FunctionException回帰テストを追加する。"
+        },
+        {
+          "finding_id": "site-central-page-concentration",
+          "summary": "主要ページへの実装集中が改善速度と回帰範囲を拡大している",
+          "severity": "p2",
+          "suggested_action": "計測で継続価値を確認した主要導線から、状態とwidgetを段階分割し専用回帰テストへ移す。"
+        },
+        {
+          "finding_id": "site-differentiation-outcome-proof-gap",
+          "summary": "統合型の差別化を比較継続成果で証明できていない",
+          "severity": "p2",
+          "suggested_action": "代表ユースケースを固定し、専門ツール併用群と比較した30日継続・完了成果・有料意向を測る。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4810 追跡中",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded to origin/main 50cce811d",
+          "passed: 3 fixed routes, HTTP 200 and SEO markers",
+          "passed: 125 profiles and 125 personas",
+          "passed: 75 tests",
+          "passed: 10 items; no issues"
+        ],
+        "issue": {
+          "number": 4810,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4810",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260825T124533+0900:whole_site"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-acquisition-retention-paid-proof-gap",
+          "site-plan-unit-economics-gap",
+          "site-billing-error-disclosure-boundary",
+          "site-central-page-concentration",
+          "site-differentiation-outcome-proof-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260825T090429+0900",
+      "started_at": "2026-08-25T09:04:29+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 77.6647
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260825T083902+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "獲得元別にD7/D30継続率と有料転換率を同じ匿名コホートで1回集計し、最上位チャネルと全体平均との差を記録する。"
+      },
+      "findings": [
+        {
+          "finding_id": "site-acquisition-retention-paid-proof-gap",
+          "summary": "獲得元別の継続利用と有料転換を結ぶ一次証拠がない",
+          "severity": "p1",
+          "suggested_action": "既存の同意・分析境界を保ったまま、獲得元別のD7/D30継続と有料転換を結ぶ最小コホート集計を設計する。"
+        },
+        {
+          "finding_id": "site-plan-unit-economics-gap",
+          "summary": "プラン別のAI変動費と粗利・回収期間を判断できない",
+          "severity": "p1",
+          "suggested_action": "認証・決済・価格を変更せず、プラン別のAI変動費、粗利率、CAC、回収期間、churn、LTVを意思決定用に集計する。"
+        },
+        {
+          "finding_id": "site-billing-error-disclosure-boundary",
+          "summary": "billing取得失敗時に内部例外文字列を利用者へ表示する",
+          "severity": "p1",
+          "suggested_action": "決済境界の所有者が許可済みエラー分類だけを表示し、再試行導線とUnauthorized・FunctionException回帰テストを追加する。"
+        },
+        {
+          "finding_id": "site-central-page-concentration",
+          "summary": "主要ページへの実装集中が改善速度と回帰範囲を拡大している",
+          "severity": "p2",
+          "suggested_action": "計測で継続価値を確認した主要導線から、状態とwidgetを段階分割し専用回帰テストへ移す。"
+        },
+        {
+          "finding_id": "site-differentiation-outcome-proof-gap",
+          "summary": "統合型の差別化を比較継続成果で証明できていない",
+          "severity": "p2",
+          "suggested_action": "代表ユースケースを固定し、専門ツール併用群と比較した30日継続・完了成果・有料意向を測る。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4803 追跡中",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded to origin/main 050798a2b",
+          "passed: 3 fixed routes, HTTP 200 and SEO markers",
+          "passed: 125 profiles",
+          "passed: 125 personas"
+        ],
+        "issue": {
+          "number": 4803,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4803",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260825T090429+0900:whole_site"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-acquisition-retention-paid-proof-gap",
+          "site-plan-unit-economics-gap",
+          "site-billing-error-disclosure-boundary",
+          "site-central-page-concentration",
+          "site-differentiation-outcome-proof-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260825T083902+0900",
+      "started_at": "2026-08-25T08:39:02+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 80.6207
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "獲得元別にD7/D30継続率と有料転換率を同じ匿名コホートで1回集計し、最上位チャネルと全体平均との差を記録する。"
+      },
+      "findings": [
+        {
+          "finding_id": "site-acquisition-retention-paid-proof-gap",
+          "summary": "獲得元別の継続利用と有料転換を結ぶ一次証拠がない",
+          "severity": "p1",
+          "suggested_action": "既存の同意・分析境界を保ったまま、獲得元別のD7/D30継続と有料転換を結ぶ最小コホート集計を設計する。"
+        },
+        {
+          "finding_id": "site-plan-unit-economics-gap",
+          "summary": "プラン別のAI変動費と粗利・回収期間を判断できない",
+          "severity": "p1",
+          "suggested_action": "認証・決済・価格を変更せず、プラン別のAI変動費、粗利率、CAC、回収期間、churn、LTVを意思決定用に集計する。"
+        },
+        {
+          "finding_id": "site-billing-error-disclosure-boundary",
+          "summary": "billing取得失敗時に内部例外文字列を利用者へ表示する",
+          "severity": "p1",
+          "suggested_action": "決済境界の所有者が許可済みエラー分類だけを表示し、再試行導線とUnauthorized・FunctionException回帰テストを追加する。"
+        },
+        {
+          "finding_id": "site-central-page-concentration",
+          "summary": "主要ページへの実装集中が改善速度と回帰範囲を拡大している",
+          "severity": "p2",
+          "suggested_action": "計測で継続価値を確認した主要導線から、状態とwidgetを段階分割し専用回帰テストへ移す。"
+        },
+        {
+          "finding_id": "site-differentiation-outcome-proof-gap",
+          "summary": "統合型の差別化を比較継続成果で証明できていない",
+          "severity": "p2",
+          "suggested_action": "代表ユースケースを固定し、専門ツール併用群と比較した30日継続・完了成果・有料意向を測る。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4800 追跡中",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: READY at origin/main 0c65ff501",
+          "passed: 3 fixed routes, HTTP 200 and SEO markers",
+          "passed: 125 profiles",
+          "passed: 125 personas"
+        ],
+        "issue": {
+          "number": 4800,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4800",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260825T083902+0900:whole_site"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-acquisition-retention-paid-proof-gap",
+          "site-plan-unit-economics-gap",
+          "site-billing-error-disclosure-boundary",
+          "site-central-page-concentration",
+          "site-differentiation-outcome-proof-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260824T220400+0900",
+      "started_at": "2026-08-24T22:04:00+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "landing",
+        "title": "ランディングページ",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 77.328
+      },
+      "status": "production_verified",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "landing-social-proof-failure-recovery",
+          "summary": "社会的証明の取得失敗を正常な初期状態と区別できず再試行できない",
+          "severity": "p1",
+          "suggested_action": "取得失敗をlive-regionで通知し、同じ場所から公開集計を再読み込みできる操作を提供する。"
+        },
+        {
+          "finding_id": "landing-implementation-concentration",
+          "summary": "多数の獲得実験と認証・体験状態が単一LP実装へ集中している",
+          "severity": "p2",
+          "suggested_action": "社会的証明、登録、体験結果を独立widgetへ段階分割し、それぞれの失敗状態を専用testで固定する。"
+        },
+        {
+          "finding_id": "landing-feature-observability-gap",
+          "summary": "本レビュー環境でLP機能別の実利用と社会的証明障害の転換影響を確認できない",
+          "severity": "p2",
+          "suggested_action": "既存の同意・分析境界を確認し、社会的証明の失敗・再試行と後続CTAを匿名集計できる最小計測を設計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "本番対策済み",
+        "detail": "変更・検証・本番反映の証拠が記録されています。",
+        "summary": "",
+        "files": [
+          "lib/pages/landing_page.dart",
+          "test/pages/landing_page_conversion_test.dart"
+        ],
+        "lines_changed": 87,
+        "resolved_finding_ids": [
+          "landing-social-proof-failure-recovery"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 50 tests",
+          "passed: No issues found",
+          "passed: 0 files changed",
+          "passed"
+        ],
+        "issue": {},
+        "implementation": {
+          "commit_sha": "dc307a7b28bfa33403e1673fc12f68a814f897ef",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32731548310",
+          "production_url": "https://my-web-app-b67f4.web.app/",
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "landing-implementation-concentration",
+          "landing-feature-observability-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260824T011146+0900",
+      "started_at": "2026-08-24T01:11:46+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "647dc452-f75d-4dd9-8292-332bada2e2f9",
+        "title": "LLM理論：大規模言語モデルの仕組み — Transformer・Attention・創発的現象 完全解説 (10/10)",
+        "url": "https://en.wikipedia.org/wiki/Large_language_model"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 75.0278
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "course-llm-capstone-learning-path",
+          "summary": "10/10完結編の名称に対し、Transformer・Attention・創発的現象を結ぶ講座固有の到達目標、読解順序、演習、到達確認が公開面にない。",
+          "severity": "p1",
+          "suggested_action": "冒頭に3つの到達目標と対象節の読解順序を示し、Attentionの情報流と創発性の測定論争を説明する短い概念マップ課題・採点基準を追加する。"
+        },
+        {
+          "finding_id": "course-llm-source-revision-boundary",
+          "summary": "可変な二次資料だけを講座出典にしているが、revision固定、確認日、変化しやすい2026年の主張を一次資料で再確認する境界がない。",
+          "severity": "p1",
+          "suggested_action": "講座に確認日とMediaWiki revision IDを保存し、Transformer原論文、創発性と測定依存性の主要論文など、採点対象の核心主張ごとに一次資料を固定する。"
+        },
+        {
+          "finding_id": "course-llm-learner-outcome-proof",
+          "summary": "講座完了後に実在学習者がTransformer・Attention・創発的現象を区別し統合できたことを示す成果証拠がない。",
+          "severity": "p2",
+          "suggested_action": "匿名の概念マップ課題、反論を含む短答問題、完了後自己評価を設け、初回正答率と再学習率を継続集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4763 追跡中",
+        "detail": "指摘はいずれも公開講座データまたは外部教材の内容・評価設計に関わり、共有契約が許可する低リスクなリポジトリ内自動修正境界を満たさない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed (125 profiles)",
+          "validate_personas.py: passed (125 profiles; 99 unique weight profiles)",
+          "public Data API catalog export: passed (active=1073, reviewable=528)",
+          "select_course.py: passed (division-5 excluded; deterministic winner preserved)",
+          "target validation: passed (one active row; HTTPS source; HTTP 200; revision 1370470611)",
+          "select_reviewer.py: executed exactly once (125 profiles; seat 12; deterministic output saved)",
+          "course_review_issue.py --execute: passed (Issue #4763; cycle dedupe evidence recorded)",
+          "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; three proposals)",
+          "build_lane_status.py --lane course_review: passed (course-only history=7; latest cycle 20260824T011146+0900; no missing Issue evidence)",
+          "test_course_review_continuity.py: passed (4 tests)",
+          "test_reviewer_selection.py: passed (14 tests)",
+          "direct Dart TigerReviewLaneStatus contract check: passed (history=7; courses=5; all review_only entries have Issue evidence)",
+          "git diff --check: passed",
+          "deploy_lane_to_production.py --lane course_review --execute: passed (workflow 32651352280; public JSON equality verified)"
+        ],
+        "issue": {
+          "number": 4763,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4763",
+          "status": "created",
+          "github_state": null,
+          "dedupe_key": "tiger-course-review:20260824T011146+0900:647dc452-f75d-4dd9-8292-332bada2e2f9"
+        },
+        "implementation": {
+          "commit_sha": "7b30251dc8cbd3398e7ad044f536670ba6c640ad",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32651352280",
+          "production_url": "https://my-web-app-b67f4.web.app/assets/assets/data/tiger_course_review_status.json",
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "course-llm-capstone-learning-path",
+          "course-llm-source-revision-boundary",
+          "course-llm-learner-outcome-proof"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260824T002432+0900",
+      "started_at": "2026-08-24T00:24:32+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "comparison",
+        "title": "競合比較一覧",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 74.61
+      },
+      "status": "production_verified",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "comparison-load-failure-recovery",
+          "summary": "競合データ取得失敗を正常な0件として表示し、利用者が復旧できない",
+          "severity": "p1",
+          "suggested_action": "取得失敗を独立したlive-regionエラー状態として表示し、同じ画面から再読み込みできる操作を提供する。"
+        },
+        {
+          "finding_id": "comparison-review-source-drift",
+          "summary": "レビュー設定のsourceが実際の一覧routeと一致しない",
+          "severity": "p2",
+          "suggested_action": "保護されたレビュー設定のcomparison.sourceを実routeに合わせ、個別 /vs-* ページは別対象として管理する。"
+        },
+        {
+          "finding_id": "comparison-browse-observability-gap",
+          "summary": "競合一覧入口の利用と個別比較への転換を直接観測できない",
+          "severity": "p2",
+          "suggested_action": "プライバシー境界を確認した上で、一覧表示、フィルター利用、個別比較遷移を集計可能な最小イベントとして設計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "本番対策済み",
+        "detail": "変更・検証・本番反映の証拠が記録されています。",
+        "summary": "",
+        "files": [
+          "lib/pages/competitor_browse_page.dart",
+          "test/pages/competitor_browse_page_test.dart"
+        ],
+        "lines_changed": 176,
+        "resolved_finding_ids": [
+          "comparison-load-failure-recovery"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 1 test",
+          "passed: No issues found",
+          "passed: 0 files changed",
+          "passed"
+        ],
+        "issue": {},
+        "implementation": {
+          "commit_sha": "23d97ae4aae6e8505f68a311ff9f008122565744",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32648607959",
+          "production_url": "https://my-web-app-b67f4.web.app/",
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "comparison-review-source-drift",
+          "comparison-browse-observability-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T232120+0900",
+      "started_at": "2026-08-23T23:21:20+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "e1712bb5-2bca-4fc0-8347-0529513411d3",
+        "title": "01.AI (Yi) とは",
+        "url": "https://www.01.ai/"
+      },
+      "reviewer": {
+        "seat": 9,
+        "name": "平出 心",
+        "selection_score": 74.9711
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "course-intro-current-scope-map",
+          "summary": "『01.AI (Yi) とは』という講座名に対し、現在の会社・Yiモデル・WorldWise基盤・TrueNorth製品群の関係を日付付きで示す講座固有の導入マップがない。",
+          "severity": "p1",
+          "suggested_action": "講座冒頭に確認日、会社、Yiモデル群、WorldWise基盤、TrueNorth製品群の4層マップと、学習後に説明できるべき3項目を追加する。"
+        },
+        {
+          "finding_id": "course-intro-learner-outcome-proof",
+          "summary": "入門講座が会社・モデル・現行製品の区別に役立ったことを示す実在学習者の課題・完了・成果証拠がない。",
+          "severity": "p2",
+          "suggested_action": "5分の分類課題と次に調べる公式ページを選ぶ到達確認を設け、匿名の完了率・初回正答率・受講後自己評価を集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4757 追跡中",
+        "detail": "両指摘は公開講座データまたは外部教材の内容・学習計測設計に関わり、共有の低リスク自動修正境界と保護対象の制約を満たさない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed (125 profiles)",
+          "validate_personas.py: passed (125 profiles)",
+          "public Data API catalog export: passed (active=1072, reviewable=527)",
+          "select_course.py: passed (division-5 excluded; deterministic winner preserved)",
+          "target validation: passed (active row; HTTPS source; HTTP 200)",
+          "select_reviewer.py: selection JSON saved once (125 profiles; seat 9; stdout encoding warning did not alter output)",
+          "course_review_issue.py --execute: passed (Issue #4757; cycle dedupe evidence recorded)",
+          "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; two proposals)",
+          "build_lane_status.py --lane course_review: passed (course-only status; latest cycle 20260823T232120+0900)",
+          "flutter test --no-pub --concurrency=1 test/models/tiger_review_lane_status_test.dart: passed (5 tests)"
+        ],
+        "issue": {
+          "number": 4757,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4757",
+          "status": "created",
+          "github_state": null,
+          "dedupe_key": "tiger-course-review:20260823T232120+0900:e1712bb5-2bca-4fc0-8347-0529513411d3"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-intro-current-scope-map",
+          "course-intro-learner-outcome-proof"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T214617+0900",
+      "started_at": "2026-08-23T21:46:17+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 78.0832
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "site-priority-segment-retained-demand",
+          "summary": "登録前AI体験と個人CEOの価値提案は具体的だが、最優先顧客と、その課題が継続利用・支払いに至る需要証拠がない。",
+          "severity": "p1",
+          "suggested_action": "最優先顧客を1セグメントに定め、trial・保存登録・D7/D30継続・paid結果を母数と期間付きで比較する。"
+        },
+        {
+          "finding_id": "site-acquisition-retention-paid-cohort",
+          "summary": "trial・登録・billing・checkoutの段階計測はあるが、流入元からD30継続とpaidまでを同一cohortで結ぶ実測証拠がない。",
+          "severity": "p1",
+          "suggested_action": "流入→trial→保存登録→初回価値→D7/D30→billing→paidを、個人特定しない同一cohortで週次集計する。"
+        },
+        {
+          "finding_id": "site-plan-unit-economics-proof",
+          "summary": "Free・Pro・Team・100円応援は明確だが、プラン別AI原価、粗利、CAC、回収期間、LTV、churnの成立証拠がない。",
+          "severity": "p1",
+          "suggested_action": "ARPU、AI・決済・サポート変動費、粗利、CAC、回収期間、churn、LTV/CACをプラン別に月次集計する。"
+        },
+        {
+          "finding_id": "site-anonymous-billing-error-boundary",
+          "summary": "未ログインの課金ページが内部FunctionException 401を利用者へ露出し、価格確認時の信頼と転換を損なう。",
+          "severity": "p1",
+          "suggested_action": "billing/auth保護領域の担当レビューで、匿名閲覧を正常なFree前提として扱い、内部例外を非表示にする回帰テストを追加する。"
+        },
+        {
+          "finding_id": "site-portfolio-focus-scalability",
+          "summary": "362 routeと巨大なlanding・home・analyticsソースは統合性を示す一方、価値が未測定のまま発見・保守・品質保証コストを広げる。",
+          "severity": "p2",
+          "suggested_action": "route別到達・D7継続・paid寄与で核機能を選び、低価値入口の統合基準と巨大ページの段階分割計画を定める。"
+        },
+        {
+          "finding_id": "site-differentiation-outcome-proof",
+          "summary": "『自分株式会社』と統合cockpitは差別化されているが、専門アプリより選ばれ続ける成果差を示す比較可能な実績がない。",
+          "severity": "p2",
+          "suggested_action": "核成果を1つ定義し、導入前後または代替手段との匿名比較を条件・母数・期間・限界付きで示す。"
+        },
+        {
+          "finding_id": "site-ai-data-trust-map",
+          "summary": "公開プライバシーポリシーはあるが、AI機能カテゴリ別の外部送信、保存、保持、削除、学習利用を比較できる運用マップがない。",
+          "severity": "p2",
+          "suggested_action": "法務文言を直接変更せず、専門レビュー後に機能カテゴリ別の入力、外部送信、保存期間、削除、学習利用有無を整理する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4755 追跡中",
+        "detail": "内部401露出はbilling/auth保護領域であり、他の6指摘は実利用cohort、原価集計、顧客・ポートフォリオ判断、成果比較、または法務・プライバシー専門レビューを要するため、共有の低リスク自動修正条件を満たす変更はない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed (125 profiles)",
+          "validate_personas.py: passed (125 profiles)",
+          "fresh isolated anonymous production journey inspection: passed (root, subscription-billing, privacy)",
+          "select_reviewer.py: passed once (125 profiles; seat 12; selection score 78.0832)",
+          "flutter test --no-pub web handoff, landing conversion, and subscription billing suite: passed (60 tests)",
+          "flutter test --no-pub Tiger lane model/page suite: passed (11 tests)",
+          "flutter analyze --no-pub scoped whole-site and Tiger files: passed (11 items; 202.3s; no issues)",
+          "review_issue.py --execute: passed (Issue #4755; cycle dedupe evidence recorded)",
+          "validate_cycle_report.py: passed (schema 4; lane=site_review; one reviewer; seven proposals)",
+          "build_lane_status.py --lane site_review: passed (site-only status; six retained cycles; no unissued passed review_only record)",
+          "post-origin/main-merge Tiger lane model/page suite: passed (12 tests)",
+          "post-origin/main-merge flutter analyze --no-pub Tiger lane files: passed (3 items; 30.2s; no issues)"
+        ],
+        "issue": {
+          "number": 4755,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4755",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260823T214617+0900:whole_site"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-priority-segment-retained-demand",
+          "site-acquisition-retention-paid-cohort",
+          "site-plan-unit-economics-proof",
+          "site-anonymous-billing-error-boundary",
+          "site-portfolio-focus-scalability",
+          "site-differentiation-outcome-proof",
+          "site-ai-data-trust-map"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T195559+0900",
+      "started_at": "2026-08-23T19:55:59+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 85.8325
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "site-segment-value-proof",
+          "summary": "個人CEOの価値提案は具体的だが、最優先顧客と、その課題が継続利用・支払いに至る需要証拠がない。",
+          "severity": "p1",
+          "suggested_action": "最優先顧客を1セグメントに定め、匿名のtrial・保存登録・7日継続・paid結果と代表成果を母数・期間付きで示す。"
+        },
+        {
+          "finding_id": "site-full-funnel-retention-proof",
+          "summary": "獲得・activation・課金イベントと継続導線はあるが、LPからD30継続・paidまでを結ぶ実測cohort証拠がない。",
+          "severity": "p1",
+          "suggested_action": "LP→trial→保存登録→初回価値→D7/D30継続→billing→paidを、個人特定しない同一cohortで集計する。"
+        },
+        {
+          "finding_id": "site-plan-unit-economics",
+          "summary": "Free・Pro・Team・100円応援は明確だが、プラン別AI原価、粗利、CAC、回収期間、LTV、churnの成立証拠がない。",
+          "severity": "p1",
+          "suggested_action": "プラン別ARPU、AI・決済・サポート変動費、粗利、CAC、回収期間、churn、LTV/CACを月次集計し拡張停止条件を設ける。"
+        },
+        {
+          "finding_id": "site-route-focus-scalability",
+          "summary": "361 routeと巨大なlanding/homeソースは統合性を示す一方、利用価値が未測定のまま発見・保守・品質保証コストを拡大させる。",
+          "severity": "p2",
+          "suggested_action": "route別到達・D7継続・paid寄与で核機能を選び、低価値入口の統合基準と巨大ページの段階分割計画を定める。"
+        },
+        {
+          "finding_id": "site-differentiation-measured-outcome",
+          "summary": "『自分株式会社』と統合cockpitは差別化されているが、専門アプリより選ばれ続ける成果差を示す比較可能な実績がない。",
+          "severity": "p2",
+          "suggested_action": "核成果を1つ定義し、導入前後または代替手段との匿名比較を条件・母数・期間・限界付きで示す。"
+        },
+        {
+          "finding_id": "site-ai-data-trust-operations",
+          "summary": "共通ポリシーとStripe説明はあるが、AI機能カテゴリ別の外部送信、保存、保持、削除、学習利用を比較できる運用マップがない。",
+          "severity": "p2",
+          "suggested_action": "法務文言を直接変更せず、専門レビュー後に機能カテゴリ別の入力、外部送信、保存期間、削除、学習利用有無をまとめる。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4746 追跡中",
+        "detail": "6指摘は実利用cohortと原価の集計、顧客・価格・ポートフォリオ判断、成果比較、または法務・プライバシー専門レビューを必要とする。共有の低リスク条件、3 product files・200 source lines、保護対象禁止を同時に満たす修正はない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed (125 profiles)",
+          "validate_personas.py: passed (125 profiles)",
+          "fresh production journey inspection: passed (root, billing, privacy)",
+          "select_reviewer.py: passed once (125 profiles; seat 12; selection score 85.8325)",
+          "flutter test --no-pub test/web_index_trial_handoff_test.dart test/pages/landing_page_conversion_test.dart test/pages/subscription_billing_page_test.dart: passed (60 tests)",
+          "flutter test --no-pub test/models/tiger_review_lane_status_test.dart test/pages/tiger_review_lane_status_page_test.dart: passed (10 tests)",
+          "flutter analyze --no-pub (11 scoped files): passed (No issues found; 204.5s)",
+          "review_issue.py --execute: passed (Issue #4746; cycle dedupe evidence recorded)",
+          "validate_cycle_report.py: passed (schema 4; lane=site_review; one reviewer; six proposals)",
+          "build_lane_status.py --lane site_review: passed (site-only status; five retained cycles; no unissued passed review_only record)"
+        ],
+        "issue": {
+          "number": 4746,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4746",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260823T195559+0900:whole_site"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-segment-value-proof",
+          "site-full-funnel-retention-proof",
+          "site-plan-unit-economics",
+          "site-route-focus-scalability",
+          "site-differentiation-measured-outcome",
+          "site-ai-data-trust-operations"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T175240+0900",
+      "started_at": "2026-08-23T17:54:10+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "525273ba-539f-4dd4-b436-a6a74a5e8cc5",
+        "title": "01.AI (Yi) 最新情報",
+        "url": "https://www.01.ai/"
+      },
+      "reviewer": {
+        "seat": 9,
+        "name": "平出 心",
+        "selection_score": 68.8967
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "course-latest-dated-synthesis",
+          "summary": "『最新情報』講座として、確認日・主要差分・日付付き一次情報を結ぶ講座固有の要約がない。",
+          "severity": "p1",
+          "suggested_action": "講座に確認日、前回からの主要変更、日付付き公式ページへのリンク、旧情報との扱いを明示する短い更新サマリーを追加する。"
+        },
+        {
+          "finding_id": "course-latest-learner-proof",
+          "summary": "最新情報を実務判断へ変換できたかを示す実在学習者の課題・成果証拠がない。",
+          "severity": "p2",
+          "suggested_action": "日付付き3点サマリーと旧情報との差分を作る短い課題を設け、匿名の完了率・正答率・自己評価を集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4734 追跡中",
+        "detail": "両指摘は公開講座データまたは外部教材の内容・計測設計に関わり、共有の低リスク自動修正境界と保護対象の制約を満たさない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed (125 profiles)",
+          "validate_personas.py: passed (125 profiles)",
+          "public Data API catalog export: passed (active=1071, reviewable=526)",
+          "select_course.py: passed (division-5 excluded; deterministic winner preserved)",
+          "target validation: passed (active row; HTTPS source; HTTP 200)",
+          "select_reviewer.py: passed once (125 profiles; seat 9)",
+          "course_review_issue.py --execute: passed (Issue #4734; cycle dedupe evidence recorded)",
+          "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; two proposals)",
+          "build_lane_status.py --lane course_review: passed (course-only status; latest cycle 20260823T175240+0900)",
+          "flutter test test/models/tiger_review_lane_status_test.dart: passed (4 tests)",
+          "deploy_lane_to_production.py --lane course_review --execute: passed (workflow 32629724865; public JSON equality verified)"
+        ],
+        "issue": {
+          "number": 4734,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4734",
+          "status": "existing",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260823T175240+0900:525273ba-539f-4dd4-b436-a6a74a5e8cc5"
+        },
+        "implementation": {
+          "commit_sha": "20b20d3ce18515752a09e11beb6efd32cee12e49",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32629724865",
+          "production_url": "https://my-web-app-b67f4.web.app/assets/assets/data/tiger_course_review_status.json",
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "course-latest-dated-synthesis",
+          "course-latest-learner-proof"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T172138+0900",
+      "started_at": "2026-08-23T17:21:38+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "ai_university",
+        "title": "AI大学入口ページ",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 78.0406
+      },
+      "status": "production_verified",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "ai-university-loading-semantics",
+          "summary": "読み込み中のspinnerが支援技術へ状態を通知しない",
+          "severity": "p1",
+          "suggested_action": "読み込みspinnerを、意味のある日本語labelとliveRegionを持つSemanticsで包み、状態を自動通知する。"
+        },
+        {
+          "finding_id": "ai-university-cold-entry-latency",
+          "summary": "SEOシェルから実AI大学画面への切り替えが遅い",
+          "severity": "p1",
+          "suggested_action": "実測の初回教材表示時間を計測し、bundle分割、初期データ量、provider描画範囲を別設計で最適化する。"
+        },
+        {
+          "finding_id": "ai-university-monolith-test-cost",
+          "summary": "8千行超の単一ページと専用widget test不足が改善速度を下げる",
+          "severity": "p2",
+          "suggested_action": "ロード状態、provider navigation、教材表示を独立widgetへ分割し、代表的なwidget testを段階的に追加する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "本番対策済み",
+        "detail": "変更・検証・本番反映の証拠が記録されています。",
+        "summary": "",
+        "files": [
+          "lib/pages/gemini_university_v2_page.dart",
+          "test/pages/gemini_university_loading_semantics_test.dart"
+        ],
+        "lines_changed": 30,
+        "resolved_finding_ids": [
+          "ai-university-loading-semantics"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 1 test",
+          "passed: No issues found",
+          "passed: 0 files changed",
+          "passed"
+        ],
+        "issue": {},
+        "implementation": {
+          "commit_sha": "087271567f2312c718f9695d0a81c51de07f5888",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32628679913",
+          "production_url": "https://my-web-app-b67f4.web.app/",
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "ai-university-cold-entry-latency",
+          "ai-university-monolith-test-cost"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T165404+0900",
+      "started_at": "2026-08-23T16:54:04+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "22befb67-6147-4a4b-999c-ee1ad6fa9615",
+        "title": "01.AI (Yi) モデル一覧",
+        "url": "https://platform.01.ai/docs"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 73.0376
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "course-model-list-freshness",
+          "summary": "モデル一覧の現行性を検証できる更新日・稼働モデル証拠が講座出典にない。",
+          "severity": "p1",
+          "suggested_action": "公式の稼働モデルAPIまたは更新日のあるモデル表を定期確認し、講座に確認日と差分検証手順を明示する。"
+        },
+        {
+          "finding_id": "course-model-list-learner-proof",
+          "summary": "モデル比較後に学習者が適切なモデルを選べたかを示す実在学習者証拠がない。",
+          "severity": "p2",
+          "suggested_action": "用途・予算・文脈長からモデルを選ぶ短い課題と、匿名集計できる完了・正答指標を設計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4737 追跡中",
+        "detail": "両指摘とも公開講座データまたは外部教材の内容・計測設計に関わり、共有の低リスク自動修正境界を満たさない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed (125 profiles)",
+          "validate_personas.py: passed (125 profiles)",
+          "public Data API catalog export: passed (active=1071, reviewable=526)",
+          "select_course.py: passed (division-5 excluded; deterministic winner preserved)",
+          "target validation: passed (active row; HTTPS source; reachable)",
+          "select_reviewer.py: passed once (125 profiles; seat 12)",
+          "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; two proposals)",
+          "build_lane_status.py --lane course_review: passed (course-only status; latest cycle 20260823T165404+0900)",
+          "flutter test test/models/tiger_review_lane_status_test.dart: passed (4 tests)",
+          "deploy_lane_to_production.py --lane course_review --execute: passed (workflow 32627164504; public JSON equality verified)"
+        ],
+        "issue": {
+          "number": 4737,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4737",
+          "status": "existing",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260823T165404+0900:22befb67-6147-4a4b-999c-ee1ad6fa9615"
+        },
+        "implementation": {
+          "commit_sha": "18eedc47ea0769b871ba191b7ff9162252afb8f3",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32627164504",
+          "production_url": "https://my-web-app-b67f4.web.app/assets/assets/data/tiger_course_review_status.json",
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "course-model-list-freshness",
+          "course-model-list-learner-proof"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T153734+0900",
+      "started_at": "2026-08-23T15:38:16.4383006+09:00",
+      "source_format": "legacy_combined",
+      "subject": {
+        "kind": "site",
+        "id": "comparison",
+        "title": "comparison",
+        "url": "https://my-web-app-b67f4.web.app/competitors"
+      },
+      "reviewer": {
+        "seat": 7,
+        "name": "榊󠄀原 清一",
+        "selection_score": 74.4337
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "comparison-claim-evidence",
+          "summary": "競合比較の公開主張に出典・確認時点を一貫して結び付ける必要がある。",
+          "severity": "p1",
+          "suggested_action": "競合別の価格・機能主張について、出典URLと最終確認日を管理する別レビューを行う。"
+        },
+        {
+          "finding_id": "comparison-funnel-evidence",
+          "summary": "比較流入から登録までの実測根拠が今回のレビュー入力にない。",
+          "severity": "p2",
+          "suggested_action": "既存計測の匿名集計を別運用で確認し、比較到達・CTA・登録のファネルを根拠化する。"
+        },
+        {
+          "finding_id": "comparison-maintainability",
+          "summary": "比較ページの巨大な単一ソースと専用試験不足が訴求変更の検証コストを高めている。",
+          "severity": "p2",
+          "suggested_action": "別タスクで競合データと表示部を分離し、代表ルートのCTA・比較表をウィジェット試験で固定する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4739 追跡中",
+        "detail": "3件はいずれも再現可能な証拠を持つが、公開比較主張、分析データ、または大規模な構造変更に関わる。安全な自動修正、低リスク、3ファイル・200行以内の全条件を満たす変更はない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed",
+          "validate_personas.py: passed",
+          "select_feature.py: passed (13 features)",
+          "select_reviewer.py: passed (125 profiles; JSON output saved)",
+          "public Data API catalog export: passed (active=1071, reviewable=526, excluded source URL=536)",
+          "select_course.py: passed",
+          "01.AI source URL inspection: reachable; only generic documentation navigation was observable",
+          "comparison source and test filename inspection: completed"
+        ],
+        "issue": {
+          "number": 4739,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4739",
+          "status": "existing",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "comparison-claim-evidence",
+          "comparison-funnel-evidence",
+          "comparison-maintainability"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T152316+0900",
+      "started_at": "2026-08-23T15:24:30+09:00",
+      "source_format": "legacy_combined",
+      "subject": {
+        "kind": "site",
+        "id": "ai_university",
+        "title": "ai_university",
+        "url": "https://my-web-app-b67f4.web.app/#/ai-university"
+      },
+      "reviewer": {
+        "seat": 1,
+        "name": "ドラゴン細井",
+        "selection_score": 79.5059
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "course-freshness-review",
+          "summary": "選出講座に出典更新確認の運用が必要。",
+          "severity": "p2",
+          "suggested_action": "公式出典の確認日と更新検知を講座運用で記録し、再確認対象を明示する。"
+        },
+        {
+          "finding_id": "course-outcome-evidence",
+          "summary": "講座選定データに学習成果の根拠がない。",
+          "severity": "p2",
+          "suggested_action": "講座編集の別タスクで、対象者・到達行動・確認方法を根拠付きで管理する。"
+        },
+        {
+          "finding_id": "content-failure-observability",
+          "summary": "教材取得失敗時の事業影響を測定できない。",
+          "severity": "p2",
+          "suggested_action": "別の計測設計レビューで、失敗・再試行・フォールバック表示を匿名かつ最小限に観測する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4738 追跡中",
+        "detail": "3件はいずれも証拠に基づくが、講座運用・計測設計または利用データを要し、低リスク自動修正の条件を満たす変更はない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed",
+          "validate_personas.py: passed",
+          "public Data API catalog export: passed (active=1071, reviewable=526)",
+          "select_feature.py: passed",
+          "select_reviewer.py: passed (125 profiles)",
+          "select_course.py: passed",
+          "AI University browser inspection: blocked by browser URL safety policy; no workaround attempted"
+        ],
+        "issue": {
+          "number": 4738,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4738",
+          "status": "existing",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-freshness-review",
+          "course-outcome-evidence",
+          "content-failure-observability"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T152239+0900",
+      "started_at": "2026-08-23T15:22:47+09:00",
+      "source_format": "legacy_combined",
+      "subject": {
+        "kind": "site",
+        "id": "ai_university",
+        "title": "ai_university",
+        "url": "https://my-web-app-b67f4.web.app/ai-university"
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 73.5265
+      },
+      "status": "implemented",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "ai_university_catalog_pagination",
+          "summary": "AI大学の主カタログ取得をページングし、PostgRESTの1,000行上限を超える有効講座も表示対象にする。",
+          "severity": "p2",
+          "suggested_action": "sort_orderとidで安定順序を付け、1,000件単位で全有効行を取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "implemented",
+        "label": "対策実施・検証済み",
+        "detail": "個別の指摘IDとの紐付けも記録済みです。",
+        "summary": "主カタログに安定順序のページングを追加し、回帰契約テストを更新した。",
+        "files": [
+          "lib/pages/gemini_university_v2_page.dart",
+          "test/pages/ai_university_published_video_fetch_contract_test.dart"
+        ],
+        "lines_changed": 27,
+        "resolved_finding_ids": [
+          "ai_university_catalog_pagination"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed",
+          "validate_personas.py: passed",
+          "flutter test test/pages/ai_university_published_video_fetch_contract_test.dart: passed",
+          "dart analyze changed files: passed"
+        ],
+        "issue": {},
+        "implementation": null,
+        "findings_without_individual_trace": []
+      }
+    }
+  ],
+  "reviewers": [
+    {
+      "seat": 11,
+      "name": "野口 功司",
+      "tier": "division_1",
+      "division": 1,
+      "provisional": false,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 95.39,
+      "completed_cycles": 4,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 95.33,
+      "last_selected_at": "2026-08-24T13:04:00+00:00",
+      "reason": "担当4回・効用95.4点で1部"
+    },
+    {
+      "seat": 9,
+      "name": "平出 心",
+      "tier": "division_1",
+      "division": 1,
+      "provisional": false,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 90.58,
+      "completed_cycles": 2,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 90.75,
+      "last_selected_at": "2026-08-23T14:21:20+00:00",
+      "reason": "担当2回・効用90.6点で1部"
+    },
+    {
+      "seat": 7,
+      "name": "榊󠄀原 清一",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 90.17,
+      "completed_cycles": 1,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 90.17,
+      "last_selected_at": "2026-08-23T06:38:16.438300+00:00",
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 1,
+      "name": "ドラゴン細井",
+      "tier": "division_1",
+      "division": 1,
+      "provisional": false,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 87.18,
+      "completed_cycles": 2,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 85.9,
+      "last_selected_at": "2026-08-25T04:33:07+00:00",
+      "reason": "担当2回・効用87.2点で1部"
+    },
+    {
+      "seat": 12,
+      "name": "迫 佑樹",
+      "tier": "division_1",
+      "division": 1,
+      "provisional": false,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 85.5,
+      "completed_cycles": 7,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 85.5,
+      "last_selected_at": "2026-08-25T03:45:33+00:00",
+      "reason": "担当7回・効用85.5点で1部"
+    },
+    {
+      "seat": 2,
+      "name": "林 尚弘",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 3,
+      "name": "谷本 吉紹",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 4,
+      "name": "桑田 龍征",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 5,
+      "name": "安藤 功一郎",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 6,
+      "name": "三浦 哲郎",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 8,
+      "name": "関口 ケント",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 10,
+      "name": "島田 隆史",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 13,
+      "name": "神田 みつき",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 14,
+      "name": "田中 雄士",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 15,
+      "name": "桐原 隆",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 16,
+      "name": "南 忠則",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 17,
+      "name": "唐沢 菜々江",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 18,
+      "name": "大石 純平",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 19,
+      "name": "竹内 亢一",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 20,
+      "name": "田中 絢望",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 21,
+      "name": "遠藤 悠記",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 22,
+      "name": "稲葉 信",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 23,
+      "name": "寺田 高士",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 24,
+      "name": "孫 駿一郎",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 25,
+      "name": "宮本 聖菜",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 26,
+      "name": "荒木 杏奈",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 27,
+      "name": "竹長 篤史",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 28,
+      "name": "東 将大",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 29,
+      "name": "河原 由次",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 30,
+      "name": "小林 真之",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 31,
+      "name": "佐々木 貴史",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 32,
+      "name": "高澤 有紀",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 33,
+      "name": "津田 篤志",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 34,
+      "name": "ど素人ホテル再建計画",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 35,
+      "name": "土橋 和貴",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 36,
+      "name": "中村 英俊",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 37,
+      "name": "西田 拳",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 38,
+      "name": "畠山 大輝",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 39,
+      "name": "松下 直人",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 40,
+      "name": "茂木 哲也",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 41,
+      "name": "山本 雅俊",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 42,
+      "name": "トモハッピー",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 43,
+      "name": "井口智明",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 44,
+      "name": "青笹寛史（あお）",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 45,
+      "name": "竹之内教博",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 46,
+      "name": "株本祐己",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 47,
+      "name": "木下勇人",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 48,
+      "name": "條隼人",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 49,
+      "name": "岩井良明",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 50,
+      "name": "岡田真弓",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 51,
+      "name": "北川哲平",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 52,
+      "name": "森龍一",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 53,
+      "name": "渡邊正都",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 54,
+      "name": "Fumi Sugita",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 55,
+      "name": "木下 博勝",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 56,
+      "name": "岩崎 健人",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 57,
+      "name": "大迫源一",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 58,
+      "name": "高橋未樹",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 59,
+      "name": "福田雅典",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 60,
+      "name": "野田慎太郎",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 61,
+      "name": "南原竜樹",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 62,
+      "name": "黒川 たくや",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 63,
+      "name": "矢神 サラ",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 64,
+      "name": "冬真怜",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 65,
+      "name": "安達逸平",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 66,
+      "name": "吉野繁",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 67,
+      "name": "杉本幸倫（もとのり社長）",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 68,
+      "name": "山澤 礼明",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 69,
+      "name": "川中子 輝昂",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 70,
+      "name": "磯遊晋介",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 71,
+      "name": "日熊秀貴",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 72,
+      "name": "井川 意高",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 73,
+      "name": "沓名 裕城",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 74,
+      "name": "山田久太郎",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 75,
+      "name": "三崎優太（青汁王子）",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 76,
+      "name": "黒田 健太郎",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 77,
+      "name": "カトリッセ・ヤン=ピートル",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 78,
+      "name": "中川浩秀",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 79,
+      "name": "奥谷敦子",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 80,
+      "name": "西本誠（Tecco）",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 81,
+      "name": "重田裕輔",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 82,
+      "name": "前德政宗",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 83,
+      "name": "升澤裕介",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 84,
+      "name": "島袋直樹",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 85,
+      "name": "京極琉",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 86,
+      "name": "小澤 辰矢",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 87,
+      "name": "長谷部文康",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 88,
+      "name": "池端美和",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 89,
+      "name": "ヒカル",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 90,
+      "name": "蓮井廉（ADHD社長）",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 91,
+      "name": "カイ ユリコ",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 92,
+      "name": "兼子ただし",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 93,
+      "name": "寺林良",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 94,
+      "name": "戸村 光",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 95,
+      "name": "村川智博",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 96,
+      "name": "牧田彰俊",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 97,
+      "name": "足立暢",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 98,
+      "name": "ロイター豪",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 99,
+      "name": "愛沢 えみり",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 100,
+      "name": "三原 拓大",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 101,
+      "name": "高野秀敏",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 102,
+      "name": "泉舞",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 103,
+      "name": "尾崎友俐",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 104,
+      "name": "川原ひろし",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 105,
+      "name": "安田久",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 106,
+      "name": "六川正男",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 107,
+      "name": "岡田修一",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 108,
+      "name": "西村博之（ひろゆき）",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 109,
+      "name": "大濱裕貴",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 110,
+      "name": "後藤 和良",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 111,
+      "name": "竹村 義宏",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 112,
+      "name": "荻原 空",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 113,
+      "name": "奥山 幸生",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 114,
+      "name": "松本 和博",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 115,
+      "name": "松尾 大史",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 116,
+      "name": "渡正行",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 117,
+      "name": "鈴木智哉",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 118,
+      "name": "仙石実",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 119,
+      "name": "辰巳大地",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 120,
+      "name": "犬飼 京",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 121,
+      "name": "尾賀裕一",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 122,
+      "name": "髙木 宏昌",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 123,
+      "name": "山本 優斗",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 124,
+      "name": "前迫 潤哉",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 125,
+      "name": "ゆとりくん（片石貴展）",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": null,
+      "completed_cycles": 0,
+      "low_utility_streak": 0,
+      "last_cycle_utility": null,
+      "last_selected_at": null,
+      "reason": "担当実績が2回未満のため暫定3部"
+    }
+  ]
+}

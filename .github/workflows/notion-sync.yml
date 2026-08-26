@@ -12,7 +12,7 @@ name: Notion Mirror Sync (hourly)
 
 on:
   schedule:
-    - cron: "10 */2 * * *" # 2時間ごと10分 (2026-06-10 ci-audit: 毎時→2時間, 360runs/月削減)
+    - cron: "10 */4 * * *" # 4時間ごと10分 (2026-06-10 ci-audit: 毎時→2時間 / 2026-07-21 ci-audit: 2時間→4時間, 180runs/月削減)
   workflow_dispatch:
     inputs:
       offset:
@@ -51,12 +51,19 @@ jobs:
 
       - name: Call schedule-hub:notion.sync_wbs
         id: sync
+        env:
+          LIMIT_INPUT: ${{ github.event.inputs.limit || '30' }}
+          OFFSET_INPUT: ${{ github.event.inputs.offset || '0' }}
         run: |
+          PAYLOAD=$(jq -n \
+            --arg limit "$LIMIT_INPUT" \
+            --arg offset "$OFFSET_INPUT" \
+            '{action: "notion.sync_wbs", limit: ($limit | tonumber), offset: ($offset | tonumber)}')
           RESP=$(curl -sS -X POST \
             "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json" \
-            -d "{\"action\":\"notion.sync_wbs\",\"limit\":${{ github.event.inputs.limit || '30' }},\"offset\":${{ github.event.inputs.offset || '0' }}}" \
+            -d "$PAYLOAD" \
             --max-time 600)
 
           echo "Response: $RESP"

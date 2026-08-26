@@ -2,6 +2,45 @@ import 'package:my_web_app/services/ai_university_video_lesson_service.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('supplemental video rows restore every unique published lesson', () {
+    Map<String, dynamic> row(String category, {String? title}) => {
+          'provider': 'openai',
+          'category': category,
+          'title': title ?? category,
+          'content': 'lesson',
+          'source_url': 'https://www.youtube.com/watch?v=-ZxiEPqxKRY',
+        };
+
+    final merged =
+        AiUniversityVideoLessonService.mergeContentRowsByProviderCategory(
+      [
+        row('overview'),
+        row('video_codex_solution_engineering'),
+        row('video_codex_custom_code_review_rules', title: 'stale title'),
+      ],
+      [
+        row('video_codex_record_replay'),
+        row('video_codex_customer_demo'),
+        row('video_codex_ios_xcodebuildmcp'),
+        row('video_codex_solution_engineering'),
+        row('video_codex_custom_code_review_rules', title: 'current title'),
+      ],
+    );
+
+    final videoRows = merged
+        .where((item) => (item['category'] as String).startsWith('video_'))
+        .toList();
+
+    expect(videoRows, hasLength(5));
+    expect(merged, hasLength(6));
+    expect(
+      videoRows.singleWhere(
+        (item) => item['category'] == 'video_codex_custom_code_review_rules',
+      )['title'],
+      'current title',
+    );
+  });
+
   test('topicsFromRows sorts overview before api', () {
     final topics = AiUniversityVideoLessonService.topicsFromRows([
       {

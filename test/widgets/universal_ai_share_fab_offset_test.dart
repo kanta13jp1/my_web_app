@@ -71,4 +71,23 @@ void main() {
       isTrue,
     );
   });
+
+  test('compact screens never receive a content-obscuring share FAB', () {
+    expect(
+      shouldShowUniversalAiShareFab(
+        routePath: '/ai-university',
+        isLoggedIn: true,
+        screenWidth: 390,
+      ),
+      isFalse,
+    );
+    expect(
+      shouldShowUniversalAiShareFab(
+        routePath: '/ai-university',
+        isLoggedIn: true,
+        screenWidth: 800,
+      ),
+      isTrue,
+    );
+  });
 }

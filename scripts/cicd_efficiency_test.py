@@ -29,6 +29,33 @@ class CicdEfficiencyTest(unittest.TestCase):
         self.assertIn("if: steps.changes.outputs.edge == 'true'", deploy)
         self.assertIn("if: steps.changes.outputs.migration == 'true'", deploy)
 
+    def test_deploy_uses_global_semver_and_rejects_tag_mismatch(self) -> None:
+        deploy = self.read(".github/workflows/deploy-prod.yml")
+        self.assertNotIn("git describe --tags", deploy)
+        self.assertIn("git tag --list 'v[0-9]*.[0-9]*.[0-9]*'", deploy)
+        self.assertIn("grep -E '^v[0-9]+\\.[0-9]+\\.[0-9]+$'", deploy)
+        self.assertIn("sort -V", deploy)
+        self.assertIn(
+            "Existing tag $TAG points to $EXISTING_TARGET, expected $GITHUB_SHA",
+            deploy,
+        )
+
+        tag_step = deploy.split("- name: Push Release Tag", 1)[1].split(
+            "- name: Create GitHub Release", 1
+        )[0]
+        self.assertNotIn("continue-on-error", tag_step)
+        self.assertIn(
+            'gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs"',
+            tag_step,
+        )
+        self.assertIn('-f sha="$GITHUB_SHA"', tag_step)
+        self.assertIn("target_commitish: ${{ github.sha }}", deploy)
+        self.assertIn("- name: Verify Release Tag Target", deploy)
+        self.assertIn(
+            "Release tag $TAG points to $REF_SHA, expected $GITHUB_SHA",
+            deploy,
+        )
+
     def test_minimal_gate_does_not_poll_ci(self) -> None:
         workflow = self.read(".github/workflows/minimal-e2e-gate.yml")
         self.assertNotIn("Wait for deterministic CI checks", workflow)
@@ -61,6 +88,30 @@ class CicdEfficiencyTest(unittest.TestCase):
         self.assertIn("if: steps.changes.outputs.edge == 'true'", workflow)
         self.assertIn("if: steps.changes.outputs.caption == 'true'", workflow)
         self.assertIn("steps.changes.outputs.web == 'true'", workflow)
+
+    def test_required_ci_checks_are_emitted_for_docs_only_prs(self) -> None:
+        workflow = self.read(".github/workflows/ci.yml")
+        pull_request = workflow.split("  pull_request:", 1)[1].split(
+            "  push:", 1
+        )[0]
+        push = workflow.split("  push:", 1)[1].split("  workflow_call:", 1)[0]
+        lint_job = workflow.split("  lint-and-test:", 1)[1].split(
+            "  security-check:", 1
+        )[0]
+        security_job = workflow.split("  security-check:", 1)[1].split(
+            "  pr-comment:", 1
+        )[0]
+
+        self.assertNotIn("paths-ignore:", pull_request)
+        self.assertIn("paths-ignore:", push)
+        self.assertIn("  workflow_call:", workflow)
+        self.assertIn(
+            "FORCE_ALL: ${{ github.event_name != 'pull_request' }}", workflow
+        )
+        self.assertIn("name: Lint, Format, and Test", workflow)
+        self.assertIn("name: Security Check", workflow)
+        self.assertNotIn("\n    if:", lint_job)
+        self.assertNotIn("\n    if:", security_job)
 
 
 if __name__ == "__main__":

@@ -32,6 +32,7 @@ class SupabaseInvestmentAssetRepository implements InvestmentAssetRepository {
 
   static const String tableName = 'investment_assets';
   static const String historyTableName = 'investment_portfolio_history';
+  static const int _assetPageSize = 1000;
   static const int _historyPageSize = 1000;
   static const String selectColumns =
       'id,user_id,asset_type,ticker,quantity,buy_price_jpy,buy_date,'
@@ -42,17 +43,28 @@ class SupabaseInvestmentAssetRepository implements InvestmentAssetRepository {
   @override
   Future<List<InvestmentAsset>> fetchByUser({required String userId}) async {
     final normalizedUserId = _requiredId(userId, 'userId');
-    final rows = await _client
-        .from(tableName)
-        .select(selectColumns)
-        .eq('user_id', normalizedUserId)
-        .order('asset_type')
-        .order('ticker');
+    final assets = <InvestmentAsset>[];
+    var offset = 0;
+    while (true) {
+      final rows = await _client
+          .from(tableName)
+          .select(selectColumns)
+          .eq('user_id', normalizedUserId)
+          .order('asset_type', ascending: true)
+          .order('ticker', ascending: true)
+          .order('id', ascending: true)
+          .range(offset, offset + _assetPageSize - 1);
+      final page = rows as List;
+      assets.addAll(
+        page.whereType<Map>().map(
+              (row) => InvestmentAsset.fromMap(row.cast<String, dynamic>()),
+            ),
+      );
+      if (page.length < _assetPageSize) break;
+      offset += page.length;
+    }
 
-    return (rows as List)
-        .whereType<Map>()
-        .map((row) => InvestmentAsset.fromMap(row.cast<String, dynamic>()))
-        .toList(growable: false);
+    return List<InvestmentAsset>.unmodifiable(assets);
   }
 
   @override

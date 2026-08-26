@@ -119,9 +119,13 @@ jobs:
 
       - name: Summary
         if: always()
+        env:
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
+          PLATFORMS_INPUT: ${{ github.event.inputs.platforms }}
+          DELAY_INPUT: ${{ github.event.inputs.delay_seconds }}
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 実行結果" >> $GITHUB_STEP_SUMMARY
-          echo "- dry_run: ${{ github.event.inputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
-          echo "- platforms: ${{ github.event.inputs.platforms }}" >> $GITHUB_STEP_SUMMARY
-          echo "- delay: ${{ github.event.inputs.delay_seconds }}s" >> $GITHUB_STEP_SUMMARY
+          echo "- dry_run: $DRY_RUN_INPUT" >> $GITHUB_STEP_SUMMARY
+          echo "- platforms: $PLATFORMS_INPUT" >> $GITHUB_STEP_SUMMARY
+          echo "- delay: ${DELAY_INPUT}s" >> $GITHUB_STEP_SUMMARY

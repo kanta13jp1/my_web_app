@@ -47,33 +47,101 @@ class AiUniversityPublishedVideoBanner extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final compact = constraints.maxWidth < 620;
-              final itemWidth = compact
-                  ? constraints.maxWidth
-                  : (constraints.maxWidth - 12) / 2;
 
               return Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _VideoBannerHeader(videoCount: videos.length),
                   const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      for (var index = 0; index < videos.length; index++)
-                        SizedBox(
-                          width: itemWidth,
-                          child: _VideoLessonTile(
-                            index: index,
-                            video: videos[index],
-                          ),
-                        ),
-                    ],
-                  ),
+                  if (compact)
+                    SizedBox(
+                      key: const Key('published-video-mobile-carousel'),
+                      height: 104,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: videos.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 10),
+                        itemBuilder: (context, index) {
+                          return SizedBox(
+                            width: (constraints.maxWidth * 0.82).clamp(
+                              220.0,
+                              340.0,
+                            ),
+                            child: _VideoLessonTile(
+                              index: index,
+                              video: videos[index],
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                  else
+                    _DesktopVideoGrid(videos: videos),
                 ],
               );
             },
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopVideoGrid extends StatefulWidget {
+  const _DesktopVideoGrid({required this.videos});
+
+  final List<AiUniversityPublishedVideoBannerItem> videos;
+
+  @override
+  State<_DesktopVideoGrid> createState() => _DesktopVideoGridState();
+}
+
+class _DesktopVideoGridState extends State<_DesktopVideoGrid> {
+  static const _itemHeight = 86.0;
+  static const _spacing = 12.0;
+  static const _maxVisibleRows = 2;
+
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rowCount = (widget.videos.length + 1) ~/ 2;
+    final contentHeight = rowCount * _itemHeight + (rowCount - 1) * _spacing;
+    const maxHeight =
+        _maxVisibleRows * _itemHeight + (_maxVisibleRows - 1) * _spacing;
+    final viewportHeight = contentHeight.clamp(0.0, maxHeight).toDouble();
+    final isScrollable = rowCount > _maxVisibleRows;
+
+    return SizedBox(
+      key: const Key('published-video-desktop-grid'),
+      height: viewportHeight,
+      child: Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: isScrollable,
+        interactive: true,
+        thickness: 6,
+        radius: const Radius.circular(999),
+        child: GridView.builder(
+          key: const Key('published-video-desktop-scroll-view'),
+          controller: _scrollController,
+          primary: false,
+          padding: EdgeInsets.only(right: isScrollable ? 12 : 0),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisExtent: _itemHeight,
+            crossAxisSpacing: _spacing,
+            mainAxisSpacing: _spacing,
+          ),
+          itemCount: widget.videos.length,
+          itemBuilder: (context, index) =>
+              _VideoLessonTile(index: index, video: widget.videos[index]),
         ),
       ),
     );

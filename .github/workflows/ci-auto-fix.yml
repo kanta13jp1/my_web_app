@@ -10,6 +10,10 @@ on:
         description: Open pull request number to format
         required: true
         type: string
+      human_review_acknowledged:
+        description: I accept responsibility for reviewing the resulting bot commit before merge
+        required: true
+        type: boolean
 
 concurrency:
   group: ci-auto-fix-pr-${{ inputs.pr_number }}
@@ -31,6 +35,14 @@ jobs:
         uses: actions/github-script@v9
         with:
           script: |
+            if ('${{ inputs.human_review_acknowledged }}' !== 'true') {
+              core.setFailed('A human operator must acknowledge review responsibility.');
+              return;
+            }
+            if (context.actor.endsWith('[bot]')) {
+              core.setFailed('Bot actors cannot acknowledge human review responsibility.');
+              return;
+            }
             const number = Number('${{ inputs.pr_number }}');
             const { data: pr } = await github.rest.pulls.get({
               owner: context.repo.owner,
@@ -93,6 +105,11 @@ jobs:
         with:
           flutter-version: '3.38.x'
 
+      # dart format reads package language versions from .dart_tool/package_config.json.
+      - name: Resolve Flutter dependencies for formatter language version
+        if: steps.pr.outputs.has_dart == 'true'
+        run: flutter pub get
+
       - name: Format changed Dart files
         if: steps.pr.outputs.has_dart == 'true'
         shell: bash
@@ -149,6 +166,6 @@ jobs:
               repo: context.repo.repo,
               issue_number: Number('${{ steps.pr.outputs.number }}'),
               body: committed
-                ? 'Manual CI Auto-Fix formatted only the changed Dart/Deno files.'
-                : 'Manual CI Auto-Fix found no formatting changes.',
+                ? `Manual CI Auto-Fix formatted only the changed Dart/Deno files. @${context.actor} acknowledged responsibility for reviewing the bot commit before merge.`
+                : `Manual CI Auto-Fix found no formatting changes. @${context.actor} completed the required human-review acknowledgement.`,
             });

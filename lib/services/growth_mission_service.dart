@@ -1538,10 +1538,7 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
       );
     });
     _metricsTimer ??= Timer.periodic(const Duration(minutes: 5), (_) {
-      _runSafely(
-        _service.refreshAggregateMetrics(),
-        'refreshAggregateMetrics',
-      );
+      _runSafely(_service.refreshAggregateMetrics(), 'refreshAggregateMetrics');
     });
   }
 

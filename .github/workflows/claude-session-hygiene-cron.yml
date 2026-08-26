@@ -48,10 +48,12 @@ jobs:
       - name: Run session hygiene check
         id: hygiene
         shell: pwsh
+        env:
+          APPLY_INPUT: ${{ inputs.apply }}
         run: |
           New-Item -ItemType Directory -Force -Path memory | Out-Null
           $applyArg = @()
-          if ("${{ github.event_name }}" -eq "schedule" -or "${{ inputs.apply }}" -eq "true") {
+          if ($env:GITHUB_EVENT_NAME -eq "schedule" -or $env:APPLY_INPUT -eq "true") {
             $applyArg = @("--apply")
           }
 
