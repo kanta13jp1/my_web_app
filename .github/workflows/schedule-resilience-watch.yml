@@ -32,10 +32,11 @@ jobs:
       - name: Watch scheduled workflows
         env:
           GH_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ inputs.dry_run || 'false' }}
         run: |
           mkdir -p tmp/schedule-resilience
           DRY_RUN_ARG=""
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
             DRY_RUN_ARG="--dry-run"
           fi
           python scripts/schedule_resilience_watch.py \

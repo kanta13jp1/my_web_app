@@ -19,6 +19,7 @@ import 'package:my_web_app/models/kgi_csf_kpi.dart';
 import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
 import 'package:my_web_app/services/asset_auto_debit_confirmation_service.dart';
+import 'package:my_web_app/services/asset_balance_timestamp_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service.dart';
 import 'package:my_web_app/services/asset_liability_card_statement_import_service.dart';
@@ -36,6 +37,7 @@ import 'package:my_web_app/services/asset_management_ai_summary_refresh.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_egress_policy.dart';
+import 'package:my_web_app/services/asset_management_fixed_cost_summary_service.dart';
 import 'package:my_web_app/services/asset_account_balance_history_store.dart';
 import 'package:my_web_app/services/asset_pref_mirror_prefetch.dart';
 import 'package:my_web_app/services/asset_debt_discipline_monitor.dart';
@@ -329,6 +331,11 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final List<Map<String, dynamic>>? debugInitialPayslipRows;
 
+  /// テスト専用: 可処分残高のサーバー計算結果を直接注入し、端末側アクションとの
+  /// 統合をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugInitialDisposableBalanceResult;
+
   /// テスト専用: マネーカレンダーの「今日」(サイクル決定・予定系の起点) を固定し、
   /// 給料日サイクル窓の表示・ショート試算を実行日非依存で検証する。
   /// null なら実時刻。
@@ -364,6 +371,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugInitialRecentFlows,
     this.debugInitialPayslipSalaryIncomes,
     this.debugInitialPayslipRows,
+    this.debugInitialDisposableBalanceResult,
     this.debugCalendarNow,
   });
 
@@ -853,6 +861,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const SalarySpendingBreakdownService();
   final DisposableBalanceService _disposableBalanceService =
       const DisposableBalanceService();
+  final DisposableBalanceActionMergeService
+      _disposableBalanceActionMergeService =
+      const DisposableBalanceActionMergeService();
+  final AssetManagementFixedCostSummaryService _fixedCostSummaryService =
+      const AssetManagementFixedCostSummaryService();
   final DisposableBalanceAssetLiabilityAdapter
       _disposableBalanceAssetLiabilityAdapter =
       const DisposableBalanceAssetLiabilityAdapter();
@@ -1084,6 +1097,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _payslipRows = <Map<String, dynamic>>[
         for (final row in debugPayslipRows) Map<String, dynamic>.from(row),
       ];
+    }
+    final debugDisposableBalanceResult =
+        widget.debugInitialDisposableBalanceResult;
+    if (debugDisposableBalanceResult != null) {
+      _serverDisposableBalanceResult =
+          Map<String, dynamic>.from(debugDisposableBalanceResult);
     }
     _assetLiabilityRepository = widget.assetLiabilityRepository ??
         AssetLiabilityRepositoryFactory.createDefault(
@@ -1665,6 +1684,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }).toList();
   }
 
+  AssetManagementFixedCostSummary _fixedCostSummaryForMonth(DateTime month) {
+    return _fixedCostSummaryService.build(
+      month: month,
+      legacySubscriptions: _subscriptionsThreeMonths,
+      recurringFixedCosts: _recurringFixedCosts,
+      usdJpyRate: _usdJpyRate?.jpyPerUnit,
+    );
+  }
+
   /// [start]〜[endExclusive)(給料日サイクル窓)に請求日が入る固定費。
   List<Map<String, dynamic>> _subscriptionsForRange(
     DateTime start,
@@ -1885,33 +1913,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Map<String, int> _fixedCostByOverviewMonth(List<DateTime> months) {
-    final totals = <String, int>{
-      for (final month in months) _monthKey(month): 0,
+    return <String, int>{
+      for (final month in months)
+        _monthKey(month): _fixedCostSummaryForMonth(month).total,
     };
-
-    for (final sub in _subscriptionsThreeMonths) {
-      final dueStr = sub['due_date']?.toString();
-      if (dueStr == null || dueStr.isEmpty) continue;
-      final dueDate = DateTime.tryParse(dueStr);
-      if (dueDate == null) continue;
-      final key = _monthKey(DateTime(dueDate.year, dueDate.month, 1));
-      if (!totals.containsKey(key)) continue;
-      totals[key] = (totals[key] ?? 0) + ((sub['price'] as num?)?.toInt() ?? 0);
-    }
-
-    for (final month in months) {
-      final key = _monthKey(month);
-      final recurringTotal = _recurringFixedCosts
-          .where((cost) => cost.appliesToMonth(month.month))
-          .fold<int>(
-            0,
-            (total, cost) =>
-                total + cost.resolveJpyAmount(_usdJpyRate?.jpyPerUnit).round(),
-          );
-      totals[key] = (totals[key] ?? 0) + recurringTotal;
-    }
-
-    return totals;
   }
 
   Map<String, Map<String, int>> _taskStatsByOverviewMonth(
@@ -5838,7 +5843,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final hasAnyPositive = todayStock.values.any((v) => v >= 0);
     final hasAnyNegative = todayStock.values.any((v) => v < 0);
 
-    final subsOk = _subscriptions.isNotEmpty;
+    final subsOk = _fixedCostSummaryForMonth(_now).isNotEmpty;
 
     final checkNow = DateTime.now();
     final currentMonthFlows = _flowsForCycle(checkNow);
@@ -5903,10 +5908,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (v < 0) totalLiabilities += v;
     });
 
-    int totalFixed = 0;
-    for (final s in _subscriptions) {
-      totalFixed += (s['price'] as num?)?.toInt() ?? 0;
-    }
+    final fixedCostSummary = _fixedCostSummaryForMonth(now);
+    final totalFixed = fixedCostSummary.total;
 
     final currentMonthFlows = _flowsForCycle(now);
     int totalIncome = 0;
@@ -5967,10 +5970,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     buf.writeln('### ③ 固定費（$monthLabel）');
     buf.writeln('- 月額合計: ¥${NumberFormat('#,###').format(totalFixed)}');
-    if (_subscriptions.isNotEmpty) {
-      for (final s in _subscriptions) {
+    if (fixedCostSummary.isNotEmpty) {
+      for (final entry in fixedCostSummary.entries) {
         buf.writeln(
-          '  - ${s["service_name"]}: ¥${NumberFormat('#,###').format(s["price"])}',
+          '  - ${entry.name}: ¥${NumberFormat('#,###').format(entry.amount)}',
         );
       }
     } else {
@@ -6276,8 +6279,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final Map<String, Map<String, double>> loadedData = {};
       final Set<String> loadedTypes = {'現金'};
       for (var item in data) {
-        final DateTime createdAt = DateTime.parse(item['created_at']).toLocal();
-        final String dateKey = DateFormat('yyyy-MM-dd').format(createdAt);
+        final createdAt = DateTime.parse(item['created_at']);
+        final recordDate = AssetBalanceTimestampService.localRecordDate(
+          createdAt,
+          now: DateTime.now(),
+        );
+        final String dateKey = DateFormat('yyyy-MM-dd').format(recordDate);
         final String title = item['title'];
         final double amount = (item['amount'] as num).toDouble();
         loadedTypes.add(title);
@@ -6766,7 +6773,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         'user_id': userId,
         'title': type,
         'amount': amount,
-        'created_at': DateTime.now().toIso8601String(),
+        'created_at': AssetBalanceTimestampService.encodeForDatabase(
+          DateTime.now(),
+        ),
       });
 
       setState(() {
@@ -6895,7 +6904,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     if (confirmed != true || !mounted) return;
 
-    final nowIso = DateTime.now().toIso8601String();
+    final nowIso = AssetBalanceTimestampService.encodeForDatabase(
+      DateTime.now(),
+    );
     try {
       await _supabase.from('cfo_assets').insert([
         for (final entry in amounts.entries)
@@ -6988,6 +6999,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!hasData) return;
 
     try {
+      final nowIso = AssetBalanceTimestampService.encodeForDatabase(
+        DateTime.now(),
+      );
       final previousAmounts = <String, double?>{
         for (final entry in todayData.entries)
           entry.key: _lastUpdatedDates[entry.key] == null
@@ -6999,7 +7013,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           'user_id': userId,
           'title': entry.key,
           'amount': entry.value,
-          'created_at': DateTime.now().toIso8601String(),
+          'created_at': nowIso,
         });
       }
       setState(() {
@@ -15619,15 +15633,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cycleEndExclusive,
     );
     final debtInputs = <AssetCalendarDebtInput>[
-      for (final row in debtRows)
-        AssetCalendarDebtInput(
-          id: row.id,
-          name: row.name,
-          balance: row.balance,
-          paymentDay: row.paymentDay,
-          scheduledPaymentAmount: row.scheduledPaymentAmount,
-          isDirectCashflowTarget: row.isDirectCashflowTarget,
-        ),
+      for (final row in debtRows) AssetCalendarDebtInput.fromDebtRow(row),
     ];
     final inflowInputs = <AssetCalendarInflowInput>[
       for (final inflow in monthInflowEntries)
@@ -16794,7 +16800,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         )
         .toList(growable: false);
     final actions = _effectiveDisposableBalanceActions(
-      balance: balance,
       serverActions: serverActions,
       localActions: localActions,
     );
@@ -17217,22 +17222,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   List<Map<String, dynamic>> _effectiveDisposableBalanceActions({
-    required DisposableBalanceResult balance,
     required List<Map<String, dynamic>> serverActions,
     required List<Map<String, dynamic>> localActions,
   }) {
-    final source = serverActions.isNotEmpty ? serverActions : localActions;
-    return source.where((action) {
-      final actionKey =
-          (action['action_key'] ?? action['actionKey'])?.toString() ?? '';
-      if (actionKey == 'upload_current_payslip' && balance.income > 0) {
-        return false;
-      }
-      if (actionKey == 'add_recurring_expenses' && balance.fixedTotal > 0) {
-        return false;
-      }
-      return true;
-    }).toList(growable: false);
+    return _disposableBalanceActionMergeService.merge(
+      serverActions: serverActions,
+      localActions: localActions,
+    );
   }
 
   String _localizedDisposableActionTitle(String actionKey, String rawTitle) {
@@ -31174,6 +31170,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final visibleSubscriptions = _subscriptionsForMonth(
       _selectedSubscriptionHistoryMonth,
     );
+    final fixedCostSummary = _fixedCostSummaryForMonth(
+      _selectedSubscriptionHistoryMonth,
+    );
     final visibleMonthLabel = _flowMonthLabel(
       _selectedSubscriptionHistoryMonth,
     );
@@ -31181,15 +31180,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _selectedSubscriptionHistoryMonth,
       DateTime(DateTime.now().year + 5, 12, 1),
     );
-    int totalCost = 0;
-    int unpaidCost = 0;
+    final totalCost = fixedCostSummary.total;
+    final unpaidCost = fixedCostSummary.legacyUnpaidTotal;
+    final recurringCount = fixedCostSummary.recurringEntryCount;
+    final unpaidLabel = recurringCount > 0 ? '旧固定費の未払い' : '未払い';
     final isCompact = _isCompact;
-    for (final sub in visibleSubscriptions) {
-      final price = (sub['price'] as num?)?.toInt() ?? 0;
-      totalCost += price;
-      final isPaid = (sub['is_paid'] as bool?) == true;
-      if (!isPaid) unpaidCost += price;
-    }
     return Card(
       elevation: 2,
       child: Column(
@@ -31257,7 +31252,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '未払い: ¥${NumberFormat('#,###').format(unpaidCost)}',
+                        '$unpaidLabel: ¥${NumberFormat('#,###').format(unpaidCost)}',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -31343,7 +31338,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '未払い: ¥${NumberFormat('#,###').format(unpaidCost)}',
+                            '$unpaidLabel: ¥${NumberFormat('#,###').format(unpaidCost)}',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -31417,139 +31412,145 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
           ),
-          _isLoadingSubscriptions
-              ? const Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              : visibleSubscriptions.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.all(32),
-                      child:
-                          Center(child: Text('$visibleMonthLabel の固定費はありません')),
-                    )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: visibleSubscriptions.length,
-                      itemBuilder: (context, index) {
-                        final item = visibleSubscriptions[index];
-                        final due = item['due_date'] as String?;
-                        final dueDate =
-                            due != null ? DateTime.parse(due) : null;
-                        final isPaid = (item['is_paid'] as bool?) == true;
-                        final src =
-                            (item['payment_source'] ?? '').toString().trim();
-                        return ListTile(
-                          dense: true,
-                          leading: Checkbox(
-                            value: isPaid,
-                            onChanged: (_) =>
-                                _toggleSubscriptionPaid(item['id'], isPaid),
+          if (recurringCount > 0)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Text(
+                '定期固定費・サブスク $recurringCount件を月額合計へ反映済みです。内訳と編集は上の専用カードで確認できます。',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          if (_isLoadingSubscriptions)
+            const Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (fixedCostSummary.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(32),
+              child: Center(child: Text('$visibleMonthLabel の固定費はありません')),
+            )
+          else if (visibleSubscriptions.isNotEmpty)
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: visibleSubscriptions.length,
+              itemBuilder: (context, index) {
+                final item = visibleSubscriptions[index];
+                final due = item['due_date'] as String?;
+                final dueDate = due != null ? DateTime.parse(due) : null;
+                final isPaid = (item['is_paid'] as bool?) == true;
+                final src = (item['payment_source'] ?? '').toString().trim();
+                return ListTile(
+                  dense: true,
+                  leading: Checkbox(
+                    value: isPaid,
+                    onChanged: (_) =>
+                        _toggleSubscriptionPaid(item['id'], isPaid),
+                  ),
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item['service_name'] ?? '',
+                          style: TextStyle(
+                            decoration:
+                                isPaid ? TextDecoration.lineThrough : null,
+                            color: isPaid ? const Color(0xFF9CA3AF) : null,
+                            fontWeight:
+                                isPaid ? FontWeight.normal : FontWeight.bold,
+                            height: 1.5,
                           ),
-                          title: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  item['service_name'] ?? '',
-                                  style: TextStyle(
-                                    decoration: isPaid
-                                        ? TextDecoration.lineThrough
-                                        : null,
-                                    color:
-                                        isPaid ? const Color(0xFF9CA3AF) : null,
-                                    fontWeight: isPaid
-                                        ? FontWeight.normal
-                                        : FontWeight.bold,
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '¥${NumberFormat('#,###').format(item['price'])}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: isPaid
-                                      ? const Color(0xFF9CA3AF)
-                                      : Theme.of(context).colorScheme.onSurface,
-                                  height: 1.5,
-                                ),
-                              ),
-                            ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '¥${NumberFormat('#,###').format(item['price'])}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isPaid
+                              ? const Color(0xFF9CA3AF)
+                              : Theme.of(context).colorScheme.onSurface,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        dueDate != null
+                            ? '支払日: ${DateFormat('yyyy/M/d(E)', 'ja_JP').format(dueDate)}'
+                            : '支払日: 未設定',
+                        style: TextStyle(
+                          color: isPaid
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFFB91C1C),
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                      ),
+                      if (src.isNotEmpty)
+                        Text(
+                          '引落先: $src',
+                          style: TextStyle(
+                            color: isPaid
+                                ? const Color(0xFF9CA3AF)
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                            fontSize: 12,
+                            height: 1.5,
                           ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                dueDate != null
-                                    ? '支払日: ${DateFormat('yyyy/M/d(E)', 'ja_JP').format(dueDate)}'
-                                    : '支払日: 未設定',
-                                style: TextStyle(
-                                  color: isPaid
-                                      ? const Color(0xFF9CA3AF)
-                                      : const Color(0xFFB91C1C),
-                                  fontSize: 12,
-                                  height: 1.5,
-                                ),
-                              ),
-                              if (src.isNotEmpty)
-                                Text(
-                                  '引落先: $src',
-                                  style: TextStyle(
-                                    color: isPaid
-                                        ? const Color(0xFF9CA3AF)
-                                        : Theme.of(
-                                            context,
-                                          ).colorScheme.onSurfaceVariant,
-                                    fontSize: 12,
-                                    height: 1.5,
-                                  ),
-                                ),
-                            ],
-                          ),
-                          trailing: PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert),
-                            onSelected: (value) async {
-                              if (value == 'due') {
-                                await _editSubscriptionDueDate(item);
-                              } else if (value == 'source') {
-                                await _editSubscriptionPaymentSource(item);
-                              } else if (value == 'delete') {
-                                final serviceName =
-                                    (item['service_name'] ?? '').toString();
-                                final shouldDelete =
-                                    await _confirmDeleteSubscription(
-                                  serviceName: serviceName,
-                                );
-                                if (!shouldDelete) return;
-                                await _deleteSubscription(item['id']);
-                              }
-                            },
-                            itemBuilder: (context) => [
-                              const PopupMenuItem<String>(
-                                value: 'due',
-                                child: Text('支払日を編集'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'source',
-                                child: Text('引落先を編集'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'delete',
-                                child: Text(
-                                  '削除',
-                                  style: TextStyle(
-                                    color: Color(0xFFB91C1C),
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        ),
+                    ],
+                  ),
+                  trailing: PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (value) async {
+                      if (value == 'due') {
+                        await _editSubscriptionDueDate(item);
+                      } else if (value == 'source') {
+                        await _editSubscriptionPaymentSource(item);
+                      } else if (value == 'delete') {
+                        final serviceName =
+                            (item['service_name'] ?? '').toString();
+                        final shouldDelete = await _confirmDeleteSubscription(
+                          serviceName: serviceName,
                         );
-                      },
-                    ),
+                        if (!shouldDelete) return;
+                        await _deleteSubscription(item['id']);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem<String>(
+                        value: 'due',
+                        child: Text('支払日を編集'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'source',
+                        child: Text('引落先を編集'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Text(
+                          '削除',
+                          style: TextStyle(
+                            color: Color(0xFFB91C1C),
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: TextButton.icon(

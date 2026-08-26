@@ -823,7 +823,7 @@ final Map<String, _ProviderMeta> _providerMeta = {
     name: '01.AI (Yi)',
     emoji: '🀄',
     color: const Color(0xFF1A73E8),
-    officialUrl: 'https://www.01.ai',
+    officialUrl: 'https://platform.01.ai/docs',
   ),
   'coze': _ProviderMeta(
     name: 'Coze',
@@ -3276,22 +3276,17 @@ Photoshop・Illustratorと深く統合。Creative Cloud 1億人ユーザー基�
 [公式サイト](https://firefly.adobe.com)
 ''',
   '01ai': '''
-## 01.AI (Yi)
-李開復 (Kai-Fu Lee) が率いる中国AIスタートアップ。
-Yi-LightningはGPT-4o同等の性能を激安で提供。OpenAI互換APIで移行が容易。
+## 01.AI (Yi) API
+01.AIが提供するYiシリーズ向けAPIです。
+公式ドキュメント確認日: 2026-08-26
 
-## 主要モデル
-- **Yi-Lightning**: GPT-4o同等・\$0.14/100万token (超低コスト)
-- **Yi-Large**: 高性能フラッグシップモデル
-- **Yi-34B/6B**: Apache 2.0ライセンスのオープンソースモデル
+## 利用前の確認
+- 公式ドキュメントはOpenAI SDKと互換性のある呼び出し形式を案内しています。全API・全バージョンの完全互換を保証する表現ではありません。
+- APIキーを作成し、認証後にモデル一覧（GET https://api.01.ai/v1/models）を取得して、利用可能なモデルIDを確認します。
+- Chat CompletionsのベースURLは https://api.01.ai/v1 です。
+- 仕様・モデル提供状況は変更される可能性があります。価格を含む最新情報は公式ドキュメントとアカウント画面で再確認してください。
 
-## 特徴
-- OpenAI API完全互換 (base_url変更のみで移行可)
-- Yi-34BはHugging Faceで公開・商用利用可
-- 中国語・英語の双語処理に強み
-- 元Google中国社長・李開復が2023年創業
-
-[公式サイト](https://www.01.ai)
+[公式ドキュメント](https://platform.01.ai/docs)
 ''',
   'coze': '''
 ## Coze (ByteDance)
