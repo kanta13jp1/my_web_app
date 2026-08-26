@@ -761,23 +761,23 @@ class _ContentDubbingPageState extends State<ContentDubbingPage> {
   }
 
   InputDecoration _inputDecoration(String label) => InputDecoration(
-    labelText: label,
-    labelStyle: const TextStyle(color: DesignTokens.textSecondary),
-    filled: true,
-    fillColor: DesignTokens.surface2,
-    contentPadding: const EdgeInsets.symmetric(
-      horizontal: DesignTokens.space12,
-      vertical: DesignTokens.space12,
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: DesignTokens.divider),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: DesignTokens.indigo),
-    ),
-  );
+        labelText: label,
+        labelStyle: const TextStyle(color: DesignTokens.textSecondary),
+        filled: true,
+        fillColor: DesignTokens.surface2,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: DesignTokens.space12,
+          vertical: DesignTokens.space12,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: DesignTokens.divider),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: DesignTokens.indigo),
+        ),
+      );
 
   String _message(Object error) => error
       .toString()

@@ -64,7 +64,8 @@ void main() {
     );
   });
 
-  test('idempotent jobs reconcile unstarted reservations in the claim month', () {
+  test('idempotent jobs reconcile unstarted reservations in the claim month',
+      () {
     expect(migration, contains("'period_start', v_period_start"));
     expect(
       migration,

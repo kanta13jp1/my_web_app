@@ -23,9 +23,8 @@ void main() {
     final flash = voiceDubbingModels.firstWhere(
       (model) => model.id == 'eleven_flash_v2_5',
     );
-    final multilingualCount = voiceDubbingLanguages
-        .where(multilingual.supports)
-        .length;
+    final multilingualCount =
+        voiceDubbingLanguages.where(multilingual.supports).length;
     final flashCount = voiceDubbingLanguages.where(flash.supports).length;
 
     expect(multilingualCount, 29);
