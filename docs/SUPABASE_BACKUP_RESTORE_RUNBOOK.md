@@ -74,13 +74,24 @@ The workflow may run only on `refs/heads/main` and has read-only repository perm
 4. Encrypt the bundle with encrypted headers, verify it is non-empty, and delete plaintext.
 5. Decrypt into a new runner directory and verify every digest and byte size.
 6. Start a fresh local Supabase Postgres 17 target with no repository migrations.
-7. Restore roles, schema, and data in a single transaction with `ON_ERROR_STOP=1`.
-8. Parse every `COPY` block for the `public` schema and assert the restored row count of every table.
-9. Stop/delete the ephemeral restore target and remove decrypted SQL.
-10. Upload only the encrypted bundle and sanitized evidence for 35 days.
+7. Recreate non-partitioned, logged PGMQ queue relations found as matching `pgmq.q_*` / `pgmq.a_*` COPY
+   pairs. The CLI intentionally omits extension-managed DDL, so these relations must exist before
+   queue rows can be restored. Remove the bootstrap metadata rows only when source PGMQ metadata is
+   present, allowing the source metadata to be restored without a duplicate key.
+8. Restore roles, schema, and data in a single transaction with `ON_ERROR_STOP=1`.
+9. Advance each restored PGMQ queue sequence to its maximum restored message ID.
+10. Parse every `COPY` block for the `public` and `pgmq` schemas and assert the restored row count
+    of every table.
+11. Stop/delete the ephemeral restore target and remove decrypted SQL.
+12. Upload only the encrypted bundle and sanitized evidence for 35 days.
 
 This proves that the exact encrypted artifact can be decrypted and that application-owned database
-tables can be restored outside the source project. It never writes to production or staging.
+tables plus durable PGMQ messages can be restored outside the source project. It never writes to
+production or staging. Queue bootstrap is derived only from quoted COPY relation identifiers; the
+generator rejects an archive/active table mismatch and quotes every generated SQL identifier and
+literal. The current project queue uses `pgmq.create(...)`; the drill fails closed if restored
+metadata identifies a partitioned or unlogged queue, which requires a mode-aware bootstrap before
+it can be accepted as recoverable.
 
 ## 5. Manual operation
 
@@ -193,12 +204,21 @@ following logged compensating controls are mandatory.
 
 The workflow pins Supabase CLI 2.115.0 because its local Auth schema matches the production
 `auth.custom_oauth_providers.custom_claims_allowlist` column observed during the first drill.
-Upgrade the pin deliberately when production's managed Auth/Storage schema moves forward; a restore
-failure caused by a missing managed column is a compatibility failure and must not be waived.
+Production Storage moved to v1.71.0 after that CLI release. Before applying the dump, the workflow
+therefore verifies and applies the exact upstream additive migration
+`scripts/sql/supabase_storage_v1_71_0_0062.sql` (SHA-256
+`45969060b55102f56af317b0d7981434be58927de1ff76e1e1789139a3f2defc`) to the ephemeral target.
+It is vendored byte-for-byte from Supabase Storage tag `v1.71.0`, commit
+`e05eb148dce70c55d7b4d9b524a3b20835b1e165`; it never runs against production or staging.
+
+Upgrade the CLI pin deliberately when its local Storage schema includes migration 0062, then remove
+the compatibility file and checksum in the same PR. A restore failure caused by a missing managed
+column is a compatibility failure and must not be waived.
 
 ## 9. Official references
 
 - [Supabase Database Backups](https://supabase.com/docs/guides/platform/backups)
 - [Backup and Restore using the CLI](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore)
 - [Restore dashboard backup](https://supabase.com/docs/guides/platform/migrating-within-supabase/dashboard-restore)
+- [Supabase Storage v1.71.0 migration 0062](https://github.com/supabase/storage/blob/v1.71.0/migrations/tenant/0062-object-versioning-core.sql)
 - [Transfer projects](https://supabase.com/docs/guides/platform/project-transfer)
