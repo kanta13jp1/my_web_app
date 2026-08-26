@@ -23,11 +23,12 @@ concurrency:
   group: blog-news-signal-draft
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   create-draft:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 8
     env:

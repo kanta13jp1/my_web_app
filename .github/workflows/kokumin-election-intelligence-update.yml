@@ -20,21 +20,22 @@ concurrency:
   group: kokumin-election-intelligence-update
   cancel-in-progress: false
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   refresh-official-endorsements:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           token: ${{ secrets.GH_PAT || secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
           cache: pip

@@ -8,13 +8,14 @@ concurrency:
   group: feedback-issue-resolved-${{ github.event.issue.number }}
   cancel-in-progress: false
 
-permissions:
-  contents: read
-  issues: read
-  pull-requests: read
+permissions: {}
 
 jobs:
   notify:
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
     name: Send Resolution Email
     if: contains(github.event.issue.labels.*.name, 'user-feedback')
     runs-on: ubuntu-latest
@@ -23,7 +24,7 @@ jobs:
     steps:
       - name: Extract feedback metadata
         id: meta
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const issue = context.payload.issue;

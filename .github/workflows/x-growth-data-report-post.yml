@@ -26,11 +26,12 @@ concurrency:
   group: x-growth-data-report-post
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   post:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
