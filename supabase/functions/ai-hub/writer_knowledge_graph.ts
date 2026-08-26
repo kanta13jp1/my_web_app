@@ -61,6 +61,7 @@ export interface WriterKnowledgeGraphStore {
 
 export interface WriterKnowledgeGraphGateway {
   createGraph(name: string, description: string): Promise<{ id: string }>;
+  deleteGraph(graphId: string): Promise<void>;
   uploadFile(input: {
     graphId: string;
     fileName: string;
@@ -94,6 +95,7 @@ export function createWriterKnowledgeGraphGateway(
   const request = async (
     path: string,
     init: RequestInit,
+    options: { allowNotFound?: boolean } = {},
   ): Promise<JsonRecord> => {
     let response: Response;
     try {
@@ -113,6 +115,7 @@ export function createWriterKnowledgeGraphGateway(
       );
     }
     const payload = await parseJsonResponse(response);
+    if (response.status === 404 && options.allowNotFound) return payload;
     if (!response.ok) {
       const detail = safeErrorDetail(payload);
       throw new WriterKnowledgeGraphError(
@@ -132,6 +135,11 @@ export function createWriterKnowledgeGraphGateway(
         body: JSON.stringify({ name, description }),
       });
       return { id: requiredUuid(payload.id, "Writer graph id missing") };
+    },
+    async deleteGraph(graphId) {
+      await request(`/v1/graphs/${encodeURIComponent(graphId)}`, {
+        method: "DELETE",
+      }, { allowNotFound: true });
     },
     async uploadFile(input) {
       const safeName = safeHeaderFileName(input.fileName);
@@ -182,7 +190,7 @@ export function createWriterKnowledgeGraphGateway(
     async deleteFile(fileId) {
       await request(`/v1/files/${encodeURIComponent(fileId)}`, {
         method: "DELETE",
-      });
+      }, { allowNotFound: true });
     },
   };
 }
@@ -338,13 +346,14 @@ async function queryGraph(
   const seen = new Set<string>();
   const citations = result.sources.flatMap((source) => {
     if (seen.has(source.file_id)) return [];
-    seen.add(source.file_id);
     const document = byFileId.get(source.file_id);
+    if (!document) return [];
+    seen.add(source.file_id);
     return [{
       index: seen.size,
       file_id: source.file_id,
-      document_id: document?.id ?? null,
-      file_name: document?.file_name ?? "Uploaded document",
+      document_id: document.id,
+      file_name: document.file_name,
       snippet: source.snippet,
     }];
   });
@@ -356,9 +365,15 @@ async function queryGraph(
     );
   }
   const markers = citations.map((citation) => `[${citation.index}]`).join("");
-  const answer = markers && !/\[\d+\]/.test(result.answer)
-    ? `${result.answer.trim()} ${markers}`
-    : result.answer.trim();
+  const answerText = result.answer.replace(/\s*\[\d+\]/g, "").trim();
+  if (!answerText) {
+    throw new WriterKnowledgeGraphError(
+      "Writer answer did not contain response text.",
+      502,
+      "writer_invalid_response",
+    );
+  }
+  const answer = `${answerText} ${markers}`;
   return {
     success: true,
     question,
@@ -407,7 +422,16 @@ async function getOrCreateGraph(
     `my_web_app user ${suffix}`,
     "Private user documents uploaded from my_web_app.",
   );
-  return await store.saveGraph(userId, created.id);
+  const saved = await store.saveGraph(userId, created.id);
+  if (saved.writer_graph_id !== created.id) {
+    try {
+      await gateway.deleteGraph(created.id);
+    } catch {
+      // The winning user graph remains authoritative. A failed cleanup is
+      // visible in Writer audit logs and can be removed by an operator.
+    }
+  }
+  return saved;
 }
 
 function decodeBase64(value: unknown): Uint8Array {

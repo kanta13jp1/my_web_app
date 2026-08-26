@@ -76,11 +76,17 @@ class MemoryStore implements WriterKnowledgeGraphStore {
 class FakeGateway implements WriterKnowledgeGraphGateway {
   createCount = 0;
   uploadedGraphId = "";
+  deletedGraphIds: string[] = [];
   deletedFileIds: string[] = [];
 
   createGraph(_name: string, _description: string) {
     this.createCount += 1;
     return Promise.resolve({ id: GRAPH_ID });
+  }
+
+  deleteGraph(graphId: string) {
+    this.deletedGraphIds.push(graphId);
+    return Promise.resolve();
   }
 
   uploadFile(input: {
@@ -170,6 +176,62 @@ Deno.test("query uses only the owner graph and adds deterministic inline citatio
   const citations = result.citations as Array<Record<string, unknown>>;
   assertEquals(citations.length, 1);
   assertEquals(citations[0].file_name, "roadmap.txt");
+});
+
+Deno.test("query ignores unknown files and rewrites numeric markers deterministically", async () => {
+  const store = new MemoryStore();
+  store.graph = { user_id: "user-a", writer_graph_id: GRAPH_ID };
+  store.documents.push(documentFor("user-a"));
+  const gateway = new FakeGateway();
+  gateway.ask = () =>
+    Promise.resolve({
+      answer: "The launch is in October [99].",
+      sources: [
+        { file_id: "other-user-file", snippet: "Private source" },
+        { file_id: "file-1", snippet: "October launch" },
+      ],
+    });
+
+  const result = await handleWriterKnowledgeGraphAction({
+    action: "knowledge_graph.query",
+    body: { question: "When is launch?" },
+    userId: "user-a",
+    configured: true,
+    store,
+    gateway,
+  });
+
+  assertEquals(result.answer, "The launch is in October. [1]");
+  const citations = result.citations as Array<Record<string, unknown>>;
+  assertEquals(citations.length, 1);
+  assertEquals(citations[0].file_id, "file-1");
+  assertEquals(citations[0].document_id, "document-1");
+});
+
+Deno.test("upload removes a graph that loses a concurrent creation race", async () => {
+  const store = new MemoryStore();
+  const winningGraphId = "97095b89-d671-42b5-9911-631d494e33c7";
+  store.saveGraph = (userId: string, _writerGraphId: string) => {
+    store.graph = { user_id: userId, writer_graph_id: winningGraphId };
+    return Promise.resolve(store.graph);
+  };
+  const gateway = new FakeGateway();
+
+  await handleWriterKnowledgeGraphAction({
+    action: "knowledge_graph.upload",
+    body: {
+      file_name: "roadmap.txt",
+      mime_type: "text/plain",
+      file_base64: btoa("October launch"),
+    },
+    userId: "user-a",
+    configured: true,
+    store,
+    gateway,
+  });
+
+  assertEquals(gateway.deletedGraphIds, [GRAPH_ID]);
+  assertEquals(gateway.uploadedGraphId, winningGraphId);
 });
 
 Deno.test("delete refuses another user's document", async () => {
@@ -264,6 +326,7 @@ Deno.test("Writer gateway keeps the API key in Authorization and scopes calls to
   );
 
   await gateway.createGraph("private", "private graph");
+  await gateway.deleteGraph(GRAPH_ID);
   await gateway.uploadFile({
     graphId: GRAPH_ID,
     fileName: "roadmap.txt",
@@ -273,7 +336,7 @@ Deno.test("Writer gateway keeps the API key in Authorization and scopes calls to
   await gateway.ask(GRAPH_ID, "When?");
   await gateway.deleteFile("file-1");
 
-  assertEquals(requests.length, 4);
+  assertEquals(requests.length, 5);
   for (const request of requests) {
     const headers = new Headers(request.init?.headers);
     assertEquals(headers.get("Authorization"), "Bearer secret-writer-key");
@@ -282,9 +345,19 @@ Deno.test("Writer gateway keeps the API key in Authorization and scopes calls to
       false,
     );
   }
-  assertStringIncludes(requests[1].url, `graphId=${GRAPH_ID}`);
-  const questionBody = JSON.parse(String(requests[2].init?.body));
+  assertEquals(requests[1].url.endsWith(`/v1/graphs/${GRAPH_ID}`), true);
+  assertStringIncludes(requests[2].url, `graphId=${GRAPH_ID}`);
+  const questionBody = JSON.parse(String(requests[3].init?.body));
   assertEquals(questionBody.graph_ids, [GRAPH_ID]);
+});
+
+Deno.test("Writer delete treats an already removed file as success", async () => {
+  const gateway = createWriterKnowledgeGraphGateway(
+    "secret-writer-key",
+    (() => Promise.resolve(jsonResponse({}, 404))) as typeof fetch,
+  );
+
+  await gateway.deleteFile("already-removed");
 });
 
 function documentFor(userId: string): UserWriterDocument {
@@ -300,9 +373,9 @@ function documentFor(userId: string): UserWriterDocument {
   };
 }
 
-function jsonResponse(body: Record<string, unknown>): Response {
+function jsonResponse(body: Record<string, unknown>, status = 200): Response {
   return new Response(JSON.stringify(body), {
-    status: 200,
+    status,
     headers: { "Content-Type": "application/json" },
   });
 }
