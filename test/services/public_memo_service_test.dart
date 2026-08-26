@@ -15,30 +15,35 @@ void main() {
     test('buildPublicMemoUrl returns the app detail route', () {
       final url = PublicMemoService.buildPublicMemoUrl(42);
 
-      expect(
-        url,
-        PublicMemoService.buildPublicMemoAppUrl(42),
-      );
+      expect(url, PublicMemoService.buildPublicMemoAppUrl(42));
     });
 
-    test('buildPublicMemoReaderUrl returns the bot-readable core-hub route',
-        () {
-      final url = PublicMemoService.buildPublicMemoReaderUrl(44);
+    test(
+      'buildPublicMemoReaderUrl returns the bot-readable core-hub route',
+      () {
+        final url = PublicMemoService.buildPublicMemoReaderUrl(
+          44,
+          supabaseUrl: 'https://example.supabase.co',
+        );
 
-      expect(
-        url,
-        'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub'
-        '?action=memo.public.view&id=44',
-      );
-    });
+        expect(
+          url,
+          'https://example.supabase.co/functions/v1/core-hub'
+          '?action=memo.public.view&id=44',
+        );
+      },
+    );
 
     test('buildPublicMemoReaderUrl appends the requested format', () {
-      final url =
-          PublicMemoService.buildPublicMemoReaderUrl(44, format: 'json');
+      final url = PublicMemoService.buildPublicMemoReaderUrl(
+        44,
+        format: 'json',
+        supabaseUrl: 'https://example.supabase.co',
+      );
 
       expect(
         url,
-        'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub'
+        'https://example.supabase.co/functions/v1/core-hub'
         '?action=memo.public.view&id=44&format=json',
       );
     });

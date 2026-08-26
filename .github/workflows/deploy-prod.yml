@@ -806,6 +806,13 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
+      - name: Validate Flutter Supabase configuration
+        if: steps.changes.outputs.web == 'true'
+        run: python scripts/validate_flutter_supabase_env.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
+
       - name: Build Flutter Web (Production)
         if: steps.changes.outputs.web == 'true'
         run: |
@@ -816,7 +823,7 @@ jobs:
             --build-number=${{ github.run_number }} \
             --dart-define=ENVIRONMENT=production \
             --dart-define=SUPABASE_URL=$SUPABASE_URL \
-            --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY \
             --dart-define=APP_VERSION=${{ steps.version.outputs.version }} \
             --dart-define=BUILD_NUMBER=${{ github.run_number }} \
             --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true \
@@ -828,9 +835,15 @@ jobs:
             --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=${{ env.LANDING_GOOGLE_LOGIN_ENABLED }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
           POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
           POSTHOG_HOST: ${{ vars.POSTHOG_HOST || 'https://us.i.posthog.com' }}
+
+      - name: Render public Supabase URL into web shell
+        if: steps.changes.outputs.web == 'true'
+        run: python scripts/render_web_supabase_config.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
 
       - name: Write version.json
         if: steps.changes.outputs.web == 'true'
@@ -987,7 +1000,7 @@ jobs:
         if: steps.changes.outputs.web == 'true'
         continue-on-error: true
         env:
-          SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           curl -fsS -X POST \

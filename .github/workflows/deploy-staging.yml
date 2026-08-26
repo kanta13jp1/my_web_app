@@ -88,8 +88,8 @@ jobs:
 
       - name: Verify staging Supabase isolation
         run: |
-          if [ -z "$STAGING_PROJECT_ID" ] || [ -z "$STAGING_SUPABASE_URL" ]; then
-            echo "Staging Supabase configuration is incomplete."
+          if [ -z "$STAGING_PROJECT_ID" ] || [ -z "$STAGING_SUPABASE_URL" ] || [ -z "$PRODUCTION_PROJECT_ID" ] || [ -z "$PRODUCTION_SUPABASE_URL" ]; then
+            echo "Staging and production Supabase isolation inputs are required."
             exit 1
           fi
           if [ "$STAGING_PROJECT_ID" = "$PRODUCTION_PROJECT_ID" ] || [ "$STAGING_SUPABASE_URL" = "$PRODUCTION_SUPABASE_URL" ]; then
@@ -129,12 +129,19 @@ jobs:
         continue-on-error: false
 
       # Build Flutter Web
+      - name: Validate Flutter Supabase configuration
+        run: python scripts/validate_flutter_supabase_env.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_STAGING }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_STAGING || secrets.SUPABASE_ANON_KEY_STAGING }}
+
       - name: Build Flutter Web (Staging)
         run: >
           flutter build web --release --pwa-strategy=none
           --dart-define=ENVIRONMENT=staging
           --dart-define="SUPABASE_URL=$SUPABASE_URL"
-          --dart-define="SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
+          --dart-define="SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY"
+          --dart-define="SUPABASE_PRODUCTION_PROJECT_REF=$SUPABASE_PRODUCTION_PROJECT_REF"
           --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true
           --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true
           --dart-define=ASSET_MANAGEMENT_AI_SUMMARY_ENABLED=true
@@ -142,7 +149,13 @@ jobs:
         env:
           # 修正: シークレット名を _STAGING に変更
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_STAGING }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_STAGING }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_STAGING || secrets.SUPABASE_ANON_KEY_STAGING }}
+          SUPABASE_PRODUCTION_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_ID_PROD }}
+
+      - name: Render public Supabase URL into web shell
+        run: python scripts/render_web_supabase_config.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_STAGING }}
 
       - name: Verify build output
         run: |
