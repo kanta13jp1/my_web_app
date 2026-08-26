@@ -69,7 +69,7 @@ void main() {
       ).hasMatch(sql),
       isTrue,
     );
-    expect(sql, contains("p_share_increment > 1"));
+    expect(sql, contains('p_share_increment > 1'));
     expect(sql, contains("'public_memo_share'"));
     expect(sql, contains("'touch_public_tracker'"));
     expect(sql, contains("'^touch_comparison_[a-z0-9_-]{1,64}\$'"));
