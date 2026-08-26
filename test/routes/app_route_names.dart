@@ -278,6 +278,7 @@ const List<String> kAllAppRoutes = <String>[
   '/self-touch-tracker',
   '/semantic-search',
   '/settings',
+  '/settings/ai-form-assistant',
   '/settings/ai-share-button',
   '/settings/theme',
   '/shop',
