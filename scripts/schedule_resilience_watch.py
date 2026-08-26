@@ -45,6 +45,7 @@ TARGETS = (
     WorkflowTarget("competitor-monitoring", "competitor-monitoring.yml", 30),
     WorkflowTarget("health-monitor", "health-monitor.yml", 3),
     WorkflowTarget("notion-sync", "notion-sync.yml", 10),
+    WorkflowTarget("supabase-backup-restore", "supabase-backup-restore.yml", 192),
     WorkflowTarget("deploy-prod", "deploy-prod.yml", 0, "push"),
 )
 
