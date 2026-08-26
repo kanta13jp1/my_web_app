@@ -1,7 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/models/competitor_claim_evidence.dart';
+import 'package:my_web_app/services/competitor_claim_evidence_repository.dart';
+import 'package:my_web_app/services/supabase_client_provider.dart';
+import 'package:my_web_app/ui/features/comparison/view_models/comparison_evidence_view_model.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_evidence_section.dart';
 
 import '../services/growth_acquisition_service.dart';
 
@@ -11,46 +15,51 @@ import '../services/growth_acquisition_service.dart';
 /// a page that speaks directly to that user's context.
 class ComparisonPage extends StatefulWidget {
   final String competitorKey;
+  final CompetitorClaimEvidenceRepository? evidenceRepository;
 
-  const ComparisonPage({super.key, required this.competitorKey});
+  const ComparisonPage({
+    super.key,
+    required this.competitorKey,
+    this.evidenceRepository,
+  });
 
   @override
   State<ComparisonPage> createState() => _ComparisonPageState();
 }
 
 class _ComparisonPageState extends State<ComparisonPage> {
-  String? _pricingTier;
-  double? _pricingStartUsd;
-  String? _pricingNotesJa;
-  String? _japanPresenceLevel;
+  late final ComparisonEvidenceViewModel _evidenceViewModel;
 
   @override
   void initState() {
     super.initState();
-    unawaited(_fetchDbOverlay());
+    _evidenceViewModel = ComparisonEvidenceViewModel(
+      repository: widget.evidenceRepository ??
+          SupabaseCompetitorClaimEvidenceRepository(supabase),
+    )..addListener(_handleEvidenceChanged);
+    unawaited(_evidenceViewModel.load(widget.competitorKey));
   }
 
-  Future<void> _fetchDbOverlay() async {
-    try {
-      final data = await Supabase.instance.client
-          .from('competitors')
-          .select(
-            'pricing_tier, pricing_start_usd, pricing_notes_ja, japan_presence_level',
-          )
-          .eq('id', widget.competitorKey.toLowerCase())
-          .maybeSingle();
-      if (data != null && mounted) {
-        setState(() {
-          _pricingTier = data['pricing_tier'] as String?;
-          final rawUsd = data['pricing_start_usd'];
-          _pricingStartUsd = rawUsd != null ? (rawUsd as num).toDouble() : null;
-          _pricingNotesJa = data['pricing_notes_ja'] as String?;
-          _japanPresenceLevel = data['japan_presence_level'] as String?;
-        });
-      }
-    } catch (_) {
-      // フォールバック: const map のみで表示
+  @override
+  void didUpdateWidget(covariant ComparisonPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.competitorKey != widget.competitorKey) {
+      unawaited(_evidenceViewModel.load(widget.competitorKey));
     }
+  }
+
+  void _handleEvidenceChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    _evidenceViewModel
+      ..removeListener(_handleEvidenceChanged)
+      ..dispose();
+    super.dispose();
   }
 
   @override
@@ -60,10 +69,8 @@ class _ComparisonPageState extends State<ComparisonPage> {
     return _ComparisonShell(
       info: info,
       competitorKey: widget.competitorKey.toLowerCase(),
-      pricingTier: _pricingTier,
-      pricingStartUsd: _pricingStartUsd,
-      pricingNotesJa: _pricingNotesJa,
-      japanPresenceLevel: _japanPresenceLevel,
+      evidenceStatus: _evidenceViewModel.status,
+      evidenceClaims: _evidenceViewModel.claims,
     );
   }
 }
@@ -67152,17 +67159,13 @@ final _competitorInfo = <String, _CompetitorInfo>{
 class _ComparisonShell extends StatefulWidget {
   final _CompetitorInfo info;
   final String competitorKey;
-  final String? pricingTier;
-  final double? pricingStartUsd;
-  final String? pricingNotesJa;
-  final String? japanPresenceLevel;
+  final ComparisonEvidenceStatus evidenceStatus;
+  final List<CompetitorClaimEvidence> evidenceClaims;
   const _ComparisonShell({
     required this.info,
     required this.competitorKey,
-    this.pricingTier,
-    this.pricingStartUsd,
-    this.pricingNotesJa,
-    this.japanPresenceLevel,
+    required this.evidenceStatus,
+    required this.evidenceClaims,
   });
 
   @override
@@ -67597,12 +67600,17 @@ class _ComparisonShellState extends State<_ComparisonShell> {
   _CompetitorInfo get _info => widget.info;
   bool get _hasImportSupport =>
       widget.competitorKey == 'notion' || widget.competitorKey == 'evernote';
-  int get _sharedFeatureCount => _info.features
-      .where((feature) => feature.competitorHas && feature.weHave)
-      .length;
-  int get _ourAdvantageCount => _info.features
-      .where((feature) => !feature.competitorHas && feature.weHave)
-      .length;
+  int get _withheldLegacyClaimCount =>
+      1 + _info.painPoints.length + _info.features.length;
+  List<CompetitorClaimEvidence> get _featureEvidence => widget.evidenceClaims
+      .where((claim) => claim.claimType == CompetitorClaimType.feature)
+      .toList(growable: false);
+  List<CompetitorClaimEvidence> get _otherEvidence => widget.evidenceClaims
+      .where((claim) => claim.claimType != CompetitorClaimType.feature)
+      .toList(growable: false);
+  // Legacy fallback copy remains available for editorial recovery, but it is
+  // deny-by-default and never rendered without row-level evidence metadata.
+  bool get _showLegacyClaims => false;
 
   List<MapEntry<String, _CompetitorInfo>> get _relatedCompetitors {
     final currentCategory = _categoryOf[widget.competitorKey];
@@ -67647,7 +67655,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
 
   String get _switchStepBody => _hasImportSupport
       ? '${_info.name} のデータをインポートしながら、今の資産を崩さず移行できます。'
-      : 'まずは無料で始めて、${_info.name} では分散していた作業を1か所に集約できます。';
+      : 'まずは無料で始めて、必要な作業だけを1か所に集約できます。';
 
   @override
   Widget build(BuildContext context) {
@@ -67804,44 +67812,8 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                             backgroundColor: _orange.withValues(alpha: 0.18),
                             foregroundColor: _textPrimary,
                           ),
-                        if (widget.pricingTier != null)
-                          _PricingBadge(tier: widget.pricingTier!),
-                        if (widget.japanPresenceLevel != null)
-                          _JapanPresenceBadge(
-                            level: widget.japanPresenceLevel!,
-                          ),
                       ],
                     ),
-                    if (widget.pricingStartUsd != null ||
-                        widget.pricingNotesJa != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Row(
-                          children: [
-                            if (widget.pricingStartUsd != null)
-                              Text(
-                                '最安 \$${widget.pricingStartUsd?.toStringAsFixed(2)}/月',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: _textSecondary,
-                                  height: 1.5,
-                                ),
-                              ),
-                            if (widget.pricingStartUsd != null &&
-                                widget.pricingNotesJa != null)
-                              const SizedBox(width: 6),
-                            if (widget.pricingNotesJa != null)
-                              Tooltip(
-                                message: widget.pricingNotesJa ?? '',
-                                child: const Icon(
-                                  Icons.info_outline,
-                                  size: 14,
-                                  color: _textMuted,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
                     const SizedBox(height: 22),
                     Text(
                       '${_info.emoji} ${_info.name} の代わりに\n自分株式会社を使う',
@@ -67855,13 +67827,19 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Text(
-                      _info.tagline,
-                      style: const TextStyle(
+                    const Text(
+                      '公開する比較情報は、根拠URLと確認日を持つ項目だけに限定しています。',
+                      style: TextStyle(
                         fontSize: 16,
                         color: _textSecondary,
                         height: 1.75,
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    ComparisonEvidenceStatusBanner(
+                      status: widget.evidenceStatus,
+                      verifiedCount: widget.evidenceClaims.length,
+                      withheldLegacyClaimCount: _withheldLegacyClaimCount,
                     ),
                     const SizedBox(height: 24),
                     Wrap(
@@ -67869,15 +67847,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       runSpacing: 14,
                       children: [
                         _buildMetricCard(
-                          icon: Icons.layers_rounded,
-                          label: '共通コア機能',
-                          value: '$_sharedFeatureCount個',
+                          icon: Icons.verified_rounded,
+                          label: '根拠確認済み',
+                          value: '${widget.evidenceClaims.length}件',
                           accent: _info.accentColor,
                         ),
                         _buildMetricCard(
-                          icon: Icons.auto_awesome_rounded,
-                          label: '乗り換えメリット',
-                          value: '+$_ourAdvantageCount個',
+                          icon: Icons.visibility_off_rounded,
+                          label: '旧比較文の公開保留',
+                          value: '$_withheldLegacyClaimCount件',
                           accent: _indigo,
                         ),
                         _buildMetricCard(
@@ -67951,7 +67929,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     final cards = [
       _buildOutcomeCard(
         icon: Icons.hub_rounded,
-        title: '${_info.name} だけでは足りない作業をひとつに集約',
+        title: '日常の作業をひとつに集約',
         body: 'ノート・タスク・財務・習慣・AI大学まで、別アプリで分かれていた流れをまとめます。',
         accent: _info.accentColor,
       ),
@@ -67964,7 +67942,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
       _buildOutcomeCard(
         icon: Icons.auto_graph_rounded,
         title: 'AI が「今日やること」を1件に絞る',
-        body: '${_info.name} の単機能では埋まらない、判断・実行・振り返りまでを一気通貫で支援します。',
+        body: '判断・実行・振り返りまでを、ひとつの流れとして支援します。',
         accent: _indigo,
       ),
     ];
@@ -68005,6 +67983,13 @@ class _ComparisonShellState extends State<_ComparisonShell> {
   }
 
   Widget _buildPainPoints() {
+    if (!_showLegacyClaims) {
+      return ComparisonEvidenceSection(
+        title: '根拠確認済みの比較情報',
+        status: widget.evidenceStatus,
+        claims: _otherEvidence,
+      );
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       child: Center(
@@ -68090,6 +68075,13 @@ class _ComparisonShellState extends State<_ComparisonShell> {
   }
 
   Widget _buildFeatureTable() {
+    if (!_showLegacyClaims) {
+      return ComparisonEvidenceSection(
+        title: '根拠確認済みの機能比較',
+        status: widget.evidenceStatus,
+        claims: _featureEvidence,
+      );
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       child: Center(
@@ -68213,7 +68205,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
       _buildStepCard(
         number: '03',
         title: '必要になった機能だけ横に増やす',
-        body: '${_info.name} 単体では届かない資産管理・AI大学・部署AIまで、後から同じアプリ内で広げられます。',
+        body: '資産管理・AI大学・部署AIまで、必要になった機能を後から同じアプリ内で広げられます。',
         accent: _orange,
       ),
     ];
@@ -68726,73 +68718,6 @@ class _ComparisonShellState extends State<_ComparisonShell> {
         foregroundColor: _textPrimary,
         side: const BorderSide(color: _borderColor),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      ),
-    );
-  }
-}
-
-class _PricingBadge extends StatelessWidget {
-  final String tier;
-  const _PricingBadge({required this.tier});
-
-  @override
-  Widget build(BuildContext context) {
-    final (label, color) = switch (tier) {
-      'free' => ('完全無料', const Color(0xFF4CAF50)),
-      'freemium' => ('無料プランあり', const Color(0xFF009688)),
-      'paid' => ('有料', const Color(0xFFFF9800)),
-      'enterprise' => ('要見積', const Color(0xFF607D8B)),
-      _ => ('?', const Color(0xFF9E9E9E)),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          height: 1.4,
-        ),
-      ),
-    );
-  }
-}
-
-class _JapanPresenceBadge extends StatelessWidget {
-  final String level;
-  const _JapanPresenceBadge({required this.level});
-
-  @override
-  Widget build(BuildContext context) {
-    final (emoji, label, color) = switch (level) {
-      'dominant' => ('🇯🇵', '日本No.1', const Color(0xFFE53935)),
-      'strong' => ('🇯🇵', '日本主要', const Color(0xFFFF6B35)),
-      'growing' => ('📈', '日本成長中', const Color(0xFFFFB300)),
-      'limited' => ('🌐', '日本限定的', const Color(0xFF607D8B)),
-      'not_present' => ('⚠️', '日本未展開', const Color(0xFF9E9E9E)),
-      _ => ('', '', const Color(0xFF9E9E9E)),
-    };
-    if (label.isEmpty) return const SizedBox.shrink();
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        border: Border.all(color: color.withValues(alpha: 0.35)),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        '$emoji $label',
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          height: 1.4,
-        ),
       ),
     );
   }

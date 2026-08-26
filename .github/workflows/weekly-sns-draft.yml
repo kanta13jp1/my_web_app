@@ -47,9 +47,11 @@ jobs:
 
       - name: Determine target week
         id: period
+        env:
+          TARGET_DATE_INPUT: ${{ github.event.inputs.target_date }}
         run: |
           # target_date = 週末 (日曜) の日付 (空の場合は直近日曜)
-          TARGET_DATE="${{ github.event.inputs.target_date }}"
+          TARGET_DATE="$TARGET_DATE_INPUT"
           if [ -z "$TARGET_DATE" ]; then
             # 直近の日曜日を計算
             DOW=$(date -u +%u)  # 1=Mon ... 7=Sun

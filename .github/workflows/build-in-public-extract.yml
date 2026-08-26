@@ -40,8 +40,9 @@ jobs:
           python-version: '3.12'
 
       - name: Run extract
+        env:
+          DAYS: ${{ github.event.inputs.days || '7' }}
         run: |
-          DAYS="${{ github.event.inputs.days || '7' }}"
           python scripts/build_in_public_extract.py --days "$DAYS"
 
       - name: Commit drafts

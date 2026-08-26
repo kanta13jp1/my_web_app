@@ -61,6 +61,13 @@ TAX_RECORDS_MIGRATION = (
 TAX_RECORDS_TABLES = ("tax_records",)
 TAX_RECORD_1 = "00000000-0000-4000-8000-000000002489"
 TAX_RECORD_2 = "00000000-0000-4000-8000-000000002490"
+AI_UNIVERSITY_MIGRATION = (
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260824135127_add_ai_university_evidence_and_content_analytics.sql"
+)
+AI_UNIVERSITY_LEGACY_ROW = "00000000-0000-4000-8000-000000004738"
 VIDEO_ARTIFACT_SQL_FILES = (
     ROOT / "supabase" / "tests" / "video_service_bootstrap.sql",
     ROOT / "supabase" / "migrations" / "20260819165405_create_first_party_video_service.sql",
@@ -293,6 +300,14 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "authenticated users cannot forge another owner",
             "authenticated owner CRUD succeeds",
         ],
+        "ai_university_migration": AI_UNIVERSITY_MIGRATION.relative_to(ROOT).as_posix(),
+        "ai_university_checks": [
+            "migration applies twice without losing legacy rows",
+            "course evidence is nullable but all-or-none when populated",
+            "anon and authenticated can insert only allowlisted event fields",
+            "clients cannot select events or supply server-owned fields",
+            "event table has RLS and no user/session/error payload columns",
+        ],
         "video_artifact_contract": [
             path.relative_to(ROOT).as_posix() for path in VIDEO_ARTIFACT_SQL_FILES
         ],
@@ -329,6 +344,168 @@ def apply_sql_fixture(conn: Any, path: Path, artifacts_dir: Path) -> None:
                 cur.execute(statement)
         conn.commit()
         log.write("ok\n")
+
+
+def seed_ai_university_legacy_fixture(conn: Any) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            "insert into public.ai_university_content (id, title) values (%s::uuid, %s)",
+            (AI_UNIVERSITY_LEGACY_ROW, "legacy course"),
+        )
+    conn.commit()
+
+
+def check_ai_university_migration(conn: Any) -> dict[str, Any]:
+    evidence_columns = {
+        "target_audience",
+        "observable_learning_outcome",
+        "assessment_verification_method",
+        "evidence_source_url",
+        "evidence_verified_at",
+    }
+    event_columns = {"id", "event_name", "surface", "occurred_at"}
+    with conn.cursor() as cur:
+        cur.execute(
+            "select column_name from information_schema.columns "
+            "where table_schema = 'public' and table_name = 'ai_university_content'"
+        )
+        actual_content_columns = {row[0] for row in cur.fetchall()}
+        cur.execute(
+            "select column_name from information_schema.columns "
+            "where table_schema = 'public' "
+            "and table_name = 'ai_university_content_events'"
+        )
+        actual_event_columns = {row[0] for row in cur.fetchall()}
+        cur.execute(
+            "select target_audience, observable_learning_outcome, "
+            "assessment_verification_method, evidence_source_url, evidence_verified_at "
+            "from public.ai_university_content where id = %s::uuid",
+            (AI_UNIVERSITY_LEGACY_ROW,),
+        )
+        legacy_evidence = cur.fetchone()
+        cur.execute(
+            "select c.relrowsecurity from pg_class c "
+            "join pg_namespace n on n.oid = c.relnamespace "
+            "where n.nspname = 'public' and c.relname = 'ai_university_content_events'"
+        )
+        rls_enabled = bool(cur.fetchone()[0])
+        cur.execute(
+            "select policyname from pg_policies where schemaname = 'public' "
+            "and tablename = 'ai_university_content_events' order by policyname"
+        )
+        policies = [row[0] for row in cur.fetchall()]
+    conn.commit()
+
+    if not evidence_columns.issubset(actual_content_columns):
+        raise AssertionError(
+            f"missing AI University evidence columns: {sorted(evidence_columns - actual_content_columns)}"
+        )
+    if actual_event_columns != event_columns:
+        raise AssertionError(f"unexpected event payload columns: {sorted(actual_event_columns)}")
+    if legacy_evidence is None or any(value is not None for value in legacy_evidence):
+        raise AssertionError(f"legacy evidence was manufactured: {legacy_evidence}")
+    if not rls_enabled:
+        raise AssertionError("AI University event table does not have RLS enabled")
+    expected_policy = "anonymous clients insert allowlisted content events"
+    if policies != [expected_policy]:
+        raise AssertionError(f"unexpected AI University event policies: {policies}")
+
+    try:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(
+                    "update public.ai_university_content set target_audience = 'learners' "
+                    "where id = %s::uuid",
+                    (AI_UNIVERSITY_LEGACY_ROW,),
+                )
+    except Exception as exc:
+        if getattr(exc, "sqlstate", None) != "23514":
+            raise AssertionError(f"partial evidence failed unexpectedly: {exc}") from exc
+        partial_evidence_sqlstate = "23514"
+    else:
+        raise AssertionError("partial AI University evidence unexpectedly succeeded")
+
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute(
+                "update public.ai_university_content set "
+                "target_audience = 'new AI learners', "
+                "observable_learning_outcome = 'build one verified workflow', "
+                "assessment_verification_method = 'review the produced workflow', "
+                "evidence_source_url = 'https://example.invalid/course', "
+                "evidence_verified_at = now() where id = %s::uuid",
+                (AI_UNIVERSITY_LEGACY_ROW,),
+            )
+
+    with conn.cursor() as cur:
+        for role in ("anon", "authenticated"):
+            for column in ("event_name", "surface"):
+                cur.execute(
+                    "select has_column_privilege(%s, %s, %s, 'INSERT')",
+                    (role, "public.ai_university_content_events", column),
+                )
+                if not bool(cur.fetchone()[0]):
+                    raise AssertionError(f"{role} lacks INSERT on allowlisted column {column}")
+            for column in ("id", "occurred_at"):
+                cur.execute(
+                    "select has_column_privilege(%s, %s, %s, 'INSERT')",
+                    (role, "public.ai_university_content_events", column),
+                )
+                if bool(cur.fetchone()[0]):
+                    raise AssertionError(f"{role} can INSERT server-owned column {column}")
+            cur.execute(
+                "select has_table_privilege(%s, %s, 'SELECT')",
+                (role, "public.ai_university_content_events"),
+            )
+            if bool(cur.fetchone()[0]):
+                raise AssertionError(f"{role} can SELECT anonymous event rows")
+    conn.commit()
+
+    for role, event_name in (("anon", "fallback_shown"), ("authenticated", "retry_succeeded")):
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(f"set local role {role}")
+                cur.execute(
+                    "insert into public.ai_university_content_events (event_name, surface) "
+                    "values (%s, 'ai_university_content')",
+                    (event_name,),
+                )
+
+    denied_select_sqlstate = issue_2773_expect_denied(
+        conn,
+        role="anon",
+        user_id=None,
+        statement="select count(*) from public.ai_university_content_events",
+    )
+    denied_server_field_sqlstate = issue_2773_expect_denied(
+        conn,
+        role="authenticated",
+        user_id=None,
+        statement=(
+            "insert into public.ai_university_content_events "
+            "(event_name, surface, occurred_at) "
+            "values ('retry_failed', 'ai_university_content', now())"
+        ),
+    )
+    with conn.cursor() as cur:
+        cur.execute("select count(*) from public.ai_university_content_events")
+        event_count = int(cur.fetchone()[0])
+    conn.commit()
+    if event_count != 2:
+        raise AssertionError(f"unexpected AI University event count: {event_count}")
+
+    return {
+        "evidence_columns": sorted(evidence_columns),
+        "event_columns": sorted(event_columns),
+        "legacy_evidence": "preserved as NULL",
+        "partial_evidence_sqlstate": partial_evidence_sqlstate,
+        "complete_evidence": "accepted",
+        "rls_enabled": rls_enabled,
+        "policies": policies,
+        "client_event_inserts": event_count,
+        "client_select_sqlstate": denied_select_sqlstate,
+        "server_field_insert_sqlstate": denied_server_field_sqlstate,
+    }
 
 
 def table_count(conn: Any, table_name: str) -> int:
@@ -1136,6 +1313,10 @@ def run_smoke(args: argparse.Namespace) -> int:
         with psycopg.connect(connection_url) as conn:
             for fixture in sql_files(args.sql_dir):
                 apply_sql_fixture(conn, fixture, artifacts_dir)
+            seed_ai_university_legacy_fixture(conn)
+            apply_sql_fixture(conn, AI_UNIVERSITY_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, AI_UNIVERSITY_MIGRATION, artifacts_dir)
+            ai_university = check_ai_university_migration(conn)
             apply_sql_fixture(conn, ISSUE_2773_RLS_MIGRATION, artifacts_dir)
             seed_issue_2773_fixture(conn)
             tenant_rls = check_issue_2773_rls(conn)
@@ -1159,6 +1340,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "tenant_rls": tenant_rls,
             "asset_chat_rls": asset_chat_rls,
             "tax_records_rls": tax_records_rls,
+            "ai_university": ai_university,
             "video_artifact_contract": "passed",
         },
         "edge_fixture": {

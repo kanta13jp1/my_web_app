@@ -112,6 +112,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   bool _showAllUniqueFeatures = false;
   bool _showTrialAnswerPreview = true;
   bool _showGuidedTrialIntake = false;
+  bool _socialProofLoadFailed = false;
   int _magicLinkCooldownSeconds = 0;
   int _achievementCount = 0;
   int _totalUsers = 0;
@@ -488,9 +489,12 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       setState(() {
         _totalUsers = stats.totalUsers;
         _publicMemoCount = stats.publicMemoCount;
+        _socialProofLoadFailed = false;
       });
     } catch (error) {
       debugPrint('Landing social proof load failed: $error');
+      if (!mounted) return;
+      setState(() => _socialProofLoadFailed = true);
     }
   }
 
@@ -1502,6 +1506,53 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               height: 1.5,
             ),
           ),
+          if (_socialProofLoadFailed) ...[
+            const SizedBox(height: 12),
+            Semantics(
+              container: true,
+              liveRegion: true,
+              child: Container(
+                key: const Key('landing_social_proof_error'),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF9800).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFFFFB74D).withValues(alpha: 0.45),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        '最新の利用状況を取得できませんでした。',
+                        style: TextStyle(
+                          color: Color(0xFFFFCC80),
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      key: const Key('landing_social_proof_retry'),
+                      onPressed: () {
+                        setState(() => _socialProofLoadFailed = false);
+                        unawaited(_loadSocialProofStats());
+                      },
+                      icon: const Icon(Icons.refresh, size: 16),
+                      label: const Text('再読み込み'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFFFCC80),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           LayoutBuilder(
             builder: (context, constraints) {

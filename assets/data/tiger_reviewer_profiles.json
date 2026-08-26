@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "snapshot_date": "2026-08-23",
-  "source_snapshot": "canonical tiger-personas.json (2026-08-24)",
+  "source_snapshot": "canonical tiger-personas.json (2026-08-25)",
   "reviewer_count": 125,
   "disclaimer": "年齢は生年月日を公開一次情報で確認できた場合のみ、スナップショット日時点で表示します。未確認の年齢は推測していません。肩書き・事業内容・出演実績は公開情報から構成したスナップショットです。",
   "profiles": [
@@ -11,7 +11,7 @@
       "roster_status": "current",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "アマソラクリニック（院長）（美容クリニック）",
+      "company_role": "アマソラクリニック 院長",
       "business_summary": "医学部受験塾、美容クリニック、インドアゴルフ場、D2Cサプリ事業",
       "business_domains": [
         "教育・スクール",
@@ -118,6 +118,7 @@
         }
       ],
       "review_style_tags": [
+        "founder_empathy",
         "growth_first",
         "balanced_risk",
         "replicability_and_store_economics"
@@ -516,7 +517,7 @@
       "evidence_source_ids": [
         "S012",
         "S002",
-        "S008"
+        "S003"
       ]
     },
     {
@@ -635,10 +636,10 @@
       "review_style_tags": [
         "numbers_first",
         "conviction_test",
-        "customer_first",
-        "growth_first",
         "balanced_risk",
-        "replicability_and_store_economics"
+        "replicability_and_store_economics",
+        "acquisition_and_conversion",
+        "gross_margin_and_repeat_purchase"
       ],
       "next_research_targets": [
         "生年月日の一次公開情報"
@@ -2352,7 +2353,6 @@
       ],
       "review_style_tags": [
         "founder_empathy",
-        "growth_first",
         "balanced_risk",
         "gross_margin_and_repeat_purchase"
       ],
@@ -2623,16 +2623,16 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "株式会社晴れる屋 代表",
+      "company_role": "株式会社トモハッピー（カードゲーム売買業。YouTuber）",
       "business_summary": "小売・通販・EC、エンタメ・クリエイター、マーケティング・メディア",
       "business_domains": [
-        "小売・通販・EC",
         "エンタメ・クリエイター",
-        "マーケティング・メディア"
+        "マーケティング・メディア",
+        "小売・通販・EC"
       ],
       "appearances": 340,
       "investment_count": 110,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。小売・通販・EC、エンタメ・クリエイター、マーケティング・メディアの公開職歴と、番組集計上の出演340回・出資110回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
+      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。エンタメ・クリエイター、マーケティング・メディア、小売・通販・ECの公開職歴と、番組集計上の出演340回・出資110回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
       "profile_url": "https://atsu-blog.com/tigerfunding-president-list/",
       "evidence_confidence": 3.3,
       "profile_completeness_percent": 57,
@@ -2677,7 +2677,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -7476,48 +7476,62 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "Tiger Casino JAPAN株式会社 代表取締役",
-      "business_summary": "教育・スクール",
+      "company_role": "株式会社SamuraiBeauty代表取締役。メンズ美容サロンの経営とフランチャイズ本部を運営",
+      "business_summary": "メンズ美容サロンの経営、サブスク型美容サービス、フランチャイズ本部運営",
       "business_domains": [
-        "教育・スクール"
+        "美容・ウェルネス",
+        "フランチャイズ・多店舗展開",
+        "人材・採用・組織"
       ],
       "appearances": 1,
       "investment_count": 0,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。教育・スクールの公開職歴と、番組集計上の出演1回・出資0回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/2/",
-      "evidence_confidence": 2.0,
-      "profile_completeness_percent": 45,
-      "review_reflection_percent": 43,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "本人署名の公式ブランド紹介では、男性が最初の一歩を踏み出しやすい専門サービス、継続利用しやすいサブスク設計、女性スタッフが働きやすい環境、品質を保った全国展開を重視する姿勢を示している。",
+      "profile_url": "https://samurai-beauty.jp/company/",
+      "evidence_links": [
+        {
+          "label": "肩書き・事業内容",
+          "url": "https://samurai-beauty.jp/company/"
+        },
+        {
+          "label": "公開された事業方針",
+          "url": "https://samurai-beauty.jp/about/"
+        }
+      ],
+      "evidence_confidence": 3.0,
+      "profile_completeness_percent": 62,
+      "review_reflection_percent": 68,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
-          "dimension": "revenue_model",
-          "label": "収益モデル",
-          "weight_percent": 17,
-          "question": "誰が、何に、いくら、どの頻度で支払うのか。"
+          "dimension": "scalability",
+          "label": "拡張性",
+          "weight_percent": 22,
+          "question": "代表者の労働量を増やさず再現・拡大できるか。"
         },
         {
           "dimension": "customer_pain",
           "label": "顧客課題",
-          "weight_percent": 16,
+          "weight_percent": 14,
           "question": "顧客の未解決課題は、支払いを伴うほど強いか。"
         },
         {
           "dimension": "unit_economics",
           "label": "単位経済性",
-          "weight_percent": 15,
+          "weight_percent": 14,
           "question": "顧客・注文・店舗単位の粗利、獲得費、回収期間は成立するか。"
         },
         {
-          "dimension": "market_demand",
-          "label": "市場需要",
-          "weight_percent": 13,
-          "question": "実在する顧客は誰で、需要を示す一次データは何か。"
+          "dimension": "go_to_market",
+          "label": "顧客獲得",
+          "weight_percent": 14,
+          "question": "最初の顧客をどの経路・費用で獲得し、検証できるか。"
         }
       ],
       "review_style_tags": [
-        "balanced_risk"
+        "growth_first",
+        "balanced_risk",
+        "replicability_and_store_economics"
       ],
       "next_research_targets": [
         "生年月日の一次公開情報",
@@ -7527,6 +7541,8 @@
       ],
       "evidence_source_ids": [
         "S002",
+        "S062",
+        "S063",
         "S008",
         "S004"
       ]
@@ -7592,7 +7608,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S062",
+        "S064",
         "S004"
       ]
     },
@@ -7657,7 +7673,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S063",
+        "S065",
         "S004"
       ]
     },
@@ -7722,7 +7738,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S064",
+        "S066",
         "S004"
       ]
     },
@@ -7732,22 +7748,31 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "OYFグループ株式会社代表。高専特化学習塾、FC店舗、結婚支援事業を展開",
-      "business_summary": "教育・スクール、フランチャイズ・多店舗展開、経営支援・コンサルティング",
+      "company_role": "OYFグループ株式会社代表、飛高専塾塾長。高専受験と一般高校受験に対応する学習塾を複数地域で運営",
+      "business_summary": "高専受験・一般高校受験向け学習塾「飛高専塾」の複数地域運営",
       "business_domains": [
         "教育・スクール",
-        "フランチャイズ・多店舗展開",
-        "経営支援・コンサルティング"
+        "フランチャイズ・多店舗展開"
       ],
       "appearances": 1,
       "investment_count": 1,
-      "public_viewpoint_summary": "対象顧客を狭く定義した専門性、教育成果、校舎展開の再現性、複数事業の相乗効果を重視する。",
-      "profile_url": "https://gamer-zylo.com/other/reiwa-tigers",
-      "evidence_confidence": 2.0,
-      "profile_completeness_percent": 45,
-      "review_reflection_percent": 43,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "本人の公式塾長挨拶では、少人数授業、生徒の苦手に寄り添って得意を引き出す指導、信頼関係、学力向上という成果を重視する姿勢を示している。",
+      "profile_url": "https://hikousenjuku.com/company/",
+      "evidence_links": [
+        {
+          "label": "肩書き・事業内容",
+          "url": "https://hikousenjuku.com/company/"
+        },
+        {
+          "label": "公開された指導方針",
+          "url": "https://hikousenjuku.com/concept/"
+        }
+      ],
+      "evidence_confidence": 3.0,
+      "profile_completeness_percent": 62,
+      "review_reflection_percent": 68,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "unit_economics",
@@ -7758,25 +7783,24 @@
         {
           "dimension": "scalability",
           "label": "拡張性",
-          "weight_percent": 18,
+          "weight_percent": 20,
           "question": "代表者の労働量を増やさず再現・拡大できるか。"
         },
         {
           "dimension": "revenue_model",
           "label": "収益モデル",
-          "weight_percent": 15,
+          "weight_percent": 17,
           "question": "誰が、何に、いくら、どの頻度で支払うのか。"
         },
         {
-          "dimension": "competitive_advantage",
-          "label": "競争優位性",
-          "weight_percent": 11,
-          "question": "既存代替より選ばれ続ける、模倣されにくい理由は何か。"
+          "dimension": "customer_pain",
+          "label": "顧客課題",
+          "weight_percent": 12,
+          "question": "顧客の未解決課題は、支払いを伴うほど強いか。"
         }
       ],
       "review_style_tags": [
-        "customer_first",
-        "growth_first",
+        "founder_empathy",
         "balanced_risk",
         "replicability_and_store_economics"
       ],
@@ -7788,7 +7812,8 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S065"
+        "S067",
+        "S068"
       ]
     },
     {
@@ -7797,47 +7822,60 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "合同会社MOVEMENT PRODUCTION 代表",
-      "business_summary": "マーケティング・メディア",
+      "company_role": "合同会社MOVEMENT PRODUCTION代表。音楽制作、楽曲提供、アーティストのマネジメント・プロモート、音楽著作権管理などを展開",
+      "business_summary": "音楽制作、楽曲提供、アーティストのマネジメント・プロモート、音楽著作権管理",
       "business_domains": [
-        "マーケティング・メディア"
+        "エンタメ・クリエイター",
+        "マーケティング・メディア",
+        "教育・スクール"
       ],
       "appearances": 1,
       "investment_count": 0,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。マーケティング・メディアの公開職歴と、番組集計上の出演1回・出資0回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/2/",
-      "evidence_confidence": 2.0,
-      "profile_completeness_percent": 45,
-      "review_reflection_percent": 43,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "本人の公式プロフィールでは、依頼目的に合う楽曲の提案と制作全般の専門品質を掲げており、会社としても顧客が求めるものを捉えて半歩先を提案する方針を示している。",
+      "profile_url": "https://movementproduction.jp/company/",
+      "evidence_links": [
+        {
+          "label": "肩書き・事業内容",
+          "url": "https://movementproduction.jp/company/"
+        },
+        {
+          "label": "公開された制作方針",
+          "url": "https://movementproduction.jp/creators/junyamaesako/"
+        }
+      ],
+      "evidence_confidence": 3.0,
+      "profile_completeness_percent": 62,
+      "review_reflection_percent": 68,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "market_demand",
           "label": "市場需要",
-          "weight_percent": 20,
+          "weight_percent": 21,
           "question": "実在する顧客は誰で、需要を示す一次データは何か。"
         },
         {
           "dimension": "go_to_market",
           "label": "顧客獲得",
-          "weight_percent": 17,
+          "weight_percent": 21,
           "question": "最初の顧客をどの経路・費用で獲得し、検証できるか。"
-        },
-        {
-          "dimension": "revenue_model",
-          "label": "収益モデル",
-          "weight_percent": 13,
-          "question": "誰が、何に、いくら、どの頻度で支払うのか。"
         },
         {
           "dimension": "competitive_advantage",
           "label": "競争優位性",
-          "weight_percent": 12,
+          "weight_percent": 13,
           "question": "既存代替より選ばれ続ける、模倣されにくい理由は何か。"
+        },
+        {
+          "dimension": "revenue_model",
+          "label": "収益モデル",
+          "weight_percent": 12,
+          "question": "誰が、何に、いくら、どの頻度で支払うのか。"
         }
       ],
       "review_style_tags": [
+        "customer_first",
         "balanced_risk",
         "acquisition_and_conversion"
       ],
@@ -7849,6 +7887,8 @@
       ],
       "evidence_source_ids": [
         "S002",
+        "S069",
+        "S070",
         "S008"
       ]
     },
@@ -7856,70 +7896,91 @@
       "seat": 125,
       "name": "ゆとりくん（片石貴展）",
       "roster_status": "historical",
-      "birth_date": null,
-      "birth_date_source_url": null,
-      "company_role": "株式会社yutori 代表",
-      "business_summary": "経営支援・コンサルティング",
+      "birth_date": "1993-12-25",
+      "birth_date_source_url": "https://www.jpx.co.jp/listing/stocks/new/bkk2ed0000002w4v-att/12yutori-1s.pdf",
+      "company_role": "株式会社yutori代表取締役社長。複数のアパレルブランドを企画・運営",
+      "business_summary": "複数アパレルブランドの企画・運営、SNSマーケティング、ブランド買収",
       "business_domains": [
-        "経営支援・コンサルティング"
+        "小売・通販・EC",
+        "マーケティング・メディア",
+        "M&A・事業再生"
       ],
       "appearances": 1,
       "investment_count": 1,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。経営支援・コンサルティングの公開職歴と、番組集計上の出演1回・出資1回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/",
-      "evidence_confidence": 2.0,
-      "profile_completeness_percent": 45,
-      "review_reflection_percent": 43,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
-      "review_focus_dimensions": [
+      "public_viewpoint_summary": "本人の公式トップメッセージでは、デジタルネイティブなSNSマーケティングとブランドの物語性を組み合わせ、純粋な熱量と多様なブランド展開で顧客基盤を広げる方針を示している。",
+      "profile_url": "https://yutori.tokyo/ir/overview/",
+      "evidence_links": [
         {
-          "dimension": "market_demand",
-          "label": "市場需要",
-          "weight_percent": 18,
-          "question": "実在する顧客は誰で、需要を示す一次データは何か。"
+          "label": "肩書き・事業内容",
+          "url": "https://yutori.tokyo/ir/overview/"
         },
+        {
+          "label": "公開された経営方針",
+          "url": "https://yutori.tokyo/ir/message/"
+        },
+        {
+          "label": "生年月日（東証提出資料）",
+          "url": "https://www.jpx.co.jp/listing/stocks/new/bkk2ed0000002w4v-att/12yutori-1s.pdf"
+        }
+      ],
+      "evidence_confidence": 3.0,
+      "profile_completeness_percent": 77,
+      "review_reflection_percent": 68,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "review_focus_dimensions": [
         {
           "dimension": "unit_economics",
           "label": "単位経済性",
-          "weight_percent": 15,
+          "weight_percent": 20,
           "question": "顧客・注文・店舗単位の粗利、獲得費、回収期間は成立するか。"
         },
         {
-          "dimension": "revenue_model",
-          "label": "収益モデル",
-          "weight_percent": 13,
-          "question": "誰が、何に、いくら、どの頻度で支払うのか。"
+          "dimension": "market_demand",
+          "label": "市場需要",
+          "weight_percent": 19,
+          "question": "実在する顧客は誰で、需要を示す一次データは何か。"
+        },
+        {
+          "dimension": "go_to_market",
+          "label": "顧客獲得",
+          "weight_percent": 18,
+          "question": "最初の顧客をどの経路・費用で獲得し、検証できるか。"
         },
         {
           "dimension": "competitive_advantage",
           "label": "競争優位性",
-          "weight_percent": 13,
+          "weight_percent": 14,
           "question": "既存代替より選ばれ続ける、模倣されにくい理由は何か。"
         }
       ],
       "review_style_tags": [
-        "balanced_risk"
+        "customer_first",
+        "growth_first",
+        "balanced_risk",
+        "acquisition_and_conversion",
+        "gross_margin_and_repeat_purchase"
       ],
       "next_research_targets": [
-        "生年月日の一次公開情報",
         "現職肩書き・事業内容の一次公開情報",
         "本人の審査姿勢が確認できる一次公開情報",
         "出演・出資実績の追加検証"
       ],
       "evidence_source_ids": [
         "S002",
+        "S071",
+        "S072",
         "S003"
       ]
     }
   ],
   "enrichment": {
-    "round": 3,
+    "round": 4,
     "batch_size": 5,
     "policy": "一次公開情報を優先し、未確認情報は推測しない。プロフィール由来のレビュー観点は証拠強度に応じて段階反映する。",
-    "average_profile_completeness_percent": 63.4,
-    "average_review_reflection_percent": 68.7,
-    "verified_birth_dates": 2,
+    "average_profile_completeness_percent": 64.1,
+    "average_review_reflection_percent": 69.5,
+    "verified_birth_dates": 3,
     "next_batch": [
       {
         "seat": 116,
@@ -7933,9 +7994,9 @@
         ]
       },
       {
-        "seat": 119,
-        "name": "辰巳大地",
-        "profile_completeness_percent": 45,
+        "seat": 87,
+        "name": "長谷部文康",
+        "profile_completeness_percent": 48,
         "research_targets": [
           "生年月日の一次公開情報",
           "現職肩書き・事業内容の一次公開情報",
@@ -7944,9 +8005,9 @@
         ]
       },
       {
-        "seat": 123,
-        "name": "山本 優斗",
-        "profile_completeness_percent": 45,
+        "seat": 88,
+        "name": "池端美和",
+        "profile_completeness_percent": 48,
         "research_targets": [
           "生年月日の一次公開情報",
           "現職肩書き・事業内容の一次公開情報",
@@ -7955,9 +8016,9 @@
         ]
       },
       {
-        "seat": 124,
-        "name": "前迫 潤哉",
-        "profile_completeness_percent": 45,
+        "seat": 89,
+        "name": "ヒカル",
+        "profile_completeness_percent": 48,
         "research_targets": [
           "生年月日の一次公開情報",
           "現職肩書き・事業内容の一次公開情報",
@@ -7966,9 +8027,9 @@
         ]
       },
       {
-        "seat": 125,
-        "name": "ゆとりくん（片石貴展）",
-        "profile_completeness_percent": 45,
+        "seat": 91,
+        "name": "カイ ユリコ",
+        "profile_completeness_percent": 48,
         "research_targets": [
           "生年月日の一次公開情報",
           "現職肩書き・事業内容の一次公開情報",

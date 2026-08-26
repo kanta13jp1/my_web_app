@@ -141,6 +141,7 @@ import '../pages/gift_registry_page.dart';
 import '../pages/growth_automation_controller_page.dart';
 import '../pages/knowledge_base_page.dart';
 import '../pages/knowledge_graph_page.dart';
+import '../pages/user_knowledge_graph_page.dart';
 import '../pages/landing_ab_test_page.dart';
 import '../pages/loyalty_points_page.dart';
 import '../pages/market_intelligence_page.dart';
@@ -1816,6 +1817,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const VirtualPetPage()),
     ),
     HomeToolEntry(
+      id: 'procrastination-reset',
+      sectionId: 'personal',
+      title: '先延ばしリセット',
+      subtitle: '大きなタスクを5分の行動と最初の一手に変える',
+      icon: Icons.bolt_outlined,
+      color: const Color(0xFF7C3AED),
+      keywords: const <String>[
+        '先延ばし',
+        '行動',
+        '5分',
+        'タスク分解',
+        '集中',
+        'スマホ',
+        'procrastination',
+      ],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/procrastination-reset'),
+    ),
+    HomeToolEntry(
       id: 'focus-capture',
       sectionId: 'personal',
       title: 'フォーカス捕獲ゲーム',
@@ -2000,6 +2020,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'notebooklm',
       ],
       onOpen: (context) => _pushPage(context, const KnowledgeGraphPage()),
+    ),
+    HomeToolEntry(
+      id: 'my-knowledge-graph',
+      sectionId: 'knowledge',
+      title: 'マイ・ナレッジグラフ',
+      subtitle: '自分の文書を登録し、根拠つきチャットで検索',
+      icon: Icons.account_tree_outlined,
+      color: const Color(0xFF4338CA),
+      keywords: const <String>[
+        'knowledge graph',
+        'writer',
+        'rag',
+        '文書アップロード',
+        '社内検索',
+        '引用',
+      ],
+      onOpen: (context) => _pushPage(context, const UserKnowledgeGraphPage()),
     ),
     HomeToolEntry(
       id: 'semantic-search',

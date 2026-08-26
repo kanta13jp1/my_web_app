@@ -14,7 +14,7 @@ typedef TigerReviewerProfileLoader = Future<TigerReviewerProfileCatalog>
     Function();
 
 @visibleForTesting
-const int tigerReviewerProfileSchemaVersion = 2;
+const int tigerReviewerProfileSchemaVersion = 3;
 
 @visibleForTesting
 Uri buildTigerReviewAssetUri(
@@ -887,6 +887,20 @@ class _ReviewerProfileDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profileUrl = profile.profileUrl;
+    final evidenceLinks = profile.evidenceLinks.toList(growable: true);
+    if (evidenceLinks.isEmpty && profileUrl != null && profileUrl.hasScheme) {
+      evidenceLinks.add(
+        TigerReviewerEvidenceLink(label: '公開プロフィール', url: profileUrl),
+      );
+    }
+    final birthSource = profile.birthDateSourceUrl;
+    if (birthSource != null &&
+        birthSource.hasScheme &&
+        !evidenceLinks.any((link) => link.url == birthSource)) {
+      evidenceLinks.add(
+        TigerReviewerEvidenceLink(label: '生年月日', url: birthSource),
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -958,15 +972,21 @@ class _ReviewerProfileDetails extends StatelessWidget {
           const SizedBox(height: 8),
           _ProfileFact(label: '審査姿勢', value: profile.publicViewpointSummary),
         ],
-        if (profileUrl != null && profileUrl.hasScheme) ...<Widget>[
+        if (evidenceLinks.isNotEmpty) ...<Widget>[
           const SizedBox(height: 8),
-          TextButton.icon(
-            key: Key('tiger-profile-source-${profile.seat}'),
-            onPressed: () =>
-                launchUrl(profileUrl, mode: LaunchMode.externalApplication),
-            icon: const Icon(Icons.open_in_new, size: 18),
-            label: const Text('公開プロフィールを開く'),
-          ),
+          Text('根拠URL', style: Theme.of(context).textTheme.labelLarge),
+          for (final (index, link) in evidenceLinks.indexed)
+            TextButton.icon(
+              key: Key(
+                index == 0
+                    ? 'tiger-profile-source-${profile.seat}'
+                    : 'tiger-profile-source-${profile.seat}-$index',
+              ),
+              onPressed: () =>
+                  launchUrl(link.url, mode: LaunchMode.externalApplication),
+              icon: const Icon(Icons.open_in_new, size: 18),
+              label: Text('${link.label}の根拠を開く'),
+            ),
         ],
       ],
     );
