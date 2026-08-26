@@ -189,5 +189,6 @@ class _DeferredGenerator implements CustomTaskListGenerator {
   Future<GeneratedCustomTaskList> generate({
     required String goal,
     required String situation,
-  }) => _completer.future;
+  }) =>
+      _completer.future;
 }
