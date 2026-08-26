@@ -136,6 +136,18 @@ COPY "public"."notes" ("id", "body") FROM stdin;
         self.assertLess(postgres_index, workflow.index(roles_restore))
         self.assertNotIn("SET ROLE supabase_storage_admin", workflow)
 
+    def test_artifact_upload_uses_the_backup_root(self) -> None:
+        workflow = (
+            ROOT / ".github" / "workflows" / "supabase-backup-restore.yml"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("${{ env.BACKUP_ROOT }}/bundle/*.7z", workflow)
+        self.assertIn(
+            "${{ env.BACKUP_ROOT }}/bundle/restore-evidence.json",
+            workflow,
+        )
+        self.assertNotIn("${{ runner.temp }}/supabase-backup", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
