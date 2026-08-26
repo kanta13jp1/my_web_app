@@ -101,9 +101,12 @@ jobs:
 
       - name: Resolve build version
         shell: bash
+        env:
+          BUILD_NAME_INPUT: ${{ inputs.build_name || '' }}
+          BUILD_NUMBER_INPUT: ${{ inputs.build_number || '' }}
         run: |
-          build_name="${{ inputs.build_name }}"
-          build_number="${{ inputs.build_number }}"
+          build_name="$BUILD_NAME_INPUT"
+          build_number="$BUILD_NUMBER_INPUT"
           if [ -z "$build_name" ]; then
             build_name="$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d '+' -f 1)"
           fi
@@ -183,9 +186,12 @@ jobs:
 
       - name: Resolve build version
         shell: bash
+        env:
+          BUILD_NAME_INPUT: ${{ inputs.build_name || '' }}
+          BUILD_NUMBER_INPUT: ${{ inputs.build_number || '' }}
         run: |
-          build_name="${{ inputs.build_name }}"
-          build_number="${{ inputs.build_number }}"
+          build_name="$BUILD_NAME_INPUT"
+          build_number="$BUILD_NUMBER_INPUT"
           if [ -z "$build_name" ]; then
             build_name="$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d '+' -f 1)"
           fi

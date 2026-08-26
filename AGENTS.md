@@ -95,3 +95,14 @@ same notebook.
 - If a task needs product judgment, cross-instance arbitration, or NotebookLM
   synthesis before code can be safely changed, route it back to Claude Code and
   leave a short handoff note.
+
+## AI-generated code responsibility
+
+- AI-generated changes are proposals; the repository owner retains the final
+  product and release decision.
+- Authentication, database schema or RLS, billing, external publishing,
+  permissions, secrets, and batch execution are core areas. They require an
+  explicit human review acknowledgement in addition to deterministic checks.
+- PostToolUse anti-pattern warnings are review prompts, not proof of safety.
+  Resolve each warning or record a narrow exception, then run the applicable
+  formatter, analyzer, tests, security checks, and PR quality gates.

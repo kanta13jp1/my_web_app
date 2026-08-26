@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/kgi_csf_kpi.dart';
 import '../services/heygen_multilingual_sns_service.dart';
 import '../services/viral_ad_legacy_history_service.dart';
+import '../services/x_post_attribution.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
@@ -170,6 +171,11 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
           (videoUrl != null && videoUrl.isNotEmpty) ? videoUrl : imageUrl;
       final hasMedia = mediaUrl != null && mediaUrl.isNotEmpty;
 
+      final tracking = buildViralAdXPostAttribution(
+        videoUrl: videoUrl,
+        imageUrl: imageUrl,
+      );
+
       // 旧 post-x-update / x-media-post は EF 統合で削除済み (呼ぶと 404)。
       // growth-hub x.post が text / media 両方を 1 action で受ける
       // (= universal_x_share_service と同じ経路)。
@@ -181,6 +187,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
           'mediaUrl': hasMedia ? mediaUrl : null,
           'source': 'viral_ad_generator',
           'contentKind': hasMedia ? 'media' : 'text',
+          ...tracking,
         },
       );
       final result = res.data as Map<String, dynamic>?;

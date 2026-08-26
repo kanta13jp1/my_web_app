@@ -13,10 +13,85 @@ concurrency:
   cancel-in-progress: false  # 前回実行をキャンセルせず完了させる (エラー隠蔽防止)
 
 permissions:
+  actions: read
   contents: write
   pull-requests: write
 
 jobs:
+  source-audit:
+    name: AI University Official Source Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download previous official-source audit baseline
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p .artifacts/ai-university-source-audit/baseline
+          PREVIOUS_RUN_ID=$(gh run list \
+            --workflow ai-university-update.yml \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId // empty')
+          if [ -n "$PREVIOUS_RUN_ID" ]; then
+            gh run download "$PREVIOUS_RUN_ID" \
+              --name ai-university-source-audit \
+              --dir .artifacts/ai-university-source-audit/baseline || true
+          fi
+
+      - name: Audit active AI University official sources (read-only)
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          mkdir -p .artifacts/ai-university-source-audit/current
+          CATALOG=.artifacts/ai-university-source-audit/catalog.json
+          BASE_URL="https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/ai_university_content"
+          COMMON_ARGS=(
+            -fsS
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY"
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+            --max-time 30
+          )
+          if ! curl "${COMMON_ARGS[@]}" \
+            "$BASE_URL?select=id,provider,source_url,is_active,target_audience,observable_learning_outcome,assessment_verification_method,evidence_source_url,evidence_verified_at&is_active=eq.true&source_url=not.is.null" \
+            -o "$CATALOG"; then
+            curl "${COMMON_ARGS[@]}" \
+              "$BASE_URL?select=id,provider,source_url,is_active&is_active=eq.true&source_url=not.is.null" \
+              -o "$CATALOG"
+          fi
+
+          BASELINE=.artifacts/ai-university-source-audit/baseline/source-audit.json
+          BASELINE_ARGS=()
+          if [ -f "$BASELINE" ]; then
+            BASELINE_ARGS=(--baseline "$BASELINE")
+          fi
+          python3 scripts/ai_university_source_audit.py \
+            --catalog-json "$CATALOG" \
+            "${BASELINE_ARGS[@]}" \
+            --timeout 8 \
+            --max-workers 8 \
+            --output-json .artifacts/ai-university-source-audit/current/source-audit.json \
+            --output-md .artifacts/ai-university-source-audit/current/source-audit.md
+          cat .artifacts/ai-university-source-audit/current/source-audit.md \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish official-source audit evidence
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v7
+        with:
+          name: ai-university-source-audit
+          path: .artifacts/ai-university-source-audit/current/
+          if-no-files-found: warn
+          retention-days: 30
+
   update:
     name: AI University Content Update
     runs-on: ubuntu-latest
