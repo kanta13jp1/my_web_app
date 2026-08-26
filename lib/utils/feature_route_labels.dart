@@ -11,6 +11,8 @@ const Set<String> _nonFeatureRoutes = <String>{
   '/home',
   '/landing',
   '/maintenance',
+  // Retired compatibility URL. It resolves to the canonical home route.
+  '/app-analytics-dashboard',
 };
 
 /// 旧導線や重複実装から、利用者に見せる正規機能へ集約する対応表。
