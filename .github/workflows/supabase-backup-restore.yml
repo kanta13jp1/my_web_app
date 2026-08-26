@@ -150,6 +150,10 @@ jobs:
             exit 1
           fi
 
+          echo "45969060b55102f56af317b0d7981434be58927de1ff76e1e1789139a3f2defc  scripts/sql/supabase_storage_v1_71_0_0062.sql" \
+            | sha256sum --check
+          docker cp scripts/sql/supabase_storage_v1_71_0_0062.sql \
+            "$db_container:/tmp/storage-compat.sql"
           docker cp "$restore_input/roles.sql" "$db_container:/tmp/roles.sql"
           docker cp "$restore_input/schema.sql" "$db_container:/tmp/schema.sql"
           docker cp "$restore_input/data.sql" "$db_container:/tmp/data.sql"
@@ -161,6 +165,7 @@ jobs:
             --dbname postgres \
             --single-transaction \
             --variable ON_ERROR_STOP=1 \
+            --file /tmp/storage-compat.sql \
             --file /tmp/roles.sql \
             --file /tmp/schema.sql \
             --file /tmp/pgmq-bootstrap.sql \
