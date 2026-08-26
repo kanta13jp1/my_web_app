@@ -124,6 +124,20 @@ jobs:
             --github-output "$GITHUB_OUTPUT" \
             "${args[@]}"
 
+      - name: Detect DB and Edge smoke scope
+        id: db_edge_smoke
+        shell: bash
+        env:
+          FORCE_ALL: ${{ github.event_name != 'push' }}
+        run: |
+          if [ "$FORCE_ALL" = "true" ] || grep -Eq \
+            '^(supabase/(migrations|functions)/|scripts/(testcontainers_supabase_smoke.py|requirements-testcontainers.txt)|test/fixtures/testcontainers/|test/scripts/test_testcontainers_supabase_smoke.py)' \
+            .deploy-logs/changed-files.txt; then
+            echo "required=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "required=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Setup Flutter
         if: steps.changes.outputs.web == 'true'
         uses: ./.github/actions/setup-flutter-sdk
@@ -190,6 +204,41 @@ jobs:
       - name: Check migration timestamp collisions
         if: steps.changes.outputs.migration == 'true'
         run: python scripts/check_migration_timestamps.py
+
+      - name: Setup Python for DB and Edge smoke
+        if: steps.db_edge_smoke.outputs.required == 'true'
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Setup Deno for DB and Edge smoke
+        if: steps.db_edge_smoke.outputs.required == 'true'
+        shell: bash
+        env:
+          DENO_VERSION: v2.9.1
+        run: bash scripts/ci/install_deno_from_github.sh
+
+      - name: Install DB and Edge smoke dependencies
+        if: steps.db_edge_smoke.outputs.required == 'true'
+        run: python -m pip install --requirement scripts/requirements-testcontainers.txt
+
+      - name: Gate production changes with DB and Edge smoke
+        if: steps.db_edge_smoke.outputs.required == 'true'
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+        run: |
+          python test/scripts/test_testcontainers_supabase_smoke.py
+          python scripts/testcontainers_supabase_smoke.py --plan
+          python scripts/testcontainers_supabase_smoke.py --artifacts-dir .testcontainers-logs
+
+      - name: Upload production DB and Edge smoke artifacts
+        if: always() && steps.db_edge_smoke.outputs.required == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: production-testcontainers-smoke-logs
+          path: .testcontainers-logs/
+          if-no-files-found: ignore
+          include-hidden-files: true
 
       - name: Setup Supabase CLI
         if: steps.changes.outputs.migration == 'true' || steps.changes.outputs.edge == 'true'
