@@ -346,7 +346,7 @@ BEGIN
 
   INSERT INTO public.team_memberships (team_id, user_id, role)
   VALUES (v_team_id, v_actor, 'member')
-  ON CONFLICT (team_id, user_id) DO NOTHING;
+  ON CONFLICT ON CONSTRAINT team_memberships_team_id_user_id_key DO NOTHING;
 
   UPDATE public.team_memberships AS tm
   SET invite_verified_at = clock_timestamp()
