@@ -13,7 +13,7 @@
 ## Current Context
 
 ```text
-﻿## 背景
+## 背景
 GitHub Actionsの運用において、不要なワークフロー実行によるリソースやコストの浪費、および過剰な権限付与による侵害リスクを防ぐため、グッドプラクティスに基づく設計が不可欠であるため。
 
 ## 要望
@@ -39,8 +39,6 @@ NotebookLMへ再ログイン後、ノート本文ベースで再生成して更�
 
 <!-- notebooklm-bulk-source:bdec9ea5-c6f6-4c7d-923c-9bdf87d553d0 -->
 <!-- notebooklm-rerun-updated:bdec9ea5-c6f6-4c7d-923c-9bdf87d553d0:1 -->
-
-
 ```
 
 ## Autonomous Repair Loop
