@@ -66,7 +66,7 @@ void main() {
 
     test('fails closed without retaining fallback claims', () async {
       final viewModel = ComparisonEvidenceViewModel(
-        repository: _FakeEvidenceRepository(error: StateError('offline')),
+        repository: _FakeEvidenceRepository(error: Exception('offline')),
       );
 
       await viewModel.load('notion');
@@ -159,7 +159,7 @@ class _FakeEvidenceRepository implements CompetitorClaimEvidenceRepository {
   const _FakeEvidenceRepository({this.result = const [], this.error});
 
   final List<CompetitorClaimEvidence> result;
-  final Object? error;
+  final Exception? error;
 
   @override
   Future<List<CompetitorClaimEvidence>> fetchForCompetitor(
