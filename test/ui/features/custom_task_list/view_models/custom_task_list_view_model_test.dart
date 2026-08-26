@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/data/repositories/custom_task_list_repository.dart';
 import 'package:my_web_app/data/services/custom_task_list_ai_service.dart';
@@ -83,6 +85,47 @@ void main() {
     expect(viewModel.goal, '資格試験に合格する');
     expect(viewModel.items, hasLength(3));
   });
+
+  test('rolls back an edit when local persistence fails', () async {
+    final original = CustomTaskListSnapshot(
+      goal: '片付ける',
+      situation: '',
+      items: const <CustomTaskItem>[
+        CustomTaskItem(id: 'task-1', title: '机を片付ける'),
+      ],
+      source: 'saved',
+      generatedAt: DateTime.utc(2026, 8, 25),
+    );
+    final viewModel = CustomTaskListViewModel(
+      repository: CustomTaskListRepositoryImpl(
+        generator: const _FixedGenerator(),
+        store: _FailingSaveStore(original),
+      ),
+    );
+    await viewModel.restore();
+
+    final saved = await viewModel.editTask('task-1', '変更後');
+
+    expect(saved, isFalse);
+    expect(viewModel.items.single.title, '机を片付ける');
+    expect(viewModel.errorMessage, contains('保存できません'));
+  });
+
+  test('finishing generation after dispose does not notify a dead model', () async {
+    final generator = _DeferredGenerator();
+    final viewModel = CustomTaskListViewModel(
+      repository: CustomTaskListRepositoryImpl(
+        generator: generator,
+        store: _MemoryStore(),
+      ),
+    );
+
+    final generation = viewModel.generate(goal: '片付ける', situation: '');
+    viewModel.dispose();
+    generator.complete();
+
+    expect(await generation, isTrue);
+  });
 }
 
 class _MemoryStore implements CustomTaskListStore {
@@ -112,4 +155,38 @@ class _FixedGenerator implements CustomTaskListGenerator {
       source: 'test-ai',
     );
   }
+}
+
+class _FailingSaveStore implements CustomTaskListStore {
+  final CustomTaskListSnapshot snapshot;
+
+  _FailingSaveStore(this.snapshot);
+
+  @override
+  Future<CustomTaskListSnapshot?> load() async => snapshot;
+
+  @override
+  Future<void> save(CustomTaskListSnapshot snapshot) {
+    throw StateError('disk full');
+  }
+}
+
+class _DeferredGenerator implements CustomTaskListGenerator {
+  final Completer<GeneratedCustomTaskList> _completer =
+      Completer<GeneratedCustomTaskList>();
+
+  void complete() {
+    _completer.complete(
+      const GeneratedCustomTaskList(
+        taskTitles: <String>['机を空にする', '本を戻す', '床を掃除する'],
+        source: 'test-ai',
+      ),
+    );
+  }
+
+  @override
+  Future<GeneratedCustomTaskList> generate({
+    required String goal,
+    required String situation,
+  }) => _completer.future;
 }

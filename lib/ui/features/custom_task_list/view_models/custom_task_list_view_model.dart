@@ -14,6 +14,7 @@ class CustomTaskListViewModel extends ChangeNotifier {
 
   CustomTaskListSnapshot? _snapshot;
   bool _isLoading = false;
+  bool _isDisposed = false;
   String? _errorMessage;
 
   bool get isLoading => _isLoading;
@@ -33,7 +34,7 @@ class CustomTaskListViewModel extends ChangeNotifier {
     } catch (_) {
       _errorMessage = '保存済みのタスクリストを読み込めませんでした。';
     }
-    notifyListeners();
+    _notifyListeners();
   }
 
   Future<bool> generate({
@@ -42,13 +43,13 @@ class CustomTaskListViewModel extends ChangeNotifier {
   }) async {
     if (goal.trim().isEmpty && situation.trim().isEmpty) {
       _errorMessage = '目標または現状を入力してください。';
-      notifyListeners();
+      _notifyListeners();
       return false;
     }
 
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    _notifyListeners();
     try {
       _snapshot = await _repository.generate(goal: goal, situation: situation);
       return true;
@@ -60,7 +61,7 @@ class CustomTaskListViewModel extends ChangeNotifier {
       return false;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _notifyListeners();
     }
   }
 
@@ -68,7 +69,12 @@ class CustomTaskListViewModel extends ChangeNotifier {
     final normalizedTitle = title.replaceAll(RegExp(r'\s+'), ' ').trim();
     if (normalizedTitle.isEmpty) {
       _errorMessage = 'タスク名を入力してください。';
-      notifyListeners();
+      _notifyListeners();
+      return false;
+    }
+    if (normalizedTitle.length > 120) {
+      _errorMessage = 'タスク名は120文字以内にしてください。';
+      _notifyListeners();
       return false;
     }
     return _replaceItems(
@@ -105,14 +111,27 @@ class CustomTaskListViewModel extends ChangeNotifier {
     final next = current.copyWith(items: nextItems);
     _snapshot = next;
     _errorMessage = null;
-    notifyListeners();
+    _notifyListeners();
     try {
       await _repository.save(next);
       return true;
     } catch (_) {
+      if (identical(_snapshot, next)) {
+        _snapshot = current;
+      }
       _errorMessage = '変更を端末に保存できませんでした。';
-      notifyListeners();
+      _notifyListeners();
       return false;
     }
+  }
+
+  void _notifyListeners() {
+    if (!_isDisposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 }

@@ -62,6 +62,8 @@
 - Requires 3-8 unique actionable items before accepting an AI response.
 - Supports local edit, delete, completion toggles, and SharedPreferences restore.
 - Provides compact and wide layouts with route and home-catalog registration.
+- Review hardening caps service-layer input, hides provider exception details,
+  rolls back failed local edits, and avoids notifications after disposal.
 
 ## Validation
 

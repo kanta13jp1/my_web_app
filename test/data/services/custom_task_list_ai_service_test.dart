@@ -63,4 +63,53 @@ void main() {
 
     expect(tasks, <String>['机を片付ける', '本を箱に入れる', '床を掃除する']);
   });
+
+  test('rejects oversized input before invoking AI', () async {
+    var invoked = false;
+    final generator = AiCustomTaskListGenerator(
+      chatService: AiHubChatService(
+        invoker: (_) async {
+          invoked = true;
+          return <String, dynamic>{};
+        },
+      ),
+    );
+
+    await expectLater(
+      generator.generate(goal: 'x' * 501, situation: ''),
+      throwsA(
+        isA<CustomTaskListGenerationException>().having(
+          (error) => error.message,
+          'message',
+          contains('500文字'),
+        ),
+      ),
+    );
+    expect(invoked, isFalse);
+  });
+
+  test('does not expose provider exception details', () async {
+    final generator = AiCustomTaskListGenerator(
+      chatService: AiHubChatService(
+        invoker: (_) => throw StateError('provider-secret-detail'),
+      ),
+    );
+
+    await expectLater(
+      generator.generate(goal: '片付ける', situation: ''),
+      throwsA(
+        isA<CustomTaskListGenerationException>()
+            .having(
+              (error) => error.message,
+              'message',
+              contains('時間をおいて再試行'),
+            )
+            .having(
+              (error) => error.message,
+              'message',
+              isNot(contains('provider-secret-detail')),
+            ),
+      ),
+    );
+  });
 }
