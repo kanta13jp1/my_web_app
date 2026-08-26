@@ -7,13 +7,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/pdf_document_analysis.dart';
 import 'offline_secure_mode_settings_service.dart';
 
-typedef PdfDocumentInvoker =
-    Future<Map<String, dynamic>> Function(Map<String, dynamic> body);
+typedef PdfDocumentInvoker = Future<Map<String, dynamic>> Function(
+  Map<String, dynamic> body,
+);
 typedef PdfDocumentUpload = Future<void> Function(String path, Uint8List bytes);
 typedef PdfDocumentRemove = Future<void> Function(String path);
 typedef PdfDocumentUserIdProvider = String? Function();
-typedef PdfDocumentOfflinePolicyLoader =
-    Future<Map<String, dynamic>> Function();
+typedef PdfDocumentOfflinePolicyLoader = Future<Map<String, dynamic>>
+    Function();
 
 abstract interface class PdfDocumentAnalysisGateway {
   Future<PdfDocumentSelection?> pickPdf();
@@ -55,12 +56,12 @@ class PdfDocumentAnalysisService implements PdfDocumentAnalysisGateway {
     PdfDocumentRemove? remover,
     PdfDocumentUserIdProvider? userIdProvider,
     PdfDocumentOfflinePolicyLoader? offlinePolicyLoader,
-  }) : _supabase = supabase,
-       _invoker = invoker,
-       _uploader = uploader,
-       _remover = remover,
-       _userIdProvider = userIdProvider,
-       _offlinePolicyLoader = offlinePolicyLoader;
+  })  : _supabase = supabase,
+        _invoker = invoker,
+        _uploader = uploader,
+        _remover = remover,
+        _userIdProvider = userIdProvider,
+        _offlinePolicyLoader = offlinePolicyLoader;
 
   @override
   Future<PdfDocumentSelection?> pickPdf() async {
@@ -126,8 +127,8 @@ class PdfDocumentAnalysisService implements PdfDocumentAnalysisGateway {
   Future<PdfDocumentAnalysisResult> analyze(
     PdfDocumentSelection selection,
   ) async {
-    final userId = (_userIdProvider?.call() ?? _client.auth.currentUser?.id)
-        ?.trim();
+    final userId =
+        (_userIdProvider?.call() ?? _client.auth.currentUser?.id)?.trim();
     if (userId == null || userId.isEmpty) {
       throw const PdfDocumentAnalysisException(
         'PDFのAI解析にはログインが必要です。',
@@ -140,8 +141,7 @@ class PdfDocumentAnalysisService implements PdfDocumentAnalysisGateway {
         'PDFのページ数が変わりました。ファイルを選び直してください。',
       );
     }
-    final path =
-        '$userId/writer-analysis/'
+    final path = '$userId/writer-analysis/'
         '${DateTime.now().microsecondsSinceEpoch}_${checked.fileName}';
     await _upload(path, checked.bytes);
     try {
@@ -173,9 +173,7 @@ class PdfDocumentAnalysisService implements PdfDocumentAnalysisGateway {
   Future<void> _upload(String path, Uint8List bytes) async {
     final uploader = _uploader;
     if (uploader != null) return uploader(path, bytes);
-    await _client.storage
-        .from(storageBucket)
-        .uploadBinary(
+    await _client.storage.from(storageBucket).uploadBinary(
           path,
           bytes,
           fileOptions: const FileOptions(
