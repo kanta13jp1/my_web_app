@@ -14,8 +14,13 @@ void main() {
       );
       final catalog = TigerReviewerProfileCatalog.fromJsonString(source);
 
-      expect(catalog.schemaVersion, 1);
+      expect(catalog.schemaVersion, 2);
       expect(catalog.profilesBySeat, hasLength(125));
+      expect(catalog.enrichmentRound, greaterThanOrEqualTo(4));
+      expect(catalog.averageProfileCompletenessPercent, greaterThan(0));
+      expect(catalog.averageReviewReflectionPercent, greaterThan(0));
+      expect(catalog.verifiedBirthDates, 3);
+      expect(catalog.nextBatchNames, hasLength(5));
       expect(catalog.profilesBySeat.keys.toSet(), hasLength(125));
       expect(
         catalog.profilesBySeat.values.every(
@@ -24,6 +29,10 @@ void main() {
               profile.companyRole.isNotEmpty &&
               profile.businessSummary.isNotEmpty &&
               profile.businessDomains.isNotEmpty &&
+              profile.profileCompletenessPercent > 0 &&
+              profile.reviewReflectionPercent > 0 &&
+              profile.reviewFocusLabels.isNotEmpty &&
+              profile.reviewQuestions.isNotEmpty &&
               profile.profileUrl?.hasScheme == true,
         ),
         isTrue,
@@ -34,6 +43,25 @@ void main() {
             .every((profile) => profile.birthDateSourceUrl?.hasScheme == true),
         isTrue,
       );
+      for (final seat in <int>[117, 120, 121]) {
+        final profile = catalog.profilesBySeat[seat]!;
+        expect(profile.profileCompletenessPercent, greaterThanOrEqualTo(62));
+        expect(profile.reviewReflectionPercent, greaterThanOrEqualTo(68));
+        expect(profile.reviewReflectionMode, isNot('neutral_guarded'));
+      }
+      for (final seat in <int>[119, 123, 124, 125]) {
+        final profile = catalog.profilesBySeat[seat]!;
+        expect(profile.profileCompletenessPercent, greaterThanOrEqualTo(62));
+        expect(profile.reviewReflectionPercent, greaterThanOrEqualTo(68));
+        expect(profile.reviewReflectionMode, 'profile_balanced');
+        expect(profile.evidenceLinks.length, greaterThanOrEqualTo(2));
+      }
+      final kataishi = catalog.profilesBySeat[125]!;
+      expect(kataishi.ageLabel(DateTime(2026, 8, 25)), '32歳（2026年8月25日時点）');
+      expect(
+        kataishi.evidenceLinks.map((link) => link.label),
+        contains('生年月日（東証提出資料）'),
+      );
 
       final standingsSource = await rootBundle.loadString(
         'assets/data/tiger_reviewer_league_status.json',
@@ -43,6 +71,15 @@ void main() {
         final seat = standing['seat'] as int;
         expect(catalog.profilesBySeat[seat]?.name, standing['name']);
       }
+
+      final sengoku = catalog.profilesBySeat[118]!;
+      expect(sengoku.name, '仙石実');
+      expect(sengoku.ageLabel(DateTime(2026, 8, 23)), '52歳（2026年8月23日時点）');
+      expect(sengoku.companyRole, contains('代表'));
+      expect(sengoku.businessDomains, contains('法務・会計・士業'));
+      expect(sengoku.profileCompletenessPercent, 65);
+      expect(sengoku.reviewReflectionPercent, 50);
+      expect(sengoku.reviewReflectionMode, 'profile_balanced');
     },
   );
 
@@ -60,6 +97,12 @@ void main() {
       publicViewpointSummary: '',
       profileUrl: Uri.parse('https://reiwanotora.jp/tiger/endo-yuki/'),
       birthDateSourceUrl: Uri.parse('https://reiwanotora.jp/tiger/endo-yuki/'),
+      evidenceLinks: <TigerReviewerEvidenceLink>[
+        TigerReviewerEvidenceLink(
+          label: '肩書き・事業内容',
+          url: Uri.parse('https://example.com/company'),
+        ),
+      ],
     );
     final unverified = TigerReviewerProfile(
       seat: 1,
@@ -77,6 +120,8 @@ void main() {
     );
 
     expect(verified.ageLabel(DateTime(2026, 8, 23)), '36歳（2026年8月23日時点）');
+    expect(verified.evidenceLinks.single.label, '肩書き・事業内容');
+    expect(verified.evidenceLinks.single.url.host, 'example.com');
     expect(unverified.ageLabel(DateTime(2026, 8, 23)), '公開情報未確認');
   });
 }

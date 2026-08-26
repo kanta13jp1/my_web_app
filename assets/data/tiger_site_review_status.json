@@ -1,19 +1,19 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-23T13:00:09.176383+00:00",
+  "generated_at": "2026-08-25T03:57:45.390157+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "site_review",
   "publication_state": "latest_review",
   "automation": {
     "id": "125",
     "name": "サイト全体の虎レビュー",
-    "status": "ACTIVE",
+    "status": "PAUSED",
     "schedule": "毎時25分（1時間ごと）"
   },
-  "review_count": 6,
+  "review_count": 9,
   "latest_review": {
-    "cycle_id": "20260823T214617+0900",
-    "started_at": "2026-08-23T21:46:17+09:00",
+    "cycle_id": "20260825T124533+0900",
+    "started_at": "2026-08-25T12:45:33+09:00",
     "source_format": "site_review",
     "surface": {
       "slug": "whole_site",
@@ -22,26 +22,17 @@
     "reviewer": {
       "seat": 12,
       "name": "迫 佑樹",
-      "selection_score": 78.0832,
+      "selection_score": 78.1432,
       "division": 1,
-      "cycle_utility": 92.04,
-      "aggregate_utility": 91.62
+      "cycle_utility": 85.5,
+      "aggregate_utility": 85.5
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 7,
+    "finding_count": 5,
     "top_findings": [
       {
-        "summary": "登録前AI体験と個人CEOの価値提案は具体的だが、最優先顧客と、その課題が継続利用・支払いに至る需要証拠がない。",
-        "severity": "p1",
-        "business_dimensions": [
-          "market_demand",
-          "revenue_model",
-          "unit_economics"
-        ]
-      },
-      {
-        "summary": "trial・登録・billing・checkoutの段階計測はあるが、流入元からD30継続とpaidまでを同一cohortで結ぶ実測証拠がない。",
+        "summary": "獲得元別の継続利用と有料転換を結ぶ一次証拠がない",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
@@ -50,58 +41,373 @@
         ]
       },
       {
-        "summary": "Free・Pro・Team・100円応援は明確だが、プラン別AI原価、粗利、CAC、回収期間、LTV、churnの成立証拠がない。",
+        "summary": "プラン別のAI変動費と粗利・回収期間を判断できない",
         "severity": "p1",
         "business_dimensions": [
           "unit_economics",
           "revenue_model",
           "scalability"
         ]
+      },
+      {
+        "summary": "billing取得失敗時に内部例外文字列を利用者へ表示する",
+        "severity": "p1",
+        "business_dimensions": [
+          "trust_risk",
+          "revenue_model",
+          "customer_pain"
+        ]
       }
     ],
+    "quality": {
+      "framework": "TCE+CLEAR",
+      "overall_score": 100.0,
+      "scores": {
+        "complete": 100,
+        "logical": 100,
+        "evidence": 100,
+        "audience": 100,
+        "relevant": 100
+      },
+      "gate_passed": true,
+      "baseline_cycle_id": "20260825T090429+0900",
+      "focus_dimension": "complete",
+      "overall_delta": 0.0,
+      "next_focus_dimension": "complete",
+      "next_cycle_experiment": "獲得元別にD7/D30継続率と有料転換率を同じ匿名コホートで1回集計し、最上位チャネルと全体平均との差を記録する。"
+    },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4755 追跡中",
-      "detail": "内部401露出はbilling/auth保護領域であり、他の6指摘は実利用cohort、原価集計、顧客・ポートフォリオ判断、成果比較、または法務・プライバシー専門レビューを要するため、共有の低リスク自動修正条件を満たす変更はない。",
+      "label": "未対策・Issue #4810 追跡中",
+      "detail": "提案のみで、対策実施の記録はありません。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "validate_roster.py: passed (125 profiles)",
-        "validate_personas.py: passed (125 profiles)",
-        "fresh isolated anonymous production journey inspection: passed (root, subscription-billing, privacy)",
-        "select_reviewer.py: passed once (125 profiles; seat 12; selection score 78.0832)",
-        "flutter test --no-pub web handoff, landing conversion, and subscription billing suite: passed (60 tests)",
-        "flutter test --no-pub Tiger lane model/page suite: passed (11 tests)",
-        "flutter analyze --no-pub scoped whole-site and Tiger files: passed (11 items; 202.3s; no issues)",
-        "review_issue.py --execute: passed (Issue #4755; cycle dedupe evidence recorded)",
-        "validate_cycle_report.py: passed (schema 4; lane=site_review; one reviewer; seven proposals)",
-        "build_lane_status.py --lane site_review: passed (site-only status; six retained cycles; no unissued passed review_only record)",
-        "post-origin/main-merge Tiger lane model/page suite: passed (12 tests)",
-        "post-origin/main-merge flutter analyze --no-pub Tiger lane files: passed (3 items; 30.2s; no issues)"
+        "passed: fast-forwarded to origin/main 50cce811d",
+        "passed: 3 fixed routes, HTTP 200 and SEO markers",
+        "passed: 125 profiles and 125 personas",
+        "passed: 75 tests",
+        "passed: 10 items; no issues"
       ],
       "issue": {
-        "number": 4755,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4755",
+        "number": 4810,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4810",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-site-review:20260823T214617+0900:whole_site"
+        "dedupe_key": "tiger-site-review:20260825T124533+0900:whole_site"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "site-priority-segment-retained-demand",
-        "site-acquisition-retention-paid-cohort",
-        "site-plan-unit-economics-proof",
-        "site-anonymous-billing-error-boundary",
-        "site-portfolio-focus-scalability",
-        "site-differentiation-outcome-proof",
-        "site-ai-data-trust-map"
+        "site-acquisition-retention-paid-proof-gap",
+        "site-plan-unit-economics-gap",
+        "site-billing-error-disclosure-boundary",
+        "site-central-page-concentration",
+        "site-differentiation-outcome-proof-gap"
       ]
     }
   },
   "history": [
+    {
+      "cycle_id": "20260825T124533+0900",
+      "started_at": "2026-08-25T12:45:33+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 78.1432
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260825T090429+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "獲得元別にD7/D30継続率と有料転換率を同じ匿名コホートで1回集計し、最上位チャネルと全体平均との差を記録する。"
+      },
+      "findings": [
+        {
+          "finding_id": "site-acquisition-retention-paid-proof-gap",
+          "summary": "獲得元別の継続利用と有料転換を結ぶ一次証拠がない",
+          "severity": "p1",
+          "suggested_action": "既存の同意・分析境界を保ったまま、獲得元別のD7/D30継続と有料転換を結ぶ最小コホート集計を設計する。"
+        },
+        {
+          "finding_id": "site-plan-unit-economics-gap",
+          "summary": "プラン別のAI変動費と粗利・回収期間を判断できない",
+          "severity": "p1",
+          "suggested_action": "認証・決済・価格を変更せず、プラン別のAI変動費、粗利率、CAC、回収期間、churn、LTVを意思決定用に集計する。"
+        },
+        {
+          "finding_id": "site-billing-error-disclosure-boundary",
+          "summary": "billing取得失敗時に内部例外文字列を利用者へ表示する",
+          "severity": "p1",
+          "suggested_action": "決済境界の所有者が許可済みエラー分類だけを表示し、再試行導線とUnauthorized・FunctionException回帰テストを追加する。"
+        },
+        {
+          "finding_id": "site-central-page-concentration",
+          "summary": "主要ページへの実装集中が改善速度と回帰範囲を拡大している",
+          "severity": "p2",
+          "suggested_action": "計測で継続価値を確認した主要導線から、状態とwidgetを段階分割し専用回帰テストへ移す。"
+        },
+        {
+          "finding_id": "site-differentiation-outcome-proof-gap",
+          "summary": "統合型の差別化を比較継続成果で証明できていない",
+          "severity": "p2",
+          "suggested_action": "代表ユースケースを固定し、専門ツール併用群と比較した30日継続・完了成果・有料意向を測る。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4810 追跡中",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded to origin/main 50cce811d",
+          "passed: 3 fixed routes, HTTP 200 and SEO markers",
+          "passed: 125 profiles and 125 personas",
+          "passed: 75 tests",
+          "passed: 10 items; no issues"
+        ],
+        "issue": {
+          "number": 4810,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4810",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260825T124533+0900:whole_site"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-acquisition-retention-paid-proof-gap",
+          "site-plan-unit-economics-gap",
+          "site-billing-error-disclosure-boundary",
+          "site-central-page-concentration",
+          "site-differentiation-outcome-proof-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260825T090429+0900",
+      "started_at": "2026-08-25T09:04:29+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 77.6647
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260825T083902+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "獲得元別にD7/D30継続率と有料転換率を同じ匿名コホートで1回集計し、最上位チャネルと全体平均との差を記録する。"
+      },
+      "findings": [
+        {
+          "finding_id": "site-acquisition-retention-paid-proof-gap",
+          "summary": "獲得元別の継続利用と有料転換を結ぶ一次証拠がない",
+          "severity": "p1",
+          "suggested_action": "既存の同意・分析境界を保ったまま、獲得元別のD7/D30継続と有料転換を結ぶ最小コホート集計を設計する。"
+        },
+        {
+          "finding_id": "site-plan-unit-economics-gap",
+          "summary": "プラン別のAI変動費と粗利・回収期間を判断できない",
+          "severity": "p1",
+          "suggested_action": "認証・決済・価格を変更せず、プラン別のAI変動費、粗利率、CAC、回収期間、churn、LTVを意思決定用に集計する。"
+        },
+        {
+          "finding_id": "site-billing-error-disclosure-boundary",
+          "summary": "billing取得失敗時に内部例外文字列を利用者へ表示する",
+          "severity": "p1",
+          "suggested_action": "決済境界の所有者が許可済みエラー分類だけを表示し、再試行導線とUnauthorized・FunctionException回帰テストを追加する。"
+        },
+        {
+          "finding_id": "site-central-page-concentration",
+          "summary": "主要ページへの実装集中が改善速度と回帰範囲を拡大している",
+          "severity": "p2",
+          "suggested_action": "計測で継続価値を確認した主要導線から、状態とwidgetを段階分割し専用回帰テストへ移す。"
+        },
+        {
+          "finding_id": "site-differentiation-outcome-proof-gap",
+          "summary": "統合型の差別化を比較継続成果で証明できていない",
+          "severity": "p2",
+          "suggested_action": "代表ユースケースを固定し、専門ツール併用群と比較した30日継続・完了成果・有料意向を測る。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4803 追跡中",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded to origin/main 050798a2b",
+          "passed: 3 fixed routes, HTTP 200 and SEO markers",
+          "passed: 125 profiles",
+          "passed: 125 personas"
+        ],
+        "issue": {
+          "number": 4803,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4803",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260825T090429+0900:whole_site"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-acquisition-retention-paid-proof-gap",
+          "site-plan-unit-economics-gap",
+          "site-billing-error-disclosure-boundary",
+          "site-central-page-concentration",
+          "site-differentiation-outcome-proof-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260825T083902+0900",
+      "started_at": "2026-08-25T08:39:02+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 80.6207
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "獲得元別にD7/D30継続率と有料転換率を同じ匿名コホートで1回集計し、最上位チャネルと全体平均との差を記録する。"
+      },
+      "findings": [
+        {
+          "finding_id": "site-acquisition-retention-paid-proof-gap",
+          "summary": "獲得元別の継続利用と有料転換を結ぶ一次証拠がない",
+          "severity": "p1",
+          "suggested_action": "既存の同意・分析境界を保ったまま、獲得元別のD7/D30継続と有料転換を結ぶ最小コホート集計を設計する。"
+        },
+        {
+          "finding_id": "site-plan-unit-economics-gap",
+          "summary": "プラン別のAI変動費と粗利・回収期間を判断できない",
+          "severity": "p1",
+          "suggested_action": "認証・決済・価格を変更せず、プラン別のAI変動費、粗利率、CAC、回収期間、churn、LTVを意思決定用に集計する。"
+        },
+        {
+          "finding_id": "site-billing-error-disclosure-boundary",
+          "summary": "billing取得失敗時に内部例外文字列を利用者へ表示する",
+          "severity": "p1",
+          "suggested_action": "決済境界の所有者が許可済みエラー分類だけを表示し、再試行導線とUnauthorized・FunctionException回帰テストを追加する。"
+        },
+        {
+          "finding_id": "site-central-page-concentration",
+          "summary": "主要ページへの実装集中が改善速度と回帰範囲を拡大している",
+          "severity": "p2",
+          "suggested_action": "計測で継続価値を確認した主要導線から、状態とwidgetを段階分割し専用回帰テストへ移す。"
+        },
+        {
+          "finding_id": "site-differentiation-outcome-proof-gap",
+          "summary": "統合型の差別化を比較継続成果で証明できていない",
+          "severity": "p2",
+          "suggested_action": "代表ユースケースを固定し、専門ツール併用群と比較した30日継続・完了成果・有料意向を測る。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4800 追跡中",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: READY at origin/main 0c65ff501",
+          "passed: 3 fixed routes, HTTP 200 and SEO markers",
+          "passed: 125 profiles",
+          "passed: 125 personas"
+        ],
+        "issue": {
+          "number": 4800,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4800",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260825T083902+0900:whole_site"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-acquisition-retention-paid-proof-gap",
+          "site-plan-unit-economics-gap",
+          "site-billing-error-disclosure-boundary",
+          "site-central-page-concentration",
+          "site-differentiation-outcome-proof-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260823T214617+0900",
       "started_at": "2026-08-23T21:46:17+09:00",
@@ -120,6 +426,7 @@
       "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
+      "quality": null,
       "findings": [
         {
           "finding_id": "site-priority-segment-retained-demand",
@@ -224,6 +531,7 @@
       "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
+      "quality": null,
       "findings": [
         {
           "finding_id": "site-segment-value-proof",
@@ -319,6 +627,7 @@
       "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
+      "quality": null,
       "findings": [
         {
           "finding_id": "comparison-claim-evidence",
@@ -391,6 +700,7 @@
       "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
+      "quality": null,
       "findings": [
         {
           "finding_id": "course-freshness-review",
@@ -462,6 +772,7 @@
       "status": "implemented",
       "review_status": "fixed",
       "validation_status": "passed",
+      "quality": null,
       "findings": [
         {
           "finding_id": "ai_university_catalog_pagination",
@@ -513,6 +824,7 @@
       "status": "blocked",
       "review_status": "blocked",
       "validation_status": "not_applicable",
+      "quality": null,
       "findings": [],
       "countermeasure": {
         "state": "blocked",

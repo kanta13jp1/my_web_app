@@ -3,12 +3,12 @@
   "electionMode": "local",
   "sourceUrl": "https://new-kokumin.jp/local-election-list",
   "sourceAsOf": "2026-08-19",
-  "sourceDocumentSha256": "d9e96f8abf053d6739b1a669b2c008a1f55f07851b96f1c9cee500f576277400",
-  "candidateRowCount": 273,
+  "sourceDocumentSha256": "33e56f90f89a1060725ab5056274d5917191ca246699c03d4b491bab5ff63bee",
+  "candidateRowCount": 274,
   "officialEndorsements": {
-    "totalCount": 264,
+    "totalCount": 265,
     "incumbentCount": 115,
-    "newcomerCount": 139,
+    "newcomerCount": 140,
     "formerCount": 10,
     "prefectureCount": 36
   },
@@ -221,9 +221,9 @@
     },
     {
       "prefecture": "福岡",
-      "totalCount": 14,
+      "totalCount": 15,
       "incumbentCount": 2,
-      "newcomerCount": 12,
+      "newcomerCount": 13,
       "formerCount": 0
     },
     {

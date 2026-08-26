@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/inbox_capture_service.dart';
 import '../services/note_semantic_search_service.dart';
+import '../services/note_tag_service.dart';
 import '../services/public_memo_service.dart';
 import 'note_editor_page.dart';
 
@@ -73,6 +74,7 @@ class _NoteListPageState extends State<NoteListPage> {
   // Win版#108: メモ検索 (title + content 部分一致・case insensitive)
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String? _selectedTag;
   Timer? _searchDebounce;
   List<NoteSearchResult> _semanticSearchResults = const <NoteSearchResult>[];
   String _semanticSearchMode = 'text_fallback';
@@ -104,13 +106,15 @@ class _NoteListPageState extends State<NoteListPage> {
     _fetchNotes();
   }
 
-  /// 検索クエリで note を絞り込み (title + content 部分一致・case insensitive)
+  /// 検索クエリで note を絞り込み (title + content + tags 部分一致)。
   bool _matchesSearch(Map<String, dynamic> note) {
     if (_searchQuery.isEmpty) return true;
     final q = _searchQuery.toLowerCase();
     final title = (note['title'] as String? ?? '').toLowerCase();
     final content = (note['content'] as String? ?? '').toLowerCase();
-    return title.contains(q) || content.contains(q);
+    return title.contains(q) ||
+        content.contains(q) ||
+        NoteTagService.containsSearch(note['tags'], q);
   }
 
   void _handleSearchChanged(String value) {
@@ -183,11 +187,19 @@ class _NoteListPageState extends State<NoteListPage> {
   List<Map<String, dynamic>> _visibleNotesForSearch(
     List<Map<String, dynamic>> notes,
   ) {
-    final locallyFiltered = _showInboxOnly
+    final viewFiltered = _showInboxOnly
         ? notes.where(_isInbox).toList(growable: false)
         : (_showFavoritesOnly
             ? notes.where(_isFavorite).toList(growable: false)
             : notes);
+    final selectedTag = _selectedTag;
+    final locallyFiltered = selectedTag == null
+        ? viewFiltered
+        : viewFiltered
+            .where(
+              (note) => NoteTagService.containsTag(note['tags'], selectedTag),
+            )
+            .toList(growable: false);
     if (_searchQuery.isEmpty) return locallyFiltered;
     if (!_semanticSearchCompleted || _semanticSearchError != null) {
       return locallyFiltered.where(_matchesSearch).toList();
@@ -196,16 +208,28 @@ class _NoteListPageState extends State<NoteListPage> {
     final notesById = <String, Map<String, dynamic>>{
       for (final note in notes) _noteId(note): note,
     };
-    return _semanticSearchResults
+    final semanticMatches = _semanticSearchResults
         .map(
-          (result) => result.toNoteRow(localNote: notesById[result.id]),
-        )
+      (result) => result.toNoteRow(localNote: notesById[result.id]),
+    )
         .where(
-          (note) => _showInboxOnly
-              ? _isInbox(note)
-              : (!_showFavoritesOnly || _isFavorite(note)),
-        )
-        .toList(growable: false);
+      (note) {
+        final matchesView = _showInboxOnly
+            ? _isInbox(note)
+            : (!_showFavoritesOnly || _isFavorite(note));
+        return matchesView &&
+            (selectedTag == null ||
+                NoteTagService.containsTag(note['tags'], selectedTag));
+      },
+    ).toList(growable: false);
+    final semanticIds = semanticMatches.map(_noteId).toSet();
+    final localMatches = locallyFiltered
+        .where(_matchesSearch)
+        .where((note) => !semanticIds.contains(_noteId(note)));
+    return <Map<String, dynamic>>[
+      ...semanticMatches,
+      ...localMatches,
+    ];
   }
 
   String _searchStatusText(int resultCount) {
@@ -316,9 +340,7 @@ class _NoteListPageState extends State<NoteListPage> {
       note['capture_status'] == inboxCaptureStatus;
 
   List<String> _noteTags(Map<String, dynamic> note) {
-    final raw = note['tags'];
-    if (raw is! List) return const <String>[];
-    return raw.map((tag) => tag.toString()).toList(growable: false);
+    return NoteTagService.normalize(note['tags']);
   }
 
   bool _isPublished(Map<String, dynamic> note) =>
@@ -1012,6 +1034,7 @@ class _NoteListPageState extends State<NoteListPage> {
     final isInbox = _isInbox(note);
     final title = _noteTitle(note);
     final content = _noteContent(note);
+    final tags = _noteTags(note);
     final reminderDate = _reminderDateOf(note);
     final accentColor = highlightShareCandidate
         ? const Color(0xFF6366F1)
@@ -1174,6 +1197,46 @@ class _NoteListPageState extends State<NoteListPage> {
                 ),
               ),
             ],
+            if (tags.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                key: ValueKey<String>('note_tags_${_noteId(note)}'),
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final tag in tags.take(6))
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 180),
+                      child: ActionChip(
+                        key: ValueKey<String>(
+                          'note_list_tag_${_noteId(note)}_$tag',
+                        ),
+                        avatar: const Icon(Icons.sell_outlined, size: 14),
+                        label: Text(
+                          tag,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _selectedTag = tag;
+                          });
+                        },
+                        visualDensity: VisualDensity.compact,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  if (tags.length > 6)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Text(
+                        '+${tags.length - 6}',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ),
+                ],
+              ),
+            ],
             if (content.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
@@ -1299,6 +1362,11 @@ class _NoteListPageState extends State<NoteListPage> {
   @override
   Widget build(BuildContext context) {
     // 表示モード → 意味検索（失敗時は端末内検索）の順で絞り込む。
+    final availableTags = NoteTagService.collectFromRows(_notes);
+    final tagOptions = <String>[...availableTags];
+    if (_selectedTag != null && !tagOptions.contains(_selectedTag)) {
+      tagOptions.add(_selectedTag!);
+    }
     final visibleNotes = _visibleNotesForSearch(_notes);
     final inboxEntries = visibleNotes.where(_isInbox).toList();
     final inboxIds =
@@ -1324,9 +1392,11 @@ class _NoteListPageState extends State<NoteListPage> {
             .where((note) => !shareCandidateIds.contains(_noteId(note)))
             .toList()
         : reminderExcludedNotes;
-    final hasAnyEntries =
-        (!_showInboxOnly && _searchQuery.isEmpty && _draftEntries.isNotEmpty) ||
-            visibleNotes.isNotEmpty;
+    final hasAnyEntries = (!_showInboxOnly &&
+            _searchQuery.isEmpty &&
+            _selectedTag == null &&
+            _draftEntries.isNotEmpty) ||
+        visibleNotes.isNotEmpty;
     final pageTitle = _showInboxOnly
         ? 'CKO OFFICE (Inbox)'
         : (_showFavoritesOnly ? 'CKO OFFICE (お気に入り)' : 'CKO OFFICE (メモ一覧)');
@@ -1460,6 +1530,58 @@ class _NoteListPageState extends State<NoteListPage> {
               ),
             ),
           ),
+          if (tagOptions.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const Text('タグで絞り込み'),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minWidth: 180,
+                      maxWidth: 320,
+                    ),
+                    child: DropdownButton<String>(
+                      key: const Key('note_list_tag_filter'),
+                      value: _selectedTag,
+                      isExpanded: true,
+                      hint: const Text('すべてのタグ'),
+                      items: tagOptions
+                          .map(
+                            (tag) => DropdownMenuItem<String>(
+                              value: tag,
+                              child: Text(
+                                tag,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList(growable: false),
+                      onChanged: (tag) {
+                        setState(() {
+                          _selectedTag = tag;
+                        });
+                      },
+                    ),
+                  ),
+                  if (_selectedTag != null)
+                    TextButton.icon(
+                      key: const Key('note_list_tag_filter_clear'),
+                      onPressed: () {
+                        setState(() {
+                          _selectedTag = null;
+                        });
+                      },
+                      icon: const Icon(Icons.clear, size: 18),
+                      label: const Text('解除'),
+                    ),
+                ],
+              ),
+            ),
           if (_searchQuery.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -1503,18 +1625,32 @@ class _NoteListPageState extends State<NoteListPage> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              _showInboxOnly
-                                  ? 'Inboxは空です'
-                                  : (_showFavoritesOnly
-                                      ? 'お気に入りのメモはまだありません'
-                                      : 'まだメモがありません'),
+                              _selectedTag != null
+                                  ? '「$_selectedTag」のメモはありません'
+                                  : _showInboxOnly
+                                      ? 'Inboxは空です'
+                                      : (_showFavoritesOnly
+                                          ? 'お気に入りのメモはまだありません'
+                                          : 'まだメモがありません'),
                               style: const TextStyle(
                                 fontSize: 18,
                                 color: Color(0xFFB0B0B0),
                                 height: 1.5,
                               ),
                             ),
-                            if (_showFavoritesOnly || _showInboxOnly) ...[
+                            if (_selectedTag != null) ...[
+                              const SizedBox(height: 12),
+                              TextButton.icon(
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedTag = null;
+                                  });
+                                },
+                                icon: const Icon(Icons.clear),
+                                label: const Text('タグ絞り込みを解除'),
+                              ),
+                            ] else if (_showFavoritesOnly ||
+                                _showInboxOnly) ...[
                               const SizedBox(height: 12),
                               TextButton.icon(
                                 onPressed: _showInboxOnly
@@ -1559,6 +1695,7 @@ class _NoteListPageState extends State<NoteListPage> {
                           ],
                           if (!_showInboxOnly &&
                               _searchQuery.isEmpty &&
+                              _selectedTag == null &&
                               _draftEntries.isNotEmpty) ...[
                             _buildSectionHeader(
                               '下書き',
