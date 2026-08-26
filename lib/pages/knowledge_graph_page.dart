@@ -617,6 +617,12 @@ _StatusPresentation _statusPresentation(String status) {
         Color(0xFF9F1239),
         'AI生成に失敗したため、検索結果の抜粋を表示しています。',
       );
+    case 'citation_fallback':
+      return const _StatusPresentation(
+        'extractive',
+        Color(0xFF9F1239),
+        'AI回答に有効な引用がなかったため、根拠付きの抜粋を表示しています。',
+      );
     case 'no_results':
       return const _StatusPresentation(
         'no results',

@@ -2,7 +2,10 @@ import {
   assert,
   assertEquals,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { buildCitationEvidence } from "./citation_evidence.ts";
+import {
+  buildCitationEvidence,
+  hasOnlyValidCitationMarkers,
+} from "./citation_evidence.ts";
 
 function evidence(
   overrides: Partial<Parameters<typeof buildCitationEvidence>[0]> = {},
@@ -79,5 +82,15 @@ Deno.test("citation preview is bounded while retaining the highlighted range", (
       citation.highlight_end,
     ),
     highlight,
+  );
+});
+
+Deno.test("AI answers require at least one in-range citation marker", () => {
+  assert(hasOnlyValidCitationMarkers("根拠です [1]。補足です [2]。", 2));
+  assertEquals(hasOnlyValidCitationMarkers("引用のない回答です。", 2), false);
+  assertEquals(hasOnlyValidCitationMarkers("範囲外です [3]。", 2), false);
+  assertEquals(
+    hasOnlyValidCitationMarkers("有効 [1] と範囲外 [9]。", 2),
+    false,
   );
 });

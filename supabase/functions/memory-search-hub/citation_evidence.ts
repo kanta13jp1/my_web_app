@@ -233,3 +233,18 @@ export function buildCitationEvidence(input: CitationEvidenceInput) {
     last_synced_at: input.lastSyncedAt,
   };
 }
+
+export function hasOnlyValidCitationMarkers(
+  answer: string,
+  citationCount: number,
+): boolean {
+  if (citationCount <= 0) return false;
+  const markers = Array.from(answer.matchAll(/\[(\d+)\]/g));
+  if (markers.length === 0) return false;
+  return markers.every((marker) => {
+    const citationNumber = Number(marker[1]);
+    return Number.isInteger(citationNumber) &&
+      citationNumber >= 1 &&
+      citationNumber <= citationCount;
+  });
+}

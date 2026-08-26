@@ -17,7 +17,10 @@ import {
 import { buildQueryRouteDecision } from "./query_report.ts";
 import { rerankWithHaiku } from "./search/rerank.ts";
 import { embedTextWithGemini, vectorSearch } from "./search/vector.ts";
-import { buildCitationEvidence } from "./citation_evidence.ts";
+import {
+  buildCitationEvidence,
+  hasOnlyValidCitationMarkers,
+} from "./citation_evidence.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ??
@@ -553,8 +556,20 @@ async function memoryRagQuery(body: Body, ctx: McpAuthContext | null) {
 
   if (citations.length > 0) {
     try {
-      answer = await generateLlmRagAnswer(body, query, citations, traceId) ??
-        answer;
+      const generatedAnswer = await generateLlmRagAnswer(
+        body,
+        query,
+        citations,
+        traceId,
+      );
+      if (
+        generatedAnswer != null &&
+        hasOnlyValidCitationMarkers(generatedAnswer, citations.length)
+      ) {
+        answer = generatedAnswer;
+      } else if (generatedAnswer != null && answerStatus === "ok") {
+        answerStatus = "citation_fallback";
+      }
     } catch (error) {
       console.warn("kg llm stage failed", error);
       if (answerStatus === "ok") answerStatus = "llm_failure";
