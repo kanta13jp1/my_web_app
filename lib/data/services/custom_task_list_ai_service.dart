@@ -73,7 +73,7 @@ class AiCustomTaskListGenerator implements CustomTaskListGenerator {
       rethrow;
     } catch (_) {
       throw const CustomTaskListGenerationException(
-        'AIによるタスクリスト生成に失敗しました。時間をおいて再試行してください。'
+        'AIによるタスクリスト生成に失敗しました。時間をおいて再試行してください。',
       );
     }
   }

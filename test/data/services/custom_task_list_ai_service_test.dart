@@ -76,7 +76,10 @@ void main() {
     );
 
     await expectLater(
-      generator.generate(goal: 'x' * 501, situation: ''),
+      generator.generate(
+        goal: List<String>.filled(501, 'x').join(),
+        situation: '',
+      ),
       throwsA(
         isA<CustomTaskListGenerationException>().having(
           (error) => error.message,
