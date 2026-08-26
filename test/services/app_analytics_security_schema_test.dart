@@ -75,33 +75,26 @@ void main() {
     expect(sql, contains('p_share_increment > 1'));
     expect(sql, contains('2147483647'));
 
-    for (final signature in <String>[
-      'public.record_app_analytics_event(\n'
-          '  text,\n'
-          '  date,\n'
-          '  integer,\n'
-          '  text\n'
-          ')',
-      'public.increment_share_count()',
-      'public.increment_app_analytics_source_detail(\n'
-          '  text,\n'
-          '  date,\n'
-          '  integer\n'
-          ')',
+    for (final signaturePattern in <String>[
+      r'public\.record_app_analytics_event\s*\(\s*text\s*,\s*date\s*,\s*integer\s*,\s*text\s*\)',
+      r'public\.increment_share_count\s*\(\s*\)',
+      r'public\.increment_app_analytics_source_detail\s*\(\s*text\s*,\s*date\s*,\s*integer\s*\)',
     ]) {
       expect(
-        sql,
-        contains(
-          'revoke all on function $signature\n'
-          'from public, anon, authenticated',
-        ),
+        RegExp(
+          'revoke\\s+all\\s+on\\s+function\\s+$signaturePattern'
+          r'\s+from\s+public\s*,\s*anon\s*,\s*authenticated',
+        ).hasMatch(sql),
+        isTrue,
+        reason: 'browser roles must not execute $signaturePattern',
       );
       expect(
-        sql,
-        contains(
-          'grant execute on function $signature\n'
-          'to service_role',
-        ),
+        RegExp(
+          'grant\\s+execute\\s+on\\s+function\\s+$signaturePattern'
+          r'\s+to\s+service_role',
+        ).hasMatch(sql),
+        isTrue,
+        reason: 'service_role must execute $signaturePattern',
       );
     }
   });
