@@ -27,6 +27,19 @@ void main() {
     );
   });
 
+  test('inspectPdf fails closed when page metadata is ambiguous', () {
+    final mismatched = Uint8List.fromList(
+      latin1.encode(
+        '%PDF-1.7\n1 0 obj << /Type /Pages /Count 3 >> endobj\n'
+        '2 0 obj << /Type /Page >> endobj\n%%EOF',
+      ),
+    );
+    expect(
+      () => PdfDocumentAnalysisService.inspectPdf('ambiguous.pdf', mismatched),
+      throwsA(isA<PdfDocumentAnalysisException>()),
+    );
+  });
+
   test('result parser rejects a server page or cost mismatch', () {
     expect(
       () => PdfDocumentAnalysisResult.fromMap(<String, dynamic>{

@@ -62,8 +62,9 @@ Tools APIのPDF parserを利用してファイルの解析を行う。1ページ
   summary, key-point, and structured-field UI to the consolidated writing center.
 - Added authenticated, owner-scoped temporary Storage plus server-side type,
   size, page-count, budget, and offline-mode checks.
-- Added Writer Files -> PDF Parser -> Palmyra X5 orchestration with cleanup on
-  success and failure; results are not persisted.
+- Added Writer Files -> bounded file-readiness polling -> PDF Parser -> Palmyra
+  X5 orchestration with idempotent cleanup on success and failure; results are
+  not persisted.
 - `WRITER_PDF_PARSER_ENABLED` defaults to false. The dated Writer endpoint must
   be proven in the target tenant and staging before release; see
   `docs/WRITER_PDF_DOCUMENT_ANALYSIS.md`.

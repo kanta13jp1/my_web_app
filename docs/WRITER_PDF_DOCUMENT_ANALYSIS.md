@@ -9,16 +9,18 @@ before enabling the feature.
 ## Request flow
 
 1. The client verifies the `%PDF-` header, estimates the page count, and
-   rejects files larger than 20 MB or 200 pages.
+   rejects files larger than 20 MB or 200 pages. Ambiguous page trees and PDF
+   object streams fail closed instead of presenting an unsafe cost estimate.
 2. The user sees the page count and the documented parser estimate of
    `$0.055/page`, then explicitly confirms.
 3. The client uploads the PDF to the private `pdf-analysis-inputs` bucket under
    its authenticated user ID.
 4. `ai-hub` downloads the file, independently verifies its type, size, page
    count, owner path, budget, and offline-secure-mode policy.
-5. When enabled, the Edge Function uses Writer Files, PDF Parser, and Palmyra
-   X5 structured output to return Markdown, a Japanese summary, key points,
-   and important fields.
+5. When enabled, the Edge Function uploads to Writer Files and polls
+   `GET /v1/files/{file_id}` until the documented status is `completed` before
+   invoking PDF Parser. It then uses Palmyra X5 structured output to return
+   Markdown, a Japanese summary, key points, and important fields.
 6. The Edge Function and client both attempt to delete the temporary object.
    The Writer file deletion is also requested in a `finally` block. Extracted
    content and results are not persisted by this feature.
@@ -29,6 +31,8 @@ Keep `WRITER_PDF_PARSER_ENABLED=false` until all of the following are proven in
 the target Writer tenant and staging Supabase project:
 
 - `POST /v1/files` accepts the tenant's PDF upload.
+- `GET /v1/files/{file_id}` reaches `completed` within the bounded polling
+  window and reports `failed` deterministically.
 - `POST /v1/tools/pdf-parser/{file_id}` succeeds for a multi-page PDF.
 - `POST /v1/chat` with `palmyra-x5` accepts the structured response format.
 - Both Supabase and Writer temporary files are absent after success and error.

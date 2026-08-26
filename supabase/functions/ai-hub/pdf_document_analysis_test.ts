@@ -25,6 +25,19 @@ Deno.test("detectPdfPageCount counts multi-page PDFs", () => {
   assertEquals(estimatedWriterParserCostUsd(12), 0.66);
 });
 
+Deno.test("detectPdfPageCount fails closed for ambiguous page metadata", () => {
+  const mismatched = new TextEncoder().encode(
+    "%PDF-1.7\n1 0 obj << /Type /Pages /Count 3 >> endobj\n" +
+      "2 0 obj << /Type /Page >> endobj\n%%EOF",
+  );
+  const objectStream = new TextEncoder().encode(
+    "%PDF-1.7\n1 0 obj << /Type /ObjStm /N 2 >> stream\n" +
+      "/Type /Pages /Count 2 /Type /Page /Type /Page\nendstream\n%%EOF",
+  );
+  assertEquals(detectPdfPageCount(mismatched), 0);
+  assertEquals(detectPdfPageCount(objectStream), 0);
+});
+
 Deno.test("isOwnerScopedPdfPath rejects traversal and other owners", () => {
   assertEquals(isOwnerScopedPdfPath("user-1/input/report.pdf", "user-1"), true);
   assertEquals(
@@ -126,7 +139,12 @@ Deno.test("handler fail-closes while feature flag is disabled and cleans up", as
 Deno.test("Writer flow uploads, parses, summarizes, then deletes the file", async () => {
   const calls: Array<{ url: string; method: string }> = [];
   const responses = [
-    new Response(JSON.stringify({ id: "writer-file-1" }), { status: 200 }),
+    new Response(
+      JSON.stringify({ id: "writer-file-1", status: "in_progress" }),
+      { status: 200 },
+    ),
+    new Response(JSON.stringify({ status: "in_progress" }), { status: 200 }),
+    new Response(JSON.stringify({ status: "completed" }), { status: 200 }),
     new Response(JSON.stringify({ content: "# Report\nPage one\nPage two" }), {
       status: 200,
     }),
@@ -156,16 +174,28 @@ Deno.test("Writer flow uploads, parses, summarizes, then deletes the file", asyn
     return Promise.resolve(responses.shift()!);
   }) as typeof fetch;
 
-  const result = await analyzePdfWithWriter({
-    apiKey: "test-key",
-    bytes: pdf(2),
-    fileName: "report.pdf",
-    format: "markdown",
-  }, fetcher);
+  const result = await analyzePdfWithWriter(
+    {
+      apiKey: "test-key",
+      bytes: pdf(2),
+      fileName: "report.pdf",
+      format: "markdown",
+    },
+    fetcher,
+    () => Promise.resolve(),
+  );
 
   assertEquals(result.summary, "Two pages summarized.");
   assertEquals(calls, [
     { url: "https://api.writer.com/v1/files", method: "POST" },
+    {
+      url: "https://api.writer.com/v1/files/writer-file-1",
+      method: "GET",
+    },
+    {
+      url: "https://api.writer.com/v1/files/writer-file-1",
+      method: "GET",
+    },
     {
       url: "https://api.writer.com/v1/tools/pdf-parser/writer-file-1",
       method: "POST",
@@ -176,6 +206,51 @@ Deno.test("Writer flow uploads, parses, summarizes, then deletes the file", asyn
       method: "DELETE",
     },
   ]);
+});
+
+Deno.test("Writer cleanup treats an already absent file as success", async () => {
+  const calls: Array<{ url: string; method: string }> = [];
+  const responses = [
+    new Response(
+      JSON.stringify({ id: "writer-file-2", status: "completed" }),
+      { status: 200 },
+    ),
+    new Response(JSON.stringify({ content: "# Ready" }), { status: 200 }),
+    new Response(
+      JSON.stringify({
+        model: "palmyra-x5",
+        choices: [{
+          message: {
+            content: JSON.stringify({
+              title: "Ready",
+              summary: "Ready.",
+              key_points: [],
+              important_fields: [],
+            }),
+          },
+        }],
+      }),
+      { status: 200 },
+    ),
+    new Response(JSON.stringify({ error: "not found" }), { status: 404 }),
+  ];
+  const fetcher = ((input: string | URL | Request, init?: RequestInit) => {
+    calls.push({ url: String(input), method: String(init?.method ?? "GET") });
+    return Promise.resolve(responses.shift()!);
+  }) as typeof fetch;
+
+  const result = await analyzePdfWithWriter({
+    apiKey: "test-key",
+    bytes: pdf(1),
+    fileName: "ready.pdf",
+    format: "markdown",
+  }, fetcher);
+
+  assertEquals(result.summary, "Ready.");
+  assertEquals(calls.at(-1), {
+    url: "https://api.writer.com/v1/files/writer-file-2",
+    method: "DELETE",
+  });
 });
 
 class FakeStorage implements PdfAnalysisStorage {

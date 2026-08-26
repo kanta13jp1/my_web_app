@@ -2,6 +2,8 @@ export const PDF_ANALYSIS_BUCKET = "pdf-analysis-inputs";
 export const PDF_ANALYSIS_MAX_BYTES = 20 * 1024 * 1024;
 export const PDF_ANALYSIS_MAX_PAGES = 200;
 export const WRITER_PDF_PARSER_USD_PER_PAGE = 0.055;
+const WRITER_FILE_STATUS_MAX_ATTEMPTS = 30;
+const WRITER_FILE_STATUS_INTERVAL_MS = 1_000;
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -58,6 +60,10 @@ export function estimatedWriterParserCostUsd(pageCount: number): number {
 export function detectPdfPageCount(bytes: Uint8Array): number {
   if (!isPdf(bytes)) return 0;
   const source = new TextDecoder("latin1").decode(bytes);
+  // Object streams can hide page dictionaries from this deliberately small
+  // preflight scanner. Reject them instead of presenting a potentially low
+  // cost estimate that the user cannot safely confirm.
+  if (/\/Type\s*\/ObjStm\b/.test(source)) return 0;
   const explicitPages = source.match(/\/Type\s*\/Page\b/g)?.length ?? 0;
   let declaredPages = 0;
   const pagesNodes = source.matchAll(
@@ -69,7 +75,13 @@ export function detectPdfPageCount(bytes: Uint8Array): number {
       declaredPages = count;
     }
   }
-  return Math.max(explicitPages, declaredPages);
+  if (
+    explicitPages <= 0 ||
+    (declaredPages > 0 && declaredPages !== explicitPages)
+  ) {
+    return 0;
+  }
+  return explicitPages;
 }
 
 export function isOwnerScopedPdfPath(path: string, userId: string): boolean {
@@ -266,6 +278,8 @@ export async function handlePdfDocumentAnalysisAction(
 export async function analyzePdfWithWriter(
   request: WriterPdfAnalyzerRequest,
   fetcher: typeof fetch = fetch,
+  sleep: (milliseconds: number) => Promise<void> = (milliseconds) =>
+    new Promise((resolve) => setTimeout(resolve, milliseconds)),
 ): Promise<WriterPdfAnalysis> {
   const apiKey = request.apiKey.trim();
   if (!apiKey) throw new Error("writer_api_key_missing");
@@ -293,6 +307,11 @@ export async function analyzePdfWithWriter(
     );
     writerFileId = asString(upload.id);
     if (!writerFileId) throw new Error("writer_file_id_missing");
+    const uploadStatus = asString(upload.status);
+    if (uploadStatus === "failed") throw new Error("writer_file_failed");
+    if (uploadStatus !== "completed") {
+      await waitForWriterFile(writerFileId, apiKey, fetcher, sleep);
+    }
 
     const parsed = await writerRequest(
       `https://api.writer.com/v1/tools/pdf-parser/${writerFileId}`,
@@ -363,13 +382,42 @@ export async function analyzePdfWithWriter(
             headers: { Authorization: `Bearer ${apiKey}` },
           },
           fetcher,
-          true,
+          { allowEmpty: true, acceptedStatuses: [404, 410] },
         );
       } catch {
         console.warn("Writer PDF file cleanup failed", "writer_delete_failed");
       }
     }
   }
+}
+
+async function waitForWriterFile(
+  writerFileId: string,
+  apiKey: string,
+  fetcher: typeof fetch,
+  sleep: (milliseconds: number) => Promise<void>,
+): Promise<void> {
+  for (let attempt = 0; attempt < WRITER_FILE_STATUS_MAX_ATTEMPTS; attempt++) {
+    const file = await writerRequest(
+      `https://api.writer.com/v1/files/${writerFileId}`,
+      {
+        method: "GET",
+        headers: { Authorization: `Bearer ${apiKey}` },
+      },
+      fetcher,
+      { timeoutMs: 5_000 },
+    );
+    const status = asString(file.status);
+    if (status === "completed") return;
+    if (status === "failed") throw new Error("writer_file_failed");
+    if (status && status !== "in_progress") {
+      throw new Error("writer_file_status_invalid");
+    }
+    if (attempt + 1 < WRITER_FILE_STATUS_MAX_ATTEMPTS) {
+      await sleep(WRITER_FILE_STATUS_INTERVAL_MS);
+    }
+  }
+  throw new Error("writer_file_processing_timeout");
 }
 
 function writerAnalysisResponseFormat(): UnknownRecord {
@@ -439,18 +487,26 @@ async function writerRequest(
   url: string,
   init: RequestInit,
   fetcher: typeof fetch,
-  allowEmpty = false,
+  options: {
+    allowEmpty?: boolean;
+    acceptedStatuses?: readonly number[];
+    timeoutMs?: number;
+  } = {},
 ): Promise<UnknownRecord> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 90_000);
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    options.timeoutMs ?? 90_000,
+  );
   try {
     const response = await fetcher(url, { ...init, signal: controller.signal });
     const text = await response.text();
     if (!response.ok) {
+      if (options.acceptedStatuses?.includes(response.status)) return {};
       throw new Error(`writer_http_${response.status}`);
     }
     if (!text.trim()) {
-      if (allowEmpty) return {};
+      if (options.allowEmpty) return {};
       throw new Error("writer_empty_response");
     }
     const parsed = JSON.parse(text);

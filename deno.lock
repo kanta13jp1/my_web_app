@@ -360,8 +360,8 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
-        "npm:@playwright/test@^1.60.0",
-        "npm:lefthook@^2.1.9"
+        "npm:@playwright/test@^1.61.1",
+        "npm:lefthook@^2.1.10"
       ]
     }
   }
