@@ -170,6 +170,7 @@ import 'package:my_web_app/pages/donation_crowdfunding_page.dart';
 import 'package:my_web_app/pages/emergency_contacts_page.dart';
 import 'package:my_web_app/pages/knowledge_base_page.dart';
 import 'package:my_web_app/pages/knowledge_graph_page.dart';
+import 'package:my_web_app/pages/user_knowledge_graph_page.dart';
 import 'package:my_web_app/pages/market_intelligence_page.dart';
 import 'package:my_web_app/pages/meeting_manager_page.dart';
 import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
@@ -1809,6 +1810,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const KnowledgeGraphPage(),
         settings: const RouteSettings(name: '/knowledge-graph'),
+      );
+    case '/my-knowledge-graph':
+      return MaterialPageRoute(
+        builder: (_) => const UserKnowledgeGraphPage(),
+        settings: const RouteSettings(name: '/my-knowledge-graph'),
       );
     case '/settings/ai-share-button':
       return MaterialPageRoute(
