@@ -130,6 +130,26 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
             plan["ai_university_checks"],
         )
 
+    def test_plan_includes_app_analytics_write_boundary(self) -> None:
+        plan = module.build_plan(
+            ROOT / "test" / "fixtures" / "testcontainers" / "sql",
+            ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts",
+            ROOT / "supabase" / "functions" / "health-check" / "index.ts",
+        )
+        self.assertEqual(
+            plan["app_analytics_migration"],
+            "supabase/migrations/20260827003000_harden_app_analytics_writes.sql",
+        )
+        self.assertIn(
+            "raw browser INSERT, UPDATE, and DELETE are denied",
+            plan["app_analytics_checks"],
+        )
+        self.assertIn(
+            "deno check --config supabase/functions/deno.json "
+            "supabase/functions/growth-hub/index.ts",
+            plan["actual_edge_checks"],
+        )
+
     def test_tenant_role_count_rejects_untrusted_identifiers(self) -> None:
         with self.assertRaisesRegex(ValueError, "unexpected role"):
             module.issue_2773_role_count(

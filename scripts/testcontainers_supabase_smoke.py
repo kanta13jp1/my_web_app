@@ -3,10 +3,11 @@
 
 The smoke intentionally avoids production Supabase credentials. It starts a
 disposable Postgres container, applies a small migration/seed fixture, verifies
-the Issue #2773 fail-closed RLS migration and Issue #2484 asset-chat isolation,
-checks the real Edge Function import policy, and runs a Deno HTTP fixture against
-the container. Logs are written as artifacts so CI failures point to the
-migration, function, or seed boundary that broke.
+the Issue #2773 fail-closed RLS migration, Issue #2484 asset-chat isolation, and
+Issue #4091 app-analytics write boundary, checks the real Edge Function import
+policy, and runs a Deno HTTP fixture against the container. Logs are written as
+artifacts so CI failures point to the migration, function, or seed boundary that
+broke.
 """
 
 from __future__ import annotations
@@ -32,6 +33,11 @@ DEFAULT_SQL_DIR = ROOT / "test" / "fixtures" / "testcontainers" / "sql"
 DEFAULT_EDGE_FIXTURE = ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts"
 DEFAULT_ARTIFACTS_DIR = ROOT / ".testcontainers-logs"
 DEFAULT_ACTUAL_EDGE_FUNCTION = ROOT / "supabase" / "functions" / "health-check" / "index.ts"
+APP_ANALYTICS_EDGE_FUNCTION = ROOT / "supabase" / "functions" / "growth-hub" / "index.ts"
+APP_ANALYTICS_EDGE_TESTS = (
+    ROOT / "supabase" / "functions" / "growth-hub" / "acquisition_signals_test.ts",
+    ROOT / "supabase" / "functions" / "growth-hub" / "analytics_actor_test.ts",
+)
 REQUIRED_TABLES = ("profiles", "wbs_tasks", "ai_circuit_breaker")
 ISSUE_2773_RLS_MIGRATION = (
     ROOT / "supabase" / "migrations" / "20260815124052_fail_closed_rls_issue_2773.sql"
@@ -61,6 +67,12 @@ TAX_RECORDS_MIGRATION = (
 TAX_RECORDS_TABLES = ("tax_records",)
 TAX_RECORD_1 = "00000000-0000-4000-8000-000000002489"
 TAX_RECORD_2 = "00000000-0000-4000-8000-000000002490"
+APP_ANALYTICS_SECURITY_MIGRATION = (
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260827003000_harden_app_analytics_writes.sql"
+)
 AI_UNIVERSITY_MIGRATION = (
     ROOT
     / "supabase"
@@ -300,6 +312,20 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "authenticated users cannot forge another owner",
             "authenticated owner CRUD succeeds",
         ],
+        "app_analytics_migration": APP_ANALYTICS_SECURITY_MIGRATION.relative_to(
+            ROOT
+        ).as_posix(),
+        "app_analytics_checks": [
+            "browser roles see aggregate rows and columns only",
+            "raw browser INSERT, UPDATE, and DELETE are denied",
+            "browser roles cannot execute analytics write RPCs",
+            "Edge service-role events are atomic and idempotent per actor/day",
+            "one actor cannot submit more than 32 source keys per JST day",
+            "unsupported source keys and oversized increments are rejected",
+            "poisoned legacy counters cannot overflow new event writes",
+            "service_role retains required aggregate DML privileges",
+            "migration applies twice without reopening public writes",
+        ],
         "ai_university_migration": AI_UNIVERSITY_MIGRATION.relative_to(ROOT).as_posix(),
         "ai_university_checks": [
             "migration applies twice without losing legacy rows",
@@ -321,12 +347,17 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
         "actual_edge_checks": [
             "scripts/check_edge_function_imports.py --root supabase/functions",
             f"deno check --config supabase/functions/deno.json {actual_edge_function.relative_to(ROOT).as_posix()}",
+            f"deno check --config supabase/functions/deno.json {APP_ANALYTICS_EDGE_FUNCTION.relative_to(ROOT).as_posix()}",
+            "deno test --config supabase/functions/deno.json "
+            + " ".join(path.relative_to(ROOT).as_posix() for path in APP_ANALYTICS_EDGE_TESTS),
             f"deno check {edge_fixture.relative_to(ROOT).as_posix()}",
         ],
         "artifacts": [
             ".testcontainers-logs/summary.json",
             ".testcontainers-logs/edge-imports.log",
             ".testcontainers-logs/deno-check-health-check.log",
+            ".testcontainers-logs/deno-check-app-analytics-edge.log",
+            ".testcontainers-logs/deno-test-app-analytics-edge.log",
             ".testcontainers-logs/deno-check-edge-db-smoke.log",
             ".testcontainers-logs/edge-db-smoke.log",
             ".testcontainers-logs/failure.json",
@@ -776,6 +807,333 @@ def check_issue_2773_rls(conn: Any) -> dict[str, Any]:
     }
 
 
+def seed_app_analytics_security_fixture(conn: Any) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            "insert into public.app_analytics "
+            "(date, landing_views, conversions, share_count, source_details) "
+            "values ((timezone('Asia/Tokyo', now()))::date, "
+            "10, 2, 2147483647, "
+            "jsonb_build_object('public_memo_share', '99999999999999999999'))"
+        )
+        cur.execute(
+            "insert into public.app_analytics "
+            "(date, user_id, source, metadata) values "
+            "(date '2000-01-02', %s::uuid, 'guitar-recording-studio', "
+            "jsonb_build_object('title', 'private title', "
+            "'filePath', 'private/path.wav', 'notes', 'private notes'))",
+            (ISSUE_2773_USER_1,),
+        )
+    conn.commit()
+
+
+def app_analytics_expect_event_rejected(
+    conn: Any,
+    *,
+    source_key: str,
+    share_increment: int,
+    actor_hash: str = "a" * 64,
+) -> str:
+    try:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute("set local role service_role")
+                cur.execute(
+                    "select public.record_app_analytics_event("
+                    "%s, (timezone('Asia/Tokyo', now()))::date, %s, %s)",
+                    (source_key, share_increment, actor_hash),
+                )
+    except Exception as exc:  # psycopg is loaded only for the integration run.
+        sqlstate = getattr(exc, "sqlstate", None)
+        if sqlstate != "P0001":
+            raise AssertionError(
+                f"expected analytics RPC SQLSTATE P0001, got {sqlstate}: {exc}"
+            ) from exc
+        return sqlstate
+    raise AssertionError("invalid analytics event unexpectedly succeeded")
+
+
+def check_app_analytics_security(conn: Any) -> dict[str, Any]:
+    table_privileges = (
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "TRUNCATE",
+        "REFERENCES",
+        "TRIGGER",
+    )
+    browser_roles = ("anon", "authenticated")
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "select policyname, cmd, roles::text from pg_policies "
+            "where schemaname = 'public' and tablename = 'app_analytics' "
+            "order by policyname"
+        )
+        policies = [tuple(row) for row in cur.fetchall()]
+        cur.execute(
+            "select p.proname, pg_get_function_identity_arguments(p.oid), "
+            "p.prosecdef, coalesce(p.proconfig, array[]::text[]), "
+            "pg_get_userbyid(p.proowner), "
+            "not exists (select 1 from aclexplode(coalesce(p.proacl, "
+            "acldefault('f', p.proowner))) acl where acl.grantee = 0 "
+            "and acl.privilege_type = 'EXECUTE') "
+            "from pg_proc p join pg_namespace n on n.oid = p.pronamespace "
+            "where n.nspname = 'public' and p.proname = any(%s) "
+            "order by p.proname, pg_get_function_identity_arguments(p.oid)",
+            (
+                [
+                    "increment_app_analytics_source_detail",
+                    "increment_share_count",
+                    "record_app_analytics_event",
+                ],
+            ),
+        )
+        function_security = [tuple(row) for row in cur.fetchall()]
+        cur.execute("select current_user")
+        migration_owner = str(cur.fetchone()[0])
+    conn.commit()
+
+    expected_policies = [
+        ("app_analytics_public_read", "SELECT", "{anon,authenticated}")
+    ]
+    if policies != expected_policies:
+        raise AssertionError(f"unexpected app_analytics policies: {policies}")
+    expected_signatures = {
+        "increment_app_analytics_source_detail": "p_source_key text, p_event_date date, p_share_increment integer",
+        "increment_share_count": "",
+        "record_app_analytics_event": "p_source_key text, p_event_date date, p_share_increment integer, p_actor_hash text",
+    }
+    if len(function_security) != len(expected_signatures):
+        raise AssertionError(f"unexpected analytics function overloads: {function_security}")
+    for name, arguments, security_definer, proconfig, owner, public_revoked in function_security:
+        if expected_signatures.get(name) != arguments:
+            raise AssertionError(f"unexpected {name} signature: {arguments}")
+        if not security_definer:
+            raise AssertionError(f"{name} is not SECURITY DEFINER")
+        if not any(str(item).startswith("search_path=") for item in proconfig):
+            raise AssertionError(f"{name} search_path is not pinned: {proconfig}")
+        if owner != migration_owner:
+            raise AssertionError(f"{name} owner {owner} != {migration_owner}")
+        if not public_revoked:
+            raise AssertionError(f"PUBLIC retains EXECUTE on {name}")
+
+    privileges: dict[str, dict[str, bool]] = {}
+    with conn.cursor() as cur:
+        for role in browser_roles:
+            privileges[role] = {}
+            for privilege in table_privileges:
+                cur.execute(
+                    "select has_table_privilege(%s, 'public.app_analytics', %s)",
+                    (role, privilege),
+                )
+                actual = bool(cur.fetchone()[0])
+                privileges[role][privilege] = actual
+                expected = False
+                if actual != expected:
+                    raise AssertionError(
+                        f"{role} {privilege} expected {expected}, got {actual}"
+                    )
+            for signature in (
+                "public.increment_share_count()",
+                "public.increment_app_analytics_source_detail(text,date,integer)",
+                "public.record_app_analytics_event(text,date,integer,text)",
+            ):
+                cur.execute(
+                    "select has_function_privilege(%s, %s, 'EXECUTE')",
+                    (role, signature),
+                )
+                if bool(cur.fetchone()[0]):
+                    raise AssertionError(f"{role} can execute {signature}")
+            for column in (
+                "date",
+                "landing_views",
+                "conversions",
+                "share_count",
+                "source_details",
+            ):
+                cur.execute(
+                    "select has_column_privilege(%s, "
+                    "'public.app_analytics', %s, 'SELECT')",
+                    (role, column),
+                )
+                if not bool(cur.fetchone()[0]):
+                    raise AssertionError(f"{role} cannot SELECT safe column {column}")
+            for column in ("id", "user_id", "source", "metadata", "created_at"):
+                cur.execute(
+                    "select has_column_privilege(%s, "
+                    "'public.app_analytics', %s, 'SELECT')",
+                    (role, column),
+                )
+                if bool(cur.fetchone()[0]):
+                    raise AssertionError(f"{role} can SELECT private column {column}")
+    conn.commit()
+
+    denied_sqlstates: dict[str, dict[str, str]] = {}
+    for role in browser_roles:
+        denied_sqlstates[role] = {
+            "insert": issue_2773_expect_denied(
+                conn,
+                role=role,
+                user_id=None,
+                statement=(
+                    "insert into public.app_analytics "
+                    "(date, landing_views, conversions, share_count) "
+                    "values (date '2000-01-01', 999, 999, 999)"
+                ),
+            ),
+            "update": issue_2773_expect_denied(
+                conn,
+                role=role,
+                user_id=None,
+                statement=(
+                    "update public.app_analytics set conversions = 999 "
+                    "where date = current_date"
+                ),
+            ),
+            "delete": issue_2773_expect_denied(
+                conn,
+                role=role,
+                user_id=None,
+                statement="delete from public.app_analytics where date = current_date",
+            ),
+        }
+
+    private_column_sqlstate = issue_2773_expect_denied(
+        conn,
+        role="anon",
+        user_id=None,
+        statement="select metadata from public.app_analytics",
+    )
+
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute("set local role anon")
+            cur.execute(
+                "select date, landing_views, conversions, share_count, source_details "
+                "from public.app_analytics"
+            )
+            anon_rows = list(cur.fetchall())
+
+    first_actor = "a" * 64
+    second_actor = "b" * 64
+    quota_actor = "c" * 64
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute("set local role service_role")
+            cur.execute(
+                "select public.record_app_analytics_event("
+                "'public_memo_share', "
+                "(timezone('Asia/Tokyo', now()))::date, 1, %s)",
+                (first_actor,),
+            )
+            first_recorded = bool(cur.fetchone()[0])
+            cur.execute(
+                "select public.record_app_analytics_event("
+                "'public_memo_share', "
+                "(timezone('Asia/Tokyo', now()))::date, 1, %s)",
+                (first_actor,),
+            )
+            duplicate_recorded = bool(cur.fetchone()[0])
+            cur.execute(
+                "select public.record_app_analytics_event("
+                "'public_memo_share', "
+                "(timezone('Asia/Tokyo', now()))::date, 1, %s)",
+                (second_actor,),
+            )
+            second_recorded = bool(cur.fetchone()[0])
+            cur.execute(
+                "select count(*) from public.app_analytics_event_receipts "
+                "where event_date = (timezone('Asia/Tokyo', now()))::date "
+                "and source_key = 'public_memo_share'"
+            )
+            receipt_count = int(cur.fetchone()[0])
+            cur.execute(
+                "insert into public.app_analytics_event_receipts "
+                "(event_date, source_key, actor_hash) "
+                "select (timezone('Asia/Tokyo', now()))::date, "
+                "'quota-fixture-' || value, %s "
+                "from generate_series(1, 32) value",
+                (quota_actor,),
+            )
+            cur.execute(
+                "select public.record_app_analytics_event("
+                "'public_memo_copy', "
+                "(timezone('Asia/Tokyo', now()))::date, 1, %s)",
+                (quota_actor,),
+            )
+            over_quota_recorded = bool(cur.fetchone()[0])
+
+    invalid_source_sqlstate = app_analytics_expect_event_rejected(
+        conn,
+        source_key="attacker_controlled_metric",
+        share_increment=0,
+    )
+    oversized_increment_sqlstate = app_analytics_expect_event_rejected(
+        conn,
+        source_key="public_memo_share",
+        share_increment=2,
+    )
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "select share_count, source_details ->> 'public_memo_share' "
+            "from public.app_analytics "
+            "where date = (timezone('Asia/Tokyo', now()))::date"
+        )
+        row = cur.fetchone()
+    conn.commit()
+    if row is None or int(row[0]) != 2147483647 or int(row[1]) != 2:
+        raise AssertionError(f"idempotent analytics RPC returned unexpected row: {row}")
+    if len(anon_rows) != 1:
+        raise AssertionError(f"anon SELECT returned unsafe rows: {anon_rows}")
+    if not first_recorded or duplicate_recorded or not second_recorded:
+        raise AssertionError(
+            "analytics receipt idempotency failed: "
+            f"{first_recorded=}, {duplicate_recorded=}, {second_recorded=}"
+        )
+    if receipt_count != 2:
+        raise AssertionError(f"expected two analytics receipts, got {receipt_count}")
+    if over_quota_recorded:
+        raise AssertionError("actor/day analytics quota was bypassed")
+
+    service_role_privileges: dict[str, bool] = {}
+    with conn.cursor() as cur:
+        for privilege in ("SELECT", "INSERT", "UPDATE", "DELETE"):
+            cur.execute(
+                "select has_table_privilege('service_role', "
+                "'public.app_analytics', %s)",
+                (privilege,),
+            )
+            service_role_privileges[privilege] = bool(cur.fetchone()[0])
+    conn.commit()
+    if not all(service_role_privileges.values()):
+        raise AssertionError(
+            f"service_role app_analytics DML regressed: {service_role_privileges}"
+        )
+
+    return {
+        "policies": policies,
+        "browser_privileges": privileges,
+        "raw_write_sqlstates": denied_sqlstates,
+        "function_security": function_security,
+        "private_column_sqlstate": private_column_sqlstate,
+        "public_row_count": len(anon_rows),
+        "service_role_privileges": service_role_privileges,
+        "event_receipts": {
+            "first_recorded": first_recorded,
+            "duplicate_recorded": duplicate_recorded,
+            "second_recorded": second_recorded,
+            "receipt_count": receipt_count,
+            "over_quota_recorded": over_quota_recorded,
+        },
+        "rpc_row": {"share_count": int(row[0]), "public_memo_share": int(row[1])},
+        "invalid_source_sqlstate": invalid_source_sqlstate,
+        "oversized_increment_sqlstate": oversized_increment_sqlstate,
+    }
+
+
 def seed_asset_chat_fixture(conn: Any) -> None:
     with conn.cursor() as cur:
         cur.executemany(
@@ -1200,6 +1558,41 @@ def check_actual_edge_function(args: argparse.Namespace, artifacts_dir: Path) ->
     if deno_result.returncode != 0:
         raise RuntimeError("Deno check failed; see deno-check-health-check.log")
 
+    analytics_check = run_command(
+        [
+            "deno",
+            "check",
+            "--config",
+            "supabase/functions/deno.json",
+            str(APP_ANALYTICS_EDGE_FUNCTION.relative_to(ROOT)),
+        ],
+        artifacts_dir=artifacts_dir,
+        log_name="deno-check-app-analytics-edge.log",
+        timeout_seconds=180,
+    )
+    if analytics_check.returncode != 0:
+        raise RuntimeError(
+            "App analytics Edge type-check failed; "
+            "see deno-check-app-analytics-edge.log"
+        )
+
+    analytics_tests = run_command(
+        [
+            "deno",
+            "test",
+            "--config",
+            "supabase/functions/deno.json",
+            *(str(path.relative_to(ROOT)) for path in APP_ANALYTICS_EDGE_TESTS),
+        ],
+        artifacts_dir=artifacts_dir,
+        log_name="deno-test-app-analytics-edge.log",
+        timeout_seconds=180,
+    )
+    if analytics_tests.returncode != 0:
+        raise RuntimeError(
+            "App analytics Edge tests failed; see deno-test-app-analytics-edge.log"
+        )
+
 
 def check_edge_db_fixture(args: argparse.Namespace, artifacts_dir: Path) -> None:
     deno_result = run_command(
@@ -1320,6 +1713,10 @@ def run_smoke(args: argparse.Namespace) -> int:
             apply_sql_fixture(conn, ISSUE_2773_RLS_MIGRATION, artifacts_dir)
             seed_issue_2773_fixture(conn)
             tenant_rls = check_issue_2773_rls(conn)
+            seed_app_analytics_security_fixture(conn)
+            apply_sql_fixture(conn, APP_ANALYTICS_SECURITY_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, APP_ANALYTICS_SECURITY_MIGRATION, artifacts_dir)
+            app_analytics_security = check_app_analytics_security(conn)
             apply_sql_fixture(conn, ASSET_CHAT_MIGRATION, artifacts_dir)
             seed_asset_chat_fixture(conn)
             asset_chat_rls = check_asset_chat_rls(conn)
@@ -1338,6 +1735,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "url": redact_url(connection_url),
             "tables": counts,
             "tenant_rls": tenant_rls,
+            "app_analytics_security": app_analytics_security,
             "asset_chat_rls": asset_chat_rls,
             "tax_records_rls": tax_records_rls,
             "ai_university": ai_university,

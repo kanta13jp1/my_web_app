@@ -99,10 +99,11 @@ class PublicMemoService {
       final response = await _supabase.functions.invoke(
         'growth-hub',
         body: <String, dynamic>{
-          'action': 'share.track',
-          'memoId': memoId,
+          'action': 'acquisition.signal',
           'signalKey': signalKey,
           'dateKey': dateKey,
+          'shareIncrement': 1,
+          'contextId': memoId,
         },
       );
       final payload = _asMap(response.data);
@@ -114,16 +115,11 @@ class PublicMemoService {
       );
     } catch (e, stackTrace) {
       AppLogger.warning(
-        'Growth share signal fallback activated',
+        'Growth share signal failed',
         error: e,
         stackTrace: stackTrace,
       );
     }
-
-    await _recordShareSignalFallback(
-      signalKey: signalKey,
-      dateKey: dateKey,
-    );
   }
 
   // Publish a note as public memo
@@ -512,47 +508,6 @@ class PublicMemoService {
     }
   }
 
-  Future<void> _recordShareSignalFallback({
-    required String signalKey,
-    required String dateKey,
-  }) async {
-    try {
-      final existing = await _supabase
-          .from('app_analytics')
-          .select(
-            'date, landing_views, conversions, share_count, source_details',
-          )
-          .eq('date', dateKey)
-          .maybeSingle();
-
-      if (existing == null) {
-        await _supabase.from('app_analytics').upsert(<String, dynamic>{
-          'date': dateKey,
-          'landing_views': 0,
-          'conversions': 0,
-          'share_count': 1,
-          'source_details': <String, int>{signalKey: 1},
-        });
-        return;
-      }
-
-      final row = _asMap(existing);
-      final sourceDetails = _normalizeSourceDetails(row['source_details'])
-        ..update(signalKey, (count) => count + 1, ifAbsent: () => 1);
-
-      await _supabase.from('app_analytics').update(<String, dynamic>{
-        'share_count': _toInt(row['share_count']) + 1,
-        'source_details': sourceDetails,
-      }).eq('date', dateKey);
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        'Failed to record public memo share signal',
-        error: e,
-        stackTrace: stackTrace,
-      );
-    }
-  }
-
   Map<String, dynamic> _asMap(dynamic value) {
     if (value is Map<String, dynamic>) {
       return value;
@@ -561,32 +516,6 @@ class PublicMemoService {
       return Map<String, dynamic>.from(value);
     }
     return <String, dynamic>{};
-  }
-
-  Map<String, int> _normalizeSourceDetails(dynamic raw) {
-    if (raw is! Map) {
-      return <String, int>{};
-    }
-
-    final result = <String, int>{};
-    raw.forEach((key, value) {
-      result[key.toString()] = _toInt(value);
-    });
-    result.removeWhere((_, value) => value <= 0);
-    return result;
-  }
-
-  int _toInt(dynamic value) {
-    if (value is int) {
-      return value;
-    }
-    if (value is num) {
-      return value.toInt();
-    }
-    if (value is String) {
-      return int.tryParse(value) ?? 0;
-    }
-    return 0;
   }
 
   String _formatDate(DateTime date) {

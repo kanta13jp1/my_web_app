@@ -23,6 +23,7 @@ import {
   normalizeSupporterBuyerContext,
 } from "../_shared/supporter_buyer.ts";
 import { isSupportedAcquisitionSignal } from "./acquisition_signals.ts";
+import { analyticsActorHash } from "./analytics_actor.ts";
 import {
   extractPostedTexts,
   findDuplicateContent,
@@ -521,17 +522,24 @@ function formatDateKey(date: Date): string {
   }-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-function resolveDateKey(rawDateKey: unknown): string {
-  return typeof rawDateKey === "string" &&
-      /^\d{4}-\d{2}-\d{2}$/.test(rawDateKey)
-    ? rawDateKey
-    : formatDateKey(new Date());
+function resolveDateKey(): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === "year")?.value ?? "";
+  const month = parts.find((part) => part.type === "month")?.value ?? "";
+  const day = parts.find((part) => part.type === "day")?.value ?? "";
+  return `${year}-${month}-${day}`;
 }
 
 async function recordAcquisitionSignal(
   admin: SupabaseClient,
   rawSignalKey: unknown,
-  rawDateKey?: unknown,
+  rawShareIncrement?: unknown,
+  actorHash?: string,
 ) {
   const signalKey = String(rawSignalKey ?? "").trim();
   if (!signalKey || !isSupportedAcquisitionSignal(signalKey)) {
@@ -541,40 +549,30 @@ async function recordAcquisitionSignal(
     };
   }
 
-  const dateKey = resolveDateKey(rawDateKey);
-  const { data: existing, error: existingError } = await admin
-    .from("app_analytics")
-    .select("date, source_details")
-    .eq("date", dateKey)
-    .maybeSingle();
-  if (existingError) throw new Error(existingError.message);
-
-  if (!existing) {
-    const { error } = await admin.from("app_analytics").upsert({
-      date: dateKey,
-      landing_views: 0,
-      conversions: 0,
-      share_count: 0,
-      source_details: { [signalKey]: 1 },
-    });
-    if (error) throw new Error(error.message);
-    return { success: true, signalKey, dateKey };
+  const dateKey = resolveDateKey();
+  const shareIncrement = Number(rawShareIncrement ?? 0);
+  if (
+    !Number.isInteger(shareIncrement) || shareIncrement < 0 ||
+    shareIncrement > 1
+  ) {
+    return {
+      success: false,
+      error: "shareIncrement must be 0 or 1",
+    };
   }
+  if (!actorHash) throw new Error("analytics actor hash is required");
 
-  const details = (existing.source_details ?? {}) as Record<string, unknown>;
-  const next: Record<string, number> = {};
-  for (const [key, value] of Object.entries(details)) {
-    const count = typeof value === "number" ? value : Number(value);
-    if (Number.isFinite(count) && count > 0) next[key] = count;
-  }
-  next[signalKey] = (next[signalKey] ?? 0) + 1;
-
-  const { error } = await admin
-    .from("app_analytics")
-    .update({ source_details: next })
-    .eq("date", dateKey);
+  const { data: recorded, error } = await admin.rpc(
+    "record_app_analytics_event",
+    {
+      p_source_key: signalKey,
+      p_event_date: dateKey,
+      p_share_increment: shareIncrement,
+      p_actor_hash: actorHash,
+    },
+  );
   if (error) throw new Error(error.message);
-  return { success: true, signalKey, dateKey };
+  return { success: true, recorded: recorded === true, signalKey, dateKey };
 }
 
 const firstUserFunnelStageSet = new Set<string>(FIRST_USER_FUNNEL_STAGES);
@@ -2485,10 +2483,12 @@ serve(async (req: Request) => {
       }
 
       case "acquisition.track": {
+        const actorHash = await analyticsActorHash(req, await getUserId(req));
         const result = await recordAcquisitionSignal(
           admin,
           body.signalKey ?? body.channel,
-          body.dateKey,
+          body.shareIncrement,
+          actorHash,
         );
         return json(result, result.success ? 200 : 400);
       }
@@ -2503,10 +2503,12 @@ serve(async (req: Request) => {
 
       // ─── Landing touchpoint signals (global / anonymous, app_analytics.source_details) ─
       case "acquisition.signal": {
+        const actorHash = await analyticsActorHash(req, await getUserId(req));
         const result = await recordAcquisitionSignal(
           admin,
           body.signalKey,
-          body.dateKey,
+          body.shareIncrement,
+          actorHash,
         );
         return json(result, result.success ? 200 : 400);
       }
