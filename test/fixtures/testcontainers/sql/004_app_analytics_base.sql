@@ -5,6 +5,7 @@ create table public.app_analytics (
   share_count integer default 0,
   source_details jsonb default '{}'::jsonb,
   id uuid default gen_random_uuid(),
+  user_id uuid,
   source text,
   metadata jsonb default '{}'::jsonb,
   created_at timestamptz default now()

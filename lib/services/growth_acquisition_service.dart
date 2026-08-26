@@ -539,33 +539,7 @@ class GrowthAcquisitionService {
         'Growth acquisition signal returned an unexpected payload: $payload',
       );
     } catch (error, stackTrace) {
-      debugPrint('Growth acquisition signal fallback activated: $error');
-      debugPrintStack(stackTrace: stackTrace);
-    }
-
-    await _recordSignalRpcFallback(signalKey: signalKey, dateKey: dateKey);
-  }
-
-  Future<void> _recordSignalRpcFallback({
-    required String signalKey,
-    required String dateKey,
-  }) async {
-    final client = _client;
-    if (client == null) {
-      return;
-    }
-
-    try {
-      await client.rpc(
-        'increment_app_analytics_source_detail',
-        params: <String, dynamic>{
-          'p_source_key': signalKey,
-          'p_event_date': dateKey,
-          'p_share_increment': 0,
-        },
-      );
-    } catch (error, stackTrace) {
-      debugPrint('Growth acquisition RPC fallback failed: $error');
+      debugPrint('Growth acquisition signal failed: $error');
       debugPrintStack(stackTrace: stackTrace);
     }
   }

@@ -1862,7 +1862,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final statsFuture = Future.wait<dynamic>([
         _supabase
             .from('app_analytics')
-            .select()
+            .select(
+              'date, landing_views, conversions, share_count, source_details',
+            )
             .gte('date', startDateKey)
             .lte('date', endDateKey)
             .order('date', ascending: false),
@@ -3799,19 +3801,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   bool _isFunnelEventKey(String key) {
-    switch (key) {
-      case 'funnel_trial_run':
-      case 'funnel_save_cta':
-      case 'funnel_magic_link_send':
-      case 'funnel_inbox_open':
-      case 'funnel_billing_view':
-      case 'funnel_upgrade_click':
-      case 'funnel_checkout_success':
-      case 'funnel_checkout_cancel':
-        return true;
-      default:
-        return false;
-    }
+    return key.startsWith('funnel_') ||
+        key.startsWith('lp_exp_') ||
+        key.startsWith('activation_exp_');
   }
 
   bool _isShareActionKey(String key) {
@@ -3820,6 +3812,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       case 'share_line':
       case 'share_facebook':
       case 'share_copy':
+      case 'share_note':
       case 'public_memo_share':
       case 'public_memo_copy':
         return true;
@@ -3850,6 +3843,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return 'Facebook シェア';
       case 'share_copy':
         return 'リンクコピー';
+      case 'share_note':
+        return 'メモ共有';
       case 'public_memo_share':
         return 'Public memo share';
       case 'public_memo_copy':
@@ -3915,6 +3910,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return const Color(0xFF1877F2);
       case 'share_copy':
         return const Color(0xFF7C3AED);
+      case 'share_note':
+        return const Color(0xFF3D5AFE);
       case 'public_memo_share':
         return const Color(0xFFFF6B35);
       case 'public_memo_copy':

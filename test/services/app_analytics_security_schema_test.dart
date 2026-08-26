@@ -12,7 +12,7 @@ void main() {
     sql = File(_migrationPath).readAsStringSync().toLowerCase();
   });
 
-  test('keeps public reads while denying browser table mutations', () {
+  test('exposes only aggregate rows and columns to browser roles', () {
     expect(
       sql,
       contains('alter table public.app_analytics enable row level security'),
@@ -34,55 +34,79 @@ void main() {
     expect(
       sql,
       contains(
-        'grant select on table public.app_analytics to anon, authenticated',
+        'grant select (\n'
+        '  date,\n'
+        '  landing_views,\n'
+        '  conversions,\n'
+        '  share_count,\n'
+        '  source_details\n'
+        ') on table public.app_analytics to anon, authenticated',
       ),
     );
     expect(sql, contains('create policy app_analytics_public_read'));
-    expect(sql, contains('for select\nto anon, authenticated\nusing (true)'));
-  });
-
-  test('exposes only bounded security-definer write RPCs', () {
-    for (final functionName in <String>[
-      'increment_share_count',
-      'increment_app_analytics_source_detail',
-    ]) {
-      expect(
-        sql,
-        contains('create or replace function public.$functionName'),
-      );
-    }
-
-    expect(
-      RegExp(
-        r'create or replace function public\.increment_share_count\(\).*?'
-        r"security definer\s+set search_path = ''",
-        dotAll: true,
-      ).hasMatch(sql),
-      isTrue,
-    );
-    expect(
-      RegExp(
-        r'create or replace function '
-        r'public\.increment_app_analytics_source_detail\(.*?'
-        r"security definer\s+set search_path = ''",
-        dotAll: true,
-      ).hasMatch(sql),
-      isTrue,
-    );
-    expect(sql, contains('p_share_increment > 1'));
-    expect(sql, contains("'public_memo_share'"));
-    expect(sql, contains("'touch_public_tracker'"));
-    expect(sql, contains("'^touch_comparison_[a-z0-9_-]{1,64}\$'"));
+    expect(sql, contains('source is null'));
+    expect(sql, contains("coalesce(metadata, '{}'::jsonb) = '{}'::jsonb"));
     expect(
       sql,
       contains(
-        'revoke all on function '
-        'public.increment_app_analytics_source_detail',
+        'revoke all privileges on table '
+        'public.app_analytics_event_receipts\n'
+        'from public, anon, authenticated',
       ),
     );
   });
 
-  test('RPC fallback accepts every growth-hub acquisition signal', () {
+  test('browser writes cross an idempotent service-role-only boundary', () {
+    expect(
+      RegExp(
+        r'create or replace function public\.record_app_analytics_event\(.*?'
+        r"security definer\s+set search_path = ''",
+        dotAll: true,
+      ).hasMatch(sql),
+      isTrue,
+    );
+    expect(sql, contains('primary key (event_date, source_key, actor_hash)'));
+    expect(sql, contains('on conflict do nothing'));
+    expect(sql, contains('get diagnostics v_inserted = row_count'));
+    expect(sql, contains('if v_inserted = 0 then'));
+    expect(sql, contains('pg_advisory_xact_lock'));
+    expect(sql, contains(') >= 32 then'));
+    expect(sql, contains("p_actor_hash !~ '^[0-9a-f]{64}\$'"));
+    expect(sql, contains('p_share_increment > 1'));
+    expect(sql, contains('2147483647'));
+
+    for (final signature in <String>[
+      'public.record_app_analytics_event(\n'
+          '  text,\n'
+          '  date,\n'
+          '  integer,\n'
+          '  text\n'
+          ')',
+      'public.increment_share_count()',
+      'public.increment_app_analytics_source_detail(\n'
+          '  text,\n'
+          '  date,\n'
+          '  integer\n'
+          ')',
+    ]) {
+      expect(
+        sql,
+        contains(
+          'revoke all on function $signature\n'
+          'from public, anon, authenticated',
+        ),
+      );
+      expect(
+        sql,
+        contains(
+          'grant execute on function $signature\n'
+          'to service_role',
+        ),
+      );
+    }
+  });
+
+  test('SQL allowlist covers every static Edge analytics signal', () {
     final growthHubSignals = File(
       'supabase/functions/growth-hub/acquisition_signals.ts',
     ).readAsStringSync();
@@ -92,52 +116,76 @@ void main() {
     ).firstMatch(growthHubSignals)?.group(1);
 
     expect(allowlistBody, isNotNull);
-    final keys = RegExp(r'"([^"]+)"')
-        .allMatches(allowlistBody!)
-        .map((match) => match.group(1)!)
-        .toSet();
+    final keys = RegExp(
+      r'"([^"]+)"',
+    ).allMatches(allowlistBody!).map((match) => match.group(1)!).toSet();
     expect(keys, isNotEmpty);
     for (final key in keys) {
-      expect(
-        sql,
-        contains("'$key'"),
-        reason: '$key must remain available to the browser RPC fallback',
-      );
+      expect(sql, contains("'$key'"), reason: '$key must be allowed by SQL');
     }
   });
 
-  test('Flutter clients no longer mutate app_analytics directly', () {
-    final rawMutation = RegExp(
-      r"\.from\('app_analytics'\)\s*\.\s*"
-      r'(?:insert|upsert|update|delete)\s*\(',
-      dotAll: true,
-    );
-
-    final dartFiles = Directory('lib')
-        .listSync(recursive: true)
-        .whereType<File>()
-        .where((file) => file.path.endsWith('.dart'));
-    for (final file in dartFiles) {
-      expect(
-        rawMutation.hasMatch(file.readAsStringSync()),
-        isFalse,
-        reason: '${file.path} must use a bounded RPC for analytics writes',
-      );
-    }
-
-    for (final path in <String>[
+  test('Landing auth diagnostics stay aligned with the SQL allowlist', () {
+    final landingService = File(
       'lib/services/landing_share_service.dart',
-      'lib/services/growth_acquisition_service.dart',
-      'lib/services/public_memo_service.dart',
-    ]) {
-      expect(
-        File(path).readAsStringSync(),
-        contains('increment_app_analytics_source_detail'),
-      );
+    ).readAsStringSync();
+    final keys = RegExp(
+      r"'(funnel_[a-z0-9_]+)'",
+    ).allMatches(landingService).map((match) => match.group(1)!).toSet();
+
+    expect(keys, isNotEmpty);
+    for (final key in keys) {
+      expect(sql, contains("'$key'"), reason: '$key must be allowed by SQL');
     }
-    expect(
-      File('lib/pages/admin_analytics_page.dart').readAsStringSync(),
-      isNot(contains('_resetAnalyticsData')),
-    );
   });
+
+  test(
+    'Flutter clients use Edge and never mutate analytics through PostgREST',
+    () {
+      final rawMutation = RegExp(
+        r"\.from\('app_analytics'\)\s*\.\s*"
+        r'(?:insert|upsert|update|delete)\s*\(',
+        dotAll: true,
+      );
+      final directWriteRpc = RegExp(
+        r"\.rpc\(\s*'(?:increment_share_count|"
+        r"increment_app_analytics_source_detail)'",
+      );
+
+      final dartFiles = Directory('lib')
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((file) => file.path.endsWith('.dart'));
+      for (final file in dartFiles) {
+        final source = file.readAsStringSync();
+        expect(
+          rawMutation.hasMatch(source),
+          isFalse,
+          reason: '${file.path} must not mutate app_analytics directly',
+        );
+        expect(
+          directWriteRpc.hasMatch(source),
+          isFalse,
+          reason: '${file.path} must use the Edge idempotency boundary',
+        );
+      }
+
+      for (final path in <String>[
+        'lib/services/landing_share_service.dart',
+        'lib/services/growth_acquisition_service.dart',
+        'lib/services/public_memo_service.dart',
+      ]) {
+        final source = File(path).readAsStringSync();
+        expect(source, contains("'action': 'acquisition.signal'"));
+      }
+      expect(
+        File('lib/services/public_memo_service.dart').readAsStringSync(),
+        isNot(contains("'action': 'share.track'")),
+      );
+      expect(
+        File('lib/pages/admin_analytics_page.dart').readAsStringSync(),
+        isNot(contains('_resetAnalyticsData')),
+      );
+    },
+  );
 }

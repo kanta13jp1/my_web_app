@@ -99,10 +99,11 @@ class PublicMemoService {
       final response = await _supabase.functions.invoke(
         'growth-hub',
         body: <String, dynamic>{
-          'action': 'share.track',
-          'memoId': memoId,
+          'action': 'acquisition.signal',
           'signalKey': signalKey,
           'dateKey': dateKey,
+          'shareIncrement': 1,
+          'contextId': memoId,
         },
       );
       final payload = _asMap(response.data);
@@ -114,16 +115,11 @@ class PublicMemoService {
       );
     } catch (e, stackTrace) {
       AppLogger.warning(
-        'Growth share signal fallback activated',
+        'Growth share signal failed',
         error: e,
         stackTrace: stackTrace,
       );
     }
-
-    await _recordShareSignalRpcFallback(
-      signalKey: signalKey,
-      dateKey: dateKey,
-    );
   }
 
   // Publish a note as public memo
@@ -509,28 +505,6 @@ class PublicMemoService {
         stackTrace: stackTrace,
       );
       return [];
-    }
-  }
-
-  Future<void> _recordShareSignalRpcFallback({
-    required String signalKey,
-    required String dateKey,
-  }) async {
-    try {
-      await _supabase.rpc(
-        'increment_app_analytics_source_detail',
-        params: <String, dynamic>{
-          'p_source_key': signalKey,
-          'p_event_date': dateKey,
-          'p_share_increment': 1,
-        },
-      );
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        'Failed to record public memo share signal through RPC',
-        error: e,
-        stackTrace: stackTrace,
-      );
     }
   }
 

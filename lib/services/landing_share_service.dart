@@ -254,19 +254,11 @@ $shareUrl
       return;
     }
 
-    var shareCountRecorded = false;
-    try {
-      await client.rpc('increment_share_count');
-      shareCountRecorded = true;
-    } catch (error) {
-      debugPrint('Share count rpc failed: $error');
-    }
-
     await _incrementSourceDetail(
       client: client,
       sourceKey: _shareActionKeys[channel]!,
       now: now,
-      fallbackShareCount: shareCountRecorded ? 0 : 1,
+      shareIncrement: 1,
     );
   }
 
@@ -274,7 +266,7 @@ $shareUrl
     required SupabaseClient? client,
     required String sourceKey,
     DateTime? now,
-    int fallbackShareCount = 0,
+    int shareIncrement = 0,
   }) async {
     if (client == null) {
       return;
@@ -282,17 +274,22 @@ $shareUrl
 
     final dateKey = _formatDate(now ?? DateTime.now());
     try {
-      await client.rpc(
-        'increment_app_analytics_source_detail',
-        params: <String, dynamic>{
-          'p_source_key': sourceKey,
-          'p_event_date': dateKey,
-          'p_share_increment': fallbackShareCount,
+      final response = await client.functions.invoke(
+        'growth-hub',
+        body: <String, dynamic>{
+          'action': 'acquisition.signal',
+          'signalKey': sourceKey,
+          'dateKey': dateKey,
+          'shareIncrement': shareIncrement,
         },
       );
-      return;
+      final payload = response.data;
+      if (payload is Map<String, dynamic> && payload['success'] == true) {
+        return;
+      }
+      debugPrint('Analytics Edge Function returned an unexpected payload');
     } catch (error) {
-      debugPrint('Atomic funnel analytics rpc failed: $error');
+      debugPrint('Analytics Edge Function failed: $error');
     }
   }
 
