@@ -21,11 +21,12 @@ concurrency:
   group: supabase-network-fix
   cancel-in-progress: true
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   manage-network:
+    permissions:
+      contents: read
     name: Supabase Network Restrictions
     runs-on: ubuntu-latest
     timeout-minutes: 5

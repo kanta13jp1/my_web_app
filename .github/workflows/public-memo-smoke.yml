@@ -20,11 +20,12 @@ concurrency:
   group: public-memo-smoke
   cancel-in-progress: true  # 2026-07-13 ci-audit: schedule+手動重複実行防止
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   smoke:
+    permissions:
+      contents: read
     name: Anonymous GET smoke
     runs-on: ubuntu-latest
     timeout-minutes: 5

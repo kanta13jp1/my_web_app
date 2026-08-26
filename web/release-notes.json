@@ -31,6 +31,71 @@
       ],
       "changes": [
         {
+          "category": "feature",
+          "id": "pr-4870",
+          "links": [
+            {
+              "title": "PR #4870",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/4870"
+            }
+          ],
+          "mergedAt": "2026-08-26T04:23:23Z",
+          "summary": "#4870 feat: publish Antigravity video lesson in AI University"
+        },
+        {
+          "category": "fix",
+          "id": "pr-4866",
+          "links": [
+            {
+              "title": "PR #4866",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/4866"
+            }
+          ],
+          "mergedAt": "2026-08-26T01:55:37Z",
+          "summary": "#4866 fix: Edge Function監査のSupabase upsert競合を解消"
+        },
+        {
+          "category": "fix",
+          "id": "pr-4865",
+          "links": [
+            {
+              "title": "PR #4865",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/4865"
+            }
+          ],
+          "mergedAt": "2026-08-26T01:52:41Z",
+          "summary": "#4865 fix: backend-only Edge FunctionをUI監査から除外"
+        },
+        {
+          "category": "fix",
+          "id": "pr-4864",
+          "links": [
+            {
+              "title": "PR #4864",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/4864"
+            }
+          ],
+          "mergedAt": "2026-08-26T01:34:14Z",
+          "summary": "#4864 fix: 01.AI API overviewの根拠表記を修正"
+        },
+        {
+          "category": "feature",
+          "id": "pr-4775",
+          "links": [
+            {
+              "title": "PR #4775",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/4775"
+            }
+          ],
+          "mergedAt": "2026-08-26T01:07:49Z",
+          "summary": "#4775 deps: bump the flutter-dependencies group across 1 directory with 20 updates"
+        },
+        {
           "category": "fix",
           "id": "pr-4858",
           "links": [
@@ -354,71 +419,6 @@
           ],
           "mergedAt": "2026-08-23T17:16:55Z",
           "summary": "#4766 feat(notes): add Evernote-compatible tag workflows"
-        },
-        {
-          "category": "fix",
-          "id": "pr-4764",
-          "links": [
-            {
-              "title": "PR #4764",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4764"
-            }
-          ],
-          "mergedAt": "2026-08-23T16:32:32Z",
-          "summary": "#4764 fix: 虎プロフィールschema 2でキャッシュを更新"
-        },
-        {
-          "category": "feature",
-          "id": "pr-4760",
-          "links": [
-            {
-              "title": "PR #4760",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4760"
-            }
-          ],
-          "mergedAt": "2026-08-23T16:10:49Z",
-          "summary": "#4760 feat: 虎プロフィール拡充ループを実装"
-        },
-        {
-          "category": "fix",
-          "id": "pr-4759",
-          "links": [
-            {
-              "title": "PR #4759",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4759"
-            }
-          ],
-          "mergedAt": "2026-08-23T15:44:00Z",
-          "summary": "#4759 fix: AI大学で公開動画より下へ到達できるようにする"
-        },
-        {
-          "category": "feature",
-          "id": "pr-4758",
-          "links": [
-            {
-              "title": "PR #4758",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4758"
-            }
-          ],
-          "mergedAt": "2026-08-23T14:39:04Z",
-          "summary": "#4758 AI大学: AI Foundations 3.1 公開動画を追加"
-        },
-        {
-          "category": "fix",
-          "id": "pr-4753",
-          "links": [
-            {
-              "title": "PR #4753",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4753"
-            }
-          ],
-          "mergedAt": "2026-08-23T12:49:28Z",
-          "summary": "#4753 fix: restore Tiger reviewers on Flutter Web"
         }
       ],
       "date": "2026-08-26",
