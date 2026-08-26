@@ -19,8 +19,7 @@ on:
         default: false
         type: boolean
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: tools-hub-mcp-smoke
@@ -28,6 +27,8 @@ concurrency:
 
 jobs:
   smoke:
+    permissions:
+      contents: read
     name: MCP facade smoke
     runs-on: ubuntu-latest
     timeout-minutes: 8
@@ -54,7 +55,7 @@ jobs:
 
       - name: Checkout
         if: steps.preflight.outputs.skip != 'true'
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Resolve smoke target
         if: steps.preflight.outputs.skip != 'true'

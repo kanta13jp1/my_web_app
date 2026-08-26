@@ -21,11 +21,12 @@ concurrency:
   group: ai-university-reminder
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   send-reminders:
+    permissions:
+      contents: read
     name: Send Study Reminders
     runs-on: ubuntu-latest
     timeout-minutes: 5

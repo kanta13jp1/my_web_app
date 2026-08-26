@@ -10,20 +10,21 @@ concurrency:
   group: edge-function-audit
   cancel-in-progress: true  # ci-cost-audit 2026-06-14: manual dispatch と schedule 競合防止
 
-permissions:
-  contents: read
-  pull-requests: read
-  issues: write
+permissions: {}
 
 jobs:
   audit:
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: write
     name: Check Edge Function UI Coverage
     runs-on: ubuntu-latest
     timeout-minutes: 10  # EF 16本 (hub統合後) × grep -rl で余裕を持たせる
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 

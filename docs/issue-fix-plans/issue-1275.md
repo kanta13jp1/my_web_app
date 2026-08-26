@@ -53,7 +53,30 @@ NotebookLMへ再ログイン後、ノート本文ベースで再生成して更�
 
 ## Checklist
 
-- [ ] Reproduction is clear
-- [ ] Smallest safe fix is implemented
-- [ ] Analyze/tests/CI are checked
-- [ ] PR notes explain the change and the remaining risk
+- [x] Reproduction is clear
+  - 120 workflows already had concurrency, but 11 lacked a workflow-level
+    permission declaration, 119 jobs inherited permissions, 8 runner jobs had
+    no timeout, 258 action references used mutable tags, and actionlint was not
+    configured.
+- [x] Smallest safe fix is implemented
+  - Workflow defaults are now `permissions: {}` and every job explicitly
+    declares its prior effective token scope.
+  - Every runner job has a bounded timeout. Reusable-workflow caller jobs are
+    excluded because GitHub does not support `timeout-minutes` on those jobs.
+  - All external actions are pinned to verified full commit SHAs, with the
+    human-readable release tag retained in a comment.
+  - CI runs actionlint v1.7.12 from a checksum-verified release archive and a
+    repository policy checker prevents regression.
+- [x] Focused local validation is checked
+  - `python scripts/check_github_actions_security_policy.py`
+  - `python -m unittest discover -s test/scripts -p 'test_check_github_actions_security_policy.py'`
+  - `actionlint v1.7.12 -no-color -shellcheck= -pyflakes=`
+- [ ] Required GitHub CI is green
+- [x] PR notes explain the change and the remaining risk
+
+## References
+
+- [GitHub Actions secure use reference](https://docs.github.com/en/actions/reference/security/secure-use)
+- [GitHub Actions concurrency](https://docs.github.com/en/actions/concepts/workflows-and-actions/concurrency)
+- [GitHub reusable workflow job permissions](https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations)
+- [actionlint usage](https://github.com/rhysd/actionlint/blob/main/docs/usage.md)
