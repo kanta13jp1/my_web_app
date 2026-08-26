@@ -8,6 +8,7 @@ import {
   CONTENT_GUARDRAIL_MAX_CHARS,
   evaluateContentGuardrail,
   parseWriterNativeGuardrailBlock,
+  writerSafeProviderErrorDetail,
 } from "./content_guardrails.ts";
 
 Deno.test("Writer input guardrail allows ordinary business text", () => {
@@ -123,4 +124,15 @@ Deno.test("Writer native guardrail errors are normalized without raw description
     categories: ["writer_credit_card"],
     guardrailName: "pii-filter",
   });
+});
+
+Deno.test("Writer provider errors never expose response content", () => {
+  const secretResponse =
+    "Request rejected after matching taro@example.com and token=super-secret-value";
+  const result = writerSafeProviderErrorDetail(500);
+
+  assertEquals(result, "Writer API request failed (500).");
+  assert(!result.includes(secretResponse));
+  assert(!result.includes("taro@example.com"));
+  assert(!result.includes("super-secret-value"));
 });

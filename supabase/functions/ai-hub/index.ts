@@ -136,6 +136,7 @@ import {
   type ContentGuardrailStage,
   evaluateContentGuardrail,
   parseWriterNativeGuardrailBlock,
+  writerSafeProviderErrorDetail,
 } from "./content_guardrails.ts";
 
 const corsHeaders = {
@@ -7007,7 +7008,7 @@ serve(async (req: Request) => {
             if (guardrailsEnabled) {
               const nativeBlock = parseWriterNativeGuardrailBlock(respText);
               if (nativeBlock.blocked) {
-                await recordGuardrailAudit(admin, {
+                const auditLogged = await recordGuardrailAudit(admin, {
                   traceId,
                   userId,
                   provider: providerId,
@@ -7023,6 +7024,14 @@ serve(async (req: Request) => {
                   ),
                   contentChars: 0,
                 });
+                if (!auditLogged) {
+                  await logProviderChat({
+                    success: false,
+                    statusCode: 503,
+                    errorMessage: "guardrail_audit_unavailable:provider",
+                  });
+                  return writerGuardrailAuditFailure(traceId);
+                }
                 await logProviderChat({
                   success: false,
                   statusCode: 422,
@@ -7047,12 +7056,15 @@ serve(async (req: Request) => {
                 }, 422);
               }
             }
+            const providerErrorDetail = guardrailsEnabled
+              ? writerSafeProviderErrorDetail(resp.status)
+              : respText.slice(0, 500);
             // Free tier / 課金制限検知
             if (isProviderPaymentRequired(resp.status, respText)) {
               await logProviderChat({
                 success: false,
                 statusCode: resp.status,
-                errorMessage: respText.slice(0, 500),
+                errorMessage: providerErrorDetail,
               });
               return json({
                 success: false,
@@ -7060,20 +7072,20 @@ serve(async (req: Request) => {
                 provider: providerId,
                 message:
                   `${cfg.displayName} はプロバイダー側で課金が必要です。`,
-                detail: respText.slice(0, 300),
+                detail: providerErrorDetail,
               });
             }
             await logProviderChat({
               success: false,
               statusCode: resp.status,
-              errorMessage: respText.slice(0, 500),
+              errorMessage: providerErrorDetail,
             });
             return json({
               success: false,
               status: "error",
               provider: providerId,
               http_status: resp.status,
-              detail: respText.slice(0, 500),
+              detail: providerErrorDetail,
             }, 502);
           }
           let data: unknown;
@@ -7276,7 +7288,9 @@ serve(async (req: Request) => {
             success: false,
             status: "error",
             provider: providerId,
-            message: String(e),
+            message: writerContentGuardrailsEnabled(providerId)
+              ? "Writer API request failed."
+              : String(e),
           }, 500);
         }
       }

@@ -327,3 +327,10 @@ export function parseWriterNativeGuardrailBlock(
     guardrailName,
   };
 }
+
+export function writerSafeProviderErrorDetail(status: number): string {
+  const safeStatus = Number.isInteger(status) && status >= 400 && status <= 599
+    ? status
+    : 502;
+  return `Writer API request failed (${safeStatus}).`;
+}
