@@ -7,6 +7,9 @@ Function work without using production Supabase credentials.
 
 - Starts a disposable `postgres:16-alpine` container through
   `testcontainers-python`.
+- Installs the exact Python environment declared in
+  `scripts/requirements-testcontainers.txt`; production and pull-request smoke
+  runs use the same pinned Python 3.12.14 toolchain.
 - Applies the fixture migrations in `test/fixtures/testcontainers/sql/`.
 - Seeds representative `profiles`, `wbs_tasks`, and `ai_circuit_breaker` rows.
 - Applies the real Issue #2773 migration and verifies fail-closed RLS for the
@@ -40,6 +43,13 @@ Pull requests that touch Supabase migrations or functions run the standalone
 again before applying a migration or deploying an Edge Function, so a direct or
 operator-triggered deployment cannot pass the DB/Edge boundary without the
 deterministic checks succeeding.
+
+The note-comment hardening is intentionally forward-only. After the database
+migration applies, do not roll the web client back to the legacy direct
+`team_memberships` insert flow because that path is denied by the new RLS.
+Keep the RPC-capable client deployed or ship a forward fix. Existing legitimate
+members must receive the current invite code again (or be re-added by the team
+owner) before workspace comments and shares become available.
 
 ## Artifacts
 

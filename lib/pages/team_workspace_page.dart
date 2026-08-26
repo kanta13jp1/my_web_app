@@ -737,14 +737,14 @@ class _JoinTeamDialogState extends State<_JoinTeamDialog> {
           TextField(
             controller: _codeController,
             decoration: const InputDecoration(
-              labelText: '招待コード (8文字)',
+              labelText: '招待コード (8文字または32文字)',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.vpn_key_outlined),
             ),
             autofocus: true,
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9A-Z]')),
-              LengthLimitingTextInputFormatter(8),
+              LengthLimitingTextInputFormatter(32),
             ],
           ),
         ],

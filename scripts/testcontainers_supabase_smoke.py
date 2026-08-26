@@ -86,6 +86,7 @@ NOTE_TEAM_MEMBER = "00000000-0000-4000-8000-000000002670"
 NOTE_OUTSIDER = "00000000-0000-4000-8000-000000002671"
 NOTE_OWNER_ADDED_MEMBER = "00000000-0000-4000-8000-000000002672"
 NOTE_TEAM_ID = "00000000-0000-4000-8000-000000002673"
+NOTE_INVITE_CODE = "26682668266826682668266826682668"
 NOTE_PRIVATE_ID = 266801
 NOTE_PUBLIC_ID = 266802
 NOTE_TEAM_ID_VALUE = 266803
@@ -917,8 +918,8 @@ def seed_note_comments_security_fixture(conn: Any) -> None:
         )
         cur.execute(
             "insert into public.teams (id, name, owner_id, invite_code) "
-            "values (%s::uuid, 'Issue 2668 team', %s::uuid, 'INVITE2668')",
-            (NOTE_TEAM_ID, NOTE_OWNER),
+            "values (%s::uuid, 'Issue 2668 team', %s::uuid, %s)",
+            (NOTE_TEAM_ID, NOTE_OWNER, NOTE_INVITE_CODE),
         )
         cur.executemany(
             "insert into public.team_memberships (team_id, user_id, role) "
@@ -1101,6 +1102,18 @@ def check_note_comments_security(conn: Any) -> dict[str, Any]:
     if initial_counts != expected_initial_counts:
         raise AssertionError(f"unexpected initial comment visibility: {initial_counts}")
 
+    unverified_team_rows = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OUTSIDER,
+        statement="select invite_code from public.teams where id = %s::uuid",
+        params=(NOTE_TEAM_ID,),
+    )
+    if unverified_team_rows:
+        raise AssertionError(
+            f"unverified legacy member can read invite code: {unverified_team_rows}"
+        )
+
     denied_sqlstates = {
         "anon_write": note_comments_expect_sqlstate(
             conn,
@@ -1226,7 +1239,8 @@ def check_note_comments_security(conn: Any) -> dict[str, Any]:
         conn,
         role="authenticated",
         user_id=NOTE_TEAM_MEMBER,
-        statement="select * from public.join_team_with_invite_code('INVITE2668')",
+        statement="select * from public.join_team_with_invite_code(%s)",
+        params=(NOTE_INVITE_CODE,),
     )
     if (
         len(joined) != 1
@@ -1236,6 +1250,15 @@ def check_note_comments_security(conn: Any) -> dict[str, Any]:
         raise AssertionError(f"invite RPC returned unexpected team: {joined}")
     if comment_count("authenticated", NOTE_TEAM_MEMBER, NOTE_TEAM_ID_VALUE) != 1:
         raise AssertionError("verified member cannot read team comments")
+    verified_team_rows = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_TEAM_MEMBER,
+        statement="select invite_code from public.teams where id = %s::uuid",
+        params=(NOTE_TEAM_ID,),
+    )
+    if verified_team_rows != [(NOTE_INVITE_CODE,)]:
+        raise AssertionError(f"verified member cannot read team: {verified_team_rows}")
     if comment_count("authenticated", NOTE_TEAM_MEMBER, NOTE_PRIVATE_ID) != 0:
         raise AssertionError("forged legacy team share granted private access")
 
@@ -1365,6 +1388,7 @@ def check_note_comments_security(conn: Any) -> dict[str, Any]:
         "functions": [f"{schema}.{name}" for schema, name, *_ in functions],
         "table_privileges": table_privileges,
         "initial_visibility": initial_counts,
+        "unverified_member_team_visibility": len(unverified_team_rows),
         "denied_sqlstates": denied_sqlstates,
         "invalid_invite_attempts": outsider_attempt_count,
         "rate_limit_sqlstate": rate_limit_sqlstate,

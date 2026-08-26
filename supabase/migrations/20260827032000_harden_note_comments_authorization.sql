@@ -264,7 +264,7 @@ BEGIN
       AND t.owner_id = (SELECT auth.uid())
   ) THEN
     NEW.invite_verified_at := COALESCE(NEW.invite_verified_at, clock_timestamp());
-  ELSE
+  ELSIF (SELECT auth.uid()) IS NOT NULL THEN
     NEW.invite_verified_at := NULL;
   END IF;
   RETURN NEW;
@@ -281,6 +281,23 @@ REVOKE ALL ON public.team_memberships FROM PUBLIC, anon, authenticated;
 GRANT SELECT, DELETE ON public.team_memberships TO authenticated;
 GRANT INSERT (team_id, user_id, role) ON public.team_memberships TO authenticated;
 GRANT ALL ON public.team_memberships TO service_role;
+
+-- The legacy teams policy trusted every membership row and exposed invite_code.
+-- Only owners and verified members may read the team row after this migration.
+DROP POLICY IF EXISTS "teams_select" ON public.teams;
+DROP POLICY IF EXISTS teams_select_authorized ON public.teams;
+CREATE POLICY teams_select_authorized
+  ON public.teams FOR SELECT TO authenticated
+  USING (
+    owner_id = (SELECT auth.uid())
+    OR EXISTS (
+      SELECT 1
+      FROM public.team_memberships AS tm
+      WHERE tm.team_id = teams.id
+        AND tm.user_id = (SELECT auth.uid())
+        AND tm.invite_verified_at IS NOT NULL
+    )
+  );
 
 CREATE TABLE IF NOT EXISTS note_comments_private.team_invite_attempts (
   user_id uuid PRIMARY KEY,

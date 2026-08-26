@@ -195,6 +195,8 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
         self.assertIn("'p_invite_code': code.trim()", join_method)
         self.assertNotIn(".from('team_memberships').insert", join_method)
         self.assertNotIn("'user_id'", join_method)
+        self.assertIn("招待コード (8文字または32文字)", source)
+        self.assertIn("LengthLimitingTextInputFormatter(32)", source)
 
     def test_asset_chat_role_count_rejects_untrusted_identifiers(self) -> None:
         with self.assertRaisesRegex(ValueError, "unexpected role"):

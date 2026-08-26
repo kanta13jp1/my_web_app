@@ -71,7 +71,14 @@ create policy "team_memberships_insert" on team_memberships for insert
   with check (user_id = auth.uid());
 create policy "team_memberships_delete" on team_memberships for delete
   using (user_id = auth.uid());
-create policy "teams_select" on teams for select using (owner_id = auth.uid());
+create policy "teams_select" on teams for select
+  using (
+    owner_id = auth.uid()
+    or exists (
+      select 1 from team_memberships tm
+      where tm.team_id = teams.id and tm.user_id = auth.uid()
+    )
+  );
 create policy "teams_insert" on teams for insert with check (owner_id = auth.uid());
 create policy "teams_update" on teams for update using (owner_id = auth.uid());
 create policy "teams_delete" on teams for delete using (owner_id = auth.uid());
