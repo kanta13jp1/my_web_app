@@ -204,12 +204,21 @@ following logged compensating controls are mandatory.
 
 The workflow pins Supabase CLI 2.115.0 because its local Auth schema matches the production
 `auth.custom_oauth_providers.custom_claims_allowlist` column observed during the first drill.
-Upgrade the pin deliberately when production's managed Auth/Storage schema moves forward; a restore
-failure caused by a missing managed column is a compatibility failure and must not be waived.
+Production Storage moved to v1.71.0 after that CLI release. Before applying the dump, the workflow
+therefore verifies and applies the exact upstream additive migration
+`scripts/sql/supabase_storage_v1_71_0_0062.sql` (SHA-256
+`45969060b55102f56af317b0d7981434be58927de1ff76e1e1789139a3f2defc`) to the ephemeral target.
+It is vendored byte-for-byte from Supabase Storage tag `v1.71.0`, commit
+`e05eb148dce70c55d7b4d9b524a3b20835b1e165`; it never runs against production or staging.
+
+Upgrade the CLI pin deliberately when its local Storage schema includes migration 0062, then remove
+the compatibility file and checksum in the same PR. A restore failure caused by a missing managed
+column is a compatibility failure and must not be waived.
 
 ## 9. Official references
 
 - [Supabase Database Backups](https://supabase.com/docs/guides/platform/backups)
 - [Backup and Restore using the CLI](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore)
 - [Restore dashboard backup](https://supabase.com/docs/guides/platform/migrating-within-supabase/dashboard-restore)
+- [Supabase Storage v1.71.0 migration 0062](https://github.com/supabase/storage/blob/v1.71.0/migrations/tenant/0062-object-versioning-core.sql)
 - [Transfer projects](https://supabase.com/docs/guides/platform/project-transfer)
