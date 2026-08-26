@@ -154,6 +154,7 @@ void main() {
     await tester.ensureVisible(generate);
     await tester.tap(generate);
     await tester.pumpAndSettle();
+    await tester.ensureVisible(generate);
     await tester.tap(generate);
     await tester.pumpAndSettle();
 
@@ -176,6 +177,7 @@ void main() {
     await tester.ensureVisible(generate);
     await tester.tap(generate);
     await tester.pumpAndSettle();
+    await tester.ensureVisible(generate);
     await tester.tap(generate);
     await tester.pumpAndSettle();
 
@@ -198,6 +200,7 @@ void main() {
     await tester.ensureVisible(generate);
     await tester.tap(generate);
     await tester.pumpAndSettle();
+    await tester.ensureVisible(generate);
     await tester.tap(generate);
     await tester.pumpAndSettle();
 
