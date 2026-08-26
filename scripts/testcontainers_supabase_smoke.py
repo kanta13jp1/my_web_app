@@ -33,6 +33,11 @@ DEFAULT_SQL_DIR = ROOT / "test" / "fixtures" / "testcontainers" / "sql"
 DEFAULT_EDGE_FIXTURE = ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts"
 DEFAULT_ARTIFACTS_DIR = ROOT / ".testcontainers-logs"
 DEFAULT_ACTUAL_EDGE_FUNCTION = ROOT / "supabase" / "functions" / "health-check" / "index.ts"
+APP_ANALYTICS_EDGE_FUNCTION = ROOT / "supabase" / "functions" / "growth-hub" / "index.ts"
+APP_ANALYTICS_EDGE_TESTS = (
+    ROOT / "supabase" / "functions" / "growth-hub" / "acquisition_signals_test.ts",
+    ROOT / "supabase" / "functions" / "growth-hub" / "analytics_actor_test.ts",
+)
 REQUIRED_TABLES = ("profiles", "wbs_tasks", "ai_circuit_breaker")
 ISSUE_2773_RLS_MIGRATION = (
     ROOT / "supabase" / "migrations" / "20260815124052_fail_closed_rls_issue_2773.sql"
@@ -342,12 +347,17 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
         "actual_edge_checks": [
             "scripts/check_edge_function_imports.py --root supabase/functions",
             f"deno check --config supabase/functions/deno.json {actual_edge_function.relative_to(ROOT).as_posix()}",
+            f"deno check --config supabase/functions/deno.json {APP_ANALYTICS_EDGE_FUNCTION.relative_to(ROOT).as_posix()}",
+            "deno test --config supabase/functions/deno.json "
+            + " ".join(path.relative_to(ROOT).as_posix() for path in APP_ANALYTICS_EDGE_TESTS),
             f"deno check {edge_fixture.relative_to(ROOT).as_posix()}",
         ],
         "artifacts": [
             ".testcontainers-logs/summary.json",
             ".testcontainers-logs/edge-imports.log",
             ".testcontainers-logs/deno-check-health-check.log",
+            ".testcontainers-logs/deno-check-app-analytics-edge.log",
+            ".testcontainers-logs/deno-test-app-analytics-edge.log",
             ".testcontainers-logs/deno-check-edge-db-smoke.log",
             ".testcontainers-logs/edge-db-smoke.log",
             ".testcontainers-logs/failure.json",
@@ -1547,6 +1557,41 @@ def check_actual_edge_function(args: argparse.Namespace, artifacts_dir: Path) ->
     )
     if deno_result.returncode != 0:
         raise RuntimeError("Deno check failed; see deno-check-health-check.log")
+
+    analytics_check = run_command(
+        [
+            "deno",
+            "check",
+            "--config",
+            "supabase/functions/deno.json",
+            str(APP_ANALYTICS_EDGE_FUNCTION.relative_to(ROOT)),
+        ],
+        artifacts_dir=artifacts_dir,
+        log_name="deno-check-app-analytics-edge.log",
+        timeout_seconds=180,
+    )
+    if analytics_check.returncode != 0:
+        raise RuntimeError(
+            "App analytics Edge type-check failed; "
+            "see deno-check-app-analytics-edge.log"
+        )
+
+    analytics_tests = run_command(
+        [
+            "deno",
+            "test",
+            "--config",
+            "supabase/functions/deno.json",
+            *(str(path.relative_to(ROOT)) for path in APP_ANALYTICS_EDGE_TESTS),
+        ],
+        artifacts_dir=artifacts_dir,
+        log_name="deno-test-app-analytics-edge.log",
+        timeout_seconds=180,
+    )
+    if analytics_tests.returncode != 0:
+        raise RuntimeError(
+            "App analytics Edge tests failed; see deno-test-app-analytics-edge.log"
+        )
 
 
 def check_edge_db_fixture(args: argparse.Namespace, artifacts_dir: Path) -> None:

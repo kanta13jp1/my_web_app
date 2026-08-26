@@ -144,6 +144,11 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
             "raw browser INSERT, UPDATE, and DELETE are denied",
             plan["app_analytics_checks"],
         )
+        self.assertIn(
+            "deno check --config supabase/functions/deno.json "
+            "supabase/functions/growth-hub/index.ts",
+            plan["actual_edge_checks"],
+        )
 
     def test_tenant_role_count_rejects_untrusted_identifiers(self) -> None:
         with self.assertRaisesRegex(ValueError, "unexpected role"):
