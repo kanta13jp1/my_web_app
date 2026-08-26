@@ -115,6 +115,21 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
             plan["tax_records_checks"],
         )
 
+    def test_plan_includes_ai_university_migration_runtime_proof(self) -> None:
+        plan = module.build_plan(
+            ROOT / "test" / "fixtures" / "testcontainers" / "sql",
+            ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts",
+            ROOT / "supabase" / "functions" / "health-check" / "index.ts",
+        )
+        self.assertEqual(
+            plan["ai_university_migration"],
+            "supabase/migrations/20260824135127_add_ai_university_evidence_and_content_analytics.sql",
+        )
+        self.assertIn(
+            "migration applies twice without losing legacy rows",
+            plan["ai_university_checks"],
+        )
+
     def test_tenant_role_count_rejects_untrusted_identifiers(self) -> None:
         with self.assertRaisesRegex(ValueError, "unexpected role"):
             module.issue_2773_role_count(

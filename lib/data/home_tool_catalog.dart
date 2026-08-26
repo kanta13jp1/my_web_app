@@ -142,6 +142,7 @@ import '../pages/gift_registry_page.dart';
 import '../pages/growth_automation_controller_page.dart';
 import '../pages/knowledge_base_page.dart';
 import '../pages/knowledge_graph_page.dart';
+import '../pages/user_knowledge_graph_page.dart';
 import '../pages/landing_ab_test_page.dart';
 import '../pages/loyalty_points_page.dart';
 import '../pages/market_intelligence_page.dart';
@@ -2037,6 +2038,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'notebooklm',
       ],
       onOpen: (context) => _pushPage(context, const KnowledgeGraphPage()),
+    ),
+    HomeToolEntry(
+      id: 'my-knowledge-graph',
+      sectionId: 'knowledge',
+      title: 'マイ・ナレッジグラフ',
+      subtitle: '自分の文書を登録し、根拠つきチャットで検索',
+      icon: Icons.account_tree_outlined,
+      color: const Color(0xFF4338CA),
+      keywords: const <String>[
+        'knowledge graph',
+        'writer',
+        'rag',
+        '文書アップロード',
+        '社内検索',
+        '引用',
+      ],
+      onOpen: (context) => _pushPage(context, const UserKnowledgeGraphPage()),
     ),
     HomeToolEntry(
       id: 'semantic-search',

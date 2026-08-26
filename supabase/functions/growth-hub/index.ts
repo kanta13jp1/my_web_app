@@ -68,6 +68,7 @@ import {
 } from "./x_metric_windows.ts";
 import { compactXMetricSnapshotMedia } from "./x_metric_snapshot.ts";
 import { decideXPostPreflight } from "./x_post_preflight.ts";
+import { resolveXPostAttribution } from "./x_post_attribution.ts";
 import { computeTodayStatus } from "./x_today_status.ts";
 import { buildMediaLiftLine, classifyPostMediaType } from "./x_media_type.ts";
 import {
@@ -3649,6 +3650,7 @@ serve(async (req: Request) => {
         const contentArchetype = archetypeHint !== "unknown"
           ? archetypeHint
           : classifyPostArchetype([text, ...replyTexts].join("\n"));
+        const postAttribution = resolveXPostAttribution(body);
 
         const baseLog = {
           text,
@@ -3664,7 +3666,10 @@ serve(async (req: Request) => {
           route: body.route ?? null,
           experiment_key: body.experimentKey ?? body.experiment_key ??
             "x_first_user_growth_10k",
-          variant: body.variant ?? body.utmContent ?? body.utm_content ?? null,
+          variant: postAttribution.variant,
+          // Keep the canonical URL attribution beside variant so video posts
+          // remain traceable through x_post_log -> snapshot -> performance.
+          utm_content: postAttribution.utmContent,
           prompt_profile: body.promptProfile ?? body.prompt_profile ?? null,
           // 定型文フォールバック投稿を perf 計測で LLM 投稿と分離するための
           // 明示フラグ(旧行はフィールド欠落 = 非フォールバック扱いで後方互換)。

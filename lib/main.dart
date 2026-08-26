@@ -136,6 +136,7 @@ import 'package:my_web_app/pages/health_page.dart';
 import 'package:my_web_app/pages/medical_notes_page.dart';
 import 'package:my_web_app/pages/mental_check_page.dart';
 import 'package:my_web_app/pages/settings_page.dart';
+import 'package:my_web_app/pages/ai_form_assistant_page.dart';
 import 'package:my_web_app/pages/theme_selector_page.dart';
 import 'package:my_web_app/pages/ai_university_faculty_select_page.dart';
 import 'package:my_web_app/pages/ai_university_department_select_page.dart';
@@ -169,6 +170,7 @@ import 'package:my_web_app/pages/donation_crowdfunding_page.dart';
 import 'package:my_web_app/pages/emergency_contacts_page.dart';
 import 'package:my_web_app/pages/knowledge_base_page.dart';
 import 'package:my_web_app/pages/knowledge_graph_page.dart';
+import 'package:my_web_app/pages/user_knowledge_graph_page.dart';
 import 'package:my_web_app/pages/market_intelligence_page.dart';
 import 'package:my_web_app/pages/meeting_manager_page.dart';
 import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
@@ -1025,6 +1027,14 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const EmbeddingLabPage());
     case '/settings':
       return MaterialPageRoute(builder: (_) => const SettingsPage());
+    case '/settings/ai-form-assistant':
+      return MaterialPageRoute(
+        builder: (_) => supabase.auth.currentSession == null
+            ? LandingPage(
+                signupCompletionService: signupCompletionService,
+              )
+            : const AiFormAssistantPage(),
+      );
     case '/settings/theme':
       return MaterialPageRoute(builder: (_) => const ThemeSelectorPage());
     case '/health':
@@ -1806,6 +1816,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const KnowledgeGraphPage(),
         settings: const RouteSettings(name: '/knowledge-graph'),
+      );
+    case '/my-knowledge-graph':
+      return MaterialPageRoute(
+        builder: (_) => const UserKnowledgeGraphPage(),
+        settings: const RouteSettings(name: '/my-knowledge-graph'),
       );
     case '/settings/ai-share-button':
       return MaterialPageRoute(

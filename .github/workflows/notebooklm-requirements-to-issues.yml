@@ -128,15 +128,21 @@ jobs:
       - name: Extract requirements and create Issues
         if: steps.restore_auth.outputs.auth_ready == 'true' && steps.capture_notebooklm_list.outputs.list_ready == 'true'
         shell: bash
+        env:
+          START_INDEX_INPUT: ${{ inputs.start_index || '1' }}
+          LIMIT_INPUT: ${{ inputs.limit || '0' }}
+          MAX_CREATED_ISSUES_INPUT: ${{ inputs.max_created_issues || '9' }}
+          REQUIREMENTS_PER_NOTEBOOK_INPUT: ${{ inputs.requirements_per_notebook || '3' }}
+          CREATE_ISSUES_INPUT: ${{ inputs.create_issues }}
         run: |
           set -euo pipefail
           CREATE_ISSUES="true"
-          START_INDEX="${{ inputs.start_index || '1' }}"
-          LIMIT="${{ inputs.limit || '0' }}"
-          MAX_CREATED_ISSUES="${{ inputs.max_created_issues || '9' }}"
-          REQUIREMENTS_PER_NOTEBOOK="${{ inputs.requirements_per_notebook || '3' }}"
+          START_INDEX="$START_INDEX_INPUT"
+          LIMIT="$LIMIT_INPUT"
+          MAX_CREATED_ISSUES="$MAX_CREATED_ISSUES_INPUT"
+          REQUIREMENTS_PER_NOTEBOOK="$REQUIREMENTS_PER_NOTEBOOK_INPUT"
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
-            CREATE_ISSUES="${{ inputs.create_issues }}"
+            CREATE_ISSUES="$CREATE_ISSUES_INPUT"
           fi
           CREATE_ARGS=()
           if [ "${CREATE_ISSUES}" = "true" ]; then

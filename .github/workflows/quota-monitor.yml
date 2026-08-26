@@ -383,6 +383,7 @@ jobs:
           ANTHROPIC_USAGE: ${{ steps.anthropic.outputs.usage_json }}
           OPENAI_USAGE: ${{ steps.openai.outputs.usage_json }}
           COPILOT_USAGE: ${{ steps.copilot.outputs.usage_json }}
+          ACTIONS_MINUTES: ${{ steps.actions_minutes.outputs.usage_json }}
           GEMINI_USAGE: ${{ steps.gemini.outputs.usage_json }}
           HEDRA_USAGE: ${{ steps.hedra.outputs.usage_json }}
           QUOTA_ALERT_WEBHOOK_URL: ${{ secrets.QUOTA_ALERT_WEBHOOK_URL }}
@@ -403,7 +404,7 @@ jobs:
           }
           today = date.today().isoformat()
 
-          tools = ['ANTHROPIC_USAGE', 'OPENAI_USAGE', 'COPILOT_USAGE', 'GEMINI_USAGE', 'HEDRA_USAGE']
+          tools = ['ANTHROPIC_USAGE', 'OPENAI_USAGE', 'COPILOT_USAGE', 'ACTIONS_MINUTES', 'GEMINI_USAGE', 'HEDRA_USAGE']
           for env_key in tools:
               raw = os.environ.get(env_key, '{}')
               if not raw or raw == '{}':
@@ -454,6 +455,7 @@ jobs:
           ANTHROPIC_USAGE: ${{ steps.anthropic.outputs.usage_json }}
           OPENAI_USAGE: ${{ steps.openai.outputs.usage_json }}
           COPILOT_USAGE: ${{ steps.copilot.outputs.usage_json }}
+          ACTIONS_MINUTES: ${{ steps.actions_minutes.outputs.usage_json }}
           GEMINI_USAGE: ${{ steps.gemini.outputs.usage_json }}
           HEDRA_USAGE: ${{ steps.hedra.outputs.usage_json }}
           ANTHROPIC_STATUS: ${{ steps.anthropic.outputs.status }}
@@ -474,6 +476,7 @@ jobs:
               ('ANTHROPIC_USAGE', 'Claude (Anthropic)'),
               ('OPENAI_USAGE', 'OpenAI (CODEX)'),
               ('COPILOT_USAGE', 'GitHub Copilot'),
+              ('ACTIONS_MINUTES', 'GitHub Actions minutes'),
               ('GEMINI_USAGE', 'Gemini Code Assist'),
               ('HEDRA_USAGE', 'Hedra API credits'),
           ]:
