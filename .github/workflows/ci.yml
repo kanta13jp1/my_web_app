@@ -334,6 +334,11 @@ jobs:
         run: ./test/scripts/tools_hub_mcp_smoke_response_test.ps1
         continue-on-error: false
 
+      - name: Test Windows terminal doctor fixtures
+        shell: pwsh
+        run: ./test/scripts/windows_terminal_doctor_test.ps1
+        continue-on-error: false
+
       - name: Check duplicate dispose statements
         if: steps.changes.outputs.flutter == 'true'
         # part 280 実例 (二重 dispose → dispose 中断 → defunct setState) の再発防止。

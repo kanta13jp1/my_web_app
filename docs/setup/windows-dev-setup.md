@@ -133,6 +133,44 @@ settings.
 Use this sequence when a terminal fails before the shell prompt appears. Stop
 as soon as the terminal works; do not add antivirus exclusions preemptively.
 
+Start with the repository doctor. It is read-only by default and checks the
+global `HKCU:\Console\ForceV2` legacy-console flag, the `wslconfig.exe /l`
+default distribution (with a locale-neutral registry fallback), and old
+`powershell` / `pwsh` / `wsl` launchers whose CPU time does not change during a
+short sample:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/windows_terminal_doctor.ps1
+```
+
+Interpret the reported Windows codes precisely. `259` is the Win32
+`STILL_ACTIVE` status returned while a process is still running, not evidence
+by itself that the process is hung. `3221225786` (`0xC000013A`) is
+`STATUS_CONTROL_C_EXIT`, commonly produced after Ctrl+C or console closure; it
+does not prove that legacy-console mode caused the termination. Correlate the
+code with the doctor findings and VS Code terminal trace before changing any
+setting or stopping a process.
+
+Use machine-readable output when attaching redacted evidence to an Issue:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/windows_terminal_doctor.ps1 -Json
+```
+
+An idle candidate is not proof that a process is hung. The doctor never stops
+anything by default, excludes its own process ancestry, and never targets
+`wslhost`, `wslservice`, `vmmem`, or Docker Desktop processes. Review the PID
+and any unsaved terminal work first. To request a confirmation prompt for each
+reported user-shell launcher, run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/windows_terminal_doctor.ps1 -OfferStop -Confirm
+```
+
+Do not pass `-Confirm:$false` unless every listed PID has been independently
+verified as disposable. The doctor only reports findings; the manual recovery
+steps below remain the rollback-safe source of truth.
+
 ### 1. Confirm the default WSL distribution
 
 Run both the current WSL command and the compatibility command requested by
@@ -270,6 +308,8 @@ Official references:
 - [VS Code: Troubleshoot terminal launch failures](https://code.visualstudio.com/docs/supporting/troubleshoot-terminal-launch)
 - [Microsoft: Basic commands for WSL](https://learn.microsoft.com/windows/wsl/basic-commands)
 - [Microsoft: Legacy Console mode](https://learn.microsoft.com/windows/console/legacymode)
+- [Microsoft: `GetExitCodeProcess` and `STILL_ACTIVE`](https://learn.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess)
+- [Microsoft: `3221225786` / `STATUS_CONTROL_C_EXIT`](https://learn.microsoft.com/windows/apps/windows-app-sdk/migrate-to-windows-app-sdk/misc-info)
 - [Microsoft Defender Antivirus exclusions](https://learn.microsoft.com/defender-endpoint/microsoft-defender-antivirus-exclusions-overview)
 - [Docker Desktop WSL 2 backend](https://docs.docker.com/desktop/features/wsl/)
 
