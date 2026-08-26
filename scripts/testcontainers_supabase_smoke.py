@@ -3,10 +3,11 @@
 
 The smoke intentionally avoids production Supabase credentials. It starts a
 disposable Postgres container, applies a small migration/seed fixture, verifies
-the Issue #2773 fail-closed RLS migration and Issue #2484 asset-chat isolation,
-checks the real Edge Function import policy, and runs a Deno HTTP fixture against
-the container. Logs are written as artifacts so CI failures point to the
-migration, function, or seed boundary that broke.
+the Issue #2773 fail-closed RLS migration, Issue #2484 asset-chat isolation, and
+Issue #4091 app-analytics write boundary, checks the real Edge Function import
+policy, and runs a Deno HTTP fixture against the container. Logs are written as
+artifacts so CI failures point to the migration, function, or seed boundary that
+broke.
 """
 
 from __future__ import annotations
@@ -61,6 +62,12 @@ TAX_RECORDS_MIGRATION = (
 TAX_RECORDS_TABLES = ("tax_records",)
 TAX_RECORD_1 = "00000000-0000-4000-8000-000000002489"
 TAX_RECORD_2 = "00000000-0000-4000-8000-000000002490"
+APP_ANALYTICS_SECURITY_MIGRATION = (
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260827003000_harden_app_analytics_writes.sql"
+)
 AI_UNIVERSITY_MIGRATION = (
     ROOT
     / "supabase"
@@ -299,6 +306,16 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "authenticated users see only their own tax records",
             "authenticated users cannot forge another owner",
             "authenticated owner CRUD succeeds",
+        ],
+        "app_analytics_migration": APP_ANALYTICS_SECURITY_MIGRATION.relative_to(
+            ROOT
+        ).as_posix(),
+        "app_analytics_checks": [
+            "anon and authenticated retain SELECT only",
+            "raw browser INSERT, UPDATE, and DELETE are denied",
+            "bounded source-detail and share-count RPCs remain executable",
+            "unsupported source keys and oversized increments are rejected",
+            "migration applies twice without reopening public writes",
         ],
         "ai_university_migration": AI_UNIVERSITY_MIGRATION.relative_to(ROOT).as_posix(),
         "ai_university_checks": [
@@ -773,6 +790,180 @@ def check_issue_2773_rls(conn: Any) -> dict[str, Any]:
         "missing_write_sqlstate": missing_write_sqlstate,
         "cross_tenant_sqlstate": cross_tenant_sqlstate,
         "anon_access": "denied on all audited tables",
+    }
+
+
+def app_analytics_expect_rpc_rejected(
+    conn: Any,
+    *,
+    source_key: str,
+    share_increment: int,
+) -> str:
+    try:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute("set local role anon")
+                cur.execute(
+                    "select public.increment_app_analytics_source_detail("
+                    "%s, current_date, %s)",
+                    (source_key, share_increment),
+                )
+    except Exception as exc:  # psycopg is loaded only for the integration run.
+        sqlstate = getattr(exc, "sqlstate", None)
+        if sqlstate != "P0001":
+            raise AssertionError(
+                f"expected analytics RPC SQLSTATE P0001, got {sqlstate}: {exc}"
+            ) from exc
+        return sqlstate
+    raise AssertionError("invalid analytics RPC input unexpectedly succeeded")
+
+
+def check_app_analytics_security(conn: Any) -> dict[str, Any]:
+    table_privileges = (
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "TRUNCATE",
+        "REFERENCES",
+        "TRIGGER",
+    )
+    browser_roles = ("anon", "authenticated")
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "select policyname, cmd, roles::text from pg_policies "
+            "where schemaname = 'public' and tablename = 'app_analytics' "
+            "order by policyname"
+        )
+        policies = [tuple(row) for row in cur.fetchall()]
+        cur.execute(
+            "select proname, prosecdef from pg_proc p "
+            "join pg_namespace n on n.oid = p.pronamespace "
+            "where n.nspname = 'public' and p.proname = any(%s) "
+            "order by proname",
+            (
+                [
+                    "increment_app_analytics_source_detail",
+                    "increment_share_count",
+                ],
+            ),
+        )
+        function_security = {row[0]: bool(row[1]) for row in cur.fetchall()}
+    conn.commit()
+
+    expected_policies = [
+        ("app_analytics_public_read", "SELECT", "{anon,authenticated}")
+    ]
+    if policies != expected_policies:
+        raise AssertionError(f"unexpected app_analytics policies: {policies}")
+    if function_security != {
+        "increment_app_analytics_source_detail": True,
+        "increment_share_count": True,
+    }:
+        raise AssertionError(
+            f"analytics write functions are not SECURITY DEFINER: {function_security}"
+        )
+
+    privileges: dict[str, dict[str, bool]] = {}
+    with conn.cursor() as cur:
+        for role in browser_roles:
+            privileges[role] = {}
+            for privilege in table_privileges:
+                cur.execute(
+                    "select has_table_privilege(%s, 'public.app_analytics', %s)",
+                    (role, privilege),
+                )
+                actual = bool(cur.fetchone()[0])
+                privileges[role][privilege] = actual
+                expected = privilege == "SELECT"
+                if actual != expected:
+                    raise AssertionError(
+                        f"{role} {privilege} expected {expected}, got {actual}"
+                    )
+            for signature in (
+                "public.increment_share_count()",
+                "public.increment_app_analytics_source_detail(text,date,integer)",
+            ):
+                cur.execute(
+                    "select has_function_privilege(%s, %s, 'EXECUTE')",
+                    (role, signature),
+                )
+                if not bool(cur.fetchone()[0]):
+                    raise AssertionError(f"{role} cannot execute {signature}")
+    conn.commit()
+
+    denied_sqlstates: dict[str, dict[str, str]] = {}
+    for role in browser_roles:
+        denied_sqlstates[role] = {
+            "insert": issue_2773_expect_denied(
+                conn,
+                role=role,
+                user_id=None,
+                statement=(
+                    "insert into public.app_analytics "
+                    "(date, landing_views, conversions, share_count) "
+                    "values (date '2000-01-01', 999, 999, 999)"
+                ),
+            ),
+            "update": issue_2773_expect_denied(
+                conn,
+                role=role,
+                user_id=None,
+                statement=(
+                    "update public.app_analytics set conversions = 999 "
+                    "where date = current_date"
+                ),
+            ),
+            "delete": issue_2773_expect_denied(
+                conn,
+                role=role,
+                user_id=None,
+                statement="delete from public.app_analytics where date = current_date",
+            ),
+        }
+
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute("set local role anon")
+            cur.execute(
+                "select public.increment_app_analytics_source_detail("
+                "'public_memo_share', current_date, 1)"
+            )
+            cur.execute("select public.increment_share_count()")
+            cur.execute("select count(*) from public.app_analytics")
+            anon_row_count = int(cur.fetchone()[0])
+
+    invalid_source_sqlstate = app_analytics_expect_rpc_rejected(
+        conn,
+        source_key="attacker_controlled_metric",
+        share_increment=0,
+    )
+    oversized_increment_sqlstate = app_analytics_expect_rpc_rejected(
+        conn,
+        source_key="public_memo_share",
+        share_increment=2,
+    )
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "select share_count, source_details ->> 'public_memo_share' "
+            "from public.app_analytics where date = current_date"
+        )
+        row = cur.fetchone()
+    conn.commit()
+    if row is None or int(row[0]) != 2 or int(row[1]) != 1:
+        raise AssertionError(f"bounded analytics RPCs returned unexpected row: {row}")
+    if anon_row_count != 1:
+        raise AssertionError(f"anon SELECT returned {anon_row_count} analytics rows")
+
+    return {
+        "policies": policies,
+        "browser_privileges": privileges,
+        "raw_write_sqlstates": denied_sqlstates,
+        "rpc_row": {"share_count": int(row[0]), "public_memo_share": int(row[1])},
+        "invalid_source_sqlstate": invalid_source_sqlstate,
+        "oversized_increment_sqlstate": oversized_increment_sqlstate,
     }
 
 
@@ -1320,6 +1511,9 @@ def run_smoke(args: argparse.Namespace) -> int:
             apply_sql_fixture(conn, ISSUE_2773_RLS_MIGRATION, artifacts_dir)
             seed_issue_2773_fixture(conn)
             tenant_rls = check_issue_2773_rls(conn)
+            apply_sql_fixture(conn, APP_ANALYTICS_SECURITY_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, APP_ANALYTICS_SECURITY_MIGRATION, artifacts_dir)
+            app_analytics_security = check_app_analytics_security(conn)
             apply_sql_fixture(conn, ASSET_CHAT_MIGRATION, artifacts_dir)
             seed_asset_chat_fixture(conn)
             asset_chat_rls = check_asset_chat_rls(conn)
@@ -1338,6 +1532,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "url": redact_url(connection_url),
             "tables": counts,
             "tenant_rls": tenant_rls,
+            "app_analytics_security": app_analytics_security,
             "asset_chat_rls": asset_chat_rls,
             "tax_records_rls": tax_records_rls,
             "ai_university": ai_university,
