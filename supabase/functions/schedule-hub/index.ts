@@ -58,6 +58,7 @@ import {
 } from "../_shared/notion_property_builder.ts";
 import {
   NOTION_API_VERSION,
+  NotionDataSourceError,
   resolveNotionDataSourceId,
 } from "../_shared/notion_data_source.ts";
 
@@ -1228,6 +1229,18 @@ async function notionFetch(
   );
 }
 
+async function configuredNotionDataSourceId(
+  token: string,
+  databaseId: string | null | undefined,
+  dataSourceId: string | null | undefined,
+  dataSourceName: string | null | undefined,
+): Promise<string> {
+  return await resolveNotionDataSourceId(
+    (path, init) => notionFetch(token, path, init),
+    { databaseId, dataSourceId, dataSourceName },
+  );
+}
+
 function notionRichText(content: string): Array<Record<string, unknown>> {
   const text = content.slice(0, 2000);
   return text ? [{ text: { content: text } }] : [];
@@ -1386,21 +1399,25 @@ async function replaceNotionPageChildren(
   return { archived, appended };
 }
 
-async function upsertNotionDatabasePage(
+async function upsertNotionDataSourcePage(
   token: string,
-  dbId: string,
+  dataSourceId: string,
   titleProperty: string,
   titleValue: string,
   properties: Record<string, unknown>,
 ): Promise<"created" | "updated"> {
-  const notionDbId = normalizeNotionId(dbId);
-  const queryResp = await notionFetch(token, `/databases/${notionDbId}/query`, {
-    method: "POST",
-    body: JSON.stringify({
-      filter: { property: titleProperty, title: { equals: titleValue } },
-      page_size: 1,
-    }),
-  });
+  const notionDataSourceId = normalizeNotionId(dataSourceId);
+  const queryResp = await notionFetch(
+    token,
+    `/data_sources/${notionDataSourceId}/query`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        filter: { property: titleProperty, title: { equals: titleValue } },
+        page_size: 1,
+      }),
+    },
+  );
   if (!queryResp.ok) {
     const detail = await queryResp.text().catch(() => "");
     throw new Error(
@@ -1437,7 +1454,10 @@ async function upsertNotionDatabasePage(
   const createResp = await notionFetch(token, "/pages", {
     method: "POST",
     body: JSON.stringify({
-      parent: { database_id: notionDbId },
+      parent: {
+        type: "data_source_id",
+        data_source_id: notionDataSourceId,
+      },
       properties,
     }),
   });
@@ -1524,7 +1544,7 @@ function notionPreflightFixes(
 
 async function validateNotionDatabaseSchema(
   token: string,
-  dbId: string,
+  dataSourceId: string,
   required: RequiredNotionProperty[],
   options: { checkAdvancedProperties?: boolean } = {},
 ): Promise<{
@@ -1540,17 +1560,20 @@ async function validateNotionDatabaseSchema(
   findings: NotionPreflightFinding[];
   human_fix_required: string[];
 }> {
-  const notionDbId = normalizeNotionId(dbId);
-  const resp = await notionFetch(token, `/databases/${notionDbId}`);
+  const notionDataSourceId = normalizeNotionId(dataSourceId);
+  const resp = await notionFetch(
+    token,
+    `/data_sources/${notionDataSourceId}`,
+  );
   if (!resp.ok) {
     const detail = await resp.text().catch(() => "");
     const category = notionPreflightFetchCategory(resp.status, detail);
     const finding: NotionPreflightFinding = {
       category,
       severity: "error",
-      message: `Notion database schema fetch failed: HTTP ${resp.status}.`,
+      message: `Notion data-source schema fetch failed: HTTP ${resp.status}.`,
       recommendation: category === "missing_permission"
-        ? "Share the target Notion database with the integration and verify NOTION_WBS_DATABASE_ID."
+        ? "Share the target Notion data source with the integration and verify the configured Notion IDs."
         : "Retry the Notion schema preflight and inspect the returned API detail.",
     };
     return {
@@ -1632,8 +1655,9 @@ async function validateNotionDatabaseSchema(
       const propertyId = asString(property.id, name);
       if (type === "relation") {
         const relation = (property.relation ?? {}) as Record<string, unknown>;
+        let relationDataSourceId = asString(relation.data_source_id);
         const relationDbId = asString(relation.database_id);
-        if (!relationDbId) {
+        if (!relationDataSourceId && !relationDbId) {
           findings.push({
             category: "advanced_property_constraint",
             severity: "warning",
@@ -1641,15 +1665,41 @@ async function validateNotionDatabaseSchema(
             property_id: propertyId,
             property_type: type,
             message:
-              `Relation property "${name}" does not expose relation.database_id.`,
+              `Relation property "${name}" does not expose a target data-source or database ID.`,
             recommendation:
               "Verify the relation target database is shared with the Notion integration.",
           });
           continue;
         }
+
+        if (!relationDataSourceId) {
+          try {
+            relationDataSourceId = await configuredNotionDataSourceId(
+              token,
+              relationDbId,
+              null,
+              null,
+            );
+          } catch (error) {
+            findings.push({
+              category: "advanced_property_constraint",
+              severity: "error",
+              property_name: name,
+              property_id: propertyId,
+              property_type: type,
+              message:
+                `Relation target for "${name}" could not be resolved to a data source: ${
+                  String(error)
+                }.`,
+              recommendation:
+                "Share the related database and configure an explicit data-source ID if it has multiple data sources.",
+            });
+            continue;
+          }
+        }
         const relationResp = await notionFetch(
           token,
-          `/databases/${relationDbId}`,
+          `/data_sources/${normalizeNotionId(relationDataSourceId)}`,
         );
         if (!relationResp.ok) {
           const detail = await relationResp.text().catch(() => "");
@@ -3668,20 +3718,31 @@ serve(async (req: Request) => {
       case "notion.preflight_wbs": {
         const token = Deno.env.get("NOTION_API_TOKEN");
         const dbId = Deno.env.get("NOTION_WBS_DATABASE_ID");
-        if (!token || !dbId) {
+        const configuredDataSourceId = Deno.env.get(
+          "NOTION_WBS_DATA_SOURCE_ID",
+        );
+        if (!token || (!dbId && !configuredDataSourceId)) {
           return json(
             {
               success: false,
               error: "notion_not_configured",
-              missing: !token ? "NOTION_API_TOKEN" : "NOTION_WBS_DATABASE_ID",
+              missing: !token
+                ? "NOTION_API_TOKEN"
+                : "NOTION_WBS_DATABASE_ID or NOTION_WBS_DATA_SOURCE_ID",
             },
             503,
           );
         }
 
-        const schema = await validateNotionDatabaseSchema(
+        const dataSourceId = await configuredNotionDataSourceId(
           token,
           dbId,
+          configuredDataSourceId,
+          Deno.env.get("NOTION_WBS_DATA_SOURCE_NAME"),
+        );
+        const schema = await validateNotionDatabaseSchema(
+          token,
+          dataSourceId,
           NOTION_WBS_REQUIRED_PROPERTIES,
           { checkAdvancedProperties: true },
         );
@@ -3714,27 +3775,38 @@ serve(async (req: Request) => {
       // upsert (last_edited 順で最新 500 件)。Anthropic outage 時もユーザーが
       // Notion mirror で WBS を閲覧できる = SPOF 解消。
       // Auth: service_role (public action / GHA cron から呼ぶ想定)
-      // Secrets: NOTION_API_TOKEN / NOTION_WBS_DATABASE_ID
+      // Secrets: NOTION_API_TOKEN / NOTION_WBS_DATABASE_ID or DATA_SOURCE_ID
       case "notion.sync_wbs": {
         const token = Deno.env.get("NOTION_API_TOKEN");
-        const dbId = normalizeNotionId(Deno.env.get("NOTION_WBS_DATABASE_ID"));
-        if (!token || !dbId) {
+        const dbId = Deno.env.get("NOTION_WBS_DATABASE_ID");
+        const configuredDataSourceId = Deno.env.get(
+          "NOTION_WBS_DATA_SOURCE_ID",
+        );
+        if (!token || (!dbId && !configuredDataSourceId)) {
           return json(
             {
               success: false,
               error: "notion_not_configured",
-              missing: !token ? "NOTION_API_TOKEN" : "NOTION_WBS_DATABASE_ID",
+              missing: !token
+                ? "NOTION_API_TOKEN"
+                : "NOTION_WBS_DATABASE_ID or NOTION_WBS_DATA_SOURCE_ID",
             },
             503,
           );
         }
 
+        const dataSourceId = await configuredNotionDataSourceId(
+          token,
+          dbId,
+          configuredDataSourceId,
+          Deno.env.get("NOTION_WBS_DATA_SOURCE_NAME"),
+        );
         // Supabase 側から最新 WBS (last_edited 順 30 件) を取得
         // 30件 × ~150ms/task ≈ 4.5s sleep + HTTP = ~30s 合計 (Supabase 150s limit に余裕)
         // 毎時 cron で 30件ずつローリング sync → 141件 ≒ 5h で全件完了
         const schema = await validateNotionDatabaseSchema(
           token,
-          dbId,
+          dataSourceId,
           NOTION_WBS_REQUIRED_PROPERTIES,
           { checkAdvancedProperties: body.advanced_preflight === true },
         );
@@ -3891,7 +3963,7 @@ serve(async (req: Request) => {
             // 既存 page を id (Title) で検索
             const queryResp = await notionFetch(
               token,
-              `/databases/${dbId}/query`,
+              `/data_sources/${dataSourceId}/query`,
               {
                 method: "POST",
                 body: JSON.stringify({
@@ -3938,7 +4010,10 @@ serve(async (req: Request) => {
               const createResp = await notionFetch(token, "/pages", {
                 method: "POST",
                 body: JSON.stringify({
-                  parent: { database_id: dbId },
+                  parent: {
+                    type: "data_source_id",
+                    data_source_id: dataSourceId,
+                  },
                   properties,
                 }),
               });
@@ -4058,22 +4133,29 @@ serve(async (req: Request) => {
       // Fallback: GHA から rows を渡して Notion DB へ upsert.
       case "notion.sync_memory_index": {
         const token = Deno.env.get("NOTION_API_TOKEN");
-        const dbId = normalizeNotionId(
-          Deno.env.get("NOTION_MEMORY_DATABASE_ID"),
+        const dbId = Deno.env.get("NOTION_MEMORY_DATABASE_ID");
+        const configuredDataSourceId = Deno.env.get(
+          "NOTION_MEMORY_DATA_SOURCE_ID",
         );
-        if (!token || !dbId) {
+        if (!token || (!dbId && !configuredDataSourceId)) {
           return json(
             {
               success: false,
               error: "notion_not_configured",
               missing: !token
                 ? "NOTION_API_TOKEN"
-                : "NOTION_MEMORY_DATABASE_ID",
+                : "NOTION_MEMORY_DATABASE_ID or NOTION_MEMORY_DATA_SOURCE_ID",
             },
             503,
           );
         }
 
+        const dataSourceId = await configuredNotionDataSourceId(
+          token,
+          dbId,
+          configuredDataSourceId,
+          Deno.env.get("NOTION_MEMORY_DATA_SOURCE_NAME"),
+        );
         const limitN = clampNumber(body.limit, 50, 1, 100);
         const offsetN = Math.max(asNumber(body.offset, 0), 0);
         const delayMs = clampNumber(body.delay_ms, 800, 400, 2500);
@@ -4133,9 +4215,9 @@ serve(async (req: Request) => {
           }
 
           try {
-            const result = await upsertNotionDatabasePage(
+            const result = await upsertNotionDataSourcePage(
               token,
-              dbId,
+              dataSourceId,
               "filename",
               filePath,
               properties,
@@ -4239,21 +4321,32 @@ serve(async (req: Request) => {
       // ─── Notion WBS Mirror Repair ───
       case "notion.fix_wbs_all_instances": {
         const token = Deno.env.get("NOTION_API_TOKEN");
-        const dbId = normalizeNotionId(Deno.env.get("NOTION_WBS_DATABASE_ID"));
-        if (!token || !dbId) {
+        const dbId = Deno.env.get("NOTION_WBS_DATABASE_ID");
+        const configuredDataSourceId = Deno.env.get(
+          "NOTION_WBS_DATA_SOURCE_ID",
+        );
+        if (!token || (!dbId && !configuredDataSourceId)) {
           return json(
             {
               success: false,
               error: "notion_not_configured",
-              missing: !token ? "NOTION_API_TOKEN" : "NOTION_WBS_DATABASE_ID",
+              missing: !token
+                ? "NOTION_API_TOKEN"
+                : "NOTION_WBS_DATABASE_ID or NOTION_WBS_DATA_SOURCE_ID",
             },
             503,
           );
         }
 
+        const dataSourceId = await configuredNotionDataSourceId(
+          token,
+          dbId,
+          configuredDataSourceId,
+          Deno.env.get("NOTION_WBS_DATA_SOURCE_NAME"),
+        );
         const notionHeaders = {
           "Authorization": `Bearer ${token}`,
-          "Notion-Version": "2022-06-28",
+          "Notion-Version": NOTION_VERSION,
           "Content-Type": "application/json",
         };
         const validInstances = new Set([
@@ -4301,7 +4394,7 @@ serve(async (req: Request) => {
           if (pageSize <= 0) break;
           const queryResp: Response = await externalFetch(
             "notion",
-            `https://api.notion.com/v1/databases/${dbId}/query`,
+            `https://api.notion.com/v1/data_sources/${dataSourceId}/query`,
             {
               method: "POST",
               headers: notionHeaders,
@@ -4423,7 +4516,7 @@ serve(async (req: Request) => {
 
         const verifyResp = await externalFetch(
           "notion",
-          `https://api.notion.com/v1/databases/${dbId}/query`,
+          `https://api.notion.com/v1/data_sources/${dataSourceId}/query`,
           {
             method: "POST",
             headers: notionHeaders,
@@ -4531,6 +4624,14 @@ serve(async (req: Request) => {
         success: false,
         ...externalFetchErrorPayload(e),
       }, 503);
+    }
+    if (e instanceof NotionDataSourceError) {
+      return json({
+        success: false,
+        error: e.code,
+        detail: e.detail ?? e.message,
+        upstream_status: e.status ?? null,
+      }, e.status ? 502 : 422);
     }
     return json({ error: String(e) }, 500);
   }

@@ -39,6 +39,14 @@ function normalizedId(value: string | null | undefined): string {
   return String(value ?? "").replaceAll("-", "").trim();
 }
 
+function encodedPropertyId(value: string): string {
+  try {
+    return encodeURIComponent(decodeURIComponent(value));
+  } catch {
+    return encodeURIComponent(value);
+  }
+}
+
 function boundedInteger(
   value: number | undefined,
   fallback: number,
@@ -235,7 +243,7 @@ export async function retrieveAllNotionPagePropertyItems(
     const payload = await responseJson(
       await request(
         `/pages/${normalizedPageId}/properties/${
-          encodeURIComponent(normalizedPropertyId)
+          encodedPropertyId(normalizedPropertyId)
         }?${search}`,
       ),
       "notion_page_property_retrieve",

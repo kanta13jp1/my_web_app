@@ -6,8 +6,8 @@ name: Notion Mirror Sync (hourly)
 # Anthropic / Claude Code outage 時もユーザーが Notion mirror で WBS 閲覧可能。
 #
 # 事前条件 (Win#132 part 5 で登録済):
-#   - Supabase Secrets: NOTION_API_TOKEN / NOTION_WBS_DATABASE_ID
-#   - Supabase Secrets: NOTION_ROADMAP_PAGE_ID / NOTION_MEMORY_DATABASE_ID
+#   - Supabase Secrets: NOTION_API_TOKEN / NOTION_WBS_DATABASE_ID or DATA_SOURCE_ID
+#   - Supabase Secrets: NOTION_ROADMAP_PAGE_ID / NOTION_MEMORY_DATABASE_ID or DATA_SOURCE_ID
 #   - EF schedule-hub notion.sync_{wbs,roadmap,memory_index}
 
 on:
@@ -267,7 +267,7 @@ jobs:
               sys.exit(0)
           error = str(data.get("error", "unknown"))
           if "notion_not_configured" in error:
-              print("::warning::NOTION_MEMORY_DATABASE_ID not configured yet — skip")
+              print("::warning::Notion memory database/data-source ID not configured yet — skip")
               sys.exit(0)
           print(f"::error::notion.sync_memory_index failed: {error}")
           sys.exit(1)

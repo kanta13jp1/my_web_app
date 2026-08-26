@@ -143,6 +143,28 @@ Deno.test("retrieveAllNotionPagePropertyItems gets values after item 25", async 
   ]);
 });
 
+Deno.test("retrieveAllNotionPagePropertyItems does not double-encode property IDs", async () => {
+  let requestedPath = "";
+  await retrieveAllNotionPagePropertyItems(
+    (path) => {
+      requestedPath = path;
+      return Promise.resolve(jsonResponse({
+        object: "list",
+        results: [],
+        has_more: false,
+        next_cursor: null,
+      }));
+    },
+    "page-id",
+    "relation%20id",
+  );
+
+  assertEquals(
+    requestedPath,
+    "/pages/pageid/properties/relation%20id?page_size=100",
+  );
+});
+
 Deno.test("Notion errors retain bounded upstream details", async () => {
   const error = await assertRejects(
     () =>
