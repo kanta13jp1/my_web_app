@@ -12,13 +12,13 @@ concurrency:
   group: ai-university-update
   cancel-in-progress: false  # 前回実行をキャンセルせず完了させる (エラー隠蔽防止)
 
-permissions:
-  actions: read
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   source-audit:
+    permissions:
+      actions: read
+      contents: read
     name: AI University Official Source Audit
     runs-on: ubuntu-latest
     timeout-minutes: 12
@@ -26,7 +26,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Download previous official-source audit baseline
         continue-on-error: true
@@ -85,7 +85,7 @@ jobs:
       - name: Publish official-source audit evidence
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ai-university-source-audit
           path: .artifacts/ai-university-source-audit/current/
@@ -93,6 +93,8 @@ jobs:
           retention-days: 30
 
   update:
+    permissions:
+      contents: write
     name: AI University Content Update
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -100,7 +102,7 @@ jobs:
     steps:
       # ── Step 1: コード取得 ────────────────────────────────────────────────
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           token: ${{ secrets.BYPASS_RULES || github.token }}
 

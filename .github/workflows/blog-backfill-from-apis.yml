@@ -13,8 +13,7 @@ on:
         default: "60"
         type: string
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: blog-backfill-from-apis
@@ -22,6 +21,8 @@ concurrency:
 
 jobs:
   backfill:
+    permissions:
+      contents: read
     name: Run blog.backfill_from_apis
     runs-on: ubuntu-latest
     timeout-minutes: 5

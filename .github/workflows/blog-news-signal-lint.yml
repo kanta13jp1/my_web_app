@@ -19,11 +19,12 @@ concurrency:
   group: blog-news-signal-lint
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   lint:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 8
     env:

@@ -21,9 +21,7 @@ on:
         default: "false"
         type: string
 
-permissions:
-  contents: read
-  issues: write
+permissions: {}
 
 concurrency:
   group: feature-review
@@ -31,6 +29,9 @@ concurrency:
 
 jobs:
   review:
+    permissions:
+      contents: read
+      issues: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -45,17 +46,17 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 100
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
 
       - name: Cache pip
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-feature-review-${{ hashFiles('**/requirements*.txt') }}-anthropic-playwright-requests
@@ -63,7 +64,7 @@ jobs:
             ${{ runner.os }}-pip-feature-review-
 
       - name: Setup Deno
-        uses: denoland/setup-deno@v2
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
         with:
           deno-version: v2.x
 
@@ -83,7 +84,7 @@ jobs:
 
       - name: Upload review artifacts
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: feature-review-${{ github.run_id }}
           path: |

@@ -31,12 +31,13 @@ concurrency:
   group: blog-publish
   cancel-in-progress: false
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   publish:
+    permissions:
+      contents: write
+      pull-requests: write
     name: Publish Blog Draft
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -47,7 +48,7 @@ jobs:
     steps:
       # ── Step 1: コード取得 ────────────────────────────────────────────────
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       # ── Step 1.5: 自動スケジュール実行時 — 未投稿ドラフト自動選択 ──────
       - name: Resolve publish draft

@@ -24,6 +24,8 @@ on:
       - '.github/PULL_REQUEST_TEMPLATE.md'
   workflow_call:
 
+permissions: {}
+
 concurrency:
   group: ci-${{ github.ref }}
   # PR 以外 (push / workflow_call) では cancel 無効化
@@ -63,7 +65,7 @@ jobs:
 
       - name: Collect PR changed files
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const fs = require('fs');
@@ -114,7 +116,7 @@ jobs:
 
       - name: Cache Flutter pub
         if: steps.changes.outputs.flutter == 'true'
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
@@ -136,7 +138,7 @@ jobs:
 
       - name: Upload analyzer evidence
         if: always() && steps.changes.outputs.flutter == 'true' && hashFiles('.ci-logs/analyzer/result.json') != ''
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: analyzer-evidence
           path: .ci-logs/analyzer
@@ -168,7 +170,7 @@ jobs:
 
       - name: Upload impossible task degradation report
         if: always() && hashFiles('.ci-logs/impossible-task-degradation.json') != ''
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: impossible-task-degradation-report
           path: .ci-logs/impossible-task-degradation.json
@@ -190,7 +192,7 @@ jobs:
 
       - name: Upload Deno lint log
         if: always() && steps.changes.outputs.edge == 'true' && hashFiles('.ci-logs/deno-lint.log') != ''
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: deno-lint-log
           path: .ci-logs/deno-lint.log
@@ -294,7 +296,11 @@ jobs:
         continue-on-error: false  # migration 構文エラーはCIブロック
 
       - name: Check GitHub Actions Node runtime floor
-        run: python scripts/check_github_actions_node_runtime.py
+        run: |
+          python -m unittest discover \
+            -s test/scripts \
+            -p 'test_check_github_actions_node_runtime.py'
+          python scripts/check_github_actions_node_runtime.py
         continue-on-error: false
 
       - name: Check GitHub Actions inline Python safety
@@ -311,6 +317,14 @@ jobs:
 
       - name: Check GitHub Actions script injection safety
         run: python scripts/check_github_actions_script_injection.py
+        continue-on-error: false
+
+      - name: Check GitHub Actions security policy
+        run: |
+          python -m unittest discover \
+            -s test/scripts \
+            -p 'test_check_github_actions_security_policy.py'
+          python scripts/check_github_actions_security_policy.py
         continue-on-error: false
 
       - name: Test tools-hub MCP smoke response compatibility
@@ -407,6 +421,33 @@ jobs:
             echo "**Actor**: ${{ github.actor }} | **Trigger**: ${{ github.event_name }}"
           } >> $GITHUB_STEP_SUMMARY
 
+  actionlint:
+    name: GitHub Actions syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install actionlint v1.7.12
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive='actionlint_1.7.12_linux_amd64.tar.gz'
+          curl --fail --silent --show-error --location \
+            --output "${RUNNER_TEMP}/${archive}" \
+            "https://github.com/rhysd/actionlint/releases/download/v1.7.12/${archive}"
+          echo '8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  '"${RUNNER_TEMP}/${archive}" \
+            | sha256sum --check --strict
+          tar -xzf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}" actionlint
+
+      - name: Lint workflow syntax
+        shell: bash
+        run: "${RUNNER_TEMP}/actionlint -no-color -shellcheck= -pyflakes="
+
   security-check:
     name: Security Check
     runs-on: ubuntu-latest
@@ -471,6 +512,7 @@ jobs:
           echo "Security check completed"
 
   pr-comment:
+    timeout-minutes: 5
     name: PR Comment
     runs-on: ubuntu-latest
     needs: [lint-and-test, security-check]
@@ -481,14 +523,14 @@ jobs:
     steps:
       - name: Download analyzer evidence
         continue-on-error: true
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: analyzer-evidence
           path: .ci-logs/analyzer
 
       - name: Comment on PR
         continue-on-error: true
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           retries: 3
           script: |

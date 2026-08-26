@@ -19,12 +19,13 @@ concurrency:
   group: ci-auto-fix-pr-${{ inputs.pr_number }}
   cancel-in-progress: false
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   auto-fix:
+    permissions:
+      contents: write
+      pull-requests: write
     name: Format changed files
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -32,7 +33,7 @@ jobs:
     steps:
       - name: Resolve pull request
         id: pr
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             if ('${{ inputs.human_review_acknowledged }}' !== 'true') {
@@ -78,12 +79,12 @@ jobs:
             );
 
       - name: Checkout PR branch
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ steps.pr.outputs.branch }}
 
       - name: Collect changed files
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const files = await github.paginate(github.rest.pulls.listFiles, {
@@ -124,7 +125,7 @@ jobs:
 
       - name: Setup Deno
         if: steps.pr.outputs.has_deno == 'true'
-        uses: denoland/setup-deno@v2
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
         with:
           deno-version: v2.9.1
 
@@ -157,7 +158,7 @@ jobs:
           echo "committed=true" >> "$GITHUB_OUTPUT"
 
       - name: Report result
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const committed = '${{ steps.commit.outputs.committed }}' === 'true';
