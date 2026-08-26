@@ -1026,6 +1026,14 @@ Route<dynamic> generateAppRoute(
     case '/settings':
       return MaterialPageRoute(builder: (_) => const SettingsPage());
     case '/settings/ai-form-assistant':
+      if (supabase.auth.currentSession == null) {
+        return MaterialPageRoute(
+          builder: (_) => LandingPage(
+            signupCompletionService: signupCompletionService,
+          ),
+          settings: const RouteSettings(name: '/login'),
+        );
+      }
       return MaterialPageRoute(builder: (_) => const AiFormAssistantPage());
     case '/settings/theme':
       return MaterialPageRoute(builder: (_) => const ThemeSelectorPage());
