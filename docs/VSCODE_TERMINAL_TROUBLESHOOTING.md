@@ -1,6 +1,6 @@
 # VS Code Terminal Troubleshooting Guide
 
-Status: repo-managed wiki page for Issue #1294.
+Status: repo-managed wiki page for Issues #1294 and #2857.
 
 This guide standardizes first-response checks when the VS Code integrated
 terminal fails to start, exits immediately, or returns a shell exit code before
@@ -117,6 +117,74 @@ code --disable-extensions .
 If this works, re-enable extensions in small batches. Terminal, shell
 integration, environment, Docker, remote development, and AI coding extensions
 are the first suspects.
+
+### Repository split-terminal standard
+
+This repository pins the following workspace behavior in
+`.vscode/settings.json`:
+
+```json
+{
+  "terminal.integrated.cwd": "${workspaceFolder}",
+  "terminal.integrated.splitCwd": "workspaceRoot"
+}
+```
+
+`workspaceRoot` is intentional. A split made from a terminal that has moved
+into `supabase/`, `web/`, or another subdirectory starts at the repository
+root, so Flutter and Supabase commands do not silently run against different
+project roots. In a multi-root workspace VS Code asks which root to use.
+
+Do not add `terminal.integrated.inheritEnv` to the workspace file. Current VS
+Code defines it as an application-scoped user setting with a default of
+`true`; it cannot be standardized per workspace, and it has no effect on
+Windows. On macOS and Linux, developers who changed the user setting to
+`false` should restore it to `true` unless they intentionally need a stripped
+shell environment.
+
+The behavior above follows the current VS Code
+[split-terminal documentation](https://code.visualstudio.com/docs/terminal/basics#_groups-split-panes)
+and the official
+[`inheritEnv` configuration schema](https://github.com/microsoft/vscode/blob/main/src/vs/platform/terminal/common/terminalPlatformConfiguration.ts).
+
+After changing either the user setting or the workspace settings, close the
+old terminals, open a new terminal, split it, and compare both panes:
+
+```powershell
+# Windows PowerShell (run in both panes)
+(Get-Location).Path
+$env:Path
+$env:PYTHONUTF8
+Get-Command flutter
+Get-Command supabase
+```
+
+```bash
+# macOS/Linux (run in both panes)
+pwd
+printf '%s\n' "$PATH" "$PYTHONUTF8"
+command -v flutter
+command -v supabase
+```
+
+Both panes must start at the repository root. `PATH`, `PYTHONUTF8`, and command
+resolution must agree. If they do not, compare the VS Code user setting,
+login-shell profile, and `terminal.integrated.env.{platform}` before changing
+the repository settings.
+
+### Recommended Flutter + Supabase layout
+
+Use one terminal group split into three panes. Keep each pane at the workspace
+root and let each CLI discover its own project files.
+
+| Pane | Long-running owner | Typical commands |
+| --- | --- | --- |
+| Left | Supabase local stack / functions | `supabase start`, `supabase status`, `supabase functions serve` |
+| Top right | Flutter daemon | `flutter run -d chrome` |
+| Bottom right | Short checks and logs | `flutter test <target>`, `supabase functions logs <name>` |
+
+Do not place tokens or `.env` values in `.vscode/settings.json`. Load secrets
+through the existing local environment or approved secret workflow instead.
 
 ## 4. Exit Code Reading Guide
 

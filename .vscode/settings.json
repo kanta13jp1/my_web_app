@@ -10,6 +10,7 @@
   "deno.unstable": [],
   "files.encoding": "utf8",
   "terminal.integrated.cwd": "${workspaceFolder}",
+  "terminal.integrated.splitCwd": "workspaceRoot",
   "terminal.integrated.defaultProfile.windows": "my_web_app PowerShell",
   "terminal.integrated.profiles.windows": {
     "my_web_app PowerShell": {
