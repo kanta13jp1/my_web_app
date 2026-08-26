@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_version.dart';
 import '../services/theme_service.dart';
+import 'ai_form_assistant_page.dart';
 import 'ai_share_button_settings_page.dart';
 import 'profile_settings_page.dart';
 import 'asset_management_page.dart';
@@ -35,6 +36,22 @@ class SettingsPage extends StatelessWidget {
             ),
           ),
           const Divider(),
+          ListTile(
+            key: const Key('settings-ai-form-assistant'),
+            leading: const Icon(Icons.auto_awesome_outlined),
+            title: const Text('AIフォーム設定支援'),
+            subtitle: const Text('対話で複雑な設定を入力・確認'),
+            trailing: const Icon(Icons.arrow_forward_ios),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                settings: const RouteSettings(
+                  name: '/settings/ai-form-assistant',
+                ),
+                builder: (_) => const AiFormAssistantPage(),
+              ),
+            ),
+          ),
           ListTile(
             leading: const Icon(Icons.color_lens_outlined),
             title: const Text('テーマ設定'),

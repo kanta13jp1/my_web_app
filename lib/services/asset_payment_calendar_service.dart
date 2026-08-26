@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:my_web_app/models/asset_liability_workbook.dart';
+
 /// カレンダー用の負債入力(重量級の workbook 行から必要項目だけ写す)。
 class AssetCalendarDebtInput {
   const AssetCalendarDebtInput({
@@ -8,8 +10,22 @@ class AssetCalendarDebtInput {
     required this.paymentDay,
     this.scheduledPaymentAmount = 0,
     this.isDirectCashflowTarget = true,
+    this.isFixedCost = false,
     this.id = '',
   });
+
+  factory AssetCalendarDebtInput.fromDebtRow(AssetLiabilityDebtRow row) {
+    return AssetCalendarDebtInput(
+      id: row.id,
+      name: row.name,
+      balance: row.balance,
+      paymentDay: row.paymentDay,
+      scheduledPaymentAmount: row.scheduledPaymentAmount,
+      isDirectCashflowTarget: row.isDirectCashflowTarget,
+      isFixedCost: row.kind == AssetLiabilityAccountKind.utility ||
+          row.fullPaymentEstimate,
+    );
+  }
 
   /// workbook 行ID(支払日移動などのアクション連携用)。
   final String id;
@@ -18,6 +34,10 @@ class AssetCalendarDebtInput {
   final int? paymentDay;
   final double scheduledPaymentAmount;
   final bool isDirectCashflowTarget;
+
+  /// 家賃・通信費・サブスク等の全額支払い固定費か。
+  /// true の行は返済額ではなく固定費額へ集計する。
+  final bool isFixedCost;
 }
 
 /// カレンダーに載せる日次イベントの種別。
@@ -129,7 +149,7 @@ class AssetPaymentCalendarMonth {
   /// 期間内の返済予定額合計(金額が分かるもののみ)。
   final double scheduledDebtPaymentTotal;
 
-  /// 期間内の固定費(サブスク)請求額合計。
+  /// 期間内の固定費(utility・サブスク)請求額合計。
   final double subscriptionTotal;
 
   /// 見込み残高が最初にマイナスへ落ちる日。資金リスクの早期警告。
@@ -233,6 +253,7 @@ class AssetPaymentCalendarService {
     final eventsByDate = <int, List<AssetCalendarEvent>>{};
     var scheduledDebtPaymentTotal = 0.0;
     var subscriptionTotal = 0.0;
+    final scheduledFixedCostKeys = <String>{};
 
     bool inRange(DateTime date) =>
         !date.isBefore(rangeStart) && date.isBefore(rangeEnd);
@@ -244,6 +265,12 @@ class AssetPaymentCalendarService {
       eventsByDate
           .putIfAbsent(_dateKey(date), () => <AssetCalendarEvent>[])
           .add(event);
+    }
+
+    String fixedCostKey(String name, DateTime date, double amount) {
+      final normalizedName =
+          name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '');
+      return '$normalizedName|${_dateKey(date)}|${amount.toStringAsFixed(2)}';
     }
 
     // 窓に重なる暦月ごとに「毎月N日」を実日付へ解決する(月末クランプ)。
@@ -321,15 +348,22 @@ class AssetPaymentCalendarService {
             ? row.scheduledPaymentAmount
             : null;
         if (amount != null) {
-          scheduledDebtPaymentTotal += amount;
+          if (row.isFixedCost) {
+            subscriptionTotal += amount;
+            scheduledFixedCostKeys.add(fixedCostKey(row.name, date, amount));
+          } else {
+            scheduledDebtPaymentTotal += amount;
+          }
           outflowByDate[_dateKey(date)] =
               (outflowByDate[_dateKey(date)] ?? 0) + amount;
         }
         addEvent(
           date,
           AssetCalendarEvent(
-            kind: AssetCalendarEventKind.debtPayment,
-            label: '${row.name} 返済',
+            kind: row.isFixedCost
+                ? AssetCalendarEventKind.subscription
+                : AssetCalendarEventKind.debtPayment,
+            label: row.isFixedCost ? row.name : '${row.name} 返済',
             amount: amount,
             sourceId: row.id.isEmpty ? null : row.id,
           ),
@@ -351,6 +385,9 @@ class AssetPaymentCalendarService {
       final name = subscription['service_name']?.toString().trim() ?? '';
       final price = (subscription['price'] as num?)?.toDouble();
       if (price != null && price > 0) {
+        if (scheduledFixedCostKeys.contains(fixedCostKey(name, date, price))) {
+          continue;
+        }
         subscriptionTotal += price;
         outflowByDate[_dateKey(date)] =
             (outflowByDate[_dateKey(date)] ?? 0) + price;
@@ -496,6 +533,7 @@ class AssetPaymentCalendarService {
                 paymentDay: shiftToDay,
                 scheduledPaymentAmount: debt.scheduledPaymentAmount,
                 isDirectCashflowTarget: debt.isDirectCashflowTarget,
+                isFixedCost: debt.isFixedCost,
               )
             else
               debt,

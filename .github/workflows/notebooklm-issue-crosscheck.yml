@@ -80,10 +80,13 @@ jobs:
       - name: Run cross-check
         id: run
         continue-on-error: true
+        env:
+          LIMIT: ${{ inputs.limit || '200' }}
+          COMMENT_TARGET: ${{ inputs.comment_target || '1647' }}
         run: |
           PYTHONUTF8=1 python scripts/notebooklm_issue_crosscheck.py \
-            --limit "${{ inputs.limit || '200' }}" \
-            --comment-on-issue "${{ inputs.comment_target || '1647' }}" \
+            --limit "$LIMIT" \
+            --comment-on-issue "$COMMENT_TARGET" \
             --json-out crosscheck_report.json \
             > crosscheck_report.txt 2>crosscheck_err.txt || true
           echo "--- stdout ---"
