@@ -224,6 +224,8 @@ import 'package:my_web_app/pages/landing_ab_test_page.dart';
 import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
 import 'package:my_web_app/ui/features/notion_migration/notion_migration_feature.dart';
 import 'package:my_web_app/ui/features/procrastination_reset/procrastination_reset_feature.dart';
+import 'package:my_web_app/ui/features/proactive_form_check/proactive_form_check_feature.dart';
+import 'package:my_web_app/ui/features/custom_task_list/custom_task_list_feature.dart';
 import 'package:my_web_app/pages/youtube_stats_page.dart';
 import 'package:my_web_app/pages/audio_effects_processor_page.dart';
 import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
@@ -1566,6 +1568,13 @@ Route<dynamic> generateAppRoute(
           name: ProcrastinationResetFeature.routeName,
         ),
       );
+    case '/proactive-form-check':
+      return MaterialPageRoute(
+        builder: (_) => const ProactiveFormCheckFeature(),
+        settings: const RouteSettings(
+          name: ProactiveFormCheckFeature.routeName,
+        ),
+      );
     case '/my-skills':
       return MaterialPageRoute(builder: (_) => const MySkillsPage());
     case '/goal-tracker':
@@ -1667,6 +1676,11 @@ Route<dynamic> generateAppRoute(
       );
     case '/brain-dump':
       return MaterialPageRoute(builder: (_) => const BrainDumpPage());
+    case '/custom-task-list':
+      return MaterialPageRoute(
+        settings: const RouteSettings(name: '/custom-task-list'),
+        builder: (_) => const CustomTaskListPage(),
+      );
     case '/project-gantt':
       return MaterialPageRoute(builder: (_) => const ProjectGanttPage());
     case '/user-tasks':
