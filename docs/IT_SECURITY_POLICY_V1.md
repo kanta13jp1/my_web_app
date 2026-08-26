@@ -69,6 +69,7 @@
 | 6-4 | Supabase Organization Owner はMFAを有効化した人間のCEOに限定し、AI agent/CI/routine automationへ付与しない |
 | 6-5 | Production projectの削除は原則禁止。削除・移管はIssueに対象project ref、理由、実行者、実行時刻、24時間以内のbackup/restore成功証跡を記録し、CEOが明示承認する。詳細は [`SUPABASE_BACKUP_RESTORE_RUNBOOK.md`](SUPABASE_BACKUP_RESTORE_RUNBOOK.md) §7 |
 | 6-6 | Database logical backupは暗号化してSupabase外へ保管し、復元可能性を定期drillで検証する。公開repositoryへ平文dumpを保存しない |
+| 6-7 | Supabaseプラットフォームログの外部転送は [`SUPABASE_LOG_DRAINS_REQUIREMENTS.md`](SUPABASE_LOG_DRAINS_REQUIREMENTS.md) に従い、費用承認、転送先審査、90日削除、最小権限を満たす場合だけ有効化する |
 
 ## 7. 点検・棚卸し (運用 cadence)
 
@@ -116,5 +117,6 @@
 - [`B2B_PROPOSAL_V1.md`](B2B_PROPOSAL_V1.md) — §4 セキュリティ FAQ (顧客向け表現 / 本書が正本)
 - [`ONCALL_INCIDENT_SOP.md`](ONCALL_INCIDENT_SOP.md) — インシデント対応 (§8)
 - [`PRODUCTION_MONITORING_RUNBOOK.md`](PRODUCTION_MONITORING_RUNBOOK.md) — 監視 cadence (§5-4)
+- [`SUPABASE_LOG_DRAINS_REQUIREMENTS.md`](SUPABASE_LOG_DRAINS_REQUIREMENTS.md) — 外部ログ転送、保持、削除、費用統制 (§6-7)
 - [`MCP_AUTH_SECURITY_PRINCIPLES.md`](MCP_AUTH_SECURITY_PRINCIPLES.md) / [`AI_DEV_PRINCIPLES.md`](AI_DEV_PRINCIPLES.md) — 技術設計原則 (§5)
 - [`OPERATIONS_CHARTER.md`](OPERATIONS_CHARTER.md) — 運用憲章 (5 正本)
