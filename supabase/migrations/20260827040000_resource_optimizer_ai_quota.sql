@@ -17,6 +17,24 @@ alter table public.resource_optimizer_ai_quota
   add column if not exists request_count integer,
   add column if not exists last_requested_at timestamptz;
 
+-- A re-apply may need to normalize column types. PostgreSQL does not permit
+-- ALTER TYPE while policies, triggers, or constraints depend on those
+-- columns, even when the canonical type is already installed. Remove the
+-- dependent objects first; they are recreated below in their exact form.
+drop policy if exists "users_read_own_resource_optimizer_ai_quota"
+  on public.resource_optimizer_ai_quota;
+drop policy if exists "users_insert_own_resource_optimizer_ai_quota"
+  on public.resource_optimizer_ai_quota;
+drop policy if exists "users_update_own_resource_optimizer_ai_quota"
+  on public.resource_optimizer_ai_quota;
+drop trigger if exists validate_resource_optimizer_ai_quota_write
+  on public.resource_optimizer_ai_quota;
+
+alter table public.resource_optimizer_ai_quota
+  drop constraint if exists resource_optimizer_ai_quota_request_count_check,
+  drop constraint if exists resource_optimizer_ai_quota_user_id_fkey,
+  drop constraint if exists resource_optimizer_ai_quota_pkey;
+
 -- Fail loudly on unconvertible drift; otherwise converge compatible partial
 -- definitions to the exact types consumed by the RLS policies and RPC.
 alter table public.resource_optimizer_ai_quota
