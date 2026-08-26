@@ -329,12 +329,14 @@ function Invoke-WindowsTerminalDoctor {
     $protectedIds = Get-ProtectedProcessIds `
         -Processes $secondSnapshot `
         -CurrentProcessId $PID
-    $candidates = Get-StaleShellProcessCandidates `
-        -FirstSnapshot $firstSnapshot `
-        -SecondSnapshot $secondSnapshot `
-        -Now (Get-Date) `
-        -MinimumAgeMinutes $MinimumAgeMinutes `
-        -ProtectedProcessIds $protectedIds
+    $candidates = @(
+        Get-StaleShellProcessCandidates `
+            -FirstSnapshot $firstSnapshot `
+            -SecondSnapshot $secondSnapshot `
+            -Now (Get-Date) `
+            -MinimumAgeMinutes $MinimumAgeMinutes `
+            -ProtectedProcessIds $protectedIds
+    )
 
     $stopped = New-Object System.Collections.Generic.List[int]
     if ($OfferStop) {

@@ -52,21 +52,25 @@ $second = @(
     [pscustomobject]@{ Name = "wsl.exe"; ProcessId = 12; ParentProcessId = 1; CreationTime = $now.AddMinutes(-5); CpuTicks = 100 },
     [pscustomobject]@{ Name = "wslhost.exe"; ProcessId = 13; ParentProcessId = 1; CreationTime = $now.AddHours(-4); CpuTicks = 100 }
 )
-$candidates = Get-StaleShellProcessCandidates `
-    -FirstSnapshot $first `
-    -SecondSnapshot $second `
-    -Now $now `
-    -MinimumAgeMinutes 120 `
-    -ProtectedProcessIds @()
+$candidates = @(
+    Get-StaleShellProcessCandidates `
+        -FirstSnapshot $first `
+        -SecondSnapshot $second `
+        -Now $now `
+        -MinimumAgeMinutes 120 `
+        -ProtectedProcessIds @()
+)
 Assert-Equal $candidates.Count 1 "Only old CPU-idle user shell launchers may be candidates"
 Assert-Equal $candidates[0].ProcessId 10 "Unexpected idle candidate"
 
-$protected = Get-StaleShellProcessCandidates `
-    -FirstSnapshot $first `
-    -SecondSnapshot $second `
-    -Now $now `
-    -MinimumAgeMinutes 120 `
-    -ProtectedProcessIds @(10)
+$protected = @(
+    Get-StaleShellProcessCandidates `
+        -FirstSnapshot $first `
+        -SecondSnapshot $second `
+        -Now $now `
+        -MinimumAgeMinutes 120 `
+        -ProtectedProcessIds @(10)
+)
 Assert-Equal $protected.Count 0 "The active process ancestry must be protected"
 
 Write-Host "windows_terminal_doctor_test: PASS"
