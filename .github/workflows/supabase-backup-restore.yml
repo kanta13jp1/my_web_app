@@ -160,12 +160,16 @@ jobs:
           docker cp "$assertions" "$db_container:/tmp/restore-assertions.sql"
           docker cp "$pgmq_bootstrap" "$db_container:/tmp/pgmq-bootstrap.sql"
           docker cp "$pgmq_finalize" "$db_container:/tmp/pgmq-finalize.sql"
-          docker exec "$db_container" psql \
-            --username supabase_storage_admin \
-            --dbname postgres \
-            --single-transaction \
-            --variable ON_ERROR_STOP=1 \
-            --file /tmp/storage-compat.sql
+          docker exec "$db_container" sh -c '
+            export PGPASSWORD="$POSTGRES_PASSWORD"
+            exec psql \
+              --host 127.0.0.1 \
+              --username supabase_storage_admin \
+              --dbname postgres \
+              --single-transaction \
+              --variable ON_ERROR_STOP=1 \
+              --file /tmp/storage-compat.sql
+          '
           docker exec "$db_container" psql \
             --username postgres \
             --dbname postgres \
