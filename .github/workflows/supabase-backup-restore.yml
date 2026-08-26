@@ -34,7 +34,9 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3
         with:
-          version: 2.84.2
+          # Keep the ephemeral Auth/Storage schemas aligned with production.
+          # Older 2.84.2 lacked auth.custom_oauth_providers.custom_claims_allowlist.
+          version: 2.115.0
 
       - name: Validate protected inputs
         shell: bash

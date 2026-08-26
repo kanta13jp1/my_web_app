@@ -191,6 +191,11 @@ following logged compensating controls are mandatory.
 | Before deletion/transfer | Fresh backup + restore drill within 24 hours and explicit Owner approval |
 | After schema/Auth/Storage changes | Confirm the logical dump and restore scope still covers the change |
 
+The workflow pins Supabase CLI 2.115.0 because its local Auth schema matches the production
+`auth.custom_oauth_providers.custom_claims_allowlist` column observed during the first drill.
+Upgrade the pin deliberately when production's managed Auth/Storage schema moves forward; a restore
+failure caused by a missing managed column is a compatibility failure and must not be waived.
+
 ## 9. Official references
 
 - [Supabase Database Backups](https://supabase.com/docs/guides/platform/backups)
