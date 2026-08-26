@@ -408,15 +408,13 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
     final taskRate = (_kpiData['task_rate'] as num?)?.toDouble() ?? 0.0;
 
     final focusHours = '${(focusMinutes / 60).toStringAsFixed(1)}h';
-    final noteSubtitle =
-        noteGrowth > 0 ? '+$noteGrowth 今週' : '記録が増えると週次差分を表示';
+    final noteSubtitle = noteGrowth > 0 ? '+$noteGrowth 今週' : '記録が増えると週次差分を表示';
     final taskSubtitle = taskRate > 0
         ? '達成率 ${(taskRate * 100).toStringAsFixed(0)}%'
         : '記録前でも達成率バーを表示';
     final focusSubtitle =
         focusMinutes > 0 ? '合計 $focusMinutes分' : 'ポモドーロや集中ログを待機中';
-    final habitSubtitle =
-        habitStreak >= 7 ? '🔥 週間達成！' : '習慣が入ると継続日数を追跡';
+    final habitSubtitle = habitStreak >= 7 ? '🔥 週間達成！' : '習慣が入ると継続日数を追跡';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),

@@ -46,8 +46,7 @@ void main() {
                   value: '123,456,789,012.34時間',
                   icon: Icons.monitor_heart_outlined,
                   color: Color(0xFF0891B2),
-                  subtitle:
-                      '前週から大きく変化した場合も、説明文を欠落させずカード内に収めて表示します。',
+                  subtitle: '前週から大きく変化した場合も、説明文を欠落させずカード内に収めて表示します。',
                 ),
               ),
             ),
