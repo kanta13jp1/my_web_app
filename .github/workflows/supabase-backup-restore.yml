@@ -165,7 +165,9 @@ jobs:
             --dbname postgres \
             --single-transaction \
             --variable ON_ERROR_STOP=1 \
+            --command 'SET ROLE supabase_storage_admin' \
             --file /tmp/storage-compat.sql \
+            --command 'RESET ROLE' \
             --file /tmp/roles.sql \
             --file /tmp/schema.sql \
             --file /tmp/pgmq-bootstrap.sql \
