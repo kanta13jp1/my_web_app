@@ -13,6 +13,7 @@ on:
       - "docs/testing/testcontainers_supabase_smoke.md"
       - "supabase/functions/**"
       - "supabase/migrations/**"
+      - "supabase/tests/**"
   workflow_dispatch:
 
 concurrency:

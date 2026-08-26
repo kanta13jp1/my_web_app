@@ -150,6 +150,27 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
             plan["actual_edge_checks"],
         )
 
+    def test_plan_includes_voice_dubbing_quota_state_machine(self) -> None:
+        plan = module.build_plan(
+            ROOT / "test" / "fixtures" / "testcontainers" / "sql",
+            ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts",
+            ROOT / "supabase" / "functions" / "health-check" / "index.ts",
+        )
+        self.assertEqual(
+            plan["voice_dubbing_sql"],
+            [
+                "supabase/tests/voice_dubbing_bootstrap.sql",
+                "supabase/migrations/20260505203000_create_billing_tables.sql",
+                "supabase/migrations/20260814160000_add_voice_dubbing_usage.sql",
+                "supabase/tests/voice_dubbing_quota_contract.sql",
+            ],
+        )
+        checks = " ".join(plan["voice_dubbing_checks"])
+        self.assertIn("applies twice", checks)
+        self.assertIn("without rebilling", checks)
+        self.assertIn("TTL reconciliation", checks)
+        self.assertIn("over-limit claims", checks.lower())
+
     def test_plan_includes_note_comments_authorization_boundary(self) -> None:
         plan = module.build_plan(
             ROOT / "test" / "fixtures" / "testcontainers" / "sql",

@@ -266,6 +266,7 @@ const List<String> kAllAppRoutes = <String>[
   '/purchase-log',
   '/qr-code-generator',
   '/quota-dashboard',
+  '/content-dubbing',
   '/reading-list',
   '/real-estate',
   '/real-world-danshari',
