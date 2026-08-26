@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Inspect schedules without retrying runs or writing issues"
+        description: "Inspect workflows without retrying runs or writing issues"
         required: false
         default: "false"
 
@@ -22,7 +22,7 @@ jobs:
       actions: write
       contents: read
       issues: write
-    name: Watch scheduled workflow resilience
+    name: Watch production workflow resilience
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -30,7 +30,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Watch scheduled workflows
+      - name: Watch production workflows
         env:
           GH_TOKEN: ${{ github.token }}
           DRY_RUN: ${{ inputs.dry_run || 'false' }}

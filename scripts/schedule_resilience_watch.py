@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Retry and alert guard for scheduled GitHub Actions workflows.
+"""Retry and alert guard for production GitHub Actions workflows.
 
-The guard watches a small set of production schedules, retries failed scheduled
-runs once, and opens/updates a workflow-failure issue when retry is exhausted or
-the schedule has stopped producing runs.
+The guard watches a small set of scheduled and deployment workflows, retries
+failed runs once, and opens/updates a workflow-failure issue when retry is
+exhausted or an expected schedule has stopped producing runs.
 """
 
 from __future__ import annotations
@@ -36,6 +36,7 @@ class WorkflowTarget:
     key: str
     workflow_file: str
     max_age_hours: int
+    event: str = "schedule"
 
 
 TARGETS = (
@@ -43,6 +44,8 @@ TARGETS = (
     WorkflowTarget("cs-check", "cs-check.yml", 3),
     WorkflowTarget("competitor-monitoring", "competitor-monitoring.yml", 30),
     WorkflowTarget("health-monitor", "health-monitor.yml", 3),
+    WorkflowTarget("notion-sync", "notion-sync.yml", 10),
+    WorkflowTarget("deploy-prod", "deploy-prod.yml", 0, "push"),
 )
 
 
@@ -71,9 +74,9 @@ def evaluate_target(
             "reason": "missing-run",
             "title": f"[Schedule監視] {target.key} missing run",
             "body": (
-                f"No scheduled run was found for `{target.workflow_file}`. "
-                "This may mean the schedule is disabled or GitHub Actions did "
-                "not dispatch it."
+                f"No run was found for `{target.workflow_file}`. "
+                f"Expected event: `{target.event}`. This may mean the workflow "
+                "is disabled or GitHub Actions did not dispatch it."
             ),
         }
 
@@ -102,7 +105,11 @@ def evaluate_target(
         return {**base, "action": "observe", "reason": f"run-{status}"}
 
     if conclusion in OK_CONCLUSIONS:
-        if age_hours is not None and age_hours > target.max_age_hours:
+        if (
+            target.max_age_hours > 0
+            and age_hours is not None
+            and age_hours > target.max_age_hours
+        ):
             return {
                 **base,
                 "action": "alert",
@@ -172,8 +179,14 @@ class GitHubClient:
                 return {}
             return json.loads(payload)
 
-    def scheduled_runs(self, workflow_file: str, *, limit: int) -> list[dict[str, Any]]:
-        query = urlencode({"branch": "main", "event": "schedule", "per_page": str(limit)})
+    def workflow_runs(
+        self,
+        workflow_file: str,
+        *,
+        event: str,
+        limit: int,
+    ) -> list[dict[str, Any]]:
+        query = urlencode({"branch": "main", "event": event, "per_page": str(limit)})
         path = f"/repos/{self.repo}/actions/workflows/{quote(workflow_file)}/runs?{query}"
         payload = self.request("GET", path)
         runs = payload.get("workflow_runs", []) if isinstance(payload, dict) else []
@@ -270,7 +283,11 @@ def main(argv: list[str]) -> int:
     results: list[dict[str, Any]] = []
 
     for target in TARGETS:
-        runs = client.scheduled_runs(target.workflow_file, limit=args.limit)
+        runs = client.workflow_runs(
+            target.workflow_file,
+            event=target.event,
+            limit=args.limit,
+        )
         result = evaluate_target(target, runs, now, max_attempts=args.max_attempts)
 
         if result["action"] == "retry":

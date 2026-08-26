@@ -1218,15 +1218,40 @@ async function notionFetch(
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
-  return await externalFetch(
+  const traceId = `schedule-hub.notion${path}`;
+  const response = await externalFetch(
     "notion",
     `https://api.notion.com/v1${path}`,
     {
       ...init,
       headers: mergeHeaders(notionHeaders(token), init.headers),
     },
-    { traceId: `schedule-hub.notion${path}` },
+    {
+      traceId,
+      retryStatuses: [408, 429, 500, 502, 503, 504],
+      baseDelayMs: 1_000,
+      maxDelayMs: 30_000,
+      jitterRatio: 0.2,
+    },
   );
+
+  // Retryable responses only reach this point after succeeding; exhausted
+  // retries throw ExternalFetchError. Log validation/auth details immediately
+  // without retrying so CI and Edge logs retain Notion's request context.
+  if (!response.ok) {
+    const detail = await response.clone().text().catch(() => "");
+    console.error(JSON.stringify({
+      level: "ERROR",
+      at: new Date().toISOString(),
+      target_api: "notion",
+      status: response.status,
+      retryable: false,
+      response_body: detail.slice(0, 500),
+      request_id: response.headers.get("x-notion-request-id"),
+      trace_id: traceId,
+    }));
+  }
+  return response;
 }
 
 async function configuredNotionDataSourceId(

@@ -6,7 +6,13 @@ from __future__ import annotations
 import unittest
 from datetime import datetime, timedelta, timezone
 
-from schedule_resilience_watch import WorkflowTarget, evaluate_target, render_summary
+from schedule_resilience_watch import (
+    GitHubClient,
+    TARGETS,
+    WorkflowTarget,
+    evaluate_target,
+    render_summary,
+)
 
 
 NOW = datetime(2026, 5, 8, 3, 0, tzinfo=timezone.utc)
@@ -62,6 +68,37 @@ class ScheduleResilienceWatchTest(unittest.TestCase):
         )
         self.assertEqual(result["action"], "alert")
         self.assertEqual(result["reason"], "stale-success")
+
+    def test_deploy_success_does_not_alert_only_because_it_is_old(self) -> None:
+        deploy = WorkflowTarget("deploy-prod", "deploy-prod.yml", 0, "push")
+        result = evaluate_target(
+            deploy,
+            [run(created_at=(NOW - timedelta(days=30)).isoformat().replace("+00:00", "Z"))],
+            NOW,
+            max_attempts=2,
+        )
+        self.assertEqual(result["action"], "healthy")
+        self.assertEqual(result["reason"], "latest-success")
+
+    def test_notion_and_deploy_workflows_are_monitored(self) -> None:
+        targets = {target.key: target for target in TARGETS}
+        self.assertEqual(targets["notion-sync"].event, "schedule")
+        self.assertEqual(targets["deploy-prod"].event, "push")
+
+    def test_workflow_runs_filters_by_requested_event(self) -> None:
+        class RecordingClient(GitHubClient):
+            requested_path = ""
+
+            def request(self, method, path, body=None):
+                self.requested_path = path
+                return {"workflow_runs": [{"id": 7}]}
+
+        client = RecordingClient("owner/repo", "token")
+        runs = client.workflow_runs("deploy-prod.yml", event="push", limit=5)
+
+        self.assertEqual(runs, [{"id": 7}])
+        self.assertIn("event=push", client.requested_path)
+        self.assertIn("per_page=5", client.requested_path)
 
     def test_summary_mentions_actions(self) -> None:
         summary = render_summary(
