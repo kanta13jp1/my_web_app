@@ -14,6 +14,13 @@ Function work without using production Supabase credentials.
 - Impersonates `anon` and `authenticated` roles to prove that a missing tenant
   claim returns no rows, cross-tenant writes fail with SQLSTATE `42501`, and an
   authenticated user sees only their own rows.
+- Applies the Issue #2668 note-comment authorization migration twice and checks
+  the full note-owner, public-viewer, verified-workspace-member, unrelated-user,
+  and service-role matrix. The fixture also proves that legacy forged public
+  memo rows, unverified memberships, and forged team shares grant no access.
+- Verifies least-privilege column grants, immutable comment owner/note fields,
+  the authenticated and actor-rate-limited invite-code RPC, bounded comment
+  content, and removal of all eight permissive legacy comment policies.
 - Runs `scripts/check_edge_function_imports.py` so real Edge Functions keep the
   ADR-required `npm:@supabase/supabase-js@2` import rule.
 - Runs `deno check` for `supabase/functions/health-check/index.ts`.
@@ -27,6 +34,12 @@ This is not a full local Supabase stack. It is the first CI gate that proves the
 DB migration/seed boundary and an Edge-like Deno function boundary can run
 without production secrets. Broader coverage can add more fixture migrations or
 function probes while keeping the same artifact contract.
+
+Pull requests that touch Supabase migrations or functions run the standalone
+`DB + Edge smoke` workflow. The production deploy workflow runs the same smoke
+again before applying a migration or deploying an Edge Function, so a direct or
+operator-triggered deployment cannot pass the DB/Edge boundary without the
+deterministic checks succeeding.
 
 ## Artifacts
 

@@ -191,6 +191,43 @@ jobs:
         if: steps.changes.outputs.migration == 'true'
         run: python scripts/check_migration_timestamps.py
 
+      - name: Setup Python for DB and Edge smoke
+        if: steps.changes.outputs.migration == 'true' || steps.changes.outputs.edge == 'true'
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Setup Deno for DB and Edge smoke
+        if: steps.changes.outputs.migration == 'true' || steps.changes.outputs.edge == 'true'
+        shell: bash
+        env:
+          DENO_VERSION: v2.9.1
+        run: bash scripts/ci/install_deno_from_github.sh
+
+      - name: Install DB and Edge smoke dependencies
+        if: steps.changes.outputs.migration == 'true' || steps.changes.outputs.edge == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "testcontainers[postgres]>=4.8,<5" "psycopg[binary]>=3.2,<4"
+
+      - name: Gate production changes with DB and Edge smoke
+        if: steps.changes.outputs.migration == 'true' || steps.changes.outputs.edge == 'true'
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+        run: |
+          python test/scripts/test_testcontainers_supabase_smoke.py
+          python scripts/testcontainers_supabase_smoke.py --plan
+          python scripts/testcontainers_supabase_smoke.py --artifacts-dir .testcontainers-logs
+
+      - name: Upload production DB and Edge smoke artifacts
+        if: always() && (steps.changes.outputs.migration == 'true' || steps.changes.outputs.edge == 'true')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: production-testcontainers-smoke-logs
+          path: .testcontainers-logs/
+          if-no-files-found: ignore
+          include-hidden-files: true
+
       - name: Setup Supabase CLI
         if: steps.changes.outputs.migration == 'true' || steps.changes.outputs.edge == 'true'
         uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3

@@ -5,7 +5,8 @@ The smoke intentionally avoids production Supabase credentials. It starts a
 disposable Postgres container, applies a small migration/seed fixture, verifies
 the Issue #2773 fail-closed RLS migration, Issue #2484 asset-chat isolation, and
 Issue #4091 app-analytics write boundary, checks the real Edge Function import
-policy, and runs a Deno HTTP fixture against the container. Logs are written as
+policy, Issue #2668 note-comment authorization, and runs a Deno HTTP fixture
+against the container. Logs are written as
 artifacts so CI failures point to the migration, function, or seed boundary that
 broke.
 """
@@ -73,6 +74,21 @@ APP_ANALYTICS_SECURITY_MIGRATION = (
     / "migrations"
     / "20260827003000_harden_app_analytics_writes.sql"
 )
+NOTE_COMMENTS_SECURITY_MIGRATION = (
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260827032000_harden_note_comments_authorization.sql"
+)
+NOTE_OWNER = "00000000-0000-4000-8000-000000002668"
+NOTE_PUBLIC_VIEWER = "00000000-0000-4000-8000-000000002669"
+NOTE_TEAM_MEMBER = "00000000-0000-4000-8000-000000002670"
+NOTE_OUTSIDER = "00000000-0000-4000-8000-000000002671"
+NOTE_OWNER_ADDED_MEMBER = "00000000-0000-4000-8000-000000002672"
+NOTE_TEAM_ID = "00000000-0000-4000-8000-000000002673"
+NOTE_PRIVATE_ID = 266801
+NOTE_PUBLIC_ID = 266802
+NOTE_TEAM_ID_VALUE = 266803
 AI_UNIVERSITY_MIGRATION = (
     ROOT
     / "supabase"
@@ -325,6 +341,19 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "poisoned legacy counters cannot overflow new event writes",
             "service_role retains required aggregate DML privileges",
             "migration applies twice without reopening public writes",
+        ],
+        "note_comments_migration": NOTE_COMMENTS_SECURITY_MIGRATION.relative_to(
+            ROOT
+        ).as_posix(),
+        "note_comments_checks": [
+            "all eight permissive legacy policies are replaced by four canonical policies",
+            "anonymous users can read only valid public-note comments",
+            "authenticated note owners and verified workspace members have scoped access",
+            "body user_id forgery and writes to unrelated private notes are denied",
+            "direct self-join and forged public/workspace shares cannot grant access",
+            "invite-code attempts are actor-scoped and rate-limited",
+            "comment authors can update content and delete only their own rows",
+            "migration applies twice without reopening legacy authorization paths",
         ],
         "ai_university_migration": AI_UNIVERSITY_MIGRATION.relative_to(ROOT).as_posix(),
         "ai_university_checks": [
@@ -804,6 +833,537 @@ def check_issue_2773_rls(conn: Any) -> dict[str, Any]:
         "missing_write_sqlstate": missing_write_sqlstate,
         "cross_tenant_sqlstate": cross_tenant_sqlstate,
         "anon_access": "denied on all audited tables",
+    }
+
+
+def note_comments_run_as(
+    conn: Any,
+    *,
+    role: str,
+    user_id: str | None,
+    statement: str,
+    params: tuple[Any, ...] = (),
+) -> list[tuple[Any, ...]]:
+    if role not in {"anon", "authenticated", "service_role"}:
+        raise ValueError(f"unexpected role for note-comments query: {role}")
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute(f"set local role {role}")
+            cur.execute(
+                "select set_config('request.jwt.claim.sub', %s, true)",
+                (user_id or "",),
+            )
+            cur.execute(statement, params)
+            if cur.description is None:
+                return []
+            return [tuple(row) for row in cur.fetchall()]
+
+
+def note_comments_expect_sqlstate(
+    conn: Any,
+    *,
+    role: str,
+    user_id: str | None,
+    statement: str,
+    expected: str,
+    params: tuple[Any, ...] = (),
+) -> str:
+    try:
+        note_comments_run_as(
+            conn,
+            role=role,
+            user_id=user_id,
+            statement=statement,
+            params=params,
+        )
+    except Exception as exc:  # psycopg is loaded only for the integration run.
+        sqlstate = getattr(exc, "sqlstate", None)
+        if sqlstate != expected:
+            raise AssertionError(
+                f"expected SQLSTATE {expected}, got {sqlstate}: {exc}"
+            ) from exc
+        return str(sqlstate)
+    raise AssertionError(f"note-comments operation unexpectedly succeeded ({expected})")
+
+
+def seed_note_comments_security_fixture(conn: Any) -> None:
+    with conn.cursor() as cur:
+        cur.executemany(
+            "insert into auth.users (id) values (%s::uuid)",
+            [
+                (NOTE_OWNER,),
+                (NOTE_PUBLIC_VIEWER,),
+                (NOTE_TEAM_MEMBER,),
+                (NOTE_OUTSIDER,),
+                (NOTE_OWNER_ADDED_MEMBER,),
+            ],
+        )
+        cur.executemany(
+            "insert into public.notes (id, user_id, content) "
+            "values (%s, %s::uuid, %s)",
+            [
+                (NOTE_PRIVATE_ID, NOTE_OWNER, "private note"),
+                (NOTE_PUBLIC_ID, NOTE_OWNER, "public note"),
+                (NOTE_TEAM_ID_VALUE, NOTE_OWNER, "team note"),
+            ],
+        )
+        cur.executemany(
+            "insert into public.public_memos "
+            "(note_id, user_id, title, is_public) values (%s, %s::uuid, %s, true)",
+            [
+                (NOTE_PUBLIC_ID, NOTE_OWNER, "valid public memo"),
+                (NOTE_PRIVATE_ID, NOTE_OUTSIDER, "legacy forged public memo"),
+            ],
+        )
+        cur.execute(
+            "insert into public.teams (id, name, owner_id, invite_code) "
+            "values (%s::uuid, 'Issue 2668 team', %s::uuid, 'INVITE2668')",
+            (NOTE_TEAM_ID, NOTE_OWNER),
+        )
+        cur.executemany(
+            "insert into public.team_memberships (team_id, user_id, role) "
+            "values (%s::uuid, %s::uuid, 'member')",
+            [
+                (NOTE_TEAM_ID, NOTE_TEAM_MEMBER),
+                (NOTE_TEAM_ID, NOTE_OUTSIDER),
+            ],
+        )
+        cur.executemany(
+            "insert into public.team_shared_notes (team_id, note_id, shared_by) "
+            "values (%s::uuid, %s, %s::uuid)",
+            [
+                (NOTE_TEAM_ID, NOTE_TEAM_ID_VALUE, NOTE_OWNER),
+                (NOTE_TEAM_ID, NOTE_PRIVATE_ID, NOTE_OUTSIDER),
+            ],
+        )
+        cur.executemany(
+            "insert into public.note_comments (note_id, user_id, content) "
+            "values (%s, %s::uuid, %s)",
+            [
+                (NOTE_PRIVATE_ID, NOTE_OWNER, "owner private comment"),
+                (NOTE_PRIVATE_ID, NOTE_OUTSIDER, "legacy forged private comment"),
+                (NOTE_PUBLIC_ID, NOTE_OWNER, "public comment"),
+                (NOTE_TEAM_ID_VALUE, NOTE_OWNER, "team comment"),
+            ],
+        )
+    conn.commit()
+
+
+def check_note_comments_security(conn: Any) -> dict[str, Any]:
+    with conn.cursor() as cur:
+        cur.execute(
+            "select policyname, cmd, roles from pg_policies "
+            "where schemaname = 'public' and tablename = 'note_comments' "
+            "order by policyname"
+        )
+        policies = [tuple(row) for row in cur.fetchall()]
+        cur.execute(
+            "select n.nspname, p.proname, p.prosecdef, "
+            "coalesce(p.proconfig, array[]::text[]), "
+            "not exists (select 1 from aclexplode(coalesce(p.proacl, "
+            "acldefault('f', p.proowner))) acl where acl.grantee = 0 "
+            "and acl.privilege_type = 'EXECUTE') "
+            "from pg_proc p join pg_namespace n on n.oid = p.pronamespace "
+            "where (n.nspname, p.proname) in "
+            "(('note_comments_private', 'owns_note'), "
+            "('note_comments_private', 'owns_team'), "
+            "('note_comments_private', 'can_participate_in_team'), "
+            "('note_comments_private', 'is_valid_team_note_share'), "
+            "('note_comments_private', 'can_access_note_comments'), "
+            "('note_comments_private', 'can_read_public_memo'), "
+            "('note_comments_private', 'stamp_owner_added_membership'), "
+            "('public', 'join_team_with_invite_code')) "
+            "order by n.nspname, p.proname"
+        )
+        functions = [tuple(row) for row in cur.fetchall()]
+        cur.execute(
+            "select coalesce(reloptions, array[]::text[]) from pg_class c "
+            "join pg_namespace n on n.oid = c.relnamespace "
+            "where n.nspname = 'public' and c.relname = 'note_comment_counts'"
+        )
+        view_options = list(cur.fetchone()[0])
+    conn.commit()
+
+    expected_policies = [
+        ("note_comments_delete_author", "DELETE", "{authenticated}"),
+        ("note_comments_insert_authorized", "INSERT", "{authenticated}"),
+        ("note_comments_select_authorized", "SELECT", "{anon,authenticated}"),
+        ("note_comments_update_author", "UPDATE", "{authenticated}"),
+    ]
+    normalized_policies = [
+        (name, command, str(roles)) for name, command, roles in policies
+    ]
+    if normalized_policies != expected_policies:
+        raise AssertionError(f"unexpected note_comments policies: {policies}")
+    if len(functions) != 8:
+        raise AssertionError(f"unexpected note authorization functions: {functions}")
+    for schema, name, security_definer, proconfig, public_revoked in functions:
+        if not security_definer:
+            raise AssertionError(f"{schema}.{name} is not SECURITY DEFINER")
+        if not any(str(item).startswith("search_path=") for item in proconfig):
+            raise AssertionError(f"{schema}.{name} search_path is not pinned: {proconfig}")
+        if not public_revoked:
+            raise AssertionError(f"PUBLIC retains EXECUTE on {schema}.{name}")
+    if "security_invoker=true" not in view_options:
+        raise AssertionError(f"note_comment_counts is not security_invoker: {view_options}")
+
+    table_privileges: dict[str, dict[str, bool]] = {}
+    with conn.cursor() as cur:
+        for role in ("anon", "authenticated"):
+            table_privileges[role] = {}
+            for privilege in ("SELECT", "INSERT", "UPDATE", "DELETE"):
+                cur.execute(
+                    "select has_table_privilege(%s, 'public.note_comments', %s)",
+                    (role, privilege),
+                )
+                table_privileges[role][privilege] = bool(cur.fetchone()[0])
+        cur.execute(
+            "select has_table_privilege('anon', 'public.note_comment_counts', 'SELECT'), "
+            "has_table_privilege('authenticated', 'public.note_comment_counts', 'SELECT')"
+        )
+        view_browser_access = tuple(bool(item) for item in cur.fetchone())
+        cur.execute(
+            "select has_function_privilege('anon', "
+            "'public.join_team_with_invite_code(text)', 'EXECUTE'), "
+            "has_function_privilege('authenticated', "
+            "'public.join_team_with_invite_code(text)', 'EXECUTE')"
+        )
+        rpc_access = tuple(bool(item) for item in cur.fetchone())
+        authenticated_columns: dict[str, dict[str, bool]] = {}
+        for column in ("id", "note_id", "user_id", "content", "created_at"):
+            authenticated_columns[column] = {}
+            for privilege in ("INSERT", "UPDATE"):
+                cur.execute(
+                    "select has_column_privilege('authenticated', "
+                    "'public.note_comments', %s, %s)",
+                    (column, privilege),
+                )
+                authenticated_columns[column][privilege] = bool(cur.fetchone()[0])
+    conn.commit()
+
+    expected_table_privileges = {
+        "anon": {"SELECT": True, "INSERT": False, "UPDATE": False, "DELETE": False},
+        "authenticated": {
+            "SELECT": True,
+            "INSERT": False,
+            "UPDATE": False,
+            "DELETE": True,
+        },
+    }
+    if table_privileges != expected_table_privileges:
+        raise AssertionError(f"unexpected note_comments ACL: {table_privileges}")
+    if view_browser_access != (False, False):
+        raise AssertionError(f"browser roles can read comment counts: {view_browser_access}")
+    if rpc_access != (False, True):
+        raise AssertionError(f"unexpected invite RPC ACL: {rpc_access}")
+    expected_columns = {
+        "id": {"INSERT": False, "UPDATE": False},
+        "note_id": {"INSERT": True, "UPDATE": False},
+        "user_id": {"INSERT": True, "UPDATE": False},
+        "content": {"INSERT": True, "UPDATE": True},
+        "created_at": {"INSERT": False, "UPDATE": False},
+    }
+    if authenticated_columns != expected_columns:
+        raise AssertionError(f"unexpected note_comments column ACL: {authenticated_columns}")
+
+    def comment_count(role: str, user_id: str | None, note_id: int) -> int:
+        rows = note_comments_run_as(
+            conn,
+            role=role,
+            user_id=user_id,
+            statement="select count(*) from public.note_comments where note_id = %s",
+            params=(note_id,),
+        )
+        return int(rows[0][0])
+
+    initial_counts = {
+        "anon_private": comment_count("anon", None, NOTE_PRIVATE_ID),
+        "anon_public": comment_count("anon", None, NOTE_PUBLIC_ID),
+        "owner_private": comment_count("authenticated", NOTE_OWNER, NOTE_PRIVATE_ID),
+        "outsider_private": comment_count(
+            "authenticated", NOTE_OUTSIDER, NOTE_PRIVATE_ID
+        ),
+        "unverified_member_team": comment_count(
+            "authenticated", NOTE_TEAM_MEMBER, NOTE_TEAM_ID_VALUE
+        ),
+    }
+    expected_initial_counts = {
+        "anon_private": 0,
+        "anon_public": 1,
+        "owner_private": 2,
+        "outsider_private": 0,
+        "unverified_member_team": 0,
+    }
+    if initial_counts != expected_initial_counts:
+        raise AssertionError(f"unexpected initial comment visibility: {initial_counts}")
+
+    denied_sqlstates = {
+        "anon_write": note_comments_expect_sqlstate(
+            conn,
+            role="anon",
+            user_id=None,
+            statement=(
+                "insert into public.note_comments (note_id, user_id, content) "
+                "values (%s, %s::uuid, 'anon write')"
+            ),
+            params=(NOTE_PUBLIC_ID, NOTE_PUBLIC_VIEWER),
+            expected="42501",
+        ),
+        "missing_claim_write": note_comments_expect_sqlstate(
+            conn,
+            role="authenticated",
+            user_id=None,
+            statement=(
+                "insert into public.note_comments (note_id, user_id, content) "
+                "values (%s, %s::uuid, 'missing claim')"
+            ),
+            params=(NOTE_PRIVATE_ID, NOTE_OWNER),
+            expected="42501",
+        ),
+        "forged_body_user": note_comments_expect_sqlstate(
+            conn,
+            role="authenticated",
+            user_id=NOTE_PUBLIC_VIEWER,
+            statement=(
+                "insert into public.note_comments (note_id, user_id, content) "
+                "values (%s, %s::uuid, 'forged user')"
+            ),
+            params=(NOTE_PUBLIC_ID, NOTE_OUTSIDER),
+            expected="42501",
+        ),
+        "unrelated_private_write": note_comments_expect_sqlstate(
+            conn,
+            role="authenticated",
+            user_id=NOTE_OUTSIDER,
+            statement=(
+                "insert into public.note_comments (note_id, user_id, content) "
+                "values (%s, %s::uuid, 'private write')"
+            ),
+            params=(NOTE_PRIVATE_ID, NOTE_OUTSIDER),
+            expected="42501",
+        ),
+        "direct_self_join": note_comments_expect_sqlstate(
+            conn,
+            role="authenticated",
+            user_id=NOTE_PUBLIC_VIEWER,
+            statement=(
+                "insert into public.team_memberships (team_id, user_id, role) "
+                "values (%s::uuid, %s::uuid, 'member')"
+            ),
+            params=(NOTE_TEAM_ID, NOTE_PUBLIC_VIEWER),
+            expected="42501",
+        ),
+        "forged_publication": note_comments_expect_sqlstate(
+            conn,
+            role="authenticated",
+            user_id=NOTE_OUTSIDER,
+            statement=(
+                "insert into public.public_memos "
+                "(note_id, user_id, title, is_public) "
+                "values (%s, %s::uuid, 'forged', true)"
+            ),
+            params=(NOTE_TEAM_ID_VALUE, NOTE_OUTSIDER),
+            expected="42501",
+        ),
+        "forged_team_share": note_comments_expect_sqlstate(
+            conn,
+            role="authenticated",
+            user_id=NOTE_OUTSIDER,
+            statement=(
+                "insert into public.team_shared_notes (team_id, note_id, shared_by) "
+                "values (%s::uuid, %s, %s::uuid)"
+            ),
+            params=(NOTE_TEAM_ID, NOTE_PUBLIC_ID, NOTE_OUTSIDER),
+            expected="42501",
+        ),
+    }
+
+    invalid_invite = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OUTSIDER,
+        statement="select * from public.join_team_with_invite_code('INVALID2668')",
+    )
+    if invalid_invite:
+        raise AssertionError(f"invalid invite returned a team: {invalid_invite}")
+    for attempt in range(2, 11):
+        repeated_invalid = note_comments_run_as(
+            conn,
+            role="authenticated",
+            user_id=NOTE_OUTSIDER,
+            statement="select * from public.join_team_with_invite_code(%s)",
+            params=(f"INVALID{attempt:04d}",),
+        )
+        if repeated_invalid:
+            raise AssertionError(
+                f"invalid invite attempt {attempt} returned a team: {repeated_invalid}"
+            )
+    rate_limit_sqlstate = note_comments_expect_sqlstate(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OUTSIDER,
+        statement="select * from public.join_team_with_invite_code('INVALID0011')",
+        expected="P0001",
+    )
+    with conn.cursor() as cur:
+        cur.execute(
+            "select attempt_count from note_comments_private.team_invite_attempts "
+            "where user_id = %s::uuid",
+            (NOTE_OUTSIDER,),
+        )
+        outsider_attempt_count = int(cur.fetchone()[0])
+    conn.commit()
+    if outsider_attempt_count != 10:
+        raise AssertionError(f"invite attempt was not recorded: {outsider_attempt_count}")
+    if comment_count("authenticated", NOTE_OUTSIDER, NOTE_TEAM_ID_VALUE) != 0:
+        raise AssertionError("invalid invite verified a legacy membership")
+
+    joined = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_TEAM_MEMBER,
+        statement="select * from public.join_team_with_invite_code('INVITE2668')",
+    )
+    if joined != [(NOTE_TEAM_ID, "Issue 2668 team")]:
+        raise AssertionError(f"invite RPC returned unexpected team: {joined}")
+    if comment_count("authenticated", NOTE_TEAM_MEMBER, NOTE_TEAM_ID_VALUE) != 1:
+        raise AssertionError("verified member cannot read team comments")
+    if comment_count("authenticated", NOTE_TEAM_MEMBER, NOTE_PRIVATE_ID) != 0:
+        raise AssertionError("forged legacy team share granted private access")
+
+    owner_added = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OWNER,
+        statement=(
+            "insert into public.team_memberships (team_id, user_id, role) "
+            "values (%s::uuid, %s::uuid, 'member') returning invite_verified_at"
+        ),
+        params=(NOTE_TEAM_ID, NOTE_OWNER_ADDED_MEMBER),
+    )
+    if not owner_added or owner_added[0][0] is None:
+        raise AssertionError("owner-added membership was not verified")
+    if comment_count(
+        "authenticated", NOTE_OWNER_ADDED_MEMBER, NOTE_TEAM_ID_VALUE
+    ) != 1:
+        raise AssertionError("owner-added member cannot read team comments")
+
+    member_insert = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_TEAM_MEMBER,
+        statement=(
+            "insert into public.note_comments (note_id, user_id, content) "
+            "values (%s, %s::uuid, 'member comment') returning id"
+        ),
+        params=(NOTE_TEAM_ID_VALUE, NOTE_TEAM_MEMBER),
+    )
+    if len(member_insert) != 1:
+        raise AssertionError("verified member could not create a team comment")
+
+    public_insert = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_PUBLIC_VIEWER,
+        statement=(
+            "insert into public.note_comments (note_id, user_id, content) "
+            "values (%s, %s::uuid, 'viewer comment') returning id"
+        ),
+        params=(NOTE_PUBLIC_ID, NOTE_PUBLIC_VIEWER),
+    )
+    public_comment_id = str(public_insert[0][0])
+    updated = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_PUBLIC_VIEWER,
+        statement=(
+            "update public.note_comments set content = 'viewer edited' "
+            "where id = %s::uuid returning content"
+        ),
+        params=(public_comment_id,),
+    )
+    if updated != [("viewer edited",)]:
+        raise AssertionError(f"author content update failed: {updated}")
+    owner_update = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OWNER,
+        statement=(
+            "update public.note_comments set content = 'owner overwrite' "
+            "where id = %s::uuid returning id"
+        ),
+        params=(public_comment_id,),
+    )
+    if owner_update:
+        raise AssertionError("note owner updated another author's comment")
+    denied_sqlstates["immutable_note_id"] = note_comments_expect_sqlstate(
+        conn,
+        role="authenticated",
+        user_id=NOTE_PUBLIC_VIEWER,
+        statement=(
+            "update public.note_comments set note_id = %s "
+            "where id = %s::uuid"
+        ),
+        params=(NOTE_PRIVATE_ID, public_comment_id),
+        expected="42501",
+    )
+    owner_delete = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OWNER,
+        statement="delete from public.note_comments where id = %s::uuid returning id",
+        params=(public_comment_id,),
+    )
+    if owner_delete:
+        raise AssertionError("note owner deleted another author's comment")
+    author_delete = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_PUBLIC_VIEWER,
+        statement="delete from public.note_comments where id = %s::uuid returning id",
+        params=(public_comment_id,),
+    )
+    if len(author_delete) != 1:
+        raise AssertionError("comment author could not delete own comment")
+
+    for key, content in (("blank_content", "   "), ("oversized_content", "x" * 2001)):
+        denied_sqlstates[key] = note_comments_expect_sqlstate(
+            conn,
+            role="authenticated",
+            user_id=NOTE_OWNER,
+            statement=(
+                "insert into public.note_comments (note_id, user_id, content) "
+                "values (%s, %s::uuid, %s)"
+            ),
+            params=(NOTE_PRIVATE_ID, NOTE_OWNER, content),
+            expected="23514",
+        )
+
+    service_rows = note_comments_run_as(
+        conn,
+        role="service_role",
+        user_id=None,
+        statement=(
+            "insert into public.note_comments (note_id, user_id, content) "
+            "values (%s, %s::uuid, 'service comment') returning id"
+        ),
+        params=(NOTE_PRIVATE_ID, NOTE_OWNER),
+    )
+    if len(service_rows) != 1:
+        raise AssertionError("service_role note comment DML regressed")
+
+    return {
+        "policies": normalized_policies,
+        "functions": [f"{schema}.{name}" for schema, name, *_ in functions],
+        "table_privileges": table_privileges,
+        "initial_visibility": initial_counts,
+        "denied_sqlstates": denied_sqlstates,
+        "invalid_invite_attempts": outsider_attempt_count,
+        "rate_limit_sqlstate": rate_limit_sqlstate,
+        "verified_member_team_comments": comment_count(
+            "authenticated", NOTE_TEAM_MEMBER, NOTE_TEAM_ID_VALUE
+        ),
+        "service_role_dml": "passed",
     }
 
 
@@ -1717,6 +2277,10 @@ def run_smoke(args: argparse.Namespace) -> int:
             apply_sql_fixture(conn, APP_ANALYTICS_SECURITY_MIGRATION, artifacts_dir)
             apply_sql_fixture(conn, APP_ANALYTICS_SECURITY_MIGRATION, artifacts_dir)
             app_analytics_security = check_app_analytics_security(conn)
+            seed_note_comments_security_fixture(conn)
+            apply_sql_fixture(conn, NOTE_COMMENTS_SECURITY_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, NOTE_COMMENTS_SECURITY_MIGRATION, artifacts_dir)
+            note_comments_security = check_note_comments_security(conn)
             apply_sql_fixture(conn, ASSET_CHAT_MIGRATION, artifacts_dir)
             seed_asset_chat_fixture(conn)
             asset_chat_rls = check_asset_chat_rls(conn)
@@ -1736,6 +2300,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "tables": counts,
             "tenant_rls": tenant_rls,
             "app_analytics_security": app_analytics_security,
+            "note_comments_security": note_comments_security,
             "asset_chat_rls": asset_chat_rls,
             "tax_records_rls": tax_records_rls,
             "ai_university": ai_university,
