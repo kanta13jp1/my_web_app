@@ -985,77 +985,55 @@ jobs:
     steps:
       - name: Notify Slack on Success
         if: needs.deploy.result == 'success' && needs.deploy.outputs.deployable == 'true'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
         run: |
-          cat <<EOF > payload.json
-          {
-            "text": "✅ Production Deployment Successful!",
-            "blocks": [
-              {
-                "type": "header",
-                "text": { "type": "plain_text", "text": "✅ Production Deployment Successful!" }
-              },
-              {
-                "type": "section",
-                "fields": [
-                  { "type": "mrkdwn", "text": "*Environment:*\nProduction" },
-                  { "type": "mrkdwn", "text": "*Branch:*\n\`${{ github.ref_name }}\`" },
-                  { "type": "mrkdwn", "text": "*Commit:*\n\`${{ github.sha }}\`" },
-                  { "type": "mrkdwn", "text": "*Author:*\n${{ github.actor }}" }
-                ]
-              },
-              {
-                "type": "actions",
-                "elements": [
-                  {
-                    "type": "button",
-                    "text": { "type": "plain_text", "text": "View Workflow" },
-                    "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                  },
-                  {
-                    "type": "button",
-                    "text": { "type": "plain_text", "text": "View Site" },
-                    "url": "https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app"
-                  }
-                ]
-              }
-            ]
-          }
-          EOF
-          curl -X POST -H 'Content-type: application/json' --data @payload.json ${{ secrets.SLACK_WEBHOOK_URL }} --max-time 10 || true
+          jq -n \
+            --arg branch "$GITHUB_REF_NAME" \
+            --arg commit "$GITHUB_SHA" \
+            --arg actor "$GITHUB_ACTOR" \
+            --arg workflow_url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --arg site_url "https://$FIREBASE_PROJECT_ID.web.app" \
+            '{
+              text: "✅ Production Deployment Successful!",
+              blocks: [
+                {type: "header", text: {type: "plain_text", text: "✅ Production Deployment Successful!"}},
+                {type: "section", fields: [
+                  {type: "mrkdwn", text: "*Environment:*\nProduction"},
+                  {type: "mrkdwn", text: ("*Branch:*\n`" + $branch + "`")},
+                  {type: "mrkdwn", text: ("*Commit:*\n`" + $commit + "`")},
+                  {type: "mrkdwn", text: ("*Author:*\n" + $actor)}
+                ]},
+                {type: "actions", elements: [
+                  {type: "button", text: {type: "plain_text", text: "View Workflow"}, url: $workflow_url},
+                  {type: "button", text: {type: "plain_text", text: "View Site"}, url: $site_url}
+                ]}
+              ]
+            }' > payload.json
+          curl -X POST -H 'Content-type: application/json' --data @payload.json "$SLACK_WEBHOOK_URL" --max-time 10 || true
 
       - name: Notify Slack on Failure
         if: needs.deploy.result == 'failure'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
         run: |
-          cat <<EOF > payload.json
-          {
-            "text": "❌ Production Deployment Failed!",
-            "blocks": [
-              {
-                "type": "header",
-                "text": { "type": "plain_text", "text": "❌ Production Deployment Failed!" }
-              },
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*Deploy Status:* \`${{ needs.deploy.result }}\`\n*Author:* ${{ github.actor }}"
-                }
-              },
-              {
-                "type": "actions",
-                "elements": [
-                  {
-                    "type": "button",
-                    "text": { "type": "plain_text", "text": "View Logs" },
-                    "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                    "style": "danger"
-                  }
-                ]
-              }
-            ]
-          }
-          EOF
-          curl -X POST -H 'Content-type: application/json' --data @payload.json ${{ secrets.SLACK_WEBHOOK_URL }} --max-time 10 || true
+          jq -n \
+            --arg result "$DEPLOY_RESULT" \
+            --arg actor "$GITHUB_ACTOR" \
+            --arg workflow_url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            '{
+              text: "❌ Production Deployment Failed!",
+              blocks: [
+                {type: "header", text: {type: "plain_text", text: "❌ Production Deployment Failed!"}},
+                {type: "section", text: {type: "mrkdwn", text: ("*Deploy Status:* `" + $result + "`\n*Author:* " + $actor)}},
+                {type: "actions", elements: [
+                  {type: "button", text: {type: "plain_text", text: "View Logs"}, url: $workflow_url, style: "danger"}
+                ]}
+              ]
+            }' > payload.json
+          curl -X POST -H 'Content-type: application/json' --data @payload.json "$SLACK_WEBHOOK_URL" --max-time 10 || true
 
       - name: Comment on commit
         if: needs.deploy.result == 'success' && needs.deploy.outputs.deployable == 'true'

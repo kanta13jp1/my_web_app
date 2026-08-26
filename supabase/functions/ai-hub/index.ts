@@ -131,6 +131,12 @@ import {
   handlePdfDocumentAnalysisAction,
   type PdfAnalysisStorage,
 } from "./pdf_document_analysis.ts";
+import {
+  createWriterKnowledgeGraphGateway,
+  handleWriterKnowledgeGraphAction,
+  WriterKnowledgeGraphError,
+} from "./writer_knowledge_graph.ts";
+import { createSupabaseWriterKnowledgeGraphStore } from "./writer_knowledge_graph_supabase.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -4315,6 +4321,10 @@ serve(async (req: Request) => {
       "compute-disposable-balance",
       "asset.anomaly.detect",
       "detect-anomalies",
+      "knowledge_graph.status",
+      "knowledge_graph.upload",
+      "knowledge_graph.query",
+      "knowledge_graph.delete_document",
       "voice.tts",
       "voice.stt",
       "voice.cartesia_session.start",
@@ -4329,6 +4339,57 @@ serve(async (req: Request) => {
     }
 
     switch (action) {
+      case "knowledge_graph.status":
+      case "knowledge_graph.upload":
+      case "knowledge_graph.query":
+      case "knowledge_graph.delete_document": {
+        if (
+          ["knowledge_graph.upload", "knowledge_graph.query"].includes(action)
+        ) {
+          const offlinePolicy = parseOfflineSecureModePolicy(body);
+          if (shouldBlockExternalProviderCall(offlinePolicy)) {
+            return json(
+              buildOfflineBlockedResponseBody(offlinePolicy, {
+                action,
+                provider: "writer",
+              }),
+              409,
+            );
+          }
+        }
+        const writerApiKey = Deno.env.get("WRITER_API_KEY") ?? "";
+        if (action === "knowledge_graph.query" && writerApiKey) {
+          const usage = await checkAndRecordAiUsage(
+            supabaseUsageStore(admin),
+            userId ?? "",
+          );
+          if (!usage.allowed) {
+            return json({
+              error: "Monthly AI query limit reached.",
+              code: "usage_limit_reached",
+            }, 402);
+          }
+          const budget = await checkBudget("ef", "ai-hub");
+          if (!budget.ok) {
+            return json({
+              error: "AI budget limit reached.",
+              code: "budget_limit_reached",
+            }, 429);
+          }
+        }
+        const result = await handleWriterKnowledgeGraphAction({
+          action,
+          body,
+          userId: userId ?? "",
+          configured: writerApiKey.length > 0,
+          store: createSupabaseWriterKnowledgeGraphStore(admin),
+          gateway: writerApiKey
+            ? createWriterKnowledgeGraphGateway(writerApiKey)
+            : null,
+        });
+        return json(result);
+      }
+
       case "judgment.get": {
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey) {
@@ -8165,6 +8226,9 @@ serve(async (req: Request) => {
     }
     if (err instanceof MarketPriceActionError) {
       return json({ error: err.message }, err.status);
+    }
+    if (err instanceof WriterKnowledgeGraphError) {
+      return json({ error: err.message, code: err.code }, err.status);
     }
     const message = err instanceof Error ? err.message : String(err);
     return json({ error: message }, 500);

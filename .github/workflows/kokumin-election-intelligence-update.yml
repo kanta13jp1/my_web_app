@@ -48,10 +48,12 @@ jobs:
 
       - name: Refresh official snapshot
         shell: bash
+        env:
+          ALLOW_LARGE_DROP_INPUT: ${{ inputs.allow_large_drop || false }}
         run: |
           set -euo pipefail
           args=()
-          if [[ "${{ inputs.allow_large_drop || false }}" == "true" ]]; then
+          if [[ "$ALLOW_LARGE_DROP_INPUT" == "true" ]]; then
             args+=(--allow-large-drop)
           fi
           python scripts/update_kokumin_local_endorsements.py "${args[@]}"
