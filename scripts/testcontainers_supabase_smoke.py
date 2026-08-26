@@ -1228,7 +1228,11 @@ def check_note_comments_security(conn: Any) -> dict[str, Any]:
         user_id=NOTE_TEAM_MEMBER,
         statement="select * from public.join_team_with_invite_code('INVITE2668')",
     )
-    if joined != [(NOTE_TEAM_ID, "Issue 2668 team")]:
+    if (
+        len(joined) != 1
+        or str(joined[0][0]) != NOTE_TEAM_ID
+        or joined[0][1] != "Issue 2668 team"
+    ):
         raise AssertionError(f"invite RPC returned unexpected team: {joined}")
     if comment_count("authenticated", NOTE_TEAM_MEMBER, NOTE_TEAM_ID_VALUE) != 1:
         raise AssertionError("verified member cannot read team comments")
