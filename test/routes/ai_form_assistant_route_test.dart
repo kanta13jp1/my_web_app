@@ -15,7 +15,7 @@ void main() {
     );
     expect(mainSource, contains("case '/settings/ai-form-assistant':"));
     expect(mainSource, contains('supabase.auth.currentSession == null'));
-    expect(mainSource, contains("RouteSettings(name: '/login')"));
+    expect(mainSource, contains('LandingPage('));
     expect(mainSource, contains('const AiFormAssistantPage()'));
   });
 }
