@@ -127,7 +127,7 @@ jobs:
             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
             -H "Prefer: resolution=merge-duplicates" \
-            "$SUPABASE_URL/rest/v1/edge_function_ui_status" \
+            "$SUPABASE_URL/rest/v1/edge_function_ui_status?on_conflict=function_name" \
             -d @/tmp/upsert_payload.json \
             --max-time 15)
 
@@ -152,6 +152,7 @@ jobs:
           else
             echo "⚠️ Supabase upsert 失敗 (HTTP $HTTP_CODE)"
             cat /tmp/upsert_result.json 2>/dev/null || true
+            exit 1
           fi
 
       - name: Create/Update Issue if missing functions
