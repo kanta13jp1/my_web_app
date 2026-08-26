@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/public_memo.dart';
 import '../utils/app_logger.dart';
 import 'app_share_service.dart';
+import 'supabase_runtime_config.dart';
 
 class PublicMemoService {
   static const String publicMemoShareSignal = 'public_memo_share';
@@ -40,8 +41,15 @@ class PublicMemoService {
   /// Flutter SPA の /public-memo は JS 実行後に本文を描画するため bot は
   /// 内容を読めない。core-hub の匿名 action `memo.public.view` が同じメモを
   /// サーバー描画済み HTML (format=json / md も可) で返す。
-  static String buildPublicMemoReaderUrl(int memoId, {String? format}) {
-    return Uri.parse(publicMemoReaderEndpoint).replace(
+  static String buildPublicMemoReaderUrl(
+    int memoId, {
+    String? format,
+    String? supabaseUrl,
+  }) {
+    final baseUrl =
+        supabaseUrl ?? SupabaseRuntimeConfig.fromCompileTimeEnvironment().url;
+    final endpoint = Uri.parse(baseUrl).resolve('/functions/v1/core-hub');
+    return endpoint.replace(
       queryParameters: <String, String>{
         'action': 'memo.public.view',
         'id': memoId.toString(),
@@ -49,9 +57,6 @@ class PublicMemoService {
       },
     ).toString();
   }
-
-  static const String publicMemoReaderEndpoint =
-      'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub';
 
   static String buildShareMessage(PublicMemo memo) {
     final excerpt = _buildShareExcerpt(memo.content);
@@ -66,6 +71,29 @@ class PublicMemoService {
       'Read the full memo:',
       buildPublicMemoUrl(memo.id),
     ].join('\n\n');
+  }
+
+  Future<Map<String, dynamic>> loadReactions(int memoId) async {
+    final response = await _supabase.functions.invoke(
+      'core-hub',
+      body: <String, dynamic>{'action': 'memo.react.list', 'memo_id': memoId},
+    );
+    return _asMap(response.data);
+  }
+
+  Future<Map<String, dynamic>> toggleReaction({
+    required int memoId,
+    required String reaction,
+  }) async {
+    final response = await _supabase.functions.invoke(
+      'core-hub',
+      body: <String, dynamic>{
+        'action': 'memo.react.toggle',
+        'memo_id': memoId,
+        'reaction': reaction,
+      },
+    );
+    return _asMap(response.data);
   }
 
   static String _buildShareExcerpt(String? content) {
@@ -508,7 +536,7 @@ class PublicMemoService {
     }
   }
 
-  Map<String, dynamic> _asMap(dynamic value) {
+  static Map<String, dynamic> _asMap(dynamic value) {
     if (value is Map<String, dynamic>) {
       return value;
     }

@@ -101,17 +101,28 @@ jobs:
         continue-on-error: false  # Database migrations must ALWAYS succeed (hard fail)
 
       # Build Flutter Web
+      - name: Validate Flutter Supabase configuration
+        run: python scripts/validate_flutter_supabase_env.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_DEV }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_DEV || secrets.SUPABASE_ANON_KEY_DEV }}
+
       - name: Build Flutter Web (Development)
         run: >
           flutter build web --release
           --pwa-strategy=none
           --dart-define=ENVIRONMENT=development
           --dart-define=SUPABASE_URL=$SUPABASE_URL
-          --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+          --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY
           --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=${{ env.LANDING_GOOGLE_LOGIN_ENABLED }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_DEV }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_DEV }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_DEV || secrets.SUPABASE_ANON_KEY_DEV }}
+
+      - name: Render public Supabase URL into web shell
+        run: python scripts/render_web_supabase_config.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_DEV }}
 
       - name: Verify build output
         run: |
