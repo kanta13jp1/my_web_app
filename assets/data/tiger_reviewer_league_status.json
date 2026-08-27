@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-27T18:15:43.589375+00:00",
+  "generated_at": "2026-08-27T23:02:22.959682+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "reviewer_league",
   "publication_state": "latest_assignment",
@@ -13,10 +13,10 @@
   "pool": {
     "total": 125,
     "eligible": 125,
-    "provisional": 121,
-    "division_1": 4,
+    "provisional": 120,
+    "division_1": 5,
     "division_2": 0,
-    "division_3": 121,
+    "division_3": 120,
     "division_4": 0,
     "division_5": 0,
     "eliminated": 0,
@@ -33,50 +33,41 @@
     }
   },
   "latest_assignment": {
-    "cycle_id": "20260828T021401+0900",
-    "started_at": "2026-08-28T02:14:01+09:00",
-    "source_format": "course_review",
+    "cycle_id": "20260828T074605+0900",
+    "started_at": "2026-08-28T07:46:05+09:00",
+    "source_format": "feature_review",
     "surface": {
-      "slug": "course-955ae2e6-9909-4635-aacd-790ab23aa7c8",
-      "url": "https://firefly.adobe.com/"
+      "slug": "schedule_hub",
+      "url": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub"
     },
     "reviewer": {
-      "seat": 12,
-      "name": "迫 佑樹",
-      "selection_score": 76.8689,
+      "seat": 11,
+      "name": "野口 功司",
+      "selection_score": 68.5457,
       "division": 1,
-      "cycle_utility": 85.25,
-      "aggregate_utility": 85.78
+      "cycle_utility": 93.62,
+      "aggregate_utility": 90.81
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 4,
+    "finding_count": 2,
     "top_findings": [
       {
-        "summary": "商業利用安全という単一正解がnon-beta条件、partner model、法域差を省略する",
-        "severity": "p1",
+        "summary": "通常のログイン利用者がowner資格情報を使う公開・更新・削除actionへ到達できる認可境界になっている",
+        "severity": "p0",
         "business_dimensions": [
           "trust_risk",
-          "market_demand",
-          "scalability"
-        ]
-      },
-      {
-        "summary": "4機能中心の入門が現行の画像・映像・音声・Boards・partner model構成を説明できない",
-        "severity": "p1",
-        "business_dimensions": [
-          "market_demand",
-          "competitive_advantage",
-          "scalability"
-        ]
-      },
-      {
-        "summary": "standard・premium機能とgenerative creditsを使った作成量・plan適合判断がない",
-        "severity": "p1",
-        "business_dimensions": [
           "unit_economics",
-          "revenue_model",
-          "customer_pain"
+          "revenue_model"
+        ]
+      },
+      {
+        "summary": "53 actionのside effectと認可levelを結ぶ完全なcontractがなく、新規actionが暗黙にuser権限になる",
+        "severity": "p1",
+        "business_dimensions": [
+          "scalability",
+          "trust_risk",
+          "unit_economics"
         ]
       }
     ],
@@ -95,43 +86,296 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After publishing one role-specific 30-minute Firefly artifact lab, measure model-provenance and beta-condition accuracy, capability choice, artifact completion, generative-credit estimate error, and follow-on course conversion for one learner cohort."
+      "next_cycle_experiment": "After an owner-reviewed fail-closed action registry and handler authorization matrix are deployed, require sensitive-action rejection at 100%, unclassified actions at zero, and incident-free operation for four weeks."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4945 追跡中",
-      "detail": "主要指摘は商用利用・model provenance・beta・法域の条件を含むcourse contentと公開データの変更を必要とし、保護されたlegalおよびproduction data境界を含むため共有の低リスク自動修正範囲外。",
+      "label": "未対策・Issue #4948 追跡中",
+      "detail": "The finding requires protected authentication and authorization policy changes, which are outside automatic modification scope.",
       "summary": "",
       "files": [],
       "lines_changed": 0,
-      "resolved_finding_ids": [
-        "course-firefly-commercial-use-claim-boundary"
-      ],
+      "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: fast-forwarded clean branch to origin/main 8c1fd4167279765df2aa79ca6b9d6db62cd65782",
+        "passed: clean at origin/main 5098469613d7e8b78ed374d797ebbe9aa15fc702",
         "passed: 125 roster profiles and 125 personas",
-        "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
-        "passed: deterministic winner preserved",
-        "passed: selected source, Adobe FAQ, credits, feature page, and named source/test paths inspected",
-        "executed exactly once against shared history root: 125 profiles, seat 12"
+        "passed: deterministic winner schedule_hub",
+        "passed: 4,663 lines, 53 actions, owner-mutation authorization evidence captured",
+        "executed exactly once: 125 profiles, seat 11"
       ],
       "issue": {
-        "number": 4945,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4945",
+        "number": 4948,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4948",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260828T021401+0900:955ae2e6-9909-4635-aacd-790ab23aa7c8"
+        "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-firefly-capability-map-freshness-gap",
-        "course-firefly-credit-cost-decision-gap",
-        "course-firefly-first-artifact-outcome-gap"
+        "schedule-hub-owner-mutation-auth-boundary",
+        "schedule-hub-auth-classification-drift"
       ]
     }
   },
   "history": [
+    {
+      "cycle_id": "20260828T074605+0900",
+      "started_at": "2026-08-28T07:46:05+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "schedule_hub",
+        "title": "schedule-hub",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 68.5457
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After an owner-reviewed fail-closed action registry and handler authorization matrix are deployed, require sensitive-action rejection at 100%, unclassified actions at zero, and incident-free operation for four weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "schedule-hub-owner-mutation-auth-boundary",
+          "summary": "通常のログイン利用者がowner資格情報を使う公開・更新・削除actionへ到達できる認可境界になっている",
+          "severity": "p0",
+          "suggested_action": "全53 actionをside-effect classで明示列挙し、owner tokenまたはservice-role mutationを伴うactionをservice_roleへfail-closedで分類し、匿名・一般user・service roleのhandler-level認可matrixを追加する。"
+        },
+        {
+          "finding_id": "schedule-hub-auth-classification-drift",
+          "summary": "53 actionのside effectと認可levelを結ぶ完全なcontractがなく、新規actionが暗黙にuser権限になる",
+          "severity": "p1",
+          "suggested_action": "action registryへauth levelとside-effect categoryを同居させ、switch case集合との完全一致、未知action拒否、全mutationのservice-roleまたは明示user ownershipを機械検証する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4948 追跡中",
+        "detail": "The finding requires protected authentication and authorization policy changes, which are outside automatic modification scope.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main 5098469613d7e8b78ed374d797ebbe9aa15fc702",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: deterministic winner schedule_hub",
+          "passed: 4,663 lines, 53 actions, owner-mutation authorization evidence captured",
+          "executed exactly once: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 4948,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4948",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "schedule-hub-owner-mutation-auth-boundary",
+          "schedule-hub-auth-classification-drift"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260828T051725+0900",
+      "started_at": "2026-08-28T05:17:25+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 32,
+        "name": "高澤 有紀",
+        "selection_score": 73.8475
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260828T011400+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After owner-approved route-specific subscription and privacy shells ship, compare URL-level search impressions, direct-entry registration starts, checkout completion, privacy-to-registration continuation, and 30-day paid retention against the root journey for 30 days."
+      },
+      "findings": [
+        {
+          "finding_id": "site-static-decision-route-collapse",
+          "summary": "価格・プライバシーの意思決定URLが同一ホームページHTMLへ集約された状態が継続している",
+          "severity": "p1",
+          "suggested_action": "価格・法務の内容所有者と公開境界を確認し、subscription-billingとprivacyへ固有title、description、canonical、OG URL、承認済み主要本文を持つ静的応答を追加する。"
+        },
+        {
+          "finding_id": "site-pricing-prequalification-observability-gap",
+          "summary": "確認済み価格はFlutter内にあるが、静的な購入前説明とURL単位の転換証拠が揃っていない",
+          "severity": "p1",
+          "suggested_action": "価格決定を変更せず、承認済みプラン情報と解約・自動更新境界を静的シェルへ反映し、直接流入からcheckoutまでのイベントをURL別に集計する。"
+        },
+        {
+          "finding_id": "site-privacy-preflight-content-gap",
+          "summary": "privacy URLの初期HTMLが法務内容ではなくホームページ販促文を返す状態が継続している",
+          "severity": "p1",
+          "suggested_action": "法務所有者が承認した現行ポリシーを唯一のソースとして、privacy URLの初期HTMLにも固有見出し、概要、canonical、本文到達性を持たせる。"
+        },
+        {
+          "finding_id": "site-public-journey-prerender-contract-gap",
+          "summary": "既存prerender契約の対象から主要な収益・信頼・商取引URLが外れている",
+          "severity": "p2",
+          "suggested_action": "公開route manifestへ収益・信頼journeyの所有区分と必須SEO契約を追加し、生成物と固定production probeでroute固有性を回帰検証する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4947 追跡中",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main 5b2b518c08347a53e8c3a69fd5b20310df8e9fdd",
+          "passed: 3 fixed routes returned HTTP 200 and required SEO-shell markers",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: current evidence locations, nine-route manifest, and protected pricing/legal boundaries recorded"
+        ],
+        "issue": {
+          "number": 4947,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4947",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260828T051725+0900:whole_site"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-static-decision-route-collapse",
+          "site-pricing-prequalification-observability-gap",
+          "site-privacy-preflight-content-gap",
+          "site-public-journey-prerender-contract-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260828T042953+0900",
+      "started_at": "2026-08-28T04:29:53+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "horse_racing",
+        "title": "horse_racing",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 49,
+        "name": "岩井良明",
+        "selection_score": 68.4108
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After owner-reviewed risk wording and ROI instrumentation are available, compare acknowledgement, budget-setting, calibrated error, ROI by bet type, and seven-day repeat use for four weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "horse-racing-risk-framing-gap",
+          "summary": "AIの賭け目を『特におすすめ』として提示する一方、損失可能性・非保証・利用上限を同じ判断面で説明していない",
+          "severity": "p0",
+          "suggested_action": "法務・責任ある利用方針の人手確認を経て、推奨表示、購入馬券記録、的中率カードの各判断点に不確実性、非保証、予算上限、休止導線を一貫して表示し、理解度と離脱率を測定する。"
+        },
+        {
+          "finding_id": "horse-racing-calibration-economics-gap",
+          "summary": "的中率と払戻額を前面に出すが、賭金正規化ROI、期間、母数品質、予測確率の較正を同時に示していない",
+          "severity": "p1",
+          "suggested_action": "券種・期間別に投下額、払戻額、ROI、母数、信頼区間、予測確率と実績の較正を表示し、データ不足時はランキングや推奨を保留する。"
+        },
+        {
+          "finding_id": "horse-racing-regression-coverage-gap",
+          "summary": "3,719行の単一ページが予想・学習・馬券記録・表示を担うが、同ページを直接扱うwidget testがない",
+          "severity": "p2",
+          "suggested_action": "データ取得境界と表示モデルを分離し、未ログイン、エラー、見送り推奨、馬券金額、的中率母数、タブURL同期を固定fixtureのwidget testで保護する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4946 追跡中",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 125 roster entries",
+          "passed: 125 personas",
+          "passed: HTTP 200, 3,719 source lines, recommendation and payout evidence captured, no direct widget test",
+          "passed: clean dedicated worktree before report publication"
+        ],
+        "issue": {
+          "number": 4946,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4946",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260828T042953+0900:horse_racing"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "horse-racing-risk-framing-gap",
+          "horse-racing-calibration-economics-gap",
+          "horse-racing-regression-coverage-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260828T021401+0900",
       "started_at": "2026-08-28T02:14:01+09:00",
@@ -2556,17 +2800,17 @@
     {
       "seat": 32,
       "name": "高澤 有紀",
-      "tier": "division_3",
-      "division": 3,
-      "provisional": true,
+      "tier": "division_1",
+      "division": 1,
+      "provisional": false,
       "eligible": true,
       "floor_protected": false,
-      "utility_score": 93.06,
-      "completed_cycles": 1,
+      "utility_score": 93.15,
+      "completed_cycles": 2,
       "low_utility_streak": 0,
-      "last_cycle_utility": 93.06,
-      "last_selected_at": "2026-08-27T16:14:00+00:00",
-      "reason": "担当実績が2回未満のため暫定3部"
+      "last_cycle_utility": 93.19,
+      "last_selected_at": "2026-08-27T20:17:25+00:00",
+      "reason": "担当2回・効用93.2点で1部"
     },
     {
       "seat": 9,
@@ -2584,6 +2828,36 @@
       "reason": "担当4回・効用91.9点で1部"
     },
     {
+      "seat": 49,
+      "name": "岩井良明",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 91.33,
+      "completed_cycles": 1,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 91.33,
+      "last_selected_at": "2026-08-27T19:29:53+00:00",
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
+      "seat": 11,
+      "name": "野口 功司",
+      "tier": "division_1",
+      "division": 1,
+      "provisional": false,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 90.81,
+      "completed_cycles": 7,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 93.62,
+      "last_selected_at": "2026-08-27T22:46:05+00:00",
+      "reason": "担当7回・効用90.8点で1部"
+    },
+    {
       "seat": 7,
       "name": "榊󠄀原 清一",
       "tier": "division_3",
@@ -2597,21 +2871,6 @@
       "last_cycle_utility": 90.17,
       "last_selected_at": "2026-08-23T06:38:16.438300+00:00",
       "reason": "担当実績が2回未満のため暫定3部"
-    },
-    {
-      "seat": 11,
-      "name": "野口 功司",
-      "tier": "division_1",
-      "division": 1,
-      "provisional": false,
-      "eligible": true,
-      "floor_protected": false,
-      "utility_score": 88.64,
-      "completed_cycles": 6,
-      "low_utility_streak": 0,
-      "last_cycle_utility": 91.5,
-      "last_selected_at": "2026-08-27T13:10:25+00:00",
-      "reason": "担当6回・効用88.6点で1部"
     },
     {
       "seat": 1,
@@ -3261,21 +3520,6 @@
     {
       "seat": 48,
       "name": "條隼人",
-      "tier": "division_3",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "floor_protected": false,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "low_utility_streak": 0,
-      "last_cycle_utility": null,
-      "last_selected_at": null,
-      "reason": "担当実績が2回未満のため暫定3部"
-    },
-    {
-      "seat": 49,
-      "name": "岩井良明",
       "tier": "division_3",
       "division": 3,
       "provisional": true,
