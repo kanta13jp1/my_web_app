@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-26T19:35:48.160503+00:00",
+  "generated_at": "2026-08-27T13:20:25.969508+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -29,27 +29,27 @@
     "operating_efficiency": 10
   },
   "latest_review": {
-    "cycle_id": "20260827T033027+0900",
-    "started_at": "2026-08-27T03:30:27+09:00",
+    "cycle_id": "20260827T221025+0900",
+    "started_at": "2026-08-27T22:10:25+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "home",
-      "url": "https://my-web-app-b67f4.web.app/"
+      "slug": "core_hub",
+      "url": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub"
     },
     "reviewer": {
       "seat": 11,
       "name": "野口 功司",
-      "selection_score": 75.8089,
+      "selection_score": 70.6913,
       "division": 1,
-      "cycle_utility": 81.0,
-      "aggregate_utility": 88.18
+      "cycle_utility": 91.5,
+      "aggregate_utility": 88.64
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "追加要望の3つの失敗経路が内部例外文字列を利用者へ直接表示する",
+        "summary": "匿名リアクションとして実装された2 actionが共通認証ゲートで401になる",
         "severity": "p1",
         "business_dimensions": [
           "customer_pain",
@@ -58,21 +58,21 @@
         ]
       },
       {
-        "summary": "ホームの多数の非同期状態と導線が1万行の単一実装へ集中している",
-        "severity": "p2",
+        "summary": "メモリアクション確認画面がreaction actionではなく旧memo.share actionを呼ぶ",
+        "severity": "p1",
         "business_dimensions": [
-          "scalability",
           "customer_pain",
-          "go_to_market"
+          "go_to_market",
+          "market_demand"
         ]
       },
       {
-        "summary": "ホーム導線と改善要望の実利用成果を機能単位で判断できない",
+        "summary": "45 actionの共有認証・例外境界をroute-levelテストが固定していない",
         "severity": "p2",
         "business_dimensions": [
-          "market_demand",
-          "go_to_market",
-          "revenue_model"
+          "scalability",
+          "trust_risk",
+          "unit_economics"
         ]
       }
     ],
@@ -91,11 +91,11 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "追加要望の表示から送信完了までを匿名計測し、3失敗経路の分類済みcopyと再試行を依存注入widget testで固定した後、完了率を基準値と比較する。"
+      "next_cycle_experiment": "owner review後にunauthenticated list/toggle route testを追加し、401率とreaction成功率を追跡する。"
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4916 追跡中",
+      "label": "未対策・Issue #4937 追跡中",
       "detail": "提案のみで、対策実施の記録はありません。",
       "summary": "",
       "files": [],
@@ -103,36 +103,121 @@
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: 125 profiles",
         "passed: 125 personas",
-        "passed: 121 tests",
-        "passed: no diff errors and clean worktree"
+        "memo.public.list=200; memo.react.list=401",
+        "passed: 45 cases, 3059 lines, no route-level index import",
+        "passed: clean dedicated worktree before report publication"
       ],
       "issue": {
-        "number": 4916,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4916",
+        "number": 4937,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4937",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260827T033027+0900:home"
+        "dedupe_key": "tiger-feature-review:20260827T221025+0900:core_hub"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "home-feature-request-error-disclosure",
-        "home-implementation-concentration",
-        "home-feature-observability-gap"
+        "core-hub-anonymous-reactions-auth-drift",
+        "core-hub-legacy-reaction-action-client",
+        "core-hub-route-policy-test-gap"
       ]
     },
     "feature": {
-      "slug": "home",
-      "title": "Home",
-      "kind": "page",
-      "reason": "The deterministic configured-feature selector chose the public home entrypoint for this single feature-review cycle; no feature-level usage analytics were available, so observed usage remains the neutral score of 50.",
-      "cycle_utility": 68.5,
-      "aggregate_utility": 68.5,
+      "slug": "core_hub",
+      "title": "core-hub",
+      "kind": "edge_function",
+      "reason": "The deterministic configured-feature selector chose core_hub for this single feature-review cycle; no per-action usage analytics were available, so observed usage remains the neutral score of 50.",
+      "cycle_utility": 62.9,
+      "aggregate_utility": 62.9,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260827T221025+0900",
+      "started_at": "2026-08-27T22:10:25+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "core_hub",
+        "title": "core-hub",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 70.6913
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "owner review後にunauthenticated list/toggle route testを追加し、401率とreaction成功率を追跡する。"
+      },
+      "findings": [
+        {
+          "finding_id": "core-hub-anonymous-reactions-auth-drift",
+          "summary": "匿名リアクションとして実装された2 actionが共通認証ゲートで401になる",
+          "severity": "p1",
+          "suggested_action": "匿名許可ポリシーをaction定義と単一の型付きregistryへ統合し、memo.react.list/toggleの未認証route-levelテストと本番smokeを追加する。"
+        },
+        {
+          "finding_id": "core-hub-legacy-reaction-action-client",
+          "summary": "メモリアクション確認画面がreaction actionではなく旧memo.share actionを呼ぶ",
+          "severity": "p1",
+          "suggested_action": "MemoReactionsPageをPublicMemoServiceへ統合し、memo.react.list/toggleだけを呼ぶwidget/service契約テストを追加する。"
+        },
+        {
+          "finding_id": "core-hub-route-policy-test-gap",
+          "summary": "45 actionの共有認証・例外境界をroute-levelテストが固定していない",
+          "severity": "p2",
+          "suggested_action": "dispatcherからaction registryとauth policyを抽出し、全actionの認証区分・未知action・例外sanitizeを表形式テストで固定する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4937 追跡中",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 125 personas",
+          "memo.public.list=200; memo.react.list=401",
+          "passed: 45 cases, 3059 lines, no route-level index import",
+          "passed: clean dedicated worktree before report publication"
+        ],
+        "issue": {
+          "number": 4937,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4937",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260827T221025+0900:core_hub"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "core-hub-anonymous-reactions-auth-drift",
+          "core-hub-legacy-reaction-action-client",
+          "core-hub-route-policy-test-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260827T033027+0900",
       "started_at": "2026-08-27T03:30:27+09:00",
@@ -698,6 +783,22 @@
       "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
+      "slug": "core_hub",
+      "kind": "edge_function",
+      "title": "core-hub",
+      "path": "",
+      "source": "supabase/functions/core-hub/index.ts",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 62.9,
+      "completed_cycles": 1,
+      "last_cycle_utility": 62.9,
+      "last_reviewed_at": "2026-08-27T13:10:25+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
       "slug": "admin_analytics",
       "kind": "page",
       "title": "admin_analytics",
@@ -719,22 +820,6 @@
       "title": "ai-hub",
       "path": "",
       "source": "supabase/functions/ai-hub/index.ts",
-      "priority": "high",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "last_cycle_utility": null,
-      "last_reviewed_at": null,
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
-    },
-    {
-      "slug": "core_hub",
-      "kind": "edge_function",
-      "title": "core-hub",
-      "path": "",
-      "source": "supabase/functions/core-hub/index.ts",
       "priority": "high",
       "division": 3,
       "provisional": true,
