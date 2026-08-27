@@ -20,7 +20,7 @@ void main() {
       contains('create table public.notion_migration_vault_manifests'),
     );
     expect(sql, contains('create table public.notion_migration_vault_entries'));
-    expect(sql, isNot(contains("source_kind text")));
+    expect(sql, isNot(contains('source_kind text')));
     expect(
       sql,
       contains(
