@@ -30,59 +30,63 @@ class NotionMigrationPage extends StatelessWidget {
           listenable: viewModel,
           builder: (context, _) => switch (viewModel.loadStatus) {
             NotionMigrationLoadStatus.initial ||
-            NotionMigrationLoadStatus.loading =>
-              const Center(
-                child: CircularProgressIndicator(),
-              ),
+            NotionMigrationLoadStatus.loading => const Center(
+              child: CircularProgressIndicator(),
+            ),
             NotionMigrationLoadStatus.failure => _LoadFailure(
-                viewModel: viewModel,
-              ),
+              viewModel: viewModel,
+            ),
             NotionMigrationLoadStatus.ready => LayoutBuilder(
-                builder: (context, constraints) {
-                  final wide = constraints.maxWidth >= _wideBreakpoint;
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1240),
-                        child: Column(
-                          key: Key(
-                            wide
-                                ? 'notion-migration-wide'
-                                : 'notion-migration-compact',
-                          ),
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const _MigrationHero(),
-                            const SizedBox(height: 16),
-                            if (viewModel.errorMessage != null)
-                              _InlineMessage(message: viewModel.errorMessage!),
-                            if (viewModel.noticeMessage != null)
-                              _InlineMessage(
-                                message: viewModel.noticeMessage!,
-                                isSuccess: true,
-                              ),
-                            if (viewModel.snapshot.batch == null)
-                              _EmptyLedger(viewModel: viewModel)
-                            else
-                              _MigrationLedger(
-                                snapshot: viewModel.snapshot,
-                                wide: wide,
-                                viewModel: viewModel,
-                              ),
-                            const SizedBox(height: 20),
-                            const _SafetyGate(),
-                            const SizedBox(height: 20),
-                            _FeatureMatrix(
-                              capabilities: viewModel.snapshot.capabilities,
-                            ),
-                          ],
+              builder: (context, constraints) {
+                final wide = constraints.maxWidth >= _wideBreakpoint;
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1240),
+                      child: Column(
+                        key: Key(
+                          wide
+                              ? 'notion-migration-wide'
+                              : 'notion-migration-compact',
                         ),
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const _MigrationHero(),
+                          const SizedBox(height: 16),
+                          if (viewModel.errorMessage != null)
+                            _InlineMessage(message: viewModel.errorMessage!),
+                          if (viewModel.noticeMessage != null)
+                            _InlineMessage(
+                              message: viewModel.noticeMessage!,
+                              isSuccess: true,
+                            ),
+                          if (viewModel.snapshot.batch == null)
+                            _EmptyLedger(viewModel: viewModel)
+                          else
+                            _MigrationLedger(
+                              snapshot: viewModel.snapshot,
+                              wide: wide,
+                              viewModel: viewModel,
+                            ),
+                          const SizedBox(height: 20),
+                          _VaultManifestCard(
+                            snapshot: viewModel.snapshot,
+                            viewModel: viewModel,
+                          ),
+                          const SizedBox(height: 20),
+                          const _SafetyGate(),
+                          const SizedBox(height: 20),
+                          _FeatureMatrix(
+                            capabilities: viewModel.snapshot.capabilities,
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
+            ),
           },
         ),
       ),
@@ -294,7 +298,8 @@ class _MigrationLedger extends StatelessWidget {
                     ),
                     OutlinedButton.icon(
                       key: const Key('notion-migration-inventory-expand'),
-                      onPressed: viewModel.isInventoryRunning ||
+                      onPressed:
+                          viewModel.isInventoryRunning ||
                               snapshot.progress.totalItems == 0
                           ? null
                           : () => unawaited(viewModel.expandInventory()),
@@ -308,7 +313,8 @@ class _MigrationLedger extends StatelessWidget {
                     ),
                     OutlinedButton.icon(
                       key: const Key('notion-migration-reconcile-wbs'),
-                      onPressed: viewModel.isReconciliationRunning ||
+                      onPressed:
+                          viewModel.isReconciliationRunning ||
                               viewModel.isInventoryRunning ||
                               snapshot.progress.totalItems == 0
                           ? null
@@ -323,7 +329,8 @@ class _MigrationLedger extends StatelessWidget {
                     ),
                     FilledButton.tonalIcon(
                       key: const Key('notion-migration-stage-wbs'),
-                      onPressed: viewModel.isWbsStaging ||
+                      onPressed:
+                          viewModel.isWbsStaging ||
                               viewModel.isReconciliationRunning ||
                               viewModel.isInventoryRunning ||
                               snapshot.wbsReconciliation == null
@@ -639,7 +646,8 @@ class _ItemPanel extends StatelessWidget {
                   subtitle: Text(
                     '${item.status.label} • 照合 ${item.passedChecks}/7',
                   ),
-                  trailing: item.status ==
+                  trailing:
+                      item.status ==
                           NotionMigrationItemStatus.readyForSourceDeletion
                       ? const Icon(Icons.verified, color: Colors.green)
                       : null,
@@ -652,12 +660,194 @@ class _ItemPanel extends StatelessWidget {
   }
 
   IconData _iconFor(String kind) => switch (kind) {
-        'database' || 'data_source' => Icons.table_chart_outlined,
-        'attachment' => Icons.attach_file,
-        'comment' => Icons.comment_outlined,
-        'teamspace' => Icons.groups_outlined,
-        _ => Icons.description_outlined,
-      };
+    'database' || 'data_source' => Icons.table_chart_outlined,
+    'attachment' => Icons.attach_file,
+    'comment' => Icons.comment_outlined,
+    'teamspace' => Icons.groups_outlined,
+    _ => Icons.description_outlined,
+  };
+}
+
+class _VaultManifestCard extends StatelessWidget {
+  const _VaultManifestCard({required this.snapshot, required this.viewModel});
+
+  final NotionMigrationSnapshot snapshot;
+  final NotionMigrationViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final preview = viewModel.vaultManifestPreview;
+    final staged = snapshot.vaultManifestSummary;
+    return Card(
+      key: const Key('notion-migration-vault-manifest-card'),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.hub_outlined),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Obsidian保管庫を安全な中継地点にする',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                Chip(label: Text('ローカル先行')),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'ローカル生成したmanifestだけをブラウザ内で検証します。ノート本文・プロパティ値・'
+              '認証情報・除外ファイルのパスは送信せず、許可されたノートと添付の構造情報だけを'
+              '本番データとは分離した安全領域へ保存します。',
+              style: TextStyle(height: 1.5),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 12,
+              runSpacing: 10,
+              children: [
+                OutlinedButton.icon(
+                  key: const Key('notion-migration-vault-manifest-pick'),
+                  onPressed:
+                      viewModel.isVaultManifestSelecting ||
+                          viewModel.isVaultManifestStaging
+                      ? null
+                      : () => unawaited(viewModel.selectVaultManifest()),
+                  icon: viewModel.isVaultManifestSelecting
+                      ? const SizedBox.square(
+                          dimension: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.file_open_outlined),
+                  label: const Text('manifest JSONを選択'),
+                ),
+                FilledButton.tonalIcon(
+                  key: const Key('notion-migration-vault-manifest-stage'),
+                  onPressed:
+                      snapshot.batch == null ||
+                          preview == null ||
+                          viewModel.isVaultManifestSelecting ||
+                          viewModel.isVaultManifestStaging
+                      ? null
+                      : () => unawaited(_confirmAndStage(context)),
+                  icon: viewModel.isVaultManifestStaging
+                      ? const SizedBox.square(
+                          dimension: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.inventory_2_outlined),
+                  label: const Text('構造情報を安全領域へ保存'),
+                ),
+              ],
+            ),
+            if (snapshot.batch == null) ...[
+              const SizedBox(height: 8),
+              const Text('保存するには先に移行台帳を作成してください。'),
+            ],
+            if (preview != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                key: const Key('notion-migration-vault-manifest-preview'),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      '${preview.vaultName} / ${preview.sourceFileName}',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        _Metric(label: '全件', value: preview.fileCount),
+                        _Metric(label: '自動保存', value: preview.autoStageCount),
+                        _Metric(
+                          label: '要確認',
+                          value: preview.reviewRequiredCount,
+                          isWarning: preview.reviewRequiredCount > 0,
+                        ),
+                        _Metric(
+                          label: '除外',
+                          value: preview.excludedCount,
+                          isWarning: preview.excludedCount > 0,
+                        ),
+                        _Metric(
+                          label: '認証候補',
+                          value: preview.credentialCandidateCount,
+                          isWarning: preview.credentialCandidateCount > 0,
+                        ),
+                        _Metric(
+                          label: '未解決リンク',
+                          value: preview.unresolvedWikilinkOccurrences,
+                          isWarning: preview.unresolvedWikilinkOccurrences > 0,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (staged != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                key: const Key('notion-migration-vault-manifest-summary'),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(
+                  '最新: ${staged.stagedEntryCount}件を${staged.status == 'staged' ? '保存済み' : '処理中'}。'
+                  '要確認${staged.reviewRequiredCount}件、除外${staged.excludedCount}件。'
+                  '除外パスと本文は保持していません。',
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmAndStage(BuildContext context) async {
+    final preview = viewModel.vaultManifestPreview;
+    if (preview == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('構造情報だけを保存しますか？'),
+        content: Text(
+          '${preview.stageableCount}件の相対パス、ハッシュ、リンク・タスク等の構造情報を保存します。'
+          'ノート本文、プロパティ値、認証情報、除外${preview.excludedCount}件のパスは送信しません。'
+          'Notionの元データと本番コンテンツは変更しません。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            key: const Key('notion-migration-vault-manifest-confirm'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('安全領域へ保存'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await viewModel.stageVaultManifest();
+    }
+  }
 }
 
 class _SafetyGate extends StatelessWidget {
@@ -710,9 +900,7 @@ class _FeatureMatrix extends StatelessWidget {
         .where((capability) => capability.isRequired)
         .toList(growable: false);
     final verified = required
-        .where(
-          (capability) => capability.status == NotionParityStatus.verified,
-        )
+        .where((capability) => capability.status == NotionParityStatus.verified)
         .length;
     return Column(
       key: const Key('notion-migration-feature-matrix'),
@@ -741,8 +929,8 @@ class _FeatureMatrix extends StatelessWidget {
               final columns = constraints.maxWidth >= 1000
                   ? 3
                   : constraints.maxWidth >= 620
-                      ? 2
-                      : 1;
+                  ? 2
+                  : 1;
               final width =
                   (constraints.maxWidth - (columns - 1) * 12) / columns;
               return Wrap(
@@ -786,10 +974,7 @@ class _CapabilityCard extends StatelessWidget {
                   ),
                 ),
                 Chip(
-                  avatar: Icon(
-                    _statusIcon(capability.status),
-                    size: 18,
-                  ),
+                  avatar: Icon(_statusIcon(capability.status), size: 18),
                   label: Text(capability.status.label),
                   backgroundColor: _statusColor(context, capability.status),
                 ),
@@ -822,22 +1007,21 @@ class _CapabilityCard extends StatelessWidget {
     return switch (status) {
       NotionParityStatus.verified => colors.primaryContainer,
       NotionParityStatus.gap ||
-      NotionParityStatus.blocked =>
-        colors.errorContainer,
+      NotionParityStatus.blocked => colors.errorContainer,
       NotionParityStatus.verifying => colors.tertiaryContainer,
       _ => colors.surfaceContainerHighest,
     };
   }
 
   IconData _statusIcon(NotionParityStatus status) => switch (status) {
-        NotionParityStatus.verified => Icons.verified_outlined,
-        NotionParityStatus.gap => Icons.warning_amber_outlined,
-        NotionParityStatus.blocked => Icons.block_outlined,
-        NotionParityStatus.verifying => Icons.fact_check_outlined,
-        NotionParityStatus.implemented => Icons.code_outlined,
-        NotionParityStatus.planned => Icons.event_note_outlined,
-        NotionParityStatus.inventory => Icons.inventory_2_outlined,
-      };
+    NotionParityStatus.verified => Icons.verified_outlined,
+    NotionParityStatus.gap => Icons.warning_amber_outlined,
+    NotionParityStatus.blocked => Icons.block_outlined,
+    NotionParityStatus.verifying => Icons.fact_check_outlined,
+    NotionParityStatus.implemented => Icons.code_outlined,
+    NotionParityStatus.planned => Icons.event_note_outlined,
+    NotionParityStatus.inventory => Icons.inventory_2_outlined,
+  };
 }
 
 class _LoadFailure extends StatelessWidget {

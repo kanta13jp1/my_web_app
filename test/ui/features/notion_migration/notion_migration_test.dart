@@ -1,6 +1,10 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/ui/features/notion_migration/data/notion_migration_gateway.dart';
+import 'package:my_web_app/ui/features/notion_migration/data/notion_vault_manifest_service.dart';
 import 'package:my_web_app/ui/features/notion_migration/domain/notion_migration_models.dart';
 import 'package:my_web_app/ui/features/notion_migration/notion_migration_feature.dart';
 import 'package:my_web_app/ui/features/notion_migration/view_models/notion_migration_view_model.dart';
@@ -150,10 +154,7 @@ void main() {
       find.byKey(const Key('notion-migration-reconcile-wbs')),
       findsOneWidget,
     );
-    expect(
-      find.byKey(const Key('notion-migration-stage-wbs')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('notion-migration-stage-wbs')), findsOneWidget);
     expect(
       find.byKey(const Key('notion-migration-wbs-reconciliation')),
       findsOneWidget,
@@ -182,15 +183,75 @@ void main() {
 
     expect(find.byKey(const Key('login-page')), findsOneWidget);
   });
+
+  testWidgets('vault manifest previews and stages allowlisted structure only', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 1500);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final gateway = _FakeGateway(snapshot: _sampleSnapshot());
+
+    await tester.pumpWidget(
+      _app(
+        gateway,
+        vaultManifestPicker: _FakeVaultManifestPicker(_pickedManifest()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final pickButton = find.byKey(
+      const Key('notion-migration-vault-manifest-pick'),
+    );
+    await tester.ensureVisible(pickButton);
+    await tester.tap(pickButton);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('notion-migration-vault-manifest-preview')),
+      findsOneWidget,
+    );
+    expect(find.text('自動保存'), findsOneWidget);
+    expect(find.text('認証候補'), findsOneWidget);
+
+    final stageButton = find.byKey(
+      const Key('notion-migration-vault-manifest-stage'),
+    );
+    await tester.ensureVisible(stageButton);
+    await tester.tap(stageButton);
+    await tester.pumpAndSettle();
+    expect(find.text('構造情報だけを保存しますか？'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const Key('notion-migration-vault-manifest-confirm')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(gateway.stagedManifest, isNotNull);
+    expect(gateway.stagedManifest!.entries, hasLength(1));
+    expect(gateway.stagedManifest!.entries.single.relativePath, 'HOME.md');
+    expect(
+      find.byKey(const Key('notion-migration-vault-manifest-summary')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('除外パスと本文は保持していません'), findsOneWidget);
+  });
 }
 
-Widget _app(NotionMigrationGateway gateway) {
+Widget _app(
+  NotionMigrationGateway gateway, {
+  NotionVaultManifestPicker? vaultManifestPicker,
+}) {
   return MaterialApp(
     routes: {
       '/login': (_) =>
           const Scaffold(body: Text('Login', key: Key('login-page'))),
     },
-    home: NotionMigrationFeature(gateway: gateway),
+    home: NotionMigrationFeature(
+      gateway: gateway,
+      vaultManifestPicker: vaultManifestPicker,
+    ),
   );
 }
 
@@ -263,9 +324,10 @@ NotionMigrationSnapshot _sampleSnapshot() {
 
 class _FakeGateway implements NotionMigrationGateway {
   _FakeGateway({NotionMigrationSnapshot? snapshot})
-      : _snapshot = snapshot ?? const NotionMigrationSnapshot();
+    : _snapshot = snapshot ?? const NotionMigrationSnapshot();
 
   NotionMigrationSnapshot _snapshot;
+  NotionVaultManifestPreview? stagedManifest;
 
   @override
   Future<NotionMigrationSnapshot> loadLatest() async => _snapshot;
@@ -332,10 +394,98 @@ class _FakeGateway implements NotionMigrationGateway {
       invalidTaskIds: 0,
     );
   }
+
+  @override
+  Future<NotionVaultManifestStageSummary> stageVaultManifest({
+    required String batchId,
+    required NotionVaultManifestPreview manifest,
+  }) async {
+    stagedManifest = manifest;
+    return NotionVaultManifestStageSummary(
+      id: '44444444-4444-4444-8444-444444444444',
+      vaultName: manifest.vaultName,
+      sourceManifestSha256: manifest.sourceManifestSha256,
+      fileCount: manifest.fileCount,
+      stagedEntryCount: manifest.entries.length,
+      reviewRequiredCount: manifest.reviewRequiredCount,
+      excludedCount: manifest.excludedCount,
+      credentialCandidateCount: manifest.credentialCandidateCount,
+      unresolvedWikilinkOccurrences: manifest.unresolvedWikilinkOccurrences,
+      status: 'staged',
+      stagedAt: DateTime.utc(2026, 8, 27),
+    );
+  }
 }
 
 class _AuthenticationRequiredGateway extends _FakeGateway {
   @override
   Future<NotionMigrationSnapshot> loadLatest() =>
       Future.error(const NotionMigrationException('authentication_required'));
+}
+
+class _FakeVaultManifestPicker implements NotionVaultManifestPicker {
+  const _FakeVaultManifestPicker(this.value);
+
+  final PickedNotionVaultManifest value;
+
+  @override
+  Future<PickedNotionVaultManifest?> pick() async => value;
+}
+
+PickedNotionVaultManifest _pickedManifest() {
+  const noteHash =
+      'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  final manifest = <String, dynamic>{
+    'schema_version': 1,
+    'local_only': true,
+    'vault_name': 'company',
+    'source_absolute_path_included': false,
+    'policy': <String, dynamic>{
+      'network_requests': false,
+      'vault_files_copied': false,
+      'note_body_or_property_values_included': false,
+      'excluded_files_opened_or_hashed': false,
+    },
+    'entries': <Map<String, dynamic>>[
+      <String, dynamic>{
+        'relative_path': 'HOME.md',
+        'category': 'note',
+        'migration_action': 'auto_stage',
+        'size_bytes': 120,
+        'content_inspected': true,
+        'sha256': noteHash,
+        'markdown': <String, dynamic>{
+          'frontmatter_present': false,
+          'property_keys': <String>[],
+          'wikilinks': <Map<String, dynamic>>[],
+          'external_link_count': 0,
+          'callout_types': <String, int>{},
+          'task_count': 2,
+          'completed_task_count': 1,
+        },
+      },
+      <String, dynamic>{
+        'relative_path': 'private/service-account.json',
+        'category': 'credential_candidate',
+        'migration_action': 'exclude',
+        'size_bytes': 2048,
+        'content_inspected': false,
+        'sha256': null,
+      },
+    ],
+    'summary': <String, dynamic>{
+      'file_count': 2,
+      'action_counts': <String, int>{
+        'auto_stage': 1,
+        'review_required': 0,
+        'exclude': 1,
+      },
+      'credential_candidate_count': 1,
+      'unresolved_wikilink_occurrences': 0,
+    },
+  };
+  return PickedNotionVaultManifest(
+    name: 'company-manifest.json',
+    bytes: Uint8List.fromList(utf8.encode(jsonEncode(manifest))),
+  );
 }

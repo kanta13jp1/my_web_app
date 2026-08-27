@@ -1,3 +1,7 @@
+import 'notion_vault_manifest_models.dart';
+
+export 'notion_vault_manifest_models.dart';
+
 enum NotionMigrationBatchStatus {
   inventory,
   migrating,
@@ -19,14 +23,14 @@ enum NotionMigrationBatchStatus {
       };
 
   String get label => switch (this) {
-        inventory => '棚卸し中',
-        migrating => '移行中',
-        verifying => '照合中',
-        awaitingSourceDeletion => 'Notion側削除待ち',
-        completed => '完了',
-        paused => '一時停止',
-        failed => '要対応',
-      };
+    inventory => '棚卸し中',
+    migrating => '移行中',
+    verifying => '照合中',
+    awaitingSourceDeletion => 'Notion側削除待ち',
+    completed => '完了',
+    paused => '一時停止',
+    failed => '要対応',
+  };
 }
 
 enum NotionMigrationItemStatus {
@@ -56,17 +60,17 @@ enum NotionMigrationItemStatus {
       };
 
   String get label => switch (this) {
-        inventoried => '棚卸し済み',
-        queued => '移行待ち',
-        exporting => '書き出し中',
-        imported => '取込済み',
-        verifying => '照合中',
-        verified => '照合済み',
-        readyForSourceDeletion => 'Notion側削除可能',
-        sourceDeleted => 'Notion側削除済み',
-        failed => '要対応',
-        skipped => '対象外',
-      };
+    inventoried => '棚卸し済み',
+    queued => '移行待ち',
+    exporting => '書き出し中',
+    imported => '取込済み',
+    verifying => '照合中',
+    verified => '照合済み',
+    readyForSourceDeletion => 'Notion側削除可能',
+    sourceDeleted => 'Notion側削除済み',
+    failed => '要対応',
+    skipped => '対象外',
+  };
 }
 
 class NotionMigrationBatch {
@@ -88,7 +92,8 @@ class NotionMigrationBatch {
       status: NotionMigrationBatchStatus.fromStorage(
         json['status']?.toString(),
       ),
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      createdAt:
+          DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
     );
   }
@@ -179,6 +184,7 @@ class NotionMigrationSnapshot {
     this.capabilities = const <NotionCapability>[],
     this.wbsReconciliation,
     this.wbsStageSummary,
+    this.vaultManifestSummary,
   });
 
   final NotionMigrationBatch? batch;
@@ -187,6 +193,7 @@ class NotionMigrationSnapshot {
   final List<NotionCapability> capabilities;
   final NotionWbsReconciliation? wbsReconciliation;
   final NotionWbsStageSummary? wbsStageSummary;
+  final NotionVaultManifestStageSummary? vaultManifestSummary;
 }
 
 class NotionInventoryActionResult {
@@ -292,24 +299,24 @@ enum NotionParityStatus {
   blocked;
 
   static NotionParityStatus fromStorage(String? value) => switch (value) {
-        'planned' => planned,
-        'implemented' => implemented,
-        'verifying' => verifying,
-        'verified' => verified,
-        'gap' => gap,
-        'blocked' => blocked,
-        _ => inventory,
-      };
+    'planned' => planned,
+    'implemented' => implemented,
+    'verifying' => verifying,
+    'verified' => verified,
+    'gap' => gap,
+    'blocked' => blocked,
+    _ => inventory,
+  };
 
   String get label => switch (this) {
-        inventory => '棚卸し待ち',
-        planned => '実装予定',
-        implemented => '実装済み',
-        verifying => '実データ検証中',
-        verified => '検証済み',
-        gap => '不足',
-        blocked => '要対応',
-      };
+    inventory => '棚卸し待ち',
+    planned => '実装予定',
+    implemented => '実装済み',
+    verifying => '実データ検証中',
+    verified => '検証済み',
+    gap => '不足',
+    blocked => '要対応',
+  };
 }
 
 class NotionCapability {
