@@ -324,7 +324,7 @@ NotionMigrationSnapshot _sampleSnapshot() {
 
 class _FakeGateway implements NotionMigrationGateway {
   _FakeGateway({NotionMigrationSnapshot? snapshot})
-    : _snapshot = snapshot ?? const NotionMigrationSnapshot();
+      : _snapshot = snapshot ?? const NotionMigrationSnapshot();
 
   NotionMigrationSnapshot _snapshot;
   NotionVaultManifestPreview? stagedManifest;

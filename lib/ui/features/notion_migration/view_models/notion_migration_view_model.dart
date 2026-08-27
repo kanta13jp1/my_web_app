@@ -11,11 +11,11 @@ class NotionMigrationViewModel extends ChangeNotifier {
     required NotionMigrationGateway gateway,
     NotionVaultManifestPicker? vaultManifestPicker,
     NotionVaultManifestParser? vaultManifestParser,
-  }) : _gateway = gateway,
-       _vaultManifestPicker =
-           vaultManifestPicker ?? const FilePickerNotionVaultManifestPicker(),
-       _vaultManifestParser =
-           vaultManifestParser ?? const NotionVaultManifestParser();
+  })  : _gateway = gateway,
+        _vaultManifestPicker =
+            vaultManifestPicker ?? const FilePickerNotionVaultManifestPicker(),
+        _vaultManifestParser =
+            vaultManifestParser ?? const NotionVaultManifestParser();
 
   final NotionMigrationGateway _gateway;
   final NotionVaultManifestPicker _vaultManifestPicker;
@@ -253,8 +253,7 @@ class NotionMigrationViewModel extends ChangeNotifier {
     _loadStatus = keepReady
         ? NotionMigrationLoadStatus.ready
         : NotionMigrationLoadStatus.failure;
-    _authenticationRequired =
-        error is NotionMigrationException &&
+    _authenticationRequired = error is NotionMigrationException &&
         error.code == 'authentication_required';
     _errorMessage = _authenticationRequired
         ? 'この機能を使うにはログインしてください。'
@@ -278,7 +277,8 @@ class NotionMigrationViewModel extends ChangeNotifier {
       return switch (error.code) {
         'admin_required' => 'WBS照合は管理者だけが実行できます。',
         'notion_not_configured' ||
-        'wbs_source_not_configured' => 'サーバー側のNotion WBS接続が未設定です。',
+        'wbs_source_not_configured' =>
+          'サーバー側のNotion WBS接続が未設定です。',
         'wbs_database_has_multiple_data_sources' =>
           'WBSデータベースに複数のデータソースがあります。対象IDをサーバー設定で明示してください。',
         'batch_not_found' => '移行台帳が見つかりません。再読み込みしてください。',
@@ -293,7 +293,8 @@ class NotionMigrationViewModel extends ChangeNotifier {
       return switch (error.code) {
         'admin_required' => 'WBS取込は管理者だけが実行できます。',
         'notion_not_configured' ||
-        'wbs_source_not_configured' => 'サーバー側のNotion WBS接続が未設定です。',
+        'wbs_source_not_configured' =>
+          'サーバー側のNotion WBS接続が未設定です。',
         'wbs_stage_inventory_incomplete' =>
           'Notion WBSの全ページを取得できなかったため、安全領域への取込を中止しました。',
         'batch_not_found' => '移行台帳が見つかりません。再読み込みしてください。',
@@ -308,7 +309,8 @@ class NotionMigrationViewModel extends ChangeNotifier {
       return switch (error.code) {
         'manifest_size_invalid' => 'manifestが空か、10MBの上限を超えています。',
         'manifest_json_invalid' => '選択したファイルは有効なJSONではありません。',
-        'manifest_policy_invalid' || 'manifest_exclusion_policy_invalid' =>
+        'manifest_policy_invalid' ||
+        'manifest_exclusion_policy_invalid' =>
           '安全ポリシーを確認できないmanifestのため取込を中止しました。',
         'manifest_path_invalid' => '安全でない相対パスを検出したため取込を中止しました。',
         'manifest_hash_invalid' => 'ファイル照合ハッシュが不正なため取込を中止しました。',
