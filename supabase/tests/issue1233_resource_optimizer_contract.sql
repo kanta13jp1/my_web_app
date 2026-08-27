@@ -10,6 +10,16 @@ values
   ('00000000-0000-4000-8000-000000001237')
 on conflict (id) do nothing;
 
+-- Supabase grants authenticated table DML at the platform layer and relies on
+-- RLS for tenant isolation. Grant only the tables this contract exercises;
+-- changing ALTER DEFAULT PRIVILEGES here would leak broad DML into unrelated
+-- fixtures that run later in the shared disposable database.
+grant select, insert, update, delete
+  on table public.hub_data,
+    public.daily_habits,
+    public.daily_habit_logs
+  to authenticated;
+
 do $contract$
 declare
   v_signature text;

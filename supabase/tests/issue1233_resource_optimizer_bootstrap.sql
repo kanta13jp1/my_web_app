@@ -51,12 +51,3 @@ $$;
 grant usage on schema auth, public to anon, authenticated, service_role;
 grant execute on function auth.uid(), auth.role()
   to anon, authenticated, service_role;
-
--- Supabase grants browser roles table privileges and relies on RLS for tenant
--- isolation. Reproduce that boundary for tables created after this bootstrap.
-alter default privileges in schema public
-  grant select, insert, update, delete
-  on tables to anon, authenticated, service_role;
-alter default privileges in schema public
-  grant usage, select
-  on sequences to anon, authenticated, service_role;

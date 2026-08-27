@@ -198,6 +198,10 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
         self.assertIn("seven varied self-reported", checks)
         self.assertIn("parallel", checks)
         self.assertIn("daily limit", checks)
+        bootstrap = (
+            ROOT / "supabase" / "tests" / "issue1233_resource_optimizer_bootstrap.sql"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn("alter default privileges", bootstrap.lower())
 
     def test_plan_includes_note_comments_authorization_boundary(self) -> None:
         plan = module.build_plan(
