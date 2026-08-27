@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "snapshot_date": "2026-08-23",
-  "source_snapshot": "canonical tiger-personas.json (2026-08-25)",
+  "snapshot_date": "2026-08-26",
+  "source_snapshot": "canonical tiger-personas.json (2026-08-26)",
   "reviewer_count": 125,
   "disclaimer": "年齢は生年月日を公開一次情報で確認できた場合のみ、スナップショット日時点で表示します。未確認の年齢は推測していません。肩書き・事業内容・出演実績は公開情報から構成したスナップショットです。",
   "profiles": [
@@ -19,8 +19,8 @@
         "医療・介護・福祉",
         "フランチャイズ・多店舗展開"
       ],
-      "appearances": 151,
-      "investment_count": 56,
+      "appearances": 157,
+      "investment_count": 59,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、愛のゴリ詰めタイプ。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/hosoi-ryu/",
       "evidence_confidence": 5.0,
@@ -82,8 +82,8 @@
         "教育・スクール",
         "経営支援・コンサルティング"
       ],
-      "appearances": 558,
-      "investment_count": 211,
+      "appearances": 567,
+      "investment_count": 217,
       "public_viewpoint_summary": "直営事業をFC化して大規模展開した経験を背景に、再現可能な仕組み、加盟店採算、拡大速度を重視する。",
       "profile_url": "https://reiwanotora.jp/hayashi/",
       "evidence_confidence": 4.3,
@@ -149,7 +149,7 @@
         "人材・採用・組織",
         "マーケティング・メディア"
       ],
-      "appearances": 102,
+      "appearances": 105,
       "investment_count": 41,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、寄り添うタイプ。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/tanimoto-yoshitsugu/",
@@ -186,7 +186,6 @@
       ],
       "review_style_tags": [
         "founder_empathy",
-        "growth_first",
         "balanced_risk",
         "acquisition_and_conversion"
       ],
@@ -279,8 +278,8 @@
         "営業・販売組織",
         "美容・ウェルネス"
       ],
-      "appearances": 155,
-      "investment_count": 64,
+      "appearances": 157,
+      "investment_count": 65,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、我が事と思い、向き合い、寄り添いますと説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/ando-koichiro/",
       "evidence_confidence": 5.0,
@@ -316,7 +315,6 @@
       ],
       "review_style_tags": [
         "founder_empathy",
-        "growth_first",
         "balanced_risk",
         "gross_margin_and_repeat_purchase"
       ],
@@ -343,7 +341,7 @@
         "教育・スクール",
         "人材・採用・組織"
       ],
-      "appearances": 64,
+      "appearances": 65,
       "investment_count": 27,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、伴走タイプ。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/miura-tetsurou/",
@@ -407,7 +405,7 @@
         "経営支援・コンサルティング",
         "IT・SaaS・プラットフォーム"
       ],
-      "appearances": 12,
+      "appearances": 13,
       "investment_count": 0,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、理詰めで本質を問うタイプ。 数字や論理は当然見ますが、それだけではありません。 人財版を運営している立場として、志願者の「信念」や「覚悟」も深掘りします。 ただし、人情で甘くなることはありません。 その信念は本物か、心構えは本気か——そこを突いていきます。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/sakakibara-seiichi/",
@@ -472,7 +470,7 @@
         "エンタメ・クリエイター",
         "経営支援・コンサルティング"
       ],
-      "appearances": 32,
+      "appearances": 34,
       "investment_count": 10,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、理論の上でパッションと説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/sekiguchi-kento/",
@@ -517,7 +515,7 @@
       "evidence_source_ids": [
         "S012",
         "S002",
-        "S003"
+        "S008"
       ]
     },
     {
@@ -534,8 +532,8 @@
         "経営支援・コンサルティング",
         "教育・スクール"
       ],
-      "appearances": 68,
-      "investment_count": 18,
+      "appearances": 69,
+      "investment_count": 19,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、数字ゴリゴリタイプ。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/hiraide-shin/",
       "evidence_confidence": 5.0,
@@ -598,7 +596,7 @@
         "フランチャイズ・多店舗展開",
         "マーケティング・メディア"
       ],
-      "appearances": 75,
+      "appearances": 76,
       "investment_count": 28,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、学歴は見ない。 数字も参考程度。 見るのは 「本気かどうか」だけ。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/shimada-takashi/",
@@ -636,10 +634,10 @@
       "review_style_tags": [
         "numbers_first",
         "conviction_test",
+        "customer_first",
+        "growth_first",
         "balanced_risk",
-        "replicability_and_store_economics",
-        "acquisition_and_conversion",
-        "gross_margin_and_repeat_purchase"
+        "replicability_and_store_economics"
       ],
       "next_research_targets": [
         "生年月日の一次公開情報"
@@ -728,7 +726,7 @@
         "小売・通販・EC",
         "マーケティング・メディア"
       ],
-      "appearances": 6,
+      "appearances": 7,
       "investment_count": 1,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、寄り添うタイプだが、志願者のために厳しいことを発言することもある。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/sako-yuki/",
@@ -794,8 +792,8 @@
         "人材・採用・組織",
         "小売・通販・EC"
       ],
-      "appearances": 39,
-      "investment_count": 12,
+      "appearances": 41,
+      "investment_count": 13,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、本当にその人が成功できるためにはを第一に。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/kanda-mitsuki/",
       "evidence_confidence": 5.0,
@@ -918,8 +916,8 @@
         "不動産・建設・住宅",
         "営業・販売組織"
       ],
-      "appearances": 63,
-      "investment_count": 17,
+      "appearances": 64,
+      "investment_count": 18,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、寄り添いタイプです。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/kirihara-takashi/",
       "evidence_confidence": 5.0,
@@ -981,8 +979,8 @@
         "小売・通販・EC",
         "飲食・宿泊・接客"
       ],
-      "appearances": 35,
-      "investment_count": 10,
+      "appearances": 39,
+      "investment_count": 11,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、人情タイプ。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/minami-tadanori/",
       "evidence_confidence": 5.0,
@@ -1044,7 +1042,7 @@
         "経営支援・コンサルティング",
         "医療・介護・福祉"
       ],
-      "appearances": 150,
+      "appearances": 151,
       "investment_count": 50,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、人情タイプ。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/karasawa-nanae/",
@@ -1106,7 +1104,7 @@
         "金融・投資・資産管理",
         "M&A・事業再生"
       ],
-      "appearances": 50,
+      "appearances": 51,
       "investment_count": 15,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、原体験を元に頑張っている人を支援していくタイプ。伴走型。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/ohishi-junpei/",
@@ -1166,9 +1164,9 @@
       "business_domains": [
         "マーケティング・メディア"
       ],
-      "appearances": 209,
-      "investment_count": 55,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。マーケティング・メディアの公開職歴と、番組集計上の出演209回・出資55回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
+      "appearances": 213,
+      "investment_count": 57,
+      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。マーケティング・メディアの公開職歴と、番組集計上の出演213回・出資57回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
       "profile_url": "https://reiwanotora.jp/tiger/takeuchi-kouichi/",
       "evidence_confidence": 4.0,
       "profile_completeness_percent": 67,
@@ -1230,7 +1228,7 @@
         "経営支援・コンサルティング",
         "小売・通販・EC"
       ],
-      "appearances": 12,
+      "appearances": 14,
       "investment_count": 2,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、数字で詰めて、そこが明らかになれば寄り添うタイプと説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/tanaka-ami/",
@@ -1243,32 +1241,32 @@
         {
           "dimension": "market_demand",
           "label": "市場需要",
-          "weight_percent": 25,
+          "weight_percent": 23,
           "question": "実在する顧客は誰で、需要を示す一次データは何か。"
         },
         {
           "dimension": "go_to_market",
           "label": "顧客獲得",
-          "weight_percent": 19,
+          "weight_percent": 16,
           "question": "最初の顧客をどの経路・費用で獲得し、検証できるか。"
+        },
+        {
+          "dimension": "unit_economics",
+          "label": "単位経済性",
+          "weight_percent": 13,
+          "question": "顧客・注文・店舗単位の粗利、獲得費、回収期間は成立するか。"
         },
         {
           "dimension": "competitive_advantage",
           "label": "競争優位性",
           "weight_percent": 13,
           "question": "既存代替より選ばれ続ける、模倣されにくい理由は何か。"
-        },
-        {
-          "dimension": "revenue_model",
-          "label": "収益モデル",
-          "weight_percent": 9,
-          "question": "誰が、何に、いくら、どの頻度で支払うのか。"
         }
       ],
       "review_style_tags": [
         "numbers_first",
         "founder_empathy",
-        "balanced_risk",
+        "evidence_demanding",
         "acquisition_and_conversion",
         "gross_margin_and_repeat_purchase"
       ],
@@ -1295,7 +1293,7 @@
         "フランチャイズ・多店舗展開",
         "経営支援・コンサルティング"
       ],
-      "appearances": 64,
+      "appearances": 65,
       "investment_count": 17,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、冷静に判断するけど、最後は人情と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/endo-yuki/",
@@ -1357,7 +1355,7 @@
         "営業・販売組織",
         "飲食・宿泊・接客"
       ],
-      "appearances": 72,
+      "appearances": 73,
       "investment_count": 27,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、元志願者として、志願者の気持ちに一番寄り添える虎でありたいと考えています。 数字や理屈だけで判断するのではなく、覚悟や背景も含めて本気で向き合います。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/inaba-shin/",
@@ -1423,7 +1421,7 @@
         "営業・販売組織",
         "小売・通販・EC"
       ],
-      "appearances": 53,
+      "appearances": 54,
       "investment_count": 14,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、論理的な思考で数字や結果を見るタイプ、感情的ではなく冷静に本質を見抜くタイプ。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/terada-takashi/",
@@ -1488,8 +1486,8 @@
         "人材・採用・組織",
         "製造・エネルギー・環境"
       ],
-      "appearances": 43,
-      "investment_count": 11,
+      "appearances": 44,
+      "investment_count": 12,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、人情タイプ。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/son-shunichirou/",
       "evidence_confidence": 5.0,
@@ -1616,8 +1614,8 @@
         "経営支援・コンサルティング",
         "マーケティング・メディア"
       ],
-      "appearances": 71,
-      "investment_count": 31,
+      "appearances": 73,
+      "investment_count": 32,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、寄り添うタイプですが数字もみます。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/araki-anna/",
       "evidence_confidence": 5.0,
@@ -1744,7 +1742,7 @@
         "小売・通販・EC",
         "人材・採用・組織"
       ],
-      "appearances": 53,
+      "appearances": 54,
       "investment_count": 22,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、経営は結局、人だと思っています。 だからこそ数字やノウハウだけではなく、「誰のためにやるのか」「どんな未来を作りたいのか」という想いを大切にしています。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/azuma-shota/",
@@ -1935,8 +1933,8 @@
         "IT・SaaS・プラットフォーム",
         "営業・販売組織"
       ],
-      "appearances": 54,
-      "investment_count": 25,
+      "appearances": 56,
+      "investment_count": 26,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、寄り添うタイプと説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/sasaki-takashi/",
       "evidence_confidence": 5.0,
@@ -2062,13 +2060,13 @@
         "医療・介護・福祉",
         "人材・採用・組織"
       ],
-      "appearances": 4,
+      "appearances": 6,
       "investment_count": 2,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、寄り添い、情熱タイプと説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/tsuda-atsushi/",
-      "evidence_confidence": 4.0,
-      "profile_completeness_percent": 76,
-      "review_reflection_percent": 88,
+      "evidence_confidence": 4.3,
+      "profile_completeness_percent": 79,
+      "review_reflection_percent": 92,
       "review_reflection_mode": "profile_guided",
       "review_application_rule": "中立スキャン後、確認済みプロフィール由来の重点観点を指摘の優先順位づけに強く反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
@@ -2125,13 +2123,13 @@
         "M&A・事業再生",
         "経営支援・コンサルティング"
       ],
-      "appearances": 4,
-      "investment_count": 1,
+      "appearances": 6,
+      "investment_count": 2,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、寄り添うタイプ、SNSを起点に勝ち筋を見つけることが得意ですと説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/doshirouto-hotel/",
-      "evidence_confidence": 4.0,
-      "profile_completeness_percent": 76,
-      "review_reflection_percent": 88,
+      "evidence_confidence": 4.3,
+      "profile_completeness_percent": 79,
+      "review_reflection_percent": 92,
       "review_reflection_mode": "profile_guided",
       "review_application_rule": "中立スキャン後、確認済みプロフィール由来の重点観点を指摘の優先順位づけに強く反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
@@ -2189,7 +2187,7 @@
         "小売・通販・EC",
         "IT・SaaS・プラットフォーム"
       ],
-      "appearances": 6,
+      "appearances": 8,
       "investment_count": 2,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、ロジカル激詰めタイプ。 数字や事業計画、再現性はしっかり見つつ、志願者の想いや挑戦する覚悟が本気か見てます。 良い部分は伸ばし、甘い部分は激詰めします。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/dobashi-kazuki/",
@@ -2256,13 +2254,13 @@
         "人材・採用・組織",
         "製造・エネルギー・環境"
       ],
-      "appearances": 4,
-      "investment_count": 2,
+      "appearances": 6,
+      "investment_count": 3,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、出来るだけ志願者さんの発したいことを引き出したい。 物やスキーム提案の場合、突っ込みところが無いか？ 深掘りし、無くしてあげたい。と説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/nakamura-hidetosih/",
-      "evidence_confidence": 4.0,
-      "profile_completeness_percent": 76,
-      "review_reflection_percent": 88,
+      "evidence_confidence": 4.3,
+      "profile_completeness_percent": 79,
+      "review_reflection_percent": 92,
       "review_reflection_mode": "profile_guided",
       "review_application_rule": "中立スキャン後、確認済みプロフィール由来の重点観点を指摘の優先順位づけに強く反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
@@ -2316,8 +2314,8 @@
         "IT・SaaS・プラットフォーム",
         "小売・通販・EC"
       ],
-      "appearances": 7,
-      "investment_count": 1,
+      "appearances": 10,
+      "investment_count": 2,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、寄り添うタイプと説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/nishida-ken/",
       "evidence_confidence": 4.3,
@@ -2353,6 +2351,7 @@
       ],
       "review_style_tags": [
         "founder_empathy",
+        "growth_first",
         "balanced_risk",
         "gross_margin_and_repeat_purchase"
       ],
@@ -2379,44 +2378,44 @@
         "人材・採用・組織",
         "営業・販売組織"
       ],
-      "appearances": 3,
-      "investment_count": 0,
+      "appearances": 5,
+      "investment_count": 1,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、人情タイプと説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/hatakeyama-daiki/",
-      "evidence_confidence": 4.0,
-      "profile_completeness_percent": 76,
-      "review_reflection_percent": 88,
+      "evidence_confidence": 4.3,
+      "profile_completeness_percent": 79,
+      "review_reflection_percent": 92,
       "review_reflection_mode": "profile_guided",
       "review_application_rule": "中立スキャン後、確認済みプロフィール由来の重点観点を指摘の優先順位づけに強く反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "unit_economics",
           "label": "単位経済性",
-          "weight_percent": 22,
+          "weight_percent": 17,
           "question": "顧客・注文・店舗単位の粗利、獲得費、回収期間は成立するか。"
-        },
-        {
-          "dimension": "revenue_model",
-          "label": "収益モデル",
-          "weight_percent": 15,
-          "question": "誰が、何に、いくら、どの頻度で支払うのか。"
         },
         {
           "dimension": "founder_execution",
           "label": "実行力",
-          "weight_percent": 12,
+          "weight_percent": 15,
           "question": "創業者とチームに、この計画をやり切った証拠があるか。"
+        },
+        {
+          "dimension": "revenue_model",
+          "label": "収益モデル",
+          "weight_percent": 13,
+          "question": "誰が、何に、いくら、どの頻度で支払うのか。"
         },
         {
           "dimension": "customer_pain",
           "label": "顧客課題",
-          "weight_percent": 10,
+          "weight_percent": 12,
           "question": "顧客の未解決課題は、支払いを伴うほど強いか。"
         }
       ],
       "review_style_tags": [
         "founder_empathy",
-        "evidence_demanding"
+        "balanced_risk"
       ],
       "next_research_targets": [
         "生年月日の一次公開情報",
@@ -2441,44 +2440,44 @@
         "教育・スクール",
         "IT・SaaS・プラットフォーム"
       ],
-      "appearances": 3,
-      "investment_count": 0,
+      "appearances": 5,
+      "investment_count": 1,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、寄り添うタイプと説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/matsushita-naoto/",
-      "evidence_confidence": 4.0,
-      "profile_completeness_percent": 76,
-      "review_reflection_percent": 88,
+      "evidence_confidence": 4.3,
+      "profile_completeness_percent": 79,
+      "review_reflection_percent": 92,
       "review_reflection_mode": "profile_guided",
       "review_application_rule": "中立スキャン後、確認済みプロフィール由来の重点観点を指摘の優先順位づけに強く反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "unit_economics",
           "label": "単位経済性",
-          "weight_percent": 24,
+          "weight_percent": 19,
           "question": "顧客・注文・店舗単位の粗利、獲得費、回収期間は成立するか。"
         },
         {
           "dimension": "market_demand",
           "label": "市場需要",
-          "weight_percent": 15,
+          "weight_percent": 17,
           "question": "実在する顧客は誰で、需要を示す一次データは何か。"
         },
         {
           "dimension": "revenue_model",
           "label": "収益モデル",
-          "weight_percent": 13,
+          "weight_percent": 12,
           "question": "誰が、何に、いくら、どの頻度で支払うのか。"
         },
         {
           "dimension": "competitive_advantage",
           "label": "競争優位性",
-          "weight_percent": 13,
+          "weight_percent": 12,
           "question": "既存代替より選ばれ続ける、模倣されにくい理由は何か。"
         }
       ],
       "review_style_tags": [
         "founder_empathy",
-        "evidence_demanding",
+        "balanced_risk",
         "gross_margin_and_repeat_purchase"
       ],
       "next_research_targets": [
@@ -2569,13 +2568,13 @@
         "製造・エネルギー・環境",
         "教育・スクール"
       ],
-      "appearances": 3,
+      "appearances": 5,
       "investment_count": 1,
       "public_viewpoint_summary": "本人公式プロフィールの『志願者との向き合い方』欄では、人情・寄り添うタイプと説明している。",
       "profile_url": "https://reiwanotora.jp/tiger/yamamoto-masatoshi/",
-      "evidence_confidence": 4.0,
-      "profile_completeness_percent": 76,
-      "review_reflection_percent": 88,
+      "evidence_confidence": 4.3,
+      "profile_completeness_percent": 79,
+      "review_reflection_percent": 92,
       "review_reflection_mode": "profile_guided",
       "review_application_rule": "中立スキャン後、確認済みプロフィール由来の重点観点を指摘の優先順位づけに強く反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
@@ -2623,16 +2622,16 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "株式会社トモハッピー（カードゲーム売買業。YouTuber）",
+      "company_role": "株式会社晴れる屋 代表",
       "business_summary": "小売・通販・EC、エンタメ・クリエイター、マーケティング・メディア",
       "business_domains": [
+        "小売・通販・EC",
         "エンタメ・クリエイター",
-        "マーケティング・メディア",
-        "小売・通販・EC"
+        "マーケティング・メディア"
       ],
       "appearances": 340,
       "investment_count": 110,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。エンタメ・クリエイター、マーケティング・メディア、小売・通販・ECの公開職歴と、番組集計上の出演340回・出資110回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
+      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。小売・通販・EC、エンタメ・クリエイター、マーケティング・メディアの公開職歴と、番組集計上の出演340回・出資110回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
       "profile_url": "https://atsu-blog.com/tigerfunding-president-list/",
       "evidence_confidence": 3.3,
       "profile_completeness_percent": 57,
@@ -2677,7 +2676,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S008",
+        "S003",
         "S004"
       ]
     },
@@ -5433,28 +5432,124 @@
       "seat": 87,
       "name": "長谷部文康",
       "roster_status": "historical",
-      "birth_date": null,
-      "birth_date_source_url": null,
-      "company_role": "株式会社ROMANDO ROLL JAPAN 代表取締役会長",
-      "business_summary": "飲食・宿泊・接客、営業・販売組織",
+      "birth_date": "1974-12-26",
+      "birth_date_source_url": "https://romandorolljapan.com/profile/",
+      "company_role": "株式会社ROMANDO ROLL JAPAN代表取締役会長。オリジナルクレープ『Romando Roll』の商品開発と店舗展開を行う",
+      "business_summary": "オリジナルクレープ『Romando Roll』の商品開発と店舗展開",
       "business_domains": [
         "飲食・宿泊・接客",
+        "フランチャイズ・多店舗展開",
         "営業・販売組織"
       ],
       "appearances": 4,
       "investment_count": 0,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。飲食・宿泊・接客、営業・販売組織の公開職歴と、番組集計上の出演4回・出資0回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/",
-      "evidence_confidence": 2.3,
-      "profile_completeness_percent": 48,
-      "review_reflection_percent": 47,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "公式プロフィールと代表挨拶では、洋菓子業界の発展と、商品を通じて人に笑顔を届けることを事業目標として掲げている。",
+      "profile_url": "https://romandorolljapan.com/profile/",
+      "evidence_links": [
+        {
+          "label": "肩書き・生年月日・公開方針（公式）",
+          "url": "https://romandorolljapan.com/profile/"
+        },
+        {
+          "label": "事業内容（公式）",
+          "url": "https://romandorolljapan.com/"
+        }
+      ],
+      "evidence_confidence": 3.3,
+      "profile_completeness_percent": 80,
+      "review_reflection_percent": 72,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "unit_economics",
           "label": "単位経済性",
-          "weight_percent": 26,
+          "weight_percent": 30,
+          "question": "顧客・注文・店舗単位の粗利、獲得費、回収期間は成立するか。"
+        },
+        {
+          "dimension": "scalability",
+          "label": "拡張性",
+          "weight_percent": 20,
+          "question": "代表者の労働量を増やさず再現・拡大できるか。"
+        },
+        {
+          "dimension": "revenue_model",
+          "label": "収益モデル",
+          "weight_percent": 14,
+          "question": "誰が、何に、いくら、どの頻度で支払うのか。"
+        },
+        {
+          "dimension": "market_demand",
+          "label": "市場需要",
+          "weight_percent": 11,
+          "question": "実在する顧客は誰で、需要を示す一次データは何か。"
+        }
+      ],
+      "review_style_tags": [
+        "evidence_demanding",
+        "replicability_and_store_economics",
+        "gross_margin_and_repeat_purchase"
+      ],
+      "next_research_targets": [
+        "現職肩書き・事業内容の一次公開情報",
+        "本人の審査姿勢が確認できる一次公開情報",
+        "出演・出資実績の追加検証"
+      ],
+      "evidence_source_ids": [
+        "S002",
+        "S047",
+        "S048",
+        "S003",
+        "S004"
+      ]
+    },
+    {
+      "seat": 88,
+      "name": "池端美和",
+      "roster_status": "historical",
+      "birth_date": null,
+      "birth_date_source_url": null,
+      "company_role": "株式会社MIWAIKEHATA取締役、武庫川女子大学薬学部特任教授、JATCO理事長。アロマ製品、教育、コンサルティングを展開",
+      "business_summary": "アロマ製品の輸入・販売、教育・サロン運営、マーケティングコンサルティング",
+      "business_domains": [
+        "美容・ウェルネス",
+        "教育・スクール",
+        "小売・通販・EC",
+        "経営支援・コンサルティング"
+      ],
+      "appearances": 4,
+      "investment_count": 0,
+      "public_viewpoint_summary": "公式事業紹介と大学発信では、科学的根拠に基づくアロマの普及、予防・健康支援、学生の専門性と社会をつなぐ実践を重視している。",
+      "profile_url": "https://shop.miwaikehata.com/shop/pages/about",
+      "evidence_links": [
+        {
+          "label": "肩書き・事業内容（公式）",
+          "url": "https://shop.miwaikehata.com/shop/pages/about"
+        },
+        {
+          "label": "現職肩書き（大学公式）",
+          "url": "https://ph.mukogawa-u.ac.jp/research/laboratory-1095/"
+        },
+        {
+          "label": "公開された教育方針（大学公式）",
+          "url": "https://info.mukogawa-u.ac.jp/publicity/newsdetail?id=5230"
+        },
+        {
+          "label": "アロマと健康支援（大学公式資料）",
+          "url": "https://www.mukogawa-u.ac.jp/special/pdf/release/20241112.pdf"
+        }
+      ],
+      "evidence_confidence": 3.3,
+      "profile_completeness_percent": 65,
+      "review_reflection_percent": 72,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "review_focus_dimensions": [
+        {
+          "dimension": "unit_economics",
+          "label": "単位経済性",
+          "weight_percent": 20,
           "question": "顧客・注文・店舗単位の粗利、獲得費、回収期間は成立するか。"
         },
         {
@@ -5466,14 +5561,14 @@
         {
           "dimension": "revenue_model",
           "label": "収益モデル",
-          "weight_percent": 14,
+          "weight_percent": 13,
           "question": "誰が、何に、いくら、どの頻度で支払うのか。"
         },
         {
-          "dimension": "scalability",
-          "label": "拡張性",
+          "dimension": "customer_pain",
+          "label": "顧客課題",
           "weight_percent": 12,
-          "question": "代表者の労働量を増やさず再現・拡大できるか。"
+          "question": "顧客の未解決課題は、支払いを伴うほど強いか。"
         }
       ],
       "review_style_tags": [
@@ -5488,71 +5583,10 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
-        "S004"
-      ]
-    },
-    {
-      "seat": 88,
-      "name": "池端美和",
-      "roster_status": "historical",
-      "birth_date": null,
-      "birth_date_source_url": null,
-      "company_role": "株式会社MIWAIKEHATA 代表取締役",
-      "business_summary": "美容・ウェルネス、IT・SaaS・プラットフォーム、マーケティング・メディア、不動産・建設・住宅",
-      "business_domains": [
-        "美容・ウェルネス",
-        "IT・SaaS・プラットフォーム",
-        "マーケティング・メディア",
-        "不動産・建設・住宅"
-      ],
-      "appearances": 4,
-      "investment_count": 0,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。美容・ウェルネス、IT・SaaS・プラットフォーム、マーケティング・メディア、不動産・建設・住宅の公開職歴と、番組集計上の出演4回・出資0回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/",
-      "evidence_confidence": 2.3,
-      "profile_completeness_percent": 48,
-      "review_reflection_percent": 47,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
-      "review_focus_dimensions": [
-        {
-          "dimension": "market_demand",
-          "label": "市場需要",
-          "weight_percent": 22,
-          "question": "実在する顧客は誰で、需要を示す一次データは何か。"
-        },
-        {
-          "dimension": "revenue_model",
-          "label": "収益モデル",
-          "weight_percent": 15,
-          "question": "誰が、何に、いくら、どの頻度で支払うのか。"
-        },
-        {
-          "dimension": "scalability",
-          "label": "拡張性",
-          "weight_percent": 15,
-          "question": "代表者の労働量を増やさず再現・拡大できるか。"
-        },
-        {
-          "dimension": "competitive_advantage",
-          "label": "競争優位性",
-          "weight_percent": 14,
-          "question": "既存代替より選ばれ続ける、模倣されにくい理由は何か。"
-        }
-      ],
-      "review_style_tags": [
-        "evidence_demanding",
-        "acquisition_and_conversion"
-      ],
-      "next_research_targets": [
-        "生年月日の一次公開情報",
-        "現職肩書き・事業内容の一次公開情報",
-        "本人の審査姿勢が確認できる一次公開情報",
-        "出演・出資実績の追加検証"
-      ],
-      "evidence_source_ids": [
-        "S002",
+        "S049",
+        "S050",
+        "S051",
+        "S052",
         "S003",
         "S004"
       ]
@@ -5561,65 +5595,76 @@
       "seat": 89,
       "name": "ヒカル",
       "roster_status": "historical",
-      "birth_date": null,
-      "birth_date_source_url": null,
-      "company_role": "登場時の表示：株式会社シュプラスの代表取締役",
-      "business_summary": "マーケティング・メディア、エンタメ・クリエイター、美容・ウェルネス、金融・投資・資産管理",
+      "birth_date": "1991-05-29",
+      "birth_date_source_url": "https://prtimes.jp/main/html/rd/p/000000460.000016935.html",
+      "company_role": "YouTuber・事業家。2025年12月の提携先発表では株式会社ReZARD取締役、ReZARD創業者・プロデューサーとして掲載",
+      "business_summary": "動画・インフルエンサー事業と、アパレル・化粧品・ホテル等のReZARDブランド展開",
       "business_domains": [
         "マーケティング・メディア",
-        "エンタメ・クリエイター",
+        "小売・通販・EC",
         "美容・ウェルネス",
-        "金融・投資・資産管理"
+        "エンタメ・クリエイター"
       ],
       "appearances": 4,
       "investment_count": 0,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。マーケティング・メディア、エンタメ・クリエイター、美容・ウェルネス、金融・投資・資産管理の公開職歴と、番組集計上の出演4回・出資0回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/2/",
-      "evidence_confidence": 2.3,
-      "profile_completeness_percent": 48,
-      "review_reflection_percent": 47,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "本人著書の出版社紹介では、目標を明確にし、試行錯誤から得た思考と実践を重ね、時代の変化を捉える姿勢を本人メッセージとして示している。ReZARDの提携先発表では、高品質と手に取りやすい価格の両立をブランド方針として掲げている。",
+      "profile_url": "https://prtimes.jp/main/html/rd/p/000000460.000016935.html",
+      "evidence_links": [
+        {
+          "label": "生年月日・本人著書メッセージ（出版社）",
+          "url": "https://prtimes.jp/main/html/rd/p/000000460.000016935.html"
+        },
+        {
+          "label": "肩書き・事業内容・ブランド方針（提携先）",
+          "url": "https://prtimes.jp/main/html/rd/p/000000008.000123388.html"
+        }
+      ],
+      "evidence_confidence": 3.3,
+      "profile_completeness_percent": 80,
+      "review_reflection_percent": 72,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "market_demand",
           "label": "市場需要",
-          "weight_percent": 25,
+          "weight_percent": 23,
           "question": "実在する顧客は誰で、需要を示す一次データは何か。"
         },
         {
           "dimension": "go_to_market",
           "label": "顧客獲得",
-          "weight_percent": 24,
+          "weight_percent": 22,
           "question": "最初の顧客をどの経路・費用で獲得し、検証できるか。"
+        },
+        {
+          "dimension": "unit_economics",
+          "label": "単位経済性",
+          "weight_percent": 17,
+          "question": "顧客・注文・店舗単位の粗利、獲得費、回収期間は成立するか。"
         },
         {
           "dimension": "competitive_advantage",
           "label": "競争優位性",
-          "weight_percent": 13,
+          "weight_percent": 11,
           "question": "既存代替より選ばれ続ける、模倣されにくい理由は何か。"
-        },
-        {
-          "dimension": "revenue_model",
-          "label": "収益モデル",
-          "weight_percent": 10,
-          "question": "誰が、何に、いくら、どの頻度で支払うのか。"
         }
       ],
       "review_style_tags": [
         "growth_first",
         "evidence_demanding",
         "acquisition_and_conversion",
-        "capital_and_downside_control"
+        "gross_margin_and_repeat_purchase"
       ],
       "next_research_targets": [
-        "生年月日の一次公開情報",
         "現職肩書き・事業内容の一次公開情報",
         "本人の審査姿勢が確認できる一次公開情報",
         "出演・出資実績の追加検証"
       ],
       "evidence_source_ids": [
         "S002",
+        "S053",
+        "S054",
         "S008",
         "S004"
       ]
@@ -5684,7 +5729,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S047",
+        "S055",
         "S004"
       ]
     },
@@ -5694,50 +5739,68 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "株式会社パスチャーの経営に携わり、デジタルマーケティング支援を経験",
-      "business_summary": "マーケティング・メディア、IT・SaaS・プラットフォーム",
+      "company_role": "株式会社Sprobe社外取締役。SNSビッグデータ解析とデジタルマーケティング支援、海外事業経営を経験",
+      "business_summary": "SNSビッグデータ解析とデジタルマーケティング支援、海外事業経営",
       "business_domains": [
         "マーケティング・メディア",
-        "IT・SaaS・プラットフォーム"
+        "IT・SaaS・プラットフォーム",
+        "経営支援・コンサルティング"
       ],
       "appearances": 3,
       "investment_count": 1,
-      "public_viewpoint_summary": "デジタル上の顧客理解、SNS運用、集客施策の実行可能性を優先して検討する。",
-      "profile_url": "https://ja.everybodywiki.com/%E4%BB%A4%E5%92%8C%E3%81%AE%E8%99%8E",
-      "evidence_confidence": 2.3,
-      "profile_completeness_percent": 48,
-      "review_reflection_percent": 47,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "本人発信では、SNSのフォロワー数や閲覧数だけでなく、サイト流入、指名検索、客単価、転換率まで追跡し、顧客コミュニティとの共創を継続的な事業価値につなげることを重視している。",
+      "profile_url": "https://sprobe.com/about-us",
+      "evidence_links": [
+        {
+          "label": "現職肩書き（公式役員ページ）",
+          "url": "https://sprobe.com/about-us"
+        },
+        {
+          "label": "事業内容・公開された経営観点（本人発信）",
+          "url": "https://note.com/yurikokai/n/ne2bb4cebf243"
+        },
+        {
+          "label": "合併・事業内容（所属企業公式）",
+          "url": "https://muscatgroup.co.jp/wp-content/uploads/2022/04/ec08ea7a1393895d7f7bfc10d7f36789.pdf"
+        },
+        {
+          "label": "上級執行役員歴（東証提出資料）",
+          "url": "https://www.jpx.co.jp/english/listing/stocks/new/dh3otn0000006m4h-att/06Ricecurry-1s.pdf"
+        }
+      ],
+      "evidence_confidence": 3.3,
+      "profile_completeness_percent": 65,
+      "review_reflection_percent": 72,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "market_demand",
           "label": "市場需要",
-          "weight_percent": 21,
+          "weight_percent": 23,
           "question": "実在する顧客は誰で、需要を示す一次データは何か。"
+        },
+        {
+          "dimension": "competitive_advantage",
+          "label": "競争優位性",
+          "weight_percent": 18,
+          "question": "既存代替より選ばれ続ける、模倣されにくい理由は何か。"
         },
         {
           "dimension": "revenue_model",
           "label": "収益モデル",
-          "weight_percent": 16,
+          "weight_percent": 13,
           "question": "誰が、何に、いくら、どの頻度で支払うのか。"
         },
         {
           "dimension": "scalability",
           "label": "拡張性",
-          "weight_percent": 15,
+          "weight_percent": 13,
           "question": "代表者の労働量を増やさず再現・拡大できるか。"
-        },
-        {
-          "dimension": "competitive_advantage",
-          "label": "競争優位性",
-          "weight_percent": 15,
-          "question": "既存代替より選ばれ続ける、模倣されにくい理由は何か。"
         }
       ],
       "review_style_tags": [
         "customer_first",
-        "execution_first",
         "balanced_risk",
         "acquisition_and_conversion"
       ],
@@ -5749,7 +5812,10 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S048",
+        "S056",
+        "S057",
+        "S058",
+        "S059",
         "S004"
       ]
     },
@@ -5876,7 +5942,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S049",
+        "S060",
         "S004"
       ]
     },
@@ -6267,7 +6333,7 @@
         "経営支援・コンサルティング",
         "人材・採用・組織"
       ],
-      "appearances": 3,
+      "appearances": 4,
       "investment_count": 1,
       "public_viewpoint_summary": "SNS予算の費用対効果、数字管理、顧客同士の協業可能性を検討し、率直で実務的な改善案を出す。",
       "profile_url": "https://reiwanotora.jp/komon/mihara-takuto/",
@@ -6316,7 +6382,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S050"
+        "S061"
       ]
     },
     {
@@ -6380,7 +6446,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S051",
+        "S062",
         "S004"
       ]
     },
@@ -6508,7 +6574,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S052",
+        "S063",
         "S004"
       ]
     },
@@ -6573,7 +6639,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S048",
+        "S064",
         "S004"
       ]
     },
@@ -6637,7 +6703,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S048",
+        "S064",
         "S004"
       ]
     },
@@ -6825,7 +6891,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S053",
+        "S065",
         "S008",
         "S004"
       ]
@@ -6891,7 +6957,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S054",
+        "S066",
         "S004"
       ]
     },
@@ -7019,7 +7085,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S055",
+        "S067",
         "S004"
       ]
     },
@@ -7084,7 +7150,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S056"
+        "S068"
       ]
     },
     {
@@ -7149,7 +7215,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S057"
+        "S069"
       ]
     },
     {
@@ -7213,7 +7279,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S058"
+        "S070"
       ]
     },
     {
@@ -7275,7 +7341,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S059"
+        "S071"
       ]
     },
     {
@@ -7284,15 +7350,27 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "合同会社lifedesign CEO",
-      "business_summary": "不動産・建設・住宅",
+      "company_role": "新築木造アパート投資専門コミュニティ『わたりサロン』代表・講師",
+      "business_summary": "新築木造アパート投資の教育・実践者コミュニティ運営",
       "business_domains": [
-        "不動産・建設・住宅"
+        "不動産・建設・住宅",
+        "教育・スクール",
+        "経営支援・コンサルティング"
       ],
       "appearances": 1,
       "investment_count": 0,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。不動産・建設・住宅の公開職歴と、番組集計上の出演1回・出資0回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/",
+      "public_viewpoint_summary": "公開団体ページの本人名義メッセージでは、建築費と利回りの妥当性を検証し、新築木造アパート投資の実践者を支援する方針を示している。",
+      "profile_url": "https://www.ooyanokai.com/ooyanokai/watari",
+      "evidence_links": [
+        {
+          "label": "肩書き・公開された活動方針（公開団体）",
+          "url": "https://www.ooyanokai.com/ooyanokai/watari"
+        },
+        {
+          "label": "著書・事業領域（政府刊行物取扱ページ）",
+          "url": "https://www.gov-book.or.jp/book/detail.php?product_id=327242"
+        }
+      ],
       "evidence_confidence": 2.0,
       "profile_completeness_percent": 45,
       "review_reflection_percent": 43,
@@ -7318,10 +7396,10 @@
           "question": "実在する顧客は誰で、需要を示す一次データは何か。"
         },
         {
-          "dimension": "customer_pain",
-          "label": "顧客課題",
-          "weight_percent": 10,
-          "question": "顧客の未解決課題は、支払いを伴うほど強いか。"
+          "dimension": "founder_execution",
+          "label": "実行力",
+          "weight_percent": 12,
+          "question": "創業者とチームに、この計画をやり切った証拠があるか。"
         }
       ],
       "review_style_tags": [
@@ -7335,6 +7413,8 @@
       ],
       "evidence_source_ids": [
         "S002",
+        "S072",
+        "S073",
         "S003",
         "S004"
       ]
@@ -7402,7 +7482,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S060",
+        "S074",
         "S004"
       ]
     },
@@ -7465,7 +7545,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S061",
+        "S075",
         "S008",
         "S004"
       ]
@@ -7541,8 +7621,8 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S062",
-        "S063",
+        "S076",
+        "S077",
         "S008",
         "S004"
       ]
@@ -7608,7 +7688,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S064",
+        "S078",
         "S004"
       ]
     },
@@ -7673,7 +7753,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S065",
+        "S079",
         "S004"
       ]
     },
@@ -7738,7 +7818,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S066",
+        "S080",
         "S004"
       ]
     },
@@ -7812,8 +7892,8 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S067",
-        "S068"
+        "S081",
+        "S082"
       ]
     },
     {
@@ -7887,8 +7967,8 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S069",
-        "S070",
+        "S083",
+        "S084",
         "S008"
       ]
     },
@@ -7905,7 +7985,7 @@
         "マーケティング・メディア",
         "M&A・事業再生"
       ],
-      "appearances": 1,
+      "appearances": 2,
       "investment_count": 1,
       "public_viewpoint_summary": "本人の公式トップメッセージでは、デジタルネイティブなSNSマーケティングとブランドの物語性を組み合わせ、純粋な熱量と多様なブランド展開で顧客基盤を広げる方針を示している。",
       "profile_url": "https://yutori.tokyo/ir/overview/",
@@ -7923,9 +8003,9 @@
           "url": "https://www.jpx.co.jp/listing/stocks/new/bkk2ed0000002w4v-att/12yutori-1s.pdf"
         }
       ],
-      "evidence_confidence": 3.0,
-      "profile_completeness_percent": 77,
-      "review_reflection_percent": 68,
+      "evidence_confidence": 3.3,
+      "profile_completeness_percent": 80,
+      "review_reflection_percent": 72,
       "review_reflection_mode": "profile_balanced",
       "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
@@ -7968,19 +8048,19 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S071",
-        "S072",
+        "S085",
+        "S086",
         "S003"
       ]
     }
   ],
   "enrichment": {
-    "round": 4,
+    "round": 5,
     "batch_size": 5,
     "policy": "一次公開情報を優先し、未確認情報は推測しない。プロフィール由来のレビュー観点は証拠強度に応じて段階反映する。",
-    "average_profile_completeness_percent": 64.1,
-    "average_review_reflection_percent": 69.5,
-    "verified_birth_dates": 3,
+    "average_profile_completeness_percent": 65.0,
+    "average_review_reflection_percent": 70.5,
+    "verified_birth_dates": 5,
     "next_batch": [
       {
         "seat": 116,
@@ -7994,8 +8074,8 @@
         ]
       },
       {
-        "seat": 87,
-        "name": "長谷部文康",
+        "seat": 92,
+        "name": "兼子ただし",
         "profile_completeness_percent": 48,
         "research_targets": [
           "生年月日の一次公開情報",
@@ -8005,8 +8085,8 @@
         ]
       },
       {
-        "seat": 88,
-        "name": "池端美和",
+        "seat": 94,
+        "name": "戸村 光",
         "profile_completeness_percent": 48,
         "research_targets": [
           "生年月日の一次公開情報",
@@ -8016,8 +8096,8 @@
         ]
       },
       {
-        "seat": 89,
-        "name": "ヒカル",
+        "seat": 95,
+        "name": "村川智博",
         "profile_completeness_percent": 48,
         "research_targets": [
           "生年月日の一次公開情報",
@@ -8027,8 +8107,8 @@
         ]
       },
       {
-        "seat": 91,
-        "name": "カイ ユリコ",
+        "seat": 96,
+        "name": "牧田彰俊",
         "profile_completeness_percent": 48,
         "research_targets": [
           "生年月日の一次公開情報",
