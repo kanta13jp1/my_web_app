@@ -11663,10 +11663,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _deleteRecurringFixedCosts(
     Iterable<AssetRecurringFixedCost> costs,
   ) async {
-    final ids = costs
-        .map((cost) => cost.id)
-        .where((id) => id.isNotEmpty)
-        .toSet();
+    final ids =
+        costs.map((cost) => cost.id).where((id) => id.isNotEmpty).toSet();
     if (ids.isEmpty) return;
     final next = _recurringFixedCosts
         .where((existing) => !ids.contains(existing.id))

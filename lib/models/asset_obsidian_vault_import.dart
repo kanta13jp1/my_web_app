@@ -147,7 +147,7 @@ class AssetObsidianImportPreview {
   final int recognizedCancellationFileCount;
   final List<AssetObsidianImportCandidate> candidates;
   final List<AssetObsidianSubscriptionCancellationCandidate>
-  subscriptionCancellations;
+      subscriptionCancellations;
   final List<String> warnings;
 
   List<AssetObsidianImportCandidate> get initiallySelected => candidates
@@ -155,9 +155,10 @@ class AssetObsidianImportPreview {
       .toList(growable: false);
 
   List<AssetObsidianSubscriptionCancellationCandidate>
-  get initiallySelectedSubscriptionCancellations => subscriptionCancellations
-      .where((candidate) => candidate.isDeletable)
-      .toList(growable: false);
+      get initiallySelectedSubscriptionCancellations =>
+          subscriptionCancellations
+              .where((candidate) => candidate.isDeletable)
+              .toList(growable: false);
 }
 
 class AssetObsidianApplySelection {
@@ -169,7 +170,7 @@ class AssetObsidianApplySelection {
 
   final List<AssetObsidianImportCandidate> balances;
   final List<AssetObsidianSubscriptionCancellationCandidate>
-  subscriptionCancellations;
+      subscriptionCancellations;
 
   int get totalCount => balances.length + subscriptionCancellations.length;
 }

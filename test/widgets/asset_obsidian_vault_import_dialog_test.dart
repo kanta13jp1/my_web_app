@@ -5,20 +5,20 @@ import 'package:my_web_app/widgets/asset_obsidian_vault_import_dialog.dart';
 
 void main() {
   AssetObsidianVaultSelection selection() => const AssetObsidianVaultSelection(
-    vaultName: 'company',
-    files: [
-      AssetObsidianVaultFile(
-        relativePath: 'company/ACCOUNTS_LIST.md',
-        byteSize: 200,
-        content: '''
+        vaultName: 'company',
+        files: [
+          AssetObsidianVaultFile(
+            relativePath: 'company/ACCOUNTS_LIST.md',
+            byteSize: 200,
+            content: '''
 | 確認日 | 口座・サービス名 | 最新確認残高 |
 | --- | --- | ---: |
 | 2026-08-26 | 現金 | 32,652円 |
 | 2026-08-24 | じぶん銀行 | 20,000円 |
 ''',
-      ),
-    ],
-  );
+          ),
+        ],
+      );
 
   testWidgets('差分プレビュー後に選択残高だけを確認して反映する', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 900));

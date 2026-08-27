@@ -51,18 +51,16 @@ class AssetObsidianVaultImportService {
       final latestRecords = records
           .where((record) => _sameDate(record.observedDate, latestDate))
           .toList(growable: false);
-      final uniqueAmounts = latestRecords
-          .map((record) => record.amount)
-          .toSet();
+      final uniqueAmounts =
+          latestRecords.map((record) => record.amount).toSet();
       final first = latestRecords.first;
       final existing = existingByKey[entry.key];
       final resolvedName = existing?.accountName ?? first.accountName;
-      final sourcePaths =
-          latestRecords
-              .map((record) => record.sourcePath)
-              .toSet()
-              .toList(growable: false)
-            ..sort();
+      final sourcePaths = latestRecords
+          .map((record) => record.sourcePath)
+          .toSet()
+          .toList(growable: false)
+        ..sort();
 
       if (uniqueAmounts.length > 1) {
         final amounts = uniqueAmounts.toList()..sort();
@@ -127,7 +125,7 @@ class AssetObsidianVaultImportService {
   }
 
   List<AssetObsidianSubscriptionCancellationCandidate>
-  _matchSubscriptionCancellations(
+      _matchSubscriptionCancellations(
     List<_ParsedSubscriptionCancellation> parsed,
     List<AssetObsidianExistingSubscription> existingSubscriptions,
   ) {
@@ -155,19 +153,15 @@ class AssetObsidianVaultImportService {
     for (final entry in parsedByKey.entries) {
       final sourceRows = entry.value;
       final first = sourceRows.first;
-      final matches =
-          existingByKey[entry.key] ??
+      final matches = existingByKey[entry.key] ??
           const <AssetObsidianExistingSubscription>[];
-      final sourcePaths =
-          sourceRows
-              .map((row) => row.sourcePath)
-              .toSet()
-              .toList(growable: false)
-            ..sort();
-      final sourceStatuses = sourceRows
-          .map((row) => row.status)
+      final sourcePaths = sourceRows
+          .map((row) => row.sourcePath)
           .toSet()
-          .toList(growable: false);
+          .toList(growable: false)
+        ..sort();
+      final sourceStatuses =
+          sourceRows.map((row) => row.status).toSet().toList(growable: false);
       final endedAtValues = sourceRows
           .map((row) => row.endedAt)
           .whereType<String>()

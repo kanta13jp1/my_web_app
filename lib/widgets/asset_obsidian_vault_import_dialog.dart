@@ -4,8 +4,8 @@ import 'package:my_web_app/models/asset_obsidian_vault_import.dart';
 import 'package:my_web_app/services/asset_obsidian_vault_import_service.dart';
 import 'package:my_web_app/utils/asset_obsidian_vault_picker.dart';
 
-typedef AssetObsidianVaultPicker =
-    Future<AssetObsidianVaultSelection?> Function();
+typedef AssetObsidianVaultPicker = Future<AssetObsidianVaultSelection?>
+    Function();
 
 class AssetObsidianVaultImportDialog extends StatefulWidget {
   const AssetObsidianVaultImportDialog({
@@ -52,7 +52,7 @@ class _AssetObsidianVaultImportDialogState
   }
 
   List<AssetObsidianSubscriptionCancellationCandidate>
-  get _selectedSubscriptionCancellations {
+      get _selectedSubscriptionCancellations {
     final preview = _preview;
     if (preview == null) {
       return const <AssetObsidianSubscriptionCancellationCandidate>[];
@@ -78,9 +78,8 @@ class _AssetObsidianVaultImportDialogState
       setState(() {
         _selection = selection;
         _preview = preview;
-        _selectedBalanceIds = preview.initiallySelected
-            .map((candidate) => candidate.id)
-            .toSet();
+        _selectedBalanceIds =
+            preview.initiallySelected.map((candidate) => candidate.id).toSet();
         _selectedCancellationIds = preview
             .initiallySelectedSubscriptionCancellations
             .map((candidate) => candidate.id)
@@ -224,9 +223,8 @@ class _AssetObsidianVaultImportDialogState
                   const Text('この機能はChromeなどのWebブラウザ版で利用できます。')
                 else
                   OutlinedButton.icon(
-                    onPressed: _isSelecting || _isApplying
-                        ? null
-                        : _selectVault,
+                    onPressed:
+                        _isSelecting || _isApplying ? null : _selectVault,
                     icon: _isSelecting
                         ? const SizedBox(
                             width: 18,
@@ -322,9 +320,8 @@ class _AssetObsidianVaultImportDialogState
         ),
         if (preview != null)
           FilledButton.icon(
-            onPressed: selectedCount == 0 || _isApplying
-                ? null
-                : _confirmAndApply,
+            onPressed:
+                selectedCount == 0 || _isApplying ? null : _confirmAndApply,
             icon: _isApplying
                 ? const SizedBox(
                     width: 18,
@@ -339,12 +336,11 @@ class _AssetObsidianVaultImportDialogState
   }
 
   Widget _buildPrivacyNotice() => _buildMessageBox(
-    icon: Icons.shield_outlined,
-    color: const Color(0xFF047857),
-    text:
-        'Markdown本文はこのブラウザ内だけで解析します。確認後に選択した口座名と残高、'
-        'または照合済みサブスクIDだけを反映し、本文とローカルパスは保存しません。',
-  );
+        icon: Icons.shield_outlined,
+        color: const Color(0xFF047857),
+        text: 'Markdown本文はこのブラウザ内だけで解析します。確認後に選択した口座名と残高、'
+            'または照合済みサブスクIDだけを反映し、本文とローカルパスは保存しません。',
+      );
 
   Widget _buildPreviewHeader(AssetObsidianImportPreview preview) {
     return Container(
@@ -593,17 +589,17 @@ class _AssetObsidianVaultImportDialogState
   ) {
     final (label, color) = switch (status) {
       AssetObsidianSubscriptionCancellationStatus.matched => (
-        '削除候補',
-        const Color(0xFFB45309),
-      ),
+          '削除候補',
+          const Color(0xFFB45309),
+        ),
       AssetObsidianSubscriptionCancellationStatus.notRegistered => (
-        '未登録',
-        const Color(0xFF64748B),
-      ),
+          '未登録',
+          const Color(0xFF64748B),
+        ),
       AssetObsidianSubscriptionCancellationStatus.conflict => (
-        '競合',
-        const Color(0xFFB91C1C),
-      ),
+          '競合',
+          const Color(0xFFB91C1C),
+        ),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
