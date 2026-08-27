@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-27T15:15:03.973250+00:00",
+  "generated_at": "2026-08-27T18:15:43.589375+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "reviewer_league",
   "publication_state": "latest_assignment",
@@ -33,27 +33,27 @@
     }
   },
   "latest_assignment": {
-    "cycle_id": "20260827T232859+0900",
-    "started_at": "2026-08-27T23:28:59+09:00",
+    "cycle_id": "20260828T021401+0900",
+    "started_at": "2026-08-28T02:14:01+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-746a2878-6a2d-4787-91e2-1778ebdda8ce",
-      "url": "https://developer.adobe.com/firefly-api/"
+      "slug": "course-955ae2e6-9909-4635-aacd-790ab23aa7c8",
+      "url": "https://firefly.adobe.com/"
     },
     "reviewer": {
       "seat": 12,
       "name": "迫 佑樹",
-      "selection_score": 77.2379,
+      "selection_score": 76.8689,
       "division": 1,
-      "cycle_utility": 82.92,
-      "aggregate_utility": 86.3
+      "cycle_utility": 85.25,
+      "aggregate_utility": 85.78
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 3,
+    "finding_count": 4,
     "top_findings": [
       {
-        "summary": "講座名はAPI利用方法を約束するが、公開教材はClient IDとClient Secretを安全なserver-side OAuth経路だけで扱う必須境界を教えていない。",
+        "summary": "商業利用安全という単一正解がnon-beta条件、partner model、法域差を省略する",
         "severity": "p1",
         "business_dimensions": [
           "trust_risk",
@@ -62,21 +62,21 @@
         ]
       },
       {
-        "summary": "公式のGenerate Image実習は教育用でproduction-readyではないと明記される一方、講座にはversioned endpoint、error handling、logging、usage budget、失敗判定を含む実運用移行課題がない。",
+        "summary": "4機能中心の入門が現行の画像・映像・音声・Boards・partner model構成を説明できない",
         "severity": "p1",
         "business_dimensions": [
-          "unit_economics",
-          "scalability",
-          "competitive_advantage"
+          "market_demand",
+          "competitive_advantage",
+          "scalability"
         ]
       },
       {
-        "summary": "実在学習者が安全な認証、API選択、失敗処理、利用量判断をできた証拠と、誰がどの成果に支払うかを示す講座固有データがない。",
-        "severity": "p2",
+        "summary": "standard・premium機能とgenerative creditsを使った作成量・plan適合判断がない",
+        "severity": "p1",
         "business_dimensions": [
-          "market_demand",
+          "unit_economics",
           "revenue_model",
-          "unit_economics"
+          "customer_pain"
         ]
       }
     ],
@@ -95,43 +95,316 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After publishing a versioned server-side OAuth and v3 Generate Image lab, measure secret-handling rubric accuracy, first-call success, non-2xx recovery, request-volume estimate error, completion time, and support requests for one learner cohort."
+      "next_cycle_experiment": "After publishing one role-specific 30-minute Firefly artifact lab, measure model-provenance and beta-condition accuracy, capability choice, artifact completion, generative-credit estimate error, and follow-on course conversion for one learner cohort."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4941 追跡中",
-      "detail": "主要指摘は認証secret、利用量、実運用設計を含む新規course contentと公開データの変更を必要とし、保護されたauthenticationおよびproduction data境界を含むため共有の低リスク自動修正範囲外。",
+      "label": "未対策・Issue #4945 追跡中",
+      "detail": "主要指摘は商用利用・model provenance・beta・法域の条件を含むcourse contentと公開データの変更を必要とし、保護されたlegalおよびproduction data境界を含むため共有の低リスク自動修正範囲外。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [
-        "course-firefly-server-auth-boundary"
+        "course-firefly-commercial-use-claim-boundary"
       ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean at origin/main 8125bd9c0c5f59a44245bd1d7145072e683469f1",
+        "passed: fast-forwarded clean branch to origin/main 8c1fd4167279765df2aa79ca6b9d6db62cd65782",
         "passed: 125 roster profiles and 125 personas",
         "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
         "passed: deterministic winner preserved",
-        "passed: Adobe auth, tutorial, capability overview, and named source/test paths inspected",
-        "executed exactly once against shared history root: 125 profiles, seat 12",
-        "passed: report_only, one reviewer, three findings, CLEAR 100, Issue #4941 linked"
+        "passed: selected source, Adobe FAQ, credits, feature page, and named source/test paths inspected",
+        "executed exactly once against shared history root: 125 profiles, seat 12"
       ],
       "issue": {
-        "number": 4941,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4941",
+        "number": 4945,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4945",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260827T232859+0900:746a2878-6a2d-4787-91e2-1778ebdda8ce"
+        "dedupe_key": "tiger-course-review:20260828T021401+0900:955ae2e6-9909-4635-aacd-790ab23aa7c8"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-firefly-production-readiness-gap",
-        "course-firefly-learner-value-evidence-gap"
+        "course-firefly-capability-map-freshness-gap",
+        "course-firefly-credit-cost-decision-gap",
+        "course-firefly-first-artifact-outcome-gap"
       ]
     }
   },
   "history": [
+    {
+      "cycle_id": "20260828T021401+0900",
+      "started_at": "2026-08-28T02:14:01+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "955ae2e6-9909-4635-aacd-790ab23aa7c8",
+        "title": "Adobe Firefly とは",
+        "url": "https://firefly.adobe.com/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 76.8689
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After publishing one role-specific 30-minute Firefly artifact lab, measure model-provenance and beta-condition accuracy, capability choice, artifact completion, generative-credit estimate error, and follow-on course conversion for one learner cohort."
+      },
+      "findings": [
+        {
+          "finding_id": "course-firefly-commercial-use-claim-boundary",
+          "summary": "商業利用安全という単一正解がnon-beta条件、partner model、法域差を省略する",
+          "severity": "p1",
+          "suggested_action": "Adobe公式FAQを出典に、Adobe modelの学習データ、non-betaの商用利用、betaの製品内表示、partner modelの個別条件、法域ごとの専門確認を分ける判断課題へ置き換える。"
+        },
+        {
+          "finding_id": "course-firefly-capability-map-freshness-gap",
+          "summary": "4機能中心の入門が現行の画像・映像・音声・Boards・partner model構成を説明できない",
+          "severity": "p1",
+          "suggested_action": "確認日付きの公式feature mapを基準に、役割別job-to-be-doneからimage、video、audio、ideation、editing、partner modelの一つを選ぶ比較演習を追加する。"
+        },
+        {
+          "finding_id": "course-firefly-credit-cost-decision-gap",
+          "summary": "standard・premium機能とgenerative creditsを使った作成量・plan適合判断がない",
+          "severity": "p1",
+          "suggested_action": "価格を転記せず公式credit FAQを参照し、指定成果物のstandard/premium区分、月間生成量、利用者数、credit不足時の代替を見積もる更新可能な演習を追加する。"
+        },
+        {
+          "finding_id": "course-firefly-first-artifact-outcome-gap",
+          "summary": "誰が何を作り何をもって成功とするかを示す最初の成果物と学習者証拠がない",
+          "severity": "p2",
+          "suggested_action": "marketing、design、videoの一役割を選び、機能選択、prompt、1成果物、credit見積もり、provenance確認、採用理由を提出する30分課題を計測する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4945 追跡中",
+        "detail": "主要指摘は商用利用・model provenance・beta・法域の条件を含むcourse contentと公開データの変更を必要とし、保護されたlegalおよびproduction data境界を含むため共有の低リスク自動修正範囲外。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-firefly-commercial-use-claim-boundary"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded clean branch to origin/main 8c1fd4167279765df2aa79ca6b9d6db62cd65782",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
+          "passed: deterministic winner preserved",
+          "passed: selected source, Adobe FAQ, credits, feature page, and named source/test paths inspected",
+          "executed exactly once against shared history root: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 4945,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4945",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260828T021401+0900:955ae2e6-9909-4635-aacd-790ab23aa7c8"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-firefly-capability-map-freshness-gap",
+          "course-firefly-credit-cost-decision-gap",
+          "course-firefly-first-artifact-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260828T011400+0900",
+      "started_at": "2026-08-28T01:14:00+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 32,
+        "name": "高澤 有紀",
+        "selection_score": 71.6385
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260827T214913+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Serve route-specific static HTML for subscription-billing and privacy, then compare URL-level search impressions, shared-link entry, checkout starts, and registration continuation for 30 days."
+      },
+      "findings": [
+        {
+          "finding_id": "site-deep-route-canonical-collapse",
+          "summary": "価格・プライバシーの深いURLが同一ホームページHTMLとルートcanonicalへ集約される",
+          "severity": "p1",
+          "suggested_action": "価格・法務の内容所有者と公開境界を確認し、各固定URLへ固有title、description、canonical、OG URL、主要本文を持つ静的応答を追加する。"
+        },
+        {
+          "finding_id": "site-pricing-prequalification-shell-gap",
+          "summary": "確認済みプラン価格がsubscription-billingの静的応答に存在しない",
+          "severity": "p1",
+          "suggested_action": "価格決定を変更せず、承認済みFree・Pro・Team・支援プラン情報と決済・解約の信頼境界をroute固有の静的シェルへ反映する。"
+        },
+        {
+          "finding_id": "site-privacy-trust-shell-gap",
+          "summary": "privacy URLの静的応答が法務内容ではなくホームページ販促文を返す",
+          "severity": "p1",
+          "suggested_action": "法務所有者が承認した現行ポリシーを唯一のソースとして、privacy URLの初期HTMLにも固有見出し、概要、canonical、本文到達性を持たせる。"
+        },
+        {
+          "finding_id": "site-public-route-prerender-coverage-gap",
+          "summary": "既存prerender基盤の対象から主要な収益・信頼URLが外れている",
+          "severity": "p2",
+          "suggested_action": "公開route manifestへ収益・信頼journeyの所有区分と必須SEO契約を追加し、生成物とproduction probeでroute固有性を回帰検証する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4944 追跡中",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main 3d518eef9965c7a55a386e5b84e981b9723cd658",
+          "passed: 3 fixed routes returned HTTP 200 and required SEO-shell markers",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: evidence locations and protected boundaries recorded"
+        ],
+        "issue": {
+          "number": 4944,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4944",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260828T011400+0900:whole_site"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-deep-route-canonical-collapse",
+          "site-pricing-prequalification-shell-gap",
+          "site-privacy-trust-shell-gap",
+          "site-public-route-prerender-coverage-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260828T004359+0900",
+      "started_at": "2026-08-28T00:43:59+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "ai_hub",
+        "title": "ai-hub",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 9,
+        "name": "平出 心",
+        "selection_score": 68.112
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "認証registryと表形式route testの導入後、匿名・一般利用者・許可ロール別HTTP結果と観測actionへの匿名アクセス件数を測定する。"
+      },
+      "findings": [
+        {
+          "finding_id": "ai-hub-unauthenticated-observability",
+          "summary": "観測系4 actionが認証対象外のままservice-roleデータを返し得る",
+          "severity": "p0",
+          "suggested_action": "観測系actionを明示的な認証・権限registryへ移し、匿名401、一般利用者403、許可ロール成功を固定するroute-levelテストを追加する。"
+        },
+        {
+          "finding_id": "ai-hub-home-recommend-user-scope",
+          "summary": "home.recommendが認証済み主体ではなくbody.user_idで利用履歴を参照する",
+          "severity": "p1",
+          "suggested_action": "home.recommendを認証必須にし、検索対象をgetUserId(req)の値へ固定して、別user_id指定を拒否する契約テストを追加する。"
+        },
+        {
+          "finding_id": "ai-hub-dispatcher-policy-regression-gap",
+          "summary": "113 actionの認証・例外境界をroute-level回帰テストが固定していない",
+          "severity": "p2",
+          "suggested_action": "dispatcherからaction registry、auth policy、response sanitizationを抽出し、全actionの区分を表形式テストで固定する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4943 追跡中",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 125 roster entries",
+          "passed: 125 personas",
+          "passed: 113 cases, 8784 lines, no route-level index import",
+          "passed: clean dedicated worktree before report publication"
+        ],
+        "issue": {
+          "number": 4943,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4943",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260828T004359+0900:ai_hub"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "ai-hub-unauthenticated-observability",
+          "ai-hub-home-recommend-user-scope",
+          "ai-hub-dispatcher-policy-regression-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260827T232859+0900",
       "started_at": "2026-08-27T23:28:59+09:00",
@@ -2281,6 +2554,21 @@
   ],
   "reviewers": [
     {
+      "seat": 32,
+      "name": "高澤 有紀",
+      "tier": "division_3",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 93.06,
+      "completed_cycles": 1,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 93.06,
+      "last_selected_at": "2026-08-27T16:14:00+00:00",
+      "reason": "担当実績が2回未満のため暫定3部"
+    },
+    {
       "seat": 9,
       "name": "平出 心",
       "tier": "division_1",
@@ -2288,12 +2576,12 @@
       "provisional": false,
       "eligible": true,
       "floor_protected": false,
-      "utility_score": 91.37,
-      "completed_cycles": 3,
+      "utility_score": 91.93,
+      "completed_cycles": 4,
       "low_utility_streak": 0,
-      "last_cycle_utility": 92.15,
-      "last_selected_at": "2026-08-26T13:09:10+00:00",
-      "reason": "担当3回・効用91.4点で1部"
+      "last_cycle_utility": 92.17,
+      "last_selected_at": "2026-08-27T15:43:59+00:00",
+      "reason": "担当4回・効用91.9点で1部"
     },
     {
       "seat": 7,
@@ -2348,12 +2636,12 @@
       "provisional": false,
       "eligible": true,
       "floor_protected": false,
-      "utility_score": 86.3,
-      "completed_cycles": 13,
+      "utility_score": 85.78,
+      "completed_cycles": 14,
       "low_utility_streak": 0,
-      "last_cycle_utility": 82.92,
-      "last_selected_at": "2026-08-27T14:28:59+00:00",
-      "reason": "担当13回・効用86.3点で1部"
+      "last_cycle_utility": 85.25,
+      "last_selected_at": "2026-08-27T17:14:01+00:00",
+      "reason": "担当14回・効用85.8点で1部"
     },
     {
       "seat": 2,
@@ -2733,21 +3021,6 @@
     {
       "seat": 31,
       "name": "佐々木 貴史",
-      "tier": "division_3",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "floor_protected": false,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "low_utility_streak": 0,
-      "last_cycle_utility": null,
-      "last_selected_at": null,
-      "reason": "担当実績が2回未満のため暫定3部"
-    },
-    {
-      "seat": 32,
-      "name": "高澤 有紀",
       "tier": "division_3",
       "division": 3,
       "provisional": true,
