@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-27T15:49:55.941667+00:00",
+  "generated_at": "2026-08-27T19:37:28.808557+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -29,50 +29,50 @@
     "operating_efficiency": 10
   },
   "latest_review": {
-    "cycle_id": "20260828T004359+0900",
-    "started_at": "2026-08-28T00:43:59+09:00",
+    "cycle_id": "20260828T042953+0900",
+    "started_at": "2026-08-28T04:29:53+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "ai_hub",
-      "url": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/ai-hub"
+      "slug": "horse_racing",
+      "url": "https://my-web-app-b67f4.web.app/horse-racing"
     },
     "reviewer": {
-      "seat": 9,
-      "name": "平出 心",
-      "selection_score": 68.112,
-      "division": 1,
-      "cycle_utility": 92.17,
-      "aggregate_utility": 91.93
+      "seat": 49,
+      "name": "岩井良明",
+      "selection_score": 68.4108,
+      "division": 3,
+      "cycle_utility": 91.33,
+      "aggregate_utility": 91.33
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "観測系4 actionが認証対象外のままservice-roleデータを返し得る",
+        "summary": "AIの賭け目を『特におすすめ』として提示する一方、損失可能性・非保証・利用上限を同じ判断面で説明していない",
         "severity": "p0",
         "business_dimensions": [
           "trust_risk",
-          "unit_economics",
-          "scalability"
+          "customer_pain",
+          "revenue_model"
         ]
       },
       {
-        "summary": "home.recommendが認証済み主体ではなくbody.user_idで利用履歴を参照する",
+        "summary": "的中率と払戻額を前面に出すが、賭金正規化ROI、期間、母数品質、予測確率の較正を同時に示していない",
         "severity": "p1",
         "business_dimensions": [
           "trust_risk",
-          "customer_pain",
-          "market_demand"
+          "unit_economics",
+          "competitive_advantage"
         ]
       },
       {
-        "summary": "113 actionの認証・例外境界をroute-level回帰テストが固定していない",
+        "summary": "3,719行の単一ページが予想・学習・馬券記録・表示を担うが、同ページを直接扱うwidget testがない",
         "severity": "p2",
         "business_dimensions": [
           "scalability",
           "founder_execution",
-          "unit_economics"
+          "trust_risk"
         ]
       }
     ],
@@ -91,11 +91,11 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "認証registryと表形式route testの導入後、匿名・一般利用者・許可ロール別HTTP結果と観測actionへの匿名アクセス件数を測定する。"
+      "next_cycle_experiment": "After owner-reviewed risk wording and ROI instrumentation are available, compare acknowledgement, budget-setting, calibrated error, ROI by bet type, and seven-day repeat use for four weeks."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4943 追跡中",
+      "label": "未対策・Issue #4946 追跡中",
       "detail": "提案のみで、対策実施の記録はありません。",
       "summary": "",
       "files": [],
@@ -105,34 +105,119 @@
       "validation_messages": [
         "passed: 125 roster entries",
         "passed: 125 personas",
-        "passed: 113 cases, 8784 lines, no route-level index import",
+        "passed: HTTP 200, 3,719 source lines, recommendation and payout evidence captured, no direct widget test",
         "passed: clean dedicated worktree before report publication"
       ],
       "issue": {
-        "number": 4943,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4943",
+        "number": 4946,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4946",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260828T004359+0900:ai_hub"
+        "dedupe_key": "tiger-feature-review:20260828T042953+0900:horse_racing"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "ai-hub-unauthenticated-observability",
-        "ai-hub-home-recommend-user-scope",
-        "ai-hub-dispatcher-policy-regression-gap"
+        "horse-racing-risk-framing-gap",
+        "horse-racing-calibration-economics-gap",
+        "horse-racing-regression-coverage-gap"
       ]
     },
     "feature": {
-      "slug": "ai_hub",
-      "title": "ai-hub",
-      "kind": "edge_function",
-      "reason": "The deterministic configured-feature selector chose ai_hub for this single feature-review cycle; no per-action usage analytics were available, so observed usage remains the neutral score of 50.",
-      "cycle_utility": 59.2,
-      "aggregate_utility": 59.2,
+      "slug": "horse_racing",
+      "title": "horse_racing",
+      "kind": "page",
+      "reason": "The deterministic configured-feature selector chose horse_racing; no production usage or calibration analytics were available, so observed usage remains the neutral score of 50.",
+      "cycle_utility": 60.4,
+      "aggregate_utility": 60.4,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260828T042953+0900",
+      "started_at": "2026-08-28T04:29:53+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "horse_racing",
+        "title": "horse_racing",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 49,
+        "name": "岩井良明",
+        "selection_score": 68.4108
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After owner-reviewed risk wording and ROI instrumentation are available, compare acknowledgement, budget-setting, calibrated error, ROI by bet type, and seven-day repeat use for four weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "horse-racing-risk-framing-gap",
+          "summary": "AIの賭け目を『特におすすめ』として提示する一方、損失可能性・非保証・利用上限を同じ判断面で説明していない",
+          "severity": "p0",
+          "suggested_action": "法務・責任ある利用方針の人手確認を経て、推奨表示、購入馬券記録、的中率カードの各判断点に不確実性、非保証、予算上限、休止導線を一貫して表示し、理解度と離脱率を測定する。"
+        },
+        {
+          "finding_id": "horse-racing-calibration-economics-gap",
+          "summary": "的中率と払戻額を前面に出すが、賭金正規化ROI、期間、母数品質、予測確率の較正を同時に示していない",
+          "severity": "p1",
+          "suggested_action": "券種・期間別に投下額、払戻額、ROI、母数、信頼区間、予測確率と実績の較正を表示し、データ不足時はランキングや推奨を保留する。"
+        },
+        {
+          "finding_id": "horse-racing-regression-coverage-gap",
+          "summary": "3,719行の単一ページが予想・学習・馬券記録・表示を担うが、同ページを直接扱うwidget testがない",
+          "severity": "p2",
+          "suggested_action": "データ取得境界と表示モデルを分離し、未ログイン、エラー、見送り推奨、馬券金額、的中率母数、タブURL同期を固定fixtureのwidget testで保護する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4946 追跡中",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 125 roster entries",
+          "passed: 125 personas",
+          "passed: HTTP 200, 3,719 source lines, recommendation and payout evidence captured, no direct widget test",
+          "passed: clean dedicated worktree before report publication"
+        ],
+        "issue": {
+          "number": 4946,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4946",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260828T042953+0900:horse_racing"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "horse-racing-risk-framing-gap",
+          "horse-racing-calibration-economics-gap",
+          "horse-racing-regression-coverage-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260828T004359+0900",
       "started_at": "2026-08-28T00:43:59+09:00",
@@ -884,6 +969,22 @@
       "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
+      "slug": "horse_racing",
+      "kind": "page",
+      "title": "horse_racing",
+      "path": "/horse-racing",
+      "source": "lib/pages/horse_racing_predictor_page.dart",
+      "priority": "medium",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 60.4,
+      "completed_cycles": 1,
+      "last_cycle_utility": 60.4,
+      "last_reviewed_at": "2026-08-27T19:29:53+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
       "slug": "admin_analytics",
       "kind": "page",
       "title": "admin_analytics",
@@ -921,22 +1022,6 @@
       "title": "growth-weekly-digest",
       "path": "",
       "source": "supabase/functions/growth-weekly-digest/index.ts",
-      "priority": "medium",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "last_cycle_utility": null,
-      "last_reviewed_at": null,
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
-    },
-    {
-      "slug": "horse_racing",
-      "kind": "page",
-      "title": "horse_racing",
-      "path": "/horse-racing",
-      "source": "lib/pages/horse_racing_predictor_page.dart",
       "priority": "medium",
       "division": 3,
       "provisional": true,
