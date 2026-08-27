@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-27T13:30:43.683206+00:00",
+  "generated_at": "2026-08-27T16:36:31.485250+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "site_review",
   "publication_state": "latest_review",
@@ -10,52 +10,52 @@
     "status": "PAUSED",
     "schedule": "毎時25分（1時間ごと）"
   },
-  "review_count": 11,
+  "review_count": 12,
   "latest_review": {
-    "cycle_id": "20260827T214913+0900",
-    "started_at": "2026-08-27T21:49:13+09:00",
+    "cycle_id": "20260828T011400+0900",
+    "started_at": "2026-08-28T01:14:00+09:00",
     "source_format": "site_review",
     "surface": {
       "slug": "whole_site",
       "url": "https://my-web-app-b67f4.web.app/"
     },
     "reviewer": {
-      "seat": 12,
-      "name": "迫 佑樹",
-      "selection_score": 79.6052,
-      "division": 1,
-      "cycle_utility": 93.1,
-      "aggregate_utility": 88.76
+      "seat": 32,
+      "name": "高澤 有紀",
+      "selection_score": 71.6385,
+      "division": 3,
+      "cycle_utility": 93.06,
+      "aggregate_utility": 93.06
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 5,
+    "finding_count": 4,
     "top_findings": [
       {
-        "summary": "拡張した機能群を獲得元別の継続・有料転換へ結ぶ一次証拠がない",
+        "summary": "価格・プライバシーの深いURLが同一ホームページHTMLとルートcanonicalへ集約される",
         "severity": "p1",
         "business_dimensions": [
+          "go_to_market",
+          "trust_risk",
+          "revenue_model"
+        ]
+      },
+      {
+        "summary": "確認済みプラン価格がsubscription-billingの静的応答に存在しない",
+        "severity": "p1",
+        "business_dimensions": [
+          "revenue_model",
+          "go_to_market",
+          "customer_pain"
+        ]
+      },
+      {
+        "summary": "privacy URLの静的応答が法務内容ではなくホームページ販促文を返す",
+        "severity": "p1",
+        "business_dimensions": [
+          "trust_risk",
           "market_demand",
-          "revenue_model",
           "go_to_market"
-        ]
-      },
-      {
-        "summary": "従量AI機能の利用枠をプラン別原価・粗利・回収期間へ接続できない",
-        "severity": "p1",
-        "business_dimensions": [
-          "unit_economics",
-          "revenue_model",
-          "scalability"
-        ]
-      },
-      {
-        "summary": "需要証明より先に画面とルートが増え、改善速度と回帰範囲が膨らんでいる",
-        "severity": "p2",
-        "business_dimensions": [
-          "scalability",
-          "unit_economics",
-          "founder_execution"
         ]
       }
     ],
@@ -70,15 +70,15 @@
         "relevant": 100
       },
       "gate_passed": true,
-      "baseline_cycle_id": "20260826T220910+0900",
+      "baseline_cycle_id": "20260827T214913+0900",
       "focus_dimension": "complete",
       "overall_delta": 0.0,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "Measure one anonymous cohort by acquisition source and primary feature for D7/D30 retention, paid conversion, and contribution margin, then compare the leading cell with the overall rate."
+      "next_cycle_experiment": "Serve route-specific static HTML for subscription-billing and privacy, then compare URL-level search impressions, shared-link entry, checkout starts, and registration continuation for 30 days."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4936 追跡中",
+      "label": "未対策・Issue #4944 追跡中",
       "detail": "提案のみで、対策実施の記録はありません。",
       "summary": "",
       "files": [],
@@ -86,29 +86,122 @@
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: fast-forwarded to origin/main 8fd85d07c",
-        "passed: 3 fixed routes, HTTP 200 and SEO markers",
+        "passed: clean at origin/main 3d518eef9965c7a55a386e5b84e981b9723cd658",
+        "passed: 3 fixed routes returned HTTP 200 and required SEO-shell markers",
         "passed: 125 profiles",
-        "passed: 125 personas"
+        "passed: 125 personas",
+        "passed: evidence locations and protected boundaries recorded"
       ],
       "issue": {
-        "number": 4936,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4936",
+        "number": 4944,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4944",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-site-review:20260827T214913+0900:whole_site"
+        "dedupe_key": "tiger-site-review:20260828T011400+0900:whole_site"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "site-expansion-retention-paid-proof-gap",
-        "site-metered-ai-margin-gap",
-        "site-surface-sprawl-cost",
-        "site-billing-error-disclosure-boundary",
-        "site-differentiation-outcome-proof-gap"
+        "site-deep-route-canonical-collapse",
+        "site-pricing-prequalification-shell-gap",
+        "site-privacy-trust-shell-gap",
+        "site-public-route-prerender-coverage-gap"
       ]
     }
   },
   "history": [
+    {
+      "cycle_id": "20260828T011400+0900",
+      "started_at": "2026-08-28T01:14:00+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 32,
+        "name": "高澤 有紀",
+        "selection_score": 71.6385
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260827T214913+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Serve route-specific static HTML for subscription-billing and privacy, then compare URL-level search impressions, shared-link entry, checkout starts, and registration continuation for 30 days."
+      },
+      "findings": [
+        {
+          "finding_id": "site-deep-route-canonical-collapse",
+          "summary": "価格・プライバシーの深いURLが同一ホームページHTMLとルートcanonicalへ集約される",
+          "severity": "p1",
+          "suggested_action": "価格・法務の内容所有者と公開境界を確認し、各固定URLへ固有title、description、canonical、OG URL、主要本文を持つ静的応答を追加する。"
+        },
+        {
+          "finding_id": "site-pricing-prequalification-shell-gap",
+          "summary": "確認済みプラン価格がsubscription-billingの静的応答に存在しない",
+          "severity": "p1",
+          "suggested_action": "価格決定を変更せず、承認済みFree・Pro・Team・支援プラン情報と決済・解約の信頼境界をroute固有の静的シェルへ反映する。"
+        },
+        {
+          "finding_id": "site-privacy-trust-shell-gap",
+          "summary": "privacy URLの静的応答が法務内容ではなくホームページ販促文を返す",
+          "severity": "p1",
+          "suggested_action": "法務所有者が承認した現行ポリシーを唯一のソースとして、privacy URLの初期HTMLにも固有見出し、概要、canonical、本文到達性を持たせる。"
+        },
+        {
+          "finding_id": "site-public-route-prerender-coverage-gap",
+          "summary": "既存prerender基盤の対象から主要な収益・信頼URLが外れている",
+          "severity": "p2",
+          "suggested_action": "公開route manifestへ収益・信頼journeyの所有区分と必須SEO契約を追加し、生成物とproduction probeでroute固有性を回帰検証する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4944 追跡中",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main 3d518eef9965c7a55a386e5b84e981b9723cd658",
+          "passed: 3 fixed routes returned HTTP 200 and required SEO-shell markers",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: evidence locations and protected boundaries recorded"
+        ],
+        "issue": {
+          "number": 4944,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4944",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260828T011400+0900:whole_site"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-deep-route-canonical-collapse",
+          "site-pricing-prequalification-shell-gap",
+          "site-privacy-trust-shell-gap",
+          "site-public-route-prerender-coverage-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260827T214913+0900",
       "started_at": "2026-08-27T21:49:13+09:00",
