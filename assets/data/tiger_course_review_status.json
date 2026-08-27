@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-26T14:20:42.305940+00:00",
+  "generated_at": "2026-08-27T14:52:44.020475+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -11,12 +11,12 @@
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 8,
-    "eligible": 8,
-    "provisional": 6,
+    "total": 9,
+    "eligible": 9,
+    "provisional": 7,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 7,
+    "division_3": 8,
     "division_4": 1,
     "division_5": 0
   },
@@ -28,50 +28,50 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260826T230834+0900",
-    "started_at": "2026-08-26T23:08:34+09:00",
+    "cycle_id": "20260827T232859+0900",
+    "started_at": "2026-08-27T23:28:59+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
-      "url": "https://huggingface.co/adept/fuyu-8b"
+      "slug": "course-746a2878-6a2d-4787-91e2-1778ebdda8ce",
+      "url": "https://developer.adobe.com/firefly-api/"
     },
     "reviewer": {
       "seat": 12,
       "name": "迫 佑樹",
-      "selection_score": 76.6278,
+      "selection_score": 77.2379,
       "division": 1,
-      "cycle_utility": 82.83,
-      "aggregate_utility": 85.16
+      "cycle_utility": 82.92,
+      "aggregate_utility": 86.3
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "講座名は『モデル一覧 (2026年)』を約束するが、選択先は2023年公開・最終更新のFuyu-8B単一モデルカードで、2026年時点の一覧や現行提供状況を裏づけない。",
+        "summary": "講座名はAPI利用方法を約束するが、公開教材はClient IDとClient Secretを安全なserver-side OAuth経路だけで扱う必須境界を教えていない。",
         "severity": "p1",
         "business_dimensions": [
           "trust_risk",
           "market_demand",
-          "unit_economics"
-        ]
-      },
-      {
-        "summary": "モデルカードには推論例があるが、講座としての固定環境、入力サイズ、必要GPU・メモリ、実行時間、費用、成功・失敗判定を持つ小規模実習がない。",
-        "severity": "p1",
-        "business_dimensions": [
-          "market_demand",
-          "unit_economics",
           "scalability"
         ]
       },
       {
-        "summary": "実在学習者がライセンス、現行性、モデル制約、再現手順を正しく判断できた証拠と、誰が何の成果に支払うかを示す講座固有データがない。",
+        "summary": "公式のGenerate Image実習は教育用でproduction-readyではないと明記される一方、講座にはversioned endpoint、error handling、logging、usage budget、失敗判定を含む実運用移行課題がない。",
+        "severity": "p1",
+        "business_dimensions": [
+          "unit_economics",
+          "scalability",
+          "competitive_advantage"
+        ]
+      },
+      {
+        "summary": "実在学習者が安全な認証、API選択、失敗処理、利用量判断をできた証拠と、誰がどの成果に支払うかを示す講座固有データがない。",
         "severity": "p2",
         "business_dimensions": [
           "market_demand",
           "revenue_model",
-          "scalability"
+          "unit_economics"
         ]
       }
     ],
@@ -90,57 +90,142 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After adding a dated model inventory and a pinned small-input lab, measure source-table completion, first-run success, GPU memory, estimated cost, license classification accuracy, and completion time for one learner cohort."
+      "next_cycle_experiment": "After publishing a versioned server-side OAuth and v3 Generate Image lab, measure secret-handling rubric accuracy, first-call success, non-2xx recovery, request-volume estimate error, completion time, and support requests for one learner cohort."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4905 追跡中",
-      "detail": "主要な不一致は公開講座データのタイトル・出典・カリキュラム境界にあり、production dataと新規教材設計を伴うため共有の低リスク自動修正範囲外。",
+      "label": "未対策・Issue #4941 追跡中",
+      "detail": "主要指摘は認証secret、利用量、実運用設計を含む新規course contentと公開データの変更を必要とし、保護されたauthenticationおよびproduction data境界を含むため共有の低リスク自動修正範囲外。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [
-        "course-fuyu-2026-freshness-mismatch"
+        "course-firefly-server-auth-boundary"
       ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: fast-forwarded to origin/main f273d2253d34983f51a7996bd8a63ee05fe02a8b",
-        "passed: 125 profiles",
-        "passed: 125 personas",
+        "passed: clean at origin/main 8125bd9c0c5f59a44245bd1d7145072e683469f1",
+        "passed: 125 roster profiles and 125 personas",
         "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
         "passed: deterministic winner preserved",
-        "passed: Hugging Face HTTP 200; model card and API metadata inspected; Adept blog Cloudflare challenge disclosed",
+        "passed: Adobe auth, tutorial, capability overview, and named source/test paths inspected",
         "executed exactly once against shared history root: 125 profiles, seat 12",
-        "passed: 114 tests",
-        "passed: READY with zero missing packages and no tracked dependency changes",
-        "passed: 2 tests",
-        "passed: no diff errors and clean worktree"
+        "passed: report_only, one reviewer, three findings, CLEAR 100, Issue #4941 linked"
       ],
       "issue": {
-        "number": 4905,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4905",
+        "number": 4941,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4941",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260826T230834+0900:fbf4eab5-f695-4ab4-bc54-b72c4abec19a"
+        "dedupe_key": "tiger-course-review:20260827T232859+0900:746a2878-6a2d-4787-91e2-1778ebdda8ce"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-fuyu-reproducible-evaluation-gap",
-        "course-fuyu-learner-and-commercial-proof-gap"
+        "course-firefly-production-readiness-gap",
+        "course-firefly-learner-value-evidence-gap"
       ]
     },
     "course": {
-      "content_id": "fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
-      "provider": "adept",
-      "title": "Adept AI モデル一覧 (2026年)",
-      "source_url": "https://huggingface.co/adept/fuyu-8b",
-      "reason": "fresh公開Data APIで有効かつHTTPS出典付きの対象行を確認した。選択先のHugging FaceモデルカードはHTTP 200で、raw base model、研究用途、CC-BY-NC-4.0、用途別fine-tuningの必要性を明示する一方、API上の最終更新は2023-11-04で、2026年という講座名を裏づける現行モデル一覧、再現可能な学習環境、計算資源・費用、合格条件、実在学習者成果は確認できなかった。実在学習者証拠は契約どおり中立50点とした。",
-      "cycle_utility": 42.75,
-      "aggregate_utility": 42.75,
+      "content_id": "746a2878-6a2d-4787-91e2-1778ebdda8ce",
+      "provider": "adobe_firefly",
+      "title": "Adobe Firefly API 利用方法",
+      "source_url": "https://developer.adobe.com/firefly-api/",
+      "reason": "fresh公開Data APIで有効かつHTTPS出典付きの対象行を確認した。Adobe公式ドキュメントはserver-side OAuth、24時間access token、v3 Generate ImageのNode.js実習を示す一方、公式自身が例示コードをproduction-readyではないと明記する。公開講座側は短いprovider紹介と1問のquizに留まり、course固有の認証境界、versioned lab、失敗処理、使用量予算、合格条件、実在学習者成果を確認できなかった。実在学習者証拠は契約どおり中立50点とした。",
+      "cycle_utility": 47.75,
+      "aggregate_utility": 47.75,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260827T232859+0900",
+      "started_at": "2026-08-27T23:28:59+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "746a2878-6a2d-4787-91e2-1778ebdda8ce",
+        "title": "Adobe Firefly API 利用方法",
+        "url": "https://developer.adobe.com/firefly-api/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 77.2379
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After publishing a versioned server-side OAuth and v3 Generate Image lab, measure secret-handling rubric accuracy, first-call success, non-2xx recovery, request-volume estimate error, completion time, and support requests for one learner cohort."
+      },
+      "findings": [
+        {
+          "finding_id": "course-firefly-server-auth-boundary",
+          "summary": "講座名はAPI利用方法を約束するが、公開教材はClient IDとClient Secretを安全なserver-side OAuth経路だけで扱う必須境界を教えていない。",
+          "severity": "p1",
+          "suggested_action": "公式認証ページを出典として、server-side限定、secret非公開、24時間token更新を確認する失敗先行の認証演習と合格条件を追加する。"
+        },
+        {
+          "finding_id": "course-firefly-production-readiness-gap",
+          "summary": "公式のGenerate Image実習は教育用でproduction-readyではないと明記される一方、講座にはversioned endpoint、error handling、logging、usage budget、失敗判定を含む実運用移行課題がない。",
+          "severity": "p1",
+          "suggested_action": "v3 Generate Imageの小規模labを固定し、1件と複数件のrequest、非2xx処理、token refresh、structured logging、上限付きusage budget、production-readiness checklistを採点する。"
+        },
+        {
+          "finding_id": "course-firefly-learner-value-evidence-gap",
+          "summary": "実在学習者が安全な認証、API選択、失敗処理、利用量判断をできた証拠と、誰がどの成果に支払うかを示す講座固有データがない。",
+          "severity": "p2",
+          "suggested_action": "匿名の成果指標として、初回call成功、secret handling、API選択理由、非2xx recovery、使用量見積もり、完了時間を役割別に収集する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4941 追跡中",
+        "detail": "主要指摘は認証secret、利用量、実運用設計を含む新規course contentと公開データの変更を必要とし、保護されたauthenticationおよびproduction data境界を含むため共有の低リスク自動修正範囲外。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-firefly-server-auth-boundary"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main 8125bd9c0c5f59a44245bd1d7145072e683469f1",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
+          "passed: deterministic winner preserved",
+          "passed: Adobe auth, tutorial, capability overview, and named source/test paths inspected",
+          "executed exactly once against shared history root: 125 profiles, seat 12",
+          "passed: report_only, one reviewer, three findings, CLEAR 100, Issue #4941 linked"
+        ],
+        "issue": {
+          "number": 4941,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4941",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260827T232859+0900:746a2878-6a2d-4787-91e2-1778ebdda8ce"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-firefly-production-readiness-gap",
+          "course-firefly-learner-value-evidence-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260826T230834+0900",
       "started_at": "2026-08-26T23:08:34+09:00",
@@ -1069,6 +1154,20 @@
       "last_cycle_utility": 56.25,
       "last_reviewed_at": "2026-08-23T07:54:04+00:00",
       "reason": "講座レビュー3回・効用53.2点で3部"
+    },
+    {
+      "content_id": "746a2878-6a2d-4787-91e2-1778ebdda8ce",
+      "provider": "adobe_firefly",
+      "title": "Adobe Firefly API 利用方法",
+      "source_url": "https://developer.adobe.com/firefly-api/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 47.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 47.75,
+      "last_reviewed_at": "2026-08-27T14:28:59+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
       "content_id": "fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
