@@ -16,10 +16,10 @@ void main() {
 
       expect(catalog.schemaVersion, 2);
       expect(catalog.profilesBySeat, hasLength(125));
-      expect(catalog.enrichmentRound, greaterThanOrEqualTo(4));
+      expect(catalog.enrichmentRound, greaterThanOrEqualTo(5));
       expect(catalog.averageProfileCompletenessPercent, greaterThan(0));
       expect(catalog.averageReviewReflectionPercent, greaterThan(0));
-      expect(catalog.verifiedBirthDates, 3);
+      expect(catalog.verifiedBirthDates, 5);
       expect(catalog.nextBatchNames, hasLength(5));
       expect(catalog.profilesBySeat.keys.toSet(), hasLength(125));
       expect(
@@ -56,6 +56,23 @@ void main() {
         expect(profile.reviewReflectionMode, 'profile_balanced');
         expect(profile.evidenceLinks.length, greaterThanOrEqualTo(2));
       }
+      for (final seat in <int>[87, 88, 89, 91]) {
+        final profile = catalog.profilesBySeat[seat]!;
+        expect(profile.profileCompletenessPercent, greaterThanOrEqualTo(65));
+        expect(profile.reviewReflectionPercent, 72);
+        expect(profile.reviewReflectionMode, 'profile_balanced');
+        expect(profile.evidenceLinks.length, greaterThanOrEqualTo(2));
+      }
+      final hasebe = catalog.profilesBySeat[87]!;
+      expect(hasebe.ageLabel(DateTime(2026, 8, 26)), '51歳（2026年8月26日時点）');
+      expect(hasebe.companyRole, contains('代表取締役会長'));
+      final hikaru = catalog.profilesBySeat[89]!;
+      expect(hikaru.ageLabel(DateTime(2026, 8, 26)), '35歳（2026年8月26日時点）');
+      expect(hikaru.companyRole, contains('2025年12月'));
+      final watari = catalog.profilesBySeat[116]!;
+      expect(watari.ageLabel(DateTime(2026, 8, 26)), '公開情報未確認');
+      expect(watari.reviewReflectionMode, 'neutral_guarded');
+      expect(watari.evidenceLinks, hasLength(2));
       final kataishi = catalog.profilesBySeat[125]!;
       expect(kataishi.ageLabel(DateTime(2026, 8, 25)), '32歳（2026年8月25日時点）');
       expect(
