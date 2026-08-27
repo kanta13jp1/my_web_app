@@ -5,8 +5,9 @@ The smoke intentionally avoids production Supabase credentials. It starts a
 disposable Postgres container, applies a small migration/seed fixture, verifies
 the Issue #2773 fail-closed RLS migration, Issue #2484 asset-chat isolation,
 Issue #4091 app-analytics write boundary, and Issue #1202 voice-dubbing quota
-state machine, checks the real Edge Function import policy, Issue #2668
-note-comment authorization, and runs a Deno HTTP fixture against the container.
+state machine, Issue #1233 resource-optimizer tenant/analysis/quota contracts,
+checks the real Edge Function import policy, Issue #2668 note-comment
+authorization, and runs a Deno HTTP fixture against the container.
 Logs are written as
 artifacts so CI failures point to the migration, function, or seed boundary that
 broke.
@@ -15,12 +16,14 @@ broke.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import json
 import os
 import re
 import socket
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -113,6 +116,16 @@ VOICE_DUBBING_MIGRATION = (
 VOICE_DUBBING_CONTRACT = (
     ROOT / "supabase" / "tests" / "voice_dubbing_quota_contract.sql"
 )
+ISSUE_1233_RESOURCE_OPTIMIZER_SQL_FILES = (
+    ROOT / "supabase" / "tests" / "issue1233_resource_optimizer_bootstrap.sql",
+    ROOT / "supabase" / "migrations" / "20260412025000_create_hub_data_table.sql",
+    ROOT / "supabase" / "migrations" / "20260327000012_create_daily_habits.sql",
+    ROOT / "supabase" / "migrations" / "20260721235500_add_habit_resource_optimization.sql",
+    ROOT / "supabase" / "migrations" / "20260827040000_resource_optimizer_ai_quota.sql",
+    ROOT / "supabase" / "tests" / "issue1233_resource_optimizer_contract.sql",
+)
+ISSUE_1233_REAPPLIED_MIGRATIONS = ISSUE_1233_RESOURCE_OPTIMIZER_SQL_FILES[3:5]
+ISSUE_1233_CONCURRENT_USER = "00000000-0000-4000-8000-000000001235"
 VIDEO_ARTIFACT_SQL_FILES = (
     ROOT / "supabase" / "tests" / "video_service_bootstrap.sql",
     ROOT / "supabase" / "migrations" / "20260819165405_create_first_party_video_service.sql",
@@ -395,6 +408,22 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "TTL reconciliation bills started chunks and releases unstarted chunks",
             "over-limit claims create no job and consume no additional quota",
         ],
+        "issue_1233_resource_optimizer_sql": [
+            path.relative_to(ROOT).as_posix()
+            for path in ISSUE_1233_RESOURCE_OPTIMIZER_SQL_FILES
+        ],
+        "issue_1233_resource_optimizer_checks": [
+            "both Issue #1233 migrations apply twice in the disposable database",
+            "two authenticated users see and mutate only their own habits, logs, "
+            "goals, and AI quota",
+            "PUBLIC and anon cannot execute either resource-optimizer RPC",
+            "habit-default proxy rows are excluded from analysis",
+            "correlations and Pareto remain disabled below seven samples or without variance",
+            "seven varied self-reported samples enable correlations and Pareto",
+            "parallel AI quota consumes at the daily boundary are atomic with "
+            "exactly one winner",
+            "cooldown and ten-request UTC daily limit do not affect another user",
+        ],
         "video_artifact_contract": [
             path.relative_to(ROOT).as_posix() for path in VIDEO_ARTIFACT_SQL_FILES
         ],
@@ -436,6 +465,65 @@ def apply_sql_fixture(conn: Any, path: Path, artifacts_dir: Path) -> None:
                 cur.execute(statement)
         conn.commit()
         log.write("ok\n")
+
+
+def check_issue_1233_ai_quota_concurrency(
+    conn: Any,
+    connection_url: str,
+    connect: Any,
+) -> dict[str, Any]:
+    """Race two authenticated consumes and require exactly one quota winner."""
+
+    barrier = threading.Barrier(2)
+
+    def consume_once() -> tuple[bool, str, int, int]:
+        with connect(connection_url, connect_timeout=10) as worker_conn:
+            with worker_conn.cursor() as cur:
+                cur.execute("set role authenticated")
+                cur.execute(
+                    "select set_config('request.jwt.claim.sub', %s, false)",
+                    (ISSUE_1233_CONCURRENT_USER,),
+                )
+                cur.execute(
+                    "select set_config('request.jwt.claim.role', 'authenticated', false)"
+                )
+                barrier.wait(timeout=10)
+                cur.execute(
+                    "select allowed, reason, remaining_daily, retry_after_seconds "
+                    "from public.consume_resource_optimizer_ai_quota()"
+                )
+                row = cur.fetchone()
+                if row is None:
+                    raise AssertionError("Issue #1233 quota RPC returned no row")
+                return bool(row[0]), str(row[1]), int(row[2]), int(row[3])
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [executor.submit(consume_once) for _ in range(2)]
+        results = [future.result(timeout=30) for future in futures]
+
+    allowed = [result for result in results if result[0]]
+    denied = [result for result in results if not result[0]]
+    if len(allowed) != 1 or allowed[0][1:] != ("allowed", 0, 0):
+        raise AssertionError(f"Issue #1233 concurrent allowed results mismatch: {results}")
+    if len(denied) != 1 or denied[0][1:] != ("daily_limit", 0, 0):
+        raise AssertionError(f"Issue #1233 concurrent denial mismatch: {results}")
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "select request_count from public.resource_optimizer_ai_quota "
+            "where user_id = %s::uuid "
+            "and usage_date = timezone('UTC', clock_timestamp())::date",
+            (ISSUE_1233_CONCURRENT_USER,),
+        )
+        row = cur.fetchone()
+    if row is None or int(row[0]) != 10:
+        raise AssertionError(f"Issue #1233 concurrent quota ledger mismatch: {row}")
+
+    return {
+        "allowed": len(allowed),
+        "daily_limit": len(denied),
+        "request_count": int(row[0]),
+    }
 
 
 def seed_ai_university_legacy_fixture(conn: Any) -> None:
@@ -2349,6 +2437,34 @@ def run_smoke(args: argparse.Namespace) -> int:
             apply_sql_fixture(conn, VOICE_DUBBING_MIGRATION, artifacts_dir)
             apply_sql_fixture(conn, VOICE_DUBBING_MIGRATION, artifacts_dir)
             apply_sql_fixture(conn, VOICE_DUBBING_CONTRACT, artifacts_dir)
+            apply_sql_fixture(
+                conn,
+                ISSUE_1233_RESOURCE_OPTIMIZER_SQL_FILES[0],
+                artifacts_dir,
+            )
+            apply_sql_fixture(
+                conn,
+                ISSUE_1233_RESOURCE_OPTIMIZER_SQL_FILES[1],
+                artifacts_dir,
+            )
+            apply_sql_fixture(
+                conn,
+                ISSUE_1233_RESOURCE_OPTIMIZER_SQL_FILES[2],
+                artifacts_dir,
+            )
+            for migration in ISSUE_1233_REAPPLIED_MIGRATIONS:
+                apply_sql_fixture(conn, migration, artifacts_dir)
+                apply_sql_fixture(conn, migration, artifacts_dir)
+            apply_sql_fixture(
+                conn,
+                ISSUE_1233_RESOURCE_OPTIMIZER_SQL_FILES[-1],
+                artifacts_dir,
+            )
+            issue_1233_quota_concurrency = check_issue_1233_ai_quota_concurrency(
+                conn,
+                connection_url,
+                psycopg.connect,
+            )
             apply_sql_fixture(conn, ASSET_CHAT_MIGRATION, artifacts_dir)
             seed_asset_chat_fixture(conn)
             asset_chat_rls = check_asset_chat_rls(conn)
@@ -2373,6 +2489,8 @@ def run_smoke(args: argparse.Namespace) -> int:
             "tax_records_rls": tax_records_rls,
             "ai_university": ai_university,
             "voice_dubbing_quota_contract": "passed",
+            "issue_1233_resource_optimizer_contract": "passed",
+            "issue_1233_ai_quota_concurrency": issue_1233_quota_concurrency,
             "video_artifact_contract": "passed",
         },
         "edge_fixture": {

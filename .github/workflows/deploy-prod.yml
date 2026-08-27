@@ -718,7 +718,7 @@ jobs:
             fi
           }
 
-          # --- Standalone (5本: 複雑すぎてhub統合困難) ---
+          # --- Standalone (7本: 複雑すぎてhub統合困難) ---
           # local-election-intelligence は line 275 にあり (並び順維持のため)
           deploy_function get-home-dashboard --no-verify-jwt
           deploy_function ai-assistant --no-verify-jwt
@@ -728,6 +728,9 @@ jobs:
           # Owner-only Notion inventory. Browser JWT + user_profiles.is_admin
           # are both checked in-function before NOTION_API_TOKEN is used.
           deploy_function notion-migration-hub --no-verify-jwt
+          # User JWT is verified at the gateway and again in-function. The
+          # caller's JWT is forwarded to the security-invoker/RLS RPC.
+          deploy_function resource-optimizer
 
           # --- Macro-Hub (6本: 旧Tier1全統合) ---
           deploy_function core-hub --no-verify-jwt
@@ -769,7 +772,7 @@ jobs:
           deploy_function memory-search-hub --no-verify-jwt
           deploy_function mcp-well-known --no-verify-jwt
 
-          # Total: 26 functions deployed (ハードキャップ50本に対し26本 — 余裕24本)
+          # Total: 30 functions deployed (ハードキャップ50本に対し30本 — 余裕20本)
           # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
           #
           # Hub対応表:

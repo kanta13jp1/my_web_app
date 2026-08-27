@@ -196,6 +196,11 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/mcp-well-known/index.ts"
 
+[functions.resource-optimizer]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/resource-optimizer/index.ts"
+
 [functions.autonomous-ops]
 enabled = true
 # Browser-facing: deployed with --no-verify-jwt; owner auth is enforced in-function
