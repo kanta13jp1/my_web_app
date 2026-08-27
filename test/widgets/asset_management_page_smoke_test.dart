@@ -2547,6 +2547,65 @@ void main() {
     );
 
     testWidgets(
+      'subscription delete confirms history retention and records tombstone',
+      (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetRecurringFixedCostStore.prefsKey: jsonEncode(
+            AssetRecurringFixedCostStore.encodeMirrorValue(
+              const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'sub_xbox',
+                  name: 'Xbox Game Pass',
+                  amount: 1550,
+                  paymentDay: 7,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+              ],
+            ),
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 3000));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await _pumpAssetPage(tester);
+        final deleteButton = find.byTooltip('Xbox Game Pass を削除');
+        expect(deleteButton, findsOneWidget);
+        await tester.ensureVisible(deleteButton);
+        await tester.tap(deleteButton);
+        await tester.pump(const Duration(milliseconds: 100));
+
+        expect(find.text('サブスクを削除'), findsOneWidget);
+        expect(find.textContaining('月額 ¥1,550'), findsOneWidget);
+        expect(find.textContaining('過去の月次履歴・取引履歴は残ります'), findsOneWidget);
+        await tester.tap(find.widgetWithText(TextButton, 'キャンセル'));
+        await tester.pump(const Duration(milliseconds: 100));
+        final afterCancel = await const AssetRecurringFixedCostStore().load();
+        expect(
+          afterCancel.map((cost) => cost.id),
+          contains('sub_xbox'),
+        );
+
+        await tester.tap(deleteButton);
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.tap(find.widgetWithText(FilledButton, '削除'));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final afterDelete = await const AssetRecurringFixedCostStore().load();
+        expect(
+          afterDelete.map((cost) => cost.id),
+          isNot(contains('sub_xbox')),
+        );
+        final preferences = await SharedPreferences.getInstance();
+        const tombstones = MirrorTombstoneStore(
+          storageKey: 'recurring_fixed_costs_deleted_v1',
+        );
+        expect(tombstones.activeIds(preferences), contains('sub_xbox'));
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
       'tombstoned recurring fixed cost is not resurfaced when the server '
       'mirror still contains it',
       (tester) async {

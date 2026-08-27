@@ -6966,22 +6966,66 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return balances;
   }
 
+  List<AssetObsidianExistingSubscription>
+      _obsidianImportExistingSubscriptions() {
+    return <AssetObsidianExistingSubscription>[
+      for (final cost in _recurringFixedCosts)
+        if (cost.category == AssetRecurringFixedCostCategory.subscription)
+          AssetObsidianExistingSubscription(
+            id: cost.id,
+            name: cost.name,
+            amount: cost.amount,
+          ),
+    ];
+  }
+
   Future<void> _showObsidianVaultImportDialog() async {
-    final importedCount = await showDialog<int>(
+    final imported = await showDialog<AssetObsidianApplySelection>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AssetObsidianVaultImportDialog(
         existingBalances: _obsidianImportExistingBalances(),
-        onApply: _applyObsidianVaultBalances,
+        existingSubscriptions: _obsidianImportExistingSubscriptions(),
+        onApply: _applyObsidianVaultSelection,
       ),
     );
-    if (!mounted || importedCount == null || importedCount == 0) return;
+    if (!mounted || imported == null || imported.totalCount == 0) return;
+    final summaries = <String>[
+      if (imported.balances.isNotEmpty) '残高${imported.balances.length}件を反映',
+      if (imported.subscriptionCancellations.isNotEmpty)
+        '解約済みサブスク${imported.subscriptionCancellations.length}件を削除',
+    ];
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('✅ Obsidian保管庫から$importedCount件の残高を反映しました'),
+        content: Text('✅ Obsidian保管庫から${summaries.join('、')}しました'),
         backgroundColor: const Color(0xFF047857),
       ),
     );
+  }
+
+  Future<void> _applyObsidianVaultSelection(
+    AssetObsidianApplySelection selection,
+  ) async {
+    if (selection.balances.isNotEmpty) {
+      await _applyObsidianVaultBalances(selection.balances);
+    }
+    if (selection.subscriptionCancellations.isEmpty) return;
+
+    final selectedIds = selection.subscriptionCancellations
+        .map((candidate) => candidate.matchedSubscriptionId)
+        .whereType<String>()
+        .toSet();
+    final subscriptions = _recurringFixedCosts
+        .where(
+          (cost) =>
+              cost.category == AssetRecurringFixedCostCategory.subscription &&
+              selectedIds.contains(cost.id),
+        )
+        .toList(growable: false);
+    if (subscriptions.length != selectedIds.length) {
+      throw StateError('削除候補が現在のサブスク登録と一致しません。再読込してください。');
+    }
+    await _deleteRecurringFixedCosts(subscriptions);
   }
 
   /// 確認済みのObsidian残高だけを本日のスナップショットとして一括保存する。
@@ -11616,19 +11660,37 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_mirrorRecurringFixedCosts());
   }
 
-  void _deleteRecurringFixedCost(AssetRecurringFixedCost cost) {
-    setState(() {
-      _recurringFixedCosts = _recurringFixedCosts
-          .where((existing) => existing.id != cost.id)
-          .toList();
-    });
-    _persistInBackground(
-      _recurringFixedCostStore.save(_recurringFixedCosts),
-      'recurring fixed cost delete',
-    );
-    // 削除をトゥームストーン化して他端末へ伝播 (union/backfill で復活させない)。
-    unawaited(_recordRecurringFixedCostTombstone(cost.id, deleted: true));
-    unawaited(_mirrorRecurringFixedCosts());
+  Future<void> _deleteRecurringFixedCosts(
+    Iterable<AssetRecurringFixedCost> costs,
+  ) async {
+    final ids = costs
+        .map((cost) => cost.id)
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    if (ids.isEmpty) return;
+    final next = _recurringFixedCosts
+        .where((existing) => !ids.contains(existing.id))
+        .toList(growable: false);
+    if (next.length == _recurringFixedCosts.length) return;
+
+    await _recurringFixedCostStore.save(next);
+    final store = await SharedPreferences.getInstance();
+    for (final id in ids) {
+      await _recurringFixedCostTombstones.addId(store, id);
+    }
+    if (mounted) {
+      setState(() => _recurringFixedCosts = next);
+    } else {
+      _recurringFixedCosts = next;
+    }
+    await Future.wait(<Future<void>>[
+      _mirrorRecurringFixedCostsDeleted(),
+      _mirrorRecurringFixedCosts(),
+    ]);
+  }
+
+  Future<void> _deleteRecurringFixedCost(AssetRecurringFixedCost cost) {
+    return _deleteRecurringFixedCosts(<AssetRecurringFixedCost>[cost]);
   }
 
   Future<void> _openRecurringFixedCostEditor({
@@ -11658,11 +11720,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _confirmDeleteRecurringFixedCost(
     AssetRecurringFixedCost cost,
   ) async {
+    final isSubscription =
+        cost.category == AssetRecurringFixedCostCategory.subscription;
+    final formattedMonthlyAmount =
+        NumberFormat('#,##0').format(cost.amount.round());
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('定期固定費を削除'),
-        content: Text('「${cost.name}」を削除しますか?'),
+        title: Text(isSubscription ? 'サブスクを削除' : '定期固定費を削除'),
+        content: Text(
+          isSubscription
+              ? '「${cost.name}」（月額 ¥$formattedMonthlyAmount）を現在のサブスクから'
+                  '削除しますか？過去の月次履歴・取引履歴は残ります。'
+              : '「${cost.name}」を削除しますか？',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -11676,7 +11747,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
     );
     if (confirmed == true) {
-      _deleteRecurringFixedCost(cost);
+      await _deleteRecurringFixedCost(cost);
     }
   }
 

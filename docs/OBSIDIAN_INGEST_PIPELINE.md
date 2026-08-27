@@ -117,3 +117,22 @@ read, insert, and update only their own staging rows and cannot delete them.
 - Import selected note bodies through a separately approved, encrypted path.
 - Complete the seven Notion parity checks before any Notion deletion or
   subscription cancellation.
+
+## Asset Management Vault Import
+
+The asset-management page reads a selected local vault entirely in the
+browser. It supports balance tables and explicit subscription cancellation
+tables. A cancellation table is recognized only inside a Markdown section
+whose heading contains `解約` or `停止済み`, with the columns `サービス名`,
+`終了日 / 停止日`, and `状態`.
+
+Only rows explicitly marked `解約完了`, `解約済み`, `停止済み`, `停止完了`,
+`終了済み`, or `終了完了` are considered. The page previews exact matches
+against currently registered recurring subscriptions. Missing and ambiguous
+matches remain read-only and are never deleted. Absence from the vault is not
+interpreted as cancellation.
+
+After final confirmation, selected matches are removed from current recurring
+fixed costs and written to the existing deletion-tombstone mirror so another
+device cannot restore them. Historical monthly and transaction records remain
+unchanged. Markdown bodies and local file paths are not uploaded.
