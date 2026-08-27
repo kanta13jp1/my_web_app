@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-27T19:37:28.808557+00:00",
+  "generated_at": "2026-08-27T22:49:55.838029+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -29,50 +29,41 @@
     "operating_efficiency": 10
   },
   "latest_review": {
-    "cycle_id": "20260828T042953+0900",
-    "started_at": "2026-08-28T04:29:53+09:00",
+    "cycle_id": "20260828T074605+0900",
+    "started_at": "2026-08-28T07:46:05+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "horse_racing",
-      "url": "https://my-web-app-b67f4.web.app/horse-racing"
+      "slug": "schedule_hub",
+      "url": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub"
     },
     "reviewer": {
-      "seat": 49,
-      "name": "岩井良明",
-      "selection_score": 68.4108,
-      "division": 3,
-      "cycle_utility": 91.33,
-      "aggregate_utility": 91.33
+      "seat": 11,
+      "name": "野口 功司",
+      "selection_score": 68.5457,
+      "division": 1,
+      "cycle_utility": 93.62,
+      "aggregate_utility": 90.81
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 3,
+    "finding_count": 2,
     "top_findings": [
       {
-        "summary": "AIの賭け目を『特におすすめ』として提示する一方、損失可能性・非保証・利用上限を同じ判断面で説明していない",
+        "summary": "通常のログイン利用者がowner資格情報を使う公開・更新・削除actionへ到達できる認可境界になっている",
         "severity": "p0",
         "business_dimensions": [
           "trust_risk",
-          "customer_pain",
+          "unit_economics",
           "revenue_model"
         ]
       },
       {
-        "summary": "的中率と払戻額を前面に出すが、賭金正規化ROI、期間、母数品質、予測確率の較正を同時に示していない",
+        "summary": "53 actionのside effectと認可levelを結ぶ完全なcontractがなく、新規actionが暗黙にuser権限になる",
         "severity": "p1",
         "business_dimensions": [
-          "trust_risk",
-          "unit_economics",
-          "competitive_advantage"
-        ]
-      },
-      {
-        "summary": "3,719行の単一ページが予想・学習・馬券記録・表示を担うが、同ページを直接扱うwidget testがない",
-        "severity": "p2",
-        "business_dimensions": [
           "scalability",
-          "founder_execution",
-          "trust_risk"
+          "trust_risk",
+          "unit_economics"
         ]
       }
     ],
@@ -91,48 +82,127 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After owner-reviewed risk wording and ROI instrumentation are available, compare acknowledgement, budget-setting, calibrated error, ROI by bet type, and seven-day repeat use for four weeks."
+      "next_cycle_experiment": "After an owner-reviewed fail-closed action registry and handler authorization matrix are deployed, require sensitive-action rejection at 100%, unclassified actions at zero, and incident-free operation for four weeks."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4946 追跡中",
-      "detail": "提案のみで、対策実施の記録はありません。",
+      "label": "未対策・Issue #4948 追跡中",
+      "detail": "The finding requires protected authentication and authorization policy changes, which are outside automatic modification scope.",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: 125 roster entries",
-        "passed: 125 personas",
-        "passed: HTTP 200, 3,719 source lines, recommendation and payout evidence captured, no direct widget test",
-        "passed: clean dedicated worktree before report publication"
+        "passed: clean at origin/main 5098469613d7e8b78ed374d797ebbe9aa15fc702",
+        "passed: 125 roster profiles and 125 personas",
+        "passed: deterministic winner schedule_hub",
+        "passed: 4,663 lines, 53 actions, owner-mutation authorization evidence captured",
+        "executed exactly once: 125 profiles, seat 11"
       ],
       "issue": {
-        "number": 4946,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4946",
+        "number": 4948,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4948",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260828T042953+0900:horse_racing"
+        "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "horse-racing-risk-framing-gap",
-        "horse-racing-calibration-economics-gap",
-        "horse-racing-regression-coverage-gap"
+        "schedule-hub-owner-mutation-auth-boundary",
+        "schedule-hub-auth-classification-drift"
       ]
     },
     "feature": {
-      "slug": "horse_racing",
-      "title": "horse_racing",
-      "kind": "page",
-      "reason": "The deterministic configured-feature selector chose horse_racing; no production usage or calibration analytics were available, so observed usage remains the neutral score of 50.",
-      "cycle_utility": 60.4,
-      "aggregate_utility": 60.4,
+      "slug": "schedule_hub",
+      "title": "schedule-hub",
+      "kind": "edge_function",
+      "reason": "The deterministic selector chose schedule_hub. A fresh bounded scan measured 53 actions in a 4,663-line privileged handler and found owner-token publication and destructive actions falling through to ordinary user authorization; production analytics were unavailable, so observed usage is neutral 50.",
+      "cycle_utility": 60.35,
+      "aggregate_utility": 60.35,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260828T074605+0900",
+      "started_at": "2026-08-28T07:46:05+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "schedule_hub",
+        "title": "schedule-hub",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 68.5457
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After an owner-reviewed fail-closed action registry and handler authorization matrix are deployed, require sensitive-action rejection at 100%, unclassified actions at zero, and incident-free operation for four weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "schedule-hub-owner-mutation-auth-boundary",
+          "summary": "通常のログイン利用者がowner資格情報を使う公開・更新・削除actionへ到達できる認可境界になっている",
+          "severity": "p0",
+          "suggested_action": "全53 actionをside-effect classで明示列挙し、owner tokenまたはservice-role mutationを伴うactionをservice_roleへfail-closedで分類し、匿名・一般user・service roleのhandler-level認可matrixを追加する。"
+        },
+        {
+          "finding_id": "schedule-hub-auth-classification-drift",
+          "summary": "53 actionのside effectと認可levelを結ぶ完全なcontractがなく、新規actionが暗黙にuser権限になる",
+          "severity": "p1",
+          "suggested_action": "action registryへauth levelとside-effect categoryを同居させ、switch case集合との完全一致、未知action拒否、全mutationのservice-roleまたは明示user ownershipを機械検証する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4948 追跡中",
+        "detail": "The finding requires protected authentication and authorization policy changes, which are outside automatic modification scope.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main 5098469613d7e8b78ed374d797ebbe9aa15fc702",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: deterministic winner schedule_hub",
+          "passed: 4,663 lines, 53 actions, owner-mutation authorization evidence captured",
+          "executed exactly once: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 4948,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4948",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "schedule-hub-owner-mutation-auth-boundary",
+          "schedule-hub-auth-classification-drift"
+        ]
+      }
+    },
     {
       "cycle_id": "20260828T042953+0900",
       "started_at": "2026-08-28T04:29:53+09:00",
@@ -985,6 +1055,22 @@
       "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
+      "slug": "schedule_hub",
+      "kind": "edge_function",
+      "title": "schedule-hub",
+      "path": "",
+      "source": "supabase/functions/schedule-hub/index.ts",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 60.35,
+      "completed_cycles": 1,
+      "last_cycle_utility": 60.35,
+      "last_reviewed_at": "2026-08-27T22:46:05+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
       "slug": "admin_analytics",
       "kind": "page",
       "title": "admin_analytics",
@@ -1039,22 +1125,6 @@
       "path": "/philosophy",
       "source": "lib/pages/philosophy_page.dart",
       "priority": "medium",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "last_cycle_utility": null,
-      "last_reviewed_at": null,
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
-    },
-    {
-      "slug": "schedule_hub",
-      "kind": "edge_function",
-      "title": "schedule-hub",
-      "path": "",
-      "source": "supabase/functions/schedule-hub/index.ts",
-      "priority": "high",
       "division": 3,
       "provisional": true,
       "eligible": true,
