@@ -10,8 +10,8 @@ import '../models/tiger_review_lane_status.dart';
 import '../models/tiger_reviewer_profile.dart';
 
 typedef TigerLaneStatusLoader = Future<TigerReviewLaneStatus> Function();
-typedef TigerReviewerProfileLoader =
-    Future<TigerReviewerProfileCatalog> Function();
+typedef TigerReviewerProfileLoader = Future<TigerReviewerProfileCatalog>
+    Function();
 
 @visibleForTesting
 const int tigerReviewerProfileSchemaVersion = 3;
@@ -24,7 +24,8 @@ Uri buildTigerReviewAssetUri(
   Uri base,
   String asset, {
   required int schemaVersion,
-}) => base.resolve('assets/$asset?review_status_schema=$schemaVersion');
+}) =>
+    base.resolve('assets/$asset?review_status_schema=$schemaVersion');
 
 enum TigerReviewLane {
   reviewers(
@@ -150,10 +151,10 @@ class _TigerReviewLaneStatusPageState extends State<TigerReviewLaneStatusPage> {
           ).then(TigerReviewLaneStatus.fromJsonString);
     final profilesFuture = widget.kind == TigerReviewLane.reviewers
         ? (widget.profileLoader?.call() ??
-              _loadAsset(
-                'assets/data/tiger_reviewer_profiles.json',
-                schemaVersion: tigerReviewerProfileSchemaVersion,
-              ).then(TigerReviewerProfileCatalog.fromJsonString))
+            _loadAsset(
+              'assets/data/tiger_reviewer_profiles.json',
+              schemaVersion: tigerReviewerProfileSchemaVersion,
+            ).then(TigerReviewerProfileCatalog.fromJsonString))
         : Future<TigerReviewerProfileCatalog?>.value();
     final status = await statusFuture;
     final profiles = await profilesFuture;
@@ -298,7 +299,9 @@ class _LaneContent extends StatelessWidget {
                             const SizedBox(height: 18),
                             Text(
                               _entriesTitle(kind),
-                              style: Theme.of(context).textTheme.titleLarge
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
                                   ?.copyWith(fontWeight: FontWeight.w800),
                             ),
                             const SizedBox(height: 8),
@@ -333,8 +336,7 @@ class _LaneContent extends StatelessWidget {
                         24,
                       ),
                       sliver: SliverToBoxAdapter(
-                        child:
-                            status.disclaimer.isEmpty &&
+                        child: status.disclaimer.isEmpty &&
                                 (profiles?.disclaimer.isEmpty ?? true)
                             ? const SizedBox.shrink()
                             : Column(
@@ -414,9 +416,8 @@ class _HistoryEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subject = entry.subject.title.isNotEmpty
-        ? entry.subject.title
-        : entry.subject.id;
+    final subject =
+        entry.subject.title.isNotEmpty ? entry.subject.title : entry.subject.id;
     final reviewer = entry.reviewer.name.isEmpty
         ? '担当虎の記録なし'
         : '${entry.reviewer.name}（席 ${entry.reviewer.seat ?? '—'}）';
@@ -610,8 +611,8 @@ class _Hero extends StatelessWidget {
                   child: Text(
                     kind.title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
+                          fontWeight: FontWeight.w900,
+                        ),
                   ),
                 ),
                 Chip(label: Text(active ? '稼働中' : status.automation.status)),
@@ -1034,11 +1035,11 @@ class _ProfileFact extends StatelessWidget {
 }
 
 String _entriesTitle(TigerReviewLane kind) => switch (kind) {
-  TigerReviewLane.reviewers => '虎レビュアー 1〜5部',
-  TigerReviewLane.courses => 'AI大学講座 1〜5部',
-  TigerReviewLane.features => '機能 1〜5部',
-  TigerReviewLane.site => '',
-};
+      TigerReviewLane.reviewers => '虎レビュアー 1〜5部',
+      TigerReviewLane.courses => 'AI大学講座 1〜5部',
+      TigerReviewLane.features => '機能 1〜5部',
+      TigerReviewLane.site => '',
+    };
 
 Map<String, dynamic> _asMap(Object? value) {
   return value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{};

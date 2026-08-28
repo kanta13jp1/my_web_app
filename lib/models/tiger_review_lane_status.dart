@@ -48,9 +48,8 @@ class TigerReviewLaneStatus {
     };
     final rawEntries = listKey == null ? const <dynamic>[] : json[listKey];
     return TigerReviewLaneStatus(
-      schemaVersion: json['schema_version'] is int
-          ? json['schema_version'] as int
-          : 0,
+      schemaVersion:
+          json['schema_version'] is int ? json['schema_version'] as int : 0,
       lane: lane,
       generatedAt: DateTime.tryParse(json['generated_at']?.toString() ?? ''),
       publicationState: json['publication_state']?.toString() ?? '',
@@ -66,9 +65,9 @@ class TigerReviewLaneStatus {
       ).map(TigerReviewHistoryEntry.fromJson).toList(growable: false),
       entries: rawEntries is List
           ? rawEntries
-                .whereType<Map>()
-                .map((entry) => Map<String, dynamic>.from(entry))
-                .toList(growable: false)
+              .whereType<Map>()
+              .map((entry) => Map<String, dynamic>.from(entry))
+              .toList(growable: false)
           : const <Map<String, dynamic>>[],
       disclaimer: json['disclaimer']?.toString() ?? '',
     );
