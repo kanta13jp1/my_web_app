@@ -255,6 +255,7 @@ import 'package:my_web_app/pages/language_learning_page.dart';
 import 'package:my_web_app/pages/focus_capture_game_page.dart';
 import 'package:my_web_app/pages/code_playground_page.dart';
 import 'package:my_web_app/pages/real_estate_tracker_page.dart';
+import 'package:my_web_app/ui/features/local_business_map/local_business_map_feature.dart';
 import 'package:my_web_app/pages/spreadsheet_database_page.dart';
 import 'package:my_web_app/pages/changelog_manager_page.dart';
 import 'package:my_web_app/pages/release_notes_page.dart';
@@ -1527,6 +1528,10 @@ Route<dynamic> generateAppRoute(
     case '/real-estate':
       return MaterialPageRoute(
         builder: (_) => const RealEstateTrackerPage(),
+      );
+    case '/local-business-map':
+      return MaterialPageRoute(
+        builder: (_) => const LocalBusinessMapFeature(),
       );
     case '/home-iot':
       return MaterialPageRoute(
