@@ -2746,6 +2746,64 @@ void main() {
     );
 
     testWidgets(
+      'pending tombstone removal preserves a deliberately re-added subscription',
+      (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetRecurringFixedCostStore.prefsKey: jsonEncode(
+            AssetRecurringFixedCostStore.encodeMirrorValue(
+              const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'sub_xbox',
+                  name: 'Xbox Game Pass',
+                  amount: 1550,
+                  paymentDay: 7,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+              ],
+            ),
+          ),
+          'recurring_fixed_costs_deleted_v1': jsonEncode(
+            const <Map<String, String>>[
+              <String, String>{
+                'id': 'sub_xbox',
+                'at': '2026-08-27T00:00:00.000Z',
+              },
+            ],
+          ),
+          AssetSyncDirtyKeysStore.prefsKey: jsonEncode(
+            const <String, List<String>>{
+              'recurring_fixed_costs_deleted': <String>['remove:sub_xbox'],
+            },
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: AssetManagementPage(
+              debugRecurringFixedCostsDeletedMirror: <String, dynamic>{
+                'ids': <String>[],
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final local = await const AssetRecurringFixedCostStore().load();
+        expect(local.map((cost) => cost.id), contains('sub_xbox'));
+        final preferences = await SharedPreferences.getInstance();
+        const tombstones = MirrorTombstoneStore(
+          storageKey: 'recurring_fixed_costs_deleted_v1',
+        );
+        expect(tombstones.activeIds(preferences), isNot(contains('sub_xbox')));
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
       'recurring fixed cost merges additively from the server mirror',
       (tester) async {
         // ローカルは fc_denki のみ。サーバは fc_denki + fc_gym を持つので、

@@ -6,9 +6,9 @@ disposable Postgres container, applies a small migration/seed fixture, verifies
 the Issue #2773 fail-closed RLS migration, Issue #2484 asset-chat isolation,
 Issue #4091 app-analytics write boundary, and Issue #1202 voice-dubbing quota
 state machine, Issue #1233 resource-optimizer tenant/analysis/quota contracts,
-Issue #4956 WBS administrator/review contracts, checks the real Edge Function
-import policy, Issue #2668 note-comment authorization, and runs a Deno HTTP
-fixture against the container.
+Issue #4956 WBS administrator/review contracts, Issue #4927 recurring-cost
+tombstone concurrency, checks the real Edge Function import policy, Issue #2668
+note-comment authorization, and runs a Deno HTTP fixture against the container.
 Logs are written as
 artifacts so CI failures point to the migration, function, or seed boundary that
 broke.
@@ -135,6 +135,15 @@ ISSUE_4956_WBS_ADMIN_REVIEW_SQL_FILES = (
     / "20260828153722_repair_wbs_admin_review_contract.sql",
     ROOT / "supabase" / "tests" / "issue4956_wbs_admin_review_contract.sql",
 )
+ISSUE_4927_RECURRING_TOMBSTONE_SQL_FILES = (
+    ROOT / "supabase" / "migrations" / "20260612230000_asset_pref_mirror.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260828164000_atomic_recurring_fixed_cost_tombstones.sql",
+    ROOT / "supabase" / "tests" / "issue4927_recurring_tombstone_contract.sql",
+)
+ISSUE_4927_USER = "00000000-0000-4000-8000-000000004927"
 VIDEO_ARTIFACT_SQL_FILES = (
     ROOT / "supabase" / "tests" / "video_service_bootstrap.sql",
     ROOT / "supabase" / "migrations" / "20260819165405_create_first_party_video_service.sql",
@@ -448,6 +457,18 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "manual_override is accepted only as an explicit administrator write",
             "migration applies twice in the disposable database",
         ],
+        "issue_4927_recurring_tombstone_sql": [
+            path.relative_to(ROOT).as_posix()
+            for path in ISSUE_4927_RECURRING_TOMBSTONE_SQL_FILES
+        ],
+        "issue_4927_recurring_tombstone_checks": [
+            "RPC normalizes empty, whitespace, duplicate, and NULL IDs",
+            "add/remove of the same ID is fail-closed with removal winning",
+            "malformed existing mirror values are rejected without overwrite",
+            "direct whole-blob writes to the dedicated key are rejected",
+            "two concurrent authenticated additions both survive",
+            "migration applies twice in the disposable database",
+        ],
         "video_artifact_contract": [
             path.relative_to(ROOT).as_posix() for path in VIDEO_ARTIFACT_SQL_FILES
         ],
@@ -489,6 +510,61 @@ def apply_sql_fixture(conn: Any, path: Path, artifacts_dir: Path) -> None:
                 cur.execute(statement)
         conn.commit()
         log.write("ok\n")
+
+
+def check_issue_4927_tombstone_concurrency(
+    conn: Any,
+    connection_url: str,
+    connect: Any,
+) -> dict[str, Any]:
+    """Race two authenticated additions and require an atomic server union."""
+
+    barrier = threading.Barrier(2)
+
+    def add_once(item_id: str) -> None:
+        with connect(connection_url, connect_timeout=10) as worker_conn:
+            with worker_conn.cursor() as cur:
+                cur.execute("set role authenticated")
+                cur.execute(
+                    "select set_config('request.jwt.claim.sub', %s, false)",
+                    (ISSUE_4927_USER,),
+                )
+                cur.execute(
+                    "select set_config('request.jwt.claim.role', 'authenticated', false)"
+                )
+                barrier.wait(timeout=10)
+                cur.execute(
+                    "select public.apply_recurring_fixed_cost_tombstones"
+                    "(%s, %s)",
+                    ([item_id], []),
+                )
+            worker_conn.commit()
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [
+            executor.submit(add_once, "concurrent-a"),
+            executor.submit(add_once, "concurrent-b"),
+        ]
+        for future in futures:
+            future.result(timeout=30)
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "select value -> 'ids' from public.asset_pref_mirror "
+            "where user_id = %s::uuid and pref_key = 'recurring_fixed_costs_deleted'",
+            (ISSUE_4927_USER,),
+        )
+        row = cur.fetchone()
+    conn.commit()
+    if row is None:
+        raise AssertionError("Issue #4927 tombstone mirror row is missing")
+    ids = set(row[0] or [])
+    expected = {"concurrent-a", "concurrent-b"}
+    if not expected.issubset(ids):
+        raise AssertionError(
+            f"Issue #4927 lost a concurrent tombstone: {sorted(ids)}"
+        )
+    return {"concurrent_ids": sorted(expected), "server_ids": sorted(ids)}
 
 
 def check_issue_1233_ai_quota_concurrency(
@@ -2509,6 +2585,33 @@ def run_smoke(args: argparse.Namespace) -> int:
                 ISSUE_4956_WBS_ADMIN_REVIEW_SQL_FILES[2],
                 artifacts_dir,
             )
+            apply_sql_fixture(
+                conn,
+                ISSUE_4927_RECURRING_TOMBSTONE_SQL_FILES[0],
+                artifacts_dir,
+            )
+            apply_sql_fixture(
+                conn,
+                ISSUE_4927_RECURRING_TOMBSTONE_SQL_FILES[1],
+                artifacts_dir,
+            )
+            apply_sql_fixture(
+                conn,
+                ISSUE_4927_RECURRING_TOMBSTONE_SQL_FILES[1],
+                artifacts_dir,
+            )
+            apply_sql_fixture(
+                conn,
+                ISSUE_4927_RECURRING_TOMBSTONE_SQL_FILES[2],
+                artifacts_dir,
+            )
+            issue_4927_tombstone_concurrency = (
+                check_issue_4927_tombstone_concurrency(
+                    conn,
+                    connection_url,
+                    psycopg.connect,
+                )
+            )
             apply_sql_fixture(conn, ASSET_CHAT_MIGRATION, artifacts_dir)
             seed_asset_chat_fixture(conn)
             asset_chat_rls = check_asset_chat_rls(conn)
@@ -2536,6 +2639,9 @@ def run_smoke(args: argparse.Namespace) -> int:
             "issue_1233_resource_optimizer_contract": "passed",
             "issue_1233_ai_quota_concurrency": issue_1233_quota_concurrency,
             "issue_4956_wbs_admin_review_contract": "passed",
+            "issue_4927_recurring_tombstone_contract": (
+                issue_4927_tombstone_concurrency
+            ),
             "video_artifact_contract": "passed",
         },
         "edge_fixture": {

@@ -104,6 +104,7 @@ void main() {
 | サービス名 | 終了日 / 停止日 | 状態 |
 | --- | --- | --- |
 | Xbox Game Pass | 2026-08-20 | 解約完了 |
+| Notion | 2026-08-21 | 解約済み |
 | sub_xbox | 2026-08-21 | 停止済み |
 ''',
         ),
@@ -121,6 +122,11 @@ void main() {
                 name: 'Xbox Game Pass',
                 amount: 1550,
               ),
+              AssetObsidianExistingSubscription(
+                id: 'sub_notion',
+                name: 'Notion',
+                amount: 1650,
+              ),
             ],
             pickVault: () async => cancellationSelection,
             onApply: (selection) async => applied = selection,
@@ -136,6 +142,12 @@ void main() {
     expect(find.text('解約済みサブスクの削除候補'), findsOneWidget);
     expect(find.text('削除候補'), findsOneWidget);
     expect(find.text('未登録'), findsOneWidget);
+    expect(find.text('選択した2件を確認'), findsOneWidget);
+
+    final cancellationCheckboxes = find.byType(Checkbox);
+    expect(cancellationCheckboxes, findsNWidgets(3));
+    await tester.tap(cancellationCheckboxes.at(1));
+    await tester.pumpAndSettle();
     expect(find.text('選択した1件を確認'), findsOneWidget);
 
     await tester.tap(find.text('選択した1件を確認'));
