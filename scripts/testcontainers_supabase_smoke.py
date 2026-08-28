@@ -6,8 +6,9 @@ disposable Postgres container, applies a small migration/seed fixture, verifies
 the Issue #2773 fail-closed RLS migration, Issue #2484 asset-chat isolation,
 Issue #4091 app-analytics write boundary, and Issue #1202 voice-dubbing quota
 state machine, Issue #1233 resource-optimizer tenant/analysis/quota contracts,
-checks the real Edge Function import policy, Issue #2668 note-comment
-authorization, and runs a Deno HTTP fixture against the container.
+Issue #4956 WBS administrator/review contracts, checks the real Edge Function
+import policy, Issue #2668 note-comment authorization, and runs a Deno HTTP
+fixture against the container.
 Logs are written as
 artifacts so CI failures point to the migration, function, or seed boundary that
 broke.
@@ -126,6 +127,14 @@ ISSUE_1233_RESOURCE_OPTIMIZER_SQL_FILES = (
 )
 ISSUE_1233_REAPPLIED_MIGRATIONS = ISSUE_1233_RESOURCE_OPTIMIZER_SQL_FILES[3:5]
 ISSUE_1233_CONCURRENT_USER = "00000000-0000-4000-8000-000000001235"
+ISSUE_4956_WBS_ADMIN_REVIEW_SQL_FILES = (
+    ROOT / "supabase" / "tests" / "issue4956_wbs_admin_review_bootstrap.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260828153722_repair_wbs_admin_review_contract.sql",
+    ROOT / "supabase" / "tests" / "issue4956_wbs_admin_review_contract.sql",
+)
 VIDEO_ARTIFACT_SQL_FILES = (
     ROOT / "supabase" / "tests" / "video_service_bootstrap.sql",
     ROOT / "supabase" / "migrations" / "20260819165405_create_first_party_video_service.sql",
@@ -423,6 +432,21 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "parallel AI quota consumes at the daily boundary are atomic with "
             "exactly one winner",
             "cooldown and ten-request UTC daily limit do not affect another user",
+        ],
+        "issue_4956_wbs_admin_review_sql": [
+            path.relative_to(ROOT).as_posix()
+            for path in ISSUE_4956_WBS_ADMIN_REVIEW_SQL_FILES
+        ],
+        "issue_4956_wbs_admin_review_checks": [
+            "both WBS admin policies use user_profiles.user_id through the hardened helper",
+            "non-admin writes remain denied even when a legacy profile id collides",
+            "administrator task and milestone writes succeed through authenticated RLS",
+            "OPEN Issues preserve in_progress/100/requested review readiness",
+            "pending/100 auto-requests review regardless of trigger ordering",
+            "rejected OPEN Issues cannot become completed/100",
+            "blank and NULL Issue sync states fail closed until explicitly CLOSED",
+            "manual_override is accepted only as an explicit administrator write",
+            "migration applies twice in the disposable database",
         ],
         "video_artifact_contract": [
             path.relative_to(ROOT).as_posix() for path in VIDEO_ARTIFACT_SQL_FILES
@@ -2465,6 +2489,26 @@ def run_smoke(args: argparse.Namespace) -> int:
                 connection_url,
                 psycopg.connect,
             )
+            apply_sql_fixture(
+                conn,
+                ISSUE_4956_WBS_ADMIN_REVIEW_SQL_FILES[0],
+                artifacts_dir,
+            )
+            apply_sql_fixture(
+                conn,
+                ISSUE_4956_WBS_ADMIN_REVIEW_SQL_FILES[1],
+                artifacts_dir,
+            )
+            apply_sql_fixture(
+                conn,
+                ISSUE_4956_WBS_ADMIN_REVIEW_SQL_FILES[1],
+                artifacts_dir,
+            )
+            apply_sql_fixture(
+                conn,
+                ISSUE_4956_WBS_ADMIN_REVIEW_SQL_FILES[2],
+                artifacts_dir,
+            )
             apply_sql_fixture(conn, ASSET_CHAT_MIGRATION, artifacts_dir)
             seed_asset_chat_fixture(conn)
             asset_chat_rls = check_asset_chat_rls(conn)
@@ -2491,6 +2535,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "voice_dubbing_quota_contract": "passed",
             "issue_1233_resource_optimizer_contract": "passed",
             "issue_1233_ai_quota_concurrency": issue_1233_quota_concurrency,
+            "issue_4956_wbs_admin_review_contract": "passed",
             "video_artifact_contract": "passed",
         },
         "edge_fixture": {
