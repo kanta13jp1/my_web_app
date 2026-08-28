@@ -2619,8 +2619,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'MCP',
         '地図',
       ],
-      onOpen: (context) =>
-          _pushPage(context, const LocalBusinessMapFeature()),
+      onOpen: (context) => _pushPage(context, const LocalBusinessMapFeature()),
     ),
     HomeToolEntry(
       id: 'real-estate',

@@ -8,7 +8,7 @@ abstract interface class LocalBusinessReferenceService {
 class SupabaseLocalBusinessReferenceService
     implements LocalBusinessReferenceService {
   SupabaseLocalBusinessReferenceService({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+      : _client = client ?? Supabase.instance.client;
 
   final SupabaseClient _client;
 
