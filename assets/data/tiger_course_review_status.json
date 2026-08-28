@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-28T11:37:16.511061+00:00",
+  "generated_at": "2026-08-28T15:34:18.265647+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -11,12 +11,12 @@
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 11,
-    "eligible": 11,
-    "provisional": 9,
+    "total": 13,
+    "eligible": 13,
+    "provisional": 11,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 10,
+    "division_3": 12,
     "division_4": 1,
     "division_5": 0
   },
@@ -28,36 +28,36 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260828T100917+0900",
-    "started_at": "2026-08-28T10:09:17+09:00",
+    "cycle_id": "20260829T002706+0900",
+    "started_at": "2026-08-29T00:27:06+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-c1ea41da-b447-4c7b-aee7-630d03c6a516",
-      "url": "https://helpx.adobe.com/firefly/using/firefly-image-3.html"
+      "slug": "course-50609809-2da6-41ba-9c35-4bbec9668493",
+      "url": "https://github.com/OpenAutoCoder/Agentless"
     },
     "reviewer": {
       "seat": 12,
       "name": "迫 佑樹",
-      "selection_score": 78.0766,
+      "selection_score": 72.7025,
       "division": 1,
-      "cycle_utility": 93.62,
-      "aggregate_utility": 89.05
+      "cycle_utility": 85.62,
+      "aggregate_utility": 86.95
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 4,
     "top_findings": [
       {
-        "summary": "モデル一覧コースの登録出典がHTTP 404で学習者を一次情報へ導けない",
+        "summary": "『SWE-bench高効率』を支えるrelease・model・benchmark subset・cost基準が固定されていない",
         "severity": "p1",
         "business_dimensions": [
           "trust_risk",
           "market_demand",
-          "scalability"
+          "unit_economics"
         ]
       },
       {
-        "summary": "モデル一覧という題名に対して現行モデル分類とtask-to-model選択rubricがない",
+        "summary": "3段階設計を一つのissueで再現する短時間labと成功条件がない",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
@@ -66,12 +66,12 @@
         ]
       },
       {
-        "summary": "モデル別creditと生成枚数の差を学習者の成果単価へ変換する比較課題がない",
+        "summary": "環境pin、候補数、token/API費用、wall timeを残す再現traceがない",
         "severity": "p1",
         "business_dimensions": [
           "unit_economics",
-          "market_demand",
-          "revenue_model"
+          "scalability",
+          "trust_risk"
         ]
       }
     ],
@@ -90,56 +90,252 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After replacing the source with a monitored current official registry and publishing one 30-minute same-brief two-model comparison lab, measure source-link success, task-fit choice, credits per usable artifact, revision count, completion, and follow-on course conversion for one learner cohort."
+      "next_cycle_experiment": "After the production-data owner adds a versioned evidence contract, run one cohort on a fixed SWE-bench issue and compare completion rate, localization accuracy, test pass rate, wall time, and API-cost forecast error against the explanation-only course."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #4951",
-      "detail": "専用対策キューで順番待ちです。",
+      "label": "対策待ち・Issue #4982",
+      "detail": "主要指摘はprotected production course dataのcourse contentと公開evidence contractを変更する必要があり、共有の低リスク自動修正範囲外。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [
-        "course-firefly-source-url-staleness"
+        "course-agentless-versioned-efficiency-contract-gap"
       ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean branch equals origin/main 30da8265755cc64583d4e464a6b8af2db31b38d2",
+        "passed: clean branch equals origin/main 782c5b6b2c24936f6c8b7987376e3db485d0d588",
         "passed: 125 roster profiles and 125 personas",
-        "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
-        "passed: deterministic winner preserved from fresh catalog",
-        "passed: selected source returned 404; current Adobe text-to-image, credit, and partner-model sources inspected; named source/test paths inspected",
-        "executed exactly once against shared history root: 125 profiles, seat 12"
+        "passed: active=1078, reviewable=533, excluded_missing_source_url=536",
+        "passed: deterministic winner from fresh catalog",
+        "passed: Agentless repository, SWE-bench guide, primary paper, and named source/test paths inspected",
+        "executed once successfully against shared history root after input schema correction: 125 profiles, seat 12"
       ],
       "issue": {
-        "number": 4951,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4951",
+        "number": 4982,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4982",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260828T100917+0900:c1ea41da-b447-4c7b-aee7-630d03c6a516",
-        "remediation_state": "queued",
+        "dedupe_key": "tiger-course-review:20260829T002706+0900:50609809-2da6-41ba-9c35-4bbec9668493",
+        "remediation_state": null,
         "queue_status": null,
-        "synced_at": "2026-08-28T11:36:55.804558+00:00"
+        "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-firefly-task-model-rubric-gap",
-        "course-firefly-credit-output-economics-gap",
-        "course-firefly-commercial-safety-boundary-gap"
+        "course-agentless-one-issue-lab-gap",
+        "course-agentless-runtime-cost-trace-gap",
+        "course-agentless-learner-outcome-gap"
       ]
     },
     "course": {
-      "content_id": "c1ea41da-b447-4c7b-aee7-630d03c6a516",
-      "provider": "adobe_firefly",
-      "title": "Adobe Firefly モデル一覧",
-      "source_url": "https://helpx.adobe.com/firefly/using/firefly-image-3.html",
-      "reason": "fresh公開Data APIで有効かつHTTPS出典付きの対象行を確認したが、登録出典は現在HTTP 404である。現行Adobe公式情報はImage 3、Image 4、Image 4 Ultra、Image 5とpartner modelを扱い、モデル別設定、生成枚数、credit、商用利用判断を分けている。一方、追跡済み教材は古い4機能中心の説明と一般化された商用利用安全の1問だけで、現行モデル一覧、確認日、task-to-model rubric、credit-aware比較、実在学習者成果を確認できなかった。実在学習者証拠は契約どおり中立50点とした。",
-      "cycle_utility": 28.5,
-      "aggregate_utility": 28.5,
+      "content_id": "50609809-2da6-41ba-9c35-4bbec9668493",
+      "provider": "agentless",
+      "title": "Agentless — 最小構成バグ修正エージェント・エージェントレス設計哲学・SWE-bench高効率 (9/9)",
+      "source_url": "https://github.com/OpenAutoCoder/Agentless",
+      "reason": "fresh公開Data APIで対象行を確認した。公式repositoryとprimary paperはlocalization、repair、patch validationという単純化された設計を示す一方、再現guideは多段localization、40候補patch、regression/reproduction test、reranking、benchmark artifact、Python 3.11/conda/API keyを要求する。さらにpaperの32.00%・$0.70、release別READMEの27.3%・$0.34や40.7%/50.8%はbenchmark、model、releaseが異なるため、版を固定しない『高効率』説明は比較不能である。bounded tracked sourceにはAgentless固有のsource/reproduction contractがなく、実在学習者証拠は契約どおり中立50点とした。",
+      "cycle_utility": 31.25,
+      "aggregate_utility": 31.25,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260829T002706+0900",
+      "started_at": "2026-08-29T00:27:06+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "50609809-2da6-41ba-9c35-4bbec9668493",
+        "title": "Agentless — 最小構成バグ修正エージェント・エージェントレス設計哲学・SWE-bench高効率 (9/9)",
+        "url": "https://github.com/OpenAutoCoder/Agentless"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 72.7025
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner adds a versioned evidence contract, run one cohort on a fixed SWE-bench issue and compare completion rate, localization accuracy, test pass rate, wall time, and API-cost forecast error against the explanation-only course."
+      },
+      "findings": [
+        {
+          "finding_id": "course-agentless-versioned-efficiency-contract-gap",
+          "summary": "『SWE-bench高効率』を支えるrelease・model・benchmark subset・cost基準が固定されていない",
+          "severity": "p1",
+          "suggested_action": "primary paperと公式release artifactを紐付け、Agentless version、model、SWE-bench subset、resolved count/rate、平均API費用、確認日を一組のversioned evidence blockとして公開する。"
+        },
+        {
+          "finding_id": "course-agentless-one-issue-lab-gap",
+          "summary": "3段階設計を一つのissueで再現する短時間labと成功条件がない",
+          "severity": "p1",
+          "suggested_action": "固定した1 SWE-bench issueで疑わしいfile、edit location、候補patch、regression/reproduction result、最終patchを提出する60分labを追加する。"
+        },
+        {
+          "finding_id": "course-agentless-runtime-cost-trace-gap",
+          "summary": "環境pin、候補数、token/API費用、wall timeを残す再現traceがない",
+          "severity": "p1",
+          "suggested_action": "Python、Agentless release、dataset revision、model、候補数、threads、token、API費用、wall time、test結果を1 run manifestへ保存する。"
+        },
+        {
+          "finding_id": "course-agentless-learner-outcome-gap",
+          "summary": "実在学習者がrepair workflowを再現し実務判断へ使えた証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名のlab開始/完了、localization正解、test結果、費用予測差、再現率、職場適用を1 cohortで取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #4982",
+        "detail": "主要指摘はprotected production course dataのcourse contentと公開evidence contractを変更する必要があり、共有の低リスク自動修正範囲外。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-agentless-versioned-efficiency-contract-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean branch equals origin/main 782c5b6b2c24936f6c8b7987376e3db485d0d588",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1078, reviewable=533, excluded_missing_source_url=536",
+          "passed: deterministic winner from fresh catalog",
+          "passed: Agentless repository, SWE-bench guide, primary paper, and named source/test paths inspected",
+          "executed once successfully against shared history root after input schema correction: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 4982,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4982",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260829T002706+0900:50609809-2da6-41ba-9c35-4bbec9668493",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-agentless-one-issue-lab-gap",
+          "course-agentless-runtime-cost-trace-gap",
+          "course-agentless-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260828T235300+0900",
+      "started_at": "2026-08-28T23:53:00+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "f0ce952d-841b-4d6b-88ed-4d6317f74a9e",
+        "title": "Adobe Firefly 最新情報",
+        "url": "https://firefly.adobe.com/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 78.4601
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After a dated source contract is added by the production-data owner, run one cohort through the August batch-interface task and compare completion time, usable-output rate, and stale-source detection with the overview-only course."
+      },
+      "findings": [
+        {
+          "finding_id": "course-firefly-latest-source-contract-gap",
+          "summary": "『最新情報』コースの登録出典が日付付きrelease sourceではなく一般アプリ入口である",
+          "severity": "p1",
+          "suggested_action": "production data所有者がAdobe公式What's newを一次出典として追加し、確認日、最新release month、対象feature、stale判定を公開契約として検証する。"
+        },
+        {
+          "finding_id": "course-firefly-change-to-workflow-gap",
+          "summary": "release差分を実務workflowへ変換する短時間課題がない",
+          "severity": "p1",
+          "suggested_action": "直近releaseから1機能を選び、旧workflow、新workflow、入力、出力、所要時間、採用基準を比較する30分課題を追加する。"
+        },
+        {
+          "finding_id": "course-firefly-freshness-automation-gap",
+          "summary": "更新確認日、change ledger、freshness threshold、stale fallbackがない",
+          "severity": "p1",
+          "suggested_action": "公式release月と教材確認日を保持し、閾値超過時にstale表示と更新Issueを生成する小さなfreshness contractを設計する。"
+        },
+        {
+          "finding_id": "course-firefly-learner-outcome-gap",
+          "summary": "最新機能が学習成果や実務効率を改善した実在学習者証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名の課題完了、旧新workflow時間、修正回数、usable output、職場適用の最小eventを定義し、1 cohortで比較する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #4979",
+        "detail": "主要指摘はproduction course dataのsource URLとcourse content、公開freshness contractを変更する必要があり、保護されたproduction data境界を含むため共有の低リスク自動修正範囲外。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-firefly-latest-source-contract-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean branch equals origin/main 782c5b6b2c24936f6c8b7987376e3db485d0d588",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1078, reviewable=533, excluded_missing_source_url=536",
+          "passed: deterministic winner from fresh catalog",
+          "passed: Adobe app entrance and What's new updated 2026-08-19 plus named source/test paths inspected",
+          "executed exactly once against shared history root: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 4979,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4979",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260828T235300+0900:f0ce952d-841b-4d6b-88ed-4d6317f74a9e",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-firefly-change-to-workflow-gap",
+          "course-firefly-freshness-automation-gap",
+          "course-firefly-learner-outcome-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260828T100917+0900",
       "started_at": "2026-08-28T10:09:17+09:00",
@@ -227,8 +423,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260828T100917+0900:c1ea41da-b447-4c7b-aee7-630d03c6a516",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -325,8 +521,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260828T021401+0900:955ae2e6-9909-4635-aacd-790ab23aa7c8",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -418,8 +614,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260827T232859+0900:746a2878-6a2d-4787-91e2-1778ebdda8ce",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -514,8 +710,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260826T230834+0900:fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -613,8 +809,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260826T151103+0900:63c96c0b-834c-4979-b387-ff4d4393aced",
           "remediation_state": "production_verified",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": {
           "commit_sha": "379d95b69c88ce2eeb9b6a1a85ed477f3209ba78",
@@ -718,8 +914,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260826T071116+0900:4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
           "remediation_state": "production_verified",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": {
           "commit_sha": "3c725dd9cf7d81d14504a090bfc471750a7a0147",
@@ -820,8 +1016,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260826T061027+0900:5b7e5f70-2652-4949-b00d-6bbc768fbb96",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -902,8 +1098,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260824T011146+0900:647dc452-f75d-4dd9-8292-332bada2e2f9",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": {
           "commit_sha": "7b30251dc8cbd3398e7ad044f536670ba6c640ad",
@@ -979,8 +1175,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260823T232120+0900:e1712bb5-2bca-4fc0-8347-0529513411d3",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1004,7 +1200,7 @@
         "name": "平出 心",
         "selection_score": 68.8967
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": null,
@@ -1023,9 +1219,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4734",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #4734 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1048,11 +1244,11 @@
           "number": 4734,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4734",
           "status": "existing",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260823T175240+0900:525273ba-539f-4dd4-b436-a6a74a5e8cc5",
-          "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "RUNNING",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": {
           "commit_sha": "20b20d3ce18515752a09e11beb6efd32cee12e49",
@@ -1127,8 +1323,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260823T165404+0900:22befb67-6147-4a4b-999c-ee1ad6fa9615",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": {
           "commit_sha": "18eedc47ea0769b871ba191b7ff9162252afb8f3",
@@ -1207,8 +1403,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1282,8 +1478,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1460,6 +1656,20 @@
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
+      "content_id": "50609809-2da6-41ba-9c35-4bbec9668493",
+      "provider": "agentless",
+      "title": "Agentless — 最小構成バグ修正エージェント・エージェントレス設計哲学・SWE-bench高効率 (9/9)",
+      "source_url": "https://github.com/OpenAutoCoder/Agentless",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 31.25,
+      "completed_cycles": 1,
+      "last_cycle_utility": 31.25,
+      "last_reviewed_at": "2026-08-28T15:27:06+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
       "content_id": "5b7e5f70-2652-4949-b00d-6bbc768fbb96",
       "provider": "adept",
       "title": "Adept AI API 入門 (Fuyu-8B)",
@@ -1471,6 +1681,20 @@
       "completed_cycles": 1,
       "last_cycle_utility": 30.2,
       "last_reviewed_at": "2026-08-25T21:10:27+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "f0ce952d-841b-4d6b-88ed-4d6317f74a9e",
+      "provider": "adobe_firefly",
+      "title": "Adobe Firefly 最新情報",
+      "source_url": "https://firefly.adobe.com/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 29.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 29.75,
+      "last_reviewed_at": "2026-08-28T14:53:00+00:00",
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
