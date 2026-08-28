@@ -5,7 +5,16 @@ import '../utils/app_logger.dart';
 import 'app_share_service.dart';
 import 'supabase_runtime_config.dart';
 
-class PublicMemoService {
+abstract interface class MemoReactionService {
+  Future<Map<String, dynamic>> loadReactions(int memoId);
+
+  Future<Map<String, dynamic>> toggleReaction({
+    required int memoId,
+    required String reaction,
+  });
+}
+
+class PublicMemoService implements MemoReactionService {
   static const String publicMemoShareSignal = 'public_memo_share';
   static const String publicMemoCopySignal = 'public_memo_copy';
 
@@ -73,27 +82,40 @@ class PublicMemoService {
     ].join('\n\n');
   }
 
+  @override
   Future<Map<String, dynamic>> loadReactions(int memoId) async {
     final response = await _supabase.functions.invoke(
       'core-hub',
-      body: <String, dynamic>{'action': 'memo.react.list', 'memo_id': memoId},
+      body: buildLoadReactionsRequest(memoId),
     );
     return _asMap(response.data);
   }
 
+  @override
   Future<Map<String, dynamic>> toggleReaction({
     required int memoId,
     required String reaction,
   }) async {
     final response = await _supabase.functions.invoke(
       'core-hub',
-      body: <String, dynamic>{
-        'action': 'memo.react.toggle',
-        'memo_id': memoId,
-        'reaction': reaction,
-      },
+      body: buildToggleReactionRequest(memoId: memoId, reaction: reaction),
     );
     return _asMap(response.data);
+  }
+
+  static Map<String, dynamic> buildLoadReactionsRequest(int memoId) {
+    return <String, dynamic>{'action': 'memo.react.list', 'memo_id': memoId};
+  }
+
+  static Map<String, dynamic> buildToggleReactionRequest({
+    required int memoId,
+    required String reaction,
+  }) {
+    return <String, dynamic>{
+      'action': 'memo.react.toggle',
+      'memo_id': memoId,
+      'reaction': reaction,
+    };
   }
 
   static String _buildShareExcerpt(String? content) {

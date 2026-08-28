@@ -2,6 +2,10 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
+  type CoreHubAction,
+  coreHubActionDefinition,
+} from "./action_registry.ts";
+import {
   createSupabaseMemoReactionStore,
   handleMemoReactionAction,
   type MemoReactionAction,
@@ -835,13 +839,23 @@ async function createFeatureRequestWbsTask(
   return { ...data, github_issue_number: params.issueNumber };
 }
 
-serve(async (req: Request) => {
+export interface CoreHubRequestDependencies {
+  createAdminClient?: () => SupabaseClient;
+  authenticateUser?: (req: Request) => Promise<string | null>;
+  handleMemoReaction?: typeof handleMemoReactionAction;
+  serviceRoleKey?: string;
+  reportError?: (error: unknown) => void;
+}
+
+export async function handleCoreHubRequest(
+  req: Request,
+  dependencies: CoreHubRequestDependencies = {},
+): Promise<Response> {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
     // deno-lint-ignore no-explicit-any
     let body: Record<string, any> = {};
     if (req.method === "GET" || req.method === "HEAD") {
@@ -861,38 +875,31 @@ serve(async (req: Request) => {
       }
     }
 
-    const action: string = body.action ?? "";
-    const serviceRoleActions = new Set([
-      "notify.feature_request",
-      "notification.broadcast_release",
-      "system.proactive_diagnostics",
-      "slack.notify",
-      "discord.notify",
-    ]);
-    // Anonymous-allowed actions (no auth required / page-specific cache)
-    const anonymousActions = new Set([
-      "page.share_generate",
-      "memo.public.view",
-      "memo.public.list",
-      "memo.public.search",
-      "memo.public.related",
-      "blog.public.view",
-      "blog.public.list",
-    ]);
+    const rawAction = typeof body.action === "string" ? body.action : "";
+    const actionDefinition = coreHubActionDefinition(rawAction);
+    if (actionDefinition === null) {
+      return json({ error: `Unknown action: ${rawAction}` }, 400);
+    }
+    const action: CoreHubAction = rawAction as CoreHubAction;
     const bearer = (req.headers.get("authorization") ?? "").replace(
       /^Bearer\s+/i,
       "",
     ).trim();
-    const isServiceRole = SERVICE_ROLE_KEY !== "" &&
-      bearer === SERVICE_ROLE_KEY;
+    const serviceRoleKey = dependencies.serviceRoleKey ?? SERVICE_ROLE_KEY;
+    const isServiceRole = serviceRoleKey !== "" && bearer === serviceRoleKey;
     let userId = "";
-    if (anonymousActions.has(action)) {
+    if (actionDefinition.auth === "anonymous") {
       // skip auth — anonymous OK
-    } else if (!(serviceRoleActions.has(action) && isServiceRole)) {
-      const authed = await getUserId(req);
+    } else if (actionDefinition.auth === "service_role") {
+      if (!isServiceRole) return json({ error: "Unauthorized" }, 401);
+    } else {
+      const authed = await (dependencies.authenticateUser ?? getUserId)(req);
       if (!authed) return json({ error: "Unauthorized" }, 401);
       userId = authed;
     }
+
+    const admin = dependencies.createAdminClient?.() ??
+      createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     switch (action) {
       // ---- Memo sharing ----
@@ -928,7 +935,9 @@ serve(async (req: Request) => {
       // ip_hash は server 側で `x-forwarded-for` を sha256 して生成する (clientは送らない)。
       case "memo.react.list":
       case "memo.react.toggle": {
-        const result = await handleMemoReactionAction({
+        const result = await (
+          dependencies.handleMemoReaction ?? handleMemoReactionAction
+        )({
           action: action as MemoReactionAction,
           body,
           headers: req.headers,
@@ -2953,13 +2962,21 @@ description: ${pageDescription}
       }
 
       default:
-        return json({ error: `Unknown action: ${action}` }, 400);
+        return assertUnreachableAction(action);
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return json({ error: message }, 500);
+    (dependencies.reportError ?? console.error)(err);
+    return json({ error: "Internal server error" }, 500);
   }
-});
+}
+
+function assertUnreachableAction(action: never): Response {
+  return json({ error: `Unknown action: ${String(action)}` }, 400);
+}
+
+if (import.meta.main) {
+  serve((req) => handleCoreHubRequest(req));
+}
 
 // ---- Helpers for notify.feature_request ----
 function _escapeHtml(value: string): string {
