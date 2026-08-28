@@ -35,7 +35,62 @@ class _FakeBoundaryRepository implements StatisticalAreaBoundaryRepository {
   final StatisticalAreaBoundaryCatalog catalog;
 
   @override
-  Future<StatisticalAreaBoundaryCatalog> loadFuchuCatalog() async => catalog;
+  Future<StatisticalAreaBoundaryCatalog> loadCatalog(
+    StatisticalBoundaryScope scope,
+  ) async =>
+      scope == StatisticalBoundaryScope.fuchuCity
+          ? catalog
+          : _catalogFor(scope);
+}
+
+StatisticalAreaBoundaryCatalog _catalogFor(StatisticalBoundaryScope scope) {
+  final codes = switch (scope) {
+    StatisticalBoundaryScope.fuchuCity => <String>['13206021001'],
+    StatisticalBoundaryScope.tokyo => <String>[
+        '13206',
+        for (var index = 1; index < 60; index++)
+          '13${index.toString().padLeft(3, '0')}',
+      ],
+    StatisticalBoundaryScope.kanto => <String>[
+        '08',
+        '09',
+        '10',
+        '11',
+        '12',
+        '13',
+        '14',
+      ],
+    StatisticalBoundaryScope.japan => <String>[
+        for (var index = 1; index <= 47; index++)
+          index.toString().padLeft(2, '0'),
+      ],
+  };
+  return StatisticalAreaBoundaryCatalog(
+    scope: scope,
+    municipalityName: scope.regionLabel,
+    datasetLabel: '行政区域テスト',
+    sourceLabel: 'CODH',
+    sourceUrl: 'https://example.com/${scope.name}',
+    license: 'CC BY 4.0',
+    boundaryNote: '2023年境界です。',
+    simplificationNote: '簡略化済みです。',
+    areas: <StatisticalAreaBoundary>[
+      for (var index = 0; index < codes.length; index++)
+        StatisticalAreaBoundary(
+          code: codes[index],
+          name: codes[index] == scope.defaultAreaCode
+              ? (scope == StatisticalBoundaryScope.tokyo ? '府中市' : '東京都')
+              : '地域$index',
+          isTarget: codes[index] == scope.defaultAreaCode,
+          points: <StatisticalAreaBoundaryPoint>[
+            StatisticalAreaBoundaryPoint(35 + index / 100, 139),
+            StatisticalAreaBoundaryPoint(35 + index / 100, 140),
+            StatisticalAreaBoundaryPoint(36 + index / 100, 140),
+            StatisticalAreaBoundaryPoint(35 + index / 100, 139),
+          ],
+        ),
+    ],
+  );
 }
 
 final _catalog = StatisticalAreaBoundaryCatalog(
@@ -178,5 +233,33 @@ void main() {
 
     expect(viewModel.errorMessage, contains('町丁境界'));
     expect(viewModel.errorMessage, isNot(contains('公式集計値')));
+  });
+
+  test('widens through four scopes and narrows without stale data', () async {
+    final viewModel = LocalBusinessMapViewModel(
+      repository: _FakeRepository(_snapshot),
+      boundaryRepository: _FakeBoundaryRepository(_catalog),
+      linkService: _FakeLinkService(),
+    );
+
+    await viewModel.load();
+    viewModel.selectBusiness('node/1');
+    await viewModel.selectScope(StatisticalBoundaryScope.tokyo);
+    expect(viewModel.availableAreas, hasLength(60));
+    expect(viewModel.selectedAreaCode, '13206');
+    expect(viewModel.snapshot.businesses, isEmpty);
+    expect(viewModel.snapshot.radiusMeters, 0);
+    expect(viewModel.selectedBusinessId, isNull);
+
+    await viewModel.selectScope(StatisticalBoundaryScope.kanto);
+    expect(viewModel.availableAreas, hasLength(7));
+    await viewModel.selectScope(StatisticalBoundaryScope.japan);
+    expect(viewModel.availableAreas, hasLength(47));
+    await viewModel.selectScope(StatisticalBoundaryScope.fuchuCity);
+
+    expect(viewModel.selectedAreaCode, '13206021001');
+    expect(viewModel.snapshot.businesses, <PublicBusinessReference>[_business]);
+    expect(viewModel.snapshot.radiusMeters, 300);
+    expect(viewModel.hasOfficialAggregateForSelectedArea, isTrue);
   });
 }

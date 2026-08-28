@@ -176,7 +176,7 @@ class _PageIntroduction extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '東京都府中市 ${viewModel.selectedArea.name}',
+                    viewModel.selectedRegionHeading,
                     key: const Key('selected-statistical-area-heading'),
                     style: const TextStyle(
                       color: DesignTokens.textPrimary,
@@ -191,9 +191,9 @@ class _PageIntroduction extends StatelessWidget {
                         ? '公式統計の集計値と、公開地図上の参考事業者を分けて表示します。'
                             'オレンジ線は統計上の町丁境界、青円は公開情報の300m範囲です。'
                             '公開一覧を「個人経営20件」とは扱いません。'
-                        : '府中市内の町丁境界を切り替えて確認できます。'
-                            'オレンジ線が選択中の統計上の境界です。'
-                            'この町丁の事業所統計と公開参考一覧は現在未連携です。',
+                        : '${viewModel.selectedScope.label}の境界を切り替えて確認できます。'
+                            'オレンジ線が選択中の境界です。'
+                            'この地域の事業所統計と公開参考一覧は現在未連携で、件数は推測しません。',
                     style: const TextStyle(
                       color: DesignTokens.textSecondary,
                       fontSize: 13,
@@ -217,7 +217,6 @@ class _AreaSelectorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final areaCount = viewModel.availableAreas.length;
     return DecoratedBox(
       key: const Key('fuchu-area-selector-card'),
       decoration: BoxDecoration(
@@ -234,9 +233,38 @@ class _AreaSelectorCard extends StatelessWidget {
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
+            final scopeSelector = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '表示範囲（府中 → 東京 → 関東 → 日本）',
+                  style: TextStyle(
+                    color: DesignTokens.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.space8),
+                Wrap(
+                  key: const Key('statistical-boundary-scope-selector'),
+                  spacing: DesignTokens.space8,
+                  runSpacing: DesignTokens.space8,
+                  children: [
+                    for (final scope in viewModel.availableScopes)
+                      ChoiceChip(
+                        key: Key('boundary-scope-${scope.name}'),
+                        label: Text(scope.label),
+                        selected: viewModel.selectedScope == scope,
+                        onSelected: (_) => viewModel.selectScope(scope),
+                      ),
+                  ],
+                ),
+              ],
+            );
             final selector = KeyedSubtree(
               key: ValueKey(
-                'fuchu-area-selector-state-${viewModel.selectedAreaCode}',
+                'area-selector-state-${viewModel.selectedScope.name}-'
+                '${viewModel.selectedAreaCode}',
               ),
               child: DropdownButtonFormField<String>(
                 key: const Key('fuchu-area-selector'),
@@ -245,7 +273,7 @@ class _AreaSelectorCard extends StatelessWidget {
                 menuMaxHeight: 420,
                 dropdownColor: DesignTokens.surface2,
                 decoration: InputDecoration(
-                  labelText: '府中市の町丁を選択',
+                  labelText: viewModel.selectedScope.selectorLabel,
                   prefixIcon: const Icon(
                     Icons.map_outlined,
                     color: DesignTokens.orange,
@@ -292,8 +320,8 @@ class _AreaSelectorCard extends StatelessWidget {
                 Flexible(
                   child: Text(
                     viewModel.isBoundaryLoading
-                        ? '府中市全域を読み込み中'
-                        : '府中市内 $areaCount町丁',
+                        ? '${viewModel.selectedScope.label}の境界を読み込み中'
+                        : viewModel.boundaryCountLabel,
                     key: const Key('fuchu-area-count-label'),
                     style: const TextStyle(
                       color: DesignTokens.textSecondary,
@@ -321,20 +349,40 @@ class _AreaSelectorCard extends StatelessWidget {
                       status,
                     ],
                   );
-            if (errorMessage == null) return body;
+            final combinedBody = constraints.maxWidth >= 900
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(flex: 3, child: scopeSelector),
+                      const SizedBox(width: DesignTokens.space16),
+                      Expanded(flex: 4, child: selector),
+                      const SizedBox(width: DesignTokens.space12),
+                      status,
+                    ],
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      scopeSelector,
+                      const SizedBox(height: DesignTokens.space12),
+                      body,
+                    ],
+                  );
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                body,
-                const SizedBox(height: DesignTokens.space8),
-                Text(
-                  errorMessage,
-                  style: const TextStyle(
-                    color: DesignTokens.orangeLight,
-                    fontSize: 11,
-                    height: 1.5,
+                combinedBody,
+                if (errorMessage != null) ...[
+                  const SizedBox(height: DesignTokens.space8),
+                  Text(
+                    errorMessage,
+                    style: const TextStyle(
+                      color: DesignTokens.orangeLight,
+                      fontSize: 11,
+                      height: 1.5,
+                    ),
                   ),
-                ),
+                ],
               ],
             );
           },
@@ -670,7 +718,8 @@ class _StatisticalBoundaryLegend extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${boundarySet.target.name}｜統計上の境界',
+                          '${boundarySet.target.name}｜'
+                          '${boundarySet.scope == StatisticalBoundaryScope.fuchuCity ? '統計上の境界' : '行政区域境界'}',
                           style: const TextStyle(
                             color: DesignTokens.orangeLight,
                             fontSize: 11,
@@ -679,9 +728,32 @@ class _StatisticalBoundaryLegend extends StatelessWidget {
                           ),
                         ),
                         Text(
+                          '${boundarySet.sourceLabel}（${boundarySet.license}）',
+                          key: const Key('statistical-boundary-dataset-label'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: DesignTokens.textSecondary,
+                            fontSize: 9,
+                            height: 1.4,
+                          ),
+                        ),
+                        Text(
+                          boundarySet.scope ==
+                                  StatisticalBoundaryScope.fuchuCity
+                              ? '統計境界・簡略表示（詳細はタップ）'
+                              : '2023年時点・簡略境界（詳細はタップ）',
+                          key: const Key('statistical-boundary-caveat'),
+                          style: const TextStyle(
+                            color: DesignTokens.textSecondary,
+                            fontSize: 9,
+                            height: 1.4,
+                          ),
+                        ),
+                        Text(
                           viewModel.hasOfficialAggregateForSelectedArea
                               ? '青円：公開情報の300m範囲'
-                              : '公開情報：この町丁は未連携',
+                              : '公開情報：この地域は未連携',
                           style: const TextStyle(
                             color: DesignTokens.textSecondary,
                             fontSize: 10,
@@ -701,13 +773,24 @@ class _StatisticalBoundaryLegend extends StatelessWidget {
   }
 }
 
-double _initialZoomFor(StatisticalAreaBoundary area) {
-  if (area.points.isEmpty) return 15;
-  var minimumLatitude = area.points.first.latitude;
+double _initialZoomFor(
+  StatisticalAreaBoundary area,
+  StatisticalBoundaryScope scope,
+) {
+  final points = area.allPoints.toList(growable: false);
+  if (points.isEmpty) {
+    return switch (scope) {
+      StatisticalBoundaryScope.fuchuCity => 13,
+      StatisticalBoundaryScope.tokyo => 9,
+      StatisticalBoundaryScope.kanto => 7,
+      StatisticalBoundaryScope.japan => 5,
+    };
+  }
+  var minimumLatitude = points.first.latitude;
   var maximumLatitude = minimumLatitude;
-  var minimumLongitude = area.points.first.longitude;
+  var minimumLongitude = points.first.longitude;
   var maximumLongitude = minimumLongitude;
-  for (final point in area.points.skip(1)) {
+  for (final point in points.skip(1)) {
     if (point.latitude < minimumLatitude) minimumLatitude = point.latitude;
     if (point.latitude > maximumLatitude) maximumLatitude = point.latitude;
     if (point.longitude < minimumLongitude) minimumLongitude = point.longitude;
@@ -717,12 +800,87 @@ double _initialZoomFor(StatisticalAreaBoundary area) {
           (maximumLongitude - minimumLongitude)
       ? maximumLatitude - minimumLatitude
       : maximumLongitude - minimumLongitude;
+  if (span > 10) return 4;
+  if (span > 5) return 5;
+  if (span > 2) return 6;
+  if (span > 1) return 7;
+  if (span > 0.5) return 8;
+  if (span > 0.2) return 9;
+  if (span > 0.08) return 10;
   if (span > 0.04) return 12.4;
   if (span > 0.025) return 13;
   if (span > 0.014) return 13.7;
   if (span > 0.008) return 14.3;
   if (span > 0.004) return 15;
   return 15.7;
+}
+
+@visibleForTesting
+class StatisticalBoundaryMapViewport {
+  const StatisticalBoundaryMapViewport({
+    required this.center,
+    required this.initialZoom,
+    required this.maximumZoom,
+    this.scopeBounds,
+  });
+
+  final LatLng center;
+  final double initialZoom;
+  final double maximumZoom;
+  final LatLngBounds? scopeBounds;
+}
+
+@visibleForTesting
+StatisticalBoundaryMapViewport statisticalBoundaryMapViewportFor(
+  StatisticalAreaBoundarySet boundarySet,
+  LatLng selectedCenter,
+) {
+  if (boundarySet.scope == StatisticalBoundaryScope.fuchuCity) {
+    return StatisticalBoundaryMapViewport(
+      center: selectedCenter,
+      initialZoom: _initialZoomFor(
+        boundarySet.target,
+        boundarySet.scope,
+      ),
+      maximumZoom: 18,
+    );
+  }
+
+  final coordinates = <LatLng>[
+    for (final area in boundarySet.areas)
+      for (final point in area.allPoints)
+        LatLng(point.latitude, point.longitude),
+  ];
+  final fallbackBounds = switch (boundarySet.scope) {
+    StatisticalBoundaryScope.tokyo => LatLngBounds(
+        const LatLng(20, 136),
+        const LatLng(36, 154),
+      ),
+    StatisticalBoundaryScope.kanto => LatLngBounds(
+        const LatLng(20, 136),
+        const LatLng(38, 154),
+      ),
+    StatisticalBoundaryScope.japan => LatLngBounds(
+        const LatLng(20, 122),
+        const LatLng(46, 154),
+      ),
+    StatisticalBoundaryScope.fuchuCity => throw StateError('unreachable'),
+  };
+  final bounds = coordinates.isEmpty
+      ? fallbackBounds
+      : LatLngBounds.fromPoints(coordinates);
+  final maximumZoom = switch (boundarySet.scope) {
+    StatisticalBoundaryScope.tokyo => 7.5,
+    StatisticalBoundaryScope.kanto => 6.5,
+    StatisticalBoundaryScope.japan => 4.5,
+    StatisticalBoundaryScope.fuchuCity => 18.0,
+  };
+  return StatisticalBoundaryMapViewport(
+    center: bounds.center,
+    initialZoom: maximumZoom,
+    maximumZoom: maximumZoom,
+    scopeBounds: bounds,
+  );
 }
 
 @visibleForTesting
@@ -734,8 +892,15 @@ Widget buildLocalBusinessReferenceMap(
   VoidCallback onOpenAttribution, {
   bool includeBaseTiles = true,
 }) {
-  final center = LatLng(snapshot.centerLatitude, snapshot.centerLongitude);
+  final referenceCenter = LatLng(
+    snapshot.centerLatitude,
+    snapshot.centerLongitude,
+  );
   final boundarySet = snapshot.statisticalBoundarySet;
+  final viewport = statisticalBoundaryMapViewportFor(
+    boundarySet,
+    referenceCenter,
+  );
   final boundaryAreas = [
     ...boundarySet.areas.where((area) => !area.isTarget),
     boundarySet.target,
@@ -744,10 +909,20 @@ Widget buildLocalBusinessReferenceMap(
     fit: StackFit.expand,
     children: [
       FlutterMap(
-        key: ValueKey('statistical-area-map-${boundarySet.target.code}'),
+        key: ValueKey(
+          'statistical-area-map-${boundarySet.scope.name}-'
+          '${boundarySet.target.code}',
+        ),
         options: MapOptions(
-          initialCenter: center,
-          initialZoom: _initialZoomFor(boundarySet.target),
+          initialCenter: viewport.center,
+          initialZoom: viewport.initialZoom,
+          initialCameraFit: viewport.scopeBounds == null
+              ? null
+              : CameraFit.bounds(
+                  bounds: viewport.scopeBounds!,
+                  padding: const EdgeInsets.all(28),
+                  maxZoom: viewport.maximumZoom,
+                ),
         ),
         children: [
           if (includeBaseTiles)
@@ -760,28 +935,35 @@ Widget buildLocalBusinessReferenceMap(
             drawLabelsLast: true,
             polygons: [
               for (final area in boundaryAreas)
-                Polygon<String>(
-                  points: [
-                    for (final point in area.points)
-                      LatLng(point.latitude, point.longitude),
-                  ],
-                  color: area.isTarget
-                      ? DesignTokens.orange.withValues(alpha: 0.14)
-                      : Colors.transparent,
-                  borderStrokeWidth: area.isTarget ? 3 : 1,
-                  borderColor: area.isTarget
-                      ? DesignTokens.orange
-                      : DesignTokens.textOnDark.withValues(alpha: 0.46),
-                  label: area.isTarget ? area.name : null,
-                  labelStyle: const TextStyle(
-                    color: DesignTokens.orangeLight,
-                    backgroundColor: Color(0xCC1A1A1A),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    height: 1.5,
-                  ),
-                  hitValue: area.code,
-                ),
+                for (final polygon in <List<StatisticalAreaBoundaryPoint>>[
+                  area.points,
+                  ...area.additionalPolygons,
+                ])
+                  if (polygon.length >= 3)
+                    Polygon<String>(
+                      points: [
+                        for (final point in polygon)
+                          LatLng(point.latitude, point.longitude),
+                      ],
+                      color: area.isTarget
+                          ? DesignTokens.orange.withValues(alpha: 0.14)
+                          : Colors.transparent,
+                      borderStrokeWidth: area.isTarget ? 3 : 1,
+                      borderColor: area.isTarget
+                          ? DesignTokens.orange
+                          : DesignTokens.textOnDark.withValues(alpha: 0.46),
+                      label: area.isTarget && identical(polygon, area.points)
+                          ? area.name
+                          : null,
+                      labelStyle: const TextStyle(
+                        color: DesignTokens.orangeLight,
+                        backgroundColor: Color(0xCC1A1A1A),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        height: 1.5,
+                      ),
+                      hitValue: area.code,
+                    ),
             ],
           ),
           if (snapshot.radiusMeters > 0)
@@ -789,7 +971,7 @@ Widget buildLocalBusinessReferenceMap(
               key: const Key('public-reference-radius-layer'),
               circles: [
                 CircleMarker(
-                  point: center,
+                  point: referenceCenter,
                   radius: snapshot.radiusMeters.toDouble(),
                   useRadiusInMeter: true,
                   color: DesignTokens.indigo.withValues(alpha: 0.06),

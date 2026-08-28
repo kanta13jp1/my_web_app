@@ -30,7 +30,12 @@ class LocalBusinessMapViewModel extends ChangeNotifier {
       LocalBusinessReferenceSnapshot.initial;
   StatisticalAreaBoundaryCatalog _boundaryCatalog =
       StatisticalAreaBoundaryCatalog.fuchuFallback;
+  StatisticalBoundaryScope _selectedScope = StatisticalBoundaryScope.fuchuCity;
+  final Map<StatisticalBoundaryScope, StatisticalAreaBoundaryCatalog>
+      _loadedCatalogs =
+      <StatisticalBoundaryScope, StatisticalAreaBoundaryCatalog>{};
   String _selectedAreaCode = '13206021001';
+  int _boundaryRequestId = 0;
   String? _selectedBusinessId;
   String? _errorMessage;
   String? _boundaryErrorMessage;
@@ -39,14 +44,35 @@ class LocalBusinessMapViewModel extends ChangeNotifier {
   StatisticalAreaCatalogStatus get boundaryStatus => _boundaryStatus;
   LocalBusinessReferenceSnapshot get snapshot => _displaySnapshot;
   StatisticalAreaBoundaryCatalog get boundaryCatalog => _boundaryCatalog;
+  StatisticalBoundaryScope get selectedScope => _selectedScope;
+  List<StatisticalBoundaryScope> get availableScopes =>
+      StatisticalBoundaryScope.values;
   List<StatisticalAreaBoundary> get availableAreas => _boundaryCatalog.areas;
   String get selectedAreaCode => _selectedAreaCode;
   StatisticalAreaBoundary get selectedArea =>
       _boundaryCatalog.findByCode(_selectedAreaCode) ??
       _boundaryCatalog.areas.first;
   bool get hasOfficialAggregateForSelectedArea =>
+      _selectedScope == StatisticalBoundaryScope.fuchuCity &&
       _selectedAreaCode == '13206021001';
-  bool get hasCompleteBoundaryCatalog => _boundaryCatalog.areas.length >= 100;
+  bool get hasCompleteBoundaryCatalog {
+    final minimumCount = switch (_selectedScope) {
+      StatisticalBoundaryScope.fuchuCity => 100,
+      StatisticalBoundaryScope.tokyo => 60,
+      StatisticalBoundaryScope.kanto => 7,
+      StatisticalBoundaryScope.japan => 47,
+    };
+    return _boundaryCatalog.areas.length >= minimumCount;
+  }
+
+  String get selectedRegionHeading =>
+      '${_selectedScope.regionLabel} ${selectedArea.name}';
+  String get boundaryCountLabel => switch (_selectedScope) {
+        StatisticalBoundaryScope.fuchuCity => '府中市内 ${availableAreas.length}町丁',
+        StatisticalBoundaryScope.tokyo => '東京都内 ${availableAreas.length}市区町村',
+        StatisticalBoundaryScope.kanto => '関東 ${availableAreas.length}都県',
+        StatisticalBoundaryScope.japan => '全国 ${availableAreas.length}都道府県',
+      };
   String? get selectedBusinessId => _selectedBusinessId;
   String? get errorMessage {
     if (_errorMessage == null) return null;
@@ -77,9 +103,11 @@ class LocalBusinessMapViewModel extends ChangeNotifier {
       _boundaryErrorMessage = null;
     }
     notifyListeners();
+    final requestId = ++_boundaryRequestId;
     await Future.wait(<Future<void>>[
       _loadReferences(),
-      if (_boundaryRepository != null) _loadBoundaries(),
+      if (_boundaryRepository != null)
+        _loadBoundaries(_selectedScope, requestId),
     ]);
     notifyListeners();
   }
@@ -97,16 +125,55 @@ class LocalBusinessMapViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> _loadBoundaries() async {
+  Future<void> _loadBoundaries(
+    StatisticalBoundaryScope scope,
+    int requestId,
+  ) async {
     try {
-      _boundaryCatalog = await _boundaryRepository!.loadFuchuCatalog();
+      final catalog = await _boundaryRepository!.loadCatalog(scope);
+      _loadedCatalogs[scope] = catalog;
+      if (_selectedScope != scope || _boundaryRequestId != requestId) return;
+      _boundaryCatalog = catalog;
       if (_boundaryCatalog.findByCode(_selectedAreaCode) == null) {
         _selectedAreaCode = _boundaryCatalog.areas.first.code;
       }
       _boundaryStatus = StatisticalAreaCatalogStatus.ready;
     } catch (_) {
+      if (_selectedScope != scope || _boundaryRequestId != requestId) return;
+      _boundaryCatalog = StatisticalAreaBoundaryCatalog.fallbackFor(scope);
+      _selectedAreaCode = scope.defaultAreaCode;
       _boundaryStatus = StatisticalAreaCatalogStatus.failure;
-      _boundaryErrorMessage = '府中市全域の境界を取得できないため、読み込み済みの周辺町丁のみ表示しています。';
+      _boundaryErrorMessage = scope == StatisticalBoundaryScope.fuchuCity
+          ? '府中市全域の境界を取得できないため、読み込み済みの周辺町丁のみ表示しています。'
+          : '${scope.label}の行政区域境界を取得できませんでした。統計や事業者情報は推測せず、既定地域のみ表示しています。';
+    }
+  }
+
+  Future<void> selectScope(StatisticalBoundaryScope scope) async {
+    if (_selectedScope == scope) return;
+    _selectedScope = scope;
+    _selectedAreaCode = scope.defaultAreaCode;
+    _selectedBusinessId = null;
+    _boundaryErrorMessage = null;
+    final cached = _loadedCatalogs[scope];
+    _boundaryCatalog =
+        cached ?? StatisticalAreaBoundaryCatalog.fallbackFor(scope);
+    if (_boundaryCatalog.findByCode(_selectedAreaCode) == null) {
+      _selectedAreaCode = _boundaryCatalog.areas.first.code;
+    }
+    if (cached != null || _boundaryRepository == null) {
+      _boundaryStatus = cached == null
+          ? StatisticalAreaCatalogStatus.initial
+          : StatisticalAreaCatalogStatus.ready;
+      notifyListeners();
+      return;
+    }
+    _boundaryStatus = StatisticalAreaCatalogStatus.loading;
+    final requestId = ++_boundaryRequestId;
+    notifyListeners();
+    await _loadBoundaries(scope, requestId);
+    if (_selectedScope == scope && _boundaryRequestId == requestId) {
+      notifyListeners();
     }
   }
 
@@ -133,7 +200,7 @@ class LocalBusinessMapViewModel extends ChangeNotifier {
   Future<bool> openPublicSource() => _open(_referenceSnapshot.publicSourceUrl);
 
   Future<bool> openBoundarySource() => _open(
-        'https://geoshape.ex.nii.ac.jp/ka/resource/13/${selectedArea.code}.html',
+        _boundaryCatalog.select(selectedArea.code).sourceUrl,
       );
 
   Future<bool> openBusinessSource(String businessId) {
@@ -160,7 +227,7 @@ class LocalBusinessMapViewModel extends ChangeNotifier {
       radiusMeters: isDefaultArea ? _referenceSnapshot.radiusMeters : 0,
       coverageNote: isDefaultArea
           ? _referenceSnapshot.coverageNote
-          : '${area.name}の公開参考一覧は未連携です。現在は町丁境界のみ切り替えて確認できます。',
+          : '${area.name}の事業所統計・公開参考一覧は未連携です。境界だけを表示し、件数は推測しません。',
       ownershipNote: _referenceSnapshot.ownershipNote,
       publicSourceLabel: _referenceSnapshot.publicSourceLabel,
       publicSourceUrl: _referenceSnapshot.publicSourceUrl,

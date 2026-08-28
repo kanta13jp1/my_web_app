@@ -6,6 +6,25 @@ class StatisticalAreaBoundaryPoint {
   final double longitude;
 }
 
+enum StatisticalBoundaryScope {
+  fuchuCity('府中市', '府中市の町丁を選択', '東京都府中市', '13206021001'),
+  tokyo('東京都', '東京都の市区町村を選択', '東京都', '13206'),
+  kanto('関東', '関東の都県を選択', '関東地方', '13'),
+  japan('日本', '都道府県を選択', '日本', '13');
+
+  const StatisticalBoundaryScope(
+    this.label,
+    this.selectorLabel,
+    this.regionLabel,
+    this.defaultAreaCode,
+  );
+
+  final String label;
+  final String selectorLabel;
+  final String regionLabel;
+  final String defaultAreaCode;
+}
+
 /// A single town/chome polygon rendered on the local-business map.
 class StatisticalAreaBoundary {
   const StatisticalAreaBoundary({
@@ -13,6 +32,7 @@ class StatisticalAreaBoundary {
     required this.name,
     required this.isTarget,
     required this.points,
+    this.additionalPolygons = const <List<StatisticalAreaBoundaryPoint>>[],
     this.centerLatitude,
     this.centerLongitude,
   });
@@ -21,6 +41,7 @@ class StatisticalAreaBoundary {
   final String name;
   final bool isTarget;
   final List<StatisticalAreaBoundaryPoint> points;
+  final List<List<StatisticalAreaBoundaryPoint>> additionalPolygons;
   final double? centerLatitude;
   final double? centerLongitude;
 
@@ -30,22 +51,33 @@ class StatisticalAreaBoundary {
   double get mapCenterLongitude =>
       centerLongitude ?? _boundsCenter(isLatitude: false);
 
+  bool get hasGeometry => points.length >= 3;
+
+  Iterable<StatisticalAreaBoundaryPoint> get allPoints sync* {
+    yield* points;
+    for (final polygon in additionalPolygons) {
+      yield* polygon;
+    }
+  }
+
   StatisticalAreaBoundary copyWithTarget(bool value) {
     return StatisticalAreaBoundary(
       code: code,
       name: name,
       isTarget: value,
       points: points,
+      additionalPolygons: additionalPolygons,
       centerLatitude: centerLatitude,
       centerLongitude: centerLongitude,
     );
   }
 
   double _boundsCenter({required bool isLatitude}) {
-    if (points.isEmpty) return 0;
-    var minimum = isLatitude ? points.first.latitude : points.first.longitude;
+    final source = allPoints.toList(growable: false);
+    if (source.isEmpty) return 0;
+    var minimum = isLatitude ? source.first.latitude : source.first.longitude;
     var maximum = minimum;
-    for (final point in points.skip(1)) {
+    for (final point in source.skip(1)) {
       final value = isLatitude ? point.latitude : point.longitude;
       if (value < minimum) minimum = value;
       if (value > maximum) maximum = value;
@@ -57,6 +89,7 @@ class StatisticalAreaBoundary {
 /// All town/chome boundaries available for a municipality.
 class StatisticalAreaBoundaryCatalog {
   const StatisticalAreaBoundaryCatalog({
+    this.scope = StatisticalBoundaryScope.fuchuCity,
     required this.municipalityName,
     required this.datasetLabel,
     required this.sourceLabel,
@@ -68,6 +101,7 @@ class StatisticalAreaBoundaryCatalog {
   });
 
   static final fuchuFallback = StatisticalAreaBoundaryCatalog(
+    scope: StatisticalBoundaryScope.fuchuCity,
     municipalityName: '東京都府中市',
     datasetLabel: StatisticalAreaBoundarySet.fuchuHonmachi1.datasetLabel,
     sourceLabel: StatisticalAreaBoundarySet.fuchuHonmachi1.sourceLabel,
@@ -80,6 +114,35 @@ class StatisticalAreaBoundaryCatalog {
     areas: StatisticalAreaBoundarySet.fuchuHonmachi1.areas,
   );
 
+  static StatisticalAreaBoundaryCatalog fallbackFor(
+    StatisticalBoundaryScope scope,
+  ) {
+    if (scope == StatisticalBoundaryScope.fuchuCity) return fuchuFallback;
+    final isTokyo = scope == StatisticalBoundaryScope.tokyo;
+    final area = StatisticalAreaBoundary(
+      code: scope.defaultAreaCode,
+      name: isTokyo ? '府中市' : '東京都',
+      isTarget: true,
+      points: const <StatisticalAreaBoundaryPoint>[],
+      centerLatitude: isTokyo ? 35.6689 : 35.6762,
+      centerLongitude: isTokyo ? 139.4777 : 139.6503,
+    );
+    return StatisticalAreaBoundaryCatalog(
+      scope: scope,
+      municipalityName: scope.regionLabel,
+      datasetLabel: '歴史的行政区域データセットβ版（2023年行政区域）',
+      sourceLabel: 'CODH 歴史的行政区域データセットβ版',
+      sourceUrl: scope == StatisticalBoundaryScope.tokyo
+          ? 'https://geoshape.ex.nii.ac.jp/city/choropleth/13_city.html'
+          : 'https://geoshape.ex.nii.ac.jp/city/choropleth/jp_pref.html',
+      license: 'CC BY 4.0',
+      boundaryNote: '行政区域境界の取得に失敗したため、選択用の既定地域のみ表示しています。',
+      simplificationNote: '再読み込みすると公開境界データの取得を再試行します。',
+      areas: <StatisticalAreaBoundary>[area],
+    );
+  }
+
+  final StatisticalBoundaryScope scope;
   final String municipalityName;
   final String datasetLabel;
   final String sourceLabel;
@@ -99,10 +162,12 @@ class StatisticalAreaBoundaryCatalog {
   StatisticalAreaBoundarySet select(String selectedCode) {
     final selected = findByCode(selectedCode) ?? areas.first;
     return StatisticalAreaBoundarySet(
+      scope: scope,
       datasetLabel: datasetLabel,
       sourceLabel: sourceLabel,
-      sourceUrl:
-          'https://geoshape.ex.nii.ac.jp/ka/resource/13/${selected.code}.html',
+      sourceUrl: scope == StatisticalBoundaryScope.fuchuCity
+          ? 'https://geoshape.ex.nii.ac.jp/ka/resource/13/${selected.code}.html'
+          : sourceUrl,
       license: license,
       boundaryNote: boundaryNote,
       simplificationNote: simplificationNote,
@@ -116,6 +181,7 @@ class StatisticalAreaBoundaryCatalog {
 /// Boundary dataset metadata and the target plus its touching neighbours.
 class StatisticalAreaBoundarySet {
   const StatisticalAreaBoundarySet({
+    this.scope = StatisticalBoundaryScope.fuchuCity,
     required this.datasetLabel,
     required this.sourceLabel,
     required this.sourceUrl,
@@ -456,6 +522,7 @@ class StatisticalAreaBoundarySet {
   );
 
   final String datasetLabel;
+  final StatisticalBoundaryScope scope;
   final String sourceLabel;
   final String sourceUrl;
   final String license;

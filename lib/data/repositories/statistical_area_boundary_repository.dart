@@ -2,19 +2,63 @@ import '../../domain/models/statistical_area_boundary.dart';
 import '../services/statistical_area_boundary_service.dart';
 
 abstract interface class StatisticalAreaBoundaryRepository {
-  Future<StatisticalAreaBoundaryCatalog> loadFuchuCatalog();
+  Future<StatisticalAreaBoundaryCatalog> loadCatalog(
+    StatisticalBoundaryScope scope,
+  );
 }
 
 class RemoteStatisticalAreaBoundaryRepository
     implements StatisticalAreaBoundaryRepository {
-  const RemoteStatisticalAreaBoundaryRepository({required this.service});
+  RemoteStatisticalAreaBoundaryRepository({required this.service});
 
   final StatisticalAreaBoundaryService service;
+  final Map<StatisticalBoundaryScope, StatisticalAreaBoundaryCatalog> _cache =
+      <StatisticalBoundaryScope, StatisticalAreaBoundaryCatalog>{};
+  final Map<StatisticalBoundaryScope, Future<StatisticalAreaBoundaryCatalog>>
+      _inFlight =
+      <StatisticalBoundaryScope, Future<StatisticalAreaBoundaryCatalog>>{};
+  Future<Map<String, dynamic>>? _prefectureTopology;
 
   @override
-  Future<StatisticalAreaBoundaryCatalog> loadFuchuCatalog() async {
-    final topology = await service.fetchFuchuTopology();
-    return const FuchuStatisticalAreaTopologyDecoder().decode(topology);
+  Future<StatisticalAreaBoundaryCatalog> loadCatalog(
+    StatisticalBoundaryScope scope,
+  ) async {
+    final cached = _cache[scope];
+    if (cached != null) return cached;
+    final active = _inFlight[scope];
+    if (active != null) return active;
+    final request = _load(scope);
+    _inFlight[scope] = request;
+    try {
+      final catalog = await request;
+      _cache[scope] = catalog;
+      return catalog;
+    } finally {
+      _inFlight.remove(scope);
+    }
+  }
+
+  Future<StatisticalAreaBoundaryCatalog> _load(
+    StatisticalBoundaryScope scope,
+  ) async {
+    try {
+      final topology = switch (scope) {
+        StatisticalBoundaryScope.kanto ||
+        StatisticalBoundaryScope.japan =>
+          await (_prefectureTopology ??= service.fetchTopology(scope)),
+        _ => await service.fetchTopology(scope),
+      };
+      const decoder = FuchuStatisticalAreaTopologyDecoder();
+      return scope == StatisticalBoundaryScope.fuchuCity
+          ? decoder.decode(topology)
+          : decoder.decodeAdministrative(topology, scope);
+    } catch (_) {
+      if (scope == StatisticalBoundaryScope.kanto ||
+          scope == StatisticalBoundaryScope.japan) {
+        _prefectureTopology = null;
+      }
+      rethrow;
+    }
   }
 }
 
@@ -70,6 +114,7 @@ class FuchuStatisticalAreaTopologyDecoder {
     }
 
     return StatisticalAreaBoundaryCatalog(
+      scope: StatisticalBoundaryScope.fuchuCity,
       municipalityName: '東京都府中市',
       datasetLabel: '令和2年国勢調査 町丁・字等別境界データ',
       sourceLabel: 'CODH 国勢調査町丁・字等別境界データセット',
@@ -78,6 +123,125 @@ class FuchuStatisticalAreaTopologyDecoder {
       license: 'CC BY 4.0',
       boundaryNote: '統計調査区を基にした境界で、住居表示などの実際の町丁境界と一致しない場合があります。',
       simplificationNote: '画面表示用に約2m精度で簡略化しています。',
+      areas: List<StatisticalAreaBoundary>.unmodifiable(areas),
+    );
+  }
+
+  StatisticalAreaBoundaryCatalog decodeAdministrative(
+    Map<String, dynamic> topology,
+    StatisticalBoundaryScope scope,
+  ) {
+    if (scope == StatisticalBoundaryScope.fuchuCity ||
+        topology['type'] != 'Topology') {
+      throw const StatisticalAreaBoundaryException(
+        '行政区域のTopoJSONではありません。',
+      );
+    }
+    final decodedArcs = _decodeArcs(
+      _list(topology['arcs']),
+      _map(topology['transform']),
+    );
+    final objects = _map(topology['objects']);
+    final object = _map(objects.values.isEmpty ? null : objects.values.first);
+    final grouped = <String,
+        ({
+      String name,
+      List<List<StatisticalAreaBoundaryPoint>> polygons,
+    })>{};
+    final kantoCodes = <String>{'08', '09', '10', '11', '12', '13', '14'};
+    final tolerance = scope == StatisticalBoundaryScope.tokyo ? 0.0003 : 0.008;
+
+    for (final rawGeometry in _list(object['geometries'])) {
+      final geometry = _map(rawGeometry);
+      final properties = _map(geometry['properties']);
+      final code = properties['N03_007']?.toString().trim() ?? '';
+      final name = (scope == StatisticalBoundaryScope.tokyo
+              ? properties['N03_004']
+              : properties['N03_001'])
+          ?.toString()
+          .trim();
+      if (code.isEmpty || name == null || name.isEmpty) continue;
+      if (scope == StatisticalBoundaryScope.tokyo && !code.startsWith('13')) {
+        continue;
+      }
+      final prefectureCode = code.substring(0, code.length >= 2 ? 2 : 1);
+      if (scope == StatisticalBoundaryScope.kanto &&
+          !kantoCodes.contains(prefectureCode)) {
+        continue;
+      }
+      final groupCode =
+          scope == StatisticalBoundaryScope.tokyo ? code : prefectureCode;
+      final rings = _exteriorRings(
+        geometry['type']?.toString() ?? '',
+        _list(geometry['arcs']),
+      );
+      final polygons = <List<StatisticalAreaBoundaryPoint>>[];
+      for (final ring in rings) {
+        final polygon = _stitchRing(
+          ring,
+          decodedArcs,
+          tolerance: tolerance,
+        );
+        if (polygon.length >= 4) polygons.add(polygon);
+      }
+      if (polygons.isEmpty) continue;
+      final existing = grouped[groupCode];
+      grouped[groupCode] = (
+        name: name,
+        polygons: <List<StatisticalAreaBoundaryPoint>>[
+          if (existing != null) ...existing.polygons,
+          ...polygons,
+        ],
+      );
+    }
+
+    final areas = <StatisticalAreaBoundary>[];
+    for (final entry in grouped.entries) {
+      final polygons = [...entry.value.polygons]
+        ..sort((left, right) => right.length.compareTo(left.length));
+      areas.add(
+        StatisticalAreaBoundary(
+          code: entry.key,
+          name: entry.value.name,
+          isTarget: entry.key == scope.defaultAreaCode,
+          points: List<StatisticalAreaBoundaryPoint>.unmodifiable(
+            polygons.first,
+          ),
+          additionalPolygons:
+              List<List<StatisticalAreaBoundaryPoint>>.unmodifiable(
+            polygons
+                .skip(1)
+                .map(List<StatisticalAreaBoundaryPoint>.unmodifiable),
+          ),
+        ),
+      );
+    }
+    areas.sort((left, right) => left.code.compareTo(right.code));
+    final minimumCount = switch (scope) {
+      StatisticalBoundaryScope.tokyo => 60,
+      StatisticalBoundaryScope.kanto => 7,
+      StatisticalBoundaryScope.japan => 47,
+      StatisticalBoundaryScope.fuchuCity => 100,
+    };
+    if (areas.length < minimumCount || !areas.any((area) => area.isTarget)) {
+      throw const StatisticalAreaBoundaryException(
+        '行政区域境界を十分に読み込めませんでした。',
+      );
+    }
+    final isTokyo = scope == StatisticalBoundaryScope.tokyo;
+    return StatisticalAreaBoundaryCatalog(
+      scope: scope,
+      municipalityName: scope.regionLabel,
+      datasetLabel: '歴史的行政区域データセットβ版（2023-01-01行政区域）',
+      sourceLabel: 'CODH 歴史的行政区域データセットβ版',
+      sourceUrl: isTokyo
+          ? 'https://geoshape.ex.nii.ac.jp/city/choropleth/13_city.html'
+          : 'https://geoshape.ex.nii.ac.jp/city/choropleth/jp_pref.html',
+      license: 'CC BY 4.0',
+      boundaryNote: '国土数値情報を変換した2023年時点の行政区域です。最新の法定境界を保証するものではありません。',
+      simplificationNote: isTokyo
+          ? '軽量表示用の低解像度TopoJSONをさらに約30m許容で簡略化しています。'
+          : '軽量表示用の粗解像度TopoJSONをさらに約800m許容で簡略化しています。離島などは簡略表示です。',
       areas: List<StatisticalAreaBoundary>.unmodifiable(areas),
     );
   }
@@ -132,10 +296,27 @@ class FuchuStatisticalAreaTopologyDecoder {
     return ring.whereType<num>().map((value) => value.toInt()).toList();
   }
 
+  List<List<int>> _exteriorRings(String type, List<dynamic> rawArcs) {
+    if (type == 'Polygon') {
+      if (rawArcs.isEmpty) return const <List<int>>[];
+      return <List<int>>[_integerRing(_list(rawArcs.first))];
+    }
+    if (type != 'MultiPolygon') return const <List<int>>[];
+    return <List<int>>[
+      for (final rawPolygon in rawArcs)
+        if (_list(rawPolygon).isNotEmpty)
+          _integerRing(_list(_list(rawPolygon).first)),
+    ];
+  }
+
+  List<int> _integerRing(List<dynamic> values) =>
+      values.whereType<num>().map((value) => value.toInt()).toList();
+
   List<StatisticalAreaBoundaryPoint> _stitchRing(
     List<int> arcIndexes,
-    List<List<StatisticalAreaBoundaryPoint>> arcs,
-  ) {
+    List<List<StatisticalAreaBoundaryPoint>> arcs, {
+    double tolerance = 0.00002,
+  }) {
     final ring = <StatisticalAreaBoundaryPoint>[];
     for (final signedIndex in arcIndexes) {
       final arcIndex = signedIndex >= 0 ? signedIndex : -signedIndex - 1;
@@ -148,7 +329,7 @@ class FuchuStatisticalAreaTopologyDecoder {
       }
     }
     if (ring.length < 3) return ring;
-    final simplified = _simplify(ring, 0.00002);
+    final simplified = _simplify(ring, tolerance);
     if (!_samePoint(simplified.first, simplified.last)) {
       simplified.add(simplified.first);
     }
