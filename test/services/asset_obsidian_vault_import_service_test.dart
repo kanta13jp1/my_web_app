@@ -157,6 +157,196 @@ void main() {
 
     expect(preview.candidates, isEmpty);
     expect(preview.recognizedFileCount, 0);
-    expect(preview.warnings, contains('対応する残高表が見つかりませんでした。'));
+    expect(preview.warnings, contains('対応する残高表または解約済みサブスク表が見つかりませんでした。'));
+  });
+
+  test('解約・停止済みセクションだけを解析し、登録中サブスクへ一意に照合する', () {
+    final preview = service.preview(
+      files: [
+        file('company/SUBSCRIPTION_LIST.md', '''
+## 1. 直接確認済み 有効サブスクリプション
+| サービス名 | プラン・内容 | 月額（税込） | 次回更新日 | 判定 / 方針 | 備考 |
+| --- | --- | ---: | --- | --- | --- |
+| Notion | Plus | 1,650円 | 2026-09-01 | 継続 | 有効 |
+
+## 2. 解約・定期請求停止済みサービス
+| サービス名 | プラン・内容 | 終了日 / 停止日 | 状態 | 備考 |
+| --- | --- | --- | --- | --- |
+| Xbox Game Pass | Ultimate | 2026-08-20 | 解約完了 | 履歴は保持 |
+| netkeiba | プレミアム | 2026-08-21 | 停止済み | - |
+| 未確定サービス | - | 2026-08-22 | 解約予定 | まだ有効 |
+'''),
+      ],
+      existingBalances: const [],
+      existingSubscriptions: const [
+        AssetObsidianExistingSubscription(
+          id: 'sub_xbox',
+          name: 'MICROSOFT*XBOX GAME',
+          amount: 1550,
+        ),
+        AssetObsidianExistingSubscription(
+          id: 'sub_notion',
+          name: 'Notion',
+          amount: 1650,
+        ),
+      ],
+    );
+
+    expect(preview.recognizedFileCount, 0);
+    expect(preview.recognizedCancellationFileCount, 1);
+    expect(preview.subscriptionCancellations, hasLength(2));
+    final xbox = preview.subscriptionCancellations.singleWhere(
+      (candidate) => candidate.sourceSubscriptionName == 'Xbox Game Pass',
+    );
+    expect(xbox.status, AssetObsidianSubscriptionCancellationStatus.matched);
+    expect(xbox.matchedSubscriptionId, 'sub_xbox');
+    expect(xbox.matchedMonthlyAmount, 1550);
+    expect(xbox.isDeletable, isTrue);
+    final netkeiba = preview.subscriptionCancellations.singleWhere(
+      (candidate) => candidate.sourceSubscriptionName == 'netkeiba',
+    );
+    expect(
+      netkeiba.status,
+      AssetObsidianSubscriptionCancellationStatus.notRegistered,
+    );
+    expect(netkeiba.isDeletable, isFalse);
+    expect(
+      preview.initiallySelectedSubscriptionCancellations.map(
+        (candidate) => candidate.matchedSubscriptionId,
+      ),
+      ['sub_xbox'],
+    );
+  });
+
+  test('同名の登録中サブスクが複数ある場合は競合として削除不可にする', () {
+    final preview = service.preview(
+      files: [
+        file('vault/SUBSCRIPTION_LIST.md', '''
+## 解約・定期請求停止済みサービス
+| サービス名 | 終了日 / 停止日 | 状態 |
+| --- | --- | --- |
+| Yousician | 2026-08-20 | 解約済み |
+'''),
+      ],
+      existingBalances: const [],
+      existingSubscriptions: const [
+        AssetObsidianExistingSubscription(
+          id: 'sub_yousician_a',
+          name: 'Yousician',
+          amount: 2000,
+        ),
+        AssetObsidianExistingSubscription(
+          id: 'sub_yousician_b',
+          name: 'Yousician',
+          amount: 3000,
+        ),
+      ],
+    );
+
+    final candidate = preview.subscriptionCancellations.single;
+    expect(
+      candidate.status,
+      AssetObsidianSubscriptionCancellationStatus.conflict,
+    );
+    expect(candidate.isDeletable, isFalse);
+    expect(candidate.conflictingSubscriptionNames, ['Yousician', 'Yousician']);
+  });
+
+  test('有効一覧から消えただけのサブスクは削除候補にしない', () {
+    final preview = service.preview(
+      files: [
+        file('vault/SUBSCRIPTION_LIST.md', '''
+## 直接確認済み 有効サブスクリプション
+| サービス名 | 月額（税込） | 状態 |
+| --- | ---: | --- |
+| Notion | 1,650円 | 有効 |
+'''),
+      ],
+      existingBalances: const [],
+      existingSubscriptions: const [
+        AssetObsidianExistingSubscription(
+          id: 'sub_chatgpt',
+          name: 'ChatGPT',
+          amount: 3000,
+        ),
+      ],
+    );
+
+    expect(preview.subscriptionCancellations, isEmpty);
+  });
+
+  test('区切り記号が異なる一般名は同一サブスクとして照合しない', () {
+    final preview = service.preview(
+      files: [
+        file('vault/SUBSCRIPTION_LIST.md', '''
+## 解約・定期請求停止済みサービス
+| サービス名 | 終了日 / 停止日 | 状態 |
+| --- | --- | --- |
+| A/B | 2026-08-20 | 解約完了 |
+| Foo-Bar | 2026-08-20 | 停止済み |
+'''),
+      ],
+      existingBalances: const [],
+      existingSubscriptions: const [
+        AssetObsidianExistingSubscription(
+          id: 'sub_ab',
+          name: 'AB',
+          amount: 1000,
+        ),
+        AssetObsidianExistingSubscription(
+          id: 'sub_foo',
+          name: 'Foo Bar',
+          amount: 1000,
+        ),
+      ],
+    );
+
+    expect(preview.subscriptionCancellations, hasLength(2));
+    expect(
+      preview.subscriptionCancellations.map((candidate) => candidate.status),
+      everyElement(AssetObsidianSubscriptionCancellationStatus.notRegistered),
+    );
+    expect(preview.initiallySelectedSubscriptionCancellations, isEmpty);
+  });
+
+  test('完了状態を含むだけの予定・否定表現は削除候補にしない', () {
+    final preview = service.preview(
+      files: [
+        file('vault/SUBSCRIPTION_LIST.md', '''
+## 解約・定期請求停止済みサービス
+| サービス名 | 終了日 / 停止日 | 状態 |
+| --- | --- | --- |
+| Service A | 2026-08-20 | 解約完了予定 |
+| Service B | 2026-08-20 | 未解約済み |
+| Service C | 2026-08-20 | 解約済みではない |
+| Service D | 2026-08-20 | 停止済み予定 |
+'''),
+      ],
+      existingBalances: const [],
+      existingSubscriptions: const [
+        AssetObsidianExistingSubscription(
+          id: 'sub_a',
+          name: 'Service A',
+          amount: 1000,
+        ),
+        AssetObsidianExistingSubscription(
+          id: 'sub_b',
+          name: 'Service B',
+          amount: 1000,
+        ),
+        AssetObsidianExistingSubscription(
+          id: 'sub_c',
+          name: 'Service C',
+          amount: 1000,
+        ),
+        AssetObsidianExistingSubscription(
+          id: 'sub_d',
+          name: 'Service D',
+          amount: 1000,
+        ),
+      ],
+    );
+
+    expect(preview.subscriptionCancellations, isEmpty);
   });
 }

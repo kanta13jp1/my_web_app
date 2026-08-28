@@ -6,9 +6,13 @@ class AssetObsidianVaultImportService {
   AssetObsidianImportPreview preview({
     required List<AssetObsidianVaultFile> files,
     required List<AssetObsidianExistingBalance> existingBalances,
+    List<AssetObsidianExistingSubscription> existingSubscriptions =
+        const <AssetObsidianExistingSubscription>[],
   }) {
     final parsed = <_ParsedBalance>[];
+    final parsedCancellations = <_ParsedSubscriptionCancellation>[];
     final recognizedPaths = <String>{};
+    final recognizedCancellationPaths = <String>{};
     final warnings = <String>[];
 
     for (final file in files) {
@@ -16,7 +20,11 @@ class AssetObsidianVaultImportService {
       if (result.recognized) {
         recognizedPaths.add(file.relativePath);
       }
+      if (result.recognizedCancellationTable) {
+        recognizedCancellationPaths.add(file.relativePath);
+      }
       parsed.addAll(result.balances);
+      parsedCancellations.addAll(result.subscriptionCancellations);
       warnings.addAll(result.warnings);
     }
 
@@ -98,16 +106,116 @@ class AssetObsidianVaultImportService {
           ? statusCompare
           : a.accountName.compareTo(b.accountName);
     });
-    if (recognizedPaths.isEmpty) {
-      warnings.add('対応する残高表が見つかりませんでした。');
+    final cancellationCandidates = _matchSubscriptionCancellations(
+      parsedCancellations,
+      existingSubscriptions,
+    );
+    if (recognizedPaths.isEmpty && recognizedCancellationPaths.isEmpty) {
+      warnings.add('対応する残高表または解約済みサブスク表が見つかりませんでした。');
     }
 
     return AssetObsidianImportPreview(
       scannedFileCount: files.length,
       recognizedFileCount: recognizedPaths.length,
+      recognizedCancellationFileCount: recognizedCancellationPaths.length,
       candidates: candidates,
+      subscriptionCancellations: cancellationCandidates,
       warnings: warnings.toSet().toList(growable: false),
     );
+  }
+
+  List<AssetObsidianSubscriptionCancellationCandidate>
+      _matchSubscriptionCancellations(
+    List<_ParsedSubscriptionCancellation> parsed,
+    List<AssetObsidianExistingSubscription> existingSubscriptions,
+  ) {
+    final existingByKey = <String, List<AssetObsidianExistingSubscription>>{};
+    for (final subscription in existingSubscriptions) {
+      existingByKey
+          .putIfAbsent(
+            _subscriptionKey(subscription.name),
+            () => <AssetObsidianExistingSubscription>[],
+          )
+          .add(subscription);
+    }
+
+    final parsedByKey = <String, List<_ParsedSubscriptionCancellation>>{};
+    for (final cancellation in parsed) {
+      parsedByKey
+          .putIfAbsent(
+            _subscriptionKey(cancellation.subscriptionName),
+            () => <_ParsedSubscriptionCancellation>[],
+          )
+          .add(cancellation);
+    }
+
+    final candidates = <AssetObsidianSubscriptionCancellationCandidate>[];
+    for (final entry in parsedByKey.entries) {
+      final sourceRows = entry.value;
+      final first = sourceRows.first;
+      final matches = existingByKey[entry.key] ??
+          const <AssetObsidianExistingSubscription>[];
+      final sourcePaths = sourceRows
+          .map((row) => row.sourcePath)
+          .toSet()
+          .toList(growable: false)
+        ..sort();
+      final sourceStatuses =
+          sourceRows.map((row) => row.status).toSet().toList(growable: false);
+      final endedAtValues = sourceRows
+          .map((row) => row.endedAt)
+          .whereType<String>()
+          .where((value) => value.isNotEmpty)
+          .toSet()
+          .toList(growable: false);
+
+      if (matches.length == 1) {
+        final match = matches.single;
+        candidates.add(
+          AssetObsidianSubscriptionCancellationCandidate(
+            sourceSubscriptionName: first.subscriptionName,
+            sourceStatus: sourceStatuses.join(' / '),
+            endedAt: endedAtValues.isEmpty ? null : endedAtValues.join(' / '),
+            status: AssetObsidianSubscriptionCancellationStatus.matched,
+            sourcePaths: sourcePaths,
+            matchedSubscriptionId: match.id,
+            matchedSubscriptionName: match.name,
+            matchedMonthlyAmount: match.amount,
+          ),
+        );
+        continue;
+      }
+
+      if (matches.length > 1) {
+        candidates.add(
+          AssetObsidianSubscriptionCancellationCandidate(
+            sourceSubscriptionName: first.subscriptionName,
+            sourceStatus: sourceStatuses.join(' / '),
+            endedAt: endedAtValues.isEmpty ? null : endedAtValues.join(' / '),
+            status: AssetObsidianSubscriptionCancellationStatus.conflict,
+            sourcePaths: sourcePaths,
+            conflictingSubscriptionNames: matches
+                .map((subscription) => subscription.name)
+                .toList(growable: false),
+          ),
+        );
+        continue;
+      }
+
+      candidates.add(
+        AssetObsidianSubscriptionCancellationCandidate(
+          sourceSubscriptionName: first.subscriptionName,
+          sourceStatus: sourceStatuses.join(' / '),
+          endedAt: endedAtValues.isEmpty ? null : endedAtValues.join(' / '),
+          status: AssetObsidianSubscriptionCancellationStatus.notRegistered,
+          sourcePaths: sourcePaths,
+        ),
+      );
+    }
+    candidates.sort(
+      (a, b) => a.sourceSubscriptionName.compareTo(b.sourceSubscriptionName),
+    );
+    return candidates;
   }
 
   AssetObsidianImportStatus _statusFor({
@@ -130,12 +238,47 @@ class AssetObsidianVaultImportService {
   _ParseResult _parseFile(AssetObsidianVaultFile file) {
     final lines = file.content.split(RegExp(r'\r?\n'));
     final balances = <_ParsedBalance>[];
+    final subscriptionCancellations = <_ParsedSubscriptionCancellation>[];
     final warnings = <String>[];
     var recognized = false;
+    var recognizedCancellationTable = false;
+    var currentHeading = '';
 
     for (var index = 0; index < lines.length; index++) {
+      final heading = RegExp(
+        r'^#{1,6}\s+(.+)$',
+      ).firstMatch(lines[index].trim());
+      if (heading != null) {
+        currentHeading = _cleanCell(heading.group(1)!);
+        continue;
+      }
       final header = _tableCells(lines[index]);
       if (header == null) continue;
+
+      final subscriptionNameIndex = _columnIndex(header, 'サービス名');
+      final endedAtIndex = header.indexWhere(
+        (cell) => cell.contains('終了日') || cell.contains('停止日'),
+      );
+      final cancellationStatusIndex = _columnIndex(header, '状態');
+      final isCancellationSection =
+          currentHeading.contains('解約') || currentHeading.contains('停止済み');
+      if (isCancellationSection &&
+          subscriptionNameIndex >= 0 &&
+          endedAtIndex >= 0 &&
+          cancellationStatusIndex >= 0) {
+        recognizedCancellationTable = true;
+        index = _parseSubscriptionCancellationTable(
+          lines: lines,
+          headerIndex: index,
+          nameIndex: subscriptionNameIndex,
+          endedAtIndex: endedAtIndex,
+          statusIndex: cancellationStatusIndex,
+          sourcePath: file.relativePath,
+          cancellations: subscriptionCancellations,
+          warnings: warnings,
+        );
+        continue;
+      }
 
       final confirmedDateIndex = _columnIndex(header, '確認日');
       final accountIndex = _columnIndex(header, '口座・サービス名');
@@ -183,9 +326,66 @@ class AssetObsidianVaultImportService {
 
     return _ParseResult(
       recognized: recognized,
+      recognizedCancellationTable: recognizedCancellationTable,
       balances: balances,
+      subscriptionCancellations: subscriptionCancellations,
       warnings: warnings,
     );
+  }
+
+  int _parseSubscriptionCancellationTable({
+    required List<String> lines,
+    required int headerIndex,
+    required int nameIndex,
+    required int endedAtIndex,
+    required int statusIndex,
+    required String sourcePath,
+    required List<_ParsedSubscriptionCancellation> cancellations,
+    required List<String> warnings,
+  }) {
+    var index = headerIndex + 1;
+    if (index < lines.length && _isSeparatorRow(lines[index])) index++;
+    for (; index < lines.length; index++) {
+      final cells = _tableCells(lines[index]);
+      if (cells == null) break;
+      final maxIndex = [
+        nameIndex,
+        endedAtIndex,
+        statusIndex,
+      ].reduce((a, b) => a > b ? a : b);
+      if (cells.length <= maxIndex) continue;
+      final name = _cleanCell(cells[nameIndex]);
+      final status = _cleanCell(cells[statusIndex]);
+      if (name.isEmpty || status.isEmpty) {
+        warnings.add('$sourcePath:${index + 1}: 解約済みサブスク行を読み飛ばしました。');
+        continue;
+      }
+      if (!_isExplicitCancellationStatus(status)) {
+        continue;
+      }
+      final endedAt = _cleanCell(cells[endedAtIndex]);
+      cancellations.add(
+        _ParsedSubscriptionCancellation(
+          subscriptionName: name,
+          status: status,
+          endedAt: endedAt.isEmpty ? null : endedAt,
+          sourcePath: sourcePath,
+        ),
+      );
+    }
+    return index - 1;
+  }
+
+  bool _isExplicitCancellationStatus(String value) {
+    final normalized = value.replaceAll(RegExp(r'\s+'), '');
+    return const <String>{
+      '解約完了',
+      '解約済み',
+      '停止済み',
+      '停止完了',
+      '終了済み',
+      '終了完了',
+    }.contains(normalized);
   }
 
   int _parseAccountTable({
@@ -287,6 +487,7 @@ class AssetObsidianVaultImportService {
       .trim()
       .replaceAll('**', '')
       .replaceAll('__', '')
+      .replaceAll('~~', '')
       .replaceAll('`', '')
       .trim();
 
@@ -341,6 +542,23 @@ class AssetObsidianVaultImportService {
       .replaceAll('）', ')')
       .replaceAll(RegExp(r'[\s()・]'), '');
 
+  String _subscriptionKey(String value) {
+    final normalized = _cleanCell(value)
+        .toLowerCase()
+        .replaceAll('（', '(')
+        .replaceAll('）', ')')
+        .replaceAll('　', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    const aliases = <String, String>{
+      'microsoft*xbox game': 'xbox game pass',
+      'microsoft*xbox game pass': 'xbox game pass',
+      'xbox game pass ultimate': 'xbox game pass',
+      'netkeiba.com': 'netkeiba',
+    };
+    return aliases[normalized] ?? normalized;
+  }
+
   bool _sameDate(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 }
@@ -361,14 +579,32 @@ class _ParsedBalance {
   final String sourcePath;
 }
 
+class _ParsedSubscriptionCancellation {
+  const _ParsedSubscriptionCancellation({
+    required this.subscriptionName,
+    required this.status,
+    required this.endedAt,
+    required this.sourcePath,
+  });
+
+  final String subscriptionName;
+  final String status;
+  final String? endedAt;
+  final String sourcePath;
+}
+
 class _ParseResult {
   const _ParseResult({
     required this.recognized,
+    required this.recognizedCancellationTable,
     required this.balances,
+    required this.subscriptionCancellations,
     required this.warnings,
   });
 
   final bool recognized;
+  final bool recognizedCancellationTable;
   final List<_ParsedBalance> balances;
+  final List<_ParsedSubscriptionCancellation> subscriptionCancellations;
   final List<String> warnings;
 }

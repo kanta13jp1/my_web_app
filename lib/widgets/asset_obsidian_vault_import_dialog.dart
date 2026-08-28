@@ -11,6 +11,7 @@ class AssetObsidianVaultImportDialog extends StatefulWidget {
   const AssetObsidianVaultImportDialog({
     super.key,
     required this.existingBalances,
+    this.existingSubscriptions = const <AssetObsidianExistingSubscription>[],
     required this.onApply,
     this.importService = const AssetObsidianVaultImportService(),
     this.pickVault = pickAssetObsidianVault,
@@ -18,8 +19,8 @@ class AssetObsidianVaultImportDialog extends StatefulWidget {
   });
 
   final List<AssetObsidianExistingBalance> existingBalances;
-  final Future<void> Function(List<AssetObsidianImportCandidate> candidates)
-      onApply;
+  final List<AssetObsidianExistingSubscription> existingSubscriptions;
+  final Future<void> Function(AssetObsidianApplySelection selection) onApply;
   final AssetObsidianVaultImportService importService;
   final AssetObsidianVaultPicker pickVault;
   final bool? pickerSupported;
@@ -33,7 +34,8 @@ class _AssetObsidianVaultImportDialogState
     extends State<AssetObsidianVaultImportDialog> {
   AssetObsidianVaultSelection? _selection;
   AssetObsidianImportPreview? _preview;
-  Set<String> _selectedIds = <String>{};
+  Set<String> _selectedBalanceIds = <String>{};
+  Set<String> _selectedCancellationIds = <String>{};
   bool _isSelecting = false;
   bool _isApplying = false;
   String? _error;
@@ -45,7 +47,22 @@ class _AssetObsidianVaultImportDialogState
     final preview = _preview;
     if (preview == null) return const <AssetObsidianImportCandidate>[];
     return preview.candidates
-        .where((candidate) => _selectedIds.contains(candidate.id))
+        .where((candidate) => _selectedBalanceIds.contains(candidate.id))
+        .toList(growable: false);
+  }
+
+  List<AssetObsidianSubscriptionCancellationCandidate>
+      get _selectedSubscriptionCancellations {
+    final preview = _preview;
+    if (preview == null) {
+      return const <AssetObsidianSubscriptionCancellationCandidate>[];
+    }
+    return preview.subscriptionCancellations
+        .where(
+          (candidate) =>
+              candidate.isDeletable &&
+              _selectedCancellationIds.contains(candidate.id),
+        )
         .toList(growable: false);
   }
 
@@ -60,12 +77,17 @@ class _AssetObsidianVaultImportDialogState
       final preview = widget.importService.preview(
         files: selection.files,
         existingBalances: widget.existingBalances,
+        existingSubscriptions: widget.existingSubscriptions,
       );
       setState(() {
         _selection = selection;
         _preview = preview;
-        _selectedIds =
+        _selectedBalanceIds =
             preview.initiallySelected.map((candidate) => candidate.id).toSet();
+        _selectedCancellationIds = preview
+            .initiallySelectedSubscriptionCancellations
+            .map((candidate) => candidate.id)
+            .toSet();
       });
     } on AssetObsidianVaultPickerException catch (error) {
       if (mounted) setState(() => _error = error.message);
@@ -81,12 +103,17 @@ class _AssetObsidianVaultImportDialogState
   }
 
   Future<void> _confirmAndApply() async {
-    final selected = _selectedCandidates;
-    if (selected.isEmpty) return;
+    final selectedBalances = _selectedCandidates;
+    final selectedCancellations = _selectedSubscriptionCancellations;
+    final selection = AssetObsidianApplySelection(
+      balances: selectedBalances,
+      subscriptionCancellations: selectedCancellations,
+    );
+    if (selection.totalCount == 0) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('${selected.length}件の残高を本日分として反映しますか？'),
+        title: Text(_confirmationTitle(selection)),
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520, maxHeight: 360),
           child: SingleChildScrollView(
@@ -95,14 +122,36 @@ class _AssetObsidianVaultImportDialogState
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  '保管庫の確認日は鮮度判定に使い、資産管理サイトには反映時点の残高として保存します。使途不明金は自動生成しません。',
+                  '残高は反映時点の値として保存し、使途不明金は自動生成しません。'
+                  '解約済みサブスクは現在の定期固定費から削除しますが、過去の月次履歴・取引履歴は残します。',
                 ),
-                const SizedBox(height: 12),
-                for (final candidate in selected)
+                if (selectedBalances.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    '残高',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ],
+                for (final candidate in selectedBalances)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Text(
                       '・${candidate.accountName}: ${_formatYen(candidate.amount)}',
+                    ),
+                  ),
+                if (selectedCancellations.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    '削除するサブスク',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ],
+                for (final candidate in selectedCancellations)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text(
+                      '・${candidate.matchedSubscriptionName}: '
+                      '${_formatYen(candidate.matchedMonthlyAmount ?? 0)}/月',
                     ),
                   ),
               ],
@@ -128,12 +177,12 @@ class _AssetObsidianVaultImportDialogState
       _error = null;
     });
     try {
-      await widget.onApply(selected);
-      if (mounted) Navigator.of(context).pop(selected.length);
+      await widget.onApply(selection);
+      if (mounted) Navigator.of(context).pop(selection);
     } catch (_) {
       if (mounted) {
         setState(() {
-          _error = '残高の反映に失敗しました。通信状態を確認して再試行してください。';
+          _error = '選択内容の反映に失敗しました。通信状態を確認して再試行してください。';
         });
       }
     } finally {
@@ -141,16 +190,26 @@ class _AssetObsidianVaultImportDialogState
     }
   }
 
+  String _confirmationTitle(AssetObsidianApplySelection selection) {
+    final parts = <String>[
+      if (selection.balances.isNotEmpty) '残高${selection.balances.length}件',
+      if (selection.subscriptionCancellations.isNotEmpty)
+        'サブスク${selection.subscriptionCancellations.length}件',
+    ];
+    return '${parts.join('・')}を反映しますか？';
+  }
+
   @override
   Widget build(BuildContext context) {
     final preview = _preview;
-    final selectedCount = _selectedCandidates.length;
+    final selectedCount =
+        _selectedCandidates.length + _selectedSubscriptionCancellations.length;
     return AlertDialog(
       title: const Row(
         children: [
           Icon(Icons.folder_open, color: Color(0xFF7C3AED)),
           SizedBox(width: 10),
-          Expanded(child: Text('Obsidian保管庫から残高を取込')),
+          Expanded(child: Text('Obsidian保管庫から資産情報を取込')),
         ],
       ),
       content: ConstrainedBox(
@@ -205,9 +264,12 @@ class _AssetObsidianVaultImportDialogState
                       ),
                   ],
                   const SizedBox(height: 12),
-                  if (preview.candidates.isEmpty)
-                    const Text('取込候補はありません。')
-                  else
+                  if (preview.candidates.isNotEmpty) ...[
+                    const _PreviewSectionTitle(
+                      icon: Icons.account_balance_wallet_outlined,
+                      label: '残高の反映候補',
+                    ),
+                    const SizedBox(height: 8),
                     LayoutBuilder(
                       builder: (context, constraints) => Column(
                         children: [
@@ -222,6 +284,33 @@ class _AssetObsidianVaultImportDialogState
                         ],
                       ),
                     ),
+                  ],
+                  if (preview.subscriptionCancellations.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    const _PreviewSectionTitle(
+                      icon: Icons.unsubscribe_outlined,
+                      label: '解約済みサブスクの削除候補',
+                    ),
+                    const SizedBox(height: 8),
+                    LayoutBuilder(
+                      builder: (context, constraints) => Column(
+                        children: [
+                          for (final candidate
+                              in preview.subscriptionCancellations)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _buildSubscriptionCancellationCandidate(
+                                candidate,
+                                compact: constraints.maxWidth < 680,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (preview.candidates.isEmpty &&
+                      preview.subscriptionCancellations.isEmpty)
+                    const Text('取込候補はありません。'),
                 ],
               ],
             ),
@@ -253,7 +342,8 @@ class _AssetObsidianVaultImportDialogState
   Widget _buildPrivacyNotice() => _buildMessageBox(
         icon: Icons.shield_outlined,
         color: const Color(0xFF047857),
-        text: 'Markdown本文はこのブラウザ内だけで解析します。確認後に選択した口座名と残高だけを資産管理サイトへ保存します。',
+        text: 'Markdown本文はこのブラウザ内だけで解析します。確認後に選択した口座名と残高、'
+            'または照合済みサブスクIDだけを反映し、本文とローカルパスは保存しません。',
       );
 
   Widget _buildPreviewHeader(AssetObsidianImportPreview preview) {
@@ -275,7 +365,9 @@ class _AssetObsidianVaultImportDialogState
           ),
           Text('Markdown ${preview.scannedFileCount}件'),
           Text('残高表 ${preview.recognizedFileCount}件'),
-          Text('候補 ${preview.candidates.length}件'),
+          Text('解約表 ${preview.recognizedCancellationFileCount}件'),
+          Text('残高候補 ${preview.candidates.length}件'),
+          Text('解約候補 ${preview.subscriptionCancellations.length}件'),
         ],
       ),
     );
@@ -285,7 +377,7 @@ class _AssetObsidianVaultImportDialogState
     AssetObsidianImportCandidate candidate, {
     required bool compact,
   }) {
-    final selected = _selectedIds.contains(candidate.id);
+    final selected = _selectedBalanceIds.contains(candidate.id);
     final details = _candidateDetails(candidate);
     final checkbox = Checkbox(
       value: selected,
@@ -293,8 +385,8 @@ class _AssetObsidianVaultImportDialogState
           ? (value) {
               setState(() {
                 value == true
-                    ? _selectedIds.add(candidate.id)
-                    : _selectedIds.remove(candidate.id);
+                    ? _selectedBalanceIds.add(candidate.id)
+                    : _selectedBalanceIds.remove(candidate.id);
               });
             }
           : null,
@@ -370,6 +462,104 @@ class _AssetObsidianVaultImportDialogState
     );
   }
 
+  Widget _buildSubscriptionCancellationCandidate(
+    AssetObsidianSubscriptionCancellationCandidate candidate, {
+    required bool compact,
+  }) {
+    final selected = _selectedCancellationIds.contains(candidate.id);
+    final checkbox = Checkbox(
+      value: selected,
+      onChanged: candidate.isDeletable && !_isApplying
+          ? (value) {
+              setState(() {
+                value == true
+                    ? _selectedCancellationIds.add(candidate.id)
+                    : _selectedCancellationIds.remove(candidate.id);
+              });
+            }
+          : null,
+    );
+    final name = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          candidate.sourceSubscriptionName,
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+        if (candidate.matchedSubscriptionName != null &&
+            candidate.matchedSubscriptionName !=
+                candidate.sourceSubscriptionName)
+          Text(
+            '登録名: ${candidate.matchedSubscriptionName}',
+            style: _detailStyle,
+          ),
+      ],
+    );
+    final amount = candidate.matchedMonthlyAmount == null
+        ? const SizedBox.shrink()
+        : Text(
+            '${_formatYen(candidate.matchedMonthlyAmount!)}/月',
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              color: Color(0xFFB91C1C),
+              fontWeight: FontWeight.w900,
+            ),
+          );
+    final details = _subscriptionCancellationDetails(candidate);
+    final status = _buildSubscriptionCancellationStatus(candidate.status);
+
+    return Semantics(
+      label: '${candidate.sourceSubscriptionName}、$details',
+      child: Container(
+        key: ValueKey('obsidian-cancellation-${candidate.id}'),
+        width: double.infinity,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: candidate.isDeletable
+              ? const Color(0xFFFFFBEB)
+              : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            checkbox,
+            const SizedBox(width: 4),
+            Expanded(
+              child: compact
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        name,
+                        const SizedBox(height: 6),
+                        amount,
+                        const SizedBox(height: 5),
+                        status,
+                        const SizedBox(height: 5),
+                        Text(details, style: _detailStyle),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        Expanded(flex: 4, child: name),
+                        Expanded(flex: 2, child: amount),
+                        const SizedBox(width: 12),
+                        status,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 4,
+                          child: Text(details, style: _detailStyle),
+                        ),
+                      ],
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   TextStyle get _detailStyle =>
       const TextStyle(fontSize: 11, color: Color(0xFF64748B), height: 1.4);
 
@@ -389,10 +579,65 @@ class _AssetObsidianVaultImportDialogState
       ),
       child: Text(
         label,
-        style:
-            TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
       ),
     );
+  }
+
+  Widget _buildSubscriptionCancellationStatus(
+    AssetObsidianSubscriptionCancellationStatus status,
+  ) {
+    final (label, color) = switch (status) {
+      AssetObsidianSubscriptionCancellationStatus.matched => (
+          '削除候補',
+          const Color(0xFFB45309),
+        ),
+      AssetObsidianSubscriptionCancellationStatus.notRegistered => (
+          '未登録',
+          const Color(0xFF64748B),
+        ),
+      AssetObsidianSubscriptionCancellationStatus.conflict => (
+          '競合',
+          const Color(0xFFB91C1C),
+        ),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  String _subscriptionCancellationDetails(
+    AssetObsidianSubscriptionCancellationCandidate candidate,
+  ) {
+    final source = candidate.endedAt == null
+        ? '保管庫: ${candidate.sourceStatus}'
+        : '保管庫: ${candidate.sourceStatus} / ${candidate.endedAt}';
+    if (candidate.status ==
+        AssetObsidianSubscriptionCancellationStatus.notRegistered) {
+      return '$source / 現在の登録なし（変更しません）';
+    }
+    if (candidate.status ==
+        AssetObsidianSubscriptionCancellationStatus.conflict) {
+      return '$source / 同名登録が複数: '
+          '${candidate.conflictingSubscriptionNames.join(' / ')}';
+    }
+    return '$source / 過去履歴は保持';
   }
 
   String _candidateDetails(AssetObsidianImportCandidate candidate) {
@@ -430,6 +675,24 @@ class _AssetObsidianVaultImportDialogState
           Expanded(child: Text(text, style: const TextStyle(height: 1.45))),
         ],
       ),
+    );
+  }
+}
+
+class _PreviewSectionTitle extends StatelessWidget {
+  const _PreviewSectionTitle({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
+      ],
     );
   }
 }

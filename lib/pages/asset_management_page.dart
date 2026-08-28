@@ -50,6 +50,7 @@ import 'package:my_web_app/services/investment_asset_repository.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
+import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
 import 'package:my_web_app/services/fx_rate_service.dart';
 import 'package:my_web_app/services/asset_recurring_suggestion_ignore_store.dart';
 import 'package:my_web_app/services/asset_subscription_audit_catalog.dart';
@@ -208,6 +209,45 @@ List<AssetLiabilityAccount> incomeDestinationAccountOptions(
     ..sort((a, b) => b.balance.compareTo(a.balance));
 }
 
+/// Obsidian の解約候補を、現在のサブスク登録へ fail-closed で再照合する。
+/// プレビュー後に対象が編集・削除された場合や、不正な候補が渡された場合は、
+/// 残高を含む一切の変更を始める前に例外として中断する。
+@visibleForTesting
+List<AssetRecurringFixedCost> validateObsidianSubscriptionCancellations(
+  List<AssetObsidianSubscriptionCancellationCandidate> candidates,
+  List<AssetRecurringFixedCost> currentCosts,
+) {
+  if (candidates.isEmpty) return const <AssetRecurringFixedCost>[];
+
+  final ids = <String>{};
+  final currentById = <String, List<AssetRecurringFixedCost>>{};
+  for (final cost in currentCosts) {
+    if (cost.category != AssetRecurringFixedCostCategory.subscription) continue;
+    currentById
+        .putIfAbsent(cost.id, () => <AssetRecurringFixedCost>[])
+        .add(cost);
+  }
+
+  final validated = <AssetRecurringFixedCost>[];
+  for (final candidate in candidates) {
+    final id = candidate.matchedSubscriptionId?.trim() ?? '';
+    if (!candidate.isDeletable || id.isEmpty || !ids.add(id)) {
+      throw StateError('削除候補が一意な登録済みサブスクではありません。再読込してください。');
+    }
+    final matches = currentById[id] ?? const <AssetRecurringFixedCost>[];
+    if (matches.length != 1) {
+      throw StateError('削除候補が現在のサブスク登録と一致しません。再読込してください。');
+    }
+    final current = matches.single;
+    if (candidate.matchedSubscriptionName != current.name ||
+        candidate.matchedMonthlyAmount != current.amount) {
+      throw StateError('削除候補がプレビュー後に変更されました。再読込してください。');
+    }
+    validated.add(current);
+  }
+  return validated;
+}
+
 class _PaymentSourceCandidate {
   final AssetLiabilityAccount account;
   final double currentBalance;
@@ -303,6 +343,10 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final List<AssetRecurringFixedCost>? debugInitialRecurringFixedCosts;
 
+  /// テスト専用: 定期固定費のローカル保存失敗を注入する。
+  @visibleForTesting
+  final AssetRecurringFixedCostStore? debugRecurringFixedCostStore;
+
   /// テスト専用: 定期固定費の集約ミラー値 (`{id: {...}}`) を注入し、端末間同期
   /// (起動時の union マージ復元) をネットワークなしで検証する。
   @visibleForTesting
@@ -367,6 +411,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugRevolvingDeletedMirror,
     this.debugWatchlistDeletedMirror,
     this.debugInitialRecurringFixedCosts,
+    this.debugRecurringFixedCostStore,
     this.debugRecurringFixedCostsMirror,
     this.debugRecurringFixedCostsDeletedMirror,
     this.debugSubscriptionAuditMirror,
@@ -524,6 +569,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 防止 / #3415 保守的 per-key ガード)。
   final AssetSyncDirtyKeysStore _syncDirtyKeysStore =
       const AssetSyncDirtyKeysStore();
+  final AssetRecurringTombstoneSyncService _recurringTombstoneSyncService =
+      AssetRecurringTombstoneSyncService.shared;
 
   /// ミラー読み取りを Supabase 正本化 (LWW) するか。テスト注入優先・既定はビルド時フラグ。
   bool get _mirrorReadsAuthoritative =>
@@ -930,8 +977,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   static const String _salaryAmountMirrorKey = 'salary_amount';
   final AssetRevolvingCreditConfigStore _revolvingConfigStore =
       const AssetRevolvingCreditConfigStore();
-  final AssetRecurringFixedCostStore _recurringFixedCostStore =
-      const AssetRecurringFixedCostStore();
+  late final AssetRecurringFixedCostStore _recurringFixedCostStore =
+      widget.debugRecurringFixedCostStore ??
+          const AssetRecurringFixedCostStore();
   static const String _recurringFixedCostsMirrorKey = 'recurring_fixed_costs';
   static const String _recurringFixedCostsDeletedMirrorKey =
       'recurring_fixed_costs_deleted';
@@ -6966,22 +7014,55 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return balances;
   }
 
+  List<AssetObsidianExistingSubscription>
+      _obsidianImportExistingSubscriptions() {
+    return <AssetObsidianExistingSubscription>[
+      for (final cost in _recurringFixedCosts)
+        if (cost.category == AssetRecurringFixedCostCategory.subscription)
+          AssetObsidianExistingSubscription(
+            id: cost.id,
+            name: cost.name,
+            amount: cost.amount,
+          ),
+    ];
+  }
+
   Future<void> _showObsidianVaultImportDialog() async {
-    final importedCount = await showDialog<int>(
+    final imported = await showDialog<AssetObsidianApplySelection>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AssetObsidianVaultImportDialog(
         existingBalances: _obsidianImportExistingBalances(),
-        onApply: _applyObsidianVaultBalances,
+        existingSubscriptions: _obsidianImportExistingSubscriptions(),
+        onApply: _applyObsidianVaultSelection,
       ),
     );
-    if (!mounted || importedCount == null || importedCount == 0) return;
+    if (!mounted || imported == null || imported.totalCount == 0) return;
+    final summaries = <String>[
+      if (imported.balances.isNotEmpty) '残高${imported.balances.length}件を反映',
+      if (imported.subscriptionCancellations.isNotEmpty)
+        '解約済みサブスク${imported.subscriptionCancellations.length}件を削除',
+    ];
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('✅ Obsidian保管庫から$importedCount件の残高を反映しました'),
+        content: Text('✅ Obsidian保管庫から${summaries.join('、')}しました'),
         backgroundColor: const Color(0xFF047857),
       ),
     );
+  }
+
+  Future<void> _applyObsidianVaultSelection(
+    AssetObsidianApplySelection selection,
+  ) async {
+    final subscriptions = validateObsidianSubscriptionCancellations(
+      selection.subscriptionCancellations,
+      _recurringFixedCosts,
+    );
+    if (selection.balances.isNotEmpty) {
+      await _applyObsidianVaultBalances(selection.balances);
+    }
+    if (subscriptions.isEmpty) return;
+    await _deleteRecurringFixedCosts(subscriptions);
   }
 
   /// 確認済みのObsidian残高だけを本日のスナップショットとして一括保存する。
@@ -10810,7 +10891,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final localHasExtra = localBefore.keys.any(
         (key) => !tombstoned.contains(key) && !serverConfigs.containsKey(key),
       );
-      if (localHasExtra && debugMirror == null) {
+      final serverHasTombstoned = serverConfigs.keys.any(tombstoned.contains);
+      if ((localHasExtra || serverHasTombstoned) && debugMirror == null) {
         unawaited(_mirrorRecurringFixedCosts());
       }
     } catch (e) {
@@ -10819,7 +10901,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// 定期固定費の全量を `asset_pref_mirror` へ 1 行 upsert する。
-  Future<void> _mirrorRecurringFixedCosts() async {
+  Future<void> _mirrorRecurringFixedCosts({bool throwOnFailure = false}) {
+    return _recurringTombstoneSyncService.runSerialized(
+      () => _mirrorRecurringFixedCostsNow(throwOnFailure: throwOnFailure),
+    );
+  }
+
+  Future<void> _mirrorRecurringFixedCostsNow({
+    bool throwOnFailure = false,
+  }) async {
     unawaited(_syncTimestampStore.markChanged(_recurringFixedCostsMirrorKey));
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
@@ -10836,8 +10926,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
       // 全量 upsert 成功 = 全 id 同期済み → dirty クリア。
       await _syncDirtyKeysStore.clearDomain(_recurringFixedCostsMirrorKey);
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('recurring fixed cost mirror upsert failed: $e');
+      if (throwOnFailure) {
+        Error.throwWithStackTrace(e, stackTrace);
+      }
     }
   }
 
@@ -11189,84 +11282,165 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 他端末へ削除を伝播する (リボ設定と同じパターン)。
   static const MirrorTombstoneStore _recurringFixedCostTombstones =
       MirrorTombstoneStore(storageKey: 'recurring_fixed_costs_deleted_v1');
+  static const String _recurringTombstoneLegacyMigrationKey =
+      'recurring_fixed_cost_tombstone_pending_v2_migrated';
 
-  /// 削除はトゥームストーン化、再追加 (同 id) は解除する。
-  Future<void> _recordRecurringFixedCostTombstone(
+  String _recurringTombstoneOperation(String id, {required bool deleted}) =>
+      AssetRecurringTombstoneSyncService.operation(id, deleted: deleted);
+
+  Set<String> _recurringTombstoneOperationIds(
+    Set<String> operations,
+    String prefix,
+  ) =>
+      AssetRecurringTombstoneSyncService.operationIds(operations, prefix);
+
+  Future<void> _queueRecurringFixedCostTombstoneOperation(
+    SharedPreferences store,
     String id, {
     required bool deleted,
-  }) async {
-    final store = await SharedPreferences.getInstance();
-    if (deleted) {
-      await _recurringFixedCostTombstones.addId(store, id);
-    } else {
-      await _recurringFixedCostTombstones.removeId(store, id);
-    }
-    unawaited(_mirrorRecurringFixedCostsDeleted());
+  }) {
+    return _recurringTombstoneSyncService.queue(
+      _recurringFixedCostsDeletedMirrorKey,
+      id,
+      deleted: deleted,
+      prefs: store,
+    );
   }
 
-  /// 定期固定費の削除トゥームストーンをサーバへ反映 (他端末伝播)。
-  Future<void> _mirrorRecurringFixedCostsDeleted() async {
+  /// 定期固定費の削除トゥームストーンを DB 側の atomic union/remove RPC で
+  /// サーバへ反映する。whole-blob upsert による端末間 lost-update を避ける。
+  // ignore: unused_element
+  Future<bool> _mirrorRecurringFixedCostsDeleted({
+    bool mirrorCurrentOnSuccess = false,
+  }) {
+    return _recurringTombstoneSyncService.runSerialized(
+      () => _mirrorRecurringFixedCostsDeletedNow(
+        mirrorCurrentOnSuccess: mirrorCurrentOnSuccess,
+      ),
+    );
+  }
+
+  Future<bool> _mirrorRecurringFixedCostsDeletedNow({
+    bool mirrorCurrentOnSuccess = false,
+  }) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
-      return;
+      return true;
     }
-    try {
-      final store = await SharedPreferences.getInstance();
-      final ids = _recurringFixedCostTombstones.activeIds(store);
-      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
-        'user_id': userId,
-        'pref_key': _recurringFixedCostsDeletedMirrorKey,
-        'value': MirrorTombstoneStore.encodeMirror(ids),
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      });
-    } catch (e) {
-      debugPrint('recurring fixed cost tombstone mirror upsert failed: $e');
-    }
+    final store = await SharedPreferences.getInstance();
+    return _recurringTombstoneSyncService.syncNow(
+      prefKey: _recurringFixedCostsDeletedMirrorKey,
+      prefs: store,
+      rpc: (additions, removals) async {
+        await _supabase.rpc('apply_recurring_fixed_cost_tombstones', params: {
+          'p_add_ids': additions,
+          'p_remove_ids': removals,
+        });
+      },
+      afterSync: mirrorCurrentOnSuccess
+          ? () => _mirrorRecurringFixedCostsNow(throwOnFailure: true)
+          : null,
+    );
   }
 
   /// 他端末で削除された定期固定費を取り込み、ローカルからも除去する。
-  Future<void> _pullRecurringFixedCostDeleted() async {
+  Future<void> _pullRecurringFixedCostDeleted() {
+    return _recurringTombstoneSyncService.runSerialized(
+      _pullRecurringFixedCostDeletedNow,
+    );
+  }
+
+  Future<void> _pullRecurringFixedCostDeletedNow() async {
     final debugMirror = widget.debugRecurringFixedCostsDeletedMirror;
     if (debugMirror == null && _supabase.auth.currentUser == null) {
       return;
     }
     try {
+      final store = await SharedPreferences.getInstance();
       Map<String, dynamic>? value = debugMirror;
+      var remoteExists = debugMirror != null;
       if (value == null) {
         final rows = await _bootSelectPrefMirror(
           _recurringFixedCostsDeletedMirrorKey,
         );
-        if (rows.isEmpty) {
-          return;
+        if (rows.isNotEmpty) {
+          remoteExists = true;
+          final raw = rows.first['value'];
+          if (raw is! Map || raw['ids'] is! List) {
+            throw const FormatException(
+              'recurring fixed cost tombstone mirror is malformed',
+            );
+          }
+          value = Map<String, dynamic>.from(raw);
         }
-        final raw = rows.first['value'];
-        if (raw is! Map) {
-          return;
-        }
-        value = Map<String, dynamic>.from(raw);
       }
-      final ids = MirrorTombstoneStore.decodeMirror(value);
-      if (ids.isEmpty) {
-        return;
-      }
-      final store = await SharedPreferences.getInstance();
-      final incoming = await _recurringFixedCostTombstones.mergeRemoteIds(
-        store,
-        ids,
+      final remoteIds = MirrorTombstoneStore.decodeMirror(value).toSet();
+      var pending = await _syncDirtyKeysStore.loadDirty(
+        _recurringFixedCostsDeletedMirrorKey,
+        prefs: store,
       );
+      final localIds = _recurringFixedCostTombstones.activeIds(store);
+      final pendingRemovals = _recurringTombstoneOperationIds(
+        pending,
+        AssetRecurringTombstoneSyncService.removePrefix,
+      );
+      final needsLegacyMigration =
+          !(store.getBool(_recurringTombstoneLegacyMigrationKey) ?? false);
+      if (needsLegacyMigration && localIds.isNotEmpty) {
+        final legacyAdds = localIds.difference(pendingRemovals);
+        await _syncDirtyKeysStore.updateDirty(
+          _recurringFixedCostsDeletedMirrorKey,
+          addKeys: <String>[
+            for (final id in legacyAdds)
+              _recurringTombstoneOperation(id, deleted: true),
+          ],
+          prefs: store,
+        );
+        await store.setBool(_recurringTombstoneLegacyMigrationKey, true);
+        pending = await _syncDirtyKeysStore.loadDirty(
+          _recurringFixedCostsDeletedMirrorKey,
+          prefs: store,
+        );
+      } else if (needsLegacyMigration) {
+        await store.setBool(_recurringTombstoneLegacyMigrationKey, true);
+      }
+
+      final desiredIds = remoteExists
+          ? Set<String>.from(remoteIds)
+          : Set<String>.from(localIds);
+      desiredIds.addAll(
+        _recurringTombstoneOperationIds(
+          pending,
+          AssetRecurringTombstoneSyncService.addPrefix,
+        ),
+      );
+      desiredIds.removeAll(
+        _recurringTombstoneOperationIds(
+          pending,
+          AssetRecurringTombstoneSyncService.removePrefix,
+        ),
+      );
+      for (final id in localIds.difference(desiredIds)) {
+        await _recurringFixedCostTombstones.removeId(store, id);
+      }
+      for (final id in desiredIds.difference(localIds)) {
+        await _recurringFixedCostTombstones.addId(store, id);
+      }
       final next = _recurringFixedCosts
-          .where((cost) => !incoming.contains(cost.id))
+          .where((cost) => !desiredIds.contains(cost.id))
           .toList();
-      if (next.length == _recurringFixedCosts.length || !mounted) {
-        return;
+      if (!mounted) return;
+      if (next.length != _recurringFixedCosts.length) {
+        setState(() {
+          _recurringFixedCosts = next;
+        });
+        await _recurringFixedCostStore.save(next, prefs: store);
       }
-      setState(() {
-        _recurringFixedCosts = next;
-      });
-      _persistInBackground(
-        _recurringFixedCostStore.save(next),
-        'recurring fixed cost tombstone pull save',
-      );
+      if (debugMirror == null && pending.isNotEmpty) {
+        await _mirrorRecurringFixedCostsDeletedNow(
+          mirrorCurrentOnSuccess: true,
+        );
+      }
     } catch (e) {
       debugPrint('recurring fixed cost tombstone pull failed: $e');
     }
@@ -11592,43 +11766,209 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  void _saveRecurringFixedCost(AssetRecurringFixedCost cost) {
-    setState(() {
-      final next = List<AssetRecurringFixedCost>.from(_recurringFixedCosts);
-      final index = next.indexWhere((existing) => existing.id == cost.id);
-      if (index >= 0) {
-        next[index] = cost;
-      } else {
-        next.add(cost);
+  Future<bool> _commitRecurringFixedCostReadditionsNow({
+    required List<AssetRecurringFixedCost> previous,
+    required List<AssetRecurringFixedCost> next,
+    required Set<String> ids,
+  }) async {
+    if (ids.isEmpty) return true;
+    final store = await SharedPreferences.getInstance();
+    final tombstonesBefore = _recurringFixedCostTombstones.activeIds(store);
+    final pendingBefore = await _syncDirtyKeysStore.loadDirty(
+      _recurringFixedCostsDeletedMirrorKey,
+      prefs: store,
+    );
+    final currentDirtyBefore = await _syncDirtyKeysStore.loadDirty(
+      _recurringFixedCostsMirrorKey,
+      prefs: store,
+    );
+    final affectedOperations = <String>{
+      for (final id in ids) _recurringTombstoneOperation(id, deleted: true),
+      for (final id in ids) _recurringTombstoneOperation(id, deleted: false),
+    };
+    try {
+      // Journal the re-add intent before publishing the new current list. The
+      // whole sequence owns the shared FIFO, so boot/delete sync cannot consume
+      // the intent between these writes.
+      for (final id in ids) {
+        await _queueRecurringFixedCostTombstoneOperation(
+          store,
+          id,
+          deleted: false,
+        );
       }
-      next.sort(_compareRecurringFixedCostsByPaymentDay);
+      await _recurringFixedCostStore.save(next, prefs: store);
+      for (final id in ids) {
+        await _recurringFixedCostTombstones.removeId(store, id);
+        await _syncDirtyKeysStore.markDirty(
+          _recurringFixedCostsMirrorKey,
+          id,
+          prefs: store,
+        );
+      }
+    } catch (error, stackTrace) {
+      try {
+        await _syncDirtyKeysStore.updateDirty(
+          _recurringFixedCostsDeletedMirrorKey,
+          addKeys: pendingBefore.intersection(affectedOperations),
+          removeKeys: affectedOperations,
+          prefs: store,
+        );
+        await _syncDirtyKeysStore.updateDirty(
+          _recurringFixedCostsMirrorKey,
+          addKeys: currentDirtyBefore.intersection(ids),
+          removeKeys: ids,
+          prefs: store,
+        );
+      } catch (rollbackError) {
+        debugPrint(
+            'recurring fixed cost dirty rollback failed: $rollbackError');
+      }
+      try {
+        await _recurringFixedCostStore.save(previous, prefs: store);
+      } catch (rollbackError) {
+        debugPrint('recurring fixed cost data rollback failed: $rollbackError');
+      }
+      try {
+        for (final id in ids) {
+          if (tombstonesBefore.contains(id)) {
+            await _recurringFixedCostTombstones.addId(store, id);
+          } else {
+            await _recurringFixedCostTombstones.removeId(store, id);
+          }
+        }
+      } catch (rollbackError) {
+        debugPrint(
+          'recurring fixed cost tombstone rollback failed: $rollbackError',
+        );
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+
+    if (mounted) {
+      setState(() => _recurringFixedCosts = next);
+    } else {
       _recurringFixedCosts = next;
-    });
-    _persistInBackground(
-      _recurringFixedCostStore.save(_recurringFixedCosts),
-      'recurring fixed cost save',
+    }
+    final synced = await _mirrorRecurringFixedCostsDeletedNow(
+      mirrorCurrentOnSuccess: true,
     );
-    // 編集/再追加は id 再利用解除 (tombstone 除去) + ローカル編集を dirty 記録。
-    unawaited(_recordRecurringFixedCostTombstone(cost.id, deleted: false));
-    unawaited(
-      _syncDirtyKeysStore.markDirty(_recurringFixedCostsMirrorKey, cost.id),
-    );
-    unawaited(_mirrorRecurringFixedCosts());
+    if (!synced && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('端末では保存済みです。サーバー同期は次回オンライン時に再試行します。'),
+          backgroundColor: Color(0xFFB45309),
+        ),
+      );
+    }
+    return synced;
   }
 
-  void _deleteRecurringFixedCost(AssetRecurringFixedCost cost) {
-    setState(() {
-      _recurringFixedCosts = _recurringFixedCosts
-          .where((existing) => existing.id != cost.id)
-          .toList();
-    });
-    _persistInBackground(
-      _recurringFixedCostStore.save(_recurringFixedCosts),
-      'recurring fixed cost delete',
+  Future<void> _saveRecurringFixedCost(AssetRecurringFixedCost cost) async {
+    try {
+      await _recurringTombstoneSyncService.runSerialized(() async {
+        final previous = List<AssetRecurringFixedCost>.from(
+          _recurringFixedCosts,
+        );
+        final next = List<AssetRecurringFixedCost>.from(previous);
+        final index = next.indexWhere((existing) => existing.id == cost.id);
+        if (index >= 0) {
+          next[index] = cost;
+        } else {
+          next.add(cost);
+        }
+        next.sort(_compareRecurringFixedCostsByPaymentDay);
+        await _commitRecurringFixedCostReadditionsNow(
+          previous: previous,
+          next: next,
+          ids: <String>{cost.id},
+        );
+      });
+    } catch (error) {
+      debugPrint('recurring fixed cost save failed: $error');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('定期固定費を保存できませんでした。元の状態を保持しています。'),
+            backgroundColor: Color(0xFFB91C1C),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteRecurringFixedCosts(
+    Iterable<AssetRecurringFixedCost> costs,
+  ) {
+    final ids =
+        costs.map((cost) => cost.id).where((id) => id.isNotEmpty).toSet();
+    if (ids.isEmpty) return Future<void>.value();
+    return _recurringTombstoneSyncService.runSerialized(
+      () => _deleteRecurringFixedCostsNow(ids),
     );
-    // 削除をトゥームストーン化して他端末へ伝播 (union/backfill で復活させない)。
-    unawaited(_recordRecurringFixedCostTombstone(cost.id, deleted: true));
-    unawaited(_mirrorRecurringFixedCosts());
+  }
+
+  Future<void> _deleteRecurringFixedCostsNow(Set<String> ids) async {
+    final next = _recurringFixedCosts
+        .where((existing) => !ids.contains(existing.id))
+        .toList(growable: false);
+    if (next.length == _recurringFixedCosts.length) return;
+
+    final store = await SharedPreferences.getInstance();
+    final tombstonesBefore = _recurringFixedCostTombstones.activeIds(store);
+    final addedTombstones = ids.difference(tombstonesBefore);
+    final pendingBefore = await _syncDirtyKeysStore.loadDirty(
+      _recurringFixedCostsDeletedMirrorKey,
+      prefs: store,
+    );
+    final affectedOperations = <String>{
+      for (final id in ids) _recurringTombstoneOperation(id, deleted: true),
+      for (final id in ids) _recurringTombstoneOperation(id, deleted: false),
+    };
+    try {
+      for (final id in ids) {
+        await _queueRecurringFixedCostTombstoneOperation(
+          store,
+          id,
+          deleted: true,
+        );
+        await _recurringFixedCostTombstones.addId(store, id);
+      }
+      await _recurringFixedCostStore.save(next);
+    } catch (error, stackTrace) {
+      await _syncDirtyKeysStore.updateDirty(
+        _recurringFixedCostsDeletedMirrorKey,
+        addKeys: pendingBefore.intersection(affectedOperations),
+        removeKeys: affectedOperations,
+        prefs: store,
+      );
+      for (final id in addedTombstones) {
+        await _recurringFixedCostTombstones.removeId(store, id);
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+    if (mounted) {
+      setState(() => _recurringFixedCosts = next);
+    } else {
+      _recurringFixedCosts = next;
+    }
+    // サーバ同期が失敗しても dirty operation を保持し、次回bootで再試行する。
+    // stale current mirror はtombstone同期成功後だけ更新する。
+    final tombstonesSynced = await _mirrorRecurringFixedCostsDeletedNow(
+      mirrorCurrentOnSuccess: true,
+    );
+    if (!tombstonesSynced && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('端末では削除済みです。サーバー同期は次回オンライン時に再試行します。'),
+          backgroundColor: Color(0xFFB45309),
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteRecurringFixedCost(AssetRecurringFixedCost cost) {
+    return _deleteRecurringFixedCosts(<AssetRecurringFixedCost>[cost]);
   }
 
   Future<void> _openRecurringFixedCostEditor({
@@ -11651,18 +11991,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       usdJpyRateAsOf: _usdJpyRate?.asOf,
     );
     if (result != null) {
-      _saveRecurringFixedCost(result);
+      await _saveRecurringFixedCost(result);
     }
   }
 
   Future<void> _confirmDeleteRecurringFixedCost(
     AssetRecurringFixedCost cost,
   ) async {
+    final isSubscription =
+        cost.category == AssetRecurringFixedCostCategory.subscription;
+    final formattedMonthlyAmount =
+        NumberFormat('#,##0').format(cost.amount.round());
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('定期固定費を削除'),
-        content: Text('「${cost.name}」を削除しますか?'),
+        title: Text(isSubscription ? 'サブスクを削除' : '定期固定費を削除'),
+        content: Text(
+          isSubscription
+              ? '「${cost.name}」（月額 ¥$formattedMonthlyAmount）を現在のサブスクから'
+                  '削除しますか？過去の月次履歴・取引履歴は残ります。'
+              : '「${cost.name}」を削除しますか？',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -11676,7 +12025,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
     );
     if (confirmed == true) {
-      _deleteRecurringFixedCost(cost);
+      await _deleteRecurringFixedCost(cost);
     }
   }
 
@@ -11787,43 +12136,48 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         false;
   }
 
-  void _importSubscriptionStatementCosts(
+  Future<void> _importSubscriptionStatementCosts(
     List<AssetRecurringFixedCost> importedCosts,
-  ) {
+  ) async {
     if (importedCosts.isEmpty) return;
-    final next = List<AssetRecurringFixedCost>.from(_recurringFixedCosts);
-    final existingNames = <String>{
-      for (final cost in next) _normalizeSubscriptionName(cost.name),
-    };
-    final added = <AssetRecurringFixedCost>[];
-    for (final cost in importedCosts) {
-      final normalized = _normalizeSubscriptionName(cost.name);
-      if (normalized.isEmpty || existingNames.contains(normalized)) continue;
-      next.add(cost);
-      added.add(cost);
-      existingNames.add(normalized);
-    }
-    if (added.isEmpty) {
+    final addedCount = await _recurringTombstoneSyncService.runSerialized(
+      () async {
+        final previous = List<AssetRecurringFixedCost>.from(
+          _recurringFixedCosts,
+        );
+        final next = List<AssetRecurringFixedCost>.from(previous);
+        final existingNames = <String>{
+          for (final cost in next) _normalizeSubscriptionName(cost.name),
+        };
+        final added = <AssetRecurringFixedCost>[];
+        for (final cost in importedCosts) {
+          final normalized = _normalizeSubscriptionName(cost.name);
+          if (normalized.isEmpty || existingNames.contains(normalized)) {
+            continue;
+          }
+          next.add(cost);
+          added.add(cost);
+          existingNames.add(normalized);
+        }
+        if (added.isEmpty) return 0;
+        next.sort(_compareRecurringFixedCostsByPaymentDay);
+        await _commitRecurringFixedCostReadditionsNow(
+          previous: previous,
+          next: next,
+          ids: added.map((cost) => cost.id).toSet(),
+        );
+        return added.length;
+      },
+    );
+    if (!mounted) return;
+    if (addedCount == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('追加できる新しいサブスクはありませんでした。')),
       );
       return;
     }
-    next.sort(_compareRecurringFixedCostsByPaymentDay);
-    setState(() => _recurringFixedCosts = next);
-    _persistInBackground(
-      _recurringFixedCostStore.save(next),
-      'subscription statement import',
-    );
-    for (final cost in added) {
-      unawaited(_recordRecurringFixedCostTombstone(cost.id, deleted: false));
-      unawaited(
-        _syncDirtyKeysStore.markDirty(_recurringFixedCostsMirrorKey, cost.id),
-      );
-    }
-    unawaited(_mirrorRecurringFixedCosts());
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${added.length}件のサブスクを棚卸しに追加しました。')),
+      SnackBar(content: Text('$addedCount件のサブスクを棚卸しに追加しました。')),
     );
   }
 

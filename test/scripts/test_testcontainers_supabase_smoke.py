@@ -225,6 +225,29 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
         self.assertIn("manual_override", checks)
         self.assertIn("applies twice", checks)
 
+    def test_plan_includes_issue_4927_recurring_tombstone_contract(self) -> None:
+        plan = module.build_plan(
+            ROOT / "test" / "fixtures" / "testcontainers" / "sql",
+            ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts",
+            ROOT / "supabase" / "functions" / "health-check" / "index.ts",
+        )
+        self.assertEqual(
+            plan["issue_4927_recurring_tombstone_sql"],
+            [
+                "supabase/migrations/20260612230000_asset_pref_mirror.sql",
+                "supabase/migrations/20260828164000_atomic_recurring_fixed_cost_tombstones.sql",
+                "supabase/tests/issue4927_recurring_tombstone_contract.sql",
+            ],
+        )
+        checks = " ".join(plan["issue_4927_recurring_tombstone_checks"])
+        self.assertIn("NULL IDs", checks)
+        self.assertIn("mixed-type malformed", checks)
+        self.assertIn("spoofed-GUC", checks)
+        self.assertIn("unrelated-key CRUD", checks)
+        self.assertIn("guard state", checks)
+        self.assertIn("concurrent add/remove", checks)
+        self.assertIn("applies twice", checks)
+
     def test_plan_includes_note_comments_authorization_boundary(self) -> None:
         plan = module.build_plan(
             ROOT / "test" / "fixtures" / "testcontainers" / "sql",
