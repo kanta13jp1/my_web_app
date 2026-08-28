@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-28T11:36:55.804558+00:00",
+  "generated_at": "2026-08-28T13:07:30.584141+00:00",
   "entries": [
     {
       "status": "existing",
@@ -19,14 +19,14 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4737",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "existing",
       "number": 4734,
       "url": "https://github.com/kanta13jp1/my_web_app/issues/4734",
-      "github_state": "OPEN",
+      "github_state": "CLOSED",
       "dedupe_key": "tiger-course-review:20260823T175240+0900:525273ba-539f-4dd4-b436-a6a74a5e8cc5",
       "cycle_id": "20260823T175240+0900",
       "lane": "course_review",
@@ -34,13 +34,21 @@
       "recorded_at": "2026-08-23T09:31:22.009744+00:00",
       "content_id": "525273ba-539f-4dd4-b436-a6a74a5e8cc5",
       "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\courses\\20260823T175240+0900-cycle.json",
-      "closed_at": null,
-      "github_updated_at": "2026-08-23T08:57:19Z",
-      "remediation_state": "queued",
-      "remediation_label": "対策待ち・Issue #4734",
-      "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "closed_at": "2026-08-28T13:02:45Z",
+      "github_updated_at": "2026-08-28T13:02:45Z",
+      "remediation_state": "production_verified",
+      "remediation_label": "対策済み・Issue #4734 本番検証済み",
+      "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+      "queue_status": "RUNNING",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00",
+      "implementation": {
+        "pr_number": 4966,
+        "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/4966",
+        "commit_sha": "05f7696a82ea6677dea368b4367f9316548a37bd",
+        "workflow_run": "33172595096",
+        "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33172595096/job/98856426598",
+        "release_status": "passed"
+      }
     },
     {
       "status": "created",
@@ -58,8 +66,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4757",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -77,8 +85,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4763",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -97,8 +105,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4850",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -119,8 +127,8 @@
       "remediation_state": "production_verified",
       "remediation_label": "対策済み・Issue #4855 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00",
+      "queue_status": "SUCCEEDED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00",
       "implementation": {
         "pr_number": null,
         "pr_url": null,
@@ -149,8 +157,8 @@
       "remediation_state": "production_verified",
       "remediation_label": "対策済み・Issue #4878 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00",
+      "queue_status": "SUCCEEDED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00",
       "implementation": {
         "pr_number": null,
         "pr_url": null,
@@ -177,8 +185,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4905",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -197,8 +205,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4941",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -217,8 +225,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4945",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -237,8 +245,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4951",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -256,8 +264,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4916",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -275,8 +283,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4937",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -294,8 +302,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4943",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -313,8 +321,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4946",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -332,8 +340,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4948",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -351,8 +359,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4952",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -370,8 +378,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4958",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "number": 4738,
@@ -379,15 +387,15 @@
       "status": "existing",
       "github_state": "OPEN",
       "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
+      "remediation_state": "queued",
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00",
       "cycle_id": "20260823T152316+0900",
       "lane": "site_review",
       "closed_at": null,
       "github_updated_at": "2026-08-25T00:44:08Z",
-      "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4738",
-      "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "remediation_detail": "専用対策キューで順番待ちです。"
     },
     {
       "number": 4739,
@@ -395,15 +403,15 @@
       "status": "existing",
       "github_state": "CLOSED",
       "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
+      "remediation_state": "closed_pending_proof",
+      "queue_status": "SUCCEEDED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00",
       "cycle_id": "20260823T153734+0900",
       "lane": "site_review",
       "closed_at": "2026-08-26T02:01:32Z",
       "github_updated_at": "2026-08-26T02:01:37Z",
-      "remediation_state": "closed_pending_proof",
       "remediation_label": "Issue #4739 終了・反映証拠確認待ち",
-      "remediation_detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "remediation_detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。"
     },
     {
       "status": "created",
@@ -421,8 +429,8 @@
       "remediation_state": "superseded",
       "remediation_label": "統合済み・Issue #4746 → #4744",
       "remediation_detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00",
+      "queue_status": "SUCCEEDED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00",
       "superseded_by_issue": 4744
     },
     {
@@ -441,8 +449,8 @@
       "remediation_state": "superseded",
       "remediation_label": "統合済み・Issue #4755 → #4834",
       "remediation_detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00",
+      "queue_status": "SUCCEEDED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00",
       "superseded_by_issue": 4834
     },
     {
@@ -461,8 +469,8 @@
       "remediation_state": "superseded",
       "remediation_label": "統合済み・Issue #4800 → #4834",
       "remediation_detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00",
+      "queue_status": "SUCCEEDED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00",
       "superseded_by_issue": 4834
     },
     {
@@ -481,8 +489,8 @@
       "remediation_state": "superseded",
       "remediation_label": "統合済み・Issue #4803 → #4834",
       "remediation_detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00",
+      "queue_status": "SUCCEEDED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00",
       "superseded_by_issue": 4834
     },
     {
@@ -501,8 +509,8 @@
       "remediation_state": "superseded",
       "remediation_label": "統合済み・Issue #4810 → #4834",
       "remediation_detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00",
+      "queue_status": "SUCCEEDED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00",
       "superseded_by_issue": 4834
     },
     {
@@ -521,8 +529,8 @@
       "remediation_state": "superseded",
       "remediation_label": "統合済み・Issue #4811 → #4834",
       "remediation_detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00",
+      "queue_status": "SUCCEEDED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00",
       "superseded_by_issue": 4834
     },
     {
@@ -541,8 +549,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4834",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -560,8 +568,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4900",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -579,8 +587,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4936",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -598,8 +606,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4944",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -617,8 +625,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4947",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -636,8 +644,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4950",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -655,8 +663,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4955",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     },
     {
       "status": "created",
@@ -674,8 +682,8 @@
       "remediation_state": "queued",
       "remediation_label": "対策待ち・Issue #4961",
       "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": null,
-      "synced_at": "2026-08-28T11:36:55.804558+00:00"
+      "queue_status": "QUEUED",
+      "synced_at": "2026-08-28T13:07:30.584141+00:00"
     }
   ]
 }
