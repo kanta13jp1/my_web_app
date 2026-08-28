@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "generated_at": "2026-08-28T10:13:50.215096+00:00",
+  "schema_version": 4,
+  "generated_at": "2026-08-28T11:37:16.511061+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "site_review",
   "publication_state": "latest_review",
@@ -78,8 +78,8 @@
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4961 追跡中",
-      "detail": "提案のみで、対策実施の記録はありません。",
+      "label": "対策待ち・Issue #4961",
+      "detail": "専用対策キューで順番待ちです。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
@@ -97,7 +97,10 @@
         "url": "https://github.com/kanta13jp1/my_web_app/issues/4961",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-site-review:20260828T190700+0900:whole_site"
+        "dedupe_key": "tiger-site-review:20260828T190700+0900:whole_site",
+        "remediation_state": "queued",
+        "queue_status": null,
+        "synced_at": "2026-08-28T11:36:55.804558+00:00"
       },
       "implementation": null,
       "findings_without_individual_trace": [
@@ -172,8 +175,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4961 追跡中",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "label": "対策待ち・Issue #4961",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -191,7 +194,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4961",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-site-review:20260828T190700+0900:whole_site"
+          "dedupe_key": "tiger-site-review:20260828T190700+0900:whole_site",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -265,8 +271,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4955 追跡中",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "label": "対策待ち・Issue #4955",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -284,7 +290,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4955",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-site-review:20260828T145600+0900:whole_site"
+          "dedupe_key": "tiger-site-review:20260828T145600+0900:whole_site",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -358,8 +367,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4950 追跡中",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "label": "対策待ち・Issue #4950",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -377,7 +386,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4950",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-site-review:20260828T090106+0900:whole_site"
+          "dedupe_key": "tiger-site-review:20260828T090106+0900:whole_site",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -451,8 +463,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4947 追跡中",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "label": "対策待ち・Issue #4947",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -470,7 +482,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4947",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-site-review:20260828T051725+0900:whole_site"
+          "dedupe_key": "tiger-site-review:20260828T051725+0900:whole_site",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -544,8 +559,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4944 追跡中",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "label": "対策待ち・Issue #4944",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -563,7 +578,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4944",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-site-review:20260828T011400+0900:whole_site"
+          "dedupe_key": "tiger-site-review:20260828T011400+0900:whole_site",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -643,8 +661,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4936 追跡中",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "label": "対策待ち・Issue #4936",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -661,7 +679,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4936",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-site-review:20260827T214913+0900:whole_site"
+          "dedupe_key": "tiger-site-review:20260827T214913+0900:whole_site",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -742,8 +763,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4900 追跡中",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "label": "対策待ち・Issue #4900",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -764,7 +785,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4900",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-site-review:20260826T220910+0900:whole_site"
+          "dedupe_key": "tiger-site-review:20260826T220910+0900:whole_site",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -791,7 +815,7 @@
         "name": "ドラゴン細井",
         "selection_score": 77.3535
       },
-      "status": "issue_tracking",
+      "status": "issue_superseded",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -844,9 +868,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "未対策・Issue #4811 追跡中",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "state": "issue_superseded",
+        "label": "統合済み・Issue #4811 → #4834",
+        "detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -862,8 +886,11 @@
           "number": 4811,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4811",
           "status": "created",
-          "github_state": "OPEN",
-          "dedupe_key": "tiger-site-review:20260825T133307+0900:whole_site"
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-site-review:20260825T133307+0900:whole_site",
+          "remediation_state": "superseded",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -890,7 +917,7 @@
         "name": "迫 佑樹",
         "selection_score": 78.1432
       },
-      "status": "issue_tracking",
+      "status": "issue_superseded",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -943,9 +970,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "未対策・Issue #4810 追跡中",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "state": "issue_superseded",
+        "label": "統合済み・Issue #4810 → #4834",
+        "detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -962,8 +989,11 @@
           "number": 4810,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4810",
           "status": "created",
-          "github_state": "OPEN",
-          "dedupe_key": "tiger-site-review:20260825T124533+0900:whole_site"
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-site-review:20260825T124533+0900:whole_site",
+          "remediation_state": "superseded",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -990,7 +1020,7 @@
         "name": "迫 佑樹",
         "selection_score": 77.6647
       },
-      "status": "issue_tracking",
+      "status": "issue_superseded",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -1043,9 +1073,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "未対策・Issue #4803 追跡中",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "state": "issue_superseded",
+        "label": "統合済み・Issue #4803 → #4834",
+        "detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1061,8 +1091,11 @@
           "number": 4803,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4803",
           "status": "created",
-          "github_state": "OPEN",
-          "dedupe_key": "tiger-site-review:20260825T090429+0900:whole_site"
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-site-review:20260825T090429+0900:whole_site",
+          "remediation_state": "superseded",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1089,7 +1122,7 @@
         "name": "迫 佑樹",
         "selection_score": 80.6207
       },
-      "status": "issue_tracking",
+      "status": "issue_superseded",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -1142,9 +1175,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "未対策・Issue #4800 追跡中",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "state": "issue_superseded",
+        "label": "統合済み・Issue #4800 → #4834",
+        "detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1160,8 +1193,11 @@
           "number": 4800,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4800",
           "status": "created",
-          "github_state": "OPEN",
-          "dedupe_key": "tiger-site-review:20260825T083902+0900:whole_site"
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-site-review:20260825T083902+0900:whole_site",
+          "remediation_state": "superseded",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1188,7 +1224,7 @@
         "name": "迫 佑樹",
         "selection_score": 78.0832
       },
-      "status": "issue_tracking",
+      "status": "issue_superseded",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": null,
@@ -1237,9 +1273,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "未対策・Issue #4755 追跡中",
-        "detail": "内部401露出はbilling/auth保護領域であり、他の6指摘は実利用cohort、原価集計、顧客・ポートフォリオ判断、成果比較、または法務・プライバシー専門レビューを要するため、共有の低リスク自動修正条件を満たす変更はない。",
+        "state": "issue_superseded",
+        "label": "統合済み・Issue #4755 → #4834",
+        "detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1263,8 +1299,11 @@
           "number": 4755,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4755",
           "status": "created",
-          "github_state": "OPEN",
-          "dedupe_key": "tiger-site-review:20260823T214617+0900:whole_site"
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-site-review:20260823T214617+0900:whole_site",
+          "remediation_state": "superseded",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1293,7 +1332,7 @@
         "name": "迫 佑樹",
         "selection_score": 85.8325
       },
-      "status": "issue_tracking",
+      "status": "issue_superseded",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": null,
@@ -1336,9 +1375,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "未対策・Issue #4746 追跡中",
-        "detail": "6指摘は実利用cohortと原価の集計、顧客・価格・ポートフォリオ判断、成果比較、または法務・プライバシー専門レビューを必要とする。共有の低リスク条件、3 product files・200 source lines、保護対象禁止を同時に満たす修正はない。",
+        "state": "issue_superseded",
+        "label": "統合済み・Issue #4746 → #4744",
+        "detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1360,8 +1399,11 @@
           "number": 4746,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4746",
           "status": "created",
-          "github_state": "OPEN",
-          "dedupe_key": "tiger-site-review:20260823T195559+0900:whole_site"
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-site-review:20260823T195559+0900:whole_site",
+          "remediation_state": "superseded",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1389,7 +1431,7 @@
         "name": "榊󠄀原 清一",
         "selection_score": 74.4337
       },
-      "status": "issue_tracking",
+      "status": "issue_closed",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": null,
@@ -1414,9 +1456,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "未対策・Issue #4739 追跡中",
-        "detail": "3件はいずれも再現可能な証拠を持つが、公開比較主張、分析データ、または大規模な構造変更に関わる。安全な自動修正、低リスク、3ファイル・200行以内の全条件を満たす変更はない。",
+        "state": "issue_closed",
+        "label": "Issue #4739 終了・反映証拠確認待ち",
+        "detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1436,8 +1478,11 @@
           "number": 4739,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4739",
           "status": "existing",
-          "github_state": "OPEN",
-          "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison"
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
+          "remediation_state": "closed_pending_proof",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1488,8 +1533,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4738 追跡中",
-        "detail": "3件はいずれも証拠に基づくが、講座運用・計測設計または利用データを要し、低リスク自動修正の条件を満たす変更はない。",
+        "label": "対策待ち・Issue #4738",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1509,7 +1554,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4738",
           "status": "existing",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university"
+          "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [

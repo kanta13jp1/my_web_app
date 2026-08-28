@@ -48,8 +48,9 @@ class TigerReviewLaneStatus {
     };
     final rawEntries = listKey == null ? const <dynamic>[] : json[listKey];
     return TigerReviewLaneStatus(
-      schemaVersion:
-          json['schema_version'] is int ? json['schema_version'] as int : 0,
+      schemaVersion: json['schema_version'] is int
+          ? json['schema_version'] as int
+          : 0,
       lane: lane,
       generatedAt: DateTime.tryParse(json['generated_at']?.toString() ?? ''),
       publicationState: json['publication_state']?.toString() ?? '',
@@ -65,9 +66,9 @@ class TigerReviewLaneStatus {
       ).map(TigerReviewHistoryEntry.fromJson).toList(growable: false),
       entries: rawEntries is List
           ? rawEntries
-              .whereType<Map>()
-              .map((entry) => Map<String, dynamic>.from(entry))
-              .toList(growable: false)
+                .whereType<Map>()
+                .map((entry) => Map<String, dynamic>.from(entry))
+                .toList(growable: false)
           : const <Map<String, dynamic>>[],
       disclaimer: json['disclaimer']?.toString() ?? '',
     );
@@ -220,11 +221,17 @@ class TigerFollowUpIssue {
     required this.number,
     required this.url,
     required this.githubState,
+    this.remediationState = '',
+    this.queueStatus = '',
+    this.syncedAt,
   });
 
   final int? number;
   final Uri? url;
   final String githubState;
+  final String remediationState;
+  final String queueStatus;
+  final DateTime? syncedAt;
 
   bool get isOpen => githubState.toUpperCase() == 'OPEN';
   bool get isClosed => githubState.toUpperCase() == 'CLOSED';
@@ -235,6 +242,9 @@ class TigerFollowUpIssue {
       url: Uri.tryParse(json['url']?.toString() ?? ''),
       githubState:
           (json['github_state'] ?? json['issue_state'])?.toString() ?? '',
+      remediationState: json['remediation_state']?.toString() ?? '',
+      queueStatus: json['queue_status']?.toString() ?? '',
+      syncedAt: DateTime.tryParse(json['synced_at']?.toString() ?? ''),
     );
   }
 }
@@ -245,12 +255,18 @@ class TigerReviewImplementation {
     required this.workflowRun,
     required this.productionUrl,
     required this.releaseStatus,
+    this.prNumber,
+    this.prUrl,
+    this.workflowUrl,
   });
 
   final String commitSha;
   final String workflowRun;
   final Uri? productionUrl;
   final String releaseStatus;
+  final int? prNumber;
+  final Uri? prUrl;
+  final Uri? workflowUrl;
 
   factory TigerReviewImplementation.fromJson(Map<String, dynamic> json) {
     return TigerReviewImplementation(
@@ -258,6 +274,9 @@ class TigerReviewImplementation {
       workflowRun: json['workflow_run']?.toString() ?? '',
       productionUrl: Uri.tryParse(json['production_url']?.toString() ?? ''),
       releaseStatus: json['release_status']?.toString() ?? '',
+      prNumber: json['pr_number'] is int ? json['pr_number'] as int : null,
+      prUrl: Uri.tryParse(json['pr_url']?.toString() ?? ''),
+      workflowUrl: Uri.tryParse(json['workflow_url']?.toString() ?? ''),
     );
   }
 }

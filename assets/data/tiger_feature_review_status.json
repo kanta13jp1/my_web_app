@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "generated_at": "2026-08-28T08:22:11.339522+00:00",
+  "schema_version": 4,
+  "generated_at": "2026-08-28T11:37:16.511061+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -95,8 +95,8 @@
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4958 追跡中",
-      "detail": "The provider-count source of truth, crawlable acquisition handoff, and privacy-bounded learning analytics require product, SEO, data, and measurement ownership decisions; choosing a count or adding production analytics automatically would exceed the low-risk repair boundary.",
+      "label": "対策待ち・Issue #4958",
+      "detail": "専用対策キューで順番待ちです。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
@@ -116,7 +116,10 @@
         "url": "https://github.com/kanta13jp1/my_web_app/issues/4958",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university"
+        "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university",
+        "remediation_state": "queued",
+        "queue_status": null,
+        "synced_at": "2026-08-28T11:36:55.804558+00:00"
       },
       "implementation": null,
       "findings_without_individual_trace": [
@@ -192,8 +195,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4958 追跡中",
-        "detail": "The provider-count source of truth, crawlable acquisition handoff, and privacy-bounded learning analytics require product, SEO, data, and measurement ownership decisions; choosing a count or adding production analytics automatically would exceed the low-risk repair boundary.",
+        "label": "対策待ち・Issue #4958",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -213,7 +216,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4958",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university"
+          "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -279,8 +285,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4952 追跡中",
-        "detail": "Direct first-action destination, conversion instrumentation, and relocation of curated videos require product funnel and editorial ownership decisions; deleting content or choosing an authenticated route automatically would exceed the low-risk repair boundary.",
+        "label": "対策待ち・Issue #4952",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -300,7 +306,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4952",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-feature-review:20260828T120337+0900:philosophy"
+          "dedupe_key": "tiger-feature-review:20260828T120337+0900:philosophy",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -360,8 +369,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4948 追跡中",
-        "detail": "The finding requires protected authentication and authorization policy changes, which are outside automatic modification scope.",
+        "label": "対策待ち・Issue #4948",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -379,7 +388,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4948",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub"
+          "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -445,8 +457,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4946 追跡中",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "label": "対策待ち・Issue #4946",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -463,7 +475,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4946",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-feature-review:20260828T042953+0900:horse_racing"
+          "dedupe_key": "tiger-feature-review:20260828T042953+0900:horse_racing",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -530,8 +545,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4943 追跡中",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "label": "対策待ち・Issue #4943",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -548,7 +563,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4943",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-feature-review:20260828T004359+0900:ai_hub"
+          "dedupe_key": "tiger-feature-review:20260828T004359+0900:ai_hub",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -615,8 +633,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4937 追跡中",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "label": "対策待ち・Issue #4937",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -633,7 +651,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4937",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-feature-review:20260827T221025+0900:core_hub"
+          "dedupe_key": "tiger-feature-review:20260827T221025+0900:core_hub",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -700,8 +721,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4916 追跡中",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "label": "対策待ち・Issue #4916",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -718,7 +739,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4916",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-feature-review:20260827T033027+0900:home"
+          "dedupe_key": "tiger-feature-review:20260827T033027+0900:home",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -959,7 +983,7 @@
         "name": "榊󠄀原 清一",
         "selection_score": 74.4337
       },
-      "status": "issue_tracking",
+      "status": "issue_closed",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": null,
@@ -984,9 +1008,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "未対策・Issue #4739 追跡中",
-        "detail": "3件はいずれも再現可能な証拠を持つが、公開比較主張、分析データ、または大規模な構造変更に関わる。安全な自動修正、低リスク、3ファイル・200行以内の全条件を満たす変更はない。",
+        "state": "issue_closed",
+        "label": "Issue #4739 終了・反映証拠確認待ち",
+        "detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1006,8 +1030,11 @@
           "number": 4739,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4739",
           "status": "existing",
-          "github_state": "OPEN",
-          "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison"
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
+          "remediation_state": "closed_pending_proof",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1058,8 +1085,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4738 追跡中",
-        "detail": "3件はいずれも証拠に基づくが、講座運用・計測設計または利用データを要し、低リスク自動修正の条件を満たす変更はない。",
+        "label": "対策待ち・Issue #4738",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1079,7 +1106,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4738",
           "status": "existing",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university"
+          "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
