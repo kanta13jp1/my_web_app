@@ -17,6 +17,9 @@ typedef TigerReviewerProfileLoader = Future<TigerReviewerProfileCatalog>
 const int tigerReviewerProfileSchemaVersion = 3;
 
 @visibleForTesting
+const int tigerReviewStatusSchemaVersion = 4;
+
+@visibleForTesting
 Uri buildTigerReviewAssetUri(
   Uri base,
   String asset, {
@@ -144,7 +147,7 @@ class _TigerReviewLaneStatusPageState extends State<TigerReviewLaneStatusPage> {
         ? widget.loader!()
         : _loadAsset(
             widget.kind.asset,
-            schemaVersion: 3,
+            schemaVersion: tigerReviewStatusSchemaVersion,
           ).then(TigerReviewLaneStatus.fromJsonString);
     final profilesFuture = widget.kind == TigerReviewLane.reviewers
         ? (widget.profileLoader?.call() ??
@@ -447,6 +450,10 @@ class _HistoryEntry extends StatelessWidget {
                 Text('変更ファイル: ${trace.files.join('、')}'),
               ],
               if (trace.implementation case final implementation?) ...<Widget>[
+                if (implementation.prNumber case final prNumber?) ...<Widget>[
+                  const SizedBox(height: 6),
+                  Text('対策PR: #$prNumber'),
+                ],
                 if (implementation.commitSha.isNotEmpty) ...<Widget>[
                   const SizedBox(height: 6),
                   Text(
@@ -527,7 +534,10 @@ class _TraceBadge extends StatelessWidget {
     final color = switch (trace.state) {
       'production_verified' => Colors.green,
       'implemented' => Colors.green,
+      'remediation_in_progress' => Colors.blue,
       'issue_tracking' || 'follow_up_issued' => Colors.orange,
+      'issue_superseded' => Colors.blueGrey,
+      'remediation_needs_attention' => Colors.red,
       'missing_issue' || 'issue_required' => Colors.red,
       'blocked' => Colors.red,
       _ => Colors.blueGrey,
@@ -557,11 +567,17 @@ class _IssueLink extends StatelessWidget {
     if (number == null || url == null || !url.hasScheme) {
       return const Text('Issue情報の形式を確認できません。');
     }
-    final stateLabel = issue.isOpen
-        ? '未対策・追跡中'
-        : issue.isClosed
-            ? '終了・対策確認待ち'
-            : '状態確認待ち';
+    final stateLabel = switch (issue.remediationState) {
+      'production_verified' => '対策済み・本番検証済み',
+      'in_progress' => '対策中',
+      'queued' => '対策待ち',
+      'needs_attention' => '要確認',
+      'closed_pending_proof' => '終了・反映証拠確認待ち',
+      'superseded' => '重複統合済み・修正完了ではありません',
+      _ when issue.isOpen => '未対策・追跡中',
+      _ when issue.isClosed => '終了・対策確認待ち',
+      _ => '状態確認待ち',
+    };
     return OutlinedButton.icon(
       key: Key('tiger-review-issue-$number'),
       onPressed: () => launchUrl(url, mode: LaunchMode.externalApplication),

@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "generated_at": "2026-08-28T02:15:53.496124+00:00",
+  "schema_version": 4,
+  "generated_at": "2026-08-28T11:37:16.511061+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -94,8 +94,8 @@
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4951 追跡中",
-      "detail": "主要指摘はproduction course dataのsource URL、course content、model provenance、商用利用条件を変更する必要があり、保護されたproduction dataおよびlegal境界を含むため共有の低リスク自動修正範囲外。",
+      "label": "対策待ち・Issue #4951",
+      "detail": "専用対策キューで順番待ちです。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
@@ -116,7 +116,10 @@
         "url": "https://github.com/kanta13jp1/my_web_app/issues/4951",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260828T100917+0900:c1ea41da-b447-4c7b-aee7-630d03c6a516"
+        "dedupe_key": "tiger-course-review:20260828T100917+0900:c1ea41da-b447-4c7b-aee7-630d03c6a516",
+        "remediation_state": "queued",
+        "queue_status": null,
+        "synced_at": "2026-08-28T11:36:55.804558+00:00"
       },
       "implementation": null,
       "findings_without_individual_trace": [
@@ -200,8 +203,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4951 追跡中",
-        "detail": "主要指摘はproduction course dataのsource URL、course content、model provenance、商用利用条件を変更する必要があり、保護されたproduction dataおよびlegal境界を含むため共有の低リスク自動修正範囲外。",
+        "label": "対策待ち・Issue #4951",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -222,7 +225,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4951",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-course-review:20260828T100917+0900:c1ea41da-b447-4c7b-aee7-630d03c6a516"
+          "dedupe_key": "tiger-course-review:20260828T100917+0900:c1ea41da-b447-4c7b-aee7-630d03c6a516",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -295,8 +301,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4945 追跡中",
-        "detail": "主要指摘は商用利用・model provenance・beta・法域の条件を含むcourse contentと公開データの変更を必要とし、保護されたlegalおよびproduction data境界を含むため共有の低リスク自動修正範囲外。",
+        "label": "対策待ち・Issue #4945",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -317,7 +323,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4945",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-course-review:20260828T021401+0900:955ae2e6-9909-4635-aacd-790ab23aa7c8"
+          "dedupe_key": "tiger-course-review:20260828T021401+0900:955ae2e6-9909-4635-aacd-790ab23aa7c8",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -384,8 +393,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4941 追跡中",
-        "detail": "主要指摘は認証secret、利用量、実運用設計を含む新規course contentと公開データの変更を必要とし、保護されたauthenticationおよびproduction data境界を含むため共有の低リスク自動修正範囲外。",
+        "label": "対策待ち・Issue #4941",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -407,7 +416,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4941",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-course-review:20260827T232859+0900:746a2878-6a2d-4787-91e2-1778ebdda8ce"
+          "dedupe_key": "tiger-course-review:20260827T232859+0900:746a2878-6a2d-4787-91e2-1778ebdda8ce",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -473,8 +485,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4905 追跡中",
-        "detail": "主要な不一致は公開講座データのタイトル・出典・カリキュラム境界にあり、production dataと新規教材設計を伴うため共有の低リスク自動修正範囲外。",
+        "label": "対策待ち・Issue #4905",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -500,7 +512,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4905",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-course-review:20260826T230834+0900:fbf4eab5-f695-4ab4-bc54-b72c4abec19a"
+          "dedupe_key": "tiger-course-review:20260826T230834+0900:fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -596,9 +611,20 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4878",
           "status": "created",
           "github_state": "CLOSED",
-          "dedupe_key": "tiger-course-review:20260826T151103+0900:63c96c0b-834c-4979-b387-ff4d4393aced"
+          "dedupe_key": "tiger-course-review:20260826T151103+0900:63c96c0b-834c-4979-b387-ff4d4393aced",
+          "remediation_state": "production_verified",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "379d95b69c88ce2eeb9b6a1a85ed477f3209ba78",
+          "workflow_run": "32957032879",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/32957032879",
+          "pr_number": null,
+          "pr_url": null,
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-adept-verifiable-workflow-gap",
           "course-adept-learner-outcome-proof-gap"
@@ -690,9 +716,20 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4855",
           "status": "created",
           "github_state": "CLOSED",
-          "dedupe_key": "tiger-course-review:20260826T071116+0900:4ec30eda-d8f5-4cef-b88d-b5e18a34e914"
+          "dedupe_key": "tiger-course-review:20260826T071116+0900:4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
+          "remediation_state": "production_verified",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "3c725dd9cf7d81d14504a090bfc471750a7a0147",
+          "workflow_run": "32919898382",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/32919898382",
+          "pr_number": null,
+          "pr_url": null,
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-01ai-verifiable-first-request-gap",
           "course-01ai-learner-outcome-proof-gap"
@@ -756,8 +793,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4850 追跡中",
-        "detail": "指摘は本番講座データの学習設計・出典属性・成果計測に関わり、共有契約が自動変更を禁止するproduction data境界を越える。",
+        "label": "対策待ち・Issue #4850",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -781,7 +818,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4850",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-course-review:20260826T061027+0900:5b7e5f70-2652-4949-b00d-6bbc768fbb96"
+          "dedupe_key": "tiger-course-review:20260826T061027+0900:5b7e5f70-2652-4949-b00d-6bbc768fbb96",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -832,8 +872,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4763 追跡中",
-        "detail": "指摘はいずれも公開講座データまたは外部教材の内容・評価設計に関わり、共有契約が許可する低リスクなリポジトリ内自動修正境界を満たさない。",
+        "label": "対策待ち・Issue #4763",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -859,8 +899,11 @@
           "number": 4763,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4763",
           "status": "created",
-          "github_state": null,
-          "dedupe_key": "tiger-course-review:20260824T011146+0900:647dc452-f75d-4dd9-8292-332bada2e2f9"
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260824T011146+0900:647dc452-f75d-4dd9-8292-332bada2e2f9",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": {
           "commit_sha": "7b30251dc8cbd3398e7ad044f536670ba6c640ad",
@@ -910,8 +953,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4757 追跡中",
-        "detail": "両指摘は公開講座データまたは外部教材の内容・学習計測設計に関わり、共有の低リスク自動修正境界と保護対象の制約を満たさない。",
+        "label": "対策待ち・Issue #4757",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -933,8 +976,11 @@
           "number": 4757,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4757",
           "status": "created",
-          "github_state": null,
-          "dedupe_key": "tiger-course-review:20260823T232120+0900:e1712bb5-2bca-4fc0-8347-0529513411d3"
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260823T232120+0900:e1712bb5-2bca-4fc0-8347-0529513411d3",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -978,8 +1024,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4734 追跡中",
-        "detail": "両指摘は公開講座データまたは外部教材の内容・計測設計に関わり、共有の低リスク自動修正境界と保護対象の制約を満たさない。",
+        "label": "対策待ち・Issue #4734",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1003,7 +1049,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4734",
           "status": "existing",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-course-review:20260823T175240+0900:525273ba-539f-4dd4-b436-a6a74a5e8cc5"
+          "dedupe_key": "tiger-course-review:20260823T175240+0900:525273ba-539f-4dd4-b436-a6a74a5e8cc5",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": {
           "commit_sha": "20b20d3ce18515752a09e11beb6efd32cee12e49",
@@ -1052,8 +1101,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4737 追跡中",
-        "detail": "両指摘とも公開講座データまたは外部教材の内容・計測設計に関わり、共有の低リスク自動修正境界を満たさない。",
+        "label": "対策待ち・Issue #4737",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1076,7 +1125,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4737",
           "status": "existing",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-course-review:20260823T165404+0900:22befb67-6147-4a4b-999c-ee1ad6fa9615"
+          "dedupe_key": "tiger-course-review:20260823T165404+0900:22befb67-6147-4a4b-999c-ee1ad6fa9615",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": {
           "commit_sha": "18eedc47ea0769b871ba191b7ff9162252afb8f3",
@@ -1105,7 +1157,7 @@
         "name": "榊󠄀原 清一",
         "selection_score": 74.4337
       },
-      "status": "issue_tracking",
+      "status": "issue_closed",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": null,
@@ -1130,9 +1182,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "未対策・Issue #4739 追跡中",
-        "detail": "3件はいずれも再現可能な証拠を持つが、公開比較主張、分析データ、または大規模な構造変更に関わる。安全な自動修正、低リスク、3ファイル・200行以内の全条件を満たす変更はない。",
+        "state": "issue_closed",
+        "label": "Issue #4739 終了・反映証拠確認待ち",
+        "detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1152,8 +1204,11 @@
           "number": 4739,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4739",
           "status": "existing",
-          "github_state": "OPEN",
-          "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison"
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
+          "remediation_state": "closed_pending_proof",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1204,8 +1259,8 @@
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "未対策・Issue #4738 追跡中",
-        "detail": "3件はいずれも証拠に基づくが、講座運用・計測設計または利用データを要し、低リスク自動修正の条件を満たす変更はない。",
+        "label": "対策待ち・Issue #4738",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1225,7 +1280,10 @@
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4738",
           "status": "existing",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university"
+          "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
+          "remediation_state": "queued",
+          "queue_status": null,
+          "synced_at": "2026-08-28T11:36:55.804558+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [

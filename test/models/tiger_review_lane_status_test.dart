@@ -31,7 +31,7 @@ void main() {
       final source = await rootBundle.loadString(testCase.$1);
       final status = TigerReviewLaneStatus.fromJsonString(source);
 
-      expect(status.schemaVersion, 3);
+      expect(status.schemaVersion, 4);
       expect(status.lane, testCase.$2);
       expect(status.history, isNotEmpty);
       expect(status.history.first.countermeasure.label, isNotEmpty);
@@ -51,4 +51,32 @@ void main() {
       }
     });
   }
+
+  test('parses reconciled remediation and release proof', () {
+    final trace = TigerCountermeasureTrace.fromJson(<String, dynamic>{
+      'issue': <String, dynamic>{
+        'number': 10,
+        'url': 'https://github.com/kanta13jp1/my_web_app/issues/10',
+        'github_state': 'CLOSED',
+        'remediation_state': 'production_verified',
+        'queue_status': 'SUCCEEDED',
+        'synced_at': '2026-08-28T00:00:00Z',
+      },
+      'implementation': <String, dynamic>{
+        'pr_number': 11,
+        'pr_url': 'https://github.com/kanta13jp1/my_web_app/pull/11',
+        'commit_sha': 'abc1234',
+        'workflow_run': '123',
+        'workflow_url':
+            'https://github.com/kanta13jp1/my_web_app/actions/runs/123',
+        'release_status': 'passed',
+      },
+    });
+
+    expect(trace.issue?.remediationState, 'production_verified');
+    expect(trace.issue?.queueStatus, 'SUCCEEDED');
+    expect(trace.issue?.syncedAt, DateTime.utc(2026, 8, 28));
+    expect(trace.implementation?.prNumber, 11);
+    expect(trace.implementation?.workflowRun, '123');
+  });
 }
