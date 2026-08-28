@@ -203,6 +203,28 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertNotIn("alter default privileges", bootstrap.lower())
 
+    def test_plan_includes_issue_4956_wbs_admin_review_contract(self) -> None:
+        plan = module.build_plan(
+            ROOT / "test" / "fixtures" / "testcontainers" / "sql",
+            ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts",
+            ROOT / "supabase" / "functions" / "health-check" / "index.ts",
+        )
+        self.assertEqual(
+            plan["issue_4956_wbs_admin_review_sql"],
+            [
+                "supabase/tests/issue4956_wbs_admin_review_bootstrap.sql",
+                "supabase/migrations/20260828153722_repair_wbs_admin_review_contract.sql",
+                "supabase/tests/issue4956_wbs_admin_review_contract.sql",
+            ],
+        )
+        checks = " ".join(plan["issue_4956_wbs_admin_review_checks"])
+        self.assertIn("legacy profile id collides", checks)
+        self.assertIn("in_progress/100/requested", checks)
+        self.assertIn("trigger ordering", checks)
+        self.assertIn("fail closed", checks)
+        self.assertIn("manual_override", checks)
+        self.assertIn("applies twice", checks)
+
     def test_plan_includes_note_comments_authorization_boundary(self) -> None:
         plan = module.build_plan(
             ROOT / "test" / "fixtures" / "testcontainers" / "sql",
