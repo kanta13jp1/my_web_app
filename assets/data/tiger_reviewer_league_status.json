@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-28T14:08:32.711668+00:00",
+  "generated_at": "2026-08-28T16:50:13.579210+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "reviewer_league",
   "publication_state": "latest_assignment",
@@ -33,8 +33,8 @@
     }
   },
   "latest_assignment": {
-    "cycle_id": "20260828T190700+0900",
-    "started_at": "2026-08-28T19:07:03+09:00",
+    "cycle_id": "20260829T012910+0900",
+    "started_at": "2026-08-29T01:29:10+09:00",
     "source_format": "site_review",
     "surface": {
       "slug": "whole_site",
@@ -43,7 +43,7 @@
     "reviewer": {
       "seat": 32,
       "name": "高澤 有紀",
-      "selection_score": 72.382,
+      "selection_score": 71.885,
       "division": 1,
       "cycle_utility": 93.31,
       "aggregate_utility": 93.31
@@ -53,7 +53,7 @@
     "finding_count": 4,
     "top_findings": [
       {
-        "summary": "価格・プライバシーの意思決定URLが同一ホームページHTMLへ集約された状態が四回目の固定計測でも継続している",
+        "summary": "価格・プライバシーの意思決定URLが同一ホームページHTMLへ集約された状態が五回目の固定計測でも継続している",
         "severity": "p1",
         "business_dimensions": [
           "go_to_market",
@@ -91,15 +91,15 @@
         "relevant": 100
       },
       "gate_passed": true,
-      "baseline_cycle_id": "20260828T145600+0900",
+      "baseline_cycle_id": "20260828T190700+0900",
       "focus_dimension": "complete",
       "overall_delta": 0.0,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After owner-approved route-specific subscription and privacy shells plus a release regression gate ship, require distinct route digests and compare URL-level search impressions, registration starts, checkout completion, privacy-to-registration continuation, and 30-day paid retention for 30 days."
+      "next_cycle_experiment": "After owner-reviewed route-specific subscription and privacy shells plus a release regression gate ship, require distinct route digests and compare URL-level search impressions, registration starts, checkout completion, privacy-to-registration continuation, and 30-day paid retention for 30 days."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #4961",
+      "label": "対策待ち・Issue #4985",
       "detail": "専用対策キューで順番待ちです。",
       "summary": "",
       "files": [],
@@ -107,21 +107,21 @@
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: fast-forwarded clean worktree to origin/main 5b8eca4d595f9bc244a94758cb2431f1a6ae3f4e",
+        "passed: clean worktree aligned with origin/main 5336cc052f762c6ff6e940dfc93cb8d978436406",
         "passed: 3 fixed routes returned HTTP 200 and required SEO-shell markers",
         "passed: 125 profiles",
         "passed: 125 personas",
         "passed: current evidence locations, protected pricing/legal boundaries, absent fixed-journey deploy gate, and unrelated intervening product changes recorded"
       ],
       "issue": {
-        "number": 4961,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4961",
+        "number": 4985,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4985",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-site-review:20260828T190700+0900:whole_site",
+        "dedupe_key": "tiger-site-review:20260829T012910+0900:whole_site",
         "remediation_state": "queued",
         "queue_status": "QUEUED",
-        "synced_at": "2026-08-28T13:07:30.584141+00:00"
+        "synced_at": "2026-08-28T16:49:34.452737+00:00"
       },
       "implementation": null,
       "findings_without_individual_trace": [
@@ -133,6 +133,387 @@
     }
   },
   "history": [
+    {
+      "cycle_id": "20260829T012910+0900",
+      "started_at": "2026-08-29T01:29:10+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 32,
+        "name": "高澤 有紀",
+        "selection_score": 71.885
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260828T190700+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After owner-reviewed route-specific subscription and privacy shells plus a release regression gate ship, require distinct route digests and compare URL-level search impressions, registration starts, checkout completion, privacy-to-registration continuation, and 30-day paid retention for 30 days."
+      },
+      "findings": [
+        {
+          "finding_id": "site-static-decision-route-collapse",
+          "summary": "価格・プライバシーの意思決定URLが同一ホームページHTMLへ集約された状態が五回目の固定計測でも継続している",
+          "severity": "p1",
+          "suggested_action": "価格・法務の内容所有者と公開境界を確認し、subscription-billingとprivacyへ固有title、description、canonical、OG URL、承認済み主要本文を持つ静的応答を追加する。"
+        },
+        {
+          "finding_id": "site-pricing-prequalification-observability-gap",
+          "summary": "確認済み価格はFlutter内にあるが、静的な購入前説明とURL単位の転換証拠が揃っていない",
+          "severity": "p1",
+          "suggested_action": "価格決定を変更せず、承認済みプラン情報と解約・自動更新境界を静的シェルへ反映し、直接流入からcheckoutまでのイベントをURL別に集計する。"
+        },
+        {
+          "finding_id": "site-privacy-preflight-content-gap",
+          "summary": "privacy URLの初期HTMLが法務内容ではなくホームページ販促文を返す状態が継続している",
+          "severity": "p1",
+          "suggested_action": "法務所有者が承認した現行ポリシーを唯一のソースとして、privacy URLの初期HTMLにも固有見出し、概要、canonical、本文到達性を持たせる。"
+        },
+        {
+          "finding_id": "site-public-journey-release-regression-gap",
+          "summary": "収益・信頼journeyのroute固有静的応答をrelease gateで検証する契約がなく、同じ欠落が連続計測で残っている",
+          "severity": "p2",
+          "suggested_action": "承認済みroute固有シェルを実装した後、root・subscription-billing・privacyのstatus、canonical、主要本文、非同一digestをdeploy workflowの回帰契約へ加える。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #4985",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean worktree aligned with origin/main 5336cc052f762c6ff6e940dfc93cb8d978436406",
+          "passed: 3 fixed routes returned HTTP 200 and required SEO-shell markers",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: current evidence locations, protected pricing/legal boundaries, absent fixed-journey deploy gate, and unrelated intervening product changes recorded"
+        ],
+        "issue": {
+          "number": 4985,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4985",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260829T012910+0900:whole_site",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-static-decision-route-collapse",
+          "site-pricing-prequalification-observability-gap",
+          "site-privacy-preflight-content-gap",
+          "site-public-journey-release-regression-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260829T011200+0900",
+      "started_at": "2026-08-29T01:12:00+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "growth_weekly_digest",
+        "title": "growth-weekly-digest",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 69.9624
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After owner-reviewed access control and the response contract are deployed, require unauthorized rejection at 100%, successful channel rendering at 100%, and one owner-assigned action with measured next-week signup delta for four consecutive weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "growth-weekly-digest-public-service-role-query-boundary",
+          "summary": "no-JWTの公開endpointがservice-role clientで集客・紹介集計を実行し、呼出主体を検証しない",
+          "severity": "p0",
+          "suggested_action": "owner-reviewedな認証・認可方針を決め、GET可否、JWT検証、admin/service-role境界、rate limit、公開可能な集計粒度をfail-closed contractとhandler testで固定する。"
+        },
+        {
+          "finding_id": "growth-weekly-digest-response-envelope-mismatch",
+          "summary": "standalone pageが{success,digest} envelopeを展開せず、成功レスポンスでも空のチャネル表示になる",
+          "severity": "p1",
+          "suggested_action": "standalone pageもGrowthMissionServiceと同じくdata.digestを展開し、success/error、channels、week range、summary fieldsを共通fixtureで検証する。"
+        },
+        {
+          "finding_id": "growth-weekly-digest-decision-contract-gap",
+          "summary": "digestは前週差を列挙するが、owner、閾値、優先action、実行結果を結ぶ意思決定contractを持たない",
+          "severity": "p1",
+          "suggested_action": "各週に1つのdecision owner、閾値付き優先チャネル、次action、due date、翌週outcomeを記録し、閲覧から実行までprivacy-boundedに測定する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #4984",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main f59dc6615baff51ab1fdb915c7d11b91067fb6d4",
+          "passed: roster 2026-08-23, personas 2026-08-28, schema 2, 125 profiles each",
+          "passed: deterministic winner growth_weekly_digest from 13 eligible features",
+          "passed: deployment auth mode, service-role query boundary, response envelope, consumers, tests, and unknown production outcomes captured",
+          "executed exactly once against shared history: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 4984,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4984",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260829T011200+0900:growth_weekly_digest",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "growth-weekly-digest-public-service-role-query-boundary",
+          "growth-weekly-digest-response-envelope-mismatch",
+          "growth-weekly-digest-decision-contract-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260829T002706+0900",
+      "started_at": "2026-08-29T00:27:06+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "50609809-2da6-41ba-9c35-4bbec9668493",
+        "title": "Agentless — 最小構成バグ修正エージェント・エージェントレス設計哲学・SWE-bench高効率 (9/9)",
+        "url": "https://github.com/OpenAutoCoder/Agentless"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 72.7025
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner adds a versioned evidence contract, run one cohort on a fixed SWE-bench issue and compare completion rate, localization accuracy, test pass rate, wall time, and API-cost forecast error against the explanation-only course."
+      },
+      "findings": [
+        {
+          "finding_id": "course-agentless-versioned-efficiency-contract-gap",
+          "summary": "『SWE-bench高効率』を支えるrelease・model・benchmark subset・cost基準が固定されていない",
+          "severity": "p1",
+          "suggested_action": "primary paperと公式release artifactを紐付け、Agentless version、model、SWE-bench subset、resolved count/rate、平均API費用、確認日を一組のversioned evidence blockとして公開する。"
+        },
+        {
+          "finding_id": "course-agentless-one-issue-lab-gap",
+          "summary": "3段階設計を一つのissueで再現する短時間labと成功条件がない",
+          "severity": "p1",
+          "suggested_action": "固定した1 SWE-bench issueで疑わしいfile、edit location、候補patch、regression/reproduction result、最終patchを提出する60分labを追加する。"
+        },
+        {
+          "finding_id": "course-agentless-runtime-cost-trace-gap",
+          "summary": "環境pin、候補数、token/API費用、wall timeを残す再現traceがない",
+          "severity": "p1",
+          "suggested_action": "Python、Agentless release、dataset revision、model、候補数、threads、token、API費用、wall time、test結果を1 run manifestへ保存する。"
+        },
+        {
+          "finding_id": "course-agentless-learner-outcome-gap",
+          "summary": "実在学習者がrepair workflowを再現し実務判断へ使えた証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名のlab開始/完了、localization正解、test結果、費用予測差、再現率、職場適用を1 cohortで取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #4982",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-agentless-versioned-efficiency-contract-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean branch equals origin/main 782c5b6b2c24936f6c8b7987376e3db485d0d588",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1078, reviewable=533, excluded_missing_source_url=536",
+          "passed: deterministic winner from fresh catalog",
+          "passed: Agentless repository, SWE-bench guide, primary paper, and named source/test paths inspected",
+          "executed once successfully against shared history root after input schema correction: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 4982,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4982",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260829T002706+0900:50609809-2da6-41ba-9c35-4bbec9668493",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-agentless-one-issue-lab-gap",
+          "course-agentless-runtime-cost-trace-gap",
+          "course-agentless-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260828T235300+0900",
+      "started_at": "2026-08-28T23:53:00+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "f0ce952d-841b-4d6b-88ed-4d6317f74a9e",
+        "title": "Adobe Firefly 最新情報",
+        "url": "https://firefly.adobe.com/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 78.4601
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After a dated source contract is added by the production-data owner, run one cohort through the August batch-interface task and compare completion time, usable-output rate, and stale-source detection with the overview-only course."
+      },
+      "findings": [
+        {
+          "finding_id": "course-firefly-latest-source-contract-gap",
+          "summary": "『最新情報』コースの登録出典が日付付きrelease sourceではなく一般アプリ入口である",
+          "severity": "p1",
+          "suggested_action": "production data所有者がAdobe公式What's newを一次出典として追加し、確認日、最新release month、対象feature、stale判定を公開契約として検証する。"
+        },
+        {
+          "finding_id": "course-firefly-change-to-workflow-gap",
+          "summary": "release差分を実務workflowへ変換する短時間課題がない",
+          "severity": "p1",
+          "suggested_action": "直近releaseから1機能を選び、旧workflow、新workflow、入力、出力、所要時間、採用基準を比較する30分課題を追加する。"
+        },
+        {
+          "finding_id": "course-firefly-freshness-automation-gap",
+          "summary": "更新確認日、change ledger、freshness threshold、stale fallbackがない",
+          "severity": "p1",
+          "suggested_action": "公式release月と教材確認日を保持し、閾値超過時にstale表示と更新Issueを生成する小さなfreshness contractを設計する。"
+        },
+        {
+          "finding_id": "course-firefly-learner-outcome-gap",
+          "summary": "最新機能が学習成果や実務効率を改善した実在学習者証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名の課題完了、旧新workflow時間、修正回数、usable output、職場適用の最小eventを定義し、1 cohortで比較する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #4979",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-firefly-latest-source-contract-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean branch equals origin/main 782c5b6b2c24936f6c8b7987376e3db485d0d588",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1078, reviewable=533, excluded_missing_source_url=536",
+          "passed: deterministic winner from fresh catalog",
+          "passed: Adobe app entrance and What's new updated 2026-08-19 plus named source/test paths inspected",
+          "executed exactly once against shared history root: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 4979,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4979",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260828T235300+0900:f0ce952d-841b-4d6b-88ed-4d6317f74a9e",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-firefly-change-to-workflow-gap",
+          "course-firefly-freshness-automation-gap",
+          "course-firefly-learner-outcome-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260828T190700+0900",
       "started_at": "2026-08-28T19:07:03+09:00",
@@ -218,7 +599,7 @@
           "dedupe_key": "tiger-site-review:20260828T190700+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -310,7 +691,7 @@
           "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -404,7 +785,7 @@
           "dedupe_key": "tiger-site-review:20260828T145600+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -496,7 +877,7 @@
           "dedupe_key": "tiger-feature-review:20260828T120337+0900:philosophy",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -593,7 +974,7 @@
           "dedupe_key": "tiger-course-review:20260828T100917+0900:c1ea41da-b447-4c7b-aee7-630d03c6a516",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -688,7 +1069,7 @@
           "dedupe_key": "tiger-site-review:20260828T090106+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -772,7 +1153,7 @@
           "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -866,7 +1247,7 @@
           "dedupe_key": "tiger-site-review:20260828T051725+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -955,7 +1336,7 @@
           "dedupe_key": "tiger-feature-review:20260828T042953+0900:horse_racing",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1053,7 +1434,7 @@
           "dedupe_key": "tiger-course-review:20260828T021401+0900:955ae2e6-9909-4635-aacd-790ab23aa7c8",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1148,7 +1529,7 @@
           "dedupe_key": "tiger-site-review:20260828T011400+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1237,7 +1618,7 @@
           "dedupe_key": "tiger-feature-review:20260828T004359+0900:ai_hub",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1330,7 +1711,7 @@
           "dedupe_key": "tiger-course-review:20260827T232859+0900:746a2878-6a2d-4787-91e2-1778ebdda8ce",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1417,7 +1798,7 @@
           "dedupe_key": "tiger-feature-review:20260827T221025+0900:core_hub",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1517,7 +1898,7 @@
           "dedupe_key": "tiger-site-review:20260827T214913+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1607,7 +1988,7 @@
           "dedupe_key": "tiger-feature-review:20260827T033027+0900:home",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1704,7 +2085,7 @@
           "dedupe_key": "tiger-course-review:20260826T230834+0900:fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1807,7 +2188,7 @@
           "dedupe_key": "tiger-site-review:20260826T220910+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1909,7 +2290,7 @@
           "dedupe_key": "tiger-course-review:20260826T151103+0900:63c96c0b-834c-4979-b387-ff4d4393aced",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": {
           "commit_sha": "379d95b69c88ce2eeb9b6a1a85ed477f3209ba78",
@@ -2014,7 +2395,7 @@
           "dedupe_key": "tiger-course-review:20260826T071116+0900:4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": {
           "commit_sha": "3c725dd9cf7d81d14504a090bfc471750a7a0147",
@@ -2116,7 +2497,7 @@
           "dedupe_key": "tiger-course-review:20260826T061027+0900:5b7e5f70-2652-4949-b00d-6bbc768fbb96",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2216,7 +2597,7 @@
           "dedupe_key": "tiger-site-review:20260825T133307+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2319,7 +2700,7 @@
           "dedupe_key": "tiger-site-review:20260825T124533+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2421,7 +2802,7 @@
           "dedupe_key": "tiger-site-review:20260825T090429+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2523,7 +2904,7 @@
           "dedupe_key": "tiger-site-review:20260825T083902+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2679,7 +3060,7 @@
           "dedupe_key": "tiger-course-review:20260824T011146+0900:647dc452-f75d-4dd9-8292-332bada2e2f9",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": {
           "commit_sha": "7b30251dc8cbd3398e7ad044f536670ba6c640ad",
@@ -2828,7 +3209,7 @@
           "dedupe_key": "tiger-course-review:20260823T232120+0900:e1712bb5-2bca-4fc0-8347-0529513411d3",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2931,7 +3312,7 @@
           "dedupe_key": "tiger-site-review:20260823T214617+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -3031,7 +3412,7 @@
           "dedupe_key": "tiger-site-review:20260823T195559+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -3106,8 +3487,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260823T175240+0900:525273ba-539f-4dd4-b436-a6a74a5e8cc5",
           "remediation_state": "production_verified",
-          "queue_status": "RUNNING",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": {
           "commit_sha": "20b20d3ce18515752a09e11beb6efd32cee12e49",
@@ -3208,7 +3589,7 @@
         "name": "迫 佑樹",
         "selection_score": 73.0376
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": null,
@@ -3227,9 +3608,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4737",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #4737 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -3251,11 +3632,11 @@
           "number": 4737,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4737",
           "status": "existing",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260823T165404+0900:22befb67-6147-4a4b-999c-ee1ad6fa9615",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": {
           "commit_sha": "18eedc47ea0769b871ba191b7ff9162252afb8f3",
@@ -3335,7 +3716,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -3409,8 +3790,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
           "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "queue_status": "DEFERRED_RESOURCE",
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -3483,11 +3864,11 @@
       "eligible": true,
       "floor_protected": false,
       "utility_score": 93.31,
-      "completed_cycles": 5,
+      "completed_cycles": 6,
       "low_utility_streak": 0,
       "last_cycle_utility": 93.31,
-      "last_selected_at": "2026-08-28T10:07:03+00:00",
-      "reason": "担当5回・効用93.3点で1部"
+      "last_selected_at": "2026-08-28T16:29:10+00:00",
+      "reason": "担当6回・効用93.3点で1部"
     },
     {
       "seat": 49,
@@ -3520,21 +3901,6 @@
       "reason": "担当実績が2回未満のため暫定3部"
     },
     {
-      "seat": 12,
-      "name": "迫 佑樹",
-      "tier": "division_1",
-      "division": 1,
-      "provisional": false,
-      "eligible": true,
-      "floor_protected": false,
-      "utility_score": 89.05,
-      "completed_cycles": 15,
-      "low_utility_streak": 0,
-      "last_cycle_utility": 93.62,
-      "last_selected_at": "2026-08-28T01:09:17+00:00",
-      "reason": "担当15回・効用89.0点で1部"
-    },
-    {
       "seat": 11,
       "name": "野口 功司",
       "tier": "division_1",
@@ -3542,12 +3908,12 @@
       "provisional": false,
       "eligible": true,
       "floor_protected": false,
-      "utility_score": 88.08,
-      "completed_cycles": 8,
+      "utility_score": 89.44,
+      "completed_cycles": 9,
       "low_utility_streak": 0,
-      "last_cycle_utility": 83.25,
-      "last_selected_at": "2026-08-28T08:16:00+00:00",
-      "reason": "担当8回・効用88.1点で1部"
+      "last_cycle_utility": 92.17,
+      "last_selected_at": "2026-08-28T16:12:00+00:00",
+      "reason": "担当9回・効用89.4点で1部"
     },
     {
       "seat": 9,
@@ -3578,6 +3944,21 @@
       "last_cycle_utility": 85.9,
       "last_selected_at": "2026-08-25T04:33:07+00:00",
       "reason": "担当2回・効用87.2点で1部"
+    },
+    {
+      "seat": 12,
+      "name": "迫 佑樹",
+      "tier": "division_1",
+      "division": 1,
+      "provisional": false,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 86.95,
+      "completed_cycles": 17,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 85.62,
+      "last_selected_at": "2026-08-28T15:27:06+00:00",
+      "reason": "担当17回・効用87.0点で1部"
     },
     {
       "seat": 2,

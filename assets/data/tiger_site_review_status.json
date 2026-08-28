@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-28T16:40:25.302050+00:00",
+  "generated_at": "2026-08-28T16:50:13.579210+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "site_review",
   "publication_state": "latest_review",
@@ -79,7 +79,7 @@
     "countermeasure": {
       "state": "issue_tracking",
       "label": "対策待ち・Issue #4985",
-      "detail": "提案のみで、対策実施の記録はありません。",
+      "detail": "専用対策キューで順番待ちです。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
@@ -98,9 +98,9 @@
         "status": "created",
         "github_state": "OPEN",
         "dedupe_key": "tiger-site-review:20260829T012910+0900:whole_site",
-        "remediation_state": null,
-        "queue_status": null,
-        "synced_at": null
+        "remediation_state": "queued",
+        "queue_status": "QUEUED",
+        "synced_at": "2026-08-28T16:49:34.452737+00:00"
       },
       "implementation": null,
       "findings_without_individual_trace": [
@@ -176,7 +176,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #4985",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -195,9 +195,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-site-review:20260829T012910+0900:whole_site",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -293,7 +293,7 @@
           "dedupe_key": "tiger-site-review:20260828T190700+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -389,7 +389,7 @@
           "dedupe_key": "tiger-site-review:20260828T145600+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -485,7 +485,7 @@
           "dedupe_key": "tiger-site-review:20260828T090106+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -581,7 +581,7 @@
           "dedupe_key": "tiger-site-review:20260828T051725+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -677,7 +677,7 @@
           "dedupe_key": "tiger-site-review:20260828T011400+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -778,7 +778,7 @@
           "dedupe_key": "tiger-site-review:20260827T214913+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -884,7 +884,7 @@
           "dedupe_key": "tiger-site-review:20260826T220910+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -986,7 +986,7 @@
           "dedupe_key": "tiger-site-review:20260825T133307+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1089,7 +1089,7 @@
           "dedupe_key": "tiger-site-review:20260825T124533+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1191,7 +1191,7 @@
           "dedupe_key": "tiger-site-review:20260825T090429+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1293,7 +1293,7 @@
           "dedupe_key": "tiger-site-review:20260825T083902+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1399,7 +1399,7 @@
           "dedupe_key": "tiger-site-review:20260823T214617+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1499,7 +1499,7 @@
           "dedupe_key": "tiger-site-review:20260823T195559+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1578,7 +1578,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1652,8 +1652,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
           "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T13:07:30.584141+00:00"
+          "queue_status": "DEFERRED_RESOURCE",
+          "synced_at": "2026-08-28T16:49:34.452737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
