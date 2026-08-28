@@ -11309,6 +11309,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// 定期固定費の削除トゥームストーンを DB 側の atomic union/remove RPC で
   /// サーバへ反映する。whole-blob upsert による端末間 lost-update を避ける。
+  // ignore: unused_element
   Future<bool> _mirrorRecurringFixedCostsDeleted({
     bool mirrorCurrentOnSuccess = false,
   }) {

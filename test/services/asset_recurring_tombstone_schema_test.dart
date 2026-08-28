@@ -16,7 +16,8 @@ void main() {
     expect(
       sql,
       contains(
-          'create or replace function public.apply_recurring_fixed_cost_tombstones'),
+        'create or replace function public.apply_recurring_fixed_cost_tombstones',
+      ),
     );
     expect(sql, contains('security definer'));
     expect(sql, contains('v_user_id uuid := auth.uid()'));
