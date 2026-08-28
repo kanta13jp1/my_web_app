@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show PointerDeviceKind;
 
@@ -6,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../services/wbs_kanban_service.dart';
 import '../utils/web_image_downloader.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
@@ -131,6 +133,7 @@ class WbsTask {
   // status field は sync EF が遅延すると 'completed' へ変わらない場合がある.
   // github_issue_state == 'CLOSED' を併用すれば close 反映を即時取得可.
   final String githubIssueState;
+  final String aiReviewStatus;
 
   const WbsTask({
     required this.id,
@@ -158,6 +161,7 @@ class WbsTask {
     this.createdAt,
     this.updatedAt,
     this.githubIssueState = '',
+    this.aiReviewStatus = 'pending',
   });
 
   bool get isEffectivelyCompleted =>
@@ -220,6 +224,7 @@ class WbsTask {
             ? DateTime.tryParse(m['updated_at'] as String)
             : null,
         githubIssueState: (m['github_issue_state'] as String?) ?? '',
+        aiReviewStatus: (m['ai_review_status'] as String?) ?? 'pending',
       );
 
   DateTime? get rawScheduleStartDate => plannedStartDate ?? startDate;
@@ -400,6 +405,33 @@ class WbsTask {
         'low' => 1,
         _ => 0,
       };
+
+  WbsKanbanLane get kanbanLane {
+    if (status == 'completed' || githubIssueState == 'CLOSED') {
+      return WbsKanbanLane.completed;
+    }
+    if (status == 'blocked') return WbsKanbanLane.blocked;
+    if (aiReviewStatus == 'requested' || aiReviewStatus == 'rejected') {
+      return WbsKanbanLane.review;
+    }
+    if (status == 'in_progress') return WbsKanbanLane.inProgress;
+    return WbsKanbanLane.pending;
+  }
+}
+
+Map<WbsKanbanLane, List<WbsTask>> groupWbsTasksByKanbanLane(
+  Iterable<WbsTask> tasks,
+) {
+  final grouped = <WbsKanbanLane, List<WbsTask>>{
+    for (final lane in WbsKanbanLane.values) lane: <WbsTask>[],
+  };
+  for (final task in tasks) {
+    grouped[task.kanbanLane]!.add(task);
+  }
+  for (final laneTasks in grouped.values) {
+    laneTasks.sort(_compareWbsTasks);
+  }
+  return grouped;
 }
 
 int _wbsTaskSortBucket(WbsTask task) {
@@ -623,7 +655,9 @@ Color _activeWbsInstanceColor(String key) => switch (key) {
 // ── ページ本体 ────────────────────────────────────────────────────────────────
 
 class ProjectGanttPage extends StatefulWidget {
-  const ProjectGanttPage({super.key});
+  const ProjectGanttPage({super.key, this.kanbanService});
+
+  final WbsKanbanService? kanbanService;
 
   @override
   State<ProjectGanttPage> createState() => _ProjectGanttPageState();
@@ -632,14 +666,20 @@ class ProjectGanttPage extends StatefulWidget {
 class _ProjectGanttPageState extends State<ProjectGanttPage>
     with SingleTickerProviderStateMixin, TabRouteUrlSync {
   @override
-  List<String> get tabUrlSlugs =>
-      const <String>['wbs', 'timeline', 'projects', 'hygiene'];
+  List<String> get tabUrlSlugs => const <String>[
+        'wbs',
+        'kanban',
+        'timeline',
+        'projects',
+        'hygiene',
+      ];
 
   @override
   TabController get tabUrlController => _tabs;
 
   final _supabase = Supabase.instance.client;
   late final TabController _tabs;
+  late final WbsKanbanService _kanbanService;
 
   // WBS data
   List<WbsMilestone> _milestones = [];
@@ -647,6 +687,8 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
   List<Map<String, dynamic>> _milestoneRisks = [];
   List<WbsTask> _tasks = [];
   bool _loadingWbs = true;
+  bool _canManageWbs = false;
+  final Set<String> _movingWbsTaskIds = <String>{};
 
   // Filter
   String? _filterInstance;
@@ -673,8 +715,10 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 4, vsync: this);
+    _tabs = TabController(length: 5, vsync: this);
+    _kanbanService = widget.kanbanService ?? WbsKanbanService(_supabase);
     _loadWbs();
+    _loadWbsManagePermission();
     _loadProjects();
   }
 
@@ -711,9 +755,8 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
           _milestones = (mData as List)
               .map((e) => WbsMilestone.fromMap(e as Map<String, dynamic>))
               .toList();
-          _tasks = dedupeWbsTasksForDisplay(
-            tData.map(WbsTask.fromMap),
-          )..sort(_compareWbsTasks);
+          _tasks = dedupeWbsTasksForDisplay(tData.map(WbsTask.fromMap))
+            ..sort(_compareWbsTasks);
         });
       }
       // Win版#131 part 13: マイルストーン risk view (failures は silent)
@@ -753,6 +796,136 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
     } catch (_) {
     } finally {
       if (mounted) setState(() => _loadingProjects = false);
+    }
+  }
+
+  Future<void> _loadWbsManagePermission() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      if (mounted) setState(() => _canManageWbs = false);
+      return;
+    }
+    try {
+      final profile = await _supabase
+          .from('user_profiles')
+          .select('is_admin')
+          .eq('id', user.id)
+          .maybeSingle();
+      if (mounted) setState(() => _canManageWbs = profile?['is_admin'] == true);
+    } catch (_) {
+      if (mounted) setState(() => _canManageWbs = false);
+    }
+  }
+
+  Future<String?> _askRecoveryPlan(
+    WbsTask task,
+    WbsKanbanLane destination,
+  ) async {
+    final controller = TextEditingController(text: task.recoveryPlan);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('回復計画を入力', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              task.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Color(0xFFB0B0B0), height: 1.6),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              key: const Key('kanban-recovery-plan-field'),
+              controller: controller,
+              autofocus: true,
+              minLines: 2,
+              maxLines: 4,
+              style: const TextStyle(color: Colors.white, height: 1.6),
+              decoration: InputDecoration(
+                hintText: '例: 依存PRを確認し、8/30までに再開する',
+                hintStyle: const TextStyle(color: Color(0xFF707070)),
+                filled: true,
+                fillColor: const Color(0xFF2A2A2A),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFFF6B35)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            key: const Key('kanban-save-recovery-plan'),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6B35),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              final value = controller.text.trim();
+              if (value.isNotEmpty) Navigator.of(dialogContext).pop(value);
+            },
+            child: Text('「${destination.label}」へ移動'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return result;
+  }
+
+  Future<void> _moveWbsTask(WbsTask task, WbsKanbanLane lane) async {
+    if (!_canManageWbs || task.kanbanLane == lane) return;
+    String? recoveryPlan;
+    final needsRecoveryPlan = lane == WbsKanbanLane.blocked ||
+        (lane != WbsKanbanLane.completed && task.isDelayedNoPlan);
+    if (needsRecoveryPlan) {
+      recoveryPlan = await _askRecoveryPlan(task, lane);
+      if (recoveryPlan == null || !mounted) return;
+    }
+    setState(() => _movingWbsTaskIds.add(task.id));
+    try {
+      final row = await _kanbanService.moveTask(
+        taskId: task.id,
+        lane: lane,
+        currentProgress: task.progress,
+        recoveryPlan: recoveryPlan,
+      );
+      final updated = WbsTask.fromMap(row);
+      if (!mounted) return;
+      setState(() {
+        final index = _tasks.indexWhere((item) => item.id == task.id);
+        if (index >= 0) _tasks[index] = updated;
+        _tasks.sort(_compareWbsTasks);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${task.title} を「${lane.label}」へ移動しました'),
+          backgroundColor: const Color(0xFF4CAF50),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('タスクを移動できませんでした: $error'),
+          backgroundColor: const Color(0xFFE53935),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _movingWbsTaskIds.remove(task.id));
     }
   }
 
@@ -819,11 +992,13 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
         ],
         bottom: TabBar(
           controller: _tabs,
+          isScrollable: true,
           indicatorColor: const Color(0xFFFF6B35),
           labelColor: const Color(0xFFFF6B35),
           unselectedLabelColor: const Color(0xFF707070),
           tabs: const [
             Tab(icon: Icon(Icons.account_tree_outlined), text: '開発WBS'),
+            Tab(icon: Icon(Icons.view_kanban_outlined), text: 'カンバン'),
             Tab(icon: Icon(Icons.timeline), text: 'タイムライン'),
             Tab(icon: Icon(Icons.folder_outlined), text: 'マイプロジェクト'),
             Tab(icon: Icon(Icons.health_and_safety_outlined), text: 'セッション衛生'),
@@ -844,6 +1019,13 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             onFilterMilestone: (v) => setState(() => _filterMilestone = v),
             onToggleHideCompleted: (v) =>
                 setState(() => _hideCompleted = v ?? false),
+          ),
+          WbsKanbanBoard(
+            tasks: _tasks,
+            loading: _loadingWbs,
+            canManage: _canManageWbs,
+            movingTaskIds: _movingWbsTaskIds,
+            onMove: _moveWbsTask,
           ),
           _GanttTimelineTab(
             milestones: _milestones,
@@ -876,6 +1058,573 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
     );
   }
 }
+
+typedef WbsKanbanMoveCallback = Future<void> Function(
+    WbsTask task, WbsKanbanLane lane);
+
+/// Five-lane, real-data kanban board for `/project-gantt`.
+///
+/// Wide layouts use pointer-first drag and drop. Narrow layouts use a long
+/// press to avoid stealing horizontal scroll gestures, and every card also has
+/// an explicit move menu for touch and keyboard accessibility.
+class WbsKanbanBoard extends StatefulWidget {
+  const WbsKanbanBoard({
+    super.key,
+    required this.tasks,
+    required this.loading,
+    required this.canManage,
+    required this.movingTaskIds,
+    required this.onMove,
+  });
+
+  final List<WbsTask> tasks;
+  final bool loading;
+  final bool canManage;
+  final Set<String> movingTaskIds;
+  final WbsKanbanMoveCallback onMove;
+
+  @override
+  State<WbsKanbanBoard> createState() => _WbsKanbanBoardState();
+}
+
+class _WbsKanbanBoardState extends State<WbsKanbanBoard> {
+  final ScrollController _horizontalController = ScrollController();
+
+  @override
+  void dispose() {
+    _horizontalController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.loading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFFFF6B35)),
+      );
+    }
+    if (widget.tasks.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.view_kanban_outlined,
+              size: 64,
+              color: Color(0xFFFF6B35),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'WBSタスクがありません',
+              style: TextStyle(color: Color(0xFFB0B0B0), fontSize: 16),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Supabaseの実データが登録されるとここに表示されます。',
+              style: TextStyle(color: Color(0xFF707070), height: 1.7),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final grouped = groupWbsTasksByKanbanLane(widget.tasks);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 769;
+        return Column(
+          children: [
+            _KanbanPermissionBanner(canManage: widget.canManage),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, boardConstraints) {
+                  final columnWidth = compact
+                      ? math.max(280.0, boardConstraints.maxWidth - 32)
+                      : 312.0;
+                  return Scrollbar(
+                    controller: _horizontalController,
+                    thumbVisibility: !compact,
+                    child: SingleChildScrollView(
+                      key: const Key('wbs-kanban-horizontal-scroll'),
+                      controller: _horizontalController,
+                      scrollDirection: Axis.horizontal,
+                      physics: const ClampingScrollPhysics(),
+                      child: SizedBox(
+                        height: boardConstraints.maxHeight,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              for (var index = 0;
+                                  index < WbsKanbanLane.values.length;
+                                  index++) ...[
+                                SizedBox(
+                                  width: columnWidth,
+                                  child: _WbsKanbanColumn(
+                                    lane: WbsKanbanLane.values[index],
+                                    tasks:
+                                        grouped[WbsKanbanLane.values[index]]!,
+                                    compact: compact,
+                                    canManage: widget.canManage,
+                                    movingTaskIds: widget.movingTaskIds,
+                                    onMove: widget.onMove,
+                                  ),
+                                ),
+                                if (index < WbsKanbanLane.values.length - 1)
+                                  const SizedBox(width: 12),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _KanbanPermissionBanner extends StatelessWidget {
+  const _KanbanPermissionBanner({required this.canManage});
+
+  final bool canManage;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A2E),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: (canManage ? const Color(0xFFFF6B35) : const Color(0xFF3D5AFE))
+              .withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            canManage ? Icons.drag_indicator : Icons.visibility_outlined,
+            color:
+                canManage ? const Color(0xFFFF6B35) : const Color(0xFF7986CB),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              canManage
+                  ? 'カードをドラッグ、または移動メニューから列を変更できます。'
+                  : '閲覧モードです。管理者でログインするとタスクを移動できます。',
+              style: const TextStyle(
+                color: Color(0xFFB0B0B0),
+                fontSize: 12,
+                height: 1.6,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WbsKanbanColumn extends StatelessWidget {
+  const _WbsKanbanColumn({
+    required this.lane,
+    required this.tasks,
+    required this.compact,
+    required this.canManage,
+    required this.movingTaskIds,
+    required this.onMove,
+  });
+
+  final WbsKanbanLane lane;
+  final List<WbsTask> tasks;
+  final bool compact;
+  final bool canManage;
+  final Set<String> movingTaskIds;
+  final WbsKanbanMoveCallback onMove;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _kanbanLaneColor(lane);
+    return DragTarget<WbsTask>(
+      key: Key('wbs-kanban-column-${lane.name}'),
+      onWillAcceptWithDetails: (details) =>
+          canManage &&
+          !movingTaskIds.contains(details.data.id) &&
+          details.data.kanbanLane != lane,
+      onAcceptWithDetails: (details) {
+        unawaited(onMove(details.data, lane));
+      },
+      builder: (context, candidateData, rejectedData) {
+        final highlighted = candidateData.isNotEmpty;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: color.withValues(alpha: highlighted ? 0.9 : 0.35),
+              width: highlighted ? 2 : 1,
+            ),
+            boxShadow: highlighted
+                ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.12),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Icon(_kanbanLaneIcon(lane), color: color, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        lane.label,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${tasks.length}',
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(color: color.withValues(alpha: 0.25), height: 1),
+              Expanded(
+                child: tasks.isEmpty
+                    ? Center(
+                        child: Text(
+                          highlighted ? 'ここにドロップ' : 'タスクなし',
+                          style: TextStyle(
+                            color:
+                                highlighted ? color : const Color(0xFF707070),
+                            height: 1.6,
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        key: Key('wbs-kanban-list-${lane.name}'),
+                        padding: const EdgeInsets.all(10),
+                        itemCount: tasks.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final task = tasks[index];
+                          return _WbsKanbanTaskDraggable(
+                            task: task,
+                            compact: compact,
+                            canManage: canManage,
+                            moving: movingTaskIds.contains(task.id),
+                            onMove: onMove,
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _WbsKanbanTaskDraggable extends StatelessWidget {
+  const _WbsKanbanTaskDraggable({
+    required this.task,
+    required this.compact,
+    required this.canManage,
+    required this.moving,
+    required this.onMove,
+  });
+
+  final WbsTask task;
+  final bool compact;
+  final bool canManage;
+  final bool moving;
+  final WbsKanbanMoveCallback onMove;
+
+  @override
+  Widget build(BuildContext context) {
+    final card = _WbsKanbanTaskCard(
+      task: task,
+      canManage: canManage,
+      moving: moving,
+      onMove: onMove,
+    );
+    if (!canManage || moving) return card;
+
+    final feedback = Material(
+      color: Colors.transparent,
+      child: SizedBox(
+        width: compact
+            ? math.max(248.0, MediaQuery.sizeOf(context).width - 64)
+            : 280,
+        child: Opacity(opacity: 0.92, child: card),
+      ),
+    );
+    if (compact) {
+      return LongPressDraggable<WbsTask>(
+        data: task,
+        feedback: feedback,
+        childWhenDragging: Opacity(opacity: 0.35, child: card),
+        child: card,
+      );
+    }
+    return Draggable<WbsTask>(
+      data: task,
+      feedback: feedback,
+      childWhenDragging: Opacity(opacity: 0.35, child: card),
+      child: card,
+    );
+  }
+}
+
+class _WbsKanbanTaskCard extends StatelessWidget {
+  const _WbsKanbanTaskCard({
+    required this.task,
+    required this.canManage,
+    required this.moving,
+    required this.onMove,
+  });
+
+  final WbsTask task;
+  final bool canManage;
+  final bool moving;
+  final WbsKanbanMoveCallback onMove;
+
+  @override
+  Widget build(BuildContext context) {
+    final laneColor = _kanbanLaneColor(task.kanbanLane);
+    final issueNumber = task.linkedGithubIssueNumber;
+    return Semantics(
+      label: '${task.title}、${task.kanbanLane.label}、進捗${task.progress}パーセント',
+      child: Card(
+        key: Key('wbs-kanban-task-${task.id}'),
+        color: const Color(0xFF1E1E1E),
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: laneColor.withValues(alpha: 0.28)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      task.title,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  if (moving)
+                    const Padding(
+                      padding: EdgeInsets.all(10),
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFFFF6B35),
+                        ),
+                      ),
+                    )
+                  else if (canManage)
+                    PopupMenuButton<WbsKanbanLane>(
+                      key: Key('wbs-kanban-move-${task.id}'),
+                      tooltip: '列を移動',
+                      icon: const Icon(
+                        Icons.more_horiz,
+                        color: Color(0xFFB0B0B0),
+                      ),
+                      onSelected: (lane) => unawaited(onMove(task, lane)),
+                      itemBuilder: (context) => [
+                        for (final lane in WbsKanbanLane.values)
+                          if (lane != task.kanbanLane)
+                            PopupMenuItem<WbsKanbanLane>(
+                              value: lane,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _kanbanLaneIcon(lane),
+                                    color: _kanbanLaneColor(lane),
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(lane.label),
+                                ],
+                              ),
+                            ),
+                      ],
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  minHeight: 6,
+                  value: task.progress.clamp(0, 100) / 100,
+                  backgroundColor: const Color(0xFF2A2A2A),
+                  valueColor: AlwaysStoppedAnimation<Color>(laneColor),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _KanbanMetaChip(
+                    icon: Icons.flag_outlined,
+                    label: task.priority,
+                    color: _priorityColor(task.priority),
+                  ),
+                  _KanbanMetaChip(
+                    icon: Icons.smart_toy_outlined,
+                    label: task.activeOwnerLabel,
+                    color: task.activeOwnerColor,
+                  ),
+                  if (task.scheduleEndDate != null)
+                    _KanbanMetaChip(
+                      icon: Icons.event_outlined,
+                      label: _formatKanbanDate(task.scheduleEndDate!),
+                      color: task.delayDays > 0
+                          ? const Color(0xFFE53935)
+                          : const Color(0xFFB0B0B0),
+                    ),
+                ],
+              ),
+              if (issueNumber != null) ...[
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFFFF6B35),
+                      minimumSize: const Size(44, 44),
+                    ),
+                    onPressed: () => unawaited(_openGithubIssue(issueNumber)),
+                    icon: const Icon(Icons.open_in_new, size: 16),
+                    label: Text('#$issueNumber'),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _KanbanMetaChip extends StatelessWidget {
+  const _KanbanMetaChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 130),
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: color, fontSize: 11, height: 1.5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Color _kanbanLaneColor(WbsKanbanLane lane) => switch (lane) {
+      WbsKanbanLane.pending => const Color(0xFFB0B0B0),
+      WbsKanbanLane.inProgress => const Color(0xFFFF6B35),
+      WbsKanbanLane.review => const Color(0xFF7986CB),
+      WbsKanbanLane.completed => const Color(0xFF4CAF50),
+      WbsKanbanLane.blocked => const Color(0xFFE53935),
+    };
+
+IconData _kanbanLaneIcon(WbsKanbanLane lane) => switch (lane) {
+      WbsKanbanLane.pending => Icons.radio_button_unchecked,
+      WbsKanbanLane.inProgress => Icons.play_circle_outline,
+      WbsKanbanLane.review => Icons.rate_review_outlined,
+      WbsKanbanLane.completed => Icons.check_circle_outline,
+      WbsKanbanLane.blocked => Icons.block_outlined,
+    };
+
+Color _priorityColor(String priority) => switch (priority) {
+      'high' => const Color(0xFFE53935),
+      'medium' => const Color(0xFFFFC107),
+      'low' => const Color(0xFF4CAF50),
+      _ => const Color(0xFFB0B0B0),
+    };
+
+String _formatKanbanDate(DateTime date) =>
+    '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
 
 // ── セッション衛生 タブ (= #2508 J3 skeleton / part 224) ───────────────────
 //
