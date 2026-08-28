@@ -14,6 +14,7 @@ import 'package:web/web.dart' as web_api;
 import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_fsrs_service.dart';
 import '../services/ai_university_content_analytics.dart';
+import '../services/ai_university_learning_outcome_analytics.dart';
 import '../services/ai_learner_profile_service.dart';
 import '../services/ai_university_rlhf_service.dart';
 import '../services/ai_university_video_lesson_service.dart';
@@ -21,6 +22,7 @@ import '../services/ai_university_x_post_service.dart';
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 import '../services/user_data_finetune_readiness_service.dart';
+import '../widgets/ai_university_latest_info_task_card.dart';
 import '../widgets/ai_university_published_video_banner.dart';
 import '../widgets/ai_university_youtube_embed.dart';
 import '../widgets/ai_university_youtube_viewer_route.dart';
@@ -5697,10 +5699,12 @@ class AiUniversityPage extends StatefulWidget {
     super.key,
     this.initialProviderId,
     this.contentAnalytics,
+    this.learningOutcomeAnalytics,
   });
 
   final String? initialProviderId;
   final AiUniversityContentAnalytics? contentAnalytics;
+  final AiUniversityLearningOutcomeAnalytics? learningOutcomeAnalytics;
 
   @override
   State<AiUniversityPage> createState() => _AiUniversityPageState();
@@ -5719,6 +5723,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   final _supabase = Supabase.instance.client;
   late final AiUniversityContentAnalytics _contentAnalytics;
+  late final AiUniversityLearningOutcomeAnalytics _learningOutcomeAnalytics;
 
   List<String> _providers = [];
   Map<String, List<Map<String, dynamic>>> _content = {};
@@ -5726,6 +5731,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   String? _error;
   TabController? _tabController;
   final Set<String> _answeredQuizzes = {};
+  final Set<String> _viewedLearningOutcomeTasks = {};
   static const String _prefsKey = 'ai_univ_answered_quizzes';
   // 新ジャンル棚の折りたたみ状態 (画面占有を抑えるため / prefs 永続化)。
   static const String _genreShelfPrefsKey = 'ai_univ_genre_shelf_collapsed';
@@ -5756,6 +5762,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     super.initState();
     _contentAnalytics = widget.contentAnalytics ??
         AiUniversityContentAnalytics.supabase(_supabase);
+    _learningOutcomeAnalytics = widget.learningOutcomeAnalytics ??
+        AiUniversityLearningOutcomeAnalytics.supabase(_supabase);
     _fetchContent();
     _loadAnsweredQuizzes();
     _loadRlhfSnapshot();
@@ -7938,6 +7946,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     Color surface,
   ) {
     final category = row['category'] as String? ?? '';
+    final provider = row['provider'] as String? ?? '';
     final title = row['title'] as String? ?? '';
     final content = row['content'] as String? ?? '';
     final sourceUrl = row['source_url'] as String?;
@@ -7955,11 +7964,20 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     ].any((value) => value != null && value.isNotEmpty);
     final youtubeVideoId =
         AiUniversityVideoLessonService.youtubeVideoIdFromUrl(sourceUrl);
+    final isLatestInfoTask = provider == '01ai' && category == 'news';
+    final taskViewKey = row['id']?.toString() ?? '$provider:$category';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       color: surface,
       child: ExpansionTile(
+        onExpansionChanged: isLatestInfoTask
+            ? (expanded) {
+                if (expanded && _viewedLearningOutcomeTasks.add(taskViewKey)) {
+                  _learningOutcomeAnalytics.recordViewed().ignore();
+                }
+              }
+            : null,
         backgroundColor: surface,
         collapsedBackgroundColor: surface,
         title: Text(
@@ -8046,6 +8064,12 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                           ),
                       ],
                     ),
+                  ),
+                ],
+                if (isLatestInfoTask) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityLatestInfoTaskCard(
+                    onSubmit: _learningOutcomeAnalytics.recordCompleted,
                   ),
                 ],
                 if (youtubeVideoId != null) ...[
