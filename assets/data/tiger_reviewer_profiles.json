@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "snapshot_date": "2026-08-26",
-  "source_snapshot": "canonical tiger-personas.json (2026-08-26)",
+  "snapshot_date": "2026-08-28",
+  "source_snapshot": "canonical tiger-personas.json (2026-08-28)",
   "reviewer_count": 125,
   "disclaimer": "年齢は生年月日を公開一次情報で確認できた場合のみ、スナップショット日時点で表示します。未確認の年齢は推測していません。肩書き・事業内容・出演実績は公開情報から構成したスナップショットです。",
   "profiles": [
@@ -186,6 +186,7 @@
       ],
       "review_style_tags": [
         "founder_empathy",
+        "growth_first",
         "balanced_risk",
         "acquisition_and_conversion"
       ],
@@ -5651,7 +5652,6 @@
         }
       ],
       "review_style_tags": [
-        "growth_first",
         "evidence_demanding",
         "acquisition_and_conversion",
         "gross_margin_and_repeat_purchase"
@@ -5823,60 +5823,74 @@
       "seat": 92,
       "name": "兼子ただし",
       "roster_status": "historical",
-      "birth_date": null,
-      "birth_date_source_url": null,
-      "company_role": "株式会社SSS 代表取締役",
-      "business_summary": "金融・投資・資産管理",
+      "birth_date": "1971-10-22",
+      "birth_date_source_url": "https://profile.ameba.jp/ameba/ssskaneko/",
+      "company_role": "株式会社KANEKO代表取締役。ストレッチ専門スタジオ、店舗FC・コンサルティング、トレーナー育成・講習、健康商品販売、スポーツジム・教室を展開",
+      "business_summary": "ストレッチ専門スタジオ、FC・コンサルティング、トレーナー育成・講習、健康商品、スポーツジム・教室",
       "business_domains": [
-        "金融・投資・資産管理"
+        "美容・ウェルネス",
+        "フランチャイズ・多店舗展開",
+        "教育・スクール",
+        "小売・通販・EC"
       ],
       "appearances": 3,
       "investment_count": 0,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。金融・投資・資産管理の公開職歴と、番組集計上の出演3回・出資0回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/",
-      "evidence_confidence": 2.3,
-      "profile_completeness_percent": 48,
-      "review_reflection_percent": 47,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "公式プロフィールでは、姿勢改善に焦点を当てたストレッチについて、体感だけでなく大学との共同研究や学術論文による科学的な数値検証も重視し、正しい効果と姿勢教育を広める方針を示している。",
+      "profile_url": "https://sss-kaneko.co.jp/profile/",
+      "evidence_links": [
+        {
+          "label": "生年月日（本人公式プロフィール）",
+          "url": "https://profile.ameba.jp/ameba/ssskaneko/"
+        },
+        {
+          "label": "肩書き・事業内容・公開方針（会社公式）",
+          "url": "https://sss-kaneko.co.jp/profile/"
+        }
+      ],
+      "evidence_confidence": 3.3,
+      "profile_completeness_percent": 80,
+      "review_reflection_percent": 72,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "unit_economics",
           "label": "単位経済性",
-          "weight_percent": 24,
+          "weight_percent": 21,
           "question": "顧客・注文・店舗単位の粗利、獲得費、回収期間は成立するか。"
-        },
-        {
-          "dimension": "revenue_model",
-          "label": "収益モデル",
-          "weight_percent": 20,
-          "question": "誰が、何に、いくら、どの頻度で支払うのか。"
         },
         {
           "dimension": "scalability",
           "label": "拡張性",
-          "weight_percent": 12,
+          "weight_percent": 20,
           "question": "代表者の労働量を増やさず再現・拡大できるか。"
         },
         {
-          "dimension": "trust_risk",
-          "label": "信頼・法務リスク",
-          "weight_percent": 12,
-          "question": "法令、表示、品質、個人情報、評判の致命的リスクは管理できるか。"
+          "dimension": "revenue_model",
+          "label": "収益モデル",
+          "weight_percent": 16,
+          "question": "誰が、何に、いくら、どの頻度で支払うのか。"
+        },
+        {
+          "dimension": "customer_pain",
+          "label": "顧客課題",
+          "weight_percent": 11,
+          "question": "顧客の未解決課題は、支払いを伴うほど強いか。"
         }
       ],
       "review_style_tags": [
         "evidence_demanding",
-        "capital_and_downside_control"
+        "replicability_and_store_economics",
+        "gross_margin_and_repeat_purchase"
       ],
       "next_research_targets": [
-        "生年月日の一次公開情報",
         "現職肩書き・事業内容の一次公開情報",
         "本人の審査姿勢が確認できる一次公開情報",
         "出演・出資実績の追加検証"
       ],
       "evidence_source_ids": [
         "S002",
+        "S060",
         "S003",
         "S004"
       ]
@@ -5942,7 +5956,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S060",
+        "S061",
         "S004"
       ]
     },
@@ -5950,59 +5964,85 @@
       "seat": 94,
       "name": "戸村 光",
       "roster_status": "historical",
-      "birth_date": null,
-      "birth_date_source_url": null,
-      "company_role": "HACK JPN, INC. CEO",
-      "business_summary": "専門サービス・生活支援",
+      "birth_date": "1994-05-17",
+      "birth_date_source_url": "https://www.shochikugeino.co.jp/talents/tomurahikaru/",
+      "company_role": "株式会社hackjpn代表取締役CEO。スタートアップ支援スクール、AI・基幹システム・アプリ開発、企業調査・事業支援を展開",
+      "business_summary": "スタートアップ支援スクール、AI・基幹システム・アプリ開発、企業調査、資金調達・戦略広報・新規事業支援",
       "business_domains": [
-        "専門サービス・生活支援"
+        "IT・SaaS・プラットフォーム",
+        "教育・スクール",
+        "経営支援・コンサルティング",
+        "金融・投資・資産管理"
       ],
       "appearances": 3,
       "investment_count": 1,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。専門サービス・生活支援の公開職歴と、番組集計上の出演3回・出資1回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/",
-      "evidence_confidence": 2.3,
-      "profile_completeness_percent": 48,
-      "review_reflection_percent": 47,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "公式会社発信では、起業家精神と行動力を育て、社会にインパクトを与える挑戦者を支援する方針を示している。本人コメントでは、業界の知見と経験へのアクセスを広げ、事業やキャリアの成長に役立てることを重視している。",
+      "profile_url": "https://www.shochikugeino.co.jp/talents/tomurahikaru/",
+      "evidence_links": [
+        {
+          "label": "生年月日・経歴・事業内容（所属事務所公式）",
+          "url": "https://www.shochikugeino.co.jp/talents/tomurahikaru/"
+        },
+        {
+          "label": "現職肩書き・起業家支援事業（会社公式）",
+          "url": "https://hackjpn.com/news/hackjpn%E6%94%AF%E6%8F%B4%E5%85%88%E3%81%8Civs%E3%83%94%E3%83%83%E3%83%81%E3%82%B3%E3%83%B3%E3%83%86%E3%82%B9%E3%83%88%E5%84%AA%E5%8B%9D%EF%BC%81-%E9%9D%99%E5%B2%A1%E7%99%BA%E3%80%81%E4%B8%96/"
+        },
+        {
+          "label": "公開された事業方針（会社公式）",
+          "url": "https://hackjpn.com/news/cxomonster/"
+        },
+        {
+          "label": "代表者・事業種別（金融庁公開資料）",
+          "url": "https://www.fsa.go.jp/menkyo/menkyoj/tokurei/011.pdf"
+        }
+      ],
+      "evidence_confidence": 3.3,
+      "profile_completeness_percent": 80,
+      "review_reflection_percent": 72,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
-          "dimension": "customer_pain",
-          "label": "顧客課題",
-          "weight_percent": 16,
-          "question": "顧客の未解決課題は、支払いを伴うほど強いか。"
+          "dimension": "market_demand",
+          "label": "市場需要",
+          "weight_percent": 17,
+          "question": "実在する顧客は誰で、需要を示す一次データは何か。"
         },
         {
           "dimension": "revenue_model",
           "label": "収益モデル",
-          "weight_percent": 15,
+          "weight_percent": 17,
           "question": "誰が、何に、いくら、どの頻度で支払うのか。"
         },
         {
-          "dimension": "unit_economics",
-          "label": "単位経済性",
-          "weight_percent": 15,
-          "question": "顧客・注文・店舗単位の粗利、獲得費、回収期間は成立するか。"
+          "dimension": "scalability",
+          "label": "拡張性",
+          "weight_percent": 16,
+          "question": "代表者の労働量を増やさず再現・拡大できるか。"
         },
         {
-          "dimension": "market_demand",
-          "label": "市場需要",
-          "weight_percent": 14,
-          "question": "実在する顧客は誰で、需要を示す一次データは何か。"
+          "dimension": "competitive_advantage",
+          "label": "競争優位性",
+          "weight_percent": 15,
+          "question": "既存代替より選ばれ続ける、模倣されにくい理由は何か。"
         }
       ],
       "review_style_tags": [
-        "balanced_risk"
+        "execution_first",
+        "growth_first",
+        "balanced_risk",
+        "capital_and_downside_control"
       ],
       "next_research_targets": [
-        "生年月日の一次公開情報",
         "現職肩書き・事業内容の一次公開情報",
         "本人の審査姿勢が確認できる一次公開情報",
         "出演・出資実績の追加検証"
       ],
       "evidence_source_ids": [
         "S002",
+        "S062",
+        "S063",
+        "S064",
         "S003",
         "S004"
       ]
@@ -6013,50 +6053,67 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "株式会社ベクトル 代表取締役CEO",
-      "business_summary": "美容・ウェルネス、小売・通販・EC、営業・販売組織",
+      "company_role": "株式会社ベクトル代表取締役。ブランド衣料・バッグ・時計・宝飾品の買取販売、ネットショップ、イベントを展開",
+      "business_summary": "ブランド衣料・バッグ・時計・宝飾品の買取販売、ネットショップ運営、イベント企画、フランチャイズ展開",
       "business_domains": [
-        "美容・ウェルネス",
         "小売・通販・EC",
-        "営業・販売組織"
+        "フランチャイズ・多店舗展開",
+        "マーケティング・メディア"
       ],
       "appearances": 3,
       "investment_count": 0,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。美容・ウェルネス、小売・通販・EC、営業・販売組織の公開職歴と、番組集計上の出演3回・出資0回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/",
-      "evidence_confidence": 2.3,
-      "profile_completeness_percent": 48,
-      "review_reflection_percent": 47,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "本人名義の公式トップメッセージでは、モノや人の価値を活かしてつなぎ、『ゴミバコのないセカイ』を実現することを掲げている。公式プロフィールでは、買取販売・FC展開と希少品の情報発信・販売に取り組んでいる。",
+      "profile_url": "https://www.vectorcorp.co.jp/%E4%BC%9A%E7%A4%BE%E6%A6%82%E8%A6%81",
+      "evidence_links": [
+        {
+          "label": "現職肩書き・事業内容（会社公式）",
+          "url": "https://www.vectorcorp.co.jp/%E4%BC%9A%E7%A4%BE%E6%A6%82%E8%A6%81"
+        },
+        {
+          "label": "公開された事業方針（本人名義の会社公式メッセージ）",
+          "url": "https://www.vectorcorp.co.jp/%E3%83%88%E3%83%83%E3%83%97%E3%83%A1%E3%83%83%E3%82%BB%E3%83%BC%E3%82%B8"
+        },
+        {
+          "label": "経歴・事業活動（本人公式プロフィール）",
+          "url": "https://murakawa-tomohiro.com/"
+        }
+      ],
+      "evidence_confidence": 3.3,
+      "profile_completeness_percent": 65,
+      "review_reflection_percent": 72,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "unit_economics",
           "label": "単位経済性",
-          "weight_percent": 21,
+          "weight_percent": 23,
           "question": "顧客・注文・店舗単位の粗利、獲得費、回収期間は成立するか。"
         },
         {
           "dimension": "go_to_market",
           "label": "顧客獲得",
-          "weight_percent": 20,
+          "weight_percent": 19,
           "question": "最初の顧客をどの経路・費用で獲得し、検証できるか。"
         },
         {
           "dimension": "market_demand",
           "label": "市場需要",
-          "weight_percent": 19,
+          "weight_percent": 14,
           "question": "実在する顧客は誰で、需要を示す一次データは何か。"
         },
         {
-          "dimension": "revenue_model",
-          "label": "収益モデル",
-          "weight_percent": 13,
-          "question": "誰が、何に、いくら、どの頻度で支払うのか。"
+          "dimension": "scalability",
+          "label": "拡張性",
+          "weight_percent": 14,
+          "question": "代表者の労働量を増やさず再現・拡大できるか。"
         }
       ],
       "review_style_tags": [
+        "growth_first",
         "evidence_demanding",
+        "replicability_and_store_economics",
+        "acquisition_and_conversion",
         "gross_margin_and_repeat_purchase"
       ],
       "next_research_targets": [
@@ -6067,6 +6124,9 @@
       ],
       "evidence_source_ids": [
         "S002",
+        "S065",
+        "S066",
+        "S067",
         "S003",
         "S004"
       ]
@@ -6075,64 +6135,80 @@
       "seat": 96,
       "name": "牧田彰俊",
       "roster_status": "historical",
-      "birth_date": null,
-      "birth_date_source_url": null,
-      "company_role": "株式会社すばる 代表",
-      "business_summary": "フランチャイズ・多店舗展開、小売・通販・EC、M&A・事業再生",
+      "birth_date": "1985-06-13",
+      "birth_date_source_url": "https://madx.co.jp/wp-content/uploads/2025/07/5af0b1d82a8c5a953e60af1042314517.pdf",
+      "company_role": "株式会社M&A DX代表取締役副社長・創業者、株式会社事業承継総合研究所代表取締役。M&A・相続・事業承継の総合サービスを展開",
+      "business_summary": "M&A仲介・FA、事業承継・相続、財務・税務調査、企業価値算定、PMI、事業再生・経営支援",
       "business_domains": [
-        "フランチャイズ・多店舗展開",
-        "小売・通販・EC",
-        "M&A・事業再生"
+        "M&A・事業再生",
+        "法務・会計・士業",
+        "経営支援・コンサルティング",
+        "IT・SaaS・プラットフォーム"
       ],
       "appearances": 3,
       "investment_count": 0,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。フランチャイズ・多店舗展開、小売・通販・EC、M&A・事業再生の公開職歴と、番組集計上の出演3回・出資0回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/2/",
-      "evidence_confidence": 2.3,
-      "profile_completeness_percent": 48,
-      "review_reflection_percent": 47,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "公式開示では、創業者として新経営体制に参画し、信頼回復と再成長に取り組む方針を示している。会社の公開方針は、透明性・専門性・誠実さと、外部有識者を含む調査による不適切な譲受側の排除を重視している。",
+      "profile_url": "https://madx.co.jp/company-profile/company-name/",
+      "evidence_links": [
+        {
+          "label": "生年月日・役職・経歴・公開方針（会社公式開示）",
+          "url": "https://madx.co.jp/wp-content/uploads/2025/07/5af0b1d82a8c5a953e60af1042314517.pdf"
+        },
+        {
+          "label": "現職肩書き・事業内容（会社公式）",
+          "url": "https://madx.co.jp/company-profile/company-name/"
+        },
+        {
+          "label": "現職肩書き・公開セミナー（会社公式）",
+          "url": "https://madx.co.jp/news_topics/news/21257/"
+        }
+      ],
+      "evidence_confidence": 3.3,
+      "profile_completeness_percent": 80,
+      "review_reflection_percent": 72,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "unit_economics",
           "label": "単位経済性",
-          "weight_percent": 34,
+          "weight_percent": 27,
           "question": "顧客・注文・店舗単位の粗利、獲得費、回収期間は成立するか。"
         },
         {
-          "dimension": "scalability",
-          "label": "拡張性",
-          "weight_percent": 15,
-          "question": "代表者の労働量を増やさず再現・拡大できるか。"
+          "dimension": "trust_risk",
+          "label": "信頼・法務リスク",
+          "weight_percent": 16,
+          "question": "法令、表示、品質、個人情報、評判の致命的リスクは管理できるか。"
         },
         {
           "dimension": "revenue_model",
           "label": "収益モデル",
-          "weight_percent": 13,
+          "weight_percent": 14,
           "question": "誰が、何に、いくら、どの頻度で支払うのか。"
         },
         {
-          "dimension": "competitive_advantage",
-          "label": "競争優位性",
-          "weight_percent": 11,
-          "question": "既存代替より選ばれ続ける、模倣されにくい理由は何か。"
+          "dimension": "founder_execution",
+          "label": "実行力",
+          "weight_percent": 13,
+          "question": "創業者とチームに、この計画をやり切った証拠があるか。"
         }
       ],
       "review_style_tags": [
         "growth_first",
         "evidence_demanding",
-        "replicability_and_store_economics",
-        "gross_margin_and_repeat_purchase"
+        "capital_and_downside_control"
       ],
       "next_research_targets": [
-        "生年月日の一次公開情報",
         "現職肩書き・事業内容の一次公開情報",
         "本人の審査姿勢が確認できる一次公開情報",
         "出演・出資実績の追加検証"
       ],
       "evidence_source_ids": [
         "S002",
+        "S068",
+        "S069",
+        "S070",
         "S008",
         "S004"
       ]
@@ -6382,7 +6458,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S061"
+        "S071"
       ]
     },
     {
@@ -6446,7 +6522,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S062",
+        "S072",
         "S004"
       ]
     },
@@ -6574,7 +6650,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S063",
+        "S073",
         "S004"
       ]
     },
@@ -6639,7 +6715,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S064",
+        "S074",
         "S004"
       ]
     },
@@ -6703,7 +6779,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S064",
+        "S074",
         "S004"
       ]
     },
@@ -6891,7 +6967,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S065",
+        "S075",
         "S008",
         "S004"
       ]
@@ -6957,7 +7033,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S066",
+        "S076",
         "S004"
       ]
     },
@@ -7085,7 +7161,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S067",
+        "S077",
         "S004"
       ]
     },
@@ -7150,7 +7226,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S068"
+        "S078"
       ]
     },
     {
@@ -7215,7 +7291,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S069"
+        "S079"
       ]
     },
     {
@@ -7279,7 +7355,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S070"
+        "S080"
       ]
     },
     {
@@ -7341,7 +7417,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S071"
+        "S081"
       ]
     },
     {
@@ -7413,8 +7489,8 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S072",
-        "S073",
+        "S082",
+        "S083",
         "S003",
         "S004"
       ]
@@ -7482,7 +7558,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S074",
+        "S084",
         "S004"
       ]
     },
@@ -7545,7 +7621,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S075",
+        "S085",
         "S008",
         "S004"
       ]
@@ -7621,8 +7697,8 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S076",
-        "S077",
+        "S086",
+        "S087",
         "S008",
         "S004"
       ]
@@ -7688,7 +7764,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S078",
+        "S088",
         "S004"
       ]
     },
@@ -7753,7 +7829,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S079",
+        "S089",
         "S004"
       ]
     },
@@ -7818,7 +7894,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S080",
+        "S090",
         "S004"
       ]
     },
@@ -7892,8 +7968,8 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S081",
-        "S082"
+        "S091",
+        "S092"
       ]
     },
     {
@@ -7967,8 +8043,8 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S083",
-        "S084",
+        "S093",
+        "S094",
         "S008"
       ]
     },
@@ -8048,19 +8124,19 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S085",
-        "S086",
+        "S095",
+        "S096",
         "S003"
       ]
     }
   ],
   "enrichment": {
-    "round": 5,
+    "round": 6,
     "batch_size": 5,
     "policy": "一次公開情報を優先し、未確認情報は推測しない。プロフィール由来のレビュー観点は証拠強度に応じて段階反映する。",
-    "average_profile_completeness_percent": 65.0,
-    "average_review_reflection_percent": 70.5,
-    "verified_birth_dates": 5,
+    "average_profile_completeness_percent": 65.9,
+    "average_review_reflection_percent": 71.3,
+    "verified_birth_dates": 8,
     "next_batch": [
       {
         "seat": 116,
@@ -8074,8 +8150,8 @@
         ]
       },
       {
-        "seat": 92,
-        "name": "兼子ただし",
+        "seat": 97,
+        "name": "足立暢",
         "profile_completeness_percent": 48,
         "research_targets": [
           "生年月日の一次公開情報",
@@ -8085,8 +8161,8 @@
         ]
       },
       {
-        "seat": 94,
-        "name": "戸村 光",
+        "seat": 98,
+        "name": "ロイター豪",
         "profile_completeness_percent": 48,
         "research_targets": [
           "生年月日の一次公開情報",
@@ -8096,8 +8172,8 @@
         ]
       },
       {
-        "seat": 95,
-        "name": "村川智博",
+        "seat": 99,
+        "name": "愛沢 えみり",
         "profile_completeness_percent": 48,
         "research_targets": [
           "生年月日の一次公開情報",
@@ -8107,8 +8183,8 @@
         ]
       },
       {
-        "seat": 96,
-        "name": "牧田彰俊",
+        "seat": 102,
+        "name": "泉舞",
         "profile_completeness_percent": 48,
         "research_targets": [
           "生年月日の一次公開情報",

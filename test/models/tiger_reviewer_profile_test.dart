@@ -16,10 +16,10 @@ void main() {
 
       expect(catalog.schemaVersion, 2);
       expect(catalog.profilesBySeat, hasLength(125));
-      expect(catalog.enrichmentRound, greaterThanOrEqualTo(5));
+      expect(catalog.enrichmentRound, greaterThanOrEqualTo(6));
       expect(catalog.averageProfileCompletenessPercent, greaterThan(0));
       expect(catalog.averageReviewReflectionPercent, greaterThan(0));
-      expect(catalog.verifiedBirthDates, 5);
+      expect(catalog.verifiedBirthDates, 8);
       expect(catalog.nextBatchNames, hasLength(5));
       expect(catalog.profilesBySeat.keys.toSet(), hasLength(125));
       expect(
@@ -73,6 +73,25 @@ void main() {
       expect(watari.ageLabel(DateTime(2026, 8, 26)), '公開情報未確認');
       expect(watari.reviewReflectionMode, 'neutral_guarded');
       expect(watari.evidenceLinks, hasLength(2));
+      for (final seat in <int>[92, 94, 95, 96]) {
+        final profile = catalog.profilesBySeat[seat]!;
+        expect(profile.profileCompletenessPercent, greaterThanOrEqualTo(65));
+        expect(profile.reviewReflectionPercent, 72);
+        expect(profile.reviewReflectionMode, 'profile_balanced');
+        expect(profile.evidenceLinks.length, greaterThanOrEqualTo(2));
+      }
+      final kaneko = catalog.profilesBySeat[92]!;
+      expect(kaneko.ageLabel(DateTime(2026, 8, 28)), '54歳（2026年8月28日時点）');
+      expect(kaneko.companyRole, contains('株式会社KANEKO'));
+      final tomura = catalog.profilesBySeat[94]!;
+      expect(tomura.ageLabel(DateTime(2026, 8, 28)), '32歳（2026年8月28日時点）');
+      expect(tomura.companyRole, contains('hackjpn'));
+      final murakawa = catalog.profilesBySeat[95]!;
+      expect(murakawa.ageLabel(DateTime(2026, 8, 28)), '公開情報未確認');
+      expect(murakawa.companyRole, contains('代表取締役'));
+      final makita = catalog.profilesBySeat[96]!;
+      expect(makita.ageLabel(DateTime(2026, 8, 28)), '41歳（2026年8月28日時点）');
+      expect(makita.companyRole, contains('代表取締役副社長'));
       final kataishi = catalog.profilesBySeat[125]!;
       expect(kataishi.ageLabel(DateTime(2026, 8, 25)), '32歳（2026年8月25日時点）');
       expect(
