@@ -105,6 +105,7 @@ jobs:
           python scripts/pre_commit_quality_gate_test.py
           python scripts/container_cleanup_guard_test.py
           python scripts/vscode_terminal_settings_test.py
+          python scripts/ci_failure_digest_test.py
 
       - name: Setup Flutter
         if: steps.changes.outputs.flutter == 'true'
