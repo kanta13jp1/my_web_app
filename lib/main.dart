@@ -34,6 +34,7 @@ import 'package:my_web_app/pages/shopping_list_page.dart';
 import 'package:my_web_app/pages/digital_product_store_pages.dart';
 import 'package:my_web_app/pages/hexciv_shop_page.dart';
 import 'package:my_web_app/services/shop_funnel_service.dart';
+import 'package:my_web_app/ui/features/live_commerce/live_commerce_feature.dart';
 import 'package:my_web_app/pages/digest_queue_page.dart';
 import 'package:my_web_app/pages/gemini_university_v2_page.dart';
 import 'package:my_web_app/pages/growth_mission_page.dart';
@@ -544,6 +545,11 @@ Route<dynamic> generateAppRoute(
     case '/shop/downloads':
       return MaterialPageRoute(
         builder: (_) => const ShopDownloadsPage(),
+        settings: settings,
+      );
+    case '/live-commerce':
+      return MaterialPageRoute(
+        builder: (_) => LiveCommerceFeature(initialUri: uri),
         settings: settings,
       );
     // 既存の共有URL・Stripe戻りURLを壊さない後方互換ルート。
