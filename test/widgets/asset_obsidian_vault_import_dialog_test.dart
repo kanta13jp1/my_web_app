@@ -104,7 +104,7 @@ void main() {
 | サービス名 | 終了日 / 停止日 | 状態 |
 | --- | --- | --- |
 | Xbox Game Pass | 2026-08-20 | 解約完了 |
-| netkeiba | 2026-08-21 | 停止済み |
+| sub_xbox | 2026-08-21 | 停止済み |
 ''',
         ),
       ],
@@ -153,5 +153,56 @@ void main() {
       applied!.subscriptionCancellations.single.matchedSubscriptionId,
       'sub_xbox',
     );
+  });
+
+  testWidgets('最終確認で戻ると適用せずプレビューへ戻る', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    AssetObsidianApplySelection? applied;
+    const cancellationSelection = AssetObsidianVaultSelection(
+      vaultName: 'company',
+      files: [
+        AssetObsidianVaultFile(
+          relativePath: 'company/SUBSCRIPTION_LIST.md',
+          byteSize: 200,
+          content: '''
+## 解約・定期請求停止済みサービス
+| サービス名 | 終了日 / 停止日 | 状態 |
+| --- | --- | --- |
+| Xbox Game Pass | 2026-08-20 | 解約完了 |
+''',
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AssetObsidianVaultImportDialog(
+            pickerSupported: true,
+            existingBalances: const [],
+            existingSubscriptions: const [
+              AssetObsidianExistingSubscription(
+                id: 'sub_xbox',
+                name: 'Xbox Game Pass',
+                amount: 1550,
+              ),
+            ],
+            pickVault: () async => cancellationSelection,
+            onApply: (selection) async => applied = selection,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Obsidian保管庫を選択'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('選択した1件を確認'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, '戻る'));
+    await tester.pumpAndSettle();
+
+    expect(applied, isNull);
+    expect(find.text('解約済みサブスクの削除候補'), findsOneWidget);
+    expect(find.text('選択した1件を確認'), findsOneWidget);
   });
 }

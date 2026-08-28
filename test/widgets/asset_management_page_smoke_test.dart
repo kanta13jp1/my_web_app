@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/models/asset_obsidian_vault_import.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_chat_privacy_settings_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
@@ -100,6 +101,76 @@ void main() {
     // static write-lock future を現在の zone の完了済み future へ再初期化する
     // (= 将来ログイン状態の編集 smoke が write 経路を踏んでも orphan-hang しない)。
     AssetSyncDirtyKeysStore.resetWriteLockForTest();
+  });
+
+  test('Obsidian解約候補は全変更前に現在のサブスクへ再照合する', () {
+    const current = <AssetRecurringFixedCost>[
+      AssetRecurringFixedCost(
+        id: 'sub_xbox',
+        name: 'Xbox Game Pass',
+        amount: 1550,
+        paymentDay: 7,
+        category: AssetRecurringFixedCostCategory.subscription,
+      ),
+    ];
+    const valid = AssetObsidianSubscriptionCancellationCandidate(
+      sourceSubscriptionName: 'Xbox Game Pass',
+      sourceStatus: '解約完了',
+      status: AssetObsidianSubscriptionCancellationStatus.matched,
+      sourcePaths: <String>['SUBSCRIPTION_LIST.md'],
+      matchedSubscriptionId: 'sub_xbox',
+      matchedSubscriptionName: 'Xbox Game Pass',
+      matchedMonthlyAmount: 1550,
+    );
+
+    expect(
+      validateObsidianSubscriptionCancellations(
+        const <AssetObsidianSubscriptionCancellationCandidate>[valid],
+        current,
+      ),
+      current,
+    );
+    expect(
+      () => validateObsidianSubscriptionCancellations(
+        const <AssetObsidianSubscriptionCancellationCandidate>[
+          AssetObsidianSubscriptionCancellationCandidate(
+            sourceSubscriptionName: 'Xbox Game Pass',
+            sourceStatus: '解約完了',
+            status: AssetObsidianSubscriptionCancellationStatus.notRegistered,
+            sourcePaths: <String>['SUBSCRIPTION_LIST.md'],
+            matchedSubscriptionId: 'sub_xbox',
+            matchedSubscriptionName: 'Xbox Game Pass',
+            matchedMonthlyAmount: 1550,
+          ),
+        ],
+        current,
+      ),
+      throwsStateError,
+    );
+    expect(
+      () => validateObsidianSubscriptionCancellations(
+        const <AssetObsidianSubscriptionCancellationCandidate>[valid, valid],
+        current,
+      ),
+      throwsStateError,
+    );
+    expect(
+      () => validateObsidianSubscriptionCancellations(
+        const <AssetObsidianSubscriptionCancellationCandidate>[
+          AssetObsidianSubscriptionCancellationCandidate(
+            sourceSubscriptionName: 'Xbox Game Pass',
+            sourceStatus: '解約完了',
+            status: AssetObsidianSubscriptionCancellationStatus.matched,
+            sourcePaths: <String>['SUBSCRIPTION_LIST.md'],
+            matchedSubscriptionId: 'sub_xbox',
+            matchedSubscriptionName: 'Xbox Game Pass',
+            matchedMonthlyAmount: 999,
+          ),
+        ],
+        current,
+      ),
+      throwsStateError,
+    );
   });
 
   group('AssetManagementPage smoke', () {

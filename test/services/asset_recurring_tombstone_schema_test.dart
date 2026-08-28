@@ -1,0 +1,67 @@
+import 'dart:io';
+
+import 'package:test/test.dart';
+
+const _migrationPath =
+    'supabase/migrations/20260828164000_atomic_recurring_fixed_cost_tombstones.sql';
+
+void main() {
+  late String sql;
+
+  setUpAll(() {
+    sql = File(_migrationPath).readAsStringSync().toLowerCase();
+  });
+
+  test('uses an authenticated security-invoker RPC with a fixed mirror key',
+      () {
+    expect(
+      sql,
+      contains(
+          'create or replace function public.apply_recurring_fixed_cost_tombstones'),
+    );
+    expect(sql, contains('security invoker'));
+    expect(sql, contains('v_user_id uuid := auth.uid()'));
+    expect(sql, contains("'recurring_fixed_costs_deleted'"));
+    expect(sql, isNot(contains('p_pref_key')));
+    expect(
+      sql,
+      contains(
+        'grant execute on function public.apply_recurring_fixed_cost_tombstones(text[], text[])\n'
+        '  to authenticated',
+      ),
+    );
+    expect(
+      sql,
+      contains(
+        'revoke all on function public.apply_recurring_fixed_cost_tombstones(text[], text[])\n'
+        '  from anon',
+      ),
+    );
+  });
+
+  test('atomically unions current and incoming IDs before explicit removal',
+      () {
+    expect(sql, contains('on conflict (user_id, pref_key) do update'));
+    expect(sql, contains("jsonb_typeof(mirror.value -> 'ids') = 'array'"));
+    expect(sql, contains("jsonb_typeof(excluded.value -> 'ids') = 'array'"));
+    expect(sql, contains('select distinct btrim(source.id) as id'));
+    expect(sql, contains('coalesce(p_remove_ids, array[]::text[])'));
+    expect(sql, contains('returning mirror.value into v_value'));
+  });
+
+  test('Flutter calls the RPC instead of replacing the tombstone blob', () {
+    final source = File(
+      'lib/pages/asset_management_page.dart',
+    ).readAsStringSync();
+    expect(
+      source,
+      contains(".rpc('apply_recurring_fixed_cost_tombstones', params:"),
+    );
+
+    final method = source
+        .split('Future<void> _mirrorRecurringFixedCostsDeleted({')[1]
+        .split('Future<void> _pullRecurringFixedCostDeleted()')[0];
+    expect(method, isNot(contains(".from('asset_pref_mirror').upsert")));
+    expect(method, contains('throwOnFailure'));
+  });
+}

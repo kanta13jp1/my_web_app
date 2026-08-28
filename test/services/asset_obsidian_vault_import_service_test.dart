@@ -274,4 +274,79 @@ void main() {
 
     expect(preview.subscriptionCancellations, isEmpty);
   });
+
+  test('区切り記号が異なる一般名は同一サブスクとして照合しない', () {
+    final preview = service.preview(
+      files: [
+        file('vault/SUBSCRIPTION_LIST.md', '''
+## 解約・定期請求停止済みサービス
+| サービス名 | 終了日 / 停止日 | 状態 |
+| --- | --- | --- |
+| A/B | 2026-08-20 | 解約完了 |
+| Foo-Bar | 2026-08-20 | 停止済み |
+'''),
+      ],
+      existingBalances: const [],
+      existingSubscriptions: const [
+        AssetObsidianExistingSubscription(
+          id: 'sub_ab',
+          name: 'AB',
+          amount: 1000,
+        ),
+        AssetObsidianExistingSubscription(
+          id: 'sub_foo',
+          name: 'Foo Bar',
+          amount: 1000,
+        ),
+      ],
+    );
+
+    expect(preview.subscriptionCancellations, hasLength(2));
+    expect(
+      preview.subscriptionCancellations.map((candidate) => candidate.status),
+      everyElement(AssetObsidianSubscriptionCancellationStatus.notRegistered),
+    );
+    expect(preview.initiallySelectedSubscriptionCancellations, isEmpty);
+  });
+
+  test('完了状態を含むだけの予定・否定表現は削除候補にしない', () {
+    final preview = service.preview(
+      files: [
+        file('vault/SUBSCRIPTION_LIST.md', '''
+## 解約・定期請求停止済みサービス
+| サービス名 | 終了日 / 停止日 | 状態 |
+| --- | --- | --- |
+| Service A | 2026-08-20 | 解約完了予定 |
+| Service B | 2026-08-20 | 未解約済み |
+| Service C | 2026-08-20 | 解約済みではない |
+| Service D | 2026-08-20 | 停止済み予定 |
+'''),
+      ],
+      existingBalances: const [],
+      existingSubscriptions: const [
+        AssetObsidianExistingSubscription(
+          id: 'sub_a',
+          name: 'Service A',
+          amount: 1000,
+        ),
+        AssetObsidianExistingSubscription(
+          id: 'sub_b',
+          name: 'Service B',
+          amount: 1000,
+        ),
+        AssetObsidianExistingSubscription(
+          id: 'sub_c',
+          name: 'Service C',
+          amount: 1000,
+        ),
+        AssetObsidianExistingSubscription(
+          id: 'sub_d',
+          name: 'Service D',
+          amount: 1000,
+        ),
+      ],
+    );
+
+    expect(preview.subscriptionCancellations, isEmpty);
+  });
 }

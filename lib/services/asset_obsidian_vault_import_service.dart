@@ -378,7 +378,14 @@ class AssetObsidianVaultImportService {
 
   bool _isExplicitCancellationStatus(String value) {
     final normalized = value.replaceAll(RegExp(r'\s+'), '');
-    return RegExp(r'(解約完了|解約済み|停止済み|停止完了|終了済み|終了完了)').hasMatch(normalized);
+    return const <String>{
+      '解約完了',
+      '解約済み',
+      '停止済み',
+      '停止完了',
+      '終了済み',
+      '終了完了',
+    }.contains(normalized);
   }
 
   int _parseAccountTable({
@@ -536,18 +543,20 @@ class AssetObsidianVaultImportService {
       .replaceAll(RegExp(r'[\s()・]'), '');
 
   String _subscriptionKey(String value) {
-    final compact = _cleanCell(value)
+    final normalized = _cleanCell(value)
         .toLowerCase()
         .replaceAll('（', '(')
         .replaceAll('）', ')')
-        .replaceAll(RegExp(r'[\s()・._\-*/]'), '');
+        .replaceAll('　', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
     const aliases = <String, String>{
-      'microsoftxboxgame': 'xboxgamepass',
-      'microsoftxboxgamepass': 'xboxgamepass',
-      'xboxgamepassultimate': 'xboxgamepass',
-      'netkeibacom': 'netkeiba',
+      'microsoft*xbox game': 'xbox game pass',
+      'microsoft*xbox game pass': 'xbox game pass',
+      'xbox game pass ultimate': 'xbox game pass',
+      'netkeiba.com': 'netkeiba',
     };
-    return aliases[compact] ?? compact;
+    return aliases[normalized] ?? normalized;
   }
 
   bool _sameDate(DateTime a, DateTime b) =>

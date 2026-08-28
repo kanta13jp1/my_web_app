@@ -92,12 +92,16 @@ class AssetObsidianSubscriptionCancellationCandidate {
   final double? matchedMonthlyAmount;
   final List<String> conflictingSubscriptionNames;
 
-  String get id =>
-      'subscription-cancellation_${matchedSubscriptionId ?? sourceSubscriptionName}';
+  String get id {
+    final target = matchedSubscriptionId ?? sourceSubscriptionName;
+    return 'subscription-cancellation_${status.name}_'
+        '${target.length}:${target}_'
+        '${sourceSubscriptionName.length}:$sourceSubscriptionName';
+  }
 
   bool get isDeletable =>
       status == AssetObsidianSubscriptionCancellationStatus.matched &&
-      matchedSubscriptionId != null;
+      (matchedSubscriptionId?.trim().isNotEmpty ?? false);
 }
 
 class AssetObsidianImportCandidate {

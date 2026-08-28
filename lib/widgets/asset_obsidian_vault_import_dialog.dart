@@ -58,7 +58,11 @@ class _AssetObsidianVaultImportDialogState
       return const <AssetObsidianSubscriptionCancellationCandidate>[];
     }
     return preview.subscriptionCancellations
-        .where((candidate) => _selectedCancellationIds.contains(candidate.id))
+        .where(
+          (candidate) =>
+              candidate.isDeletable &&
+              _selectedCancellationIds.contains(candidate.id),
+        )
         .toList(growable: false);
   }
 
