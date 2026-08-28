@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-typedef AiUniversityLatestInfoTaskSubmit =
-    Future<bool> Function({
-      required int correctAnswers,
-      required int selfRating,
-    });
+typedef AiUniversityLatestInfoTaskSubmit = Future<bool> Function({
+  required int correctAnswers,
+  required int selfRating,
+});
 
 class AiUniversityLatestInfoTaskCard extends StatefulWidget {
   const AiUniversityLatestInfoTaskCard({super.key, required this.onSubmit});
@@ -144,20 +143,21 @@ class _AiUniversityLatestInfoTaskCardState
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: List<Widget>.generate(question.options.length, (
-                      optionIndex,
-                    ) {
-                      return ChoiceChip(
-                        key: Key('latest-info-q$questionIndex-o$optionIndex'),
-                        label: Text(question.options[optionIndex]),
-                        selected: _answers[questionIndex] == optionIndex,
-                        onSelected: _submitted
-                            ? null
-                            : (_) => setState(
-                                () => _answers[questionIndex] = optionIndex,
-                              ),
-                      );
-                    }),
+                    children: List<Widget>.generate(
+                      question.options.length,
+                      (optionIndex) {
+                        return ChoiceChip(
+                          key: Key('latest-info-q$questionIndex-o$optionIndex'),
+                          label: Text(question.options[optionIndex]),
+                          selected: _answers[questionIndex] == optionIndex,
+                          onSelected: _submitted
+                              ? null
+                              : (_) => setState(
+                                  () => _answers[questionIndex] = optionIndex,
+                                ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
