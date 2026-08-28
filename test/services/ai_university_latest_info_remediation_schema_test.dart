@@ -23,7 +23,8 @@ void main() {
     expect(sql, contains("and category = 'news'"));
   });
 
-  test('learning events aggregate outcomes without learner text or identity', () {
+  test('learning events aggregate outcomes without learner text or identity',
+      () {
     final sql = migration.readAsStringSync();
     final events = sql.substring(
       sql.indexOf(

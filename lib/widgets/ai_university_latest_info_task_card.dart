@@ -143,9 +143,8 @@ class _AiUniversityLatestInfoTaskCardState
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: List<Widget>.generate(
-                      question.options.length,
-                      (optionIndex) {
+                    children: List<Widget>.generate(question.options.length,
+                        (optionIndex) {
                         return ChoiceChip(
                           key: Key('latest-info-q$questionIndex-o$optionIndex'),
                           label: Text(question.options[optionIndex]),
@@ -156,8 +155,7 @@ class _AiUniversityLatestInfoTaskCardState
                                   () => _answers[questionIndex] = optionIndex,
                                 ),
                         );
-                      },
-                    ),
+                      }),
                   ),
                 ],
               ),
