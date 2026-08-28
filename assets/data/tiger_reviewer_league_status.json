@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-28T11:37:16.511061+00:00",
+  "generated_at": "2026-08-28T14:08:32.711668+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "reviewer_league",
   "publication_state": "latest_assignment",
@@ -120,8 +120,8 @@
         "github_state": "OPEN",
         "dedupe_key": "tiger-site-review:20260828T190700+0900:whole_site",
         "remediation_state": "queued",
-        "queue_status": null,
-        "synced_at": "2026-08-28T11:36:55.804558+00:00"
+        "queue_status": "QUEUED",
+        "synced_at": "2026-08-28T13:07:30.584141+00:00"
       },
       "implementation": null,
       "findings_without_individual_trace": [
@@ -217,8 +217,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-site-review:20260828T190700+0900:whole_site",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -309,8 +309,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -403,8 +403,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-site-review:20260828T145600+0900:whole_site",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -495,8 +495,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260828T120337+0900:philosophy",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -592,8 +592,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260828T100917+0900:c1ea41da-b447-4c7b-aee7-630d03c6a516",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -687,8 +687,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-site-review:20260828T090106+0900:whole_site",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -771,8 +771,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -865,8 +865,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-site-review:20260828T051725+0900:whole_site",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -954,8 +954,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260828T042953+0900:horse_racing",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1052,8 +1052,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260828T021401+0900:955ae2e6-9909-4635-aacd-790ab23aa7c8",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1147,8 +1147,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-site-review:20260828T011400+0900:whole_site",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1236,8 +1236,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260828T004359+0900:ai_hub",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1329,8 +1329,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260827T232859+0900:746a2878-6a2d-4787-91e2-1778ebdda8ce",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1416,8 +1416,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260827T221025+0900:core_hub",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1516,8 +1516,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-site-review:20260827T214913+0900:whole_site",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1606,8 +1606,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260827T033027+0900:home",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1703,8 +1703,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260826T230834+0900:fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1806,8 +1806,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-site-review:20260826T220910+0900:whole_site",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1908,8 +1908,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260826T151103+0900:63c96c0b-834c-4979-b387-ff4d4393aced",
           "remediation_state": "production_verified",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": {
           "commit_sha": "379d95b69c88ce2eeb9b6a1a85ed477f3209ba78",
@@ -2013,8 +2013,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260826T071116+0900:4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
           "remediation_state": "production_verified",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": {
           "commit_sha": "3c725dd9cf7d81d14504a090bfc471750a7a0147",
@@ -2115,8 +2115,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260826T061027+0900:5b7e5f70-2652-4949-b00d-6bbc768fbb96",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2215,8 +2215,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-site-review:20260825T133307+0900:whole_site",
           "remediation_state": "superseded",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2318,8 +2318,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-site-review:20260825T124533+0900:whole_site",
           "remediation_state": "superseded",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2420,8 +2420,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-site-review:20260825T090429+0900:whole_site",
           "remediation_state": "superseded",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2522,8 +2522,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-site-review:20260825T083902+0900:whole_site",
           "remediation_state": "superseded",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2678,8 +2678,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260824T011146+0900:647dc452-f75d-4dd9-8292-332bada2e2f9",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": {
           "commit_sha": "7b30251dc8cbd3398e7ad044f536670ba6c640ad",
@@ -2827,8 +2827,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260823T232120+0900:e1712bb5-2bca-4fc0-8347-0529513411d3",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2930,8 +2930,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-site-review:20260823T214617+0900:whole_site",
           "remediation_state": "superseded",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -3030,8 +3030,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-site-review:20260823T195559+0900:whole_site",
           "remediation_state": "superseded",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -3059,7 +3059,7 @@
         "name": "平出 心",
         "selection_score": 68.8967
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": null,
@@ -3078,9 +3078,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4734",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #4734 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -3103,11 +3103,11 @@
           "number": 4734,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4734",
           "status": "existing",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260823T175240+0900:525273ba-539f-4dd4-b436-a6a74a5e8cc5",
-          "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "RUNNING",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": {
           "commit_sha": "20b20d3ce18515752a09e11beb6efd32cee12e49",
@@ -3254,8 +3254,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260823T165404+0900:22befb67-6147-4a4b-999c-ee1ad6fa9615",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": {
           "commit_sha": "18eedc47ea0769b871ba191b7ff9162252afb8f3",
@@ -3334,8 +3334,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -3409,8 +3409,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
