@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-28T11:37:16.511061+00:00",
+  "generated_at": "2026-08-28T16:15:25.494550+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -29,49 +29,49 @@
     "operating_efficiency": 10
   },
   "latest_review": {
-    "cycle_id": "20260828T171600+0900",
-    "started_at": "2026-08-28T17:16:00+09:00",
+    "cycle_id": "20260829T011200+0900",
+    "started_at": "2026-08-29T01:12:00+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "gemini_university",
-      "url": "https://my-web-app-b67f4.web.app/gemini-university"
+      "slug": "growth_weekly_digest",
+      "url": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/growth-weekly-digest"
     },
     "reviewer": {
       "seat": 11,
       "name": "野口 功司",
-      "selection_score": 75.2124,
+      "selection_score": 69.9624,
       "division": 1,
-      "cycle_utility": 83.25,
-      "aggregate_utility": 88.08
+      "cycle_utility": 92.17,
+      "aggregate_utility": 89.44
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "公開訴求の259社と実装上の351 tab前提が同期するtested source-of-truthを持たない",
-        "severity": "p1",
+        "summary": "no-JWTの公開endpointがservice-role clientで集客・紹介集計を実行し、呼出主体を検証しない",
+        "severity": "p0",
         "business_dimensions": [
           "trust_risk",
-          "market_demand",
+          "unit_economics",
+          "revenue_model"
+        ]
+      },
+      {
+        "summary": "standalone pageが{success,digest} envelopeを展開せず、成功レスポンスでも空のチャネル表示になる",
+        "severity": "p1",
+        "business_dimensions": [
+          "customer_pain",
+          "go_to_market",
           "scalability"
         ]
       },
       {
-        "summary": "非JavaScript公開面がAI大学の最初の学習actionではなく汎用landing funnelへ続く",
+        "summary": "digestは前週差を列挙するが、owner、閾値、優先action、実行結果を結ぶ意思決定contractを持たない",
         "severity": "p1",
         "business_dimensions": [
           "go_to_market",
           "market_demand",
-          "customer_pain"
-        ]
-      },
-      {
-        "summary": "運用計測がfetch障害とretryに限定され、学習funnelと成果を観測できない",
-        "severity": "p1",
-        "business_dimensions": [
-          "market_demand",
-          "unit_economics",
           "revenue_model"
         ]
       }
@@ -91,53 +91,141 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After owners define one provider-count source of truth and one crawlable provider-selection action, instrument privacy-bounded search-to-quiz events and require improved quiz completion without reduced provider discovery over one four-week cohort."
+      "next_cycle_experiment": "After owner-reviewed access control and the response contract are deployed, require unauthorized rejection at 100%, successful channel rendering at 100%, and one owner-assigned action with measured next-week signup delta for four consecutive weeks."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #4958",
-      "detail": "専用対策キューで順番待ちです。",
+      "label": "対策待ち・Issue #4984",
+      "detail": "The highest-impact finding requires protected authentication and authorization policy changes, which are outside automatic modification scope; implementation belongs to the dedicated remediation queue.",
       "summary": "",
       "files": [],
       "lines_changed": 0,
-      "resolved_finding_ids": [
-        "gemini-university-public-count-contract-gap"
-      ],
+      "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean at origin/main 720be3aa0696cfce16fa752e820edde21fbc5153",
-        "passed: 125 roster profiles and 125 personas",
-        "passed: deterministic winner gemini_university from 13 eligible features",
-        "passed: public shell, provider count, paginated fetch, navigation, loading semantics, retry analytics, and unknown learner outcomes captured",
-        "executed exactly once against shared history root: 125 profiles, seat 11"
+        "passed: clean at origin/main f59dc6615baff51ab1fdb915c7d11b91067fb6d4",
+        "passed: roster 2026-08-23, personas 2026-08-28, schema 2, 125 profiles each",
+        "passed: deterministic winner growth_weekly_digest from 13 eligible features",
+        "passed: deployment auth mode, service-role query boundary, response envelope, consumers, tests, and unknown production outcomes captured",
+        "executed exactly once against shared history: 125 profiles, seat 11"
       ],
       "issue": {
-        "number": 4958,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4958",
+        "number": 4984,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4984",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university",
-        "remediation_state": "queued",
+        "dedupe_key": "tiger-feature-review:20260829T011200+0900:growth_weekly_digest",
+        "remediation_state": null,
         "queue_status": null,
-        "synced_at": "2026-08-28T11:36:55.804558+00:00"
+        "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "gemini-university-crawlable-first-action-gap",
-        "gemini-university-learning-funnel-evidence-gap"
+        "growth-weekly-digest-public-service-role-query-boundary",
+        "growth-weekly-digest-response-envelope-mismatch",
+        "growth-weekly-digest-decision-contract-gap"
       ]
     },
     "feature": {
-      "slug": "gemini_university",
-      "title": "gemini_university",
-      "kind": "page",
-      "reason": "productionはAI大学固有title、H1、259社訴求をHTTP 200で返すが、非JavaScript本文はその後に汎用の自分株式会社landing funnelへ続き、crawlableなprovider選択や最初の学習actionを示さない。実装はactive contentを1,000件ずつ全件取得し、動的provider tab、検索、category、content、quiz、FSRS、RLHFを提供する一方、公開configの259社と実装コメントの351 tabは同期するtested source-of-truthを持たない。operational analyticsはfetch失敗、fallback、retryだけで、実在learnerのsearch、content open、quiz completion、repeat learning、outcomeは確認できず、observed usageは契約どおり中立50点とした。",
-      "cycle_utility": 50.8,
-      "aggregate_utility": 50.8,
+      "slug": "growth_weekly_digest",
+      "title": "growth-weekly-digest",
+      "kind": "edge_function",
+      "reason": "The deterministic selector chose growth_weekly_digest. The bounded scan found a no-JWT service-role analytics endpoint, a standalone page that reads the response at the wrong nesting level, and a metrics brief without a decision owner or threshold; production usage and outcome analytics were unavailable, so observed usage is neutral 50.",
+      "cycle_utility": 44.35,
+      "aggregate_utility": 44.35,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260829T011200+0900",
+      "started_at": "2026-08-29T01:12:00+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "growth_weekly_digest",
+        "title": "growth-weekly-digest",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 69.9624
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After owner-reviewed access control and the response contract are deployed, require unauthorized rejection at 100%, successful channel rendering at 100%, and one owner-assigned action with measured next-week signup delta for four consecutive weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "growth-weekly-digest-public-service-role-query-boundary",
+          "summary": "no-JWTの公開endpointがservice-role clientで集客・紹介集計を実行し、呼出主体を検証しない",
+          "severity": "p0",
+          "suggested_action": "owner-reviewedな認証・認可方針を決め、GET可否、JWT検証、admin/service-role境界、rate limit、公開可能な集計粒度をfail-closed contractとhandler testで固定する。"
+        },
+        {
+          "finding_id": "growth-weekly-digest-response-envelope-mismatch",
+          "summary": "standalone pageが{success,digest} envelopeを展開せず、成功レスポンスでも空のチャネル表示になる",
+          "severity": "p1",
+          "suggested_action": "standalone pageもGrowthMissionServiceと同じくdata.digestを展開し、success/error、channels、week range、summary fieldsを共通fixtureで検証する。"
+        },
+        {
+          "finding_id": "growth-weekly-digest-decision-contract-gap",
+          "summary": "digestは前週差を列挙するが、owner、閾値、優先action、実行結果を結ぶ意思決定contractを持たない",
+          "severity": "p1",
+          "suggested_action": "各週に1つのdecision owner、閾値付き優先チャネル、次action、due date、翌週outcomeを記録し、閲覧から実行までprivacy-boundedに測定する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #4984",
+        "detail": "The highest-impact finding requires protected authentication and authorization policy changes, which are outside automatic modification scope; implementation belongs to the dedicated remediation queue.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main f59dc6615baff51ab1fdb915c7d11b91067fb6d4",
+          "passed: roster 2026-08-23, personas 2026-08-28, schema 2, 125 profiles each",
+          "passed: deterministic winner growth_weekly_digest from 13 eligible features",
+          "passed: deployment auth mode, service-role query boundary, response envelope, consumers, tests, and unknown production outcomes captured",
+          "executed exactly once against shared history: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 4984,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4984",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260829T011200+0900:growth_weekly_digest",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "growth-weekly-digest-public-service-role-query-boundary",
+          "growth-weekly-digest-response-envelope-mismatch",
+          "growth-weekly-digest-decision-contract-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260828T171600+0900",
       "started_at": "2026-08-28T17:16:00+09:00",
@@ -218,8 +306,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -308,8 +396,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260828T120337+0900:philosophy",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -390,8 +478,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -477,8 +565,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260828T042953+0900:horse_racing",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -565,8 +653,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260828T004359+0900:ai_hub",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -653,8 +741,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260827T221025+0900:core_hub",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -741,8 +829,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260827T033027+0900:home",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1033,8 +1121,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1108,8 +1196,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
           "remediation_state": "queued",
-          "queue_status": null,
-          "synced_at": "2026-08-28T11:36:55.804558+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-28T13:07:30.584141+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1302,22 +1390,6 @@
       "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
-      "slug": "growth_weekly_digest",
-      "kind": "edge_function",
-      "title": "growth-weekly-digest",
-      "path": "",
-      "source": "supabase/functions/growth-weekly-digest/index.ts",
-      "priority": "medium",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "last_cycle_utility": null,
-      "last_reviewed_at": null,
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
-    },
-    {
       "slug": "user_manual",
       "kind": "page",
       "title": "user_manual",
@@ -1379,6 +1451,22 @@
       "completed_cycles": 1,
       "last_cycle_utility": 50.8,
       "last_reviewed_at": "2026-08-28T08:16:00+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "growth_weekly_digest",
+      "kind": "edge_function",
+      "title": "growth-weekly-digest",
+      "path": "",
+      "source": "supabase/functions/growth-weekly-digest/index.ts",
+      "priority": "medium",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 44.35,
+      "completed_cycles": 1,
+      "last_cycle_utility": 44.35,
+      "last_reviewed_at": "2026-08-28T16:12:00+00:00",
       "reason": "機能レビュー実績が2回未満のため暫定3部"
     }
   ]
