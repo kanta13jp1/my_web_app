@@ -1,6 +1,8 @@
 -- Tiger remediation #4734: make the 01.AI latest-information lesson dated,
 -- source-attributed, assessable, and measurable without collecting learner
 -- text or identifiers.
+-- nocheck: time-relative -- UPDATE uses fixed evidence dates; the only
+-- time-relative trigger assigns updated_at = now() and cannot reject replay.
 
 update public.ai_university_content
 set content = $markdown$
