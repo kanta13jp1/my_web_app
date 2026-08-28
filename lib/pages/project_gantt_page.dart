@@ -1060,7 +1060,9 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
 }
 
 typedef WbsKanbanMoveCallback = Future<void> Function(
-    WbsTask task, WbsKanbanLane lane);
+  WbsTask task,
+  WbsKanbanLane lane,
+);
 
 /// Five-lane, real-data kanban board for `/project-gantt`.
 ///
