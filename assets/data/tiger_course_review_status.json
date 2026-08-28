@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-27T17:21:01.240560+00:00",
+  "generated_at": "2026-08-28T02:15:53.496124+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -11,12 +11,12 @@
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 10,
-    "eligible": 10,
-    "provisional": 8,
+    "total": 11,
+    "eligible": 11,
+    "provisional": 9,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 9,
+    "division_3": 10,
     "division_4": 1,
     "division_5": 0
   },
@@ -28,27 +28,27 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260828T021401+0900",
-    "started_at": "2026-08-28T02:14:01+09:00",
+    "cycle_id": "20260828T100917+0900",
+    "started_at": "2026-08-28T10:09:17+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-955ae2e6-9909-4635-aacd-790ab23aa7c8",
-      "url": "https://firefly.adobe.com/"
+      "slug": "course-c1ea41da-b447-4c7b-aee7-630d03c6a516",
+      "url": "https://helpx.adobe.com/firefly/using/firefly-image-3.html"
     },
     "reviewer": {
       "seat": 12,
       "name": "迫 佑樹",
-      "selection_score": 76.8689,
+      "selection_score": 78.0766,
       "division": 1,
-      "cycle_utility": 85.25,
-      "aggregate_utility": 85.78
+      "cycle_utility": 93.62,
+      "aggregate_utility": 89.05
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 4,
     "top_findings": [
       {
-        "summary": "商業利用安全という単一正解がnon-beta条件、partner model、法域差を省略する",
+        "summary": "モデル一覧コースの登録出典がHTTP 404で学習者を一次情報へ導けない",
         "severity": "p1",
         "business_dimensions": [
           "trust_risk",
@@ -57,7 +57,7 @@
         ]
       },
       {
-        "summary": "4機能中心の入門が現行の画像・映像・音声・Boards・partner model構成を説明できない",
+        "summary": "モデル一覧という題名に対して現行モデル分類とtask-to-model選択rubricがない",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
@@ -66,12 +66,12 @@
         ]
       },
       {
-        "summary": "standard・premium機能とgenerative creditsを使った作成量・plan適合判断がない",
+        "summary": "モデル別creditと生成枚数の差を学習者の成果単価へ変換する比較課題がない",
         "severity": "p1",
         "business_dimensions": [
           "unit_economics",
-          "revenue_model",
-          "customer_pain"
+          "market_demand",
+          "revenue_model"
         ]
       }
     ],
@@ -90,53 +90,148 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After publishing one role-specific 30-minute Firefly artifact lab, measure model-provenance and beta-condition accuracy, capability choice, artifact completion, generative-credit estimate error, and follow-on course conversion for one learner cohort."
+      "next_cycle_experiment": "After replacing the source with a monitored current official registry and publishing one 30-minute same-brief two-model comparison lab, measure source-link success, task-fit choice, credits per usable artifact, revision count, completion, and follow-on course conversion for one learner cohort."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4945 追跡中",
-      "detail": "主要指摘は商用利用・model provenance・beta・法域の条件を含むcourse contentと公開データの変更を必要とし、保護されたlegalおよびproduction data境界を含むため共有の低リスク自動修正範囲外。",
+      "label": "未対策・Issue #4951 追跡中",
+      "detail": "主要指摘はproduction course dataのsource URL、course content、model provenance、商用利用条件を変更する必要があり、保護されたproduction dataおよびlegal境界を含むため共有の低リスク自動修正範囲外。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [
-        "course-firefly-commercial-use-claim-boundary"
+        "course-firefly-source-url-staleness"
       ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: fast-forwarded clean branch to origin/main 8c1fd4167279765df2aa79ca6b9d6db62cd65782",
+        "passed: clean branch equals origin/main 30da8265755cc64583d4e464a6b8af2db31b38d2",
         "passed: 125 roster profiles and 125 personas",
         "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
-        "passed: deterministic winner preserved",
-        "passed: selected source, Adobe FAQ, credits, feature page, and named source/test paths inspected",
+        "passed: deterministic winner preserved from fresh catalog",
+        "passed: selected source returned 404; current Adobe text-to-image, credit, and partner-model sources inspected; named source/test paths inspected",
         "executed exactly once against shared history root: 125 profiles, seat 12"
       ],
       "issue": {
-        "number": 4945,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4945",
+        "number": 4951,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4951",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260828T021401+0900:955ae2e6-9909-4635-aacd-790ab23aa7c8"
+        "dedupe_key": "tiger-course-review:20260828T100917+0900:c1ea41da-b447-4c7b-aee7-630d03c6a516"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-firefly-capability-map-freshness-gap",
-        "course-firefly-credit-cost-decision-gap",
-        "course-firefly-first-artifact-outcome-gap"
+        "course-firefly-task-model-rubric-gap",
+        "course-firefly-credit-output-economics-gap",
+        "course-firefly-commercial-safety-boundary-gap"
       ]
     },
     "course": {
-      "content_id": "955ae2e6-9909-4635-aacd-790ab23aa7c8",
+      "content_id": "c1ea41da-b447-4c7b-aee7-630d03c6a516",
       "provider": "adobe_firefly",
-      "title": "Adobe Firefly とは",
-      "source_url": "https://firefly.adobe.com/",
-      "reason": "fresh公開Data APIで有効かつHTTPS出典付きの対象行を確認した。公式の現行Fireflyは画像・映像・音声・編集・Boards・partner modelまで広がり、standard/premium機能とgenerative creditsで利用条件が変わる。一方、公開講座側は古い4機能中心の短い紹介と商業利用安全を正解とする1問だけで、non-beta条件、partner modelとの出典区分、credit判断、役割別の最初の成果物、実在学習者成果を確認できなかった。実在学習者証拠は契約どおり中立50点とした。",
-      "cycle_utility": 38.75,
-      "aggregate_utility": 38.75,
+      "title": "Adobe Firefly モデル一覧",
+      "source_url": "https://helpx.adobe.com/firefly/using/firefly-image-3.html",
+      "reason": "fresh公開Data APIで有効かつHTTPS出典付きの対象行を確認したが、登録出典は現在HTTP 404である。現行Adobe公式情報はImage 3、Image 4、Image 4 Ultra、Image 5とpartner modelを扱い、モデル別設定、生成枚数、credit、商用利用判断を分けている。一方、追跡済み教材は古い4機能中心の説明と一般化された商用利用安全の1問だけで、現行モデル一覧、確認日、task-to-model rubric、credit-aware比較、実在学習者成果を確認できなかった。実在学習者証拠は契約どおり中立50点とした。",
+      "cycle_utility": 28.5,
+      "aggregate_utility": 28.5,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260828T100917+0900",
+      "started_at": "2026-08-28T10:09:17+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "c1ea41da-b447-4c7b-aee7-630d03c6a516",
+        "title": "Adobe Firefly モデル一覧",
+        "url": "https://helpx.adobe.com/firefly/using/firefly-image-3.html"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 78.0766
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After replacing the source with a monitored current official registry and publishing one 30-minute same-brief two-model comparison lab, measure source-link success, task-fit choice, credits per usable artifact, revision count, completion, and follow-on course conversion for one learner cohort."
+      },
+      "findings": [
+        {
+          "finding_id": "course-firefly-source-url-staleness",
+          "summary": "モデル一覧コースの登録出典がHTTP 404で学習者を一次情報へ導けない",
+          "severity": "p1",
+          "suggested_action": "production data所有者が現行Adobe公式モデル情報へ出典を更新し、確認日、HTTP到達性、対象モデル範囲を公開契約として検証する。"
+        },
+        {
+          "finding_id": "course-firefly-task-model-rubric-gap",
+          "summary": "モデル一覧という題名に対して現行モデル分類とtask-to-model選択rubricがない",
+          "severity": "p1",
+          "suggested_action": "確認日付きのAdobe公式registryを基準に、model由来、用途、設定、生成枚数、強み、制約を比較する更新可能な表と選択課題を追加する。"
+        },
+        {
+          "finding_id": "course-firefly-credit-output-economics-gap",
+          "summary": "モデル別creditと生成枚数の差を学習者の成果単価へ変換する比較課題がない",
+          "severity": "p1",
+          "suggested_action": "同じbriefを2種類のmodelで試し、credit、生成枚数、採用枚数、修正回数、所要時間を記録する30分比較課題を追加する。"
+        },
+        {
+          "finding_id": "course-firefly-commercial-safety-boundary-gap",
+          "summary": "商業利用安全という一般化がAdobe proprietary modelとpartner modelの判断責任を分けていない",
+          "severity": "p1",
+          "suggested_action": "Adobe公式記述を出典に、proprietaryとpartner model、学習データ、利用条件、用途適合、商用利用判断を分ける確認課題へ置き換える。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4951 追跡中",
+        "detail": "主要指摘はproduction course dataのsource URL、course content、model provenance、商用利用条件を変更する必要があり、保護されたproduction dataおよびlegal境界を含むため共有の低リスク自動修正範囲外。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-firefly-source-url-staleness"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean branch equals origin/main 30da8265755cc64583d4e464a6b8af2db31b38d2",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
+          "passed: deterministic winner preserved from fresh catalog",
+          "passed: selected source returned 404; current Adobe text-to-image, credit, and partner-model sources inspected; named source/test paths inspected",
+          "executed exactly once against shared history root: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 4951,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4951",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260828T100917+0900:c1ea41da-b447-4c7b-aee7-630d03c6a516"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-firefly-task-model-rubric-gap",
+          "course-firefly-credit-output-economics-gap",
+          "course-firefly-commercial-safety-boundary-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260828T021401+0900",
       "started_at": "2026-08-28T02:14:01+09:00",
@@ -1318,6 +1413,20 @@
       "completed_cycles": 1,
       "last_cycle_utility": 30.2,
       "last_reviewed_at": "2026-08-25T21:10:27+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "c1ea41da-b447-4c7b-aee7-630d03c6a516",
+      "provider": "adobe_firefly",
+      "title": "Adobe Firefly モデル一覧",
+      "source_url": "https://helpx.adobe.com/firefly/using/firefly-image-3.html",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 28.5,
+      "completed_cycles": 1,
+      "last_cycle_utility": 28.5,
+      "last_reviewed_at": "2026-08-28T01:09:17+00:00",
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
