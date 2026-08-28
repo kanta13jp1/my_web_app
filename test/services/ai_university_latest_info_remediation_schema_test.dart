@@ -54,7 +54,7 @@ void main() {
 
     expect(page, contains("provider == '01ai' && category == 'news'"));
     expect(page, contains('_viewedLearningOutcomeTasks.add(taskViewKey)'));
-    expect(page, contains('_learningOutcomeAnalytics.recordViewed()'));
+    expect(page, contains('learningOutcomeAnalytics.recordViewed()'));
     expect(page, contains('AiUniversityLatestInfoTaskCard('));
     expect(
       page,

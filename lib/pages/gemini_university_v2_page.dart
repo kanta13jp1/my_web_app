@@ -23,6 +23,7 @@ import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 import '../services/user_data_finetune_readiness_service.dart';
 import '../widgets/ai_university_latest_info_task_card.dart';
+import '../widgets/ai_university_model_selection_task_card.dart';
 import '../widgets/ai_university_published_video_banner.dart';
 import '../widgets/ai_university_youtube_embed.dart';
 import '../widgets/ai_university_youtube_viewer_route.dart';
@@ -5700,11 +5701,14 @@ class AiUniversityPage extends StatefulWidget {
     this.initialProviderId,
     this.contentAnalytics,
     this.learningOutcomeAnalytics,
+    this.modelSelectionLearningOutcomeAnalytics,
   });
 
   final String? initialProviderId;
   final AiUniversityContentAnalytics? contentAnalytics;
   final AiUniversityLearningOutcomeAnalytics? learningOutcomeAnalytics;
+  final AiUniversityLearningOutcomeAnalytics?
+      modelSelectionLearningOutcomeAnalytics;
 
   @override
   State<AiUniversityPage> createState() => _AiUniversityPageState();
@@ -5724,6 +5728,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   final _supabase = Supabase.instance.client;
   late final AiUniversityContentAnalytics _contentAnalytics;
   late final AiUniversityLearningOutcomeAnalytics _learningOutcomeAnalytics;
+  late final AiUniversityLearningOutcomeAnalytics
+      _modelSelectionLearningOutcomeAnalytics;
 
   List<String> _providers = [];
   Map<String, List<Map<String, dynamic>>> _content = {};
@@ -5764,6 +5770,12 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         AiUniversityContentAnalytics.supabase(_supabase);
     _learningOutcomeAnalytics = widget.learningOutcomeAnalytics ??
         AiUniversityLearningOutcomeAnalytics.supabase(_supabase);
+    _modelSelectionLearningOutcomeAnalytics =
+        widget.modelSelectionLearningOutcomeAnalytics ??
+            AiUniversityLearningOutcomeAnalytics.supabase(
+              _supabase,
+              task: AiUniversityLearningOutcomeTask.modelSelection,
+            );
     _fetchContent();
     _loadAnsweredQuizzes();
     _loadRlhfSnapshot();
@@ -7965,16 +7977,21 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final youtubeVideoId =
         AiUniversityVideoLessonService.youtubeVideoIdFromUrl(sourceUrl);
     final isLatestInfoTask = provider == '01ai' && category == 'news';
+    final isModelSelectionTask = provider == '01ai' && category == 'models';
+    final learningOutcomeAnalytics = isModelSelectionTask
+        ? _modelSelectionLearningOutcomeAnalytics
+        : _learningOutcomeAnalytics;
+    final hasLearningOutcomeTask = isLatestInfoTask || isModelSelectionTask;
     final taskViewKey = row['id']?.toString() ?? '$provider:$category';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       color: surface,
       child: ExpansionTile(
-        onExpansionChanged: isLatestInfoTask
+        onExpansionChanged: hasLearningOutcomeTask
             ? (expanded) {
                 if (expanded && _viewedLearningOutcomeTasks.add(taskViewKey)) {
-                  _learningOutcomeAnalytics.recordViewed().ignore();
+                  learningOutcomeAnalytics.recordViewed().ignore();
                 }
               }
             : null,
@@ -8070,6 +8087,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   const SizedBox(height: 16),
                   AiUniversityLatestInfoTaskCard(
                     onSubmit: _learningOutcomeAnalytics.recordCompleted,
+                  ),
+                ],
+                if (isModelSelectionTask) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityModelSelectionTaskCard(
+                    onSubmit:
+                        _modelSelectionLearningOutcomeAnalytics.recordCompleted,
                   ),
                 ],
                 if (youtubeVideoId != null) ...[
