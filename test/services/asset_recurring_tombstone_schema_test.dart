@@ -44,6 +44,12 @@ void main() {
       sql,
       contains("current_setting('app.recurring_tombstone_rpc', true)"),
     );
+    expect(sql, contains('security invoker'));
+    expect(sql, contains('before insert or update or delete'));
+    expect(sql, contains("old.pref_key = 'recurring_fixed_costs_deleted'"));
+    expect(sql, contains("new.pref_key = 'recurring_fixed_costs_deleted'"));
+    expect(sql, contains('current_user is distinct from v_rpc_owner'));
+    expect(sql, contains("if tg_op = 'delete' then"));
   });
 
   test('atomically unions current and incoming IDs before explicit removal',
@@ -61,6 +67,20 @@ void main() {
         "jsonb_typeof(v_existing -> 'ids') is distinct from 'array'",
       ),
     );
+    expect(sql, contains('pg_catalog.jsonb_array_elements'));
+    expect(
+      sql,
+      contains("jsonb_typeof(element.value) is distinct from 'string'"),
+    );
+    expect(sql, contains('v_previous_guard text'));
+    expect(
+      RegExp(
+        r"coalesce\s*\(\s*v_previous_guard,\s*''\s*\)",
+        caseSensitive: false,
+        multiLine: true,
+      ).allMatches(sql).length,
+      greaterThanOrEqualTo(2),
+    );
     expect(sql, contains('returning mirror.value into v_value'));
   });
 
@@ -74,10 +94,17 @@ void main() {
     );
 
     final method = source
-        .split('Future<bool> _mirrorRecurringFixedCostsDeleted() async {')[1]
+        .split('Future<bool> _mirrorRecurringFixedCostsDeleted({')[1]
         .split('Future<void> _pullRecurringFixedCostDeleted()')[0];
     expect(method, isNot(contains(".from('asset_pref_mirror').upsert")));
-    expect(method, contains('_syncDirtyKeysStore.loadDirty'));
-    expect(method, contains('_syncDirtyKeysStore.updateDirty'));
+    expect(method, contains('_recurringTombstoneSyncService.sync'));
+
+    final syncService = File(
+      'lib/services/asset_recurring_tombstone_sync_service.dart',
+    ).readAsStringSync();
+    expect(syncService, contains('(_tail ?? Future<void>.value()).then'));
+    expect(syncService, contains('_dirtyKeysStore.loadDirty'));
+    expect(syncService, contains('_dirtyKeysStore.updateDirty'));
+    expect(syncService, contains('await afterSync()'));
   });
 }

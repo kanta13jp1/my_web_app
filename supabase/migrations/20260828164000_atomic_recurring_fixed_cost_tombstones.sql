@@ -15,6 +15,7 @@ declare
   v_user_id uuid := auth.uid();
   v_existing jsonb;
   v_value jsonb;
+  v_previous_guard text;
 begin
   if v_user_id is null then
     raise exception 'authentication required' using errcode = '42501';
@@ -30,14 +31,27 @@ begin
   if found and (
     jsonb_typeof(v_existing) is distinct from 'object'
     or jsonb_typeof(v_existing -> 'ids') is distinct from 'array'
+    or exists (
+      select 1
+      from pg_catalog.jsonb_array_elements(
+        case
+          when jsonb_typeof(v_existing -> 'ids') = 'array'
+            then v_existing -> 'ids'
+          else '[]'::jsonb
+        end
+      ) as element(value)
+      where jsonb_typeof(element.value) is distinct from 'string'
+    )
   ) then
     raise exception 'recurring fixed cost tombstone mirror is malformed'
       using errcode = '22023';
   end if;
 
+  v_previous_guard := current_setting('app.recurring_tombstone_rpc', true);
   perform set_config('app.recurring_tombstone_rpc', 'on', true);
 
-  insert into public.asset_pref_mirror as mirror (
+  begin
+    insert into public.asset_pref_mirror as mirror (
     user_id,
     pref_key,
     value,
@@ -112,7 +126,22 @@ begin
       ) as merged
     ),
     updated_at = now()
-  returning mirror.value into v_value;
+    returning mirror.value into v_value;
+  exception
+    when others then
+      perform set_config(
+        'app.recurring_tombstone_rpc',
+        coalesce(v_previous_guard, ''),
+        true
+      );
+      raise;
+  end;
+
+  perform set_config(
+    'app.recurring_tombstone_rpc',
+    coalesce(v_previous_guard, ''),
+    true
+  );
 
   return v_value;
 end;
@@ -124,15 +153,41 @@ language plpgsql
 security invoker
 set search_path = pg_catalog, public
 as $$
+declare
+  v_rpc_owner name;
+  v_touches_protected boolean;
 begin
-  if new.pref_key = 'recurring_fixed_costs_deleted'
-    and coalesce(
-      current_setting('app.recurring_tombstone_rpc', true),
-      ''
-    ) <> 'on'
+  select pg_catalog.pg_get_userbyid(procedure.proowner)
+  into v_rpc_owner
+  from pg_catalog.pg_proc as procedure
+  where procedure.oid =
+    'public.apply_recurring_fixed_cost_tombstones(text[],text[])'
+      ::pg_catalog.regprocedure;
+
+  v_touches_protected := case tg_op
+    when 'INSERT' then new.pref_key = 'recurring_fixed_costs_deleted'
+    when 'UPDATE' then
+      old.pref_key = 'recurring_fixed_costs_deleted'
+      or new.pref_key = 'recurring_fixed_costs_deleted'
+    when 'DELETE' then old.pref_key = 'recurring_fixed_costs_deleted'
+    else false
+  end;
+
+  if v_touches_protected
+    and (
+      coalesce(
+        current_setting('app.recurring_tombstone_rpc', true),
+        ''
+      ) <> 'on'
+      or current_user is distinct from v_rpc_owner
+    )
   then
     raise exception 'use apply_recurring_fixed_cost_tombstones()'
       using errcode = '42501';
+  end if;
+
+  if tg_op = 'DELETE' then
+    return old;
   end if;
   return new;
 end;
@@ -141,7 +196,7 @@ $$;
 drop trigger if exists guard_recurring_fixed_cost_tombstone_writes
   on public.asset_pref_mirror;
 create trigger guard_recurring_fixed_cost_tombstone_writes
-before insert or update on public.asset_pref_mirror
+before insert or update or delete on public.asset_pref_mirror
 for each row
 execute function public.guard_recurring_fixed_cost_tombstone_writes();
 

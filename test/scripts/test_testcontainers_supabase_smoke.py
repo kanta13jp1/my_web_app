@@ -241,9 +241,11 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
         )
         checks = " ".join(plan["issue_4927_recurring_tombstone_checks"])
         self.assertIn("NULL IDs", checks)
-        self.assertIn("malformed", checks)
-        self.assertIn("whole-blob", checks)
-        self.assertIn("concurrent", checks)
+        self.assertIn("mixed-type malformed", checks)
+        self.assertIn("spoofed-GUC", checks)
+        self.assertIn("unrelated-key CRUD", checks)
+        self.assertIn("guard state", checks)
+        self.assertIn("concurrent add/remove", checks)
         self.assertIn("applies twice", checks)
 
     def test_plan_includes_note_comments_authorization_boundary(self) -> None:

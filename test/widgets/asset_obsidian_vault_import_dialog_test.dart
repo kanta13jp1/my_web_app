@@ -140,13 +140,30 @@ void main() {
 
     expect(find.text('解約表 1件'), findsOneWidget);
     expect(find.text('解約済みサブスクの削除候補'), findsOneWidget);
-    expect(find.text('削除候補'), findsOneWidget);
+    expect(find.text('削除候補'), findsNWidgets(2));
     expect(find.text('未登録'), findsOneWidget);
     expect(find.text('選択した2件を確認'), findsOneWidget);
 
     final cancellationCheckboxes = find.byType(Checkbox);
     expect(cancellationCheckboxes, findsNWidgets(3));
-    await tester.tap(cancellationCheckboxes.at(1));
+    const notionCandidate = AssetObsidianSubscriptionCancellationCandidate(
+      sourceSubscriptionName: 'Notion',
+      sourceStatus: '解約済み',
+      status: AssetObsidianSubscriptionCancellationStatus.matched,
+      sourcePaths: <String>['company/SUBSCRIPTION_LIST.md'],
+      endedAt: '2026-08-21',
+      matchedSubscriptionId: 'sub_notion',
+      matchedSubscriptionName: 'Notion',
+      matchedMonthlyAmount: 1650,
+    );
+    final notionCheckbox = find.descendant(
+      of: find.byKey(
+        ValueKey('obsidian-cancellation-${notionCandidate.id}'),
+      ),
+      matching: find.byType(Checkbox),
+    );
+    expect(notionCheckbox, findsOneWidget);
+    await tester.tap(notionCheckbox);
     await tester.pumpAndSettle();
     expect(find.text('選択した1件を確認'), findsOneWidget);
 

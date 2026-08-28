@@ -464,9 +464,11 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
         "issue_4927_recurring_tombstone_checks": [
             "RPC normalizes empty, whitespace, duplicate, and NULL IDs",
             "add/remove of the same ID is fail-closed with removal winning",
-            "malformed existing mirror values are rejected without overwrite",
-            "direct whole-blob writes to the dedicated key are rejected",
-            "two concurrent authenticated additions both survive",
+            "mixed-type malformed mirror values are rejected without overwrite",
+            "authenticated INSERT, UPDATE, rename, DELETE, and spoofed-GUC writes are rejected",
+            "unrelated-key CRUD remains allowed",
+            "RPC guard state is restored after success",
+            "initial concurrent additions and a concurrent add/remove preserve the exact set",
             "migration applies twice in the disposable database",
         ],
         "video_artifact_contract": [
@@ -519,9 +521,20 @@ def check_issue_4927_tombstone_concurrency(
 ) -> dict[str, Any]:
     """Race two authenticated additions and require an atomic server union."""
 
+    with conn.cursor() as cur:
+        cur.execute("select set_config('app.recurring_tombstone_rpc', 'on', false)")
+        cur.execute(
+            "delete from public.asset_pref_mirror "
+            "where user_id = %s::uuid "
+            "and pref_key = 'recurring_fixed_costs_deleted'",
+            (ISSUE_4927_USER,),
+        )
+        cur.execute("select set_config('app.recurring_tombstone_rpc', 'off', false)")
+    conn.commit()
+
     barrier = threading.Barrier(2)
 
-    def add_once(item_id: str) -> None:
+    def apply_once(additions: list[str], removals: list[str]) -> None:
         with connect(connection_url, connect_timeout=10) as worker_conn:
             with worker_conn.cursor() as cur:
                 cur.execute("set role authenticated")
@@ -536,14 +549,14 @@ def check_issue_4927_tombstone_concurrency(
                 cur.execute(
                     "select public.apply_recurring_fixed_cost_tombstones"
                     "(%s, %s)",
-                    ([item_id], []),
+                    (additions, removals),
                 )
             worker_conn.commit()
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         futures = [
-            executor.submit(add_once, "concurrent-a"),
-            executor.submit(add_once, "concurrent-b"),
+            executor.submit(apply_once, ["concurrent-a"], []),
+            executor.submit(apply_once, ["concurrent-b"], []),
         ]
         for future in futures:
             future.result(timeout=30)
@@ -560,11 +573,38 @@ def check_issue_4927_tombstone_concurrency(
         raise AssertionError("Issue #4927 tombstone mirror row is missing")
     ids = set(row[0] or [])
     expected = {"concurrent-a", "concurrent-b"}
-    if not expected.issubset(ids):
+    if ids != expected:
         raise AssertionError(
-            f"Issue #4927 lost a concurrent tombstone: {sorted(ids)}"
+            f"Issue #4927 initial concurrent union mismatch: {sorted(ids)}"
         )
-    return {"concurrent_ids": sorted(expected), "server_ids": sorted(ids)}
+
+    barrier = threading.Barrier(2)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [
+            executor.submit(apply_once, ["concurrent-c"], []),
+            executor.submit(apply_once, [], ["concurrent-a"]),
+        ]
+        for future in futures:
+            future.result(timeout=30)
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "select value -> 'ids' from public.asset_pref_mirror "
+            "where user_id = %s::uuid and pref_key = 'recurring_fixed_costs_deleted'",
+            (ISSUE_4927_USER,),
+        )
+        row = cur.fetchone()
+    conn.commit()
+    ids = set(row[0] or []) if row is not None else set()
+    final_expected = {"concurrent-b", "concurrent-c"}
+    if ids != final_expected:
+        raise AssertionError(
+            f"Issue #4927 concurrent add/remove mismatch: {sorted(ids)}"
+        )
+    return {
+        "initial_concurrent_ids": sorted(expected),
+        "server_ids": sorted(ids),
+    }
 
 
 def check_issue_1233_ai_quota_concurrency(
