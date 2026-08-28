@@ -7,6 +7,7 @@ import io
 import os
 import unittest
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from unittest.mock import patch
 
 from schedule_resilience_watch import (
@@ -108,6 +109,14 @@ class ScheduleResilienceWatchTest(unittest.TestCase):
         self.assertEqual(targets["notion-sync"].event, "schedule")
         self.assertEqual(targets["deploy-prod"].event, "push")
 
+    def test_health_monitor_avoids_top_of_hour_congestion(self) -> None:
+        workflow = (
+            Path(__file__).resolve().parents[1] / ".github/workflows/health-monitor.yml"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn('cron: "3 */2 * * *"', workflow)
+        self.assertNotIn('cron: "0 */2 * * *"', workflow)
+
     def test_workflow_runs_filters_by_requested_event(self) -> None:
         class RecordingClient(GitHubClient):
             requested_path = ""
@@ -185,7 +194,7 @@ class ScheduleResilienceWatchTest(unittest.TestCase):
         )
 
         created_after = repository_revalidation_start(TARGET, [stale], NOW)
-        runs = merge_revalidated_runs([stale], [fresh], created_after=created_after)
+        runs = merge_revalidated_runs([stale], [fresh, stale], created_after=created_after)
         result = evaluate_target(TARGET, runs, NOW, max_attempts=2)
 
         self.assertEqual(result["action"], "healthy")
@@ -200,14 +209,36 @@ class ScheduleResilienceWatchTest(unittest.TestCase):
         created_after = repository_revalidation_start(TARGET, [stale_failure], NOW)
         runs = merge_revalidated_runs(
             [stale_failure],
-            [],
+            [stale_failure],
             created_after=created_after,
         )
 
         result = evaluate_target(TARGET, runs, NOW, max_attempts=2)
 
         self.assertEqual(result["action"], "alert")
-        self.assertEqual(result["reason"], "missing-run")
+        self.assertEqual(result["reason"], "stale-failure")
+
+    def test_stale_success_is_not_misreported_as_missing(self) -> None:
+        stale_success = run(
+            id=2,
+            created_at=(NOW - timedelta(hours=5)).isoformat().replace("+00:00", "Z"),
+        )
+        created_after = repository_revalidation_start(TARGET, [stale_success], NOW)
+        runs = merge_revalidated_runs(
+            [stale_success],
+            [stale_success],
+            created_after=created_after,
+        )
+
+        result = evaluate_target(TARGET, runs, NOW, max_attempts=2)
+
+        self.assertEqual(result["action"], "alert")
+        self.assertEqual(result["reason"], "stale-success")
+
+    def test_repository_fallback_without_primary_uses_a_full_day(self) -> None:
+        created_after = repository_revalidation_start(TARGET, [], NOW)
+
+        self.assertEqual(created_after, NOW - timedelta(hours=24))
 
     def test_fresh_primary_must_be_confirmed_by_repository_listing(self) -> None:
         fresh = run(id=7)

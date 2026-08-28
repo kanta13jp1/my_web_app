@@ -32,6 +32,8 @@ BAD_CONCLUSIONS = {
 }
 REPOSITORY_RUNS_PER_PAGE = 100
 REPOSITORY_RUNS_MAX_PAGES = 10
+# Keep stale runs visible long enough to classify them instead of reporting them missing.
+REPOSITORY_REVALIDATION_MIN_HOURS = 24
 
 
 @dataclass(frozen=True)
@@ -112,13 +114,13 @@ def repository_revalidation_start(
         created_at = parse_time(str(newest.get("created_at") or ""))
         if created_at is None:
             raise ValueError("Workflow run is missing created_at")
-        if (
-            target.max_age_hours <= 0
-            or now - created_at <= timedelta(hours=target.max_age_hours)
-        ):
-            return created_at - timedelta(seconds=1)
+        return created_at - timedelta(seconds=1)
 
-    window_hours = target.max_age_hours if target.max_age_hours > 0 else 24 * 30
+    window_hours = (
+        max(target.max_age_hours, REPOSITORY_REVALIDATION_MIN_HOURS)
+        if target.max_age_hours > 0
+        else 24 * 30
+    )
     window_start = now - timedelta(hours=window_hours)
     if target.introduced_at is None:
         return window_start
@@ -351,6 +353,22 @@ def evaluate_target(
         return {**base, "action": "healthy", "reason": "latest-success"}
 
     if conclusion in BAD_CONCLUSIONS:
+        if (
+            target.max_age_hours > 0
+            and age_hours is not None
+            and age_hours > target.max_age_hours
+        ):
+            return {
+                **base,
+                "action": "alert",
+                "reason": "stale-failure",
+                "title": f"[Schedule監視] {target.key} stale schedule",
+                "body": (
+                    f"Latest scheduled run for `{target.workflow_file}` failed and is "
+                    f"{age_hours:.1f}h old, exceeding the {target.max_age_hours}h guard. "
+                    f"Run: {run_url(latest)}"
+                ),
+            }
         if run_attempt < max_attempts:
             return {
                 **base,
