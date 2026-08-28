@@ -145,17 +145,17 @@ class _AiUniversityLatestInfoTaskCardState
                     runSpacing: 8,
                     children: List<Widget>.generate(question.options.length,
                         (optionIndex) {
-                        return ChoiceChip(
-                          key: Key('latest-info-q$questionIndex-o$optionIndex'),
-                          label: Text(question.options[optionIndex]),
-                          selected: _answers[questionIndex] == optionIndex,
-                          onSelected: _submitted
-                              ? null
-                              : (_) => setState(
+                      return ChoiceChip(
+                        key: Key('latest-info-q$questionIndex-o$optionIndex'),
+                        label: Text(question.options[optionIndex]),
+                        selected: _answers[questionIndex] == optionIndex,
+                        onSelected: _submitted
+                            ? null
+                            : (_) => setState(
                                   () => _answers[questionIndex] = optionIndex,
                                 ),
-                        );
-                      }),
+                      );
+                    }),
                   ),
                 ],
               ),
