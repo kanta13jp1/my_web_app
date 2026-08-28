@@ -56,4 +56,28 @@ void main() {
     );
     expect(writes, 0);
   });
+
+  test('model-selection task uses its fixed category and version', () async {
+    final rows = <Map<String, Object>>[];
+    final analytics = AiUniversityLearningOutcomeAnalytics(
+      task: AiUniversityLearningOutcomeTask.modelSelection,
+      writer: (row) async => rows.add(row),
+    );
+
+    expect(await analytics.recordViewed(), isTrue);
+    expect(
+      await analytics.recordCompleted(correctAnswers: 3, selfRating: 5),
+      isTrue,
+    );
+
+    expect(rows.first, <String, Object>{
+      'event_name': 'task_viewed',
+      'task_version': '01ai_models_20260829_v1',
+      'provider': '01ai',
+      'category': 'models',
+    });
+    expect(rows.last['correct_answers'], 3);
+    expect(rows.last['total_questions'], 3);
+    expect(rows.last['self_rating'], 5);
+  });
 }

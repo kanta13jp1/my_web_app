@@ -5,6 +5,29 @@ typedef AiUniversityLearningOutcomeWriter = Future<void> Function(
   Map<String, Object> row,
 );
 
+enum AiUniversityLearningOutcomeTask {
+  latestInfo(
+    taskVersion: '01ai_latest_20260828_v1',
+    provider: '01ai',
+    category: 'news',
+  ),
+  modelSelection(
+    taskVersion: '01ai_models_20260829_v1',
+    provider: '01ai',
+    category: 'models',
+  );
+
+  const AiUniversityLearningOutcomeTask({
+    required this.taskVersion,
+    required this.provider,
+    required this.category,
+  });
+
+  final String taskVersion;
+  final String provider;
+  final String category;
+}
+
 /// Anonymous, course-bounded learning outcome analytics.
 ///
 /// Only the fixed task identity and aggregate metrics are accepted. Learner
@@ -13,12 +36,16 @@ typedef AiUniversityLearningOutcomeWriter = Future<void> Function(
 class AiUniversityLearningOutcomeAnalytics {
   const AiUniversityLearningOutcomeAnalytics({
     AiUniversityLearningOutcomeWriter? writer,
+    this.task = AiUniversityLearningOutcomeTask.latestInfo,
   }) : _writer = writer;
 
   factory AiUniversityLearningOutcomeAnalytics.supabase(
-    SupabaseClient client,
-  ) {
+    SupabaseClient client, {
+    AiUniversityLearningOutcomeTask task =
+        AiUniversityLearningOutcomeTask.latestInfo,
+  }) {
     return AiUniversityLearningOutcomeAnalytics(
+      task: task,
       writer: (row) async {
         await client.from('ai_university_learning_outcome_events').insert(row);
       },
@@ -37,12 +64,13 @@ class AiUniversityLearningOutcomeAnalytics {
   };
 
   final AiUniversityLearningOutcomeWriter? _writer;
+  final AiUniversityLearningOutcomeTask task;
 
   Future<bool> recordViewed() => _record(<String, Object>{
         'event_name': 'task_viewed',
-        'task_version': taskVersion,
-        'provider': '01ai',
-        'category': 'news',
+        'task_version': task.taskVersion,
+        'provider': task.provider,
+        'category': task.category,
       });
 
   Future<bool> recordCompleted({
@@ -54,9 +82,9 @@ class AiUniversityLearningOutcomeAnalytics {
 
     return _record(<String, Object>{
       'event_name': 'task_completed',
-      'task_version': taskVersion,
-      'provider': '01ai',
-      'category': 'news',
+      'task_version': task.taskVersion,
+      'provider': task.provider,
+      'category': task.category,
       'correct_answers': correctAnswers,
       'total_questions': 3,
       'self_rating': selfRating,
