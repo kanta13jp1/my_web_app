@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-28T03:28:08.365941+00:00",
+  "generated_at": "2026-08-28T08:22:11.339522+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -29,36 +29,27 @@
     "operating_efficiency": 10
   },
   "latest_review": {
-    "cycle_id": "20260828T120337+0900",
-    "started_at": "2026-08-28T12:03:37+09:00",
+    "cycle_id": "20260828T171600+0900",
+    "started_at": "2026-08-28T17:16:00+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "philosophy",
-      "url": "https://my-web-app-b67f4.web.app/philosophy"
+      "slug": "gemini_university",
+      "url": "https://my-web-app-b67f4.web.app/gemini-university"
     },
     "reviewer": {
-      "seat": 9,
-      "name": "平出 心",
-      "selection_score": 79.9025,
+      "seat": 11,
+      "name": "野口 功司",
+      "selection_score": 75.2124,
       "division": 1,
-      "cycle_utility": 82.5,
-      "aggregate_utility": 87.33
+      "cycle_utility": 83.25,
+      "aggregate_utility": 88.08
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "長い理念説明の最終CTAがlanding rootへ戻り、具体的な初回行動へ接続しない",
-        "severity": "p1",
-        "business_dimensions": [
-          "go_to_market",
-          "market_demand",
-          "unit_economics"
-        ]
-      },
-      {
-        "summary": "理念動画selectorへ無関係なAI大学4動画と出典なしの精密市場主張が混在する",
+        "summary": "公開訴求の259社と実装上の351 tab前提が同期するtested source-of-truthを持たない",
         "severity": "p1",
         "business_dimensions": [
           "trust_risk",
@@ -67,12 +58,21 @@
         ]
       },
       {
-        "summary": "長文ガイドが実在visitorの行動・継続・成果へ結び付く証拠がない",
-        "severity": "p2",
+        "summary": "非JavaScript公開面がAI大学の最初の学習actionではなく汎用landing funnelへ続く",
+        "severity": "p1",
+        "business_dimensions": [
+          "go_to_market",
+          "market_demand",
+          "customer_pain"
+        ]
+      },
+      {
+        "summary": "運用計測がfetch障害とretryに限定され、学習funnelと成果を観測できない",
+        "severity": "p1",
         "business_dimensions": [
           "market_demand",
           "unit_economics",
-          "go_to_market"
+          "revenue_model"
         ]
       }
     ],
@@ -91,50 +91,137 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After product owners choose one direct three-minute first action and separate AI University videos, instrument philosophy CTA clicks and require an improvement in first-action completion without reducing guide completion over one four-week cohort."
+      "next_cycle_experiment": "After owners define one provider-count source of truth and one crawlable provider-selection action, instrument privacy-bounded search-to-quiz events and require improved quiz completion without reduced provider discovery over one four-week cohort."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4952 追跡中",
-      "detail": "Direct first-action destination, conversion instrumentation, and relocation of curated videos require product funnel and editorial ownership decisions; deleting content or choosing an authenticated route automatically would exceed the low-risk repair boundary.",
+      "label": "未対策・Issue #4958 追跡中",
+      "detail": "The provider-count source of truth, crawlable acquisition handoff, and privacy-bounded learning analytics require product, SEO, data, and measurement ownership decisions; choosing a count or adding production analytics automatically would exceed the low-risk repair boundary.",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [
-        "philosophy-cta-activation-handoff-gap"
+        "gemini-university-public-count-contract-gap"
       ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean at origin/main b8f234042eabf6a9adb651394375030944c733e3",
+        "passed: clean at origin/main 720be3aa0696cfce16fa752e820edde21fbc5153",
         "passed: 125 roster profiles and 125 personas",
-        "passed: deterministic winner philosophy from 13 eligible features",
-        "passed: HTTP 200; CTA, video scope, mobile, title, SEO, FAQ, and unknown analytics evidence captured",
-        "executed exactly once against shared history root: 125 profiles, seat 9"
+        "passed: deterministic winner gemini_university from 13 eligible features",
+        "passed: public shell, provider count, paginated fetch, navigation, loading semantics, retry analytics, and unknown learner outcomes captured",
+        "executed exactly once against shared history root: 125 profiles, seat 11"
       ],
       "issue": {
-        "number": 4952,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4952",
+        "number": 4958,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4958",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260828T120337+0900:philosophy"
+        "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "philosophy-video-scope-and-trust-gap",
-        "philosophy-visitor-outcome-evidence-gap"
+        "gemini-university-crawlable-first-action-gap",
+        "gemini-university-learning-funnel-evidence-gap"
       ]
     },
     "feature": {
-      "slug": "philosophy",
-      "title": "philosophy",
+      "slug": "gemini_university",
+      "title": "gemini_university",
       "kind": "page",
-      "reason": "productionはHTTP 200で、30日運営ガイド、架空例の明示、編集方針、9原則、FAQ、mobile/SEO testsを確認できた。一方、最終CTAはサービス内の具体的な初回行動ではなくlanding rootへ戻し、9本の動画selectorにはphilosophy動画5本と無関係なAI大学動画4本が混在する。実在visitorの利用・conversion・outcome evidenceは確認できず、observed usageは契約どおり中立50点とした。",
-      "cycle_utility": 57.65,
-      "aggregate_utility": 57.65,
+      "reason": "productionはAI大学固有title、H1、259社訴求をHTTP 200で返すが、非JavaScript本文はその後に汎用の自分株式会社landing funnelへ続き、crawlableなprovider選択や最初の学習actionを示さない。実装はactive contentを1,000件ずつ全件取得し、動的provider tab、検索、category、content、quiz、FSRS、RLHFを提供する一方、公開configの259社と実装コメントの351 tabは同期するtested source-of-truthを持たない。operational analyticsはfetch失敗、fallback、retryだけで、実在learnerのsearch、content open、quiz completion、repeat learning、outcomeは確認できず、observed usageは契約どおり中立50点とした。",
+      "cycle_utility": 50.8,
+      "aggregate_utility": 50.8,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260828T171600+0900",
+      "started_at": "2026-08-28T17:16:00+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "gemini_university",
+        "title": "gemini_university",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 75.2124
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After owners define one provider-count source of truth and one crawlable provider-selection action, instrument privacy-bounded search-to-quiz events and require improved quiz completion without reduced provider discovery over one four-week cohort."
+      },
+      "findings": [
+        {
+          "finding_id": "gemini-university-public-count-contract-gap",
+          "summary": "公開訴求の259社と実装上の351 tab前提が同期するtested source-of-truthを持たない",
+          "severity": "p1",
+          "suggested_action": "active providerの正規化済みunique countを一つのbuild inputとして算出し、SEO title、H1、description、points、runtime表示、sitemap testが同じ値を参照するcontractを設計する。"
+        },
+        {
+          "finding_id": "gemini-university-crawlable-first-action-gap",
+          "summary": "非JavaScript公開面がAI大学の最初の学習actionではなく汎用landing funnelへ続く",
+          "severity": "p1",
+          "suggested_action": "非JS shellにproviderを探す、1教材を開く、1問quizを解くという3段階と、JS起動後に同じproviderまたはcategoryへ復元する明示的なfirst-action linkを追加する。"
+        },
+        {
+          "finding_id": "gemini-university-learning-funnel-evidence-gap",
+          "summary": "運用計測がfetch障害とretryに限定され、学習funnelと成果を観測できない",
+          "severity": "p1",
+          "suggested_action": "個人識別子や自由記述を送らない現行privacy境界を維持し、provider_search、provider_selected、content_opened、quiz_completed、review_returnedの集計eventを段階導入する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4958 追跡中",
+        "detail": "The provider-count source of truth, crawlable acquisition handoff, and privacy-bounded learning analytics require product, SEO, data, and measurement ownership decisions; choosing a count or adding production analytics automatically would exceed the low-risk repair boundary.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "gemini-university-public-count-contract-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main 720be3aa0696cfce16fa752e820edde21fbc5153",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: deterministic winner gemini_university from 13 eligible features",
+          "passed: public shell, provider count, paginated fetch, navigation, loading semantics, retry analytics, and unknown learner outcomes captured",
+          "executed exactly once against shared history root: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 4958,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4958",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "gemini-university-crawlable-first-action-gap",
+          "gemini-university-learning-funnel-evidence-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260828T120337+0900",
       "started_at": "2026-08-28T12:03:37+09:00",
@@ -1185,22 +1272,6 @@
       "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
-      "slug": "gemini_university",
-      "kind": "page",
-      "title": "gemini_university",
-      "path": "/gemini-university",
-      "source": "lib/pages/gemini_university_v2_page.dart",
-      "priority": "medium",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "last_cycle_utility": null,
-      "last_reviewed_at": null,
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
-    },
-    {
       "slug": "growth_weekly_digest",
       "kind": "edge_function",
       "title": "growth-weekly-digest",
@@ -1262,6 +1333,22 @@
       "completed_cycles": 1,
       "last_cycle_utility": 57.65,
       "last_reviewed_at": "2026-08-28T03:03:37+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "gemini_university",
+      "kind": "page",
+      "title": "gemini_university",
+      "path": "/gemini-university",
+      "source": "lib/pages/gemini_university_v2_page.dart",
+      "priority": "medium",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 50.8,
+      "completed_cycles": 1,
+      "last_cycle_utility": 50.8,
+      "last_reviewed_at": "2026-08-28T08:16:00+00:00",
       "reason": "機能レビュー実績が2回未満のため暫定3部"
     }
   ]
