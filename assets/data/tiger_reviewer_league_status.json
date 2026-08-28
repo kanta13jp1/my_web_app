@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-08-27T23:02:22.959682+00:00",
+  "generated_at": "2026-08-28T04:12:07.142059+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "reviewer_league",
   "publication_state": "latest_assignment",
@@ -33,41 +33,50 @@
     }
   },
   "latest_assignment": {
-    "cycle_id": "20260828T074605+0900",
-    "started_at": "2026-08-28T07:46:05+09:00",
+    "cycle_id": "20260828T120337+0900",
+    "started_at": "2026-08-28T12:03:37+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "schedule_hub",
-      "url": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub"
+      "slug": "philosophy",
+      "url": "https://my-web-app-b67f4.web.app/philosophy"
     },
     "reviewer": {
-      "seat": 11,
-      "name": "野口 功司",
-      "selection_score": 68.5457,
+      "seat": 9,
+      "name": "平出 心",
+      "selection_score": 79.9025,
       "division": 1,
-      "cycle_utility": 93.62,
-      "aggregate_utility": 90.81
+      "cycle_utility": 82.5,
+      "aggregate_utility": 87.33
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 2,
+    "finding_count": 3,
     "top_findings": [
       {
-        "summary": "通常のログイン利用者がowner資格情報を使う公開・更新・削除actionへ到達できる認可境界になっている",
-        "severity": "p0",
+        "summary": "長い理念説明の最終CTAがlanding rootへ戻り、具体的な初回行動へ接続しない",
+        "severity": "p1",
         "business_dimensions": [
-          "trust_risk",
-          "unit_economics",
-          "revenue_model"
+          "go_to_market",
+          "market_demand",
+          "unit_economics"
         ]
       },
       {
-        "summary": "53 actionのside effectと認可levelを結ぶ完全なcontractがなく、新規actionが暗黙にuser権限になる",
+        "summary": "理念動画selectorへ無関係なAI大学4動画と出典なしの精密市場主張が混在する",
         "severity": "p1",
         "business_dimensions": [
-          "scalability",
           "trust_risk",
-          "unit_economics"
+          "market_demand",
+          "scalability"
+        ]
+      },
+      {
+        "summary": "長文ガイドが実在visitorの行動・継続・成果へ結び付く証拠がない",
+        "severity": "p2",
+        "business_dimensions": [
+          "market_demand",
+          "unit_economics",
+          "go_to_market"
         ]
       }
     ],
@@ -86,39 +95,316 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After an owner-reviewed fail-closed action registry and handler authorization matrix are deployed, require sensitive-action rejection at 100%, unclassified actions at zero, and incident-free operation for four weeks."
+      "next_cycle_experiment": "After product owners choose one direct three-minute first action and separate AI University videos, instrument philosophy CTA clicks and require an improvement in first-action completion without reducing guide completion over one four-week cohort."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "未対策・Issue #4948 追跡中",
-      "detail": "The finding requires protected authentication and authorization policy changes, which are outside automatic modification scope.",
+      "label": "未対策・Issue #4952 追跡中",
+      "detail": "Direct first-action destination, conversion instrumentation, and relocation of curated videos require product funnel and editorial ownership decisions; deleting content or choosing an authenticated route automatically would exceed the low-risk repair boundary.",
       "summary": "",
       "files": [],
       "lines_changed": 0,
-      "resolved_finding_ids": [],
+      "resolved_finding_ids": [
+        "philosophy-cta-activation-handoff-gap"
+      ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean at origin/main 5098469613d7e8b78ed374d797ebbe9aa15fc702",
+        "passed: clean at origin/main b8f234042eabf6a9adb651394375030944c733e3",
         "passed: 125 roster profiles and 125 personas",
-        "passed: deterministic winner schedule_hub",
-        "passed: 4,663 lines, 53 actions, owner-mutation authorization evidence captured",
-        "executed exactly once: 125 profiles, seat 11"
+        "passed: deterministic winner philosophy from 13 eligible features",
+        "passed: HTTP 200; CTA, video scope, mobile, title, SEO, FAQ, and unknown analytics evidence captured",
+        "executed exactly once against shared history root: 125 profiles, seat 9"
       ],
       "issue": {
-        "number": 4948,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4948",
+        "number": 4952,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/4952",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub"
+        "dedupe_key": "tiger-feature-review:20260828T120337+0900:philosophy"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "schedule-hub-owner-mutation-auth-boundary",
-        "schedule-hub-auth-classification-drift"
+        "philosophy-video-scope-and-trust-gap",
+        "philosophy-visitor-outcome-evidence-gap"
       ]
     }
   },
   "history": [
+    {
+      "cycle_id": "20260828T120337+0900",
+      "started_at": "2026-08-28T12:03:37+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "philosophy",
+        "title": "philosophy",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 9,
+        "name": "平出 心",
+        "selection_score": 79.9025
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After product owners choose one direct three-minute first action and separate AI University videos, instrument philosophy CTA clicks and require an improvement in first-action completion without reducing guide completion over one four-week cohort."
+      },
+      "findings": [
+        {
+          "finding_id": "philosophy-cta-activation-handoff-gap",
+          "summary": "長い理念説明の最終CTAがlanding rootへ戻り、具体的な初回行動へ接続しない",
+          "severity": "p1",
+          "suggested_action": "最初の3分棚卸しまたは30日運営開始へ直結する明示的なdestinationと計測可能なeventを設計し、CTA文言・遷移・完了状態を同じcontractで検証する。"
+        },
+        {
+          "finding_id": "philosophy-video-scope-and-trust-gap",
+          "summary": "理念動画selectorへ無関係なAI大学4動画と出典なしの精密市場主張が混在する",
+          "severity": "p1",
+          "suggested_action": "philosophyページは理念動画だけに限定し、AI大学動画は専用hubへ移す。残す精密主張には確認日と一次出典を付け、selectorのscopeをtestで固定する。"
+        },
+        {
+          "finding_id": "philosophy-visitor-outcome-evidence-gap",
+          "summary": "長文ガイドが実在visitorの行動・継続・成果へ結び付く証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名eventでhero到達、3分棚卸し到達、CTA click、first-action完了を測り、短い任意feedbackで役立った判断と未解決課題を集める。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4952 追跡中",
+        "detail": "Direct first-action destination, conversion instrumentation, and relocation of curated videos require product funnel and editorial ownership decisions; deleting content or choosing an authenticated route automatically would exceed the low-risk repair boundary.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "philosophy-cta-activation-handoff-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main b8f234042eabf6a9adb651394375030944c733e3",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: deterministic winner philosophy from 13 eligible features",
+          "passed: HTTP 200; CTA, video scope, mobile, title, SEO, FAQ, and unknown analytics evidence captured",
+          "executed exactly once against shared history root: 125 profiles, seat 9"
+        ],
+        "issue": {
+          "number": 4952,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4952",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260828T120337+0900:philosophy"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "philosophy-video-scope-and-trust-gap",
+          "philosophy-visitor-outcome-evidence-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260828T100917+0900",
+      "started_at": "2026-08-28T10:09:17+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "c1ea41da-b447-4c7b-aee7-630d03c6a516",
+        "title": "Adobe Firefly モデル一覧",
+        "url": "https://helpx.adobe.com/firefly/using/firefly-image-3.html"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 78.0766
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After replacing the source with a monitored current official registry and publishing one 30-minute same-brief two-model comparison lab, measure source-link success, task-fit choice, credits per usable artifact, revision count, completion, and follow-on course conversion for one learner cohort."
+      },
+      "findings": [
+        {
+          "finding_id": "course-firefly-source-url-staleness",
+          "summary": "モデル一覧コースの登録出典がHTTP 404で学習者を一次情報へ導けない",
+          "severity": "p1",
+          "suggested_action": "production data所有者が現行Adobe公式モデル情報へ出典を更新し、確認日、HTTP到達性、対象モデル範囲を公開契約として検証する。"
+        },
+        {
+          "finding_id": "course-firefly-task-model-rubric-gap",
+          "summary": "モデル一覧という題名に対して現行モデル分類とtask-to-model選択rubricがない",
+          "severity": "p1",
+          "suggested_action": "確認日付きのAdobe公式registryを基準に、model由来、用途、設定、生成枚数、強み、制約を比較する更新可能な表と選択課題を追加する。"
+        },
+        {
+          "finding_id": "course-firefly-credit-output-economics-gap",
+          "summary": "モデル別creditと生成枚数の差を学習者の成果単価へ変換する比較課題がない",
+          "severity": "p1",
+          "suggested_action": "同じbriefを2種類のmodelで試し、credit、生成枚数、採用枚数、修正回数、所要時間を記録する30分比較課題を追加する。"
+        },
+        {
+          "finding_id": "course-firefly-commercial-safety-boundary-gap",
+          "summary": "商業利用安全という一般化がAdobe proprietary modelとpartner modelの判断責任を分けていない",
+          "severity": "p1",
+          "suggested_action": "Adobe公式記述を出典に、proprietaryとpartner model、学習データ、利用条件、用途適合、商用利用判断を分ける確認課題へ置き換える。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4951 追跡中",
+        "detail": "主要指摘はproduction course dataのsource URL、course content、model provenance、商用利用条件を変更する必要があり、保護されたproduction dataおよびlegal境界を含むため共有の低リスク自動修正範囲外。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-firefly-source-url-staleness"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean branch equals origin/main 30da8265755cc64583d4e464a6b8af2db31b38d2",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
+          "passed: deterministic winner preserved from fresh catalog",
+          "passed: selected source returned 404; current Adobe text-to-image, credit, and partner-model sources inspected; named source/test paths inspected",
+          "executed exactly once against shared history root: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 4951,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4951",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260828T100917+0900:c1ea41da-b447-4c7b-aee7-630d03c6a516"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-firefly-task-model-rubric-gap",
+          "course-firefly-credit-output-economics-gap",
+          "course-firefly-commercial-safety-boundary-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260828T090106+0900",
+      "started_at": "2026-08-28T09:01:06+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 32,
+        "name": "高澤 有紀",
+        "selection_score": 73.361
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260828T051725+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After owner-approved route-specific subscription and privacy shells plus a release regression gate ship, require distinct route digests and compare URL-level search impressions, registration starts, checkout completion, privacy-to-registration continuation, and 30-day paid retention for 30 days."
+      },
+      "findings": [
+        {
+          "finding_id": "site-static-decision-route-collapse",
+          "summary": "価格・プライバシーの意思決定URLが同一ホームページHTMLへ集約された状態が再計測でも継続している",
+          "severity": "p1",
+          "suggested_action": "価格・法務の内容所有者と公開境界を確認し、subscription-billingとprivacyへ固有title、description、canonical、OG URL、承認済み主要本文を持つ静的応答を追加する。"
+        },
+        {
+          "finding_id": "site-pricing-prequalification-observability-gap",
+          "summary": "確認済み価格はFlutter内にあるが、静的な購入前説明とURL単位の転換証拠が揃っていない",
+          "severity": "p1",
+          "suggested_action": "価格決定を変更せず、承認済みプラン情報と解約・自動更新境界を静的シェルへ反映し、直接流入からcheckoutまでのイベントをURL別に集計する。"
+        },
+        {
+          "finding_id": "site-privacy-preflight-content-gap",
+          "summary": "privacy URLの初期HTMLが法務内容ではなくホームページ販促文を返す状態が継続している",
+          "severity": "p1",
+          "suggested_action": "法務所有者が承認した現行ポリシーを唯一のソースとして、privacy URLの初期HTMLにも固有見出し、概要、canonical、本文到達性を持たせる。"
+        },
+        {
+          "finding_id": "site-public-journey-release-regression-gap",
+          "summary": "収益・信頼journeyのroute固有静的応答をrelease gateで検証する契約がなく、同じ欠落が連続計測で残っている",
+          "severity": "p2",
+          "suggested_action": "承認済みroute固有シェルを実装した後、root・subscription-billing・privacyのstatus、canonical、主要本文、非同一digestをdeploy workflowの回帰契約へ加える。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "未対策・Issue #4950 追跡中",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main 5c85e7e955b07f988872bd760e8361feab7480ff",
+          "passed: 3 fixed routes returned HTTP 200 and required SEO-shell markers",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: current evidence locations, protected pricing/legal boundaries, and absent fixed-journey deploy gate recorded"
+        ],
+        "issue": {
+          "number": 4950,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4950",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260828T090106+0900:whole_site"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-static-decision-route-collapse",
+          "site-pricing-prequalification-observability-gap",
+          "site-privacy-preflight-content-gap",
+          "site-public-journey-release-regression-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260828T074605+0900",
       "started_at": "2026-08-28T07:46:05+09:00",
@@ -2805,27 +3091,12 @@
       "provisional": false,
       "eligible": true,
       "floor_protected": false,
-      "utility_score": 93.15,
-      "completed_cycles": 2,
+      "utility_score": 93.23,
+      "completed_cycles": 3,
       "low_utility_streak": 0,
-      "last_cycle_utility": 93.19,
-      "last_selected_at": "2026-08-27T20:17:25+00:00",
-      "reason": "担当2回・効用93.2点で1部"
-    },
-    {
-      "seat": 9,
-      "name": "平出 心",
-      "tier": "division_1",
-      "division": 1,
-      "provisional": false,
-      "eligible": true,
-      "floor_protected": false,
-      "utility_score": 91.93,
-      "completed_cycles": 4,
-      "low_utility_streak": 0,
-      "last_cycle_utility": 92.17,
-      "last_selected_at": "2026-08-27T15:43:59+00:00",
-      "reason": "担当4回・効用91.9点で1部"
+      "last_cycle_utility": 93.31,
+      "last_selected_at": "2026-08-28T00:01:06+00:00",
+      "reason": "担当3回・効用93.2点で1部"
     },
     {
       "seat": 49,
@@ -2873,6 +3144,36 @@
       "reason": "担当実績が2回未満のため暫定3部"
     },
     {
+      "seat": 12,
+      "name": "迫 佑樹",
+      "tier": "division_1",
+      "division": 1,
+      "provisional": false,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 89.05,
+      "completed_cycles": 15,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 93.62,
+      "last_selected_at": "2026-08-28T01:09:17+00:00",
+      "reason": "担当15回・効用89.0点で1部"
+    },
+    {
+      "seat": 9,
+      "name": "平出 心",
+      "tier": "division_1",
+      "division": 1,
+      "provisional": false,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 87.33,
+      "completed_cycles": 5,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 82.5,
+      "last_selected_at": "2026-08-28T03:03:37+00:00",
+      "reason": "担当5回・効用87.3点で1部"
+    },
+    {
       "seat": 1,
       "name": "ドラゴン細井",
       "tier": "division_1",
@@ -2886,21 +3187,6 @@
       "last_cycle_utility": 85.9,
       "last_selected_at": "2026-08-25T04:33:07+00:00",
       "reason": "担当2回・効用87.2点で1部"
-    },
-    {
-      "seat": 12,
-      "name": "迫 佑樹",
-      "tier": "division_1",
-      "division": 1,
-      "provisional": false,
-      "eligible": true,
-      "floor_protected": false,
-      "utility_score": 85.78,
-      "completed_cycles": 14,
-      "low_utility_streak": 0,
-      "last_cycle_utility": 85.25,
-      "last_selected_at": "2026-08-27T17:14:01+00:00",
-      "reason": "担当14回・効用85.8点で1部"
     },
     {
       "seat": 2,
