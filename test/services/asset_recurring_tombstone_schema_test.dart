@@ -12,14 +12,13 @@ void main() {
     sql = File(_migrationPath).readAsStringSync().toLowerCase();
   });
 
-  test('uses an authenticated security-invoker RPC with a fixed mirror key',
-      () {
+  test('uses an authenticated fixed-key RPC and guards direct writes', () {
     expect(
       sql,
       contains(
           'create or replace function public.apply_recurring_fixed_cost_tombstones'),
     );
-    expect(sql, contains('security invoker'));
+    expect(sql, contains('security definer'));
     expect(sql, contains('v_user_id uuid := auth.uid()'));
     expect(sql, contains("'recurring_fixed_costs_deleted'"));
     expect(sql, isNot(contains('p_pref_key')));
@@ -37,6 +36,14 @@ void main() {
         '  from anon',
       ),
     );
+    expect(
+      sql,
+      contains('create trigger guard_recurring_fixed_cost_tombstone_writes'),
+    );
+    expect(
+      sql,
+      contains("current_setting('app.recurring_tombstone_rpc', true)"),
+    );
   });
 
   test('atomically unions current and incoming IDs before explicit removal',
@@ -46,6 +53,14 @@ void main() {
     expect(sql, contains("jsonb_typeof(excluded.value -> 'ids') = 'array'"));
     expect(sql, contains('select distinct btrim(source.id) as id'));
     expect(sql, contains('coalesce(p_remove_ids, array[]::text[])'));
+    expect(sql, contains('and not exists'));
+    expect(sql, contains('where removed.id is not null'));
+    expect(
+      sql,
+      contains(
+        "jsonb_typeof(v_existing -> 'ids') is distinct from 'array'",
+      ),
+    );
     expect(sql, contains('returning mirror.value into v_value'));
   });
 
@@ -59,9 +74,10 @@ void main() {
     );
 
     final method = source
-        .split('Future<void> _mirrorRecurringFixedCostsDeleted({')[1]
+        .split('Future<bool> _mirrorRecurringFixedCostsDeleted() async {')[1]
         .split('Future<void> _pullRecurringFixedCostDeleted()')[0];
     expect(method, isNot(contains(".from('asset_pref_mirror').upsert")));
-    expect(method, contains('throwOnFailure'));
+    expect(method, contains('_syncDirtyKeysStore.loadDirty'));
+    expect(method, contains('_syncDirtyKeysStore.updateDirty'));
   });
 }
