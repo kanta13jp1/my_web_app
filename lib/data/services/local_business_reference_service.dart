@@ -15,8 +15,9 @@ class SupabaseLocalBusinessReferenceService
   @override
   Future<Map<String, dynamic>> fetchReferences({int limit = 30}) async {
     final response = await _client.functions.invoke(
-      'local-business-reference',
+      'tools-hub',
       body: <String, dynamic>{
+        'action': 'public_businesses.reference_list',
         'target_id': 'fuchu-honmachi-1',
         'limit': limit.clamp(1, 50),
       },

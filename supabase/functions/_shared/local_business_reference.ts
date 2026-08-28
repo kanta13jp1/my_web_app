@@ -60,6 +60,42 @@ export type LocalBusinessReferencePayload = {
   };
 };
 
+export type LocalBusinessReferenceActionResult = {
+  status: number;
+  body:
+    | LocalBusinessReferencePayload
+    | { success: false; error: "unsupported_target" }
+    | { success: false; error: "public_reference_unavailable" };
+};
+
+export async function dispatchLocalBusinessReferenceAction(
+  body: Record<string, unknown>,
+  load: (
+    options: { limit?: unknown },
+  ) => Promise<LocalBusinessReferencePayload> = fetchLocalBusinessReferences,
+): Promise<LocalBusinessReferenceActionResult> {
+  const targetId = String(
+    body.target_id ?? LOCAL_BUSINESS_TARGET_ID,
+  ).trim();
+  if (targetId !== LOCAL_BUSINESS_TARGET_ID) {
+    return {
+      status: 400,
+      body: { success: false, error: "unsupported_target" },
+    };
+  }
+  try {
+    return {
+      status: 200,
+      body: await load({ limit: body.limit ?? 30 }),
+    };
+  } catch (_) {
+    return {
+      status: 502,
+      body: { success: false, error: "public_reference_unavailable" },
+    };
+  }
+}
+
 function asRecord(value: unknown): JsonRecord {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     return {};

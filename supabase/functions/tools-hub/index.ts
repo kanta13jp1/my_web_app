@@ -60,7 +60,10 @@ import {
   publicMcpFileConnector,
 } from "../_shared/mcp_external_file.ts";
 import { callExternalMcpTool } from "../_shared/mcp_external_file_client.ts";
-import { fetchLocalBusinessReferences } from "../_shared/local_business_reference.ts";
+import {
+  dispatchLocalBusinessReferenceAction,
+  fetchLocalBusinessReferences,
+} from "../_shared/local_business_reference.ts";
 import {
   createSupabaseJibunApiStore,
   handleJibunApiAction,
@@ -5908,6 +5911,14 @@ serve(async (req) => {
 
     const mcpResponse = await handleMcpFacade(req, action, body, admin);
     if (mcpResponse) return mcpResponse;
+
+    // Public, read-only business references used by the regional map. Keep this
+    // in tools-hub so the browser and authenticated MCP tool share one fetcher
+    // without consuming another production Edge Function slot.
+    if (action === "public_businesses.reference_list") {
+      const result = await dispatchLocalBusinessReferenceAction(body);
+      return json(result.body, result.status);
+    }
 
     // ── 自分API (Notion Developer Platform 対抗 / 2026-07-12 WEB版) ─────────
     // jibunapi.* = 管理系 (Supabase JWT) / api.* = 外部公開系 (jibun_sk_ キー)。

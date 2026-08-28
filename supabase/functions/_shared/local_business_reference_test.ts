@@ -5,6 +5,7 @@ import {
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   buildLocalBusinessOverpassQuery,
+  dispatchLocalBusinessReferenceAction,
   fetchLocalBusinessReferences,
   FUCHU_HONMACHI_1_TARGET,
   normalizeOpenStreetMapBusinesses,
@@ -112,4 +113,42 @@ Deno.test("OSM limit is bounded to fifty records", () => {
   }, 999);
 
   assertEquals(rows.length, 50);
+});
+
+Deno.test("public hub action validates target and forwards limit", async () => {
+  let receivedLimit: unknown;
+  const valid = await dispatchLocalBusinessReferenceAction(
+    { target_id: "fuchu-honmachi-1", limit: 12 },
+    async ({ limit }) => {
+      receivedLimit = limit;
+      return await fetchLocalBusinessReferences({
+        fetcher: (() =>
+          Promise.resolve(
+            new Response(JSON.stringify({ elements: [] }), { status: 200 }),
+          )) as typeof fetch,
+      });
+    },
+  );
+  assertEquals(valid.status, 200);
+  assertEquals(valid.body.success, true);
+  assertEquals(receivedLimit, 12);
+
+  const invalid = await dispatchLocalBusinessReferenceAction({
+    target_id: "another-area",
+  });
+  assertEquals(invalid, {
+    status: 400,
+    body: { success: false, error: "unsupported_target" },
+  });
+});
+
+Deno.test("public hub action maps upstream failure without leaking details", async () => {
+  const result = await dispatchLocalBusinessReferenceAction(
+    {},
+    () => Promise.reject(new Error("sensitive upstream detail")),
+  );
+  assertEquals(result, {
+    status: 502,
+    body: { success: false, error: "public_reference_unavailable" },
+  });
 });
