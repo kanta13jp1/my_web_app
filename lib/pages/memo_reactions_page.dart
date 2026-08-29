@@ -172,6 +172,8 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
                     label:
                         '${_reactionLabels[r] ?? r} $count件${isActive ? " 選択中" : ""}',
                     button: true,
+                    excludeSemantics: true,
+                    onTap: () => _toggle(r),
                     child: GestureDetector(
                       onTap: () => _toggle(r),
                       child: Container(
