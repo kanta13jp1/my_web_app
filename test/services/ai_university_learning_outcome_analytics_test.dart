@@ -80,4 +80,28 @@ void main() {
     expect(rows.last['total_questions'], 3);
     expect(rows.last['self_rating'], 5);
   });
+
+  test('LLM mechanics task uses its fixed academic identity', () async {
+    final rows = <Map<String, Object>>[];
+    final analytics = AiUniversityLearningOutcomeAnalytics(
+      task: AiUniversityLearningOutcomeTask.llmMechanics,
+      writer: (row) async => rows.add(row),
+    );
+
+    expect(await analytics.recordViewed(), isTrue);
+    expect(
+      await analytics.recordCompleted(correctAnswers: 2, selfRating: 4),
+      isTrue,
+    );
+
+    expect(rows.first, <String, Object>{
+      'event_name': 'task_viewed',
+      'task_version': 'academic_llm_mechanics_20260829_v1',
+      'provider': 'academic',
+      'category': 'llm_mechanics',
+    });
+    expect(rows.last['correct_answers'], 2);
+    expect(rows.last['total_questions'], 3);
+    expect(rows.last['self_rating'], 4);
+  });
 }
