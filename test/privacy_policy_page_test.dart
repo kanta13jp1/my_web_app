@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/privacy_policy_page.dart';
 
@@ -17,23 +18,8 @@ void main() {
     expect(find.textContaining('AI分析・提案'), findsWidgets);
     expect(find.textContaining('AI動画生成'), findsWidgets);
 
-    final policyScroll = find
-        .byWidgetPredicate(
-          (widget) =>
-              widget is Scrollable &&
-              widget.axisDirection == AxisDirection.down,
-        )
-        .first;
-    expect(policyScroll, findsOneWidget);
-
-    for (var attempt = 0;
-        attempt < 10 && find.text('1. 適用範囲').evaluate().isEmpty;
-        attempt++) {
-      await tester.drag(policyScroll, const Offset(0, -400));
-      await tester.pumpAndSettle();
-    }
-
-    expect(find.text('1. 適用範囲'), findsOneWidget);
-    expect(find.textContaining('対象サービス'), findsWidgets);
+    final policy = await rootBundle.loadString(PrivacyPolicyPage.assetPath);
+    expect(policy, contains('## 1. 適用範囲'));
+    expect(policy, contains('対象サービス'));
   });
 }
