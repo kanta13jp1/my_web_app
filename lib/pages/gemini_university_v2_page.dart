@@ -23,6 +23,7 @@ import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 import '../services/user_data_finetune_readiness_service.dart';
 import '../widgets/ai_university_latest_info_task_card.dart';
+import '../widgets/ai_university_llm_mechanics_task_card.dart';
 import '../widgets/ai_university_model_selection_task_card.dart';
 import '../widgets/ai_university_published_video_banner.dart';
 import '../widgets/ai_university_youtube_embed.dart';
@@ -5730,6 +5731,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   late final AiUniversityLearningOutcomeAnalytics _learningOutcomeAnalytics;
   late final AiUniversityLearningOutcomeAnalytics
       _modelSelectionLearningOutcomeAnalytics;
+  late final AiUniversityLearningOutcomeAnalytics
+      _llmMechanicsLearningOutcomeAnalytics;
 
   List<String> _providers = [];
   Map<String, List<Map<String, dynamic>>> _content = {};
@@ -5776,6 +5779,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               _supabase,
               task: AiUniversityLearningOutcomeTask.modelSelection,
             );
+    _llmMechanicsLearningOutcomeAnalytics =
+        AiUniversityLearningOutcomeAnalytics.supabase(
+      _supabase,
+      task: AiUniversityLearningOutcomeTask.llmMechanics,
+    );
     _fetchContent();
     _loadAnsweredQuizzes();
     _loadRlhfSnapshot();
@@ -7978,10 +7986,15 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         AiUniversityVideoLessonService.youtubeVideoIdFromUrl(sourceUrl);
     final isLatestInfoTask = provider == '01ai' && category == 'news';
     final isModelSelectionTask = provider == '01ai' && category == 'models';
-    final learningOutcomeAnalytics = isModelSelectionTask
-        ? _modelSelectionLearningOutcomeAnalytics
-        : _learningOutcomeAnalytics;
-    final hasLearningOutcomeTask = isLatestInfoTask || isModelSelectionTask;
+    final isLlmMechanicsTask =
+        provider == 'academic' && category == 'llm_mechanics';
+    final learningOutcomeAnalytics = isLlmMechanicsTask
+        ? _llmMechanicsLearningOutcomeAnalytics
+        : isModelSelectionTask
+            ? _modelSelectionLearningOutcomeAnalytics
+            : _learningOutcomeAnalytics;
+    final hasLearningOutcomeTask =
+        isLatestInfoTask || isModelSelectionTask || isLlmMechanicsTask;
     final taskViewKey = row['id']?.toString() ?? '$provider:$category';
 
     return Card(
@@ -8094,6 +8107,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   AiUniversityModelSelectionTaskCard(
                     onSubmit:
                         _modelSelectionLearningOutcomeAnalytics.recordCompleted,
+                  ),
+                ],
+                if (isLlmMechanicsTask) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityLlmMechanicsTaskCard(
+                    onSubmit:
+                        _llmMechanicsLearningOutcomeAnalytics.recordCompleted,
                   ),
                 ],
                 if (youtubeVideoId != null) ...[
