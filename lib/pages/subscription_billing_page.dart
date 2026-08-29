@@ -102,9 +102,12 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     try {
       final status = await _service.fetchStatus();
       if (mounted) setState(() => _status = status);
-    } catch (e) {
+    } catch (error) {
+      debugPrint('Billing status fetch failed: $error');
       if (mounted) {
-        setState(() => _errorMessage = 'プラン情報を読み込めませんでした: $e');
+        setState(
+          () => _errorMessage = 'プラン情報を読み込めませんでした。時間をおいて再度お試しください。',
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -170,8 +173,13 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         throw BillingServiceException('Stripe決済画面を開けませんでした');
       }
-    } catch (e) {
-      if (mounted) setState(() => _errorMessage = '決済画面の準備に失敗しました: $e');
+    } catch (error) {
+      debugPrint('Billing session preparation failed: $error');
+      if (mounted) {
+        setState(
+          () => _errorMessage = '決済画面を準備できませんでした。時間をおいて再度お試しください。',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isOpeningStripe = false);
     }
