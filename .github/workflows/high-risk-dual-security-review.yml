@@ -1,0 +1,130 @@
+name: High-risk Dual Security Review
+
+on:
+  # Base-branch workflow/scripts are the trust root. PR-head files are diffed as
+  # data only and are never executed in a credential-bearing step.
+  pull_request_target:
+    branches: [main, staging, develop]
+    types: [opened, synchronize, reopened, labeled, edited]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Pull request number"
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: dual-security-review-${{ github.event.pull_request.number || inputs.pr_number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Independent Claude and Codex review
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+    steps:
+      - name: Validate PR number
+        run: |
+          if ! [[ "$PR_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::PR number must be a positive integer"
+            exit 1
+          fi
+
+      - name: Checkout trusted base read-only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve immutable review inputs
+        id: refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" > /tmp/pr.json
+          base=$(jq -r '.base.sha' /tmp/pr.json)
+          head=$(jq -r '.head.sha' /tmp/pr.json)
+          test "$base" != null && test "$head" != null
+          git cat-file -e "${base}^{commit}" || git fetch --no-tags origin "$base"
+          git fetch --no-tags origin \
+            "+refs/pull/${PR_NUMBER}/head:refs/remotes/pull/${PR_NUMBER}/head"
+          fetched_head=$(git rev-parse "refs/remotes/pull/${PR_NUMBER}/head")
+          if [ "$fetched_head" != "$head" ]; then
+            echo "::error::Fetched PR head does not match the GitHub API head SHA"
+            exit 1
+          fi
+          git diff --name-only "$base...$head" > /tmp/changed-files.txt
+          # Bound disk, prompt, and cost exposure before any API credential is
+          # made available. SIGPIPE (141) is expected when head reaches the cap.
+          set +o pipefail
+          git diff --no-ext-diff --unified=40 "$base...$head" \
+            | head -c 240000 > /tmp/review.diff
+          diff_status=${PIPESTATUS[0]}
+          set -o pipefail
+          if [ "$diff_status" -ne 0 ] && [ "$diff_status" -ne 141 ]; then
+            echo "::error::Unable to produce the bounded review diff"
+            exit "$diff_status"
+          fi
+          git show "$base:scripts/check_high_risk_ultrareview_gate.py" > /tmp/check_high_risk_ultrareview_gate.py
+          git show "$base:scripts/security_review_input.py" > /tmp/security_review_input.py
+          git show "$base:scripts/run_dual_security_review.py" > /tmp/run_dual_security_review.py
+
+      - name: Classify and redact untrusted diff
+        id: classify
+        run: |
+          PYTHONPATH=/tmp python /tmp/security_review_input.py \
+            --event /tmp/pr.json \
+            --changed-files /tmp/changed-files.txt \
+            --diff /tmp/review.diff \
+            --output /tmp/security-review-input.txt \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Run independent reviews and persist evidence
+        id: dual
+        if: steps.classify.outputs.high_risk == 'true'
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DECISION_EVENTS_URL: https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/decision-events
+          CLAUDE_SECURITY_MODEL: ${{ vars.CLAUDE_SECURITY_MODEL || 'claude-opus-4-7' }}
+          CODEX_SECURITY_MODEL: ${{ vars.CODEX_SECURITY_MODEL || 'gpt-5.3-codex' }}
+        run: |
+          python /tmp/run_dual_security_review.py \
+            --input /tmp/security-review-input.txt \
+            --report /tmp/dual-security-review.md \
+            --repo "$GITHUB_REPOSITORY" \
+            --pr-number "$PR_NUMBER" \
+            --run-id "$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+
+      - name: Publish explicit review or exception evidence
+        if: steps.classify.outputs.high_risk == 'true' && always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -s /tmp/dual-security-review.md ]; then
+            printf '%s\n' '## High-risk dual security review' '' '**UNAVAILABLE — review evidence generation failed; this is not a dual review.**' > /tmp/dual-security-review.md
+          fi
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file /tmp/dual-security-review.md
+          cat /tmp/dual-security-review.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enforce fail-closed dual-review result
+        if: steps.classify.outputs.high_risk == 'true' && always()
+        run: |
+          if [ "${{ steps.dual.outcome }}" != "success" ]; then
+            echo "::error::Both independent reviews and hash-linked evidence are required. Fallbacks do not count."
+            exit 1
+          fi
+
+      - name: Low-risk summary
+        if: steps.classify.outputs.high_risk != 'true'
+        run: echo "No high-risk trigger; dual-model review was not requested." >> "$GITHUB_STEP_SUMMARY"
