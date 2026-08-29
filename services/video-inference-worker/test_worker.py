@@ -74,6 +74,21 @@ class WorkerContractTest(unittest.TestCase):
         self.assertIn("dst=/run/secrets/video-worker-token,readonly", startup)
         self.assertNotIn('--env "VIDEO_WORKER_TOKEN=${token}"', startup)
 
+    def test_gcp_startup_keeps_worker_stopped_until_gpu_is_ready(self) -> None:
+        startup = (Path(__file__).parent / "gcp" / "startup.sh").read_text(
+            encoding="utf-8"
+        )
+
+        early_stop = startup.index("systemctl disable --now video-worker.service")
+        docker_restart = startup.index("systemctl restart docker")
+        gpu_check = startup.index("assert torch.cuda.is_available()")
+        worker_start = startup.rindex("systemctl start video-worker.service")
+
+        self.assertLess(early_stop, docker_restart)
+        self.assertLess(docker_restart, gpu_check)
+        self.assertLess(gpu_check, worker_start)
+        self.assertNotIn("systemctl enable --now video-worker.service", startup)
+
     def test_wan_patch_enables_cpu_blended_tiled_vae_decode(self) -> None:
         root = Path(__file__).parent
         dockerfile = (root / "Dockerfile").read_text(encoding="utf-8")

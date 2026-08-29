@@ -10,6 +10,11 @@ readonly STATE_DIR="/var/lib/video-worker"
 
 exec > >(logger --tag video-gpu-startup) 2>&1
 
+# The unit is intentionally kept disabled between boots. A unit left enabled by
+# an older startup script can otherwise claim a paid job while Docker, the model
+# image, and the GPU runtime are still being provisioned on this boot.
+systemctl disable --now video-worker.service || true
+
 metadata() {
   curl --fail --silent --show-error \
     --header "${METADATA_HEADER}" \
@@ -184,10 +189,11 @@ WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload
+systemctl disable video-worker.service || true
 if [[ "${WORKER_ENABLED}" == "true" ]]; then
-  systemctl enable --now video-worker.service
+  systemctl start video-worker.service
 else
-  systemctl disable --now video-worker.service || true
+  systemctl stop video-worker.service || true
 fi
 
 printf '%s\n' "ready" > "${STATE_DIR}/status"
