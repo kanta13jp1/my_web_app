@@ -140,6 +140,7 @@ class ScheduleResilienceWatchTest(unittest.TestCase):
         )
 
         self.assertEqual(delayed["action"], "healthy")
+        self.assertEqual(stalled["action"], "alert")
         self.assertEqual(stalled["reason"], "stale-success")
 
     def test_health_monitor_avoids_top_of_hour_congestion(self) -> None:
