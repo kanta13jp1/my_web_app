@@ -338,7 +338,10 @@ void main() {
       expect(
         workbook.overdueCashflowRows.map((row) => row.accountId),
         isNot(
-            contains(AssetLiabilityPlanningService.jibunBankCardLoanAccountId)),
+          contains(
+            AssetLiabilityPlanningService.jibunBankCardLoanAccountId,
+          ),
+        ),
       );
     });
 
