@@ -12,6 +12,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Privacy Policy'), findsWidgets);
+    expect(find.text('AIデータ取扱い早見表'), findsOneWidget);
+    expect(find.textContaining('AIチャット・文章生成'), findsWidgets);
+    expect(find.textContaining('AI分析・提案'), findsWidgets);
+    expect(find.textContaining('AI動画生成'), findsWidgets);
     expect(find.text('1. 適用範囲'), findsOneWidget);
     expect(find.textContaining('対象サービス'), findsWidgets);
   });
