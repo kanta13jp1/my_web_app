@@ -21,6 +21,14 @@ create table if not exists auth.users (
 
 create schema if not exists storage;
 
+create table if not exists storage.buckets (
+  id text primary key,
+  name text not null,
+  public boolean not null default false,
+  file_size_limit bigint,
+  allowed_mime_types text[]
+);
+
 create table if not exists storage.objects (
   id uuid primary key default gen_random_uuid(),
   bucket_id text not null,
@@ -28,6 +36,13 @@ create table if not exists storage.objects (
   owner_id text,
   owner uuid
 );
+
+insert into storage.buckets (id, name, public)
+values
+  ('avatars', 'avatars', false),
+  ('attachments', 'attachments', false),
+  ('ai-generated-images', 'ai-generated-images', true)
+on conflict (id) do nothing;
 
 -- Supabase provides auth.jwt() in production. The disposable PostgreSQL
 -- contract uses the same request-claim setting as the other auth fixtures.
