@@ -192,6 +192,8 @@ class AssetLiabilityPlanningService {
     Map<String, String> cardBillingAccountIds = const <String, String>{},
     Map<String, AssetLiabilityRevolvingCreditConfig> revolvingConfigs =
         const <String, AssetLiabilityRevolvingCreditConfig>{},
+    Map<String, AssetCardUsagePolicy> cardUsagePolicies =
+        const <String, AssetCardUsagePolicy>{},
     List<AssetLiabilityIncomePlan> incomePlans =
         const <AssetLiabilityIncomePlan>[],
     List<AssetLiabilityTransferTask> transferTasks =
@@ -456,6 +458,7 @@ class AssetLiabilityPlanningService {
       manualPaymentCount: manualPaymentCount,
       estimatedPaymentCount: estimatedPaymentCount,
       subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds,
+      cardUsagePolicies: cardUsagePolicies,
     );
   }
 
