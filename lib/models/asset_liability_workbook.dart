@@ -647,6 +647,11 @@ class AssetLiabilityDebtRow {
   final bool billingConfirmed;
   final bool paid;
 
+  /// 今月の支払いを期限管理・行動対象として扱うか。
+  ///
+  /// 支払予定額が 0 円の月と支払済みの行は確認対象に留め、延滞として扱わない。
+  final bool requiresAction;
+
   /// 家賃・通信費など毎月全額を支払う固定費型の負債。利率の概念を持たない。
   final bool fullPaymentEstimate;
 
@@ -682,6 +687,7 @@ class AssetLiabilityDebtRow {
     required this.paymentAmountEstimated,
     required this.billingConfirmed,
     required this.paid,
+    required this.requiresAction,
     this.fullPaymentEstimate = false,
     this.revolvingBilling,
   });
@@ -715,6 +721,7 @@ class AssetLiabilityPaymentDayRisk {
   final double interestEstimateTotal;
   final int manualPaymentCount;
   final int estimatedPaymentCount;
+  final bool requiresAction;
   final bool isPast;
   final bool isToday;
 
@@ -729,6 +736,7 @@ class AssetLiabilityPaymentDayRisk {
     required this.interestEstimateTotal,
     required this.manualPaymentCount,
     required this.estimatedPaymentCount,
+    required this.requiresAction,
     required this.isPast,
     required this.isToday,
   });
