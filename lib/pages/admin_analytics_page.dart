@@ -6,6 +6,7 @@ import '../models/admin_growth_evidence.dart';
 import '../services/growth_mission_service.dart';
 import '../widgets/admin_billing_overview.dart';
 import '../widgets/admin_growth_evidence_section.dart';
+import '../widgets/admin_today_registration_goal_card.dart';
 import '../widgets/structured_field_chips.dart';
 import '../widgets/schedule_task_monitor_card.dart';
 import '../widgets/competitor_monitoring_card.dart';
@@ -2372,8 +2373,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }) {
     const dailyTarget = 1;
     final achieved = todayRegistrations >= dailyTarget;
-    final remaining = achieved ? 0 : dailyTarget - todayRegistrations;
-    final progress = (todayRegistrations / dailyTarget).clamp(0.0, 1.0);
     final priorityChannelKey = achieved || todayViews > 0
         ? null
         : _resolvePriorityAcquisitionChannel(sourceBreakdown);
@@ -2388,8 +2387,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       priorityChannelKey: priorityChannelKey,
       priorityChannelLabel: priorityChannelLabel,
     );
-    final accentColor =
-        achieved ? const Color(0xFF0D9488) : const Color(0xFFB91C1C);
     // R16: 今日すでに投稿済み(または spend-cap ブロック中)なら、todayViews==0 でも
     // 「流入不足/今日の流入がありません」を出さず、growthAction(投稿済み状態機械の
     // 出力)の診断・文言をそのまま使う。
@@ -2417,10 +2414,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             : todayFunnel.inboxOpens == 0
                                 ? const Color(0xFF92400E)
                                 : const Color(0xFFB91C1C);
-    final actionTitle = achieved ? null : growthAction.title;
-    final actionDetail = achieved ? null : growthAction.detail;
-    final actionIcon = achieved ? null : growthAction.icon;
-    final actionButtonLabel = achieved ? null : growthAction.buttonLabel;
     final statusText = achieved
         ? '今日の登録目標は達成済みです。次は流入改善で上振れを狙う。'
         : postedTodayActive
@@ -2437,242 +2430,28 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                 ? 'Magic Link送信はありますが、受信箱が開かれていません。送信後の次の行動をさらに明確にしてください。'
                                 : '流れ込みはありますが登録が出ていません。登録完了直前での離脱が発生しています。';
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: achieved
-              ? (isDark
-                  ? const [Color(0xFF0D2E1A), Color(0xFF0A1F12)]
-                  : const [Color(0xFFE8F5E9), Color(0xFFF6FFF7)])
-              : (isDark
-                  ? const [Color(0xFF2E0A0A), Color(0xFF1F0808)]
-                  : const [Color(0xFFFFEBEE), Color(0xFFFFF8F8)]),
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accentColor.withValues(alpha: 0.35)),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withValues(alpha: 0.1),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  achieved ? Icons.check_circle : Icons.track_changes,
-                  color: accentColor,
-                  size: 20,
-                ),
+    return AdminTodayRegistrationGoalCard(
+      todayViews: todayViews,
+      todayRegistrations: todayRegistrations,
+      trialRuns: todayFunnel.trialRuns,
+      magicLinkSends: todayFunnel.magicLinkSends,
+      cvrText: formatRatePercent(todayRegistrations, todayViews),
+      diagnosisLabel: diagnosisLabel,
+      diagnosisColor: diagnosisColor,
+      priorityChannelLabel: priorityChannelLabel,
+      statusText: statusText,
+      actionTitle: achieved ? null : growthAction.title,
+      actionDetail: achieved ? null : growthAction.detail,
+      actionIcon: achieved ? null : growthAction.icon,
+      actionButtonLabel: achieved ? null : growthAction.buttonLabel,
+      onActionPressed: achieved
+          ? null
+          : () => _openGrowthAction(
+                isAcquisitionAction: growthAction.isAcquisitionAction,
+                priorityChannelKey: priorityChannelKey,
+                priorityChannelLabel: priorityChannelLabel,
+                ctaUrl: growthAction.launchUrl,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '今日の登録目標',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$todayRegistrations / $dailyTarget',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w800,
-                        color: accentColor,
-                        height: 1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  achieved ? '達成' : '未達',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: accentColor,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              minHeight: 10,
-              value: progress,
-              backgroundColor: Colors.black.withValues(alpha: 0.06),
-              valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _buildMiniKpiChip(
-                label: '今日のLP View数',
-                value: '$todayViews',
-                color: const Color(0xFF6366F1),
-              ),
-              _buildMiniKpiChip(
-                label: '今日のCVR',
-                // R17: 流入0のとき「0.0%」は捏造 → 「—」(ファネル率セルと同じ規律)。
-                value: formatRatePercent(todayRegistrations, todayViews),
-                color: diagnosisColor,
-              ),
-              if (todayViews > 0)
-                _buildMiniKpiChip(
-                  label: '今日体験',
-                  value: '${todayFunnel.trialRuns}',
-                  color: const Color(0xFF0D9488),
-                ),
-              if (todayViews > 0)
-                _buildMiniKpiChip(
-                  label: '今日送信',
-                  value: '${todayFunnel.magicLinkSends}',
-                  color: const Color(0xFFFF6B35),
-                ),
-              // R27: 値は率ではなくボトルネック診断ラベル(体験未実行 等)なので、
-              // ラベルも「登録率」でなく「今日の診断」にする(label/value 不一致
-              // の解消。率は隣の「今日のCVR」チップが担う)。
-              _buildMiniKpiChip(
-                label: '今日の診断',
-                value: diagnosisLabel,
-                color: diagnosisColor,
-              ),
-              if (priorityChannelLabel != null)
-                _buildMiniKpiChip(
-                  label: '最優先チャネル',
-                  value: priorityChannelLabel,
-                  color: const Color(0xFF475569),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            achieved ? statusText : '$statusText あと$remaining人の登録が必要です。',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
-              height: 1.7,
-            ),
-          ),
-          if (actionTitle != null &&
-              actionDetail != null &&
-              actionIcon != null &&
-              actionButtonLabel != null) ...[
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: diagnosisColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: diagnosisColor.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: diagnosisColor.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(actionIcon, color: diagnosisColor, size: 18),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          actionTitle,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: diagnosisColor,
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          actionDetail,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface,
-                            height: 1.7,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        FilledButton.icon(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: diagnosisColor,
-                            foregroundColor: const Color(0xFFE5E7EB),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                          ),
-                          onPressed: () {
-                            _openGrowthAction(
-                              isAcquisitionAction:
-                                  growthAction.isAcquisitionAction,
-                              priorityChannelKey: priorityChannelKey,
-                              priorityChannelLabel: priorityChannelLabel,
-                              ctaUrl: growthAction.launchUrl,
-                            );
-                          },
-                          icon: const Icon(Icons.arrow_forward, size: 16),
-                          label: Text(actionButtonLabel),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
     );
   }
 
