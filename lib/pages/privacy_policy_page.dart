@@ -9,8 +9,7 @@ class PrivacyPolicyPage extends StatefulWidget {
   const PrivacyPolicyPage({super.key, this.showBackButton = true});
 
   static const assetPath = 'assets/legal/privacy_policy.md';
-  static const aiDataMapAssetPath =
-      'assets/legal/ai_data_handling_map.md';
+  static const aiDataMapAssetPath = 'assets/legal/ai_data_handling_map.md';
 
   final bool showBackButton;
 
