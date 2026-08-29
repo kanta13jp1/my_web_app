@@ -15,6 +15,11 @@ enum AiUniversityLearningOutcomeTask {
     taskVersion: '01ai_models_20260829_v1',
     provider: '01ai',
     category: 'models',
+  ),
+  llmMechanics(
+    taskVersion: 'academic_llm_mechanics_20260829_v1',
+    provider: 'academic',
+    category: 'llm_mechanics',
   );
 
   const AiUniversityLearningOutcomeTask({
