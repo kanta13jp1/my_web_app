@@ -201,6 +201,13 @@ enabled = true
 verify_jwt = true
 entrypoint = "./functions/resource-optimizer/index.ts"
 
+[functions.decision-events]
+enabled = true
+# Internal automation only. The function also performs a constant-time exact
+# service-role bearer check before parsing or writing an event.
+verify_jwt = true
+entrypoint = "./functions/decision-events/index.ts"
+
 [functions.autonomous-ops]
 enabled = true
 # Browser-facing: deployed with --no-verify-jwt; owner auth is enforced in-function

@@ -149,6 +149,41 @@ void main() {
     ]);
   });
 
+  testWidgets('keeps the static pricing entry marker through checkout return', (
+    tester,
+  ) async {
+    final billing = _FakeBillingGateway();
+    final acquisition = _RecordingAcquisitionService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: billing,
+          acquisitionService: acquisition,
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
+          initialUri: Uri.parse(
+            'https://example.com/subscription-billing?entry=static_pricing',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final checkoutButton = find.byKey(const Key('billing_pro_checkout_button'));
+    await tester.ensureVisible(checkoutButton);
+    await tester.tap(checkoutButton);
+    await tester.pumpAndSettle();
+
+    final checkoutReturnUri = Uri.parse(billing.checkoutReturnUrl!);
+    expect(checkoutReturnUri.path, '/subscription-billing');
+    expect(checkoutReturnUri.queryParameters['entry'], 'static_pricing');
+    expect(acquisition.billingStages, [
+      GrowthAcquisitionService.funnelBillingView,
+      GrowthAcquisitionService.funnelUpgradeClick,
+    ]);
+  });
+
   testWidgets('shows supporter success confirmation', (tester) async {
     final billing = _FakeBillingGateway();
     final acquisition = _RecordingAcquisitionService();
@@ -328,6 +363,7 @@ class _FakeBillingGateway implements BillingGateway {
   final Exception? checkoutError;
   int fetchStatusCount = 0;
   BillingSupporterAttribution? supporterAttribution;
+  String? checkoutReturnUrl;
 
   @override
   Future<BillingStatus> fetchStatus() async {
@@ -343,6 +379,7 @@ class _FakeBillingGateway implements BillingGateway {
     required String returnUrl,
     BillingCheckoutAttribution attribution = const BillingCheckoutAttribution(),
   }) async {
+    checkoutReturnUrl = returnUrl;
     final error = checkoutError;
     if (error != null) throw error;
     return const BillingCheckoutSession(url: 'https://stripe.example.test');
