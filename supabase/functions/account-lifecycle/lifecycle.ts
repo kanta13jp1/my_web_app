@@ -1,0 +1,106 @@
+export const ACCOUNT_DELETION_POLICY_VERSION = "2026-08-29.v1";
+export const ACCOUNT_DELETION_GRACE_DAYS = 30;
+export const RECENT_SIGN_IN_MINUTES = 15;
+export const ACCOUNT_DELETION_CONFIRMATION = "アカウントを削除する";
+
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set([
+  "active",
+  "trialing",
+  "past_due",
+  "incomplete",
+]);
+
+export type BillingState = {
+  status?: unknown;
+  cancel_at_period_end?: unknown;
+  current_period_end?: unknown;
+};
+
+export type DependencyInventoryRow = {
+  deletion_strategy?: unknown;
+  matching_rows?: unknown;
+  is_blocking?: unknown;
+};
+
+export function isRecentSignIn(
+  lastSignInAt: unknown,
+  now = new Date(),
+): boolean {
+  if (typeof lastSignInAt !== "string" || lastSignInAt.trim() === "") {
+    return false;
+  }
+  const signedInAt = new Date(lastSignInAt);
+  if (Number.isNaN(signedInAt.getTime())) return false;
+  const ageMs = now.getTime() - signedInAt.getTime();
+  return ageMs >= 0 && ageMs <= RECENT_SIGN_IN_MINUTES * 60 * 1000;
+}
+
+export function requiresSubscriptionCancellation(
+  billing: BillingState | null | undefined,
+): boolean {
+  if (!billing) return false;
+  const status = String(billing.status ?? "").toLowerCase();
+  return ACTIVE_SUBSCRIPTION_STATUSES.has(status) &&
+    billing.cancel_at_period_end !== true;
+}
+
+export function deletionScheduledFor(
+  requestedAt: Date,
+  billing: BillingState | null | undefined,
+): Date {
+  const graceEnd = new Date(
+    requestedAt.getTime() + ACCOUNT_DELETION_GRACE_DAYS * 86400 * 1000,
+  );
+  const periodEndRaw = billing?.current_period_end;
+  if (typeof periodEndRaw !== "string" || periodEndRaw.trim() === "") {
+    return graceEnd;
+  }
+  const periodEnd = new Date(periodEndRaw);
+  if (Number.isNaN(periodEnd.getTime())) return graceEnd;
+  return periodEnd > graceEnd ? periodEnd : graceEnd;
+}
+
+export function blockingDependencyCount(
+  inventory: DependencyInventoryRow[] | null | undefined,
+): number {
+  return (inventory ?? []).reduce((total, row) => {
+    if (row.is_blocking !== true) return total;
+    const count = Number(row.matching_rows ?? 0);
+    return total + (Number.isFinite(count) && count > 0 ? count : 0);
+  }, 0);
+}
+
+export function bearerToken(request: Request): string {
+  const header = request.headers.get("authorization") ?? "";
+  return header.toLowerCase().startsWith("bearer ")
+    ? header.slice(7).trim()
+    : "";
+}
+
+export function isServiceRoleRequest(
+  request: Request,
+  serviceRoleKey: string,
+): boolean {
+  const token = bearerToken(request);
+  return serviceRoleKey !== "" && token.length === serviceRoleKey.length &&
+    timingSafeEqual(token, serviceRoleKey);
+}
+
+function timingSafeEqual(left: string, right: string): boolean {
+  let mismatch = 0;
+  for (let index = 0; index < left.length; index += 1) {
+    mismatch |= left.charCodeAt(index) ^ right.charCodeAt(index);
+  }
+  return mismatch === 0;
+}
+
+export function safeErrorCode(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  if (message.includes("account_deletion_dependency_blocked")) {
+    return "account_deletion_dependency_blocked";
+  }
+  if (message.includes("stripe")) return "stripe_deletion_failed";
+  if (message.includes("storage")) return "storage_deletion_failed";
+  if (message.includes("auth")) return "auth_deletion_failed";
+  return "account_deletion_failed";
+}

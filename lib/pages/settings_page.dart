@@ -10,6 +10,7 @@ import 'financial_report_page.dart';
 import 'admin_analytics_page.dart';
 import 'feedback_page.dart';
 import 'offline_secure_mode_settings_page.dart';
+import 'account_deletion_page.dart';
 import 'theme_selector_page.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -135,6 +136,23 @@ class SettingsPage extends StatelessWidget {
               MaterialPageRoute(
                 settings: const RouteSettings(name: '/feedback'),
                 builder: (_) => const FeedbackPage(),
+              ),
+            ),
+          ),
+          ListTile(
+            key: const Key('settings-account-deletion'),
+            leading: Icon(
+              Icons.person_off_outlined,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            title: const Text('退会・アカウント削除'),
+            subtitle: const Text('サブスク解約とは別に、関連データの削除を申請'),
+            trailing: const Icon(Icons.arrow_forward_ios),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                settings: const RouteSettings(name: '/account-deletion'),
+                builder: (_) => const AccountDeletionPage(),
               ),
             ),
           ),
