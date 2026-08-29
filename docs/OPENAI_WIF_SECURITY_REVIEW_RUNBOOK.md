@@ -34,10 +34,15 @@ Create one OpenAI Workload Identity Provider with:
 - Audience: `https://api.openai.com/v1`
 - Uploaded JWKS: disabled; use GitHub OIDC discovery
 
-Create one service-account mapping per trusted base branch. Each mapping must
-contain all five exact claim assertions shown below.
+GitHub currently evaluates `pull_request_target` in the repository default
+branch context. This workflow therefore supports `main` only. Do not create
+equivalent mappings for `staging` or `develop`: a less-protected base branch
+must never be able to run code with the default-branch OIDC identity.
 
-### main
+Create two service-account mappings. Bind both mappings to the dedicated
+project and service account, and grant `api.model.request` only.
+
+### Automatic trusted-author PR review
 
 ```text
 iss = https://token.actions.githubusercontent.com
@@ -45,31 +50,43 @@ aud = https://api.openai.com/v1
 repository = kanta13jp1/my_web_app
 ref = refs/heads/main
 workflow_ref = kanta13jp1/my_web_app/.github/workflows/high-risk-dual-security-review.yml@refs/heads/main
+environment = high-risk-security-review
+event_name = pull_request_target
+base_ref = main
 ```
 
-### staging
+### Explicit maintainer dispatch
 
 ```text
 iss = https://token.actions.githubusercontent.com
 aud = https://api.openai.com/v1
 repository = kanta13jp1/my_web_app
-ref = refs/heads/staging
-workflow_ref = kanta13jp1/my_web_app/.github/workflows/high-risk-dual-security-review.yml@refs/heads/staging
+ref = refs/heads/main
+workflow_ref = kanta13jp1/my_web_app/.github/workflows/high-risk-dual-security-review.yml@refs/heads/main
+environment = high-risk-security-review
+event_name = workflow_dispatch
 ```
 
-### develop
+Do not replace these assertions with a broad `repository_owner`-only mapping.
+
+## GitHub environment and external-contributor gate
+
+Create the GitHub environment `high-risk-security-review` and allow deployment
+from `main` only. Move these credentials into that environment, then remove
+their repository-level copies:
 
 ```text
-iss = https://token.actions.githubusercontent.com
-aud = https://api.openai.com/v1
-repository = kanta13jp1/my_web_app
-ref = refs/heads/develop
-workflow_ref = kanta13jp1/my_web_app/.github/workflows/high-risk-dual-security-review.yml@refs/heads/develop
+ANTHROPIC_API_KEY
+SUPABASE_SERVICE_ROLE_KEY
 ```
 
-Do not replace these with a broad `repository_owner`-only assertion. Bind every
-mapping to the dedicated project, service account, and `api.model.request`
-permission.
+Only PR authors associated as `OWNER`, `MEMBER`, or `COLLABORATOR` run the
+credential-bearing review automatically. Every other author fails closed
+without receiving model or Supabase credentials. After inspecting the exact PR
+diff, a maintainer can approve that review by dispatching this workflow from
+`main` with the PR number. In the repository Actions settings, require approval
+for all outside collaborators as an additional defense against unrelated fork
+workflows.
 
 ## GitHub repository variables
 
@@ -86,6 +103,28 @@ Do not add `OPENAI_API_KEY` for this workflow. GitHub supplies
 `ACTIONS_ID_TOKEN_REQUEST_URL` and `ACTIONS_ID_TOKEN_REQUEST_TOKEN` only to the
 job with `id-token: write`; the script never prints either token.
 
+## Python dependency lock
+
+The credential-bearing job uses CPython 3.12 and installs only prebuilt wheels
+whose complete dependency graph and SHA-256 hashes are recorded in
+`scripts/requirements-high-risk-security-review.txt`. A top-level OpenAI SDK
+version pin alone is not sufficient because its transitive dependencies use
+version ranges.
+
+Regenerate the lock in an empty directory and review every version and hash:
+
+```powershell
+python -m pip download --disable-pip-version-check --no-cache-dir `
+  --only-binary=:all: --platform manylinux2014_x86_64 `
+  --python-version 312 --implementation cp --abi cp312 `
+  --dest <empty-directory> "openai==3.6.0"
+Get-FileHash -Algorithm SHA256 <empty-directory>\*.whl
+```
+
+Update the lock through a reviewed PR. CI re-downloads the Linux CPython 3.12
+wheels with `--require-hashes`; the production job installs with the same hash
+enforcement.
+
 ## Bootstrap and validation
 
 The workflow definition used by `pull_request_target` comes from the trusted
@@ -99,12 +138,16 @@ do not represent the exception as a completed independent review.
 After the workflow is on the base branch:
 
 1. Configure the OpenAI project, service account, hard limit, provider, and
-   branch mappings.
-2. Set the three GitHub repository variables.
-3. Re-run the high-risk review for PR #5015 with `workflow_dispatch`.
-4. Confirm the PR comment contains executed Claude and Codex results, distinct
+   the two `main` mappings.
+2. Create the protected GitHub environment, move the two existing credentials
+   into it, and remove their repository-level copies.
+3. Set the three GitHub repository variables and require approval for all
+   outside collaborators in the repository Actions settings.
+4. Re-run the high-risk review for PR #5015 from `main` with
+   `workflow_dispatch`.
+5. Confirm the PR comment contains executed Claude and Codex results, distinct
    evidence IDs, and one decision trace ID.
-5. Confirm the OpenAI project usage increased by the expected single request
+6. Confirm the OpenAI project usage increased by the expected single request
    and no credential or raw token appears in Actions logs.
 
 Any missing variable, OIDC endpoint, review result, or decision-event write

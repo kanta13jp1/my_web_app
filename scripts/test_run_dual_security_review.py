@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import tempfile
 import types
@@ -173,17 +174,54 @@ class DualSecurityReviewTest(unittest.TestCase):
             self.assertIn("This check fails closed.", output)
             self.assertIn("required WIF configuration is unavailable", output)
 
-    def test_workflow_uses_wif_and_has_no_static_openai_key(self) -> None:
+    def test_workflow_confines_credentials_to_trusted_main_execution(self) -> None:
         root = Path(__file__).resolve().parents[1]
         workflow = (
             root / ".github/workflows/high-risk-dual-security-review.yml"
         ).read_text(encoding="utf-8")
         self.assertIn("id-token: write", workflow)
-        self.assertIn("openai==3.6.0", workflow)
+        self.assertIn("branches: [main]", workflow)
+        self.assertNotIn("branches: [main, staging, develop]", workflow)
+        self.assertIn("environment: high-risk-security-review", workflow)
+        self.assertIn("ref: ${{ github.sha }}", workflow)
+        self.assertIn('[ "$GITHUB_REF" != "refs/heads/main" ]', workflow)
+        self.assertIn('[ "$base_ref" != "main" ]', workflow)
+        self.assertIn(
+            'git show "$trusted:scripts/run_dual_security_review.py"', workflow
+        )
+        self.assertNotIn(
+            'git show "$base:scripts/run_dual_security_review.py"', workflow
+        )
+        self.assertIn("OWNER|MEMBER|COLLABORATOR", workflow)
+        self.assertIn('EVENT_NAME" = "workflow_dispatch', workflow)
+        self.assertIn("python-version: '3.12'", workflow)
+        self.assertIn("--only-binary=:all: --require-hashes", workflow)
+        self.assertIn("requirements-high-risk-security-review.txt", workflow)
         self.assertIn("vars.OPENAI_WIF_AUDIENCE", workflow)
         self.assertIn("vars.OPENAI_IDENTITY_PROVIDER_ID", workflow)
         self.assertIn("vars.OPENAI_SERVICE_ACCOUNT_ID", workflow)
         self.assertNotIn("secrets.OPENAI_API_KEY", workflow)
+        self.assertNotIn("pip install openai==", workflow)
+
+    def test_security_review_dependency_lock_is_complete_and_hashed(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        lock = (
+            root / "scripts/requirements-high-risk-security-review.txt"
+        ).read_text(encoding="utf-8")
+        requirements = re.findall(
+            r"(?m)^([a-z0-9-]+)==([^\s\\]+) \\\n"
+            r"\s+--hash=sha256:([0-9a-f]{64})$",
+            lock,
+        )
+        names = [name for name, _, _ in requirements]
+        self.assertEqual(len(requirements), 14)
+        self.assertEqual(len(names), len(set(names)))
+        versions = [(name, version) for name, version, _ in requirements]
+        self.assertIn(("openai", "3.6.0"), versions)
+        self.assertNotRegex(
+            lock,
+            r"(?:>=|<=|~=|!=|(?<![=])>(?!=)|(?<![=])<(?!=))",
+        )
 
 
 if __name__ == "__main__":
