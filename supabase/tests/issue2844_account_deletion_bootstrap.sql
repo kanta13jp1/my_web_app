@@ -49,6 +49,8 @@ create table if not exists public.user_api_audit_log (
   created_at timestamptz not null default now()
 );
 
+grant select on table public.user_api_audit_log to service_role;
+
 insert into storage.buckets (id, name, public)
 values
   ('avatars', 'avatars', false),

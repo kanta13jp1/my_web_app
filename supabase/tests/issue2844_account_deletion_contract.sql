@@ -35,6 +35,12 @@ create table public.issue2844_direct_z_child_fixture (
     references public.issue2844_direct_a_parent_fixture(id)
 );
 
+grant select on table
+  public.issue2844_direct_fixture,
+  public.issue2844_direct_a_parent_fixture,
+  public.issue2844_direct_z_child_fixture
+to service_role;
+
 insert into public.account_deletion_direct_delete_adapters (table_name)
 values
   ('issue2844_direct_fixture'),
