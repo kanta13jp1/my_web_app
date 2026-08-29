@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../models/admin_growth_evidence.dart';
 import '../services/growth_mission_service.dart';
+import '../widgets/admin_billing_overview.dart';
+import '../widgets/admin_growth_evidence_section.dart';
 import '../widgets/structured_field_chips.dart';
 import '../widgets/schedule_task_monitor_card.dart';
 import '../widgets/competitor_monitoring_card.dart';
@@ -29,32 +32,6 @@ class _FunnelMetrics {
     required this.magicLinkSends,
     required this.inboxOpens,
   });
-}
-
-class _BillingFunnelMetrics {
-  final int billingViews;
-  final int upgradeClicks;
-  final int checkoutSuccesses;
-  final int checkoutCancels;
-
-  const _BillingFunnelMetrics({
-    required this.billingViews,
-    required this.upgradeClicks,
-    required this.checkoutSuccesses,
-    required this.checkoutCancels,
-  });
-}
-
-class _PaidConversionMetrics {
-  final int paidCustomers;
-  final int mrrYen;
-
-  const _PaidConversionMetrics({
-    required this.paidCustomers,
-    required this.mrrYen,
-  });
-
-  static const empty = _PaidConversionMetrics(paidCustomers: 0, mrrYen: 0);
 }
 
 class _GrowthActionPlan {
@@ -96,7 +73,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   int _lpTotalViews = 0;
   int _allowedToolExecutionCount = 0;
   int _blockedToolExecutionCount = 0;
-  _PaidConversionMetrics _paidConversionMetrics = _PaidConversionMetrics.empty;
+  AdminPaidConversionMetrics _paidConversionMetrics =
+      AdminPaidConversionMetrics.empty;
   bool _hasLpViewStats = false;
   // R16: growth-hub x.today_status の結果(今日すでに投稿したか / 最新tweet+初速
   // インプレ / spend-cap ブロック中か)。取得失敗や available:false のときは null
@@ -244,8 +222,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
-  _BillingFunnelMetrics _extractBillingFunnelMetrics(Map<String, int> sources) {
-    return _BillingFunnelMetrics(
+  AdminBillingFunnelMetrics _extractBillingFunnelMetrics(
+    Map<String, int> sources,
+  ) {
+    return AdminBillingFunnelMetrics(
       billingViews: sources['funnel_billing_view'] ?? 0,
       upgradeClicks: sources['funnel_upgrade_click'] ?? 0,
       checkoutSuccesses: sources['funnel_checkout_success'] ?? 0,
@@ -266,11 +246,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return '${(numerator / denominator * 100).toStringAsFixed(1)}%';
   }
 
-  String _formatPaidConversionRate(int paidCustomers, int totalUsers) {
-    // R17: 母数0のとき「0.0%」は測定した0%に見えて誤解を生む → 計測不能の「—」。
-    return formatRatePercent(paidCustomers, totalUsers);
-  }
-
   Map<String, dynamic> _firstMap(dynamic value) {
     if (value is Map) {
       return Map<String, dynamic>.from(value);
@@ -281,19 +256,19 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return <String, dynamic>{};
   }
 
-  _PaidConversionMetrics _paidConversionMetricsFromRpc(dynamic value) {
+  AdminPaidConversionMetrics _paidConversionMetricsFromRpc(dynamic value) {
     final row = _firstMap(value);
     if (row.isEmpty) {
-      return _PaidConversionMetrics.empty;
+      return AdminPaidConversionMetrics.empty;
     }
 
-    return _PaidConversionMetrics(
+    return AdminPaidConversionMetrics(
       paidCustomers: _toInt(row['paid_customers']),
       mrrYen: _toInt(row['mrr_yen']),
     );
   }
 
-  Future<_PaidConversionMetrics> _loadPaidConversionMetrics() async {
+  Future<AdminPaidConversionMetrics> _loadPaidConversionMetrics() async {
     try {
       final response = await _supabase.rpc(
         'get_billing_paid_conversion_summary',
@@ -301,7 +276,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       return _paidConversionMetricsFromRpc(response);
     } catch (error) {
       debugPrint('billing paid conversion summary is unavailable: $error');
-      return _PaidConversionMetrics.empty;
+      return AdminPaidConversionMetrics.empty;
     }
   }
 
@@ -2017,6 +1992,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       }
     }
 
+    final acquisitionEvidence = adminAcquisitionEvidenceFromAggregateSignals(
+      sourceBreakdown,
+    );
     final chartData = _dailyStats.reversed.toList();
     final effectiveTodayViews = _hasLpViewStats ? _lpTodayViews : todayViews;
     final effectiveTotalLpViews =
@@ -2219,12 +2197,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       todayFunnel,
                     ),
                     const SizedBox(height: 16),
-                    _buildPaidConversionCard(
+                    AdminPaidConversionCard(
                       metrics: _paidConversionMetrics,
                       totalUsers: _actualUserCount,
                     ),
                     const SizedBox(height: 16),
-                    _buildBillingFunnelCard(totalBillingFunnel),
+                    AdminBillingFunnelCard(metrics: totalBillingFunnel),
+                    const SizedBox(height: 16),
+                    AdminGrowthEvidenceSection(
+                      acquisitionEvidence: acquisitionEvidence,
+                    ),
                     const SizedBox(height: 16),
                     _buildRegistrationOpsCard(
                       todayDropBeforeTrial: todayDropBeforeTrial,
@@ -3035,183 +3017,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   '$totalLpViews',
                   Icons.analytics,
                   const Color(0xFF0D9488),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPaidConversionCard({
-    required _PaidConversionMetrics metrics,
-    required int totalUsers,
-  }) {
-    final conversionRate = _formatPaidConversionRate(
-      metrics.paidCustomers,
-      totalUsers,
-    );
-    final formattedMrr = NumberFormat.currency(
-      locale: 'ja_JP',
-      symbol: '¥',
-      decimalDigits: 0,
-    ).format(metrics.mrrYen);
-
-    return Card(
-      elevation: 3,
-      shadowColor: const Color(0x33000000),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.workspace_premium, color: Color(0xFF0D9488)),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    '有料転換',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-                Text(
-                  'active pro/team',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'billing_subscriptions の active な Pro/Team だけを集計します。',
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                _buildMiniKpiChip(
-                  label: '課金ユーザー数',
-                  value: '${metrics.paidCustomers}',
-                  color: const Color(0xFF0D9488),
-                ),
-                _buildMiniKpiChip(
-                  label: 'MRR',
-                  value: formattedMrr,
-                  color: const Color(0xFF7C3AED),
-                ),
-                _buildMiniKpiChip(
-                  label: 'free→paid CVR',
-                  value: conversionRate,
-                  color: const Color(0xFF6366F1),
-                ),
-                _buildMiniKpiChip(
-                  label: '登録総数',
-                  value: '$totalUsers',
-                  color: const Color(0xFF475569),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBillingFunnelCard(_BillingFunnelMetrics metrics) {
-    return Card(
-      key: const Key('billing_funnel_card'),
-      elevation: 3,
-      shadowColor: const Color(0x33000000),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.shopping_cart_checkout, color: Color(0xFF6366F1)),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '過去30日の課金ファネル',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '課金ページ表示 → アップグレードクリック → Stripe決済結果を同じ集計窓で確認します。',
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                _buildMiniKpiChip(
-                  label: '課金ページ表示',
-                  value: '${metrics.billingViews}',
-                  color: const Color(0xFF475569),
-                ),
-                _buildMiniKpiChip(
-                  label: 'アップグレードクリック',
-                  value: '${metrics.upgradeClicks}',
-                  color: const Color(0xFF6366F1),
-                ),
-                _buildMiniKpiChip(
-                  label: '決済成功',
-                  value: '${metrics.checkoutSuccesses}',
-                  color: const Color(0xFF0D9488),
-                ),
-                _buildMiniKpiChip(
-                  label: '決済キャンセル',
-                  value: '${metrics.checkoutCancels}',
-                  color: const Color(0xFFB45309),
-                ),
-                _buildMiniKpiChip(
-                  label: '表示→クリック',
-                  value: _formatRate(
-                    metrics.upgradeClicks,
-                    metrics.billingViews,
-                  ),
-                  color: const Color(0xFF6366F1),
-                ),
-                _buildMiniKpiChip(
-                  label: 'クリック→成功',
-                  value: _formatRate(
-                    metrics.checkoutSuccesses,
-                    metrics.upgradeClicks,
-                  ),
-                  color: const Color(0xFF0D9488),
                 ),
               ],
             ),
