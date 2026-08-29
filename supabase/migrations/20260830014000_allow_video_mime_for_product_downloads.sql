@@ -1,5 +1,7 @@
 -- Paid video products use the same protected delivery path as existing ZIP
 -- products. Keep the bucket private and preserve every existing MIME type.
+-- Rollback removes only 'video/mp4' from allowed_mime_types after video sales
+-- are deactivated; it must not delete paid entitlements or stored objects.
 do $$
 begin
   if not exists (
@@ -23,4 +25,3 @@ begin
     );
 end;
 $$;
-
