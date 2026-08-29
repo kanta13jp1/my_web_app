@@ -109,6 +109,40 @@ class ScheduleResilienceWatchTest(unittest.TestCase):
         self.assertEqual(targets["notion-sync"].event, "schedule")
         self.assertEqual(targets["deploy-prod"].event, "push")
 
+    def test_health_monitor_requires_two_missed_delivery_opportunities(self) -> None:
+        targets = {target.key: target for target in TARGETS}
+        health_monitor = targets["health-monitor"]
+
+        self.assertEqual(health_monitor.max_age_hours, 6)
+        delayed = evaluate_target(
+            health_monitor,
+            [
+                run(
+                    created_at=(NOW - timedelta(hours=3, minutes=36))
+                    .isoformat()
+                    .replace("+00:00", "Z")
+                )
+            ],
+            NOW,
+            max_attempts=2,
+        )
+        stalled = evaluate_target(
+            health_monitor,
+            [
+                run(
+                    created_at=(NOW - timedelta(hours=6, minutes=1))
+                    .isoformat()
+                    .replace("+00:00", "Z")
+                )
+            ],
+            NOW,
+            max_attempts=2,
+        )
+
+        self.assertEqual(delayed["action"], "healthy")
+        self.assertEqual(stalled["action"], "alert")
+        self.assertEqual(stalled["reason"], "stale-success")
+
     def test_health_monitor_avoids_top_of_hour_congestion(self) -> None:
         workflow = (
             Path(__file__).resolve().parents[1] / ".github/workflows/health-monitor.yml"
