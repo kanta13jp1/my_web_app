@@ -107,6 +107,29 @@ jobs:
           python scripts/vscode_terminal_settings_test.py
           python scripts/ci_failure_digest_test.py
 
+      - name: Test high-risk dual security review
+        run: >-
+          python -m unittest
+          scripts/test_security_review_input.py
+          scripts/test_run_dual_security_review.py
+          scripts/test_decision_event_migration.py
+
+      - name: Verify high-risk security review dependency lock
+        shell: bash
+        run: |
+          mkdir -p "${RUNNER_TEMP}/high-risk-security-review-wheels"
+          python -m pip download \
+            --disable-pip-version-check \
+            --no-cache-dir \
+            --only-binary=:all: \
+            --require-hashes \
+            --platform manylinux2014_x86_64 \
+            --python-version 312 \
+            --implementation cp \
+            --abi cp312 \
+            --dest "${RUNNER_TEMP}/high-risk-security-review-wheels" \
+            -r scripts/requirements-high-risk-security-review.txt
+
       - name: Setup Flutter
         if: steps.changes.outputs.flutter == 'true'
         uses: ./.github/actions/setup-flutter-sdk
