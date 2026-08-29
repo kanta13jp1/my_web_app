@@ -89,7 +89,7 @@ Map<String, dynamic> growthWeeklyDigestSuccessFixture() => <String, dynamic>{
           'actual': <String, dynamic>{
             'cvr': 5,
             'touches': 20,
-            'signupSubmits': 1
+            'signupSubmits': 1,
           },
           'status': 'met',
         },
