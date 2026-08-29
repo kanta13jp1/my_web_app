@@ -113,6 +113,10 @@ jobs:
           UPDATE_WBS="${INPUT_UPDATE_WBS:-true}"
           SEND_SLACK_PROBE="${INPUT_SEND_SLACK_PROBE:-false}"
 
+          python scripts/production_journey_probe.py \
+            --base-url "$BASE_URL" \
+            --public-routes web/seo/public-routes.json
+
           args=(
             --base-url "$BASE_URL"
             --supabase-url "$SUPABASE_URL"

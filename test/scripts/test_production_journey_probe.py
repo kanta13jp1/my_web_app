@@ -132,19 +132,16 @@ class ProductionJourneyProbeTest(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "title mismatch"):
             run_probe(config_path=self.config, root_dir=self.root)
 
-    def test_deploy_workflow_runs_predeploy_and_live_contract(self) -> None:
+    def test_release_readiness_runs_live_contract_after_deploy(self) -> None:
         repo_root = Path(__file__).resolve().parents[2]
-        workflow = (repo_root / ".github" / "workflows" / "deploy-prod.yml").read_text(
-            encoding="utf-8"
-        )
+        workflow = (
+            repo_root / ".github" / "workflows" / "release-readiness.yml"
+        ).read_text(encoding="utf-8")
 
-        self.assertGreaterEqual(
-            workflow.count("scripts/production_journey_probe.py"),
-            2,
-        )
-        self.assertIn("--root-dir build/web", workflow)
+        self.assertIn('      - "Deploy to Production"', workflow)
+        self.assertEqual(workflow.count("scripts/production_journey_probe.py"), 1)
         self.assertIn("--base-url", workflow)
-        self.assertIn("steps.firebase_cli_deploy.outcome == 'success'", workflow)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'", workflow)
 
     def test_real_generator_output_satisfies_the_local_contract(self) -> None:
         repo_root = Path(__file__).resolve().parents[2]
