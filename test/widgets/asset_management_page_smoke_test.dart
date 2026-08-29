@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/asset_obsidian_vault_import.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/services/asset_card_usage_policy_store.dart';
 import 'package:my_web_app/services/asset_chat_privacy_settings_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
@@ -2066,6 +2067,50 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets(
+      'completed one-shot policy restores its memo and suppresses setup advice',
+      (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetCardUsagePolicyStore.prefsKey: jsonEncode(<String, dynamic>{
+            'famipay_card': <String, dynamic>{
+              'enforce_one_shot': true,
+              'changed_at': '2026-08-29T06:18:55.608Z',
+              'memo': '受付 ABC123 / 8月29日 電話',
+            },
+          }),
+        });
+        final dateKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        await tester.binding.setSurfaceSize(const Size(1200, 3600));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'ファミペイ': -100000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 250));
+        await tester.pump(const Duration(milliseconds: 250));
+
+        final checkbox = tester.widget<CheckboxListTile>(
+          find.byKey(const Key('asset_card_one_shot_completed_famipay_card')),
+        );
+        expect(checkbox.value, isTrue);
+        expect(find.text('受付 ABC123 / 8月29日 電話'), findsOneWidget);
+        expect(find.textContaining('12ヶ月脱却の月額'), findsWidgets);
+        expect(find.textContaining('リボ/分割の設定解除を電話する'), findsNothing);
+        expect(find.textContaining('設定を解除し'), findsNothing);
+
+        await _unmount(tester);
+      },
+    );
 
     testWidgets('mirror update notice offers and applies remote prefs', (
       tester,

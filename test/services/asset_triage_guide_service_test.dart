@@ -85,6 +85,82 @@ void main() {
       expect(plan.consultationNote!.contains('188'), isTrue);
     });
 
+    test(
+      'completed one-shot change removes phone advice but keeps repayment',
+      () {
+        final workbook = planner.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'bank': 500000,
+            'ファミペイ': -100000,
+          },
+          baseDate: DateTime(2026, 8, 29),
+          monthlyPaymentOverrides: const <String, double>{'ファミペイ': 5000},
+          cardUsagePolicies: <String, AssetCardUsagePolicy>{
+            'famipay_card': AssetCardUsagePolicy(
+              enforceOneShot: true,
+              changedAt: DateTime.utc(2026, 8, 29),
+              memo: '受付 ABC123',
+            ),
+          },
+        );
+        final discipline = monitor.evaluate(
+          workbook: workbook,
+          cardUsagePolicies: workbook.cardUsagePolicies,
+        );
+
+        final plan = triage.buildPlan(
+          workbook: workbook,
+          disciplineReport: discipline,
+        );
+
+        expect(
+          plan.weekSteps.any(
+            (step) => step.kind == AssetTriageStepKind.disableRevolving,
+          ),
+          isFalse,
+        );
+        expect(
+          plan.monthSteps.any(
+            (step) => step.kind == AssetTriageStepKind.reviewRepaymentPace,
+          ),
+          isTrue,
+        );
+      },
+    );
+
+    test('one-shot policy suppresses advice only for the matching card', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'ファミペイ': -100000,
+          'auPayカード': -80000,
+        },
+        baseDate: DateTime(2026, 8, 29),
+        monthlyPaymentOverrides: const <String, double>{
+          'ファミペイ': 5000,
+          'auPayカード': 5000,
+        },
+        cardUsagePolicies: const <String, AssetCardUsagePolicy>{
+          'famipay_card': AssetCardUsagePolicy(enforceOneShot: true),
+        },
+      );
+      final discipline = monitor.evaluate(
+        workbook: workbook,
+        cardUsagePolicies: workbook.cardUsagePolicies,
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: discipline,
+      );
+
+      final settingStep = plan.weekSteps.singleWhere(
+        (step) => step.kind == AssetTriageStepKind.disableRevolving,
+      );
+      expect(settingStep.detail, contains('auPayカード'));
+      expect(settingStep.detail, isNot(contains('ファミペイ')));
+    });
+
     test('overdue step ignores unreceived income and due-today payments', () {
       // 未受領の給料 (期日超過で overdue フラグが立つ) と本日期日の支払は
       // 「期限超過」ステップに数えない。

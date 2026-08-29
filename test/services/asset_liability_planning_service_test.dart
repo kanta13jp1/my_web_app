@@ -38,6 +38,28 @@ void main() {
       expect(workbook.topFourDebtShare, closeTo(0.7556, 0.001));
     });
 
+    test('carries card usage policies into the workbook for insights', () {
+      final changedAt = DateTime.utc(2026, 8, 29, 6, 18);
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'ファミペイ': -100000,
+        },
+        baseDate: DateTime(2026, 8, 29),
+        cardUsagePolicies: <String, AssetCardUsagePolicy>{
+          'famipay_card': AssetCardUsagePolicy(
+            enforceOneShot: true,
+            changedAt: changedAt,
+            memo: '受付 ABC123',
+          ),
+        },
+      );
+
+      expect(workbook.cardUsagePolicies['famipay_card']!.enforceOneShot, true);
+      expect(workbook.cardUsagePolicies['famipay_card']!.changedAt, changedAt);
+      expect(workbook.cardUsagePolicies['famipay_card']!.memo, '受付 ABC123');
+    });
+
     test('groups liability balances by payment day', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,

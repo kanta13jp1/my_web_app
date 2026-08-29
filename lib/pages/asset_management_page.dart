@@ -48,6 +48,7 @@ import 'package:my_web_app/services/advisory_briefing_share_service.dart';
 import 'package:my_web_app/services/household_tracker_share_service.dart';
 import 'package:my_web_app/services/investment_asset_repository.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
+import 'package:my_web_app/services/asset_card_usage_policy_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
@@ -641,7 +642,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       final rows = await _supabase
           .from('asset_pref_mirror')
-          .select()
+          .select('user_id,pref_key,value,updated_at')
           .eq('user_id', userId);
       return indexPrefMirrorRowsByKey(rows);
     } catch (e) {
@@ -678,7 +679,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     final rows = await _supabase
         .from('asset_pref_mirror')
-        .select()
+        .select('user_id,pref_key,value,updated_at')
+        .eq('user_id', userId)
         .inFilter('pref_key', prefKeys);
     return List<Map<String, dynamic>>.from(rows);
   }
@@ -735,6 +737,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // リボ払いカードの設定 (負債IDごと)。v1 はローカル永続化のみ。
   Map<String, AssetLiabilityRevolvingCreditConfig> _revolvingConfigs =
       <String, AssetLiabilityRevolvingCreditConfig>{};
+  // カード会社で「今後は一括（1回）払い」へ変更した実行記録。
+  Map<String, AssetCardUsagePolicy> _cardUsagePolicies =
+      <String, AssetCardUsagePolicy>{};
   // UI 登録の定期固定費 (家賃・光熱費など)。振替日昇順で保持する。
   List<AssetRecurringFixedCost> _recurringFixedCosts =
       <AssetRecurringFixedCost>[];
@@ -759,6 +764,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 視線誘導するため一時的に点滅ハイライトする負債マスタ行ID (2.6 秒で自動解除)。
   String? _highlightedDebtCardId;
   Timer? _debtCardHighlightTimer;
+  Timer? _cardUsagePolicyMemoSaveTimer;
   Map<String, AssetLiabilityAnnualRateEvidence> _annualRateEvidences =
       <String, AssetLiabilityAnnualRateEvidence>{};
   Set<String> _monthlyPaidAccountNames = <String>{};
@@ -977,6 +983,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   static const String _salaryAmountMirrorKey = 'salary_amount';
   final AssetRevolvingCreditConfigStore _revolvingConfigStore =
       const AssetRevolvingCreditConfigStore();
+  final AssetCardUsagePolicyStore _cardUsagePolicyStore =
+      const AssetCardUsagePolicyStore();
+  static const String _cardUsagePoliciesMirrorKey = 'card_usage_policies';
   late final AssetRecurringFixedCostStore _recurringFixedCostStore =
       widget.debugRecurringFixedCostStore ??
           const AssetRecurringFixedCostStore();
@@ -1185,6 +1194,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_loadHouseholdTrackerPublishing());
     unawaited(_loadSalaryAmount());
     unawaited(_loadRevolvingConfigs());
+    unawaited(_loadCardUsagePolicies());
     unawaited(_loadCategoryBudgets());
     unawaited(_loadRecurringFixedCosts());
     // ドル建てサブスクの円換算に使う USD/JPY を取得し、最新レートで再計算する。
@@ -1266,6 +1276,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _deadlineTimer?.cancel();
     _bootPrefMirrorExpiryTimer?.cancel();
     _debtCardHighlightTimer?.cancel();
+    _cardUsagePolicyMemoSaveTimer?.cancel();
     _assetManagementAiSummaryDebounce?.cancel();
     _existingDeveloperIssueLookupDebounce?.cancel();
     _annualRateEvidencePasteRegistration?.dispose();
@@ -5383,6 +5394,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       defaultCardBillingAccountIds: _defaultCardBillingAccountIds,
       cardBillingAccountIds: _cardBillingAccountIds,
       revolvingConfigs: _revolvingConfigs,
+      cardUsagePolicies: _cardUsagePolicies,
       incomePlans: _monthlyIncomePlans,
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
@@ -9472,6 +9484,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       defaultCardBillingAccountIds: _defaultCardBillingAccountIds,
       cardBillingAccountIds: _cardBillingAccountIds,
       revolvingConfigs: _revolvingConfigs,
+      cardUsagePolicies: _cardUsagePolicies,
       incomePlans: _monthlyIncomePlans,
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
@@ -10771,6 +10784,161 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // ローカル読込後にサーバ集約ミラーから復元する (端末間同期 / 集約優先)。
     await _restoreRevolvingConfigsFromMirror();
     unawaited(_refreshSyncSources());
+  }
+
+  Future<void> _loadCardUsagePolicies() async {
+    try {
+      final policies = await _cardUsagePolicyStore.load();
+      if (mounted && policies.isNotEmpty) {
+        setState(() {
+          _cardUsagePolicies = policies;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading card usage policies: $e');
+    }
+    await _restoreCardUsagePoliciesFromMirror();
+  }
+
+  /// カード利用方針を 1 行 JSON としてミラーする。SharedPreferences は
+  /// 未ログイン・オフライン時も一次ストアとして残す。
+  Future<void> _mirrorCardUsagePolicies() async {
+    unawaited(_syncTimestampStore.markChanged(_cardUsagePoliciesMirrorKey));
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _cardUsagePoliciesMirrorKey,
+        'value': AssetCardUsagePolicyStore.encodeMirrorValue(
+          _cardUsagePolicies,
+        ),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+      await _syncDirtyKeysStore.clearDomain(_cardUsagePoliciesMirrorKey);
+    } catch (e) {
+      debugPrint('card usage policy mirror upsert failed: $e');
+    }
+  }
+
+  /// サーバにしかないカードは追加し、同一カードの衝突は既存の LWW 方針に従う。
+  Future<void> _restoreCardUsagePoliciesFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    final localBefore = Map<String, AssetCardUsagePolicy>.from(
+      _cardUsagePolicies,
+    );
+    final hasLocal = localBefore.isNotEmpty;
+    try {
+      final rows = await _bootSelectPrefMirror(_cardUsagePoliciesMirrorKey);
+      if (rows.isEmpty) {
+        if (hasLocal) {
+          unawaited(_mirrorCardUsagePolicies());
+        }
+        return;
+      }
+      final serverPolicies = AssetCardUsagePolicyStore.decodeMirrorValue(
+        rows.first['value'],
+      );
+      final mirrorUpdatedAt = DateTime.tryParse(
+        rows.first['updated_at']?.toString() ?? '',
+      );
+      final adoptConflicts = await _shouldAdoptMirror(
+        prefKey: _cardUsagePoliciesMirrorKey,
+        hasLocal: hasLocal,
+        mirrorUpdatedAt: mirrorUpdatedAt,
+      );
+      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
+        _cardUsagePoliciesMirrorKey,
+      );
+      final merged = Map<String, AssetCardUsagePolicy>.from(localBefore);
+      var changed = false;
+      serverPolicies.forEach((key, policy) {
+        if (!merged.containsKey(key) ||
+            (adoptConflicts && !dirtyKeys.contains(key))) {
+          merged[key] = policy;
+          changed = true;
+        }
+      });
+      if (changed && mounted) {
+        setState(() {
+          _cardUsagePolicies = merged;
+        });
+        _persistInBackground(
+          _cardUsagePolicyStore.save(merged),
+          'card usage policy restore save',
+        );
+        unawaited(
+          _realignMirrorTimestamp(_cardUsagePoliciesMirrorKey, mirrorUpdatedAt),
+        );
+      }
+      final localHasExtra = localBefore.keys.any(
+        (key) => !serverPolicies.containsKey(key),
+      );
+      if (localHasExtra) {
+        unawaited(_mirrorCardUsagePolicies());
+      }
+    } catch (e) {
+      debugPrint('card usage policy mirror restore failed: $e');
+    }
+  }
+
+  void _persistCardUsagePolicy(String cardId, AssetCardUsagePolicy policy) {
+    setState(() {
+      _cardUsagePolicies = <String, AssetCardUsagePolicy>{
+        ..._cardUsagePolicies,
+        cardId: policy,
+      };
+    });
+    _persistInBackground(
+      _cardUsagePolicyStore.save(_cardUsagePolicies),
+      'card usage policy save',
+    );
+    unawaited(
+      _syncDirtyKeysStore.markDirty(_cardUsagePoliciesMirrorKey, cardId),
+    );
+    unawaited(_mirrorCardUsagePolicies());
+  }
+
+  void _toggleCardOneShotCompleted(String cardId, bool completed) {
+    final current = _cardUsagePolicies[cardId];
+    _persistCardUsagePolicy(
+      cardId,
+      AssetCardUsagePolicy(
+        enforceOneShot: completed,
+        changedAt: completed ? DateTime.now().toUtc() : current?.changedAt,
+        memo: current?.memo ?? '',
+      ),
+    );
+  }
+
+  /// メモはローカルへ即時保存し、ネットワーク upsert だけをデバウンスする。
+  void _updateCardUsagePolicyMemo(String cardId, String memo) {
+    final current = _cardUsagePolicies[cardId];
+    if (current == null) {
+      return;
+    }
+    _cardUsagePolicies = <String, AssetCardUsagePolicy>{
+      ..._cardUsagePolicies,
+      cardId: current.copyWith(memo: memo),
+    };
+    _persistInBackground(
+      _cardUsagePolicyStore.save(_cardUsagePolicies),
+      'card usage policy memo save',
+    );
+    unawaited(
+      _syncDirtyKeysStore.markDirty(_cardUsagePoliciesMirrorKey, cardId),
+    );
+    _cardUsagePolicyMemoSaveTimer?.cancel();
+    _cardUsagePolicyMemoSaveTimer = Timer(
+      const Duration(milliseconds: 600),
+      () {
+        unawaited(_mirrorCardUsagePolicies());
+      },
+    );
   }
 
   // --- 定期固定費 (UI 登録) の読み書き・端末間同期 ---
@@ -17191,6 +17359,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         defaultCardBillingAccountIds: _defaultCardBillingAccountIds,
         cardBillingAccountIds: _cardBillingAccountIds,
         revolvingConfigs: _revolvingConfigs,
+        cardUsagePolicies: _cardUsagePolicies,
         incomePlans: _monthlyIncomePlans,
         cardStatementLines: _cardStatementLines,
         transferTasks: _transferTasks,
@@ -28708,6 +28877,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 child: _buildRevolvingControl(row),
                 maxWidth: 260,
               ),
+              if (AssetDebtDisciplineMonitor.isLumpSumCardKind(row.kind))
+                _buildDebtMasterControl(
+                  label: '一括払い化',
+                  child: _buildCardUsagePolicyControl(row),
+                  maxWidth: 320,
+                ),
               _buildDebtMasterControl(
                 label: '支払額区分',
                 child: _buildPaymentAmountSourceChip(row),
@@ -29177,6 +29352,60 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             },
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildCardUsagePolicyControl(AssetLiabilityDebtRow row) {
+    final policy = _cardUsagePolicies[row.id];
+    final completed = policy?.enforceOneShot == true;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CheckboxListTile(
+          key: ValueKey('asset_card_one_shot_completed_${row.id}'),
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          controlAffinity: ListTileControlAffinity.leading,
+          value: completed,
+          title: const Text(
+            '一括化完了（今後は1回払い）',
+            style: TextStyle(fontSize: 12, height: 1.3),
+          ),
+          onChanged: (value) =>
+              _toggleCardOneShotCompleted(row.id, value ?? false),
+        ),
+        if (completed) ...[
+          if (policy?.changedAt != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                '変更記録: ${DateFormat('yyyy/MM/dd HH:mm').format(policy!.changedAt!.toLocal())}',
+                style: const TextStyle(fontSize: 11, height: 1.3),
+              ),
+            ),
+          TextFormField(
+            key: ValueKey('asset_card_one_shot_memo_${row.id}'),
+            initialValue: policy?.memo ?? '',
+            maxLength: 200,
+            minLines: 1,
+            maxLines: 2,
+            style: const TextStyle(fontSize: 12),
+            decoration: const InputDecoration(
+              isDense: true,
+              labelText: '受付番号・連絡日メモ',
+              hintText: '例: 8/29 電話、受付 ABC123',
+              helperText: 'カード番号などの機密情報は記録しないでください',
+            ),
+            onChanged: (value) => _updateCardUsagePolicyMemo(row.id, value),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            '設定変更の再案内は停止し、返済月額目標だけを継続表示します。',
+            style: TextStyle(fontSize: 11, height: 1.3),
+          ),
+        ],
       ],
     );
   }
