@@ -536,9 +536,9 @@ jobs:
           # 全250本を16本のhubにaction分岐統合 (11 hub + 5 standalone)。新規機能は既存hubへのaction追加のみ。
           # 新しいEFを作成する場合は必ず既存hubの数を減らして50本以下を維持すること。
           #
-          # All browser-facing functions use --no-verify-jwt so that CORS OPTIONS
-          # preflight requests (which carry no Authorization header) are not
-          # rejected by Supabase's platform-level JWT check.
+          # Public/browser functions that own a custom auth handshake use
+          # --no-verify-jwt. Sensitive owner-only endpoints keep gateway JWT
+          # verification and repeat authorization inside the handler.
           #
           # Remote dependency CDNs can occasionally return transient 5xx errors
           # while the Supabase CLI builds each function graph. Retry per
@@ -601,7 +601,9 @@ jobs:
           # local-election-intelligence は line 275 にあり (並び順維持のため)
           deploy_function get-home-dashboard --no-verify-jwt
           deploy_function ai-assistant --no-verify-jwt
-          deploy_function growth-weekly-digest --no-verify-jwt
+          # Owner-only growth aggregates. Gateway JWT verification remains on;
+          # the handler also requires user_profiles admin or service role.
+          deploy_function growth-weekly-digest
           deploy_function guitar-recording-studio --no-verify-jwt
           deploy_function autonomous-ops --no-verify-jwt
           # Owner-only Notion inventory. Browser JWT + user_profiles.is_admin
