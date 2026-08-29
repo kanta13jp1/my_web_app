@@ -10,11 +10,19 @@ create table public.account_deletion_requests (
   id bigint generated always as identity primary key,
   user_id uuid,
   status text not null default 'pending'
-    check (status in ('pending', 'processing', 'failed', 'cancelled', 'completed')),
+    check (status in (
+      'pending',
+      'processing',
+      'awaiting_token_expiry',
+      'failed',
+      'cancelled',
+      'completed'
+    )),
   policy_version text not null,
   requested_at timestamptz not null default now(),
   scheduled_for timestamptz not null,
   processing_started_at timestamptz,
+  auth_user_deleted_at timestamptz,
   retry_after timestamptz,
   cancelled_at timestamptz,
   completed_at timestamptz,
@@ -30,7 +38,10 @@ create table public.account_deletion_requests (
   check (scheduled_for >= requested_at),
   check ((status = 'cancelled') = (cancelled_at is not null)),
   check ((status = 'completed') = (completed_at is not null)),
-  check (status not in ('pending', 'processing', 'failed') or user_id is not null)
+  check (
+    status not in ('pending', 'processing', 'awaiting_token_expiry', 'failed')
+    or user_id is not null
+  )
 );
 
 comment on table public.account_deletion_requests is
@@ -41,16 +52,67 @@ comment on column public.account_deletion_requests.user_id is
 create unique index account_deletion_requests_active_user_idx
   on public.account_deletion_requests (user_id)
   where user_id is not null
-    and status in ('pending', 'processing', 'failed');
+    and status in ('pending', 'processing', 'awaiting_token_expiry', 'failed');
 
 create index account_deletion_requests_due_idx
   on public.account_deletion_requests (scheduled_for, id)
-  where status in ('pending', 'failed');
+  where status in ('pending', 'awaiting_token_expiry', 'failed');
 
 alter table public.account_deletion_requests enable row level security;
 revoke all on table public.account_deletion_requests
   from public, anon, authenticated;
 grant select, insert, update on table public.account_deletion_requests
+  to service_role;
+
+-- Explicit adapters keep future plain user_id tables fail-closed. Adding a
+-- user-owned table without an auth.users FK requires a reviewed row here (or a
+-- purpose-built anonymization/retention adapter) in the same migration.
+create table public.account_deletion_direct_delete_adapters (
+  schema_name text not null default 'public'
+    check (schema_name = 'public'),
+  table_name text not null,
+  column_name text not null default 'user_id'
+    check (column_name = 'user_id'),
+  primary key (schema_name, table_name, column_name)
+);
+
+comment on table public.account_deletion_direct_delete_adapters is
+  'Reviewed legacy user-owned columns that account deletion may hard-delete.';
+
+insert into public.account_deletion_direct_delete_adapters (table_name)
+values
+  ('ab_assignments'),
+  ('abstinence_slips'),
+  ('ai_task_budget_job_steps'),
+  ('ai_task_budget_jobs'),
+  ('daily_habit_logs'),
+  ('daily_habits'),
+  ('email_accounts'),
+  ('email_clean_logs'),
+  ('email_cleanup_routines'),
+  ('email_subscriptions'),
+  ('feature_requests'),
+  ('musubi_thread_members'),
+  ('note_search_index'),
+  ('notion_migration_capabilities'),
+  ('notion_migration_checks'),
+  ('notion_migration_items'),
+  ('notion_migration_vault_entries'),
+  ('notion_migration_vault_manifests'),
+  ('notion_migration_wbs_staging'),
+  ('payment_logs'),
+  ('payment_reminders'),
+  ('resource_optimizer_ai_quota'),
+  ('shopping_items'),
+  ('shopping_purchase_logs'),
+  ('user_theme_preferences'),
+  ('user_writer_knowledge_graph_documents');
+
+alter table public.account_deletion_direct_delete_adapters
+  enable row level security;
+revoke all on table public.account_deletion_direct_delete_adapters
+  from public, anon, authenticated;
+grant select on table public.account_deletion_direct_delete_adapters
   to service_role;
 grant usage, select on sequence public.account_deletion_requests_id_seq
   to service_role;
@@ -91,7 +153,7 @@ begin
     select request.id
     from public.account_deletion_requests as request
     where (
-      request.status in ('pending', 'failed')
+      request.status in ('pending', 'awaiting_token_expiry', 'failed')
       and request.scheduled_for <= now()
       and coalesce(request.retry_after, request.scheduled_for) <= now()
       and request.attempt_count < 10
@@ -120,7 +182,10 @@ create or replace function public.fail_account_deletion(
   p_request_id bigint,
   p_error_code text,
   p_database_rows_remaining bigint default 0,
-  p_retry_seconds integer default 86400
+  p_retry_seconds integer default 86400,
+  p_storage_objects_deleted integer default 0,
+  p_stripe_customer_deleted boolean default false,
+  p_auth_user_deleted boolean default false
 )
 returns void
 language plpgsql
@@ -142,6 +207,17 @@ begin
         secs => greatest(300, least(coalesce(p_retry_seconds, 86400), 604800))
       ),
       last_error_code = left(btrim(p_error_code), 120),
+      auth_user_deleted_at = case
+        when coalesce(p_auth_user_deleted, false)
+          then coalesce(auth_user_deleted_at, now())
+        else auth_user_deleted_at
+      end,
+      storage_objects_deleted = storage_objects_deleted + greatest(
+        0,
+        coalesce(p_storage_objects_deleted, 0)
+      ),
+      stripe_customer_deleted = stripe_customer_deleted
+        or coalesce(p_stripe_customer_deleted, false),
       database_rows_remaining = greatest(
         0,
         coalesce(p_database_rows_remaining, 0)
@@ -178,12 +254,58 @@ begin
       retry_after = null,
       completed_at = now(),
       last_error_code = null,
-      storage_objects_deleted = greatest(
+      storage_objects_deleted = storage_objects_deleted + greatest(
         0,
         coalesce(p_storage_objects_deleted, 0)
       ),
-      stripe_customer_deleted = coalesce(p_stripe_customer_deleted, false),
+      stripe_customer_deleted = stripe_customer_deleted
+        or coalesce(p_stripe_customer_deleted, false),
       database_rows_remaining = 0
+  where id = p_request_id
+    and status = 'processing'
+    and auth_user_deleted_at is not null
+    and auth_user_deleted_at <= now() - interval '65 minutes';
+
+  if not found then
+    raise exception 'account_deletion_request_not_processing'
+      using errcode = 'P0002';
+  end if;
+end;
+$$;
+
+-- Access tokens issued before auth deletion remain valid until their exp claim.
+-- Keep the request identifiable and schedule one final cleanup only after the
+-- configured one-hour JWT lifetime plus a five-minute safety margin.
+create or replace function public.defer_account_deletion_finalization(
+  p_request_id bigint,
+  p_storage_objects_deleted integer default 0,
+  p_stripe_customer_deleted boolean default false
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if coalesce(auth.jwt() ->> 'role', '') <> 'service_role' then
+    raise exception 'service_role_required' using errcode = '42501';
+  end if;
+
+  update public.account_deletion_requests
+  set status = 'awaiting_token_expiry',
+      processing_started_at = null,
+      auth_user_deleted_at = coalesce(auth_user_deleted_at, now()),
+      retry_after = greatest(
+        now() + interval '5 minutes',
+        coalesce(auth_user_deleted_at, now()) + interval '65 minutes'
+      ),
+      last_error_code = null,
+      storage_objects_deleted = storage_objects_deleted + greatest(
+        0,
+        coalesce(p_storage_objects_deleted, 0)
+      ),
+      stripe_customer_deleted = stripe_customer_deleted
+        or coalesce(p_stripe_customer_deleted, false)
   where id = p_request_id
     and status = 'processing';
 
@@ -195,8 +317,9 @@ end;
 $$;
 
 -- Inventory every current public UUID subject column. Direct auth.users
--- CASCADE/SET NULL references are safe. A populated unbound/restricting column
--- blocks processing before any Storage, Stripe, Auth, or table data is deleted.
+-- CASCADE/SET NULL references and reviewed direct-delete adapters are safe.
+-- The API audit log is deliberately retained for its existing 90-day policy;
+-- every other populated unclassified/restricting column fails closed.
 create or replace function public.account_deletion_dependency_inventory(
   p_user_id uuid
 )
@@ -217,6 +340,7 @@ declare
   v_delete_rule "char";
   v_matches bigint;
   v_strategy text;
+  v_direct_delete boolean;
 begin
   if coalesce(auth.jwt() ->> 'role', '') <> 'service_role' then
     raise exception 'service_role_required' using errcode = '42501';
@@ -256,12 +380,23 @@ begin
       and constraint_record.confrelid = 'auth.users'::regclass
     limit 1;
 
-    v_strategy := case v_delete_rule
-      when 'c' then 'cascade'
-      when 'n' then 'set_null'
-      when 'd' then 'set_default_blocked'
-      when 'r' then 'restrict_blocked'
-      when 'a' then 'no_action_blocked'
+    select exists (
+      select 1
+      from public.account_deletion_direct_delete_adapters as adapter
+      where adapter.schema_name = v_column.schema_name
+        and adapter.table_name = v_column.table_name
+        and adapter.column_name = v_column.column_name
+    ) into v_direct_delete;
+
+    v_strategy := case
+      when v_delete_rule = 'c' then 'cascade'
+      when v_delete_rule = 'n' then 'set_null'
+      when v_column.table_name = 'user_api_audit_log'
+        and v_column.column_name = 'user_id' then 'retain_90_days'
+      when v_direct_delete then 'delete_direct'
+      when v_delete_rule = 'd' then 'set_default_blocked'
+      when v_delete_rule = 'r' then 'restrict_blocked'
+      when v_delete_rule = 'a' then 'no_action_blocked'
       else 'unclassified_blocked'
     end;
 
@@ -278,9 +413,88 @@ begin
     deletion_strategy := v_strategy;
     matching_rows := v_matches;
     is_blocking := v_matches > 0
-      and v_strategy not in ('cascade', 'set_null');
+      and v_strategy not in (
+        'cascade',
+        'set_null',
+        'delete_direct',
+        'retain_90_days'
+      );
     return next;
   end loop;
+end;
+$$;
+
+-- Delete legacy user-owned rows that have a direct user_id but no automatic
+-- auth.users CASCADE/SET NULL path. Multiple passes tolerate parent/child
+-- ordering; an unresolved FK remains fail-closed.
+create or replace function public.delete_account_deletion_direct_rows(
+  p_user_id uuid
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_column record;
+  v_deleted bigint;
+  v_total_deleted bigint := 0;
+  v_progress boolean;
+begin
+  if coalesce(auth.jwt() ->> 'role', '') <> 'service_role' then
+    raise exception 'service_role_required' using errcode = '42501';
+  end if;
+  if p_user_id is null then
+    raise exception 'user_id_required' using errcode = '22023';
+  end if;
+
+  for v_pass in 1..8 loop
+    v_progress := false;
+    for v_column in
+      select inventory.schema_name, inventory.table_name, inventory.column_name
+      from public.account_deletion_dependency_inventory(p_user_id) as inventory
+      where inventory.deletion_strategy = 'delete_direct'
+        and inventory.matching_rows > 0
+      order by inventory.schema_name, inventory.table_name, inventory.column_name
+    loop
+      begin
+        execute format(
+          'delete from %I.%I where %I = $1',
+          v_column.schema_name,
+          v_column.table_name,
+          v_column.column_name
+        ) using p_user_id;
+        get diagnostics v_deleted = row_count;
+        if v_deleted > 0 then
+          v_total_deleted := v_total_deleted + v_deleted;
+          v_progress := true;
+        end if;
+      exception when foreign_key_violation then
+        -- A later pass can succeed after its dependent table is emptied.
+        null;
+      end;
+    end loop;
+
+    exit when not exists (
+      select 1
+      from public.account_deletion_dependency_inventory(p_user_id) as inventory
+      where inventory.deletion_strategy = 'delete_direct'
+        and inventory.matching_rows > 0
+    );
+    exit when not v_progress;
+  end loop;
+
+  if exists (
+    select 1
+    from public.account_deletion_dependency_inventory(p_user_id) as inventory
+    where inventory.deletion_strategy = 'delete_direct'
+      and inventory.matching_rows > 0
+  ) then
+    raise exception 'account_deletion_direct_delete_blocked'
+      using errcode = '23503';
+  end if;
+
+  return v_total_deleted;
 end;
 $$;
 
@@ -325,22 +539,38 @@ $$;
 
 revoke all on function public.claim_due_account_deletion()
   from public, anon, authenticated;
-revoke all on function public.fail_account_deletion(bigint, text, bigint, integer)
+revoke all on function public.fail_account_deletion(
+  bigint, text, bigint, integer, integer, boolean, boolean
+)
   from public, anon, authenticated;
 revoke all on function public.complete_account_deletion(bigint, integer, boolean)
   from public, anon, authenticated;
+revoke all on function public.defer_account_deletion_finalization(
+  bigint, integer, boolean
+)
+  from public, anon, authenticated;
 revoke all on function public.account_deletion_dependency_inventory(uuid)
+  from public, anon, authenticated;
+revoke all on function public.delete_account_deletion_direct_rows(uuid)
   from public, anon, authenticated;
 revoke all on function public.account_deletion_storage_objects(uuid, integer)
   from public, anon, authenticated;
 
 grant execute on function public.claim_due_account_deletion()
   to service_role;
-grant execute on function public.fail_account_deletion(bigint, text, bigint, integer)
+grant execute on function public.fail_account_deletion(
+  bigint, text, bigint, integer, integer, boolean, boolean
+)
   to service_role;
 grant execute on function public.complete_account_deletion(bigint, integer, boolean)
   to service_role;
+grant execute on function public.defer_account_deletion_finalization(
+  bigint, integer, boolean
+)
+  to service_role;
 grant execute on function public.account_deletion_dependency_inventory(uuid)
+  to service_role;
+grant execute on function public.delete_account_deletion_direct_rows(uuid)
   to service_role;
 grant execute on function public.account_deletion_storage_objects(uuid, integer)
   to service_role;

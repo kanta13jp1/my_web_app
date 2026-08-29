@@ -22,12 +22,14 @@ abstract class AccountLifecycleGateway {
 
   Future<AccountLifecycleSnapshot> cancelDeletion();
 
-  Future<bool> reauthenticate();
+  Future<void> reauthenticateWithPassword(String password);
+
+  Future<bool> reauthenticateWithGoogle();
 }
 
 class AccountLifecycleService implements AccountLifecycleGateway {
   AccountLifecycleService({SupabaseClient? client})
-      : _client = client ?? supabase;
+    : _client = client ?? supabase;
 
   final SupabaseClient _client;
 
@@ -49,7 +51,23 @@ class AccountLifecycleService implements AccountLifecycleGateway {
   }
 
   @override
-  Future<bool> reauthenticate() {
+  Future<void> reauthenticateWithPassword(String password) async {
+    final email = _client.auth.currentUser?.email?.trim() ?? '';
+    if (email.isEmpty) {
+      throw const AccountLifecycleException(
+        'reauthentication_email_unavailable',
+      );
+    }
+
+    try {
+      await _client.auth.signInWithPassword(email: email, password: password);
+    } on AuthException {
+      throw const AccountLifecycleException('reauthentication_failed');
+    }
+  }
+
+  @override
+  Future<bool> reauthenticateWithGoogle() {
     final redirect = Uri.base.resolve('/account-deletion').toString();
     return _client.auth.signInWithOAuth(
       OAuthProvider.google,

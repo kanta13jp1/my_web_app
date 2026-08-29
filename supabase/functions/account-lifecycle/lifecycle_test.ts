@@ -4,11 +4,14 @@ import {
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   ACCOUNT_DELETION_CONFIRMATION,
+  ACCOUNT_DELETION_TOKEN_DRAIN_SECONDS,
   blockingDependencyCount,
   deletionScheduledFor,
   isRecentSignIn,
   isServiceRoleRequest,
+  remainingDeletionDependencyCount,
   requiresSubscriptionCancellation,
+  tokenDrainSecondsRemaining,
 } from "./lifecycle.ts";
 
 Deno.test("recent sign-in expires after fifteen minutes", () => {
@@ -57,6 +60,30 @@ Deno.test("inventory counts only populated blocking dependencies", () => {
       { is_blocking: true, matching_rows: 0 },
     ]),
     3,
+  );
+});
+
+Deno.test("finalization waits until pre-deletion JWTs have expired", () => {
+  const now = new Date("2026-08-29T11:05:00Z");
+  assertEquals(
+    tokenDrainSecondsRemaining("2026-08-29T10:00:00Z", now),
+    0,
+  );
+  assertEquals(
+    tokenDrainSecondsRemaining("2026-08-29T10:30:00Z", now),
+    30 * 60,
+  );
+  assertEquals(
+    tokenDrainSecondsRemaining(null, now),
+    ACCOUNT_DELETION_TOKEN_DRAIN_SECONDS,
+  );
+  assertEquals(
+    remainingDeletionDependencyCount([
+      { deletion_strategy: "cascade", matching_rows: 0 },
+      { deletion_strategy: "delete_direct", matching_rows: 2 },
+      { deletion_strategy: "retain_90_days", matching_rows: 5 },
+    ]),
+    2,
   );
 });
 

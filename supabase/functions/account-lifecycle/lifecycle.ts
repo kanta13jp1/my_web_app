@@ -1,6 +1,7 @@
 export const ACCOUNT_DELETION_POLICY_VERSION = "2026-08-29.v1";
 export const ACCOUNT_DELETION_GRACE_DAYS = 30;
 export const RECENT_SIGN_IN_MINUTES = 15;
+export const ACCOUNT_DELETION_TOKEN_DRAIN_SECONDS = 65 * 60;
 export const ACCOUNT_DELETION_CONFIRMATION = "アカウントを削除する";
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set([
@@ -70,6 +71,34 @@ export function blockingDependencyCount(
   }, 0);
 }
 
+export function remainingDeletionDependencyCount(
+  inventory: DependencyInventoryRow[] | null | undefined,
+): number {
+  return (inventory ?? []).reduce((total, row) => {
+    if (row.deletion_strategy === "retain_90_days") return total;
+    const count = Number(row.matching_rows ?? 0);
+    return total + (Number.isFinite(count) && count > 0 ? count : 0);
+  }, 0);
+}
+
+export function tokenDrainSecondsRemaining(
+  authUserDeletedAt: unknown,
+  now = new Date(),
+): number {
+  if (
+    typeof authUserDeletedAt !== "string" || authUserDeletedAt.trim() === ""
+  ) {
+    return ACCOUNT_DELETION_TOKEN_DRAIN_SECONDS;
+  }
+  const deletedAt = new Date(authUserDeletedAt);
+  if (Number.isNaN(deletedAt.getTime())) {
+    return ACCOUNT_DELETION_TOKEN_DRAIN_SECONDS;
+  }
+  const remainingMs = ACCOUNT_DELETION_TOKEN_DRAIN_SECONDS * 1000 -
+    (now.getTime() - deletedAt.getTime());
+  return Math.max(0, Math.ceil(remainingMs / 1000));
+}
+
 export function bearerToken(request: Request): string {
   const header = request.headers.get("authorization") ?? "";
   return header.toLowerCase().startsWith("bearer ")
@@ -101,6 +130,9 @@ export function safeErrorCode(error: unknown): string {
   }
   if (message.includes("stripe")) return "stripe_deletion_failed";
   if (message.includes("storage")) return "storage_deletion_failed";
+  if (message.includes("database deletion")) {
+    return "database_deletion_failed";
+  }
   if (message.includes("auth")) return "auth_deletion_failed";
   return "account_deletion_failed";
 }

@@ -4,7 +4,8 @@
 insert into auth.users (id)
 values
   ('00000000-0000-4000-8000-000000002844'::uuid),
-  ('00000000-0000-4000-8000-000000012844'::uuid)
+  ('00000000-0000-4000-8000-000000012844'::uuid),
+  ('00000000-0000-4000-8000-000000022844'::uuid)
 on conflict (id) do nothing;
 
 create table public.issue2844_cascade_fixture (
@@ -17,10 +18,55 @@ create table public.issue2844_unclassified_fixture (
   owner_user_id uuid not null
 );
 
+create table public.issue2844_direct_fixture (
+  id bigint generated always as identity primary key,
+  user_id uuid not null
+);
+
+create table public.issue2844_direct_a_parent_fixture (
+  id uuid primary key,
+  user_id uuid not null
+);
+
+create table public.issue2844_direct_z_child_fixture (
+  id uuid primary key,
+  user_id uuid not null,
+  parent_id uuid not null
+    references public.issue2844_direct_a_parent_fixture(id)
+);
+
+insert into public.account_deletion_direct_delete_adapters (table_name)
+values
+  ('issue2844_direct_fixture'),
+  ('issue2844_direct_a_parent_fixture'),
+  ('issue2844_direct_z_child_fixture');
+
 insert into public.issue2844_cascade_fixture (user_id)
 values ('00000000-0000-4000-8000-000000002844'::uuid);
 insert into public.issue2844_unclassified_fixture (owner_user_id)
 values ('00000000-0000-4000-8000-000000002844'::uuid);
+insert into public.issue2844_direct_fixture (user_id)
+values ('00000000-0000-4000-8000-000000002844'::uuid);
+insert into public.issue2844_direct_a_parent_fixture (id, user_id)
+values (
+  '00000000-0000-4000-8000-000000102844'::uuid,
+  '00000000-0000-4000-8000-000000002844'::uuid
+);
+insert into public.issue2844_direct_z_child_fixture (
+  id,
+  user_id,
+  parent_id
+) values (
+  '00000000-0000-4000-8000-000000112844'::uuid,
+  '00000000-0000-4000-8000-000000002844'::uuid,
+  '00000000-0000-4000-8000-000000102844'::uuid
+);
+insert into public.user_api_audit_log (user_id, action, status)
+values (
+  '00000000-0000-4000-8000-000000002844'::uuid,
+  'account_deletion_contract',
+  200
+);
 
 insert into storage.objects (bucket_id, name, owner_id)
 values
@@ -54,6 +100,8 @@ select set_config('request.jwt.claim.role', 'service_role', false);
 do $contract$
 declare
   v_cascade record;
+  v_direct record;
+  v_retained record;
   v_blocker record;
   v_claimed public.account_deletion_requests;
   v_storage_count integer;
@@ -70,6 +118,60 @@ begin
      or v_cascade.is_blocking is distinct from false then
     raise exception 'cascade inventory classification failed: %',
       row_to_json(v_cascade);
+  end if;
+
+  select * into v_direct
+  from public.account_deletion_dependency_inventory(
+    '00000000-0000-4000-8000-000000002844'::uuid
+  )
+  where table_name = 'issue2844_direct_fixture'
+    and column_name = 'user_id';
+  if not found
+     or v_direct.deletion_strategy is distinct from 'delete_direct'
+     or v_direct.matching_rows is distinct from 1::bigint
+     or v_direct.is_blocking is distinct from false then
+    raise exception 'direct ownership classification failed: %',
+      row_to_json(v_direct);
+  end if;
+
+  perform public.delete_account_deletion_direct_rows(
+    '00000000-0000-4000-8000-000000002844'::uuid
+  );
+  if exists (
+    select 1
+    from public.issue2844_direct_fixture
+    where user_id = '00000000-0000-4000-8000-000000002844'::uuid
+    union all
+    select 1
+    from public.issue2844_direct_a_parent_fixture
+    where user_id = '00000000-0000-4000-8000-000000002844'::uuid
+    union all
+    select 1
+    from public.issue2844_direct_z_child_fixture
+    where user_id = '00000000-0000-4000-8000-000000002844'::uuid
+  ) then
+    raise exception 'direct ownership rows were not deleted across FK passes';
+  end if;
+
+  select * into v_retained
+  from public.account_deletion_dependency_inventory(
+    '00000000-0000-4000-8000-000000002844'::uuid
+  )
+  where table_name = 'user_api_audit_log'
+    and column_name = 'user_id';
+  if not found
+     or v_retained.deletion_strategy is distinct from 'retain_90_days'
+     or v_retained.matching_rows is distinct from 1::bigint
+     or v_retained.is_blocking is distinct from false then
+    raise exception '90-day audit retention classification failed: %',
+      row_to_json(v_retained);
+  end if;
+  if not exists (
+    select 1
+    from public.user_api_audit_log
+    where user_id = '00000000-0000-4000-8000-000000002844'::uuid
+  ) then
+    raise exception '90-day audit evidence was deleted';
   end if;
 
   select count(*) into v_storage_count
@@ -108,7 +210,10 @@ begin
     v_claimed.id,
     'account_deletion_dependency_blocked',
     1,
-    300
+    300,
+    2,
+    true,
+    true
   );
   if not exists (
     select 1
@@ -116,6 +221,9 @@ begin
     where id = v_claimed.id
       and status = 'failed'
       and database_rows_remaining = 1
+      and storage_objects_deleted = 2
+      and stripe_customer_deleted
+      and auth_user_deleted_at is not null
       and retry_after >= now() + interval '299 seconds'
   ) then
     raise exception 'failed request retry state was not recorded';
@@ -131,14 +239,20 @@ insert into public.account_deletion_requests (
   policy_version,
   requested_at,
   scheduled_for,
-  processing_started_at
+  processing_started_at,
+  auth_user_deleted_at,
+  storage_objects_deleted,
+  stripe_customer_deleted
 ) values (
   '00000000-0000-4000-8000-000000012844'::uuid,
   'processing',
   '2026-08-29.v1',
   now() - interval '31 days',
   now() - interval '1 day',
-  now()
+  now(),
+  now() - interval '66 minutes',
+  2,
+  true
 );
 
 set role service_role;
@@ -152,7 +266,7 @@ begin
   from public.account_deletion_requests
   where user_id = '00000000-0000-4000-8000-000000012844'::uuid;
 
-  perform public.complete_account_deletion(v_request_id, 2, true);
+  perform public.complete_account_deletion(v_request_id, 3, false);
   if not exists (
     select 1
     from public.account_deletion_requests
@@ -160,10 +274,68 @@ begin
       and status = 'completed'
       and user_id is null
       and completed_at is not null
-      and storage_objects_deleted = 2
+      and storage_objects_deleted = 5
       and stripe_customer_deleted
   ) then
     raise exception 'completion did not anonymize the request row';
+  end if;
+end;
+$contract$;
+
+reset role;
+
+insert into public.account_deletion_requests (
+  user_id,
+  status,
+  policy_version,
+  requested_at,
+  scheduled_for,
+  processing_started_at,
+  auth_user_deleted_at
+) values (
+  '00000000-0000-4000-8000-000000022844'::uuid,
+  'processing',
+  '2026-08-29.v1',
+  now() - interval '31 days',
+  now() - interval '1 day',
+  now(),
+  now()
+);
+
+set role service_role;
+select set_config('request.jwt.claim.role', 'service_role', false);
+
+do $contract$
+declare
+  v_request_id bigint;
+begin
+  select id into v_request_id
+  from public.account_deletion_requests
+  where user_id = '00000000-0000-4000-8000-000000022844'::uuid;
+
+  begin
+    perform public.complete_account_deletion(v_request_id, 0, false);
+    raise exception 'premature completion unexpectedly succeeded';
+  exception when sqlstate 'P0002' then
+    null;
+  end;
+
+  perform public.defer_account_deletion_finalization(
+    v_request_id,
+    4,
+    true
+  );
+  if not exists (
+    select 1
+    from public.account_deletion_requests
+    where id = v_request_id
+      and status = 'awaiting_token_expiry'
+      and auth_user_deleted_at is not null
+      and retry_after >= now() + interval '3899 seconds'
+      and storage_objects_deleted = 4
+      and stripe_customer_deleted
+  ) then
+    raise exception 'token-expiry deferral state was not recorded';
   end if;
 end;
 $contract$;
@@ -196,9 +368,11 @@ begin
 
   foreach v_function in array array[
     'public.claim_due_account_deletion()'::regprocedure::oid,
-    'public.fail_account_deletion(bigint,text,bigint,integer)'::regprocedure::oid,
+    'public.fail_account_deletion(bigint,text,bigint,integer,integer,boolean,boolean)'::regprocedure::oid,
     'public.complete_account_deletion(bigint,integer,boolean)'::regprocedure::oid,
+    'public.defer_account_deletion_finalization(bigint,integer,boolean)'::regprocedure::oid,
     'public.account_deletion_dependency_inventory(uuid)'::regprocedure::oid,
+    'public.delete_account_deletion_direct_rows(uuid)'::regprocedure::oid,
     'public.account_deletion_storage_objects(uuid,integer)'::regprocedure::oid
   ] loop
     if has_function_privilege('authenticated', v_function, 'execute')
@@ -224,4 +398,7 @@ end;
 $contract$;
 
 drop table public.issue2844_unclassified_fixture;
+drop table public.issue2844_direct_fixture;
+drop table public.issue2844_direct_z_child_fixture;
+drop table public.issue2844_direct_a_parent_fixture;
 drop table public.issue2844_cascade_fixture;

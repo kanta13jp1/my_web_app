@@ -17,6 +17,7 @@ class AccountDeletionPage extends StatefulWidget {
 class _AccountDeletionPageState extends State<AccountDeletionPage> {
   late final AccountDeletionViewModel _viewModel;
   final _confirmationController = TextEditingController();
+  final _reauthenticationPasswordController = TextEditingController();
   bool _understood = false;
 
   @override
@@ -30,6 +31,7 @@ class _AccountDeletionPageState extends State<AccountDeletionPage> {
   @override
   void dispose() {
     _confirmationController.dispose();
+    _reauthenticationPasswordController.dispose();
     _viewModel.dispose();
     super.dispose();
   }
@@ -63,7 +65,19 @@ class _AccountDeletionPageState extends State<AccountDeletionPage> {
                       if (_viewModel.errorCode != null)
                         _ErrorCard(
                           code: _viewModel.errorCode!,
-                          onReauthenticate: _viewModel.reauthenticate,
+                          passwordController:
+                              _reauthenticationPasswordController,
+                          isSubmitting: _viewModel.isSubmitting,
+                          onPasswordReauthenticate: () async {
+                            final password =
+                                _reauthenticationPasswordController.text;
+                            await _viewModel.reauthenticateWithPassword(
+                              password,
+                            );
+                            _reauthenticationPasswordController.clear();
+                          },
+                          onGoogleReauthenticate:
+                              _viewModel.reauthenticateWithGoogle,
                           onOpenBilling: () =>
                               Navigator.of(context).pushNamed('/billing'),
                         ),
@@ -199,7 +213,7 @@ class _RetentionSummaryCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text('申請から$days日間は取り消し可能です。'),
             const SizedBox(height: 4),
-            const Text('期限後に外部決済顧客、Storage、Auth、関連DBデータの順で削除します。'),
+            const Text('期限後に関連データを削除し、発行済みトークンの失効後に残存を再確認します。'),
             const SizedBox(height: 4),
             const Text('法令上保持が必要な決済記録と隔離バックアップは、各保持期限まで利用を制限します。'),
           ],
@@ -331,17 +345,28 @@ class _PendingRequestCard extends StatelessWidget {
 class _ErrorCard extends StatelessWidget {
   const _ErrorCard({
     required this.code,
-    required this.onReauthenticate,
+    required this.passwordController,
+    required this.isSubmitting,
+    required this.onPasswordReauthenticate,
+    required this.onGoogleReauthenticate,
     required this.onOpenBilling,
   });
 
   final String code;
-  final VoidCallback onReauthenticate;
+  final TextEditingController passwordController;
+  final bool isSubmitting;
+  final VoidCallback onPasswordReauthenticate;
+  final VoidCallback onGoogleReauthenticate;
   final VoidCallback onOpenBilling;
 
   @override
   Widget build(BuildContext context) {
-    final reauth = code == 'reauthentication_required';
+    final reauth = const {
+      'reauthentication_required',
+      'reauthentication_failed',
+      'reauthentication_email_unavailable',
+      'reauthentication_launch_failed',
+    }.contains(code);
     final billing = code == 'active_subscription_must_be_cancelled';
     return Card(
       color: Theme.of(context).colorScheme.errorContainer,
@@ -353,8 +378,26 @@ class _ErrorCard extends StatelessWidget {
             Text(_errorMessage(code)),
             if (reauth) ...[
               const SizedBox(height: 8),
+              TextField(
+                key: const Key('account-deletion-reauth-password'),
+                controller: passwordController,
+                obscureText: true,
+                autofillHints: const [AutofillHints.password],
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'パスワード',
+                ),
+              ),
+              const SizedBox(height: 8),
               FilledButton(
-                onPressed: onReauthenticate,
+                key: const Key('account-deletion-reauth-password-submit'),
+                onPressed: isSubmitting ? null : onPasswordReauthenticate,
+                child: const Text('パスワードで本人確認'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                key: const Key('account-deletion-reauth-google'),
+                onPressed: isSubmitting ? null : onGoogleReauthenticate,
                 child: const Text('Googleで再ログイン'),
               ),
             ],
@@ -373,18 +416,20 @@ class _ErrorCard extends StatelessWidget {
 }
 
 String _statusLabel(String status) => switch (status) {
-      'pending' => '取消猶予中',
-      'processing' => '削除処理中',
-      'failed' => '安全確認・再試行待ち',
-      _ => status,
-    };
+  'pending' => '取消猶予中',
+  'processing' => '削除処理中',
+  'failed' => '安全確認・再試行待ち',
+  _ => status,
+};
 
 String _errorMessage(String code) => switch (code) {
-      'authentication_required' => 'ログイン後にもう一度お試しください。',
-      'reauthentication_required' => '本人確認のため、15分以内に再ログインしてください。',
-      'active_subscription_must_be_cancelled' =>
-        '先に有料サブスクリプションの解約手続きを完了してください。',
-      'confirmation_mismatch' => '確認文が一致しません。',
-      'reauthentication_launch_failed' => '再ログイン画面を開けませんでした。',
-      _ => '退会処理を開始できませんでした。時間をおいて再度お試しください。',
-    };
+  'authentication_required' => 'ログイン後にもう一度お試しください。',
+  'reauthentication_required' => '本人確認のため、15分以内に再ログインしてください。',
+  'active_subscription_must_be_cancelled' => '先に有料サブスクリプションの解約手続きを完了してください。',
+  'confirmation_mismatch' => '確認文が一致しません。',
+  'reauthentication_launch_failed' => '再ログイン画面を開けませんでした。',
+  'reauthentication_failed' => 'パスワードを確認できませんでした。もう一度お試しください。',
+  'reauthentication_email_unavailable' =>
+    'ログイン中のメールアドレスを確認できません。Googleで再ログインしてください。',
+  _ => '退会処理を開始できませんでした。時間をおいて再度お試しください。',
+};

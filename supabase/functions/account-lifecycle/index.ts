@@ -14,8 +14,10 @@ import {
   deletionScheduledFor,
   isRecentSignIn,
   isServiceRoleRequest,
+  remainingDeletionDependencyCount,
   requiresSubscriptionCancellation,
   safeErrorCode,
+  tokenDrainSecondsRemaining,
 } from "./lifecycle.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -38,11 +40,21 @@ type DeletionRequestRow = {
   policy_version: string;
   requested_at: string;
   scheduled_for: string;
+  auth_user_deleted_at: string | null;
   cancelled_at: string | null;
   completed_at: string | null;
   attempt_count: number;
   last_error_code: string | null;
+  storage_objects_deleted: number;
+  stripe_customer_deleted: boolean;
 };
+
+class StorageDeletionError extends Error {
+  constructor(message: string, readonly deletedCount: number) {
+    super(message);
+    this.name = "StorageDeletionError";
+  }
+}
 
 serve(async (request: Request) => {
   if (request.method === "OPTIONS") {
@@ -217,6 +229,7 @@ async function processDueRequest(admin: SupabaseClient): Promise<Response> {
 
   let storageObjectsDeleted = 0;
   let stripeCustomerDeleted = false;
+  let authUserDeleted = request.auth_user_deleted_at != null;
   try {
     const blockers = await dependencyBlockers(admin, request.user_id);
     if (blockers > 0) {
@@ -235,8 +248,10 @@ async function processDueRequest(admin: SupabaseClient): Promise<Response> {
       }, 409);
     }
 
-    const billing = await billingForDeletion(admin, request.user_id);
-    if (requiresSubscriptionCancellation(billing)) {
+    const billing = authUserDeleted
+      ? null
+      : await billingForDeletion(admin, request.user_id);
+    if (!authUserDeleted && requiresSubscriptionCancellation(billing)) {
       await markFailed(
         admin,
         request.id,
@@ -251,10 +266,12 @@ async function processDueRequest(admin: SupabaseClient): Promise<Response> {
       }, 409);
     }
 
-    if (billing?.stripe_customer_id) {
+    if (!request.stripe_customer_deleted && billing?.stripe_customer_id) {
       await deleteStripeCustomer(String(billing.stripe_customer_id));
       stripeCustomerDeleted = true;
     }
+
+    await deleteDirectDatabaseRows(admin, request.user_id);
 
     storageObjectsDeleted = await deleteOwnedStorageObjects(
       admin,
@@ -267,6 +284,30 @@ async function processDueRequest(admin: SupabaseClient): Promise<Response> {
     if (deleteUserError && !isAuthUserMissing(deleteUserError)) {
       throw new Error(`auth deletion failed: ${deleteUserError.message}`);
     }
+    authUserDeleted = true;
+
+    const tokenDrainSeconds = tokenDrainSecondsRemaining(
+      request.auth_user_deleted_at,
+    );
+    if (tokenDrainSeconds > 0) {
+      const { error: deferError } = await admin.rpc(
+        "defer_account_deletion_finalization",
+        {
+          p_request_id: request.id,
+          p_storage_objects_deleted: storageObjectsDeleted,
+          p_stripe_customer_deleted: stripeCustomerDeleted,
+        },
+      );
+      if (deferError) throw deferError;
+      return jsonResponse({
+        success: true,
+        processed: true,
+        completed: false,
+        request_id: request.id,
+        reason: "awaiting_token_expiry",
+        retry_after_seconds: tokenDrainSeconds,
+      });
+    }
 
     const remainingRows = await dependencyMatches(admin, request.user_id);
     if (remainingRows > 0) {
@@ -275,6 +316,9 @@ async function processDueRequest(admin: SupabaseClient): Promise<Response> {
         request.id,
         "account_deletion_residual_rows",
         remainingRows,
+        storageObjectsDeleted,
+        stripeCustomerDeleted,
+        authUserDeleted,
       );
       return jsonResponse({
         success: false,
@@ -298,13 +342,27 @@ async function processDueRequest(admin: SupabaseClient): Promise<Response> {
     return jsonResponse({
       success: true,
       processed: true,
+      completed: true,
       request_id: request.id,
-      storage_objects_deleted: storageObjectsDeleted,
-      stripe_customer_deleted: stripeCustomerDeleted,
+      storage_objects_deleted: request.storage_objects_deleted +
+        storageObjectsDeleted,
+      stripe_customer_deleted: request.stripe_customer_deleted ||
+        stripeCustomerDeleted,
     });
   } catch (error) {
+    if (error instanceof StorageDeletionError) {
+      storageObjectsDeleted += error.deletedCount;
+    }
     const errorCode = safeErrorCode(error);
-    await markFailed(admin, request.id, errorCode, 0).catch((markError) => {
+    await markFailed(
+      admin,
+      request.id,
+      errorCode,
+      0,
+      storageObjectsDeleted,
+      stripeCustomerDeleted,
+      authUserDeleted,
+    ).catch((markError) => {
       console.error(
         "[account-lifecycle] failed to record retry state",
         safeErrorCode(markError),
@@ -335,10 +393,19 @@ async function dependencyMatches(
     { p_user_id: userId },
   );
   if (error) throw error;
-  return (Array.isArray(data) ? data : []).reduce((total, row) => {
-    const count = Number((row as JsonRecord).matching_rows ?? 0);
-    return total + (Number.isFinite(count) && count > 0 ? count : 0);
-  }, 0);
+  return remainingDeletionDependencyCount(
+    Array.isArray(data) ? data : [],
+  );
+}
+
+async function deleteDirectDatabaseRows(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<void> {
+  const { error } = await admin.rpc("delete_account_deletion_direct_rows", {
+    p_user_id: userId,
+  });
+  if (error) throw new Error(`database deletion failed: ${error.message}`);
 }
 
 async function billingForDeletion(
@@ -366,7 +433,12 @@ async function deleteOwnedStorageObjects(
       "account_deletion_storage_objects",
       { p_user_id: userId, p_limit: 1000 },
     );
-    if (error) throw new Error(`storage inventory failed: ${error.message}`);
+    if (error) {
+      throw new StorageDeletionError(
+        `storage inventory failed: ${error.message}`,
+        deleted,
+      );
+    }
     const objects = Array.isArray(data) ? data as JsonRecord[] : [];
     if (objects.length === 0) return deleted;
 
@@ -382,13 +454,19 @@ async function deleteOwnedStorageObjects(
         paths,
       );
       if (removeError) {
-        throw new Error(`storage deletion failed: ${removeError.message}`);
+        throw new StorageDeletionError(
+          `storage deletion failed: ${removeError.message}`,
+          deleted,
+        );
       }
       deleted += paths.length;
     }
     if (objects.length < 1000) return deleted;
   }
-  throw new Error("storage deletion failed: batch limit exceeded");
+  throw new StorageDeletionError(
+    "storage deletion failed: batch limit exceeded",
+    deleted,
+  );
 }
 
 async function deleteStripeCustomer(customerId: string): Promise<void> {
@@ -413,12 +491,18 @@ async function markFailed(
   requestId: number,
   errorCode: string,
   remainingRows: number,
+  storageObjectsDeleted = 0,
+  stripeCustomerDeleted = false,
+  authUserDeleted = false,
 ): Promise<void> {
   const { error } = await admin.rpc("fail_account_deletion", {
     p_request_id: requestId,
     p_error_code: errorCode,
     p_database_rows_remaining: Math.max(0, remainingRows),
     p_retry_seconds: 86400,
+    p_storage_objects_deleted: Math.max(0, storageObjectsDeleted),
+    p_stripe_customer_deleted: stripeCustomerDeleted,
+    p_auth_user_deleted: authUserDeleted,
   });
   if (error) throw error;
 }
@@ -431,7 +515,12 @@ async function activeRequest(
     .from("account_deletion_requests")
     .select(publicRequestColumns())
     .eq("user_id", userId)
-    .in("status", ["pending", "processing", "failed"])
+    .in("status", [
+      "pending",
+      "processing",
+      "awaiting_token_expiry",
+      "failed",
+    ])
     .order("requested_at", { ascending: false })
     .limit(1)
     .maybeSingle();

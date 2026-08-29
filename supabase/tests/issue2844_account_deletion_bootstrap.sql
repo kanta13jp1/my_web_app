@@ -37,6 +37,18 @@ create table if not exists storage.objects (
   owner uuid
 );
 
+-- Production creates this service-role audit table in
+-- 20260712013000_create_jibun_api_platform.sql. The focused Issue #2844
+-- smoke applies only this bootstrap plus the account-deletion migration, so a
+-- minimal shape is included to verify the explicit 90-day retention adapter.
+create table if not exists public.user_api_audit_log (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  action text not null,
+  status smallint not null,
+  created_at timestamptz not null default now()
+);
+
 insert into storage.buckets (id, name, public)
 values
   ('avatars', 'avatars', false),

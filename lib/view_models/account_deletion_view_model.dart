@@ -5,7 +5,7 @@ import '../services/account_lifecycle_service.dart';
 
 class AccountDeletionViewModel extends ChangeNotifier {
   AccountDeletionViewModel({required AccountLifecycleGateway gateway})
-      : _gateway = gateway;
+    : _gateway = gateway;
 
   final AccountLifecycleGateway _gateway;
 
@@ -48,13 +48,38 @@ class AccountDeletionViewModel extends ChangeNotifier {
     await _submit(_gateway.cancelDeletion, notice: '退会申請を取り消しました。');
   }
 
-  Future<void> reauthenticate() async {
+  Future<void> reauthenticateWithPassword(String password) async {
+    _isSubmitting = true;
     _errorCode = null;
     _notice = null;
     notifyListeners();
-    final launched = await _gateway.reauthenticate();
-    if (!launched) {
+    try {
+      await _gateway.reauthenticateWithPassword(password);
+      _notice = '本人確認が完了しました。退会申請をもう一度送信してください。';
+    } on AccountLifecycleException catch (error) {
+      _errorCode = error.code;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> reauthenticateWithGoogle() async {
+    _isSubmitting = true;
+    _errorCode = null;
+    _notice = null;
+    notifyListeners();
+    try {
+      final launched = await _gateway.reauthenticateWithGoogle();
+      if (!launched) {
+        _errorCode = 'reauthentication_launch_failed';
+      }
+    } on AccountLifecycleException catch (error) {
+      _errorCode = error.code;
+    } catch (_) {
       _errorCode = 'reauthentication_launch_failed';
+    } finally {
+      _isSubmitting = false;
       notifyListeners();
     }
   }

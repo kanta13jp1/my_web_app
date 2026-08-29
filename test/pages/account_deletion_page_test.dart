@@ -82,6 +82,31 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('退会・アカウント削除'), findsOneWidget);
   });
+
+  testWidgets('supports password reauthentication for email accounts', (
+    tester,
+  ) async {
+    final gateway = _FakeAccountLifecycleGateway(
+      fetchErrorCode: 'reauthentication_required',
+    );
+    await tester.pumpWidget(_app(gateway));
+    await tester.pumpAndSettle();
+
+    expect(find.text('パスワードで本人確認'), findsOneWidget);
+    expect(find.text('Googleで再ログイン'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('account-deletion-reauth-password')),
+      'correct horse battery staple',
+    );
+    await tester.tap(
+      find.byKey(const Key('account-deletion-reauth-password-submit')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(gateway.reauthenticatedPassword, 'correct horse battery staple');
+    expect(find.textContaining('本人確認が完了しました'), findsOneWidget);
+  });
 }
 
 Widget _app(AccountLifecycleGateway gateway) {
@@ -95,11 +120,15 @@ Widget _app(AccountLifecycleGateway gateway) {
 }
 
 class _FakeAccountLifecycleGateway implements AccountLifecycleGateway {
-  _FakeAccountLifecycleGateway({AccountDeletionRequest? initialRequest})
-      : _request = initialRequest;
+  _FakeAccountLifecycleGateway({
+    AccountDeletionRequest? initialRequest,
+    this.fetchErrorCode,
+  }) : _request = initialRequest;
 
   AccountDeletionRequest? _request;
+  final String? fetchErrorCode;
   String? requestedConfirmation;
+  String? reauthenticatedPassword;
   int cancelCalls = 0;
 
   static const policy = AccountDeletionPolicy(
@@ -111,6 +140,9 @@ class _FakeAccountLifecycleGateway implements AccountLifecycleGateway {
 
   @override
   Future<AccountLifecycleSnapshot> fetchStatus() async {
+    if (fetchErrorCode case final code?) {
+      throw AccountLifecycleException(code);
+    }
     return AccountLifecycleSnapshot(policy: policy, request: _request);
   }
 
@@ -131,7 +163,12 @@ class _FakeAccountLifecycleGateway implements AccountLifecycleGateway {
   }
 
   @override
-  Future<bool> reauthenticate() async => true;
+  Future<void> reauthenticateWithPassword(String password) async {
+    reauthenticatedPassword = password;
+  }
+
+  @override
+  Future<bool> reauthenticateWithGoogle() async => true;
 }
 
 AccountDeletionRequest _requestFixture() => _request();
