@@ -21,8 +21,9 @@ class AiUniversityUpdateWorkflowTest(unittest.TestCase):
         self.assertIn("scripts/ai_university_export_contract.py", self.workflow)
         self.assertNotIn("select=id,provider,source_url,is_active&", self.workflow)
 
-    def test_reliability_job_is_read_only_and_publishes_only_aggregates(self) -> None:
-        start = self.workflow.index("  reliability-metrics:")
+    def test_reliability_steps_reuse_audit_runner_and_publish_only_aggregates(self) -> None:
+        self.assertNotIn("  reliability-metrics:", self.workflow)
+        start = self.workflow.index("  source-audit:")
         end = self.workflow.index("\n  update:", start)
         job = self.workflow[start:end]
         self.assertIn("scripts/ai_university_reliability_metrics.py", job)

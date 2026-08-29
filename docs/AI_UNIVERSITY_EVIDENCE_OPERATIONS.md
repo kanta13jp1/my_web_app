@@ -82,9 +82,9 @@ operational signals rather than billing-grade truth. Monitor volume and add an
 edge rate limit or aggregate RPC before using them for automated decisions.
 
 `scripts/ai_university_reliability_metrics.py` now provides the reproducible
-measurement layer. The scheduled read-only job exports the last 30 days of the
+measurement layer. The scheduled source-audit runner also exports the last 30 days of the
 five allowlisted event names, detects a truncated PostgREST range, and publishes
-counts plus these descriptive ratios:
+counts plus these descriptive ratios without starting an additional runner:
 
 - fallbacks per content-fetch failure;
 - retry successes divided by terminal retry outcomes;

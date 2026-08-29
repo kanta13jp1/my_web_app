@@ -21,7 +21,7 @@ jobs:
       contents: read
     name: AI University Official Source Audit
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     continue-on-error: true
 
     steps:
@@ -94,19 +94,9 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-  reliability-metrics:
-    permissions:
-      contents: read
-    name: AI University Reliability Metrics
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    continue-on-error: true
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
       - name: Aggregate anonymous reliability events (read-only)
+        if: always()
+        continue-on-error: true
         env:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
