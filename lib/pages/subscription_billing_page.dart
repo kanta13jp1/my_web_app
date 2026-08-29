@@ -106,8 +106,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
       debugPrint('Billing status fetch failed: $error');
       if (mounted) {
         setState(
-          () => _errorMessage =
-              'プラン情報を読み込めませんでした。時間をおいて再度お試しください。',
+          () => _errorMessage = 'プラン情報を読み込めませんでした。時間をおいて再度お試しください。',
         );
       }
     } finally {
@@ -178,8 +177,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
       debugPrint('Billing session preparation failed: $error');
       if (mounted) {
         setState(
-          () => _errorMessage =
-              '決済画面を準備できませんでした。時間をおいて再度お試しください。',
+          () => _errorMessage = '決済画面を準備できませんでした。時間をおいて再度お試しください。',
         );
       }
     } finally {
