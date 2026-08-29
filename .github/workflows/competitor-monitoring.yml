@@ -26,6 +26,9 @@ permissions: {}
 
 jobs:
   generate-report:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: write
     name: Competitor Intelligence Report

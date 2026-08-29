@@ -40,6 +40,9 @@ permissions: {}
 
 jobs:
   sync-notion:
+    environment:
+      name: wbs-automation-production
+      deployment: false
     permissions:
       contents: read
     name: Sync project mirrors → Notion

@@ -14,6 +14,9 @@ permissions: {}
 
 jobs:
   cs-check:
+    environment:
+      name: customer-operations-production
+      deployment: false
     permissions:
       contents: write
       pull-requests: write

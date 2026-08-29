@@ -31,6 +31,9 @@ permissions: {}
 
 jobs:
   generate:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: write
     name: Generate Blog Draft via Claude API

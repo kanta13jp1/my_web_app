@@ -26,6 +26,9 @@ permissions: {}
 
 jobs:
   generate:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: write
     name: Generate Weekly SNS Draft via AI API

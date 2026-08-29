@@ -18,6 +18,9 @@ permissions: {}
 
 jobs:
   check-quotas:
+    environment:
+      name: observability-production
+      deployment: false
     permissions:
       contents: read
     name: Check AI Tool Quotas

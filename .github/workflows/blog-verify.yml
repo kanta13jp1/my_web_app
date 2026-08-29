@@ -27,6 +27,9 @@ permissions: {}
 
 jobs:
   verify:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: write
     name: Verify past posts

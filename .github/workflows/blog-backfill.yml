@@ -31,6 +31,9 @@ permissions: {}
 
 jobs:
   backfill:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: write
       actions: write  # blog-publish.yml を dispatch するため

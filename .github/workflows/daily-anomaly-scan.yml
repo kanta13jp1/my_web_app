@@ -28,6 +28,9 @@ concurrency:
 
 jobs:
   scan:
+    environment:
+      name: observability-production
+      deployment: false
     permissions:
       contents: read
     name: Scan all active users

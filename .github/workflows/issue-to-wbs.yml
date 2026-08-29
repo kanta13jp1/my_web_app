@@ -25,6 +25,9 @@ env:
 
 jobs:
   sync:
+    environment:
+      name: wbs-automation-production
+      deployment: false
     permissions:
       contents: read
       issues: write

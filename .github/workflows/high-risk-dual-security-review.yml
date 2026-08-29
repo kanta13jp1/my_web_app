@@ -25,7 +25,9 @@ jobs:
     if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    environment: high-risk-security-review
+    environment:
+      name: high-risk-security-review
+      deployment: false
     permissions:
       contents: read
       id-token: write
