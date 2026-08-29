@@ -104,6 +104,8 @@ jobs:
           python scripts/cicd_efficiency_test.py
           python scripts/pre_commit_quality_gate_test.py
           python scripts/container_cleanup_guard_test.py
+          python scripts/check_rootless_container_setup_test.py
+          python scripts/check_rootless_container_setup.py
           python scripts/vscode_terminal_settings_test.py
           python scripts/ci_failure_digest_test.py
 

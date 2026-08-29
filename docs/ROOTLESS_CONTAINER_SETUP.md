@@ -1,0 +1,200 @@
+# Rootless Podman / Docker development environment
+
+Issue #2842 の標準経路は、Windows 11 + WSL2-backed rootless Podman です。
+Linux/WSL2 で既に Rootless Docker を運用している場合は、後半の代替手順を
+利用できます。Dev Container 内へ Docker/Podman socket をマウントせず、
+Supabase CLI はホスト側、Flutter は非 root Dev Container 側で実行します。
+
+## Safety gate
+
+Podman のインストール、machine 作成、イメージ取得、コンテナ起動はホスト状態を
+変更します。owner の承認後、次を 2 回測定し、両方のサンプルで RAM 使用率 85%
+未満かつ空き 2 GB 超であることを確認してください。Windows Podman machine の公式
+前提は RAM 6 GB です。このリポジトリの full Supabase/Flutter 検証では、machine に
+6 GB を割り当てた後もホストに余裕が残り、C: に 40 GB 以上の空きがある状態を推奨
+します。
+
+```powershell
+$os = Get-CimInstance Win32_OperatingSystem
+[pscustomobject]@{
+  UsedRAMPercent = [math]::Round(
+    (1 - $os.FreePhysicalMemory / $os.TotalVisibleMemorySize) * 100,
+    1
+  )
+  FreeRAMGB = [math]::Round($os.FreePhysicalMemory / 1MB, 2)
+  FreeCGB = [math]::Round((Get-PSDrive C).Free / 1GB, 2)
+}
+```
+
+条件未達時は machine の作成・起動や `supabase start` を行いません。不要な volume を
+削除して空きを作る場合も、先に
+[`CONTAINER_RESOURCE_CLEANUP.md`](./CONTAINER_RESOURCE_CLEANUP.md) の退避手順を使います。
+
+## Windows 11 + WSL2 Podman
+
+1. 通常ユーザーの PowerShell で WSL2 とツールを確認します。
+
+   ```powershell
+   wsl --status
+   wsl --list --verbose
+   winget show --id RedHat.Podman --exact
+   ```
+
+2. owner 承認後に Podman 5 以降を導入します。リポジトリの Windows setup script にも
+   同じ package ID が固定されています。
+
+   ```powershell
+   winget install --id RedHat.Podman --exact
+   ```
+
+3. 安全ゲート通過後、rootless を明示して WSL2-backed machine を作ります。既存の
+   machine がある場合は再作成せず、`podman machine inspect` で設定を確認します。
+
+   ```powershell
+   podman machine init `
+     --cpus 4 `
+     --memory 6144 `
+     --disk-size 40 `
+     --rootful=false `
+     --now
+
+   podman machine inspect --format `
+     '{{.Name}} {{.State}} rootful={{.Rootful}} memory={{.Resources.Memory}}'
+   podman info --format json
+   ```
+
+   `rootful=false`、`State=running`、`host.security.rootless=true` を証跡に残します。
+   rootful と rootless の image/container/volume は別ストレージです。検証の途中で
+   `podman machine set --rootful=true` へ切り替えないでください。
+
+4. VS Code で推奨拡張機能を導入します。
+
+   - Container Tools: `ms-azuretools.vscode-containers`
+   - Dev Containers: `ms-vscode-remote.remote-containers`
+
+   `.vscode/settings.json` は次の 2 系統を設定済みです。Container Tools の provider ID
+   と Dev Containers の CLI path は別設定なので、片方だけを Docker のまま残さない
+   でください。
+
+   ```json
+   {
+     "containers.containerClient": "com.microsoft.visualstudio.containers.podman",
+     "containers.orchestratorClient": "com.microsoft.visualstudio.orchestrators.podmancompose",
+     "dev.containers.dockerPath": "podman"
+   }
+   ```
+
+5. VS Code で **Dev Containers: Rebuild and Reopen in Container** を実行します。
+   `.devcontainer/devcontainer.json` は `--userns=keep-id`、capability 全削除、
+   `no-new-privileges`、非 root の `vscode` user を固定しています。コンテナ内で確認します。
+
+   ```bash
+   test "$(id -u)" -ne 0
+   ! sudo -n true
+   flutter --version
+   flutter pub get
+   ```
+
+## Supabase and Flutter smoke
+
+Supabase CLI はホスト PowerShell から実行します。Docker Desktop context ではなく
+Podman が選ばれていることを `podman info` で確認してから開始します。
+
+```powershell
+podman info --format '{{.Host.Security.Rootless}}'
+supabase --version
+supabase start
+supabase status
+podman ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+```
+
+DB コンテナ名を `podman ps` から特定し、Postgres health と volume permission error の
+不在を確認します。名前を推測せず、表示された値を `$dbContainer` に設定します。
+
+```powershell
+$dbContainer = '<supabase db container name>'
+podman exec $dbContainer pg_isready -U postgres
+podman logs $dbContainer 2>&1 |
+  Select-String -Pattern 'permission denied|operation not permitted'
+```
+
+最後の検索が 0 件で、Auth/DB を含む `supabase status` が healthy であることを記録します。
+Flutter Dev Container 内では非特権 port 8080 に bind します。
+
+```bash
+flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080
+```
+
+ホストから `http://127.0.0.1:8080` と `http://127.0.0.1:54321/auth/v1/health`
+へアクセスし、Flutter と Supabase Auth の応答を記録します。終了時は DB backup を保つ
+通常の停止だけを実行します。
+
+```powershell
+supabase stop
+```
+
+`supabase stop --no-backup`、`podman volume prune`、Podman machine 削除はこの検証に
+含めません。
+
+## Rootless limitations and workarounds
+
+### 特権ポート
+
+rootless runtime は通常 1024 未満の特権ポートを bind できません。この repo の
+Supabase ports (54320-54324) と Flutter port (8080) はすべて非特権です。80/443 が
+必要でも runtime を rootful に切り替えず、8080/8443 のような非特権 port を使い、
+OS 管理の reverse proxy で転送します。Linux 管理者が security trade-off を承認した
+場合のみ `net.ipv4.ip_unprivileged_port_start` の変更を検討します。
+
+### Volume permission
+
+bind mount で `permission denied` が出た場合は、host path の owner を実行ユーザーへ
+戻し、Podman では `--userns=keep-id` を維持します。Podman の `:U` option は host
+filesystem の owner を再帰変更するため、対象を確認せず既存 Supabase data に適用
+しません。SELinux host では専用 directory に限って `:Z`/`:z` を検討します。
+
+### Networking and Docker API compatibility
+
+Windows の Podman machine は rootless user socket を使用します。別 WSL distribution
+から接続する場合は `podman-user.sock` を default connection に設定し、root socket を
+選ばないでください。Supabase CLI が runtime を検出できない場合は、Podman の
+Docker-compatible socket を `DOCKER_HOST` に設定します。TCP の平文 socket を
+0.0.0.0 に公開してはいけません。
+
+## Native Linux / WSL2 Rootless Docker alternative
+
+Linux 側で Docker Engine を標準にする場合は、`uidmap`、`/etc/subuid`、
+`/etc/subgid` を準備し、通常ユーザーで公式の setup tool を実行します。
+
+```bash
+dockerd-rootless-setuptool.sh install
+systemctl --user enable --now docker
+docker context use rootless
+export DOCKER_HOST="unix://${XDG_RUNTIME_DIR}/docker.sock"
+docker info
+```
+
+`docker info` の Security Options に `rootless` があり、system-wide の rootful daemon
+へ接続していないことを確認します。この経路では VS Code の
+`dev.containers.dockerPath` を `docker` に machine override し、Container Tools も
+Docker provider に override します。repo default は Windows/Podman のままです。
+
+## Evidence checklist
+
+- Podman/Docker、Supabase CLI、Flutter の version
+- 2 回の RAM/C: resource sample
+- rootless user/machine/socket の証跡
+- VS Code の `containers.containerClient` と `dev.containers.dockerPath`
+- Dev Container の非 root UID、sudo拒否、8080応答
+- Supabase Auth/DB health、volume permission error 0 件
+- privileged port の実測結果と採用した非特権 port
+- `supabase stop` 後に orphan process がないこと
+
+Official references:
+
+- [VS Code: Podman with Dev Containers](https://code.visualstudio.com/remote/advancedcontainers/docker-options)
+- [VS Code Container Tools provider settings](https://github.com/microsoft/vscode-containers/blob/main/extensions/vscode-containers/package.json)
+- [Podman machine](https://docs.podman.io/en/stable/markdown/podman-machine.1.html)
+- [Podman rootless limitations](https://github.com/containers/podman/blob/main/rootless.md)
+- [Supabase local development](https://supabase.com/docs/guides/local-development)
+- [Docker rootless mode](https://docs.docker.com/engine/security/rootless/)

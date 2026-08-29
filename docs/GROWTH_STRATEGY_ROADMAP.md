@@ -33505,3 +33505,11 @@ watcher が名指しできるのはスナップショット時点で**生存し�
 - 新規・更新・同額・古い・同日競合を差分表示し、新しい確認日の同額残高は口座鮮度の更新候補とする。古い残高と競合は自動反映しない。
 - 保管庫由来の残高更新では使途不明金を自動生成せず、取引履歴・給与・支払予定・カード明細・推定サブスクは誤更新防止のためMVP対象外とした。
 - 検証はパーサー5件、レスポンシブWidget 2件、既存資産管理ページのスモーク1件、変更対象ファイルの静的解析で実施した。全体解析とWeb buildはRAM保護のためCIへ委ねる。
+
+### 開発基盤セッション記録: Rootless Podman Dev Container準備 (2026-08-29 JST)
+
+- Issue #2842 向けに、Container Tools と Dev Containers のPodman設定、非root Flutter 3.38.10 Dev Container、Windows/WSL2・Linuxのrunbook、静的回帰テストを追加した。
+- Flutter containerは`keep-id`、capability全削除、`no-new-privileges`、sudo拒否、非特権port 8080を固定し、Supabaseはhost側rootless runtimeから起動してruntime socketをDev Containerへ渡さない。
+- 公式一次情報で、Container ToolsのPodman provider IDとDev Containersの`dev.containers.dockerPath`が別設定であること、Windows Podman machineがrootless既定かつRAM 6 GBを要することを確認した。
+- ローカルはRAM使用93.8%、空き0.97 GB、C:空き9.95 GBで安全ゲート未達だったため、Podman導入・machine作成・image取得・Supabase/Flutter live smokeは実行していない。Issueは実機検証完了までOPENを維持する。
+- 静的contract 7件、repository checker、既存VS Code settings 4件、PowerShell parser、setup dry-run、diff checkは成功した。コンテナbuildとAuth/DB/volume/port smokeは安全なhostでの後続検証へ残す。
