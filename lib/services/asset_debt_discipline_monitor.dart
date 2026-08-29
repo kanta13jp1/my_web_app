@@ -46,6 +46,10 @@ class AssetDebtDisciplineViolation {
   /// [currentPlanPayoffMonths] が null のときは null。
   final double? currentPlanTotalInterest;
 
+  /// カード会社で「今後は一括（1回）払い」への変更を記録済みか。
+  /// true の場合も違反判定と返済月額目標は維持し、設定変更の再案内だけを抑止する。
+  final bool oneShotChangeCompleted;
+
   const AssetDebtDisciplineViolation({
     required this.type,
     required this.severity,
@@ -60,6 +64,7 @@ class AssetDebtDisciplineViolation {
     this.escapeMonthlyPayment,
     this.currentPlanPayoffMonths,
     this.currentPlanTotalInterest,
+    this.oneShotChangeCompleted = false,
   });
 
   /// 具体的な脱却プラン（月額×期間）を提示できるか。
@@ -157,6 +162,8 @@ class AssetDebtDisciplineMonitor {
   AssetDebtDisciplineReport evaluate({
     required AssetLiabilityWorkbook workbook,
     Map<String, double> priorBalancesByAccountId = const <String, double>{},
+    Map<String, AssetCardUsagePolicy> cardUsagePolicies =
+        const <String, AssetCardUsagePolicy>{},
   }) {
     final newBorrowing = <AssetDebtDisciplineViolation>[];
     final revolving = <AssetDebtDisciplineViolation>[];
@@ -207,6 +214,8 @@ class AssetDebtDisciplineMonitor {
         final carriedOver = balance - payment;
         final interestBearing = row.annualRate > 0;
         if (carriedOver > _epsilon && interestBearing) {
+          final oneShotChangeCompleted =
+              cardUsagePolicies[row.id]?.enforceOneShot == true;
           totalCarried += carriedOver;
           // 「いつまでに・いくら返せば脱却できるか」を Dart 側で確定させる。
           // AI は説明のみ（calculation_owner: dart_service）。
@@ -241,6 +250,16 @@ class AssetDebtDisciplineMonitor {
             // 利息は上回るがシミュレーション上限 (600ヶ月) 内に完済しない。
             currentPlanText = '現在の予定額 月${_yen(payment)}では完済まで50年以上かかる見込みです。';
           }
+          final action = oneShotChangeCompleted
+              ? '今後の利用分を一括（1回）払いにする設定変更は完了済みです。'
+                  '残高圧縮に集中し、月${_yen(escapePayment)}以上の返済を続ければ'
+                  '約$escapeTargetMonthsヶ月で完済できる目安です。'
+                  '$currentPlanText'
+              : 'リボ/分割の設定を解除し、残高${_yen(balance)}の一括返済が最優先です。'
+                  '一括が難しい場合も、月${_yen(escapePayment)}以上の返済を続ければ'
+                  '約$escapeTargetMonthsヶ月でリボ状態から脱却できます。'
+                  '$currentPlanText'
+                  '今後カードを使うときは必ず一括（1回払い）に設定し、残高を翌月へ繰り越さないでください。';
           revolving.add(
             AssetDebtDisciplineViolation(
               type: AssetDebtDisciplineViolationType.revolvingCard,
@@ -254,16 +273,13 @@ class AssetDebtDisciplineMonitor {
                   '${row.name}は残高${_yen(balance)}に対し今月の返済予定が${_yen(payment)}で、'
                   '${_yen(carriedOver)}が翌月へ繰り越され利息が発生します（＝リボ/分割の状態）。'
                   '「カードは必ず一括返済」誓約に反しています。',
-              action: 'リボ/分割の設定を解除し、残高${_yen(balance)}の一括返済が最優先です。'
-                  '一括が難しい場合も、月${_yen(escapePayment)}以上の返済を続ければ'
-                  '約$escapeTargetMonthsヶ月でリボ状態から脱却できます。'
-                  '$currentPlanText'
-                  '今後カードを使うときは必ず一括（1回払い）に設定し、残高を翌月へ繰り越さないでください。',
+              action: action,
               escapeMonths: escapeTargetMonths,
               escapeMonthlyPayment: escapePayment,
               currentPlanPayoffMonths: currentPlanMonths,
               currentPlanTotalInterest:
                   currentPlanMonths == null ? null : currentPlan!.totalInterest,
+              oneShotChangeCompleted: oneShotChangeCompleted,
             ),
           );
         }

@@ -260,6 +260,59 @@ class AssetLiabilityRevolvingCreditConfig {
   }
 }
 
+/// カード会社へ連絡して「今後は一括（1回）払い」に変更した実行記録。
+///
+/// [enforceOneShot] が true のカードは、残高が残っていても設定変更を促す
+/// 助言を繰り返さない。返済額や完済目標の計算自体は止めず、残高圧縮の
+/// 月額目標は引き続き提示する。
+class AssetCardUsagePolicy {
+  /// 今後の利用分を一括（1回）払いにする設定変更が完了しているか。
+  final bool enforceOneShot;
+
+  /// 設定変更を完了として記録した日時（UTC 保存を推奨）。
+  final DateTime? changedAt;
+
+  /// 受付番号、連絡日、担当窓口などの監査メモ。
+  final String memo;
+
+  const AssetCardUsagePolicy({
+    required this.enforceOneShot,
+    this.changedAt,
+    this.memo = '',
+  });
+
+  AssetCardUsagePolicy copyWith({
+    bool? enforceOneShot,
+    DateTime? changedAt,
+    String? memo,
+  }) {
+    return AssetCardUsagePolicy(
+      enforceOneShot: enforceOneShot ?? this.enforceOneShot,
+      changedAt: changedAt ?? this.changedAt,
+      memo: memo ?? this.memo,
+    );
+  }
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'enforce_one_shot': enforceOneShot,
+        if (changedAt != null)
+          'changed_at': changedAt!.toUtc().toIso8601String(),
+        if (memo.trim().isNotEmpty) 'memo': memo.trim(),
+      };
+
+  factory AssetCardUsagePolicy.fromJson(Map<String, dynamic> json) {
+    final changedAtRaw = json['changed_at'] ?? json['changedAt'];
+    return AssetCardUsagePolicy(
+      enforceOneShot:
+          json['enforce_one_shot'] == true || json['enforceOneShot'] == true,
+      changedAt: changedAtRaw == null
+          ? null
+          : DateTime.tryParse(changedAtRaw.toString())?.toUtc(),
+      memo: json['memo']?.toString().trim() ?? '',
+    );
+  }
+}
+
 /// 定期固定費の発生周期。
 enum AssetRecurringFixedCostCadence {
   /// 毎月。
@@ -1346,6 +1399,12 @@ class AssetLiabilityWorkbook {
   /// (サブスクは解約候補であって優先支払い対象ではない)。
   final Set<String> subscriptionFixedCostAccountIds;
 
+  /// カードIDごとの「今後は一括（1回）払い」実行記録。
+  ///
+  /// 規律違反や残高圧縮額の算出は維持し、設定変更を促す助言だけをカード単位で
+  /// 抑止するために insight 層へ渡す。
+  final Map<String, AssetCardUsagePolicy> cardUsagePolicies;
+
   const AssetLiabilityWorkbook({
     required this.baseDate,
     required this.accounts,
@@ -1377,6 +1436,7 @@ class AssetLiabilityWorkbook {
     required this.manualPaymentCount,
     required this.estimatedPaymentCount,
     this.subscriptionFixedCostAccountIds = const <String>{},
+    this.cardUsagePolicies = const <String, AssetCardUsagePolicy>{},
   });
 
   List<AssetLiabilityCashflowRow> get overdueCashflowRows {

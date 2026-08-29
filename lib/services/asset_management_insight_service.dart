@@ -395,6 +395,7 @@ class AssetManagementInsightService {
     final disciplineReport = disciplineMonitor.evaluate(
       workbook: workbook,
       priorBalancesByAccountId: priorMonthAccountBalances,
+      cardUsagePolicies: workbook.cardUsagePolicies,
     );
     final triagePlan = triageGuideService.buildPlan(
       workbook: workbook,
@@ -1374,6 +1375,13 @@ class AssetManagementInsightPromptBuilder {
       report.developerRequests.map((item) => item.severity.name),
     );
     final workbook = report.workbook;
+    final completedOneShotCardNames = workbook.debtMasterRows
+        .where(
+          (row) => workbook.cardUsagePolicies[row.id]?.enforceOneShot == true,
+        )
+        .map((row) => row.name)
+        .toSet()
+        .join('、');
     final buffer = StringBuffer()
       ..writeln('あなたは「細木数子」を彷彿とさせる、ズバズバ断言型の資産管理アシスタントです。')
       ..writeln(
@@ -1397,6 +1405,11 @@ class AssetManagementInsightPromptBuilder {
         '「取込明細合計(今月の新規利用)」は一致しないのが正常です。これらの差を「照合不一致」「ズレ」'
         '「要修正」「今日中に直せ」等として指摘しないでください。リボ払いカードの照合は完了済みとして扱い、'
         '明細の取り込みも催促しないでください。',
+      )
+      ..writeln(
+        '一括払い化の実行記録: ${completedOneShotCardNames.isEmpty ? 'なし' : completedOneShotCardNames}。'
+        '変更完了済みのカードには、カード会社への電話、リボ/分割設定の解除、1回払いへの変更を二度と促さないでください。'
+        'そのカードは残高圧縮の計算済み月額目標だけを提示してください。',
       )
       ..writeln(
         '支払済みの扱い: 「支払済み:はい」または「期限超過:いいえ」の負債・支払いは、今月分の支払いが'
