@@ -36,26 +36,28 @@ void main() {
   ) async {
     final service = FakeMemoReactionService();
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
+    try {
+      await tester.pumpWidget(
+        MaterialApp(home: MemoReactionsPage(publicMemoService: service)),
+      );
 
-    await tester.pumpWidget(
-      MaterialApp(home: MemoReactionsPage(publicMemoService: service)),
-    );
+      await tester.enterText(find.byType(TextField), '42');
+      await tester.tap(find.text('取得'));
+      await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField), '42');
-    await tester.tap(find.text('取得'));
-    await tester.pumpAndSettle();
+      expect(service.loadedMemoIds, <int>[42]);
+      expect(find.text('2'), findsOneWidget);
 
-    expect(service.loadedMemoIds, <int>[42]);
-    expect(find.text('2'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('いいね 2件'));
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.bySemanticsLabel('いいね 2件'));
-    await tester.pumpAndSettle();
-
-    expect(service.toggles, <({int memoId, String reaction})>[
-      (memoId: 42, reaction: '👍'),
-    ]);
-    expect(find.text('3'), findsOneWidget);
-    expect(find.bySemanticsLabel('いいね 3件 選択中'), findsOneWidget);
+      expect(service.toggles, <({int memoId, String reaction})>[
+        (memoId: 42, reaction: '👍'),
+      ]);
+      expect(find.text('3'), findsOneWidget);
+      expect(find.bySemanticsLabel('いいね 3件 選択中'), findsOneWidget);
+    } finally {
+      semantics.dispose();
+    }
   });
 }
