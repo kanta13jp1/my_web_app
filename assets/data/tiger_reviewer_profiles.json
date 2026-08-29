@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "snapshot_date": "2026-08-29",
-  "source_snapshot": "canonical tiger-personas.json (2026-08-29)",
+  "snapshot_date": "2026-08-30",
+  "source_snapshot": "canonical tiger-personas.json (2026-08-30)",
   "reviewer_count": 125,
   "disclaimer": "年齢は生年月日を公開一次情報で確認できた場合のみ、スナップショット日時点で表示します。未確認の年齢は推測していません。肩書き・事業内容・出演実績は公開情報から構成したスナップショットです。",
   "profiles": [
@@ -11,7 +11,7 @@
       "roster_status": "current",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "アマソラクリニック（院長）（美容クリニック）",
+      "company_role": "アマソラクリニック 院長",
       "business_summary": "医学部受験塾、美容クリニック、インドアゴルフ場、D2Cサプリ事業",
       "business_domains": [
         "教育・スクール",
@@ -118,6 +118,7 @@
         }
       ],
       "review_style_tags": [
+        "founder_empathy",
         "growth_first",
         "balanced_risk",
         "replicability_and_store_economics"
@@ -195,7 +196,7 @@
       "evidence_source_ids": [
         "S006",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -258,9 +259,9 @@
         "生年月日の一次公開情報"
       ],
       "evidence_source_ids": [
-        "S008",
-        "S002",
         "S007",
+        "S002",
+        "S008",
         "S004"
       ]
     },
@@ -325,7 +326,7 @@
       "evidence_source_ids": [
         "S009",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -388,7 +389,7 @@
       "evidence_source_ids": [
         "S010",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -455,7 +456,7 @@
       "evidence_source_ids": [
         "S011",
         "S002",
-        "S007"
+        "S008"
       ]
     },
     {
@@ -516,7 +517,7 @@
       "evidence_source_ids": [
         "S012",
         "S002",
-        "S007"
+        "S003"
       ]
     },
     {
@@ -579,7 +580,7 @@
       "evidence_source_ids": [
         "S013",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -635,10 +636,10 @@
       "review_style_tags": [
         "numbers_first",
         "conviction_test",
-        "customer_first",
-        "growth_first",
         "balanced_risk",
-        "replicability_and_store_economics"
+        "replicability_and_store_economics",
+        "acquisition_and_conversion",
+        "gross_margin_and_repeat_purchase"
       ],
       "next_research_targets": [
         "生年月日の一次公開情報"
@@ -646,7 +647,7 @@
       "evidence_source_ids": [
         "S014",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -710,7 +711,7 @@
       "evidence_source_ids": [
         "S015",
         "S002",
-        "S007"
+        "S003"
       ]
     },
     {
@@ -776,7 +777,7 @@
       "evidence_source_ids": [
         "S016",
         "S002",
-        "S007"
+        "S003"
       ]
     },
     {
@@ -839,7 +840,7 @@
       "evidence_source_ids": [
         "S017",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -901,7 +902,7 @@
       "evidence_source_ids": [
         "S018",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -962,7 +963,7 @@
       "evidence_source_ids": [
         "S019",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -1026,7 +1027,7 @@
       "evidence_source_ids": [
         "S020",
         "S002",
-        "S007"
+        "S003"
       ]
     },
     {
@@ -1089,7 +1090,7 @@
       "evidence_source_ids": [
         "S021",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -1150,7 +1151,7 @@
       "evidence_source_ids": [
         "S022",
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -1211,7 +1212,7 @@
       "evidence_source_ids": [
         "S023",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -1277,7 +1278,7 @@
       "evidence_source_ids": [
         "S024",
         "S002",
-        "S007"
+        "S003"
       ]
     },
     {
@@ -1338,7 +1339,7 @@
       "evidence_source_ids": [
         "S025",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -1405,7 +1406,7 @@
       "evidence_source_ids": [
         "S026",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -1459,7 +1460,6 @@
       ],
       "review_style_tags": [
         "numbers_first",
-        "growth_first",
         "balanced_risk",
         "gross_margin_and_repeat_purchase"
       ],
@@ -1469,7 +1469,7 @@
       "evidence_source_ids": [
         "S027",
         "S002",
-        "S007",
+        "S008",
         "S004"
       ]
     },
@@ -1532,7 +1532,7 @@
       "evidence_source_ids": [
         "S028",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -1597,7 +1597,7 @@
       "evidence_source_ids": [
         "S029",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -1664,7 +1664,7 @@
       "evidence_source_ids": [
         "S030",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -1725,7 +1725,7 @@
       "evidence_source_ids": [
         "S031",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -1790,7 +1790,7 @@
       "evidence_source_ids": [
         "S032",
         "S002",
-        "S007"
+        "S003"
       ]
     },
     {
@@ -1855,7 +1855,7 @@
       "evidence_source_ids": [
         "S033",
         "S002",
-        "S007"
+        "S003"
       ]
     },
     {
@@ -1918,7 +1918,7 @@
       "evidence_source_ids": [
         "S034",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -1979,7 +1979,7 @@
       "evidence_source_ids": [
         "S035",
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -2045,7 +2045,7 @@
       "evidence_source_ids": [
         "S036",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -2238,7 +2238,7 @@
       "evidence_source_ids": [
         "S039",
         "S002",
-        "S007"
+        "S003"
       ]
     },
     {
@@ -2300,7 +2300,7 @@
       "evidence_source_ids": [
         "S040",
         "S002",
-        "S007"
+        "S003"
       ]
     },
     {
@@ -2363,7 +2363,7 @@
       "evidence_source_ids": [
         "S041",
         "S002",
-        "S007"
+        "S003"
       ]
     },
     {
@@ -2551,7 +2551,7 @@
       "evidence_source_ids": [
         "S044",
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -2623,16 +2623,16 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "株式会社トモハッピー（カードゲーム売買業。YouTuber）",
+      "company_role": "株式会社晴れる屋 代表",
       "business_summary": "小売・通販・EC、エンタメ・クリエイター、マーケティング・メディア",
       "business_domains": [
+        "小売・通販・EC",
         "エンタメ・クリエイター",
-        "マーケティング・メディア",
-        "小売・通販・EC"
+        "マーケティング・メディア"
       ],
       "appearances": 340,
       "investment_count": 110,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。エンタメ・クリエイター、マーケティング・メディア、小売・通販・ECの公開職歴と、番組集計上の出演340回・出資110回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
+      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。小売・通販・EC、エンタメ・クリエイター、マーケティング・メディアの公開職歴と、番組集計上の出演340回・出資110回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
       "profile_url": "https://atsu-blog.com/tigerfunding-president-list/",
       "evidence_confidence": 3.3,
       "profile_completeness_percent": 57,
@@ -2742,7 +2742,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -2804,7 +2804,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -2867,7 +2867,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -2877,15 +2877,14 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "StockSun株式会社 代表取締役社長",
+      "company_role": "StockSun（WEBコンサルティング業）",
       "business_summary": "マーケティング・メディア、経営支援・コンサルティング",
       "business_domains": [
-        "マーケティング・メディア",
         "経営支援・コンサルティング"
       ],
       "appearances": 70,
       "investment_count": 6,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。マーケティング・メディア、経営支援・コンサルティングの公開職歴と、番組集計上の出演70回・出資6回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
+      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。経営支援・コンサルティングの公開職歴と、番組集計上の出演70回・出資6回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
       "profile_url": "https://atsu-blog.com/tigerfunding-president-list/",
       "evidence_confidence": 3.3,
       "profile_completeness_percent": 57,
@@ -2894,35 +2893,32 @@
       "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
-          "dimension": "market_demand",
-          "label": "市場需要",
-          "weight_percent": 20,
-          "question": "実在する顧客は誰で、需要を示す一次データは何か。"
-        },
-        {
           "dimension": "unit_economics",
           "label": "単位経済性",
-          "weight_percent": 16,
+          "weight_percent": 20,
           "question": "顧客・注文・店舗単位の粗利、獲得費、回収期間は成立するか。"
         },
         {
-          "dimension": "competitive_advantage",
-          "label": "競争優位性",
-          "weight_percent": 15,
-          "question": "既存代替より選ばれ続ける、模倣されにくい理由は何か。"
+          "dimension": "market_demand",
+          "label": "市場需要",
+          "weight_percent": 16,
+          "question": "実在する顧客は誰で、需要を示す一次データは何か。"
         },
         {
           "dimension": "revenue_model",
           "label": "収益モデル",
-          "weight_percent": 13,
+          "weight_percent": 15,
           "question": "誰が、何に、いくら、どの頻度で支払うのか。"
+        },
+        {
+          "dimension": "competitive_advantage",
+          "label": "競争優位性",
+          "weight_percent": 13,
+          "question": "既存代替より選ばれ続ける、模倣されにくい理由は何か。"
         }
       ],
       "review_style_tags": [
-        "numbers_first",
-        "founder_empathy",
-        "evidence_demanding",
-        "acquisition_and_conversion"
+        "evidence_demanding"
       ],
       "next_research_targets": [
         "生年月日の一次公開情報",
@@ -2931,7 +2927,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -2992,7 +2988,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -3055,7 +3051,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -3119,7 +3115,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -3180,7 +3176,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -3243,7 +3239,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -3303,7 +3299,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -3364,7 +3360,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -3426,7 +3422,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -3486,7 +3482,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -3546,7 +3542,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -3607,7 +3603,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -3667,7 +3663,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -3731,7 +3727,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -3796,7 +3792,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -3857,7 +3853,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -3917,7 +3913,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -3981,7 +3977,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -4044,7 +4040,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -4110,7 +4106,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -4172,7 +4168,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -4301,7 +4297,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -4366,7 +4362,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -4430,7 +4426,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -4492,7 +4488,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -4553,7 +4549,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007"
+        "S003"
       ]
     },
     {
@@ -4618,7 +4614,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -4679,7 +4675,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -4745,7 +4741,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -4806,7 +4802,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -4869,7 +4865,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -4931,7 +4927,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -4994,7 +4990,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -5055,7 +5051,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -5116,7 +5112,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -5177,7 +5173,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -5243,7 +5239,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -5304,7 +5300,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -5365,7 +5361,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -5426,7 +5422,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003"
+        "S008"
       ]
     },
     {
@@ -5501,7 +5497,7 @@
         "S002",
         "S047",
         "S048",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -5588,7 +5584,7 @@
         "S050",
         "S051",
         "S052",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -5652,7 +5648,6 @@
         }
       ],
       "review_style_tags": [
-        "growth_first",
         "evidence_demanding",
         "acquisition_and_conversion",
         "gross_margin_and_repeat_purchase"
@@ -5666,7 +5661,7 @@
         "S002",
         "S053",
         "S054",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -5892,7 +5887,7 @@
       "evidence_source_ids": [
         "S002",
         "S060",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -6044,7 +6039,7 @@
         "S062",
         "S063",
         "S064",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -6128,7 +6123,7 @@
         "S065",
         "S066",
         "S067",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -6210,7 +6205,7 @@
         "S068",
         "S069",
         "S070",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -6271,7 +6266,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -6340,7 +6335,7 @@
       "evidence_source_ids": [
         "S002",
         "S071",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -6423,7 +6418,7 @@
         "S072",
         "S073",
         "S074",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -6614,7 +6609,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S007",
+        "S003",
         "S004"
       ]
     },
@@ -6689,29 +6684,40 @@
       "seat": 104,
       "name": "川原ひろし",
       "roster_status": "historical",
-      "birth_date": null,
-      "birth_date_source_url": null,
-      "company_role": "なんでんかんでん創業者。ラーメン店の出店、ブランド再生、飲食FCを経験",
-      "business_summary": "飲食・宿泊・接客、フランチャイズ・多店舗展開、M&A・事業再生",
+      "birth_date": "1964-03-13",
+      "birth_date_source_url": "https://sakurai-machizukuri.com/wp/wp-content/uploads/2019/07/miraijuku6-20190310.pdf",
+      "company_role": "なんでんかんでん社長。ラーメン店経営のほか、タレント、歌手、俳優、講演会・接客セミナー講師として活動",
+      "business_summary": "豚骨ラーメン店『なんでんかんでん』の経営と商品開発、芸能・講演・接客セミナー活動",
       "business_domains": [
         "飲食・宿泊・接客",
         "フランチャイズ・多店舗展開",
-        "M&A・事業再生"
+        "マーケティング・メディア",
+        "教育・スクール"
       ],
       "appearances": 2,
       "investment_count": 0,
-      "public_viewpoint_summary": "商品力、立地、話題化、店舗採算と、失敗後も立て直せる経営者の粘りを重視する。",
-      "profile_url": "https://ja.everybodywiki.com/%E4%BB%A4%E5%92%8C%E3%81%AE%E8%99%8E",
-      "evidence_confidence": 2.3,
-      "profile_completeness_percent": 48,
-      "review_reflection_percent": 47,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "公式所属事務所プロフィールでは、東京に本格的な豚骨ラーメンがない市場ギャップを捉えて出店した経緯と、豚骨ラーメンを主流にする目標、プリントのりなど独自商品の開発実績を説明している。",
+      "profile_url": "https://www.office-ballad.com/kawaharahiroshi",
+      "evidence_links": [
+        {
+          "label": "現職肩書き・事業内容・公開方針（公式所属事務所）",
+          "url": "https://www.office-ballad.com/kawaharahiroshi"
+        },
+        {
+          "label": "生年月日・経歴（都市再生推進法人の公開資料）",
+          "url": "https://sakurai-machizukuri.com/wp/wp-content/uploads/2019/07/miraijuku6-20190310.pdf"
+        }
+      ],
+      "evidence_confidence": 3.3,
+      "profile_completeness_percent": 80,
+      "review_reflection_percent": 72,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "unit_economics",
           "label": "単位経済性",
-          "weight_percent": 31,
+          "weight_percent": 21,
           "question": "顧客・注文・店舗単位の粗利、獲得費、回収期間は成立するか。"
         },
         {
@@ -6723,23 +6729,23 @@
         {
           "dimension": "market_demand",
           "label": "市場需要",
-          "weight_percent": 11,
+          "weight_percent": 17,
           "question": "実在する顧客は誰で、需要を示す一次データは何か。"
         },
         {
-          "dimension": "revenue_model",
-          "label": "収益モデル",
-          "weight_percent": 11,
-          "question": "誰が、何に、いくら、どの頻度で支払うのか。"
+          "dimension": "go_to_market",
+          "label": "顧客獲得",
+          "weight_percent": 15,
+          "question": "最初の顧客をどの経路・費用で獲得し、検証できるか。"
         }
       ],
       "review_style_tags": [
         "balanced_risk",
         "replicability_and_store_economics",
+        "acquisition_and_conversion",
         "gross_margin_and_repeat_purchase"
       ],
       "next_research_targets": [
-        "生年月日の一次公開情報",
         "現職肩書き・事業内容の一次公開情報",
         "本人の審査姿勢が確認できる一次公開情報",
         "出演・出資実績の追加検証"
@@ -6747,6 +6753,7 @@
       "evidence_source_ids": [
         "S002",
         "S078",
+        "S079",
         "S004"
       ]
     },
@@ -6756,22 +6763,37 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "株式会社外食虎塾代表。飲食店経営、業態開発、外食経営支援を経験",
-      "business_summary": "飲食・宿泊・接客、経営支援・コンサルティング、M&A・事業再生",
+      "company_role": "株式会社外食虎塾代表取締役社長。飲食店の再生コンサルティング、経営塾・会員制コミュニティ、講演・セミナー、直営・FC店舗を展開",
+      "business_summary": "飲食店の再生コンサルティング、経営塾・会員制コミュニティ、講演・セミナー、直営・FC店舗",
       "business_domains": [
         "飲食・宿泊・接客",
         "経営支援・コンサルティング",
-        "M&A・事業再生"
+        "M&A・事業再生",
+        "教育・スクール"
       ],
       "appearances": 2,
       "investment_count": 1,
-      "public_viewpoint_summary": "客単価、原価、人件費、回転率、立地、再来店理由が一つの店舗モデルとして成立するかを重視する。",
-      "profile_url": "https://ja.everybodywiki.com/%E4%BB%A4%E5%92%8C%E3%81%AE%E8%99%8E",
-      "evidence_confidence": 2.3,
-      "profile_completeness_percent": 48,
-      "review_reflection_percent": 47,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "公式コンサルティング案内では、PL分析に加え、ぶれないコンセプト、キラーコンテンツ、理論原価を繁盛店づくりの重要要素として掲げ、自身の成功・失敗経験を次世代経営者支援に活かしている。",
+      "profile_url": "https://gaishoku.jp/",
+      "evidence_links": [
+        {
+          "label": "現職肩書き・事業内容（公式会社サイト）",
+          "url": "https://gaishoku.jp/"
+        },
+        {
+          "label": "経歴・公開された経営方針（本人公式サイト）",
+          "url": "https://www.yasudahisashi.com/"
+        },
+        {
+          "label": "再生支援の評価観点（公式コンサルティング案内）",
+          "url": "https://gaishoku.jp/consulting/"
+        }
+      ],
+      "evidence_confidence": 3.3,
+      "profile_completeness_percent": 65,
+      "review_reflection_percent": 72,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "unit_economics",
@@ -6810,7 +6832,9 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S078",
+        "S080",
+        "S081",
+        "S082",
         "S004"
       ]
     },
@@ -6872,7 +6896,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -6934,7 +6958,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -6998,8 +7022,8 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S079",
-        "S003",
+        "S083",
+        "S008",
         "S004"
       ]
     },
@@ -7064,7 +7088,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S080",
+        "S084",
         "S004"
       ]
     },
@@ -7126,7 +7150,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003",
+        "S008",
         "S004"
       ]
     },
@@ -7192,7 +7216,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S081",
+        "S085",
         "S004"
       ]
     },
@@ -7257,7 +7281,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S082"
+        "S086"
       ]
     },
     {
@@ -7322,7 +7346,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S083"
+        "S087"
       ]
     },
     {
@@ -7386,7 +7410,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S084"
+        "S088"
       ]
     },
     {
@@ -7448,7 +7472,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S085"
+        "S089"
       ]
     },
     {
@@ -7520,9 +7544,9 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S086",
-        "S087",
-        "S007",
+        "S090",
+        "S091",
+        "S003",
         "S004"
       ]
     },
@@ -7589,7 +7613,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S088",
+        "S092",
         "S004"
       ]
     },
@@ -7652,8 +7676,8 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S089",
-        "S003",
+        "S093",
+        "S008",
         "S004"
       ]
     },
@@ -7728,9 +7752,9 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S090",
-        "S091",
-        "S003",
+        "S094",
+        "S095",
+        "S008",
         "S004"
       ]
     },
@@ -7795,7 +7819,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S092",
+        "S096",
         "S004"
       ]
     },
@@ -7860,7 +7884,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S093",
+        "S097",
         "S004"
       ]
     },
@@ -7925,7 +7949,7 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S094",
+        "S098",
         "S004"
       ]
     },
@@ -7999,8 +8023,8 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S095",
-        "S096"
+        "S099",
+        "S100"
       ]
     },
     {
@@ -8074,9 +8098,9 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S097",
-        "S098",
-        "S003"
+        "S101",
+        "S102",
+        "S008"
       ]
     },
     {
@@ -8155,19 +8179,19 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S099",
-        "S100",
-        "S007"
+        "S103",
+        "S104",
+        "S003"
       ]
     }
   ],
   "enrichment": {
-    "round": 7,
+    "round": 8,
     "batch_size": 5,
     "policy": "一次公開情報を優先し、未確認情報は推測しない。プロフィール由来のレビュー観点は証拠強度に応じて段階反映する。",
-    "average_profile_completeness_percent": 66.3,
-    "average_review_reflection_percent": 71.7,
-    "verified_birth_dates": 9,
+    "average_profile_completeness_percent": 66.7,
+    "average_review_reflection_percent": 72.1,
+    "verified_birth_dates": 10,
     "next_batch": [
       {
         "seat": 116,
@@ -8203,8 +8227,8 @@
         ]
       },
       {
-        "seat": 104,
-        "name": "川原ひろし",
+        "seat": 106,
+        "name": "六川正男",
         "profile_completeness_percent": 48,
         "research_targets": [
           "生年月日の一次公開情報",
@@ -8214,8 +8238,8 @@
         ]
       },
       {
-        "seat": 105,
-        "name": "安田久",
+        "seat": 107,
+        "name": "岡田修一",
         "profile_completeness_percent": 48,
         "research_targets": [
           "生年月日の一次公開情報",
