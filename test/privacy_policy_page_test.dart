@@ -17,10 +17,13 @@ void main() {
     expect(find.textContaining('AI分析・提案'), findsWidgets);
     expect(find.textContaining('AI動画生成'), findsWidgets);
 
-    final policyScroll = find.byWidgetPredicate(
-      (widget) =>
-          widget is Scrollable && widget.axisDirection == AxisDirection.down,
-    );
+    final policyScroll = find
+        .byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        )
+        .first;
     expect(policyScroll, findsOneWidget);
 
     for (var attempt = 0;
