@@ -525,7 +525,8 @@ void main() {
       );
       final lifeline = indexOf(
         priorityReport,
-        (item) => item.relatedAccountId ==
+        (item) =>
+            item.relatedAccountId ==
             AssetLiabilityPlanningService.rentAccountId,
       );
       final contact = indexOf(

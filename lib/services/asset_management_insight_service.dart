@@ -1285,8 +1285,7 @@ class AssetManagementInsightService {
     required Map<String, AssetLiabilityDebtRow> debtRowsById,
     required Set<String> subscriptionFixedCostAccountIds,
   }) {
-    if (item.type ==
-        AssetManagementInsightActionType.emergencyLivingExpense) {
+    if (item.type == AssetManagementInsightActionType.emergencyLivingExpense) {
       return 0;
     }
 
