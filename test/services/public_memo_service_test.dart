@@ -48,4 +48,23 @@ void main() {
       );
     });
   });
+
+  group('PublicMemoService reaction contract', () {
+    test('load request uses only memo.react.list', () {
+      expect(PublicMemoService.buildLoadReactionsRequest(42), {
+        'action': 'memo.react.list',
+        'memo_id': 42,
+      });
+    });
+
+    test('toggle request uses only memo.react.toggle', () {
+      expect(
+        PublicMemoService.buildToggleReactionRequest(
+          memoId: 42,
+          reaction: '👍',
+        ),
+        {'action': 'memo.react.toggle', 'memo_id': 42, 'reaction': '👍'},
+      );
+    });
+  });
 }
