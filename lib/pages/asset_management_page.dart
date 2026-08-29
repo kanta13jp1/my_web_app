@@ -1019,6 +1019,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetManagementInsightService.defaultMinimumSafetyBalance;
   late final TextEditingController _minimumSafetyBalanceController =
       TextEditingController(text: _minimumSafetyBalance.round().toString());
+  // 既定 OFF。ON の間だけ行動リストを生活防衛ルール順へ並べ替える。
+  bool _livingExpensePriorityMode = false;
   Map<AssetManagementSectionId, AssetManagementSectionVisibilityOverride>
       _sectionOverrides = {};
   // GC 設定をサーバ/ローカルから取得したら差し替えるため非 final (#part287/288)。
@@ -20410,6 +20412,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       userProfile: _assetManagementUserProfile,
       mainAccountId: _assetManagementMainAccountId,
       minimumSafetyBalance: _minimumSafetyBalance,
+      livingExpensePriorityMode: _livingExpensePriorityMode,
       priorMonthAccountBalances: priorMonthAccountBalances,
       dailyTodoDigest: _currentDailyTodoDigest(),
     );
@@ -24066,25 +24069,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     List<AssetManagementInsightActionItem> actionItems,
     Set<String> debtMasterCardIds,
   ) {
-    if (actionItems.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: const Color(0xFFECFDF5),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: const Color(0xFF0D9488).withValues(alpha: 0.24),
-          ),
-        ),
-        child: const Text(
-          '今日すぐ確認すべき資金繰りアクションはありません。',
-          style: TextStyle(fontWeight: FontWeight.w700, height: 1.4),
-        ),
-      );
-    }
-
     return Column(
+      key: const Key('asset_management_action_list'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
@@ -24092,14 +24078,53 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
         ),
         const SizedBox(height: 6),
-        for (final item in actionItems.take(8))
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: _buildAssetManagementAssistantActionTile(
-              item,
-              debtMasterCardIds,
-            ),
+        SwitchListTile.adaptive(
+          key: const Key('asset_living_expense_priority_toggle'),
+          value: _livingExpensePriorityMode,
+          contentPadding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
+          secondary: const Icon(Icons.health_and_safety_outlined),
+          title: const Text(
+            '生活費優先モード',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
           ),
+          subtitle: const Text(
+            '食費・住居・公共料金 → 支払先への連絡 → 高金利ローンの順に並べ替えます。',
+            style: TextStyle(fontSize: 11, height: 1.4),
+          ),
+          onChanged: (enabled) {
+            setState(() {
+              _livingExpensePriorityMode = enabled;
+            });
+          },
+        ),
+        const SizedBox(height: 6),
+        if (actionItems.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: const Color(0xFF0D9488).withValues(alpha: 0.24),
+              ),
+            ),
+            child: const Text(
+              '今日すぐ確認すべき資金繰りアクションはありません。',
+              style: TextStyle(fontWeight: FontWeight.w700, height: 1.4),
+            ),
+          )
+        else ...[
+          for (final item in actionItems.take(8))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: _buildAssetManagementAssistantActionTile(
+                item,
+                debtMasterCardIds,
+              ),
+            ),
+        ],
         if (actionItems.length > 8)
           Text(
             'ほか ${actionItems.length - 8}件',

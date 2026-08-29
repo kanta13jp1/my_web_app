@@ -466,6 +466,90 @@ void main() {
       );
     });
 
+    test('living expense priority mode follows emergency advice order', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 1000,
+          'アコムカードローン': -100000,
+          'モビット': -100000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        includeDefaultFixedPayments: true,
+      );
+
+      final defaultReport = service.buildReport(
+        workbook: workbook,
+        upcomingPaymentWarningDays: 20,
+      );
+      final explicitOffReport = service.buildReport(
+        workbook: workbook,
+        upcomingPaymentWarningDays: 20,
+        livingExpensePriorityMode: false,
+      );
+      final priorityReport = service.buildReport(
+        workbook: workbook,
+        upcomingPaymentWarningDays: 20,
+        livingExpensePriorityMode: true,
+      );
+
+      expect(
+        explicitOffReport.actionItems.map((item) => item.title),
+        defaultReport.actionItems.map((item) => item.title),
+      );
+
+      int indexOf(
+        AssetManagementInsightReport report,
+        bool Function(AssetManagementInsightActionItem item) predicate,
+      ) =>
+          report.actionItems.indexWhere(predicate);
+
+      final defaultLivingExpense = indexOf(
+        defaultReport,
+        (item) =>
+            item.type ==
+            AssetManagementInsightActionType.emergencyLivingExpense,
+      );
+      final defaultContact = indexOf(
+        defaultReport,
+        (item) =>
+            item.type == AssetManagementInsightActionType.overduePayment &&
+            item.relatedAccountId == 'acom_card_loan',
+      );
+      expect(defaultContact, lessThan(defaultLivingExpense));
+
+      final livingExpense = indexOf(
+        priorityReport,
+        (item) =>
+            item.type ==
+            AssetManagementInsightActionType.emergencyLivingExpense,
+      );
+      final lifeline = indexOf(
+        priorityReport,
+        (item) => item.relatedAccountId ==
+            AssetLiabilityPlanningService.rentAccountId,
+      );
+      final contact = indexOf(
+        priorityReport,
+        (item) =>
+            item.type == AssetManagementInsightActionType.overduePayment &&
+            item.relatedAccountId == 'acom_card_loan',
+      );
+      final highInterest = indexOf(
+        priorityReport,
+        (item) =>
+            item.type == AssetManagementInsightActionType.upcomingPayment &&
+            item.relatedAccountId == 'mobit',
+      );
+
+      expect(livingExpense, greaterThanOrEqualTo(0));
+      expect(lifeline, greaterThanOrEqualTo(0));
+      expect(contact, greaterThanOrEqualTo(0));
+      expect(highInterest, greaterThanOrEqualTo(0));
+      expect(livingExpense, lessThan(contact));
+      expect(lifeline, lessThan(contact));
+      expect(contact, lessThan(highInterest));
+    });
+
     test('flags account shortfall with matched transfer suggestion', () {
       // 全体では黒字(三井住友 500000)でも、支払原資に割り当てた現金だけが
       // 不足するケース。口座別見込みの先読み警告と移動提案の紐付けを検証する。
