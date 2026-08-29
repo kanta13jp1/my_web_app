@@ -21,7 +21,7 @@ jobs:
       contents: read
     name: AI University Official Source Audit
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     continue-on-error: true
 
     steps:
@@ -59,13 +59,15 @@ jobs:
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
             --max-time 30
           )
-          if ! curl "${COMMON_ARGS[@]}" \
-            "$BASE_URL?select=id,provider,source_url,is_active,target_audience,observable_learning_outcome,assessment_verification_method,evidence_source_url,evidence_verified_at&is_active=eq.true&source_url=not.is.null" \
-            -o "$CATALOG"; then
-            curl "${COMMON_ARGS[@]}" \
-              "$BASE_URL?select=id,provider,source_url,is_active&is_active=eq.true&source_url=not.is.null" \
-              -o "$CATALOG"
-          fi
+          curl "${COMMON_ARGS[@]}" \
+            "$BASE_URL?select=id,provider,title,source_url,is_active,target_audience,observable_learning_outcome,assessment_verification_method,evidence_source_url,evidence_verified_at&is_active=eq.true&source_url=not.is.null" \
+            -o "$CATALOG"
+
+          python3 scripts/ai_university_export_contract.py "$CATALOG" \
+            --output-json .artifacts/ai-university-source-audit/current/export-contract.json \
+            --output-md .artifacts/ai-university-source-audit/current/export-contract.md
+          cat .artifacts/ai-university-source-audit/current/export-contract.md \
+            >> "$GITHUB_STEP_SUMMARY"
 
           BASELINE=.artifacts/ai-university-source-audit/baseline/source-audit.json
           BASELINE_ARGS=()
@@ -89,6 +91,48 @@ jobs:
         with:
           name: ai-university-source-audit
           path: .artifacts/ai-university-source-audit/current/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Aggregate anonymous reliability events (read-only)
+        if: always()
+        continue-on-error: true
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          mkdir -p .artifacts/ai-university-reliability
+          EVENTS=.artifacts/ai-university-reliability/events.json
+          HEADERS=.artifacts/ai-university-reliability/headers.txt
+          UNTIL=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          SINCE=$(date -u -d '30 days ago' +'%Y-%m-%dT%H:%M:%SZ')
+          BASE_URL="https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/ai_university_content_events"
+          curl -fsS \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Prefer: count=exact" \
+            -H "Range-Unit: items" \
+            -H "Range: 0-9999" \
+            --max-time 30 \
+            -D "$HEADERS" \
+            "$BASE_URL?select=event_name,surface,occurred_at&occurred_at=gte.$SINCE&occurred_at=lt.$UNTIL&order=occurred_at.asc" \
+            -o "$EVENTS"
+          python3 scripts/ai_university_reliability_metrics.py "$EVENTS" \
+            --headers "$HEADERS" \
+            --window-start "$SINCE" \
+            --window-end "$UNTIL" \
+            --output-json .artifacts/ai-university-reliability/metrics.json \
+            --output-md .artifacts/ai-university-reliability/metrics.md
+          cat .artifacts/ai-university-reliability/metrics.md \
+            >> "$GITHUB_STEP_SUMMARY"
+          rm "$EVENTS" "$HEADERS"
+
+      - name: Publish reliability metrics
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ai-university-reliability-metrics
+          path: .artifacts/ai-university-reliability/metrics.*
           if-no-files-found: warn
           retention-days: 30
 
