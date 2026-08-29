@@ -35,6 +35,9 @@ void main() {
     tester,
   ) async {
     final service = FakeMemoReactionService();
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
+
     await tester.pumpWidget(
       MaterialApp(home: MemoReactionsPage(publicMemoService: service)),
     );
