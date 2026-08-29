@@ -16,10 +16,10 @@ void main() {
 
       expect(catalog.schemaVersion, 2);
       expect(catalog.profilesBySeat, hasLength(125));
-      expect(catalog.enrichmentRound, greaterThanOrEqualTo(6));
+      expect(catalog.enrichmentRound, greaterThanOrEqualTo(7));
       expect(catalog.averageProfileCompletenessPercent, greaterThan(0));
       expect(catalog.averageReviewReflectionPercent, greaterThan(0));
-      expect(catalog.verifiedBirthDates, 8);
+      expect(catalog.verifiedBirthDates, 9);
       expect(catalog.nextBatchNames, hasLength(5));
       expect(catalog.profilesBySeat.keys.toSet(), hasLength(125));
       expect(
@@ -92,6 +92,21 @@ void main() {
       final makita = catalog.profilesBySeat[96]!;
       expect(makita.ageLabel(DateTime(2026, 8, 28)), '41歳（2026年8月28日時点）');
       expect(makita.companyRole, contains('代表取締役副社長'));
+      final reuter = catalog.profilesBySeat[98]!;
+      expect(reuter.ageLabel(DateTime(2026, 8, 29)), '公開情報未確認');
+      expect(reuter.companyRole, contains('株式会社Reuter'));
+      expect(reuter.businessDomains, contains('人材・採用・組織'));
+      expect(reuter.reviewReflectionPercent, 72);
+      expect(reuter.reviewReflectionMode, 'profile_balanced');
+      expect(reuter.evidenceLinks, hasLength(1));
+      final aizawa = catalog.profilesBySeat[99]!;
+      expect(aizawa.ageLabel(DateTime(2026, 8, 29)), '37歳（2026年8月29日時点）');
+      expect(aizawa.companyRole, contains('株式会社VOYAGE'));
+      expect(aizawa.businessDomains, contains('マーケティング・メディア'));
+      expect(aizawa.profileCompletenessPercent, 80);
+      expect(aizawa.reviewReflectionPercent, 72);
+      expect(aizawa.reviewReflectionMode, 'profile_balanced');
+      expect(aizawa.evidenceLinks, hasLength(3));
       final kataishi = catalog.profilesBySeat[125]!;
       expect(kataishi.ageLabel(DateTime(2026, 8, 25)), '32歳（2026年8月25日時点）');
       expect(
