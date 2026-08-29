@@ -597,7 +597,7 @@ jobs:
             fi
           }
 
-          # --- Standalone (7本: 複雑すぎてhub統合困難) ---
+          # --- Standalone (8本: 複雑すぎてhub統合困難) ---
           # local-election-intelligence は line 275 にあり (並び順維持のため)
           deploy_function get-home-dashboard --no-verify-jwt
           deploy_function ai-assistant --no-verify-jwt
@@ -610,6 +610,9 @@ jobs:
           # User JWT is verified at the gateway and again in-function. The
           # caller's JWT is forwarded to the security-invoker/RLS RPC.
           deploy_function resource-optimizer
+          # Internal Issue #1352 decision-chain writer. Gateway JWT verification
+          # plus an exact service-role bearer check is enforced in-function.
+          deploy_function decision-events
 
           # --- Macro-Hub (6本: 旧Tier1全統合) ---
           deploy_function core-hub --no-verify-jwt
