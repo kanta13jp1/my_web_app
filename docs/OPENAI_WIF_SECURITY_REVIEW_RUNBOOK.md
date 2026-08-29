@@ -92,6 +92,9 @@ The workflow definition used by `pull_request_target` comes from the trusted
 base branch. Therefore the first PR that introduces WIF cannot exercise the
 new WIF path before it is merged. Review and merge that bootstrap PR using the
 normal repository-owner exception process after its deterministic tests pass.
+Record the non-executed Claude ownership path in the PR body with the gate's
+exact `Reviewer: Claude Code #1` and `High-Risk-Ultrareview-Exception:` fields;
+do not represent the exception as a completed independent review.
 
 After the workflow is on the base branch:
 
