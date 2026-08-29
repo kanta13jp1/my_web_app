@@ -23,11 +23,9 @@ void main() {
     );
     expect(policyScroll, findsOneWidget);
 
-    for (
-      var attempt = 0;
-      attempt < 10 && find.text('1. 適用範囲').evaluate().isEmpty;
-      attempt++
-    ) {
+    for (var attempt = 0;
+        attempt < 10 && find.text('1. 適用範囲').evaluate().isEmpty;
+        attempt++) {
       await tester.drag(policyScroll, const Offset(0, -400));
       await tester.pumpAndSettle();
     }
