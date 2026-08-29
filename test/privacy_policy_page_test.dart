@@ -17,13 +17,19 @@ void main() {
     expect(find.textContaining('AI分析・提案'), findsWidgets);
     expect(find.textContaining('AI動画生成'), findsWidgets);
 
+    final policyScroll = find.byWidgetPredicate(
+      (widget) =>
+          widget is Scrollable && widget.axisDirection == AxisDirection.down,
+    );
+    expect(policyScroll, findsOneWidget);
+
     for (
       var attempt = 0;
       attempt < 10 && find.text('1. 適用範囲').evaluate().isEmpty;
       attempt++
     ) {
-      await tester.drag(find.byType(Scrollable), const Offset(0, -400));
-      await tester.pump();
+      await tester.drag(policyScroll, const Offset(0, -400));
+      await tester.pumpAndSettle();
     }
 
     expect(find.text('1. 適用範囲'), findsOneWidget);
