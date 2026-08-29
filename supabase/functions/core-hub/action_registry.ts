@@ -48,8 +48,8 @@ export const CORE_HUB_ACTION_REGISTRY = {
   "system.proactive_diagnostics": { auth: "service_role" },
   "page.share_generate": { auth: "anonymous" },
   "design.screens.list": { auth: "user" },
-  "design.audit.upsert": { auth: "user" },
-  "design.rollout.upsert": { auth: "user" },
+  "design.audit.upsert": { auth: "service_role" },
+  "design.rollout.upsert": { auth: "service_role" },
 } as const satisfies Record<string, CoreHubActionDefinition>;
 
 export type CoreHubAction = keyof typeof CORE_HUB_ACTION_REGISTRY;

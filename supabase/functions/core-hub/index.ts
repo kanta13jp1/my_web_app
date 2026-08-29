@@ -64,7 +64,11 @@ const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 
 function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
+  const responseData = status >= 500 && data !== null &&
+      typeof data === "object" && "error" in data
+    ? { ...data, error: "Internal server error" }
+    : data;
+  return new Response(JSON.stringify(responseData), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
@@ -2895,10 +2899,6 @@ description: ${pageDescription}
       }
 
       case "design.audit.upsert": {
-        const auth = req.headers.get("authorization") ?? "";
-        if (auth.replace(/^Bearer\s+/i, "") !== SERVICE_ROLE_KEY) {
-          return json({ error: "forbidden" }, 403);
-        }
         const route = String(body.route ?? "");
         if (!route) return json({ error: "route required" }, 400);
         const compliance = Array.isArray(body.compliance)
@@ -2926,10 +2926,6 @@ description: ${pageDescription}
       }
 
       case "design.rollout.upsert": {
-        const auth = req.headers.get("authorization") ?? "";
-        if (auth.replace(/^Bearer\s+/i, "") !== SERVICE_ROLE_KEY) {
-          return json({ error: "forbidden" }, 403);
-        }
         const route = String(body.route ?? "");
         if (!route) return json({ error: "route required" }, 400);
         const validStages = new Set(["applied", "in_progress", "planned"]);

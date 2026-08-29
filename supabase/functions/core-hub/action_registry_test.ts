@@ -17,6 +17,8 @@ const EXPECTED_ACTIONS: Record<CoreHubAuthPolicy, string[]> = {
     "page.share_generate",
   ],
   service_role: [
+    "design.audit.upsert",
+    "design.rollout.upsert",
     "discord.notify",
     "notification.broadcast_release",
     "notify.feature_request",
@@ -27,8 +29,6 @@ const EXPECTED_ACTIONS: Record<CoreHubAuthPolicy, string[]> = {
     "achievements.add",
     "achievements.list",
     "analytics.summary",
-    "design.audit.upsert",
-    "design.rollout.upsert",
     "design.screens.list",
     "feature_request.analyze_attachment",
     "feature_request.existing_issues",
