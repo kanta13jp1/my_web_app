@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-typedef AiUniversityLlmMechanicsTaskSubmit =
-    Future<bool> Function({
-      required int correctAnswers,
-      required int selfRating,
-    });
+typedef AiUniversityLlmMechanicsTaskSubmit = Future<bool> Function({
+  required int correctAnswers,
+  required int selfRating,
+});
 
 class AiUniversityLlmMechanicsTaskCard extends StatefulWidget {
   const AiUniversityLlmMechanicsTaskCard({super.key, required this.onSubmit});
@@ -72,87 +71,88 @@ class _AiUniversityLlmMechanicsTaskCardState
 
   @override
   Widget build(BuildContext context) => Card(
-    color: const Color(0xFF0F1929),
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('概念マップと測定論争チェック'),
-          const SizedBox(height: 8),
-          const Text('情報流と創発性の主張／反論を1枚に結んでください。図や回答本文は送信しません。'),
-          const SizedBox(height: 12),
-          ...List.generate(_questions.length, (questionIndex) {
-            final (prompt, encodedOptions) = _questions[questionIndex];
-            final options = encodedOptions.split('|');
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('${questionIndex + 1}. $prompt'),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: List.generate(
-                      options.length,
-                      (optionIndex) => ChoiceChip(
-                        key: Key('llm-q$questionIndex-o$optionIndex'),
-                        label: Text(options[optionIndex]),
-                        selected: _answers[questionIndex] == optionIndex,
-                        onSelected: _submitted
-                            ? null
-                            : (_) => setState(
-                                () => _answers[questionIndex] = optionIndex,
-                              ),
+        color: const Color(0xFF0F1929),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('概念マップと測定論争チェック'),
+              const SizedBox(height: 8),
+              const Text('情報流と創発性の主張／反論を1枚に結んでください。図や回答本文は送信しません。'),
+              const SizedBox(height: 12),
+              ...List.generate(_questions.length, (questionIndex) {
+                final (prompt, encodedOptions) = _questions[questionIndex];
+                final options = encodedOptions.split('|');
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${questionIndex + 1}. $prompt'),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: List.generate(
+                          options.length,
+                          (optionIndex) => ChoiceChip(
+                            key: Key('llm-q$questionIndex-o$optionIndex'),
+                            label: Text(options[optionIndex]),
+                            selected: _answers[questionIndex] == optionIndex,
+                            onSelected: _submitted
+                                ? null
+                                : (_) => setState(
+                                      () =>
+                                          _answers[questionIndex] = optionIndex,
+                                    ),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          }),
-          CheckboxListTile(
-            key: const Key('llm-mechanics-map-completed'),
-            contentPadding: EdgeInsets.zero,
-            value: _mapCompleted,
-            onChanged: _submitted
-                ? null
-                : (value) => setState(() => _mapCompleted = value ?? false),
-            title: const Text('情報流・Transformer・創発性の両論を図示した'),
-          ),
-          const Text('3概念を説明できる度合い（1〜5）'),
-          Wrap(
-            spacing: 8,
-            children: List.generate(5, (index) {
-              final rating = index + 1;
-              return ChoiceChip(
-                key: Key('llm-mechanics-rating-$rating'),
-                label: Text('$rating'),
-                selected: _selfRating == rating,
-                onSelected: _submitted
+                );
+              }),
+              CheckboxListTile(
+                key: const Key('llm-mechanics-map-completed'),
+                contentPadding: EdgeInsets.zero,
+                value: _mapCompleted,
+                onChanged: _submitted
                     ? null
-                    : (_) => setState(() => _selfRating = rating),
-              );
-            }),
+                    : (value) => setState(() => _mapCompleted = value ?? false),
+                title: const Text('情報流・Transformer・創発性の両論を図示した'),
+              ),
+              const Text('3概念を説明できる度合い（1〜5）'),
+              Wrap(
+                spacing: 8,
+                children: List.generate(5, (index) {
+                  final rating = index + 1;
+                  return ChoiceChip(
+                    key: Key('llm-mechanics-rating-$rating'),
+                    label: Text('$rating'),
+                    selected: _selfRating == rating,
+                    onSelected: _submitted
+                        ? null
+                        : (_) => setState(() => _selfRating = rating),
+                  );
+                }),
+              ),
+              const SizedBox(height: 14),
+              if (_submitted)
+                Text(
+                  '送信済み: $_score / 3 問正解',
+                  key: const Key('llm-mechanics-submitted-result'),
+                )
+              else if (_submitting)
+                const LinearProgressIndicator()
+              else
+                FilledButton.icon(
+                  key: const Key('llm-mechanics-submit'),
+                  onPressed: _canSubmit ? _submit : null,
+                  icon: const Icon(Icons.send_outlined),
+                  label: const Text('匿名結果を送信'),
+                ),
+            ],
           ),
-          const SizedBox(height: 14),
-          if (_submitted)
-            Text(
-              '送信済み: $_score / 3 問正解',
-              key: const Key('llm-mechanics-submitted-result'),
-            )
-          else if (_submitting)
-            const LinearProgressIndicator()
-          else
-            FilledButton.icon(
-              key: const Key('llm-mechanics-submit'),
-              onPressed: _canSubmit ? _submit : null,
-              icon: const Icon(Icons.send_outlined),
-              label: const Text('匿名結果を送信'),
-            ),
-        ],
-      ),
-    ),
-  );
+        ),
+      );
 }

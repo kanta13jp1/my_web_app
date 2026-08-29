@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-typedef AiUniversityLearningOutcomeWriter =
-    Future<void> Function(Map<String, Object> row);
+typedef AiUniversityLearningOutcomeWriter = Future<void> Function(
+  Map<String, Object> row,
+);
 
 enum AiUniversityLearningOutcomeTask {
   latestInfo(
@@ -71,11 +72,11 @@ class AiUniversityLearningOutcomeAnalytics {
   final AiUniversityLearningOutcomeTask task;
 
   Future<bool> recordViewed() => _record(<String, Object>{
-    'event_name': 'task_viewed',
-    'task_version': task.taskVersion,
-    'provider': task.provider,
-    'category': task.category,
-  });
+        'event_name': 'task_viewed',
+        'task_version': task.taskVersion,
+        'provider': task.provider,
+        'category': task.category,
+      });
 
   Future<bool> recordCompleted({
     required int correctAnswers,

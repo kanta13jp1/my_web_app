@@ -10,12 +10,12 @@ void main() {
   }
 
   Widget subject(AiUniversityLlmMechanicsTaskSubmit onSubmit) => MaterialApp(
-    home: Scaffold(
-      body: SingleChildScrollView(
-        child: AiUniversityLlmMechanicsTaskCard(onSubmit: onSubmit),
-      ),
-    ),
-  );
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: AiUniversityLlmMechanicsTaskCard(onSubmit: onSubmit),
+          ),
+        ),
+      );
 
   testWidgets('requires the map, three answers, and self-rating', (
     tester,
