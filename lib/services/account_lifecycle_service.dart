@@ -29,7 +29,7 @@ abstract class AccountLifecycleGateway {
 
 class AccountLifecycleService implements AccountLifecycleGateway {
   AccountLifecycleService({SupabaseClient? client})
-    : _client = client ?? supabase;
+      : _client = client ?? supabase;
 
   final SupabaseClient _client;
 

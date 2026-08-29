@@ -5,7 +5,7 @@ import '../services/account_lifecycle_service.dart';
 
 class AccountDeletionViewModel extends ChangeNotifier {
   AccountDeletionViewModel({required AccountLifecycleGateway gateway})
-    : _gateway = gateway;
+      : _gateway = gateway;
 
   final AccountLifecycleGateway _gateway;
 

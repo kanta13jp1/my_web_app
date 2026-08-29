@@ -416,20 +416,21 @@ class _ErrorCard extends StatelessWidget {
 }
 
 String _statusLabel(String status) => switch (status) {
-  'pending' => '取消猶予中',
-  'processing' => '削除処理中',
-  'failed' => '安全確認・再試行待ち',
-  _ => status,
-};
+      'pending' => '取消猶予中',
+      'processing' => '削除処理中',
+      'failed' => '安全確認・再試行待ち',
+      _ => status,
+    };
 
 String _errorMessage(String code) => switch (code) {
-  'authentication_required' => 'ログイン後にもう一度お試しください。',
-  'reauthentication_required' => '本人確認のため、15分以内に再ログインしてください。',
-  'active_subscription_must_be_cancelled' => '先に有料サブスクリプションの解約手続きを完了してください。',
-  'confirmation_mismatch' => '確認文が一致しません。',
-  'reauthentication_launch_failed' => '再ログイン画面を開けませんでした。',
-  'reauthentication_failed' => 'パスワードを確認できませんでした。もう一度お試しください。',
-  'reauthentication_email_unavailable' =>
-    'ログイン中のメールアドレスを確認できません。Googleで再ログインしてください。',
-  _ => '退会処理を開始できませんでした。時間をおいて再度お試しください。',
-};
+      'authentication_required' => 'ログイン後にもう一度お試しください。',
+      'reauthentication_required' => '本人確認のため、15分以内に再ログインしてください。',
+      'active_subscription_must_be_cancelled' =>
+        '先に有料サブスクリプションの解約手続きを完了してください。',
+      'confirmation_mismatch' => '確認文が一致しません。',
+      'reauthentication_launch_failed' => '再ログイン画面を開けませんでした。',
+      'reauthentication_failed' => 'パスワードを確認できませんでした。もう一度お試しください。',
+      'reauthentication_email_unavailable' =>
+        'ログイン中のメールアドレスを確認できません。Googleで再ログインしてください。',
+      _ => '退会処理を開始できませんでした。時間をおいて再度お試しください。',
+    };
