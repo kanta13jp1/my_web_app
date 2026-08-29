@@ -6,6 +6,7 @@ import '../models/admin_growth_evidence.dart';
 import '../services/growth_mission_service.dart';
 import '../widgets/admin_billing_overview.dart';
 import '../widgets/admin_growth_evidence_section.dart';
+import '../widgets/admin_registration_ops_card.dart';
 import '../widgets/admin_today_registration_goal_card.dart';
 import '../widgets/structured_field_chips.dart';
 import '../widgets/schedule_task_monitor_card.dart';
@@ -2209,7 +2210,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       acquisitionEvidence: acquisitionEvidence,
                     ),
                     const SizedBox(height: 16),
-                    _buildRegistrationOpsCard(
+                    AdminRegistrationOpsCard(
                       todayDropBeforeTrial: todayDropBeforeTrial,
                       totalDropBeforeTrial: totalDropBeforeTrial,
                       zeroRegistrationStreakDays: zeroRegistrationStreakDays,
@@ -2798,113 +2799,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   const Color(0xFF0D9488),
                 ),
               ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRegistrationOpsCard({
-    required int todayDropBeforeTrial,
-    required int totalDropBeforeTrial,
-    required int zeroRegistrationStreakDays,
-    required bool zeroStreakAtCap,
-    required double averageViewsLast7Days,
-    required String totalTrialRate,
-    required String? registrationsPerLpView,
-  }) {
-    // R18: 集計窓を使い切っていたら「N日以上」(実際はそれ以上)と正直に。
-    final streakLabel =
-        '$zeroRegistrationStreakDays日${zeroStreakAtCap ? '以上' : ''}';
-    final alertText = zeroRegistrationStreakDays >= 3
-        ? '登録ゼロが$streakLabel連続です。流入ではなく、体験開始と認証前の離脱を最優先で潰してください。'
-        : todayDropBeforeTrial > 0
-            ? '今日は流入がありますが、体験前に$todayDropBeforeTrial件が離脱しています。無料体験の訴求を最優先で確認してください。'
-            : '直近の登録導線は動いています。次は送信後の完了率を維持できているかを確認してください。';
-
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '登録管理の追加指標',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'LP View以外に、体験前離脱・継続未達・直近流量をまとめて確認します。',
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                _buildMiniKpiChip(
-                  label: '今日の体験前離脱',
-                  value: '$todayDropBeforeTrial',
-                  color: const Color(0xFF0D9488),
-                ),
-                _buildMiniKpiChip(
-                  label: '30日体験前離脱',
-                  value: '$totalDropBeforeTrial',
-                  color: const Color(0xFF475569),
-                ),
-                _buildMiniKpiChip(
-                  label: '連続登録ゼロ日',
-                  value: streakLabel,
-                  color: const Color(0xFFB91C1C),
-                ),
-                _buildMiniKpiChip(
-                  label: '直近7日平均LP',
-                  value: averageViewsLast7Days.toStringAsFixed(1),
-                  color: const Color(0xFF6366F1),
-                ),
-                _buildMiniKpiChip(
-                  label: '30日体験率',
-                  value: totalTrialRate,
-                  color: const Color(0xFF0D9488),
-                ),
-                _buildMiniKpiChip(
-                  label: '直近登録効率',
-                  value: registrationsPerLpView == null
-                      ? '登録未発生'
-                      : '$registrationsPerLpView LP/登録',
-                  color: const Color(0xFF6366F1),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                alertText,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
-                  height: 1.7,
-                ),
-              ),
             ),
           ],
         ),
