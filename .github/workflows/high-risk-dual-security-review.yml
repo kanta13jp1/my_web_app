@@ -26,6 +26,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+      id-token: write
       pull-requests: write
     env:
       PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
@@ -87,13 +88,19 @@ jobs:
             --output /tmp/security-review-input.txt \
             --github-output "$GITHUB_OUTPUT"
 
+      - name: Install pinned OpenAI SDK for workload identity
+        if: steps.classify.outputs.high_risk == 'true'
+        run: python -m pip install --disable-pip-version-check --no-cache-dir "openai==3.6.0"
+
       - name: Run independent reviews and persist evidence
         id: dual
         if: steps.classify.outputs.high_risk == 'true'
         continue-on-error: true
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_WIF_AUDIENCE: ${{ vars.OPENAI_WIF_AUDIENCE }}
+          OPENAI_IDENTITY_PROVIDER_ID: ${{ vars.OPENAI_IDENTITY_PROVIDER_ID }}
+          OPENAI_SERVICE_ACCOUNT_ID: ${{ vars.OPENAI_SERVICE_ACCOUNT_ID }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DECISION_EVENTS_URL: https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/decision-events
           CLAUDE_SECURITY_MODEL: ${{ vars.CLAUDE_SECURITY_MODEL || 'claude-opus-4-7' }}
