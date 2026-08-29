@@ -810,8 +810,7 @@ class AssetLiabilityPlanningService {
     final paid = paidAccountNames.contains(account.id) ||
         paidAccountNames.contains(account.name.trim()) ||
         paidAccountNames.contains(account.name);
-    final requiresAction =
-        minimumPayment > 0 && scheduledPayment > 0 && !paid;
+    final requiresAction = minimumPayment > 0 && scheduledPayment > 0 && !paid;
 
     return AssetLiabilityDebtRow(
       id: account.id,
@@ -1375,12 +1374,10 @@ class AssetLiabilityPlanningService {
       if (row.paid) {
         continue;
       }
-      byDayAndAction
-          .putIfAbsent(
-            (day, row.requiresAction),
-            () => <AssetLiabilityDebtRow>[],
-          )
-          .add(row);
+      byDayAndAction.putIfAbsent(
+        (day, row.requiresAction),
+        () => <AssetLiabilityDebtRow>[],
+      ).add(row);
     }
 
     final result = <AssetLiabilityPaymentDayRisk>[];

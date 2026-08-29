@@ -304,8 +304,7 @@ void main() {
 
       final jibun = workbook.debtMasterRows.firstWhere(
         (row) =>
-            row.id ==
-            AssetLiabilityPlanningService.jibunBankCardLoanAccountId,
+            row.id == AssetLiabilityPlanningService.jibunBankCardLoanAccountId,
       );
       final payPay = workbook.debtMasterRows.firstWhere(
         (row) => row.id == 'paypay_card',
@@ -321,8 +320,7 @@ void main() {
           .toList(growable: false);
       expect(day27, hasLength(2));
       final actionRisk = day27.singleWhere((risk) => risk.requiresAction);
-      final reviewOnlyRisk =
-          day27.singleWhere((risk) => !risk.requiresAction);
+      final reviewOnlyRisk = day27.singleWhere((risk) => !risk.requiresAction);
       expect(actionRisk.accountNames, <String>['PayPayカード']);
       expect(reviewOnlyRisk.accountNames, <String>['じぶん銀行カードローン']);
       expect(reviewOnlyRisk.scheduledPaymentTotal, 0);
@@ -339,7 +337,8 @@ void main() {
       expect(payPayCashflow.overdue, isTrue);
       expect(
         workbook.overdueCashflowRows.map((row) => row.accountId),
-        isNot(contains(AssetLiabilityPlanningService.jibunBankCardLoanAccountId)),
+        isNot(
+            contains(AssetLiabilityPlanningService.jibunBankCardLoanAccountId)),
       );
     });
 
