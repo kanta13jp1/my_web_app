@@ -1377,8 +1377,7 @@ class AssetManagementInsightPromptBuilder {
     final workbook = report.workbook;
     final completedOneShotCardNames = workbook.debtMasterRows
         .where(
-          (row) =>
-              workbook.cardUsagePolicies[row.id]?.enforceOneShot == true,
+          (row) => workbook.cardUsagePolicies[row.id]?.enforceOneShot == true,
         )
         .map((row) => row.name)
         .toSet()
