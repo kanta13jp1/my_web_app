@@ -92,6 +92,12 @@ GENERATED_MEMO_REPAIR_MIGRATION = (
     / "migrations"
     / "20260830021402_restore_generated_public_memo_publishing.sql"
 )
+PUBLIC_MEMO_RETURNING_RLS_MIGRATION = (
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830063839_fix_public_memo_returning_rls.sql"
+)
 NOTE_OWNER = "00000000-0000-4000-8000-000000002668"
 NOTE_PUBLIC_VIEWER = "00000000-0000-4000-8000-000000002669"
 NOTE_TEAM_MEMBER = "00000000-0000-4000-8000-000000002670"
@@ -457,6 +463,17 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "public memo foreign key is validated after repair",
             "forged legacy publications remain inaccessible",
             "migration applies twice without duplicating backing notes",
+        ],
+        "public_memo_returning_rls_migration": (
+            PUBLIC_MEMO_RETURNING_RLS_MIGRATION.relative_to(ROOT).as_posix()
+        ),
+        "public_memo_returning_rls_checks": [
+            "owner insert with RETURNING succeeds for a fresh public memo",
+            "owner conflict update with RETURNING succeeds",
+            "anonymous readers see only valid public-note rows",
+            "outsiders cannot conflict-update another owner's publication",
+            "the SELECT policy does not self-read the row being written",
+            "migration applies twice without widening access",
         ],
         "ai_university_migration": AI_UNIVERSITY_MIGRATION.relative_to(ROOT).as_posix(),
         "ai_university_checks": [
@@ -2154,12 +2171,123 @@ def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
     if forged_rows:
         raise AssertionError("repair made a forged legacy publication readable")
 
+    with conn.cursor() as cur:
+        cur.execute(
+            "insert into public.notes (user_id, content, source_key) "
+            "values (%s::uuid, 'fresh generated memo', %s) "
+            "on conflict (user_id, source_key) do update "
+            "set content = excluded.content returning id",
+            (NOTE_OWNER, "local-election:returning-smoke"),
+        )
+        fresh_note_id = int(cur.fetchone()[0])
+        cur.execute(
+            "select count(*) from pg_proc p "
+            "join pg_namespace n on n.oid = p.pronamespace "
+            "where n.nspname = 'note_comments_private' "
+            "and p.proname = 'can_read_public_memo' "
+            "and p.proargtypes = '20 2950 16'::oidvector"
+        )
+        row_aware_helper_count = int(cur.fetchone()[0])
+        cur.execute(
+            "select count(*) from pg_proc p "
+            "join pg_namespace n on n.oid = p.pronamespace "
+            "where n.nspname = 'note_comments_private' "
+            "and p.proname = 'can_read_public_memo' "
+            "and p.proargtypes = '20'::oidvector"
+        )
+        self_reading_helper_count = int(cur.fetchone()[0])
+    conn.commit()
+
+    owner_insert = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OWNER,
+        statement=(
+            "insert into public.public_memos "
+            "(note_id, user_id, title, content, is_public) "
+            "values (%s, %s::uuid, 'fresh generated publication', "
+            "'fresh generated memo', true) "
+            "on conflict (note_id, user_id) do update "
+            "set title = excluded.title returning note_id, title"
+        ),
+        params=(fresh_note_id, NOTE_OWNER),
+    )
+    if owner_insert != [(fresh_note_id, "fresh generated publication")]:
+        raise AssertionError(
+            f"fresh generated memo insert returning failed: {owner_insert}"
+        )
+
+    owner_conflict_update = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OWNER,
+        statement=(
+            "insert into public.public_memos "
+            "(note_id, user_id, title, content, is_public) "
+            "values (%s, %s::uuid, 'fresh generated publication update', "
+            "'fresh generated memo', true) "
+            "on conflict (note_id, user_id) do update "
+            "set title = excluded.title returning note_id, title"
+        ),
+        params=(fresh_note_id, NOTE_OWNER),
+    )
+    if owner_conflict_update != [
+        (fresh_note_id, "fresh generated publication update")
+    ]:
+        raise AssertionError(
+            "fresh generated memo conflict update returning failed: "
+            f"{owner_conflict_update}"
+        )
+
+    outsider_upsert_sqlstate = note_comments_expect_sqlstate(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OUTSIDER,
+        statement=(
+            "insert into public.public_memos "
+            "(note_id, user_id, title, content, is_public) "
+            "values (%s, %s::uuid, 'forged generated publication', "
+            "'forged generated memo', true) "
+            "on conflict (note_id, user_id) do update "
+            "set title = excluded.title returning note_id"
+        ),
+        params=(fresh_note_id, NOTE_OWNER),
+        expected="42501",
+    )
+
+    anonymous_fresh_rows = note_comments_run_as(
+        conn,
+        role="anon",
+        user_id=None,
+        statement=(
+            "select note_id, title from public.public_memos "
+            "where note_id = %s"
+        ),
+        params=(fresh_note_id,),
+    )
+    if anonymous_fresh_rows != [
+        (fresh_note_id, "fresh generated publication update")
+    ]:
+        raise AssertionError(
+            f"fresh generated memo is not publicly readable: {anonymous_fresh_rows}"
+        )
+
+    if row_aware_helper_count != 1 or self_reading_helper_count != 0:
+        raise AssertionError(
+            "public memo read helper still depends on the row being written: "
+            f"row_aware={row_aware_helper_count}, self_reading={self_reading_helper_count}"
+        )
+
     return {
         "backing_note_id": backing_note_id,
         "source_key": source_key,
         "foreign_key_validated": foreign_key_validated,
         "owner_update": owner_update[0][0],
         "forged_publication_visible": False,
+        "fresh_owner_insert_returning": owner_insert[0][1],
+        "fresh_owner_conflict_update_returning": owner_conflict_update[0][1],
+        "outsider_upsert_sqlstate": outsider_upsert_sqlstate,
+        "row_aware_read_policy": True,
     }
 
 
@@ -3082,6 +3210,8 @@ def run_smoke(args: argparse.Namespace) -> int:
             note_comments_security = check_note_comments_security(conn)
             apply_sql_fixture(conn, GENERATED_MEMO_REPAIR_MIGRATION, artifacts_dir)
             apply_sql_fixture(conn, GENERATED_MEMO_REPAIR_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, PUBLIC_MEMO_RETURNING_RLS_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, PUBLIC_MEMO_RETURNING_RLS_MIGRATION, artifacts_dir)
             generated_memo_repair = check_generated_memo_repair(conn)
             apply_sql_fixture(conn, VOICE_DUBBING_BOOTSTRAP, artifacts_dir)
             apply_sql_fixture(conn, BILLING_MIGRATION, artifacts_dir)
