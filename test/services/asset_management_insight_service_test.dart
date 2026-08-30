@@ -743,6 +743,35 @@ void main() {
       );
     });
 
+    test('keeps zero-yen unpaid debt in review-only prompt data', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'じぶん銀行カードローン': -100000,
+        },
+        baseDate: DateTime(2026, 5, 29),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.jibunBankCardLoanAccountId: 0,
+        },
+      );
+
+      final report = service.buildReport(workbook: workbook);
+      final prompt = const AssetManagementInsightPromptBuilder()
+          .buildDetailedAdvicePrompt(report);
+
+      expect(
+        report.actionItems.where(
+          (item) =>
+              item.type == AssetManagementInsightActionType.overduePayment,
+        ),
+        isEmpty,
+      );
+      expect(prompt, contains('対象:じぶん銀行カードローン'));
+      expect(prompt, contains('区分:確認のみ'));
+      expect(prompt, contains('状態:確認のみ'));
+      expect(prompt, contains('要対応:いいえ'));
+    });
+
     test('builds prompt with deterministic calculated values', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
@@ -865,6 +894,7 @@ AssetLiabilityDebtRow _debtRow({
     paymentAmountEstimated: false,
     billingConfirmed: true,
     paid: false,
+    requiresAction: true,
   );
 }
 

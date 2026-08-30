@@ -1626,6 +1626,7 @@ class AssetManagementInsightPromptBuilder {
         '優先度:${row.priorityLabel} / '
         '推定額:${row.paymentAmountEstimated ? 'はい' : 'いいえ'} / '
         '支払済み:${row.paid ? 'はい' : 'いいえ'} / '
+        '要対応:${row.requiresAction ? 'はい' : 'いいえ'} / '
         '支払原資:${row.paymentSourceAccountName ?? '未設定'} / '
         '支払い方式:${row.paymentMethodLabel ?? row.paymentMethod.name} / '
         'カード請求先:${row.billingAccountName ?? 'なし'}',
@@ -1648,7 +1649,8 @@ class AssetManagementInsightPromptBuilder {
         '支払予定合計:${_formatAmount(risk.scheduledPaymentTotal)} / '
         '手入力支払合計:${_formatAmount(risk.manualPaymentTotal)} / '
         '利息見込み合計:${_formatAmount(risk.interestEstimateTotal)} / '
-        '状態:${risk.isPast ? '期限超過' : risk.isToday ? '本日' : '今後'}',
+        '区分:${risk.requiresAction ? '要対応' : '確認のみ'} / '
+        '状態:${!risk.requiresAction ? '確認のみ' : risk.isPast ? '期限超過' : risk.isToday ? '本日' : '今後'}',
       );
     }
     return buffer.toString();

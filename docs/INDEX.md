@@ -8,201 +8,201 @@
 
 | 概念 | 総出現 | レイヤー |
 | --- | ---:| --- |
-| [GitHub](concepts/github.md) | 873 | competitor=217 cs-notes=514 daily-report=139 memory=3 |
+| [GitHub](concepts/github.md) | 876 | competitor=219 cs-notes=514 daily-report=140 memory=3 |
 | [Step](concepts/step.md) | 860 | competitor=5 cs-notes=846 daily-report=7 memory=2 |
-| [レビュー](concepts/jp-3c5ba2f1.md) | 849 | competitor=14 cs-notes=731 daily-report=103 incident=1 |
+| [レビュー](concepts/jp-3c5ba2f1.md) | 850 | competitor=14 cs-notes=731 daily-report=104 incident=1 |
 | [Schedule](concepts/schedule.md) | 848 | competitor=44 cs-notes=743 daily-report=58 incident=2 memory=1 |
 | [Edge](concepts/edge.md) | 847 | competitor=13 cs-notes=811 daily-report=22 incident=1 |
-| [チェック](concepts/jp-0e9a2e49.md) | 837 | competitor=89 cs-notes=725 daily-report=20 incident=1 memory=2 |
+| [チェック](concepts/jp-0e9a2e49.md) | 838 | competitor=90 cs-notes=725 daily-report=20 incident=1 memory=2 |
 | [Function](concepts/function.md) | 836 | competitor=9 cs-notes=808 daily-report=18 incident=1 |
-| [Supabase](concepts/supabase.md) | 808 | competitor=13 cs-notes=645 daily-report=143 incident=6 memory=1 |
-| [コミット](concepts/jp-44fd5a79.md) | 729 | competitor=3 cs-notes=589 daily-report=133 incident=2 memory=2 |
+| [Supabase](concepts/supabase.md) | 809 | competitor=13 cs-notes=645 daily-report=144 incident=6 memory=1 |
+| [コミット](concepts/jp-44fd5a79.md) | 730 | competitor=3 cs-notes=589 daily-report=134 incident=2 memory=2 |
 | [健全性](concepts/jp-52d27e1e.md) | 687 | cs-notes=687 |
 | [スキップ](concepts/jp-a91a8a6a.md) | 666 | competitor=5 cs-notes=655 daily-report=5 memory=1 |
 | [チケット](concepts/jp-3549da88.md) | 518 | cs-notes=516 incident=2 |
-| [Codex](concepts/codex.md) | 495 | competitor=64 cs-notes=300 daily-report=117 memory=14 |
-| [Claude](concepts/claude.md) | 486 | competitor=105 cs-notes=228 daily-report=136 incident=2 memory=15 |
+| [Codex](concepts/codex.md) | 496 | competitor=64 cs-notes=300 daily-report=118 memory=14 |
+| [Claude](concepts/claude.md) | 487 | competitor=105 cs-notes=228 daily-report=137 incident=2 memory=15 |
+| [Notion](concepts/notion.md) | 443 | competitor=231 cs-notes=108 daily-report=92 memory=12 |
 | [API](concepts/api.md) | 442 | competitor=68 cs-notes=327 daily-report=41 incident=3 memory=3 |
-| [Notion](concepts/notion.md) | 440 | competitor=229 cs-notes=108 daily-report=91 memory=12 |
 | [cache.json](concepts/cache-json.md) | 434 | cs-notes=432 daily-report=1 incident=1 |
 | [プロキシ](concepts/jp-98407da0.md) | 318 | cs-notes=309 daily-report=8 incident=1 |
 | [エスカレーション](concepts/jp-5bd41563.md) | 307 | cs-notes=307 |
-| [Code](concepts/code.md) | 298 | competitor=82 cs-notes=84 daily-report=123 incident=2 memory=7 |
-| [Google](concepts/google.md) | 261 | competitor=123 cs-notes=3 daily-report=132 memory=3 |
-| [HTTP](concepts/http.md) | 256 | competitor=75 cs-notes=60 daily-report=118 incident=3 |
+| [Code](concepts/code.md) | 299 | competitor=82 cs-notes=84 daily-report=124 incident=2 memory=7 |
+| [Google](concepts/google.md) | 263 | competitor=125 cs-notes=3 daily-report=132 memory=3 |
+| [HTTP](concepts/http.md) | 258 | competitor=76 cs-notes=60 daily-report=119 incident=3 |
 | [レポート](concepts/jp-a3406f8e.md) | 253 | competitor=34 cs-notes=175 daily-report=43 incident=1 |
-| [Microsoft](concepts/microsoft.md) | 242 | competitor=110 daily-report=132 |
+| [Microsoft](concepts/microsoft.md) | 244 | competitor=112 daily-report=132 |
 | [GHA](concepts/gha.md) | 235 | competitor=33 cs-notes=186 daily-report=11 memory=5 |
-| [Copilot](concepts/copilot.md) | 212 | competitor=92 daily-report=119 memory=1 |
+| [Copilot](concepts/copilot.md) | 213 | competitor=92 daily-report=120 memory=1 |
 | [Issues](concepts/issues.md) | 206 | competitor=2 cs-notes=201 daily-report=3 |
 | [Anthropic](concepts/anthropic.md) | 200 | competitor=62 cs-notes=3 daily-report=131 memory=4 |
-| [Perplexity](concepts/perplexity.md) | 199 | competitor=68 daily-report=131 |
+| [Perplexity](concepts/perplexity.md) | 200 | competitor=69 daily-report=131 |
 | [OpenAI](concepts/openai.md) | 197 | competitor=61 daily-report=131 memory=5 |
 | [オープン](concepts/jp-265f036d.md) | 196 | competitor=1 cs-notes=195 |
 | [クローズ](concepts/jp-b4fea6e2.md) | 196 | competitor=3 cs-notes=192 daily-report=1 |
 | [接続不可](concepts/jp-83bfe1ce.md) | 196 | cs-notes=181 daily-report=15 |
-| [MCP](concepts/mcp.md) | 194 | competitor=66 cs-notes=10 daily-report=112 memory=6 |
-| [ユーザー](concepts/jp-e6073ae3.md) | 192 | competitor=41 cs-notes=8 daily-report=132 incident=2 memory=9 |
+| [MCP](concepts/mcp.md) | 195 | competitor=66 cs-notes=10 daily-report=113 memory=6 |
+| [ユーザー](concepts/jp-e6073ae3.md) | 193 | competitor=41 cs-notes=8 daily-report=133 incident=2 memory=9 |
 | [UTC](concepts/utc.md) | 188 | competitor=11 cs-notes=148 daily-report=26 incident=3 |
-| [JST](concepts/jst.md) | 175 | competitor=3 cs-notes=114 daily-report=48 incident=5 memory=5 |
-| [Devin](concepts/devin.md) | 171 | competitor=169 cs-notes=1 daily-report=1 |
-| [Gemini](concepts/gemini.md) | 162 | competitor=39 cs-notes=7 daily-report=109 memory=7 |
+| [JST](concepts/jst.md) | 176 | competitor=3 cs-notes=114 daily-report=49 incident=5 memory=5 |
+| [Devin](concepts/devin.md) | 173 | competitor=171 cs-notes=1 daily-report=1 |
+| [Gemini](concepts/gemini.md) | 163 | competitor=39 cs-notes=7 daily-report=110 memory=7 |
 | [Slack](concepts/slack.md) | 162 | competitor=100 cs-notes=3 daily-report=57 memory=2 |
-| [コンテンツ](concepts/jp-17e3fddc.md) | 161 | competitor=12 cs-notes=16 daily-report=133 |
+| [コンテンツ](concepts/jp-17e3fddc.md) | 162 | competitor=12 cs-notes=16 daily-report=134 |
 | [対応済](concepts/jp-c34d1e11.md) | 153 | cs-notes=153 |
+| [リクエスト](concepts/jp-90aa7c4e.md) | 138 | daily-report=138 |
 | [DeepSeek](concepts/deepseek.md) | 137 | competitor=2 cs-notes=4 daily-report=131 |
 | [Meta](concepts/meta.md) | 137 | competitor=5 daily-report=131 memory=1 |
-| [リクエスト](concepts/jp-90aa7c4e.md) | 137 | daily-report=137 |
-| [RSS](concepts/rss.md) | 134 | daily-report=133 memory=1 |
+| [RSS](concepts/rss.md) | 135 | daily-report=134 memory=1 |
+| [UPSERT](concepts/upsert.md) | 134 | daily-report=134 |
 | [アクセス](concepts/jp-94b21072.md) | 134 | competitor=12 cs-notes=118 daily-report=3 incident=1 |
 | [ネットワーク](concepts/jp-12bc92db.md) | 134 | cs-notes=126 daily-report=6 incident=2 |
 | [Cursor](concepts/cursor.md) | 133 | competitor=119 daily-report=6 memory=8 |
-| [UPSERT](concepts/upsert.md) | 133 | daily-report=133 |
 | [Mistral](concepts/mistral.md) | 131 | daily-report=131 |
 | [更新成功](concepts/jp-e2cff773.md) | 131 | daily-report=131 |
 | [プロバイダー](concepts/jp-82fcf853.md) | 129 | competitor=1 cs-notes=1 daily-report=126 incident=1 |
-| [Jules](concepts/jules.md) | 122 | competitor=19 daily-report=103 |
+| [Jules](concepts/jules.md) | 123 | competitor=19 daily-report=104 |
+| [Assistant](concepts/assistant.md) | 120 | competitor=15 daily-report=105 |
 | [版担当](concepts/jp-c26d72c9.md) | 120 | cs-notes=119 memory=1 |
-| [Assistant](concepts/assistant.md) | 119 | competitor=15 daily-report=104 |
-| [新規機能](concepts/jp-85ff62b2.md) | 118 | daily-report=118 |
+| [新規機能](concepts/jp-85ff62b2.md) | 119 | daily-report=119 |
 | [CLI](concepts/cli.md) | 113 | competitor=62 cs-notes=20 daily-report=25 incident=1 memory=5 |
-| [E2E](concepts/e2e.md) | 111 | competitor=3 cs-notes=6 daily-report=102 |
-| [MoneyForward](concepts/moneyforward.md) | 111 | competitor=104 daily-report=6 memory=1 |
-| [Patterns](concepts/patterns.md) | 111 | competitor=111 |
+| [E2E](concepts/e2e.md) | 112 | competitor=3 cs-notes=6 daily-report=103 |
+| [MoneyForward](concepts/moneyforward.md) | 112 | competitor=105 daily-report=6 memory=1 |
+| [Patterns](concepts/patterns.md) | 112 | competitor=112 |
 | [パターン](concepts/jp-c5b3b4a7.md) | 108 | competitor=7 cs-notes=98 daily-report=1 memory=2 |
+| [Playwright](concepts/playwright.md) | 107 | competitor=3 daily-report=104 |
 | [アクション](concepts/jp-faedd7eb.md) | 107 | competitor=53 cs-notes=11 daily-report=42 incident=1 |
-| [Playwright](concepts/playwright.md) | 106 | competitor=3 daily-report=103 |
 | [ファイル](concepts/jp-6422db7e.md) | 106 | competitor=11 cs-notes=88 daily-report=1 incident=1 memory=5 |
 | [確認不可](concepts/jp-0e61d5bc.md) | 106 | cs-notes=106 |
 | [継続課題](concepts/jp-73bb98b4.md) | 106 | cs-notes=106 |
-| [Qodo](concepts/qodo.md) | 104 | daily-report=104 |
-| [Semgrep](concepts/semgrep.md) | 104 | daily-report=104 |
-| [OpenHands](concepts/openhands.md) | 103 | daily-report=103 |
-| [非同期](concepts/jp-e3022dd5.md) | 103 | competitor=1 daily-report=102 |
-| [Git](concepts/git.md) | 99 | competitor=2 daily-report=97 |
+| [Qodo](concepts/qodo.md) | 105 | daily-report=105 |
+| [Semgrep](concepts/semgrep.md) | 105 | daily-report=105 |
+| [OpenHands](concepts/openhands.md) | 104 | daily-report=104 |
+| [非同期](concepts/jp-e3022dd5.md) | 104 | competitor=1 daily-report=103 |
+| [Git](concepts/git.md) | 100 | competitor=2 daily-report=98 |
 | [コメント](concepts/jp-41a632ef.md) | 99 | competitor=2 cs-notes=94 daily-report=1 memory=2 |
+| [chatgpt.com](concepts/chatgpt-com.md) | 98 | daily-report=98 |
 | [HEAD](concepts/head.md) | 97 | competitor=1 cs-notes=94 daily-report=1 memory=1 |
-| [chatgpt.com](concepts/chatgpt-com.md) | 97 | daily-report=97 |
+| [Replit](concepts/replit.md) | 95 | competitor=88 daily-report=1 memory=6 |
 | [Web](concepts/web.md) | 95 | competitor=11 cs-notes=70 daily-report=12 incident=1 memory=1 |
-| [Replit](concepts/replit.md) | 94 | competitor=87 daily-report=1 memory=6 |
-| [github.com](concepts/github-com.md) | 94 | competitor=78 cs-notes=5 daily-report=1 incident=1 memory=9 |
+| [github.com](concepts/github-com.md) | 95 | competitor=79 cs-notes=5 daily-report=1 incident=1 memory=9 |
 | [ブランチ](concepts/jp-60c8aa73.md) | 93 | competitor=1 cs-notes=89 daily-report=3 |
 | [Actions](concepts/actions.md) | 91 | competitor=18 cs-notes=25 daily-report=47 memory=1 |
 | [エージェント](concepts/jp-b8d9e324.md) | 91 | competitor=66 cs-notes=3 daily-report=22 |
-| [Review](concepts/review.md) | 89 | competitor=85 cs-notes=2 daily-report=1 memory=1 |
+| [Review](concepts/review.md) | 90 | competitor=86 cs-notes=2 daily-report=1 memory=1 |
 | [登録済](concepts/jp-6a96304f.md) | 89 | cs-notes=89 |
-| [Action](concepts/action.md) | 87 | competitor=87 |
-| [Evernote](concepts/evernote.md) | 87 | competitor=86 memory=1 |
-| [Salesforce](concepts/salesforce.md) | 87 | competitor=85 memory=2 |
+| [Action](concepts/action.md) | 88 | competitor=88 |
+| [Evernote](concepts/evernote.md) | 88 | competitor=87 memory=1 |
+| [Salesforce](concepts/salesforce.md) | 88 | competitor=86 memory=2 |
+| [Teams](concepts/teams.md) | 87 | competitor=87 |
 | [Agent](concepts/agent.md) | 86 | competitor=66 daily-report=14 memory=6 |
-| [Teams](concepts/teams.md) | 85 | competitor=85 |
-| [Amazon](concepts/amazon.md) | 83 | competitor=82 daily-report=1 |
+| [Amazon](concepts/amazon.md) | 84 | competitor=83 daily-report=1 |
 | [自動修復](concepts/jp-5be2449c.md) | 81 | competitor=1 cs-notes=78 memory=2 |
+| [Evidence](concepts/evidence.md) | 80 | competitor=80 |
 | [Cowork](concepts/cowork.md) | 79 | competitor=66 daily-report=3 memory=10 |
 | [Draft](concepts/draft.md) | 79 | competitor=4 cs-notes=75 |
-| [Evidence](concepts/evidence.md) | 79 | competitor=79 |
 | [Firebase](concepts/firebase.md) | 79 | competitor=3 cs-notes=66 daily-report=3 incident=5 memory=2 |
 | [Mirror](concepts/mirror.md) | 79 | cs-notes=79 |
 | [Sync](concepts/sync.md) | 78 | competitor=1 cs-notes=77 |
-| [可用性](concepts/jp-11b0f730.md) | 76 | competitor=76 |
+| [可用性](concepts/jp-11b0f730.md) | 77 | competitor=77 |
 | [セキュリティ](concepts/jp-81b9e692.md) | 75 | competitor=4 cs-notes=71 |
 | [ローカル](concepts/jp-9ce56180.md) | 75 | competitor=10 cs-notes=65 |
-| [Cognition](concepts/cognition.md) | 73 | competitor=73 |
+| [Cognition](concepts/cognition.md) | 74 | competitor=74 |
+| [Discord](concepts/discord.md) | 73 | competitor=73 |
 | [サポートチケット](concepts/jp-294515dd.md) | 73 | cs-notes=73 |
 | [差別化](concepts/jp-93692755.md) | 73 | competitor=46 daily-report=27 |
-| [Discord](concepts/discord.md) | 72 | competitor=72 |
 | [Flutter](concepts/flutter.md) | 72 | competitor=9 cs-notes=54 daily-report=4 incident=2 memory=3 |
+| [Ads](concepts/ads.md) | 70 | competitor=70 |
 | [Win](concepts/win.md) | 70 | competitor=41 cs-notes=13 daily-report=9 memory=7 |
-| [devin.ai](concepts/devin-ai.md) | 69 | competitor=69 |
-| [replit.com](concepts/replit-com.md) | 69 | competitor=69 |
-| [Ads](concepts/ads.md) | 68 | competitor=68 |
+| [devin.ai](concepts/devin-ai.md) | 70 | competitor=70 |
+| [replit.com](concepts/replit-com.md) | 70 | competitor=70 |
+| [cognition.ai](concepts/cognition-ai.md) | 68 | competitor=68 |
 | [スケジュール](concepts/jp-e9d361d3.md) | 68 | competitor=7 cs-notes=61 |
 | [件確認](concepts/jp-f34d4838.md) | 68 | cs-notes=68 |
-| [cognition.ai](concepts/cognition-ai.md) | 67 | competitor=67 |
-| [HeyGen](concepts/heygen.md) | 66 | competitor=64 cs-notes=2 |
-| [ITANDI](concepts/itandi.md) | 66 | competitor=66 |
-| [freee.co](concepts/freee-co.md) | 66 | competitor=66 |
-| [メルカリ](concepts/jp-7ef38af3.md) | 66 | competitor=66 |
+| [HeyGen](concepts/heygen.md) | 67 | competitor=65 cs-notes=2 |
+| [ITANDI](concepts/itandi.md) | 67 | competitor=67 |
+| [freee.co](concepts/freee-co.md) | 67 | competitor=67 |
+| [メルカリ](concepts/jp-7ef38af3.md) | 67 | competitor=67 |
+| [KDDI](concepts/kddi.md) | 66 | competitor=66 |
+| [Mercari](concepts/mercari.md) | 66 | competitor=66 |
+| [Roblox](concepts/roblox.md) | 66 | competitor=66 |
+| [Udemy](concepts/udemy.md) | 66 | competitor=66 |
+| [mercari.com](concepts/mercari-com.md) | 66 | competitor=66 |
 | [直接確認不可](concepts/jp-04f54bd5.md) | 66 | cs-notes=65 daily-report=1 |
-| [KDDI](concepts/kddi.md) | 65 | competitor=65 |
-| [Mercari](concepts/mercari.md) | 65 | competitor=65 |
-| [Roblox](concepts/roblox.md) | 65 | competitor=65 |
-| [Udemy](concepts/udemy.md) | 65 | competitor=65 |
+| [Ameba](concepts/ameba.md) | 65 | competitor=65 |
+| [Calm](concepts/calm.md) | 65 | competitor=65 |
+| [Coda](concepts/coda.md) | 65 | competitor=65 |
+| [Face](concepts/face.md) | 65 | competitor=65 |
+| [Hugging](concepts/hugging.md) | 65 | competitor=65 |
+| [Jasper](concepts/jasper.md) | 65 | competitor=65 |
+| [Magic](concepts/magic.md) | 65 | competitor=65 |
+| [Postman](concepts/postman.md) | 65 | competitor=65 |
+| [Progate](concepts/progate.md) | 65 | competitor=65 |
+| [Rakuten](concepts/rakuten.md) | 65 | competitor=65 |
+| [STORES](concepts/stores.md) | 65 | competitor=65 |
+| [Sansan](concepts/sansan.md) | 65 | competitor=65 |
+| [Synthesia](concepts/synthesia.md) | 65 | competitor=65 |
+| [Together](concepts/together.md) | 65 | competitor=65 |
 | [VSCode](concepts/vscode.md) | 65 | competitor=6 cs-notes=47 daily-report=3 memory=9 |
-| [mercari.com](concepts/mercari-com.md) | 65 | competitor=65 |
+| [amazon.com](concepts/amazon-com.md) | 65 | competitor=65 |
+| [discord.com](concepts/discord-com.md) | 65 | competitor=65 |
+| [evernote.com](concepts/evernote-com.md) | 65 | competitor=65 |
+| [graffer.jp](concepts/graffer-jp.md) | 65 | competitor=65 |
+| [heygen.com](concepts/heygen-com.md) | 65 | competitor=65 |
+| [huggingface.co](concepts/huggingface-co.md) | 65 | competitor=65 |
+| [itandi.co](concepts/itandi-co.md) | 65 | competitor=65 |
+| [jasper.ai](concepts/jasper-ai.md) | 65 | competitor=65 |
+| [magic.dev](concepts/magic-dev.md) | 65 | competitor=65 |
+| [notion.so](concepts/notion-so.md) | 65 | competitor=65 |
+| [perplexity.ai](concepts/perplexity-ai.md) | 65 | competitor=65 |
+| [postman.com](concepts/postman-com.md) | 65 | competitor=65 |
+| [rakuten.co](concepts/rakuten-co.md) | 65 | competitor=65 |
+| [roblox.com](concepts/roblox-com.md) | 65 | competitor=65 |
+| [sansan.com](concepts/sansan-com.md) | 65 | competitor=65 |
+| [stores.jp](concepts/stores-jp.md) | 65 | competitor=65 |
+| [synthesia.io](concepts/synthesia-io.md) | 65 | competitor=65 |
+| [together.ai](concepts/together-ai.md) | 65 | competitor=65 |
+| [udemy.com](concepts/udemy-com.md) | 65 | competitor=65 |
+| [グラファー](concepts/jp-a48a9e9f.md) | 65 | competitor=65 |
 | [到達不可](concepts/jp-59cb2999.md) | 65 | cs-notes=61 daily-report=4 |
-| [Ameba](concepts/ameba.md) | 64 | competitor=64 |
-| [Calm](concepts/calm.md) | 64 | competitor=64 |
-| [Coda](concepts/coda.md) | 64 | competitor=64 |
-| [Face](concepts/face.md) | 64 | competitor=64 |
-| [Hugging](concepts/hugging.md) | 64 | competitor=64 |
-| [Jasper](concepts/jasper.md) | 64 | competitor=64 |
-| [Magic](concepts/magic.md) | 64 | competitor=64 |
-| [Postman](concepts/postman.md) | 64 | competitor=64 |
-| [Progate](concepts/progate.md) | 64 | competitor=64 |
-| [Rakuten](concepts/rakuten.md) | 64 | competitor=64 |
-| [STORES](concepts/stores.md) | 64 | competitor=64 |
-| [Sansan](concepts/sansan.md) | 64 | competitor=64 |
-| [Synthesia](concepts/synthesia.md) | 64 | competitor=64 |
-| [Together](concepts/together.md) | 64 | competitor=64 |
-| [amazon.com](concepts/amazon-com.md) | 64 | competitor=64 |
-| [discord.com](concepts/discord-com.md) | 64 | competitor=64 |
-| [evernote.com](concepts/evernote-com.md) | 64 | competitor=64 |
-| [graffer.jp](concepts/graffer-jp.md) | 64 | competitor=64 |
-| [heygen.com](concepts/heygen-com.md) | 64 | competitor=64 |
-| [huggingface.co](concepts/huggingface-co.md) | 64 | competitor=64 |
-| [itandi.co](concepts/itandi-co.md) | 64 | competitor=64 |
-| [jasper.ai](concepts/jasper-ai.md) | 64 | competitor=64 |
-| [magic.dev](concepts/magic-dev.md) | 64 | competitor=64 |
-| [notion.so](concepts/notion-so.md) | 64 | competitor=64 |
-| [perplexity.ai](concepts/perplexity-ai.md) | 64 | competitor=64 |
-| [postman.com](concepts/postman-com.md) | 64 | competitor=64 |
-| [rakuten.co](concepts/rakuten-co.md) | 64 | competitor=64 |
-| [roblox.com](concepts/roblox-com.md) | 64 | competitor=64 |
-| [sansan.com](concepts/sansan-com.md) | 64 | competitor=64 |
-| [stores.jp](concepts/stores-jp.md) | 64 | competitor=64 |
-| [synthesia.io](concepts/synthesia-io.md) | 64 | competitor=64 |
-| [together.ai](concepts/together-ai.md) | 64 | competitor=64 |
-| [udemy.com](concepts/udemy-com.md) | 64 | competitor=64 |
-| [グラファー](concepts/jp-a48a9e9f.md) | 64 | competitor=64 |
+| [Calendly](concepts/calendly.md) | 64 | competitor=64 |
+| [Kore](concepts/kore.md) | 64 | competitor=64 |
+| [Poshmark](concepts/poshmark.md) | 64 | competitor=64 |
+| [Schoo](concepts/schoo.md) | 64 | competitor=64 |
+| [Zoho](concepts/zoho.md) | 64 | competitor=64 |
+| [ameba.jp](concepts/ameba-jp.md) | 64 | competitor=64 |
+| [calendly.com](concepts/calendly-com.md) | 64 | competitor=64 |
+| [docomo.ne](concepts/docomo-ne.md) | 64 | competitor=64 |
+| [poshmark.com](concepts/poshmark-com.md) | 64 | competitor=64 |
+| [schoo.jp](concepts/schoo-jp.md) | 64 | competitor=64 |
+| [サイバーエージェント](concepts/jp-fe8648cc.md) | 64 | competitor=64 |
 | [シグナル](concepts/jp-eb299d4a.md) | 64 | competitor=62 daily-report=2 |
+| [人事労務](concepts/jp-70244af2.md) | 64 | competitor=64 |
 | [件登録済](concepts/jp-16f8ebd0.md) | 64 | cs-notes=64 |
-| [Calendly](concepts/calendly.md) | 63 | competitor=63 |
-| [Kore](concepts/kore.md) | 63 | competitor=63 |
-| [Poshmark](concepts/poshmark.md) | 63 | competitor=63 |
-| [Schoo](concepts/schoo.md) | 63 | competitor=63 |
+| [佐川急便](concepts/jp-6c47cddf.md) | 64 | competitor=64 |
 | [WEB](concepts/web.md) | 63 | cs-notes=63 |
-| [Zoho](concepts/zoho.md) | 63 | competitor=63 |
-| [ameba.jp](concepts/ameba-jp.md) | 63 | competitor=63 |
-| [calendly.com](concepts/calendly-com.md) | 63 | competitor=63 |
-| [docomo.ne](concepts/docomo-ne.md) | 63 | competitor=63 |
-| [poshmark.com](concepts/poshmark-com.md) | 63 | competitor=63 |
-| [schoo.jp](concepts/schoo-jp.md) | 63 | competitor=63 |
-| [サイバーエージェント](concepts/jp-fe8648cc.md) | 63 | competitor=63 |
 | [ブロック](concepts/jp-65f1a462.md) | 63 | competitor=8 cs-notes=33 daily-report=22 |
-| [人事労務](concepts/jp-70244af2.md) | 63 | competitor=63 |
-| [佐川急便](concepts/jp-6c47cddf.md) | 63 | competitor=63 |
 | [Agents](concepts/agents.md) | 61 | competitor=52 daily-report=8 memory=1 |
 | [インスタンス](concepts/jp-de3dcb4e.md) | 61 | competitor=4 cs-notes=49 daily-report=3 memory=5 |
-| [Groq](concepts/groq.md) | 59 | competitor=59 |
+| [Groq](concepts/groq.md) | 60 | competitor=60 |
+| [Stripe](concepts/stripe.md) | 59 | competitor=57 cs-notes=2 |
 | [タイトル](concepts/jp-47b4753f.md) | 59 | cs-notes=58 daily-report=1 |
 | [取得不可](concepts/jp-ef88fa60.md) | 59 | cs-notes=39 daily-report=20 |
-| [Stripe](concepts/stripe.md) | 58 | competitor=56 cs-notes=2 |
 | [インフラヘルスチェック](concepts/jp-d5ab435b.md) | 58 | cs-notes=58 |
 | [Deploy](concepts/deploy.md) | 55 | cs-notes=54 incident=1 |
 | [未実行](concepts/jp-b4c167b5.md) | 55 | cs-notes=54 daily-report=1 |
 | [Opus](concepts/opus.md) | 54 | competitor=49 daily-report=3 memory=2 |
+| [stripe.com](concepts/stripe-com.md) | 54 | competitor=54 |
 | [キャッシュ](concepts/jp-52fea85a.md) | 54 | cs-notes=52 incident=2 |
 | [セッション](concepts/jp-7e053920.md) | 54 | competitor=15 cs-notes=23 daily-report=4 memory=12 |
 | [Pro](concepts/pro.md) | 53 | competitor=49 daily-report=1 memory=3 |
 | [Production](concepts/production.md) | 53 | competitor=1 cs-notes=51 incident=1 |
 | [WBS](concepts/wbs.md) | 53 | competitor=9 cs-notes=18 daily-report=21 memory=5 |
-| [stripe.com](concepts/stripe-com.md) | 53 | competitor=53 |
+| [moneyforward.com](concepts/moneyforward-com.md) | 53 | competitor=53 |
 | [CEO](concepts/ceo.md) | 52 | competitor=43 memory=9 |
 | [SDK](concepts/sdk.md) | 52 | competitor=26 cs-notes=17 daily-report=9 |
-| [moneyforward.com](concepts/moneyforward-com.md) | 52 | competitor=52 |
+| [salesforce.com](concepts/salesforce-com.md) | 52 | competitor=52 |
 | [ジョブカン](concepts/jp-1a6afc84.md) | 52 | competitor=52 |
-| [salesforce.com](concepts/salesforce-com.md) | 51 | competitor=51 |
 | [セクション](concepts/jp-bac96b1b.md) | 51 | competitor=48 daily-report=1 memory=2 |
 | [インフラ](concepts/jp-51879a07.md) | 50 | competitor=4 cs-notes=44 incident=1 memory=1 |
 | [継続中](concepts/jp-79946c48.md) | 50 | cs-notes=49 incident=1 |
@@ -219,58 +219,58 @@
 | [リリース](concepts/jp-938d86a3.md) | 42 | competitor=40 daily-report=2 |
 | [Enterprise](concepts/enterprise.md) | 40 | competitor=32 daily-report=5 memory=3 |
 | [ヘルスモニター](concepts/jp-8dae3ec0.md) | 40 | cs-notes=39 daily-report=1 |
+| [Cerebras](concepts/cerebras.md) | 39 | competitor=39 |
 | [Dependabot](concepts/dependabot.md) | 39 | competitor=2 cs-notes=37 |
-| [Cerebras](concepts/cerebras.md) | 38 | competitor=38 |
 | [WebSearch](concepts/websearch.md) | 38 | competitor=28 daily-report=8 memory=2 |
 | [サービス](concepts/jp-2dd5ca6b.md) | 38 | competitor=6 cs-notes=31 memory=1 |
 | [自動化](concepts/jp-57222287.md) | 38 | competitor=21 cs-notes=1 daily-report=10 incident=2 memory=4 |
 | [Agentforce](concepts/agentforce.md) | 37 | competitor=36 daily-report=1 |
+| [microsoft.com](concepts/microsoft-com.md) | 37 | competitor=37 |
 | [サンドボックス](concepts/jp-567bf7be.md) | 37 | cs-notes=33 daily-report=3 incident=1 |
 | [Auto-Fix](concepts/auto-fix.md) | 36 | cs-notes=36 |
 | [GPT-5](concepts/gpt-5.md) | 36 | competitor=36 |
 | [HubSpot](concepts/hubspot.md) | 36 | competitor=36 |
 | [Integromat](concepts/integromat.md) | 36 | competitor=36 |
 | [Make](concepts/make.md) | 36 | competitor=36 |
+| [Systems](concepts/systems.md) | 36 | competitor=36 |
 | [Twitter](concepts/twitter.md) | 36 | competitor=36 |
+| [cerebras.net](concepts/cerebras-net.md) | 36 | competitor=36 |
 | [jobcan.ne](concepts/jobcan-ne.md) | 36 | competitor=36 |
-| [microsoft.com](concepts/microsoft-com.md) | 36 | competitor=36 |
 | [可能性](concepts/jp-2542d7f4.md) | 36 | competitor=13 cs-notes=22 incident=1 |
 | [対応不要](concepts/jp-ae6e475d.md) | 36 | cs-notes=36 |
 | [NotebookLM](concepts/notebooklm.md) | 35 | competitor=7 cs-notes=23 memory=5 |
-| [Systems](concepts/systems.md) | 35 | competitor=35 |
-| [cerebras.net](concepts/cerebras-net.md) | 35 | competitor=35 |
 | [edge_function_summary_card.dart](concepts/edge-function-summary-card-dart.md) | 35 | cs-notes=35 |
 | [ドラフト](concepts/jp-532b08c9.md) | 34 | competitor=1 cs-notes=31 daily-report=2 |
 | [新機能](concepts/jp-6887d78a.md) | 34 | competitor=19 daily-report=15 |
+| [Linear](concepts/linear.md) | 33 | competitor=33 |
 | [hubspot.com](concepts/hubspot-com.md) | 33 | competitor=33 |
 | [確認要](concepts/jp-3558d8b4.md) | 33 | cs-notes=33 |
 | [Developer](concepts/developer.md) | 32 | competitor=20 daily-report=12 |
-| [Linear](concepts/linear.md) | 32 | competitor=32 |
+| [google.com](concepts/google-com.md) | 32 | competitor=32 |
 | [ヘルスチェック](concepts/jp-75cb238a.md) | 32 | cs-notes=31 incident=1 |
 | [対応待](concepts/jp-72c4d867.md) | 32 | cs-notes=32 |
 | [自動回復待](concepts/jp-7c1bc33c.md) | 32 | cs-notes=32 |
 | [Platform](concepts/platform.md) | 31 | competitor=20 daily-report=11 |
-| [google.com](concepts/google-com.md) | 31 | competitor=31 |
 | [KPI](concepts/kpi.md) | 30 | competitor=19 daily-report=3 memory=8 |
+| [Vanta](concepts/vanta.md) | 30 | competitor=30 |
+| [vanta.com](concepts/vanta-com.md) | 30 | competitor=30 |
 | [ワークフロー](concepts/jp-fd7f971a.md) | 30 | competitor=11 cs-notes=16 daily-report=3 |
 | [生成済](concepts/jp-61075fbd.md) | 30 | cs-notes=28 daily-report=2 |
 | [要対応](concepts/jp-f25cb953.md) | 30 | cs-notes=30 |
 | [AI_FALLBACK_RUNBOOK](concepts/ai-fallback-runbook.md) | 29 | competitor=26 daily-report=1 memory=2 |
-| [Vanta](concepts/vanta.md) | 29 | competitor=29 |
-| [vanta.com](concepts/vanta-com.md) | 29 | competitor=29 |
+| [Descript](concepts/descript.md) | 29 | competitor=29 |
+| [descript.com](concepts/descript-com.md) | 29 | competitor=29 |
+| [linear.app](concepts/linear-app.md) | 29 | competitor=29 |
 | [サイクル](concepts/jp-420745a0.md) | 29 | competitor=24 cs-notes=1 memory=4 |
 | [ステータス](concepts/jp-0a409cee.md) | 29 | competitor=6 cs-notes=5 daily-report=16 incident=2 |
 | [外部依存](concepts/jp-45db192a.md) | 29 | cs-notes=29 |
 | [版修復不可](concepts/jp-d8770a0d.md) | 29 | cs-notes=29 |
 | [Build](concepts/build.md) | 28 | competitor=27 daily-report=1 |
-| [Descript](concepts/descript.md) | 28 | competitor=28 |
 | [Drata](concepts/drata.md) | 28 | competitor=28 |
 | [Host](concepts/host.md) | 28 | cs-notes=24 daily-report=4 |
 | [SNS](concepts/sns.md) | 28 | competitor=4 cs-notes=14 daily-report=2 memory=8 |
-| [descript.com](concepts/descript-com.md) | 28 | competitor=28 |
 | [drata.com](concepts/drata-com.md) | 28 | competitor=28 |
 | [hrmos.co](concepts/hrmos-co.md) | 28 | competitor=28 |
-| [linear.app](concepts/linear-app.md) | 28 | competitor=28 |
 | [脅威度](concepts/jp-39f21fa4.md) | 28 | competitor=24 daily-report=4 |
 | [CONFLICT](concepts/conflict.md) | 27 | cs-notes=27 |
 | [コマンド](concepts/jp-49b7386b.md) | 27 | competitor=7 cs-notes=19 daily-report=1 |
@@ -340,6 +340,7 @@
 | [ARR](concepts/arr.md) | 16 | competitor=15 memory=1 |
 | [Bolt](concepts/bolt.md) | 16 | competitor=16 |
 | [Discovery](concepts/discovery.md) | 16 | competitor=16 |
+| [Hold](concepts/hold.md) | 16 | competitor=16 |
 | [Mode](concepts/mode.md) | 16 | competitor=15 memory=1 |
 | [New](concepts/new.md) | 16 | competitor=16 |
 | [OpenClaw](concepts/openclaw.md) | 16 | competitor=16 |
@@ -358,7 +359,6 @@
 | [AI-TOOL-VERIFY](concepts/ai-tool-verify.md) | 15 | competitor=15 |
 | [Computer](concepts/computer.md) | 15 | competitor=12 daily-report=1 memory=2 |
 | [External](concepts/external.md) | 15 | competitor=13 daily-report=2 |
-| [Hold](concepts/hold.md) | 15 | competitor=15 |
 | [Hosting](concepts/hosting.md) | 15 | cs-notes=6 daily-report=3 incident=5 memory=1 |
 | [May](concepts/may.md) | 15 | competitor=15 |
 | [URL](concepts/url.md) | 15 | competitor=8 cs-notes=3 daily-report=1 incident=1 memory=2 |
