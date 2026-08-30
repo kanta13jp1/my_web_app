@@ -761,6 +761,13 @@ jobs:
           python3 scripts/generate_sitemap.py --out build/web/sitemap.xml
           echo "prerendered vs-* pages:"; ls build/web/ | grep -c '^vs-' || true
 
+      - name: Verify production journey static route contract
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          python3 scripts/production_journey_probe.py \
+            --root-dir build/web \
+            --public-routes web/seo/public-routes.json
+
       - name: Setup Node for Firebase CLI
         if: steps.changes.outputs.web == 'true'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
