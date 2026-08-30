@@ -26,6 +26,10 @@ The implementation is based on Paddle's primary documentation:
   [Customer Portal](https://developer.paddle.com/concepts/sell/customer-portal/)
   lets a buyer authenticate by email, review transactions, and download PDF
   invoices.
+- Paddle's [sandbox documentation](https://developer.paddle.com/sdks/sandbox/)
+  states that sandbox customer emails are delivered only for addresses that
+  match the account's registered domain. Use an inbox that satisfies this
+  restriction so the Customer Portal magic link can be verified.
 - An authenticated
   [customer portal session](https://developer.paddle.com/build/customers/integrate-customer-portal/)
   is temporary. A
@@ -46,7 +50,7 @@ artifact, log, or screenshot:
 | Secret | Purpose |
 | --- | --- |
 | `PADDLE_SANDBOX_CLIENT_TOKEN` | Paddle frontend token beginning with `test_`. |
-| `PADDLE_SANDBOX_B2B_EMAIL` | Purchaser email that can receive sandbox Customer Portal magic links. |
+| `PADDLE_SANDBOX_B2B_EMAIL` | Purchaser email on the sandbox account's registered domain that can receive Customer Portal magic links. |
 | `PADDLE_SANDBOX_B2B_TAX_IDENTIFIER` | Valid test VAT/Tax ID for the selected official scenario. |
 
 Create these repository variables:
