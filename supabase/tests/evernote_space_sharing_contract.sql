@@ -69,6 +69,17 @@ select (
 ) as delegate_invitation_id
 \gset
 
+select set_config(
+  'test.other_notebook_id',
+  (
+    select id::text
+    from public.note_collections
+    where user_id = '00000000-0000-4000-8000-000000000101'
+      and name = 'Primary Notebook'
+  ),
+  false
+);
+
 do $$
 begin
   if has_table_privilege(
@@ -204,11 +215,7 @@ begin
         from public.notes
         where title = 'Delegate note'
       ),
-      (
-        select id
-        from public.note_collections
-        where name = 'Primary Notebook'
-      )
+      current_setting('test.other_notebook_id')::bigint
     );
     raise exception 'Cross-Space note movement unexpectedly succeeded.';
   exception
