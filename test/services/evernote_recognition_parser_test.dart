@@ -41,7 +41,10 @@ void main() {
       expect(result.language, 'ja');
       expect(result.objectWidth, 2398);
       expect(result.objectHeight, 1798);
-      expect(result.rawSha256, sha256.convert(utf8.encode(_sampleRecognition)).toString());
+      expect(
+        result.rawSha256,
+        sha256.convert(utf8.encode(_sampleRecognition)).toString(),
+      );
 
       expect(result.regions, hasLength(2));
       expect(result.regions.first.x, 437);
@@ -140,8 +143,10 @@ void main() {
 
       final region = parser.parse(raw).regions.single;
 
-      expect(region.candidates.map((candidate) => candidate.text),
-          ['first', 'best', 'third']);
+      expect(
+        region.candidates.map((candidate) => candidate.text),
+        ['first', 'best', 'third'],
+      );
       expect(region.displayCandidate.text, 'best');
     });
   });
