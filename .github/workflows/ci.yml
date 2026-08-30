@@ -112,6 +112,8 @@ jobs:
           python scripts/container_cleanup_guard_test.py
           python scripts/vscode_terminal_settings_test.py
           python scripts/ci_failure_digest_test.py
+          python scripts/test_paid_ai_policy.py
+          python scripts/paid_ai_policy.py audit --workflows-dir .github/workflows
 
       - name: Test high-risk dual security review
         run: >-
