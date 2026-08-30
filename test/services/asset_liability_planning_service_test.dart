@@ -338,9 +338,7 @@ void main() {
       expect(
         workbook.overdueCashflowRows.map((row) => row.accountId),
         isNot(
-          contains(
-            AssetLiabilityPlanningService.jibunBankCardLoanAccountId,
-          ),
+          contains(AssetLiabilityPlanningService.jibunBankCardLoanAccountId),
         ),
       );
     });
@@ -353,8 +351,9 @@ void main() {
       );
 
       expect(
-        workbook.cardBillingReview.needsReviewItems
-            .where((item) => item.accountId == 'paypay_card'),
+        workbook.cardBillingReview.needsReviewItems.where(
+          (item) => item.accountId == 'paypay_card',
+        ),
         isEmpty,
       );
     });
@@ -441,10 +440,7 @@ void main() {
 
     test('drops payment day risk entirely when every debt is paid', () {
       final workbook = service.buildWorkbook(
-        latestSnapshot: <String, double>{
-          '財布': 50000,
-          'モビット': -20000,
-        },
+        latestSnapshot: <String, double>{'財布': 50000, 'モビット': -20000},
         baseDate: DateTime(2026, 5, 20),
         paidAccountNames: const <String>{'モビット'},
       );
@@ -692,8 +688,9 @@ void main() {
       );
 
       final review = workbook.cardBillingReview;
-      final directIds =
-          review.directPaymentItems.map((item) => item.accountId).toSet();
+      final directIds = review.directPaymentItems
+          .map((item) => item.accountId)
+          .toSet();
 
       expect(
         directIds,
@@ -911,10 +908,7 @@ void main() {
 
     test('リボ払いカードは最低返済額へ明細の新規利用を上乗せし25日に返す', () {
       final workbook = service.buildWorkbook(
-        latestSnapshot: <String, double>{
-          'cash': 50000,
-          'auPayカード': -530163,
-        },
+        latestSnapshot: <String, double>{'cash': 50000, 'auPayカード': -530163},
         baseDate: DateTime(2026, 6, 1),
         revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
           'aupay_card': AssetLiabilityRevolvingCreditConfig(
@@ -1122,13 +1116,12 @@ void main() {
           AssetLiabilityPlanningService.cardStatementBillingAccountMissingAlert,
         ),
       );
-      final kinds =
-          group.fixActions.map((action) => action.kind).toList(growable: false);
+      final kinds = group.fixActions
+          .map((action) => action.kind)
+          .toList(growable: false);
       expect(
         kinds,
-        contains(
-          AssetLiabilityCardStatementFixActionKind.assignBillingAccount,
-        ),
+        contains(AssetLiabilityCardStatementFixActionKind.assignBillingAccount),
       );
       // 請求額がプレースホルダ0のため、取り込み・内訳修正は提案しない。
       expect(
@@ -2148,16 +2141,16 @@ void main() {
       '横浜銀行': -161437,
     };
 
-    test(
-        'payment day >= salaryDay lands in the first cycle month, < in the '
+    test('payment day >= salaryDay lands in the first cycle month, < in the '
         'second', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
         baseDate: DateTime(2026, 6, 26), // サイクル 6/25〜7/24
         salaryDay: 25,
       );
-      final payments =
-          workbook.cashflowRows.where((row) => row.isPayment).toList();
+      final payments = workbook.cashflowRows
+          .where((row) => row.isPayment)
+          .toList();
       expect(payments, isNotEmpty);
       for (final row in payments) {
         final day = row.paymentDay;
@@ -2170,8 +2163,7 @@ void main() {
       }
     });
 
-    test(
-        'a pre-salaryDay payment is overdue under calendar but not under '
+    test('a pre-salaryDay payment is overdue under calendar but not under '
         'the salary cycle (払ったのに未払い 逆戻りの根治)', () {
       final base = DateTime(2026, 6, 26);
       final calendar = service.buildWorkbook(
@@ -2306,10 +2298,7 @@ void main() {
       );
       expect(deposit.id, AssetLiabilityPlanningService.jibunBankAccountId);
       expect(deposit.kind, AssetLiabilityAccountKind.deposit);
-      expect(
-        loan.id,
-        AssetLiabilityPlanningService.jibunBankCardLoanAccountId,
-      );
+      expect(loan.id, AssetLiabilityPlanningService.jibunBankCardLoanAccountId);
       expect(loan.kind, AssetLiabilityAccountKind.cardLoan);
       expect(deposit.id, isNot(loan.id));
     });
@@ -2336,9 +2325,7 @@ void main() {
       );
       expect(aupay.paymentSourceAccountName, 'じぶん銀行');
       expect(
-        workbook.paymentSourceMissingRows.any(
-          (row) => row.name == 'auPayカード',
-        ),
+        workbook.paymentSourceMissingRows.any((row) => row.name == 'auPayカード'),
         isFalse,
       );
     });

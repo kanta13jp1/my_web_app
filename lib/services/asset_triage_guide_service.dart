@@ -95,10 +95,10 @@ class AssetTriagePlan {
       showConsultation;
 
   List<AssetTriageStep> get allSteps => <AssetTriageStep>[
-        ...todaySteps,
-        ...weekSteps,
-        ...monthSteps,
-      ];
+    ...todaySteps,
+    ...weekSteps,
+    ...monthSteps,
+  ];
 }
 
 /// 資産管理レポートの計算結果から段階別トリアージ計画を組み立てる。
@@ -174,16 +174,19 @@ class AssetTriageGuideService {
           : '本日の使用可能額が${_yen(todayAvailableAmount)}です。';
       final String detail;
       if (source == null || sourceProjected <= 0) {
-        detail = '$reason現金・預金として登録された口座に余力が見つかりません。'
+        detail =
+            '$reason現金・預金として登録された口座に余力が見つかりません。'
             '他に使える資産がないか確認し、無ければ今日の食費は家族・自治体・'
             'フードバンク等への相談も選択肢にしてください。食事を抜く判断はしないでください。';
       } else if (sourceProjected >= 20000) {
-        detail = '$reason${source.name}（残高 ${_yen(source.balance)} / '
+        detail =
+            '$reason${source.name}（残高 ${_yen(source.balance)} / '
             '引落予定を除いた余力 ${_yen(sourceProjected)}）から'
             '1〜2万円を下ろして今日の食費・移動費を確保してください。'
             '食事を抜く判断はしないでください。';
       } else {
-        detail = '$reason${source.name}の引落予定を除いた余力は'
+        detail =
+            '$reason${source.name}の引落予定を除いた余力は'
             '${_yen(sourceProjected)}です。引き落としに影響しないよう、'
             'この範囲で今日の食費・移動費を確保してください。'
             '食事を抜く判断はしないでください。';
@@ -199,12 +202,13 @@ class AssetTriageGuideService {
 
     // ①.5 期日を過ぎた入金予定（給料等）の着金確認。着金すれば口座が正常化する
     // 最もレバレッジの高い1件のため、生活費の次・本日期日の前に置く。
-    final pendingIncome = workbook.incomePlans
-        .where(
-          (plan) => !plan.received && !_dateOnly(plan.date).isAfter(today),
-        )
-        .toList()
-      ..sort((a, b) => b.amount.compareTo(a.amount));
+    final pendingIncome =
+        workbook.incomePlans
+            .where(
+              (plan) => !plan.received && !_dateOnly(plan.date).isAfter(today),
+            )
+            .toList()
+          ..sort((a, b) => b.amount.compareTo(a.amount));
     if (pendingIncome.isNotEmpty) {
       final top = pendingIncome.first;
       final others = pendingIncome.length - 1;
@@ -215,7 +219,8 @@ class AssetTriageGuideService {
         AssetTriageStep(
           kind: AssetTriageStepKind.confirmIncomeArrival,
           title: '入金予定が着金したか確認する',
-          detail: '${top.name} ${_yen(top.amount)}'
+          detail:
+              '${top.name} ${_yen(top.amount)}'
               '${others > 0 ? ' ほか$others件' : ''}が'
               '入金予定日を過ぎても「未受取」のままです。$destinationNote'
               '着金していれば「受取済み」に更新してください。口座の見込み残高が'
@@ -225,16 +230,17 @@ class AssetTriageGuideService {
     }
 
     // ② 本日期日の支払い。
-    final dueTodayRows = workbook.cashflowRows
-        .where(
-          (row) =>
-              row.isPayment &&
-              row.isDirectCashflowTarget &&
-              !row.paid &&
-              _dateOnly(row.paymentDate) == today,
-        )
-        .toList()
-      ..sort((a, b) => b.paymentAmount.compareTo(a.paymentAmount));
+    final dueTodayRows =
+        workbook.cashflowRows
+            .where(
+              (row) =>
+                  row.isPayment &&
+                  row.isDirectCashflowTarget &&
+                  !row.paid &&
+                  _dateOnly(row.paymentDate) == today,
+            )
+            .toList()
+          ..sort((a, b) => b.paymentAmount.compareTo(a.paymentAmount));
     if (dueTodayRows.isNotEmpty) {
       final total = dueTodayRows.fold<double>(
         0,
@@ -246,7 +252,8 @@ class AssetTriageGuideService {
         AssetTriageStep(
           kind: AssetTriageStepKind.dueTodayPayment,
           title: '本日期日の支払いを確認する',
-          detail: '本日期日は${first.accountName} ${_yen(first.paymentAmount)}'
+          detail:
+              '本日期日は${first.accountName} ${_yen(first.paymentAmount)}'
               '${others > 0 ? ' ほか$others件（合計 ${_yen(total)}）' : ''}です。'
               '引落口座の残高が足りているか確認し、不足なら生活費とは別に移してください。',
         ),
@@ -266,7 +273,8 @@ class AssetTriageGuideService {
         AssetTriageStep(
           kind: AssetTriageStepKind.stopNewCardUsage,
           title: 'カードを財布から抜く',
-          detail: '$namesを今日から使わないでください。$newBorrowingNote'
+          detail:
+              '$namesを今日から使わないでください。$newBorrowingNote'
               '「増やさない」が返済より先です。支払いは現金かデビットに切り替えてください。',
         ),
       );
@@ -285,7 +293,8 @@ class AssetTriageGuideService {
         const AssetTriageStep(
           kind: AssetTriageStepKind.registerIncomePlan,
           title: '収入予定を登録する',
-          detail: '今月の収入予定が1件も登録されていません。'
+          detail:
+              '今月の収入予定が1件も登録されていません。'
               'そのため使用可能額や口座の見込み残高は「収入ゼロ」で計算されており、'
               '実際より大幅に厳しい数字が出ています。'
               '給料日・金額・入金先の口座を登録すると正しい資金繰りに直ります。',
@@ -306,19 +315,18 @@ class AssetTriageGuideService {
     // 直接引き落とされず、そのカードの請求行で支払われる。ここで「口座に先に
     // 確保せよ」と出すとカード請求分と二重計上になるため、直接引落分のみを対象にする。
     final subscriptionIds = workbook.subscriptionFixedCostAccountIds;
-    final lifelineRows = workbook.debtMasterRows
-        .where(
-          (row) =>
-              row.fullPaymentEstimate &&
-              !row.paid &&
-              row.scheduledPaymentAmount > 0 &&
-              !row.includedInBillingAccount &&
-              !subscriptionIds.contains(row.id),
-        )
-        .toList()
-      ..sort(
-        (a, b) => (a.paymentDay ?? 99).compareTo(b.paymentDay ?? 99),
-      );
+    final lifelineRows =
+        workbook.debtMasterRows
+            .where(
+              (row) =>
+                  row.fullPaymentEstimate &&
+                  !row.paid &&
+                  row.scheduledPaymentAmount > 0 &&
+                  !row.includedInBillingAccount &&
+                  !subscriptionIds.contains(row.id),
+            )
+            .toList()
+          ..sort((a, b) => (a.paymentDay ?? 99).compareTo(b.paymentDay ?? 99));
     if (lifelineRows.isNotEmpty) {
       final total = lifelineRows.fold<double>(
         0,
@@ -327,7 +335,8 @@ class AssetTriageGuideService {
       final names = lifelineRows
           .take(3)
           .map(
-            (row) => '${row.name} ${_yen(row.scheduledPaymentAmount)}'
+            (row) =>
+                '${row.name} ${_yen(row.scheduledPaymentAmount)}'
                 '${row.paymentDay == null ? '' : '（${row.paymentDay}日）'}',
           )
           .join(' / ');
@@ -335,7 +344,8 @@ class AssetTriageGuideService {
         AssetTriageStep(
           kind: AssetTriageStepKind.secureLifeline,
           title: '家賃・通信など生命線を優先確保する',
-          detail: '住居・通信は生活の生命線です。$names'
+          detail:
+              '住居・通信は生活の生命線です。$names'
               '${lifelineRows.length > 3 ? ' ほか${lifelineRows.length - 3}件' : ''}'
               '（合計 ${_yen(total)}）の引落分は、他の支払いより先に口座へ確保してください。',
         ),
@@ -343,22 +353,24 @@ class AssetTriageGuideService {
     }
 
     // ⑤ 高金利ローンの最低額を死守（利息が重いので他より優先して最低額を守る）。
-    final highInterestLoans = workbook.debtMasterRows
-        .where(
-          (row) =>
-              !row.fullPaymentEstimate &&
-              row.kind == AssetLiabilityAccountKind.cardLoan &&
-              row.annualRate >= highInterestRateThreshold &&
-              row.balance.abs() > 1 &&
-              !row.paid,
-        )
-        .toList()
-      ..sort((a, b) => b.annualRate.compareTo(a.annualRate));
+    final highInterestLoans =
+        workbook.debtMasterRows
+            .where(
+              (row) =>
+                  !row.fullPaymentEstimate &&
+                  row.kind == AssetLiabilityAccountKind.cardLoan &&
+                  row.annualRate >= highInterestRateThreshold &&
+                  row.balance.abs() > 1 &&
+                  !row.paid,
+            )
+            .toList()
+          ..sort((a, b) => b.annualRate.compareTo(a.annualRate));
     if (highInterestLoans.isNotEmpty) {
       final names = highInterestLoans
           .take(3)
           .map(
-            (row) => '${row.name}（年${_formatRate(row.annualRate)} / '
+            (row) =>
+                '${row.name}（年${_formatRate(row.annualRate)} / '
                 '最低 ${_yen(row.minimumPaymentEstimate)}）',
           )
           .join(' / ');
@@ -366,7 +378,8 @@ class AssetTriageGuideService {
         AssetTriageStep(
           kind: AssetTriageStepKind.protectHighInterestLoan,
           title: '高金利ローンの最低額を死守する',
-          detail: '利息が重い高金利ローンは、延滞すると傷が深くなります。$names'
+          detail:
+              '利息が重い高金利ローンは、延滞すると傷が深くなります。$names'
               '${highInterestLoans.length > 3 ? ' ほか${highInterestLoans.length - 3}件' : ''}'
               'は最低額を必ず確保し、余力があればここから多めに返してください。',
         ),
@@ -396,7 +409,8 @@ class AssetTriageGuideService {
         AssetTriageStep(
           kind: AssetTriageStepKind.processOverdue,
           title: '期限超過リストを上から処理する',
-          detail: '期限超過が${overdueRows.length}件（合計 ${_yen(total)}）あります。'
+          detail:
+              '期限超過が${overdueRows.length}件（合計 ${_yen(total)}）あります。'
               '各項目の「次の一手」に従って払えるものから払い、払えないものは放置せず'
               '支払先へ電話して支払日の再約束か分割の相談をしてください。放置だけが最悪の選択です。',
         ),
@@ -404,7 +418,8 @@ class AssetTriageGuideService {
     }
 
     // ⑤ カード新規利用分の25日返済ルールを是正する。
-    final revolving = discipline?.revolvingCardViolations ??
+    final revolving =
+        discipline?.revolvingCardViolations ??
         const <AssetDebtDisciplineViolation>[];
     if (revolving.isNotEmpty) {
       final names = revolving
@@ -415,7 +430,8 @@ class AssetTriageGuideService {
         AssetTriageStep(
           kind: AssetTriageStepKind.disableRevolving,
           title: '新規利用分の25日返済を確保する',
-          detail: '$namesは、最低返済額に当月の新規利用分を全額上乗せし、'
+          detail:
+              '$namesは、最低返済額に当月の新規利用分を全額上乗せし、'
               '給料日の25日に返済できる予定へ直してください。'
               '既存残高の一括返済は求めず、これ以上残高を増やさないことを優先します。',
         ),
@@ -433,16 +449,18 @@ class AssetTriageGuideService {
           AssetDebtDisciplineMonitor.isBorrowingKind(row.kind) &&
           row.balance.abs() > 1,
     );
-    final subscriptionRows = workbook.debtMasterRows
-        .where(
-          (row) =>
-              workbook.subscriptionFixedCostAccountIds.contains(row.id) &&
-              row.scheduledPaymentAmount > 0,
-        )
-        .toList()
-      ..sort(
-        (a, b) => b.scheduledPaymentAmount.compareTo(a.scheduledPaymentAmount),
-      );
+    final subscriptionRows =
+        workbook.debtMasterRows
+            .where(
+              (row) =>
+                  workbook.subscriptionFixedCostAccountIds.contains(row.id) &&
+                  row.scheduledPaymentAmount > 0,
+            )
+            .toList()
+          ..sort(
+            (a, b) =>
+                b.scheduledPaymentAmount.compareTo(a.scheduledPaymentAmount),
+          );
     if (hasBorrowingDebt && subscriptionRows.isNotEmpty) {
       final total = subscriptionRows.fold<double>(
         0,
@@ -456,7 +474,8 @@ class AssetTriageGuideService {
         AssetTriageStep(
           kind: AssetTriageStepKind.cancelSubscriptions,
           title: 'サブスクを見直す',
-          detail: '$names'
+          detail:
+              '$names'
               '${subscriptionRows.length > 4 ? ' ほか${subscriptionRows.length - 4}件' : ''}'
               '（毎月 ${_yen(total)}）。使う月だけ入れて、終わったら切る運用にすれば'
               'この分がそのまま浮きます。今すぐ使っていないものから解約してください。',
@@ -470,18 +489,19 @@ class AssetTriageGuideService {
       for (final row in workbook.debtMasterRows) row.id: row.annualRate,
     };
     final planned =
-        revolving.where((violation) => violation.hasEscapePlan).toList()
-          ..sort(
-            (a, b) => (annualRateById[b.accountId] ?? 0)
-                .compareTo(annualRateById[a.accountId] ?? 0),
-          );
+        revolving.where((violation) => violation.hasEscapePlan).toList()..sort(
+          (a, b) => (annualRateById[b.accountId] ?? 0).compareTo(
+            annualRateById[a.accountId] ?? 0,
+          ),
+        );
     if (planned.isNotEmpty) {
       final top = planned.first;
       monthSteps.add(
         AssetTriageStep(
           kind: AssetTriageStepKind.reviewRepaymentPace,
           title: '返済ペースを宣言モニターで決める',
-          detail: '宣言モニターの「${top.escapeMonths}ヶ月脱却の月額」を見て、'
+          detail:
+              '宣言モニターの「${top.escapeMonths}ヶ月脱却の月額」を見て、'
               '金利の高いカードから月の返済額を決めてください。'
               '例: ${top.accountName}は月${_yen(top.escapeMonthlyPayment!)}を'
               '${top.escapeMonths}ヶ月続ければ脱却できます。',
@@ -501,7 +521,8 @@ class AssetTriageGuideService {
           AssetTriageStep(
             kind: AssetTriageStepKind.closeIncomeGap,
             title: '支払予定と収入の差を埋める',
-            detail: '今月の支払予定合計${_yen(monthlyPaymentTotal)}は'
+            detail:
+                '今月の支払予定合計${_yen(monthlyPaymentTotal)}は'
                 '月収目安${_yen(monthlyIncome)}に対して重すぎます。'
                 '通信費・保険など固定費の見直し候補を明細から洗い出してください。',
           ),
@@ -519,7 +540,8 @@ class AssetTriageGuideService {
               AssetDebtDisciplineMonitor.isBorrowingKind(row.kind),
         )
         .fold<double>(0, (sum, row) => sum + row.balance.abs());
-    final showConsultation = totalDebt >= consultationDebtThreshold ||
+    final showConsultation =
+        totalDebt >= consultationDebtThreshold ||
         (annualIncome != null &&
             annualIncome > 0 &&
             totalDebt >= annualIncome * consultationDebtIncomeRatio);
@@ -531,13 +553,16 @@ class AssetTriageGuideService {
       if (annualIncome == null || annualIncome <= 0) {
         incomeNote = '';
       } else if (totalDebt <= annualIncome * 1.5) {
-        incomeNote = '年収${_yen(annualIncome)}の収入があるので、増やすのを止めて'
+        incomeNote =
+            '年収${_yen(annualIncome)}の収入があるので、増やすのを止めて'
             '計画を立て直せば十分立て直せる数字です。';
       } else {
-        incomeNote = '年収${_yen(annualIncome)}の収入があることは大きな強みです。'
+        incomeNote =
+            '年収${_yen(annualIncome)}の収入があることは大きな強みです。'
             'どの手続きが合うかも含めて、専門家と一緒に現実的な計画を立てましょう。';
       }
-      consultationNote = '借入合計 約${_yen(totalDebt)}は、任意整理などで利息を'
+      consultationNote =
+          '借入合計 約${_yen(totalDebt)}は、任意整理などで利息を'
           '止められる可能性がある水準です。無料で相談できます: '
           '法テラス 0570-078374（収入基準を満たせば弁護士相談が無料）/ '
           '消費者ホットライン 188（最寄りの消費生活センター）/ '

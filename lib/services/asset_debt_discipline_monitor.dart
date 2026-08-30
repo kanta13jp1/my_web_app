@@ -149,8 +149,7 @@ class AssetDebtDisciplineMonitor {
       AssetLiabilityAccountKind.creditCard ||
       AssetLiabilityAccountKind.cardLoan ||
       AssetLiabilityAccountKind.shoppingDebt ||
-      AssetLiabilityAccountKind.otherLiability =>
-        true,
+      AssetLiabilityAccountKind.otherLiability => true,
       _ => false,
     };
   }
@@ -215,7 +214,8 @@ class AssetDebtDisciplineMonitor {
               kind: row.kind,
               amount: inferredNewUsage,
               currentBalance: balance,
-              problem: '${row.name}で今月 約${_yen(inferredNewUsage)}の新規借入が発生しました。'
+              problem:
+                  '${row.name}で今月 約${_yen(inferredNewUsage)}の新規借入が発生しました。'
                   '「追加の借金をしない」誓約に反しています。',
               action: '翌月はこのローン・借入の新規利用を止め、既存の返済計画を優先してください。',
             ),
@@ -257,8 +257,8 @@ class AssetDebtDisciplineMonitor {
               : null;
           final currentPlanMonths =
               (currentPlan != null && currentPlan.everPaysOff)
-                  ? currentPlan.months
-                  : null;
+              ? currentPlan.months
+              : null;
           final String currentPlanText;
           if (payment <= 0) {
             currentPlanText = '今月の返済予定が未入力のため、現状ペースの完済見込みを出せません。';
@@ -275,12 +275,11 @@ class AssetDebtDisciplineMonitor {
           }
           final shortageAction = shortfall >= _epsilon
               ? '最低返済${_yen(minimumPayment)}へ新規利用${_yen(newUsage)}を全額上乗せし、'
-                  '不足${_yen(shortfall)}を追加してください。'
+                    '不足${_yen(shortfall)}を追加してください。'
               : '';
-          final paydayAction = paydayAligned
-              ? ''
-              : '返済日を給料日の毎月25日に変更してください。';
-          final action = '$shortageAction$paydayAction'
+          final paydayAction = paydayAligned ? '' : '返済日を給料日の毎月25日に変更してください。';
+          final action =
+              '$shortageAction$paydayAction'
               '既存残高${_yen(balance)}の一括返済は求めません。'
               '無理のない範囲で残高圧縮を続ける場合、月${_yen(escapePayment)}なら'
               '約$escapeTargetMonthsヶ月で完済できる目安です。$currentPlanText';
@@ -293,7 +292,8 @@ class AssetDebtDisciplineMonitor {
               kind: row.kind,
               amount: shortfall,
               currentBalance: balance,
-              problem: '${row.name}は新規利用${_yen(newUsage)}に対する'
+              problem:
+                  '${row.name}は新規利用${_yen(newUsage)}に対する'
                   '25日の返済ルールを満たしていません'
                   '（必要${_yen(requiredPayment)} / 予定${_yen(payment)} / '
                   '返済日${row.paymentDay?.toString() ?? '未設定'}日）。',
@@ -301,8 +301,9 @@ class AssetDebtDisciplineMonitor {
               escapeMonths: escapeTargetMonths,
               escapeMonthlyPayment: escapePayment,
               currentPlanPayoffMonths: currentPlanMonths,
-              currentPlanTotalInterest:
-                  currentPlanMonths == null ? null : currentPlan!.totalInterest,
+              currentPlanTotalInterest: currentPlanMonths == null
+                  ? null
+                  : currentPlan!.totalInterest,
               oneShotChangeCompleted: oneShotChangeCompleted,
             ),
           );

@@ -27,10 +27,7 @@ void main() {
           'mobit': 10000,
           'aupay_card': 20000,
         },
-        paymentDayOverrides: const <String, int>{
-          'モビット': 15,
-          'auPayカード': 10,
-        },
+        paymentDayOverrides: const <String, int>{'モビット': 15, 'auPayカード': 10},
         revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
           'famipay_card': AssetLiabilityRevolvingCreditConfig(
             monthlyAmount: 3000,
@@ -40,8 +37,9 @@ void main() {
         actualPaymentAmounts: const <String, double>{'famipay_card': 3000},
         paidAccountNames: const <String>{'famipay_card'},
       );
-      final famipayId =
-          workbook.debtMasterRows.firstWhere((row) => row.name == 'ファミペイ').id;
+      final famipayId = workbook.debtMasterRows
+          .firstWhere((row) => row.name == 'ファミペイ')
+          .id;
       final discipline = monitor.evaluate(
         workbook: workbook,
         priorBalancesByAccountId: <String, double>{famipayId: 200000},
@@ -139,42 +137,45 @@ void main() {
       );
     });
 
-    test('legacy one-shot record does not hide an actual repayment shortfall', () {
-      final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 500000,
-          'ファミペイ': -100000,
-        },
-        baseDate: DateTime(2026, 8, 29),
-        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
-          'famipay_card': AssetLiabilityRevolvingCreditConfig(
-            monthlyAmount: 5000,
-            newUsageAmount: 30000,
-          ),
-        },
-        actualPaymentAmounts: const <String, double>{'famipay_card': 5000},
-        paidAccountNames: const <String>{'famipay_card'},
-        cardUsagePolicies: const <String, AssetCardUsagePolicy>{
-          'famipay_card': AssetCardUsagePolicy(enforceOneShot: true),
-        },
-      );
-      final discipline = monitor.evaluate(
-        workbook: workbook,
-        cardUsagePolicies: workbook.cardUsagePolicies,
-      );
+    test(
+      'legacy one-shot record does not hide an actual repayment shortfall',
+      () {
+        final workbook = planner.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'bank': 500000,
+            'ファミペイ': -100000,
+          },
+          baseDate: DateTime(2026, 8, 29),
+          revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+            'famipay_card': AssetLiabilityRevolvingCreditConfig(
+              monthlyAmount: 5000,
+              newUsageAmount: 30000,
+            ),
+          },
+          actualPaymentAmounts: const <String, double>{'famipay_card': 5000},
+          paidAccountNames: const <String>{'famipay_card'},
+          cardUsagePolicies: const <String, AssetCardUsagePolicy>{
+            'famipay_card': AssetCardUsagePolicy(enforceOneShot: true),
+          },
+        );
+        final discipline = monitor.evaluate(
+          workbook: workbook,
+          cardUsagePolicies: workbook.cardUsagePolicies,
+        );
 
-      final plan = triage.buildPlan(
-        workbook: workbook,
-        disciplineReport: discipline,
-      );
+        final plan = triage.buildPlan(
+          workbook: workbook,
+          disciplineReport: discipline,
+        );
 
-      final settingStep = plan.weekSteps.singleWhere(
-        (step) => step.kind == AssetTriageStepKind.disableRevolving,
-      );
-      expect(settingStep.detail, contains('ファミペイ'));
-      expect(settingStep.detail, contains('25日'));
-      expect(settingStep.detail, contains('既存残高の一括返済は求めず'));
-    });
+        final settingStep = plan.weekSteps.singleWhere(
+          (step) => step.kind == AssetTriageStepKind.disableRevolving,
+        );
+        expect(settingStep.detail, contains('ファミペイ'));
+        expect(settingStep.detail, contains('25日'));
+        expect(settingStep.detail, contains('既存残高の一括返済は求めず'));
+      },
+    );
 
     test('overdue step ignores unreceived income and due-today payments', () {
       // 未受領の給料 (期日超過で overdue フラグが立つ) と本日期日の支払は
@@ -362,8 +363,7 @@ void main() {
       );
     });
 
-    test(
-        'surfaces directly-debited rent as a lifeline but excludes '
+    test('surfaces directly-debited rent as a lifeline but excludes '
         'card-billed telecom', () {
       // 家賃は口座直接引落の生命線→出す。au(通信)は auPay カード請求に内包され
       // (includedInBillingAccount=true)、そのカードの請求行で支払われるため、
@@ -434,8 +434,7 @@ void main() {
       expect(lifeline.detail.contains('30,000円'), isFalse);
     });
 
-    test(
-        'cancelSubscriptions names subscription fixed costs but not '
+    test('cancelSubscriptions names subscription fixed costs but not '
         'utilities', () {
       // サブスク (ChatGPT/Claude) は名指しで解約候補に。光熱費 (電気代) は含めない。
       // 借入 (モビット) がある家計でのみ発火する。
@@ -688,27 +687,26 @@ void main() {
       expect(gap.first.detail.contains('12,500円'), isTrue);
     });
 
-    test('living expense step degrades gracefully without a deposit account',
-        () {
-      final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          '財布(現金)': 500,
-          'モビット': -50000,
-        },
-        baseDate: DateTime(2026, 5, 1),
-        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
-      );
+    test(
+      'living expense step degrades gracefully without a deposit account',
+      () {
+        final workbook = planner.buildWorkbook(
+          latestSnapshot: const <String, double>{'財布(現金)': 500, 'モビット': -50000},
+          baseDate: DateTime(2026, 5, 1),
+          monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+        );
 
-      final plan = triage.buildPlan(
-        workbook: workbook,
-        disciplineReport: monitor.evaluate(workbook: workbook),
-      );
+        final plan = triage.buildPlan(
+          workbook: workbook,
+          disciplineReport: monitor.evaluate(workbook: workbook),
+        );
 
-      final living = plan.todaySteps.firstWhere(
-        (step) => step.kind == AssetTriageStepKind.secureLivingExpense,
-      );
-      expect(living.detail.contains('フードバンク'), isTrue);
-      expect(living.detail.contains('食事を抜く判断はしないでください'), isTrue);
-    });
+        final living = plan.todaySteps.firstWhere(
+          (step) => step.kind == AssetTriageStepKind.secureLivingExpense,
+        );
+        expect(living.detail.contains('フードバンク'), isTrue);
+        expect(living.detail.contains('食事を抜く判断はしないでください'), isTrue);
+      },
+    );
   });
 }
