@@ -6,19 +6,47 @@ import {
   ACCOUNT_DELETION_CONFIRMATION,
   ACCOUNT_DELETION_TOKEN_DRAIN_SECONDS,
   blockingDependencyCount,
+  canCancelDeletionRequest,
   deletionScheduledFor,
-  isRecentSignIn,
   isServiceRoleRequest,
   remainingDeletionDependencyCount,
   requiresSubscriptionCancellation,
+  sessionIdFromAccessToken,
   tokenDrainSecondsRemaining,
 } from "./lifecycle.ts";
 
-Deno.test("recent sign-in expires after fifteen minutes", () => {
-  const now = new Date("2026-08-29T10:00:00Z");
-  assertEquals(isRecentSignIn("2026-08-29T09:45:00Z", now), true);
-  assertFalse(isRecentSignIn("2026-08-29T09:44:59Z", now));
-  assertFalse(isRecentSignIn("not-a-date", now));
+Deno.test("extracts only a valid session UUID from a verified access token", () => {
+  const payload = btoa(JSON.stringify({
+    session_id: "00000000-0000-4000-8000-100000002844",
+  })).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+  assertEquals(
+    sessionIdFromAccessToken(`header.${payload}.signature`),
+    "00000000-0000-4000-8000-100000002844",
+  );
+  assertEquals(sessionIdFromAccessToken("not-a-jwt"), "");
+  assertEquals(
+    sessionIdFromAccessToken(
+      `header.${btoa(JSON.stringify({ session_id: "not-a-uuid" }))}.signature`,
+    ),
+    "",
+  );
+});
+
+Deno.test("cancellation closes permanently when worker processing begins", () => {
+  assertEquals(
+    canCancelDeletionRequest({ status: "pending", attempt_count: 0 }),
+    true,
+  );
+  assertFalse(
+    canCancelDeletionRequest({ status: "failed", attempt_count: 1 }),
+  );
+  assertFalse(
+    canCancelDeletionRequest({
+      status: "pending",
+      attempt_count: 0,
+      auth_user_deleted_at: "2026-08-29T10:00:00Z",
+    }),
+  );
 });
 
 Deno.test("active subscription must be cancelled before account deletion", () => {

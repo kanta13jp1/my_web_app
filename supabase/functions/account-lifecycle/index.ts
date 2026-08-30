@@ -11,12 +11,13 @@ import {
   ACCOUNT_DELETION_POLICY_VERSION,
   bearerToken,
   blockingDependencyCount,
+  canCancelDeletionRequest,
   deletionScheduledFor,
-  isRecentSignIn,
   isServiceRoleRequest,
   remainingDeletionDependencyCount,
   requiresSubscriptionCancellation,
   safeErrorCode,
+  sessionIdFromAccessToken,
   tokenDrainSecondsRemaining,
 } from "./lifecycle.ts";
 
@@ -32,6 +33,11 @@ const MAX_BODY_BYTES = 8 * 1024;
 const MAX_STORAGE_BATCHES = 100;
 
 type JsonRecord = Record<string, unknown>;
+
+type AuthenticatedContext = {
+  user: User;
+  sessionId: string;
+};
 
 type DeletionRequestRow = {
   id: number;
@@ -77,18 +83,23 @@ serve(async (request: Request) => {
       return await processDueRequest(admin);
     }
 
-    const user = await authenticatedUser(request);
-    if (!user || user.is_anonymous) {
+    const authenticated = await authenticatedContext(request);
+    if (!authenticated || authenticated.user.is_anonymous) {
       return jsonResponse({ error: "authentication_required" }, 401);
     }
 
     switch (action) {
       case "status":
-        return await statusResponse(admin, user.id);
+        return await statusResponse(admin, authenticated.user.id);
       case "request_deletion":
-        return await requestDeletion(admin, user, body);
+        return await requestDeletion(
+          admin,
+          authenticated.user,
+          authenticated.sessionId,
+          body,
+        );
       case "cancel_deletion":
-        return await cancelDeletion(admin, user.id);
+        return await cancelDeletion(admin, authenticated.user.id);
       default:
         return jsonResponse({ error: "unknown_action" }, 400);
     }
@@ -105,7 +116,7 @@ async function statusResponse(
   const active = await activeRequest(admin, userId);
   return jsonResponse({
     success: true,
-    request: active,
+    request: toPublicRequest(active),
     policy: publicPolicy(),
   });
 }
@@ -113,12 +124,13 @@ async function statusResponse(
 async function requestDeletion(
   admin: SupabaseClient,
   user: User,
+  sessionId: string,
   body: JsonRecord,
 ): Promise<Response> {
   if (asString(body.confirmation) !== ACCOUNT_DELETION_CONFIRMATION) {
     return jsonResponse({ error: "confirmation_mismatch" }, 400);
   }
-  if (!isRecentSignIn(user.last_sign_in_at)) {
+  if (!await hasRecentAccountDeletionSession(admin, user.id, sessionId)) {
     return jsonResponse({
       error: "reauthentication_required",
       reauthentication_window_minutes: 15,
@@ -130,7 +142,7 @@ async function requestDeletion(
     return jsonResponse({
       success: true,
       idempotent: true,
-      request: existing,
+      request: toPublicRequest(existing),
       policy: publicPolicy(),
     });
   }
@@ -167,7 +179,7 @@ async function requestDeletion(
       return jsonResponse({
         success: true,
         idempotent: true,
-        request: raced,
+        request: toPublicRequest(raced),
         policy: publicPolicy(),
       });
     }
@@ -190,11 +202,11 @@ async function cancelDeletion(
   if (!current) {
     return jsonResponse({ error: "deletion_request_not_found" }, 404);
   }
-  if (current.status === "processing") {
+  if (!canCancelDeletionRequest(current)) {
     return jsonResponse({ error: "deletion_already_processing" }, 409);
   }
 
-  const { error } = await admin
+  const { data, error } = await admin
     .from("account_deletion_requests")
     .update({
       status: "cancelled",
@@ -204,11 +216,30 @@ async function cancelDeletion(
     })
     .eq("id", current.id)
     .eq("user_id", userId)
-    .in("status", ["pending", "failed"])
+    .eq("status", "pending")
+    .eq("attempt_count", 0)
+    .is("auth_user_deleted_at", null)
     .select(publicRequestColumns())
-    .single();
+    .maybeSingle();
   if (error) throw error;
+  if (!data) {
+    return jsonResponse({ error: "deletion_already_processing" }, 409);
+  }
   return jsonResponse({ success: true, request: null, policy: publicPolicy() });
+}
+
+async function hasRecentAccountDeletionSession(
+  admin: SupabaseClient,
+  userId: string,
+  sessionId: string,
+): Promise<boolean> {
+  if (sessionId === "") return false;
+  const { data, error } = await admin.rpc(
+    "has_recent_account_deletion_session",
+    { p_user_id: userId, p_session_id: sessionId },
+  );
+  if (error) throw error;
+  return data === true;
 }
 
 async function processDueRequest(admin: SupabaseClient): Promise<Response> {
@@ -513,7 +544,7 @@ async function activeRequest(
 ): Promise<DeletionRequestRow | null> {
   const { data, error } = await admin
     .from("account_deletion_requests")
-    .select(publicRequestColumns())
+    .select(internalRequestColumns())
     .eq("user_id", userId)
     .in("status", [
       "pending",
@@ -542,6 +573,27 @@ function publicRequestColumns(): string {
   ].join(",");
 }
 
+function internalRequestColumns(): string {
+  return `${publicRequestColumns()},auth_user_deleted_at`;
+}
+
+function toPublicRequest(
+  request: DeletionRequestRow | null,
+): JsonRecord | null {
+  if (!request) return null;
+  return {
+    id: request.id,
+    status: request.status,
+    policy_version: request.policy_version,
+    requested_at: request.requested_at,
+    scheduled_for: request.scheduled_for,
+    cancelled_at: request.cancelled_at,
+    completed_at: request.completed_at,
+    attempt_count: request.attempt_count,
+    last_error_code: request.last_error_code,
+  };
+}
+
 function publicPolicy(): JsonRecord {
   return {
     version: ACCOUNT_DELETION_POLICY_VERSION,
@@ -551,7 +603,9 @@ function publicPolicy(): JsonRecord {
   };
 }
 
-async function authenticatedUser(request: Request): Promise<User | null> {
+async function authenticatedContext(
+  request: Request,
+): Promise<AuthenticatedContext | null> {
   const token = bearerToken(request);
   if (token === "") return null;
   const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -559,7 +613,11 @@ async function authenticatedUser(request: Request): Promise<User | null> {
     auth: { persistSession: false },
   });
   const { data, error } = await client.auth.getUser();
-  return error ? null : data.user;
+  if (error || !data.user) return null;
+  return {
+    user: data.user,
+    sessionId: sessionIdFromAccessToken(token),
+  };
 }
 
 async function readBody(request: Request): Promise<JsonRecord> {

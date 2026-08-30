@@ -7,7 +7,7 @@
 ## 1. 決定事項
 
 - サブスクリプション解約とアカウント退会を分離する。解約だけではデータを削除せず、Free アカウントとして保持する。
-- 退会申請は直近15分以内の再ログインと確認文入力を要求する。
+- 退会申請は現在の Auth session が直近15分以内の再ログインで新規作成されていることと、確認文入力を要求する。別端末の `last_sign_in_at` や通常のtoken refreshは再認証として扱わない。
 - 既存の公開ポリシーに合わせ、申請から30日を取消猶予とする。有料期間の終了がそれより後なら、削除予定日は有料期間終了後とする。
 - 自動 worker は daily で due request を1件ずつ claim し、重複実行を `FOR UPDATE SKIP LOCKED` で防ぐ。
 - データ inventory が不完全なら何も削除せず停止する。登録済みの plain `user_id` 所有テーブルは service-role adapter で削除し、新規・曖昧な所有列は fail-closed とする。完了は JWT 失効待ち後の再削除・残存検査が0件の場合だけ記録する。
@@ -45,10 +45,10 @@
 ## 4. 処理シーケンス
 
 1. Flutter が user JWT で `account-lifecycle:status` を取得する。
-2. 退会申請時、Edge Function が Auth の `last_sign_in_at` を検査し、15分超ならメールアカウントのパスワードまたは Google OAuth による再ログインを要求する。
+2. 退会申請時、Edge Function が検証済みaccess tokenの `session_id` と `auth.sessions` を照合し、現在sessionの作成から15分超ならメールアカウントのパスワードまたは Google OAuth による再ログインを要求する。refresh後も同じsession rowを使うため、token refreshだけでは条件を満たさない。
 3. active subscription が `cancel_at_period_end=false` なら申請を拒否し、billing portal を案内する。
 4. `scheduled_for = max(requested_at + 30 days, current_period_end)` として request を作る。同一 user の active request は1件に制限する。
-5. 期限までは user が self-service で cancel できる。
+5. worker が初回claimするまでは user が self-service で cancel できる。claim後は部分削除が始まり得るため、失敗・再試行待ちを含め取消不可とする。
 6. daily worker が due request を atomic claim する。
 7. DB inventory の populated blocker が0か検査する。
 8. Stripe Customer、plain `user_id` の DB data、Storage object、Auth user / cascade data の順で削除する。

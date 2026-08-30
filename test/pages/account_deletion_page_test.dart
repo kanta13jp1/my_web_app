@@ -68,6 +68,39 @@ void main() {
     expect(find.text('退会を申請する'), findsOneWidget);
   });
 
+  testWidgets('does not offer cancellation after worker processing starts', (
+    tester,
+  ) async {
+    final gateway = _FakeAccountLifecycleGateway(
+      initialRequest: _request(
+        status: 'failed',
+        attemptCount: 1,
+        lastErrorCode: 'storage_deletion_failed',
+      ),
+    );
+    await tester.pumpWidget(_app(gateway));
+    await tester.pumpAndSettle();
+
+    expect(find.text('状態: 安全確認・再試行待ち'), findsOneWidget);
+    expect(find.byKey(const Key('account-deletion-cancel')), findsNothing);
+  });
+
+  testWidgets('shows token drain as an irreversible processing state', (
+    tester,
+  ) async {
+    final gateway = _FakeAccountLifecycleGateway(
+      initialRequest: _request(
+        status: 'awaiting_token_expiry',
+        attemptCount: 1,
+      ),
+    );
+    await tester.pumpWidget(_app(gateway));
+    await tester.pumpAndSettle();
+
+    expect(find.text('状態: アクセストークン失効待ち'), findsOneWidget);
+    expect(find.byKey(const Key('account-deletion-cancel')), findsNothing);
+  });
+
   testWidgets('renders at a narrow web viewport without overflow', (
     tester,
   ) async {
@@ -173,12 +206,18 @@ class _FakeAccountLifecycleGateway implements AccountLifecycleGateway {
 
 AccountDeletionRequest _requestFixture() => _request();
 
-AccountDeletionRequest _request() {
+AccountDeletionRequest _request({
+  String status = 'pending',
+  int attemptCount = 0,
+  String? lastErrorCode,
+}) {
   return AccountDeletionRequest(
     id: 2844,
-    status: 'pending',
+    status: status,
     policyVersion: '2026-08-29.v1',
     requestedAt: DateTime.utc(2026, 8, 29),
     scheduledFor: DateTime.utc(2026, 9, 28),
+    attemptCount: attemptCount,
+    lastErrorCode: lastErrorCode,
   );
 }

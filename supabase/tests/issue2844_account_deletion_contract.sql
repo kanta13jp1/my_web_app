@@ -8,6 +8,20 @@ values
   ('00000000-0000-4000-8000-000000022844'::uuid)
 on conflict (id) do nothing;
 
+insert into auth.sessions (id, user_id, created_at)
+values
+  (
+    '00000000-0000-4000-8000-100000002844'::uuid,
+    '00000000-0000-4000-8000-000000002844'::uuid,
+    now() - interval '14 minutes'
+  ),
+  (
+    '00000000-0000-4000-8000-100000012844'::uuid,
+    '00000000-0000-4000-8000-000000002844'::uuid,
+    now() - interval '16 minutes'
+  )
+on conflict (id) do nothing;
+
 create table public.issue2844_cascade_fixture (
   id bigint generated always as identity primary key,
   user_id uuid not null references auth.users(id) on delete cascade
@@ -112,6 +126,25 @@ declare
   v_claimed public.account_deletion_requests;
   v_storage_count integer;
 begin
+  if not public.has_recent_account_deletion_session(
+    '00000000-0000-4000-8000-000000002844'::uuid,
+    '00000000-0000-4000-8000-100000002844'::uuid
+  ) then
+    raise exception 'fresh current session was rejected';
+  end if;
+  if public.has_recent_account_deletion_session(
+    '00000000-0000-4000-8000-000000002844'::uuid,
+    '00000000-0000-4000-8000-100000012844'::uuid
+  ) then
+    raise exception 'stale current session was accepted';
+  end if;
+  if public.has_recent_account_deletion_session(
+    '00000000-0000-4000-8000-000000012844'::uuid,
+    '00000000-0000-4000-8000-100000002844'::uuid
+  ) then
+    raise exception 'another users session was accepted';
+  end if;
+
   select * into v_cascade
   from public.account_deletion_dependency_inventory(
     '00000000-0000-4000-8000-000000002844'::uuid
@@ -373,6 +406,7 @@ begin
   end if;
 
   foreach v_function in array array[
+    'public.has_recent_account_deletion_session(uuid,uuid)'::regprocedure::oid,
     'public.claim_due_account_deletion()'::regprocedure::oid,
     'public.fail_account_deletion(bigint,text,bigint,integer,integer,boolean,boolean)'::regprocedure::oid,
     'public.complete_account_deletion(bigint,integer,boolean)'::regprocedure::oid,

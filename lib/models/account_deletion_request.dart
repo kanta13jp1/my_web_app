@@ -45,8 +45,9 @@ class AccountDeletionRequest {
   final int attemptCount;
   final String? lastErrorCode;
 
-  bool get canCancel => status == 'pending' || status == 'failed';
-  bool get isProcessing => status == 'processing';
+  bool get canCancel => status == 'pending' && attemptCount == 0;
+  bool get isProcessing =>
+      status == 'processing' || status == 'awaiting_token_expiry';
 
   factory AccountDeletionRequest.fromJson(Map<String, dynamic> json) {
     return AccountDeletionRequest(

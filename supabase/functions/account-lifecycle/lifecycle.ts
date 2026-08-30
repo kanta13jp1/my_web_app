@@ -1,6 +1,5 @@
 export const ACCOUNT_DELETION_POLICY_VERSION = "2026-08-29.v1";
 export const ACCOUNT_DELETION_GRACE_DAYS = 30;
-export const RECENT_SIGN_IN_MINUTES = 15;
 export const ACCOUNT_DELETION_TOKEN_DRAIN_SECONDS = 65 * 60;
 export const ACCOUNT_DELETION_CONFIRMATION = "アカウントを削除する";
 
@@ -23,17 +22,42 @@ export type DependencyInventoryRow = {
   is_blocking?: unknown;
 };
 
-export function isRecentSignIn(
-  lastSignInAt: unknown,
-  now = new Date(),
+export type CancellableDeletionRequest = {
+  status?: unknown;
+  attempt_count?: unknown;
+  auth_user_deleted_at?: unknown;
+};
+
+export function canCancelDeletionRequest(
+  request: CancellableDeletionRequest,
 ): boolean {
-  if (typeof lastSignInAt !== "string" || lastSignInAt.trim() === "") {
-    return false;
+  return request.status === "pending" &&
+    Number(request.attempt_count ?? 0) === 0 &&
+    request.auth_user_deleted_at == null;
+}
+
+export function sessionIdFromAccessToken(token: string): string {
+  const segments = token.split(".");
+  if (segments.length !== 3) return "";
+  try {
+    const encoded = segments[1].replaceAll("-", "+").replaceAll("_", "/");
+    const padded = encoded.padEnd(Math.ceil(encoded.length / 4) * 4, "=");
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(
+      binary,
+      (character) => character.charCodeAt(0),
+    );
+    const payload = JSON.parse(new TextDecoder().decode(bytes));
+    const sessionId = typeof payload?.session_id === "string"
+      ? payload.session_id.trim()
+      : "";
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        .test(sessionId)
+      ? sessionId
+      : "";
+  } catch {
+    return "";
   }
-  const signedInAt = new Date(lastSignInAt);
-  if (Number.isNaN(signedInAt.getTime())) return false;
-  const ageMs = now.getTime() - signedInAt.getTime();
-  return ageMs >= 0 && ageMs <= RECENT_SIGN_IN_MINUTES * 60 * 1000;
 }
 
 export function requiresSubscriptionCancellation(

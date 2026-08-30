@@ -137,6 +137,40 @@ for each row execute function public.set_account_deletion_updated_at();
 -- Service-role RPCs live in public because the Data API exposes only public,
 -- storage, and graphql_public in this project. Every function checks the JWT
 -- role, pins search_path, and has EXECUTE revoked from browser roles.
+create or replace function public.has_recent_account_deletion_session(
+  p_user_id uuid,
+  p_session_id uuid
+)
+returns boolean
+language plpgsql
+security definer
+stable
+set search_path = ''
+as $$
+begin
+  if coalesce(auth.jwt() ->> 'role', '') <> 'service_role' then
+    raise exception 'service_role_required' using errcode = '42501';
+  end if;
+  if p_user_id is null or p_session_id is null then
+    return false;
+  end if;
+
+  -- A refresh keeps the same auth.sessions row. Checking its creation time
+  -- binds the destructive request to a fresh sign-in on this exact session,
+  -- rather than another device's account-wide last_sign_in_at timestamp.
+  return exists (
+    select 1
+    from auth.sessions as session_record
+    where session_record.id = p_session_id
+      and session_record.user_id = p_user_id
+      and session_record.created_at >= now() - interval '15 minutes'
+  );
+end;
+$$;
+
+comment on function public.has_recent_account_deletion_session(uuid, uuid) is
+  'Service-role check that binds account-deletion reauthentication to the current Auth session.';
+
 create or replace function public.claim_due_account_deletion()
 returns setof public.account_deletion_requests
 language plpgsql
@@ -539,6 +573,8 @@ $$;
 
 revoke all on function public.claim_due_account_deletion()
   from public, anon, authenticated;
+revoke all on function public.has_recent_account_deletion_session(uuid, uuid)
+  from public, anon, authenticated;
 revoke all on function public.fail_account_deletion(
   bigint, text, bigint, integer, integer, boolean, boolean
 )
@@ -557,6 +593,8 @@ revoke all on function public.account_deletion_storage_objects(uuid, integer)
   from public, anon, authenticated;
 
 grant execute on function public.claim_due_account_deletion()
+  to service_role;
+grant execute on function public.has_recent_account_deletion_session(uuid, uuid)
   to service_role;
 grant execute on function public.fail_account_deletion(
   bigint, text, bigint, integer, integer, boolean, boolean

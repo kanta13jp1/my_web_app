@@ -418,6 +418,7 @@ class _ErrorCard extends StatelessWidget {
 String _statusLabel(String status) => switch (status) {
       'pending' => '取消猶予中',
       'processing' => '削除処理中',
+      'awaiting_token_expiry' => 'アクセストークン失効待ち',
       'failed' => '安全確認・再試行待ち',
       _ => status,
     };

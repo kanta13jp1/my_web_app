@@ -19,6 +19,12 @@ create table if not exists auth.users (
   id uuid primary key
 );
 
+create table if not exists auth.sessions (
+  id uuid primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
 create schema if not exists storage;
 
 create table if not exists storage.buckets (
