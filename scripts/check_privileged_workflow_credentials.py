@@ -24,6 +24,7 @@ ENVIRONMENT_NAME = re.compile(
 SECRET_EXPRESSION = re.compile(
     r"\bsecrets\.(?P<name>ANTHROPIC_API_KEY|SUPABASE_SERVICE_ROLE_KEY)\b"
 )
+REVIEW_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 NON_PR_EVENT_GUARD = re.compile(
     r"^github\.event_name\s*==\s*['\"](?:workflow_dispatch|schedule|push|workflow_run)['\"]"
 )
@@ -192,6 +193,18 @@ def find_violations(root: Path, manifest_path: Path) -> list[Violation]:
             else:
                 declared_by_workflow[workflow] = environment
 
+    raw_service_role_exceptions = manifest.get(
+        "supabase_service_role_exceptions", {}
+    )
+    if not isinstance(raw_service_role_exceptions, dict):
+        violations.append(
+            Violation(
+                str(manifest_path),
+                "supabase_service_role_exceptions must be an object",
+            )
+        )
+        raw_service_role_exceptions = {}
+
     raw_overrides = manifest.get("workflow_job_environment_overrides", {})
     job_overrides: dict[str, dict[str, str]] = {}
     if not isinstance(raw_overrides, dict):
@@ -233,6 +246,7 @@ def find_violations(root: Path, manifest_path: Path) -> list[Violation]:
         job_overrides[workflow] = valid_jobs
 
     actual_consumers: set[str] = set()
+    actual_supabase_environments: set[str] = set()
     files = sorted([*root.glob("*.yml"), *root.glob("*.yaml")])
     for path in files:
         lines = path.read_text(encoding="utf-8-sig").splitlines()
@@ -261,6 +275,8 @@ def find_violations(root: Path, manifest_path: Path) -> list[Violation]:
                 continue
             credential_jobs.add(job_name)
             job_environment = overrides.get(job_name, expected_environment)
+            if "SUPABASE_SERVICE_ROLE_KEY" in job_secrets:
+                actual_supabase_environments.add(job_environment)
             environment_config = environments[job_environment]
             targets = environment_config.get("least_privilege_targets", {})
             missing_targets = sorted(job_secrets - set(targets))
@@ -311,6 +327,72 @@ def find_violations(root: Path, manifest_path: Path) -> list[Violation]:
                 "manifest entry is stale because the workflow no longer consumes a tracked secret",
             )
         )
+
+    declared_exception_environments = set(raw_service_role_exceptions)
+    for environment in sorted(
+        actual_supabase_environments - declared_exception_environments
+    ):
+        violations.append(
+            Violation(
+                f"{manifest_path}:{environment}",
+                "active SUPABASE_SERVICE_ROLE_KEY use requires an approved temporary exception",
+            )
+        )
+    for environment in sorted(
+        declared_exception_environments - actual_supabase_environments
+    ):
+        violations.append(
+            Violation(
+                f"{manifest_path}:{environment}",
+                "service-role exception is stale because the environment has no active consumer",
+            )
+        )
+
+    required_exception_fields = (
+        "reason",
+        "data_scope",
+        "approver",
+        "approval_basis",
+        "review_on",
+        "rotation_owner",
+        "replacement_blocker",
+    )
+    for environment, raw_exception in raw_service_role_exceptions.items():
+        subject = f"{manifest_path}:{environment}"
+        if not isinstance(raw_exception, dict):
+            violations.append(Violation(subject, "service-role exception must be an object"))
+            continue
+        if raw_exception.get("status") != "approved-temporary":
+            violations.append(
+                Violation(subject, "service-role exception status must be approved-temporary")
+            )
+        if raw_exception.get("project_ref") != "smmkxxavexumewbfaqpy":
+            violations.append(
+                Violation(subject, "service-role exception must name the production project_ref")
+            )
+        for field in required_exception_fields:
+            value = raw_exception.get(field)
+            if not isinstance(value, str) or not value.strip():
+                violations.append(
+                    Violation(subject, f"service-role exception field `{field}` is required")
+                )
+        review_on = raw_exception.get("review_on")
+        if isinstance(review_on, str) and not REVIEW_DATE.fullmatch(review_on):
+            violations.append(
+                Violation(subject, "service-role exception review_on must use YYYY-MM-DD")
+            )
+        alternatives = raw_exception.get("rejected_alternatives")
+        if (
+            not isinstance(alternatives, list)
+            or len(alternatives) < 2
+            or any(not isinstance(item, str) or not item.strip() for item in alternatives)
+        ):
+            violations.append(
+                Violation(
+                    subject,
+                    "service-role exception must document at least two rejected alternatives",
+                )
+            )
     return violations
 
 
