@@ -83,6 +83,8 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: read
+    env:
+      ROOTLESS_DOCKER_APT_VERSION: 5:29.7.2-1~ubuntu.24.04~noble
 
     steps:
       - name: Checkout repository
@@ -92,18 +94,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          docker_version=$(docker --version | sed -nE 's/^Docker version ([0-9.]+),.*/\1/p')
-          test -n "$docker_version"
           sudo apt-get update
-          rootless_version=$(apt-cache madison docker-ce-rootless-extras \
-            | awk -v version="$docker_version" \
-              'index($3, version) && found == "" { found=$3 } END { print found }')
-          if [ -z "$rootless_version" ]; then
-            echo "::error::No docker-ce-rootless-extras package matches Docker $docker_version"
-            exit 1
-          fi
           sudo apt-get install --yes --no-install-recommends \
-            "docker-ce-rootless-extras=${rootless_version}" \
+            "docker-ce=${ROOTLESS_DOCKER_APT_VERSION}" \
+            "docker-ce-cli=${ROOTLESS_DOCKER_APT_VERSION}" \
+            "docker-ce-rootless-extras=${ROOTLESS_DOCKER_APT_VERSION}" \
             uidmap dbus-user-session slirp4netns fuse-overlayfs
           if ! grep -q "^${USER}:" /etc/subuid; then
             sudo usermod --add-subuids 524288-589823 "${USER}"
@@ -115,6 +110,7 @@ jobs:
           sudo rm -f /var/run/docker.sock
           command -v dockerd-rootless.sh
           unshare --user --map-root-user true
+          docker --version
 
       - name: Install Supabase CLI
         uses: supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf # v2
