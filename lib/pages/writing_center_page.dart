@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 import 'ai_summarizer_page.dart';
 import 'ai_writing_assistant_page.dart';
+import 'pdf_document_analyzer_page.dart';
 
-enum WritingCenterSection { writing, summaries }
+enum WritingCenterSection { writing, summaries, documents }
 
-/// 文章生成・改善と、履歴付きAI要約を1つの機能にまとめる入口。
+/// 文章生成・改善、履歴付きAI要約、PDF解析を1つの機能にまとめる入口。
 class WritingCenterPage extends StatefulWidget {
   const WritingCenterPage({
     super.key,
@@ -32,7 +33,11 @@ class _WritingCenterPageState extends State<WritingCenterPage> {
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
-        children: const <Widget>[AiWritingAssistantPage(), AiSummarizerPage()],
+        children: const <Widget>[
+          AiWritingAssistantPage(),
+          AiSummarizerPage(),
+          PdfDocumentAnalyzerPage(),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
@@ -47,6 +52,10 @@ class _WritingCenterPageState extends State<WritingCenterPage> {
           NavigationDestination(
             icon: Icon(Icons.summarize_outlined),
             label: 'AI要約・履歴',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.picture_as_pdf_outlined),
+            label: 'PDF解析',
           ),
         ],
       ),

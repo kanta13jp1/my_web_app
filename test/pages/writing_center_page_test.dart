@@ -31,6 +31,7 @@ void main() {
     expect(find.text('AI サマリー'), findsOneWidget);
     expect(find.text('文章作成・改善'), findsOneWidget);
     expect(find.text('AI要約・履歴'), findsOneWidget);
+    expect(find.text('PDF解析'), findsOneWidget);
 
     await tester.tap(find.text('文章作成・改善'));
     await tester.pumpAndSettle();
@@ -42,5 +43,20 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('AI サマリー'), findsOneWidget);
+  });
+
+  testWidgets('PDF entry opens the document analyzer tab', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: WritingCenterPage(initialSection: WritingCenterSection.documents),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('PDFドキュメント解析'), findsOneWidget);
+    expect(find.byKey(const Key('pdf-picker-button')), findsOneWidget);
   });
 }

@@ -242,6 +242,7 @@ const List<String> kAllAppRoutes = <String>[
   '/password-vault',
   '/payment-channel-ledger',
   '/payment-reminders',
+  '/pdf-document-analyzer',
   '/people-help',
   '/performance-review',
   '/personal-dashboard',
