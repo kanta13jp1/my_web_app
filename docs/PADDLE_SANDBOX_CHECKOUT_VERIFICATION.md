@@ -19,6 +19,23 @@ It uploads the logs and the final `build/web` directory as a seven-day
 artifact. Compile-only values in this workflow are deliberately invalid public
 placeholders; the workflow does not open Paddle or create a transaction.
 
+After the project-specific sandbox is provisioned, keep the real checkout on a
+GitHub-hosted runner too:
+
+1. Store the sandbox client-side token as the repository secret
+   `PADDLE_SANDBOX_CLIENT_TOKEN`.
+2. Store the sandbox price ID as the repository variable
+   `PADDLE_SANDBOX_PRICE_ID`.
+3. Set the sandbox default payment link domain to `localhost` in Paddle.
+4. Run **Paddle Sandbox Checkout Cloud Validation** manually with
+   **Run the real Paddle sandbox success/failure/cancel matrix** enabled.
+
+The real job builds a non-release app, serves it only on the runner's temporary
+`localhost:7357`, and runs the three scenarios serially without retries. It
+uploads sanitized Paddle event data, the Playwright report, and screenshots
+after payment fields are no longer visible. Never put a Paddle API key in
+GitHub Actions or Flutter; this flow accepts only a `test_` client-side token.
+
 Keep local preflight work lightweight:
 
 ```powershell
@@ -45,10 +62,9 @@ must not be used in this flow.
 
 ## Run the real sandbox checkout
 
-Start this interactive step only after the cloud validation is green and the
-project-specific sandbox values are available. A cloud development environment
-with browser port forwarding is preferred when one is provisioned; otherwise,
-use a short-lived local Web session and stop it after collecting evidence.
+The GitHub Actions real-sandbox job above is the primary execution path. Use the
+interactive fallback below only when Paddle changes its hosted form and the
+cloud automation needs a visual diagnosis.
 
 From the repository root, run a non-release Flutter Web session:
 

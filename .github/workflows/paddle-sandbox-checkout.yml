@@ -2,6 +2,12 @@ name: Paddle Sandbox Checkout Cloud Validation
 
 on:
   workflow_dispatch:
+    inputs:
+      run_real_sandbox_e2e:
+        description: Run the real Paddle sandbox success/failure/cancel matrix
+        required: true
+        default: false
+        type: boolean
   pull_request:
     branches:
       - main
@@ -15,6 +21,7 @@ on:
       - 'lib/services/paddle_js_checkout_gateway_web.dart'
       - 'lib/ui/features/billing/**'
       - 'test/pages/subscription_billing_page_test.dart'
+      - 'test/e2e/paddle_sandbox_checkout.spec.ts'
       - 'test/services/paddle_checkout_test.dart'
       - 'test/services/paddle_sandbox_web_entrypoint_test.dart'
       - 'test/ui/features/billing/**'
@@ -159,3 +166,133 @@ jobs:
           if-no-files-found: warn
           include-hidden-files: true
           retention-days: 7
+
+  real-sandbox-e2e:
+    name: Real Paddle sandbox success, failure, and cancel
+    if: github.event_name == 'workflow_dispatch' && inputs.run_real_sandbox_e2e
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    env:
+      PADDLE_SANDBOX_CLIENT_TOKEN: ${{ secrets.PADDLE_SANDBOX_CLIENT_TOKEN }}
+      PADDLE_SANDBOX_PRICE_ID: ${{ vars.PADDLE_SANDBOX_PRICE_ID }}
+      PADDLE_SANDBOX_E2E: 'true'
+      E2E_BASE_URL: http://localhost:7357
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Validate sandbox configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "::add-mask::$PADDLE_SANDBOX_CLIENT_TOKEN"
+          if [[ -z "$PADDLE_SANDBOX_CLIENT_TOKEN" ]]; then
+            echo '::error::Repository secret PADDLE_SANDBOX_CLIENT_TOKEN is missing.'
+            exit 1
+          fi
+          if [[ "$PADDLE_SANDBOX_CLIENT_TOKEN" != test_* ]]; then
+            echo '::error::PADDLE_SANDBOX_CLIENT_TOKEN must be a sandbox test_ token.'
+            exit 1
+          fi
+          if [[ -z "$PADDLE_SANDBOX_PRICE_ID" ]]; then
+            echo '::error::Repository variable PADDLE_SANDBOX_PRICE_ID is missing.'
+            exit 1
+          fi
+          if [[ "$PADDLE_SANDBOX_PRICE_ID" != pri_* ]]; then
+            echo '::error::PADDLE_SANDBOX_PRICE_ID must be a pri_ identifier.'
+            exit 1
+          fi
+
+      - name: Setup Flutter
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies and Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Build sandbox-enabled debug Web app
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-logs
+          flutter build web --debug --pwa-strategy=none \
+            --dart-define=PADDLE_SANDBOX_ENABLED=true \
+            --dart-define=PADDLE_SANDBOX_CLIENT_TOKEN="$PADDLE_SANDBOX_CLIENT_TOKEN" \
+            --dart-define=PADDLE_SANDBOX_PRICE_ID="$PADDLE_SANDBOX_PRICE_ID" \
+            2>&1 | tee .ci-logs/paddle-real-sandbox-build.log
+
+      - name: Start short-lived Web server
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 7357 --directory build/web \
+            > .ci-logs/paddle-real-sandbox-server.log 2>&1 &
+          echo "$!" > .ci-logs/paddle-real-sandbox-server.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error http://localhost:7357/ \
+              > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo '::error::The temporary Flutter Web server did not become ready.'
+          exit 1
+
+      - name: Run real sandbox matrix without retries
+        shell: bash
+        run: >-
+          npx playwright test
+          test/e2e/paddle_sandbox_checkout.spec.ts
+          --project=chromium
+          --retries=0
+
+      - name: Stop short-lived Web server
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f .ci-logs/paddle-real-sandbox-server.pid ]]; then
+            kill "$(cat .ci-logs/paddle-real-sandbox-server.pid)" 2>/dev/null || true
+          fi
+
+      - name: Write real sandbox summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## Real Paddle sandbox matrix'
+            echo
+            echo '- The GitHub-hosted runner used a short-lived localhost debug build.'
+            echo '- Playwright ran success, declined-card, and customer-cancel scenarios serially with retries disabled.'
+            echo '- Review the uploaded report, sanitized event log, and post-checkout screenshots before closing #2845.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload real sandbox evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: paddle-real-sandbox-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .ci-logs
+            playwright-report
+            test-results
+          if-no-files-found: warn
+          include-hidden-files: true
+          retention-days: 14

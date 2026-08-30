@@ -5,6 +5,7 @@
   let paddleLoadPromise = null;
   let initializedToken = null;
   let activeEventCallback = null;
+  const sandboxEventLog = [];
 
   function loadPaddle() {
     if (window.Paddle) return Promise.resolve(window.Paddle);
@@ -49,13 +50,24 @@
   function relayPaddleEvent(event) {
     if (!activeEventCallback || !event) return;
     const data = event.data || {};
-    activeEventCallback(JSON.stringify({
+    const payload = {
       name: optionalText(event.name) || '',
       checkoutId: optionalText(data.id),
       transactionId: optionalText(data.transaction_id),
       message: optionalText(data.detail) || optionalText(data.message),
-    }));
+    };
+    sandboxEventLog.push({
+      receivedAt: new Date().toISOString(),
+      ...payload,
+    });
+    activeEventCallback(JSON.stringify(payload));
   }
+
+  window.getPaddleSandboxEventLog = function() {
+    return sandboxEventLog.map(function(entry) {
+      return { ...entry };
+    });
+  };
 
   window.openPaddleSandboxCheckout = async function(
     clientSideToken,

@@ -19,5 +19,7 @@ void main() {
     expect(bridge, contains("paddle.Environment.set('sandbox')"));
     expect(bridge, contains('paddle.Initialize({'));
     expect(bridge, contains('paddle.Checkout.open({'));
+    expect(bridge, contains('window.getPaddleSandboxEventLog'));
+    expect(bridge, contains('receivedAt: new Date().toISOString()'));
   });
 }
