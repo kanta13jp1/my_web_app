@@ -192,6 +192,46 @@ def find_violations(root: Path, manifest_path: Path) -> list[Violation]:
             else:
                 declared_by_workflow[workflow] = environment
 
+    raw_overrides = manifest.get("workflow_job_environment_overrides", {})
+    job_overrides: dict[str, dict[str, str]] = {}
+    if not isinstance(raw_overrides, dict):
+        violations.append(
+            Violation(
+                str(manifest_path),
+                "workflow_job_environment_overrides must be an object",
+            )
+        )
+        raw_overrides = {}
+    for workflow, raw_jobs in raw_overrides.items():
+        subject = f"{manifest_path}:{workflow}"
+        if workflow not in declared_by_workflow:
+            violations.append(
+                Violation(subject, "job overrides require a declared workflow")
+            )
+            continue
+        if not isinstance(raw_jobs, dict) or not raw_jobs:
+            violations.append(
+                Violation(subject, "job overrides must be a non-empty object")
+            )
+            continue
+        valid_jobs: dict[str, str] = {}
+        for job_name, environment in raw_jobs.items():
+            if not isinstance(job_name, str) or not isinstance(environment, str):
+                violations.append(
+                    Violation(subject, "job override names and environments must be strings")
+                )
+                continue
+            if environment not in environments:
+                violations.append(
+                    Violation(
+                        subject,
+                        f"job `{job_name}` references unknown environment `{environment}`",
+                    )
+                )
+                continue
+            valid_jobs[job_name] = environment
+        job_overrides[workflow] = valid_jobs
+
     actual_consumers: set[str] = set()
     files = sorted([*root.glob("*.yml"), *root.glob("*.yaml")])
     for path in files:
@@ -212,27 +252,31 @@ def find_violations(root: Path, manifest_path: Path) -> list[Violation]:
             continue
         global_secrets = _secret_names(lines[: jobs_block[0]])
         events = _event_names(lines)
-        environment_config = environments[expected_environment]
-        targets = environment_config.get("least_privilege_targets", {})
-        missing_targets = sorted(workflow_secrets - set(targets))
-        if missing_targets:
-            violations.append(
-                Violation(
-                    str(path),
-                    f"manifest environment `{expected_environment}` lacks least-privilege targets for {missing_targets}",
-                )
-            )
+        credential_jobs: set[str] = set()
+        overrides = job_overrides.get(path.name, {})
         for job_name, start, end in _job_blocks(lines):
             job_lines = lines[start:end]
             job_secrets = global_secrets | _secret_names(job_lines)
             if not job_secrets:
                 continue
-            actual_environment, deployment_tracking = _job_environment(job_lines)
-            if actual_environment != expected_environment:
+            credential_jobs.add(job_name)
+            job_environment = overrides.get(job_name, expected_environment)
+            environment_config = environments[job_environment]
+            targets = environment_config.get("least_privilege_targets", {})
+            missing_targets = sorted(job_secrets - set(targets))
+            if missing_targets:
                 violations.append(
                     Violation(
                         f"{path}:{start + 1}",
-                        f"job `{job_name}` uses {sorted(job_secrets)} and must declare environment `{expected_environment}`",
+                        f"manifest environment `{job_environment}` lacks least-privilege targets for {missing_targets}",
+                    )
+                )
+            actual_environment, deployment_tracking = _job_environment(job_lines)
+            if actual_environment != job_environment:
+                violations.append(
+                    Violation(
+                        f"{path}:{start + 1}",
+                        f"job `{job_name}` uses {sorted(job_secrets)} and must declare environment `{job_environment}`",
                     )
                 )
             elif deployment_tracking is not False:
@@ -251,6 +295,13 @@ def find_violations(root: Path, manifest_path: Path) -> list[Violation]:
                         f"job `{job_name}` may expose a tracked secret to an internal pull_request",
                     )
                 )
+        for stale_job in sorted(set(overrides) - credential_jobs):
+            violations.append(
+                Violation(
+                    f"{manifest_path}:{path.name}:{stale_job}",
+                    "job environment override is stale because the job does not consume a tracked secret",
+                )
+            )
 
     missing_files = sorted(set(declared_by_workflow) - actual_consumers)
     for workflow in missing_files:

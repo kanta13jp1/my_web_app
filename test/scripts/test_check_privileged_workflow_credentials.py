@@ -11,7 +11,10 @@ from scripts.check_privileged_workflow_credentials import find_violations
 
 class CheckPrivilegedWorkflowCredentialsTest(unittest.TestCase):
     def _messages(
-        self, workflows: dict[str, str], environment_workflows: dict[str, list[str]]
+        self,
+        workflows: dict[str, str],
+        environment_workflows: dict[str, list[str]],
+        workflow_job_environment_overrides: dict[str, dict[str, str]] | None = None,
     ) -> list[str]:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / ".github" / "workflows"
@@ -38,6 +41,9 @@ class CheckPrivilegedWorkflowCredentialsTest(unittest.TestCase):
                     }
                     for name, names in environment_workflows.items()
                 },
+                "workflow_job_environment_overrides": (
+                    workflow_job_environment_overrides or {}
+                ),
             }
             manifest_path = Path(tmp) / "manifest.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
@@ -160,6 +166,91 @@ jobs:
             {"operations-production": ["noisy.yml"]},
         )
         self.assertIn("job `run` must set environment deployment to false", messages)
+
+    def test_accepts_explicit_job_level_environment_overrides(self) -> None:
+        workflow = """name: migration
+on: workflow_dispatch
+jobs:
+  source:
+    environment:
+      name: source-production
+      deployment: false
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - run: 'true'
+  target:
+    environment:
+      name: target-production
+      deployment: false
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - run: 'true'
+"""
+        target_consumer = """name: target
+on: workflow_dispatch
+jobs:
+  run:
+    environment:
+      name: target-production
+      deployment: false
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - run: 'true'
+"""
+        self.assertEqual(
+            self._messages(
+                {
+                    "migration.yml": workflow,
+                    "target-consumer.yml": target_consumer,
+                },
+                {
+                    "source-production": ["migration.yml"],
+                    "target-production": ["target-consumer.yml"],
+                },
+                {
+                    "migration.yml": {
+                        "source": "source-production",
+                        "target": "target-production",
+                    }
+                },
+            ),
+            [],
+        )
+
+    def test_rejects_stale_job_level_environment_override(self) -> None:
+        workflow = """name: migration
+on: workflow_dispatch
+jobs:
+  source:
+    environment:
+      name: source-production
+      deployment: false
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - run: 'true'
+"""
+        messages = self._messages(
+            {"migration.yml": workflow},
+            {"source-production": ["migration.yml"]},
+            {
+                "migration.yml": {
+                    "source": "source-production",
+                    "missing": "source-production",
+                }
+            },
+        )
+        self.assertIn(
+            "job environment override is stale because the job does not consume a tracked secret",
+            messages,
+        )
 
 if __name__ == "__main__":
     unittest.main()
