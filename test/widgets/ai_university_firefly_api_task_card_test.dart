@@ -29,7 +29,8 @@ void main() {
         required non2xxRecoveryPassed,
         required estimatedDailyRequests,
         required completionSeconds,
-      }) async => true),
+      }) async => true,
+      ),
     );
 
     final submit = find.byKey(const Key('firefly-submit'));
