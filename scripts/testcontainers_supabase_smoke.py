@@ -176,9 +176,17 @@ ISSUE_2844_ACCOUNT_DELETION_SQL_FILES = (
     ROOT / "supabase" / "tests" / "issue2844_account_deletion_bootstrap.sql",
     ROOT
     / "supabase"
+     / "migrations"
+     / "20260829095836_account_retention_and_deletion.sql",
+    ROOT
+    / "supabase"
     / "migrations"
-    / "20260829095836_account_retention_and_deletion.sql",
+    / "20260830054326_account_deletion_rollout_preflight.sql",
     ROOT / "supabase" / "tests" / "issue2844_account_deletion_contract.sql",
+    ROOT
+    / "supabase"
+    / "tests"
+    / "issue2844_account_deletion_rollout_contract.sql",
 )
 VIDEO_ARTIFACT_SQL_FILES = (
     ROOT / "supabase" / "tests" / "video_service_bootstrap.sql",
@@ -542,6 +550,9 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "Storage owner metadata and approved user path conventions are inventoried",
             "failed work records a bounded retry",
             "completed request evidence removes user_id",
+            "preflight is non-mutating and exposes no user identifier",
+            "exact-id canary preserves the control tenant",
+            "target residual is zero except the documented audit retention",
         ],
         "video_artifact_contract": [
             path.relative_to(ROOT).as_posix() for path in VIDEO_ARTIFACT_SQL_FILES
