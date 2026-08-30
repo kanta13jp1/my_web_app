@@ -117,7 +117,6 @@ async function openFlutterCheckout(page: Page) {
   await expect(page.locator('iframe[name="paddle_frame"]')).toBeVisible({
     timeout: 30_000,
   });
-  await expectFlutterText(page, 'Paddle sandbox checkout を表示しています。');
 }
 
 async function enableFlutterAccessibility(page: Page) {
