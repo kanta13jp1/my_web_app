@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/note_collection_service.dart';
 import 'note_list_page.dart';
+import 'space_sharing_page.dart';
 
 class NoteCollectionsPage extends StatefulWidget {
   const NoteCollectionsPage({
@@ -86,6 +87,16 @@ class _NoteCollectionsPageState extends State<NoteCollectionsPage> {
       appBar: AppBar(
         title: const Text('ノートブック・スタック・Space'),
         actions: [
+          IconButton(
+            key: const Key('note_collections_space_sharing'),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const SpaceSharingPage(),
+              ),
+            ),
+            tooltip: 'Space共有',
+            icon: const Icon(Icons.group_outlined),
+          ),
           IconButton(
             key: const Key('note_collections_refresh'),
             onPressed: _saving ? null : _reload,
@@ -267,6 +278,21 @@ class _NoteCollectionsPageState extends State<NoteCollectionsPage> {
                     icon: const Icon(Icons.notes_outlined),
                     label: Text('${collection.noteCount}件を表示'),
                   ),
+                  if (collection.type == NoteCollectionType.space)
+                    OutlinedButton.icon(
+                      key: ValueKey<String>(
+                        'note_collection_share_${collection.id}',
+                      ),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => SpaceSharingPage(
+                            initialSpaceId: collection.id,
+                          ),
+                        ),
+                      ),
+                      icon: const Icon(Icons.group_outlined),
+                      label: const Text('共有'),
+                    ),
                   if (collection.type != NoteCollectionType.notebook)
                     OutlinedButton.icon(
                       key: ValueKey<String>(

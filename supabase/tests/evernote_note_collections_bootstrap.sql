@@ -34,6 +34,21 @@ $$;
 grant usage on schema auth to authenticated, service_role;
 grant execute on function auth.uid() to authenticated, service_role;
 
+create or replace function auth.jwt()
+returns jsonb
+language sql
+stable
+as $
+  select jsonb_build_object(
+    'sub',
+    nullif(current_setting('request.jwt.claim.sub', true), ''),
+    'email',
+    nullif(current_setting('request.jwt.claim.email', true), '')
+  )
+$;
+
+grant execute on function auth.jwt() to authenticated, service_role;
+
 create table public.notes (
   id bigint generated always as identity primary key,
   user_id uuid not null references auth.users (id) on delete cascade,
