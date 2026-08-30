@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-30T18:40:24.943080+00:00",
+  "generated_at": "2026-08-30T21:18:33.566925+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -11,12 +11,12 @@
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 18,
-    "eligible": 18,
-    "provisional": 16,
+    "total": 19,
+    "eligible": 19,
+    "provisional": 17,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 17,
+    "division_3": 18,
     "division_4": 1,
     "division_5": 0
   },
@@ -28,27 +28,27 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260831T033107+0900",
-    "started_at": "2026-08-31T03:29:37+09:00",
+    "cycle_id": "20260831T061237+0900",
+    "started_at": "2026-08-31T06:12:37+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-363d108c-37e3-4bb5-a4a2-a34f65416938",
-      "url": "https://docs.ai21.com/docs/quickstart"
+      "slug": "course-5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
+      "url": "https://docs.ai21.com/docs/jamba-models"
     },
     "reviewer": {
       "seat": 12,
       "name": "迫 佑樹",
-      "selection_score": 79.7131,
+      "selection_score": 79.4436,
       "division": 1,
       "cycle_utility": 85.44,
-      "aggregate_utility": 85.56
+      "aggregate_utility": 87.52
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 4,
     "top_findings": [
       {
-        "summary": "掲載URLとAI21 SaaSモデル名が現行公式契約から外れている",
+        "summary": "掲載source URLが404で、platform非区別のjamba-1.5-large/miniを現行モデル一覧として提示している",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
@@ -57,7 +57,7 @@
         ]
       },
       {
-        "summary": "versioned environment、期待出力、評価rubric、合格閾値がない",
+        "summary": "用途別推奨はあるが、platform、version、品質、latency、costを比較する再現可能な意思決定rubricがない",
         "severity": "p1",
         "business_dimensions": [
           "unit_economics",
@@ -66,7 +66,7 @@
         ]
       },
       {
-        "summary": "固定価格表と無料トライアル記述の検証日・計算課題がない",
+        "summary": "cost efficient・最高精度という主張に、現行platform別の費用、latency、qualityを再計算する課題がない",
         "severity": "p2",
         "business_dimensions": [
           "unit_economics",
@@ -90,57 +90,156 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After the production-data owner publishes one dated-endpoint lab, run one cohort and compare source reachability, first-call success, 60-minute completion, rubric score, token-cost prediction error, support contacts, and workplace application."
+      "next_cycle_experiment": "After the production-data owner publishes one dated platform matrix and model-selection lab, run one cohort and compare source reachability, platform-selection accuracy, endpoint success, 60-minute completion, rubric score, cost-prediction error, support contacts, and workplace application."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5144",
+      "label": "対策待ち・Issue #5150",
       "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [
-        "course-ai21-deprecated-api-contract"
+        "course-ai21-model-source-platform-contract"
       ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean dedicated branch ready at origin/main 139410e80d48f9ec3196e614cf877f71d0446a2d",
+        "passed: clean dedicated branch ready at origin/main 28438d008d072ed5a0c96614804e258c62f0d81b",
         "passed: 125 roster profiles and 125 personas",
         "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
-        "passed: deterministic AI21 Labs API winner from fresh catalog",
+        "passed: deterministic AI21 model-availability winner from fresh catalog",
         "passed: no comparable baseline, focus_dimension=evidence",
-        "passed: current AI21 SDK, Jamba, API, and pricing docs plus the named tracked migration inspected separately",
+        "passed: source 404, current AI21 Jamba and platform availability documentation, and the named tracked course migration were inspected separately",
         "executed once successfully: 125 profiles, seat 12"
       ],
       "issue": {
-        "number": 5144,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5144",
+        "number": 5150,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5150",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260831T033107+0900:363d108c-37e3-4bb5-a4a2-a34f65416938",
+        "dedupe_key": "tiger-course-review:20260831T061237+0900:5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-ai21-reproducible-lab-gap",
-        "course-ai21-pricing-evidence-gap",
-        "course-ai21-learner-outcome-gap"
+        "course-ai21-model-decision-rubric-gap",
+        "course-ai21-cost-quality-verification-gap",
+        "course-ai21-model-selection-learner-outcome-gap"
       ]
     },
     "course": {
-      "content_id": "363d108c-37e3-4bb5-a4a2-a34f65416938",
+      "content_id": "5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
       "provider": "ai21",
-      "title": "AI21 Labs API 入門",
-      "source_url": "https://docs.ai21.com/docs/quickstart",
-      "reason": "Fresh公開Data APIで対象行を確認したが、5つのevidence fieldはすべてnullだった。掲載source_urlは404で、tracked教材はAI21 SaaSで2025年5月に廃止されたjamba-1.5-large/miniを使用する一方、現行公式SDKはjamba-large/miniとChatMessageを案内する。教材にはversion pin、実行manifest、期待出力、評価rubricがなく、実在学習者成果も確認できないためlearner evidenceは契約どおり中立50点とした。",
-      "cycle_utility": 25.25,
-      "aggregate_utility": 25.25,
+      "title": "AI21 Labs — 利用可能モデル (2026)",
+      "source_url": "https://docs.ai21.com/docs/jamba-models",
+      "reason": "Fresh公開Data APIで対象行を確認したが、5つのevidence fieldはすべてnullだった。掲載source_urlは404で、tracked courseはjamba-1.5-large/miniをプラットフォーム非区別の一般選択肢として提示する。現行公式AI21 SaaSはjamba-large 1.7とjamba-mini 2を案内しdated endpointを推奨する一方、Azure・AWSの一部は1.5を提供しており、選択にはplatform、version、cost、latency、qualityの明示が必要である。courseには実行課題、rubric、合格閾値、実在学習者成果がないためlearner evidenceは契約どおり中立50点とした。",
+      "cycle_utility": 31.0,
+      "aggregate_utility": 31.0,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260831T061237+0900",
+      "started_at": "2026-08-31T06:12:37+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
+        "title": "AI21 Labs — 利用可能モデル (2026)",
+        "url": "https://docs.ai21.com/docs/jamba-models"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 79.4436
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner publishes one dated platform matrix and model-selection lab, run one cohort and compare source reachability, platform-selection accuracy, endpoint success, 60-minute completion, rubric score, cost-prediction error, support contacts, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-ai21-model-source-platform-contract",
+          "summary": "掲載source URLが404で、platform非区別のjamba-1.5-large/miniを現行モデル一覧として提示している",
+          "severity": "p1",
+          "suggested_action": "source_urlを現行Jambaページへ更新し、AI21 SaaS、managed cloud、self-deployを分けたdated matrixでversion、endpoint、context、availability、deprecationを示す。"
+        },
+        {
+          "finding_id": "course-ai21-model-decision-rubric-gap",
+          "summary": "用途別推奨はあるが、platform、version、品質、latency、costを比較する再現可能な意思決定rubricがない",
+          "severity": "p1",
+          "suggested_action": "3つのworkload fixtureについてcontext、quality threshold、latency SLO、budget、privacy、deployment constraintを与え、dated model/platformを選んで根拠を提出するrubricを追加する。"
+        },
+        {
+          "finding_id": "course-ai21-cost-quality-verification-gap",
+          "summary": "cost efficient・最高精度という主張に、現行platform別の費用、latency、qualityを再計算する課題がない",
+          "severity": "p2",
+          "suggested_action": "日付付き公式pricing/availabilityを参照し、一つのlong-context workloadでtokenまたはhosting cost、latency、quality thresholdを比較して選択理由を提出させる。"
+        },
+        {
+          "finding_id": "course-ai21-model-selection-learner-outcome-gap",
+          "summary": "実在学習者が現行AI21 model/platformを再現可能に選定できた証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名の開始/完了、platform選択、dated endpoint成功、rubric score、cost予測誤差、再現率、職場適用を一cohortで取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5150",
+        "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-ai21-model-source-platform-contract"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch ready at origin/main 28438d008d072ed5a0c96614804e258c62f0d81b",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
+          "passed: deterministic AI21 model-availability winner from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: source 404, current AI21 Jamba and platform availability documentation, and the named tracked course migration were inspected separately",
+          "executed once successfully: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 5150,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5150",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260831T061237+0900:5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-ai21-model-decision-rubric-gap",
+          "course-ai21-cost-quality-verification-gap",
+          "course-ai21-model-selection-learner-outcome-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260831T033107+0900",
       "started_at": "2026-08-31T03:29:37+09:00",
@@ -2207,6 +2306,20 @@
       "completed_cycles": 1,
       "last_cycle_utility": 31.25,
       "last_reviewed_at": "2026-08-28T15:27:06+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
+      "provider": "ai21",
+      "title": "AI21 Labs — 利用可能モデル (2026)",
+      "source_url": "https://docs.ai21.com/docs/jamba-models",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 31.0,
+      "completed_cycles": 1,
+      "last_cycle_utility": 31.0,
+      "last_reviewed_at": "2026-08-30T21:12:37+00:00",
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
