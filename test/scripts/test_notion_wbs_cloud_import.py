@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import io
 import json
 import unittest
+import urllib.error
 from copy import deepcopy
 from typing import Any
 
-from scripts.notion_wbs_cloud_import import ImportError, run_import
+from scripts.notion_wbs_cloud_import import (
+    ImportError,
+    _safe_postgrest_code,
+    run_import,
+)
 from scripts.notion_wbs_import_plan import build_wbs_import_plan
 
 
@@ -165,6 +171,19 @@ class FakeClient:
 
 
 class NotionWbsCloudImportTest(unittest.TestCase):
+    def test_postgrest_error_exposes_only_a_safe_code(self) -> None:
+        error = urllib.error.HTTPError(
+            "https://example.invalid",
+            400,
+            "bad request",
+            {},
+            io.BytesIO(
+                b'{"code":"23514","message":"private row content"}'
+            ),
+        )
+
+        self.assertEqual(_safe_postgrest_code(error), "23514")
+
     def setUp(self) -> None:
         self.stage_rows = [staged(PAGE_IDS[0]), staged(PAGE_IDS[1])]
         self.item_rows = [

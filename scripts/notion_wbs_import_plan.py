@@ -7,7 +7,7 @@ import hashlib
 import json
 import math
 import re
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 
 
@@ -28,6 +28,17 @@ BLOCKED_WBS_DECISIONS = frozenset(
         "title_group_content_conflict",
     }
 )
+ALLOWED_WBS_INSTANCES = frozenset(
+    {
+        "claude", "codex", "codex1", "codex2", "cx",
+        "automation", "auto", "user", "usr", "human",
+        "gemini", "co-pilot", "copilot", "vscode", "win", "windows",
+        "ps", "ps1", "ps2", "ps3", "ps4", "ps5", "ps6",
+        "web", "mobile", "schedule", "scheduled", "gha",
+        "github-actions", "github-copilot", "all",
+    }
+)
+ALLOWED_WBS_STATUSES = frozenset({"pending", "in_progress", "completed", "blocked"})
 
 
 def normalized_wbs_uuid(value: object) -> str | None:
@@ -36,16 +47,18 @@ def normalized_wbs_uuid(value: object) -> str | None:
 
 
 def _normalize_instance(value: object) -> str:
-    instance = str(value or "win").strip()
-    if instance == "all":
-        return "codex"
-    if instance in {"copilot", "github-copilot"}:
-        return "co-pilot"
-    return instance or "win"
+    instance = str(value or "win").strip().lower()
+    aliases = {
+        "all": "codex",
+        "claude-code": "claude",
+        "copilot": "co-pilot",
+        "github-copilot": "co-pilot",
+    }
+    return aliases.get(instance, instance or "win")
 
 
 def _normalize_status(value: object) -> str:
-    status = str(value or "pending").strip()
+    status = str(value or "pending").strip().lower()
     if status == "in-progress":
         return "in_progress"
     if status in {"not_started", "draft"}:
@@ -133,12 +146,27 @@ def _canonical_row(rows: list[dict[str, Any]]) -> dict[str, Any]:
     )[0]
 
 
+def wbs_content_validation_errors(content: dict[str, Any]) -> tuple[str, ...]:
+    errors: list[str] = []
+    if not content["title"].strip() or len(content["title"]) > 10000:
+        errors.append("title")
+    if content["progress"] is None:
+        errors.append("progress")
+    if content["instance"] not in ALLOWED_WBS_INSTANCES:
+        errors.append("instance")
+    if content["status"] not in ALLOWED_WBS_STATUSES:
+        errors.append("status")
+    deadline = content["deadline"]
+    if deadline is not None:
+        try:
+            date.fromisoformat(deadline)
+        except ValueError:
+            errors.append("deadline")
+    return tuple(errors)
+
+
 def _invalid_content(content: dict[str, Any]) -> bool:
-    return (
-        not content["title"].strip()
-        or content["progress"] is None
-        or len(content["title"]) > 10000
-    )
+    return bool(wbs_content_validation_errors(content))
 
 
 def _compare_to_destination(
@@ -238,6 +266,17 @@ def build_wbs_import_plan_details(
         "conflicting_duplicate": 0,
         "title_group_content_conflict": 0,
     }
+    validation_errors = {
+        "title": 0,
+        "progress": 0,
+        "instance": 0,
+        "status": 0,
+        "deadline": 0,
+    }
+    for row in canonical.values():
+        for error in wbs_content_validation_errors(staged_wbs_content(row)):
+            validation_errors[error] += 1
+
     private_actions: list[dict[str, Any]] = []
     blocked_logical_groups = 0
     identity_alias_rows = 0
@@ -359,6 +398,7 @@ def build_wbs_import_plan_details(
             "title_group_content_conflict"
         ],
         "invalid_field_rows": decision_counts["invalid_fields"],
+        "validation_errors": validation_errors,
         "decisions": decision_counts,
         "blocked_logical_groups": blocked_logical_groups,
         "blockers": blockers,

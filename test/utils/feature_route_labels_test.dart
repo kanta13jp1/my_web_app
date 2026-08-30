@@ -7,6 +7,7 @@ void main() {
       // kHomeSystemFixed 由来。Supabase 未初期化でも参照できる。
       expect(featureLabelForRoute('/site-guide-ai'), 'サイト案内AI');
       expect(featureLabelForRoute('/ai-university'), 'AI大学');
+      expect(featureLabelForRoute('/ai-university-toeic'), 'AI大学 TOEIC対策');
       expect(featureLabelForRoute('/release-notes'), 'Release Notes');
       expect(featureLabelForRoute('/procrastination-reset'), '先延ばしリセット');
       expect(
