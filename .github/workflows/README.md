@@ -2,6 +2,8 @@
 
 このディレクトリには、CI/CDパイプラインを構成するGitHub Actionsワークフローが含まれています。
 
+- **Infrastructure Documentation** (`infrastructure-docs.yml`): main の関連変更から Supabase / GitHub Actions 構成図を生成し、Actions artifact と `generated/infrastructure-docs` ブランチへ公開します。
+
 2026-05-07 #1706: AI-tool workflow changes must cite official sources, stay in the Claude Code #1 + Codex #1 two-instance flow, and avoid starting persistent local dev server / node / dart processes.
 
 2026-05-17 #2535: Guarded child subagents are allowed under Claude Code #1 or
