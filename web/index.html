@@ -62,8 +62,8 @@
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
   <link rel="icon" type="image/png" href="favicon.png">
 
-  <link rel="preconnect" href="https://smmkxxavexumewbfaqpy.supabase.co" crossorigin>
-  <link rel="dns-prefetch" href="//smmkxxavexumewbfaqpy.supabase.co">
+  <link rel="preconnect" href="__SUPABASE_URL__" crossorigin>
+  <link rel="dns-prefetch" href="__SUPABASE_URL__">
   <link rel="preload" href="flutter_bootstrap.js" as="script">
   <link rel="preload" href="main.dart.js" as="script" fetchpriority="high">
   <link rel="preload" href="assets/web/assets/fonts/NotoSansJP-Regular.ttf" as="font" type="font/ttf" crossorigin>
@@ -107,8 +107,7 @@
     ],
     "inLanguage": "ja",
     "publisher": {
-      "@type": "Organization",
-      "name": "自分株式会社"
+      "@id": "https://my-web-app-b67f4.web.app/#organization"
     },
     "potentialAction": {
       "@type": "RegisterAction",
@@ -809,8 +808,9 @@
     // Flutter loads, so social crawlers and search engines see real content.
     // -----------------------------------------------------------------------
     (function () {
-      var SUPABASE_FUNC_BASE =
-        'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1';
+      var SUPABASE_FUNC_BASE = '__SUPABASE_URL__/functions/v1';
+      var supabaseUrlIsConfigured =
+        SUPABASE_FUNC_BASE.indexOf('__SUPABASE_URL__') === -1;
 
       function setMeta(property, content) {
         var el = document.querySelector(
@@ -1268,6 +1268,7 @@
             'https://my-web-app-b67f4.web.app/blog/post?id=' +
               encodeURIComponent(blogId)
           );
+          if (!supabaseUrlIsConfigured) return;
           fetch(
             SUPABASE_FUNC_BASE +
               '/core-hub?action=blog.public.view&id=' +
@@ -1302,6 +1303,7 @@
           'https://my-web-app-b67f4.web.app/public-memo?id=' +
             encodeURIComponent(memoId)
         );
+        if (!supabaseUrlIsConfigured) return;
         fetch(SUPABASE_FUNC_BASE + '/get-public-memo-preview?id=' + encodeURIComponent(memoId))
           .then(function (res) { return res.json(); })
           .then(function (data) {

@@ -18,10 +18,12 @@ Related readiness gate: #1556
 
 ## Repair Rules
 
-The deploy job still keeps the legacy preflight repair list as a conservative safety belt. The dynamic repair path owns new failures:
+The deploy job uses a fail-closed dynamic repair path instead of a speculative preflight repair list:
 
-- `schema_migrations_pkey` or duplicate key errors repair extracted versions as `applied`.
-- `Remote migration versions not found` style errors repair extracted versions as `reverted`.
+- A `schema_migrations_pkey` duplicate diagnostic repairs only the version reported in the same diagnostic block as `applied` and only when that version exists locally.
+- A `Remote migration versions not found` diagnostic repairs only the contiguous reported remote-only rows as `reverted` and only when those versions are absent locally.
+- An explicit Supabase CLI `migration repair` recommendation is accepted only when every version agrees with the local migration set and all recommendations use the same status.
+- Repair command failures stop the deployment before another database push.
 - Unknown failures are not repaired automatically; the job fails and the digest/artifact points to the relevant log lines.
 - Release readiness failures are not self-repaired in the gate. `workflow-failure-handler.yml` monitors `Release Readiness Gate` and opens or updates a `workflow-failure` issue with the root-cause key so the normal repair lane can take over.
 

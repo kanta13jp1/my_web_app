@@ -31,3 +31,18 @@ Deno.test("acquisition signal allowlist rejects unknown funnel events", () => {
   assertEquals(isSupportedAcquisitionSignal("funnel_checkout_unknown"), false);
   assertEquals(isSupportedAcquisitionSignal("touch_comparison_notion"), true);
 });
+
+Deno.test("public share and auth diagnostics use the same Edge allowlist", () => {
+  for (
+    const signal of [
+      "share_x",
+      "public_memo_share",
+      "funnel_magic_link_fail_network",
+      "funnel_google_oauth_fail_callback_exchange",
+      "lp_exp_h10_treatment_signup_complete",
+      "activation_exp_a10_control_checkout_return",
+    ]
+  ) {
+    assertEquals(isSupportedAcquisitionSignal(signal), true);
+  }
+});

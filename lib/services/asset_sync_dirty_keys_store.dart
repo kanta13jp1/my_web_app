@@ -126,6 +126,34 @@ class AssetSyncDirtyKeysStore {
     });
   }
 
+  /// [prefKey] の dirty 集合を 1 回のロック区間で差分更新する。
+  /// 同じ論理IDの add/remove のように、相反する操作を入れ替える用途で使う。
+  Future<void> updateDirty(
+    String prefKey, {
+    Iterable<String> addKeys = const <String>[],
+    Iterable<String> removeKeys = const <String>[],
+    SharedPreferences? prefs,
+  }) {
+    final additions = addKeys.where((key) => key.isNotEmpty).toSet();
+    final removals = removeKeys.where((key) => key.isNotEmpty).toSet();
+    if (additions.isEmpty && removals.isEmpty) {
+      return Future<void>.value();
+    }
+    return _runLocked(() async {
+      final store = prefs ?? await SharedPreferences.getInstance();
+      final all = await _loadAll(store);
+      final dirty = all[prefKey] ?? <String>{};
+      dirty.removeAll(removals);
+      dirty.addAll(additions);
+      if (dirty.isEmpty) {
+        all.remove(prefKey);
+      } else {
+        all[prefKey] = dirty;
+      }
+      await _writeAll(store, all);
+    });
+  }
+
   /// [prefKey] ドメインの全 dirty キーを消す (= 全量 upsert 成功で同期済み)。
   Future<void> clearDomain(
     String prefKey, {

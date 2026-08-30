@@ -139,6 +139,41 @@ void main() {
       expect(violation.action.contains('完済まで約'), isTrue);
     });
 
+    test(
+      'completed one-shot change suppresses setup advice but keeps target',
+      () {
+        final workbook = planner.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'bank': 500000,
+            'ファミペイ': -100000,
+          },
+          baseDate: baseDate,
+          monthlyPaymentOverrides: const <String, double>{'ファミペイ': 5000},
+          cardUsagePolicies: <String, AssetCardUsagePolicy>{
+            'famipay_card': AssetCardUsagePolicy(
+              enforceOneShot: true,
+              changedAt: DateTime.utc(2026, 8, 29),
+              memo: '受付 ABC123',
+            ),
+          },
+        );
+
+        final report = monitor.evaluate(
+          workbook: workbook,
+          cardUsagePolicies: workbook.cardUsagePolicies,
+        );
+
+        final violation = report.revolvingCardViolations.single;
+        expect(violation.oneShotChangeCompleted, isTrue);
+        expect(violation.hasEscapePlan, isTrue);
+        expect(violation.escapeMonthlyPayment, isNotNull);
+        expect(violation.action, contains('月'));
+        expect(violation.action, contains('完済'));
+        expect(violation.action, isNot(contains('設定を解除')));
+        expect(violation.action, isNot(contains('今後カードを使うとき')));
+      },
+    );
+
     test('revolving violation reports 50+ years when payoff exceeds the cap',
         () {
       // 月12,505円は初月利息 (100万×月利1.25% = 12,500円) を僅かに上回るが、

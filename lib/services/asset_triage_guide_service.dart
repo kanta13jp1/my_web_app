@@ -406,9 +406,14 @@ class AssetTriageGuideService {
     // ⑤ リボ/分割の設定解除 (全額返済は不要、増やさない設定が目的)。
     final revolving = discipline?.revolvingCardViolations ??
         const <AssetDebtDisciplineViolation>[];
-    if (revolving.isNotEmpty) {
-      final names =
-          revolving.map((violation) => violation.accountName).take(4).join('・');
+    final revolvingNeedingSettingChange = revolving
+        .where((violation) => !violation.oneShotChangeCompleted)
+        .toList(growable: false);
+    if (revolvingNeedingSettingChange.isNotEmpty) {
+      final names = revolvingNeedingSettingChange
+          .map((violation) => violation.accountName)
+          .take(4)
+          .join('・');
       weekSteps.add(
         AssetTriageStep(
           kind: AssetTriageStepKind.disableRevolving,

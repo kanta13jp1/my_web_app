@@ -66,6 +66,10 @@
 | 6-1 | ユーザーデータへのアクセスは業務上必要な範囲のみ (本番 DB の直接操作は migration / 検証目的に限定し、履歴が残る経路で行う) |
 | 6-2 | 利用 SaaS は台帳化し (§7 棚卸しで維持)、不要になったら解約・権限剥奪 |
 | 6-3 | 顧客 (法人含む) への約束はセキュリティ FAQ ([`B2B_PROPOSAL_V1.md`](B2B_PROPOSAL_V1.md) §4) と本書の範囲内でのみ行う — 規程にない確約をしない |
+| 6-4 | Supabase Organization Owner はMFAを有効化した人間のCEOに限定し、AI agent/CI/routine automationへ付与しない |
+| 6-5 | Production projectの削除は原則禁止。削除・移管はIssueに対象project ref、理由、実行者、実行時刻、24時間以内のbackup/restore成功証跡を記録し、CEOが明示承認する。詳細は [`SUPABASE_BACKUP_RESTORE_RUNBOOK.md`](SUPABASE_BACKUP_RESTORE_RUNBOOK.md) §7 |
+| 6-6 | Database logical backupは暗号化してSupabase外へ保管し、復元可能性を定期drillで検証する。公開repositoryへ平文dumpを保存しない |
+| 6-7 | Supabaseプラットフォームログの外部転送は [`SUPABASE_LOG_DRAINS_REQUIREMENTS.md`](SUPABASE_LOG_DRAINS_REQUIREMENTS.md) に従い、費用承認、転送先審査、90日削除、最小権限を満たす場合だけ有効化する |
 
 ## 7. 点検・棚卸し (運用 cadence)
 
@@ -73,6 +77,8 @@
 |------|------|
 | 四半期 | クレデンシャル棚卸し: 発行済み PAT / API key / SaaS アカウント一覧を確認し、不要分を失効 (§1-4) |
 | 四半期 | 端末設定確認: 暗号化有効 / OS 更新 / 画面ロック (§3) |
+| 四半期 | Supabase Organization Owner一覧と削除・移管権限を確認し、不要なOwnerを削除 (§6-4/6-5) |
+| 週次 | 最新の暗号化database backup、restore drill、artifact保持を確認 (§6-6) |
 | 随時 | 露出検知時は §2-5 即時対応 (定期を待たない) |
 | 年次 | 本書全体の見直し改訂 (SOC 2 準備 `9a564512` 着手時は要求項目との gap 分析で改訂) |
 
@@ -111,5 +117,6 @@
 - [`B2B_PROPOSAL_V1.md`](B2B_PROPOSAL_V1.md) — §4 セキュリティ FAQ (顧客向け表現 / 本書が正本)
 - [`ONCALL_INCIDENT_SOP.md`](ONCALL_INCIDENT_SOP.md) — インシデント対応 (§8)
 - [`PRODUCTION_MONITORING_RUNBOOK.md`](PRODUCTION_MONITORING_RUNBOOK.md) — 監視 cadence (§5-4)
+- [`SUPABASE_LOG_DRAINS_REQUIREMENTS.md`](SUPABASE_LOG_DRAINS_REQUIREMENTS.md) — 外部ログ転送、保持、削除、費用統制 (§6-7)
 - [`MCP_AUTH_SECURITY_PRINCIPLES.md`](MCP_AUTH_SECURITY_PRINCIPLES.md) / [`AI_DEV_PRINCIPLES.md`](AI_DEV_PRINCIPLES.md) — 技術設計原則 (§5)
 - [`OPERATIONS_CHARTER.md`](OPERATIONS_CHARTER.md) — 運用憲章 (5 正本)

@@ -71,19 +71,31 @@ export function evaluateScheduleCollectionQuality(
     source.requiredForPersistence && source.fetchSucceeded &&
     source.parsedEntryCount === 0
   ).map((source) => source.url).sort();
+  const requiredSources = sources.filter((source) =>
+    source.requiredForPersistence
+  );
+  const parsedRequiredSourceCount =
+    requiredSources.filter((source) =>
+      source.fetchSucceeded && source.parsedEntryCount > 0
+    ).length;
+  // Required schedule sources are independent, redundant providers. Persist
+  // when at least one remains healthy, while retaining the per-source arrays
+  // above for observability. A total required-source outage still blocks.
+  const requiredSourcesUnavailable = requiredSources.length > 0 &&
+    parsedRequiredSourceCount === 0;
   const issues = [
     ...(fetchSuccessCount === 0 ? ["schedule_sources_all_failed"] : []),
     ...(fetchSuccessCount > 0 && parsedSourceCount === 0
       ? ["schedule_sources_parser_empty"]
       : []),
-    ...(failedRequiredSourceUrls.length > 0
+    ...(requiredSourcesUnavailable && failedRequiredSourceUrls.length > 0
       ? [
         `required_schedule_source_fetch_failed:${
           failedRequiredSourceUrls.join(",")
         }`,
       ]
       : []),
-    ...(parserEmptyRequiredSourceUrls.length > 0
+    ...(requiredSourcesUnavailable && parserEmptyRequiredSourceUrls.length > 0
       ? [
         `required_schedule_source_parser_empty:${
           parserEmptyRequiredSourceUrls.join(",")

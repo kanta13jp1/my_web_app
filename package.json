@@ -14,7 +14,7 @@
     "quality:no-verify": "python scripts/check_no_verify_bypass.py --range HEAD~1..HEAD"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.1",
+    "@playwright/test": "^1.62.1",
     "lefthook": "^2.1.10"
   }
 }

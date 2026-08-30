@@ -539,54 +539,7 @@ class GrowthAcquisitionService {
         'Growth acquisition signal returned an unexpected payload: $payload',
       );
     } catch (error, stackTrace) {
-      debugPrint('Growth acquisition signal fallback activated: $error');
-      debugPrintStack(stackTrace: stackTrace);
-    }
-
-    await _recordSignalFallback(signalKey: signalKey, dateKey: dateKey);
-  }
-
-  Future<void> _recordSignalFallback({
-    required String signalKey,
-    required String dateKey,
-  }) async {
-    final client = _client;
-    if (client == null) {
-      return;
-    }
-
-    try {
-      final existing = await client
-          .from('app_analytics')
-          .select(
-            'date, landing_views, conversions, share_count, source_details',
-          )
-          .eq('date', dateKey)
-          .maybeSingle();
-
-      if (existing == null) {
-        await client.from('app_analytics').upsert(<String, dynamic>{
-          'date': dateKey,
-          'landing_views': 0,
-          'conversions': 0,
-          'share_count': 0,
-          'source_details': <String, int>{signalKey: 1},
-        });
-        return;
-      }
-
-      final row = _asMap(existing);
-      final sourceDetails = _normalizeSourceDetails(row['source_details'])
-        ..update(signalKey, (count) => count + 1, ifAbsent: () => 1);
-
-      await client
-          .from('app_analytics')
-          .update(<String, dynamic>{'source_details': sourceDetails}).eq(
-        'date',
-        dateKey,
-      );
-    } catch (error, stackTrace) {
-      debugPrint('Growth acquisition fallback failed: $error');
+      debugPrint('Growth acquisition signal failed: $error');
       debugPrintStack(stackTrace: stackTrace);
     }
   }
@@ -599,34 +552,6 @@ class GrowthAcquisitionService {
       return Map<String, dynamic>.from(value);
     }
     return <String, dynamic>{};
-  }
-
-  Map<String, int> _normalizeSourceDetails(dynamic raw) {
-    if (raw is! Map) {
-      return <String, int>{};
-    }
-
-    final result = <String, int>{};
-    raw.forEach((key, value) {
-      final count = _toInt(value);
-      if (count > 0) {
-        result[key.toString()] = count;
-      }
-    });
-    return result;
-  }
-
-  int _toInt(dynamic value) {
-    if (value is int) {
-      return value;
-    }
-    if (value is num) {
-      return value.toInt();
-    }
-    if (value is String) {
-      return int.tryParse(value) ?? 0;
-    }
-    return 0;
   }
 
   String _formatDate(DateTime date) {

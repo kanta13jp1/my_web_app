@@ -14,11 +14,13 @@ import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_management_ai_analysis_history.dart';
 import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/models/asset_obsidian_vault_import.dart';
 import 'package:my_web_app/models/debt_repayment_plan.dart';
 import 'package:my_web_app/models/kgi_csf_kpi.dart';
 import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
 import 'package:my_web_app/services/asset_auto_debit_confirmation_service.dart';
+import 'package:my_web_app/services/asset_balance_timestamp_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service.dart';
 import 'package:my_web_app/services/asset_liability_card_statement_import_service.dart';
@@ -36,6 +38,7 @@ import 'package:my_web_app/services/asset_management_ai_summary_refresh.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_egress_policy.dart';
+import 'package:my_web_app/services/asset_management_fixed_cost_summary_service.dart';
 import 'package:my_web_app/services/asset_account_balance_history_store.dart';
 import 'package:my_web_app/services/asset_pref_mirror_prefetch.dart';
 import 'package:my_web_app/services/asset_debt_discipline_monitor.dart';
@@ -45,8 +48,10 @@ import 'package:my_web_app/services/advisory_briefing_share_service.dart';
 import 'package:my_web_app/services/household_tracker_share_service.dart';
 import 'package:my_web_app/services/investment_asset_repository.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
+import 'package:my_web_app/services/asset_card_usage_policy_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
+import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
 import 'package:my_web_app/services/fx_rate_service.dart';
 import 'package:my_web_app/services/asset_recurring_suggestion_ignore_store.dart';
 import 'package:my_web_app/services/asset_subscription_audit_catalog.dart';
@@ -109,6 +114,7 @@ import 'package:my_web_app/widgets/asset_alert_center_card.dart';
 import 'package:my_web_app/widgets/asset_cashflow_statement_card.dart';
 import 'package:my_web_app/widgets/asset_dashboard_grid.dart';
 import 'package:my_web_app/widgets/asset_net_worth_panel_card.dart';
+import 'package:my_web_app/widgets/asset_obsidian_vault_import_dialog.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
 import 'package:my_web_app/widgets/asset_subscription_statement_scan_dialog.dart';
 import 'package:my_web_app/widgets/asset_subscription_login_dialog.dart';
@@ -202,6 +208,45 @@ List<AssetLiabilityAccount> incomeDestinationAccountOptions(
       )
       .toList()
     ..sort((a, b) => b.balance.compareTo(a.balance));
+}
+
+/// Obsidian の解約候補を、現在のサブスク登録へ fail-closed で再照合する。
+/// プレビュー後に対象が編集・削除された場合や、不正な候補が渡された場合は、
+/// 残高を含む一切の変更を始める前に例外として中断する。
+@visibleForTesting
+List<AssetRecurringFixedCost> validateObsidianSubscriptionCancellations(
+  List<AssetObsidianSubscriptionCancellationCandidate> candidates,
+  List<AssetRecurringFixedCost> currentCosts,
+) {
+  if (candidates.isEmpty) return const <AssetRecurringFixedCost>[];
+
+  final ids = <String>{};
+  final currentById = <String, List<AssetRecurringFixedCost>>{};
+  for (final cost in currentCosts) {
+    if (cost.category != AssetRecurringFixedCostCategory.subscription) continue;
+    currentById
+        .putIfAbsent(cost.id, () => <AssetRecurringFixedCost>[])
+        .add(cost);
+  }
+
+  final validated = <AssetRecurringFixedCost>[];
+  for (final candidate in candidates) {
+    final id = candidate.matchedSubscriptionId?.trim() ?? '';
+    if (!candidate.isDeletable || id.isEmpty || !ids.add(id)) {
+      throw StateError('削除候補が一意な登録済みサブスクではありません。再読込してください。');
+    }
+    final matches = currentById[id] ?? const <AssetRecurringFixedCost>[];
+    if (matches.length != 1) {
+      throw StateError('削除候補が現在のサブスク登録と一致しません。再読込してください。');
+    }
+    final current = matches.single;
+    if (candidate.matchedSubscriptionName != current.name ||
+        candidate.matchedMonthlyAmount != current.amount) {
+      throw StateError('削除候補がプレビュー後に変更されました。再読込してください。');
+    }
+    validated.add(current);
+  }
+  return validated;
 }
 
 class _PaymentSourceCandidate {
@@ -299,6 +344,10 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final List<AssetRecurringFixedCost>? debugInitialRecurringFixedCosts;
 
+  /// テスト専用: 定期固定費のローカル保存失敗を注入する。
+  @visibleForTesting
+  final AssetRecurringFixedCostStore? debugRecurringFixedCostStore;
+
   /// テスト専用: 定期固定費の集約ミラー値 (`{id: {...}}`) を注入し、端末間同期
   /// (起動時の union マージ復元) をネットワークなしで検証する。
   @visibleForTesting
@@ -329,6 +378,11 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final List<Map<String, dynamic>>? debugInitialPayslipRows;
 
+  /// テスト専用: 可処分残高のサーバー計算結果を直接注入し、端末側アクションとの
+  /// 統合をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugInitialDisposableBalanceResult;
+
   /// テスト専用: マネーカレンダーの「今日」(サイクル決定・予定系の起点) を固定し、
   /// 給料日サイクル窓の表示・ショート試算を実行日非依存で検証する。
   /// null なら実時刻。
@@ -358,12 +412,14 @@ class AssetManagementPage extends StatefulWidget {
     this.debugRevolvingDeletedMirror,
     this.debugWatchlistDeletedMirror,
     this.debugInitialRecurringFixedCosts,
+    this.debugRecurringFixedCostStore,
     this.debugRecurringFixedCostsMirror,
     this.debugRecurringFixedCostsDeletedMirror,
     this.debugSubscriptionAuditMirror,
     this.debugInitialRecentFlows,
     this.debugInitialPayslipSalaryIncomes,
     this.debugInitialPayslipRows,
+    this.debugInitialDisposableBalanceResult,
     this.debugCalendarNow,
   });
 
@@ -514,6 +570,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 防止 / #3415 保守的 per-key ガード)。
   final AssetSyncDirtyKeysStore _syncDirtyKeysStore =
       const AssetSyncDirtyKeysStore();
+  final AssetRecurringTombstoneSyncService _recurringTombstoneSyncService =
+      AssetRecurringTombstoneSyncService.shared;
 
   /// ミラー読み取りを Supabase 正本化 (LWW) するか。テスト注入優先・既定はビルド時フラグ。
   bool get _mirrorReadsAuthoritative =>
@@ -584,7 +642,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       final rows = await _supabase
           .from('asset_pref_mirror')
-          .select()
+          .select('user_id,pref_key,value,updated_at')
           .eq('user_id', userId);
       return indexPrefMirrorRowsByKey(rows);
     } catch (e) {
@@ -621,7 +679,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     final rows = await _supabase
         .from('asset_pref_mirror')
-        .select()
+        .select('user_id,pref_key,value,updated_at')
+        .eq('user_id', userId)
         .inFilter('pref_key', prefKeys);
     return List<Map<String, dynamic>>.from(rows);
   }
@@ -678,6 +737,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // リボ払いカードの設定 (負債IDごと)。v1 はローカル永続化のみ。
   Map<String, AssetLiabilityRevolvingCreditConfig> _revolvingConfigs =
       <String, AssetLiabilityRevolvingCreditConfig>{};
+  // カード会社で「今後は一括（1回）払い」へ変更した実行記録。
+  Map<String, AssetCardUsagePolicy> _cardUsagePolicies =
+      <String, AssetCardUsagePolicy>{};
   // UI 登録の定期固定費 (家賃・光熱費など)。振替日昇順で保持する。
   List<AssetRecurringFixedCost> _recurringFixedCosts =
       <AssetRecurringFixedCost>[];
@@ -702,6 +764,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 視線誘導するため一時的に点滅ハイライトする負債マスタ行ID (2.6 秒で自動解除)。
   String? _highlightedDebtCardId;
   Timer? _debtCardHighlightTimer;
+  Timer? _cardUsagePolicyMemoSaveTimer;
   Map<String, AssetLiabilityAnnualRateEvidence> _annualRateEvidences =
       <String, AssetLiabilityAnnualRateEvidence>{};
   Set<String> _monthlyPaidAccountNames = <String>{};
@@ -853,6 +916,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const SalarySpendingBreakdownService();
   final DisposableBalanceService _disposableBalanceService =
       const DisposableBalanceService();
+  final DisposableBalanceActionMergeService
+      _disposableBalanceActionMergeService =
+      const DisposableBalanceActionMergeService();
+  final AssetManagementFixedCostSummaryService _fixedCostSummaryService =
+      const AssetManagementFixedCostSummaryService();
   final DisposableBalanceAssetLiabilityAdapter
       _disposableBalanceAssetLiabilityAdapter =
       const DisposableBalanceAssetLiabilityAdapter();
@@ -915,8 +983,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   static const String _salaryAmountMirrorKey = 'salary_amount';
   final AssetRevolvingCreditConfigStore _revolvingConfigStore =
       const AssetRevolvingCreditConfigStore();
-  final AssetRecurringFixedCostStore _recurringFixedCostStore =
-      const AssetRecurringFixedCostStore();
+  final AssetCardUsagePolicyStore _cardUsagePolicyStore =
+      const AssetCardUsagePolicyStore();
+  static const String _cardUsagePoliciesMirrorKey = 'card_usage_policies';
+  late final AssetRecurringFixedCostStore _recurringFixedCostStore =
+      widget.debugRecurringFixedCostStore ??
+          const AssetRecurringFixedCostStore();
   static const String _recurringFixedCostsMirrorKey = 'recurring_fixed_costs';
   static const String _recurringFixedCostsDeletedMirrorKey =
       'recurring_fixed_costs_deleted';
@@ -956,6 +1028,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetManagementInsightService.defaultMinimumSafetyBalance;
   late final TextEditingController _minimumSafetyBalanceController =
       TextEditingController(text: _minimumSafetyBalance.round().toString());
+  // 既定 OFF。ON の間だけ行動リストを生活防衛ルール順へ並べ替える。
+  bool _livingExpensePriorityMode = false;
   Map<AssetManagementSectionId, AssetManagementSectionVisibilityOverride>
       _sectionOverrides = {};
   // GC 設定をサーバ/ローカルから取得したら差し替えるため非 final (#part287/288)。
@@ -1085,6 +1159,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         for (final row in debugPayslipRows) Map<String, dynamic>.from(row),
       ];
     }
+    final debugDisposableBalanceResult =
+        widget.debugInitialDisposableBalanceResult;
+    if (debugDisposableBalanceResult != null) {
+      _serverDisposableBalanceResult =
+          Map<String, dynamic>.from(debugDisposableBalanceResult);
+    }
     _assetLiabilityRepository = widget.assetLiabilityRepository ??
         AssetLiabilityRepositoryFactory.createDefault(
           supabaseClient: _supabase,
@@ -1114,6 +1194,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_loadHouseholdTrackerPublishing());
     unawaited(_loadSalaryAmount());
     unawaited(_loadRevolvingConfigs());
+    unawaited(_loadCardUsagePolicies());
     unawaited(_loadCategoryBudgets());
     unawaited(_loadRecurringFixedCosts());
     // ドル建てサブスクの円換算に使う USD/JPY を取得し、最新レートで再計算する。
@@ -1195,6 +1276,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _deadlineTimer?.cancel();
     _bootPrefMirrorExpiryTimer?.cancel();
     _debtCardHighlightTimer?.cancel();
+    _cardUsagePolicyMemoSaveTimer?.cancel();
     _assetManagementAiSummaryDebounce?.cancel();
     _existingDeveloperIssueLookupDebounce?.cancel();
     _annualRateEvidencePasteRegistration?.dispose();
@@ -1665,6 +1747,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }).toList();
   }
 
+  AssetManagementFixedCostSummary _fixedCostSummaryForMonth(DateTime month) {
+    return _fixedCostSummaryService.build(
+      month: month,
+      legacySubscriptions: _subscriptionsThreeMonths,
+      recurringFixedCosts: _recurringFixedCosts,
+      usdJpyRate: _usdJpyRate?.jpyPerUnit,
+    );
+  }
+
   /// [start]〜[endExclusive)(給料日サイクル窓)に請求日が入る固定費。
   List<Map<String, dynamic>> _subscriptionsForRange(
     DateTime start,
@@ -1885,33 +1976,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Map<String, int> _fixedCostByOverviewMonth(List<DateTime> months) {
-    final totals = <String, int>{
-      for (final month in months) _monthKey(month): 0,
+    return <String, int>{
+      for (final month in months)
+        _monthKey(month): _fixedCostSummaryForMonth(month).total,
     };
-
-    for (final sub in _subscriptionsThreeMonths) {
-      final dueStr = sub['due_date']?.toString();
-      if (dueStr == null || dueStr.isEmpty) continue;
-      final dueDate = DateTime.tryParse(dueStr);
-      if (dueDate == null) continue;
-      final key = _monthKey(DateTime(dueDate.year, dueDate.month, 1));
-      if (!totals.containsKey(key)) continue;
-      totals[key] = (totals[key] ?? 0) + ((sub['price'] as num?)?.toInt() ?? 0);
-    }
-
-    for (final month in months) {
-      final key = _monthKey(month);
-      final recurringTotal = _recurringFixedCosts
-          .where((cost) => cost.appliesToMonth(month.month))
-          .fold<int>(
-            0,
-            (total, cost) =>
-                total + cost.resolveJpyAmount(_usdJpyRate?.jpyPerUnit).round(),
-          );
-      totals[key] = (totals[key] ?? 0) + recurringTotal;
-    }
-
-    return totals;
   }
 
   Map<String, Map<String, int>> _taskStatsByOverviewMonth(
@@ -5326,6 +5394,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       defaultCardBillingAccountIds: _defaultCardBillingAccountIds,
       cardBillingAccountIds: _cardBillingAccountIds,
       revolvingConfigs: _revolvingConfigs,
+      cardUsagePolicies: _cardUsagePolicies,
       incomePlans: _monthlyIncomePlans,
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
@@ -5838,7 +5907,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final hasAnyPositive = todayStock.values.any((v) => v >= 0);
     final hasAnyNegative = todayStock.values.any((v) => v < 0);
 
-    final subsOk = _subscriptions.isNotEmpty;
+    final subsOk = _fixedCostSummaryForMonth(_now).isNotEmpty;
 
     final checkNow = DateTime.now();
     final currentMonthFlows = _flowsForCycle(checkNow);
@@ -5903,10 +5972,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (v < 0) totalLiabilities += v;
     });
 
-    int totalFixed = 0;
-    for (final s in _subscriptions) {
-      totalFixed += (s['price'] as num?)?.toInt() ?? 0;
-    }
+    final fixedCostSummary = _fixedCostSummaryForMonth(now);
+    final totalFixed = fixedCostSummary.total;
 
     final currentMonthFlows = _flowsForCycle(now);
     int totalIncome = 0;
@@ -5967,10 +6034,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     buf.writeln('### ③ 固定費（$monthLabel）');
     buf.writeln('- 月額合計: ¥${NumberFormat('#,###').format(totalFixed)}');
-    if (_subscriptions.isNotEmpty) {
-      for (final s in _subscriptions) {
+    if (fixedCostSummary.isNotEmpty) {
+      for (final entry in fixedCostSummary.entries) {
         buf.writeln(
-          '  - ${s["service_name"]}: ¥${NumberFormat('#,###').format(s["price"])}',
+          '  - ${entry.name}: ¥${NumberFormat('#,###').format(entry.amount)}',
         );
       }
     } else {
@@ -6276,8 +6343,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final Map<String, Map<String, double>> loadedData = {};
       final Set<String> loadedTypes = {'現金'};
       for (var item in data) {
-        final DateTime createdAt = DateTime.parse(item['created_at']).toLocal();
-        final String dateKey = DateFormat('yyyy-MM-dd').format(createdAt);
+        final createdAt = DateTime.parse(item['created_at']);
+        final recordDate = AssetBalanceTimestampService.localRecordDate(
+          createdAt,
+          now: DateTime.now(),
+        );
+        final String dateKey = DateFormat('yyyy-MM-dd').format(recordDate);
         final String title = item['title'];
         final double amount = (item['amount'] as num).toDouble();
         loadedTypes.add(title);
@@ -6766,7 +6837,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         'user_id': userId,
         'title': type,
         'amount': amount,
-        'created_at': DateTime.now().toIso8601String(),
+        'created_at': AssetBalanceTimestampService.encodeForDatabase(
+          DateTime.now(),
+        ),
       });
 
       setState(() {
@@ -6895,7 +6968,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     if (confirmed != true || !mounted) return;
 
-    final nowIso = DateTime.now().toIso8601String();
+    final nowIso = AssetBalanceTimestampService.encodeForDatabase(
+      DateTime.now(),
+    );
     try {
       await _supabase.from('cfo_assets').insert([
         for (final entry in amounts.entries)
@@ -6933,6 +7008,123 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         const SnackBar(content: Text('一括記録に失敗しました。時間をおいて再試行してください')),
       );
     }
+  }
+
+  List<AssetObsidianExistingBalance> _obsidianImportExistingBalances() {
+    final balances = <AssetObsidianExistingBalance>[];
+    for (final type in _assetTypes) {
+      final dateKey = _lastUpdatedDates[type];
+      final date = dateKey == null ? null : DateTime.tryParse(dateKey);
+      final amount = dateKey == null ? null : _assetData[dateKey]?[type];
+      if (date == null || amount == null) continue;
+      balances.add(
+        AssetObsidianExistingBalance(
+          accountName: type,
+          observedDate: date,
+          amount: amount,
+        ),
+      );
+    }
+    return balances;
+  }
+
+  List<AssetObsidianExistingSubscription>
+      _obsidianImportExistingSubscriptions() {
+    return <AssetObsidianExistingSubscription>[
+      for (final cost in _recurringFixedCosts)
+        if (cost.category == AssetRecurringFixedCostCategory.subscription)
+          AssetObsidianExistingSubscription(
+            id: cost.id,
+            name: cost.name,
+            amount: cost.amount,
+          ),
+    ];
+  }
+
+  Future<void> _showObsidianVaultImportDialog() async {
+    final imported = await showDialog<AssetObsidianApplySelection>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AssetObsidianVaultImportDialog(
+        existingBalances: _obsidianImportExistingBalances(),
+        existingSubscriptions: _obsidianImportExistingSubscriptions(),
+        onApply: _applyObsidianVaultSelection,
+      ),
+    );
+    if (!mounted || imported == null || imported.totalCount == 0) return;
+    final summaries = <String>[
+      if (imported.balances.isNotEmpty) '残高${imported.balances.length}件を反映',
+      if (imported.subscriptionCancellations.isNotEmpty)
+        '解約済みサブスク${imported.subscriptionCancellations.length}件を削除',
+    ];
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✅ Obsidian保管庫から${summaries.join('、')}しました'),
+        backgroundColor: const Color(0xFF047857),
+      ),
+    );
+  }
+
+  Future<void> _applyObsidianVaultSelection(
+    AssetObsidianApplySelection selection,
+  ) async {
+    final subscriptions = validateObsidianSubscriptionCancellations(
+      selection.subscriptionCancellations,
+      _recurringFixedCosts,
+    );
+    if (selection.balances.isNotEmpty) {
+      await _applyObsidianVaultBalances(selection.balances);
+    }
+    if (subscriptions.isEmpty) return;
+    await _deleteRecurringFixedCosts(subscriptions);
+  }
+
+  /// 確認済みのObsidian残高だけを本日のスナップショットとして一括保存する。
+  ///
+  /// 保管庫の記録は既存履歴の再分類を表す場合があるため、通常の手入力保存で行う
+  /// 残高減少→使途不明金の自動生成は実行しない。Markdown本文やローカルパスも
+  /// Supabaseへ送信しない。
+  Future<void> _applyObsidianVaultBalances(
+    List<AssetObsidianImportCandidate> candidates,
+  ) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('残高の反映にはログインが必要です。');
+    }
+    if (candidates.isEmpty) return;
+
+    final nowIso = AssetBalanceTimestampService.encodeForDatabase(
+      DateTime.now(),
+    );
+    await _supabase.from('cfo_assets').insert([
+      for (final candidate in candidates)
+        {
+          'user_id': userId,
+          'title': candidate.accountName,
+          'amount': candidate.amount,
+          'created_at': nowIso,
+        },
+    ]);
+
+    if (!mounted) return;
+    final today = _todayDateKey();
+    setState(() {
+      final todayMap = _assetData.putIfAbsent(
+        today,
+        () => <String, double>{},
+      );
+      for (final candidate in candidates) {
+        if (!_assetTypes.contains(candidate.accountName)) {
+          _assetTypes.add(candidate.accountName);
+        }
+        todayMap[candidate.accountName] = candidate.amount;
+      }
+      _initControllers();
+      _updateLastUpdatedDates();
+      _sortAssetTypes();
+      _updateChartData();
+    });
+    await _fetchTodayClosing();
   }
 
   Future<void> _saveSingleAssetData(String type) async {
@@ -6988,6 +7180,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!hasData) return;
 
     try {
+      final nowIso = AssetBalanceTimestampService.encodeForDatabase(
+        DateTime.now(),
+      );
       final previousAmounts = <String, double?>{
         for (final entry in todayData.entries)
           entry.key: _lastUpdatedDates[entry.key] == null
@@ -6999,7 +7194,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           'user_id': userId,
           'title': entry.key,
           'amount': entry.value,
-          'created_at': DateTime.now().toIso8601String(),
+          'created_at': nowIso,
         });
       }
       setState(() {
@@ -9289,6 +9484,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       defaultCardBillingAccountIds: _defaultCardBillingAccountIds,
       cardBillingAccountIds: _cardBillingAccountIds,
       revolvingConfigs: _revolvingConfigs,
+      cardUsagePolicies: _cardUsagePolicies,
       incomePlans: _monthlyIncomePlans,
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
@@ -10590,6 +10786,161 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_refreshSyncSources());
   }
 
+  Future<void> _loadCardUsagePolicies() async {
+    try {
+      final policies = await _cardUsagePolicyStore.load();
+      if (mounted && policies.isNotEmpty) {
+        setState(() {
+          _cardUsagePolicies = policies;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading card usage policies: $e');
+    }
+    await _restoreCardUsagePoliciesFromMirror();
+  }
+
+  /// カード利用方針を 1 行 JSON としてミラーする。SharedPreferences は
+  /// 未ログイン・オフライン時も一次ストアとして残す。
+  Future<void> _mirrorCardUsagePolicies() async {
+    unawaited(_syncTimestampStore.markChanged(_cardUsagePoliciesMirrorKey));
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _cardUsagePoliciesMirrorKey,
+        'value': AssetCardUsagePolicyStore.encodeMirrorValue(
+          _cardUsagePolicies,
+        ),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+      await _syncDirtyKeysStore.clearDomain(_cardUsagePoliciesMirrorKey);
+    } catch (e) {
+      debugPrint('card usage policy mirror upsert failed: $e');
+    }
+  }
+
+  /// サーバにしかないカードは追加し、同一カードの衝突は既存の LWW 方針に従う。
+  Future<void> _restoreCardUsagePoliciesFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    final localBefore = Map<String, AssetCardUsagePolicy>.from(
+      _cardUsagePolicies,
+    );
+    final hasLocal = localBefore.isNotEmpty;
+    try {
+      final rows = await _bootSelectPrefMirror(_cardUsagePoliciesMirrorKey);
+      if (rows.isEmpty) {
+        if (hasLocal) {
+          unawaited(_mirrorCardUsagePolicies());
+        }
+        return;
+      }
+      final serverPolicies = AssetCardUsagePolicyStore.decodeMirrorValue(
+        rows.first['value'],
+      );
+      final mirrorUpdatedAt = DateTime.tryParse(
+        rows.first['updated_at']?.toString() ?? '',
+      );
+      final adoptConflicts = await _shouldAdoptMirror(
+        prefKey: _cardUsagePoliciesMirrorKey,
+        hasLocal: hasLocal,
+        mirrorUpdatedAt: mirrorUpdatedAt,
+      );
+      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
+        _cardUsagePoliciesMirrorKey,
+      );
+      final merged = Map<String, AssetCardUsagePolicy>.from(localBefore);
+      var changed = false;
+      serverPolicies.forEach((key, policy) {
+        if (!merged.containsKey(key) ||
+            (adoptConflicts && !dirtyKeys.contains(key))) {
+          merged[key] = policy;
+          changed = true;
+        }
+      });
+      if (changed && mounted) {
+        setState(() {
+          _cardUsagePolicies = merged;
+        });
+        _persistInBackground(
+          _cardUsagePolicyStore.save(merged),
+          'card usage policy restore save',
+        );
+        unawaited(
+          _realignMirrorTimestamp(_cardUsagePoliciesMirrorKey, mirrorUpdatedAt),
+        );
+      }
+      final localHasExtra = localBefore.keys.any(
+        (key) => !serverPolicies.containsKey(key),
+      );
+      if (localHasExtra) {
+        unawaited(_mirrorCardUsagePolicies());
+      }
+    } catch (e) {
+      debugPrint('card usage policy mirror restore failed: $e');
+    }
+  }
+
+  void _persistCardUsagePolicy(String cardId, AssetCardUsagePolicy policy) {
+    setState(() {
+      _cardUsagePolicies = <String, AssetCardUsagePolicy>{
+        ..._cardUsagePolicies,
+        cardId: policy,
+      };
+    });
+    _persistInBackground(
+      _cardUsagePolicyStore.save(_cardUsagePolicies),
+      'card usage policy save',
+    );
+    unawaited(
+      _syncDirtyKeysStore.markDirty(_cardUsagePoliciesMirrorKey, cardId),
+    );
+    unawaited(_mirrorCardUsagePolicies());
+  }
+
+  void _toggleCardOneShotCompleted(String cardId, bool completed) {
+    final current = _cardUsagePolicies[cardId];
+    _persistCardUsagePolicy(
+      cardId,
+      AssetCardUsagePolicy(
+        enforceOneShot: completed,
+        changedAt: completed ? DateTime.now().toUtc() : current?.changedAt,
+        memo: current?.memo ?? '',
+      ),
+    );
+  }
+
+  /// メモはローカルへ即時保存し、ネットワーク upsert だけをデバウンスする。
+  void _updateCardUsagePolicyMemo(String cardId, String memo) {
+    final current = _cardUsagePolicies[cardId];
+    if (current == null) {
+      return;
+    }
+    _cardUsagePolicies = <String, AssetCardUsagePolicy>{
+      ..._cardUsagePolicies,
+      cardId: current.copyWith(memo: memo),
+    };
+    _persistInBackground(
+      _cardUsagePolicyStore.save(_cardUsagePolicies),
+      'card usage policy memo save',
+    );
+    unawaited(
+      _syncDirtyKeysStore.markDirty(_cardUsagePoliciesMirrorKey, cardId),
+    );
+    _cardUsagePolicyMemoSaveTimer?.cancel();
+    _cardUsagePolicyMemoSaveTimer = Timer(
+      const Duration(milliseconds: 600),
+      () {
+        unawaited(_mirrorCardUsagePolicies());
+      },
+    );
+  }
+
   // --- 定期固定費 (UI 登録) の読み書き・端末間同期 ---
 
   /// 起動時にローカルから読み、空ならサーバ集約ミラーから復元する。
@@ -10710,7 +11061,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final localHasExtra = localBefore.keys.any(
         (key) => !tombstoned.contains(key) && !serverConfigs.containsKey(key),
       );
-      if (localHasExtra && debugMirror == null) {
+      final serverHasTombstoned = serverConfigs.keys.any(tombstoned.contains);
+      if ((localHasExtra || serverHasTombstoned) && debugMirror == null) {
         unawaited(_mirrorRecurringFixedCosts());
       }
     } catch (e) {
@@ -10719,7 +11071,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// 定期固定費の全量を `asset_pref_mirror` へ 1 行 upsert する。
-  Future<void> _mirrorRecurringFixedCosts() async {
+  Future<void> _mirrorRecurringFixedCosts({bool throwOnFailure = false}) {
+    return _recurringTombstoneSyncService.runSerialized(
+      () => _mirrorRecurringFixedCostsNow(throwOnFailure: throwOnFailure),
+    );
+  }
+
+  Future<void> _mirrorRecurringFixedCostsNow({
+    bool throwOnFailure = false,
+  }) async {
     unawaited(_syncTimestampStore.markChanged(_recurringFixedCostsMirrorKey));
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
@@ -10736,8 +11096,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
       // 全量 upsert 成功 = 全 id 同期済み → dirty クリア。
       await _syncDirtyKeysStore.clearDomain(_recurringFixedCostsMirrorKey);
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('recurring fixed cost mirror upsert failed: $e');
+      if (throwOnFailure) {
+        Error.throwWithStackTrace(e, stackTrace);
+      }
     }
   }
 
@@ -11089,84 +11452,165 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 他端末へ削除を伝播する (リボ設定と同じパターン)。
   static const MirrorTombstoneStore _recurringFixedCostTombstones =
       MirrorTombstoneStore(storageKey: 'recurring_fixed_costs_deleted_v1');
+  static const String _recurringTombstoneLegacyMigrationKey =
+      'recurring_fixed_cost_tombstone_pending_v2_migrated';
 
-  /// 削除はトゥームストーン化、再追加 (同 id) は解除する。
-  Future<void> _recordRecurringFixedCostTombstone(
+  String _recurringTombstoneOperation(String id, {required bool deleted}) =>
+      AssetRecurringTombstoneSyncService.operation(id, deleted: deleted);
+
+  Set<String> _recurringTombstoneOperationIds(
+    Set<String> operations,
+    String prefix,
+  ) =>
+      AssetRecurringTombstoneSyncService.operationIds(operations, prefix);
+
+  Future<void> _queueRecurringFixedCostTombstoneOperation(
+    SharedPreferences store,
     String id, {
     required bool deleted,
-  }) async {
-    final store = await SharedPreferences.getInstance();
-    if (deleted) {
-      await _recurringFixedCostTombstones.addId(store, id);
-    } else {
-      await _recurringFixedCostTombstones.removeId(store, id);
-    }
-    unawaited(_mirrorRecurringFixedCostsDeleted());
+  }) {
+    return _recurringTombstoneSyncService.queue(
+      _recurringFixedCostsDeletedMirrorKey,
+      id,
+      deleted: deleted,
+      prefs: store,
+    );
   }
 
-  /// 定期固定費の削除トゥームストーンをサーバへ反映 (他端末伝播)。
-  Future<void> _mirrorRecurringFixedCostsDeleted() async {
+  /// 定期固定費の削除トゥームストーンを DB 側の atomic union/remove RPC で
+  /// サーバへ反映する。whole-blob upsert による端末間 lost-update を避ける。
+  // ignore: unused_element
+  Future<bool> _mirrorRecurringFixedCostsDeleted({
+    bool mirrorCurrentOnSuccess = false,
+  }) {
+    return _recurringTombstoneSyncService.runSerialized(
+      () => _mirrorRecurringFixedCostsDeletedNow(
+        mirrorCurrentOnSuccess: mirrorCurrentOnSuccess,
+      ),
+    );
+  }
+
+  Future<bool> _mirrorRecurringFixedCostsDeletedNow({
+    bool mirrorCurrentOnSuccess = false,
+  }) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
-      return;
+      return true;
     }
-    try {
-      final store = await SharedPreferences.getInstance();
-      final ids = _recurringFixedCostTombstones.activeIds(store);
-      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
-        'user_id': userId,
-        'pref_key': _recurringFixedCostsDeletedMirrorKey,
-        'value': MirrorTombstoneStore.encodeMirror(ids),
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      });
-    } catch (e) {
-      debugPrint('recurring fixed cost tombstone mirror upsert failed: $e');
-    }
+    final store = await SharedPreferences.getInstance();
+    return _recurringTombstoneSyncService.syncNow(
+      prefKey: _recurringFixedCostsDeletedMirrorKey,
+      prefs: store,
+      rpc: (additions, removals) async {
+        await _supabase.rpc('apply_recurring_fixed_cost_tombstones', params: {
+          'p_add_ids': additions,
+          'p_remove_ids': removals,
+        });
+      },
+      afterSync: mirrorCurrentOnSuccess
+          ? () => _mirrorRecurringFixedCostsNow(throwOnFailure: true)
+          : null,
+    );
   }
 
   /// 他端末で削除された定期固定費を取り込み、ローカルからも除去する。
-  Future<void> _pullRecurringFixedCostDeleted() async {
+  Future<void> _pullRecurringFixedCostDeleted() {
+    return _recurringTombstoneSyncService.runSerialized(
+      _pullRecurringFixedCostDeletedNow,
+    );
+  }
+
+  Future<void> _pullRecurringFixedCostDeletedNow() async {
     final debugMirror = widget.debugRecurringFixedCostsDeletedMirror;
     if (debugMirror == null && _supabase.auth.currentUser == null) {
       return;
     }
     try {
+      final store = await SharedPreferences.getInstance();
       Map<String, dynamic>? value = debugMirror;
+      var remoteExists = debugMirror != null;
       if (value == null) {
         final rows = await _bootSelectPrefMirror(
           _recurringFixedCostsDeletedMirrorKey,
         );
-        if (rows.isEmpty) {
-          return;
+        if (rows.isNotEmpty) {
+          remoteExists = true;
+          final raw = rows.first['value'];
+          if (raw is! Map || raw['ids'] is! List) {
+            throw const FormatException(
+              'recurring fixed cost tombstone mirror is malformed',
+            );
+          }
+          value = Map<String, dynamic>.from(raw);
         }
-        final raw = rows.first['value'];
-        if (raw is! Map) {
-          return;
-        }
-        value = Map<String, dynamic>.from(raw);
       }
-      final ids = MirrorTombstoneStore.decodeMirror(value);
-      if (ids.isEmpty) {
-        return;
-      }
-      final store = await SharedPreferences.getInstance();
-      final incoming = await _recurringFixedCostTombstones.mergeRemoteIds(
-        store,
-        ids,
+      final remoteIds = MirrorTombstoneStore.decodeMirror(value).toSet();
+      var pending = await _syncDirtyKeysStore.loadDirty(
+        _recurringFixedCostsDeletedMirrorKey,
+        prefs: store,
       );
+      final localIds = _recurringFixedCostTombstones.activeIds(store);
+      final pendingRemovals = _recurringTombstoneOperationIds(
+        pending,
+        AssetRecurringTombstoneSyncService.removePrefix,
+      );
+      final needsLegacyMigration =
+          !(store.getBool(_recurringTombstoneLegacyMigrationKey) ?? false);
+      if (needsLegacyMigration && localIds.isNotEmpty) {
+        final legacyAdds = localIds.difference(pendingRemovals);
+        await _syncDirtyKeysStore.updateDirty(
+          _recurringFixedCostsDeletedMirrorKey,
+          addKeys: <String>[
+            for (final id in legacyAdds)
+              _recurringTombstoneOperation(id, deleted: true),
+          ],
+          prefs: store,
+        );
+        await store.setBool(_recurringTombstoneLegacyMigrationKey, true);
+        pending = await _syncDirtyKeysStore.loadDirty(
+          _recurringFixedCostsDeletedMirrorKey,
+          prefs: store,
+        );
+      } else if (needsLegacyMigration) {
+        await store.setBool(_recurringTombstoneLegacyMigrationKey, true);
+      }
+
+      final desiredIds = remoteExists
+          ? Set<String>.from(remoteIds)
+          : Set<String>.from(localIds);
+      desiredIds.addAll(
+        _recurringTombstoneOperationIds(
+          pending,
+          AssetRecurringTombstoneSyncService.addPrefix,
+        ),
+      );
+      desiredIds.removeAll(
+        _recurringTombstoneOperationIds(
+          pending,
+          AssetRecurringTombstoneSyncService.removePrefix,
+        ),
+      );
+      for (final id in localIds.difference(desiredIds)) {
+        await _recurringFixedCostTombstones.removeId(store, id);
+      }
+      for (final id in desiredIds.difference(localIds)) {
+        await _recurringFixedCostTombstones.addId(store, id);
+      }
       final next = _recurringFixedCosts
-          .where((cost) => !incoming.contains(cost.id))
+          .where((cost) => !desiredIds.contains(cost.id))
           .toList();
-      if (next.length == _recurringFixedCosts.length || !mounted) {
-        return;
+      if (!mounted) return;
+      if (next.length != _recurringFixedCosts.length) {
+        setState(() {
+          _recurringFixedCosts = next;
+        });
+        await _recurringFixedCostStore.save(next, prefs: store);
       }
-      setState(() {
-        _recurringFixedCosts = next;
-      });
-      _persistInBackground(
-        _recurringFixedCostStore.save(next),
-        'recurring fixed cost tombstone pull save',
-      );
+      if (debugMirror == null && pending.isNotEmpty) {
+        await _mirrorRecurringFixedCostsDeletedNow(
+          mirrorCurrentOnSuccess: true,
+        );
+      }
     } catch (e) {
       debugPrint('recurring fixed cost tombstone pull failed: $e');
     }
@@ -11492,43 +11936,209 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  void _saveRecurringFixedCost(AssetRecurringFixedCost cost) {
-    setState(() {
-      final next = List<AssetRecurringFixedCost>.from(_recurringFixedCosts);
-      final index = next.indexWhere((existing) => existing.id == cost.id);
-      if (index >= 0) {
-        next[index] = cost;
-      } else {
-        next.add(cost);
+  Future<bool> _commitRecurringFixedCostReadditionsNow({
+    required List<AssetRecurringFixedCost> previous,
+    required List<AssetRecurringFixedCost> next,
+    required Set<String> ids,
+  }) async {
+    if (ids.isEmpty) return true;
+    final store = await SharedPreferences.getInstance();
+    final tombstonesBefore = _recurringFixedCostTombstones.activeIds(store);
+    final pendingBefore = await _syncDirtyKeysStore.loadDirty(
+      _recurringFixedCostsDeletedMirrorKey,
+      prefs: store,
+    );
+    final currentDirtyBefore = await _syncDirtyKeysStore.loadDirty(
+      _recurringFixedCostsMirrorKey,
+      prefs: store,
+    );
+    final affectedOperations = <String>{
+      for (final id in ids) _recurringTombstoneOperation(id, deleted: true),
+      for (final id in ids) _recurringTombstoneOperation(id, deleted: false),
+    };
+    try {
+      // Journal the re-add intent before publishing the new current list. The
+      // whole sequence owns the shared FIFO, so boot/delete sync cannot consume
+      // the intent between these writes.
+      for (final id in ids) {
+        await _queueRecurringFixedCostTombstoneOperation(
+          store,
+          id,
+          deleted: false,
+        );
       }
-      next.sort(_compareRecurringFixedCostsByPaymentDay);
+      await _recurringFixedCostStore.save(next, prefs: store);
+      for (final id in ids) {
+        await _recurringFixedCostTombstones.removeId(store, id);
+        await _syncDirtyKeysStore.markDirty(
+          _recurringFixedCostsMirrorKey,
+          id,
+          prefs: store,
+        );
+      }
+    } catch (error, stackTrace) {
+      try {
+        await _syncDirtyKeysStore.updateDirty(
+          _recurringFixedCostsDeletedMirrorKey,
+          addKeys: pendingBefore.intersection(affectedOperations),
+          removeKeys: affectedOperations,
+          prefs: store,
+        );
+        await _syncDirtyKeysStore.updateDirty(
+          _recurringFixedCostsMirrorKey,
+          addKeys: currentDirtyBefore.intersection(ids),
+          removeKeys: ids,
+          prefs: store,
+        );
+      } catch (rollbackError) {
+        debugPrint(
+            'recurring fixed cost dirty rollback failed: $rollbackError');
+      }
+      try {
+        await _recurringFixedCostStore.save(previous, prefs: store);
+      } catch (rollbackError) {
+        debugPrint('recurring fixed cost data rollback failed: $rollbackError');
+      }
+      try {
+        for (final id in ids) {
+          if (tombstonesBefore.contains(id)) {
+            await _recurringFixedCostTombstones.addId(store, id);
+          } else {
+            await _recurringFixedCostTombstones.removeId(store, id);
+          }
+        }
+      } catch (rollbackError) {
+        debugPrint(
+          'recurring fixed cost tombstone rollback failed: $rollbackError',
+        );
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+
+    if (mounted) {
+      setState(() => _recurringFixedCosts = next);
+    } else {
       _recurringFixedCosts = next;
-    });
-    _persistInBackground(
-      _recurringFixedCostStore.save(_recurringFixedCosts),
-      'recurring fixed cost save',
+    }
+    final synced = await _mirrorRecurringFixedCostsDeletedNow(
+      mirrorCurrentOnSuccess: true,
     );
-    // 編集/再追加は id 再利用解除 (tombstone 除去) + ローカル編集を dirty 記録。
-    unawaited(_recordRecurringFixedCostTombstone(cost.id, deleted: false));
-    unawaited(
-      _syncDirtyKeysStore.markDirty(_recurringFixedCostsMirrorKey, cost.id),
-    );
-    unawaited(_mirrorRecurringFixedCosts());
+    if (!synced && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('端末では保存済みです。サーバー同期は次回オンライン時に再試行します。'),
+          backgroundColor: Color(0xFFB45309),
+        ),
+      );
+    }
+    return synced;
   }
 
-  void _deleteRecurringFixedCost(AssetRecurringFixedCost cost) {
-    setState(() {
-      _recurringFixedCosts = _recurringFixedCosts
-          .where((existing) => existing.id != cost.id)
-          .toList();
-    });
-    _persistInBackground(
-      _recurringFixedCostStore.save(_recurringFixedCosts),
-      'recurring fixed cost delete',
+  Future<void> _saveRecurringFixedCost(AssetRecurringFixedCost cost) async {
+    try {
+      await _recurringTombstoneSyncService.runSerialized(() async {
+        final previous = List<AssetRecurringFixedCost>.from(
+          _recurringFixedCosts,
+        );
+        final next = List<AssetRecurringFixedCost>.from(previous);
+        final index = next.indexWhere((existing) => existing.id == cost.id);
+        if (index >= 0) {
+          next[index] = cost;
+        } else {
+          next.add(cost);
+        }
+        next.sort(_compareRecurringFixedCostsByPaymentDay);
+        await _commitRecurringFixedCostReadditionsNow(
+          previous: previous,
+          next: next,
+          ids: <String>{cost.id},
+        );
+      });
+    } catch (error) {
+      debugPrint('recurring fixed cost save failed: $error');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('定期固定費を保存できませんでした。元の状態を保持しています。'),
+            backgroundColor: Color(0xFFB91C1C),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteRecurringFixedCosts(
+    Iterable<AssetRecurringFixedCost> costs,
+  ) {
+    final ids =
+        costs.map((cost) => cost.id).where((id) => id.isNotEmpty).toSet();
+    if (ids.isEmpty) return Future<void>.value();
+    return _recurringTombstoneSyncService.runSerialized(
+      () => _deleteRecurringFixedCostsNow(ids),
     );
-    // 削除をトゥームストーン化して他端末へ伝播 (union/backfill で復活させない)。
-    unawaited(_recordRecurringFixedCostTombstone(cost.id, deleted: true));
-    unawaited(_mirrorRecurringFixedCosts());
+  }
+
+  Future<void> _deleteRecurringFixedCostsNow(Set<String> ids) async {
+    final next = _recurringFixedCosts
+        .where((existing) => !ids.contains(existing.id))
+        .toList(growable: false);
+    if (next.length == _recurringFixedCosts.length) return;
+
+    final store = await SharedPreferences.getInstance();
+    final tombstonesBefore = _recurringFixedCostTombstones.activeIds(store);
+    final addedTombstones = ids.difference(tombstonesBefore);
+    final pendingBefore = await _syncDirtyKeysStore.loadDirty(
+      _recurringFixedCostsDeletedMirrorKey,
+      prefs: store,
+    );
+    final affectedOperations = <String>{
+      for (final id in ids) _recurringTombstoneOperation(id, deleted: true),
+      for (final id in ids) _recurringTombstoneOperation(id, deleted: false),
+    };
+    try {
+      for (final id in ids) {
+        await _queueRecurringFixedCostTombstoneOperation(
+          store,
+          id,
+          deleted: true,
+        );
+        await _recurringFixedCostTombstones.addId(store, id);
+      }
+      await _recurringFixedCostStore.save(next);
+    } catch (error, stackTrace) {
+      await _syncDirtyKeysStore.updateDirty(
+        _recurringFixedCostsDeletedMirrorKey,
+        addKeys: pendingBefore.intersection(affectedOperations),
+        removeKeys: affectedOperations,
+        prefs: store,
+      );
+      for (final id in addedTombstones) {
+        await _recurringFixedCostTombstones.removeId(store, id);
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+    if (mounted) {
+      setState(() => _recurringFixedCosts = next);
+    } else {
+      _recurringFixedCosts = next;
+    }
+    // サーバ同期が失敗しても dirty operation を保持し、次回bootで再試行する。
+    // stale current mirror はtombstone同期成功後だけ更新する。
+    final tombstonesSynced = await _mirrorRecurringFixedCostsDeletedNow(
+      mirrorCurrentOnSuccess: true,
+    );
+    if (!tombstonesSynced && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('端末では削除済みです。サーバー同期は次回オンライン時に再試行します。'),
+          backgroundColor: Color(0xFFB45309),
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteRecurringFixedCost(AssetRecurringFixedCost cost) {
+    return _deleteRecurringFixedCosts(<AssetRecurringFixedCost>[cost]);
   }
 
   Future<void> _openRecurringFixedCostEditor({
@@ -11551,18 +12161,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       usdJpyRateAsOf: _usdJpyRate?.asOf,
     );
     if (result != null) {
-      _saveRecurringFixedCost(result);
+      await _saveRecurringFixedCost(result);
     }
   }
 
   Future<void> _confirmDeleteRecurringFixedCost(
     AssetRecurringFixedCost cost,
   ) async {
+    final isSubscription =
+        cost.category == AssetRecurringFixedCostCategory.subscription;
+    final formattedMonthlyAmount =
+        NumberFormat('#,##0').format(cost.amount.round());
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('定期固定費を削除'),
-        content: Text('「${cost.name}」を削除しますか?'),
+        title: Text(isSubscription ? 'サブスクを削除' : '定期固定費を削除'),
+        content: Text(
+          isSubscription
+              ? '「${cost.name}」（月額 ¥$formattedMonthlyAmount）を現在のサブスクから'
+                  '削除しますか？過去の月次履歴・取引履歴は残ります。'
+              : '「${cost.name}」を削除しますか？',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -11576,7 +12195,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
     );
     if (confirmed == true) {
-      _deleteRecurringFixedCost(cost);
+      await _deleteRecurringFixedCost(cost);
     }
   }
 
@@ -11687,43 +12306,48 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         false;
   }
 
-  void _importSubscriptionStatementCosts(
+  Future<void> _importSubscriptionStatementCosts(
     List<AssetRecurringFixedCost> importedCosts,
-  ) {
+  ) async {
     if (importedCosts.isEmpty) return;
-    final next = List<AssetRecurringFixedCost>.from(_recurringFixedCosts);
-    final existingNames = <String>{
-      for (final cost in next) _normalizeSubscriptionName(cost.name),
-    };
-    final added = <AssetRecurringFixedCost>[];
-    for (final cost in importedCosts) {
-      final normalized = _normalizeSubscriptionName(cost.name);
-      if (normalized.isEmpty || existingNames.contains(normalized)) continue;
-      next.add(cost);
-      added.add(cost);
-      existingNames.add(normalized);
-    }
-    if (added.isEmpty) {
+    final addedCount = await _recurringTombstoneSyncService.runSerialized(
+      () async {
+        final previous = List<AssetRecurringFixedCost>.from(
+          _recurringFixedCosts,
+        );
+        final next = List<AssetRecurringFixedCost>.from(previous);
+        final existingNames = <String>{
+          for (final cost in next) _normalizeSubscriptionName(cost.name),
+        };
+        final added = <AssetRecurringFixedCost>[];
+        for (final cost in importedCosts) {
+          final normalized = _normalizeSubscriptionName(cost.name);
+          if (normalized.isEmpty || existingNames.contains(normalized)) {
+            continue;
+          }
+          next.add(cost);
+          added.add(cost);
+          existingNames.add(normalized);
+        }
+        if (added.isEmpty) return 0;
+        next.sort(_compareRecurringFixedCostsByPaymentDay);
+        await _commitRecurringFixedCostReadditionsNow(
+          previous: previous,
+          next: next,
+          ids: added.map((cost) => cost.id).toSet(),
+        );
+        return added.length;
+      },
+    );
+    if (!mounted) return;
+    if (addedCount == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('追加できる新しいサブスクはありませんでした。')),
       );
       return;
     }
-    next.sort(_compareRecurringFixedCostsByPaymentDay);
-    setState(() => _recurringFixedCosts = next);
-    _persistInBackground(
-      _recurringFixedCostStore.save(next),
-      'subscription statement import',
-    );
-    for (final cost in added) {
-      unawaited(_recordRecurringFixedCostTombstone(cost.id, deleted: false));
-      unawaited(
-        _syncDirtyKeysStore.markDirty(_recurringFixedCostsMirrorKey, cost.id),
-      );
-    }
-    unawaited(_mirrorRecurringFixedCosts());
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${added.length}件のサブスクを棚卸しに追加しました。')),
+      SnackBar(content: Text('$addedCount件のサブスクを棚卸しに追加しました。')),
     );
   }
 
@@ -15619,15 +16243,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cycleEndExclusive,
     );
     final debtInputs = <AssetCalendarDebtInput>[
-      for (final row in debtRows)
-        AssetCalendarDebtInput(
-          id: row.id,
-          name: row.name,
-          balance: row.balance,
-          paymentDay: row.paymentDay,
-          scheduledPaymentAmount: row.scheduledPaymentAmount,
-          isDirectCashflowTarget: row.isDirectCashflowTarget,
-        ),
+      for (final row in debtRows) AssetCalendarDebtInput.fromDebtRow(row),
     ];
     final inflowInputs = <AssetCalendarInflowInput>[
       for (final inflow in monthInflowEntries)
@@ -16743,6 +17359,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         defaultCardBillingAccountIds: _defaultCardBillingAccountIds,
         cardBillingAccountIds: _cardBillingAccountIds,
         revolvingConfigs: _revolvingConfigs,
+        cardUsagePolicies: _cardUsagePolicies,
         incomePlans: _monthlyIncomePlans,
         cardStatementLines: _cardStatementLines,
         transferTasks: _transferTasks,
@@ -16794,7 +17411,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         )
         .toList(growable: false);
     final actions = _effectiveDisposableBalanceActions(
-      balance: balance,
       serverActions: serverActions,
       localActions: localActions,
     );
@@ -17217,22 +17833,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   List<Map<String, dynamic>> _effectiveDisposableBalanceActions({
-    required DisposableBalanceResult balance,
     required List<Map<String, dynamic>> serverActions,
     required List<Map<String, dynamic>> localActions,
   }) {
-    final source = serverActions.isNotEmpty ? serverActions : localActions;
-    return source.where((action) {
-      final actionKey =
-          (action['action_key'] ?? action['actionKey'])?.toString() ?? '';
-      if (actionKey == 'upload_current_payslip' && balance.income > 0) {
-        return false;
-      }
-      if (actionKey == 'add_recurring_expenses' && balance.fixedTotal > 0) {
-        return false;
-      }
-      return true;
-    }).toList(growable: false);
+    return _disposableBalanceActionMergeService.merge(
+      serverActions: serverActions,
+      localActions: localActions,
+    );
   }
 
   String _localizedDisposableActionTitle(String actionKey, String rawTitle) {
@@ -19974,6 +20581,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       userProfile: _assetManagementUserProfile,
       mainAccountId: _assetManagementMainAccountId,
       minimumSafetyBalance: _minimumSafetyBalance,
+      livingExpensePriorityMode: _livingExpensePriorityMode,
       priorMonthAccountBalances: priorMonthAccountBalances,
       dailyTodoDigest: _currentDailyTodoDigest(),
     );
@@ -23630,25 +24238,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     List<AssetManagementInsightActionItem> actionItems,
     Set<String> debtMasterCardIds,
   ) {
-    if (actionItems.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: const Color(0xFFECFDF5),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: const Color(0xFF0D9488).withValues(alpha: 0.24),
-          ),
-        ),
-        child: const Text(
-          '今日すぐ確認すべき資金繰りアクションはありません。',
-          style: TextStyle(fontWeight: FontWeight.w700, height: 1.4),
-        ),
-      );
-    }
-
     return Column(
+      key: const Key('asset_management_action_list'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
@@ -23656,14 +24247,53 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
         ),
         const SizedBox(height: 6),
-        for (final item in actionItems.take(8))
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: _buildAssetManagementAssistantActionTile(
-              item,
-              debtMasterCardIds,
-            ),
+        SwitchListTile.adaptive(
+          key: const Key('asset_living_expense_priority_toggle'),
+          value: _livingExpensePriorityMode,
+          contentPadding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
+          secondary: const Icon(Icons.health_and_safety_outlined),
+          title: const Text(
+            '生活費優先モード',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
           ),
+          subtitle: const Text(
+            '食費・住居・公共料金 → 支払先への連絡 → 高金利ローンの順に並べ替えます。',
+            style: TextStyle(fontSize: 11, height: 1.4),
+          ),
+          onChanged: (enabled) {
+            setState(() {
+              _livingExpensePriorityMode = enabled;
+            });
+          },
+        ),
+        const SizedBox(height: 6),
+        if (actionItems.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: const Color(0xFF0D9488).withValues(alpha: 0.24),
+              ),
+            ),
+            child: const Text(
+              '今日すぐ確認すべき資金繰りアクションはありません。',
+              style: TextStyle(fontWeight: FontWeight.w700, height: 1.4),
+            ),
+          )
+        else ...[
+          for (final item in actionItems.take(8))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: _buildAssetManagementAssistantActionTile(
+                item,
+                debtMasterCardIds,
+              ),
+            ),
+        ],
         if (actionItems.length > 8)
           Text(
             'ほか ${actionItems.length - 8}件',
@@ -24511,8 +25141,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildCardBillingRemainingSummary(
     List<AssetLiabilityCardBillingReviewItem> items,
   ) {
-    final remainingItems =
-        items.where((item) => !item.paid).toList(growable: false);
+    final remainingItems = items
+        .where((item) => !item.paid && item.amount > 0)
+        .toList(growable: false);
     final overdueItems =
         remainingItems.where(_isCardBillingReviewItemOverdue).toList();
     final todayOrLaterItems = remainingItems
@@ -24782,7 +25413,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetLiabilityCardBillingReviewItem item,
   ) {
     final day = item.paymentDay;
-    if (item.paid || day == null) {
+    if (item.paid || item.amount <= 0 || day == null) {
       return false;
     }
     final lastDay = DateTime(_now.year, _now.month + 1, 0).day;
@@ -24794,6 +25425,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) {
     if (item.paid) {
       return '支払済み';
+    }
+    if (item.amount <= 0) {
+      return '確認のみ';
     }
     if (item.paymentDay == null) {
       return '支払日未設定';
@@ -24814,6 +25448,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) {
     if (item.paid) {
       return const Color(0xFF0D9488);
+    }
+    if (item.amount <= 0) {
+      return const Color(0xFF64748B);
     }
     if (item.paymentDay == null) {
       return const Color(0xFF64748B);
@@ -26053,7 +26690,43 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return const SizedBox.shrink();
     }
 
+    final actionRisks = workbook.paymentDayRisks
+        .where((risk) => risk.requiresAction)
+        .toList(growable: false);
+    final reviewOnlyRisks = workbook.paymentDayRisks
+        .where((risk) => !risk.requiresAction)
+        .toList(growable: false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (actionRisks.isNotEmpty)
+          _buildPaymentRiskSection(
+            key: const Key('asset_payment_risk_action_section'),
+            title: '支払日別リスク（要対応）',
+            risks: actionRisks,
+          ),
+        if (actionRisks.isNotEmpty && reviewOnlyRisks.isNotEmpty)
+          const SizedBox(height: 12),
+        if (reviewOnlyRisks.isNotEmpty)
+          _buildPaymentRiskSection(
+            key: const Key('asset_payment_risk_review_only_section'),
+            title: '確認のみ',
+            description: '今月支払予定額が0円のため、延滞ではなく確認対象として表示しています。',
+            risks: reviewOnlyRisks,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentRiskSection({
+    required Key key,
+    required String title,
+    required List<AssetLiabilityPaymentDayRisk> risks,
+    String? description,
+  }) {
     return Container(
+      key: key,
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -26063,23 +26736,36 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '支払日別リスク',
-            style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, height: 1.4),
           ),
+          if (description != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              description,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
-          ...workbook.paymentDayRisks.map(_buildPaymentRiskRow),
+          ...risks.map(_buildPaymentRiskRow),
         ],
       ),
     );
   }
 
   Widget _buildPaymentRiskRow(AssetLiabilityPaymentDayRisk risk) {
-    final color = risk.isToday
-        ? const Color(0xFFFF6B35)
+    final color = !risk.requiresAction
+        ? const Color(0xFF64748B)
         : risk.isPast
-            ? const Color(0xFF64748B)
-            : const Color(0xFFB91C1C);
+            ? const Color(0xFFB91C1C)
+            : risk.isToday
+                ? const Color(0xFFFF6B35)
+                : const Color(0xFF2563EB);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -26107,6 +26793,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Container(
+                  key: ValueKey<String>(
+                    'asset_payment_risk_status_'
+                    '${risk.requiresAction ? 'action' : 'review'}_'
+                    '${risk.paymentDay}',
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    _paymentRiskStatusLabel(risk),
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
                 Text(
                   risk.accountNames.join('、'),
                   style: const TextStyle(
@@ -26115,7 +26826,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                 ),
                 Text(
-                  '${_paymentRiskStatusLabel(risk)} / 残高 ${_formatManagementYen(risk.balanceTotal)} / 支払予定 ${_formatManagementYen(risk.scheduledPaymentTotal)}（${_paymentRiskPaymentSourceLabel(risk)}） / 推定最低支払額 ${_formatManagementYen(risk.minimumPaymentEstimateTotal)}',
+                  '残高 ${_formatManagementYen(risk.balanceTotal)} / 支払予定 ${_formatManagementYen(risk.scheduledPaymentTotal)}（${_paymentRiskPaymentSourceLabel(risk)}） / 推定最低支払額 ${_formatManagementYen(risk.minimumPaymentEstimateTotal)}',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 12,
@@ -28247,6 +28958,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 child: _buildRevolvingControl(row),
                 maxWidth: 260,
               ),
+              if (AssetDebtDisciplineMonitor.isLumpSumCardKind(row.kind))
+                _buildDebtMasterControl(
+                  label: '一括払い化',
+                  child: _buildCardUsagePolicyControl(row),
+                  maxWidth: 320,
+                ),
               _buildDebtMasterControl(
                 label: '支払額区分',
                 child: _buildPaymentAmountSourceChip(row),
@@ -28716,6 +29433,60 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             },
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildCardUsagePolicyControl(AssetLiabilityDebtRow row) {
+    final policy = _cardUsagePolicies[row.id];
+    final completed = policy?.enforceOneShot == true;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CheckboxListTile(
+          key: ValueKey('asset_card_one_shot_completed_${row.id}'),
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          controlAffinity: ListTileControlAffinity.leading,
+          value: completed,
+          title: const Text(
+            '一括化完了（今後は1回払い）',
+            style: TextStyle(fontSize: 12, height: 1.3),
+          ),
+          onChanged: (value) =>
+              _toggleCardOneShotCompleted(row.id, value ?? false),
+        ),
+        if (completed) ...[
+          if (policy?.changedAt != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                '変更記録: ${DateFormat('yyyy/MM/dd HH:mm').format(policy!.changedAt!.toLocal())}',
+                style: const TextStyle(fontSize: 11, height: 1.3),
+              ),
+            ),
+          TextFormField(
+            key: ValueKey('asset_card_one_shot_memo_${row.id}'),
+            initialValue: policy?.memo ?? '',
+            maxLength: 200,
+            minLines: 1,
+            maxLines: 2,
+            style: const TextStyle(fontSize: 12),
+            decoration: const InputDecoration(
+              isDense: true,
+              labelText: '受付番号・連絡日メモ',
+              hintText: '例: 8/29 電話、受付 ABC123',
+              helperText: 'カード番号などの機密情報は記録しないでください',
+            ),
+            onChanged: (value) => _updateCardUsagePolicyMemo(row.id, value),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            '設定変更の再案内は停止し、返済月額目標だけを継続表示します。',
+            style: TextStyle(fontSize: 11, height: 1.3),
+          ),
+        ],
       ],
     );
   }
@@ -29301,9 +30072,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   String _paymentRiskStatusLabel(AssetLiabilityPaymentDayRisk risk) {
-    if (risk.isToday) return '今日';
-    if (risk.isPast) return '通過済み';
-    return '今月これから';
+    if (!risk.requiresAction) return '確認のみ';
+    if (risk.isToday) return '本日・要対応';
+    if (risk.isPast) return '期限超過';
+    return '今月これから・要対応';
   }
 
   String _paymentRiskPaymentSourceLabel(AssetLiabilityPaymentDayRisk risk) {
@@ -29498,6 +30270,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   onPressed: _showAddAssetDialog,
                   icon: const Icon(Icons.add),
                   label: const Text('項目を追加'),
+                ),
+                TextButton.icon(
+                  onPressed: _showObsidianVaultImportDialog,
+                  icon: const Icon(
+                    Icons.folder_open,
+                    color: Color(0xFF7C3AED),
+                  ),
+                  label: const Text('Obsidian保管庫から取込'),
                 ),
                 TextButton.icon(
                   onPressed: _isFetchingSmbc ? null : _fetchSmbcDataFromSheet,
@@ -31174,6 +31954,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final visibleSubscriptions = _subscriptionsForMonth(
       _selectedSubscriptionHistoryMonth,
     );
+    final fixedCostSummary = _fixedCostSummaryForMonth(
+      _selectedSubscriptionHistoryMonth,
+    );
     final visibleMonthLabel = _flowMonthLabel(
       _selectedSubscriptionHistoryMonth,
     );
@@ -31181,15 +31964,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _selectedSubscriptionHistoryMonth,
       DateTime(DateTime.now().year + 5, 12, 1),
     );
-    int totalCost = 0;
-    int unpaidCost = 0;
+    final totalCost = fixedCostSummary.total;
+    final unpaidCost = fixedCostSummary.legacyUnpaidTotal;
+    final recurringCount = fixedCostSummary.recurringEntryCount;
+    final unpaidLabel = recurringCount > 0 ? '旧固定費の未払い' : '未払い';
     final isCompact = _isCompact;
-    for (final sub in visibleSubscriptions) {
-      final price = (sub['price'] as num?)?.toInt() ?? 0;
-      totalCost += price;
-      final isPaid = (sub['is_paid'] as bool?) == true;
-      if (!isPaid) unpaidCost += price;
-    }
     return Card(
       elevation: 2,
       child: Column(
@@ -31257,7 +32036,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '未払い: ¥${NumberFormat('#,###').format(unpaidCost)}',
+                        '$unpaidLabel: ¥${NumberFormat('#,###').format(unpaidCost)}',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -31343,7 +32122,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '未払い: ¥${NumberFormat('#,###').format(unpaidCost)}',
+                            '$unpaidLabel: ¥${NumberFormat('#,###').format(unpaidCost)}',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -31417,139 +32196,145 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
           ),
-          _isLoadingSubscriptions
-              ? const Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              : visibleSubscriptions.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.all(32),
-                      child:
-                          Center(child: Text('$visibleMonthLabel の固定費はありません')),
-                    )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: visibleSubscriptions.length,
-                      itemBuilder: (context, index) {
-                        final item = visibleSubscriptions[index];
-                        final due = item['due_date'] as String?;
-                        final dueDate =
-                            due != null ? DateTime.parse(due) : null;
-                        final isPaid = (item['is_paid'] as bool?) == true;
-                        final src =
-                            (item['payment_source'] ?? '').toString().trim();
-                        return ListTile(
-                          dense: true,
-                          leading: Checkbox(
-                            value: isPaid,
-                            onChanged: (_) =>
-                                _toggleSubscriptionPaid(item['id'], isPaid),
+          if (recurringCount > 0)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Text(
+                '定期固定費・サブスク $recurringCount件を月額合計へ反映済みです。内訳と編集は上の専用カードで確認できます。',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          if (_isLoadingSubscriptions)
+            const Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (fixedCostSummary.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(32),
+              child: Center(child: Text('$visibleMonthLabel の固定費はありません')),
+            )
+          else if (visibleSubscriptions.isNotEmpty)
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: visibleSubscriptions.length,
+              itemBuilder: (context, index) {
+                final item = visibleSubscriptions[index];
+                final due = item['due_date'] as String?;
+                final dueDate = due != null ? DateTime.parse(due) : null;
+                final isPaid = (item['is_paid'] as bool?) == true;
+                final src = (item['payment_source'] ?? '').toString().trim();
+                return ListTile(
+                  dense: true,
+                  leading: Checkbox(
+                    value: isPaid,
+                    onChanged: (_) =>
+                        _toggleSubscriptionPaid(item['id'], isPaid),
+                  ),
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item['service_name'] ?? '',
+                          style: TextStyle(
+                            decoration:
+                                isPaid ? TextDecoration.lineThrough : null,
+                            color: isPaid ? const Color(0xFF9CA3AF) : null,
+                            fontWeight:
+                                isPaid ? FontWeight.normal : FontWeight.bold,
+                            height: 1.5,
                           ),
-                          title: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  item['service_name'] ?? '',
-                                  style: TextStyle(
-                                    decoration: isPaid
-                                        ? TextDecoration.lineThrough
-                                        : null,
-                                    color:
-                                        isPaid ? const Color(0xFF9CA3AF) : null,
-                                    fontWeight: isPaid
-                                        ? FontWeight.normal
-                                        : FontWeight.bold,
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '¥${NumberFormat('#,###').format(item['price'])}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: isPaid
-                                      ? const Color(0xFF9CA3AF)
-                                      : Theme.of(context).colorScheme.onSurface,
-                                  height: 1.5,
-                                ),
-                              ),
-                            ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '¥${NumberFormat('#,###').format(item['price'])}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isPaid
+                              ? const Color(0xFF9CA3AF)
+                              : Theme.of(context).colorScheme.onSurface,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        dueDate != null
+                            ? '支払日: ${DateFormat('yyyy/M/d(E)', 'ja_JP').format(dueDate)}'
+                            : '支払日: 未設定',
+                        style: TextStyle(
+                          color: isPaid
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFFB91C1C),
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                      ),
+                      if (src.isNotEmpty)
+                        Text(
+                          '引落先: $src',
+                          style: TextStyle(
+                            color: isPaid
+                                ? const Color(0xFF9CA3AF)
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                            fontSize: 12,
+                            height: 1.5,
                           ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                dueDate != null
-                                    ? '支払日: ${DateFormat('yyyy/M/d(E)', 'ja_JP').format(dueDate)}'
-                                    : '支払日: 未設定',
-                                style: TextStyle(
-                                  color: isPaid
-                                      ? const Color(0xFF9CA3AF)
-                                      : const Color(0xFFB91C1C),
-                                  fontSize: 12,
-                                  height: 1.5,
-                                ),
-                              ),
-                              if (src.isNotEmpty)
-                                Text(
-                                  '引落先: $src',
-                                  style: TextStyle(
-                                    color: isPaid
-                                        ? const Color(0xFF9CA3AF)
-                                        : Theme.of(
-                                            context,
-                                          ).colorScheme.onSurfaceVariant,
-                                    fontSize: 12,
-                                    height: 1.5,
-                                  ),
-                                ),
-                            ],
-                          ),
-                          trailing: PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert),
-                            onSelected: (value) async {
-                              if (value == 'due') {
-                                await _editSubscriptionDueDate(item);
-                              } else if (value == 'source') {
-                                await _editSubscriptionPaymentSource(item);
-                              } else if (value == 'delete') {
-                                final serviceName =
-                                    (item['service_name'] ?? '').toString();
-                                final shouldDelete =
-                                    await _confirmDeleteSubscription(
-                                  serviceName: serviceName,
-                                );
-                                if (!shouldDelete) return;
-                                await _deleteSubscription(item['id']);
-                              }
-                            },
-                            itemBuilder: (context) => [
-                              const PopupMenuItem<String>(
-                                value: 'due',
-                                child: Text('支払日を編集'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'source',
-                                child: Text('引落先を編集'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'delete',
-                                child: Text(
-                                  '削除',
-                                  style: TextStyle(
-                                    color: Color(0xFFB91C1C),
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        ),
+                    ],
+                  ),
+                  trailing: PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (value) async {
+                      if (value == 'due') {
+                        await _editSubscriptionDueDate(item);
+                      } else if (value == 'source') {
+                        await _editSubscriptionPaymentSource(item);
+                      } else if (value == 'delete') {
+                        final serviceName =
+                            (item['service_name'] ?? '').toString();
+                        final shouldDelete = await _confirmDeleteSubscription(
+                          serviceName: serviceName,
                         );
-                      },
-                    ),
+                        if (!shouldDelete) return;
+                        await _deleteSubscription(item['id']);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem<String>(
+                        value: 'due',
+                        child: Text('支払日を編集'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'source',
+                        child: Text('引落先を編集'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Text(
+                          '削除',
+                          style: TextStyle(
+                            color: Color(0xFFB91C1C),
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: TextButton.icon(

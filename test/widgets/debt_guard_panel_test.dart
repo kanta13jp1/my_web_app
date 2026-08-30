@@ -17,6 +17,10 @@ void main() {
 
     expect(find.text('完済までの禁止事項'), findsOneWidget);
     expect(find.text('25項目'), findsOneWidget);
+    expect(find.text(DebtGuardFoundationPolicy.motto), findsOneWidget);
+    expect(find.text('先に守る土台（制限しない）'), findsOneWidget);
+    expect(find.text('毎日の生活基盤チェック'), findsOneWidget);
+    expect(find.text('その後の一歩（必須でない拡大）'), findsOneWidget);
     expect(find.text('脳内の虫（バグ）を弱らせる'), findsOneWidget);
     expect(
       find.byKey(const Key('debt-guard-rule-gambling')),
@@ -33,6 +37,32 @@ void main() {
     expect(repository.events.single.type, DebtGuardEventType.checkIn);
   });
 
+  testWidgets('shows the complete essential-action safety boundary', (
+    tester,
+  ) async {
+    final repository = _PanelRepository();
+    final viewModel = _viewModel(repository);
+    addTearDown(viewModel.dispose);
+    await viewModel.load();
+    await _pump(tester, viewModel, width: 430);
+
+    expect(
+      find.byKey(const Key('debt-guard-foundation-mindset')),
+      findsOneWidget,
+    );
+    for (final action in DebtGuardFoundationPolicy.essentialActions) {
+      expect(find.textContaining(action), findsWidgets);
+    }
+    expect(find.textContaining('決して制限しません'), findsOneWidget);
+    expect(find.textContaining('動機づけの比喩'), findsOneWidget);
+    for (final task in debtGuardFoundationTasks) {
+      expect(find.textContaining(task.title), findsWidgets);
+    }
+    for (final cadence in DebtGuardFoundationCadence.values) {
+      expect(find.text(cadence.label), findsOneWidget);
+    }
+  });
+
   testWidgets('bug help records resisting a prohibited action', (tester) async {
     final repository = _PanelRepository();
     final viewModel = _viewModel(repository);
@@ -44,13 +74,48 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('脳内バグ退治'), findsOneWidget);
-    expect(find.textContaining('一時的な「脳内の虫（バグ）」'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.textContaining('一時的な「脳内の虫（バグ）」'),
+      ),
+      findsOneWidget,
+    );
     expect(find.textContaining('10分待つ'), findsOneWidget);
     await tester.tap(find.text('バグを弱めた'));
     await tester.pumpAndSettle();
 
     expect(find.text('バグを弱めた 1'), findsOneWidget);
     expect(repository.events.single.type, DebtGuardEventType.urgeResisted);
+  });
+
+  testWidgets('starts a minimum foundation action in one tap', (tester) async {
+    final repository = _PanelRepository();
+    final viewModel = _viewModel(repository);
+    addTearDown(viewModel.dispose);
+    await viewModel.load();
+    await _pump(tester, viewModel, width: 430);
+
+    await tester.tap(find.byKey(const Key('debt-guard-start-foundation')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('生活を1つ整える'), findsOneWidget);
+    expect(
+      tester
+          .widget<ChoiceChip>(find.byKey(const Key('bug-mode-start')))
+          .selected,
+      isTrue,
+    );
+    expect(find.textContaining('皿かコップを1つだけ洗う'), findsOneWidget);
+
+    await tester.tap(find.text('バグを弱めた'));
+    await tester.pumpAndSettle();
+
+    expect(
+      repository.events.single.type,
+      DebtGuardEventType.requiredActionStarted,
+    );
+    expect(repository.events.single.ruleId, 'dishes_left_unwashed');
   });
 
   testWidgets('bug help starts a required action in a minimum unit', (
