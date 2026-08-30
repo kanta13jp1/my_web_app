@@ -198,6 +198,8 @@ jobs:
       PADDLE_SANDBOX_PRICE_ID: ${{ vars.PADDLE_SANDBOX_PRICE_ID }}
       PADDLE_SANDBOX_E2E: 'true'
       E2E_BASE_URL: http://localhost:7357
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL_DEV }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_DEV || secrets.SUPABASE_ANON_KEY_DEV }}
 
     steps:
       - name: Checkout code
@@ -226,6 +228,14 @@ jobs:
             echo '::error::PADDLE_SANDBOX_PRICE_ID must be a pri_ identifier.'
             exit 1
           fi
+          if [[ -z "$SUPABASE_URL" || -z "$SUPABASE_PUBLISHABLE_KEY" ]]; then
+            echo '::error::The development Supabase URL and publishable key are required to start the Flutter app.'
+            exit 1
+          fi
+          if [[ "$SUPABASE_PUBLISHABLE_KEY" == sb_secret_* ]]; then
+            echo '::error::A Supabase secret key must never be compiled into Flutter Web.'
+            exit 1
+          fi
 
       - name: Setup Flutter
         uses: ./.github/actions/setup-flutter-sdk
@@ -252,6 +262,9 @@ jobs:
           set -euo pipefail
           mkdir -p .ci-logs
           flutter build web --debug --pwa-strategy=none \
+            --dart-define=ENVIRONMENT=development \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
             --dart-define=PADDLE_SANDBOX_ENABLED=true \
             --dart-define=PADDLE_SANDBOX_CLIENT_TOKEN="$PADDLE_SANDBOX_CLIENT_TOKEN" \
             --dart-define=PADDLE_SANDBOX_PRICE_ID="$PADDLE_SANDBOX_PRICE_ID" \
