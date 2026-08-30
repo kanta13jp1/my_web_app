@@ -142,4 +142,3 @@ void main() {
     expect(preferences.getKeys(), isEmpty);
   });
 }
-
