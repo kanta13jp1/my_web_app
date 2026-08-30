@@ -289,8 +289,9 @@ begin
      and not v_source_deleted
      and tg_table_name = 'note_tags'
      and (
-       new.name is distinct from old.name
-       or new.parent_id is distinct from old.parent_id
+       to_jsonb(new)->>'name' is distinct from to_jsonb(old)->>'name'
+       or to_jsonb(new)->>'parent_id'
+         is distinct from to_jsonb(old)->>'parent_id'
      ) then
     raise exception using
       errcode = '23514',
@@ -301,8 +302,10 @@ begin
      and not v_source_deleted
      and tg_table_name = 'note_tag_assignments'
      and (
-       new.note_id is distinct from old.note_id
-       or new.tag_id is distinct from old.tag_id
+       to_jsonb(new)->>'note_id'
+         is distinct from to_jsonb(old)->>'note_id'
+       or to_jsonb(new)->>'tag_id'
+         is distinct from to_jsonb(old)->>'tag_id'
      ) then
     raise exception using
       errcode = '23514',

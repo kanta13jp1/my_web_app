@@ -426,11 +426,13 @@ class _NoteListPageState extends State<NoteListPage> {
       if (id == null) continue;
       final parentId = int.tryParse(row['parent_id']?.toString() ?? '');
       final parent = parentId == null ? null : byId[parentId];
+      final stackName = parent != null &&
+              parent['collection_type'] == 'stack'
+          ? parent['name']?.toString()
+          : null;
       contexts[id] = _NoteCollectionSearchContext(
         notebookName: row['name']?.toString() ?? '',
-        stackName: parent?['collection_type'] == 'stack'
-            ? parent?['name']?.toString()
-            : null,
+        stackName: stackName,
       );
     }
     return Map<int, _NoteCollectionSearchContext>.unmodifiable(contexts);
