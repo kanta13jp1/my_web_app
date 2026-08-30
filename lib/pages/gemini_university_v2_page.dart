@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart' as web_api;
 import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_fsrs_service.dart';
+import '../services/ai_university_agentless_lab_analytics.dart';
 import '../services/ai_university_content_analytics.dart';
 import '../services/ai_university_learning_outcome_analytics.dart';
 import '../services/ai_learner_profile_service.dart';
@@ -23,6 +24,7 @@ import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 import '../services/user_data_finetune_readiness_service.dart';
 import '../widgets/ai_university_latest_info_task_card.dart';
+import '../widgets/ai_university_agentless_lab_task_card.dart';
 import '../widgets/ai_university_llm_mechanics_task_card.dart';
 import '../widgets/ai_university_model_selection_task_card.dart';
 import '../widgets/ai_university_published_video_banner.dart';
@@ -5703,6 +5705,7 @@ class AiUniversityPage extends StatefulWidget {
     this.contentAnalytics,
     this.learningOutcomeAnalytics,
     this.modelSelectionLearningOutcomeAnalytics,
+    this.agentlessLabAnalytics,
   });
 
   final String? initialProviderId;
@@ -5710,6 +5713,7 @@ class AiUniversityPage extends StatefulWidget {
   final AiUniversityLearningOutcomeAnalytics? learningOutcomeAnalytics;
   final AiUniversityLearningOutcomeAnalytics?
       modelSelectionLearningOutcomeAnalytics;
+  final AiUniversityAgentlessLabAnalytics? agentlessLabAnalytics;
 
   @override
   State<AiUniversityPage> createState() => _AiUniversityPageState();
@@ -5733,6 +5737,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       _modelSelectionLearningOutcomeAnalytics;
   late final AiUniversityLearningOutcomeAnalytics
       _llmMechanicsLearningOutcomeAnalytics;
+  late final AiUniversityAgentlessLabAnalytics _agentlessLabAnalytics;
 
   List<String> _providers = [];
   Map<String, List<Map<String, dynamic>>> _content = {};
@@ -5784,6 +5789,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       _supabase,
       task: AiUniversityLearningOutcomeTask.llmMechanics,
     );
+    _agentlessLabAnalytics = widget.agentlessLabAnalytics ??
+        AiUniversityAgentlessLabAnalytics.supabase(_supabase);
     _fetchContent();
     _loadAnsweredQuizzes();
     _loadRlhfSnapshot();
@@ -7988,6 +7995,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final isModelSelectionTask = provider == '01ai' && category == 'models';
     final isLlmMechanicsTask =
         provider == 'academic' && category == 'llm_mechanics';
+    final isAgentlessLab = provider == 'agentless' && category == 'overview';
     final learningOutcomeAnalytics = isLlmMechanicsTask
         ? _llmMechanicsLearningOutcomeAnalytics
         : isModelSelectionTask
@@ -8114,6 +8122,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   AiUniversityLlmMechanicsTaskCard(
                     onSubmit:
                         _llmMechanicsLearningOutcomeAnalytics.recordCompleted,
+                  ),
+                ],
+                if (isAgentlessLab) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityAgentlessLabTaskCard(
+                    onStart: _agentlessLabAnalytics.recordStarted,
+                    onSubmit: _agentlessLabAnalytics.recordCompleted,
                   ),
                 ],
                 if (youtubeVideoId != null) ...[

@@ -130,6 +130,23 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
             plan["ai_university_checks"],
         )
 
+    def test_plan_includes_agentless_course_runtime_proof(self) -> None:
+        plan = module.build_plan(
+            ROOT / "test" / "fixtures" / "testcontainers" / "sql",
+            ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts",
+            ROOT / "supabase" / "functions" / "health-check" / "index.ts",
+        )
+        self.assertEqual(
+            plan["agentless_course_migration"],
+            "supabase/migrations/20260830120000_remediate_agentless_course.sql",
+        )
+        checks = " ".join(plan["agentless_course_checks"])
+        self.assertIn("exact Agentless course row", checks)
+        self.assertIn("creates no learner outcome rows", checks)
+        self.assertIn("fail closed", checks)
+        self.assertIn("service-role-only aggregate view", checks)
+        self.assertIn("applies twice", checks)
+
     def test_plan_includes_app_analytics_write_boundary(self) -> None:
         plan = module.build_plan(
             ROOT / "test" / "fixtures" / "testcontainers" / "sql",
