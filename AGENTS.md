@@ -69,6 +69,14 @@ same notebook.
 - Work from a scoped branch and keep unrelated user changes intact.
 - Prefer deterministic checks over agent claims: `flutter analyze`,
   `flutter test`, `deno lint`, migration checks, and GitHub Actions status.
+- Prefer GitHub Actions for full Flutter analysis/tests/builds,
+  Docker/Testcontainers, and deployment validation. Keep local execution to
+  editing and lightweight targeted checks when cloud CI covers the same gate.
+- If `scripts/codex_session_check.py` reports
+  `github-actions-required`, do not run heavy validation locally. Push a scoped
+  branch or draft PR, use the PR checks as the source of truth, inspect failures
+  with `gh run view --log-failed`, and iterate with scoped edits. Merge only
+  after the required cloud checks pass.
 - For WBS pressure, prioritize tasks that reduce repeated manual work:
   CI repair, deploy stability, merge backlog, issue sync, scheduled reports,
   and tool-change monitoring.

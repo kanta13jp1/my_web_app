@@ -4,8 +4,9 @@
 -- The election dashboard historically used a synthetic public_memos.note_id
 -- without creating the authoritative notes row. The hardened RLS correctly
 -- rejects and hides those rows. Give every generated memo an owner-backed note
--- while retaining the old IDs so deployed clients can still find existing
--- shares during the rollout.
+-- and remap public_memos.note_id to the database-assigned integer ID. The
+-- synthetic ID remains in source_key so deployed clients can resolve the same
+-- generated note after the rollout.
 -- nocheck: time-relative -- only source_key is updated; no date-constrained
 -- column or time-relative enforcement state is changed.
 
@@ -14,40 +15,6 @@ ALTER TABLE public.notes
 
 COMMENT ON COLUMN public.notes.source_key IS
   'Stable owner-scoped key for notes generated outside the note editor.';
-
-INSERT INTO public.notes (
-  id,
-  user_id,
-  content,
-  source_key
-)
-SELECT
-  pm.note_id,
-  pm.user_id,
-  COALESCE(pm.content, ''),
-  CASE
-    WHEN pm.note_id >= 90000000000000
-      THEN 'local-election:' || pm.note_id::text
-    ELSE 'legacy-public-memo:' || pm.id::text
-  END
-FROM public.public_memos AS pm
-LEFT JOIN public.notes AS n ON n.id = pm.note_id
-WHERE n.id IS NULL
-  AND pm.user_id IS NOT NULL
-ON CONFLICT (id) DO NOTHING;
-
--- A retry may see the repaired note but not its source key if the first run was
--- interrupted between statements.
-UPDATE public.notes AS n
-SET source_key = CASE
-  WHEN pm.note_id >= 90000000000000
-    THEN 'local-election:' || pm.note_id::text
-  ELSE 'legacy-public-memo:' || pm.id::text
-END
-FROM public.public_memos AS pm
-WHERE n.id = pm.note_id
-  AND n.user_id = pm.user_id
-  AND n.source_key IS NULL;
 
 DO $$
 BEGIN
@@ -62,6 +29,41 @@ BEGIN
   END IF;
 END
 $$;
+
+INSERT INTO public.notes (
+  user_id,
+  content,
+  source_key
+)
+SELECT
+  pm.user_id,
+  COALESCE(pm.content, ''),
+  CASE
+    WHEN pm.note_id >= 90000000000000
+      THEN 'local-election:' || pm.note_id::text
+    ELSE 'legacy-public-memo:' || pm.id::text
+  END
+FROM public.public_memos AS pm
+LEFT JOIN public.notes AS n ON n.id = pm.note_id
+WHERE n.id IS NULL
+  AND pm.user_id IS NOT NULL
+ON CONFLICT (user_id, source_key) DO UPDATE
+SET content = EXCLUDED.content;
+
+UPDATE public.public_memos AS pm
+SET note_id = n.id
+FROM public.notes AS n
+WHERE n.user_id = pm.user_id
+  AND n.source_key = CASE
+    WHEN pm.note_id >= 90000000000000
+      THEN 'local-election:' || pm.note_id::text
+    ELSE 'legacy-public-memo:' || pm.id::text
+  END
+  AND NOT EXISTS (
+    SELECT 1
+    FROM public.notes AS current_note
+    WHERE current_note.id = pm.note_id
+  );
 
 -- All legacy public memo rows are now backed by notes. Validation turns the
 -- earlier NOT VALID foreign key into a durable invariant for future writes.

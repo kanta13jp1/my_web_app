@@ -12,6 +12,7 @@ from codex_session_check import (
     context_injection_snapshot,
     is_remote_control_flag_path,
     notebooklm_snapshot,
+    resource_budget_snapshot,
     resource_budget_warnings,
 )
 
@@ -97,6 +98,22 @@ class ClaudeRemoteControlDetectionTest(unittest.TestCase):
 
 
 class ResourceBudgetTest(unittest.TestCase):
+    def test_routes_heavy_work_to_github_actions_under_local_pressure(self) -> None:
+        with (
+            patch(
+                "codex_session_check.physical_memory_snapshot",
+                return_value={"used_pct": 92.2, "free_gb": 1.23, "total_gb": 16.0},
+            ),
+            patch("codex_session_check.shutil.disk_usage") as disk_usage,
+        ):
+            disk_usage.return_value = type(
+                "DiskUsage", (), {"total": 100 * 1024**3, "free": 20 * 1024**3}
+            )()
+
+            snapshot = resource_budget_snapshot(Path("C:/repo"), [])
+
+        self.assertEqual(snapshot["heavy_work_route"], "github-actions-required")
+
     def test_warns_when_ram_and_worktree_budget_are_exceeded(self) -> None:
         snapshot = {
             "memory": {"used_pct": 92.2, "free_gb": 1.23},
