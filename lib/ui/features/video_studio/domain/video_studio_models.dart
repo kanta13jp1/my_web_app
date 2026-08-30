@@ -121,6 +121,7 @@ class VideoGenerationJob {
     this.completedAt,
     this.parentArtifactId,
     this.appliedReviewId,
+    this.authorizationId,
     this.artifact,
   });
 
@@ -142,6 +143,7 @@ class VideoGenerationJob {
   final DateTime? completedAt;
   final String? parentArtifactId;
   final String? appliedReviewId;
+  final String? authorizationId;
   final VideoArtifact? artifact;
 
   bool get isTerminal =>
@@ -169,6 +171,7 @@ class VideoGenerationJob {
       completedAt: _date(json['completed_at']),
       parentArtifactId: _nullableString(json['parent_artifact_id']),
       appliedReviewId: _nullableString(json['applied_review_id']),
+      authorizationId: _nullableString(json['authorization_id']),
       artifact: json['artifact'] == null
           ? null
           : VideoArtifact.fromJson(_map(json['artifact'])),
@@ -195,6 +198,7 @@ class VideoGenerationJob {
       completedAt: completedAt,
       parentArtifactId: parentArtifactId,
       appliedReviewId: appliedReviewId,
+      authorizationId: authorizationId,
       artifact: value,
     );
   }
@@ -359,6 +363,74 @@ class VideoArtifactReviewResult {
 class VideoCreateResult {
   const VideoCreateResult({required this.job, required this.balance});
 
+  final VideoGenerationJob job;
+  final VideoCreditBalance balance;
+}
+
+class VideoImprovementAuthorization {
+  const VideoImprovementAuthorization({
+    required this.id,
+    required this.status,
+    required this.validUntil,
+    required this.totalCreditLimit,
+    required this.reservedCredits,
+    required this.consumedCredits,
+    required this.remainingCredits,
+    required this.totalRegenerationLimit,
+    required this.consumedRegenerations,
+    required this.remainingRegenerations,
+    required this.rootArtifactId,
+    required this.initialReviewId,
+    required this.allowCreditPurchase,
+  });
+
+  final String id;
+  final String status;
+  final DateTime validUntil;
+  final int totalCreditLimit;
+  final int reservedCredits;
+  final int consumedCredits;
+  final int remainingCredits;
+  final int totalRegenerationLimit;
+  final int consumedRegenerations;
+  final int remainingRegenerations;
+  final String rootArtifactId;
+  final String initialReviewId;
+  final bool allowCreditPurchase;
+
+  bool get isActive =>
+      status == 'active' &&
+      validUntil.isAfter(DateTime.now()) &&
+      remainingRegenerations > 0;
+
+  factory VideoImprovementAuthorization.fromJson(Map<String, dynamic> json) {
+    return VideoImprovementAuthorization(
+      id: _string(json['id']),
+      status: _string(json['status']),
+      validUntil:
+          _date(json['valid_until']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      totalCreditLimit: _integer(json['total_credit_limit']),
+      reservedCredits: _integer(json['reserved_credits']),
+      consumedCredits: _integer(json['consumed_credits']),
+      remainingCredits: _integer(json['remaining_credits']),
+      totalRegenerationLimit: _integer(json['total_regeneration_limit']),
+      consumedRegenerations: _integer(json['consumed_regenerations']),
+      remainingRegenerations: _integer(json['remaining_regenerations']),
+      rootArtifactId: _string(json['root_artifact_id']),
+      initialReviewId: _string(json['initial_review_id']),
+      allowCreditPurchase: json['allow_credit_purchase'] == true,
+    );
+  }
+}
+
+class VideoAuthorizationCreateResult {
+  const VideoAuthorizationCreateResult({
+    required this.authorization,
+    required this.job,
+    required this.balance,
+  });
+
+  final VideoImprovementAuthorization authorization;
   final VideoGenerationJob job;
   final VideoCreditBalance balance;
 }

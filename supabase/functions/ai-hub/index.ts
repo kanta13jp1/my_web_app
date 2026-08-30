@@ -23,6 +23,7 @@ import {
   evaluateAgentToolPolicy,
 } from "../_shared/agent_tool_policy.ts";
 import { selectEffort } from "../_shared/effort_router.ts";
+import { requestTraceId } from "../_shared/trace_context.ts";
 import {
   calculateApiCost,
   checkBudget,
@@ -148,7 +149,7 @@ import { createSupabaseWriterKnowledgeGraphStore } from "./writer_knowledge_grap
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, a2a-version, a2a-extensions",
+    "authorization, x-client-info, apikey, content-type, a2a-version, a2a-extensions, traceparent, tracestate, baggage, sentry-trace",
   "Access-Control-Expose-Headers": "A2A-Version, WWW-Authenticate",
   "Access-Control-Max-Age": "86400",
 };
@@ -6674,7 +6675,7 @@ serve(async (req: Request) => {
             409,
           );
         }
-        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const traceId = requestTraceId(req, body.trace_id);
         const sessionId = body.session_id != null
           ? String(body.session_id)
           : null;
@@ -6768,7 +6769,7 @@ serve(async (req: Request) => {
           SUPABASE_ANON_KEY,
           { global: { headers: { Authorization: authorization } } },
         );
-        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const traceId = requestTraceId(req, body.trace_id);
         const sessionId = body.session_id != null
           ? String(body.session_id)
           : null;
@@ -6883,7 +6884,7 @@ serve(async (req: Request) => {
         }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
         const requestStartedAt = performance.now();
-        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const traceId = requestTraceId(req, body.trace_id);
         const sessionId = body.session_id != null
           ? String(body.session_id)
           : null;
@@ -7215,7 +7216,7 @@ serve(async (req: Request) => {
 
         // Win版#131 part 4: Observability — trace_id / session_id / latency 計測
         const requestStartedAt = performance.now();
-        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const traceId = requestTraceId(req, body.trace_id);
         const sessionId = body.session_id != null
           ? String(body.session_id)
           : null;
@@ -7497,7 +7498,7 @@ serve(async (req: Request) => {
         });
 
         const requestStartedAt = performance.now();
-        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const traceId = requestTraceId(req, body.trace_id);
         const sessionId = body.session_id != null
           ? String(body.session_id)
           : null;
