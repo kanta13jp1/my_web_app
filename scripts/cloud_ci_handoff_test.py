@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import sys
 import unittest
 from pathlib import Path
 
@@ -8,6 +9,7 @@ from cloud_ci_handoff import (
     HandoffState,
     dispatch_command,
     readiness_reasons,
+    run_command,
     select_new_exact_run,
 )
 
@@ -16,6 +18,19 @@ HEAD = "a" * 40
 
 
 class CloudCiHandoffTest(unittest.TestCase):
+    def test_runner_decodes_utf8_cli_output_on_windows(self) -> None:
+        result = run_command(
+            [
+                sys.executable,
+                "-c",
+                "import sys; sys.stdout.buffer.write('クラウド✓'.encode('utf-8'))",
+            ],
+            Path.cwd(),
+        )
+
+        self.assertEqual(result.code, 0)
+        self.assertEqual(result.stdout, "クラウド✓")
+
     def test_exact_pushed_feature_branch_is_ready(self) -> None:
         self.assertEqual(
             readiness_reasons(
