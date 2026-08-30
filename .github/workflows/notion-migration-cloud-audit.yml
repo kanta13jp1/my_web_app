@@ -47,6 +47,7 @@ jobs:
     permissions:
       contents: read
     env:
+      PYTHONPATH: .
       SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
