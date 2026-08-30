@@ -16,6 +16,11 @@ class EvernoteRecognitionCandidate {
 
   final String text;
   final int weight;
+
+  Map<String, Object> toManifestJson() => <String, Object>{
+        'text': text,
+        'weight': weight,
+      };
 }
 
 class EvernoteRecognitionRegion {
@@ -45,6 +50,16 @@ class EvernoteRecognitionRegion {
     }
     return best;
   }
+
+  Map<String, dynamic> toManifestJson() => <String, dynamic>{
+        'x': x,
+        'y': y,
+        'width': width,
+        'height': height,
+        'candidates': candidates
+            .map((candidate) => candidate.toManifestJson())
+            .toList(growable: false),
+      };
 }
 
 class EvernoteRecognitionIndex {
@@ -81,6 +96,22 @@ class EvernoteRecognitionIndex {
         .where((text) => text.isNotEmpty)
         .join(' ');
   }
+
+  Map<String, dynamic> toManifestJson() => <String, dynamic>{
+        'raw_sha256': rawSha256,
+        'document_type': documentType,
+        'object_type': objectType,
+        'object_id': objectId,
+        'engine_version': engineVersion,
+        'recognition_type': recognitionType,
+        'language': language,
+        'object_width': objectWidth,
+        'object_height': objectHeight,
+        'search_text': searchText,
+        'regions': regions
+            .map((region) => region.toManifestJson())
+            .toList(growable: false),
+      };
 }
 
 class EvernoteRecognitionParser {
