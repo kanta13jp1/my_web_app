@@ -18,6 +18,9 @@ concurrency:
 
 jobs:
   index:
+    environment:
+      name: analytics-production
+      deployment: false
     permissions:
       contents: read
       issues: write

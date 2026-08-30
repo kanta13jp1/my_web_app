@@ -25,6 +25,9 @@ permissions: {}
 
 jobs:
   manage-network:
+    environment:
+      name: platform-security-production
+      deployment: false
     permissions:
       contents: read
     name: Supabase Network Restrictions
