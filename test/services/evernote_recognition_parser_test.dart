@@ -66,7 +66,8 @@ void main() {
     });
 
     test('accepts the standard SYSTEM DTD form without resolving it', () {
-      const raw = '''<!DOCTYPE recoIndex SYSTEM "https://xml.evernote.com/pub/recoIndex.dtd">
+      const raw =
+          '''<!DOCTYPE recoIndex SYSTEM "https://xml.evernote.com/pub/recoIndex.dtd">
 <recoIndex><item x="0" y="0" w="1" h="1"><t w="1">safe</t></item></recoIndex>''';
 
       final result = parser.parse(raw);
@@ -91,7 +92,8 @@ void main() {
     });
 
     test('rejects an unexpected external DTD', () {
-      const raw = '''<!DOCTYPE recoIndex SYSTEM "https://attacker.example/reco.dtd">
+      const raw =
+          '''<!DOCTYPE recoIndex SYSTEM "https://attacker.example/reco.dtd">
 <recoIndex><item x="0" y="0" w="1" h="1"><t w="1">unsafe</t></item></recoIndex>''';
 
       expect(() => parser.parse(raw), throwsFormatException);
