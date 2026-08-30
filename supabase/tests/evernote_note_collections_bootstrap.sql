@@ -238,3 +238,53 @@ grant execute on function public.evernote_verify_note(
   text,
   jsonb
 ) to authenticated;
+
+
+-- Supabase Storage-shaped fixture required by the history contract.
+create schema storage;
+create table storage.objects (
+  id uuid primary key default gen_random_uuid(),
+  bucket_id text not null,
+  name text not null,
+  owner_id uuid,
+  metadata jsonb not null default '{}',
+  unique (bucket_id, name)
+);
+alter table storage.objects enable row level security;
+
+create policy storage_objects_select_owner
+  on storage.objects for select to authenticated
+  using ((select auth.uid()) = owner_id);
+create policy storage_objects_insert_owner
+  on storage.objects for insert to authenticated
+  with check ((select auth.uid()) = owner_id);
+
+grant usage on schema storage to authenticated, service_role;
+grant select, insert on storage.objects to authenticated;
+grant all on storage.objects to service_role;
+
+-- Shape of the native note history before the Evernote extension migration.
+create table public.note_versions (
+  id uuid primary key default gen_random_uuid(),
+  note_id bigint not null references public.notes (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  title text not null default '',
+  content text not null default '',
+  saved_at timestamptz not null default now()
+);
+alter table public.note_versions enable row level security;
+
+create policy "Users can view own note versions"
+  on public.note_versions for select to authenticated
+  using ((select auth.uid()) = user_id);
+create policy "Users can insert own note versions"
+  on public.note_versions for insert to authenticated
+  with check ((select auth.uid()) = user_id);
+create policy "Users can delete own note versions"
+  on public.note_versions for delete to authenticated
+  using ((select auth.uid()) = user_id);
+
+grant select, insert, delete on public.note_versions to authenticated;
+grant all on public.note_versions to service_role;
+create index note_versions_note_id_saved_at_idx
+  on public.note_versions (note_id, saved_at desc);
