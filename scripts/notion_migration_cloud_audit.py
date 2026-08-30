@@ -394,10 +394,15 @@ def render_summary(report: dict[str, Any]) -> str:
             "",
             "### WBS cloud import plan",
             "",
-            "| canonical | insert | update | unchanged | site newer | blockers |",
-            "| ---: | ---: | ---: | ---: | ---: | ---: |",
+            (
+                "| canonical | logical | aliases | insert | update | "
+                "unchanged | site newer | blockers |"
+            ),
+            "| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
             (
                 f"| {wbs_plan['canonical_rows']} | "
+                f"{wbs_plan['logical_rows']} | "
+                f"{wbs_plan['identity_alias_rows']} | "
                 f"{wbs_plan['decisions']['insert']} | "
                 f"{wbs_plan['decisions']['update_from_notion']} | "
                 f"{wbs_plan['decisions']['unchanged']} | "

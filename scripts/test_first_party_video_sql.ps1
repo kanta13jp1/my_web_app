@@ -9,6 +9,8 @@ $migrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260819165405_c
 $artifactFixturePath = Join-Path $repositoryRoot 'supabase/tests/video_artifact_review_loop_pre_migration.sql'
 $artifactMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260822084126_add_video_artifact_review_loop.sql'
 $authorizationMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260830053403_video_improvement_authorization_envelopes.sql'
+$authorizationRetryMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260830123038_allow_authorized_video_retry_after_failure.sql'
+$authorizationRetryIndexMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260830123552_allow_authorized_video_retry_index.sql'
 $bootstrapPath = Join-Path $repositoryRoot 'supabase/tests/video_service_bootstrap.sql'
 $contractPath = Join-Path $repositoryRoot 'supabase/tests/first_party_video_service_contract.sql'
 $artifactContractPath = Join-Path $repositoryRoot 'supabase/tests/video_artifact_review_loop_contract.sql'
@@ -45,6 +47,8 @@ try {
       $artifactFixturePath,
       $artifactMigrationPath,
       $authorizationMigrationPath,
+      $authorizationRetryMigrationPath,
+      $authorizationRetryIndexMigrationPath,
       $contractPath,
       $artifactContractPath,
       $authorizationContractPath
