@@ -48,7 +48,9 @@ test.describe('real Paddle sandbox checkout', () => {
   }, testInfo) => {
     await openFlutterCheckout(page);
     await completeCardForm(page, '4000000000000002');
-    await expectFlutterText(page, 'Sandbox 決済に失敗しました。', 60_000);
+    await expect(
+      page.getByRole('button', { name: 'もう一度試す' }),
+    ).toBeVisible({ timeout: 60_000 });
 
     const events = await collectEvidence(page, testInfo, 'failure', {
       browserVersion: browser.version(),
