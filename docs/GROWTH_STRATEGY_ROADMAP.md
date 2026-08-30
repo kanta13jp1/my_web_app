@@ -33539,6 +33539,12 @@ watcher が名指しできるのはスナップショット時点で**生存し�
 - 元のKPIピル表示、色、文言、最大12件、新鮮度による年表示の切り替えを維持し、`admin_analytics_page.dart` を6,791行から6,540行へ縮小した。
 - Flutter 3.38.10 で専用Widgetテスト3件、変更対象の静的解析、フォーマット検査が成功した。全体buildとブラウザ自動化は空きRAM保護のため起動せず、PR CIでの検証に回す。
 
+### 虎レビュー改善記録: 登録ファネルカードの段階分割 (2026-08-30 JST)
+
+- Issue #4834 の主要ページ分割を継続し、今日・過去30日で共用する登録ファネルの表示責務を `admin_analytics_page.dart` から専用Widgetへ抽出した。目標差分、必要送信数、ボトルネックの算出は親ページに残した。
+- 6段階の件数、4つの転換率、目標未達時だけ表示するボトルネックと必要送信数、分母0時の `--` 表示を維持し、`admin_analytics_page.dart` を6,540行から6,362行へ縮小した。
+- Flutter 3.38.10 で専用Widgetテスト3件、変更対象の静的解析、フォーマット検査が成功した。全体buildとブラウザ自動化は空きRAM保護のため起動せず、PR CIでの検証に回す。
+
 ### 開発基盤セッション記録: Rootless Podman Dev Container準備 (2026-08-29 JST)
 
 - Issue #2842 向けに、Container Tools と Dev Containers のPodman設定、非root Flutter 3.38.10 Dev Container、Windows/WSL2・Linuxのrunbook、静的回帰テストを追加した。
