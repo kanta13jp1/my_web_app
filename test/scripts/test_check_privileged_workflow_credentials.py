@@ -10,17 +10,44 @@ from scripts.check_privileged_workflow_credentials import find_violations
 
 
 class CheckPrivilegedWorkflowCredentialsTest(unittest.TestCase):
+    @staticmethod
+    def _exception() -> dict[str, object]:
+        return {
+            "status": "approved-temporary",
+            "project_ref": "smmkxxavexumewbfaqpy",
+            "reason": "fixture requires privileged access",
+            "data_scope": "fixture table",
+            "approver": "fixture-owner",
+            "approval_basis": "fixture approval",
+            "review_on": "2026-11-30",
+            "rotation_owner": "fixture-owner",
+            "replacement_blocker": "fixture scoped identity is unavailable",
+            "rejected_alternatives": [
+                "anon key cannot perform the operation",
+                "secret key retains service-role privilege",
+            ],
+        }
+
     def _messages(
         self,
         workflows: dict[str, str],
         environment_workflows: dict[str, list[str]],
         workflow_job_environment_overrides: dict[str, dict[str, str]] | None = None,
+        supabase_service_role_exceptions: dict[str, object] | None = None,
     ) -> list[str]:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / ".github" / "workflows"
             root.mkdir(parents=True)
             for name, contents in workflows.items():
                 (root / name).write_text(contents, encoding="utf-8")
+            inferred_exceptions = {
+                environment: self._exception()
+                for environment, names in environment_workflows.items()
+                if any(
+                    "SUPABASE_SERVICE_ROLE_KEY" in workflows.get(name, "")
+                    for name in names
+                )
+            }
             manifest = {
                 "schema_version": 1,
                 "tracked_repository_secrets": [
@@ -43,6 +70,11 @@ class CheckPrivilegedWorkflowCredentialsTest(unittest.TestCase):
                 },
                 "workflow_job_environment_overrides": (
                     workflow_job_environment_overrides or {}
+                ),
+                "supabase_service_role_exceptions": (
+                    inferred_exceptions
+                    if supabase_service_role_exceptions is None
+                    else supabase_service_role_exceptions
                 ),
             }
             manifest_path = Path(tmp) / "manifest.json"
@@ -219,6 +251,7 @@ jobs:
                         "target": "target-production",
                     }
                 },
+                {"target-production": self._exception()},
             ),
             [],
         )
@@ -250,6 +283,46 @@ jobs:
         self.assertIn(
             "job environment override is stale because the job does not consume a tracked secret",
             messages,
+        )
+
+    def test_requires_complete_service_role_exception(self) -> None:
+        workflow = """name: privileged
+on: workflow_dispatch
+jobs:
+  run:
+    environment:
+      name: operations-production
+      deployment: false
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - run: 'true'
+"""
+        missing = self._messages(
+            {"privileged.yml": workflow},
+            {"operations-production": ["privileged.yml"]},
+            supabase_service_role_exceptions={},
+        )
+        self.assertIn(
+            "active SUPABASE_SERVICE_ROLE_KEY use requires an approved temporary exception",
+            missing,
+        )
+
+        incomplete = self._messages(
+            {"privileged.yml": workflow},
+            {"operations-production": ["privileged.yml"]},
+            supabase_service_role_exceptions={
+                "operations-production": {"status": "approved-temporary"}
+            },
+        )
+        self.assertIn(
+            "service-role exception field `reason` is required",
+            incomplete,
+        )
+        self.assertIn(
+            "service-role exception must document at least two rejected alternatives",
+            incomplete,
         )
 
 if __name__ == "__main__":

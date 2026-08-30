@@ -137,11 +137,48 @@ jobs:
             ([paths(scalars) as $path | $path[-1] | tostring] |
               all(. != "user_id" and . != "email"))
           ' "${report_dir}/existing-user-retention.json" >/dev/null
+
+      - name: Build acquisition cohort and route evidence
+        shell: bash
+        run: |
+          report_dir=tmp/first-user-acquisition-report
+          http_code=$(curl --silent --show-error \
+            --output "${report_dir}/growth-evidence.json" \
+            --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/rest/v1/rpc/get_tiger_growth_evidence_summary" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data '{"p_window_days":90}')
+          if [ "${http_code}" != "200" ]; then
+            jq -c . "${report_dir}/growth-evidence.json" || true
+            echo "::error::Growth evidence report returned HTTP ${http_code}."
+            exit 1
+          fi
+          jq -e '
+            type == "object" and
+            .privacy.aggregateOnly == true and
+            .privacy.containsUserIds == false and
+            .privacy.containsVisitorIds == false and
+            .privacy.containsEmail == false and
+            .privacy.containsName == false and
+            .privacy.containsPromptText == false and
+            (.cohorts | type == "array") and
+            (.routes | type == "array") and
+            ([paths(scalars) as $path | $path[-1] | tostring] |
+              all(. != "user_id" and . != "auth_user_id" and
+                  . != "visitor_id" and . != "email" and . != "name")) and
+            ([.. | strings] |
+              all(test("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$") | not))
+          ' "${report_dir}/growth-evidence.json" >/dev/null
+
       - name: Publish aggregate summary
         shell: bash
         run: |
           report=tmp/first-user-acquisition-report/report.json
           retention=tmp/first-user-acquisition-report/existing-user-retention.json
+          growth=tmp/first-user-acquisition-report/growth-evidence.json
           retention_rate=$(jq -r '.weekly_retention[0].rate // "not available"' "${retention}")
           if [ "${retention_rate}" != "not available" ]; then
             retention_rate="${retention_rate}%"
@@ -169,7 +206,19 @@ jobs:
             jq '.funnel.counts' "${report}"
             echo '```'
             echo
-            echo "The artifact contains aggregate counts only; raw visitor IDs are omitted."
+            echo "### Acquisition-source cohort evidence"
+            echo
+            echo '```json'
+            jq '.cohorts' "${growth}"
+            echo '```'
+            echo
+            echo "### Top route evidence"
+            echo
+            echo '```json'
+            jq '.routes[:20]' "${growth}"
+            echo '```'
+            echo
+            echo "Metric definitions are included in growth-evidence.json. The artifact contains aggregate counts only; user and visitor IDs are omitted."
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload aggregate report

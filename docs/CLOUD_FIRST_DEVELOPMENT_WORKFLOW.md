@@ -81,3 +81,13 @@ Verify deployment by matching the production `version.json` commit to the merged
 ## Recovery
 
 If a cloud run fails, inspect its logs and make the smallest source change. Do not reproduce a runner-scale failure locally unless the user explicitly requests it and the resource gate is healthy. Artifacts are temporary evidence, not a long-term store.
+
+## Notion migration cloud audit
+
+Use the read-only cloud audit to inspect the latest migration batch without opening Notion, running Flutter locally, or downloading source content:
+
+    gh workflow run notion-migration-cloud-audit.yml --ref main
+
+The job reads only aggregate progress from the owner-scoped migration control plane. Its log, job summary, and one-day artifact contain counts and gate states only; page titles, note bodies, attachments, workspace identifiers, source IDs, and credentials are excluded.
+
+The audit never imports, deletes, or cancels a subscription. A source deletion gate opens only when at least one item has passed all seven checks and has separately recorded owner authorization. The subscription cancellation gate opens only after every item is source-deleted, every required capability is verified, and the guarded migration batch is complete.

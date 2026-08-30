@@ -46,6 +46,38 @@ class ValidateSharedSecretEnvironmentTest(unittest.TestCase):
         self.assertEqual(captured[0].full_url, "https://example.supabase.co/rest/v1/")
         self.assertEqual(captured[0].get_header("Apikey"), "supabase-fixture")
 
+    def test_validates_anon_reads_for_rls_approved_tables(self) -> None:
+        captured: list[Request] = []
+
+        def opener(request: Request, *, timeout: int) -> _Response:
+            self.assertEqual(timeout, 20)
+            captured.append(request)
+            return _Response(200)
+
+        result = validate_environment(
+            environment="content-automation-production",
+            expect_anthropic=False,
+            expect_supabase=False,
+            expect_public_reads=True,
+            environ={
+                "SUPABASE_ANON_KEY": "anon-fixture",
+                "SUPABASE_URL": "https://example.supabase.co",
+            },
+            opener=opener,
+        )
+
+        self.assertEqual(result.public_read_statuses, (200, 200))
+        self.assertEqual(
+            [request.full_url for request in captured],
+            [
+                "https://example.supabase.co/rest/v1/competitors?select=id,display_name&is_active=eq.true&limit=1",
+                "https://example.supabase.co/rest/v1/ai_circuit_breaker?provider=eq.anthropic&select=state,expires_at",
+            ],
+        )
+        self.assertTrue(
+            all(request.get_header("Apikey") == "anon-fixture" for request in captured)
+        )
+
     def test_rejects_missing_required_secret_without_network(self) -> None:
         with self.assertRaisesRegex(ValueError, "ANTHROPIC_API_KEY did not resolve"):
             validate_environment(
