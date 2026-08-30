@@ -122,8 +122,10 @@ void main() {
       expect(database.verifyCalls, hasLength(1));
       expect(database.committedMetadata.single['streaming_commit'], isTrue);
       expect(transferProgress.first.stageLabel, 'Recovery archive');
-      expect(transferProgress.first.state,
-          EvernoteMigrationTransferState.completed);
+      expect(
+        transferProgress.first.state,
+        EvernoteMigrationTransferState.completed,
+      );
       expect(transferProgress.last.percent, 100);
       expect(transferProgress.last.objectIndex, 2);
       expect(transferProgress.last.objectCount, 2);
