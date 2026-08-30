@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-30T08:21:17.573724+00:00",
+  "generated_at": "2026-08-30T10:41:20.993020+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "site_review",
   "publication_state": "latest_review",
@@ -10,29 +10,38 @@
     "status": "PAUSED",
     "schedule": "毎時25分（1時間ごと）"
   },
-  "review_count": 19,
+  "review_count": 20,
   "latest_review": {
-    "cycle_id": "20260830T170216+0900",
-    "started_at": "2026-08-30T17:02:16+09:00",
+    "cycle_id": "20260830T192700+0900",
+    "started_at": "2026-08-30T19:27:00+09:00",
     "source_format": "site_review",
     "surface": {
       "slug": "whole_site",
       "url": "https://my-web-app-b67f4.web.app/"
     },
     "reviewer": {
-      "seat": 7,
-      "name": "榊󠄀原 清一",
-      "selection_score": 76.0262,
+      "seat": 9,
+      "name": "平出 心",
+      "selection_score": 74.8631,
       "division": 1,
       "cycle_utility": 94.05,
-      "aggregate_utility": 93.24
+      "aggregate_utility": 89.89
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 5,
     "top_findings": [
       {
-        "summary": "獲得元別の集計表示はあるが、D7・D30継続とpaid転換を結ぶ保持需要の一次証拠はまだない",
+        "summary": "task完了直後のmicro-surveyは安全に収集できるが、回答を継続・paid成果と結ぶ意思決定ループが未定義である",
+        "severity": "p1",
+        "business_dimensions": [
+          "market_demand",
+          "customer_pain",
+          "trust_risk"
+        ]
+      },
+      {
+        "summary": "獲得元別のD7・D30・paid cohort証拠は実装中だが、PR #5107が未検証でproduction判断には使えない",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
@@ -41,21 +50,12 @@
         ]
       },
       {
-        "summary": "CAC・回収月数・churn・LTVの計算枠は実装済みだが、プラン別の実測入力と意思決定証拠が未投入である",
+        "summary": "CAC・回収月数・churn・LTVの計算枠はあるが、プラン別の実測入力と意思決定証拠が未投入である",
         "severity": "p1",
         "business_dimensions": [
           "unit_economics",
           "revenue_model",
           "founder_execution"
-        ]
-      },
-      {
-        "summary": "公開landingには広い優位・唯一性表現が残る一方、選ばれ続ける成果差を示す比較一次証拠が不足している",
-        "severity": "p1",
-        "business_dimensions": [
-          "competitive_advantage",
-          "market_demand",
-          "trust_risk"
         ]
       }
     ],
@@ -70,15 +70,15 @@
         "relevant": 100
       },
       "gate_passed": true,
-      "baseline_cycle_id": "20260830T150936+0900",
+      "baseline_cycle_id": "20260830T170216+0900",
       "focus_dimension": "complete",
       "overall_delta": 0.0,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After one complete monthly cohort is available, compare source-level D7/D30 paid conversion and plan gross margin/payback, while measuring art-museum search-to-official-site progression and D7 return for one named customer segment."
+      "next_cycle_experiment": "After one complete monthly survey window, compare route-level response, rating, opt-out, D7/D30, and paid-conversion deltas, and record one owner decision with its post-change outcome."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5096",
+      "label": "対策待ち・Issue #5108",
       "detail": "提案のみで、対策実施の記録はありません。",
       "summary": "",
       "files": [],
@@ -86,34 +86,138 @@
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean worktree aligned with origin/main c5a1d4da20c77c404d7f406d8e7878781bbba510",
+        "passed: clean worktree aligned with origin/main 9f188a4f66e3efc8b802866cfb0b21cb4ac50a36",
         "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers and distinct response digests",
         "passed: 125 profiles",
         "passed: 125 personas",
-        "passed: resolved outcomes removed; current evidence gaps and art-museum experiment boundary recorded",
+        "passed: current evidence gaps and the feedback-to-outcome decision-loop boundary recorded",
         "not run: cloud-first resource policy prohibits local heavy validation for this report-only review"
       ],
       "issue": {
-        "number": 5096,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5096",
+        "number": 5108,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5108",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-site-review:20260830T170216+0900:whole_site",
+        "dedupe_key": "tiger-site-review:20260830T192700+0900:whole_site",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
+        "site-micro-survey-outcome-loop-gap",
         "site-acquisition-retention-paid-cohort-proof",
         "site-plan-economics-production-input-gap",
         "site-superiority-claim-evidence-gap",
-        "site-art-museum-demand-economics-proof-gap",
         "site-delivery-scalability-gap"
       ]
     }
   },
   "history": [
+    {
+      "cycle_id": "20260830T192700+0900",
+      "started_at": "2026-08-30T19:27:00+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 9,
+        "name": "平出 心",
+        "selection_score": 74.8631
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260830T170216+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After one complete monthly survey window, compare route-level response, rating, opt-out, D7/D30, and paid-conversion deltas, and record one owner decision with its post-change outcome."
+      },
+      "findings": [
+        {
+          "finding_id": "site-micro-survey-outcome-loop-gap",
+          "summary": "task完了直後のmicro-surveyは安全に収集できるが、回答を継続・paid成果と結ぶ意思決定ループが未定義である",
+          "severity": "p1",
+          "suggested_action": "個人コメントを直接結合せず、route・trigger別の回答率、rating分布、opt-out率、D7/D30・paidの匿名集計差、owner、判定日、採否結果を一つの月次decision recordに固定する。"
+        },
+        {
+          "finding_id": "site-acquisition-retention-paid-cohort-proof",
+          "summary": "獲得元別のD7・D30・paid cohort証拠は実装中だが、PR #5107が未検証でproduction判断には使えない",
+          "severity": "p1",
+          "suggested_action": "PR #5107のcloud CI・merge・production proofを完了し、source、D7、D30、paid conversionを期間・母数・成熟状態・欠測率付きで公開判断へ接続する。"
+        },
+        {
+          "finding_id": "site-plan-economics-production-input-gap",
+          "summary": "CAC・回収月数・churn・LTVの計算枠はあるが、プラン別の実測入力と意思決定証拠が未投入である",
+          "severity": "p1",
+          "suggested_action": "価格や決済を変えず、Pro・Teamごとのpaid customers、MRR、変動費、獲得費、解約数を承認済み集計から投入し、欠測時は判断保留を維持する。"
+        },
+        {
+          "finding_id": "site-superiority-claim-evidence-gap",
+          "summary": "公開landingには広い優位・唯一性表現が残る一方、選ばれ続ける成果差を示す比較一次証拠が不足している",
+          "severity": "p1",
+          "suggested_action": "owner reviewで主張を用途・顧客・比較指標へ限定し、出典・確認日・母数・期間を持つものだけを維持しregression guardを追加する。"
+        },
+        {
+          "finding_id": "site-delivery-scalability-gap",
+          "summary": "主要surfaceは大きいままで、17件のopen PRにBLOCKED・BEHIND・DIRTYが混在する",
+          "severity": "p2",
+          "suggested_action": "次のadmin・landing面を段階抽出し、strict checksを維持したmerge queueまたは一つのbounded cloud auto-follow laneで更新とCIを直列化する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5108",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean worktree aligned with origin/main 9f188a4f66e3efc8b802866cfb0b21cb4ac50a36",
+          "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers and distinct response digests",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: current evidence gaps and the feedback-to-outcome decision-loop boundary recorded",
+          "not run: cloud-first resource policy prohibits local heavy validation for this report-only review"
+        ],
+        "issue": {
+          "number": 5108,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5108",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260830T192700+0900:whole_site",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-micro-survey-outcome-loop-gap",
+          "site-acquisition-retention-paid-cohort-proof",
+          "site-plan-economics-production-input-gap",
+          "site-superiority-claim-evidence-gap",
+          "site-delivery-scalability-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260830T170216+0900",
       "started_at": "2026-08-30T17:02:16+09:00",
