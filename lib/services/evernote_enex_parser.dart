@@ -434,8 +434,7 @@ class EvernoteEnexParser {
     EvernoteRecognitionIndex? recognition;
     if (recognitionXml != null && recognitionXml.trim().isNotEmpty) {
       try {
-        recognition =
-            const EvernoteRecognitionParser().parse(recognitionXml);
+        recognition = const EvernoteRecognitionParser().parse(recognitionXml);
       } on FormatException {
         warnings.add(
           'A resource contains invalid Evernote recognition data; '
@@ -684,4 +683,3 @@ extension<T> on Iterable<T> {
     return iterator.moveNext() ? iterator.current : null;
   }
 }
-
