@@ -7,6 +7,8 @@ import '../services/activation_revenue_experiment_service.dart';
 import '../services/activation_revenue_tracker.dart';
 import '../services/billing_service.dart';
 import '../services/growth_acquisition_service.dart';
+import '../services/paddle_checkout.dart';
+import '../ui/features/billing/views/paddle_sandbox_checkout_card.dart';
 
 class SubscriptionBillingPage extends StatefulWidget {
   const SubscriptionBillingPage({
@@ -17,6 +19,8 @@ class SubscriptionBillingPage extends StatefulWidget {
     this.experimentService = const ActivationRevenueExperimentService(),
     this.tracker = const SupabaseActivationRevenueEventTracker(),
     this.assignment,
+    this.paddleSandboxConfig,
+    this.paddleCheckoutGateway,
   });
 
   final BillingGateway? service;
@@ -25,6 +29,8 @@ class SubscriptionBillingPage extends StatefulWidget {
   final ActivationRevenueExperimentService experimentService;
   final ActivationRevenueEventTracker tracker;
   final ActivationRevenueAssignment? assignment;
+  final PaddleSandboxConfig? paddleSandboxConfig;
+  final PaddleCheckoutGateway? paddleCheckoutGateway;
 
   @override
   State<SubscriptionBillingPage> createState() =>
@@ -213,6 +219,8 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
         );
     final fromOnboarding = _sourceUri.queryParameters['entry'] == 'onboarding';
     final valueFraming = _enabled('a10');
+    final paddleSandboxConfig =
+        widget.paddleSandboxConfig ?? PaddleSandboxConfig.fromEnvironment();
     return Scaffold(
       appBar: AppBar(
         title: const Text('プランと応援'),
@@ -265,6 +273,16 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                         },
                         onUpgrade: _openCheckout,
                       ),
+                      if (paddleSandboxConfig.shouldExpose) ...[
+                        const SizedBox(height: 16),
+                        PaddleSandboxCheckoutCard(
+                          config: paddleSandboxConfig,
+                          gateway: widget.paddleCheckoutGateway,
+                          onContinue: () {
+                            Navigator.of(context).pushReplacementNamed('/home');
+                          },
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       _UsageCard(status: status),
                       const SizedBox(height: 16),

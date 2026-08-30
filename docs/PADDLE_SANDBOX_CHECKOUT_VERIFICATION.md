@@ -1,0 +1,133 @@
+# Paddle.js sandbox checkout verification
+
+Issue: [#2845](https://github.com/kanta13jp1/my_web_app/issues/2845)
+
+This flow validates Paddle.js without replacing or modifying the production
+Stripe checkout. The Paddle card is hidden by default and is always hidden in a
+Flutter release build.
+
+## Cloud-first validation
+
+Run the heavy validation in GitHub Actions instead of on a contributor's local
+machine. The `Paddle Sandbox Checkout Cloud Validation` workflow runs
+automatically for relevant pull requests and can also be started with
+**Actions > Paddle Sandbox Checkout Cloud Validation > Run workflow**.
+
+The GitHub-hosted runner performs the project analysis, focused VM and Chrome
+tests, sandbox-enabled debug compilation, and the release-guard compilation.
+It uploads the logs and the final `build/web` directory as a seven-day
+artifact. Compile-only values in this workflow are deliberately invalid public
+placeholders; the workflow does not open Paddle or create a transaction.
+
+Keep local preflight work lightweight:
+
+```powershell
+node --check web/paddle_sandbox_bridge.js
+git diff --check
+```
+
+Do not repeat the full analyzer, Chrome tests, or Web builds locally when the
+cloud workflow is available. A real checkout remains an interactive external
+verification and is recorded separately in the scenario matrix below.
+
+## Prerequisites
+
+Prepare these values in a Paddle **sandbox** account:
+
+- A client-side token beginning with `test_`. This token is designed for
+  frontend use; never put a Paddle API key in Flutter or browser code.
+- A sandbox price ID beginning with `pri_`.
+- A default payment link configured under **Checkout > Checkout settings**.
+  `localhost` may be used for sandbox testing.
+
+Sandbox and live catalogs are separate. A live token or a live-only price ID
+must not be used in this flow.
+
+## Run the real sandbox checkout
+
+Start this interactive step only after the cloud validation is green and the
+project-specific sandbox values are available. A cloud development environment
+with browser port forwarding is preferred when one is provisioned; otherwise,
+use a short-lived local Web session and stop it after collecting evidence.
+
+From the repository root, run a non-release Flutter Web session:
+
+```powershell
+flutter run -d chrome --web-port 7357 `
+  --dart-define=PADDLE_SANDBOX_ENABLED=true `
+  --dart-define=PADDLE_SANDBOX_CLIENT_TOKEN=test_REPLACE_ME `
+  --dart-define=PADDLE_SANDBOX_PRICE_ID=pri_REPLACE_ME
+```
+
+Open `http://localhost:7357/subscription-billing`. Confirm that:
+
+1. Existing Stripe plan and supporter buttons remain present.
+2. A separate **Paddle checkout 検証 / SANDBOX ONLY** card appears.
+3. Browser network activity does not request Paddle.js until **Paddle sandbox
+   を開く** is pressed.
+4. Pressing the button loads
+   `https://cdn.paddle.com/paddle/v2/paddle.js` and opens an overlay marked as
+   test mode.
+
+If the card is absent, confirm this is not a release build and that
+`PADDLE_SANDBOX_ENABLED=true` was passed. If the card is visible but disabled,
+confirm the `test_` token and `pri_` price ID.
+
+## Scenario matrix
+
+Use an email address you control, any supported country, any future expiry,
+and security code `100` where requested.
+
+| Scenario | Steps | Expected Flutter result | Paddle evidence |
+| --- | --- | --- | --- |
+| Success | Pay with `4242 4242 4242 4242`. | Green completion message and **ホームへ戻る** action. A later `checkout.closed` event must not replace the success state. | Sandbox transaction is present with the captured transaction ID. |
+| Failure | Pay with declined card `4000 0000 0000 0002`. | Red failure message; checkout may be retried. Closing after the failure must not relabel it as a cancellation. | Failed payment attempt is visible in sandbox events/console. |
+| Cancel | Open the overlay and close it before payment. | Amber cancellation message stating that no charge occurred; retry remains available. | `checkout.closed` is emitted without `checkout.completed`. |
+
+For each scenario, record the date/time (JST), browser and version, result,
+checkout ID, transaction ID when available, and a screenshot with personal and
+payment data redacted.
+
+## Browser and responsive checks
+
+Run all three scenarios in current Chrome and Edge. At minimum, also inspect
+the billing page at desktop width (1440x900) and mobile width (390x844):
+
+- No overflow or clipped checkout controls.
+- The sandbox label and status message remain readable.
+- Keyboard focus reaches the launch, retry, and continuation controls.
+- No uncaught Flutter or Paddle errors remain in the console.
+
+Safari/Firefox should be checked before claiming cross-browser completion if
+they are in the supported browser matrix for the release.
+
+## Production guard
+
+The cloud workflow compiles a release build with the enable flag present. The
+release-mode configuration and widget tests verify that the sandbox card has no
+UI call path. If troubleshooting requires a local reproduction, use:
+
+```powershell
+flutter build web --release `
+  --dart-define=PADDLE_SANDBOX_ENABLED=true `
+  --dart-define=PADDLE_SANDBOX_CLIENT_TOKEN=test_guard_check `
+  --dart-define=PADDLE_SANDBOX_PRICE_ID=pri_guard_check
+```
+
+The local `paddle_sandbox_bridge.js` may be present as a dormant bridge, but it
+must not load Paddle's CDN script until called, and the release UI provides no
+call path.
+
+## Execution record
+
+Real sandbox execution is not complete until project-specific sandbox values
+are supplied and all three rows below contain dated evidence.
+
+| Date (JST) | Browser | Scenario | Result | Evidence |
+| --- | --- | --- | --- | --- |
+| Pending | Chrome | Success | Not run: sandbox token/price not supplied | — |
+| Pending | Chrome | Failure | Not run: sandbox token/price not supplied | — |
+| Pending | Chrome | Cancel | Not run: sandbox token/price not supplied | — |
+
+Do not copy a client-side token, API key, full card form, customer address, or
+unredacted personal information into this document, an Issue, or a PR.
