@@ -380,6 +380,76 @@ create trigger enforce_evernote_tasks_before_source_deletion
   execute function
     evernote_migration_private.enforce_tasks_before_source_deletion();
 
+create or replace function
+  evernote_migration_private.protect_imported_note_feature_source()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_source_deleted boolean;
+begin
+  if old.source_system <> 'evernote' then
+    return case when tg_op = 'DELETE' then old else new end;
+  end if;
+
+  if tg_op = 'DELETE' then
+    select exists (
+      select 1
+      from public.evernote_migration_items
+      where user_id = old.user_id
+        and target_note_id = old.note_id
+        and status = 'source_deleted'
+    )
+    into v_source_deleted;
+
+    if not v_source_deleted then
+      raise exception using
+        errcode = '23514',
+        message =
+          'Imported Evernote Task evidence cannot be deleted before the source.';
+    end if;
+    return old;
+  end if;
+
+  if new.user_id is distinct from old.user_id
+     or new.note_id is distinct from old.note_id
+     or new.source_system is distinct from old.source_system
+     or new.source_key is distinct from old.source_key
+     or new.source_sha256 is distinct from old.source_sha256
+     or new.source_metadata is distinct from old.source_metadata then
+    raise exception using
+      errcode = '23514',
+      message = 'Imported Evernote Task source evidence is immutable.';
+  end if;
+
+  return new;
+end
+$$;
+
+revoke all on function
+  evernote_migration_private.protect_imported_note_feature_source()
+  from public, anon, authenticated, service_role;
+
+create trigger protect_imported_note_task_source
+  before update or delete on public.note_tasks
+  for each row
+  execute function
+    evernote_migration_private.protect_imported_note_feature_source();
+
+create trigger protect_imported_note_task_reminder_source
+  before update or delete on public.note_task_reminders
+  for each row
+  execute function
+    evernote_migration_private.protect_imported_note_feature_source();
+
+create trigger protect_imported_note_reminder_source
+  before update or delete on public.note_reminders
+  for each row
+  execute function
+    evernote_migration_private.protect_imported_note_feature_source();
+
 create or replace function public.evernote_commit_note_with_features(
   p_batch_id bigint,
   p_source_item_key text,
@@ -679,6 +749,16 @@ begin
       source_metadata = excluded.source_metadata,
       updated_at = clock_timestamp();
   end if;
+
+  update public.notes
+  set reminder_date = case
+    when p_note_reminder is not null
+      and p_note_reminder->>'completed_at' is null
+    then nullif(p_note_reminder->>'reminder_at', '')::timestamptz
+    else null
+  end
+  where id = v_note_id
+    and user_id = v_user_id;
 
   v_source_task_count := jsonb_array_length(p_tasks);
   select count(*)
