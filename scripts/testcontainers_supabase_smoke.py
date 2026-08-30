@@ -85,6 +85,12 @@ NOTE_COMMENTS_SECURITY_MIGRATION = (
     / "migrations"
     / "20260827032000_harden_note_comments_authorization.sql"
 )
+GENERATED_MEMO_REPAIR_MIGRATION = (
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830021402_restore_generated_public_memo_publishing.sql"
+)
 NOTE_OWNER = "00000000-0000-4000-8000-000000002668"
 NOTE_PUBLIC_VIEWER = "00000000-0000-4000-8000-000000002669"
 NOTE_TEAM_MEMBER = "00000000-0000-4000-8000-000000002670"
@@ -95,6 +101,7 @@ NOTE_INVITE_CODE = "26682668266826682668266826682668"
 NOTE_PRIVATE_ID = 266801
 NOTE_PUBLIC_ID = 266802
 NOTE_TEAM_ID_VALUE = 266803
+GENERATED_MEMO_NOTE_ID = 90000007002027
 AI_UNIVERSITY_MIGRATION = (
     ROOT
     / "supabase"
@@ -402,6 +409,17 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "invite-code attempts are actor-scoped and rate-limited",
             "comment authors can update content and delete only their own rows",
             "migration applies twice without reopening legacy authorization paths",
+        ],
+        "generated_memo_repair_migration": (
+            GENERATED_MEMO_REPAIR_MIGRATION.relative_to(ROOT).as_posix()
+        ),
+        "generated_memo_repair_checks": [
+            "orphaned generated public memos receive owner-backed notes",
+            "legacy synthetic IDs remain readable during the client rollout",
+            "owner-scoped source keys are unique and reusable",
+            "public memo foreign key is validated after repair",
+            "forged legacy publications remain inaccessible",
+            "migration applies twice without duplicating backing notes",
         ],
         "ai_university_migration": AI_UNIVERSITY_MIGRATION.relative_to(ROOT).as_posix(),
         "ai_university_checks": [
@@ -1173,6 +1191,11 @@ def seed_note_comments_security_fixture(conn: Any) -> None:
             [
                 (NOTE_PUBLIC_ID, NOTE_OWNER, "valid public memo"),
                 (NOTE_PRIVATE_ID, NOTE_OUTSIDER, "legacy forged public memo"),
+                (
+                    GENERATED_MEMO_NOTE_ID,
+                    NOTE_OWNER,
+                    "generated election dashboard",
+                ),
             ],
         )
         cur.execute(
@@ -1655,6 +1678,106 @@ def check_note_comments_security(conn: Any) -> dict[str, Any]:
             "authenticated", NOTE_TEAM_MEMBER, NOTE_TEAM_ID_VALUE
         ),
         "service_role_dml": "passed",
+    }
+
+
+def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
+    with conn.cursor() as cur:
+        cur.execute(
+            "select n.user_id::text, n.source_key, count(*) over () "
+            "from public.notes n "
+            "where n.id = %s",
+            (GENERATED_MEMO_NOTE_ID,),
+        )
+        repaired_rows = [tuple(row) for row in cur.fetchall()]
+        cur.execute(
+            "select convalidated from pg_constraint "
+            "where conname = 'public_memos_note_id_fkey' "
+            "and conrelid = 'public.public_memos'::regclass"
+        )
+        foreign_key_validated = bool(cur.fetchone()[0])
+        cur.execute(
+            "select count(*) from pg_constraint "
+            "where conname = 'notes_user_source_key_unique' "
+            "and conrelid = 'public.notes'::regclass"
+        )
+        source_key_constraint_count = int(cur.fetchone()[0])
+    conn.commit()
+
+    expected_repaired_rows = [
+        (
+            NOTE_OWNER,
+            f"local-election:{GENERATED_MEMO_NOTE_ID}",
+            1,
+        )
+    ]
+    if repaired_rows != expected_repaired_rows:
+        raise AssertionError(f"generated memo backing note mismatch: {repaired_rows}")
+    if not foreign_key_validated:
+        raise AssertionError("public_memos note foreign key was not validated")
+    if source_key_constraint_count != 1:
+        raise AssertionError("owner-scoped generated note key is not unique")
+
+    anonymous_rows = note_comments_run_as(
+        conn,
+        role="anon",
+        user_id=None,
+        statement=(
+            "select note_id from public.public_memos "
+            "where note_id = %s and is_public is true"
+        ),
+        params=(GENERATED_MEMO_NOTE_ID,),
+    )
+    if anonymous_rows != [(GENERATED_MEMO_NOTE_ID,)]:
+        raise AssertionError(
+            f"repaired generated memo is not public: {anonymous_rows}"
+        )
+
+    owner_update = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OWNER,
+        statement=(
+            "update public.public_memos set title = 'generated election update' "
+            "where note_id = %s returning title"
+        ),
+        params=(GENERATED_MEMO_NOTE_ID,),
+    )
+    if owner_update != [("generated election update",)]:
+        raise AssertionError(f"generated memo owner update failed: {owner_update}")
+
+    outsider_update = note_comments_run_as(
+        conn,
+        role="authenticated",
+        user_id=NOTE_OUTSIDER,
+        statement=(
+            "update public.public_memos set title = 'forged update' "
+            "where note_id = %s returning title"
+        ),
+        params=(GENERATED_MEMO_NOTE_ID,),
+    )
+    if outsider_update:
+        raise AssertionError("outsider updated an owner-backed generated memo")
+
+    forged_rows = note_comments_run_as(
+        conn,
+        role="anon",
+        user_id=None,
+        statement=(
+            "select note_id from public.public_memos "
+            "where note_id = %s and user_id = %s::uuid"
+        ),
+        params=(NOTE_PRIVATE_ID, NOTE_OUTSIDER),
+    )
+    if forged_rows:
+        raise AssertionError("repair made a forged legacy publication readable")
+
+    return {
+        "backing_note_id": GENERATED_MEMO_NOTE_ID,
+        "source_key": repaired_rows[0][1],
+        "foreign_key_validated": foreign_key_validated,
+        "owner_update": owner_update[0][0],
+        "forged_publication_visible": False,
     }
 
 
@@ -2572,6 +2695,9 @@ def run_smoke(args: argparse.Namespace) -> int:
             apply_sql_fixture(conn, NOTE_COMMENTS_SECURITY_MIGRATION, artifacts_dir)
             apply_sql_fixture(conn, NOTE_COMMENTS_SECURITY_MIGRATION, artifacts_dir)
             note_comments_security = check_note_comments_security(conn)
+            apply_sql_fixture(conn, GENERATED_MEMO_REPAIR_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, GENERATED_MEMO_REPAIR_MIGRATION, artifacts_dir)
+            generated_memo_repair = check_generated_memo_repair(conn)
             apply_sql_fixture(conn, VOICE_DUBBING_BOOTSTRAP, artifacts_dir)
             apply_sql_fixture(conn, BILLING_MIGRATION, artifacts_dir)
             apply_sql_fixture(conn, VOICE_DUBBING_MIGRATION, artifacts_dir)
@@ -2672,6 +2798,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "tenant_rls": tenant_rls,
             "app_analytics_security": app_analytics_security,
             "note_comments_security": note_comments_security,
+            "generated_memo_repair": generated_memo_repair,
             "asset_chat_rls": asset_chat_rls,
             "tax_records_rls": tax_records_rls,
             "ai_university": ai_university,
