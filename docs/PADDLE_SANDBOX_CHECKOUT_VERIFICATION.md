@@ -106,8 +106,10 @@ payment data redacted.
 
 ## Browser and responsive checks
 
-Run all three scenarios in current Chrome and Edge. At minimum, also inspect
-the billing page at desktop width (1440x900) and mobile width (390x844):
+Run the acceptance matrix in current Chromium. Before enabling Paddle for a
+supported release, repeat the matrix in current Edge and any other browser in
+that release's support policy. At minimum, also inspect the billing page at
+desktop width (1440x900) and mobile width (390x844):
 
 - No overflow or clipped checkout controls.
 - The sandbox label and status message remain readable.
@@ -139,15 +141,19 @@ call path.
 The project-specific Paddle sandbox matrix completed on a GitHub-hosted runner
 without retries. The linked run retains the sanitized event JSON, Playwright
 report, and post-result screenshots in artifact
-`paddle-real-sandbox-evidence-33308228516-1` until 2026-09-13.
+`paddle-real-sandbox-evidence-33308666661-1` until 2026-09-13. The failure and
+success tests close the remaining Paddle overlay and then assert that Flutter
+still renders **もう一度試す** and **ホームへ戻る**, respectively.
 
 | Date (JST) | Browser | Scenario | Result | Evidence |
 | --- | --- | --- | --- | --- |
-| 2026-08-30 20:13:43 | Chromium 151.0.7922.34 | Success | Pass: `checkout.completed`; Flutter rendered **ホームへ戻る** | [run 33308228516](https://github.com/kanta13jp1/my_web_app/actions/runs/33308228516), checkout `che_01m195zvjvq96t9ernsvdatheb`, transaction `txn_01m195zvbetzh649m4bnjfstnr` |
-| 2026-08-30 20:13:23 | Chromium 151.0.7922.34 | Failure | Pass: `checkout.payment.failed`; Flutter rendered **もう一度試す** | [run 33308228516](https://github.com/kanta13jp1/my_web_app/actions/runs/33308228516), checkout `che_01m195za6xsb42v1pyy1c8h9w5`, failed transaction `txn_01m195z9z8ef5n84ps3saxz9bm` |
-| 2026-08-30 20:13:06 | Chromium 151.0.7922.34 | Cancel | Pass: `checkout.closed` without `checkout.completed`; Flutter rendered the no-charge cancellation state | [run 33308228516](https://github.com/kanta13jp1/my_web_app/actions/runs/33308228516), checkout `che_01m195yz4mj12bjams3erf7yx4`, incomplete transaction `txn_01m195yyw76bfakq9gd6ev3396` |
+| 2026-08-30 20:24:24 | Chromium 151.0.7922.34 | Success | Pass: `checkout.completed`; **ホームへ戻る** remained after overlay close | [run 33308666661](https://github.com/kanta13jp1/my_web_app/actions/runs/33308666661); checkout and transaction IDs captured in the private artifact |
+| 2026-08-30 20:24:04 | Chromium 151.0.7922.34 | Failure | Pass: `checkout.payment.failed`; **もう一度試す** remained after overlay close | [run 33308666661](https://github.com/kanta13jp1/my_web_app/actions/runs/33308666661); checkout and failed transaction IDs captured in the private artifact |
+| 2026-08-30 20:23:45 | Chromium 151.0.7922.34 | Cancel | Pass: `checkout.closed` without `checkout.completed`; Flutter rendered the no-charge cancellation state | [run 33308666661](https://github.com/kanta13jp1/my_web_app/actions/runs/33308666661); checkout and incomplete transaction IDs captured in the private artifact |
 
-The evidence was captured from Git commit `fae1935026bfd3578c4217e78c71afd49c890fc4`.
+The evidence was captured from Git commit
+`a9f61e389dd0265b1d45c48f099dc23eba48e64a`. Playwright reported three
+expected passes, zero retries, zero unexpected results, and zero flaky tests.
 
 Do not copy a client-side token, API key, full card form, customer address, or
 unredacted personal information into this document, an Issue, or a PR.
