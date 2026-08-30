@@ -31,6 +31,7 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   Exception? magicLinkError;
   Completer<String>? trialResponse;
   Exception? trialError;
+  Exception? socialProofError;
   String? lastTrialPrompt;
   LandingSocialProofStats socialProofStats = const LandingSocialProofStats(
     totalUsers: 38,
@@ -48,6 +49,7 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   @override
   Future<LandingSocialProofStats> loadSocialProofStats() async {
     socialProofLoads += 1;
+    if (socialProofError != null) throw socialProofError!;
     return socialProofStats;
   }
 
@@ -225,12 +227,13 @@ void main() {
     LandingConversionExperimentService? conversionExperimentService,
     LandingConversionAnalytics? conversionAnalytics,
     GrowthAcquisitionService? acquisitionService,
+    _LandingAdapter? landingAdapter,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetPhysicalSize);
-    final adapter = _LandingAdapter();
+    final adapter = landingAdapter ?? _LandingAdapter();
     await tester.pumpWidget(
       MaterialApp(
         routes: {'/privacy': (_) => const Scaffold(body: Text('privacy'))},
@@ -905,6 +908,37 @@ void main() {
     expect(find.text('登録ユーザー数'), findsOneWidget);
     expect(find.text('12'), findsOneWidget);
     expect(find.text('公開メモ数'), findsOneWidget);
+  });
+
+  testWidgets('social proof failure is disclosed and retry recovers', (
+    tester,
+  ) async {
+    final adapter = _LandingAdapter()
+      ..socialProofError = Exception('aggregate unavailable');
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h07', LandingExperimentVariant.treatment),
+      landingAdapter: adapter,
+    );
+    await tester.pumpAndSettle();
+
+    expect(adapter.socialProofLoads, 1);
+    expect(
+      find.byKey(const Key('landing_social_proof_error')),
+      findsOneWidget,
+    );
+    expect(find.text('最新の利用状況を取得できませんでした。'), findsOneWidget);
+
+    adapter.socialProofError = null;
+    final retry = find.byKey(const Key('landing_social_proof_retry'));
+    await tester.ensureVisible(retry);
+    await tester.tap(retry);
+    await tester.pumpAndSettle();
+
+    expect(adapter.socialProofLoads, 2);
+    expect(find.byKey(const Key('landing_social_proof_error')), findsNothing);
+    expect(find.text('38'), findsOneWidget);
+    expect(find.text('12'), findsOneWidget);
   });
 
   testWidgets(

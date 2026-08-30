@@ -31,12 +31,13 @@ concurrency:
   group: blog-publish
   cancel-in-progress: false
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   publish:
+    permissions:
+      contents: write
+      pull-requests: write
     name: Publish Blog Draft
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -47,18 +48,20 @@ jobs:
     steps:
       # ── Step 1: コード取得 ────────────────────────────────────────────────
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       # ── Step 1.5: 自動スケジュール実行時 — 未投稿ドラフト自動選択 ──────
       - name: Resolve publish draft
         id: auto_select
+        env:
+          DRAFT_PATH_INPUT: ${{ github.event.inputs.draft_path }}
         run: |
           # docs/blog-drafts/ から未投稿ドラフトを日付順(古い順)で探す
           # YYYY-MM-DD.md 形式の日次自動レポートはスキップ
           # frontmatter なし (# 見出しのみ) のファイルも対象
           REQUESTED_DRAFT=""
           if [ "${{ github.event_name }}" != "schedule" ]; then
-            REQUESTED_DRAFT="${{ github.event.inputs.draft_path }}"
+            REQUESTED_DRAFT="$DRAFT_PATH_INPUT"
           fi
 
           if [ -n "$REQUESTED_DRAFT" ] && [ -f "$REQUESTED_DRAFT" ]; then
@@ -276,6 +279,8 @@ jobs:
         env:
           ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
           DRAFT_PATH_VAR: ${{ steps.meta.outputs.draft_path }}
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
+          PLATFORMS_INPUT: ${{ github.event.inputs.platforms }}
         run: |
           DRAFT_PATH="$DRAFT_PATH_VAR"
           TITLE="$ARTICLE_TITLE"
@@ -285,8 +290,8 @@ jobs:
             DRY_RUN="false"
             PLATFORMS="devto"
           else
-            DRY_RUN="${{ github.event.inputs.dry_run }}"
-            PLATFORMS="${{ github.event.inputs.platforms }}"
+            DRY_RUN="$DRY_RUN_INPUT"
+            PLATFORMS="$PLATFORMS_INPUT"
           fi
 
           if [ "$DRY_RUN" = "true" ]; then
@@ -331,6 +336,8 @@ jobs:
           DRAFT_PATH_VAR: ${{ steps.meta.outputs.draft_path }}
           TAGS_VAR: ${{ steps.meta.outputs.tags }}
           DRAFT_PATH_EN: ${{ github.event.inputs.draft_path_en }}
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
+          PLATFORMS_INPUT: ${{ github.event.inputs.platforms }}
         run: |
           DRAFT_PATH="$DRAFT_PATH_VAR"
           TITLE="$ARTICLE_TITLE"
@@ -341,8 +348,8 @@ jobs:
             DRY_RUN="false"
             PLATFORMS="devto"
           else
-            DRY_RUN="${{ github.event.inputs.dry_run }}"
-            PLATFORMS="${{ github.event.inputs.platforms }}"
+            DRY_RUN="$DRY_RUN_INPUT"
+            PLATFORMS="$PLATFORMS_INPUT"
           fi
           
           CONTENT_JP=$(cat "$DRAFT_PATH")
@@ -491,8 +498,9 @@ jobs:
           ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
           QIITA_URL: ${{ steps.publish.outputs.qiita_url }}
           DEVTO_URL: ${{ steps.publish.outputs.devto_url }}
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
         run: |
-          DRY_RUN="${{ github.event.inputs.dry_run }}"
+          DRY_RUN="$DRY_RUN_INPUT"
           STATUS="success"
           if [ "${{ steps.auto_select.outputs.has_draft }}" = "true" ] && \
              [ "$DRY_RUN" != "true" ] && \
@@ -515,10 +523,13 @@ jobs:
         env:
           ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
           DRAFT_PATH_OUT: ${{ steps.meta.outputs.draft_path }}
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
+          QIITA_URL: ${{ steps.publish.outputs.qiita_url }}
+          DEVTO_URL: ${{ steps.publish.outputs.devto_url }}
         run: |
-          DRY_RUN="${{ github.event.inputs.dry_run }}"
-          QIITA="${{ steps.publish.outputs.qiita_url }}"
-          DEVTO="${{ steps.publish.outputs.devto_url }}"
+          DRY_RUN="$DRY_RUN_INPUT"
+          QIITA="$QIITA_URL"
+          DEVTO="$DEVTO_URL"
           {
             echo "## Blog Publish $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
             echo ""
@@ -548,6 +559,9 @@ jobs:
           ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
           GH_TOKEN: ${{ secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}
           BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
+          PLATFORMS_INPUT: ${{ github.event.inputs.platforms }}
+          EVENT_NAME: ${{ github.event_name }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
         run: |
           TODAY=$(date -u +%Y-%m-%d)
           mkdir -p docs/incident-reports
@@ -562,9 +576,9 @@ jobs:
               "${{ github.run_id }}" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}"
             printf -- "- **draft**: \`%s\`\n" "${DRAFT_PATH_OUT:-unknown}"
             printf -- "- **title**: %s\n" "${ARTICLE_TITLE:-unknown}"
-            printf -- "- **platforms**: %s\n" "${{ github.event.inputs.platforms }}"
-            printf -- "- **event**: %s\n" "${{ github.event_name }}"
-            printf -- "- **actor**: %s\n" "${{ github.triggering_actor }}"
+            printf -- "- **platforms**: %s\n" "$PLATFORMS_INPUT"
+            printf -- "- **event**: %s\n" "$EVENT_NAME"
+            printf -- "- **actor**: %s\n" "$TRIGGERING_ACTOR"
           } >> "$FILE"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

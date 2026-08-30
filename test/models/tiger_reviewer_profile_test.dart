@@ -16,11 +16,15 @@ void main() {
 
       expect(catalog.schemaVersion, 2);
       expect(catalog.profilesBySeat, hasLength(125));
-      expect(catalog.enrichmentRound, greaterThanOrEqualTo(3));
+      expect(catalog.enrichmentRound, greaterThanOrEqualTo(8));
       expect(catalog.averageProfileCompletenessPercent, greaterThan(0));
       expect(catalog.averageReviewReflectionPercent, greaterThan(0));
-      expect(catalog.verifiedBirthDates, 2);
+      expect(catalog.verifiedBirthDates, 10);
       expect(catalog.nextBatchNames, hasLength(5));
+      expect(
+        catalog.nextBatchNames,
+        <String>['渡正行', '足立暢', '泉舞', '六川正男', '岡田修一'],
+      );
       expect(catalog.profilesBySeat.keys.toSet(), hasLength(125));
       expect(
         catalog.profilesBySeat.values.every(
@@ -49,6 +53,84 @@ void main() {
         expect(profile.reviewReflectionPercent, greaterThanOrEqualTo(68));
         expect(profile.reviewReflectionMode, isNot('neutral_guarded'));
       }
+      for (final seat in <int>[119, 123, 124, 125]) {
+        final profile = catalog.profilesBySeat[seat]!;
+        expect(profile.profileCompletenessPercent, greaterThanOrEqualTo(62));
+        expect(profile.reviewReflectionPercent, greaterThanOrEqualTo(68));
+        expect(profile.reviewReflectionMode, 'profile_balanced');
+        expect(profile.evidenceLinks.length, greaterThanOrEqualTo(2));
+      }
+      for (final seat in <int>[87, 88, 89, 91]) {
+        final profile = catalog.profilesBySeat[seat]!;
+        expect(profile.profileCompletenessPercent, greaterThanOrEqualTo(65));
+        expect(profile.reviewReflectionPercent, 72);
+        expect(profile.reviewReflectionMode, 'profile_balanced');
+        expect(profile.evidenceLinks.length, greaterThanOrEqualTo(2));
+      }
+      final hasebe = catalog.profilesBySeat[87]!;
+      expect(hasebe.ageLabel(DateTime(2026, 8, 26)), '51歳（2026年8月26日時点）');
+      expect(hasebe.companyRole, contains('代表取締役会長'));
+      final hikaru = catalog.profilesBySeat[89]!;
+      expect(hikaru.ageLabel(DateTime(2026, 8, 26)), '35歳（2026年8月26日時点）');
+      expect(hikaru.companyRole, contains('2025年12月'));
+      final watari = catalog.profilesBySeat[116]!;
+      expect(watari.ageLabel(DateTime(2026, 8, 26)), '公開情報未確認');
+      expect(watari.reviewReflectionMode, 'neutral_guarded');
+      expect(watari.evidenceLinks, hasLength(2));
+      for (final seat in <int>[92, 94, 95, 96]) {
+        final profile = catalog.profilesBySeat[seat]!;
+        expect(profile.profileCompletenessPercent, greaterThanOrEqualTo(65));
+        expect(profile.reviewReflectionPercent, 72);
+        expect(profile.reviewReflectionMode, 'profile_balanced');
+        expect(profile.evidenceLinks.length, greaterThanOrEqualTo(2));
+      }
+      final kaneko = catalog.profilesBySeat[92]!;
+      expect(kaneko.ageLabel(DateTime(2026, 8, 28)), '54歳（2026年8月28日時点）');
+      expect(kaneko.companyRole, contains('株式会社KANEKO'));
+      final tomura = catalog.profilesBySeat[94]!;
+      expect(tomura.ageLabel(DateTime(2026, 8, 28)), '32歳（2026年8月28日時点）');
+      expect(tomura.companyRole, contains('hackjpn'));
+      final murakawa = catalog.profilesBySeat[95]!;
+      expect(murakawa.ageLabel(DateTime(2026, 8, 28)), '公開情報未確認');
+      expect(murakawa.companyRole, contains('代表取締役'));
+      final makita = catalog.profilesBySeat[96]!;
+      expect(makita.ageLabel(DateTime(2026, 8, 28)), '41歳（2026年8月28日時点）');
+      expect(makita.companyRole, contains('代表取締役副社長'));
+      final reuter = catalog.profilesBySeat[98]!;
+      expect(reuter.ageLabel(DateTime(2026, 8, 29)), '公開情報未確認');
+      expect(reuter.companyRole, contains('株式会社Reuter'));
+      expect(reuter.businessDomains, contains('人材・採用・組織'));
+      expect(reuter.reviewReflectionPercent, 72);
+      expect(reuter.reviewReflectionMode, 'profile_balanced');
+      expect(reuter.evidenceLinks, hasLength(1));
+      final aizawa = catalog.profilesBySeat[99]!;
+      expect(aizawa.ageLabel(DateTime(2026, 8, 29)), '37歳（2026年8月29日時点）');
+      expect(aizawa.companyRole, contains('株式会社VOYAGE'));
+      expect(aizawa.businessDomains, contains('マーケティング・メディア'));
+      expect(aizawa.profileCompletenessPercent, 80);
+      expect(aizawa.reviewReflectionPercent, 72);
+      expect(aizawa.reviewReflectionMode, 'profile_balanced');
+      expect(aizawa.evidenceLinks, hasLength(3));
+      final kawahara = catalog.profilesBySeat[104]!;
+      expect(kawahara.ageLabel(DateTime(2026, 8, 30)), '62歳（2026年8月30日時点）');
+      expect(kawahara.companyRole, contains('なんでんかんでん社長'));
+      expect(kawahara.profileCompletenessPercent, 80);
+      expect(kawahara.reviewReflectionPercent, 72);
+      expect(kawahara.reviewReflectionMode, 'profile_balanced');
+      expect(kawahara.evidenceLinks, hasLength(2));
+      final yasuda = catalog.profilesBySeat[105]!;
+      expect(yasuda.ageLabel(DateTime(2026, 8, 30)), '公開情報未確認');
+      expect(yasuda.companyRole, contains('代表取締役社長'));
+      expect(yasuda.profileCompletenessPercent, 65);
+      expect(yasuda.reviewReflectionPercent, 72);
+      expect(yasuda.reviewReflectionMode, 'profile_balanced');
+      expect(yasuda.evidenceLinks, hasLength(3));
+      final kataishi = catalog.profilesBySeat[125]!;
+      expect(kataishi.ageLabel(DateTime(2026, 8, 25)), '32歳（2026年8月25日時点）');
+      expect(
+        kataishi.evidenceLinks.map((link) => link.label),
+        contains('生年月日（東証提出資料）'),
+      );
 
       final standingsSource = await rootBundle.loadString(
         'assets/data/tiger_reviewer_league_status.json',
@@ -84,6 +166,12 @@ void main() {
       publicViewpointSummary: '',
       profileUrl: Uri.parse('https://reiwanotora.jp/tiger/endo-yuki/'),
       birthDateSourceUrl: Uri.parse('https://reiwanotora.jp/tiger/endo-yuki/'),
+      evidenceLinks: <TigerReviewerEvidenceLink>[
+        TigerReviewerEvidenceLink(
+          label: '肩書き・事業内容',
+          url: Uri.parse('https://example.com/company'),
+        ),
+      ],
     );
     final unverified = TigerReviewerProfile(
       seat: 1,
@@ -101,6 +189,8 @@ void main() {
     );
 
     expect(verified.ageLabel(DateTime(2026, 8, 23)), '36歳（2026年8月23日時点）');
+    expect(verified.evidenceLinks.single.label, '肩書き・事業内容');
+    expect(verified.evidenceLinks.single.url.host, 'example.com');
     expect(unverified.ageLabel(DateTime(2026, 8, 23)), '公開情報未確認');
   });
 }
