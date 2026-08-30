@@ -1,6 +1,9 @@
 -- Issue #2844 staged rollout controls. These service-role-only functions let
 -- operators inspect a due request without exposing user identifiers and let a
 -- canary run claim exactly the request that was reviewed.
+-- nocheck: time-relative -- the detector reads schema-qualified UPDATE public
+-- as table "public"; the actual target is account_deletion_requests, which has
+-- no time-relative constraint trigger.
 
 create or replace function public.preflight_due_account_deletion(
   p_request_id bigint default null
