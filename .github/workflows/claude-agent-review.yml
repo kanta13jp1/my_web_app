@@ -64,7 +64,7 @@ jobs:
     # A pull_request workflow is branch-controlled and must never receive a
     # repository or environment credential. Review is explicitly dispatched
     # from main; PR contents are fetched as immutable data and never executed.
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.ultrareview != 'true' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && vars.PAID_AI_REVIEWS_ENABLED == 'true' && github.event.inputs.ultrareview != 'true' && github.ref == 'refs/heads/main'
 
     steps:
       - name: Resolve PR number
@@ -305,7 +305,7 @@ jobs:
     name: High-risk ultrareview gate
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: github.event_name == 'pull_request'
+    if: vars.PAID_AI_REVIEWS_ENABLED == 'true' && github.event_name == 'pull_request'
     permissions:
       contents: read
       pull-requests: read
@@ -360,7 +360,7 @@ jobs:
     name: Claude ultrareview (opt-in)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.ultrareview == 'true' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && vars.PAID_AI_REVIEWS_ENABLED == 'true' && github.event.inputs.ultrareview == 'true' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
       pull-requests: write

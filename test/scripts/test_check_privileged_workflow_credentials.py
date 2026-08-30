@@ -11,7 +11,10 @@ from scripts.check_privileged_workflow_credentials import find_violations
 
 class CheckPrivilegedWorkflowCredentialsTest(unittest.TestCase):
     def _messages(
-        self, workflows: dict[str, str], environment_workflows: dict[str, list[str]]
+        self,
+        workflows: dict[str, str],
+        environment_workflows: dict[str, list[str]],
+        paid_ai_review_policy: dict[str, object] | None = None,
     ) -> list[str]:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / ".github" / "workflows"
@@ -39,6 +42,8 @@ class CheckPrivilegedWorkflowCredentialsTest(unittest.TestCase):
                     for name, names in environment_workflows.items()
                 },
             }
+            if paid_ai_review_policy is not None:
+                manifest["paid_ai_review_policy"] = paid_ai_review_policy
             manifest_path = Path(tmp) / "manifest.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
             return [item.message for item in find_violations(root, manifest_path)]
@@ -160,6 +165,48 @@ jobs:
             {"operations-production": ["noisy.yml"]},
         )
         self.assertIn("job `run` must set environment deployment to false", messages)
+
+    def test_paid_ai_review_policy_requires_fail_closed_variable_gate(self) -> None:
+        policy = {
+            "state": "paused",
+            "enable_variable": "PAID_AI_REVIEWS_ENABLED",
+            "workflows": ["review.yml"],
+        }
+        safe = """name: paid-review
+on: workflow_dispatch
+jobs:
+  review:
+    if: vars.PAID_AI_REVIEWS_ENABLED == 'true' && github.ref == 'refs/heads/main'
+    environment:
+      name: review-production
+      deployment: false
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - run: 'true'
+"""
+        unsafe = safe.replace(
+            "vars.PAID_AI_REVIEWS_ENABLED == 'true' && ", ""
+        )
+        self.assertEqual(
+            self._messages(
+                {"review.yml": safe},
+                {"review-production": ["review.yml"]},
+                policy,
+            ),
+            [],
+        )
+        self.assertTrue(
+            any(
+                "paid AI job `review` must require" in message
+                for message in self._messages(
+                    {"review.yml": unsafe},
+                    {"review-production": ["review.yml"]},
+                    policy,
+                )
+            )
+        )
 
 
 if __name__ == "__main__":

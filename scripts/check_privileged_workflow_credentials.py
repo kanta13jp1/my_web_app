@@ -30,6 +30,7 @@ NON_PR_EVENT_GUARD = re.compile(
 PULL_REQUEST_EXCLUSION = re.compile(
     r"github\.event_name\s*!=\s*['\"]pull_request['\"]"
 )
+PAID_AI_REVIEW_GATE = "vars.PAID_AI_REVIEWS_ENABLED == 'true'"
 
 
 @dataclass(frozen=True)
@@ -144,6 +145,47 @@ def load_manifest(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _paid_ai_review_policy_violations(
+    root: Path, manifest_path: Path, manifest: dict[str, object]
+) -> list[Violation]:
+    policy = manifest.get("paid_ai_review_policy")
+    if policy is None:
+        return []
+    subject = f"{manifest_path}:paid_ai_review_policy"
+    if not isinstance(policy, dict):
+        return [Violation(subject, "paid_ai_review_policy must be an object")]
+
+    violations: list[Violation] = []
+    if policy.get("state") != "paused":
+        violations.append(Violation(subject, "paid AI review state must remain paused"))
+    if policy.get("enable_variable") != "PAID_AI_REVIEWS_ENABLED":
+        violations.append(
+            Violation(subject, "enable_variable must be PAID_AI_REVIEWS_ENABLED")
+        )
+    workflows = policy.get("workflows")
+    if not isinstance(workflows, list) or not workflows:
+        return [*violations, Violation(subject, "workflows must be a non-empty list")]
+
+    for workflow in workflows:
+        path = root / str(workflow)
+        if not path.is_file():
+            violations.append(Violation(str(path), "paid AI review workflow is missing"))
+            continue
+        lines = path.read_text(encoding="utf-8-sig").splitlines()
+        for job_name, start, end in _job_blocks(lines):
+            job_lines = lines[start:end]
+            if not _secret_names(job_lines):
+                continue
+            if PAID_AI_REVIEW_GATE not in _job_if_expression(job_lines):
+                violations.append(
+                    Violation(
+                        f"{path}:{start + 1}",
+                        f"paid AI job `{job_name}` must require {PAID_AI_REVIEW_GATE}",
+                    )
+                )
+    return violations
+
+
 def find_violations(root: Path, manifest_path: Path) -> list[Violation]:
     violations: list[Violation] = []
     manifest = load_manifest(manifest_path)
@@ -158,6 +200,8 @@ def find_violations(root: Path, manifest_path: Path) -> list[Violation]:
                 "tracked_repository_secrets must contain the two migration targets in stable order",
             )
         )
+
+    violations.extend(_paid_ai_review_policy_violations(root, manifest_path, manifest))
 
     environments = manifest.get("environments")
     if not isinstance(environments, dict) or not environments:

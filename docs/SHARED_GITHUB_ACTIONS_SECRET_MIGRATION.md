@@ -17,6 +17,28 @@ same-named repository secret still exists. Internal branches can use repository
 secrets, so deterministic internal-PR isolation is complete only after both
 repository copies are deleted.
 
+## Paid AI review pause
+
+OpenAI and Anthropic review execution is paused while the repository has open
+Issues. Both review workflows are disabled in GitHub, and every credential-
+bearing review job additionally requires the repository variable
+`PAID_AI_REVIEWS_ENABLED` to equal `true`. Keep the variable unset or set to
+`false`; this is the fail-closed source-controlled guard if a workflow is
+accidentally re-enabled.
+
+Do not re-enable the workflows or set the variable to `true` until all of the
+following are true:
+
+1. The repository open Issue count is zero.
+2. The repository owner explicitly approves renewed OpenAI and Anthropic
+   billing.
+3. Provider credentials, WIF configuration, monthly spend limits, and review
+   policy have been revalidated.
+
+The deterministic static checker rejects either paid review workflow if a
+credential-bearing job loses this variable guard. Skipped or unavailable AI
+reviews during the pause are not valid review evidence.
+
 GitHub's [secrets reference](https://docs.github.com/en/actions/reference/security/secrets)
 defines environment-over-repository precedence and when each secret scope is
 read. GitHub's [environment reference](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)
@@ -88,6 +110,10 @@ gh api "repos/$repo/environments/$encoded/deployment-branch-policies"
 GitHub never returns secret values. Obtain the current credential from the
 approved password manager or rotate it at the provider; do not copy values from
 logs, workflow files, shell history, or Actions artifacts.
+
+While the paid AI review policy is paused, do not provision additional
+Anthropic or OpenAI review credentials and do not dispatch either review
+workflow. The non-AI Supabase migration groups may proceed independently.
 
 Set the temporary same-named environment secret only where a scoped replacement
 is not ready:

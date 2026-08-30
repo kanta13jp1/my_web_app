@@ -22,7 +22,7 @@ concurrency:
 jobs:
   review:
     name: Independent Claude and Codex review
-    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    if: vars.PAID_AI_REVIEWS_ENABLED == 'true' && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:

@@ -27,6 +27,9 @@ jobs:
     if: >-
       (github.event_name == 'schedule' && vars.ACCOUNT_DELETION_AUTOMATION_ENABLED == 'true') ||
       (github.event_name == 'workflow_dispatch' && inputs.apply)
+    environment:
+      name: customer-operations-production
+      deployment: false
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
