@@ -6,8 +6,8 @@ Issue #5019 migrates `ANTHROPIC_API_KEY` and `SUPABASE_SERVICE_ROLE_KEY`
 away from repository-level GitHub Actions secrets. The source-controlled
 inventory is `.github/privileged-workflow-credentials.json`.
 
-As of 2026-08-29, `origin/main` has 11 workflow files that resolve
-`ANTHROPIC_API_KEY`, 54 that resolve `SUPABASE_SERVICE_ROLE_KEY`, and 60 unique
+As of 2026-08-30, `origin/main` has 11 workflow files that resolve
+`ANTHROPIC_API_KEY`, 55 that resolve `SUPABASE_SERVICE_ROLE_KEY`, and 61 unique
 consumer workflows. The issue body's earlier 10 / 52 snapshot must not be used
 as a deletion gate.
 
@@ -19,12 +19,12 @@ repository copies are deleted.
 
 ## Paid AI review pause
 
-OpenAI and Anthropic review execution is paused while the repository has open
-Issues. Both review workflows are disabled in GitHub, and every credential-
-bearing review job additionally requires the repository variable
-`PAID_AI_REVIEWS_ENABLED` to equal `true`. Keep the variable unset or set to
-`false`; this is the fail-closed source-controlled guard if a workflow is
-accidentally re-enabled.
+Paid OpenAI and Anthropic execution is paused while the repository has open
+Issues. Both review workflows are disabled in GitHub. The canonical
+`.github/actions/paid-ai-policy` action also requires the repository variable
+`PAID_AI_CLAUDE_CODEX_ENABLED` to equal `true` and verifies that the live open
+Issue count is zero before exposing paid credentials. Lookup errors fail
+closed. Keep the variable set to `false` during the pause.
 
 Do not re-enable the workflows or set the variable to `true` until all of the
 following are true:
@@ -35,9 +35,10 @@ following are true:
 3. Provider credentials, WIF configuration, monthly spend limits, and review
    policy have been revalidated.
 
-The deterministic static checker rejects either paid review workflow if a
-credential-bearing job loses this variable guard. Skipped or unavailable AI
-reviews during the pause are not valid review evidence.
+Run `python scripts/paid_ai_policy.py audit --workflows-dir
+.github/workflows` to verify the paid-AI contract. The CI workflow runs the
+same audit. Skipped or unavailable paid reviews during the pause are not valid
+review evidence.
 
 GitHub's [secrets reference](https://docs.github.com/en/actions/reference/security/secrets)
 defines environment-over-repository precedence and when each secret scope is

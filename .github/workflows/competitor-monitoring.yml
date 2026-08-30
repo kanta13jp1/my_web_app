@@ -31,13 +31,13 @@ jobs:
       deployment: false
     permissions:
       contents: write
+      issues: read
     name: Competitor Intelligence Report
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     env:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
       SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -48,6 +48,12 @@ jobs:
         with:
           fetch-depth: 10
           token: ${{ secrets.BYPASS_RULES || github.token }}
+
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
 
       # ── Step 1: 日付・イベントカレンダー判定 ─────────────────────────────
       - name: Step 1 - 日付 + 特記イベント検出
@@ -183,6 +189,8 @@ jobs:
       # ── Step 4: AI で戦略インテリジェンスレポート生成 ─────────────────────
       - name: Step 4 - AI 戦略インテリジェンス生成 (Gemini primary / Claude fallback)
         id: ai_report
+        env:
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
         run: |
           TODAY="${{ steps.calendar.outputs.today }}"
           SPECIAL_EVENT="${{ steps.calendar.outputs.special_event }}"
