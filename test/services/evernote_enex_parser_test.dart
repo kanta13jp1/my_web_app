@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/services/evernote_enml_markdown_converter.dart';
 import 'package:my_web_app/services/evernote_enex_parser.dart';
 
 void main() {
@@ -35,6 +36,27 @@ void main() {
       expect(note.links, <String>['evernote:///view/1/s1/guid/guid/']);
       expect(note.plainText, contains('☐ Follow up'));
       expect(note.plainText, contains('[Attachment: memo.txt]'));
+      expect(note.markdownText, contains('## Plan'));
+      expect(note.markdownText, contains('**Bold** and *italic*'));
+      expect(note.markdownText, contains('- [ ] Follow up'));
+      expect(
+        note.markdownText,
+        contains('[Internal link](evernote-note:guid)'),
+      );
+      expect(
+        EvernoteEnmlMarkdownConverter.sourceIdFromReference(
+          'evernote-note:guid',
+        ),
+        'guid',
+      );
+      expect(
+        note.markdownText,
+        contains(
+          '[memo.txt](evernote-resource:5d41402abc4b2a76b9719d911017c592)',
+        ),
+      );
+      expect(note.markdownText, contains('| Key | Value |'));
+      expect(note.markdownText, contains('| --- | --- |'));
       expect(note.contentSha256, hasLength(64));
       expect(note.rawXml, contains('<note-attributes>'));
 
@@ -62,6 +84,102 @@ void main() {
         throwsA(isA<FormatException>()),
       );
     });
+
+    test('blocks unresolved attachments and encrypted sections', () {
+      final export = parser.parseText(_unsafeEnex);
+
+      expect(export.warnings, hasLength(2));
+      expect(
+        export.warnings,
+        anyElement(contains('attachment reference(s) could not be matched')),
+      );
+      expect(
+        export.warnings,
+        anyElement(contains('encrypted ENML section(s)')),
+      );
+      expect(
+        export.notes.single.markdownText,
+        contains('[Unresolved Evernote attachment]'),
+      );
+    });
+
+    test('streams one note subtree at a time across byte boundaries',
+        () async {
+      final bytes = Uint8List.fromList(utf8.encode(_streamingEnex));
+      final notes = <EvernoteEnexNote>[];
+      final progress = <int>[];
+      var activeCallbacks = 0;
+      var maximumActiveCallbacks = 0;
+
+      final summary = await parser.parseStream(
+        Stream<List<int>>.fromIterable(
+          bytes.map<List<int>>((byte) => <int>[byte]),
+        ),
+        totalBytes: bytes.length,
+        onProgress: (processedBytes, totalBytes) {
+          progress.add(processedBytes);
+        },
+        onNote: (note) async {
+          activeCallbacks += 1;
+          if (activeCallbacks > maximumActiveCallbacks) {
+            maximumActiveCallbacks = activeCallbacks;
+          }
+          await Future<void>.delayed(Duration.zero);
+          notes.add(note);
+          activeCallbacks -= 1;
+        },
+      );
+      final full = parser.parseBytes(bytes);
+
+      expect(summary.exportSha256, full.exportSha256);
+      expect(summary.exportDate, full.exportDate);
+      expect(summary.application, full.application);
+      expect(summary.version, full.version);
+      expect(summary.noteCount, full.notes.length);
+      expect(summary.resourceCount, full.resourceCount);
+      expect(summary.warnings, full.warnings);
+      expect(summary.processedBytes, bytes.length);
+      expect(notes.map((note) => note.sourceId),
+          full.notes.map((note) => note.sourceId));
+      expect(notes.map((note) => note.title),
+          full.notes.map((note) => note.title));
+      expect(notes.map((note) => note.contentSha256),
+          full.notes.map((note) => note.contentSha256));
+      expect(notes.first.resources.single.data, utf8.encode('hello'));
+      expect(notes.last.title, '日本語ノート');
+      expect(maximumActiveCallbacks, 1);
+      expect(progress.first, 0);
+      expect(progress.last, bytes.length);
+      expect(
+        progress.indexed.skip(1).every(
+              (entry) => entry.$2 >= progress[entry.$1 - 1],
+            ),
+        isTrue,
+      );
+    });
+
+    test('rejects a stream whose declared size is incomplete', () async {
+      final bytes = Uint8List.fromList(utf8.encode(_minimalEnex));
+
+      await expectLater(
+        parser.parseStream(
+          Stream<List<int>>.value(bytes),
+          totalBytes: bytes.length + 1,
+          onNote: (_) {},
+        ),
+        throwsStateError,
+      );
+    });
+
+    test('rejects a streamed XML document that is not ENEX', () async {
+      await expectLater(
+        parser.parseStream(
+          Stream<List<int>>.value(utf8.encode('<notes />')),
+          onNote: (_) {},
+        ),
+        throwsA(isA<FormatException>()),
+      );
+    });
   });
 }
 
@@ -84,9 +202,12 @@ const _completeEnex = '''
     <title>Migration &amp; verification</title>
     <content><![CDATA[
       <en-note>
+        <h2>Plan</h2>
+        <div><strong>Bold</strong> and <em>italic</em></div>
         <div><en-todo checked="false"/>Follow up</div>
         <div><a href="evernote:///view/1/s1/guid/guid/">Internal link</a></div>
         <div><en-media type="text/plain" hash="5d41402abc4b2a76b9719d911017c592"/></div>
+        <table><tr><th>Key</th><th>Value</th></tr><tr><td>A</td><td>B</td></tr></table>
       </en-note>
     ]]></content>
     <created>20240102T030405Z</created>
@@ -112,3 +233,38 @@ const _completeEnex = '''
   </note>
 </en-export>
 ''';
+
+const _unsafeEnex = '''
+<?xml version="1.0" encoding="UTF-8"?>
+<en-export export-date="20260823T034500Z" application="Evernote" version="10">
+  <note>
+    <title>Unsafe</title>
+    <content><![CDATA[
+      <en-note>
+        <en-media type="image/png" hash="missing-resource"/>
+        <en-crypt hint="unlock first">ciphertext</en-crypt>
+      </en-note>
+    ]]></content>
+  </note>
+</en-export>
+''';
+
+const _streamingEnex = '''
+<?xml version="1.0" encoding="UTF-8"?>
+<en-export export-date="20260823T034500Z" application="Evernote" version="10">
+  <note>
+    <guid>stream-1</guid>
+    <title>First</title>
+    <content><![CDATA[<en-note><div>One</div></en-note>]]></content>
+    <resource>
+      <data encoding="base64">aGVsbG8=</data>
+      <mime>text/plain</mime>
+    </resource>
+  </note>
+  <note>
+    <title>日本語ノート</title>
+    <content><![CDATA[<en-note><div>二番目</div></en-note>]]></content>
+  </note>
+</en-export>
+''';
+
