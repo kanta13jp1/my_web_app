@@ -13,7 +13,7 @@ owners or leave persistent local processes behind.
 
 | ワークフロー | ファイル | トリガー | 用途 |
 | --- | --- | --- | --- |
-| **CI** | `ci.yml` | PR + push (main/staging/develop) | flutter analyze **0エラー強制** + deno lint **0エラー強制** + ビルド検証 + Job Summary |
+| **CI** | `ci.yml` | PR + staging/develop push + manual | GitHub-hosted runner上でflutter analyze **0エラー強制** + deno lint **0エラー強制** + ビルド検証 + Job Summary |
 | **Deploy to Development** | `deploy-dev.yml` | `develop` へのpush | 開発環境デプロイ (concurrency制御・timeout付き) |
 | **Deploy to Staging** | `deploy-staging.yml` | `staging` へのpush | ステージング環境デプロイ (concurrency制御・timeout付き) |
 | **Deploy to Production** | `deploy-prod.yml` | `main` へのpush | 本番環境デプロイ + バージョニング (concurrency制御・timeout付き) |
@@ -63,7 +63,11 @@ owners or leave persistent local processes behind.
 
 ### 1. CI (`ci.yml`)
 
-継続的インテグレーション（CI）ワークフロー。すべてのPRに対して自動実行されます。
+継続的インテグレーション（CI）ワークフロー。すべてのPRに対して自動実行され、ローカルPCで重いFlutter/Deno/build検証を実行できない場合は任意のpush済みbranchから手動実行できます。
+
+ローカルのRAM・ディスクが逼迫している場合は
+[`docs/CLOUD_FIRST_DEVELOPMENT_RUNBOOK.md`](../../docs/CLOUD_FIRST_DEVELOPMENT_RUNBOOK.md)
+に従い、編集と軽量チェックだけをローカルで行い、重い検証をGitHub-hosted runnerへ移します。
 
 #### トリガー条件
 
@@ -76,10 +80,24 @@ on:
       - develop
   push:
     branches:
-      - main
       - staging
       - develop
+  workflow_dispatch: {}
+  workflow_call:
 ```
+
+#### Cloud-first手動検証
+
+```powershell
+git push -u origin HEAD
+gh workflow run ci.yml --ref <branch>
+$runId = gh run list --workflow ci.yml --branch <branch> --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId'
+gh run watch $runId --exit-status
+```
+
+PRがある場合はpushだけでCIが開始されるため、通常は
+`gh pr checks <PR番号> --watch`を使います。生成物はephemeral runnerに残し、
+必要な場合だけartifactをダウンロードします。
 
 #### 実行ジョブ
 

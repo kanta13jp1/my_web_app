@@ -104,14 +104,22 @@ Discard instead of merge when:
 
 ## Session Hygiene Gate
 
-Every session must perform a cheap resource check before wrap-up:
+Every session must use `python scripts/codex_session_check.py` as the first
+resource-routing check. If its `Parallel/heavy-work gate` is `hold`, keep
+local work read-only or source-only and route Flutter/Dart/Deno tests, builds,
+browser automation, and other heavy validation to GitHub Actions. Do not start
+cleanup work merely because the gate is `hold`.
+
+Before wrap-up, use read-only checks first:
 
 ```powershell
 Get-PSDrive C
 Get-Process | Sort-Object WorkingSet64 -Descending | Select-Object -First 12 ProcessName,Id,@{Name='MB';Expression={[math]::Round($_.WorkingSet64/1MB,1)}}
-git worktree prune
-git gc --auto
 ```
+
+Run `git worktree prune` or `git gc --auto` only after confirming that no
+other task is performing Git operations and that cleanup is actually needed.
+Prefer the cloud-first procedure in `docs/CLOUD_FIRST_DEVELOPMENT_RUNBOOK.md`.
 
 Safe cleanup candidates:
 

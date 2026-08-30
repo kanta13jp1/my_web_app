@@ -47,6 +47,30 @@ before creating a new Issue. Keep skip reasons in
 `docs/notebooklm-intake/state.json` so repeated sessions do not re-triage the
 same notebook.
 
+## Cloud-First Resource Gate
+
+- Treat `python scripts/codex_session_check.py` as the routing authority for
+  local resource pressure. When `Parallel/heavy-work gate` is `hold`, do not
+  run local Flutter/Dart/Deno builds, full test suites, dev servers, browser
+  automation, media processing, dependency downloads, or similarly heavy
+  commands.
+- Keep local work to source edits, `git`/`rg`, parsers, and narrowly targeted
+  lightweight policy tests. Push the scoped branch and let the pull-request CI
+  validate it on GitHub-hosted runners.
+- For a pushed branch that needs validation before or outside a PR, dispatch
+  `.github/workflows/ci.yml` with `gh workflow run ci.yml --ref <branch>` and
+  inspect it with `gh run watch <run-id> --exit-status` or `gh pr checks`.
+- Do not download CI artifacts unless inspection requires them; prefer job
+  summaries and logs so generated build output remains on the ephemeral
+  runner.
+- Local heavy validation is an exception: use it only when the cloud cannot
+  reproduce the check, the resource gate is `allow`, and the task records why.
+  Cloud routing never expands authority for production, paid AI, secrets, or
+  external writes.
+
+The complete operating procedure is in
+`docs/CLOUD_FIRST_DEVELOPMENT_RUNBOOK.md`.
+
 ## Role Split
 
 - Claude Code owns planning, architecture, review, and quality-gate design.

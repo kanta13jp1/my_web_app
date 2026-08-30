@@ -22,6 +22,10 @@ on:
       - '.github/**/*.md'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/PULL_REQUEST_TEMPLATE.md'
+  # Local PC resource pressure must not force Flutter/Deno/build validation to
+  # run on Windows. Operators can dispatch the same full gate on a hosted
+  # runner for any pushed branch.
+  workflow_dispatch: {}
   workflow_call:
 
 permissions: {}

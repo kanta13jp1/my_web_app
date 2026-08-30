@@ -89,6 +89,23 @@ class CicdEfficiencyTest(unittest.TestCase):
         self.assertIn("if: steps.changes.outputs.caption == 'true'", workflow)
         self.assertIn("steps.changes.outputs.web == 'true'", workflow)
 
+    def test_ci_supports_cloud_first_manual_validation(self) -> None:
+        workflow = self.read(".github/workflows/ci.yml")
+        triggers = workflow.split("on:", 1)[1].split("permissions:", 1)[0]
+
+        self.assertIn("workflow_dispatch: {}", triggers)
+        self.assertIn("workflow_call:", triggers)
+        self.assertIn("runs-on: ubuntu-latest", workflow)
+        self.assertNotIn("runs-on: self-hosted", workflow)
+        self.assertIn(
+            "FORCE_ALL: ${{ github.event_name != 'pull_request' }}", workflow
+        )
+
+        agents = self.read("AGENTS.md")
+        self.assertIn("## Cloud-First Resource Gate", agents)
+        self.assertIn("gh workflow run ci.yml --ref <branch>", agents)
+        self.assertIn("Parallel/heavy-work gate", agents)
+
     def test_required_ci_checks_are_emitted_for_docs_only_prs(self) -> None:
         workflow = self.read(".github/workflows/ci.yml")
         pull_request = workflow.split("  pull_request:", 1)[1].split(
