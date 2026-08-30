@@ -8025,8 +8025,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         AiUniversityVideoLessonService.youtubeVideoIdFromUrl(sourceUrl);
     final isLatestInfoTask = provider == '01ai' && category == 'news';
     final isModelSelectionTask = provider == '01ai' && category == 'models';
-    final isFireflyApiTask =
-        provider == 'adobe_firefly' && category == 'api';
+    final isFireflyApiTask = provider == 'adobe_firefly' && category == 'api';
     final isLlmMechanicsTask =
         provider == 'academic' && category == 'llm_mechanics';
     final isFuyuLab = provider == 'adept' && category == 'api';
@@ -8038,8 +8037,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             : isModelSelectionTask
                 ? _modelSelectionLearningOutcomeAnalytics
                 : _learningOutcomeAnalytics;
-    final hasLearningOutcomeTask =
-        isLatestInfoTask ||
+    final hasLearningOutcomeTask = isLatestInfoTask ||
         isModelSelectionTask ||
         isFireflyApiTask ||
         isLlmMechanicsTask;

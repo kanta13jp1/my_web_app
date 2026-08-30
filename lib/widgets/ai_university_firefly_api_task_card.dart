@@ -227,8 +227,7 @@ class _AiUniversityFireflyApiTaskCardState
                         onSelected: _submitted
                             ? null
                             : (_) => setState(
-                                  () =>
-                                      _answers[questionIndex] = optionIndex,
+                                  () => _answers[questionIndex] = optionIndex,
                                 ),
                       ),
                     ),

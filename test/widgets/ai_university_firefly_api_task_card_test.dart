@@ -17,19 +17,22 @@ void main() {
         ),
       );
 
-  testWidgets('requires the complete security and operations lab', (tester) async {
+  testWidgets('requires the complete security and operations lab',
+      (tester) async {
     await tester.pumpWidget(
-      subject(({
-        required correctAnswers,
-        required selfRating,
-        required learnerRole,
-        required firstCallSucceeded,
-        required secretHandlingPassed,
-        required apiSelectionPassed,
-        required non2xxRecoveryPassed,
-        required estimatedDailyRequests,
-        required completionSeconds,
-      }) async => true,
+      subject(
+        ({
+          required correctAnswers,
+          required selfRating,
+          required learnerRole,
+          required firstCallSucceeded,
+          required secretHandlingPassed,
+          required apiSelectionPassed,
+          required non2xxRecoveryPassed,
+          required estimatedDailyRequests,
+          required completionSeconds,
+        }) async =>
+            true,
       ),
     );
 
@@ -62,7 +65,8 @@ void main() {
     expect(tester.widget<FilledButton>(submit).onPressed, isNotNull);
   });
 
-  testWidgets('submits only bounded role-level outcome metrics', (tester) async {
+  testWidgets('submits only bounded role-level outcome metrics',
+      (tester) async {
     Map<String, Object>? submitted;
     await tester.pumpWidget(
       subject(({

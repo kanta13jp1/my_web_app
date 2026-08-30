@@ -152,7 +152,8 @@ void main() {
     });
   });
 
-  test('Firefly API task rejects unbounded role, usage, and duration', () async {
+  test('Firefly API task rejects unbounded role, usage, and duration',
+      () async {
     var writes = 0;
     final analytics = AiUniversityLearningOutcomeAnalytics(
       task: AiUniversityLearningOutcomeTask.fireflyApi,
