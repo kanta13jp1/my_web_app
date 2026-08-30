@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-28T17:09:33.441776+00:00",
+  "generated_at": "2026-08-30T04:24:32.859422+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -11,12 +11,12 @@
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 13,
-    "eligible": 13,
-    "provisional": 11,
+    "total": 14,
+    "eligible": 14,
+    "provisional": 12,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 12,
+    "division_3": 13,
     "division_4": 1,
     "division_5": 0
   },
@@ -28,50 +28,50 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260829T002706+0900",
-    "started_at": "2026-08-29T00:27:06+09:00",
+    "cycle_id": "20260830T130051+0900",
+    "started_at": "2026-08-30T13:00:51+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-50609809-2da6-41ba-9c35-4bbec9668493",
-      "url": "https://github.com/OpenAutoCoder/Agentless"
+      "slug": "course-c2dc853b-071e-479c-acc8-cbe679cc510d",
+      "url": "https://github.com/OpenBMB/AgentVerse"
     },
     "reviewer": {
       "seat": 12,
       "name": "迫 佑樹",
-      "selection_score": 72.7025,
+      "selection_score": 74.5105,
       "division": 1,
-      "cycle_utility": 85.62,
-      "aggregate_utility": 86.95
+      "cycle_utility": 85.69,
+      "aggregate_utility": 85.66
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 4,
     "top_findings": [
       {
-        "summary": "『SWE-bench高効率』を支えるrelease・model・benchmark subset・cost基準が固定されていない",
+        "summary": "実行例のAgentVerse、ConversationAgent、TaskDrivenAgentVerseが公式package exportと一致しない",
         "severity": "p1",
         "business_dimensions": [
           "trust_risk",
           "market_demand",
-          "unit_economics"
-        ]
-      },
-      {
-        "summary": "3段階設計を一つのissueで再現する短時間labと成功条件がない",
-        "severity": "p1",
-        "business_dimensions": [
-          "market_demand",
-          "competitive_advantage",
           "scalability"
         ]
       },
       {
-        "summary": "環境pin、候補数、token/API費用、wall timeを残す再現traceがない",
+        "summary": "refactor中のsimulationとstable release、main commit、依存環境を区別するversion contractがない",
         "severity": "p1",
         "business_dimensions": [
+          "trust_risk",
           "unit_economics",
-          "scalability",
-          "trust_risk"
+          "scalability"
+        ]
+      },
+      {
+        "summary": "役割分担と動的group compositionを一つのtaskで比較する提出物とrubricがない",
+        "severity": "p1",
+        "business_dimensions": [
+          "market_demand",
+          "competitive_advantage",
+          "revenue_model"
         ]
       }
     ],
@@ -90,56 +90,156 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After the production-data owner adds a versioned evidence contract, run one cohort on a fixed SWE-bench issue and compare completion rate, localization accuracy, test pass rate, wall time, and API-cost forecast error against the explanation-only course."
+      "next_cycle_experiment": "After the production-data owner replaces the example with one commit-pinned official Simulation or TaskSolving workflow, run one cohort and compare import success, 60-minute completion, rubric gain, role-selection justification, wall time, and token or backend cost."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #4982",
-      "detail": "専用対策キューで順番待ちです。",
+      "label": "対策待ち・Issue #5049",
+      "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [
-        "course-agentless-versioned-efficiency-contract-gap"
+        "course-agentverse-nonexistent-api-example"
       ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean branch equals origin/main 782c5b6b2c24936f6c8b7987376e3db485d0d588",
+        "passed: clean dedicated branch fast-forwarded to origin/main 2e6eac446879e0e0b51d846e0fc0ddfe5f20b8c2",
         "passed: 125 roster profiles and 125 personas",
-        "passed: active=1078, reviewable=533, excluded_missing_source_url=536",
+        "passed: active=1079, reviewable=534, excluded_missing_source_url=536, evidence_complete=3",
         "passed: deterministic winner from fresh catalog",
-        "passed: Agentless repository, SWE-bench guide, primary paper, and named source/test paths inspected",
-        "executed once successfully against shared history root after input schema correction: 125 profiles, seat 12"
+        "passed: no comparable baseline, focus_dimension=evidence",
+        "passed: AgentVerse repository, package exports, paper v3, seed migration, named page, and named provider-evidence test inspected",
+        "executed once successfully: 125 profiles, seat 12"
       ],
       "issue": {
-        "number": 4982,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4982",
+        "number": 5049,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5049",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260829T002706+0900:50609809-2da6-41ba-9c35-4bbec9668493",
-        "remediation_state": "queued",
-        "queue_status": "QUEUED",
-        "synced_at": "2026-08-28T17:09:06.597309+00:00"
+        "dedupe_key": "tiger-course-review:20260830T130051+0900:c2dc853b-071e-479c-acc8-cbe679cc510d",
+        "remediation_state": null,
+        "queue_status": null,
+        "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-agentless-one-issue-lab-gap",
-        "course-agentless-runtime-cost-trace-gap",
-        "course-agentless-learner-outcome-gap"
+        "course-agentverse-version-stability-contract-gap",
+        "course-agentverse-role-collaboration-lab-gap",
+        "course-agentverse-learner-outcome-gap"
       ]
     },
     "course": {
-      "content_id": "50609809-2da6-41ba-9c35-4bbec9668493",
-      "provider": "agentless",
-      "title": "Agentless — 最小構成バグ修正エージェント・エージェントレス設計哲学・SWE-bench高効率 (9/9)",
-      "source_url": "https://github.com/OpenAutoCoder/Agentless",
-      "reason": "fresh公開Data APIで対象行を確認した。公式repositoryとprimary paperはlocalization、repair、patch validationという単純化された設計を示す一方、再現guideは多段localization、40候補patch、regression/reproduction test、reranking、benchmark artifact、Python 3.11/conda/API keyを要求する。さらにpaperの32.00%・$0.70、release別READMEの27.3%・$0.34や40.7%/50.8%はbenchmark、model、releaseが異なるため、版を固定しない『高効率』説明は比較不能である。bounded tracked sourceにはAgentless固有のsource/reproduction contractがなく、実在学習者証拠は契約どおり中立50点とした。",
-      "cycle_utility": 31.25,
-      "aggregate_utility": 31.25,
+      "content_id": "c2dc853b-071e-479c-acc8-cbe679cc510d",
+      "provider": "agentverse",
+      "title": "AgentVerse (OpenBMB/清華大学) — マルチエージェントシミュレーション・役割ベース協調・動的チーム編成 (9/9)",
+      "source_url": "https://github.com/OpenBMB/AgentVerse",
+      "reason": "fresh公開Data APIで対象行を確認したが、5つのevidence fieldはすべてnullだった。公式repositoryはtask-solvingとsimulationを分離し、simulationをrefactor中として安定用途にrelease-0.1を案内する。公式main commit f90c4bd9680fdd3bcff8c52c9170911a59b23478のpackage exportはSimulationとTaskSolvingで、tracked courseのAgentVerse、ConversationAgent、TaskDrivenAgentVerseという実行例を裏づけない。primary paperは動的なgroup compositionを報告するが、講座固有API、環境、合格条件、費用、実在学習者成果は確認できないため、learner evidenceは契約どおり中立50点とした。",
+      "cycle_utility": 26.25,
+      "aggregate_utility": 26.25,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260830T130051+0900",
+      "started_at": "2026-08-30T13:00:51+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "c2dc853b-071e-479c-acc8-cbe679cc510d",
+        "title": "AgentVerse (OpenBMB/清華大学) — マルチエージェントシミュレーション・役割ベース協調・動的チーム編成 (9/9)",
+        "url": "https://github.com/OpenBMB/AgentVerse"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 74.5105
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner replaces the example with one commit-pinned official Simulation or TaskSolving workflow, run one cohort and compare import success, 60-minute completion, rubric gain, role-selection justification, wall time, and token or backend cost."
+      },
+      "findings": [
+        {
+          "finding_id": "course-agentverse-nonexistent-api-example",
+          "summary": "実行例のAgentVerse、ConversationAgent、TaskDrivenAgentVerseが公式package exportと一致しない",
+          "severity": "p1",
+          "suggested_action": "公式commitを固定し、実在するSimulationまたはTaskSolvingと公式CLIだけで一つのrole-based exampleを再構成し、開始コマンド、期待出力、代表的エラー、合格条件を明示する。"
+        },
+        {
+          "finding_id": "course-agentverse-version-stability-contract-gap",
+          "summary": "refactor中のsimulationとstable release、main commit、依存環境を区別するversion contractがない",
+          "severity": "p1",
+          "suggested_action": "確認日、repository commit、利用framework、stable branch、Python、model backend、credential要否、依存file、既知のrefactor制約を一組のenvironment manifestとして固定する。"
+        },
+        {
+          "finding_id": "course-agentverse-role-collaboration-lab-gap",
+          "summary": "役割分担と動的group compositionを一つのtaskで比較する提出物とrubricがない",
+          "severity": "p1",
+          "suggested_action": "固定taskでsingle agent、固定role team、条件付きrole追加を各1回実行し、品質rubric、wall time、token/cost、役割追加理由を比較する60分labを設ける。"
+        },
+        {
+          "finding_id": "course-agentverse-learner-outcome-gap",
+          "summary": "実在学習者がrole-based collaborationを再現し判断へ使えた証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名のlab開始/完了、import成功、rubric score、role選択理由、token/cost差、再現率、職場適用を1 cohortで取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5049",
+        "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-agentverse-nonexistent-api-example"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch fast-forwarded to origin/main 2e6eac446879e0e0b51d846e0fc0ddfe5f20b8c2",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1079, reviewable=534, excluded_missing_source_url=536, evidence_complete=3",
+          "passed: deterministic winner from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: AgentVerse repository, package exports, paper v3, seed migration, named page, and named provider-evidence test inspected",
+          "executed once successfully: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 5049,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5049",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260830T130051+0900:c2dc853b-071e-479c-acc8-cbe679cc510d",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-agentverse-version-stability-contract-gap",
+          "course-agentverse-role-collaboration-lab-gap",
+          "course-agentverse-learner-outcome-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260829T002706+0900",
       "started_at": "2026-08-29T00:27:06+09:00",
@@ -228,7 +328,7 @@
           "dedupe_key": "tiger-course-review:20260829T002706+0900:50609809-2da6-41ba-9c35-4bbec9668493",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -326,7 +426,7 @@
           "dedupe_key": "tiger-course-review:20260828T235300+0900:f0ce952d-841b-4d6b-88ed-4d6317f74a9e",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -424,7 +524,7 @@
           "dedupe_key": "tiger-course-review:20260828T100917+0900:c1ea41da-b447-4c7b-aee7-630d03c6a516",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -522,7 +622,7 @@
           "dedupe_key": "tiger-course-review:20260828T021401+0900:955ae2e6-9909-4635-aacd-790ab23aa7c8",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -615,7 +715,7 @@
           "dedupe_key": "tiger-course-review:20260827T232859+0900:746a2878-6a2d-4787-91e2-1778ebdda8ce",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -711,7 +811,7 @@
           "dedupe_key": "tiger-course-review:20260826T230834+0900:fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -809,8 +909,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260826T151103+0900:63c96c0b-834c-4979-b387-ff4d4393aced",
           "remediation_state": "production_verified",
-          "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": {
           "commit_sha": "379d95b69c88ce2eeb9b6a1a85ed477f3209ba78",
@@ -914,8 +1014,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260826T071116+0900:4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
           "remediation_state": "production_verified",
-          "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": {
           "commit_sha": "3c725dd9cf7d81d14504a090bfc471750a7a0147",
@@ -1017,7 +1117,7 @@
           "dedupe_key": "tiger-course-review:20260826T061027+0900:5b7e5f70-2652-4949-b00d-6bbc768fbb96",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1042,7 +1142,7 @@
         "name": "迫 佑樹",
         "selection_score": 75.0278
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": null,
@@ -1067,9 +1167,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4763",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #4763 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1095,11 +1195,11 @@
           "number": 4763,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4763",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260824T011146+0900:647dc452-f75d-4dd9-8292-332bada2e2f9",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "EXTERNAL_IN_PROGRESS",
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": {
           "commit_sha": "7b30251dc8cbd3398e7ad044f536670ba6c640ad",
@@ -1176,7 +1276,7 @@
           "dedupe_key": "tiger-course-review:20260823T232120+0900:e1712bb5-2bca-4fc0-8347-0529513411d3",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1248,7 +1348,7 @@
           "dedupe_key": "tiger-course-review:20260823T175240+0900:525273ba-539f-4dd4-b436-a6a74a5e8cc5",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": {
           "commit_sha": "20b20d3ce18515752a09e11beb6efd32cee12e49",
@@ -1324,7 +1424,7 @@
           "dedupe_key": "tiger-course-review:20260823T165404+0900:22befb67-6147-4a4b-999c-ee1ad6fa9615",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": {
           "commit_sha": "18eedc47ea0769b871ba191b7ff9162252afb8f3",
@@ -1403,8 +1503,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
-          "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1478,8 +1578,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
           "remediation_state": "queued",
-          "queue_status": "DEFERRED_RESOURCE",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1709,6 +1809,20 @@
       "completed_cycles": 1,
       "last_cycle_utility": 28.5,
       "last_reviewed_at": "2026-08-28T01:09:17+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "c2dc853b-071e-479c-acc8-cbe679cc510d",
+      "provider": "agentverse",
+      "title": "AgentVerse (OpenBMB/清華大学) — マルチエージェントシミュレーション・役割ベース協調・動的チーム編成 (9/9)",
+      "source_url": "https://github.com/OpenBMB/AgentVerse",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 26.25,
+      "completed_cycles": 1,
+      "last_cycle_utility": 26.25,
+      "last_reviewed_at": "2026-08-30T04:00:51+00:00",
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
