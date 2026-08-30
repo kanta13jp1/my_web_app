@@ -634,6 +634,21 @@ void main() {
           'paypay_card': 10000,
           'ファミペイ': 10000,
         },
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'paypay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            newUsageAmount: 30000,
+          ),
+          'famipay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            newUsageAmount: 30000,
+          ),
+        },
+        actualPaymentAmounts: const <String, double>{
+          'paypay_card': 10000,
+          'famipay_card': 10000,
+        },
+        paidAccountNames: const <String>{'paypay_card', 'famipay_card'},
         annualRateOverrides: const <String, double>{'famipay_card': 0.18},
       );
 
