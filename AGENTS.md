@@ -139,3 +139,10 @@ gh run watch <run-id> --exit-status
 - PostToolUse anti-pattern warnings are review prompts, not proof of safety.
   Resolve each warning or record a narrow exception, then run the applicable
   formatter, analyzer, tests, security checks, and PR quality gates.
+## Cloud-first Execution
+
+- Default heavy work to `.github/workflows/cloud-development.yml`; see `docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md`.
+- Keep local work to scoped edits, diff review, branch/PR operations, workflow dispatch, log inspection, and short HTTP/revision smoke checks.
+- Run Flutter dependency resolution, analysis, tests, release web builds, and deployment gates on GitHub-hosted runners whenever the workflow can cover the task.
+- Do not start local Flutter/Dart builds, analysis, tests, browser automation, or media processing when RAM usage is at least 85% or free physical memory is below 2 GB. Preserve edits and dispatch the cloud workflow instead.
+- Use `analyze`, `test`, or `web-build` while iterating and `full` before merge. Do not download cloud build artifacts merely to redeploy them locally.
