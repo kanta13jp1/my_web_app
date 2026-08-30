@@ -128,7 +128,13 @@ async function enableFlutterAccessibility(page: Page) {
     () => undefined,
   );
   if ((await placeholder.count()) > 0) {
-    await placeholder.click({ force: true });
+    // Flutter's semantics placeholder can be intentionally zero-sized and
+    // outside the rendered viewport. Dispatch the element's click handler
+    // directly so headless cloud runners can enable accessibility without a
+    // coordinate-based Playwright click.
+    await placeholder.evaluate((element) =>
+      (element as HTMLElement).click(),
+    );
   }
 }
 
