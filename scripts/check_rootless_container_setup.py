@@ -175,6 +175,7 @@ def validate_cloud_workflow(
 
     docker_markers = (
         "dockerd-rootless.sh",
+        "--exec-opt native.cgroupdriver=cgroupfs",
         "docker info",
         "DOCKER_HOST",
         "docker_security_options",

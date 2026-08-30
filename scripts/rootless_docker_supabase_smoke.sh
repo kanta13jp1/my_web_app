@@ -83,6 +83,7 @@ record "unprivileged_port_start=$(cat /proc/sys/net/ipv4/ip_unprivileged_port_st
 dockerd-rootless.sh \
   --host="${DOCKER_HOST}" \
   --storage-driver=fuse-overlayfs \
+  --exec-opt native.cgroupdriver=cgroupfs \
   --data-root="${runtime_root}/data" \
   --exec-root="${runtime_root}/exec" \
   --pidfile="${runtime_root}/docker.pid" \
