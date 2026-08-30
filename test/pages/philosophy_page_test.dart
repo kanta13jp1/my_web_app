@@ -27,6 +27,7 @@ void main() {
     expect(find.text('このページの編集方針'), findsOneWidget);
     expect(find.textContaining('実在する利用者の体験談や成果ではありません'), findsOneWidget);
     expect(find.text('開発実績と更新履歴'), findsOneWidget);
+    expect(find.text('GitHub @kanta13jp1'), findsOneWidget);
     expect(find.text('データの取り扱い'), findsOneWidget);
     expect(find.text('本社'), findsOneWidget);
     expect(find.text('人事'), findsOneWidget);
