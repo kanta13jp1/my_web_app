@@ -35,7 +35,7 @@ const SIGNED_URL_TTL_SECONDS = 300;
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, traceparent, tracestate, baggage, sentry-trace",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 

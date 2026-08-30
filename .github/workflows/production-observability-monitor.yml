@@ -1,0 +1,160 @@
+name: Production Observability Monitor
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/production-observability-monitor.yml"
+      - "lib/main.dart"
+      - "lib/services/supabase_trace_context.dart"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - "scripts/production_observability_monitor.py"
+      - "supabase/functions/**/*.ts"
+      - "test/scripts/test_production_observability_monitor.py"
+      - "test/services/supabase_trace_context_test.dart"
+  workflow_dispatch:
+    inputs:
+      run_production:
+        description: "Fetch configured production telemetry and alert on breaches"
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: "41 * * * *"
+
+concurrency:
+  group: production-observability-monitor-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  validate:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: "3.38.10"
+          cache: true
+
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+
+      - name: Validate deterministic trace and monitor behavior
+        run: |
+          flutter pub get
+          flutter test test/services/supabase_trace_context_test.dart
+          deno test --allow-read supabase/functions/_shared/trace_context_test.ts
+          python test/scripts/test_production_observability_monitor.py
+
+      - name: Validate workflow and scripts
+        run: |
+          python -m py_compile scripts/production_observability_monitor.py test/scripts/test_production_observability_monitor.py
+          ruby -e "require 'yaml'; YAML.load_file('.github/workflows/production-observability-monitor.yml')"
+
+  monitor:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_production)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+      P95_ALERT_MS: ${{ vars.OBSERVABILITY_P95_ALERT_MS || '5000' }}
+      ERROR_RATE_ALERT: ${{ vars.OBSERVABILITY_ERROR_RATE_ALERT || '0.20' }}
+      SENTRY_ERROR_ALERT: ${{ vars.OBSERVABILITY_SENTRY_ERROR_ALERT || '20' }}
+      NODE_LOAD5_ALERT: ${{ vars.OBSERVABILITY_NODE_LOAD5_ALERT || '4' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Require production telemetry configuration
+        run: |
+          test -n "$SUPABASE_SERVICE_ROLE_KEY" || { echo "::error::SUPABASE_SERVICE_ROLE_KEY missing"; exit 1; }
+          test -n "$SUPABASE_SECRET_KEY" || { echo "::error::SUPABASE_SECRET_KEY missing"; exit 1; }
+          test -n "$SENTRY_AUTH_TOKEN" || { echo "::error::SENTRY_AUTH_TOKEN missing"; exit 1; }
+          test -n "$SENTRY_ORG" || { echo "::error::SENTRY_ORG variable missing"; exit 1; }
+          test -n "$SENTRY_PROJECT" || { echo "::error::SENTRY_PROJECT variable missing"; exit 1; }
+
+      - name: Fetch aggregate sources
+        run: |
+          START=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)
+          END=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          curl --fail --silent --show-error --max-time 30 \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"action":"observability.provider_health"}' \
+            "$SUPABASE_URL/functions/v1/ai-hub" > ai-hub-health.json
+          curl --fail --silent --show-error --max-time 30 \
+            -u "service_role:$SUPABASE_SECRET_KEY" \
+            "$SUPABASE_URL/customer/v1/privileged/metrics" > supabase-metrics.prom
+          curl --fail --silent --show-error --max-time 30 \
+            -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" \
+            "https://sentry.io/api/0/projects/$SENTRY_ORG/$SENTRY_PROJECT/" \
+            > sentry-project.json
+          SENTRY_PROJECT_ID=$(jq -er '.id' sentry-project.json)
+          curl --fail --silent --show-error --max-time 30 --get \
+            -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" \
+            --data-urlencode "field=sum(quantity)" \
+            --data-urlencode "groupBy=category" \
+            --data-urlencode "category=error" \
+            --data-urlencode "interval=1h" \
+            --data-urlencode "start=$START" \
+            --data-urlencode "end=$END" \
+            --data-urlencode "project=$SENTRY_PROJECT_ID" \
+            "https://sentry.io/api/0/organizations/$SENTRY_ORG/stats_v2/" \
+            > sentry-stats.json
+
+      - name: Evaluate thresholds
+        id: evaluate
+        run: |
+          python scripts/production_observability_monitor.py \
+            --ai-hub-json ai-hub-health.json \
+            --supabase-metrics supabase-metrics.prom \
+            --sentry-json sentry-stats.json \
+            --output-json production-observability.json \
+            --output-md production-observability.md \
+            --p95-alert-ms "$P95_ALERT_MS" \
+            --error-rate-alert "$ERROR_RATE_ALERT" \
+            --sentry-error-alert "$SENTRY_ERROR_ALERT" \
+            --resource-alert "node_load5=$NODE_LOAD5_ALERT" | tee monitor-output.txt
+          cat monitor-output.txt >> "$GITHUB_OUTPUT"
+          cat production-observability.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create or update deduplicated breach issue
+        if: steps.evaluate.outputs.breach == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEDUPE_KEY: ${{ steps.evaluate.outputs.dedupe_key }}
+        run: |
+          MARKER="[observability-dedupe:$DEDUPE_KEY]"
+          ISSUE=$(gh issue list --state open --search "$MARKER in:body" --json number --jq '.[0].number // empty')
+          { echo "$MARKER"; cat production-observability.md; } > issue-body.md
+          if [ -n "$ISSUE" ]; then
+            gh issue comment "$ISSUE" --body-file issue-body.md
+          else
+            gh issue create --title "[Alert][Observability] Production telemetry threshold breach" --body-file issue-body.md --label automation --label bug
+          fi
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: production-observability
+          path: |
+            production-observability.json
+            production-observability.md

@@ -343,6 +343,7 @@ import 'utils/error_reporter.dart';
 
 import 'services/supabase_client_provider.dart';
 import 'services/supabase_runtime_config.dart';
+import 'services/supabase_trace_context.dart';
 
 export 'services/supabase_client_provider.dart';
 
@@ -366,6 +367,13 @@ Future<void> main() async {
   await Supabase.initialize(
     url: supabaseConfig.url,
     publishableKey: supabaseConfig.publishableKey,
+    tracePropagationOptions: TracePropagationOptions(
+      enabled: true,
+      // Keep trace IDs in Supabase logs even when the Sentry transaction is
+      // not exported. Only W3C identifiers are propagated, never payloads.
+      respectSamplingDecision: false,
+      traceContextProvider: SupabaseSentryTraceContextProvider().call,
+    ),
   );
 
   // Flutter/Dart エラーを自動で Sentry + フィードバックEF に送信
