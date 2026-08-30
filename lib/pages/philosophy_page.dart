@@ -362,7 +362,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
           const Text(
             '自分株式会社の考え方を、日々の意思決定に使える独自の運用ガイドとして整理しています。'
             '記入例はすべて説明用の架空例です。医療・法律・投資など専門判断の代わりにはならず、'
-            '必要な場合は各分野の専門家へ相談してください。最終更新: 2026年8月19日',
+            '必要な場合は各分野の専門家へ相談してください。最終更新: 2026年8月23日',
             style: TextStyle(
               fontSize: 13,
               color: Color(0xFFCBD5E1),
@@ -380,6 +380,14 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
                 ).pushNamed('/development-achievements'),
                 icon: const Icon(Icons.history, size: 16),
                 label: const Text('開発実績と更新履歴'),
+              ),
+              TextButton.icon(
+                onPressed: () => launchUrl(
+                  Uri.parse('https://github.com/kanta13jp1'),
+                  mode: LaunchMode.externalApplication,
+                ),
+                icon: const Icon(Icons.open_in_new, size: 16),
+                label: const Text('GitHub @kanta13jp1'),
               ),
               TextButton.icon(
                 onPressed: () => Navigator.of(context).pushNamed('/privacy'),
