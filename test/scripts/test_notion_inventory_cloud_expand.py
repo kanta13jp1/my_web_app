@@ -7,6 +7,7 @@ import unittest
 from scripts.notion_inventory_cloud_expand import (
     ExpansionError,
     execute,
+    execute_drain,
     render_summary,
 )
 
@@ -42,6 +43,71 @@ class FakeHub:
     def apply(self, limit: int, expected_plan_sha256: str) -> dict[str, object]:
         self.apply_calls.append((limit, expected_plan_sha256))
         return self.apply_payload
+
+
+class DrainHub:
+    def __init__(self) -> None:
+        self.plan_calls: list[int] = []
+        self.apply_calls: list[tuple[int, str]] = []
+        self._plans = [
+            {
+                "plan_sha256": "a" * 64,
+                "selected": 5,
+                "remaining_to_expand": 100,
+                "safe_apply_gate_open": True,
+                "source_deletion_attempted": False,
+                "private_batch_id": "must-not-leak",
+            },
+            {
+                "plan_sha256": "b" * 64,
+                "selected": 5,
+                "remaining_to_expand": 95,
+                "safe_apply_gate_open": True,
+                "source_deletion_attempted": False,
+            },
+            {
+                "plan_sha256": "c" * 64,
+                "selected": 2,
+                "remaining_to_expand": 90,
+                "safe_apply_gate_open": True,
+                "source_deletion_attempted": False,
+            },
+        ]
+        self._applies = [
+            {
+                "plan_sha256": "a" * 64,
+                "expanded": 5,
+                "discovered": 3,
+                "remaining_to_expand": 95,
+                "inventory_complete": False,
+                "source_deletion_attempted": False,
+                "private_page_id": "must-not-leak",
+            },
+            {
+                "plan_sha256": "b" * 64,
+                "expanded": 5,
+                "discovered": 2,
+                "remaining_to_expand": 90,
+                "inventory_complete": False,
+                "source_deletion_attempted": False,
+            },
+            {
+                "plan_sha256": "c" * 64,
+                "expanded": 2,
+                "discovered": 1,
+                "remaining_to_expand": 88,
+                "inventory_complete": False,
+                "source_deletion_attempted": False,
+            },
+        ]
+
+    def plan(self, limit: int) -> dict[str, object]:
+        self.plan_calls.append(limit)
+        return self._plans[len(self.plan_calls) - 1]
+
+    def apply(self, limit: int, expected_plan_sha256: str) -> dict[str, object]:
+        self.apply_calls.append((limit, expected_plan_sha256))
+        return self._applies[len(self.apply_calls) - 1]
 
 
 class NotionInventoryCloudExpandTest(unittest.TestCase):
@@ -108,6 +174,66 @@ class NotionInventoryCloudExpandTest(unittest.TestCase):
                 expected_plan_sha256=DIGEST,
             )
 
+        self.assertEqual(hub.apply_calls, [])
+
+    def test_drain_replans_each_five_item_batch_and_caps_total(self) -> None:
+        hub = DrainHub()
+        pauses: list[float] = []
+
+        report = execute_drain(
+            hub,
+            limit=5,
+            max_items=12,
+            expected_plan_sha256="a" * 64,
+            pause=pauses.append,
+        )
+
+        self.assertEqual(hub.plan_calls, [5, 5, 2])
+        self.assertEqual(
+            hub.apply_calls,
+            [(5, "a" * 64), (5, "b" * 64), (2, "c" * 64)],
+        )
+        self.assertEqual(pauses, [1.0, 1.0])
+        self.assertEqual(report["batches_applied"], 3)
+        self.assertEqual(report["mutations"]["items_attempted"], 12)
+        self.assertEqual(report["mutations"]["inventory_items_discovered"], 6)
+        self.assertEqual(report["remaining_after"], 88)
+        self.assertEqual(report["stopped_reason"], "max_items_reached")
+        self.assertFalse(report["source_deletion_attempted"])
+        evidence = json.dumps(report) + render_summary(report)
+        self.assertNotIn("private_page_id", evidence)
+        self.assertNotIn("private_batch_id", evidence)
+
+    def test_drain_stale_initial_digest_fails_before_any_write(self) -> None:
+        hub = DrainHub()
+
+        with self.assertRaisesRegex(
+            ExpansionError,
+            "does not match current plan",
+        ):
+            execute_drain(
+                hub,
+                limit=5,
+                max_items=100,
+                expected_plan_sha256="d" * 64,
+                pause=lambda _: None,
+            )
+
+        self.assertEqual(hub.apply_calls, [])
+
+    def test_drain_rejects_more_than_one_hundred_before_planning(self) -> None:
+        hub = DrainHub()
+
+        with self.assertRaisesRegex(ExpansionError, "between 1 and 100"):
+            execute_drain(
+                hub,
+                limit=5,
+                max_items=101,
+                expected_plan_sha256="a" * 64,
+                pause=lambda _: None,
+            )
+
+        self.assertEqual(hub.plan_calls, [])
         self.assertEqual(hub.apply_calls, [])
 
 
