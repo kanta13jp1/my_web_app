@@ -457,8 +457,6 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
         ],
       ),
     );
-    nameController.dispose();
-    queryController.dispose();
     if (result == null) return;
     await _runMutation(
       () => savedSearch == null
@@ -609,8 +607,6 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
         },
       ),
     );
-    labelController.dispose();
-    targetController.dispose();
     if (draft == null) return;
     await _runMutation(
       () => _repository.createShortcut(draft),
@@ -664,7 +660,6 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
         ],
       ),
     );
-    controller.dispose();
     if (manifest == null) return;
     await _runMutation(
       () async {
