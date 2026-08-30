@@ -65,6 +65,7 @@ import 'package:my_web_app/pages/privacy_policy_page.dart';
 import 'package:my_web_app/pages/ai_dev_principles_page.dart';
 import 'package:my_web_app/pages/feature_requests_page.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
+import 'package:my_web_app/pages/account_deletion_page.dart';
 import 'package:my_web_app/pages/public_profile_page.dart';
 import 'package:my_web_app/pages/blog_page.dart';
 import 'package:my_web_app/pages/blog_compose_page.dart';
@@ -822,6 +823,11 @@ Route<dynamic> generateAppRoute(
     case '/profile-settings':
       return MaterialPageRoute(
         builder: (_) => const ProfileSettingsPage(),
+      );
+    case '/account-deletion':
+      return MaterialPageRoute(
+        builder: (_) => const AccountDeletionPage(),
+        settings: const RouteSettings(name: '/account-deletion'),
       );
     case '/u':
       final userId = uri.queryParameters['id'] ?? '';

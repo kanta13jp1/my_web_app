@@ -38,6 +38,28 @@ void main() {
       expect(workbook.topFourDebtShare, closeTo(0.7556, 0.001));
     });
 
+    test('carries card usage policies into the workbook for insights', () {
+      final changedAt = DateTime.utc(2026, 8, 29, 6, 18);
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'ファミペイ': -100000,
+        },
+        baseDate: DateTime(2026, 8, 29),
+        cardUsagePolicies: <String, AssetCardUsagePolicy>{
+          'famipay_card': AssetCardUsagePolicy(
+            enforceOneShot: true,
+            changedAt: changedAt,
+            memo: '受付 ABC123',
+          ),
+        },
+      );
+
+      expect(workbook.cardUsagePolicies['famipay_card']!.enforceOneShot, true);
+      expect(workbook.cardUsagePolicies['famipay_card']!.changedAt, changedAt);
+      expect(workbook.cardUsagePolicies['famipay_card']!.memo, '受付 ABC123');
+    });
+
     test('groups liability balances by payment day', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
@@ -263,6 +285,64 @@ void main() {
       expect(payPay.manualPaymentAmount, 0);
       expect(payPay.scheduledPaymentAmount, 0);
       expect(payPay.paymentAmountEstimated, isFalse);
+      expect(payPay.requiresAction, isFalse);
+    });
+
+    test('separates zero-yen payments into review-only day groups', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布': 50000,
+          'じぶん銀行カードローン': -100000,
+          'PayPayカード': -10000,
+        },
+        baseDate: DateTime(2026, 5, 29),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.jibunBankCardLoanAccountId: 0,
+          'paypay_card': 5000,
+        },
+      );
+
+      final jibun = workbook.debtMasterRows.firstWhere(
+        (row) =>
+            row.id == AssetLiabilityPlanningService.jibunBankCardLoanAccountId,
+      );
+      final payPay = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'paypay_card',
+      );
+      expect(jibun.minimumPaymentEstimate, greaterThan(0));
+      expect(jibun.scheduledPaymentAmount, 0);
+      expect(jibun.paid, isFalse);
+      expect(jibun.requiresAction, isFalse);
+      expect(payPay.requiresAction, isTrue);
+
+      final day27 = workbook.paymentDayRisks
+          .where((risk) => risk.paymentDay == 27)
+          .toList(growable: false);
+      expect(day27, hasLength(2));
+      final actionRisk = day27.singleWhere((risk) => risk.requiresAction);
+      final reviewOnlyRisk = day27.singleWhere((risk) => !risk.requiresAction);
+      expect(actionRisk.accountNames, <String>['PayPayカード']);
+      expect(reviewOnlyRisk.accountNames, <String>['じぶん銀行カードローン']);
+      expect(reviewOnlyRisk.scheduledPaymentTotal, 0);
+
+      final jibunCashflow = workbook.cashflowRows.firstWhere(
+        (row) =>
+            row.accountId ==
+            AssetLiabilityPlanningService.jibunBankCardLoanAccountId,
+      );
+      final payPayCashflow = workbook.cashflowRows.firstWhere(
+        (row) => row.accountId == 'paypay_card',
+      );
+      expect(jibunCashflow.overdue, isFalse);
+      expect(payPayCashflow.overdue, isTrue);
+      expect(
+        workbook.overdueCashflowRows.map((row) => row.accountId),
+        isNot(
+          contains(
+            AssetLiabilityPlanningService.jibunBankCardLoanAccountId,
+          ),
+        ),
+      );
     });
 
     test('manual zero yen does not trigger card billing review alert', () {
