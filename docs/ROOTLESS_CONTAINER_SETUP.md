@@ -20,6 +20,8 @@ GitHub-hosted runner で並行実行します。production secret や hosted Sup
   permission error 0 件を確認する。Podman と Supabase CLI の health-check 互換差を
   避けるため CLI 起動時だけ `--ignore-health-check` を指定しますが、合格判定は script
   自身の DB/Auth 待機と実測結果で行うため、サービス不健全を成功扱いにはしません。
+  Auth は Supabase network 内から GoTrue の `/health` が HTTP 200 になることを必須とし、
+  Kong 経由の `127.0.0.1:54321` は別項目として記録します。
 
 関連ファイルの Pull Request では自動実行されます。任意の branch を手動検証する場合は
 Actions 画面から **Rootless Container Cloud Smoke** を選ぶか、次を実行します。
@@ -205,6 +207,13 @@ listen する場合があります。IPv4 loopback が必要な container は
 `-p 127.0.0.1:8080:80` のように host address を明示します。2026-08-30 の実測では、
 明示後に `http://127.0.0.1:8080` と `http://localhost:8080` の両方が HTTP 200 でした。
 
+Supabase CLI と rootless Podman の組み合わせでは GoTrue と DB が healthy でも Kong が
+停止し、host の `127.0.0.1:54321` だけが接続拒否になる既知の互換制限があります。
+cloud smoke はこの場合に GoTrue を DB container から直接検査して Auth container 自体の
+正常性を判定し、gateway を `unavailable_known_podman_kong_limit` として証跡へ分離します。
+gateway を必要とする開発は、この記録を無視せず Rootless Docker へ切り替えるか、
+Supabase CLI 側の修正を待ちます。rootful fallback は使用しません。
+
 ## Native Linux / WSL2 Rootless Docker alternative
 
 Linux 側で Docker Engine を標準にする場合は、`uidmap`、`/etc/subuid`、
@@ -241,4 +250,5 @@ Official references:
 - [Podman machine](https://docs.podman.io/en/stable/markdown/podman-machine.1.html)
 - [Podman rootless limitations](https://github.com/containers/podman/blob/main/rootless.md)
 - [Supabase local development](https://supabase.com/docs/guides/local-development)
+- [Supabase CLI: rootless Podman / Kong compatibility](https://github.com/supabase/cli/issues/3099)
 - [Docker rootless mode](https://docs.docker.com/engine/security/rootless/)
