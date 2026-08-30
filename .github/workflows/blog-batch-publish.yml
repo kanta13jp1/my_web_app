@@ -34,6 +34,9 @@ permissions: {}
 
 jobs:
   batch:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: write
     name: Batch Publish All Drafts

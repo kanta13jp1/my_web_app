@@ -65,6 +65,7 @@ import 'package:my_web_app/pages/privacy_policy_page.dart';
 import 'package:my_web_app/pages/ai_dev_principles_page.dart';
 import 'package:my_web_app/pages/feature_requests_page.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
+import 'package:my_web_app/pages/account_deletion_page.dart';
 import 'package:my_web_app/pages/public_profile_page.dart';
 import 'package:my_web_app/pages/blog_page.dart';
 import 'package:my_web_app/pages/blog_compose_page.dart';
@@ -247,6 +248,7 @@ import 'package:my_web_app/pages/crm_sales_pipeline_page.dart';
 import 'package:my_web_app/pages/horse_racing_predictor_page.dart';
 import 'package:my_web_app/pages/horse_provider_leaderboard_page.dart';
 import 'package:my_web_app/pages/travel_itinerary_page.dart';
+import 'package:my_web_app/pages/art_museum_directory_page.dart';
 import 'package:my_web_app/pages/virtual_whiteboard_page.dart';
 import 'package:my_web_app/pages/recipe_meal_planner_page.dart';
 import 'package:my_web_app/pages/meal_log_page.dart';
@@ -341,6 +343,7 @@ import 'utils/error_reporter.dart';
 
 import 'services/supabase_client_provider.dart';
 import 'services/supabase_runtime_config.dart';
+import 'services/supabase_trace_context.dart';
 
 export 'services/supabase_client_provider.dart';
 
@@ -364,6 +367,9 @@ Future<void> main() async {
   await Supabase.initialize(
     url: supabaseConfig.url,
     publishableKey: supabaseConfig.publishableKey,
+    // Keep trace IDs in Supabase logs even when the Sentry transaction is not
+    // exported. The wrapper adds identifiers only; payloads are never copied.
+    httpClient: SupabaseTracingHttpClient(),
   );
 
   // Flutter/Dart エラーを自動で Sentry + フィードバックEF に送信
@@ -822,6 +828,11 @@ Route<dynamic> generateAppRoute(
     case '/profile-settings':
       return MaterialPageRoute(
         builder: (_) => const ProfileSettingsPage(),
+      );
+    case '/account-deletion':
+      return MaterialPageRoute(
+        builder: (_) => const AccountDeletionPage(),
+        settings: const RouteSettings(name: '/account-deletion'),
       );
     case '/u':
       final userId = uri.queryParameters['id'] ?? '';
@@ -1460,6 +1471,11 @@ Route<dynamic> generateAppRoute(
     case '/travel-planner':
       return MaterialPageRoute(
         builder: (_) => const TravelItineraryPage(),
+      );
+    case '/art-museums':
+      return MaterialPageRoute(
+        builder: (_) => const ArtMuseumDirectoryPage(),
+        settings: settings,
       );
     case '/virtual-whiteboard':
       return MaterialPageRoute(

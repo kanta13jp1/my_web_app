@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-28T17:09:33.441776+00:00",
+  "generated_at": "2026-08-30T11:15:06.803844+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -29,45 +29,45 @@
     "operating_efficiency": 10
   },
   "latest_review": {
-    "cycle_id": "20260829T011200+0900",
-    "started_at": "2026-08-29T01:12:00+09:00",
+    "cycle_id": "20260830T200304+0900",
+    "started_at": "2026-08-30T20:03:04+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "growth_weekly_digest",
-      "url": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/growth-weekly-digest"
+      "slug": "user_manual",
+      "url": "https://my-web-app-b67f4.web.app/user-manual"
     },
     "reviewer": {
       "seat": 11,
       "name": "野口 功司",
-      "selection_score": 69.9624,
+      "selection_score": 81.7188,
       "division": 1,
-      "cycle_utility": 92.17,
-      "aggregate_utility": 89.44
+      "cycle_utility": 91.58,
+      "aggregate_utility": 90.39
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "no-JWTの公開endpointがservice-role clientで集客・紹介集計を実行し、呼出主体を検証しない",
-        "severity": "p0",
-        "business_dimensions": [
-          "trust_risk",
-          "unit_economics",
-          "revenue_model"
-        ]
-      },
-      {
-        "summary": "standalone pageが{success,digest} envelopeを展開せず、成功レスポンスでも空のチャネル表示になる",
+        "summary": "レビュー設定の/manualと実際の/user-manualが不一致で、設定URLから対象マニュアルへ到達できない",
         "severity": "p1",
         "business_dimensions": [
           "customer_pain",
           "go_to_market",
+          "trust_risk"
+        ]
+      },
+      {
+        "summary": "随時更新を掲げるマニュアルの更新日が実ソースより約5か月古く、利用者向け手順と管理者・内部自動化情報が混在する",
+        "severity": "p1",
+        "business_dimensions": [
+          "trust_risk",
+          "customer_pain",
           "scalability"
         ]
       },
       {
-        "summary": "digestは前週差を列挙するが、owner、閾値、優先action、実行結果を結ぶ意思決定contractを持たない",
+        "summary": "16節の機能列挙に初回価値までの短い導線と成功計測がなく、マニュアルが継続利用へ寄与したか検証できない",
         "severity": "p1",
         "business_dimensions": [
           "go_to_market",
@@ -91,52 +91,141 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After owner-reviewed access control and the response contract are deployed, require unauthorized rejection at 100%, successful channel rendering at 100%, and one owner-assigned action with measured next-week signup delta for four consecutive weeks."
+      "next_cycle_experiment": "After canonical route compatibility and a three-step task guide are deployed, require /manual-to-/user-manual arrival at 100%, measure manual_view-to-task_complete conversion and median completion time, and compare D7 continuation plus support contacts for four weeks."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #4984",
-      "detail": "専用対策キューで順番待ちです。",
+      "label": "対策待ち・Issue #5110",
+      "detail": "A one-line review-config correction alone would not repair public compatibility, stale mixed-audience content, or the missing outcome funnel; the complete change needs a bounded remediation with product-owner content judgment and cloud validation.",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean at origin/main f59dc6615baff51ab1fdb915c7d11b91067fb6d4",
-        "passed: roster 2026-08-23, personas 2026-08-28, schema 2, 125 profiles each",
-        "passed: deterministic winner growth_weekly_digest from 13 eligible features",
-        "passed: deployment auth mode, service-role query boundary, response envelope, consumers, tests, and unknown production outcomes captured",
+        "passed: clean at origin/main 6d8903dd63467d61cad2e692522a0d26d8d64bb1",
+        "passed: roster 2026-08-23, personas 2026-08-30, schema 2, 125 profiles each",
+        "passed: deterministic winner user_manual from 13 eligible features",
+        "passed: route mismatch, source freshness, 16-section content boundary, absent dedicated tests, and unknown production outcomes captured",
         "executed exactly once against shared history: 125 profiles, seat 11"
       ],
       "issue": {
-        "number": 4984,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/4984",
+        "number": 5110,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5110",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260829T011200+0900:growth_weekly_digest",
-        "remediation_state": "queued",
-        "queue_status": "QUEUED",
-        "synced_at": "2026-08-28T17:09:06.597309+00:00"
+        "dedupe_key": "tiger-feature-review:20260830T200304+0900:user_manual",
+        "remediation_state": null,
+        "queue_status": null,
+        "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "growth-weekly-digest-public-service-role-query-boundary",
-        "growth-weekly-digest-response-envelope-mismatch",
-        "growth-weekly-digest-decision-contract-gap"
+        "user-manual-configured-route-mismatch",
+        "user-manual-stale-trust-and-audience-boundary",
+        "user-manual-first-value-and-measurement-gap"
       ]
     },
     "feature": {
-      "slug": "growth_weekly_digest",
-      "title": "growth-weekly-digest",
-      "kind": "edge_function",
-      "reason": "The deterministic selector chose growth_weekly_digest. The bounded scan found a no-JWT service-role analytics endpoint, a standalone page that reads the response at the wrong nesting level, and a metrics brief without a decision owner or threshold; production usage and outcome analytics were unavailable, so observed usage is neutral 50.",
-      "cycle_utility": 44.35,
-      "aggregate_utility": 44.35,
+      "slug": "user_manual",
+      "title": "user_manual",
+      "kind": "page",
+      "reason": "The deterministic selector chose user_manual. The neutral scan found a configured-route mismatch, an audibly stale last-updated claim, a 620-line mixed-audience manual without dedicated tests, and no production usage or outcome analytics; observed usage therefore remains neutral 50.",
+      "cycle_utility": 40.15,
+      "aggregate_utility": 40.15,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260830T200304+0900",
+      "started_at": "2026-08-30T20:03:04+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "user_manual",
+        "title": "user_manual",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 81.7188
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After canonical route compatibility and a three-step task guide are deployed, require /manual-to-/user-manual arrival at 100%, measure manual_view-to-task_complete conversion and median completion time, and compare D7 continuation plus support contacts for four weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "user-manual-configured-route-mismatch",
+          "summary": "レビュー設定の/manualと実際の/user-manualが不一致で、設定URLから対象マニュアルへ到達できない",
+          "severity": "p1",
+          "suggested_action": "設定と公開導線を/user-manualへ統一し、旧/manualは明示的な互換redirectまたはroute aliasで正規URLへ送るcontract testを追加する。"
+        },
+        {
+          "finding_id": "user-manual-stale-trust-and-audience-boundary",
+          "summary": "随時更新を掲げるマニュアルの更新日が実ソースより約5か月古く、利用者向け手順と管理者・内部自動化情報が混在する",
+          "severity": "p1",
+          "suggested_action": "公開対象をエンドユーザーの主要タスクへ限定し、管理者・内部運用資料を分離したうえで、更新日をsource commitまたはrelease metadataから生成する。"
+        },
+        {
+          "finding_id": "user-manual-first-value-and-measurement-gap",
+          "summary": "16節の機能列挙に初回価値までの短い導線と成功計測がなく、マニュアルが継続利用へ寄与したか検証できない",
+          "severity": "p1",
+          "suggested_action": "上部に役割別の3ステップ導線と検索・目次を置き、manual_viewから主要task_start、task_complete、D7継続までprivacy-bounded funnelを測定する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5110",
+        "detail": "A one-line review-config correction alone would not repair public compatibility, stale mixed-audience content, or the missing outcome funnel; the complete change needs a bounded remediation with product-owner content judgment and cloud validation.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main 6d8903dd63467d61cad2e692522a0d26d8d64bb1",
+          "passed: roster 2026-08-23, personas 2026-08-30, schema 2, 125 profiles each",
+          "passed: deterministic winner user_manual from 13 eligible features",
+          "passed: route mismatch, source freshness, 16-section content boundary, absent dedicated tests, and unknown production outcomes captured",
+          "executed exactly once against shared history: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 5110,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5110",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260830T200304+0900:user_manual",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "user-manual-configured-route-mismatch",
+          "user-manual-stale-trust-and-audience-boundary",
+          "user-manual-first-value-and-measurement-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260829T011200+0900",
       "started_at": "2026-08-29T01:12:00+09:00",
@@ -216,7 +305,7 @@
           "dedupe_key": "tiger-feature-review:20260829T011200+0900:growth_weekly_digest",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -307,7 +396,7 @@
           "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -397,7 +486,7 @@
           "dedupe_key": "tiger-feature-review:20260828T120337+0900:philosophy",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -479,7 +568,7 @@
           "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -566,7 +655,7 @@
           "dedupe_key": "tiger-feature-review:20260828T042953+0900:horse_racing",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -654,7 +743,7 @@
           "dedupe_key": "tiger-feature-review:20260828T004359+0900:ai_hub",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -679,7 +768,7 @@
         "name": "野口 功司",
         "selection_score": 70.6913
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -720,9 +809,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4937",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #4937 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -738,13 +827,21 @@
           "number": 4937,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4937",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-feature-review:20260827T221025+0900:core_hub",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "ec314d3f767ea3245c3af7aa1fd7db51cfad9f4c",
+          "workflow_run": "33234270397",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33234270397/job/99053902129",
+          "pr_number": 4987,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/4987",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "core-hub-anonymous-reactions-auth-drift",
           "core-hub-legacy-reaction-action-client",
@@ -830,7 +927,7 @@
           "dedupe_key": "tiger-feature-review:20260827T033027+0900:home",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1121,8 +1218,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
-          "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1196,8 +1293,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
           "remediation_state": "queued",
-          "queue_status": "DEFERRED_RESOURCE",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1390,22 +1487,6 @@
       "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
-      "slug": "user_manual",
-      "kind": "page",
-      "title": "user_manual",
-      "path": "/manual",
-      "source": "lib/pages/user_manual_page.dart",
-      "priority": "low",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "last_cycle_utility": null,
-      "last_reviewed_at": null,
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
-    },
-    {
       "slug": "ai_hub",
       "kind": "edge_function",
       "title": "ai-hub",
@@ -1467,6 +1548,22 @@
       "completed_cycles": 1,
       "last_cycle_utility": 44.35,
       "last_reviewed_at": "2026-08-28T16:12:00+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "user_manual",
+      "kind": "page",
+      "title": "user_manual",
+      "path": "/manual",
+      "source": "lib/pages/user_manual_page.dart",
+      "priority": "low",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 40.15,
+      "completed_cycles": 1,
+      "last_cycle_utility": 40.15,
+      "last_reviewed_at": "2026-08-30T11:03:04+00:00",
       "reason": "機能レビュー実績が2回未満のため暫定3部"
     }
   ]

@@ -121,8 +121,27 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   late final LocalElectionShareService _shareService =
       LocalElectionShareService(
     Supabase.instance.client,
-    publishMemo: _publicMemoService.upsertMemo,
-    loadMemo: _publicMemoService.getUserPublicMemoByNoteId,
+    publishMemo: ({
+      required int noteId,
+      required String userId,
+      required String title,
+      String? content,
+      String? category,
+      Map<String, dynamic> metadata = const <String, dynamic>{},
+    }) =>
+        _publicMemoService.upsertGeneratedMemo(
+      sourceKey: LocalElectionShareService.generatedMemoSourceKey(noteId),
+      userId: userId,
+      title: title,
+      content: content,
+      category: category,
+      metadata: metadata,
+    ),
+    loadMemo: ({required int noteId, required String userId}) =>
+        _publicMemoService.getUserGeneratedPublicMemoBySourceKey(
+      sourceKey: LocalElectionShareService.generatedMemoSourceKey(noteId),
+      userId: userId,
+    ),
   );
   final DateFormat _dateTimeFormat = DateFormat('yyyy/MM/dd HH:mm', 'ja_JP');
   final DateFormat _dateOnlyFormat = DateFormat('yyyy/MM/dd', 'ja_JP');

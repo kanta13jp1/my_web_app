@@ -303,6 +303,7 @@ enum ShopProductType {
   prompt('prompt', 'プロンプト'),
   idea('idea', 'アイデア'),
   game('game', 'ゲーム'),
+  application('application', 'アプリ'),
   template('template', 'テンプレート');
 
   const ShopProductType(this.databaseValue, this.labelJa);

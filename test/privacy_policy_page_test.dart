@@ -21,5 +21,10 @@ void main() {
     final policy = await rootBundle.loadString(PrivacyPolicyPage.assetPath);
     expect(policy, contains('## 1. 適用範囲'));
     expect(policy, contains('対象サービス'));
+    expect(policy, contains('サブスクリプション解約と退会の違い'));
+    expect(policy, contains('申請後30日間は同じ画面から取り消せます'));
+    expect(policy, contains('決済顧客情報、関連DBデータ、Storage、Supabase Auth'));
+    expect(policy, contains('発行済みアクセストークンの失効を最大65分待って'));
+    expect(policy, contains('メールアカウントはパスワード'));
   });
 }

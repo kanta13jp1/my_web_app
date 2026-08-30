@@ -1,0 +1,163 @@
+name: Account deletion retention worker
+
+on:
+  schedule:
+    - cron: "37 18 * * *"
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Process due requests; false performs a non-destructive preflight"
+        required: true
+        default: false
+        type: boolean
+      request_id:
+        description: "Exact request ID (required for canary apply)"
+        required: false
+        type: string
+      max_requests:
+        description: "Maximum requests (canary=1, limited<=5, full<=50)"
+        required: true
+        default: "1"
+        type: string
+      confirmation:
+        description: "DELETE REQUEST <id> or DELETE UP TO <count>"
+        required: false
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: account-deletion-retention-worker
+  cancel-in-progress: false
+
+jobs:
+  process:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'schedule' &&
+        vars.ACCOUNT_DELETION_AUTOMATION_ENABLED == 'true' &&
+        (vars.ACCOUNT_DELETION_ROLLOUT_STAGE == 'limited' ||
+         vars.ACCOUNT_DELETION_ROLLOUT_STAGE == 'full')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: customer-operations-production
+      deployment: false
+    permissions:
+      contents: read
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      EVENT_NAME: ${{ github.event_name }}
+      ROLLOUT_STAGE: ${{ vars.ACCOUNT_DELETION_ROLLOUT_STAGE || 'disabled' }}
+      AUTOMATION_ENABLED: ${{ vars.ACCOUNT_DELETION_AUTOMATION_ENABLED || 'false' }}
+      APPLY_REQUESTED: ${{ github.event_name == 'workflow_dispatch' && inputs.apply || false }}
+      REQUEST_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.request_id || '' }}
+      MAX_REQUESTS: ${{ github.event_name == 'workflow_dispatch' && inputs.max_requests || '1' }}
+      CONFIRMATION: ${{ github.event_name == 'workflow_dispatch' && inputs.confirmation || '' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Evaluate staged rollout policy
+        id: policy
+        run: python scripts/account_deletion_rollout.py --github-output "$GITHUB_OUTPUT"
+
+      - name: Validate service configuration
+        if: steps.policy.outputs.mode != 'skip'
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_URL:-}" || {
+            echo "::error::SUPABASE_URL_PROD is required"
+            exit 1
+          }
+          test -n "${SUPABASE_SERVICE_ROLE_KEY:-}" || {
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is required"
+            exit 1
+          }
+
+      - name: Preflight due account deletion
+        id: preflight
+        if: steps.policy.outputs.mode != 'skip'
+        env:
+          WORKER_MODE: ${{ steps.policy.outputs.mode }}
+          POLICY_REQUEST_ID: ${{ steps.policy.outputs.request_id }}
+        run: |
+          set -euo pipefail
+          payload=$(jq -nc --arg request_id "$POLICY_REQUEST_ID" '
+            {action:"preflight_due"} +
+            (if $request_id == "" then {} else {request_id:($request_id|tonumber)} end)
+          ')
+          response_file=$(mktemp)
+          http_code=$(curl -sS -o "$response_file" -w "%{http_code}" \
+            -X POST "$SUPABASE_URL/functions/v1/account-lifecycle" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            --data "$payload")
+          jq -c . "$response_file"
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ] ||
+            ! jq -e '.success == true' "$response_file" >/dev/null; then
+            echo "::error::account-lifecycle preflight failed with HTTP ${http_code}"
+            exit 1
+          fi
+          if jq -e '.candidate == null' "$response_file" >/dev/null; then
+            echo "has_candidate=false" >> "$GITHUB_OUTPUT"
+            if [ "$WORKER_MODE" = "apply" ]; then
+              echo "::error::No eligible due request matched the reviewed scope"
+              exit 1
+            fi
+            exit 0
+          fi
+          echo "has_candidate=true" >> "$GITHUB_OUTPUT"
+          if ! jq -e '.candidate.blocking_rows == 0' "$response_file" >/dev/null; then
+            echo "::error::Deletion inventory has blocking rows; no claim was made"
+            exit 1
+          fi
+          jq -r '
+            "### Account deletion preflight\n" +
+            "- request_id: `\(.candidate.request_id)`\n" +
+            "- status: `\(.candidate.status)`\n" +
+            "- remaining database rows: `\(.candidate.remaining_rows)`\n" +
+            "- storage objects: `\(.candidate.storage_objects)`"
+          ' "$response_file" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Process reviewed due account deletions
+        if: >-
+          steps.policy.outputs.mode == 'apply' &&
+          steps.preflight.outputs.has_candidate == 'true'
+        env:
+          POLICY_MAX_REQUESTS: ${{ steps.policy.outputs.max_requests }}
+          POLICY_REQUEST_ID: ${{ steps.policy.outputs.request_id }}
+        run: |
+          set -euo pipefail
+          processed=0
+          for ((attempt=1; attempt<=POLICY_MAX_REQUESTS; attempt++)); do
+            payload=$(jq -nc --arg request_id "$POLICY_REQUEST_ID" '
+              {action:"process_due"} +
+              (if $request_id == "" then {} else {request_id:($request_id|tonumber)} end)
+            ')
+            response_file=$(mktemp)
+            http_code=$(curl -sS -o "$response_file" -w "%{http_code}" \
+              -X POST "$SUPABASE_URL/functions/v1/account-lifecycle" \
+              -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Content-Type: application/json" \
+              --data "$payload")
+            jq -c . "$response_file"
+            if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ] ||
+              ! jq -e '.success == true' "$response_file" >/dev/null; then
+              echo "::error::account-lifecycle failed with HTTP ${http_code}"
+              exit 1
+            fi
+            if jq -e '.processed == true' "$response_file" >/dev/null; then
+              processed=$((processed + 1))
+            else
+              break
+            fi
+            if [ -n "$POLICY_REQUEST_ID" ]; then
+              break
+            fi
+          done
+          echo "Processed ${processed} due account deletion request(s)."

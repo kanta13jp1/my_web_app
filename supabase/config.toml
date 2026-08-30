@@ -201,6 +201,13 @@ enabled = true
 verify_jwt = true
 entrypoint = "./functions/resource-optimizer/index.ts"
 
+[functions.growth-weekly-digest]
+enabled = true
+# Owner-only aggregate endpoint: gateway JWT plus handler-level admin/service-role
+# authorization. GET and anonymous access are intentionally unavailable.
+verify_jwt = true
+entrypoint = "./functions/growth-weekly-digest/index.ts"
+
 [functions.decision-events]
 enabled = true
 # Internal automation only. The function also performs a constant-time exact
@@ -237,3 +244,10 @@ enabled = true
 # VIDEO_WORKER_TOKEN is verified in-function before any lease operation.
 verify_jwt = false
 entrypoint = "./functions/video-worker-hub/index.ts"
+
+[functions.account-lifecycle]
+enabled = true
+# Browser preflight has no JWT. User requests are verified again with
+# auth.getUser(); scheduled destructive processing requires service_role.
+verify_jwt = false
+entrypoint = "./functions/account-lifecycle/index.ts"

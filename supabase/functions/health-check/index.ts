@@ -6,11 +6,12 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { requestTraceId } from "../_shared/trace_context.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, traceparent, tracestate, baggage, sentry-trace",
   "Access-Control-Max-Age": "86400",
 };
 
@@ -26,6 +27,7 @@ type CheckResult = {
 type HealthResponse = {
   status: "healthy" | "degraded" | "unhealthy";
   checks: Record<string, CheckResult>;
+  trace_id: string;
   timestamp: string;
 };
 
@@ -34,6 +36,7 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const traceId = requestTraceId(req);
   const checks: Record<string, CheckResult> = {};
   let failCount = 0;
 
@@ -97,11 +100,23 @@ serve(async (req) => {
   const body: HealthResponse = {
     status,
     checks,
+    trace_id: traceId,
     timestamp: new Date().toISOString(),
   };
 
+  console.log(JSON.stringify({
+    event: "health_check.completed",
+    trace_id: traceId,
+    status,
+    failure_count: failCount,
+  }));
+
   return new Response(JSON.stringify(body, null, 2), {
     status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+      "X-Trace-Id": traceId,
+    },
   });
 });

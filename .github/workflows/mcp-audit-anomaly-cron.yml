@@ -60,6 +60,9 @@ jobs:
         run: deno test scripts/mcp_audit_anomaly_test.ts
 
   detect:
+    environment:
+      name: platform-security-production
+      deployment: false
     permissions:
       contents: read
     name: Detect MCP audit anomalies

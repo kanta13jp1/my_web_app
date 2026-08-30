@@ -26,18 +26,22 @@ permissions: {}
 
 jobs:
   generate-report:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: write
+      issues: read
     name: Competitor Intelligence Report
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     env:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
       SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      # competitorsはRLSでpublic SELECTのみ許可。service roleは不要。
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
 
     steps:
       - name: Checkout
@@ -45,6 +49,12 @@ jobs:
         with:
           fetch-depth: 10
           token: ${{ secrets.BYPASS_RULES || github.token }}
+
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
 
       # ── Step 1: 日付・イベントカレンダー判定 ─────────────────────────────
       - name: Step 1 - 日付 + 特記イベント検出
@@ -119,8 +129,6 @@ jobs:
       # ── Step 3: 競合サイト可用性チェック (competitors テーブル動的取得 / 190社対応) ──
       - name: Step 3 - 競合可用性チェック (動的取得)
         id: availability
-        env:
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           > /tmp/avail_results.txt
 
@@ -140,8 +148,8 @@ jobs:
           # Phase 1 スキーマ: website カラム / Phase 3 スキーマ: website_url カラム (両方 SELECT)
           COMP_JSON=$(curl -sf \
             "$SUPABASE_URL/rest/v1/competitors?select=display_name,website,website_url,threat_level&is_active=eq.true&limit=50" \
-            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" 2>/dev/null || echo "[]")
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" 2>/dev/null || echo "[]")
 
           COMP_COUNT=$(echo "$COMP_JSON" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
 
@@ -180,6 +188,8 @@ jobs:
       # ── Step 4: AI で戦略インテリジェンスレポート生成 ─────────────────────
       - name: Step 4 - AI 戦略インテリジェンス生成 (Gemini primary / Claude fallback)
         id: ai_report
+        env:
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
         run: |
           TODAY="${{ steps.calendar.outputs.today }}"
           SPECIAL_EVENT="${{ steps.calendar.outputs.special_event }}"

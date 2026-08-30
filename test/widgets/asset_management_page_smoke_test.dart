@@ -6,9 +6,11 @@ import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/asset_obsidian_vault_import.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/services/asset_card_usage_policy_store.dart';
 import 'package:my_web_app/services/asset_chat_privacy_settings_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
+import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
@@ -30,10 +32,19 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// 他のロード/保存は SharedPreferences 実装に委譲(テストでは空)。
 class _FakeDebtOverrideRepository
     extends SharedPreferencesAssetLiabilityRepository {
-  _FakeDebtOverrideRepository(this._seed);
+  _FakeDebtOverrideRepository(
+    this._seed, {
+    this.monthlyState = const AssetLiabilityMonthlyState(),
+  });
 
   final Map<String, int> _seed;
+  final AssetLiabilityMonthlyState monthlyState;
   Map<String, int>? savedDebtOverrides;
+
+  @override
+  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
+    return monthlyState;
+  }
 
   @override
   Future<Map<String, int>> loadDebtPaymentDayOverrides() async {
@@ -1286,6 +1297,82 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets('zero-yen payment is shown only in the gray review section', (
+      tester,
+    ) async {
+      final dateKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final repo = _FakeDebtOverrideRepository(
+        const <String, int>{},
+        monthlyState: const AssetLiabilityMonthlyState(
+          paymentOverrides: <String, double>{
+            AssetLiabilityPlanningService.jibunBankCardLoanAccountId: 0,
+            'paypay_card': 5000,
+          },
+        ),
+      );
+      await tester.binding.setSurfaceSize(const Size(1200, 4000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: repo,
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 50000,
+                'じぶん銀行カードローン': -100000,
+                'PayPayカード': -10000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final actionSection =
+          find.byKey(const Key('asset_payment_risk_action_section'));
+      final reviewSection =
+          find.byKey(const Key('asset_payment_risk_review_only_section'));
+      expect(actionSection, findsOneWidget);
+      expect(reviewSection, findsOneWidget);
+      expect(
+        find.descendant(
+          of: actionSection,
+          matching: find.text('PayPayカード'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: actionSection,
+          matching: find.text('じぶん銀行カードローン'),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: reviewSection,
+          matching: find.text('じぶん銀行カードローン'),
+        ),
+        findsOneWidget,
+      );
+
+      final reviewBadge = find.byKey(
+        const Key('asset_payment_risk_status_review_27'),
+      );
+      expect(reviewBadge, findsOneWidget);
+      final reviewBadgeText = tester.widget<Text>(
+        find.descendant(
+          of: reviewBadge,
+          matching: find.text('確認のみ'),
+        ),
+      );
+      expect(reviewBadgeText.style?.color, const Color(0xFF64748B));
+
+      await _unmount(tester);
+    });
+
     testWidgets('shortfall warning appears and clears via expected inflow', (
       tester,
     ) async {
@@ -1515,6 +1602,67 @@ void main() {
       expect(store.getDouble('asset_minimum_safety_balance_v1'), 30000);
       // 使用可能額カードの安全余裕表示にも反映される。
       expect(find.textContaining('安全余裕 ¥30,000'), findsWidgets);
+
+      await _unmount(tester);
+    });
+
+    testWidgets('living expense priority toggle immediately reorders actions', (
+      tester,
+    ) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 3200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: _FakeDebtOverrideRepository(
+              <String, int>{'mobit': now.day},
+            ),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 1000,
+                'モビット': -300000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final toggle = find.byKey(
+        const Key('asset_living_expense_priority_toggle'),
+      );
+      final livingExpense = find.text('本日の生活費が不足しています');
+      final overdue = find.text('モビットが期限超過です');
+      expect(toggle, findsOneWidget);
+      expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+      expect(livingExpense, findsOneWidget);
+      expect(overdue, findsOneWidget);
+      expect(
+        tester.getTopLeft(overdue).dy,
+        lessThan(tester.getTopLeft(livingExpense).dy),
+      );
+
+      await tester.ensureVisible(toggle);
+      await tester.tap(toggle);
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
+      expect(livingExpense, findsOneWidget);
+      expect(overdue, findsNothing);
+
+      await tester.tap(toggle);
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+      expect(overdue, findsOneWidget);
+      expect(
+        tester.getTopLeft(overdue).dy,
+        lessThan(tester.getTopLeft(livingExpense).dy),
+      );
 
       await _unmount(tester);
     });
@@ -2005,6 +2153,50 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets(
+      'completed one-shot policy restores its memo and suppresses setup advice',
+      (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetCardUsagePolicyStore.prefsKey: jsonEncode(<String, dynamic>{
+            'famipay_card': <String, dynamic>{
+              'enforce_one_shot': true,
+              'changed_at': '2026-08-29T06:18:55.608Z',
+              'memo': '受付 ABC123 / 8月29日 電話',
+            },
+          }),
+        });
+        final dateKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        await tester.binding.setSurfaceSize(const Size(1200, 3600));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'ファミペイ': -100000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 250));
+        await tester.pump(const Duration(milliseconds: 250));
+
+        final checkbox = tester.widget<CheckboxListTile>(
+          find.byKey(const Key('asset_card_one_shot_completed_famipay_card')),
+        );
+        expect(checkbox.value, isTrue);
+        expect(find.text('受付 ABC123 / 8月29日 電話'), findsOneWidget);
+        expect(find.textContaining('12ヶ月脱却の月額'), findsWidgets);
+        expect(find.textContaining('リボ/分割の設定解除を電話する'), findsNothing);
+        expect(find.textContaining('設定を解除し'), findsNothing);
+
+        await _unmount(tester);
+      },
+    );
 
     testWidgets('mirror update notice offers and applies remote prefs', (
       tester,
