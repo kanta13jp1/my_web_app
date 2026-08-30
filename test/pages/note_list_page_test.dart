@@ -242,6 +242,7 @@ Map<String, dynamic> _noteRow({
     'title': title,
     'content': '$title body',
     'created_at': '2026-03-18T09:00:00.000Z',
+    'updated_at': '2026-03-18T10:00:00.000Z',
     'is_pinned': false,
     'is_favorite': isFavorite,
     'is_archived': false,
@@ -660,6 +661,106 @@ void main() {
     expect(find.text('Project decision'), findsOneWidget);
     expect(find.text('Private journal'), findsNothing);
     expect(find.text('Work'), findsWidgets);
+  });
+
+
+  testWidgets('executes supported Evernote search syntax without semantic search',
+      (tester) async {
+    final semanticSearch = _FakeSemanticSearchService(
+      const NoteSemanticSearchResponse(
+        searchMode: 'ai',
+        results: <NoteSearchResult>[],
+      ),
+    );
+    final client = _FakeSupabaseClient(
+      collectionRows: const <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 10,
+          'parent_id': null,
+          'collection_type': 'stack',
+          'name': 'Company',
+        },
+        <String, dynamic>{
+          'id': 11,
+          'parent_id': 10,
+          'collection_type': 'notebook',
+          'name': 'Finance Book',
+        },
+        <String, dynamic>{
+          'id': 12,
+          'parent_id': null,
+          'collection_type': 'notebook',
+          'name': 'Personal',
+        },
+      ],
+      noteRows: <Map<String, dynamic>>[
+        _noteRow(
+          id: 'matching',
+          title: 'Quarterly plan',
+          isFavorite: false,
+          tags: const <String>['Work'],
+          notebookCollectionId: 11,
+        ),
+        _noteRow(
+          id: 'outside',
+          title: 'Quarterly personal',
+          isFavorite: false,
+          tags: const <String>['Work'],
+          notebookCollectionId: 12,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NoteListPage(
+          supabaseClient: client,
+          semanticSearchService: semanticSearch,
+          initialSearchQuery:
+              'intitle:Quarter* tag:Work notebook:"Finance Book" '
+              'stack:Company updated:20260318',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(semanticSearch.lastQuery, isNull);
+    expect(find.text('Quarterly plan'), findsOneWidget);
+    expect(find.text('Quarterly personal'), findsNothing);
+    expect(find.textContaining('Evernote高度検索'), findsOneWidget);
+  });
+
+  testWidgets('surfaces unsupported Evernote operators without false filtering',
+      (tester) async {
+    final semanticSearch = _FakeSemanticSearchService(
+      const NoteSemanticSearchResponse(
+        searchMode: 'ai',
+        results: <NoteSearchResult>[],
+      ),
+    );
+    final client = _FakeSupabaseClient(
+      noteRows: <Map<String, dynamic>>[
+        _noteRow(id: 'one', title: 'One note', isFavorite: false),
+        _noteRow(id: 'two', title: 'Two note', isFavorite: false),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NoteListPage(
+          supabaseClient: client,
+          semanticSearchService: semanticSearch,
+          initialSearchQuery: 'resource:application/pdf',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(semanticSearch.lastQuery, isNull);
+    expect(find.text('One note'), findsOneWidget);
+    expect(find.text('Two note'), findsOneWidget);
+    expect(find.textContaining('未対応のEvernote演算子'), findsOneWidget);
+    expect(find.textContaining('resource'), findsOneWidget);
   });
 
   testWidgets('opens a notebook or stack shortcut with descendant filtering',

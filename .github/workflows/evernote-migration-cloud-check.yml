@@ -248,7 +248,7 @@ jobs:
 
 
   hierarchy-db-contract:
-    name: Evernote hierarchy, navigation, history, and Task database contract
+    name: Evernote hierarchy, navigation, nested-tag, history, and Task database contract
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -277,7 +277,7 @@ jobs:
       - name: Checkout immutable event revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Apply hierarchy, navigation, history, and Task migrations to disposable Postgres
+      - name: Apply hierarchy, navigation, nested-tag, history, and Task migrations to disposable Postgres
         shell: bash
         run: |
           set -euo pipefail
@@ -300,7 +300,11 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 \
             -f supabase/migrations/20260831040000_add_evernote_navigation_inventory.sql
           psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831041000_add_evernote_nested_tags.sql
+          psql -X -v ON_ERROR_STOP=1 \
             -f supabase/tests/evernote_note_collections_contract.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_nested_tags_contract.sql
           psql -X -v ON_ERROR_STOP=1 \
             -f supabase/tests/evernote_navigation_contract.sql
           psql -X -v ON_ERROR_STOP=1 \
