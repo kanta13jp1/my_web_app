@@ -277,8 +277,8 @@ begin
     from public.note_feature_notifications
     where cancelled_at is null
       and dismissed_at is null
-  ) <> 2 then
-    raise exception 'The assignee inbox did not receive assignment and reminder.';
+  ) <> 1 then
+    raise exception 'Completed Task reminders were not paused.';
   end if;
   if (
     select count(*)
@@ -297,6 +297,15 @@ begin
     select status from public.note_tasks where id = v_task_id
   ) <> 'open' then
     raise exception 'The assignee could not reopen the assigned Task.';
+  end if;
+
+  if (
+    select count(*)
+    from public.note_feature_notifications
+    where cancelled_at is null
+      and dismissed_at is null
+  ) <> 2 then
+    raise exception 'Reopening did not restore the Task reminder.';
   end if;
 
   update public.note_tasks

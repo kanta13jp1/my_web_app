@@ -101,10 +101,11 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
     }
     try {
       final tasksFuture = _repository.loadAllTasks();
-      final notificationsFuture = _notificationRepository?.loadNotifications() ??
-          Future<List<NoteFeatureNotification>>.value(
-            const <NoteFeatureNotification>[],
-          );
+      final notificationsFuture =
+          _notificationRepository?.loadNotifications() ??
+              Future<List<NoteFeatureNotification>>.value(
+                const <NoteFeatureNotification>[],
+              );
       final tasks = await tasksFuture;
       final notifications = await notificationsFuture;
       tasks.sort(_compareTasks);
