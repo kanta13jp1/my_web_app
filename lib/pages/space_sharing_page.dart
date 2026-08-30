@@ -229,7 +229,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
       child: ListTile(
         leading: const Icon(Icons.mark_email_unread_outlined),
         title: Text(invitation.spaceName),
-        subtitle: Text(invitation.permission.label + 'として招待されています'),
+        subtitle: Text('${invitation.permission.label}として招待されています'),
         isThreeLine: true,
         trailing: Wrap(
           spacing: 4,
@@ -271,18 +271,16 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
     final highlighted = space.id == widget.initialSpaceId;
     return Card(
       key: ValueKey<String>('space_${space.id}'),
-      color: highlighted
-          ? Theme.of(context).colorScheme.secondaryContainer
-          : null,
+      color:
+          highlighted ? Theme.of(context).colorScheme.secondaryContainer : null,
       margin: const EdgeInsets.only(bottom: 12),
       child: ExpansionTile(
         initiallyExpanded: highlighted,
         leading: const Icon(Icons.workspaces_outline),
         title: Text(space.name),
         subtitle: Text(
-          space.permission.label +
-              ' ・ ${space.notes.length}ノート'
-                  ' ・ ${space.members.length}メンバー',
+          '${space.permission.label} ・ ${space.notes.length}ノート'
+          ' ・ ${space.members.length}メンバー',
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
@@ -481,7 +479,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(space.name + 'に招待'),
+          title: Text('${space.name}に招待'),
           content: SizedBox(
             width: 420,
             child: Column(
@@ -638,7 +636,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          leaving ? space.name + 'から退出しますか？' : 'メンバーを削除しますか？',
+          leaving ? '${space.name}から退出しますか？' : 'メンバーを削除しますか？',
         ),
         content: const Text(
           '共有権限は直ちに失われます。既に作成されたノートはSpaceに残ります。',

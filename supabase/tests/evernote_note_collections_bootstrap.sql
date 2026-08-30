@@ -38,14 +38,14 @@ create or replace function auth.jwt()
 returns jsonb
 language sql
 stable
-as $
+as $$
   select jsonb_build_object(
     'sub',
     nullif(current_setting('request.jwt.claim.sub', true), ''),
     'email',
     nullif(current_setting('request.jwt.claim.email', true), '')
   )
-$;
+$$;
 
 grant execute on function auth.jwt() to authenticated, service_role;
 

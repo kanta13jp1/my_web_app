@@ -23,8 +23,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('space_sharing_narrow')), findsOneWidget);
-    expect(find.byKey(const Key('space_invitation_accept_invite-2')),
-        findsOneWidget);
+    expect(
+      find.byKey(const Key('space_invitation_accept_invite-2')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('space_invite_7')), findsOneWidget);
     expect(find.byKey(const Key('space_create_note_7')), findsOneWidget);
     expect(find.text('Shared note'), findsOneWidget);

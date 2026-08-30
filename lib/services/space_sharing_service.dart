@@ -267,9 +267,8 @@ class SupabaseSpaceSharingDataSource implements SpaceSharingDataSource {
       final member = spaceMembers
           .where((item) => item.userId == currentUserId)
           .firstOrNull;
-      final permission = ownerId == currentUserId
-          ? SpacePermission.owner
-          : member?.permission;
+      final permission =
+          ownerId == currentUserId ? SpacePermission.owner : member?.permission;
       if (permission == null) continue;
 
       final notebooks = collections
@@ -471,8 +470,7 @@ class SupabaseSpaceSharingDataSource implements SpaceSharingDataSource {
     return result;
   }
 
-  static final RegExp _emailPattern =
-      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+  static final RegExp _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 }
 
 extension<T> on Iterable<T> {
