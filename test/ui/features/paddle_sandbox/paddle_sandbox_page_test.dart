@@ -54,6 +54,10 @@ void main() {
       await tester.pump();
       expect(find.text('Sandbox 決済が完了しました'), findsOneWidget);
       expect(find.text('transaction: txn_widget_success'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel('transaction: txn_widget_success'),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     },
   );

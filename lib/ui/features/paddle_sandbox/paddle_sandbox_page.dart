@@ -159,7 +159,14 @@ class _StatusCard extends StatelessWidget {
             ],
             if (snapshot.transactionId.isNotEmpty) ...[
               const SizedBox(height: 4),
-              SelectableText('transaction: ${snapshot.transactionId}'),
+              Semantics(
+                label: 'transaction: ${snapshot.transactionId}',
+                child: ExcludeSemantics(
+                  child: SelectableText(
+                    'transaction: ${snapshot.transactionId}',
+                  ),
+                ),
+              ),
             ],
           ],
         ),
