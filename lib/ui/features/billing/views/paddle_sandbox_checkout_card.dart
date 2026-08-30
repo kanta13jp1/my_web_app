@@ -63,8 +63,8 @@ class _PaddleSandboxCheckoutCardState extends State<PaddleSandboxCheckoutCard> {
                     Text(
                       'Paddle checkout 検証',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const Chip(label: Text('SANDBOX ONLY')),
                   ],
@@ -73,6 +73,10 @@ class _PaddleSandboxCheckoutCardState extends State<PaddleSandboxCheckoutCard> {
                 const Text('Stripe の既存課金は変更せず、Paddle.js のモーダルとイベント処理だけを検証します。'),
                 const SizedBox(height: 12),
                 _PaddleCheckoutStatusBanner(state: state),
+                if (state.hasFinancialSnapshot) ...[
+                  const SizedBox(height: 10),
+                  _PaddleTaxEvidenceSummary(state: state),
+                ],
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 10,
@@ -115,6 +119,48 @@ class _PaddleSandboxCheckoutCardState extends State<PaddleSandboxCheckoutCard> {
   }
 }
 
+class _PaddleTaxEvidenceSummary extends StatelessWidget {
+  const _PaddleTaxEvidenceSummary({required this.state});
+
+  final PaddleCheckoutState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final currency = state.currencyCode ?? '—';
+    return Container(
+      key: const Key('paddle_sandbox_tax_evidence'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            state.hasTaxIdentifier
+                ? 'VAT / Tax ID 適用済み（番号は保存しません）'
+                : '税額スナップショット',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 12,
+            runSpacing: 6,
+            children: [
+              Text('通貨: $currency'),
+              Text('小計: ${state.subtotal ?? '—'}'),
+              Text('税額: ${state.tax ?? '—'}'),
+              Text('合計: ${state.total ?? '—'}'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PaddleCheckoutStatusBanner extends StatelessWidget {
   const _PaddleCheckoutStatusBanner({required this.state});
 
@@ -124,25 +170,25 @@ class _PaddleCheckoutStatusBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final (icon, color) = switch (state.phase) {
       PaddleCheckoutPhase.completed => (
-          Icons.check_circle_outline,
-          const Color(0xFF15803D),
-        ),
+        Icons.check_circle_outline,
+        const Color(0xFF15803D),
+      ),
       PaddleCheckoutPhase.failed || PaddleCheckoutPhase.unavailable => (
-          Icons.error_outline,
-          const Color(0xFFB91C1C),
-        ),
+        Icons.error_outline,
+        const Color(0xFFB91C1C),
+      ),
       PaddleCheckoutPhase.canceled => (
-          Icons.info_outline,
-          const Color(0xFFB45309),
-        ),
+        Icons.info_outline,
+        const Color(0xFFB45309),
+      ),
       PaddleCheckoutPhase.opening || PaddleCheckoutPhase.opened => (
-          Icons.hourglass_top,
-          const Color(0xFF1D4ED8),
-        ),
+        Icons.hourglass_top,
+        const Color(0xFF1D4ED8),
+      ),
       PaddleCheckoutPhase.idle => (
-          Icons.shield_outlined,
-          const Color(0xFF475569),
-        ),
+        Icons.shield_outlined,
+        const Color(0xFF475569),
+      ),
     };
     return Semantics(
       liveRegion: true,

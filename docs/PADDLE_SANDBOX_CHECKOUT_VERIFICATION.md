@@ -27,11 +27,13 @@ GitHub-hosted runner too:
 2. Store the sandbox price ID as the repository variable
    `PADDLE_SANDBOX_PRICE_ID`.
 3. Set the sandbox default payment link domain to `localhost` in Paddle.
-4. Run **Paddle Sandbox Checkout Cloud Validation** manually with
-   **Run the real Paddle sandbox success/failure/cancel matrix** enabled.
+4. Configure the B2B VAT and Customer Portal values described in
+   [`PADDLE_B2B_VAT_INVOICE_VERIFICATION.md`](PADDLE_B2B_VAT_INVOICE_VERIFICATION.md).
+5. Run **Paddle Sandbox Checkout Cloud Validation** manually with
+   **Run the real Paddle sandbox checkout and B2B VAT matrix** enabled.
 
 The real job builds a non-release app, serves it only on the runner's temporary
-`localhost:7357`, and runs the three scenarios serially without retries. It
+`localhost:7357`, and runs the checkout and B2B VAT scenarios serially without retries. It
 uploads sanitized Paddle event data, the Playwright report, and screenshots
 after payment fields are no longer visible. Never put a Paddle API key in
 GitHub Actions or Flutter; this flow accepts only a `test_` client-side token.

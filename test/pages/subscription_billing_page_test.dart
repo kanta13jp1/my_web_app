@@ -6,6 +6,7 @@ import 'package:my_web_app/services/activation_revenue_tracker.dart';
 import 'package:my_web_app/services/billing_service.dart';
 import 'package:my_web_app/services/growth_acquisition_service.dart';
 import 'package:my_web_app/services/paddle_checkout.dart';
+import 'package:my_web_app/services/paddle_invoice_access.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -221,10 +222,7 @@ void main() {
       MaterialApp(
         home: SubscriptionBillingPage(
           service: _FakeBillingGateway(
-            fetchStatusError: BillingServiceException(
-              secret,
-              statusCode: 503,
-            ),
+            fetchStatusError: BillingServiceException(secret, statusCode: 503),
           ),
           tracker: const NoopActivationRevenueEventTracker(),
           assignment: _treatment,
@@ -234,10 +232,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('プラン情報を読み込めませんでした。時間をおいて再度お試しください。'),
-      findsOneWidget,
-    );
+    expect(find.text('プラン情報を読み込めませんでした。時間をおいて再度お試しください。'), findsOneWidget);
     expect(find.textContaining(secret), findsNothing);
   });
 
@@ -248,10 +243,7 @@ void main() {
       MaterialApp(
         home: SubscriptionBillingPage(
           service: _FakeBillingGateway(
-            checkoutError: BillingServiceException(
-              secret,
-              statusCode: 500,
-            ),
+            checkoutError: BillingServiceException(secret, statusCode: 500),
           ),
           acquisitionService: _RecordingAcquisitionService(),
           tracker: const NoopActivationRevenueEventTracker(),
@@ -267,10 +259,7 @@ void main() {
     await tester.tap(checkoutButton);
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('決済画面を準備できませんでした。時間をおいて再度お試しください。'),
-      findsOneWidget,
-    );
+    expect(find.text('決済画面を準備できませんでした。時間をおいて再度お試しください。'), findsOneWidget);
     expect(find.textContaining(secret), findsNothing);
   });
 
@@ -376,6 +365,13 @@ void main() {
             releaseMode: false,
           ),
           paddleCheckoutGateway: _FakePaddleCheckoutGateway(),
+          paddleInvoiceAccessConfig: const PaddleInvoiceAccessConfig(
+            enabled: true,
+            customerPortalUrl:
+                'https://sandbox-customer-portal.paddle.com/cpl_sandboxtest123',
+            releaseMode: false,
+          ),
+          paddleInvoicePortalLauncher: (_) async => true,
         ),
       ),
     );
@@ -385,7 +381,12 @@ void main() {
       find.byKey(const Key('paddle_sandbox_checkout_card')),
       findsOneWidget,
     );
-    expect(find.text('SANDBOX ONLY'), findsOneWidget);
+    expect(find.text('SANDBOX ONLY'), findsNWidgets(2));
+    expect(
+      find.byKey(const Key('paddle_sandbox_invoice_access_card')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('発行元は'), findsOneWidget);
   });
 }
 

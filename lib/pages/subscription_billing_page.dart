@@ -8,7 +8,9 @@ import '../services/activation_revenue_tracker.dart';
 import '../services/billing_service.dart';
 import '../services/growth_acquisition_service.dart';
 import '../services/paddle_checkout.dart';
+import '../services/paddle_invoice_access.dart';
 import '../ui/features/billing/views/paddle_sandbox_checkout_card.dart';
+import '../ui/features/billing/views/paddle_sandbox_invoice_access_card.dart';
 
 class SubscriptionBillingPage extends StatefulWidget {
   const SubscriptionBillingPage({
@@ -21,6 +23,8 @@ class SubscriptionBillingPage extends StatefulWidget {
     this.assignment,
     this.paddleSandboxConfig,
     this.paddleCheckoutGateway,
+    this.paddleInvoiceAccessConfig,
+    this.paddleInvoicePortalLauncher,
   });
 
   final BillingGateway? service;
@@ -31,6 +35,8 @@ class SubscriptionBillingPage extends StatefulWidget {
   final ActivationRevenueAssignment? assignment;
   final PaddleSandboxConfig? paddleSandboxConfig;
   final PaddleCheckoutGateway? paddleCheckoutGateway;
+  final PaddleInvoiceAccessConfig? paddleInvoiceAccessConfig;
+  final PaddleInvoicePortalLauncher? paddleInvoicePortalLauncher;
 
   @override
   State<SubscriptionBillingPage> createState() =>
@@ -59,7 +65,8 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
   }
 
   Future<void> _initialize() async {
-    final assignment = widget.assignment ??
+    final assignment =
+        widget.assignment ??
         await widget.experimentService.resolve(uri: _sourceUri);
     if (!mounted) return;
     setState(() => _assignment = assignment);
@@ -111,9 +118,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     } catch (error) {
       debugPrint('Billing status fetch failed: $error');
       if (mounted) {
-        setState(
-          () => _errorMessage = 'プラン情報を読み込めませんでした。時間をおいて再度お試しください。',
-        );
+        setState(() => _errorMessage = 'プラン情報を読み込めませんでした。時間をおいて再度お試しください。');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -127,14 +132,14 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     );
     await _openStripeSession(() {
       return widget.acquisitionService.loadLatestTouchpoint().then(
-            (latestTouchpoint) => _service.createCheckoutSession(
-              tier: tier,
-              returnUrl: _currentReturnUrl,
-              attribution: BillingCheckoutAttribution.fromLatestTouchpoint(
-                latestTouchpoint,
-              ),
-            ),
-          );
+        (latestTouchpoint) => _service.createCheckoutSession(
+          tier: tier,
+          returnUrl: _currentReturnUrl,
+          attribution: BillingCheckoutAttribution.fromLatestTouchpoint(
+            latestTouchpoint,
+          ),
+        ),
+      );
     });
   }
 
@@ -144,10 +149,10 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
       stage: 'supporter_checkout',
     );
     await _openStripeSession(() async {
-      final latestTouchpoint =
-          await widget.acquisitionService.loadLatestTouchpoint();
-      final firstUserAttribution =
-          await widget.acquisitionService.loadFirstUserAttribution();
+      final latestTouchpoint = await widget.acquisitionService
+          .loadLatestTouchpoint();
+      final firstUserAttribution = await widget.acquisitionService
+          .loadFirstUserAttribution();
       return _service.createSupporterCheckoutSession(
         returnUrl: _currentReturnUrl,
         attribution: BillingSupporterAttribution.fromUri(
@@ -163,6 +168,10 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     await _openStripeSession(() {
       return _service.createPortalSession(returnUrl: _currentReturnUrl);
     });
+  }
+
+  Future<bool> _openPaddleInvoicePortal(Uri uri) {
+    return launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   Future<void> _openStripeSession(
@@ -182,9 +191,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     } catch (error) {
       debugPrint('Billing session preparation failed: $error');
       if (mounted) {
-        setState(
-          () => _errorMessage = '決済画面を準備できませんでした。時間をおいて再度お試しください。',
-        );
+        setState(() => _errorMessage = '決済画面を準備できませんでした。時間をおいて再度お試しください。');
       }
     } finally {
       if (mounted) setState(() => _isOpeningStripe = false);
@@ -210,7 +217,8 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final status = _status ??
+    final status =
+        _status ??
         const BillingStatus(
           tier: 'free',
           status: 'active',
@@ -221,6 +229,9 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     final valueFraming = _enabled('a10');
     final paddleSandboxConfig =
         widget.paddleSandboxConfig ?? PaddleSandboxConfig.fromEnvironment();
+    final paddleInvoiceAccessConfig =
+        widget.paddleInvoiceAccessConfig ??
+        PaddleInvoiceAccessConfig.fromEnvironment();
     return Scaffold(
       appBar: AppBar(
         title: const Text('プランと応援'),
@@ -281,6 +292,13 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                           onContinue: () {
                             Navigator.of(context).pushReplacementNamed('/home');
                           },
+                        ),
+                        const SizedBox(height: 16),
+                        PaddleSandboxInvoiceAccessCard(
+                          config: paddleInvoiceAccessConfig,
+                          launchPortal:
+                              widget.paddleInvoicePortalLauncher ??
+                              _openPaddleInvoicePortal,
                         ),
                       ],
                       const SizedBox(height: 16),
@@ -388,11 +406,11 @@ class _BillingReturnNotice {
       'success' => const _BillingReturnNotice._(_BillingReturnKind.success),
       'cancel' => const _BillingReturnNotice._(_BillingReturnKind.cancel),
       'supporter_success' => const _BillingReturnNotice._(
-          _BillingReturnKind.supporterSuccess,
-        ),
+        _BillingReturnKind.supporterSuccess,
+      ),
       'supporter_cancel' => const _BillingReturnNotice._(
-          _BillingReturnKind.supporterCancel,
-        ),
+        _BillingReturnKind.supporterCancel,
+      ),
       _ => null,
     };
   }
@@ -408,20 +426,18 @@ class _BillingReturnNotice {
       isSuccess ? Icons.check_circle_outline : Icons.info_outline;
 
   String get title => switch (kind) {
-        _BillingReturnKind.supporterSuccess => '100円の応援を受け付けました',
-        _BillingReturnKind.supporterCancel => '応援の決済をキャンセルしました',
-        _BillingReturnKind.success => 'プランの決済を受け付けました',
-        _BillingReturnKind.cancel => 'プランの決済をキャンセルしました',
-      };
+    _BillingReturnKind.supporterSuccess => '100円の応援を受け付けました',
+    _BillingReturnKind.supporterCancel => '応援の決済をキャンセルしました',
+    _BillingReturnKind.success => 'プランの決済を受け付けました',
+    _BillingReturnKind.cancel => 'プランの決済をキャンセルしました',
+  };
 
   String get message => switch (kind) {
-        _BillingReturnKind.supporterSuccess =>
-          'ありがとうございます。反映まで少し時間がかかる場合があります。',
-        _BillingReturnKind.supporterCancel =>
-          '請求は発生していません。必要になったときに、いつでも再開できます。',
-        _BillingReturnKind.success => 'Stripeから戻りました。最新のプラン状態を確認しています。',
-        _BillingReturnKind.cancel => '請求は発生していません。無料プランはそのまま利用できます。',
-      };
+    _BillingReturnKind.supporterSuccess => 'ありがとうございます。反映まで少し時間がかかる場合があります。',
+    _BillingReturnKind.supporterCancel => '請求は発生していません。必要になったときに、いつでも再開できます。',
+    _BillingReturnKind.success => 'Stripeから戻りました。最新のプラン状態を確認しています。',
+    _BillingReturnKind.cancel => '請求は発生していません。無料プランはそのまま利用できます。',
+  };
 }
 
 class _BillingReturnBanner extends StatelessWidget {
@@ -648,8 +664,8 @@ class _PlanGrid extends StatelessWidget {
         final columns = constraints.maxWidth >= 900
             ? 3
             : constraints.maxWidth >= 620
-                ? 2
-                : 1;
+            ? 2
+            : 1;
         return GridView.count(
           crossAxisCount: columns,
           shrinkWrap: true,
@@ -731,8 +747,8 @@ class _PlanCard extends StatelessWidget {
                   isFree
                       ? '無料で使い続ける'
                       : isCurrent
-                          ? '利用中'
-                          : '${plan.name}を始める',
+                      ? '利用中'
+                      : '${plan.name}を始める',
                 ),
               ),
             ),
@@ -891,18 +907,18 @@ class _Plan {
 }
 
 String _tierLabel(String tier) => switch (tier) {
-      'pro' => 'Pro（月額980円）',
-      'team' => 'Team（月額2,980円）',
-      _ => 'Free（無料）',
-    };
+  'pro' => 'Pro（月額980円）',
+  'team' => 'Team（月額2,980円）',
+  _ => 'Free（無料）',
+};
 
 String _statusLabel(String status) => switch (status) {
-      'active' => '利用中',
-      'trialing' => '無料体験中',
-      'past_due' => '支払い確認が必要',
-      'canceled' => '解約済み',
-      _ => status,
-    };
+  'active' => '利用中',
+  'trialing' => '無料体験中',
+  'past_due' => '支払い確認が必要',
+  'canceled' => '解約済み',
+  _ => status,
+};
 
 String _formatDate(DateTime value) {
   final month = value.month.toString().padLeft(2, '0');
