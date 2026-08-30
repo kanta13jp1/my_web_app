@@ -663,8 +663,8 @@ void main() {
     expect(find.text('Work'), findsWidgets);
   });
 
-
-  testWidgets('executes supported Evernote search syntax without semantic search',
+  testWidgets(
+      'executes supported Evernote search syntax without semantic search',
       (tester) async {
     final semanticSearch = _FakeSemanticSearchService(
       const NoteSemanticSearchResponse(

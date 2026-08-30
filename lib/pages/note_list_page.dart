@@ -140,9 +140,8 @@ class _NoteListPageState extends State<NoteListPage> {
       final notebookId = int.tryParse(
         note['notebook_collection_id']?.toString() ?? '',
       );
-      final collection = notebookId == null
-          ? null
-          : _collectionSearchContexts[notebookId];
+      final collection =
+          notebookId == null ? null : _collectionSearchContexts[notebookId];
       return _evernoteSearchQuery.matches(
         EvernoteSearchDocument(
           title: note['title']?.toString() ?? '',
@@ -426,8 +425,7 @@ class _NoteListPageState extends State<NoteListPage> {
       if (id == null) continue;
       final parentId = int.tryParse(row['parent_id']?.toString() ?? '');
       final parent = parentId == null ? null : byId[parentId];
-      final stackName = parent != null &&
-              parent['collection_type'] == 'stack'
+      final stackName = parent != null && parent['collection_type'] == 'stack'
           ? parent['name']?.toString()
           : null;
       contexts[id] = _NoteCollectionSearchContext(

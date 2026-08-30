@@ -295,9 +295,8 @@ class _SearchParser {
       }
     }
 
-    final quoted = value.length >= 2 &&
-        value.startsWith('"') &&
-        value.endsWith('"');
+    final quoted =
+        value.length >= 2 && value.startsWith('"') && value.endsWith('"');
     if (value.contains('"') && !quoted) {
       errors.add('引用符は検索語または演算子の値全体を囲んでください。');
     }
@@ -378,11 +377,9 @@ class _BinaryExpression extends _SearchExpression {
   @override
   bool evaluate(EvernoteSearchDocument document, DateTime now) {
     if (operator == _TokenKind.and) {
-      return left.evaluate(document, now) &&
-          right.evaluate(document, now);
+      return left.evaluate(document, now) && right.evaluate(document, now);
     }
-    return left.evaluate(document, now) ||
-        right.evaluate(document, now);
+    return left.evaluate(document, now) || right.evaluate(document, now);
   }
 }
 
