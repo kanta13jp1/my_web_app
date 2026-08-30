@@ -18,6 +18,16 @@ class FakeClient:
         del query
         return self.responses.get(resource, [])
 
+    def all_rows(
+        self,
+        resource: str,
+        query: list[tuple[str, str]],
+        *,
+        page_size: int = 1000,
+    ) -> list[dict[str, object]]:
+        del query, page_size
+        return self.responses.get(resource, [])
+
 
 def fixture(
     *,
@@ -64,6 +74,31 @@ def fixture(
                 "duplicate_rows": 175,
                 "invalid_task_ids": 0,
                 "staged_at": "2026-08-30T00:30:00Z",
+            }
+        ],
+        "notion_migration_wbs_staging": [
+            {
+                "source_page_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                "task_id": "11111111-1111-4111-8111-111111111111",
+                "title": "aggregate-only source",
+                "instance": "codex",
+                "status": "in_progress",
+                "progress": 40,
+                "deadline": "2026-09-01",
+                "source_updated_at": "2026-08-30T01:00:00Z",
+                "source_last_edited_at": "2026-08-30T02:00:00Z",
+            }
+        ],
+        "wbs_tasks": [
+            {
+                "id": "11111111-1111-4111-8111-111111111111",
+                "title": "aggregate-only source",
+                "instance": "codex",
+                "status": "in_progress",
+                "progress": 40,
+                "end_date": "2026-09-01",
+                "updated_at": "2026-08-30T01:00:00Z",
+                "category": "Development",
             }
         ],
         "notion_migration_vault_manifests": [
@@ -128,8 +163,12 @@ class NotionMigrationCloudAuditTest(unittest.TestCase):
 
         self.assertIn("棚卸し 10", summary)
         self.assertIn("4705", summary)
+        self.assertEqual(report["wbs_import_plan"]["decisions"]["unchanged"], 1)
+        self.assertIn("WBS cloud import plan", summary)
         self.assertNotIn("private-batch-id", summary)
         self.assertNotIn("must-not-leak", summary)
+        self.assertNotIn("aggregate-only source", summary)
+        self.assertNotIn("aaaaaaaa-aaaa", summary)
 
     def test_no_batch_is_safe_and_actionable(self) -> None:
         report = collect_audit(FakeClient({}))
