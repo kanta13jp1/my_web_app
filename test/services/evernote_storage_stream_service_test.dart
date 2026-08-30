@@ -131,4 +131,3 @@ void main() {
     expect(client.requests, isEmpty);
   });
 }
-
