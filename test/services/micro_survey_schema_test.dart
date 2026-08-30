@@ -18,7 +18,8 @@ void main() {
       expect(
         sql,
         contains(
-            "trigger in ('deployment_monitoring_created', 'resource_created')"),
+          "trigger in ('deployment_monitoring_created', 'resource_created')",
+        ),
       );
       expect(
         sql,
