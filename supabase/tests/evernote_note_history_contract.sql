@@ -209,6 +209,17 @@ select public.evernote_mark_note_history_reviewed(
   0
 );
 
+select public.evernote_verify_note_features(
+  102,
+  'id:note-102',
+  jsonb_build_object(
+    'task_count', true,
+    'task_hashes', true,
+    'task_reminder_hashes', true,
+    'note_reminder_hash', true
+  )
+);
+
 update public.evernote_migration_items
 set status = 'source_deleting'
 where batch_id = 102

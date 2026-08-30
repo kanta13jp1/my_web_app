@@ -221,7 +221,7 @@ jobs:
 
 
   hierarchy-db-contract:
-    name: Evernote hierarchy and history database contract
+    name: Evernote hierarchy, history, and Task database contract
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -250,7 +250,7 @@ jobs:
       - name: Checkout immutable event revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Apply hierarchy and history migrations to disposable Postgres
+      - name: Apply hierarchy, history, and Task migrations to disposable Postgres
         shell: bash
         run: |
           set -euo pipefail
@@ -265,6 +265,10 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 \
             -f supabase/migrations/20260831010954_add_evernote_note_history_gate.sql
           psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831014500_add_evernote_note_tasks_gate.sql
+          psql -X -v ON_ERROR_STOP=1 \
             -f supabase/tests/evernote_note_collections_contract.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_note_tasks_contract.sql
           psql -X -v ON_ERROR_STOP=1 \
             -f supabase/tests/evernote_note_history_contract.sql

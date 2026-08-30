@@ -12,7 +12,7 @@ select set_config(
   false
 );
 
-select public.evernote_commit_note_with_hierarchy(
+select public.evernote_commit_note_with_features(
   101,
   'id:note-101',
   'Hierarchy fixture',
@@ -28,6 +28,49 @@ select public.evernote_commit_note_with_hierarchy(
       'stack_name', 'Stack A',
       'notebook_name', 'Notebook A'
     )
+  ),
+  jsonb_build_array(
+    jsonb_build_object(
+      'title', 'Structured task',
+      'created_at', '2026-08-31T00:00:10Z',
+      'updated_at', '2026-08-31T00:00:20Z',
+      'status', 'open',
+      'in_note', true,
+      'task_flag', 'false',
+      'sort_weight', '1',
+      'note_level_id', 'task-101',
+      'task_group_note_level_id', 'group-101',
+      'due_at', '2026-09-01T00:00:00Z',
+      'due_date_ui_option', 'date_time',
+      'time_zone', 'Asia/Tokyo',
+      'recurrence', 'FREQ=DAILY',
+      'repeat_after_completion', false,
+      'status_updated_at', null,
+      'creator', 'fixture',
+      'last_editor', 'fixture',
+      'source_sha256', repeat('e', 64),
+      'raw_xml', '<task>Structured task</task>',
+      'reminders', jsonb_build_array(
+        jsonb_build_object(
+          'created_at', '2026-08-31T00:00:30Z',
+          'updated_at', '2026-08-31T00:00:40Z',
+          'note_level_id', 'task-reminder-101',
+          'reminder_at', '2026-09-01T00:00:00Z',
+          'reminder_date_ui_option', 'date_time',
+          'time_zone', 'Asia/Tokyo',
+          'due_date_offset', '0',
+          'status', 'active',
+          'source_sha256', repeat('f', 64),
+          'raw_xml', '<reminder />'
+        )
+      )
+    )
+  ),
+  jsonb_build_object(
+    'order', 1,
+    'reminder_at', '2026-09-02T00:00:00Z',
+    'completed_at', null,
+    'source_sha256', repeat('d', 64)
   ),
   '[]'::jsonb,
   'evernote-migration-archives',
@@ -69,7 +112,7 @@ end
 $$;
 
 -- A retry must reuse the same note and hierarchy rows.
-select public.evernote_commit_note_with_hierarchy(
+select public.evernote_commit_note_with_features(
   101,
   'id:note-101',
   'Hierarchy fixture',
@@ -85,6 +128,49 @@ select public.evernote_commit_note_with_hierarchy(
       'stack_name', 'Stack A',
       'notebook_name', 'Notebook A'
     )
+  ),
+  jsonb_build_array(
+    jsonb_build_object(
+      'title', 'Structured task',
+      'created_at', '2026-08-31T00:00:10Z',
+      'updated_at', '2026-08-31T00:00:20Z',
+      'status', 'open',
+      'in_note', true,
+      'task_flag', 'false',
+      'sort_weight', '1',
+      'note_level_id', 'task-101',
+      'task_group_note_level_id', 'group-101',
+      'due_at', '2026-09-01T00:00:00Z',
+      'due_date_ui_option', 'date_time',
+      'time_zone', 'Asia/Tokyo',
+      'recurrence', 'FREQ=DAILY',
+      'repeat_after_completion', false,
+      'status_updated_at', null,
+      'creator', 'fixture',
+      'last_editor', 'fixture',
+      'source_sha256', repeat('e', 64),
+      'raw_xml', '<task>Structured task</task>',
+      'reminders', jsonb_build_array(
+        jsonb_build_object(
+          'created_at', '2026-08-31T00:00:30Z',
+          'updated_at', '2026-08-31T00:00:40Z',
+          'note_level_id', 'task-reminder-101',
+          'reminder_at', '2026-09-01T00:00:00Z',
+          'reminder_date_ui_option', 'date_time',
+          'time_zone', 'Asia/Tokyo',
+          'due_date_offset', '0',
+          'status', 'active',
+          'source_sha256', repeat('f', 64),
+          'raw_xml', '<reminder />'
+        )
+      )
+    )
+  ),
+  jsonb_build_object(
+    'order', 1,
+    'reminder_at', '2026-09-02T00:00:00Z',
+    'completed_at', null,
+    'source_sha256', repeat('d', 64)
   ),
   '[]'::jsonb,
   'evernote-migration-archives',
@@ -102,7 +188,7 @@ begin
 end
 $$;
 
-select public.evernote_verify_note_with_hierarchy(
+select public.evernote_verify_note_with_features(
   101,
   'id:note-101',
   jsonb_build_object(
@@ -112,7 +198,11 @@ select public.evernote_verify_note_with_hierarchy(
     'tags', true,
     'resource_count', true,
     'resource_sha256', true,
-    'hierarchy', true
+    'hierarchy', true,
+    'task_count', true,
+    'task_hashes', true,
+    'task_reminder_hashes', true,
+    'note_reminder_hash', true
   )
 );
 
