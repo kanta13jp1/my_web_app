@@ -233,6 +233,108 @@ class PublicMemoService implements MemoReactionService {
     }
   }
 
+  /// Creates or updates a generated note before publishing it.
+  ///
+  /// Public memos must reference a note owned by the authenticated user. A
+  /// stable [sourceKey] lets generated surfaces update the same backing note
+  /// without using a synthetic value as the `notes.id` primary key.
+  Future<PublicMemo?> upsertGeneratedMemo({
+    required String sourceKey,
+    required String userId,
+    required String title,
+    String? content,
+    String? category,
+    Map<String, dynamic> metadata = const <String, dynamic>{},
+  }) async {
+    final normalizedSourceKey = sourceKey.trim();
+    if (normalizedSourceKey.isEmpty) {
+      throw ArgumentError.value(
+        sourceKey,
+        'sourceKey',
+        'Generated memo source key must not be empty',
+      );
+    }
+
+    try {
+      final now = DateTime.now().toUtc().toIso8601String();
+      final note = await _supabase
+          .from('notes')
+          .upsert(
+            <String, dynamic>{
+              'user_id': userId,
+              'source_key': normalizedSourceKey,
+              'title': title,
+              'content': content,
+              'is_archived': false,
+              'is_pinned': false,
+              'capture_status': 'organized',
+              'capture_source': 'public_memo_generated',
+              'updated_at': now,
+            },
+            onConflict: 'user_id,source_key',
+          )
+          .select('id')
+          .single();
+      final noteId = int.tryParse(note['id'].toString());
+      if (noteId == null) {
+        throw StateError('Generated memo note upsert returned no numeric id.');
+      }
+
+      return upsertMemo(
+        noteId: noteId,
+        userId: userId,
+        title: title,
+        content: content,
+        category: category,
+        metadata: <String, dynamic>{
+          ...metadata,
+          'source_key': normalizedSourceKey,
+        },
+      );
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Failed to persist generated memo backing note',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return null;
+    }
+  }
+
+  Future<PublicMemo?> getUserGeneratedPublicMemoBySourceKey({
+    required String sourceKey,
+    required String userId,
+  }) async {
+    final normalizedSourceKey = sourceKey.trim();
+    if (normalizedSourceKey.isEmpty) {
+      return null;
+    }
+
+    try {
+      final note = await _supabase
+          .from('notes')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('source_key', normalizedSourceKey)
+          .maybeSingle();
+      if (note == null) {
+        return null;
+      }
+      final noteId = int.tryParse(note['id'].toString());
+      if (noteId == null) {
+        return null;
+      }
+      return getUserPublicMemoByNoteId(noteId: noteId, userId: userId);
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Failed to load generated public memo',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return null;
+    }
+  }
+
   // Unpublish a memo
   Future<bool> unpublishMemo(int noteId, String userId) async {
     try {
