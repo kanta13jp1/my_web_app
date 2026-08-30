@@ -136,8 +136,7 @@ void main() {
       );
     });
 
-    test('streams one note subtree at a time across byte boundaries',
-        () async {
+    test('streams one note subtree at a time across byte boundaries', () async {
       final bytes = Uint8List.fromList(utf8.encode(_streamingEnex));
       final notes = <EvernoteEnexNote>[];
       final progress = <int>[];
@@ -323,4 +322,3 @@ const _streamingEnex = '''
   </note>
 </en-export>
 ''';
-
