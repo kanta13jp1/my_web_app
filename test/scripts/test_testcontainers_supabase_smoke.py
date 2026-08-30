@@ -262,6 +262,16 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
         self.assertIn("body user_id forgery", checks)
         self.assertIn("direct self-join", checks)
         self.assertIn("applies twice", checks)
+        self.assertEqual(
+            plan["generated_memo_repair_migration"],
+            "supabase/migrations/"
+            "20260830021402_restore_generated_public_memo_publishing.sql",
+        )
+        repair_checks = " ".join(plan["generated_memo_repair_checks"])
+        self.assertIn("owner-backed notes", repair_checks)
+        self.assertIn("foreign key is validated", repair_checks)
+        self.assertIn("forged legacy publications", repair_checks)
+        self.assertIn("applies twice", repair_checks)
 
     def test_tenant_role_count_rejects_untrusted_identifiers(self) -> None:
         with self.assertRaisesRegex(ValueError, "unexpected role"):
