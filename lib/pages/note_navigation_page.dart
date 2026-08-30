@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/note_navigation_service.dart';
 import 'note_editor_page.dart';
 import 'note_list_page.dart';
+import 'note_tags_page.dart';
 
 class NoteNavigationPage extends StatefulWidget {
   const NoteNavigationPage({
@@ -83,6 +84,18 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
       appBar: AppBar(
         title: const Text('保存済み検索・ショートカット'),
         actions: [
+          IconButton(
+            key: const Key('note_navigation_tags'),
+            onPressed: _saving
+                ? null
+                : () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const NoteTagsPage(),
+                      ),
+                    ),
+            tooltip: '階層タグ',
+            icon: const Icon(Icons.account_tree_outlined),
+          ),
           IconButton(
             key: const Key('note_navigation_refresh'),
             onPressed: _saving ? null : _reload,

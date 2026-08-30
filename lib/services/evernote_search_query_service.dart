@@ -8,6 +8,12 @@ class EvernoteSearchDocument {
     this.createdAt,
     this.updatedAt,
     this.reminderTime,
+    this.resourceMimeTypes = const <String>[],
+    this.source,
+    this.hasEncryptedText = false,
+    this.hasCheckedTodo = false,
+    this.hasUncheckedTodo = false,
+    this.containsTypes = const <String>{},
   });
 
   final String title;
@@ -18,6 +24,12 @@ class EvernoteSearchDocument {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? reminderTime;
+  final List<String> resourceMimeTypes;
+  final String? source;
+  final bool hasEncryptedText;
+  final bool hasCheckedTodo;
+  final bool hasUncheckedTodo;
+  final Set<String> containsTypes;
 }
 
 class EvernoteSearchQuery {
@@ -37,6 +49,11 @@ class EvernoteSearchQuery {
 
   bool get isFullySupported =>
       errors.isEmpty && unsupportedOperators.isEmpty && _expression != null;
+
+  bool get requiresStoredFeatures => RegExp(
+        r'(^|\s|\()(?:(?:resource|source|todo|encryption|contains):)',
+        caseSensitive: false,
+      ).hasMatch(raw);
 
   bool matches(
     EvernoteSearchDocument document, {
@@ -64,6 +81,46 @@ class EvernoteSearchQueryService {
     'created',
     'updated',
     'remindertime',
+    'resource',
+    'source',
+    'todo',
+    'encryption',
+    'contains',
+  };
+
+  static const Set<String> supportedContainsTypes = <String>{
+    'address',
+    'filearchive',
+    'attachment',
+    'fileaudio',
+    'calendarevent',
+    'entodo',
+    'encodeblock',
+    'contact',
+    'date',
+    'filedocument',
+    'email',
+    'encrypt',
+    'urlgoogledrive',
+    'fileimage',
+    'numberinteger',
+    'list',
+    'numberreal',
+    'fileoffice',
+    'filepdf',
+    'numberpercent',
+    'person',
+    'phonenumber',
+    'filepresentation',
+    'numberprice',
+    'filespreadsheet',
+    'table',
+    'task',
+    'taskcompleted',
+    'tasknotcompleted',
+    'time',
+    'url',
+    'filevideo',
   };
 
   static EvernoteSearchQuery parse(String raw) {
@@ -289,7 +346,7 @@ class _SearchParser {
         unsupportedOperators.add(modifier);
         return const _MatchAllExpression();
       }
-      if (value.isEmpty) {
+      if (value.isEmpty && modifier != 'encryption') {
         errors.add('$modifier: の値が不足しています。');
         return const _MatchAllExpression();
       }
@@ -301,11 +358,23 @@ class _SearchParser {
       errors.add('引用符は検索語または演算子の値全体を囲んでください。');
     }
     final unquoted = quoted ? value.substring(1, value.length - 1) : value;
-    if (unquoted.trim().isEmpty) {
+    if (unquoted.trim().isEmpty && modifier != 'encryption') {
       errors.add('空の検索語は使用できません。');
     }
     if (unquoted.contains('*') && !unquoted.endsWith('*')) {
       errors.add('ワイルドカードは検索語の末尾でのみ使用できます。');
+    }
+    if (modifier == 'todo' &&
+        !const <String>{'true', 'false', '*'}.contains(
+          unquoted.toLowerCase(),
+        )) {
+      errors.add('todo: は true、false、* のいずれかを指定してください。');
+    }
+    if (modifier == 'contains' &&
+        !EvernoteSearchQueryService.supportedContainsTypes.contains(
+          unquoted.toLowerCase(),
+        )) {
+      errors.add('contains: の種別が不正です。');
     }
     if (modifier == 'created' ||
         modifier == 'updated' ||
@@ -416,8 +485,27 @@ class _AtomExpression extends _SearchExpression {
       case 'updated':
         return _matchesDate(document.updatedAt, target, now);
       case 'remindertime':
-        if (target == '') return document.reminderTime != null;
+        if (target == '' || target == '*') {
+          return document.reminderTime != null;
+        }
         return _matchesDate(document.reminderTime, target, now);
+      case 'resource':
+        return document.resourceMimeTypes.any(
+          (mime) => _matchesName(mime, target, wildcard),
+        );
+      case 'source':
+        return _matchesName(document.source, target, wildcard);
+      case 'todo':
+        return switch (target.toLowerCase()) {
+          'true' => document.hasCheckedTodo,
+          'false' => document.hasUncheckedTodo,
+          '*' => document.hasCheckedTodo || document.hasUncheckedTodo,
+          _ => false,
+        };
+      case 'encryption':
+        return document.hasEncryptedText;
+      case 'contains':
+        return document.containsTypes.contains(target.toLowerCase());
       case null:
         final fields = <String>[
           document.title,

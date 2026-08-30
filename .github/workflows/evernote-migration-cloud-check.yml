@@ -156,7 +156,9 @@ jobs:
               lib/pages/note_editor_page.dart \
               lib/pages/note_tasks_page.dart \
               lib/pages/note_navigation_page.dart \
+              lib/pages/note_tags_page.dart \
               lib/services/note_task_service.dart \
+              lib/services/note_tag_hierarchy_service.dart \
               lib/services/note_navigation_service.dart \
               lib/widgets/note_tasks_panel.dart \
               lib/pages/note_list_page.dart \
@@ -166,6 +168,8 @@ jobs:
               test/pages/note_editor_page_test.dart \
               test/pages/note_tasks_page_test.dart \
               test/pages/note_navigation_page_test.dart \
+              test/pages/note_tags_page_test.dart \
+              test/services/note_tag_hierarchy_service_test.dart \
               test/widgets/note_tasks_panel_test.dart \
               test/pages/note_list_page_test.dart \
               test/widgets/markdown_preview_test.dart

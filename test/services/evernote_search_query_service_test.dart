@@ -11,6 +11,12 @@ void main() {
     createdAt: DateTime(2026, 8, 28, 10),
     updatedAt: DateTime(2026, 8, 30, 12),
     reminderTime: DateTime(2026, 9, 2, 9),
+    resourceMimeTypes: <String>['application/pdf', 'image/jpeg'],
+    source: 'mobile.android',
+    hasEncryptedText: true,
+    hasCheckedTodo: true,
+    hasUncheckedTodo: false,
+    containsTypes: <String>{'attachment', 'filepdf', 'taskcompleted'},
   );
 
   group('EvernoteSearchQueryService', () {
@@ -102,11 +108,47 @@ void main() {
       expect(query.matches(base), isFalse);
     });
 
+    test('matches resource, source, todo, encryption, and contains', () {
+      expect(
+        EvernoteSearchQueryService.parse('resource:application/pdf')
+            .matches(base),
+        isTrue,
+      );
+      expect(
+        EvernoteSearchQueryService.parse('resource:image/*').matches(base),
+        isTrue,
+      );
+      expect(
+        EvernoteSearchQueryService.parse('source:mobile.*').matches(base),
+        isTrue,
+      );
+      expect(EvernoteSearchQueryService.parse('todo:true').matches(base), isTrue);
+      expect(
+        EvernoteSearchQueryService.parse('encryption:').matches(base),
+        isTrue,
+      );
+      expect(
+        EvernoteSearchQueryService.parse('contains:filePdf').matches(base),
+        isTrue,
+      );
+    });
+
+    test('validates todo and contains values', () {
+      expect(
+        EvernoteSearchQueryService.parse('todo:done').errors,
+        isNotEmpty,
+      );
+      expect(
+        EvernoteSearchQueryService.parse('contains:unknown').errors,
+        isNotEmpty,
+      );
+    });
+
     test('reports unsupported operators and leaves results unfiltered', () {
       final query =
-          EvernoteSearchQueryService.parse('project resource:application/pdf');
+          EvernoteSearchQueryService.parse('project latitude:35.0');
 
-      expect(query.unsupportedOperators, <String>['resource']);
+      expect(query.unsupportedOperators, <String>['latitude']);
       expect(query.isFullySupported, isFalse);
       expect(
         query.matches(
