@@ -102,7 +102,7 @@ jobs:
           docker_key_fingerprint=$(gpg --show-keys --with-colons \
             /etc/apt/keyrings/docker.asc \
             | awk -F: '$1 == "fpr" && found == "" { found=$10 } END { print found }')
-          test "$docker_key_fingerprint" = "060A61C51B558A7F742B77AAC52FEB6B621E9F35"
+          test "$docker_key_fingerprint" = "9DC858229FC7DD38854AE2D88D81803C0EBFCD88"
           sudo chmod a+r /etc/apt/keyrings/docker.asc
           architecture=$(dpkg --print-architecture)
           codename=$(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
