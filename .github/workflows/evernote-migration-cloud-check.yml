@@ -203,6 +203,14 @@ jobs:
           if [ -s .ci-logs/evernote-cloud-format.patch ]; then
             echo 'mismatch=true' >> "$GITHUB_OUTPUT"
             echo "::warning::Formatting or pubspec.lock differs; download the patch artifact."
+            patch_bytes="$(wc -c < .ci-logs/evernote-cloud-format.patch)"
+            if [ "$patch_bytes" -le 100000 ]; then
+              echo "::group::Cloud formatting patch"
+              cat .ci-logs/evernote-cloud-format.patch
+              echo "::endgroup::"
+            else
+              echo "::warning::Formatting patch is too large to print safely."
+            fi
           else
             echo 'mismatch=false' >> "$GITHUB_OUTPUT"
           fi
