@@ -20,6 +20,9 @@ permissions: {}
 
 jobs:
   register:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: read
     name: Register new drafts in blog_posts

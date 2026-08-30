@@ -18,6 +18,9 @@ permissions: {}
 
 jobs:
   fetch-and-summarize:
+    environment:
+      name: ai-operations-production
+      deployment: false
     permissions:
       contents: write
       issues: write

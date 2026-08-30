@@ -36,6 +36,9 @@ concurrency:
 
 jobs:
   engagement:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: read
     name: Blog Engagement Analytics

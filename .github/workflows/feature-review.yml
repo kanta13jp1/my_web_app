@@ -29,6 +29,9 @@ concurrency:
 
 jobs:
   review:
+    environment:
+      name: ai-operations-production
+      deployment: false
     permissions:
       contents: read
       issues: write

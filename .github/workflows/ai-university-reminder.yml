@@ -25,6 +25,9 @@ permissions: {}
 
 jobs:
   send-reminders:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: read
     name: Send Study Reminders

@@ -16,6 +16,9 @@ permissions: {}
 
 jobs:
   source-audit:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       actions: read
       contents: read
@@ -137,6 +140,9 @@ jobs:
           retention-days: 30
 
   update:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: write
     name: AI University Content Update

@@ -18,6 +18,9 @@ permissions: {}
 
 jobs:
   notify:
+    environment:
+      name: wbs-automation-production
+      deployment: false
     permissions:
       contents: read
     runs-on: ubuntu-latest
