@@ -1,8 +1,8 @@
 # Cloud-first Development Workflow
 
 This repository treats the Windows checkout as a lightweight control plane.
-GitHub Actions owns expensive dependency resolution, analysis, tests, coverage,
-browser smoke tests, and production builds.
+GitHub and Supabase own dependency hydration, analysis, tests, builds, browser
+checks, migration staging, and durable evidence.
 
 ## Route Before Work
 
@@ -18,16 +18,33 @@ Cloud execution is mandatory when any of these limits is reached:
 - free physical memory below 4 GiB;
 - memory use at or above 85%.
 
-`CLOUD_PREFERRED` still means that GitHub Actions is the default validation
-authority. `CLOUD_REQUIRED` additionally prohibits local dependency installs,
-full Flutter/Dart/Deno checks, builds, Docker, dev servers, and local child
-workers.
+`CLOUD_PREFERRED` means that GitHub Actions is the default validation authority.
+`CLOUD_REQUIRED` additionally prohibits local dependency installs, full
+Flutter/Dart/Deno checks, builds, Docker, dev servers, browsers, media work, and
+local data conversion.
 
-## Lightweight Local Control Plane
+When memory use reaches 90% or free memory falls below 2 GiB, do not begin a
+local Git operation, analyzer, test, build, browser, server, or import. Preserve
+open edits and let any already-running Git operation finish. Resume resource
+intensive local work only after two samples, at least eight seconds apart, both
+show memory use below 85%, free memory above 2 GiB, and no Dart/Flutter process.
+A user request to continue does not override this safety gate.
 
-When a separate checkout is necessary, use a sparse worktree and select only
-the paths in the task's write set. This avoids copying application assets and
-prevents accidental package-cache creation.
+## Three Cloud Lanes
+
+### 1. Remote source lane
+
+Use a scoped `codex/` branch and a draft pull request as the durable source of
+truth. When the Codex GitHub connection is available, bounded documentation,
+policy, and workflow edits can be committed through GitHub without hydrating a
+local checkout. Never write directly to a protected branch.
+
+Do not mix a remote-only infrastructure change into a dirty local feature
+branch. Create a separate branch from a known base commit, review the diff in a
+draft PR, and merge or cherry-pick it only after CI succeeds.
+
+If a local checkout is necessary, keep it sparse and select only the task's
+write set:
 
 ```powershell
 git fetch origin main
@@ -38,51 +55,73 @@ git sparse-checkout set '/lib/target/' '/test/target/' '/AGENTS.md'
 git checkout
 ```
 
-Keep local validation cheap and deterministic:
+Local checks must remain cheap: text inspection, `git diff --check`, and
+standard-library policy tests. Do not install packages merely to make a local
+check available.
 
-```powershell
-git diff --check
-python scripts/<targeted-policy-test>.py
-```
+### 2. Cloud validation lane
 
-Do not run package installation merely to make a local check available. The
-missing toolchain is a routing signal to use CI.
+Push an immutable branch head and let GitHub Actions install dependencies, use
+runner-side caches, format, analyze, test, run headless-browser smoke checks,
+and build release artifacts. Pull-request CI validates the merge ref.
 
-## Cloud Validation
-
-For normal implementation, push the branch and open a draft PR. Pull-request CI
-classifies changed paths and runs only the required expensive scopes against
-the merge ref.
-
-For pre-PR or branch-only proof, dispatch the full cloud gate after pushing the
-branch:
+For a branch-only proof, dispatch the full cloud gate after pushing:
 
 ```powershell
 git push -u origin HEAD
 python scripts/cloud_ci_handoff.py --execute --watch
 ```
 
-Run the helper without `--execute` for a read-only preflight. It refuses a
-dirty checkout, a protected branch, an origin branch that is missing or differs
-from local `HEAD`, or a missing GitHub CLI. The dispatched workflow receives
-`expected_head_sha`, fetches the immutable event SHA instead of the moving
-branch ref, and fails if checkout does not equal the handoff SHA.
+The helper refuses a dirty checkout, protected branch, missing remote branch,
+head mismatch, or missing GitHub CLI. It passes the exact expected SHA so CI
+cannot silently validate a newer moving branch.
 
-The manual dispatch intentionally runs all scopes. It proves the exact pushed
-branch head without creating Flutter, Deno, Node, coverage, or build outputs
-locally. Record the emitted run URL and head SHA in the PR. PR CI must still
-pass because it tests the merge ref, not only the branch head.
+Evernote-scoped work may also use
+`.github/workflows/evernote-migration-cloud-check.yml`. That workflow formats
+and validates on the runner, emits a one-day patch when the branch is not
+formatted or the lockfile changes, runs focused tests, and can optionally run
+the web smoke test or release build. Apply the patch only after reviewing it.
 
-The GitHub CLI commands remain available for incident diagnosis, but do not
-dispatch `ci.yml` by hand: the required SHA input and new-run fencing belong to
-`cloud_ci_handoff.py`.
+### 3. Private migration data lane
+
+Personal exports must never be committed to Git, uploaded to GitHub Actions, or
+included in logs and artifacts. Evernote ENEX files and attachments travel
+directly from the selected local file stream to a private Supabase Storage
+bucket using resumable, bounded chunks. The client must not create a full
+in-memory copy or a second local archive.
+
+Supabase-side workers then process the staged object sequentially:
+
+1. record archive size, SHA-256, expected note count, and a migration batch ID;
+2. parse one note at a time and copy attachments server-side;
+3. commit and verify each note before advancing the ledger;
+4. compare counts, hashes, attachments, searchable content, and recovery export;
+5. mark the batch eligible for source deletion only after all checks succeed.
+
+Storage remains private with user-scoped RLS. Operational logs contain IDs,
+counts, hashes, timings, and error codes only. They must not contain note bodies,
+attachment bytes, account credentials, or signed URLs.
+
+Deleting the corresponding Evernote batch always requires a fresh, explicit
+approval after verification. Subscription cancellation remains locked until all
+batches, feature parity, recovery, and billing audits are complete.
+
+## Artifact and Cache Policy
+
+- Dependency caches live on GitHub runners, never in the project checkout.
+- Upload only review evidence, logs, and source patches; default retention is one
+  day for migration-specific artifacts.
+- Never upload ENEX, Obsidian vault contents, attachment bytes, secrets, browser
+  profiles, or production database exports.
+- Do not download cloud build outputs unless the user needs to inspect one.
+- Supabase staging objects use a documented lifecycle and are deleted only after
+  the committed copy and recovery evidence are verified.
 
 ## Cleanup Boundary
 
 - Close only servers and browser tabs opened for the current task.
-- Remove only ignored caches or build outputs created by the current task.
-- Keep clean unmerged worktrees until the PR has review evidence; remove them
-  after merge according to `docs/AGENT_DELEGATION_PROTOCOL.md`.
+- Remove only ignored caches or outputs created by the current task.
+- Keep clean unmerged worktrees until the PR has review evidence.
 - Never delete dirty, locked, rescued, or unrelated worktrees to gain space.
-- If CI is unavailable, report the infrastructure blocker. Do not silently fall
-  back to a heavy local run while `CLOUD_REQUIRED` is active.
+- If cloud execution is unavailable, report the infrastructure blocker. Do not
+  fall back to a heavy local run while `CLOUD_REQUIRED` is active.
