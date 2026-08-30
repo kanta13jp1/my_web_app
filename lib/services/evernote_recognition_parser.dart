@@ -75,7 +75,10 @@ class EvernoteRecognitionIndex {
   String get searchText {
     return regions
         .expand((region) => region.candidates)
-        .map((candidate) => candidate.text.replaceAll(RegExp(r'\s+'), ' ').trim())
+        .map(
+          (candidate) =>
+              candidate.text.replaceAll(RegExp(r'\\s+'), ' ').trim(),
+        )
         .where((text) => text.isNotEmpty)
         .join(' ');
   }
