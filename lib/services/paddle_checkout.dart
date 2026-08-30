@@ -113,16 +113,16 @@ class PaddleCheckoutState {
   });
 
   const PaddleCheckoutState.idle()
-    : phase = PaddleCheckoutPhase.idle,
-      message = 'Paddle sandbox checkout を開始できます。',
-      checkoutId = null,
-      transactionId = null,
-      currencyCode = null,
-      subtotal = null,
-      tax = null,
-      total = null,
-      hasBusiness = false,
-      hasTaxIdentifier = false;
+      : phase = PaddleCheckoutPhase.idle,
+        message = 'Paddle sandbox checkout を開始できます。',
+        checkoutId = null,
+        transactionId = null,
+        currencyCode = null,
+        subtotal = null,
+        tax = null,
+        total = null,
+        hasBusiness = false,
+        hasTaxIdentifier = false;
 
   final PaddleCheckoutPhase phase;
   final String message;

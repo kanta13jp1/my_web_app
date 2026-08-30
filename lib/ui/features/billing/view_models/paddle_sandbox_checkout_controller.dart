@@ -6,8 +6,8 @@ class PaddleSandboxCheckoutController extends ChangeNotifier {
   PaddleSandboxCheckoutController({
     required this.config,
     required PaddleCheckoutGateway gateway,
-  }) : _gateway = gateway,
-       _state = _initialState(config);
+  })  : _gateway = gateway,
+        _state = _initialState(config);
 
   final PaddleSandboxConfig config;
   final PaddleCheckoutGateway _gateway;

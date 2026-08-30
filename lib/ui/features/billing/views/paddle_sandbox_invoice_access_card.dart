@@ -100,9 +100,8 @@ class _PaddleSandboxInvoiceAccessCardState
             const SizedBox(height: 12),
             FilledButton.icon(
               key: const Key('paddle_sandbox_invoice_button'),
-              onPressed: _isOpening || !widget.config.canOpen
-                  ? null
-                  : _openPortal,
+              onPressed:
+                  _isOpening || !widget.config.canOpen ? null : _openPortal,
               icon: _isOpening
                   ? const SizedBox.square(
                       dimension: 18,

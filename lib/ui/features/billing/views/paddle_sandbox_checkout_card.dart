@@ -63,8 +63,8 @@ class _PaddleSandboxCheckoutCardState extends State<PaddleSandboxCheckoutCard> {
                     Text(
                       'Paddle checkout 検証',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const Chip(label: Text('SANDBOX ONLY')),
                   ],
@@ -170,25 +170,25 @@ class _PaddleCheckoutStatusBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final (icon, color) = switch (state.phase) {
       PaddleCheckoutPhase.completed => (
-        Icons.check_circle_outline,
-        const Color(0xFF15803D),
-      ),
+          Icons.check_circle_outline,
+          const Color(0xFF15803D),
+        ),
       PaddleCheckoutPhase.failed || PaddleCheckoutPhase.unavailable => (
-        Icons.error_outline,
-        const Color(0xFFB91C1C),
-      ),
+          Icons.error_outline,
+          const Color(0xFFB91C1C),
+        ),
       PaddleCheckoutPhase.canceled => (
-        Icons.info_outline,
-        const Color(0xFFB45309),
-      ),
+          Icons.info_outline,
+          const Color(0xFFB45309),
+        ),
       PaddleCheckoutPhase.opening || PaddleCheckoutPhase.opened => (
-        Icons.hourglass_top,
-        const Color(0xFF1D4ED8),
-      ),
+          Icons.hourglass_top,
+          const Color(0xFF1D4ED8),
+        ),
       PaddleCheckoutPhase.idle => (
-        Icons.shield_outlined,
-        const Color(0xFF475569),
-      ),
+          Icons.shield_outlined,
+          const Color(0xFF475569),
+        ),
     };
     return Semantics(
       liveRegion: true,
