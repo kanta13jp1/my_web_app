@@ -46,7 +46,9 @@ void main() {
     expect(sql, contains('estimated_daily_requests between 1 and 9000'));
     expect(sql, contains('completion_seconds between 1 and 3600'));
     expect(
-        sql, contains("'developer', 'operations', 'creator', 'product_owner'"));
+      sql,
+      contains("'developer', 'operations', 'creator', 'product_owner'"),
+    );
     expect(sql, contains('ai_university_firefly_api_outcome_summary'));
     expect(sql, contains('first_call_success_percent'));
     expect(sql, contains('non_2xx_recovery_pass_percent'));
