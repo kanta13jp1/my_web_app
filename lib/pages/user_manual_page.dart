@@ -581,7 +581,8 @@ class UserManualPage extends StatelessWidget {
           const SizedBox(height: 8),
           const Text(
             'メモ・タスク・資産・習慣をすべて一元管理し、AIの力で自己実現をサポートする統合プラットフォームです。'
-            'Notion・Evernote・MoneyForward・LINE・Facebook・Liven・GitHub など21の競合サービスを超える機能を完全無料で提供します。',
+            '主要機能は無料で始められます。一部の高度な機能と利用枠にはPro・Teamなどの有料プランがあります。'
+            '料金・対象機能・解約条件は「プランと応援」画面で確認してください。',
             style: TextStyle(fontSize: 13, height: 1.6),
           ),
         ],
