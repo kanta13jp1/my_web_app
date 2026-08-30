@@ -1,5 +1,7 @@
 # Privacy Policy / プライバシーポリシー (Draft)
 
+> **履歴資料:** 現在の公開正本は `assets/legal/privacy_policy.md`。本ファイルの保持期間や実装状態を公開判断に使用しない。
+
 > **Win版#132 part 160 (2026-05-07)**: Issue #1495 [P0][Mobile] Phase 0 blocker.
 > Win Claude territory = ドラフト本文 + 法的 framing + 倫理免責 + AI data flow / Win Codex hand-off = `/privacy` route 実装 + 公開 URL 確保 + ストア掲載連携.
 > 適用先: Web (= <https://my-web-app-b67f4.web.app/privacy>) / iOS App Store / Google Play.
