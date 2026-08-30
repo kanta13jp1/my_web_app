@@ -7,6 +7,7 @@ import unittest
 from check_rootless_container_setup import (
     REPO_ROOT,
     load_json,
+    validate_cloud_control_plane,
     validate_devcontainer,
     validate_dockerfile,
     validate_cloud_workflow,
@@ -21,7 +22,7 @@ class RootlessContainerSetupTest(unittest.TestCase):
         self.assertEqual(validate_repository(REPO_ROOT), [])
 
     def test_rejects_root_or_privileged_devcontainer(self) -> None:
-        config = load_json(REPO_ROOT / ".devcontainer" / "devcontainer.json")
+        config = load_json(REPO_ROOT / ".devcontainer" / "flutter-local" / "devcontainer.json")
         broken = copy.deepcopy(config)
         broken["containerUser"] = "root"
         broken["runArgs"].append("--privileged")
@@ -32,7 +33,7 @@ class RootlessContainerSetupTest(unittest.TestCase):
         self.assertTrue(any("privileged" in error for error in errors), errors)
 
     def test_rejects_privileged_forwarded_port(self) -> None:
-        config = load_json(REPO_ROOT / ".devcontainer" / "devcontainer.json")
+        config = load_json(REPO_ROOT / ".devcontainer" / "flutter-local" / "devcontainer.json")
         broken = copy.deepcopy(config)
         broken["forwardPorts"] = [80]
 
@@ -41,7 +42,7 @@ class RootlessContainerSetupTest(unittest.TestCase):
         self.assertTrue(any(">= 1024" in error for error in errors), errors)
 
     def test_rejects_host_runtime_socket_mount(self) -> None:
-        config = load_json(REPO_ROOT / ".devcontainer" / "devcontainer.json")
+        config = load_json(REPO_ROOT / ".devcontainer" / "flutter-local" / "devcontainer.json")
         broken = copy.deepcopy(config)
         broken["mounts"] = [
             "source=/run/user/1000/podman/podman.sock,target=/var/run/docker.sock,type=bind"
@@ -51,6 +52,20 @@ class RootlessContainerSetupTest(unittest.TestCase):
 
         self.assertTrue(any("socket" in error or ".sock" in error for error in errors), errors)
 
+    def test_accepts_lightweight_cloud_control_plane(self) -> None:
+        config = load_json(REPO_ROOT / ".devcontainer" / "devcontainer.json")
+
+        self.assertEqual(validate_cloud_control_plane(config), [])
+
+    def test_rejects_flutter_in_cloud_control_plane_startup(self) -> None:
+        config = load_json(REPO_ROOT / ".devcontainer" / "devcontainer.json")
+        broken = copy.deepcopy(config)
+        broken["postCreateCommand"] = "flutter pub get"
+
+        errors = validate_cloud_control_plane(broken)
+
+        self.assertTrue(any("lightweight" in error for error in errors), errors)
+        self.assertTrue(any("flutter" in error for error in errors), errors)
     def test_rejects_wrong_container_clients(self) -> None:
         errors = validate_settings(
             {
