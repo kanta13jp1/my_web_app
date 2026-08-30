@@ -70,6 +70,7 @@ void main() {
     expect(find.text('1. この操作はスムーズでしたか？'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('microSurveyRating5')));
+    await tester.pump();
     await tester.tap(find.text('送信'));
     await tester.pumpAndSettle();
 
@@ -99,6 +100,7 @@ void main() {
     await tester.tap(find.text('タスク完了'));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('microSurveyRating3')));
+    await tester.pump();
     await tester.tap(find.text('送信'));
     await tester.pumpAndSettle();
 
