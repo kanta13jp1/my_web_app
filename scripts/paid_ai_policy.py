@@ -22,7 +22,11 @@ import urllib.request
 
 
 PAID_AI_VARIABLE = "PAID_AI_CLAUDE_CODEX_ENABLED"
-EXEMPT_ADMIN_WORKFLOWS = {"quota-monitor.yml"}
+EXEMPT_ADMIN_WORKFLOWS = {"shared-secret-environment-migration.yml"}
+PAID_PROVIDER_ENDPOINTS = (
+    "api.anthropic.com",
+    "api.openai.com",
+)
 PROTECTED_REFERENCES = (
     "secrets.ANTHROPIC_API_KEY",
     "secrets.CLAUDE_CODE_OAUTH_TOKEN",
@@ -162,9 +166,13 @@ def audit_workflows(workflows_dir: Path) -> list[str]:
 
     errors: list[str] = []
     for path in sorted((*workflows_dir.glob("*.yml"), *workflows_dir.glob("*.yaml"))):
-        if path.name in EXEMPT_ADMIN_WORKFLOWS:
-            continue
         text = path.read_text(encoding="utf-8")
+        if path.name in EXEMPT_ADMIN_WORKFLOWS:
+            if any(endpoint in text for endpoint in PAID_PROVIDER_ENDPOINTS):
+                errors.append(
+                    f"{path}: administrative migration workflow must not call a paid provider"
+                )
+            continue
         protected_lines: list[tuple[int, str]] = []
         for line_number, line in enumerate(text.splitlines(), 1):
             if any(reference in line for reference in PROTECTED_REFERENCES):

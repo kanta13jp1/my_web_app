@@ -6,6 +6,7 @@ import '../models/admin_growth_evidence.dart';
 import '../services/growth_mission_service.dart';
 import '../widgets/admin_billing_overview.dart';
 import '../widgets/admin_growth_evidence_section.dart';
+import '../widgets/admin_registration_funnel_card.dart';
 import '../widgets/admin_registration_ops_card.dart';
 import '../widgets/admin_tool_execution_guard_card.dart';
 import '../widgets/admin_today_registration_goal_card.dart';
@@ -2462,45 +2463,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
-  Widget _buildMiniKpiChip({
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
-      ),
-      child: RichText(
-        text: TextSpan(
-          children: [
-            TextSpan(
-              text: '$label ',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.5,
-              ),
-            ),
-            TextSpan(
-              text: value,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: color,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   // --- 以下、既存のウィジェットメソッド ---
 
   Widget _buildFunnelOverviewCard({
@@ -2524,157 +2486,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       priorityChannelLabel: null,
     );
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'LP流入後の途中離脱を切り分けるためのファネルです。どこで止まっているかを先に確認します。',
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 14,
-              runSpacing: 14,
-              children: [
-                _buildFunnelStepItem(
-                  label: 'LP View',
-                  value: '$lpViews',
-                  icon: Icons.visibility,
-                  color: const Color(0xFF6366F1),
-                ),
-                _buildFunnelStepItem(
-                  label: '体験実行',
-                  value: '${funnel.trialRuns}',
-                  icon: Icons.play_circle_outline,
-                  color: const Color(0xFF0D9488),
-                ),
-                _buildFunnelStepItem(
-                  label: '保存CTA',
-                  value: '${funnel.saveClicks}',
-                  icon: Icons.save_outlined,
-                  color: const Color(0xFF6366F1),
-                ),
-                _buildFunnelStepItem(
-                  label: 'Magic Link送信',
-                  value: '${funnel.magicLinkSends}',
-                  icon: Icons.mail_outline,
-                  color: const Color(0xFF7C3AED),
-                ),
-                _buildFunnelStepItem(
-                  label: '受信箱を開く',
-                  value: '${funnel.inboxOpens}',
-                  icon: Icons.mark_email_read_outlined,
-                  color: const Color(0xFFFF6B35),
-                ),
-                _buildFunnelStepItem(
-                  label: '実登録',
-                  value: '$registrations',
-                  icon: Icons.person_add,
-                  color: const Color(0xFF0D9488),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                _buildMiniKpiChip(
-                  label: 'LP→体験率',
-                  value: _formatRate(funnel.trialRuns, lpViews),
-                  color: const Color(0xFF0D9488),
-                ),
-                _buildMiniKpiChip(
-                  label: '体験→保存率',
-                  value: _formatRate(funnel.saveClicks, funnel.trialRuns),
-                  color: const Color(0xFF6366F1),
-                ),
-                _buildMiniKpiChip(
-                  label: '保存→送信率',
-                  value: _formatRate(funnel.magicLinkSends, funnel.saveClicks),
-                  color: const Color(0xFF7C3AED),
-                ),
-                _buildMiniKpiChip(
-                  label: '送信→登録率',
-                  value: _formatRate(registrations, funnel.magicLinkSends),
-                  color: const Color(0xFF0D9488),
-                ),
-                if (remainingRegistrations > 0)
-                  _buildMiniKpiChip(
-                    label: '最大ボトルネック',
-                    value: funnelAction.bottleneckLabel,
-                    color: const Color(0xFF475569),
-                  ),
-                if (remainingRegistrations > 0)
-                  _buildMiniKpiChip(
-                    label: '目標達成に必要な送信',
-                    value: '$neededMagicLinks件',
-                    color: const Color(0xFFB91C1C),
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFunnelStepItem({
-    required String label,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      width: 110,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
+    return AdminRegistrationFunnelCard(
+      title: title,
+      lpViews: lpViews,
+      registrations: registrations,
+      trialRuns: funnel.trialRuns,
+      saveClicks: funnel.saveClicks,
+      magicLinkSends: funnel.magicLinkSends,
+      inboxOpens: funnel.inboxOpens,
+      remainingRegistrations: remainingRegistrations,
+      bottleneckLabel: funnelAction.bottleneckLabel,
+      neededMagicLinks: neededMagicLinks,
     );
   }
 

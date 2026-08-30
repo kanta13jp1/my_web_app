@@ -42,7 +42,9 @@ jobs:
       )
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    environment: customer-operations-production
+    environment:
+      name: customer-operations-production
+      deployment: false
     permissions:
       contents: read
     env:
