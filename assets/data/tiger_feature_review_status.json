@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-30T15:31:39.593095+00:00",
+  "generated_at": "2026-08-30T19:40:30.846475+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -29,50 +29,50 @@
     "operating_efficiency": 10
   },
   "latest_review": {
-    "cycle_id": "20260831T000451+0900",
-    "started_at": "2026-08-31T00:04:51+09:00",
+    "cycle_id": "20260831T040750+0900",
+    "started_at": "2026-08-31T04:07:50+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "admin_analytics",
-      "url": "https://my-web-app-b67f4.web.app/admin/analytics"
+      "slug": "ai_university",
+      "url": "https://my-web-app-b67f4.web.app/ai-university"
     },
     "reviewer": {
-      "seat": 7,
-      "name": "榊󠄀原 清一",
-      "selection_score": 72.5129,
+      "seat": 12,
+      "name": "迫 佑樹",
+      "selection_score": 83.8473,
       "division": 1,
-      "cycle_utility": 91.33,
-      "aggregate_utility": 92.76
+      "cycle_utility": 91.67,
+      "aggregate_utility": 88.6
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "The configured /admin/analytics review URL does not match the application route /admin, so automated and human checks cannot prove that they reached the intended dashboard.",
+        "summary": "The entry page records content-recovery events and several bounded learning-task outcomes, but it lacks one measurable path from discovery choice to first lesson, completion, repeat learning, and paid conversion.",
+        "severity": "p1",
+        "business_dimensions": [
+          "market_demand",
+          "revenue_model",
+          "unit_economics"
+        ]
+      },
+      {
+        "summary": "The entry surface exposes many simultaneous discovery modes without evidence that a first-time learner can identify the best next lesson quickly.",
         "severity": "p1",
         "business_dimensions": [
           "customer_pain",
-          "trust_risk",
-          "go_to_market"
+          "market_demand",
+          "revenue_model"
         ]
       },
       {
-        "summary": "Several independent metric loaders turn failures into empty, hidden, null, or debug-only states without a page-level freshness and completeness ledger.",
-        "severity": "p1",
-        "business_dimensions": [
-          "trust_risk",
-          "unit_economics",
-          "customer_pain"
-        ]
-      },
-      {
-        "summary": "A 6,362-line page combines many operator domains, but available tests and telemetry do not show which panels shorten decisions or improve commercial outcomes.",
+        "summary": "An 8,483-line stateful page coordinates discovery, content loading, progress, sharing, quizzes, RLHF, and analytics, raising the cost of safely improving the learner funnel.",
         "severity": "p2",
         "business_dimensions": [
           "unit_economics",
-          "market_demand",
-          "scalability"
+          "scalability",
+          "trust_risk"
         ]
       }
     ],
@@ -91,52 +91,141 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "Instrument source-state badges and one top operator workflow, then measure successful-load rate and median time-to-decision for four weeks."
+      "next_cycle_experiment": "Instrument one privacy-safe entry-to-first-lesson funnel by discovery path and compare first-lesson start plus seven-day repeat-learning rates for four weeks."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5131",
-      "detail": "A complete remedy spans route compatibility, evidence provenance, operator workflow design, and production telemetry. Authentication-sensitive and product-judgment changes are outside the shared low-risk automatic repair boundary.",
+      "label": "対策待ち・Issue #5146",
+      "detail": "A complete remedy requires a product-defined learner funnel, privacy-safe production measurement, discovery design judgment, and cross-cutting module boundaries. These exceed the shared low-risk automatic repair scope.",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: dedicated worktree fast-forwarded cleanly to origin/main 4b02aac7ac657c6f61113d4c173a9eb42de7a1d7",
+        "passed: dedicated worktree fast-forwarded cleanly to origin/main 724624964cc5a90743884a4724ae5e38e7f9591e",
         "passed: roster 2026-08-23 and personas 2026-08-30 schema 2, 125 profiles each",
-        "passed: deterministic winner admin_analytics from 13 eligible features",
-        "passed: route mismatch, 6,362-line surface, eleven loaders, silent degradation patterns, six widget tests, and unknown production outcomes captured",
-        "passed after rejecting one invalid draft dimension: 125 profiles, deterministic seat 7"
+        "passed: deterministic winner ai_university from 13 eligible features",
+        "passed: 8,483-line entry surface, 40 matched tests, recovery semantics, broad discovery controls, and unknown production outcomes captured",
+        "passed: 125 profiles, deterministic seat 12"
       ],
       "issue": {
-        "number": 5131,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5131",
+        "number": 5146,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5146",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260831T000451+0900:admin_analytics",
+        "dedupe_key": "tiger-feature-review:20260831T040750+0900:ai_university",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "admin-analytics-configured-route-mismatch",
-        "admin-analytics-silent-evidence-degradation",
-        "admin-analytics-decision-surface-and-outcome-gap"
+        "ai-university-entry-outcome-funnel-gap",
+        "ai-university-discovery-decision-overload",
+        "ai-university-monolith-operating-cost"
       ]
     },
     "feature": {
-      "slug": "admin_analytics",
-      "title": "admin_analytics",
+      "slug": "ai_university",
+      "title": "AI University entry",
       "kind": "page",
-      "reason": "The deterministic selector chose admin_analytics. The neutral scan found a configured-route mismatch, a 6,362-line multi-domain operator surface with eleven independent loaders, several silent degradation paths, six focused widget tests, and no production usage or decision-outcome evidence; observed usage therefore remains neutral 50.",
-      "cycle_utility": 43.4,
-      "aggregate_utility": 43.4,
-      "division": 3
+      "reason": "The deterministic selector chose ai_university. The neutral scan found strong recovery semantics and broad content discovery, but no unified page-level contract links entry, discovery path, first lesson, completion, repeat learning, and paid conversion; observed usage therefore remains neutral 50.",
+      "cycle_utility": 65.2,
+      "aggregate_utility": 65.12,
+      "division": 2
     }
   },
   "history": [
+    {
+      "cycle_id": "20260831T040750+0900",
+      "started_at": "2026-08-31T04:07:50+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "ai_university",
+        "title": "AI University entry",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 83.8473
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Instrument one privacy-safe entry-to-first-lesson funnel by discovery path and compare first-lesson start plus seven-day repeat-learning rates for four weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "ai-university-entry-outcome-funnel-gap",
+          "summary": "The entry page records content-recovery events and several bounded learning-task outcomes, but it lacks one measurable path from discovery choice to first lesson, completion, repeat learning, and paid conversion.",
+          "severity": "p1",
+          "suggested_action": "Define a privacy-safe page-level funnel with stable discovery-path labels and measure entry, first-lesson start, completion, seven-day repeat learning, and attributable paid conversion without free-form user data."
+        },
+        {
+          "finding_id": "ai-university-discovery-decision-overload",
+          "summary": "The entry surface exposes many simultaneous discovery modes without evidence that a first-time learner can identify the best next lesson quickly.",
+          "severity": "p1",
+          "suggested_action": "Define one outcome-oriented first-step path for new learners, retain exploration for returning learners, and compare time-to-first-lesson and repeat learning against the current surface."
+        },
+        {
+          "finding_id": "ai-university-monolith-operating-cost",
+          "summary": "An 8,483-line stateful page coordinates discovery, content loading, progress, sharing, quizzes, RLHF, and analytics, raising the cost of safely improving the learner funnel.",
+          "severity": "p2",
+          "suggested_action": "Define an entry-to-outcome contract first, then extract independently owned discovery and outcome modules behind stable interfaces with focused contract tests."
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5146",
+        "detail": "A complete remedy requires a product-defined learner funnel, privacy-safe production measurement, discovery design judgment, and cross-cutting module boundaries. These exceed the shared low-risk automatic repair scope.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: dedicated worktree fast-forwarded cleanly to origin/main 724624964cc5a90743884a4724ae5e38e7f9591e",
+          "passed: roster 2026-08-23 and personas 2026-08-30 schema 2, 125 profiles each",
+          "passed: deterministic winner ai_university from 13 eligible features",
+          "passed: 8,483-line entry surface, 40 matched tests, recovery semantics, broad discovery controls, and unknown production outcomes captured",
+          "passed: 125 profiles, deterministic seat 12"
+        ],
+        "issue": {
+          "number": 5146,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5146",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260831T040750+0900:ai_university",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "ai-university-entry-outcome-funnel-gap",
+          "ai-university-discovery-decision-overload",
+          "ai-university-monolith-operating-cost"
+        ]
+      }
+    },
     {
       "cycle_id": "20260831T000451+0900",
       "started_at": "2026-08-31T00:04:51+09:00",
@@ -195,7 +284,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5131",
-        "detail": "A complete remedy spans route compatibility, evidence provenance, operator workflow design, and production telemetry. Authentication-sensitive and product-judgment changes are outside the shared low-risk automatic repair boundary.",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -214,9 +303,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260831T000451+0900:admin_analytics",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -305,7 +394,7 @@
           "dedupe_key": "tiger-feature-review:20260830T200304+0900:user_manual",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T14:45:52.445967+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -394,7 +483,7 @@
           "dedupe_key": "tiger-feature-review:20260829T011200+0900:growth_weekly_digest",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T14:45:52.445967+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -485,7 +574,7 @@
           "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T14:45:52.445967+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -575,7 +664,7 @@
           "dedupe_key": "tiger-feature-review:20260828T120337+0900:philosophy",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T14:45:52.445967+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -657,7 +746,7 @@
           "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T14:45:52.445967+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -744,7 +833,7 @@
           "dedupe_key": "tiger-feature-review:20260828T042953+0900:horse_racing",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T14:45:52.445967+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -832,7 +921,7 @@
           "dedupe_key": "tiger-feature-review:20260828T004359+0900:ai_hub",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T14:45:52.445967+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -920,7 +1009,7 @@
           "dedupe_key": "tiger-feature-review:20260827T221025+0900:core_hub",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-30T14:45:52.445967+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": {
           "commit_sha": "ec314d3f767ea3245c3af7aa1fd7db51cfad9f4c",
@@ -953,7 +1042,7 @@
         "name": "野口 功司",
         "selection_score": 75.8089
       },
-      "status": "remediation_in_progress",
+      "status": "issue_tracking",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -994,9 +1083,9 @@
         }
       ],
       "countermeasure": {
-        "state": "remediation_in_progress",
-        "label": "対策中・Issue #4916",
-        "detail": "専用対策キューが修正・検証・反映を処理しています。",
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #4916",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1014,9 +1103,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260827T033027+0900:home",
-          "remediation_state": "in_progress",
-          "queue_status": "RUNNING",
-          "synced_at": "2026-08-30T14:45:52.445967+00:00"
+          "remediation_state": "queued",
+          "queue_status": "PARTIAL_WAIT",
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1308,7 +1397,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T14:45:52.445967+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1383,7 +1472,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T14:45:52.445967+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1473,11 +1562,11 @@
       "division": 2,
       "provisional": false,
       "eligible": true,
-      "utility_score": 65.3,
-      "completed_cycles": 3,
-      "last_cycle_utility": 65.8,
-      "last_reviewed_at": "2026-08-23T08:21:38+00:00",
-      "reason": "機能レビュー3回・効用65.3点で2部"
+      "utility_score": 65.12,
+      "completed_cycles": 4,
+      "last_cycle_utility": 65.2,
+      "last_reviewed_at": "2026-08-30T19:07:50+00:00",
+      "reason": "機能レビュー4回・効用65.1点で2部"
     },
     {
       "slug": "landing",
