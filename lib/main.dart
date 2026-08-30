@@ -192,6 +192,7 @@ import 'package:my_web_app/pages/workflow_templates_page.dart';
 import 'package:my_web_app/pages/customer_feedback_page.dart';
 import 'package:my_web_app/pages/address_book_page.dart';
 import 'package:my_web_app/pages/subscription_billing_page.dart';
+import 'package:my_web_app/ui/features/paddle_sandbox/paddle_sandbox_feature.dart';
 import 'package:my_web_app/pages/maintenance_mode_page.dart';
 import 'package:my_web_app/pages/appointment_scheduler_page.dart';
 import 'package:my_web_app/pages/budget_financial_planner_page.dart';
@@ -1283,6 +1284,10 @@ Route<dynamic> generateAppRoute(
     case '/subscription-billing':
       return MaterialPageRoute(
         builder: (_) => SubscriptionBillingPage(initialUri: uri),
+      );
+    case '/paddle-sandbox':
+      return MaterialPageRoute(
+        builder: (_) => PaddleSandboxPage(initialUri: uri),
       );
     case '/billing':
       return MaterialPageRoute(

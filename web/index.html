@@ -606,6 +606,8 @@
       window.__posthogFlutterInitialized = true;
     };
   </script>
+  <!-- Inert until the sandbox-only Flutter route explicitly initializes it. -->
+  <script src="paddle_sandbox_bridge.js" defer></script>
 </head>
 <body>
   <div id="seo-shell">

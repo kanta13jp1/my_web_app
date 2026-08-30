@@ -240,6 +240,7 @@ const List<String> kAllAppRoutes = <String>[
   '/one-in-two-out',
   '/one-in-two-out-assist',
   '/parking-reservation',
+  '/paddle-sandbox',
   '/password-vault',
   '/payment-channel-ledger',
   '/payment-reminders',

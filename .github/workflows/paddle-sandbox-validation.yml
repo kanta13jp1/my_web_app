@@ -1,0 +1,203 @@
+name: Paddle Sandbox Validation
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/paddle-sandbox-validation.yml"
+      - "docs/PADDLE_SANDBOX_CHECKOUT_RUNBOOK.md"
+      - "lib/main.dart"
+      - "lib/ui/features/paddle_sandbox/**"
+      - "scripts/serve_flutter_spa.mjs"
+      - "test/e2e/paddle_sandbox_mock.spec.ts"
+      - "test/routes/app_route_names.dart"
+      - "test/ui/features/paddle_sandbox/**"
+      - "test/web_paddle_sandbox_bridge_test.dart"
+      - "web/index.html"
+      - "web/paddle_sandbox_bridge.js"
+  workflow_dispatch:
+    inputs:
+      build_configured_sandbox:
+        description: Build a private artifact with repository Paddle sandbox secrets
+        required: true
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: paddle-sandbox-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Focused tests, Web build, and mock browser QA
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      PADDLE_TEST_TOKEN: test_123456789012345678901234567
+      PADDLE_TEST_PRICE: pri_01sandboxbrowserproof
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Flutter
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: 3.38.x
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          flutter pub get
+          npm ci
+
+      - name: Check focused Dart formatting
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/ui/features/paddle_sandbox
+          test/routes/app_route_names.dart
+          test/ui/features/paddle_sandbox
+          test/web_paddle_sandbox_bridge_test.dart
+
+      - name: Run focused Dart and Flutter tests
+        run: >-
+          flutter test
+          test/ui/features/paddle_sandbox
+          test/web_paddle_sandbox_bridge_test.dart
+          test/routes/route_url_sync_test.dart
+          --reporter=compact
+
+      - name: Analyze Paddle sandbox implementation
+        run: |
+          flutter analyze lib/ui/features/paddle_sandbox
+          flutter analyze test/ui/features/paddle_sandbox
+          flutter analyze test/web_paddle_sandbox_bridge_test.dart
+
+      - name: Verify Flutter Web imports
+        run: flutter test --platform chrome test/web_import_smoke_test.dart
+
+      - name: Build deterministic mock Sandbox Web app
+        run: >-
+          flutter build web --release --pwa-strategy=none
+          --dart-define=PADDLE_SANDBOX_ENABLED=true
+          --dart-define=PADDLE_SANDBOX_CLIENT_TOKEN=${PADDLE_TEST_TOKEN}
+          --dart-define=PADDLE_SANDBOX_PRICE_ID=${PADDLE_TEST_PRICE}
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Start Flutter SPA server
+        run: |
+          node scripts/serve_flutter_spa.mjs build/web > paddle-sandbox-server.log 2>&1 &
+          echo $! > paddle-sandbox-server.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:7357/paddle-sandbox > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat paddle-sandbox-server.log
+          exit 1
+
+      - name: Run desktop and mobile mock browser QA
+        env:
+          E2E_BASE_URL: http://127.0.0.1:7357
+        run: >-
+          npx playwright test test/e2e/paddle_sandbox_mock.spec.ts
+          --project=chromium
+          --project=mobile-chrome
+          --workers=1
+
+      - name: Stop Flutter SPA server
+        if: always()
+        run: |
+          if [ -f paddle-sandbox-server.pid ]; then
+            kill "$(cat paddle-sandbox-server.pid)" 2>/dev/null || true
+          fi
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: paddle-sandbox-mock-browser-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+            paddle-sandbox-server.log
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Summarize mock validation
+        if: always()
+        run: |
+          {
+            echo "## Paddle Sandbox cloud validation"
+            echo ""
+            echo "This job validates Dart state mapping, Web compilation, and mocked Paddle.js browser events."
+            echo "It does not create a real Paddle sandbox transaction."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  configured-artifact:
+    name: Private configured Sandbox artifact
+    if: github.event_name == 'workflow_dispatch' && inputs.build_configured_sandbox
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      PADDLE_SANDBOX_CLIENT_TOKEN: ${{ secrets.PADDLE_SANDBOX_CLIENT_TOKEN }}
+      PADDLE_SANDBOX_PRICE_ID: ${{ secrets.PADDLE_SANDBOX_PRICE_ID }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Flutter
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: 3.38.x
+
+      - name: Validate sandbox-only repository secrets
+        shell: bash
+        run: |
+          if [[ ! "$PADDLE_SANDBOX_CLIENT_TOKEN" =~ ^test_[a-zA-Z0-9]{27}$ ]]; then
+            echo "PADDLE_SANDBOX_CLIENT_TOKEN is missing or is not an exact Paddle sandbox client token." >&2
+            exit 1
+          fi
+          if [[ ! "$PADDLE_SANDBOX_PRICE_ID" =~ ^pri_[a-zA-Z0-9]+$ ]]; then
+            echo "PADDLE_SANDBOX_PRICE_ID is missing or invalid." >&2
+            exit 1
+          fi
+
+      - name: Build configured Sandbox Web app
+        run: |
+          flutter pub get
+          flutter build web --release --pwa-strategy=none \
+            --dart-define=PADDLE_SANDBOX_ENABLED=true \
+            --dart-define=PADDLE_SANDBOX_CLIENT_TOKEN="$PADDLE_SANDBOX_CLIENT_TOKEN" \
+            --dart-define=PADDLE_SANDBOX_PRICE_ID="$PADDLE_SANDBOX_PRICE_ID"
+
+      - name: Upload private configured Web artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: paddle-sandbox-configured-web-${{ github.run_id }}
+          path: build/web/
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Summarize configured artifact
+        run: |
+          {
+            echo "## Configured Paddle Sandbox artifact"
+            echo ""
+            echo "A one-day private artifact was built with repository sandbox configuration."
+            echo "The artifact contains a client-side token by design; do not publish it as production configuration."
+            echo "A real checkout still requires the manual Paddle sandbox evidence in the runbook."
+          } >> "$GITHUB_STEP_SUMMARY"
