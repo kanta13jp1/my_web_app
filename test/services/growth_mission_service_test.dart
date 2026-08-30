@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/growth_acquisition_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 
+import '../fixtures/growth_weekly_digest_fixture.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -137,6 +139,34 @@ void main() {
       expect(snapshot.touchpoints.single.touchCount, 12);
       expect(snapshot.touchpoints.single.signupSubmitCount, 3);
       expect(snapshot.importPreviews.single.previewCount, 5);
+    });
+
+    test('parses the shared weekly digest success fixture', () {
+      final envelope = growthWeeklyDigestSuccessFixture();
+      final snapshot = WeeklyDigestSnapshot.fromJson(
+        Map<String, dynamic>.from(envelope['digest']! as Map),
+      );
+
+      expect(snapshot.currentWeekStart, '2026-08-23');
+      expect(snapshot.currentWeekEnd, '2026-08-29');
+      expect(snapshot.channels, hasLength(2));
+      expect(snapshot.channels.first.label, 'ランディングページ');
+      expect(snapshot.channels.first.cvr, 5);
+      expect(snapshot.signupSubmitTotal, 1);
+      expect(snapshot.referralsCompleted, 3);
+      expect(snapshot.importCtaClicks, 3);
+      expect(snapshot.publicMemoCtaClicks, 2);
+      expect(snapshot.decision.owner, isNotEmpty);
+      expect(snapshot.decision.id, 'growth-weekly:2026-08-29:profile:cvr-5');
+      expect(snapshot.decision.priorityChannelId, 'profile');
+      expect(snapshot.decision.targetCvr, 5);
+      expect(snapshot.decision.dueDate, '2026-09-05');
+      expect(snapshot.previousDecisionOutcome.status, 'met');
+      expect(
+        snapshot.previousDecisionOutcome.decisionId,
+        'growth-weekly:2026-08-22:landing:cvr-5',
+      );
+      expect(snapshot.previousDecisionOutcome.actualTouches, 20);
     });
   });
 
