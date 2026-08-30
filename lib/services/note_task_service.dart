@@ -115,8 +115,7 @@ class NoteTask {
       taskFlag: json['task_flag']?.toString() ?? 'false',
       sortWeight: json['sort_weight']?.toString() ?? '0',
       noteLevelId: json['note_level_id']?.toString() ?? '',
-      taskGroupNoteLevelId:
-          json['task_group_note_level_id']?.toString() ?? '',
+      taskGroupNoteLevelId: json['task_group_note_level_id']?.toString() ?? '',
       dueAt: _asOptionalDateTime(json['due_at']),
       dueDateUiOption: _emptyToNull(json['due_date_ui_option']),
       timeZone: _emptyToNull(json['time_zone']),
@@ -201,18 +200,16 @@ class SupabaseNoteTaskRepository implements NoteTaskRepository {
           .add(reminder);
     }
 
-    return taskRows
-        .map(
-          (row) {
-            final json = Map<String, dynamic>.from(row);
-            final id = json['id']?.toString() ?? '';
-            return NoteTask.fromJson(
-              json,
-              reminders: remindersByTask[id] ?? const <NoteTaskReminder>[],
-            );
-          },
-        )
-        .toList(growable: false);
+    return taskRows.map(
+      (row) {
+        final json = Map<String, dynamic>.from(row);
+        final id = json['id']?.toString() ?? '';
+        return NoteTask.fromJson(
+          json,
+          reminders: remindersByTask[id] ?? const <NoteTaskReminder>[],
+        );
+      },
+    ).toList(growable: false);
   }
 
   @override
@@ -223,8 +220,7 @@ class SupabaseNoteTaskRepository implements NoteTaskRepository {
     final user = _requireUser();
     final title = _validatedTitle(draft.title);
     final now = DateTime.now().toUtc();
-    final sourceKey =
-        'native-$noteId-${now.microsecondsSinceEpoch.toString()}';
+    final sourceKey = 'native-$noteId-${now.microsecondsSinceEpoch.toString()}';
     await _client.from('note_tasks').insert(<String, dynamic>{
       'note_id': noteId,
       'user_id': user.id,

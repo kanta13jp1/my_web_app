@@ -203,8 +203,7 @@ class _NoteTasksPanelState extends State<NoteTasksPanel> {
                   ),
                   FilledButton.icon(
                     key: const Key('note_task_add_button'),
-                    onPressed:
-                        _isMutating ? null : () => _showTaskEditor(),
+                    onPressed: _isMutating ? null : () => _showTaskEditor(),
                     icon: const Icon(Icons.add_task),
                     label: Text(isNarrow ? '追加' : 'タスクを追加'),
                   ),
@@ -299,16 +298,16 @@ class _NoteTasksPanelState extends State<NoteTasksPanel> {
                     child: Text(
                       task.title,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        decoration:
-                            task.isCompleted ? TextDecoration.lineThrough : null,
+                        decoration: task.isCompleted
+                            ? TextDecoration.lineThrough
+                            : null,
                       ),
                     ),
                   ),
                 ),
                 IconButton(
                   key: ValueKey('note_task_edit_${task.id}'),
-                  onPressed:
-                      _isMutating ? null : () => _showTaskEditor(task),
+                  onPressed: _isMutating ? null : () => _showTaskEditor(task),
                   icon: const Icon(Icons.edit_outlined),
                   tooltip: '編集',
                 ),
@@ -324,9 +323,7 @@ class _NoteTasksPanelState extends State<NoteTasksPanel> {
                       ? null
                       : () => _deleteTask(task),
                   icon: const Icon(Icons.delete_outline),
-                  tooltip: task.isImported
-                      ? 'Evernote原本の削除完了までは保護されます'
-                      : '削除',
+                  tooltip: task.isImported ? 'Evernote原本の削除完了までは保護されます' : '削除',
                 ),
               ],
             ),
@@ -381,8 +378,8 @@ class _NoteTasksPanelState extends State<NoteTasksPanel> {
                       onDeleted: _isMutating || reminder.isImported
                           ? null
                           : () => _runMutation(
-                                () => widget.repository
-                                    .deleteReminder(reminder),
+                                () =>
+                                    widget.repository.deleteReminder(reminder),
                                 successMessage: 'リマインダーを削除しました',
                               ),
                       deleteButtonTooltipMessage: reminder.isImported
@@ -428,8 +425,7 @@ class _NoteTaskEditorDialogState extends State<_NoteTaskEditorDialog> {
       text: widget.task?.recurrence ?? '',
     );
     _dueAt = widget.task?.dueAt?.toLocal();
-    _repeatAfterCompletion =
-        widget.task?.repeatAfterCompletion ?? false;
+    _repeatAfterCompletion = widget.task?.repeatAfterCompletion ?? false;
   }
 
   @override
@@ -469,8 +465,7 @@ class _NoteTaskEditorDialogState extends State<_NoteTaskEditorDialog> {
                   TextButton.icon(
                     key: const Key('note_task_due_button'),
                     onPressed: () async {
-                      final selected =
-                          await widget.onPickDateTime(_dueAt);
+                      final selected = await widget.onPickDateTime(_dueAt);
                       if (selected == null || !mounted) return;
                       setState(() {
                         _dueAt = selected;
@@ -548,4 +543,3 @@ class _NoteTaskEditorDialogState extends State<_NoteTaskEditorDialog> {
     );
   }
 }
-
