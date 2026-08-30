@@ -15,6 +15,7 @@ import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_fsrs_service.dart';
 import '../services/ai_university_agentless_lab_analytics.dart';
 import '../services/ai_university_content_analytics.dart';
+import '../services/ai_university_fuyu_lab_analytics.dart';
 import '../services/ai_university_learning_outcome_analytics.dart';
 import '../services/ai_learner_profile_service.dart';
 import '../services/ai_university_rlhf_service.dart';
@@ -24,6 +25,7 @@ import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 import '../services/user_data_finetune_readiness_service.dart';
 import '../widgets/ai_university_latest_info_task_card.dart';
+import '../widgets/ai_university_fuyu_lab_task_card.dart';
 import '../widgets/ai_university_agentless_lab_task_card.dart';
 import '../widgets/ai_university_llm_mechanics_task_card.dart';
 import '../widgets/ai_university_model_selection_task_card.dart';
@@ -5705,6 +5707,7 @@ class AiUniversityPage extends StatefulWidget {
     this.contentAnalytics,
     this.learningOutcomeAnalytics,
     this.modelSelectionLearningOutcomeAnalytics,
+    this.fuyuLabAnalytics,
     this.agentlessLabAnalytics,
   });
 
@@ -5713,6 +5716,7 @@ class AiUniversityPage extends StatefulWidget {
   final AiUniversityLearningOutcomeAnalytics? learningOutcomeAnalytics;
   final AiUniversityLearningOutcomeAnalytics?
       modelSelectionLearningOutcomeAnalytics;
+  final AiUniversityFuyuLabAnalytics? fuyuLabAnalytics;
   final AiUniversityAgentlessLabAnalytics? agentlessLabAnalytics;
 
   @override
@@ -5737,6 +5741,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       _modelSelectionLearningOutcomeAnalytics;
   late final AiUniversityLearningOutcomeAnalytics
       _llmMechanicsLearningOutcomeAnalytics;
+  late final AiUniversityFuyuLabAnalytics _fuyuLabAnalytics;
   late final AiUniversityAgentlessLabAnalytics _agentlessLabAnalytics;
 
   List<String> _providers = [];
@@ -5789,6 +5794,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       _supabase,
       task: AiUniversityLearningOutcomeTask.llmMechanics,
     );
+    _fuyuLabAnalytics = widget.fuyuLabAnalytics ??
+        AiUniversityFuyuLabAnalytics.supabase(_supabase);
     _agentlessLabAnalytics = widget.agentlessLabAnalytics ??
         AiUniversityAgentlessLabAnalytics.supabase(_supabase);
     _fetchContent();
@@ -7995,6 +8002,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final isModelSelectionTask = provider == '01ai' && category == 'models';
     final isLlmMechanicsTask =
         provider == 'academic' && category == 'llm_mechanics';
+    final isFuyuLab = provider == 'adept' && category == 'api';
     final isAgentlessLab = provider == 'agentless' && category == 'overview';
     final learningOutcomeAnalytics = isLlmMechanicsTask
         ? _llmMechanicsLearningOutcomeAnalytics
@@ -8122,6 +8130,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   AiUniversityLlmMechanicsTaskCard(
                     onSubmit:
                         _llmMechanicsLearningOutcomeAnalytics.recordCompleted,
+                  ),
+                ],
+                if (isFuyuLab) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityFuyuLabTaskCard(
+                    onStart: _fuyuLabAnalytics.recordStarted,
+                    onSubmit: _fuyuLabAnalytics.recordCompleted,
                   ),
                 ],
                 if (isAgentlessLab) ...[
