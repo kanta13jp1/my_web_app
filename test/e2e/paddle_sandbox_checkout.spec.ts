@@ -106,12 +106,14 @@ async function openFlutterCheckout(page: Page) {
   );
   await enableFlutterAccessibility(page);
 
-  await expect(page.getByText('Paddle checkout 検証')).toBeVisible({
+  const checkoutButton = page.getByRole('button', {
+    name: /Paddle sandbox を開く|もう一度試す/,
+  });
+  await expect(checkoutButton).toBeVisible({
     timeout: 30_000,
   });
-  await page
-    .getByRole('button', { name: /Paddle sandbox を開く|もう一度試す/ })
-    .click();
+  await checkoutButton.scrollIntoViewIfNeeded();
+  await checkoutButton.click();
   await expect(page.locator('iframe[name="paddle_frame"]')).toBeVisible({
     timeout: 30_000,
   });
