@@ -10,6 +10,7 @@ import 'package:my_web_app/services/asset_card_usage_policy_store.dart';
 import 'package:my_web_app/services/asset_chat_privacy_settings_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
+import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
@@ -31,10 +32,19 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// 他のロード/保存は SharedPreferences 実装に委譲(テストでは空)。
 class _FakeDebtOverrideRepository
     extends SharedPreferencesAssetLiabilityRepository {
-  _FakeDebtOverrideRepository(this._seed);
+  _FakeDebtOverrideRepository(
+    this._seed, {
+    this.monthlyState = const AssetLiabilityMonthlyState(),
+  });
 
   final Map<String, int> _seed;
+  final AssetLiabilityMonthlyState monthlyState;
   Map<String, int>? savedDebtOverrides;
+
+  @override
+  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
+    return monthlyState;
+  }
 
   @override
   Future<Map<String, int>> loadDebtPaymentDayOverrides() async {
@@ -1284,6 +1294,82 @@ void main() {
       // SnackBar の自動消滅タイマー (既定4秒) を drain してから unmount しないと、
       // 保留タイマーが後続テストの FakeAsync zone へ漏れて "did not complete" になる。
       await tester.pump(const Duration(seconds: 5));
+      await _unmount(tester);
+    });
+
+    testWidgets('zero-yen payment is shown only in the gray review section', (
+      tester,
+    ) async {
+      final dateKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final repo = _FakeDebtOverrideRepository(
+        const <String, int>{},
+        monthlyState: const AssetLiabilityMonthlyState(
+          paymentOverrides: <String, double>{
+            AssetLiabilityPlanningService.jibunBankCardLoanAccountId: 0,
+            'paypay_card': 5000,
+          },
+        ),
+      );
+      await tester.binding.setSurfaceSize(const Size(1200, 4000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: repo,
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 50000,
+                'じぶん銀行カードローン': -100000,
+                'PayPayカード': -10000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final actionSection =
+          find.byKey(const Key('asset_payment_risk_action_section'));
+      final reviewSection =
+          find.byKey(const Key('asset_payment_risk_review_only_section'));
+      expect(actionSection, findsOneWidget);
+      expect(reviewSection, findsOneWidget);
+      expect(
+        find.descendant(
+          of: actionSection,
+          matching: find.text('PayPayカード'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: actionSection,
+          matching: find.text('じぶん銀行カードローン'),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: reviewSection,
+          matching: find.text('じぶん銀行カードローン'),
+        ),
+        findsOneWidget,
+      );
+
+      final reviewBadge = find.byKey(
+        const Key('asset_payment_risk_status_review_27'),
+      );
+      expect(reviewBadge, findsOneWidget);
+      final reviewBadgeText = tester.widget<Text>(
+        find.descendant(
+          of: reviewBadge,
+          matching: find.text('確認のみ'),
+        ),
+      );
+      expect(reviewBadgeText.style?.color, const Color(0xFF64748B));
+
       await _unmount(tester);
     });
 

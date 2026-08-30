@@ -25141,8 +25141,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildCardBillingRemainingSummary(
     List<AssetLiabilityCardBillingReviewItem> items,
   ) {
-    final remainingItems =
-        items.where((item) => !item.paid).toList(growable: false);
+    final remainingItems = items
+        .where((item) => !item.paid && item.amount > 0)
+        .toList(growable: false);
     final overdueItems =
         remainingItems.where(_isCardBillingReviewItemOverdue).toList();
     final todayOrLaterItems = remainingItems
@@ -25412,7 +25413,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetLiabilityCardBillingReviewItem item,
   ) {
     final day = item.paymentDay;
-    if (item.paid || day == null) {
+    if (item.paid || item.amount <= 0 || day == null) {
       return false;
     }
     final lastDay = DateTime(_now.year, _now.month + 1, 0).day;
@@ -25424,6 +25425,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) {
     if (item.paid) {
       return '支払済み';
+    }
+    if (item.amount <= 0) {
+      return '確認のみ';
     }
     if (item.paymentDay == null) {
       return '支払日未設定';
@@ -25444,6 +25448,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) {
     if (item.paid) {
       return const Color(0xFF0D9488);
+    }
+    if (item.amount <= 0) {
+      return const Color(0xFF64748B);
     }
     if (item.paymentDay == null) {
       return const Color(0xFF64748B);
@@ -26683,7 +26690,43 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return const SizedBox.shrink();
     }
 
+    final actionRisks = workbook.paymentDayRisks
+        .where((risk) => risk.requiresAction)
+        .toList(growable: false);
+    final reviewOnlyRisks = workbook.paymentDayRisks
+        .where((risk) => !risk.requiresAction)
+        .toList(growable: false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (actionRisks.isNotEmpty)
+          _buildPaymentRiskSection(
+            key: const Key('asset_payment_risk_action_section'),
+            title: '支払日別リスク（要対応）',
+            risks: actionRisks,
+          ),
+        if (actionRisks.isNotEmpty && reviewOnlyRisks.isNotEmpty)
+          const SizedBox(height: 12),
+        if (reviewOnlyRisks.isNotEmpty)
+          _buildPaymentRiskSection(
+            key: const Key('asset_payment_risk_review_only_section'),
+            title: '確認のみ',
+            description: '今月支払予定額が0円のため、延滞ではなく確認対象として表示しています。',
+            risks: reviewOnlyRisks,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentRiskSection({
+    required Key key,
+    required String title,
+    required List<AssetLiabilityPaymentDayRisk> risks,
+    String? description,
+  }) {
     return Container(
+      key: key,
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -26693,23 +26736,36 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '支払日別リスク',
-            style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, height: 1.4),
           ),
+          if (description != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              description,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
-          ...workbook.paymentDayRisks.map(_buildPaymentRiskRow),
+          ...risks.map(_buildPaymentRiskRow),
         ],
       ),
     );
   }
 
   Widget _buildPaymentRiskRow(AssetLiabilityPaymentDayRisk risk) {
-    final color = risk.isToday
-        ? const Color(0xFFFF6B35)
+    final color = !risk.requiresAction
+        ? const Color(0xFF64748B)
         : risk.isPast
-            ? const Color(0xFF64748B)
-            : const Color(0xFFB91C1C);
+            ? const Color(0xFFB91C1C)
+            : risk.isToday
+                ? const Color(0xFFFF6B35)
+                : const Color(0xFF2563EB);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -26737,6 +26793,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Container(
+                  key: ValueKey<String>(
+                    'asset_payment_risk_status_'
+                    '${risk.requiresAction ? 'action' : 'review'}_'
+                    '${risk.paymentDay}',
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    _paymentRiskStatusLabel(risk),
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
                 Text(
                   risk.accountNames.join('、'),
                   style: const TextStyle(
@@ -26745,7 +26826,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                 ),
                 Text(
-                  '${_paymentRiskStatusLabel(risk)} / 残高 ${_formatManagementYen(risk.balanceTotal)} / 支払予定 ${_formatManagementYen(risk.scheduledPaymentTotal)}（${_paymentRiskPaymentSourceLabel(risk)}） / 推定最低支払額 ${_formatManagementYen(risk.minimumPaymentEstimateTotal)}',
+                  '残高 ${_formatManagementYen(risk.balanceTotal)} / 支払予定 ${_formatManagementYen(risk.scheduledPaymentTotal)}（${_paymentRiskPaymentSourceLabel(risk)}） / 推定最低支払額 ${_formatManagementYen(risk.minimumPaymentEstimateTotal)}',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 12,
@@ -29991,9 +30072,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   String _paymentRiskStatusLabel(AssetLiabilityPaymentDayRisk risk) {
-    if (risk.isToday) return '今日';
-    if (risk.isPast) return '通過済み';
-    return '今月これから';
+    if (!risk.requiresAction) return '確認のみ';
+    if (risk.isToday) return '本日・要対応';
+    if (risk.isPast) return '期限超過';
+    return '今月これから・要対応';
   }
 
   String _paymentRiskPaymentSourceLabel(AssetLiabilityPaymentDayRisk risk) {
