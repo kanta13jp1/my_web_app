@@ -192,18 +192,40 @@ class NotionWbsImportPlanTest(unittest.TestCase):
         self.assertEqual(plan["decisions"]["title_group_content_conflict"], 1)
         self.assertFalse(plan["apply_gate_open"])
 
-    def test_invalid_ids_and_fields_are_blockers(self) -> None:
+    def test_invalid_ids_and_database_fields_are_blockers(self) -> None:
         plan = build_wbs_import_plan(
             [
                 staged("not-a-uuid", "invalid id"),
                 staged(IDS[0], "", progress=101),
+                {**staged(IDS[1], "bad instance"), "instance": "unknown-lane"},
+                {**staged(IDS[2], "bad status"), "status": "cancelled"},
+                {**staged(IDS[3], "bad deadline"), "deadline": "not-a-date"},
             ],
             [],
         )
 
         self.assertEqual(plan["invalid_task_id_rows"], 1)
-        self.assertEqual(plan["invalid_field_rows"], 1)
+        self.assertEqual(plan["invalid_field_rows"], 4)
+        self.assertEqual(
+            plan["validation_errors"],
+            {
+                "title": 1,
+                "progress": 1,
+                "instance": 1,
+                "status": 1,
+                "deadline": 1,
+            },
+        )
         self.assertFalse(plan["apply_gate_open"])
+
+    def test_known_instance_alias_is_normalized_before_write(self) -> None:
+        source = {**staged(IDS[0], "alias"), "instance": "Claude-Code"}
+
+        plan, actions = build_wbs_import_plan_details([source], [])
+
+        self.assertEqual(plan["validation_errors"]["instance"], 0)
+        self.assertEqual(actions[0]["content"]["instance"], "claude")
+        self.assertEqual(actions[0]["decision"], "insert")
 
     def test_public_result_never_contains_private_action_data(self) -> None:
         plan = build_wbs_import_plan(

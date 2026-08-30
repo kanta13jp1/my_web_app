@@ -48,6 +48,17 @@ class ImportError(RuntimeError):
     """Safe failure whose message contains no row content, IDs, or credentials."""
 
 
+def _safe_postgrest_code(exc: urllib.error.HTTPError) -> str:
+    try:
+        payload = json.loads(exc.read().decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return "unknown"
+    if not isinstance(payload, dict):
+        return "unknown"
+    code = str(payload.get("code") or "")
+    return code if re.fullmatch(r"[A-Z0-9]{5,8}", code) else "unknown"
+
+
 class SupabaseImportClient:
     def __init__(self, base_url: str, service_role_key: str) -> None:
         if not base_url.startswith("https://"):
@@ -146,8 +157,10 @@ class SupabaseImportClient:
             with urllib.request.urlopen(request, timeout=45) as response:
                 response.read()
         except urllib.error.HTTPError as exc:
+            postgrest_code = _safe_postgrest_code(exc)
             raise ImportError(
-                f"Supabase returned HTTP {exc.code} while writing {resource}"
+                f"Supabase returned HTTP {exc.code} code {postgrest_code} "
+                f"while writing {resource}"
             ) from None
         except urllib.error.URLError as exc:
             raise ImportError(f"Supabase write failed for {resource}") from exc
@@ -283,6 +296,7 @@ def _report_base(
         "plan_sha256": summary["plan_sha256"],
         "safe_logical_groups": safe_total,
         "blocked_logical_groups": summary["blocked_logical_groups"],
+        "validation_errors": summary["validation_errors"],
         "selected_offset": offset,
         "selected_limit": limit,
         "selected_logical_groups": len(selected),
@@ -612,8 +626,8 @@ def _write_summary(path: Path, report: dict[str, Any]) -> None:
     lines = [
         "## Notion WBS cloud import",
         "",
-        f"- Mode: \`{report['mode']}\`",
-        f"- Plan SHA-256: \`{report['plan_sha256']}\`",
+        f"- Mode: `{report['mode']}`",
+        f"- Plan SHA-256: `{report['plan_sha256']}`",
         f"- Safe logical groups: {report['safe_logical_groups']}",
         f"- Blocked logical groups: {report['blocked_logical_groups']}",
         f"- Selected logical groups: {report['selected_logical_groups']}",
