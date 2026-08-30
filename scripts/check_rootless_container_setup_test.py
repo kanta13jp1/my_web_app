@@ -83,13 +83,15 @@ class RootlessContainerSetupTest(unittest.TestCase):
     def test_rejects_unsafe_or_incomplete_cloud_workflow(self) -> None:
         errors = validate_cloud_workflow(
             "pull_request_target:\nsecrets.API_KEY\n--privileged\n",
-            "podman info\nsupabase start\n",
+            "podman info\n",
+            "sudo dockerd\nsupabase start\n--ignore-health-check\n",
         )
 
         self.assertTrue(any("pull_request_target" in error for error in errors), errors)
         self.assertTrue(any("secrets." in error for error in errors), errors)
         self.assertTrue(any("--privileged" in error for error in errors), errors)
         self.assertTrue(any("supabase stop" in error for error in errors), errors)
+        self.assertTrue(any("sudo dockerd" in error for error in errors), errors)
         self.assertTrue(any("--ignore-health-check" in error for error in errors), errors)
 
 

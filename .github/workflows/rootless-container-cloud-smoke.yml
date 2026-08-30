@@ -22,6 +22,7 @@ on:
       - "scripts/check_rootless_container_setup.py"
       - "scripts/check_rootless_container_setup_test.py"
       - "scripts/rootless_cloud_smoke.sh"
+      - "scripts/rootless_docker_supabase_smoke.sh"
       - "supabase/config.toml"
 
 permissions: {}
@@ -73,7 +74,7 @@ jobs:
           if-no-files-found: warn
 
   supabase:
-    name: Rootless Supabase Auth and DB
+    name: Rootless Docker Supabase Auth and DB
     if: >-
       github.event_name != 'workflow_dispatch' ||
       inputs.scope == 'all' ||
@@ -87,33 +88,47 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Install rootless Podman dependencies
+      - name: Install Rootless Docker dependencies
         shell: bash
         run: |
           set -euo pipefail
+          docker_version=$(docker --version | sed -nE 's/^Docker version ([0-9.]+),.*/\1/p')
+          test -n "$docker_version"
           sudo apt-get update
-          sudo apt-get install --yes podman uidmap passt slirp4netns fuse-overlayfs
+          rootless_version=$(apt-cache madison docker-ce-rootless-extras \
+            | awk -v version="$docker_version" \
+              'index($3, version) && found == "" { found=$3 } END { print found }')
+          if [ -z "$rootless_version" ]; then
+            echo "::error::No docker-ce-rootless-extras package matches Docker $docker_version"
+            exit 1
+          fi
+          sudo apt-get install --yes --no-install-recommends \
+            "docker-ce-rootless-extras=${rootless_version}" \
+            uidmap dbus-user-session slirp4netns fuse-overlayfs
           if ! grep -q "^${USER}:" /etc/subuid; then
             sudo usermod --add-subuids 524288-589823 "${USER}"
           fi
           if ! grep -q "^${USER}:" /etc/subgid; then
             sudo usermod --add-subgids 524288-589823 "${USER}"
           fi
-          podman info
+          sudo systemctl disable --now docker.service docker.socket
+          sudo rm -f /var/run/docker.sock
+          command -v dockerd-rootless.sh
+          unshare --user --map-root-user true
 
       - name: Install Supabase CLI
         uses: supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf # v2
         with:
           version: 2.116.0
 
-      - name: Run Supabase Auth and DB on the rootless Docker API
+      - name: Run Supabase Auth and DB on Rootless Docker
         shell: bash
-        run: bash scripts/rootless_cloud_smoke.sh supabase
+        run: bash scripts/rootless_docker_supabase_smoke.sh
 
       - name: Upload rootless Supabase evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: rootless-supabase-evidence
-          path: .ci-logs/rootless-cloud/supabase*.txt
+          path: .ci-logs/rootless-cloud/supabase-docker*.txt
           if-no-files-found: warn

@@ -1,7 +1,8 @@
 # Rootless Podman / Docker development environment
 
-Issue #2842 の再現可能な標準経路は GitHub-hosted Ubuntu runner 上の rootless
-Podman です。Windows 11 + WSL2-backed rootless Podman は VS Code 統合の確認や
+Issue #2842 の再現可能な標準経路は GitHub-hosted Ubuntu runner 上で、Flutter
+Dev Container を rootless Podman、Supabase Auth/DB を Rootless Docker で実行する
+分離構成です。Windows 11 + WSL2-backed rootless Podman は VS Code 統合の確認や
 障害調査が必要な場合だけ利用します。Dev Container 内へ Docker/Podman socket を
 マウントせず、Supabase CLI と Flutter の重い image 取得・build・起動は原則クラウドへ
 寄せます。
@@ -15,13 +16,11 @@ GitHub-hosted runner で並行実行します。production secret や hosted Sup
 - **Rootless Dev Container**: native Linux の非 root Podman で image を build し、
   `keep-id` bind mount、非 root UID、sudo 拒否、capability 全削除、
   `no-new-privileges` を確認する。
-- **Rootless Supabase Auth and DB**: rootless Podman の user socket を一時的な
-  Docker API として Supabase CLI へ渡し、Auth health、`pg_isready`、DB volume の
-  permission error 0 件を確認する。Podman と Supabase CLI の health-check 互換差を
-  避けるため CLI 起動時だけ `--ignore-health-check` を指定しますが、合格判定は script
-  自身の DB/Auth 待機と実測結果で行うため、サービス不健全を成功扱いにはしません。
-  Auth は Supabase network 内から GoTrue の `/health` が HTTP 200 になることを必須とし、
-  Kong 経由の `127.0.0.1:54321` は別項目として記録します。
+- **Rootless Docker Supabase Auth and DB**: GitHub runner の rootful Docker daemon を
+  停止し、通常ユーザー所有の socket で Rootless Docker daemon を起動する。
+  `docker info` の rootless security option と UID map を確認してから Supabase CLI を
+  実行し、Kong 経由の Auth HTTP 200、`pg_isready`、DB volume の permission error
+  0 件、通常の `supabase stop`、orphan container 0 件を必須とする。
 
 関連ファイルの Pull Request では自動実行されます。任意の branch を手動検証する場合は
 Actions 画面から **Rootless Container Cloud Smoke** を選ぶか、次を実行します。
@@ -209,10 +208,8 @@ listen する場合があります。IPv4 loopback が必要な container は
 
 Supabase CLI と rootless Podman の組み合わせでは GoTrue と DB が healthy でも Kong が
 停止し、host の `127.0.0.1:54321` だけが接続拒否になる既知の互換制限があります。
-cloud smoke はこの場合に GoTrue を DB container から直接検査して Auth container 自体の
-正常性を判定し、gateway を `unavailable_known_podman_kong_limit` として証跡へ分離します。
-gateway を必要とする開発は、この記録を無視せず Rootless Docker へ切り替えるか、
-Supabase CLI 側の修正を待ちます。rootful fallback は使用しません。
+標準 cloud smoke はこの制限を成功扱いせず、Supabase lane だけ Rootless Docker へ
+切り替えて gateway の Auth HTTP 200 まで検証します。rootful fallback は使用しません。
 
 ## Native Linux / WSL2 Rootless Docker alternative
 

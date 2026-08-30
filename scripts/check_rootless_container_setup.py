@@ -31,6 +31,7 @@ REQUIRED_RUN_ARGS = {
 }
 CLOUD_WORKFLOW = ".github/workflows/rootless-container-cloud-smoke.yml"
 CLOUD_SMOKE_SCRIPT = "scripts/rootless_cloud_smoke.sh"
+ROOTLESS_DOCKER_SMOKE_SCRIPT = "scripts/rootless_docker_supabase_smoke.sh"
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -129,7 +130,9 @@ def validate_setup_script(text: str) -> list[str]:
     return errors
 
 
-def validate_cloud_workflow(workflow: str, smoke_script: str) -> list[str]:
+def validate_cloud_workflow(
+    workflow: str, podman_script: str, docker_script: str
+) -> list[str]:
     errors: list[str] = []
     workflow_markers = (
         "workflow_dispatch:",
@@ -138,32 +141,53 @@ def validate_cloud_workflow(workflow: str, smoke_script: str) -> list[str]:
         "timeout-minutes: 40\n    permissions:\n      contents: read",
         "timeout-minutes: 45\n    permissions:\n      contents: read",
         "rootless_cloud_smoke.sh devcontainer",
-        "rootless_cloud_smoke.sh supabase",
+        "docker-ce-rootless-extras",
+        "sudo systemctl disable --now docker.service docker.socket",
+        "rootless_docker_supabase_smoke.sh",
         "supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf",
         "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
     )
     for marker in workflow_markers:
         if marker not in workflow:
             errors.append(f"cloud workflow missing {marker!r}.")
-    for forbidden in ("pull_request_target:", "secrets.", "--privileged"):
+    for forbidden in (
+        "pull_request_target:",
+        "secrets.",
+        "--privileged",
+        "get.docker.com",
+        "sudo dockerd",
+    ):
         if forbidden in workflow:
             errors.append(f"cloud workflow must not contain {forbidden!r}.")
 
-    script_markers = (
+    podman_markers = (
         "podman info",
-        "podman system service",
-        "DOCKER_HOST",
         "--userns=keep-id",
         "--cap-drop=ALL",
+        "no-new-privileges",
+    )
+    for marker in podman_markers:
+        if marker not in podman_script:
+            errors.append(f"Podman cloud smoke script missing {marker!r}.")
+
+    docker_markers = (
+        "dockerd-rootless.sh",
+        "docker info",
+        "DOCKER_HOST",
+        "docker_security_options",
         "supabase start",
-        "--ignore-health-check",
         "supabase stop",
         "pg_isready",
         "/auth/v1/health",
+        "database_volume_permission_errors=0",
+        "supabase_cleanup_orphans=0",
     )
-    for marker in script_markers:
-        if marker not in smoke_script:
-            errors.append(f"cloud smoke script missing {marker!r}.")
+    for marker in docker_markers:
+        if marker not in docker_script:
+            errors.append(f"Rootless Docker cloud smoke script missing {marker!r}.")
+    for forbidden in ("--ignore-health-check", "--privileged", "sudo dockerd"):
+        if forbidden in docker_script:
+            errors.append(f"Rootless Docker smoke script must not contain {forbidden!r}.")
     return errors
 
 
@@ -185,6 +209,7 @@ def validate_repository(root: Path) -> list[str]:
         validate_cloud_workflow(
             (root / CLOUD_WORKFLOW).read_text(encoding="utf-8"),
             (root / CLOUD_SMOKE_SCRIPT).read_text(encoding="utf-8"),
+            (root / ROOTLESS_DOCKER_SMOKE_SCRIPT).read_text(encoding="utf-8"),
         )
     )
     runbook = (root / "docs" / "ROOTLESS_CONTAINER_SETUP.md").read_text(encoding="utf-8")
