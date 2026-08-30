@@ -439,53 +439,25 @@ Workspace: 自分株式会社 mirror
 # 3. Supabase Secrets + GitHub Secrets に追加
 supabase secrets set NOTION_API_TOKEN="secret_xxx"
 supabase secrets set NOTION_WBS_DATABASE_ID="xxx..."
+supabase secrets set NOTION_WBS_DATA_SOURCE_ID="xxx..." # 複数 data source 時は必須
 supabase secrets set NOTION_MEMORY_DATABASE_ID="xxx..."
+supabase secrets set NOTION_MEMORY_DATA_SOURCE_ID="xxx..."
 supabase secrets set NOTION_ROADMAP_PAGE_ID="xxx..."
 
 # 4. schedule-hub に notion.sync_wbs action 追加 (Win版 Backlog)
 # 5. GHA cron 1h 毎に notion.sync_roadmap 呼び出し (Win版 Backlog)
 ```
 
-### 9-5. schedule-hub:notion.sync_wbs action (設計 / 未実装)
+### 9-5. schedule-hub:notion.sync_wbs action (実装済み)
 
 ```typescript
-// supabase/functions/schedule-hub/index.ts
-case 'notion.sync_wbs': {
-  const token = Deno.env.get('NOTION_API_TOKEN');
-  const dbId = Deno.env.get('NOTION_WBS_DATABASE_ID');
-  if (!token || !dbId) return jsonResponse({ success: false, error: 'notion not configured' }, 500);
-
-  const { data: tasks } = await supabase
-    .from('wbs_tasks')
-    .select('id, title, instance, status, progress, end_date, updated_at')
-    .order('updated_at', { ascending: false })
-    .limit(500);
-
-  for (const t of tasks ?? []) {
-    await fetch(`https://api.notion.com/v1/pages`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        parent: { database_id: dbId },
-        properties: {
-          id:         { title:  [{ text: { content: t.id } }] },
-          title:      { rich_text: [{ text: { content: t.title } }] },
-          instance:   { select: { name: t.instance ?? 'all' } },
-          status:     { select: { name: t.status ?? 'pending' } },
-          progress:   { number: t.progress ?? 0 },
-          deadline:   t.end_date ? { date: { start: t.end_date } } : null,
-          updated_at: { date: { start: t.updated_at } },
-        },
-      }),
-    });
-  }
-
-  return jsonResponse({ success: true, count: tasks?.length ?? 0 });
-}
+// 2025-09-03 API の実装は以下を参照する。
+// - supabase/functions/schedule-hub/index.ts
+// - supabase/functions/_shared/notion_data_source.ts
+// Database ID は container の data_sources 解決にだけ使用し、レコードは
+// POST /v1/data_sources/{data_source_id}/query で取得する。
+// 複数 data source の database は NOTION_*_DATA_SOURCE_ID または
+// NOTION_*_DATA_SOURCE_NAME を Secret として明示する。
 ```
 
 ### 9-6. Notion mirror 停止時の fallback

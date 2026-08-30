@@ -34,6 +34,29 @@ void main() {
       expect(await store.loadDirty('domB', prefs: sp), <String>{'x'});
     });
 
+    test('updateDirty atomically replaces opposing operation keys', () async {
+      final sp = await prefs();
+      await store.markDirty('tombstones', 'add:item', prefs: sp);
+
+      await store.updateDirty(
+        'tombstones',
+        addKeys: const <String>['remove:item'],
+        removeKeys: const <String>['add:item'],
+        prefs: sp,
+      );
+
+      expect(
+        await store.loadDirty('tombstones', prefs: sp),
+        <String>{'remove:item'},
+      );
+      await store.updateDirty(
+        'tombstones',
+        removeKeys: const <String>['remove:item'],
+        prefs: sp,
+      );
+      expect(await store.loadDirty('tombstones', prefs: sp), isEmpty);
+    });
+
     test('tolerates malformed json', () async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         AssetSyncDirtyKeysStore.prefsKey: 'not json',

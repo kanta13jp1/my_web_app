@@ -196,6 +196,18 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/mcp-well-known/index.ts"
 
+[functions.resource-optimizer]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/resource-optimizer/index.ts"
+
+[functions.decision-events]
+enabled = true
+# Internal automation only. The function also performs a constant-time exact
+# service-role bearer check before parsing or writing an event.
+verify_jwt = true
+entrypoint = "./functions/decision-events/index.ts"
+
 [functions.autonomous-ops]
 enabled = true
 # Browser-facing: deployed with --no-verify-jwt; owner auth is enforced in-function
@@ -225,3 +237,10 @@ enabled = true
 # VIDEO_WORKER_TOKEN is verified in-function before any lease operation.
 verify_jwt = false
 entrypoint = "./functions/video-worker-hub/index.ts"
+
+[functions.account-lifecycle]
+enabled = true
+# Browser preflight has no JWT. User requests are verified again with
+# auth.getUser(); scheduled destructive processing requires service_role.
+verify_jwt = false
+entrypoint = "./functions/account-lifecycle/index.ts"

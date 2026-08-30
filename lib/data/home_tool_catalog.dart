@@ -109,6 +109,8 @@ import '../pages/guitar_recording_studio_page.dart';
 import '../pages/public_guitar_gallery_page.dart';
 import '../pages/music_collaboration_page.dart';
 import '../ui/features/beatles_guitar_tabs/beatles_guitar_tabs_feature.dart';
+import '../ui/features/custom_task_list/custom_task_list_feature.dart';
+import '../ui/features/local_business_map/local_business_map_feature.dart';
 import '../pages/focus_timer_page.dart';
 import '../pages/writing_center_page.dart';
 import '../pages/wiki_database_page.dart';
@@ -141,6 +143,7 @@ import '../pages/gift_registry_page.dart';
 import '../pages/growth_automation_controller_page.dart';
 import '../pages/knowledge_base_page.dart';
 import '../pages/knowledge_graph_page.dart';
+import '../pages/user_knowledge_graph_page.dart';
 import '../pages/landing_ab_test_page.dart';
 import '../pages/loyalty_points_page.dart';
 import '../pages/market_intelligence_page.dart';
@@ -1529,6 +1532,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const UserTasksPage()),
     ),
     HomeToolEntry(
+      id: 'custom-task-list',
+      sectionId: 'personal',
+      title: 'AI カスタムタスクリスト',
+      subtitle: '目標と現状から、編集・完了管理できる具体的な行動リストをAI生成',
+      icon: Icons.playlist_add_check_circle_outlined,
+      color: const Color(0xFF0F766E),
+      keywords: const <String>[
+        'AI',
+        'カスタムタスク',
+        'タスクリスト',
+        '目標分解',
+        'TODO',
+        '行動計画',
+      ],
+      onOpen: (context) => _pushPage(context, const CustomTaskListPage()),
+    ),
+    HomeToolEntry(
       id: 'gantt-timeline',
       sectionId: 'growth',
       title: 'ガントチャート (Growth Timeline)',
@@ -1816,6 +1836,43 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const VirtualPetPage()),
     ),
     HomeToolEntry(
+      id: 'procrastination-reset',
+      sectionId: 'personal',
+      title: '先延ばしリセット',
+      subtitle: '大きなタスクを5分の行動と最初の一手に変える',
+      icon: Icons.bolt_outlined,
+      color: const Color(0xFF7C3AED),
+      keywords: const <String>[
+        '先延ばし',
+        '行動',
+        '5分',
+        'タスク分解',
+        '集中',
+        'スマホ',
+        'procrastination',
+      ],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/procrastination-reset'),
+    ),
+    HomeToolEntry(
+      id: 'proactive-form-check',
+      sectionId: 'personal',
+      title: '入力チェックアシスタント',
+      subtitle: '入力中にエラーを見つけ、具体的な修正案を反映',
+      icon: Icons.fact_check_outlined,
+      color: const Color(0xFF2563EB),
+      keywords: const <String>[
+        '入力チェック',
+        'フォーム',
+        'エラー',
+        '検証',
+        '修正案',
+        'validation',
+      ],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/proactive-form-check'),
+    ),
+    HomeToolEntry(
       id: 'focus-capture',
       sectionId: 'personal',
       title: 'フォーカス捕獲ゲーム',
@@ -2000,6 +2057,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'notebooklm',
       ],
       onOpen: (context) => _pushPage(context, const KnowledgeGraphPage()),
+    ),
+    HomeToolEntry(
+      id: 'my-knowledge-graph',
+      sectionId: 'knowledge',
+      title: 'マイ・ナレッジグラフ',
+      subtitle: '自分の文書を登録し、根拠つきチャットで検索',
+      icon: Icons.account_tree_outlined,
+      color: const Color(0xFF4338CA),
+      keywords: const <String>[
+        'knowledge graph',
+        'writer',
+        'rag',
+        '文書アップロード',
+        '社内検索',
+        '引用',
+      ],
+      onOpen: (context) => _pushPage(context, const UserKnowledgeGraphPage()),
     ),
     HomeToolEntry(
       id: 'semantic-search',
@@ -2525,6 +2599,27 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'sandbox',
       ],
       onOpen: (context) => _pushPage(context, const CodePlaygroundPage()),
+    ),
+    HomeToolEntry(
+      id: 'local-business-map',
+      sectionId: 'office',
+      title: '地域事業者マップ',
+      subtitle: 'e-Statの公式集計とOpenStreetMapの公開参考事業者を分離して地図表示',
+      icon: Icons.location_city,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        '東京都',
+        '府中市',
+        '本町1丁目',
+        '事業所',
+        '個人経営',
+        '経済センサス',
+        'e-Stat',
+        'OpenStreetMap',
+        'MCP',
+        '地図',
+      ],
+      onOpen: (context) => _pushPage(context, const LocalBusinessMapFeature()),
     ),
     HomeToolEntry(
       id: 'real-estate',

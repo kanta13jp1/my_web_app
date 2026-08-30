@@ -12,11 +12,12 @@ void main() {
       schemaVersion: tigerReviewerProfileSchemaVersion,
     );
 
-    expect(tigerReviewerProfileSchemaVersion, 2);
+    expect(tigerReviewerProfileSchemaVersion, 3);
+    expect(tigerReviewStatusSchemaVersion, 4);
     expect(
       uri.toString(),
       'https://example.com/assets/assets/data/tiger_reviewer_profiles.json'
-      '?review_status_schema=2',
+      '?review_status_schema=3',
     );
   });
 
@@ -175,6 +176,16 @@ void main() {
                   birthDateSourceUrl: Uri.parse(
                     'https://reiwanotora.jp/tiger/endo-yuki/',
                   ),
+                  evidenceLinks: <TigerReviewerEvidenceLink>[
+                    TigerReviewerEvidenceLink(
+                      label: '肩書き・事業内容',
+                      url: Uri.parse('https://example.com/company'),
+                    ),
+                    TigerReviewerEvidenceLink(
+                      label: '公開された事業方針',
+                      url: Uri.parse('https://example.com/policy'),
+                    ),
+                  ],
                   evidenceConfidence: 5,
                   profileCompletenessPercent: 100,
                   reviewReflectionPercent: 100,
@@ -192,9 +203,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final reviewerTile = find.byKey(
-        const Key('tiger-reviewer_league-21'),
-      );
+      final reviewerTile = find.byKey(const Key('tiger-reviewer_league-21'));
       await tester.scrollUntilVisible(
         reviewerTile,
         300,
@@ -214,6 +223,12 @@ void main() {
       expect(find.text('• 実在する顧客は誰か。'), findsOneWidget);
       expect(find.text('最新肩書きの再確認'), findsOneWidget);
       expect(find.byKey(const Key('tiger-profile-source-21')), findsOneWidget);
+      expect(
+        find.byKey(const Key('tiger-profile-source-21-1')),
+        findsOneWidget,
+      );
+      expect(find.text('肩書き・事業内容の根拠を開く'), findsOneWidget);
+      expect(find.text('公開された事業方針の根拠を開く'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
@@ -281,6 +296,124 @@ void main() {
     expect(find.textContaining('読み込み状態を通知する'), findsOneWidget);
     expect(find.textContaining('flutter test: passed'), findsOneWidget);
     expect(find.byKey(const Key('tiger-review-issue-4734')), findsOneWidget);
+  });
+
+  testWidgets('history shows reconciled remediation proof', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.features,
+          loader: () async => _status(
+            lane: 'feature_review',
+            history: <TigerReviewHistoryEntry>[
+              TigerReviewHistoryEntry(
+                cycleId: 'cycle-remediated',
+                startedAt: DateTime.utc(2026, 8, 28),
+                subject: const TigerReviewHistorySubject(
+                  kind: 'feature',
+                  id: 'home',
+                  title: 'ホーム',
+                ),
+                reviewer: const TigerReviewHistoryReviewer(
+                  seat: 7,
+                  name: '榊原 清一',
+                ),
+                reviewStatus: 'review_only',
+                validationStatus: 'passed',
+                findings: const <TigerReviewHistoryFinding>[],
+                countermeasure: TigerCountermeasureTrace(
+                  state: 'production_verified',
+                  label: '対策済み・Issue #10 本番検証済み',
+                  detail: 'Issue、commit、workflowを再同期しました。',
+                  summary: '',
+                  files: const <String>[],
+                  validationStatus: 'passed',
+                  validationMessages: const <String>[],
+                  findingsWithoutIndividualTrace: const <String>[],
+                  issue: TigerFollowUpIssue(
+                    number: 10,
+                    url: Uri.parse(
+                      'https://github.com/kanta13jp1/my_web_app/issues/10',
+                    ),
+                    githubState: 'CLOSED',
+                    remediationState: 'production_verified',
+                  ),
+                  implementation: const TigerReviewImplementation(
+                    commitSha: 'abc1234',
+                    workflowRun: '123',
+                    productionUrl: null,
+                    releaseStatus: 'passed',
+                    prNumber: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('対策済み・Issue #10 本番検証済み'), findsOneWidget);
+    expect(find.text('対策PR: #11'), findsOneWidget);
+    expect(find.textContaining('対策反映コミット: abc1234'), findsOneWidget);
+    expect(find.textContaining('対策反映workflow: 123'), findsOneWidget);
+    expect(find.textContaining('対策済み・本番検証済み'), findsOneWidget);
+  });
+
+  testWidgets('superseded issue is not shown as remediated', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.features,
+          loader: () async => _status(
+            lane: 'feature_review',
+            history: <TigerReviewHistoryEntry>[
+              TigerReviewHistoryEntry(
+                cycleId: 'cycle-superseded',
+                startedAt: DateTime.utc(2026, 8, 28),
+                subject: const TigerReviewHistorySubject(
+                  kind: 'feature',
+                  id: 'home',
+                  title: 'ホーム',
+                ),
+                reviewer: const TigerReviewHistoryReviewer(
+                  seat: 7,
+                  name: '榊原 清一',
+                ),
+                reviewStatus: 'review_only',
+                validationStatus: 'passed',
+                findings: const <TigerReviewHistoryFinding>[],
+                countermeasure: TigerCountermeasureTrace(
+                  state: 'issue_superseded',
+                  label: '統合済み・Issue #10 → #11',
+                  detail: '重複Issueとして統合されました。',
+                  summary: '',
+                  files: const <String>[],
+                  validationStatus: 'passed',
+                  validationMessages: const <String>[],
+                  findingsWithoutIndividualTrace: const <String>[],
+                  issue: TigerFollowUpIssue(
+                    number: 10,
+                    url: Uri.parse(
+                      'https://github.com/kanta13jp1/my_web_app/issues/10',
+                    ),
+                    githubState: 'CLOSED',
+                    remediationState: 'superseded',
+                  ),
+                  implementation: null,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('統合済み・Issue #10 → #11'), findsOneWidget);
+    expect(find.textContaining('重複統合済み・修正完了ではありません'), findsOneWidget);
+    expect(find.textContaining('対策済み・本番検証済み'), findsNothing);
   });
 
   testWidgets('site history remains visible when the lane has no standings', (

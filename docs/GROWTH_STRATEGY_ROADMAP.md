@@ -32777,6 +32777,27 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 理念的貢献: deny-by-default (AI_DEV_PRINCIPLES 原則 2) を schedule-hub 全 action で達成
 - 懸念: なし (billing supporter の public 据え置きは収益導線の意図的判断として action_auth.ts コメント + PR に文書化済み)
 
+## セッション記録: WEB版 (2026-07-13) — AIシェア動画エンジン二択化 + 97Kデータダイジェスト移植 + X operator 403 修復
+
+**契機**: ユーザー依頼 3 連鎖 — ① Arcads 比較動画品質の cinematic 動画対応 ② 過去 3 ヶ月インプレッション上位 (97K/79K/13K = 集計シリーズ) の分析と AIシェアへの移植 ③ 本番 403 (X operator role required) の修復。
+
+**実施** (PR 4 本すべて merged):
+
+- [PR #3935](https://github.com/kanta13jp1/my_web_app/pull/3935): viral-video-ad-generator に type=cinematic_video (fal.ai queue API / FAL_TEXT_TO_VIDEO_MODEL で Veo/Kling/Seedance 差替可)。AiShareVideoEngine 設定 (presenter=Hedra 既定 / cinematic) + 設定パネル切替 UI + fal_video.ts 純関数分離。レビュー指摘「終端失敗時 7.5 分ポーリング」を processing 限定 falRequestId 返却で解消
+- [PR #3947](https://github.com/kanta13jp1/my_web_app/pull/3947): TTS 読み辞書に 厳重→げんじゅう (実観測誤読)
+- [PR #4002](https://github.com/kanta13jp1/my_web_app/pull/4002): R24/R26 (並行フロー先行マージ分) の残存プロンプト矛盾 5 件解消 — (d) ブロック不在日の骨格要求矛盾 (捏造圧力 high)、関連性ゲート(B) 優先順位、鮮度例外ゲート、🔴🟡 スコープ、DISABLED ヘッダ折畳み。4 観点レビュー→敵対的検証 (confirmed 8/12) の残反映分
+- [PR #4008](https://github.com/kanta13jp1/my_web_app/pull/4008): オーナーへ X operator (user_profiles.is_admin) 付与 migration — x.post が R系ハードニング (07-12) で operator 限定化された一方オーナー未付与で本番 403。トリガーガード (20260712144000) の正規経路 = migration (postgres 権限) で付与。あわせて 2d38e1b が壊した MCP カタログ deno test を追随修正し main 緑化
+
+**次回優先**: 本番デプロイ後の AIシェア投稿 実機再試行 (403→成功確認) → データレポート型リードの初回実測 (Archetype lift n>=2 蓄積)。
+
+### Philosophy Alignment (WEB 2026-07-13)
+
+- 主要実装: AIシェア動画エンジン二択化 + 97K 実測構造のプロンプト移植 + X operator 認可修復
+- 該当原則: 5 (商品=ユーザー価値: 実測 114 倍差の勝ち型をプロダクトへ) / 8 (KPI=昨日の自分: 自アカウントの実測インプレッションを唯一の裁定者に) / 7 (資産負債: main 壊れテスト・認可付与漏れという負債を即返済)
+- 整合性スコア: 7/9 ✅ (4 人事・9 IPO は非該当)
+- 理念的貢献: 「数字は実在するもののみ」の捏造ガードを保ったまま実データ供給を拡張 (AI_DEV_PRINCIPLES: deny-by-default と整合)
+- 懸念: なし (アーキタイプ採否は実測リフト行 n>=2 ゲートに委譲済み)
+
 ## セッション記録: Win Claude part 333 (2026-07-12→14) — schedule-hub publicActions 書き込み系 lockdown (PR #3975)
 
 **契機**: publicActions に認証不要で公開されていた書き込み系 4 action — Web アプリ同梱の anon key (= 実質公開) だけで第三者がオーナーの Qiita/dev.to/X 資格情報での投稿・hub_data への system 書き込みが可能だった。
@@ -33497,3 +33518,23 @@ watcher が名指しできるのはスナップショット時点で**生存し�
 - `ready`とlive公開を分離し、linked商品は全gateと人手承認が揃うまで`is_active=true`をDB triggerで拒否する。問題時は販売停止、stage rollback、修正版の再取込で閉ループに戻す。
 - 管理画面、migration contract、local intake test、responsive widget test、運用docs、repository skillを同じ設計へ同期した。既存購入・download・Stripe Priceをrollbackで削除しない。
 - 検証はFlutter 12件、local intake 5件、変更対象の静的解析、linked Supabaseのmigration dry-run、1440px/390pxブラウザ表示で実施し、live商品自体はactive化していない。
+
+### 資産管理セッション記録: Obsidian保管庫から残高一括取込 (2026-08-26 JST)
+
+- Issue #4868 として、ローカルObsidian保管庫の明示的な残高表を資産管理画面へ取り込むMVPを実装した。
+- Chromeのフォルダー選択権限内でMarkdownだけを読み、`.obsidian/` を除外する。本文はブラウザ内で解析し、確認後に選択された口座名・残高だけを既存の `cfo_assets` へ保存する。
+- 新規・更新・同額・古い・同日競合を差分表示し、新しい確認日の同額残高は口座鮮度の更新候補とする。古い残高と競合は自動反映しない。
+- 保管庫由来の残高更新では使途不明金を自動生成せず、取引履歴・給与・支払予定・カード明細・推定サブスクは誤更新防止のためMVP対象外とした。
+- 検証はパーサー5件、レスポンシブWidget 2件、既存資産管理ページのスモーク1件、変更対象ファイルの静的解析で実施した。全体解析とWeb buildはRAM保護のためCIへ委ねる。
+
+### 虎レビュー改善記録: 登録管理指標カードの段階分割 (2026-08-29 JST)
+
+- Issue #4834 の主要ページ分割を継続し、登録管理の追加指標カードを `admin_analytics_page.dart` から専用Widgetへ抽出した。親ページの集計とデータ取得は変更していない。
+- 連続登録ゼロが集計窓上限に達した場合の「N日以上」表示、体験前離脱警告、正常時の登録効率表示を専用Widgetテスト3件で固定した。
+- Flutter 3.38.10 で専用Widgetテスト3件と関連Widgetテスト3件、変更3ファイルの静的解析、フォーマット検査が成功した。Chromeの既存統合テストはロード後に進行せず、空きRAM保護のため停止し、PR CIでの検証に回す。
+
+### 虎レビュー改善記録: Agent Tool Guardカードの段階分割 (2026-08-29 JST)
+
+- Issue #4834 の主要ページ分割を継続し、Agent Tool Guardの空状態、実行概要、ブロック理由、直近実行一覧を `admin_analytics_page.dart` から専用Widgetへ抽出した。ログ取得と集計は親ページに残した。
+- 元のKPIピル表示、色、文言、最大12件、新鮮度による年表示の切り替えを維持し、`admin_analytics_page.dart` を6,791行から6,540行へ縮小した。
+- Flutter 3.38.10 で専用Widgetテスト3件、変更対象の静的解析、フォーマット検査が成功した。全体buildとブラウザ自動化は空きRAM保護のため起動せず、PR CIでの検証に回す。

@@ -13,6 +13,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart' as web_api;
 import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_fsrs_service.dart';
+import '../services/ai_university_agentless_lab_analytics.dart';
+import '../services/ai_university_content_analytics.dart';
+import '../services/ai_university_learning_outcome_analytics.dart';
 import '../services/ai_learner_profile_service.dart';
 import '../services/ai_university_rlhf_service.dart';
 import '../services/ai_university_video_lesson_service.dart';
@@ -20,6 +23,10 @@ import '../services/ai_university_x_post_service.dart';
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 import '../services/user_data_finetune_readiness_service.dart';
+import '../widgets/ai_university_latest_info_task_card.dart';
+import '../widgets/ai_university_agentless_lab_task_card.dart';
+import '../widgets/ai_university_llm_mechanics_task_card.dart';
+import '../widgets/ai_university_model_selection_task_card.dart';
 import '../widgets/ai_university_published_video_banner.dart';
 import '../widgets/ai_university_youtube_embed.dart';
 import '../widgets/ai_university_youtube_viewer_route.dart';
@@ -822,7 +829,7 @@ final Map<String, _ProviderMeta> _providerMeta = {
     name: '01.AI (Yi)',
     emoji: '🀄',
     color: const Color(0xFF1A73E8),
-    officialUrl: 'https://www.01.ai',
+    officialUrl: 'https://platform.01.ai/docs',
   ),
   'coze': _ProviderMeta(
     name: 'Coze',
@@ -3275,22 +3282,17 @@ Photoshop・Illustratorと深く統合。Creative Cloud 1億人ユーザー基�
 [公式サイト](https://firefly.adobe.com)
 ''',
   '01ai': '''
-## 01.AI (Yi)
-李開復 (Kai-Fu Lee) が率いる中国AIスタートアップ。
-Yi-LightningはGPT-4o同等の性能を激安で提供。OpenAI互換APIで移行が容易。
+## 01.AI (Yi) API
+01.AIが提供するYiシリーズ向けAPIです。
+公式ドキュメント確認日: 2026-08-26
 
-## 主要モデル
-- **Yi-Lightning**: GPT-4o同等・\$0.14/100万token (超低コスト)
-- **Yi-Large**: 高性能フラッグシップモデル
-- **Yi-34B/6B**: Apache 2.0ライセンスのオープンソースモデル
+## 利用前の確認
+- 公式ドキュメントはOpenAI SDKと互換性のある呼び出し形式を案内しています。全API・全バージョンの完全互換を保証する表現ではありません。
+- APIキーを作成し、認証後にモデル一覧（GET https://api.01.ai/v1/models）を取得して、利用可能なモデルIDを確認します。
+- Chat CompletionsのベースURLは https://api.01.ai/v1 です。
+- 仕様・モデル提供状況は変更される可能性があります。価格を含む最新情報は公式ドキュメントとアカウント画面で再確認してください。
 
-## 特徴
-- OpenAI API完全互換 (base_url変更のみで移行可)
-- Yi-34BはHugging Faceで公開・商用利用可
-- 中国語・英語の双語処理に強み
-- 元Google中国社長・李開復が2023年創業
-
-[公式サイト](https://www.01.ai)
+[公式ドキュメント](https://platform.01.ai/docs)
 ''',
   'coze': '''
 ## Coze (ByteDance)
@@ -3457,20 +3459,22 @@ Microsoft に主要チームが移籍後も Pi は独立サービスとして継
 ''',
   'adept': '''
 ## Adept AI
-ブラウザや業務SaaSを自然言語で実際に操作する実行型AI。Fuyu-8B のOSS公開でも知られる。
+コンピュータ上の画面を理解し、ブラウザや業務ソフトを操作するエージェント技術を開発してきた企業。以下は同社の日付付き公式発表に基づく歴史で、現行の提供状況とは分けて確認する必要がある。
 
-## 主要機能
-- **ACT-1 / ACT-2**: ブラウザ・業務SaaSの操作自動化
-- **Fuyu-8B**: 画像理解を含むマルチモーダルOSSモデル
-- **Adept Agent Platform**: エンタープライズ向け業務自動化基盤
+**公式情報確認日: 2026-08-26**
 
-## 特徴
-- クリック・入力・検索まで含めて「実際に操作するAI」
-- ブラウザと業務SaaSをまたぐ反復作業の自動化に強い
-- Amazon連携を含む企業向けエージェント展開
-- 「回答するAI」より「実行するAI」に重心がある
+## 日付付きタイムライン
+- **2022-09-14 — ACT-1**: ブラウザでクリック、入力、スクロールなどを行う「操作のためのTransformer」として発表された。
+- **2023-10-17 — Fuyu-8B**: デジタルエージェント向けの画像理解を想定したマルチモーダルモデルとして公開された。
+- **2024-06-28 — 戦略更新**: エージェントAIソリューションへ集中する方針を発表。AmazonはAdeptのエージェント技術、モデル群、一部データセットをライセンスし、共同創業者と一部メンバーがAmazon AGI組織へ参加した。
+- **2024-08-23 — AWL**: マルチモーダルなWeb操作を構成するAdept Workflow Languageを紹介した。
 
-[公式サイト](https://www.adept.ai/)
+## 学習時の確認ポイント
+- ACT-1とFuyu-8Bは過去の技術発表、2024年6月以降の記事は後続の戦略として読み分ける。
+- 現行の製品名、提供範囲、利用条件は変わり得るため、導入判断前に公式サイトで再確認する。
+- 2024年6月発表のAmazonとの関係は、「サービス連携」ではなく、技術ライセンスと人員の参加として記載されている。
+
+[公式サイト](https://www.adept.ai/) / [ACT-1](https://www.adept.ai/blog/act-1/) / [Fuyu-8B](https://www.adept.ai/blog/fuyu-8b/) / [2024年6月の戦略更新](https://www.adept.ai/blog/adept-update/) / [AWL](https://www.adept.ai/blog/adept-agents/)
 ''',
   'prover': '''
 ## Prover — 定理証明・形式検証特化型 AI
@@ -5695,9 +5699,21 @@ Slack / Google Drive / Jira など 100+ データソースを横断する Work K
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AiUniversityPage extends StatefulWidget {
-  const AiUniversityPage({super.key, this.initialProviderId});
+  const AiUniversityPage({
+    super.key,
+    this.initialProviderId,
+    this.contentAnalytics,
+    this.learningOutcomeAnalytics,
+    this.modelSelectionLearningOutcomeAnalytics,
+    this.agentlessLabAnalytics,
+  });
 
   final String? initialProviderId;
+  final AiUniversityContentAnalytics? contentAnalytics;
+  final AiUniversityLearningOutcomeAnalytics? learningOutcomeAnalytics;
+  final AiUniversityLearningOutcomeAnalytics?
+      modelSelectionLearningOutcomeAnalytics;
+  final AiUniversityAgentlessLabAnalytics? agentlessLabAnalytics;
 
   @override
   State<AiUniversityPage> createState() => _AiUniversityPageState();
@@ -5715,6 +5731,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   TabController? get tabUrlController => _tabController;
 
   final _supabase = Supabase.instance.client;
+  late final AiUniversityContentAnalytics _contentAnalytics;
+  late final AiUniversityLearningOutcomeAnalytics _learningOutcomeAnalytics;
+  late final AiUniversityLearningOutcomeAnalytics
+      _modelSelectionLearningOutcomeAnalytics;
+  late final AiUniversityLearningOutcomeAnalytics
+      _llmMechanicsLearningOutcomeAnalytics;
+  late final AiUniversityAgentlessLabAnalytics _agentlessLabAnalytics;
 
   List<String> _providers = [];
   Map<String, List<Map<String, dynamic>>> _content = {};
@@ -5722,6 +5745,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   String? _error;
   TabController? _tabController;
   final Set<String> _answeredQuizzes = {};
+  final Set<String> _viewedLearningOutcomeTasks = {};
   static const String _prefsKey = 'ai_univ_answered_quizzes';
   // 新ジャンル棚の折りたたみ状態 (画面占有を抑えるため / prefs 永続化)。
   static const String _genreShelfPrefsKey = 'ai_univ_genre_shelf_collapsed';
@@ -5750,6 +5774,23 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   @override
   void initState() {
     super.initState();
+    _contentAnalytics = widget.contentAnalytics ??
+        AiUniversityContentAnalytics.supabase(_supabase);
+    _learningOutcomeAnalytics = widget.learningOutcomeAnalytics ??
+        AiUniversityLearningOutcomeAnalytics.supabase(_supabase);
+    _modelSelectionLearningOutcomeAnalytics =
+        widget.modelSelectionLearningOutcomeAnalytics ??
+            AiUniversityLearningOutcomeAnalytics.supabase(
+              _supabase,
+              task: AiUniversityLearningOutcomeTask.modelSelection,
+            );
+    _llmMechanicsLearningOutcomeAnalytics =
+        AiUniversityLearningOutcomeAnalytics.supabase(
+      _supabase,
+      task: AiUniversityLearningOutcomeTask.llmMechanics,
+    );
+    _agentlessLabAnalytics = widget.agentlessLabAnalytics ??
+        AiUniversityAgentlessLabAnalytics.supabase(_supabase);
     _fetchContent();
     _loadAnsweredQuizzes();
     _loadRlhfSnapshot();
@@ -6267,7 +6308,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     super.dispose();
   }
 
-  Future<void> _fetchContent() async {
+  Future<void> _fetchContent({bool isRetry = false}) async {
     try {
       const pageSize = 1000;
       final contentRows = <Map<String, dynamic>>[];
@@ -6313,6 +6354,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       // DB が空なら _providerMeta の全キーをフォールバックで表示
       final providers =
           grouped.isEmpty ? _providerMeta.keys.toList() : grouped.keys.toList();
+      if (grouped.isEmpty) {
+        _contentAnalytics
+            .record(AiUniversityContentEvent.fallbackShown)
+            .ignore();
+      }
       final requestedProvider = widget.initialProviderId;
       final requestedIndex =
           requestedProvider == null ? -1 : providers.indexOf(requestedProvider);
@@ -6340,13 +6386,25 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         });
         rebindTabUrlSync();
       }
-    } catch (e) {
+      if (isRetry) {
+        _contentAnalytics
+            .record(AiUniversityContentEvent.retrySucceeded)
+            .ignore();
+      }
+    } catch (_) {
+      _contentAnalytics
+          .record(AiUniversityContentEvent.contentFetchFailed)
+          .ignore();
+      _contentAnalytics.record(AiUniversityContentEvent.fallbackShown).ignore();
+      if (isRetry) {
+        _contentAnalytics.record(AiUniversityContentEvent.retryFailed).ignore();
+      }
       if (mounted) {
         final providers = _providerMeta.keys.toList();
         _tabController?.dispose();
         setState(() {
           _loading = false;
-          _error = e.toString();
+          _error = 'content_fetch_failed';
           _providers = providers;
           _tabController = TabController(length: providers.length, vsync: this);
         });
@@ -6755,8 +6813,14 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   }
 
   void _refreshUniversityContent() {
+    final isRetry = _error != null;
     setState(() => _loading = true);
-    _fetchContent();
+    if (isRetry) {
+      _contentAnalytics
+          .record(AiUniversityContentEvent.retryRequested)
+          .ignore();
+    }
+    _fetchContent(isRetry: isRetry);
   }
 
   void _openVideoLessonGenerator() {
@@ -7909,16 +7973,49 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     Color surface,
   ) {
     final category = row['category'] as String? ?? '';
+    final provider = row['provider'] as String? ?? '';
     final title = row['title'] as String? ?? '';
     final content = row['content'] as String? ?? '';
     final sourceUrl = row['source_url'] as String?;
+    final targetAudience = row['target_audience'] as String?;
+    final learningOutcome = row['observable_learning_outcome'] as String?;
+    final verificationMethod = row['assessment_verification_method'] as String?;
+    final evidenceSourceUrl = row['evidence_source_url'] as String?;
+    final evidenceVerifiedAt = row['evidence_verified_at'] as String?;
+    final hasCourseEvidence = <String?>[
+      targetAudience,
+      learningOutcome,
+      verificationMethod,
+      evidenceSourceUrl,
+      evidenceVerifiedAt,
+    ].any((value) => value != null && value.isNotEmpty);
     final youtubeVideoId =
         AiUniversityVideoLessonService.youtubeVideoIdFromUrl(sourceUrl);
+    final isLatestInfoTask = provider == '01ai' && category == 'news';
+    final isModelSelectionTask = provider == '01ai' && category == 'models';
+    final isLlmMechanicsTask =
+        provider == 'academic' && category == 'llm_mechanics';
+    final isAgentlessLab = provider == 'agentless' && category == 'overview';
+    final learningOutcomeAnalytics = isLlmMechanicsTask
+        ? _llmMechanicsLearningOutcomeAnalytics
+        : isModelSelectionTask
+            ? _modelSelectionLearningOutcomeAnalytics
+            : _learningOutcomeAnalytics;
+    final hasLearningOutcomeTask =
+        isLatestInfoTask || isModelSelectionTask || isLlmMechanicsTask;
+    final taskViewKey = row['id']?.toString() ?? '$provider:$category';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       color: surface,
       child: ExpansionTile(
+        onExpansionChanged: hasLearningOutcomeTask
+            ? (expanded) {
+                if (expanded && _viewedLearningOutcomeTasks.add(taskViewKey)) {
+                  learningOutcomeAnalytics.recordViewed().ignore();
+                }
+              }
+            : null,
         backgroundColor: surface,
         collapsedBackgroundColor: surface,
         title: Text(
@@ -7953,6 +8050,87 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                     },
                   ),
                 ),
+                if (hasCourseEvidence) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF111827),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '学習設計の根拠',
+                          style: TextStyle(
+                            color: Color(0xFFE5E7EB),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (targetAudience != null && targetAudience.isNotEmpty)
+                          Text(
+                            '対象: $targetAudience',
+                            style: const TextStyle(color: Color(0xFFE5E7EB)),
+                          ),
+                        if (learningOutcome != null &&
+                            learningOutcome.isNotEmpty)
+                          Text(
+                            '観察可能な成果: $learningOutcome',
+                            style: const TextStyle(color: Color(0xFFE5E7EB)),
+                          ),
+                        if (verificationMethod != null &&
+                            verificationMethod.isNotEmpty)
+                          Text(
+                            '確認方法: $verificationMethod',
+                            style: const TextStyle(color: Color(0xFFE5E7EB)),
+                          ),
+                        if (evidenceVerifiedAt != null &&
+                            evidenceVerifiedAt.isNotEmpty)
+                          Text(
+                            '根拠確認日時: $evidenceVerifiedAt',
+                            style: const TextStyle(color: Color(0xFFE5E7EB)),
+                          ),
+                        if (evidenceSourceUrl != null &&
+                            evidenceSourceUrl.isNotEmpty)
+                          TextButton.icon(
+                            icon:
+                                const Icon(Icons.fact_check_outlined, size: 14),
+                            label: const Text('学習設計の根拠を開く'),
+                            onPressed: () => _launchUrl(evidenceSourceUrl),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (isLatestInfoTask) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityLatestInfoTaskCard(
+                    onSubmit: _learningOutcomeAnalytics.recordCompleted,
+                  ),
+                ],
+                if (isModelSelectionTask) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityModelSelectionTaskCard(
+                    onSubmit:
+                        _modelSelectionLearningOutcomeAnalytics.recordCompleted,
+                  ),
+                ],
+                if (isLlmMechanicsTask) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityLlmMechanicsTaskCard(
+                    onSubmit:
+                        _llmMechanicsLearningOutcomeAnalytics.recordCompleted,
+                  ),
+                ],
+                if (isAgentlessLab) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityAgentlessLabTaskCard(
+                    onStart: _agentlessLabAnalytics.recordStarted,
+                    onSubmit: _agentlessLabAnalytics.recordCompleted,
+                  ),
+                ],
                 if (youtubeVideoId != null) ...[
                   const SizedBox(height: 16),
                   AiUniversityYoutubeEmbed(
