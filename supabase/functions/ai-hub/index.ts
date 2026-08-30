@@ -95,6 +95,17 @@ import {
 } from "./market_price.ts";
 import { applyProviderGenerationOptions } from "./provider_generation_options.ts";
 import {
+  concatenateAudio,
+  normalizeVoiceId,
+  normalizeVoiceLanguage,
+  normalizeVoiceSettings,
+  resolveVoiceDubbingModel,
+  safeAudioFileName,
+  splitVoiceText,
+  VOICE_DUBBING_BUCKET,
+  voiceCharacterLimit,
+} from "./voice_dubbing.ts";
+import {
   buildCompanyRuntimePrompt,
   nextCompanyRuntimeRoutingProfile,
   parseCompanyRuntimeQueueMessages,
@@ -127,6 +138,12 @@ import {
   buildSubscriptionStatementPrompt,
   parseSubscriptionStatementResponse,
 } from "./subscription_statement_scan.ts";
+import {
+  createWriterKnowledgeGraphGateway,
+  handleWriterKnowledgeGraphAction,
+  WriterKnowledgeGraphError,
+} from "./writer_knowledge_graph.ts";
+import { createSupabaseWriterKnowledgeGraphStore } from "./writer_knowledge_graph_supabase.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -4208,6 +4225,97 @@ async function callManusTask(
   };
 }
 
+type VoiceUsagePayload = {
+  tier: string;
+  used: number;
+  limit: number;
+  remaining: number;
+  generation_count: number;
+  generation_limit: number;
+  period_start?: string;
+};
+
+async function getVoiceUsage(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<VoiceUsagePayload> {
+  const { error: reconciliationError } = await admin.rpc(
+    "reconcile_voice_dubbing_quota",
+    { p_user_id: userId },
+  );
+  if (reconciliationError) throw new Error(reconciliationError.message);
+  const periodStart = new Date(
+    Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1),
+  ).toISOString().slice(0, 10);
+  const [{ data: subscription, error: subscriptionError }, {
+    data: counter,
+    error: counterError,
+  }] = await Promise.all([
+    admin.from("billing_subscriptions").select("tier,status").eq(
+      "user_id",
+      userId,
+    ).maybeSingle(),
+    admin.from("billing_usage_counters").select(
+      "voice_character_count,voice_generation_count",
+    ).eq("user_id", userId).eq("period_start", periodStart).maybeSingle(),
+  ]);
+  if (subscriptionError) throw new Error(subscriptionError.message);
+  if (counterError) throw new Error(counterError.message);
+
+  const subscriptionRecord = subscription as Record<string, unknown> | null;
+  const status = asString(subscriptionRecord?.status);
+  const tier = status === "active" || status === "trialing"
+    ? asString(subscriptionRecord?.tier) || "free"
+    : "free";
+  const rawUsed = (counter as Record<string, unknown> | null)
+    ?.voice_character_count;
+  const used = typeof rawUsed === "number"
+    ? rawUsed
+    : Number(rawUsed ?? 0) || 0;
+  const limit = voiceCharacterLimit(tier);
+  const rawGenerationCount = (counter as Record<string, unknown> | null)
+    ?.voice_generation_count;
+  const generationCount = typeof rawGenerationCount === "number"
+    ? rawGenerationCount
+    : Number(rawGenerationCount ?? 0) || 0;
+  const generationLimit = tier === "team" ? 3000 : tier === "pro" ? 1000 : 100;
+  return {
+    tier,
+    used,
+    limit,
+    remaining: Math.max(limit - used, 0),
+    generation_count: generationCount,
+    generation_limit: generationLimit,
+  };
+}
+
+function normalizeVoiceUsagePayload(value: unknown): VoiceUsagePayload & {
+  allowed: boolean;
+  reason?: string;
+} {
+  const raw = asRecord(value) ?? {};
+  const tier = asString(raw.tier) || "free";
+  const limit = Number(raw.limit ?? voiceCharacterLimit(tier));
+  const used = Number(raw.used ?? 0);
+  const remaining = Number(raw.remaining ?? Math.max(limit - used, 0));
+  const generationCount = Number(raw.generation_count ?? 0);
+  const generationLimit = Number(
+    raw.generation_limit ??
+      (tier === "team" ? 3000 : tier === "pro" ? 1000 : 100),
+  );
+  return {
+    allowed: raw.allowed === true,
+    tier,
+    limit: Number.isFinite(limit) ? limit : voiceCharacterLimit(tier),
+    used: Number.isFinite(used) ? used : 0,
+    remaining: Number.isFinite(remaining) ? remaining : 0,
+    generation_count: Number.isFinite(generationCount) ? generationCount : 0,
+    generation_limit: Number.isFinite(generationLimit) ? generationLimit : 100,
+    period_start: asString(raw.period_start) || undefined,
+    reason: asString(raw.reason) || undefined,
+  };
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -4310,7 +4418,14 @@ serve(async (req: Request) => {
       "compute-disposable-balance",
       "asset.anomaly.detect",
       "detect-anomalies",
+      "knowledge_graph.status",
+      "knowledge_graph.upload",
+      "knowledge_graph.query",
+      "knowledge_graph.delete_document",
       "voice.tts",
+      "voice.catalog",
+      "voice.usage",
+      "voice.dubbing.generate",
       "voice.stt",
       "voice.cartesia_session.start",
       "voice.cartesia_session.finish",
@@ -4324,6 +4439,57 @@ serve(async (req: Request) => {
     }
 
     switch (action) {
+      case "knowledge_graph.status":
+      case "knowledge_graph.upload":
+      case "knowledge_graph.query":
+      case "knowledge_graph.delete_document": {
+        if (
+          ["knowledge_graph.upload", "knowledge_graph.query"].includes(action)
+        ) {
+          const offlinePolicy = parseOfflineSecureModePolicy(body);
+          if (shouldBlockExternalProviderCall(offlinePolicy)) {
+            return json(
+              buildOfflineBlockedResponseBody(offlinePolicy, {
+                action,
+                provider: "writer",
+              }),
+              409,
+            );
+          }
+        }
+        const writerApiKey = Deno.env.get("WRITER_API_KEY") ?? "";
+        if (action === "knowledge_graph.query" && writerApiKey) {
+          const usage = await checkAndRecordAiUsage(
+            supabaseUsageStore(admin),
+            userId ?? "",
+          );
+          if (!usage.allowed) {
+            return json({
+              error: "Monthly AI query limit reached.",
+              code: "usage_limit_reached",
+            }, 402);
+          }
+          const budget = await checkBudget("ef", "ai-hub");
+          if (!budget.ok) {
+            return json({
+              error: "AI budget limit reached.",
+              code: "budget_limit_reached",
+            }, 429);
+          }
+        }
+        const result = await handleWriterKnowledgeGraphAction({
+          action,
+          body,
+          userId: userId ?? "",
+          configured: writerApiKey.length > 0,
+          store: createSupabaseWriterKnowledgeGraphStore(admin),
+          gateway: writerApiKey
+            ? createWriterKnowledgeGraphGateway(writerApiKey)
+            : null,
+        });
+        return json(result);
+      }
+
       case "judgment.get": {
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey) {
@@ -7757,53 +7923,523 @@ serve(async (req: Request) => {
             reason: "ELEVENLABS_API_KEY not configured",
           });
         }
-        const ttsResp = await fetchWithProviderTimeout(
-          `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
-          {
-            method: "POST",
-            headers: {
-              "xi-api-key": elevenKey,
-              "Content-Type": "application/json",
+        try {
+          const ttsResp = await fetchWithProviderTimeout(
+            `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+            {
+              method: "POST",
+              headers: {
+                "xi-api-key": elevenKey,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                text,
+                model_id: "eleven_multilingual_v2",
+                voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+              }),
             },
-            body: JSON.stringify({
-              text,
-              model_id: "eleven_multilingual_v2",
-              voice_settings: { stability: 0.5, similarity_boost: 0.75 },
-            }),
-          },
-        );
-        if (!ttsResp.ok) {
-          const errText = await ttsResp.text();
-          // Free-tier / paid-plan-required → フォールバックで Web Speech API 利用を UI に通知
-          if (
-            errText.includes("paid_plan_required") ||
-            errText.includes("payment_required")
-          ) {
+          );
+          if (!ttsResp.ok) {
+            const errText = await ttsResp.text();
+            // Free-tier / paid-plan-required → フォールバックで Web Speech API 利用を UI に通知
+            if (
+              errText.includes("paid_plan_required") ||
+              errText.includes("payment_required")
+            ) {
+              return json({
+                success: false,
+                fallback: "webspeech",
+                text,
+                reason: "elevenlabs_paid_plan_required",
+              });
+            }
+            const errorId = crypto.randomUUID();
+            console.error("voice.tts provider failure", {
+              errorId,
+              status: ttsResp.status,
+              detail: errText.slice(0, 500),
+            });
             return json({
-              success: false,
+              error: "elevenlabs_tts_unavailable",
+              error_id: errorId,
               fallback: "webspeech",
               text,
-              reason: "elevenlabs_paid_plan_required",
-            });
+            }, 502);
           }
+          const audioBuffer = await ttsResp.arrayBuffer();
+          const bytes = new Uint8Array(audioBuffer);
+          let binary = "";
+          for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          const base64Audio = btoa(binary);
           return json({
-            error: `ElevenLabs error: ${errText}`,
+            success: true,
+            audio_base64: base64Audio,
+            content_type: "audio/mpeg",
+          });
+        } catch (error) {
+          const errorId = crypto.randomUUID();
+          console.error("voice.tts unavailable", {
+            errorId,
+            detail: String(error).slice(0, 500),
+          });
+          return json({
+            error: "elevenlabs_tts_unavailable",
+            error_id: errorId,
             fallback: "webspeech",
             text,
           }, 502);
         }
-        const audioBuffer = await ttsResp.arrayBuffer();
-        const bytes = new Uint8Array(audioBuffer);
-        let binary = "";
-        for (let i = 0; i < bytes.byteLength; i++) {
-          binary += String.fromCharCode(bytes[i]);
+      }
+
+      case "voice.catalog": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const elevenKey = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
+        if (!elevenKey) {
+          return json({ error: "ELEVENLABS_API_KEY not configured" }, 503);
         }
-        const base64Audio = btoa(binary);
-        return json({
-          success: true,
-          audio_base64: base64Audio,
-          content_type: "audio/mpeg",
+        const search = asString(body.search).slice(0, 80);
+        const requestedPage = Number(asString(body.page_token) || "0");
+        const page = Number.isInteger(requestedPage) && requestedPage >= 0
+          ? Math.min(requestedPage, 100)
+          : 0;
+        const params = new URLSearchParams({
+          page_size: "100",
+          page: String(page),
+          sort: "trending",
         });
+        if (search) params.set("search", search);
+        try {
+          const response = await fetchWithProviderTimeout(
+            `https://api.elevenlabs.io/v1/shared-voices?${params}`,
+            { headers: { "xi-api-key": elevenKey } },
+          );
+          const rawText = await response.text();
+          if (!response.ok) {
+            const errorId = crypto.randomUUID();
+            console.error("voice.catalog provider failure", {
+              errorId,
+              status: response.status,
+              detail: rawText.slice(0, 500),
+            });
+            return json({
+              error: "voice_catalog_unavailable",
+              error_id: errorId,
+            }, 502);
+          }
+          const payload = JSON.parse(rawText) as Record<string, unknown>;
+          const voices = Array.isArray(payload.voices)
+            ? payload.voices.flatMap((item) => {
+              const voice = asRecord(item);
+              const id = asString(voice?.voice_id);
+              if (!voice || !id) return [];
+              const labels = {
+                language: asString(voice.language),
+                accent: asString(voice.accent),
+                gender: asString(voice.gender),
+                age: asString(voice.age),
+                style: asString(voice.descriptive),
+                use_case: asString(voice.use_case),
+              };
+              return [{
+                id,
+                name: asString(voice.name) || "Voice",
+                category: asString(voice.category),
+                description: asString(voice.description),
+                preview_url: asString(voice.preview_url),
+                public_owner_id: asString(voice.public_owner_id),
+                labels,
+              }];
+            })
+            : [];
+          return json({
+            success: true,
+            voices,
+            has_more: payload.has_more === true,
+            next_page_token: payload.has_more === true
+              ? String(page + 1)
+              : null,
+            total_count: Number(payload.total_count ?? voices.length),
+          });
+        } catch (error) {
+          const errorId = crypto.randomUUID();
+          console.error("voice.catalog unavailable", {
+            errorId,
+            detail: String(error).slice(0, 500),
+          });
+          return json({
+            error: "voice_catalog_unavailable",
+            error_id: errorId,
+          }, 502);
+        }
+      }
+
+      case "voice.usage": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        try {
+          return json({
+            success: true,
+            usage: await getVoiceUsage(admin, userId),
+          });
+        } catch (error) {
+          const errorId = crypto.randomUUID();
+          console.error("voice.usage unavailable", {
+            errorId,
+            detail: String(error).slice(0, 500),
+          });
+          return json({
+            error: "voice_usage_unavailable",
+            error_id: errorId,
+          }, 503);
+        }
+      }
+
+      case "voice.dubbing.generate": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const elevenKey = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
+        if (!elevenKey) {
+          return json({ error: "ELEVENLABS_API_KEY not configured" }, 503);
+        }
+
+        const text = asString(body.text).replace(/\r\n/g, "\n");
+        if (!text) return json({ error: "text required" }, 400);
+
+        let model: ReturnType<typeof resolveVoiceDubbingModel>;
+        let language: string;
+        let voiceId: string;
+        try {
+          model = resolveVoiceDubbingModel(body.model_id);
+          language = normalizeVoiceLanguage(body.language, model);
+          voiceId = normalizeVoiceId(body.voice_id);
+        } catch (error) {
+          return json({ error: String(error).replace("Error: ", "") }, 400);
+        }
+        if (text.length > model.totalLimit) {
+          return json({
+            error: "text_too_long",
+            model_id: model.id,
+            max_characters: model.totalLimit,
+          }, 400);
+        }
+
+        const settings = normalizeVoiceSettings(body.voice_settings);
+        const chunks = splitVoiceText(text, model.chunkLimit);
+        const reservedCharacters = chunks.reduce(
+          (total, chunk) => total + chunk.length,
+          0,
+        );
+        const requestId = asString(body.idempotency_key).toLowerCase();
+        if (
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+            .test(
+              requestId,
+            )
+        ) {
+          return json({ error: "invalid_idempotency_key" }, 400);
+        }
+        const fileName = safeAudioFileName(body.file_name);
+        const requestHash = await sha256Hex(JSON.stringify({
+          text,
+          fileName,
+          modelId: model.id,
+          language,
+          voiceId,
+          settings,
+        }));
+
+        const { data: claimData, error: claimError } = await admin.rpc(
+          "claim_voice_character_quota",
+          {
+            p_user_id: userId,
+            p_request_id: requestId,
+            p_request_hash: requestHash,
+            p_characters: reservedCharacters,
+          },
+        );
+        if (claimError) {
+          const errorId = crypto.randomUUID();
+          console.error("voice.dubbing quota claim failed", {
+            errorId,
+            detail: claimError.message.slice(0, 500),
+          });
+          return json({
+            error: "voice_quota_unavailable",
+            error_id: errorId,
+          }, 503);
+        }
+        const claim = asRecord(claimData) ?? {};
+        if (claim.replayed === true) {
+          const replay = asRecord(claim.result) ?? {};
+          const replayPath = asString(replay.storage_path);
+          if (!replayPath.startsWith(`${userId}/`)) {
+            return json({ error: "voice_replay_unavailable" }, 503);
+          }
+          const { data: signed, error: signedError } = await admin.storage
+            .from(VOICE_DUBBING_BUCKET)
+            .createSignedUrl(replayPath, 3600);
+          if (signedError || !signed?.signedUrl) {
+            return json({ error: "voice_replay_unavailable" }, 503);
+          }
+          let replayUsage: VoiceUsagePayload;
+          try {
+            replayUsage = await getVoiceUsage(admin, userId);
+          } catch (error) {
+            const errorId = crypto.randomUUID();
+            console.error("voice.dubbing replay usage unavailable", {
+              errorId,
+              requestId,
+              detail: String(error).slice(0, 500),
+            });
+            return json({
+              error: "voice_usage_unavailable",
+              error_id: errorId,
+            }, 503);
+          }
+          return json({
+            ...replay,
+            success: true,
+            replayed: true,
+            audio_url: signed.signedUrl,
+            expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+            usage: replayUsage,
+          });
+        }
+        const usage = normalizeVoiceUsagePayload(claimData);
+        if (!usage.allowed) {
+          const conflict = usage.reason === "request_in_progress" ||
+            usage.reason === "idempotency_conflict" ||
+            usage.reason === "retry_with_new_request_id";
+          return json(
+            { success: false, error: usage.reason, usage },
+            conflict ? 409 : 429,
+          );
+        }
+
+        let uploadedPath: string | null = null;
+        let billedCharacters = 0;
+        let startedCharacters = 0;
+        let providerCallAmbiguous = false;
+        let completionUncertain = false;
+        try {
+          const audioChunks: Uint8Array[] = [];
+          const requestIds: string[] = [];
+          for (const chunk of chunks) {
+            const requestBody: Record<string, unknown> = {
+              text: chunk,
+              model_id: model.id,
+              language_code: language,
+              voice_settings: model.id === "eleven_v3"
+                ? {
+                  stability: settings.stability,
+                  style: settings.style,
+                  speed: settings.speed,
+                }
+                : settings,
+            };
+            if (model.requestStitching && requestIds.length > 0) {
+              requestBody.previous_request_ids = requestIds.slice(-3);
+            }
+            const { error: startError } = await admin.rpc(
+              "start_voice_dubbing_chunk",
+              {
+                p_user_id: userId,
+                p_request_id: requestId,
+                p_characters: chunk.length,
+              },
+            );
+            if (startError) {
+              throw new Error("voice_job_chunk_start_failed");
+            }
+            startedCharacters += chunk.length;
+            let response: Response;
+            try {
+              response = await fetchWithProviderTimeout(
+                `https://api.elevenlabs.io/v1/text-to-speech/${
+                  encodeURIComponent(voiceId)
+                }?output_format=mp3_44100_128`,
+                {
+                  method: "POST",
+                  headers: {
+                    "xi-api-key": elevenKey,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify(requestBody),
+                },
+              );
+            } catch (error) {
+              providerCallAmbiguous = true;
+              throw error;
+            }
+            if (!response.ok) {
+              providerCallAmbiguous = false;
+              const providerDetail = (await response.text()).slice(0, 500);
+              console.error("voice.dubbing provider failure", {
+                requestId,
+                status: response.status,
+                detail: providerDetail,
+              });
+              throw new Error("elevenlabs_generation_failed");
+            }
+            providerCallAmbiguous = true;
+            const audioBuffer = await response.arrayBuffer();
+            billedCharacters += chunk.length;
+            providerCallAmbiguous = false;
+            const providerRequestId = response.headers.get("request-id");
+            if (providerRequestId) requestIds.push(providerRequestId);
+            audioChunks.push(new Uint8Array(audioBuffer));
+          }
+
+          uploadedPath = `${userId}/${
+            new Date().toISOString().slice(0, 7)
+          }/${crypto.randomUUID()}-${fileName}`;
+          const combinedAudio = concatenateAudio(audioChunks);
+          const { error: uploadError } = await admin.storage
+            .from(VOICE_DUBBING_BUCKET)
+            .upload(uploadedPath, combinedAudio, {
+              contentType: "audio/mpeg",
+              cacheControl: "3600",
+              upsert: false,
+            });
+          if (uploadError) {
+            throw new Error(`Audio upload failed: ${uploadError.message}`);
+          }
+
+          const { data: signed, error: signedError } = await admin.storage
+            .from(VOICE_DUBBING_BUCKET)
+            .createSignedUrl(uploadedPath, 3600);
+          if (signedError || !signed?.signedUrl) {
+            throw new Error(
+              `Audio signing failed: ${signedError?.message ?? "no URL"}`,
+            );
+          }
+          const storedResult = {
+            success: true,
+            storage_path: uploadedPath,
+            file_name: fileName,
+            content_type: "audio/mpeg",
+            character_count: text.length,
+            chunk_count: chunks.length,
+            model_id: model.id,
+            language,
+          };
+          const { data: finishData, error: finishError } = await admin.rpc(
+            "finish_voice_dubbing_job",
+            {
+              p_user_id: userId,
+              p_request_id: requestId,
+              p_status: "completed",
+              p_billed_characters: billedCharacters,
+              p_result: storedResult,
+              p_error_code: null,
+            },
+          );
+          const finish = asRecord(finishData);
+          if (finishError || asString(finish?.status) !== "completed") {
+            const { data: persistedJob, error: persistedJobError } = await admin
+              .from("voice_dubbing_jobs")
+              .select("status,result")
+              .eq("user_id", userId)
+              .eq("request_id", requestId)
+              .maybeSingle();
+            const persisted = asRecord(persistedJob);
+            const persistedResult = asRecord(persisted?.result);
+            const completionPersisted =
+              asString(persisted?.status) === "completed" &&
+              asString(persistedResult?.storage_path) === uploadedPath;
+            if (!completionPersisted) {
+              if (finishError || persistedJobError) {
+                completionUncertain = true;
+              }
+              throw new Error("voice_job_completion_failed");
+            }
+          }
+          return json({
+            ...storedResult,
+            audio_url: signed.signedUrl,
+            expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+            usage,
+          });
+        } catch (error) {
+          const errorId = crypto.randomUUID();
+          if (completionUncertain) {
+            console.error("voice.dubbing completion state uncertain", {
+              errorId,
+              requestId,
+              billedCharacters,
+              uploadedPath,
+              detail: String(error).slice(0, 700),
+            });
+            return json({
+              error: "voice_completion_pending",
+              error_id: errorId,
+              billed_characters: billedCharacters,
+            }, 503);
+          }
+          const accountedCharacters = providerCallAmbiguous
+            ? Math.max(billedCharacters, startedCharacters)
+            : billedCharacters;
+          const { data: failureFinishData, error: finishError } = await admin
+            .rpc(
+              "finish_voice_dubbing_job",
+              {
+                p_user_id: userId,
+                p_request_id: requestId,
+                p_status: "failed",
+                p_billed_characters: accountedCharacters,
+                p_result: null,
+                p_error_code: "voice_generation_failed",
+              },
+            );
+          const failureFinish = asRecord(failureFinishData);
+          const failureStatus = asString(failureFinish?.status);
+          const finalizedAsFailure = failureStatus === "failed" ||
+            failureStatus === "expired";
+          if (finishError || !finalizedAsFailure) {
+            console.error("voice.dubbing failure state uncertain", {
+              errorId,
+              requestId,
+              failureStatus,
+              uploadedPath,
+              detail: String(error).slice(0, 700),
+              reconciliationError: finishError?.message.slice(0, 500),
+            });
+            return json({
+              error: finishError || failureStatus === "completed"
+                ? "voice_completion_pending"
+                : "voice_quota_reconciliation_required",
+              error_id: errorId,
+              billed_characters: accountedCharacters,
+            }, 503);
+          }
+          if (uploadedPath) {
+            const { error: removeError } = await admin.storage
+              .from(VOICE_DUBBING_BUCKET).remove([
+                uploadedPath,
+              ]);
+            if (removeError) {
+              console.error("voice.dubbing cleanup failed", {
+                requestId,
+                detail: removeError.message.slice(0, 500),
+              });
+            }
+          }
+          console.error("voice.dubbing generation failed", {
+            errorId,
+            requestId,
+            billedCharacters,
+            startedCharacters,
+            accountedCharacters,
+            providerCallAmbiguous,
+            detail: String(error).slice(0, 700),
+            reconciliationError: finishError?.message.slice(0, 500),
+          });
+          return json({
+            error: "voice_generation_failed",
+            error_id: errorId,
+            billed_characters: accountedCharacters,
+          }, 502);
+        }
       }
 
       case "voice.stt": {
@@ -8138,6 +8774,9 @@ serve(async (req: Request) => {
     }
     if (err instanceof MarketPriceActionError) {
       return json({ error: err.message }, err.status);
+    }
+    if (err instanceof WriterKnowledgeGraphError) {
+      return json({ error: err.message, code: err.code }, err.status);
     }
     const message = err instanceof Error ? err.message : String(err);
     return json({ error: message }, 500);

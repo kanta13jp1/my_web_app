@@ -3,8 +3,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../widgets/home_back_button.dart';
 
+typedef CompetitorBrowseLoader = Future<List<Map<String, dynamic>>> Function();
+
 class CompetitorBrowsePage extends StatefulWidget {
-  const CompetitorBrowsePage({super.key});
+  final CompetitorBrowseLoader? loader;
+
+  const CompetitorBrowsePage({super.key, this.loader});
 
   @override
   State<CompetitorBrowsePage> createState() => _CompetitorBrowsePageState();
@@ -13,6 +17,7 @@ class CompetitorBrowsePage extends StatefulWidget {
 class _CompetitorBrowsePageState extends State<CompetitorBrowsePage> {
   List<Map<String, dynamic>> _competitors = [];
   bool _loading = true;
+  bool _loadFailed = false;
 
   String? _selectedPricingTier;
   String? _selectedJapanPresence;
@@ -25,26 +30,41 @@ class _CompetitorBrowsePageState extends State<CompetitorBrowsePage> {
   }
 
   Future<void> _load() async {
+    if (!_loading || _loadFailed) {
+      setState(() {
+        _loading = true;
+        _loadFailed = false;
+      });
+    }
     try {
-      final rows = await Supabase.instance.client
-          .from('competitors')
-          .select(
-            'id, display_name, emoji, category, pricing_tier, pricing_start_usd, '
-            'japan_presence_level, our_overlap_score, threat_level',
-          )
-          .eq('is_active', true)
-          .order('our_overlap_score', ascending: false);
+      final rows = await (widget.loader?.call() ?? _fetchCompetitors());
       if (mounted) {
         setState(() {
-          _competitors = List<Map<String, dynamic>>.from(rows as List);
+          _competitors = rows;
           _loading = false;
+          _loadFailed = false;
         });
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _loading = false);
+        setState(() {
+          _loading = false;
+          _loadFailed = true;
+        });
       }
     }
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchCompetitors() async {
+    final rows = await Supabase.instance.client
+        .from('competitors')
+        .select(
+          'id, display_name, emoji, category, pricing_tier, pricing_start_usd, '
+          'japan_presence_level, our_overlap_score, threat_level',
+        )
+        .eq('is_active', true)
+        .order('our_overlap_score', ascending: false);
+    return List<Map<String, dynamic>>.from(rows as List);
   }
 
   List<Map<String, dynamic>> get _filtered {
@@ -115,33 +135,57 @@ class _CompetitorBrowsePageState extends State<CompetitorBrowsePage> {
           Expanded(
             child: _loading
                 ? const Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFFFF6B35),
-                    ),
+                    child: CircularProgressIndicator(color: Color(0xFFFF6B35)),
                   )
-                : filtered.isEmpty
-                    ? const Center(
-                        child: Text(
-                          '該当する競合がありません',
-                          style: TextStyle(
-                            color: Color(0xFF94A3B8),
-                            height: 1.6,
+                : _loadFailed
+                    ? Center(
+                        child: Semantics(
+                          liveRegion: true,
+                          label: '競合情報の読み込みに失敗しました',
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                '競合情報を読み込めませんでした',
+                                style: TextStyle(
+                                  color: Color(0xFFCBD5E1),
+                                  height: 1.6,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              OutlinedButton.icon(
+                                key: const Key('competitor-browse-retry'),
+                                onPressed: _load,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('再読み込み'),
+                              ),
+                            ],
                           ),
                         ),
                       )
-                    : GridView.builder(
-                        padding: const EdgeInsets.all(12),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: crossCount,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                          childAspectRatio: 1.0,
-                        ),
-                        itemCount: filtered.length,
-                        itemBuilder: (context, i) => _CompetitorCard(
-                          data: filtered[i],
-                        ),
-                      ),
+                    : filtered.isEmpty
+                        ? const Center(
+                            child: Text(
+                              '該当する競合がありません',
+                              style: TextStyle(
+                                color: Color(0xFF94A3B8),
+                                height: 1.6,
+                              ),
+                            ),
+                          )
+                        : GridView.builder(
+                            padding: const EdgeInsets.all(12),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossCount,
+                              crossAxisSpacing: 10,
+                              mainAxisSpacing: 10,
+                              childAspectRatio: 1.0,
+                            ),
+                            itemCount: filtered.length,
+                            itemBuilder: (context, i) =>
+                                _CompetitorCard(data: filtered[i]),
+                          ),
           ),
         ],
       ),
@@ -348,9 +392,7 @@ class _CompetitorCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFF1E1B2E),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: threatColor.withValues(alpha: 0.25),
-          ),
+          border: Border.all(color: threatColor.withValues(alpha: 0.25)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,9 +474,7 @@ class _FilterChip extends StatelessWidget {
               ? color.withValues(alpha: 0.18)
               : const Color(0xFF2A2744),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? color : const Color(0xFF374151),
-          ),
+          border: Border.all(color: selected ? color : const Color(0xFF374151)),
         ),
         child: Text(
           label,
@@ -548,11 +588,7 @@ class _JapanPresenceBadge extends StatelessWidget {
       ),
       child: Text(
         '$emoji $label',
-        style: TextStyle(
-          color: color,
-          fontSize: 9,
-          height: 1.4,
-        ),
+        style: TextStyle(color: color, fontSize: 9, height: 1.4),
       ),
     );
   }

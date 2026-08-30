@@ -89,6 +89,45 @@ class CicdEfficiencyTest(unittest.TestCase):
         self.assertIn("if: steps.changes.outputs.caption == 'true'", workflow)
         self.assertIn("steps.changes.outputs.web == 'true'", workflow)
 
+    def test_cloud_first_manual_gate_is_available(self) -> None:
+        workflow = self.read(".github/workflows/ci.yml")
+        self.assertIn("  workflow_dispatch:\n", workflow)
+        self.assertIn(
+            "github.event_name == 'pull_request' || "
+            "github.event_name == 'workflow_dispatch'",
+            workflow,
+        )
+        self.assertIn("python scripts/cloud_first_route_test.py", workflow)
+
+        guide = self.read("docs/CLOUD_FIRST_DEVELOPMENT.md")
+        self.assertIn("gh workflow run ci.yml --ref", guide)
+        self.assertIn("30 GiB", guide)
+        self.assertIn("4 GiB", guide)
+
+    def test_required_ci_checks_are_emitted_for_docs_only_prs(self) -> None:
+        workflow = self.read(".github/workflows/ci.yml")
+        pull_request = workflow.split("  pull_request:", 1)[1].split(
+            "  push:", 1
+        )[0]
+        push = workflow.split("  push:", 1)[1].split("  workflow_call:", 1)[0]
+        lint_job = workflow.split("  lint-and-test:", 1)[1].split(
+            "  security-check:", 1
+        )[0]
+        security_job = workflow.split("  security-check:", 1)[1].split(
+            "  pr-comment:", 1
+        )[0]
+
+        self.assertNotIn("paths-ignore:", pull_request)
+        self.assertIn("paths-ignore:", push)
+        self.assertIn("  workflow_call:", workflow)
+        self.assertIn(
+            "FORCE_ALL: ${{ github.event_name != 'pull_request' }}", workflow
+        )
+        self.assertIn("name: Lint, Format, and Test", workflow)
+        self.assertIn("name: Security Check", workflow)
+        self.assertNotIn("\n    if:", lint_job)
+        self.assertNotIn("\n    if:", security_job)
+
 
 if __name__ == "__main__":
     unittest.main()

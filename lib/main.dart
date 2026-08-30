@@ -55,6 +55,7 @@ import 'package:my_web_app/pages/public_memo_directory_page.dart';
 import 'package:my_web_app/pages/ai_university_ranking_page.dart';
 import 'package:my_web_app/pages/ai_university_video_page.dart';
 import 'package:my_web_app/pages/ai_university_voice_page.dart';
+import 'package:my_web_app/pages/content_dubbing_page.dart';
 import 'package:my_web_app/pages/reality_check_page.dart';
 import 'package:my_web_app/pages/comparison_page.dart';
 import 'package:my_web_app/pages/competitor_browse_page.dart';
@@ -65,6 +66,7 @@ import 'package:my_web_app/pages/privacy_policy_page.dart';
 import 'package:my_web_app/pages/ai_dev_principles_page.dart';
 import 'package:my_web_app/pages/feature_requests_page.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
+import 'package:my_web_app/pages/account_deletion_page.dart';
 import 'package:my_web_app/pages/public_profile_page.dart';
 import 'package:my_web_app/pages/blog_page.dart';
 import 'package:my_web_app/pages/blog_compose_page.dart';
@@ -137,6 +139,7 @@ import 'package:my_web_app/pages/health_page.dart';
 import 'package:my_web_app/pages/medical_notes_page.dart';
 import 'package:my_web_app/pages/mental_check_page.dart';
 import 'package:my_web_app/pages/settings_page.dart';
+import 'package:my_web_app/pages/ai_form_assistant_page.dart';
 import 'package:my_web_app/pages/theme_selector_page.dart';
 import 'package:my_web_app/pages/ai_university_faculty_select_page.dart';
 import 'package:my_web_app/pages/ai_university_department_select_page.dart';
@@ -170,6 +173,7 @@ import 'package:my_web_app/pages/donation_crowdfunding_page.dart';
 import 'package:my_web_app/pages/emergency_contacts_page.dart';
 import 'package:my_web_app/pages/knowledge_base_page.dart';
 import 'package:my_web_app/pages/knowledge_graph_page.dart';
+import 'package:my_web_app/pages/user_knowledge_graph_page.dart';
 import 'package:my_web_app/pages/market_intelligence_page.dart';
 import 'package:my_web_app/pages/meeting_manager_page.dart';
 import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
@@ -222,6 +226,9 @@ import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
 import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
 import 'package:my_web_app/ui/features/notion_migration/notion_migration_feature.dart';
+import 'package:my_web_app/ui/features/procrastination_reset/procrastination_reset_feature.dart';
+import 'package:my_web_app/ui/features/proactive_form_check/proactive_form_check_feature.dart';
+import 'package:my_web_app/ui/features/custom_task_list/custom_task_list_feature.dart';
 import 'package:my_web_app/pages/youtube_stats_page.dart';
 import 'package:my_web_app/pages/audio_effects_processor_page.dart';
 import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
@@ -250,6 +257,7 @@ import 'package:my_web_app/pages/language_learning_page.dart';
 import 'package:my_web_app/pages/focus_capture_game_page.dart';
 import 'package:my_web_app/pages/code_playground_page.dart';
 import 'package:my_web_app/pages/real_estate_tracker_page.dart';
+import 'package:my_web_app/ui/features/local_business_map/local_business_map_feature.dart';
 import 'package:my_web_app/pages/spreadsheet_database_page.dart';
 import 'package:my_web_app/pages/changelog_manager_page.dart';
 import 'package:my_web_app/pages/release_notes_page.dart';
@@ -314,7 +322,6 @@ import 'package:my_web_app/pages/habit_tracker_page.dart';
 import 'package:my_web_app/pages/agent_department_manager_page.dart';
 import 'package:my_web_app/pages/agent_performance_monitor_page.dart';
 import 'package:my_web_app/pages/ai_share_button_settings_page.dart';
-import 'package:my_web_app/pages/app_analytics_dashboard_page.dart';
 import 'package:my_web_app/pages/cfo_cost_ledger_page.dart';
 import 'package:my_web_app/pages/compatibility_result_page.dart';
 import 'package:my_web_app/pages/leave_management_page.dart';
@@ -589,6 +596,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const AiUniversityVoicePage(),
       );
+    case '/content-dubbing':
+      return MaterialPageRoute(
+        builder: (_) => const ContentDubbingPage(),
+        settings: settings,
+      );
     case '/ai-university-video':
       final args = settings.arguments as Map<String, dynamic>?;
       return MaterialPageRoute(
@@ -818,6 +830,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const ProfileSettingsPage(),
       );
+    case '/account-deletion':
+      return MaterialPageRoute(
+        builder: (_) => const AccountDeletionPage(),
+        settings: const RouteSettings(name: '/account-deletion'),
+      );
     case '/u':
       final userId = uri.queryParameters['id'] ?? '';
       if (userId.isEmpty) {
@@ -1029,6 +1046,14 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const EmbeddingLabPage());
     case '/settings':
       return MaterialPageRoute(builder: (_) => const SettingsPage());
+    case '/settings/ai-form-assistant':
+      return MaterialPageRoute(
+        builder: (_) => supabase.auth.currentSession == null
+            ? LandingPage(
+                signupCompletionService: signupCompletionService,
+              )
+            : const AiFormAssistantPage(),
+      );
     case '/settings/theme':
       return MaterialPageRoute(builder: (_) => const ThemeSelectorPage());
     case '/health':
@@ -1516,6 +1541,10 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const RealEstateTrackerPage(),
       );
+    case '/local-business-map':
+      return MaterialPageRoute(
+        builder: (_) => const LocalBusinessMapFeature(),
+      );
     case '/home-iot':
       return MaterialPageRoute(
         builder: (_) => const HomeIotManagerPage(),
@@ -1553,6 +1582,20 @@ Route<dynamic> generateAppRoute(
     case '/personal-dashboard':
       return MaterialPageRoute(
         builder: (_) => const PersonalDashboardPage(),
+      );
+    case '/procrastination-reset':
+      return MaterialPageRoute(
+        builder: (_) => const ProcrastinationResetFeature(),
+        settings: const RouteSettings(
+          name: ProcrastinationResetFeature.routeName,
+        ),
+      );
+    case '/proactive-form-check':
+      return MaterialPageRoute(
+        builder: (_) => const ProactiveFormCheckFeature(),
+        settings: const RouteSettings(
+          name: ProactiveFormCheckFeature.routeName,
+        ),
       );
     case '/my-skills':
       return MaterialPageRoute(builder: (_) => const MySkillsPage());
@@ -1655,6 +1698,11 @@ Route<dynamic> generateAppRoute(
       );
     case '/brain-dump':
       return MaterialPageRoute(builder: (_) => const BrainDumpPage());
+    case '/custom-task-list':
+      return MaterialPageRoute(
+        settings: const RouteSettings(name: '/custom-task-list'),
+        builder: (_) => const CustomTaskListPage(),
+      );
     case '/project-gantt':
       return MaterialPageRoute(builder: (_) => const ProjectGanttPage());
     case '/user-tasks':
@@ -1764,7 +1812,14 @@ Route<dynamic> generateAppRoute(
       );
     case '/app-analytics-dashboard':
       return MaterialPageRoute(
-        builder: (_) => const AppAnalyticsDashboardPage(),
+        settings: const RouteSettings(name: '/'),
+        builder: (_) => supabase.auth.currentSession != null
+            ? _AuthenticatedHomePage(
+                signupCompletionService: signupCompletionService,
+              )
+            : LandingPage(
+                signupCompletionService: signupCompletionService,
+              ),
       );
     case '/deployment-monitoring':
       return MaterialPageRoute(
@@ -1798,6 +1853,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const KnowledgeGraphPage(),
         settings: const RouteSettings(name: '/knowledge-graph'),
+      );
+    case '/my-knowledge-graph':
+      return MaterialPageRoute(
+        builder: (_) => const UserKnowledgeGraphPage(),
+        settings: const RouteSettings(name: '/my-knowledge-graph'),
       );
     case '/settings/ai-share-button':
       return MaterialPageRoute(

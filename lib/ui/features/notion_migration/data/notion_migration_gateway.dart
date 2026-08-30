@@ -28,6 +28,11 @@ abstract class NotionMigrationGateway {
   Future<NotionWbsReconciliation> reconcileWbs(String batchId);
 
   Future<NotionWbsStageSummary> stageWbs(String batchId);
+
+  Future<NotionVaultManifestStageSummary> stageVaultManifest({
+    required String batchId,
+    required NotionVaultManifestPreview manifest,
+  });
 }
 
 class SupabaseNotionMigrationGateway implements NotionMigrationGateway {
@@ -93,6 +98,12 @@ class SupabaseNotionMigrationGateway implements NotionMigrationGateway {
           .select()
           .eq('batch_id', batch.id)
           .limit(1),
+      _client
+          .from('notion_migration_vault_manifests')
+          .select()
+          .eq('batch_id', batch.id)
+          .order('created_at', ascending: false)
+          .limit(1),
     ]);
 
     final progressRows = results[0];
@@ -101,6 +112,7 @@ class SupabaseNotionMigrationGateway implements NotionMigrationGateway {
     final dataSourceRows = results[3];
     final capabilityRows = results[4];
     final stageRows = results[5];
+    final vaultManifestRows = results[6];
     final checksByItem = <String, int>{};
     for (final check in checkRows) {
       final itemId = check['item_id']?.toString();
@@ -141,6 +153,9 @@ class SupabaseNotionMigrationGateway implements NotionMigrationGateway {
       wbsStageSummary: stageRows.isEmpty
           ? null
           : NotionWbsStageSummary.fromJson(stageRows.first),
+      vaultManifestSummary: vaultManifestRows.isEmpty
+          ? null
+          : NotionVaultManifestStageSummary.fromJson(vaultManifestRows.first),
     );
   }
 
@@ -185,6 +200,105 @@ class SupabaseNotionMigrationGateway implements NotionMigrationGateway {
     return NotionWbsStageSummary.fromJson(data);
   }
 
+  @override
+  Future<NotionVaultManifestStageSummary> stageVaultManifest({
+    required String batchId,
+    required NotionVaultManifestPreview manifest,
+  }) async {
+    final userId = _userId;
+    String? manifestId;
+    try {
+      final manifestRow = await _client
+          .from('notion_migration_vault_manifests')
+          .upsert(
+            {
+              'batch_id': batchId,
+              'user_id': userId,
+              'schema_version': manifest.schemaVersion,
+              'vault_name': manifest.vaultName,
+              'source_file_name': manifest.sourceFileName,
+              'source_manifest_sha256': manifest.sourceManifestSha256,
+              'file_count': manifest.fileCount,
+              'auto_stage_count': manifest.autoStageCount,
+              'review_required_count': manifest.reviewRequiredCount,
+              'excluded_count': manifest.excludedCount,
+              'credential_candidate_count': manifest.credentialCandidateCount,
+              'unresolved_wikilink_occurrences':
+                  manifest.unresolvedWikilinkOccurrences,
+              'status': 'staging',
+              'staged_entry_count': 0,
+              'staged_at': null,
+              'last_error': null,
+            },
+            onConflict: 'batch_id,source_manifest_sha256',
+          )
+          .select()
+          .single();
+      manifestId = manifestRow['id']?.toString();
+      if (manifestId == null || manifestId.isEmpty) {
+        throw const NotionMigrationException('vault_manifest_id_missing');
+      }
+
+      const chunkSize = 100;
+      for (var start = 0; start < manifest.entries.length; start += chunkSize) {
+        final end = (start + chunkSize).clamp(0, manifest.entries.length);
+        final rows = manifest.entries.sublist(start, end).map((entry) {
+          return <String, dynamic>{
+            'manifest_id': manifestId,
+            'batch_id': batchId,
+            'user_id': userId,
+            'relative_path': entry.relativePath,
+            'category': entry.category,
+            'migration_action': entry.migrationAction,
+            'size_bytes': entry.sizeBytes,
+            'source_hash': entry.sourceHash,
+            'structure_metadata': entry.structureMetadata,
+          };
+        }).toList(growable: false);
+        await _client
+            .from('notion_migration_vault_entries')
+            .upsert(rows, onConflict: 'manifest_id,relative_path');
+      }
+
+      final stagedAt = DateTime.now().toUtc().toIso8601String();
+      final stagedRow = await _client
+          .from('notion_migration_vault_manifests')
+          .update({
+            'status': 'staged',
+            'staged_entry_count': manifest.entries.length,
+            'staged_at': stagedAt,
+            'last_error': null,
+          })
+          .eq('id', manifestId)
+          .eq('user_id', userId)
+          .select()
+          .single();
+      return NotionVaultManifestStageSummary.fromJson(stagedRow);
+    } catch (error) {
+      if (manifestId != null) {
+        try {
+          final detail = error.toString();
+          await _client
+              .from('notion_migration_vault_manifests')
+              .update({
+                'status': 'failed',
+                'last_error':
+                    detail.length <= 2000 ? detail : detail.substring(0, 2000),
+              })
+              .eq('id', manifestId)
+              .eq('user_id', userId);
+        } catch (_) {
+          // Preserve the original staging error.
+        }
+      }
+      if (error is NotionMigrationException) rethrow;
+      throw NotionMigrationException(
+        'vault_manifest_stage_failed',
+        error.toString(),
+      );
+    }
+  }
+
   Future<NotionInventoryActionResult> _runInventoryAction(
     String action,
     String batchId,
@@ -193,10 +307,7 @@ class SupabaseNotionMigrationGateway implements NotionMigrationGateway {
     return NotionInventoryActionResult.fromJson(data);
   }
 
-  Future<Map<String, dynamic>> _runAction(
-    String action,
-    String batchId,
-  ) async {
+  Future<Map<String, dynamic>> _runAction(String action, String batchId) async {
     _userId;
     try {
       final response = await _client.functions.invoke(
