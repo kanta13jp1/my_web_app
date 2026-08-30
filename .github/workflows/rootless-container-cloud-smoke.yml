@@ -129,7 +129,6 @@ jobs:
           sudo systemctl disable --now docker.service docker.socket
           sudo rm -f /var/run/docker.sock
           command -v dockerd-rootless.sh
-          unshare --user --map-root-user true
           docker --version
 
       - name: Install Supabase CLI
