@@ -100,9 +100,12 @@ create index video_improvement_authorizations_initial_review_idx
 create index video_generation_jobs_authorization_idx
   on public.video_generation_jobs (authorization_id, created_at desc)
   where authorization_id is not null;
+-- Historical manual retries can share applied_review_id. Preserve that immutable
+-- lineage and enforce exactly-once consumption for authorization-backed jobs.
 create unique index video_generation_jobs_applied_review_uidx
   on public.video_generation_jobs (user_id, applied_review_id)
-  where applied_review_id is not null;
+  where applied_review_id is not null
+    and authorization_id is not null;
 
 alter table public.video_improvement_authorizations enable row level security;
 
