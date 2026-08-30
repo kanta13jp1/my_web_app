@@ -7,6 +7,7 @@ import 'package:xml/xml.dart';
 import 'package:xml/xml_events.dart';
 
 import 'evernote_enml_markdown_converter.dart';
+import 'evernote_recognition_parser.dart';
 
 /// A loss-preserving representation of one Evernote ENEX export.
 ///
@@ -126,6 +127,7 @@ class EvernoteEnexResource {
     this.height,
     this.duration,
     this.recognitionXml,
+    this.recognition,
     this.alternateData,
   });
 
@@ -138,6 +140,7 @@ class EvernoteEnexResource {
   final int? height;
   final int? duration;
   final String? recognitionXml;
+  final EvernoteRecognitionIndex? recognition;
   final String? alternateData;
   final Map<String, dynamic> attributes;
   final String rawXml;
@@ -152,6 +155,7 @@ class EvernoteEnexResource {
         'height': height,
         'duration': duration,
         'recognition_xml': recognitionXml,
+        'recognition': recognition?.toManifestJson(),
         'alternate_data': alternateData,
         'attributes': attributes,
         'raw_resource_xml': rawXml,
@@ -421,7 +425,24 @@ class EvernoteEnexParser {
     final attributes = attributesElement == null
         ? const <String, dynamic>{}
         : _parseAttributes(attributesElement);
-    final recognition = _firstChild(resource, 'recognition');
+    final recognitionElement = _firstChild(resource, 'recognition');
+    final recognitionXml = recognitionElement == null
+        ? null
+        : recognitionElement.children.whereType<XmlCDATA>().isNotEmpty
+            ? recognitionElement.innerText
+            : _innerXml(recognitionElement);
+    EvernoteRecognitionIndex? recognition;
+    if (recognitionXml != null && recognitionXml.trim().isNotEmpty) {
+      try {
+        recognition =
+            const EvernoteRecognitionParser().parse(recognitionXml);
+      } on FormatException {
+        warnings.add(
+          'A resource contains invalid Evernote recognition data; '
+          'raw XML retained for cloud OCR fallback.',
+        );
+      }
+    }
     final alternateData = _firstChild(resource, 'alternate-data');
 
     return EvernoteEnexResource(
@@ -433,7 +454,8 @@ class EvernoteEnexParser {
       width: int.tryParse(_childText(resource, 'width').trim()),
       height: int.tryParse(_childText(resource, 'height').trim()),
       duration: int.tryParse(_childText(resource, 'duration').trim()),
-      recognitionXml: recognition == null ? null : _innerXml(recognition),
+      recognitionXml: recognitionXml,
+      recognition: recognition,
       alternateData: alternateData?.innerText,
       attributes: Map<String, dynamic>.unmodifiable(attributes),
       rawXml: resource.toXmlString(pretty: false),
