@@ -39,7 +39,7 @@ Content-Type: application/json
 Accept: application/json
 ```
 
-1. `prompt` 1件でrequestし、2xx、output URL、request ID、所要時間を確認する。
+1. `prompt`を1件requestとして送信し、2xx、output URL、request ID、所要時間を確認する。
 2. 2〜3件の小さな配列をqueueし、**組織単位の既定4 RPM**を超えないよう逐次実行する。
 3. 非2xxをstatus別に扱う。401はtokenを1回更新、429は`Retry-After`または指数backoff、その他4xxは入力修正、5xxは上限付き再試行後に失敗とする。
 4. structured logには`event`、`status`、`request_id`、`attempt`、`elapsed_ms`、`retry_after`、`budget_remaining`だけを残す。secret、token、prompt、画像URL、個人情報は記録しない。
