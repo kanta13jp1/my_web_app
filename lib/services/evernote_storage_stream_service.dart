@@ -22,7 +22,9 @@ class EvernoteStorageStreamService {
         pathSegments.any(
           (segment) => segment.isEmpty || segment == '.' || segment == '..',
         )) {
-      throw ArgumentError('A safe Storage bucket and object path are required.');
+      throw ArgumentError(
+        'A safe Storage bucket and object path are required.',
+      );
     }
     final authorization = headers.entries
         .where((entry) => entry.key.toLowerCase() == 'authorization')
@@ -79,4 +81,3 @@ extension<T> on Iterable<T> {
     return iterator.moveNext() ? iterator.current : null;
   }
 }
-
