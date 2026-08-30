@@ -1,6 +1,9 @@
 -- Machine-checkable, balance-only authorization envelopes for recurring
 -- first-party video improvements. Creating an envelope and reserving its
 -- first generation is atomic so an approval cannot be stranded unused.
+-- nocheck: time-relative -- this migration updates only video_* tables; the
+-- CI detector otherwise treats schema-qualified UPDATE public.video_* as an
+-- UPDATE of the unrelated table named public.
 
 create table public.video_improvement_authorizations (
   id uuid primary key default gen_random_uuid(),
