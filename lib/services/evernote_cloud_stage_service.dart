@@ -56,6 +56,9 @@ class EvernoteCloudStageResult {
 
 /// Sends a selected ENEX stream to private Storage before parsing it.
 ///
+/// When [historyRevision] is true, exactly one note is accepted and the
+/// content-addressed archive is isolated under the Evernote history namespace.
+///
 /// The browser keeps at most the file picker's current chunk, a one-megabyte
 /// fingerprint prefix, and one parsed note subtree in memory. The original
 /// file name is not included in the resumable staging object path.
@@ -83,6 +86,7 @@ class EvernoteCloudStageService {
     required String fileName,
     required Stream<List<int>> source,
     required int totalBytes,
+    bool historyRevision = false,
     EvernoteCloudStageProgressCallback? onProgress,
   }) async {
     final ownerId = _validatedOwnerId(userId);
@@ -113,7 +117,9 @@ class EvernoteCloudStageService {
         .convert(utf8.encode(displayFileName))
         .toString()
         .substring(0, 32);
-    final stagingPath = '$ownerId/evernote/incoming/'
+    final stagingNamespace =
+        historyRevision ? 'evernote-history/incoming' : 'evernote/incoming';
+    final stagingPath = '$ownerId/$stagingNamespace/'
         'v2-$totalBytes-${prepared.prefixSha256}-$fileNameHash.enex';
 
     ImportPreviewResult preview;
@@ -224,7 +230,15 @@ class EvernoteCloudStageService {
           'this staging fingerprint.',
         );
       }
-      final archivePath = '$ownerId/evernote/$exportSha256/source.enex';
+      if (historyRevision && preview.notes.length != 1) {
+        throw StateError(
+          'Export exactly one Evernote history revision per ENEX file.',
+        );
+      }
+      final archiveNamespace =
+          historyRevision ? 'evernote-history' : 'evernote';
+      final archivePath =
+          '$ownerId/$archiveNamespace/$exportSha256/source.enex';
 
       onProgress?.call(
         EvernoteCloudStageProgress(

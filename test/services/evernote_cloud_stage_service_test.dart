@@ -98,6 +98,55 @@ void main() {
     },
   );
 
+  test('isolates a single history revision in its own archive namespace',
+      () async {
+    final bytes = Uint8List.fromList(utf8.encode(_fixture));
+
+    final result = await service.stage(
+      userId: 'owner-1',
+      fileName: 'history-version.enex',
+      source: _chunked(bytes, 9),
+      totalBytes: bytes.length,
+      historyRevision: true,
+    );
+
+    final exportHash = sha256.convert(bytes).toString();
+    expect(
+      result.stagingPath,
+      startsWith('owner-1/evernote-history/incoming/'),
+    );
+    expect(
+      result.archivePath,
+      'owner-1/evernote-history/$exportHash/source.enex',
+    );
+    expect(result.preview.notes, hasLength(1));
+  });
+
+  test('rejects a history ENEX containing multiple revisions', () async {
+    final multiNoteFixture = _fixture.replaceFirst(
+      '</en-export>',
+      '$_secondHistoryNote\n</en-export>',
+    );
+    final bytes = Uint8List.fromList(utf8.encode(multiNoteFixture));
+
+    await expectLater(
+      service.stage(
+        userId: 'owner-1',
+        fileName: 'history-version.enex',
+        source: _chunked(bytes, 9),
+        totalBytes: bytes.length,
+        historyRevision: true,
+      ),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          contains('exactly one'),
+        ),
+      ),
+    );
+  });
+
   test('rejects same-prefix same-size staging collisions', () async {
     final firstBytes = Uint8List.fromList(utf8.encode(_largeFixture('A')));
     final secondBytes = Uint8List.fromList(utf8.encode(_largeFixture('B')));
@@ -290,6 +339,15 @@ const String _fixture = '''
     </resource>
   </note>
 </en-export>
+''';
+
+const String _secondHistoryNote = '''
+  <note>
+    <title>Second history revision</title>
+    <content><![CDATA[<en-note><div>Older body</div></en-note>]]></content>
+    <created>20260829T110000Z</created>
+    <updated>20260829T113000Z</updated>
+  </note>
 ''';
 
 String _largeFixture(String suffix) {

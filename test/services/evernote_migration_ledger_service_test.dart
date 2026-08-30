@@ -117,6 +117,35 @@ void main() {
       );
       expect(captured.headers['authorization'], 'Bearer user-a-jwt');
     });
+
+    test('loads owner-scoped note-history inventory and target titles',
+        () async {
+      late http.Request captured;
+      final service = _service((request) async {
+        captured = request;
+        return http.Response(
+          jsonEncode(<Map<String, dynamic>>[_itemJson()]),
+          200,
+          headers: const {'content-type': 'application/json'},
+          request: request,
+        );
+      });
+
+      final items = await service.loadItems(userId: ' user-a ');
+
+      expect(items, hasLength(1));
+      expect(items.single.id, 19);
+      expect(items.single.batchId, 7);
+      expect(items.single.displayTitle, 'Imported note');
+      expect(items.single.sourceHistoryVersionCount, 3);
+      expect(items.single.verifiedHistoryVersionCount, 2);
+      expect(items.single.historyDeletionGatePassed, isFalse);
+      expect(captured.url.queryParameters['user_id'], 'eq.user-a');
+      expect(
+        captured.url.queryParameters['select'],
+        contains('evernote_migration_items_target_note_fkey'),
+      );
+    });
   });
 }
 
@@ -169,6 +198,22 @@ Map<String, dynamic> _batchJson() {
     'source_deleted_note_count': 0,
     'created_at': '2026-08-23T00:00:00Z',
     'updated_at': '2026-08-23T00:00:00Z',
+  };
+}
+
+Map<String, dynamic> _itemJson() {
+  return <String, dynamic>{
+    'id': 19,
+    'batch_id': 7,
+    'source_item_key': 'id:note-guid-1',
+    'source_note_id': 'note-guid-1',
+    'target_note_id': 7001,
+    'status': 'verified',
+    'history_status': 'importing',
+    'source_history_version_count': 3,
+    'imported_history_version_count': 2,
+    'verified_history_version_count': 2,
+    'notes': <String, dynamic>{'title': 'Imported note'},
   };
 }
 
