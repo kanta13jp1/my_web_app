@@ -18,7 +18,8 @@ void main() {
     test('joins acquisition to D1, D7, D30, and paid outcomes', () {
       expect(sql, contains("event.stage = 'signup_complete'"));
       for (final day in <int>[1, 7, 30]) {
-        expect(sql, contains("interval '$day day'"));
+        final unit = day == 1 ? 'day' : 'days';
+        expect(sql, contains("interval '$day $unit'"));
         expect(sql, contains("'d${day}eligibleusers'"));
         expect(sql, contains("'d${day}retainedusers'"));
       }
