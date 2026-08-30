@@ -1416,6 +1416,7 @@ class AssetLiabilityPlanningService {
           .putIfAbsent((
             day,
             row.requiresAction,
+            // ignore: require_trailing_commas
           ), () => <AssetLiabilityDebtRow>[])
           .add(row);
     }
@@ -2114,6 +2115,7 @@ class AssetLiabilityPlanningService {
         sourceAccountId: cost.sourceAccountId,
         isSubscription:
             cost.category == AssetRecurringFixedCostCategory.subscription,
+        // ignore: require_trailing_commas
       ));
     }
     return result;
