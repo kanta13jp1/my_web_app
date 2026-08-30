@@ -142,6 +142,10 @@ class EvernoteEnexTask {
     this.statusUpdatedAt,
     this.creator,
     this.lastEditor,
+    this.assigneeUserId,
+    this.assigneeEmail,
+    this.assigneeDisplayName,
+    this.assigneeRawXml,
   });
 
   final String title;
@@ -161,6 +165,10 @@ class EvernoteEnexTask {
   final DateTime? statusUpdatedAt;
   final String? creator;
   final String? lastEditor;
+  final String? assigneeUserId;
+  final String? assigneeEmail;
+  final String? assigneeDisplayName;
+  final String? assigneeRawXml;
   final List<EvernoteEnexTaskReminder> reminders;
   final String rawXml;
 
@@ -184,6 +192,17 @@ class EvernoteEnexTask {
         'status_updated_at': statusUpdatedAt?.toUtc().toIso8601String(),
         'creator': creator,
         'last_editor': lastEditor,
+        'assignee': assigneeUserId == null &&
+                assigneeEmail == null &&
+                assigneeDisplayName == null &&
+                assigneeRawXml == null
+            ? null
+            : <String, dynamic>{
+                'user_id': assigneeUserId,
+                'email': assigneeEmail,
+                'display_name': assigneeDisplayName,
+                'raw_xml': assigneeRawXml,
+              },
         'reminders': reminders
             .map((reminder) => reminder.toJson())
             .toList(growable: false),
@@ -604,6 +623,7 @@ class EvernoteEnexParser {
     final statusUpdatedAt = _parseEvernoteDate(rawStatusUpdated);
     final creator = _nonEmpty(_childText(task, 'creator').trim());
     final lastEditor = _nonEmpty(_childText(task, 'lastEditor').trim());
+    final assignee = _parseTaskAssignee(task);
     final reminders = task.childElements
         .where((element) => element.localName == 'reminder')
         .map((element) => _parseTaskReminder(element, warnings))
@@ -645,9 +665,73 @@ class EvernoteEnexParser {
       statusUpdatedAt: statusUpdatedAt,
       creator: creator,
       lastEditor: lastEditor,
+      assigneeUserId: assignee.userId,
+      assigneeEmail: assignee.email,
+      assigneeDisplayName: assignee.displayName,
+      assigneeRawXml: assignee.rawXml,
       reminders: List<EvernoteEnexTaskReminder>.unmodifiable(reminders),
       rawXml: task.toXmlString(pretty: false),
     );
+  }
+
+  ({
+    String? userId,
+    String? email,
+    String? displayName,
+    String? rawXml,
+  }) _parseTaskAssignee(XmlElement task) {
+    XmlElement? container;
+    for (final child in task.childElements) {
+      if (<String>{'assignee', 'assignedTo'}.contains(child.localName)) {
+        container = child;
+        break;
+      }
+    }
+
+    String childValue(String name) =>
+        container == null ? '' : _childText(container, name).trim();
+
+    final userId = _firstNonEmpty(<String>[
+      childValue('userID'),
+      childValue('userId'),
+      childValue('user-id'),
+      _childText(task, 'assigneeUserID').trim(),
+      _childText(task, 'assigneeUserId').trim(),
+    ]);
+    var email = _firstNonEmpty(<String>[
+      childValue('email'),
+      childValue('emailAddress'),
+      childValue('email-address'),
+      _childText(task, 'assigneeEmail').trim(),
+    ]);
+    var displayName = _firstNonEmpty(<String>[
+      childValue('displayName'),
+      childValue('name'),
+      _childText(task, 'assigneeName').trim(),
+    ]);
+    final compact = _nonEmpty(container?.innerText.trim());
+    if (userId == null && email == null && displayName == null && compact != null) {
+      if (compact.contains('@')) {
+        email = compact;
+      } else {
+        displayName = compact;
+      }
+    }
+
+    return (
+      userId: userId,
+      email: email,
+      displayName: displayName,
+      rawXml: container?.toXmlString(pretty: false),
+    );
+  }
+
+  String? _firstNonEmpty(Iterable<String> values) {
+    for (final value in values) {
+      final candidate = _nonEmpty(value.trim());
+      if (candidate != null) return candidate;
+    }
+    return null;
   }
 
   EvernoteEnexTaskReminder _parseTaskReminder(

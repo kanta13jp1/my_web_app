@@ -5,7 +5,8 @@ const String _noteTaskColumns =
     'note_level_id,task_group_note_level_id,due_at,due_date_ui_option,'
     'time_zone,recurrence,repeat_after_completion,status_updated_at,'
     'creator,last_editor,source_created_at,source_updated_at,source_system,'
-    'source_key,created_at,updated_at';
+    'source_key,assignee_user_id,assignee_email,assignee_display_name,'
+    'source_assignee,created_at,updated_at';
 
 const String _noteTaskReminderColumns =
     'id,task_id,note_id,user_id,note_level_id,remind_at,'
@@ -78,6 +79,11 @@ class NoteTask {
     this.statusUpdatedAt,
     this.creator,
     this.lastEditor,
+    this.ownerUserId = '',
+    this.isOwnedByCurrentUser = true,
+    this.assigneeUserId,
+    this.assigneeEmail,
+    this.assigneeDisplayName,
   });
 
   final String id;
@@ -97,12 +103,23 @@ class NoteTask {
   final DateTime? statusUpdatedAt;
   final String? creator;
   final String? lastEditor;
+  final String ownerUserId;
+  final bool isOwnedByCurrentUser;
+  final String? assigneeUserId;
+  final String? assigneeEmail;
+  final String? assigneeDisplayName;
   final String sourceSystem;
   final List<NoteTaskReminder> reminders;
   final String? noteTitle;
 
   bool get isCompleted => status == 'completed';
   bool get isImported => sourceSystem == 'evernote';
+  bool get hasAssignee =>
+      assigneeUserId != null ||
+      assigneeEmail != null ||
+      assigneeDisplayName != null;
+  String? get assigneeLabel =>
+      assigneeDisplayName ?? assigneeEmail ?? assigneeUserId;
 
   factory NoteTask.fromJson(
     Map<String, dynamic> json, {
@@ -126,6 +143,12 @@ class NoteTask {
       statusUpdatedAt: _asOptionalDateTime(json['status_updated_at']),
       creator: _emptyToNull(json['creator']),
       lastEditor: _emptyToNull(json['last_editor']),
+      ownerUserId: json['user_id']?.toString() ?? '',
+      isOwnedByCurrentUser: json['current_user_id'] == null ||
+          json['user_id']?.toString() == json['current_user_id']?.toString(),
+      assigneeUserId: _emptyToNull(json['assignee_user_id']),
+      assigneeEmail: _emptyToNull(json['assignee_email']),
+      assigneeDisplayName: _emptyToNull(json['assignee_display_name']),
       sourceSystem: json['source_system']?.toString() ?? 'native',
       reminders: List<NoteTaskReminder>.unmodifiable(reminders),
       noteTitle: _emptyToNull(json['note_title']),
@@ -166,6 +189,14 @@ abstract class NoteTaskRepository {
     required NoteTask task,
     required bool completed,
   });
+
+  Future<void> assignTask({
+    required NoteTask task,
+    String? email,
+    String? displayName,
+  }) {
+    throw UnsupportedError('Task assignment is not supported.');
+  }
 
   Future<void> deleteTask(NoteTask task);
 
@@ -286,6 +317,7 @@ class SupabaseNoteTaskRepository implements NoteTaskRepository {
         final id = json['id']?.toString() ?? '';
         final noteId = _asInt(json['note_id']);
         json['note_title'] = noteTitles[noteId];
+        json['current_user_id'] = _client.auth.currentUser?.id;
         return NoteTask.fromJson(
           json,
           reminders: remindersByTask[id] ?? const <NoteTaskReminder>[],
@@ -351,16 +383,34 @@ class SupabaseNoteTaskRepository implements NoteTaskRepository {
     required NoteTask task,
     required bool completed,
   }) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await _client
-        .from('note_tasks')
-        .update(<String, dynamic>{
-          'status': completed ? 'completed' : 'open',
-          'status_updated_at': now,
-          'updated_at': now,
-        })
-        .eq('id', task.id)
-        .eq('note_id', task.noteId);
+    _requireUser();
+    await _client.rpc(
+      'note_task_set_completion',
+      params: <String, dynamic>{
+        'p_task_id': task.id,
+        'p_completed': completed,
+      },
+    );
+  }
+
+  @override
+  Future<void> assignTask({
+    required NoteTask task,
+    String? email,
+    String? displayName,
+  }) async {
+    _requireUser();
+    if (!task.isOwnedByCurrentUser) {
+      throw StateError('Only the Task owner can change its assignee.');
+    }
+    await _client.rpc(
+      'note_task_assign',
+      params: <String, dynamic>{
+        'p_task_id': task.id,
+        'p_assignee_email': _emptyToNull(email),
+        'p_assignee_display_name': _emptyToNull(displayName),
+      },
+    );
   }
 
   @override

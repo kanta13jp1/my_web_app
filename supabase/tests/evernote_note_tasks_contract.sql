@@ -42,6 +42,22 @@ begin
   end if;
 
   if (
+    select assignee_user_id
+    from public.note_tasks
+    where source_system = 'evernote'
+  ) is distinct from '00000000-0000-4000-8000-000000000102'::uuid then
+    raise exception 'Imported Task assignee was not linked by email.';
+  end if;
+
+  if (
+    select source_assignee->>'email'
+    from public.note_tasks
+    where source_system = 'evernote'
+  ) <> 'delegate@example.com' then
+    raise exception 'Imported Task assignee evidence was not preserved.';
+  end if;
+
+  if (
     select source_sha256
     from public.note_task_reminders
     where source_system = 'evernote'
@@ -104,6 +120,16 @@ begin
     set source_sha256 = repeat('a', 64)
     where id = v_task_id;
     raise exception 'Imported Task source hash was mutable.';
+  exception
+    when check_violation then
+      null;
+  end;
+
+  begin
+    update public.note_tasks
+    set source_assignee = jsonb_build_object('email', 'changed@example.com')
+    where id = v_task_id;
+    raise exception 'Imported Task assignee evidence was mutable.';
   exception
     when check_violation then
       null;
@@ -197,8 +223,8 @@ begin
 end
 $$;
 
--- Another authenticated user must see no Task/reminder rows and cannot
--- forge ownership.
+-- The linked assignee can read only the assigned Task and its reminder,
+-- and can change completion only through the narrow RPC.
 select set_config(
   'request.jwt.claim.sub',
   '00000000-0000-4000-8000-000000000102',
@@ -206,16 +232,50 @@ select set_config(
 );
 
 do $$
+declare
+  v_task_id uuid;
 begin
-  if (select count(*) from public.note_tasks) <> 0 then
-    raise exception 'RLS exposed another user Tasks.';
+  if (select count(*) from public.note_tasks) <> 1 then
+    raise exception 'The assignee cannot read exactly the assigned Task.';
   end if;
-  if (select count(*) from public.note_task_reminders) <> 0 then
-    raise exception 'RLS exposed another user Task reminders.';
+  if (select count(*) from public.note_task_reminders) <> 1 then
+    raise exception 'The assignee cannot read the assigned Task reminder.';
   end if;
   if (select count(*) from public.note_reminders) <> 0 then
-    raise exception 'RLS exposed another user note reminders.';
+    raise exception 'Task assignment exposed owner-only note reminders.';
   end if;
+
+  select id into strict v_task_id
+  from public.note_tasks
+  where source_system = 'evernote';
+
+  perform public.note_task_set_completion(v_task_id, false);
+  if (
+    select status from public.note_tasks where id = v_task_id
+  ) <> 'open' then
+    raise exception 'The assignee could not reopen the assigned Task.';
+  end if;
+
+  update public.note_tasks
+  set title = 'Forged title'
+  where id = v_task_id;
+  if (
+    select title from public.note_tasks where id = v_task_id
+  ) = 'Forged title' then
+    raise exception 'The assignee bypassed owner-only Task editing.';
+  end if;
+
+  begin
+    perform public.note_task_assign(
+      v_task_id,
+      'other@example.com',
+      'Other'
+    );
+    raise exception 'The assignee changed Task ownership.';
+  exception
+    when insufficient_privilege then
+      null;
+  end;
 
   begin
     insert into public.note_tasks (

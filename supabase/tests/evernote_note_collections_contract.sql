@@ -1,9 +1,15 @@
 \set ON_ERROR_STOP on
 
-insert into auth.users (id)
+insert into auth.users (id, email)
 values
-  ('00000000-0000-4000-8000-000000000101'),
-  ('00000000-0000-4000-8000-000000000102');
+  (
+    '00000000-0000-4000-8000-000000000101',
+    'owner@example.com'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000102',
+    'delegate@example.com'
+  );
 
 set role authenticated;
 select set_config(
@@ -48,6 +54,12 @@ select public.evernote_commit_note_with_features(
       'status_updated_at', null,
       'creator', 'fixture',
       'last_editor', 'fixture',
+      'assignee', jsonb_build_object(
+        'user_id', 'evernote-user-42',
+        'email', 'delegate@example.com',
+        'display_name', 'Delegated reviewer',
+        'raw_xml', '<assignee>delegate@example.com</assignee>'
+      ),
       'source_sha256', repeat('e', 64),
       'raw_xml', '<task>Structured task</task>',
       'reminders', jsonb_build_array(
@@ -148,6 +160,12 @@ select public.evernote_commit_note_with_features(
       'status_updated_at', null,
       'creator', 'fixture',
       'last_editor', 'fixture',
+      'assignee', jsonb_build_object(
+        'user_id', 'evernote-user-42',
+        'email', 'delegate@example.com',
+        'display_name', 'Delegated reviewer',
+        'raw_xml', '<assignee>delegate@example.com</assignee>'
+      ),
       'source_sha256', repeat('e', 64),
       'raw_xml', '<task>Structured task</task>',
       'reminders', jsonb_build_array(
