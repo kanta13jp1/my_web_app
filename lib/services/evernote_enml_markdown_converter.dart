@@ -296,9 +296,8 @@ class EvernoteEnmlMarkdownConverter {
         .toList(growable: false);
     if (rows.isEmpty) return;
 
-    final columnCount = rows
-        .map((row) => row.length)
-        .fold(0, (a, b) => a > b ? a : b);
+    final columnCount =
+        rows.map((row) => row.length).fold(0, (a, b) => a > b ? a : b);
     String renderRow(List<String> row) {
       final cells = <String>[
         ...row,
@@ -333,10 +332,8 @@ class EvernoteEnmlMarkdownConverter {
     return sourceId.isEmpty ? null : sourceId;
   }
 
-  String _inlineText(XmlElement element) => element.descendants
-      .whereType<XmlText>()
-      .map((node) => node.value)
-      .join();
+  String _inlineText(XmlElement element) =>
+      element.descendants.whereType<XmlText>().map((node) => node.value).join();
 
   String _escapeText(String value) {
     return value
@@ -381,4 +378,3 @@ class EvernoteEnmlMarkdownConverter {
         .trim();
   }
 }
-
