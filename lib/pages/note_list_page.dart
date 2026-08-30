@@ -1416,6 +1416,12 @@ class _NoteListPageState extends State<NoteListPage> {
             onPressed: _fetchNotes,
           ),
           IconButton(
+            key: const Key('note_list_page_tasks_button'),
+            icon: const Icon(Icons.task_alt_outlined),
+            tooltip: 'ノートタスク',
+            onPressed: () => Navigator.of(context).pushNamed('/note-tasks'),
+          ),
+          IconButton(
             icon: const Icon(Icons.public),
             tooltip: '公開メモ一覧',
             onPressed: () => Navigator.of(context).pushNamed('/public-memos'),

@@ -172,6 +172,11 @@ class _FakeNoteTaskRepository implements NoteTaskRepository {
   final List<String> deletedReminderIds = <String>[];
 
   @override
+  Future<List<NoteTask>> loadAllTasks() async {
+    return List<NoteTask>.unmodifiable(_tasks);
+  }
+
+  @override
   Future<List<NoteTask>> loadTasks({required int noteId}) async {
     return List<NoteTask>.unmodifiable(_tasks);
   }

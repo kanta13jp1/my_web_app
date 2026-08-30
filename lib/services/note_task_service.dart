@@ -69,6 +69,7 @@ class NoteTask {
     required this.taskGroupNoteLevelId,
     required this.sourceSystem,
     required this.reminders,
+    this.noteTitle,
     this.dueAt,
     this.dueDateUiOption,
     this.timeZone,
@@ -98,6 +99,7 @@ class NoteTask {
   final String? lastEditor;
   final String sourceSystem;
   final List<NoteTaskReminder> reminders;
+  final String? noteTitle;
 
   bool get isCompleted => status == 'completed';
   bool get isImported => sourceSystem == 'evernote';
@@ -126,6 +128,7 @@ class NoteTask {
       lastEditor: _emptyToNull(json['last_editor']),
       sourceSystem: json['source_system']?.toString() ?? 'native',
       reminders: List<NoteTaskReminder>.unmodifiable(reminders),
+      noteTitle: _emptyToNull(json['note_title']),
     );
   }
 }
@@ -146,6 +149,8 @@ class NoteTaskDraft {
 
 abstract class NoteTaskRepository {
   Future<List<NoteTask>> loadTasks({required int noteId});
+
+  Future<List<NoteTask>> loadAllTasks();
 
   Future<void> createTask({
     required int noteId,
@@ -179,22 +184,100 @@ class SupabaseNoteTaskRepository implements NoteTaskRepository {
 
   @override
   Future<List<NoteTask>> loadTasks({required int noteId}) async {
-    final taskRows = await _client
-        .from('note_tasks')
-        .select(_noteTaskColumns)
-        .eq('note_id', noteId)
-        .order('sort_weight');
-    final reminderRows = await _client
-        .from('note_task_reminders')
-        .select(_noteTaskReminderColumns)
-        .eq('note_id', noteId)
-        .order('remind_at');
+    final taskRows = List<Map<String, dynamic>>.from(
+      await _client
+          .from('note_tasks')
+          .select(_noteTaskColumns)
+          .eq('note_id', noteId)
+          .order('sort_weight'),
+    );
+    final reminderRows = List<Map<String, dynamic>>.from(
+      await _client
+          .from('note_task_reminders')
+          .select(_noteTaskReminderColumns)
+          .eq('note_id', noteId)
+          .order('remind_at'),
+    );
+    return _buildTasks(taskRows, reminderRows);
+  }
 
+  @override
+  Future<List<NoteTask>> loadAllTasks() async {
+    final taskRows = await _loadPagedRows(
+      table: 'note_tasks',
+      columns: _noteTaskColumns,
+      orderColumn: 'created_at',
+    );
+    final reminderRows = await _loadPagedRows(
+      table: 'note_task_reminders',
+      columns: _noteTaskReminderColumns,
+      orderColumn: 'created_at',
+    );
+    final noteTitles = await _loadNoteTitles(
+      taskRows.map((row) => _asInt(row['note_id'])).toSet(),
+    );
+    return _buildTasks(
+      taskRows,
+      reminderRows,
+      noteTitles: noteTitles,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> _loadPagedRows({
+    required String table,
+    required String columns,
+    required String orderColumn,
+  }) async {
+    const pageSize = 500;
+    final rows = <Map<String, dynamic>>[];
+    for (var offset = 0;; offset += pageSize) {
+      final page = List<Map<String, dynamic>>.from(
+        await _client
+            .from(table)
+            .select(columns)
+            .order(orderColumn)
+            .range(offset, offset + pageSize - 1),
+      );
+      rows.addAll(page);
+      if (page.length < pageSize) break;
+    }
+    return rows;
+  }
+
+  Future<Map<int, String>> _loadNoteTitles(Set<int> noteIds) async {
+    const chunkSize = 200;
+    final ids = noteIds.where((id) => id > 0).toList(growable: false);
+    final titles = <int, String>{};
+    for (var offset = 0; offset < ids.length; offset += chunkSize) {
+      final end = offset + chunkSize < ids.length
+          ? offset + chunkSize
+          : ids.length;
+      final chunk = ids.sublist(offset, end);
+      final rows = List<Map<String, dynamic>>.from(
+        await _client
+            .from('notes')
+            .select('id,title')
+            .inFilter('id', chunk),
+      );
+      for (final row in rows) {
+        final id = _asInt(row['id']);
+        final title = _emptyToNull(row['title']);
+        if (id > 0 && title != null) {
+          titles[id] = title;
+        }
+      }
+    }
+    return titles;
+  }
+
+  List<NoteTask> _buildTasks(
+    List<Map<String, dynamic>> taskRows,
+    List<Map<String, dynamic>> reminderRows, {
+    Map<int, String> noteTitles = const <int, String>{},
+  }) {
     final remindersByTask = <String, List<NoteTaskReminder>>{};
     for (final row in reminderRows) {
-      final reminder = NoteTaskReminder.fromJson(
-        Map<String, dynamic>.from(row),
-      );
+      final reminder = NoteTaskReminder.fromJson(row);
       remindersByTask
           .putIfAbsent(reminder.taskId, () => <NoteTaskReminder>[])
           .add(reminder);
@@ -204,6 +287,8 @@ class SupabaseNoteTaskRepository implements NoteTaskRepository {
       (row) {
         final json = Map<String, dynamic>.from(row);
         final id = json['id']?.toString() ?? '';
+        final noteId = _asInt(json['note_id']);
+        json['note_title'] = noteTitles[noteId];
         return NoteTask.fromJson(
           json,
           reminders: remindersByTask[id] ?? const <NoteTaskReminder>[],
