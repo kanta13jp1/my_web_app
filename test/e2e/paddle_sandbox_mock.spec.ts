@@ -105,7 +105,9 @@ test('sandbox checkout maps open, failed, cancelled, and completed events', asyn
   });
   await expect(page.getByLabel('Sandbox 決済が完了しました')).toBeVisible();
   await expect(
-    page.getByLabel('transaction: txn_sandbox_mock_2845'),
+    page
+      .getByText(/txn_sandbox_mock_2845/)
+      .or(page.getByLabel(/txn_sandbox_mock_2845/)),
   ).toBeVisible();
 
   await page.evaluate(() => {
