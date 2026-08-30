@@ -92,9 +92,10 @@ evidence artifact.
 | Date (JST) | Scenario | Expected | Result | Evidence |
 | --- | --- | --- | --- | --- |
 | 2026-08-30 | Receipt email and attached PDF | Paddle is the issuer and a paid PDF invoice is retrievable | Passed for the #2845 sandbox checkout: USD 1.00 subtotal + USD 0.09 sales tax = USD 1.09 total. This does not prove B2B VAT or Customer Portal access. | [Owner screenshot review](https://github.com/kanta13jp1/my_web_app/issues/2846#issuecomment-5468736129); source images were not persisted because they contain personal and sandbox transaction data. |
+| 2026-08-31 | Customer Portal invoice path | Purchase-email magic-link login exposes payment history and an invoice action for a completed transaction | Passed: the Owner authenticated through the generic sandbox portal, saw four paid USD 1.09 payments, opened one payment detail, and reached **View invoice**. The detail showed the expected product and USD 1.00 subtotal + USD 0.09 sales tax = USD 1.09 total. | [Owner screenshot review](https://github.com/kanta13jp1/my_web_app/issues/2846#issuecomment-5468736129); source images were not persisted because they contain sandbox transaction data. |
 | Pending | B2B VAT recalculation | Confirmed expected tax and changed tax/total | Not run: project sandbox values not supplied | — |
 | Pending | Valid card completion | Completed transaction ID | Not run: project sandbox values not supplied | — |
-| Pending | Invoice portal | Magic-link login and PDF invoice download for the completed transaction | Not run: completed sandbox transaction required | — |
+| Pending | B2B invoice portal | The B2B transaction is visible through the already-verified portal path and exposes its invoice | Not run: completed B2B sandbox transaction required | — |
 
 ## Invoice retrieval UX check
 
@@ -112,11 +113,18 @@ In the sandbox-enabled debug artifact, open `/subscription-billing` and inspect
 5. Record a redacted screenshot and the GitHub run URL. Do not commit the PDF
    because it can contain personal and tax information.
 
+The generic portal, purchase-email magic link, payment-history list, payment
+detail, and **View invoice** action were verified by the Owner on 2026-08-31.
+The remaining portal check is limited to confirming that the eventual B2B VAT
+transaction appears through the same path; no new portal design or credential
+mechanism is required.
+
 If the URL is missing, points to the live portal, uses HTTP, has extra path
 segments, or contains any query parameter, the button stays disabled. The UI
 never promises that entering a VAT ID always makes tax zero.
 
 ## Completion record
 
-Close #2846 only after all three pending rows above have dated evidence, the
-pull request is merged, required CI is green, and WBS progress is synchronized.
+Close #2846 only after the three remaining B2B rows above have dated evidence,
+the pull request is merged, required CI is green, and WBS progress is
+synchronized.
