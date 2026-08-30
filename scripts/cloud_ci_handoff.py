@@ -46,13 +46,19 @@ def run_command(args: Sequence[str], cwd: Path) -> CommandResult:
             list(args),
             cwd=str(cwd),
             text=True,
+            encoding="utf-8",
+            errors="replace",
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=False,
         )
     except (FileNotFoundError, PermissionError, OSError) as exc:
         return CommandResult(127, "", str(exc))
-    return CommandResult(proc.returncode, proc.stdout.strip(), proc.stderr.strip())
+    return CommandResult(
+        proc.returncode,
+        (proc.stdout or "").strip(),
+        (proc.stderr or "").strip(),
+    )
 
 
 def _require(result: CommandResult, label: str) -> str:
