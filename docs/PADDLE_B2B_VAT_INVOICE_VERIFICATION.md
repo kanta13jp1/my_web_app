@@ -27,9 +27,10 @@ The implementation is based on Paddle's primary documentation:
   lets a buyer authenticate by email, review transactions, and download PDF
   invoices.
 - Paddle's [sandbox documentation](https://developer.paddle.com/sdks/sandbox/)
-  states that sandbox customer emails are delivered only for addresses that
-  match the account's registered domain. Use an inbox that satisfies this
-  restriction so the Customer Portal magic link can be verified.
+  states that sandbox customer emails go directly to addresses on the
+  account's registered domain; messages for other domains are forwarded to the
+  account's main email address. Confirm that the resulting inbox can receive
+  the Customer Portal magic link.
 - An authenticated
   [customer portal session](https://developer.paddle.com/build/customers/integrate-customer-portal/)
   is temporary. A
@@ -50,7 +51,7 @@ artifact, log, or screenshot:
 | Secret | Purpose |
 | --- | --- |
 | `PADDLE_SANDBOX_CLIENT_TOKEN` | Paddle frontend token beginning with `test_`. |
-| `PADDLE_SANDBOX_B2B_EMAIL` | Purchaser email on the sandbox account's registered domain that can receive Customer Portal magic links. |
+| `PADDLE_SANDBOX_B2B_EMAIL` | Sandbox purchaser email whose direct or forwarded inbox can receive Customer Portal magic links. |
 | `PADDLE_SANDBOX_B2B_TAX_IDENTIFIER` | Valid test VAT/Tax ID for the selected official scenario. |
 
 Create these repository variables:
@@ -90,6 +91,7 @@ evidence artifact.
 
 | Date (JST) | Scenario | Expected | Result | Evidence |
 | --- | --- | --- | --- | --- |
+| 2026-08-30 | Receipt email and attached PDF | Paddle is the issuer and a paid PDF invoice is retrievable | Passed for the #2845 sandbox checkout: USD 1.00 subtotal + USD 0.09 sales tax = USD 1.09 total. This does not prove B2B VAT or Customer Portal access. | [Owner screenshot review](https://github.com/kanta13jp1/my_web_app/issues/2846#issuecomment-5468736129); source images were not persisted because they contain personal and sandbox transaction data. |
 | Pending | B2B VAT recalculation | Confirmed expected tax and changed tax/total | Not run: project sandbox values not supplied | — |
 | Pending | Valid card completion | Completed transaction ID | Not run: project sandbox values not supplied | — |
 | Pending | Invoice portal | Magic-link login and PDF invoice download for the completed transaction | Not run: completed sandbox transaction required | — |
