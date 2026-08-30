@@ -33513,3 +33513,10 @@ watcher が名指しできるのはスナップショット時点で**生存し�
 - 公式一次情報で、Container ToolsのPodman provider IDとDev Containersの`dev.containers.dockerPath`が別設定であること、Windows Podman machineがrootless既定かつRAM 6 GBを要することを確認した。
 - ローカルはRAM使用93.8%、空き0.97 GB、C:空き9.95 GBで安全ゲート未達だったため、Podman導入・machine作成・image取得・Supabase/Flutter live smokeは実行していない。Issueは実機検証完了までOPENを維持する。
 - 静的contract 7件、repository checker、既存VS Code settings 4件、PowerShell parser、setup dry-run、diff checkは成功した。コンテナbuildとAuth/DB/volume/port smokeは安全なhostでの後続検証へ残す。
+
+### 開発基盤セッション記録: Rootless検証のクラウド移行 (2026-08-30 JST)
+
+- Owner特例でWindowsへPodman 5.8.3とrootless WSL2 machineを導入し、rootless UID mapping、Docker API互換、`keep-id` volume write、port 80拒否、IPv4明示時の8080応答を実測した。
+- Supabase最小構成はDB healthy到達後のschema初期化中にhost RAMが99.9%へ達しexit 137となった。`supabase stop`でvolume backupを保持し、Podman machineとuser-mode networkを停止した。image/volumeのpruneやrootful切替は行っていない。
+- 重いimage取得・Dev Container build・Supabase Auth/DB smokeを2つのGitHub-hosted runnerへ分離するcloud-first workflowを追加した。production secretを使わず、workflow/job権限はread-only、証跡はartifactへ保存する。
+- repository contractを8件へ拡張し、`pull_request_target`、secret参照、privileged container、不完全cleanupを拒否する。ローカル実機はVS Code統合の診断用途へ縮小し、標準の再現可能な証明はクラウドへ移した。

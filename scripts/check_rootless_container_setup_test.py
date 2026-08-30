@@ -9,6 +9,7 @@ from check_rootless_container_setup import (
     load_json,
     validate_devcontainer,
     validate_dockerfile,
+    validate_cloud_workflow,
     validate_repository,
     validate_settings,
     validate_supabase_ports,
@@ -78,6 +79,17 @@ class RootlessContainerSetupTest(unittest.TestCase):
         )
 
         self.assertTrue(any("api.port" in error for error in errors), errors)
+
+    def test_rejects_unsafe_or_incomplete_cloud_workflow(self) -> None:
+        errors = validate_cloud_workflow(
+            "pull_request_target:\nsecrets.API_KEY\n--privileged\n",
+            "podman info\nsupabase start\n",
+        )
+
+        self.assertTrue(any("pull_request_target" in error for error in errors), errors)
+        self.assertTrue(any("secrets." in error for error in errors), errors)
+        self.assertTrue(any("--privileged" in error for error in errors), errors)
+        self.assertTrue(any("supabase stop" in error for error in errors), errors)
 
 
 if __name__ == "__main__":

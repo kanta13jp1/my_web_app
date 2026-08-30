@@ -29,6 +29,8 @@ REQUIRED_RUN_ARGS = {
     "--cap-drop=ALL",
     "--security-opt=no-new-privileges",
 }
+CLOUD_WORKFLOW = ".github/workflows/rootless-container-cloud-smoke.yml"
+CLOUD_SMOKE_SCRIPT = "scripts/rootless_cloud_smoke.sh"
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -127,6 +129,43 @@ def validate_setup_script(text: str) -> list[str]:
     return errors
 
 
+def validate_cloud_workflow(workflow: str, smoke_script: str) -> list[str]:
+    errors: list[str] = []
+    workflow_markers = (
+        "workflow_dispatch:",
+        "pull_request:",
+        "permissions: {}",
+        "timeout-minutes: 40\n    permissions:\n      contents: read",
+        "timeout-minutes: 45\n    permissions:\n      contents: read",
+        "rootless_cloud_smoke.sh devcontainer",
+        "rootless_cloud_smoke.sh supabase",
+        "supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf",
+        "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+    )
+    for marker in workflow_markers:
+        if marker not in workflow:
+            errors.append(f"cloud workflow missing {marker!r}.")
+    for forbidden in ("pull_request_target:", "secrets.", "--privileged"):
+        if forbidden in workflow:
+            errors.append(f"cloud workflow must not contain {forbidden!r}.")
+
+    script_markers = (
+        "podman info",
+        "podman system service",
+        "DOCKER_HOST",
+        "--userns=keep-id",
+        "--cap-drop=ALL",
+        "supabase start",
+        "supabase stop",
+        "pg_isready",
+        "/auth/v1/health",
+    )
+    for marker in script_markers:
+        if marker not in smoke_script:
+            errors.append(f"cloud smoke script missing {marker!r}.")
+    return errors
+
+
 def validate_repository(root: Path) -> list[str]:
     errors: list[str] = []
     errors.extend(validate_settings(load_json(root / ".vscode" / "settings.json")))
@@ -141,6 +180,12 @@ def validate_repository(root: Path) -> list[str]:
             (root / "scripts" / "setup_windows_dev.ps1").read_text(encoding="utf-8-sig")
         )
     )
+    errors.extend(
+        validate_cloud_workflow(
+            (root / CLOUD_WORKFLOW).read_text(encoding="utf-8"),
+            (root / CLOUD_SMOKE_SCRIPT).read_text(encoding="utf-8"),
+        )
+    )
     runbook = (root / "docs" / "ROOTLESS_CONTAINER_SETUP.md").read_text(encoding="utf-8")
     for marker in (
         "containers.containerClient",
@@ -150,6 +195,8 @@ def validate_repository(root: Path) -> list[str]:
         "特権ポート",
         "supabase start",
         "flutter run",
+        "rootless-container-cloud-smoke.yml",
+        "GitHub-hosted",
     ):
         if marker not in runbook:
             errors.append(f"rootless runbook missing {marker!r}.")

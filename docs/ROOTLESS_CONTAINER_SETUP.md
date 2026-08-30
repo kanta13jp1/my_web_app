@@ -1,9 +1,37 @@
 # Rootless Podman / Docker development environment
 
-Issue #2842 の標準経路は、Windows 11 + WSL2-backed rootless Podman です。
-Linux/WSL2 で既に Rootless Docker を運用している場合は、後半の代替手順を
-利用できます。Dev Container 内へ Docker/Podman socket をマウントせず、
-Supabase CLI はホスト側、Flutter は非 root Dev Container 側で実行します。
+Issue #2842 の再現可能な標準経路は GitHub-hosted Ubuntu runner 上の rootless
+Podman です。Windows 11 + WSL2-backed rootless Podman は VS Code 統合の確認や
+障害調査が必要な場合だけ利用します。Dev Container 内へ Docker/Podman socket を
+マウントせず、Supabase CLI と Flutter の重い image 取得・build・起動は原則クラウドへ
+寄せます。
+
+## Cloud-first verification
+
+`.github/workflows/rootless-container-cloud-smoke.yml` は次の 2 job を別々の
+GitHub-hosted runner で並行実行します。production secret や hosted Supabase project には
+接続せず、権限は `contents: read` だけです。
+
+- **Rootless Dev Container**: native Linux の非 root Podman で image を build し、
+  `keep-id` bind mount、非 root UID、sudo 拒否、capability 全削除、
+  `no-new-privileges` を確認する。
+- **Rootless Supabase Auth and DB**: rootless Podman の user socket を一時的な
+  Docker API として Supabase CLI へ渡し、Auth health、`pg_isready`、DB volume の
+  permission error 0 件を確認する。
+
+関連ファイルの Pull Request では自動実行されます。任意の branch を手動検証する場合は
+Actions 画面から **Rootless Container Cloud Smoke** を選ぶか、次を実行します。
+
+```powershell
+gh workflow run rootless-container-cloud-smoke.yml `
+  --ref <branch> `
+  -f scope=all
+```
+
+証跡は `rootless-devcontainer-evidence` と `rootless-supabase-evidence` artifact へ
+保存されます。runner は ephemeral なので、停止後の image、container、volume は
+ローカル PC へ残りません。Windows 上の VS Code provider 設定は repository contract
+test で検証し、実機 UI 確認が必要なときだけ次のローカル手順を使います。
 
 ## Safety gate
 
@@ -29,6 +57,13 @@ $os = Get-CimInstance Win32_OperatingSystem
 条件未達時は machine の作成・起動や `supabase start` を行いません。不要な volume を
 削除して空きを作る場合も、先に
 [`CONTAINER_RESOURCE_CLEANUP.md`](./CONTAINER_RESOURCE_CLEANUP.md) の退避手順を使います。
+
+2026-08-30 の owner 特例ではゲート未達のまま Windows 実測を行い、Podman 5.8.3 の
+rootless user mapping、Docker API、`keep-id` volume write、特権 port 80 の拒否を
+確認しました。一方、Supabase DB は schema 初期化中に host RAM が 99.9% へ達し
+exit 137 になりました。通常の `supabase stop` で volume backup を保持し、Podman
+machine も停止済みです。この結果から、同じ重い smoke をローカル標準経路にはせず、
+上記 cloud workflow を採用します。
 
 ## Windows 11 + WSL2 Podman
 
@@ -160,6 +195,11 @@ Windows の Podman machine は rootless user socket を使用します。別 WSL
 選ばないでください。Supabase CLI が runtime を検出できない場合は、Podman の
 Docker-compatible socket を `DOCKER_HOST` に設定します。TCP の平文 socket を
 0.0.0.0 に公開してはいけません。
+
+Windows の user-mode networking では、`-p 8080:80` が IPv6 loopback だけを
+listen する場合があります。IPv4 loopback が必要な container は
+`-p 127.0.0.1:8080:80` のように host address を明示します。2026-08-30 の実測では、
+明示後に `http://127.0.0.1:8080` と `http://localhost:8080` の両方が HTTP 200 でした。
 
 ## Native Linux / WSL2 Rootless Docker alternative
 

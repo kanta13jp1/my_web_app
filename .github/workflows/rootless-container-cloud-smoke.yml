@@ -1,0 +1,119 @@
+name: Rootless Container Cloud Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: Rootless smoke scope
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - devcontainer
+          - supabase
+  pull_request:
+    paths:
+      - ".devcontainer/**"
+      - ".vscode/extensions.json"
+      - ".vscode/settings.json"
+      - ".github/workflows/rootless-container-cloud-smoke.yml"
+      - "docs/ROOTLESS_CONTAINER_SETUP.md"
+      - "scripts/check_rootless_container_setup.py"
+      - "scripts/check_rootless_container_setup_test.py"
+      - "scripts/rootless_cloud_smoke.sh"
+      - "supabase/config.toml"
+
+permissions: {}
+
+concurrency:
+  group: rootless-cloud-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  devcontainer:
+    name: Rootless Dev Container
+    if: >-
+      github.event_name != 'workflow_dispatch' ||
+      inputs.scope == 'all' ||
+      inputs.scope == 'devcontainer'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install rootless Podman dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes podman uidmap passt slirp4netns fuse-overlayfs
+          if ! grep -q "^${USER}:" /etc/subuid; then
+            sudo usermod --add-subuids 524288-589823 "${USER}"
+          fi
+          if ! grep -q "^${USER}:" /etc/subgid; then
+            sudo usermod --add-subgids 524288-589823 "${USER}"
+          fi
+          podman info
+
+      - name: Build and verify the Dev Container as rootless
+        shell: bash
+        run: bash scripts/rootless_cloud_smoke.sh devcontainer
+
+      - name: Upload rootless Dev Container evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: rootless-devcontainer-evidence
+          path: .ci-logs/rootless-cloud/devcontainer.txt
+          if-no-files-found: warn
+
+  supabase:
+    name: Rootless Supabase Auth and DB
+    if: >-
+      github.event_name != 'workflow_dispatch' ||
+      inputs.scope == 'all' ||
+      inputs.scope == 'supabase'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install rootless Podman dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes podman uidmap passt slirp4netns fuse-overlayfs
+          if ! grep -q "^${USER}:" /etc/subuid; then
+            sudo usermod --add-subuids 524288-589823 "${USER}"
+          fi
+          if ! grep -q "^${USER}:" /etc/subgid; then
+            sudo usermod --add-subgids 524288-589823 "${USER}"
+          fi
+          podman info
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf # v2
+        with:
+          version: 2.116.0
+
+      - name: Run Supabase Auth and DB on the rootless Docker API
+        shell: bash
+        run: bash scripts/rootless_cloud_smoke.sh supabase
+
+      - name: Upload rootless Supabase evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: rootless-supabase-evidence
+          path: .ci-logs/rootless-cloud/supabase.txt
+          if-no-files-found: warn
