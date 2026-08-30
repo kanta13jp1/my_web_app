@@ -97,25 +97,33 @@ jobs:
         shell: bash
         run: node --check web/paddle_sandbox_bridge.js
 
-      - name: Verify Paddle Dart formatting
+      - name: Diagnose Flutter 3.38 Paddle Dart formatting
         shell: bash
-        run: >-
-          dart format --output=none --set-exit-if-changed
-          lib/pages/subscription_billing_page.dart
-          lib/services/paddle_checkout.dart
-          lib/services/paddle_invoice_access.dart
-          lib/services/paddle_js_checkout_gateway.dart
-          lib/services/paddle_js_checkout_gateway_stub.dart
-          lib/services/paddle_js_checkout_gateway_web.dart
-          lib/ui/features/billing/view_models/paddle_sandbox_checkout_controller.dart
-          lib/ui/features/billing/views/paddle_sandbox_checkout_card.dart
-          lib/ui/features/billing/views/paddle_sandbox_invoice_access_card.dart
-          test/pages/subscription_billing_page_test.dart
-          test/services/paddle_checkout_test.dart
-          test/services/paddle_invoice_access_test.dart
-          test/services/paddle_sandbox_web_entrypoint_test.dart
-          test/ui/features/billing/paddle_sandbox_checkout_card_test.dart
-          test/ui/features/billing/paddle_sandbox_invoice_access_card_test.dart
+        run: |
+          set -euo pipefail
+          dart format \
+            lib/pages/subscription_billing_page.dart \
+            lib/services/paddle_checkout.dart \
+            lib/services/paddle_invoice_access.dart \
+            lib/services/paddle_js_checkout_gateway.dart \
+            lib/services/paddle_js_checkout_gateway_stub.dart \
+            lib/services/paddle_js_checkout_gateway_web.dart \
+            lib/ui/features/billing/view_models/paddle_sandbox_checkout_controller.dart \
+            lib/ui/features/billing/views/paddle_sandbox_checkout_card.dart \
+            lib/ui/features/billing/views/paddle_sandbox_invoice_access_card.dart \
+            test/pages/subscription_billing_page_test.dart \
+            test/services/paddle_checkout_test.dart \
+            test/services/paddle_invoice_access_test.dart \
+            test/services/paddle_sandbox_web_entrypoint_test.dart \
+            test/ui/features/billing/paddle_sandbox_checkout_card_test.dart \
+            test/ui/features/billing/paddle_sandbox_invoice_access_card_test.dart
+          git diff -- \
+            lib/pages/subscription_billing_page.dart \
+            lib/services/paddle_checkout.dart \
+            lib/ui/features/billing/view_models/paddle_sandbox_checkout_controller.dart \
+            lib/ui/features/billing/views/paddle_sandbox_checkout_card.dart \
+            lib/ui/features/billing/views/paddle_sandbox_invoice_access_card.dart
+          exit 1
 
       - name: Analyze project
         shell: bash
