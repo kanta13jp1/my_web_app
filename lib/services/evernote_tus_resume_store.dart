@@ -101,10 +101,8 @@ class SharedPreferencesEvernoteTusResumeStore
       key,
       jsonEncode(<String, String>{
         'upload_url': uploadUrl.toString(),
-        'expires_at': _now()
-            .toUtc()
-            .add(evernoteTusResumeLifetime)
-            .toIso8601String(),
+        'expires_at':
+            _now().toUtc().add(evernoteTusResumeLifetime).toIso8601String(),
       }),
     );
   }
@@ -150,4 +148,3 @@ class SharedPreferencesEvernoteTusResumeStore
         uploadUrl.path.startsWith('/storage/v1/upload/resumable/');
   }
 }
-
