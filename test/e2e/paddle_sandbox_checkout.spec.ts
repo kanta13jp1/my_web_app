@@ -89,10 +89,8 @@ test.describe('real Paddle sandbox checkout', () => {
 });
 
 async function openFlutterCheckout(page: Page) {
-  // The short-lived evidence server is a static server without SPA fallback.
-  // Use Flutter's supported hash deep link so `/` serves index.html while the
-  // app still starts on the subscription billing route.
-  const response = await page.goto('/#/subscription-billing', {
+  // The evidence server falls back to index.html for Flutter path routes.
+  const response = await page.goto('/subscription-billing', {
     waitUntil: 'domcontentloaded',
   });
   expect(response?.ok()).toBe(true);

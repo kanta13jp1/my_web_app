@@ -261,12 +261,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m http.server 7357 --directory build/web \
+          python3 scripts/flutter_spa_server.py \
+            --directory build/web \
+            --port 7357 \
             > .ci-logs/paddle-real-sandbox-server.log 2>&1 &
           echo "$!" > .ci-logs/paddle-real-sandbox-server.pid
           for attempt in $(seq 1 30); do
-            if curl --fail --silent --show-error http://localhost:7357/ \
-              > /dev/null; then
+            if curl --fail --silent --show-error \
+              http://localhost:7357/subscription-billing \
+              | grep --quiet '<title>'; then
               exit 0
             fi
             sleep 1
