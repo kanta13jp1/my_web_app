@@ -8,11 +8,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../pages/landing_page.dart';
 import '../services/external_format_service.dart';
+import '../services/evernote_cloud_stage_service.dart';
 import '../services/evernote_migration_ledger_service.dart';
 import '../services/evernote_migration_commit_service.dart';
 import '../services/gamification_service.dart';
 import '../services/growth_acquisition_service.dart';
 import '../services/import_service.dart';
+import '../widgets/evernote_cloud_migration_controls.dart';
 
 class ImportPage extends StatefulWidget {
   const ImportPage({super.key});
@@ -29,16 +31,26 @@ class _ImportPageState extends State<ImportPage> {
   late ImportService _importService;
   late EvernoteMigrationLedgerService _evernoteMigrationLedgerService;
   late EvernoteMigrationCommitService _evernoteMigrationCommitService;
+  late EvernoteCloudStageService _evernoteCloudStageService;
   bool _migrationLedgerInitialized = false;
   bool _isMigrationLedgerLoading = false;
   String? _migrationLedgerError;
   List<EvernoteMigrationBatch> _evernoteMigrationBatches =
       const <EvernoteMigrationBatch>[];
   ImportPreviewResult? _preview;
+  EvernoteCloudStageResult? _evernoteCloudStageResult;
+  EvernoteCloudStageProgress? _evernoteCloudStageProgress;
+  EvernoteMigrationTransferProgress? _evernoteTransferProgress;
   Uint8List? _selectedFileBytes;
   ImportExecutionResult? _lastImportResult;
   String? _selectedSource;
   final TextEditingController _notionTokenController = TextEditingController();
+  final TextEditingController _evernoteNotebookNameController =
+      TextEditingController();
+  final TextEditingController _evernoteStackNameController =
+      TextEditingController();
+  final TextEditingController _evernoteSpaceNameController =
+      TextEditingController();
   final TextEditingController _externalFormatInputController =
       TextEditingController(
     text: ExternalFormatService.sampleText('ssim'),
@@ -55,6 +67,9 @@ class _ImportPageState extends State<ImportPage> {
   @override
   void dispose() {
     _notionTokenController.dispose();
+    _evernoteNotebookNameController.dispose();
+    _evernoteStackNameController.dispose();
+    _evernoteSpaceNameController.dispose();
     _externalFormatInputController.dispose();
     super.dispose();
   }
@@ -67,6 +82,10 @@ class _ImportPageState extends State<ImportPage> {
       listen: false,
     );
     _importService = ImportService(gamificationService);
+    _evernoteCloudStageService = EvernoteCloudStageService.supabase(
+      client: Supabase.instance.client,
+      importService: _importService,
+    );
     _evernoteMigrationCommitService =
         EvernoteMigrationCommitService.supabase(Supabase.instance.client);
     if (!_migrationLedgerInitialized) {
@@ -121,14 +140,26 @@ class _ImportPageState extends State<ImportPage> {
   }
 
   Future<void> _pickFile(String sourceType) async {
+    final currentUser = Supabase.instance.client.auth.currentUser;
+    if (sourceType == 'evernote' && currentUser == null) {
+      _showMessage('Log in before selecting an ENEX batch for cloud staging.');
+      return;
+    }
     setState(() {
       _isLoading = true;
       _selectedSource = sourceType;
+      _preview = null;
+      _selectedFileBytes = null;
+      _evernoteCloudStageResult = null;
+      _evernoteCloudStageProgress = null;
+      _evernoteTransferProgress = null;
     });
 
     try {
+      final isEvernote = sourceType == 'evernote';
       final result = await FilePicker.pickFiles(
-        withData: true,
+        withData: !isEvernote,
+        withReadStream: isEvernote,
         type: FileType.custom,
         allowedExtensions: _extensionsFor(sourceType),
       );
@@ -138,20 +169,43 @@ class _ImportPageState extends State<ImportPage> {
       }
 
       final file = result.files.single;
+      if (isEvernote) {
+        final readStream = file.readStream;
+        if (readStream == null) {
+          throw StateError('The selected ENEX stream could not be opened.');
+        }
+        final staged = await _evernoteCloudStageService.stage(
+          userId: currentUser!.id,
+          fileName: file.name,
+          source: readStream,
+          totalBytes: file.size,
+          onProgress: (progress) {
+            if (!mounted) return;
+            setState(() => _evernoteCloudStageProgress = progress);
+          },
+        );
+        if (!mounted) return;
+        _setEvernoteSourceContextDefaults(file.name);
+        setState(() {
+          _preview = staged.preview;
+          _evernoteCloudStageResult = staged;
+          _selectedFileBytes = null;
+        });
+        await _recordEvernotePreview(staged.preview);
+        unawaited(_acquisitionService.recordImportPreview(sourceType));
+        return;
+      }
+
       final bytes = file.bytes;
       if (bytes == null) {
         throw Exception('The selected file could not be read.');
       }
-
       final preview = await _importService.buildPreview(
         sourceType: sourceType,
         fileName: file.name,
         bytes: bytes,
       );
-
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       setState(() {
         _preview = preview;
         _selectedFileBytes = bytes;
@@ -159,14 +213,10 @@ class _ImportPageState extends State<ImportPage> {
       await _recordEvernotePreview(preview);
       unawaited(_acquisitionService.recordImportPreview(sourceType));
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       _showMessage('Import preview failed: $error');
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -258,32 +308,37 @@ class _ImportPageState extends State<ImportPage> {
   Future<void> _importPreview() async {
     final preview = _preview;
     final user = Supabase.instance.client.auth.currentUser;
-    if (preview == null) {
-      return;
-    }
+    if (preview == null) return;
     if (user == null) {
       _showMessage('Log in before importing notes.');
       return;
     }
 
-    setState(() => _isImporting = true);
+    setState(() {
+      _isImporting = true;
+      _evernoteTransferProgress = null;
+    });
     try {
       final ImportExecutionResult result;
       if (preview.sourceType == 'evernote') {
-        final bytes = _selectedFileBytes;
-        if (bytes == null) {
-          throw StateError('Select the ENEX file again before importing.');
+        final staged = _evernoteCloudStageResult;
+        if (staged == null) {
+          throw StateError('Select the ENEX batch again for cloud staging.');
         }
-        final evernoteResult = await _evernoteMigrationCommitService.commit(
+        final evernoteResult =
+            await _evernoteMigrationCommitService.commitFromArchive(
           userId: user.id,
-          exportBytes: bytes,
+          archiveBytes: staged.totalBytes,
           preview: preview,
           sourceContext: EvernoteMigrationSourceContext(
-            notebookName: preview.fileName.replaceFirst(
-              RegExp(r'\.enex$', caseSensitive: false),
-              '',
-            ),
+            notebookName: _evernoteNotebookNameController.text,
+            stackName: _evernoteStackNameController.text,
+            spaceName: _evernoteSpaceNameController.text,
           ),
+          onTransferProgress: (progress) {
+            if (!mounted) return;
+            setState(() => _evernoteTransferProgress = progress);
+          },
         );
         result = ImportExecutionResult(
           insertedCount: evernoteResult.importedNoteCount,
@@ -296,30 +351,49 @@ class _ImportPageState extends State<ImportPage> {
           notes: preview.notes,
         );
       }
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       _showMessage(
-        'Imported ${result.insertedCount} notes via ${result.importModeLabel.toLowerCase()}.',
+        'Imported ' +
+            result.insertedCount.toString() +
+            ' notes via ' +
+            result.importModeLabel.toLowerCase() +
+            '.',
       );
       setState(() {
         _preview = null;
         _selectedFileBytes = null;
+        _evernoteCloudStageResult = null;
+        _evernoteCloudStageProgress = null;
+        _evernoteTransferProgress = null;
         _lastImportResult = result;
       });
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      _showMessage('Import failed: $error');
+      if (!mounted) return;
       if (preview.sourceType == 'evernote') {
+        setState(() => _selectedFileBytes = null);
+        _showMessage(
+          'Import failed, but the verified private cloud archive was kept. '
+          'You can retry without selecting the ENEX again: $error',
+        );
         unawaited(_loadEvernoteMigrationLedger());
+      } else {
+        _showMessage('Import failed: $error');
       }
     } finally {
-      if (mounted) {
-        setState(() => _isImporting = false);
-      }
+      if (mounted) setState(() => _isImporting = false);
     }
+  }
+
+  void _setEvernoteSourceContextDefaults(String fileName) {
+    final normalized = fileName.replaceAll('\\', '/');
+    final leaf = normalized.split('/').last.trim();
+    final dotIndex = leaf.lastIndexOf('.');
+    final inferredNotebook =
+        (dotIndex > 0 ? leaf.substring(0, dotIndex) : leaf).trim();
+    _evernoteNotebookNameController.text =
+        inferredNotebook.isEmpty ? 'Evernote import' : inferredNotebook;
+    _evernoteStackNameController.clear();
+    _evernoteSpaceNameController.clear();
   }
 
   void _showMessage(String message) {
@@ -501,6 +575,12 @@ class _ImportPageState extends State<ImportPage> {
           _externalFormatPanel(),
           const SizedBox(height: 24),
           if (_isLoading) const LinearProgressIndicator(),
+          if (_evernoteCloudStageProgress != null) ...[
+            const SizedBox(height: 8),
+            EvernoteCloudStageStatus(
+              progress: _evernoteCloudStageProgress!,
+            ),
+          ],
           if (_lastImportResult != null) ...[
             _buildImportSuccessOnboarding(
               result: _lastImportResult!,
@@ -591,11 +671,31 @@ class _ImportPageState extends State<ImportPage> {
                         ),
                       ),
                     ],
+                    if (preview.sourceType == 'evernote') ...[
+                      const SizedBox(height: 16),
+                      EvernoteSourceContextFields(
+                        notebookController: _evernoteNotebookNameController,
+                        stackController: _evernoteStackNameController,
+                        spaceController: _evernoteSpaceNameController,
+                        onChanged: () => setState(() {}),
+                      ),
+                      if (_evernoteTransferProgress != null) ...[
+                        const SizedBox(height: 12),
+                        EvernoteCloudTransferStatus(
+                          progress: _evernoteTransferProgress!,
+                        ),
+                      ],
+                    ],
                     const SizedBox(height: 16),
                     FilledButton.icon(
                       onPressed: _isImporting ||
                               preview.notes.isEmpty ||
-                              !preview.canCommit
+                              !preview.canCommit ||
+                              (preview.sourceType == 'evernote' &&
+                                  (_evernoteCloudStageResult == null ||
+                                      _evernoteNotebookNameController.text
+                                          .trim()
+                                          .isEmpty))
                           ? null
                           : currentUser == null
                               ? _openLandingPage
