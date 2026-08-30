@@ -4275,25 +4275,28 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   ],
                 ),
                 SizedBox(height: compactHero ? 8 : 14),
-                TextField(
-                  key: const Key('landing_trial_prompt_input'),
-                  controller: _trialPromptController,
-                  focusNode: _trialPromptFocusNode,
-                  readOnly: _isTrialLoading || _showGuidedTrialIntake,
-                  onChanged: _handleTrialPromptChanged,
-                  minLines: heroMode ? 1 : 2,
-                  maxLines: heroMode ? 2 : 3,
-                  decoration: InputDecoration(
-                    labelText: '例: 今日いちばん詰まっていることを簡単に書く',
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.bolt),
-                    isDense: compactHero,
-                    contentPadding: compactHero
-                        ? const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          )
-                        : null,
+                Semantics(
+                  container: true,
+                  child: TextField(
+                    key: const Key('landing_trial_prompt_input'),
+                    controller: _trialPromptController,
+                    focusNode: _trialPromptFocusNode,
+                    readOnly: _isTrialLoading || _showGuidedTrialIntake,
+                    onChanged: _handleTrialPromptChanged,
+                    minLines: heroMode ? 1 : 2,
+                    maxLines: heroMode ? 2 : 3,
+                    decoration: InputDecoration(
+                      labelText: '例: 今日いちばん詰まっていることを簡単に書く',
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.bolt),
+                      isDense: compactHero,
+                      contentPadding: compactHero
+                          ? const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            )
+                          : null,
+                    ),
                   ),
                 ),
                 SizedBox(height: compactHero ? 8 : 12),
@@ -4782,23 +4785,26 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             ),
             const SizedBox(height: 10),
           ],
-          TextField(
-            key: const Key('landing_h04_inline_email'),
-            controller: _trialEmailController,
-            focusNode: _trialEmailFocusNode,
-            keyboardType: TextInputType.emailAddress,
-            autofillHints: const [AutofillHints.email],
-            onSubmitted: (_) {
-              if (!_isLoading && !_isMagicLinkCoolingDown) {
-                unawaited(_saveTrialWithMagicLink());
-              }
-            },
-            decoration: const InputDecoration(
-              labelText: 'メールアドレス',
-              hintText: 'you@example.com',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.email_outlined),
-              isDense: true,
+          Semantics(
+            container: true,
+            child: TextField(
+              key: const Key('landing_h04_inline_email'),
+              controller: _trialEmailController,
+              focusNode: _trialEmailFocusNode,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.email],
+              onSubmitted: (_) {
+                if (!_isLoading && !_isMagicLinkCoolingDown) {
+                  unawaited(_saveTrialWithMagicLink());
+                }
+              },
+              decoration: const InputDecoration(
+                labelText: 'メールアドレス',
+                hintText: 'you@example.com',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.email_outlined),
+                isDense: true,
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -5276,15 +5282,18 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
                 const SizedBox(height: 14),
               ],
-              TextField(
-                key: const Key('landing_auth_email'),
-                controller: _emailController,
-                focusNode: _emailFocusNode,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'メールアドレス',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email_outlined),
+              Semantics(
+                container: true,
+                child: TextField(
+                  key: const Key('landing_auth_email'),
+                  controller: _emailController,
+                  focusNode: _emailFocusNode,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'メールアドレス',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.email_outlined),
+                  ),
                 ),
               ),
               if (_hypothesisEnabled('h10')) ...[
