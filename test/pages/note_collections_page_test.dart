@@ -36,10 +36,9 @@ void main() {
 
     final nativeCard =
         find.byKey(const ValueKey<String>('note_collection_4'));
-    final makeDefault = find.descendant(
-      of: nativeCard,
-      matching: find.widgetWithText(TextButton, '既定にする'),
-    );
+    final makeDefault =
+        find.byKey(const ValueKey<String>('note_collection_default_4'));
+    expect(find.descendant(of: nativeCard, matching: makeDefault), findsOne);
     expect(tester.widget<TextButton>(makeDefault).onPressed, isNotNull);
   });
 
