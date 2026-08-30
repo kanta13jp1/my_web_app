@@ -143,6 +143,15 @@ void main() {
             'provider_choice_reason': 'asset:summary; test route',
             'routing_use_case': 'summary',
           },
+          'guardrail': {
+            'decision': 'redact',
+            'stage': 'output',
+            'categories': ['pii_email'],
+            'redaction_count': 1,
+            'warning': '個人情報を伏せました。',
+            'policy_version': 'writer-content-v1',
+            'trace_id': 'trace-12345678',
+          },
         };
       },
     );
@@ -166,7 +175,49 @@ void main() {
       'asset:summary; test route',
     );
     expect(response.observability?.routingUseCase, 'summary');
+    expect(response.guardrail?.wasRedacted, isTrue);
+    expect(response.guardrail?.stage, 'output');
+    expect(response.guardrail?.categories, ['pii_email']);
+    expect(response.guardrail?.redactionCount, 1);
+    expect(response.guardrail?.warning, '個人情報を伏せました。');
+    expect(response.guardrail?.policyVersion, 'writer-content-v1');
   });
+
+  test(
+    'sendProviderChat surfaces a user-safe guardrail block message',
+    () async {
+      final service = AiHubChatService(
+        invoker: (_) async => {
+          'success': false,
+          'status': 'guardrailBlocked',
+          'code': 'unsafe_input',
+          'message': '個人情報・秘密情報を取り除いて再試行してください。',
+          'guardrail': {
+            'decision': 'block',
+            'stage': 'input',
+            'categories': ['pii_email'],
+          },
+        },
+      );
+
+      await expectLater(
+        () => service.sendProviderChat(message: 'unsafe', provider: 'writer'),
+        throwsA(
+          isA<AiHubChatException>()
+              .having(
+                (error) => error.message,
+                'message',
+                contains('guardrailBlocked'),
+              )
+              .having(
+                (error) => error.message,
+                'safe guidance',
+                contains('個人情報・秘密情報を取り除いて'),
+              ),
+        ),
+      );
+    },
+  );
 
   test('sendProviderChat throws when provider response is empty', () async {
     final service = AiHubChatService(
@@ -201,42 +252,44 @@ void main() {
     );
   });
 
-  test('quota cooldown is per-provider and does not block other providers',
-      () async {
-    final service = AiHubChatService(
-      invoker: (body) async {
-        if (body['provider'] == 'openai') {
+  test(
+    'quota cooldown is per-provider and does not block other providers',
+    () async {
+      final service = AiHubChatService(
+        invoker: (body) async {
+          if (body['provider'] == 'openai') {
+            return <String, dynamic>{
+              'success': false,
+              'status': 'paidPlanRequired',
+              'provider': 'openai',
+              'message': 'OpenAI quota',
+              'detail': 'You exceeded your current quota',
+            };
+          }
           return <String, dynamic>{
-            'success': false,
-            'status': 'paidPlanRequired',
-            'provider': 'openai',
-            'message': 'OpenAI quota',
-            'detail': 'You exceeded your current quota',
+            'success': true,
+            'text': 'gemini ok',
+            'provider': 'google',
           };
-        }
-        return <String, dynamic>{
-          'success': true,
-          'text': 'gemini ok',
-          'provider': 'google',
-        };
-      },
-    );
+        },
+      );
 
-    // OpenAI のクォータ超過は OpenAI のみクールダウンさせる。
-    await expectLater(
-      () => service.sendProviderChat(message: 'hi', provider: 'openai'),
-      throwsA(isA<AiHubChatException>()),
-    );
-    expect(AiHubChatQuotaGuard.isCoolingDown('openai'), isTrue);
-    expect(AiHubChatQuotaGuard.isCoolingDown('google'), isFalse);
+      // OpenAI のクォータ超過は OpenAI のみクールダウンさせる。
+      await expectLater(
+        () => service.sendProviderChat(message: 'hi', provider: 'openai'),
+        throwsA(isA<AiHubChatException>()),
+      );
+      expect(AiHubChatQuotaGuard.isCoolingDown('openai'), isTrue);
+      expect(AiHubChatQuotaGuard.isCoolingDown('google'), isFalse);
 
-    // Gemini は別プロバイダなのでブロックされず成功する。
-    final response = await service.sendProviderChat(
-      message: 'hi',
-      provider: 'google',
-    );
-    expect(response.text, 'gemini ok');
-  });
+      // Gemini は別プロバイダなのでブロックされず成功する。
+      final response = await service.sendProviderChat(
+        message: 'hi',
+        provider: 'google',
+      );
+      expect(response.text, 'gemini ok');
+    },
+  );
 
   test('sendAutoChat returns auto-routed provider metadata', () async {
     final service = AiHubChatService(

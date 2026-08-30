@@ -108,15 +108,63 @@ class AiHubChatObservability {
   }
 }
 
+class AiHubChatGuardrail {
+  final String decision;
+  final String? stage;
+  final List<String> categories;
+  final int redactionCount;
+  final String? warning;
+  final String? policyVersion;
+  final String? traceId;
+
+  const AiHubChatGuardrail({
+    required this.decision,
+    this.stage,
+    this.categories = const [],
+    this.redactionCount = 0,
+    this.warning,
+    this.policyVersion,
+    this.traceId,
+  });
+
+  static AiHubChatGuardrail? fromResponseMap(Map<String, dynamic> data) {
+    final nested = data['guardrail'];
+    if (nested is! Map) return null;
+    final raw = Map<String, dynamic>.from(nested);
+    final decision = raw['decision']?.toString().trim() ?? '';
+    if (decision.isEmpty) return null;
+    final rawCategories = raw['categories'];
+    final categories = rawCategories is List
+        ? rawCategories
+            .map((value) => value.toString().trim())
+            .where((value) => value.isNotEmpty)
+            .toList(growable: false)
+        : const <String>[];
+    return AiHubChatGuardrail(
+      decision: decision,
+      stage: _emptyToNull(raw['stage']?.toString().trim()),
+      categories: categories,
+      redactionCount: _asInt(raw['redaction_count']) ?? 0,
+      warning: _emptyToNull(raw['warning']?.toString().trim()),
+      policyVersion: _emptyToNull(raw['policy_version']?.toString().trim()),
+      traceId: _emptyToNull(raw['trace_id']?.toString().trim()),
+    );
+  }
+
+  bool get wasRedacted => decision == 'redact';
+}
+
 class AiHubChatResponse {
   final String text;
   final String source;
   final AiHubChatObservability? observability;
+  final AiHubChatGuardrail? guardrail;
 
   const AiHubChatResponse({
     required this.text,
     required this.source,
     this.observability,
+    this.guardrail,
   });
 }
 
@@ -287,6 +335,7 @@ class AiHubChatService {
             data,
             fallbackProvider: provider,
           ),
+          guardrail: AiHubChatGuardrail.fromResponseMap(data),
         );
       }
       throw _buildAiHubFailureException(data);
@@ -351,6 +400,7 @@ class AiHubChatService {
             data,
             fallbackProvider: provider,
           ),
+          guardrail: AiHubChatGuardrail.fromResponseMap(data),
         );
       }
       throw _buildAiHubFailureException(data);
