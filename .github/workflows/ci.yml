@@ -22,15 +22,20 @@ on:
       - '.github/**/*.md'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/PULL_REQUEST_TEMPLATE.md'
+  # Cloud-first manual gate for branches that should not hydrate Flutter/Deno
+  # dependencies on the developer machine. workflow_dispatch intentionally
+  # runs every scope; PR CI later validates the merge ref with path scoping.
+  workflow_dispatch:
   workflow_call:
 
 permissions: {}
 
 concurrency:
   group: ci-${{ github.ref }}
-  # PR 以外 (push / workflow_call) では cancel 無効化
+  # push / workflow_call では cancel 無効化。手動cloud gateは同じrefの
+  # 古いrunを止め、Actions時間も浪費しない。
   # → deploy-prod.yml (cancel-in-progress: false) から呼ばれた CI が cascade cancel される事故を防ぐ
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
 
 jobs:
   lint-and-test:
@@ -101,6 +106,7 @@ jobs:
       - name: Test CI scope classifier
         run: |
           python scripts/classify_ci_changes_test.py
+          python scripts/cloud_first_route_test.py
           python scripts/cicd_efficiency_test.py
           python scripts/pre_commit_quality_gate_test.py
           python scripts/container_cleanup_guard_test.py
