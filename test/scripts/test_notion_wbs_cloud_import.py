@@ -78,6 +78,7 @@ class FakeClient:
         self.site_rows = deepcopy(site_rows or [])
         self.check_rows: list[dict[str, Any]] = []
         self.upserts: list[tuple[str, list[dict[str, Any]], str]] = []
+        self.patches: list[tuple[str, list[tuple[str, str]], dict[str, Any]]] = []
 
     def rows(
         self,
@@ -119,6 +120,8 @@ class FakeClient:
         *,
         on_conflict: str,
     ) -> None:
+        if not rows:
+            return
         copied = deepcopy(rows)
         self.upserts.append((resource, copied, on_conflict))
         if resource == "wbs_tasks":
@@ -168,6 +171,27 @@ class FakeClient:
                     existing.update(row)
             return
         raise AssertionError(resource)
+
+    def patch(
+        self,
+        resource: str,
+        query: list[tuple[str, str]],
+        values: dict[str, Any],
+    ) -> None:
+        copied_query = deepcopy(query)
+        copied_values = deepcopy(values)
+        self.patches.append((resource, copied_query, copied_values))
+        if resource != "wbs_tasks":
+            raise AssertionError(resource)
+        filters = dict(query)
+        destination_id = str(filters["id"]).removeprefix("eq.")
+        existing = next(
+            current
+            for current in self.site_rows
+            if current["id"] == destination_id
+        )
+        existing.update(copied_values)
+        existing["updated_at"] = "2026-08-30T04:00:00Z"
 
 
 class NotionWbsCloudImportTest(unittest.TestCase):
@@ -261,6 +285,44 @@ class NotionWbsCloudImportTest(unittest.TestCase):
         )
         self.assertEqual(rerun["mutations"]["wbs_rows"], 0)
         self.assertEqual(rerun["mutations"]["items_imported_now"], 0)
+
+    def test_existing_row_uses_partial_patch_and_preserves_other_columns(self) -> None:
+        source = staged(PAGE_IDS[0])
+        existing_site = {
+            "id": TASK_ID,
+            "title": "older private title",
+            "instance": "codex",
+            "status": "pending",
+            "progress": 10,
+            "end_date": "2026-08-31",
+            "updated_at": "2026-08-30T01:00:00Z",
+            "category": "Development",
+            "owner_instance": "codex",
+            "user_report_status": "waiting",
+        }
+        client = FakeClient([source], [item(0, PAGE_IDS[0])], [existing_site])
+        digest = build_wbs_import_plan([source], [existing_site])["plan_sha256"]
+
+        report = run_import(
+            client,
+            mode="apply",
+            expected_plan_sha256=digest,
+            offset=0,
+            limit=100,
+        )
+
+        self.assertEqual(report["mutations"]["wbs_rows"], 1)
+        self.assertEqual(len(client.patches), 1)
+        resource, query, values = client.patches[0]
+        self.assertEqual(resource, "wbs_tasks")
+        self.assertEqual(query, [("id", f"eq.{TASK_ID}")])
+        self.assertNotIn("id", values)
+        self.assertNotIn("category", values)
+        self.assertNotIn("owner_instance", values)
+        self.assertEqual(client.site_rows[0]["category"], "Development")
+        self.assertEqual(client.site_rows[0]["owner_instance"], "codex")
+        self.assertEqual(client.site_rows[0]["user_report_status"], "waiting")
+        self.assertEqual(client.item_rows[0]["status"], "imported")
 
     def test_batch_size_cannot_exceed_one_hundred(self) -> None:
         client = FakeClient(self.stage_rows, self.item_rows)
