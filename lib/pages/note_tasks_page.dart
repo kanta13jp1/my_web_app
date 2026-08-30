@@ -498,9 +498,7 @@ class _TaskOverviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final dueAt = task.dueAt?.toLocal();
     final noteTitle = task.noteTitle ??
-        (task.isOwnedByCurrentUser
-            ? 'メモ #${task.noteId}'
-            : '共有タスク（メモ本文は非公開）');
+        (task.isOwnedByCurrentUser ? 'メモ #${task.noteId}' : '共有タスク（メモ本文は非公開）');
     return Card(
       key: ValueKey('note_tasks_page_card_${task.id}'),
       child: Padding(
@@ -537,9 +535,7 @@ class _TaskOverviewCard extends StatelessWidget {
                   key: ValueKey(
                     'note_tasks_page_open_note_${task.id}',
                   ),
-                  tooltip: onOpenNote == null
-                      ? '元のメモは共有されていません'
-                      : '元のメモを開く',
+                  tooltip: onOpenNote == null ? '元のメモは共有されていません' : '元のメモを開く',
                   onPressed: onOpenNote,
                   icon: const Icon(Icons.open_in_new),
                 ),
