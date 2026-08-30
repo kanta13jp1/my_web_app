@@ -32,6 +32,8 @@ gh workflow run rootless-container-cloud-smoke.yml `
 保存されます。runner は ephemeral なので、停止後の image、container、volume は
 ローカル PC へ残りません。Windows 上の VS Code provider 設定は repository contract
 test で検証し、実機 UI 確認が必要なときだけ次のローカル手順を使います。
+リポジトリ全体の resource routing と sparse checkout 方針は
+[`CLOUD_FIRST_DEVELOPMENT.md`](./CLOUD_FIRST_DEVELOPMENT.md) に従います。
 
 ## Safety gate
 

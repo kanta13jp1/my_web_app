@@ -22,15 +22,20 @@ on:
       - '.github/**/*.md'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/PULL_REQUEST_TEMPLATE.md'
+  # Cloud-first manual gate for branches that should not hydrate Flutter/Deno
+  # dependencies on the developer machine. workflow_dispatch intentionally
+  # runs every scope; PR CI later validates the merge ref with path scoping.
+  workflow_dispatch:
   workflow_call:
 
 permissions: {}
 
 concurrency:
   group: ci-${{ github.ref }}
-  # PR 以外 (push / workflow_call) では cancel 無効化
+  # push / workflow_call では cancel 無効化。手動cloud gateは同じrefの
+  # 古いrunを止め、Actions時間も浪費しない。
   # → deploy-prod.yml (cancel-in-progress: false) から呼ばれた CI が cascade cancel される事故を防ぐ
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
 
 jobs:
   lint-and-test:
@@ -101,6 +106,7 @@ jobs:
       - name: Test CI scope classifier
         run: |
           python scripts/classify_ci_changes_test.py
+          python scripts/cloud_first_route_test.py
           python scripts/cicd_efficiency_test.py
           python scripts/pre_commit_quality_gate_test.py
           python scripts/container_cleanup_guard_test.py
@@ -108,6 +114,29 @@ jobs:
           python scripts/check_rootless_container_setup.py
           python scripts/vscode_terminal_settings_test.py
           python scripts/ci_failure_digest_test.py
+
+      - name: Test high-risk dual security review
+        run: >-
+          python -m unittest
+          scripts/test_security_review_input.py
+          scripts/test_run_dual_security_review.py
+          scripts/test_decision_event_migration.py
+
+      - name: Verify high-risk security review dependency lock
+        shell: bash
+        run: |
+          mkdir -p "${RUNNER_TEMP}/high-risk-security-review-wheels"
+          python -m pip download \
+            --disable-pip-version-check \
+            --no-cache-dir \
+            --only-binary=:all: \
+            --require-hashes \
+            --platform manylinux2014_x86_64 \
+            --python-version 312 \
+            --implementation cp \
+            --abi cp312 \
+            --dest "${RUNNER_TEMP}/high-risk-security-review-wheels" \
+            -r scripts/requirements-high-risk-security-review.txt
 
       - name: Setup Flutter
         if: steps.changes.outputs.flutter == 'true'

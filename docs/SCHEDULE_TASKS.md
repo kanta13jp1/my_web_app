@@ -401,6 +401,9 @@ GitHub Actions の最小権限・依存供給網、migration 順序、認証済�
 高リスク PR は `.github/workflows/high-risk-dual-security-review.yml` で Claude と Codex を
 独立実行し、fallback は二重レビューとして数えない。片方の API credential または
 decision-event 永続化が利用できない場合は、PR に例外 evidence を残して fail closed とする。
+Codex lane は静的な OpenAI API key を保存せず、GitHub OIDC から OpenAI Workload
+Identity Federation で短期 token を取得する。管理画面設定と復旧手順は
+[`OPENAI_WIF_SECURITY_REVIEW_RUNBOOK.md`](OPENAI_WIF_SECURITY_REVIEW_RUNBOOK.md) を参照する。
 
 ---
 
