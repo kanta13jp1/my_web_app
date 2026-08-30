@@ -236,6 +236,7 @@ class SupabaseNoteTaskRepository implements NoteTaskRepository {
             .from(table)
             .select(columns)
             .order(orderColumn)
+            .order('id')
             .range(offset, offset + pageSize - 1),
       );
       rows.addAll(page);
