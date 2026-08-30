@@ -110,131 +110,13 @@ class _NoteTasksPanelState extends State<NoteTasksPanel> {
   }
 
   Future<void> _showTaskEditor([NoteTask? task]) async {
-    final titleController = TextEditingController(text: task?.title ?? '');
-    final recurrenceController =
-        TextEditingController(text: task?.recurrence ?? '');
-    var dueAt = task?.dueAt?.toLocal();
-    var repeatAfterCompletion = task?.repeatAfterCompletion ?? false;
-    String? titleError;
-
     final draft = await showDialog<NoteTaskDraft>(
       context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            final dueLabel = dueAt == null
-                ? '期限なし'
-                : DateFormat('yyyy/MM/dd HH:mm').format(dueAt!);
-            return AlertDialog(
-              title: Text(task == null ? 'タスクを追加' : 'タスクを編集'),
-              content: SizedBox(
-                width: 480,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextField(
-                        key: const Key('note_task_title_field'),
-                        controller: titleController,
-                        autofocus: true,
-                        maxLength: 4096,
-                        decoration: InputDecoration(
-                          labelText: 'タスク名',
-                          errorText: titleError,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(child: Text(dueLabel)),
-                          TextButton.icon(
-                            key: const Key('note_task_due_button'),
-                            onPressed: () async {
-                              final selected = await _pickDateTime(dueAt);
-                              if (selected == null ||
-                                  !dialogContext.mounted) {
-                                return;
-                              }
-                              setDialogState(() {
-                                dueAt = selected;
-                              });
-                            },
-                            icon: const Icon(Icons.event_outlined),
-                            label: const Text('期限'),
-                          ),
-                          if (dueAt != null)
-                            IconButton(
-                              key: const Key('note_task_due_clear_button'),
-                              onPressed: () {
-                                setDialogState(() {
-                                  dueAt = null;
-                                });
-                              },
-                              icon: const Icon(Icons.clear),
-                              tooltip: '期限を削除',
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        key: const Key('note_task_recurrence_field'),
-                        controller: recurrenceController,
-                        decoration: const InputDecoration(
-                          labelText: '繰り返し',
-                          hintText: '例: RRULE:FREQ=WEEKLY',
-                          helperText: 'EvernoteのRRULEもそのまま編集できます。',
-                        ),
-                      ),
-                      SwitchListTile(
-                        key: const Key('note_task_repeat_after_completion'),
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('完了後に次回分を繰り返す'),
-                        value: repeatAfterCompletion,
-                        onChanged: (value) {
-                          setDialogState(() {
-                            repeatAfterCompletion = value;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('キャンセル'),
-                ),
-                FilledButton(
-                  key: const Key('note_task_save_button'),
-                  onPressed: () {
-                    final title = titleController.text.trim();
-                    if (title.isEmpty) {
-                      setDialogState(() {
-                        titleError = 'タスク名を入力してください。';
-                      });
-                      return;
-                    }
-                    Navigator.pop(
-                      dialogContext,
-                      NoteTaskDraft(
-                        title: title,
-                        dueAt: dueAt,
-                        recurrence: recurrenceController.text,
-                        repeatAfterCompletion: repeatAfterCompletion,
-                      ),
-                    );
-                  },
-                  child: const Text('保存'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (_) => _NoteTaskEditorDialog(
+        task: task,
+        onPickDateTime: _pickDateTime,
+      ),
     );
-    titleController.dispose();
-    recurrenceController.dispose();
     if (draft == null || !mounted) return;
 
     await _runMutation(
@@ -517,3 +399,153 @@ class _NoteTasksPanelState extends State<NoteTasksPanel> {
     );
   }
 }
+
+class _NoteTaskEditorDialog extends StatefulWidget {
+  const _NoteTaskEditorDialog({
+    required this.task,
+    required this.onPickDateTime,
+  });
+
+  final NoteTask? task;
+  final Future<DateTime?> Function(DateTime? current) onPickDateTime;
+
+  @override
+  State<_NoteTaskEditorDialog> createState() => _NoteTaskEditorDialogState();
+}
+
+class _NoteTaskEditorDialogState extends State<_NoteTaskEditorDialog> {
+  late final TextEditingController _titleController;
+  late final TextEditingController _recurrenceController;
+  DateTime? _dueAt;
+  late bool _repeatAfterCompletion;
+  String? _titleError;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.task?.title ?? '');
+    _recurrenceController = TextEditingController(
+      text: widget.task?.recurrence ?? '',
+    );
+    _dueAt = widget.task?.dueAt?.toLocal();
+    _repeatAfterCompletion =
+        widget.task?.repeatAfterCompletion ?? false;
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _recurrenceController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dueLabel = _dueAt == null
+        ? '期限なし'
+        : DateFormat('yyyy/MM/dd HH:mm').format(_dueAt!);
+    return AlertDialog(
+      title: Text(widget.task == null ? 'タスクを追加' : 'タスクを編集'),
+      content: SizedBox(
+        width: 480,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                key: const Key('note_task_title_field'),
+                controller: _titleController,
+                autofocus: true,
+                maxLength: 4096,
+                decoration: InputDecoration(
+                  labelText: 'タスク名',
+                  errorText: _titleError,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(child: Text(dueLabel)),
+                  TextButton.icon(
+                    key: const Key('note_task_due_button'),
+                    onPressed: () async {
+                      final selected =
+                          await widget.onPickDateTime(_dueAt);
+                      if (selected == null || !mounted) return;
+                      setState(() {
+                        _dueAt = selected;
+                      });
+                    },
+                    icon: const Icon(Icons.event_outlined),
+                    label: const Text('期限'),
+                  ),
+                  if (_dueAt != null)
+                    IconButton(
+                      key: const Key('note_task_due_clear_button'),
+                      onPressed: () {
+                        setState(() {
+                          _dueAt = null;
+                        });
+                      },
+                      icon: const Icon(Icons.clear),
+                      tooltip: '期限を削除',
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                key: const Key('note_task_recurrence_field'),
+                controller: _recurrenceController,
+                decoration: const InputDecoration(
+                  labelText: '繰り返し',
+                  hintText: '例: RRULE:FREQ=WEEKLY',
+                  helperText: 'EvernoteのRRULEもそのまま編集できます。',
+                ),
+              ),
+              SwitchListTile(
+                key: const Key('note_task_repeat_after_completion'),
+                contentPadding: EdgeInsets.zero,
+                title: const Text('完了後に次回分を繰り返す'),
+                value: _repeatAfterCompletion,
+                onChanged: (value) {
+                  setState(() {
+                    _repeatAfterCompletion = value;
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('キャンセル'),
+        ),
+        FilledButton(
+          key: const Key('note_task_save_button'),
+          onPressed: () {
+            final title = _titleController.text.trim();
+            if (title.isEmpty) {
+              setState(() {
+                _titleError = 'タスク名を入力してください。';
+              });
+              return;
+            }
+            Navigator.pop(
+              context,
+              NoteTaskDraft(
+                title: title,
+                dueAt: _dueAt,
+                recurrence: _recurrenceController.text,
+                repeatAfterCompletion: _repeatAfterCompletion,
+              ),
+            );
+          },
+          child: const Text('保存'),
+        ),
+      ],
+    );
+  }
+}
+
