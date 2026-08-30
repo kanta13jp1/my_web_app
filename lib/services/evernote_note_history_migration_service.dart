@@ -186,8 +186,7 @@ class SupabaseEvernoteNoteHistoryDatabaseGateway
       title: version['title']?.toString() ?? '',
       content: version['content']?.toString() ?? '',
       savedAt: _asDateTime(version['saved_at']),
-      sourceContentSha256:
-          version['source_content_sha256']?.toString() ?? '',
+      sourceContentSha256: version['source_content_sha256']?.toString() ?? '',
       tags: (version['source_tags'] as List<dynamic>? ?? const <dynamic>[])
           .map((value) => value.toString())
           .toList(growable: false),
@@ -276,16 +275,13 @@ class EvernoteNoteHistoryMigrationService {
     final ownerId = userId.trim();
     final itemKey = sourceItemKey.trim();
     final expectedHash = archiveSha256.trim().toLowerCase();
-    if (ownerId.isEmpty ||
-        ownerId.contains('/') ||
-        ownerId.contains('\\')) {
+    if (ownerId.isEmpty || ownerId.contains('/') || ownerId.contains('\\')) {
       throw ArgumentError.value(userId, 'userId', 'Invalid owner id.');
     }
     if (batchId <= 0 || itemKey.isEmpty) {
       throw ArgumentError('A valid Evernote migration item is required.');
     }
-    if (archiveBytes <= 0 ||
-        archiveBytes > evernoteMigrationMaxObjectBytes) {
+    if (archiveBytes <= 0 || archiveBytes > evernoteMigrationMaxObjectBytes) {
       throw StateError(
         'The history ENEX must be between 1 byte and '
         '$evernoteMigrationMaxObjectBytes bytes.',
@@ -299,8 +295,7 @@ class EvernoteNoteHistoryMigrationService {
       );
     }
 
-    final archivePath =
-        '$ownerId/evernote-history/$expectedHash/source.enex';
+    final archivePath = '$ownerId/evernote-history/$expectedHash/source.enex';
     if (!await storage.objectExists(
       bucketId: evernoteArchiveBucket,
       path: archivePath,
@@ -475,8 +470,7 @@ class EvernoteNoteHistoryMigrationService {
       noteVersionId: versionId!,
     );
     final expectedByPath = <String, EvernoteMigrationResourceManifest>{
-      for (final resource in importedResources!)
-        resource.filePath: resource,
+      for (final resource in importedResources!) resource.filePath: resource,
     };
     var resourceHashesMatch =
         snapshot.attachments.length == expectedByPath.length;
@@ -500,13 +494,11 @@ class EvernoteNoteHistoryMigrationService {
 
     final checks = <String, bool>{
       'archive_sha256': commitSummary.exportSha256 == expectedHash,
-      'content_sha256':
-          snapshot.id == versionId &&
-              snapshot.title == importedNote!.title &&
-              snapshot.content == importedContent &&
-              snapshot.sourceContentSha256 ==
-                  importedNote!.contentSha256 &&
-              _sameStrings(snapshot.tags, importedNote!.tags),
+      'content_sha256': snapshot.id == versionId &&
+          snapshot.title == importedNote!.title &&
+          snapshot.content == importedContent &&
+          snapshot.sourceContentSha256 == importedNote!.contentSha256 &&
+          _sameStrings(snapshot.tags, importedNote!.tags),
       'timestamp': snapshot.savedAt.toUtc().microsecondsSinceEpoch ==
           importedSavedAt!.microsecondsSinceEpoch,
       'resource_count':
@@ -612,7 +604,7 @@ class EvernoteNoteHistoryMigrationService {
   }
 }
 
-class _HistoryDigestSink extends Sink<Digest> {
+class _HistoryDigestSink implements Sink<Digest> {
   Digest? _value;
 
   Digest get value {
