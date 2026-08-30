@@ -26,8 +26,10 @@ Before choosing a local worker or toolchain, run
 `python scripts/cloud_first_route.py`. When it reports `CLOUD_REQUIRED`, both
 top-level instances must keep the local session lightweight: no dependency
 hydration, full analyzer/test/build, dev server, Docker job, or local child
-worker. Use a sparse checkout for edits and GitHub Actions for proof. The full
-procedure is `docs/CLOUD_FIRST_DEVELOPMENT.md`.
+worker. Use a sparse checkout for edits and
+`python scripts/cloud_ci_handoff.py --execute --watch` for exact-SHA GitHub
+Actions proof after pushing the branch. The full procedure is
+`docs/CLOUD_FIRST_DEVELOPMENT.md`.
 
 Local tool check on 2026-05-07:
 
