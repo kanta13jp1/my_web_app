@@ -17,6 +17,7 @@ void main() {
       expect(export.exportDate, DateTime.utc(2026, 8, 23, 3, 45));
       expect(export.notes, hasLength(1));
       expect(export.resourceCount, 1);
+      expect(export.taskCount, 1);
       expect(export.exportSha256, hasLength(64));
 
       final note = export.notes.single;
@@ -57,6 +58,32 @@ void main() {
       );
       expect(note.markdownText, contains('| Key | Value |'));
       expect(note.markdownText, contains('| --- | --- |'));
+      expect(note.noteReminder, isNotNull);
+      expect(note.noteReminder!.order, 1710000000000);
+      expect(note.noteReminder!.reminderAt, DateTime.utc(2024, 7, 1, 9));
+      expect(note.noteReminder!.completedAt, DateTime.utc(2024, 7, 2, 9));
+      expect(note.tasks, hasLength(1));
+      final task = note.tasks.single;
+      expect(task.title, 'Structured follow up');
+      expect(task.status, 'open');
+      expect(task.inNote, isTrue);
+      expect(task.dueAt, DateTime.utc(2024, 7, 10, 9));
+      expect(task.dueDateUiOption, 'date_time');
+      expect(task.timeZone, 'Asia/Tokyo');
+      expect(task.recurrence, 'RRULE:FREQ=WEEKLY');
+      expect(task.repeatAfterCompletion, isTrue);
+      expect(task.creator, 'owner@example.com');
+      expect(task.reminders, hasLength(1));
+      expect(task.reminders.single.status, 'active');
+      expect(
+        task.reminders.single.reminderAt,
+        DateTime.utc(2024, 7, 9, 9),
+      );
+      expect(
+        note.toImportMetadata()['tasks'],
+        isA<List<dynamic>>().having((tasks) => tasks.length, 'length', 1),
+      );
+      expect(note.toImportMetadata()['note_reminder'], isA<Map>());
       expect(note.contentSha256, hasLength(64));
       expect(note.rawXml, contains('<note-attributes>'));
 
@@ -255,8 +282,40 @@ const _completeEnex = '''
     <note-attributes>
       <author>Migration test</author>
       <source-url>https://example.com/source?id=1&amp;lang=ja</source-url>
+      <reminder-order>1710000000000</reminder-order>
+      <reminder-time>20240701T090000Z</reminder-time>
+      <reminder-done-time>20240702T090000Z</reminder-done-time>
       <application-data key="future-key"><value>kept</value></application-data>
     </note-attributes>
+    <task>
+      <title>Structured follow up</title>
+      <created>20240601T010203Z</created>
+      <updated>20240602T020304Z</updated>
+      <taskStatus>open</taskStatus>
+      <inNote>true</inNote>
+      <taskFlag>priority</taskFlag>
+      <sortWeight>100</sortWeight>
+      <noteLevelID>task-1</noteLevelID>
+      <taskGroupNoteLevelID>group-1</taskGroupNoteLevelID>
+      <dueDate>20240710T090000Z</dueDate>
+      <dueDateUIOption>date_time</dueDateUIOption>
+      <timeZone>Asia/Tokyo</timeZone>
+      <recurrence>RRULE:FREQ=WEEKLY</recurrence>
+      <repeatAfterCompletion>true</repeatAfterCompletion>
+      <statusUpdated>20240602T020304Z</statusUpdated>
+      <creator>owner@example.com</creator>
+      <lastEditor>editor@example.com</lastEditor>
+      <reminder>
+        <created>20240601T010203Z</created>
+        <updated>20240602T020304Z</updated>
+        <noteLevelID>reminder-1</noteLevelID>
+        <reminderDate>20240709T090000Z</reminderDate>
+        <reminderDateUIOption>date_time</reminderDateUIOption>
+        <timeZone>Asia/Tokyo</timeZone>
+        <dueDateOffset>-86400000</dueDateOffset>
+        <reminderStatus>active</reminderStatus>
+      </reminder>
+    </task>
     <resource>
       <data encoding="base64" hash="5d41402abc4b2a76b9719d911017c592">aGVsbG8=</data>
       <mime>text/plain</mime>
