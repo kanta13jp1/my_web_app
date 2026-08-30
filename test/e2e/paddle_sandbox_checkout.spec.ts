@@ -34,9 +34,10 @@ const b2bTaxIdentifier =
   process.env.PADDLE_SANDBOX_B2B_TAX_IDENTIFIER ?? '';
 const b2bExpectedTax = process.env.PADDLE_SANDBOX_B2B_EXPECTED_TAX ?? '';
 
+test.use({ screenshot: 'off', trace: 'off', video: 'off' });
+
 test.describe('real Paddle sandbox checkout', () => {
   test.describe.configure({ mode: 'serial' });
-  test.use({ screenshot: 'off', trace: 'off', video: 'off' });
   test.skip(
     !realSandboxEnabled,
     'Set PADDLE_SANDBOX_E2E=true only in the guarded manual cloud workflow.',
