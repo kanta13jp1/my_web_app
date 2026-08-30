@@ -48,11 +48,10 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Set up Flutter with shared cache
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+      - name: Set up repository-pinned Flutter SDK
+        uses: ./.github/actions/setup-flutter-sdk
         with:
-          channel: stable
-          cache: true
+          flutter-version: '3.38.x'
 
       - name: Resolve dependencies in cloud
         run: flutter pub get
