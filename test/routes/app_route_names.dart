@@ -6,6 +6,7 @@ const List<String> kAllAppRoutes = <String>[
   '/ab-testing-manager',
   '/abstinence-guard',
   '/access-control',
+  '/account-deletion',
   '/activity-feed',
   '/address-book',
   '/admin',

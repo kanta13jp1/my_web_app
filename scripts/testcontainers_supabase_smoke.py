@@ -7,8 +7,9 @@ the Issue #2773 fail-closed RLS migration, Issue #2484 asset-chat isolation,
 Issue #4091 app-analytics write boundary, and Issue #1202 voice-dubbing quota
 state machine, Issue #1233 resource-optimizer tenant/analysis/quota contracts,
 Issue #4956 WBS administrator/review contracts, Issue #4927 recurring-cost
-tombstone concurrency, checks the real Edge Function import policy, Issue #2668
-note-comment authorization, and runs a Deno HTTP fixture against the container.
+tombstone concurrency, Issue #2844 account-deletion retention contracts, checks
+the real Edge Function import policy, Issue #2668 note-comment authorization,
+and runs a Deno HTTP fixture against the container.
 Logs are written as
 artifacts so CI failures point to the migration, function, or seed boundary that
 broke.
@@ -171,6 +172,14 @@ ISSUE_4927_RECURRING_TOMBSTONE_SQL_FILES = (
     ROOT / "supabase" / "tests" / "issue4927_recurring_tombstone_contract.sql",
 )
 ISSUE_4927_USER = "00000000-0000-4000-8000-000000004927"
+ISSUE_2844_ACCOUNT_DELETION_SQL_FILES = (
+    ROOT / "supabase" / "tests" / "issue2844_account_deletion_bootstrap.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260829095836_account_retention_and_deletion.sql",
+    ROOT / "supabase" / "tests" / "issue2844_account_deletion_contract.sql",
+)
 VIDEO_ARTIFACT_SQL_FILES = (
     ROOT / "supabase" / "tests" / "video_service_bootstrap.sql",
     ROOT / "supabase" / "migrations" / "20260819165405_create_first_party_video_service.sql",
@@ -520,6 +529,19 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "RPC guard state is restored after success",
             "initial concurrent additions and a concurrent add/remove preserve the exact set",
             "migration applies twice in the disposable database",
+        ],
+        "issue_2844_account_deletion_sql": [
+            path.relative_to(ROOT).as_posix()
+            for path in ISSUE_2844_ACCOUNT_DELETION_SQL_FILES
+        ],
+        "issue_2844_account_deletion_checks": [
+            "queue and RPC access is service-role only",
+            "due requests are claimed atomically",
+            "direct auth.users CASCADE references are accepted",
+            "populated unclassified user references fail closed",
+            "Storage owner metadata and approved user path conventions are inventoried",
+            "failed work records a bounded retry",
+            "completed request evidence removes user_id",
         ],
         "video_artifact_contract": [
             path.relative_to(ROOT).as_posix() for path in VIDEO_ARTIFACT_SQL_FILES
@@ -2026,10 +2048,11 @@ def check_note_comments_security(conn: Any) -> dict[str, Any]:
 def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
     with conn.cursor() as cur:
         cur.execute(
-            "select n.user_id::text, n.source_key, count(*) over () "
+            "select n.id, n.user_id::text, n.source_key, count(*) over () "
             "from public.notes n "
-            "where n.id = %s",
-            (GENERATED_MEMO_NOTE_ID,),
+            "join public.public_memos pm on pm.note_id = n.id "
+            "where n.source_key = %s and pm.user_id = %s::uuid",
+            (f"local-election:{GENERATED_MEMO_NOTE_ID}", NOTE_OWNER),
         )
         repaired_rows = [tuple(row) for row in cur.fetchall()]
         cur.execute(
@@ -2046,14 +2069,20 @@ def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
         source_key_constraint_count = int(cur.fetchone()[0])
     conn.commit()
 
-    expected_repaired_rows = [
-        (
-            NOTE_OWNER,
-            f"local-election:{GENERATED_MEMO_NOTE_ID}",
-            1,
+    if len(repaired_rows) != 1:
+        raise AssertionError(f"generated memo backing note mismatch: {repaired_rows}")
+    backing_note_id, owner_id, source_key, matching_count = repaired_rows[0]
+    if not isinstance(backing_note_id, int) or not 0 < backing_note_id < 2**31:
+        raise AssertionError(
+            f"generated memo note ID is not an integer ID: {backing_note_id}"
         )
-    ]
-    if repaired_rows != expected_repaired_rows:
+    if backing_note_id == GENERATED_MEMO_NOTE_ID:
+        raise AssertionError("generated memo retained the out-of-range synthetic ID")
+    if (
+        owner_id != NOTE_OWNER
+        or source_key != f"local-election:{GENERATED_MEMO_NOTE_ID}"
+        or matching_count != 1
+    ):
         raise AssertionError(f"generated memo backing note mismatch: {repaired_rows}")
     if not foreign_key_validated:
         raise AssertionError("public_memos note foreign key was not validated")
@@ -2068,9 +2097,9 @@ def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
             "select note_id from public.public_memos "
             "where note_id = %s and is_public is true"
         ),
-        params=(GENERATED_MEMO_NOTE_ID,),
+        params=(backing_note_id,),
     )
-    if anonymous_rows != [(GENERATED_MEMO_NOTE_ID,)]:
+    if anonymous_rows != [(backing_note_id,)]:
         raise AssertionError(
             f"repaired generated memo is not public: {anonymous_rows}"
         )
@@ -2083,7 +2112,7 @@ def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
             "update public.public_memos set title = 'generated election update' "
             "where note_id = %s returning title"
         ),
-        params=(GENERATED_MEMO_NOTE_ID,),
+        params=(backing_note_id,),
     )
     if owner_update != [("generated election update",)]:
         raise AssertionError(f"generated memo owner update failed: {owner_update}")
@@ -2096,7 +2125,7 @@ def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
             "update public.public_memos set title = 'forged update' "
             "where note_id = %s returning title"
         ),
-        params=(GENERATED_MEMO_NOTE_ID,),
+        params=(backing_note_id,),
     )
     if outsider_update:
         raise AssertionError("outsider updated an owner-backed generated memo")
@@ -2115,8 +2144,8 @@ def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
         raise AssertionError("repair made a forged legacy publication readable")
 
     return {
-        "backing_note_id": GENERATED_MEMO_NOTE_ID,
-        "source_key": repaired_rows[0][1],
+        "backing_note_id": backing_note_id,
+        "source_key": source_key,
         "foreign_key_validated": foreign_key_validated,
         "owner_update": owner_update[0][0],
         "forged_publication_visible": False,
@@ -3123,6 +3152,8 @@ def run_smoke(args: argparse.Namespace) -> int:
                     psycopg.connect,
                 )
             )
+            for issue_2844_sql in ISSUE_2844_ACCOUNT_DELETION_SQL_FILES:
+                apply_sql_fixture(conn, issue_2844_sql, artifacts_dir)
             apply_sql_fixture(conn, ASSET_CHAT_MIGRATION, artifacts_dir)
             seed_asset_chat_fixture(conn)
             asset_chat_rls = check_asset_chat_rls(conn)
@@ -3155,6 +3186,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "issue_4927_recurring_tombstone_contract": (
                 issue_4927_tombstone_concurrency
             ),
+            "issue_2844_account_deletion_contract": "passed",
             "video_artifact_contract": "passed",
         },
         "edge_fixture": {

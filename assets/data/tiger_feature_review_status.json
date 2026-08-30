@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-28T17:09:33.441776+00:00",
+  "generated_at": "2026-08-30T05:08:55.798697+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -117,7 +117,7 @@
         "dedupe_key": "tiger-feature-review:20260829T011200+0900:growth_weekly_digest",
         "remediation_state": "queued",
         "queue_status": "QUEUED",
-        "synced_at": "2026-08-28T17:09:06.597309+00:00"
+        "synced_at": "2026-08-29T06:24:25.423750+00:00"
       },
       "implementation": null,
       "findings_without_individual_trace": [
@@ -216,7 +216,7 @@
           "dedupe_key": "tiger-feature-review:20260829T011200+0900:growth_weekly_digest",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -307,7 +307,7 @@
           "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -397,7 +397,7 @@
           "dedupe_key": "tiger-feature-review:20260828T120337+0900:philosophy",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -479,7 +479,7 @@
           "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -566,7 +566,7 @@
           "dedupe_key": "tiger-feature-review:20260828T042953+0900:horse_racing",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -654,7 +654,7 @@
           "dedupe_key": "tiger-feature-review:20260828T004359+0900:ai_hub",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -679,7 +679,7 @@
         "name": "野口 功司",
         "selection_score": 70.6913
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -720,9 +720,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4937",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #4937 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -738,13 +738,21 @@
           "number": 4937,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4937",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-feature-review:20260827T221025+0900:core_hub",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "ec314d3f767ea3245c3af7aa1fd7db51cfad9f4c",
+          "workflow_run": "33234270397",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33234270397/job/99053902129",
+          "pr_number": 4987,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/4987",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "core-hub-anonymous-reactions-auth-drift",
           "core-hub-legacy-reaction-action-client",
@@ -830,7 +838,7 @@
           "dedupe_key": "tiger-feature-review:20260827T033027+0900:home",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1121,8 +1129,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
-          "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1196,8 +1204,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
           "remediation_state": "queued",
-          "queue_status": "DEFERRED_RESOURCE",
-          "synced_at": "2026-08-28T17:09:06.597309+00:00"
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-29T06:24:25.423750+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [

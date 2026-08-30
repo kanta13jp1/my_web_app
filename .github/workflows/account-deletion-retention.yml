@@ -1,0 +1,86 @@
+name: Account deletion retention worker
+
+on:
+  schedule:
+    - cron: "37 18 * * *"
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Process due deletion requests (destructive)"
+        required: true
+        default: false
+        type: boolean
+      max_requests:
+        description: "Maximum requests to process in this run"
+        required: true
+        default: "10"
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: account-deletion-retention-worker
+  cancel-in-progress: false
+
+jobs:
+  process:
+    if: >-
+      (github.event_name == 'schedule' && vars.ACCOUNT_DELETION_AUTOMATION_ENABLED == 'true') ||
+      (github.event_name == 'workflow_dispatch' && inputs.apply)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      MAX_REQUESTS: ${{ github.event_name == 'workflow_dispatch' && inputs.max_requests || '10' }}
+    steps:
+      - name: Validate destructive worker configuration
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_URL:-}" || {
+            echo "::error::SUPABASE_URL_PROD is required"
+            exit 1
+          }
+          test -n "${SUPABASE_SERVICE_ROLE_KEY:-}" || {
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is required"
+            exit 1
+          }
+          [[ "$MAX_REQUESTS" =~ ^[0-9]+$ ]] || {
+            echo "::error::max_requests must be an integer"
+            exit 1
+          }
+          if [ "$MAX_REQUESTS" -lt 1 ] || [ "$MAX_REQUESTS" -gt 50 ]; then
+            echo "::error::max_requests must be between 1 and 50"
+            exit 1
+          fi
+
+      - name: Process due account deletions
+        run: |
+          set -euo pipefail
+          processed=0
+          for ((attempt=1; attempt<=MAX_REQUESTS; attempt++)); do
+            response_file="/tmp/account-deletion-response-${attempt}.json"
+            http_code=$(curl -sS -o "$response_file" -w "%{http_code}" \
+              -X POST "$SUPABASE_URL/functions/v1/account-lifecycle" \
+              -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Content-Type: application/json" \
+              --data '{"action":"process_due"}')
+
+            jq -c . "$response_file"
+            if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ] ||
+              ! jq -e '.success == true' "$response_file" >/dev/null; then
+              echo "::error::account-lifecycle failed with HTTP ${http_code}"
+              exit 1
+            fi
+
+            if jq -e '.processed == true' "$response_file" >/dev/null
+            then
+              processed=$((processed + 1))
+            else
+              break
+            fi
+          done
+          echo "Processed ${processed} due account deletion request(s)."
