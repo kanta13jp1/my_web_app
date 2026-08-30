@@ -71,6 +71,7 @@ import '../widgets/home_tier/new_features_list.dart';
 import '../widgets/home_tier/ai_recommended_features_list.dart';
 import '../widgets/home_tier/popular_features_list.dart';
 import '../utils/feature_tap_logger.dart';
+import '../utils/home_feature_request_failure.dart';
 import '../services/route_visibility_observer.dart';
 
 class HomePage extends StatefulWidget {
@@ -348,6 +349,23 @@ class _HomePageState extends State<HomePage> with RouteAware {
     return lines.join('\n');
   }
 
+  void _showFeatureRequestFailure(
+    HomeFeatureRequestFailure failure,
+    Future<void> Function() retry,
+  ) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(failure.userMessage),
+        action: SnackBarAction(
+          label: failure.retryLabel,
+          onPressed: () => unawaited(retry()),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
+
   Future<void> _pickFeatureRequestAttachment() async {
     try {
       final result = await FilePicker.pickFiles(
@@ -369,13 +387,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
         _featureRequestAttachment = file;
         _featureRequestAttachmentAnalysis = null;
       });
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('画像の選択に失敗しました: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
+    } catch (_) {
+      _showFeatureRequestFailure(
+        HomeFeatureRequestFailure.attachmentSelection,
+        _pickFeatureRequestAttachment,
       );
     }
   }
@@ -463,13 +478,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('画像から追加要望の下書きを作成しました')));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('画像AI診断に失敗しました: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
+    } catch (_) {
+      _showFeatureRequestFailure(
+        HomeFeatureRequestFailure.attachmentAnalysis,
+        _analyzeFeatureRequestAttachment,
       );
     } finally {
       if (mounted) {
@@ -542,13 +554,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
           ),
         ),
       );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('追加要望の登録に失敗しました: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
+    } catch (_) {
+      _showFeatureRequestFailure(
+        HomeFeatureRequestFailure.submission,
+        _submitHomeFeatureRequest,
       );
     } finally {
       if (mounted) {

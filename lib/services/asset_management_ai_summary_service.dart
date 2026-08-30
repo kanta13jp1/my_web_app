@@ -1057,10 +1057,8 @@ class AssetManagementAiSummaryService {
   ) {
     final revolving = group.revolvingBilling;
     if (revolving != null) {
-      // リボ払い: 請求額は revolving_billing.billed_amount で確定する。設定内訳合計や
-      // 取込明細合計は請求額と比較しても無意味なため top-level の比較対象から外し、
-      // 「請求額の構成要素ではない参考値」として明示ラベル付きで渡す。
-      // (生の合計を請求額の隣に置くと AI が自前で差を取り「不一致」と誤指摘するため)
+      // リボ払い: 25日の返済予定は最低返済額 + 当月新規利用額。
+      // 既存残高は一括返済せず、最低返済額で圧縮する。
       return <String, dynamic>{
         'billing_account_id': group.billingAccountId,
         'billing_account_name': group.billingAccountName,
@@ -1072,21 +1070,20 @@ class AssetManagementAiSummaryService {
         'reconciliation_status': 'ok_revolving_no_action_needed',
         'revolving_billing': <String, dynamic>{
           'monthly_amount': revolving.monthlyAmount,
-          'credit_limit': revolving.creditLimit,
+          'new_usage_amount': revolving.newUsageAmount,
+          'existing_balance_amount': revolving.existingBalanceAmount,
+          'payment_day': revolving.paymentDay,
           'balance': revolving.balance,
-          'over_limit_amount': revolving.overLimitAmount,
           'billed_amount': revolving.billedAmount,
         },
-        'reference_only_not_billed': <String, dynamic>{
+        'statement_context': <String, dynamic>{
           'new_usage_this_month_total': group.statementLineTotal,
           'debts_routed_to_card_total': group.configuredDetailTotal,
-          'note': 'これらは請求額の構成要素ではない参考値。リボ払いの請求額は '
-              'revolving_billing.billed_amount のみで確定する。これらとの差を'
-              '「不一致」「ズレ」として判断・指摘しないこと。',
+          'note': '取込明細合計は新規利用額として25日の返済予定へ全額上乗せする。'
+              '紐づけ負債合計は参考値で、既存残高の一括返済額ではない。',
         },
-        'reconciliation_note': 'リボ払いカード。請求額=リボ設定額+max(0,リボ残高-利用限度額)で確定する。'
-            '取込明細(今月の新規利用)はリボ残高へ積み増される参考値、設定内訳は紐づけ管理用の参考値で、'
-            'いずれも請求額とは一致しないのが正常。不一致・要修正として扱わず、照合は完了とみなすこと。',
+        'reconciliation_note': 'リボ払いカード。25日の返済予定=最低返済額+当月新規利用額。'
+            '既存残高は一括返済せず最低返済額で圧縮し、新規利用分だけを同月に全額返す。',
         'configured_items': group.configuredItems
             .map(_cardReviewItemToJson)
             .toList(growable: false),

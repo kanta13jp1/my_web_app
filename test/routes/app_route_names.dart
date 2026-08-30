@@ -43,6 +43,7 @@ const List<String> kAllAppRoutes = <String>[
   '/ai-university-faculty',
   '/ai-university-ranking',
   '/ai-university-streaks',
+  '/ai-university-toeic',
   '/ai-university-video',
   '/ai-university-voice',
   '/ai-workflow-automation',

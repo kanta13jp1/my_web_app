@@ -48,6 +48,17 @@ class ImportError(RuntimeError):
     """Safe failure whose message contains no row content, IDs, or credentials."""
 
 
+def _safe_postgrest_code(exc: urllib.error.HTTPError) -> str:
+    try:
+        payload = json.loads(exc.read().decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return "unknown"
+    if not isinstance(payload, dict):
+        return "unknown"
+    code = str(payload.get("code") or "")
+    return code if re.fullmatch(r"[A-Z0-9]{5,8}", code) else "unknown"
+
+
 class SupabaseImportClient:
     def __init__(self, base_url: str, service_role_key: str) -> None:
         if not base_url.startswith("https://"):
@@ -146,11 +157,47 @@ class SupabaseImportClient:
             with urllib.request.urlopen(request, timeout=45) as response:
                 response.read()
         except urllib.error.HTTPError as exc:
+            postgrest_code = _safe_postgrest_code(exc)
             raise ImportError(
-                f"Supabase returned HTTP {exc.code} while writing {resource}"
+                f"Supabase returned HTTP {exc.code} code {postgrest_code} "
+                f"while writing {resource}"
             ) from None
         except urllib.error.URLError as exc:
             raise ImportError(f"Supabase write failed for {resource}") from exc
+
+    def patch(
+        self,
+        resource: str,
+        query: list[tuple[str, str]],
+        values: dict[str, Any],
+    ) -> None:
+        encoded = urllib.parse.urlencode(query)
+        headers = {
+            **self._headers,
+            "Content-Type": "application/json",
+            "Prefer": "return=minimal",
+        }
+        request = urllib.request.Request(
+            f"{self._rest_url}/{resource}?{encoded}",
+            data=json.dumps(
+                values,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ).encode("utf-8"),
+            headers=headers,
+            method="PATCH",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=45) as response:
+                response.read()
+        except urllib.error.HTTPError as exc:
+            postgrest_code = _safe_postgrest_code(exc)
+            raise ImportError(
+                f"Supabase returned HTTP {exc.code} code {postgrest_code} "
+                f"while patching {resource}"
+            ) from None
+        except urllib.error.URLError as exc:
+            raise ImportError(f"Supabase patch failed for {resource}") from exc
 
 
 def _latest_context(
@@ -283,6 +330,7 @@ def _report_base(
         "plan_sha256": summary["plan_sha256"],
         "safe_logical_groups": safe_total,
         "blocked_logical_groups": summary["blocked_logical_groups"],
+        "validation_errors": summary["validation_errors"],
         "selected_offset": offset,
         "selected_limit": limit,
         "selected_logical_groups": len(selected),
@@ -307,30 +355,37 @@ def _report_base(
     }
 
 
-def _wbs_mutation_rows(
+def _wbs_mutation_batches(
     selected: list[dict[str, Any]],
     site_rows: list[dict[str, Any]],
-) -> list[dict[str, Any]]:
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     site_by_id = {str(row.get("id") or ""): row for row in site_rows}
-    rows: list[dict[str, Any]] = []
+    insert_rows: list[dict[str, Any]] = []
+    update_rows: list[dict[str, Any]] = []
     for action in selected:
         if action["decision"] not in {"insert", "update_from_notion"}:
             continue
         destination_id = str(action["destination_task_id"])
-        existing = site_by_id.get(destination_id, {})
         content = action["content"]
-        rows.append(
-            {
-                "id": destination_id,
-                "category": str(existing.get("category") or "Notion移行"),
-                "title": content["title"],
-                "instance": content["instance"],
-                "status": content["status"],
-                "progress": content["progress"],
-                "end_date": content["deadline"],
-            }
-        )
-    return rows
+        values = {
+            "title": content["title"],
+            "instance": content["instance"],
+            "status": content["status"],
+            "progress": content["progress"],
+            "end_date": content["deadline"],
+        }
+        if action["decision"] == "insert":
+            existing = site_by_id.get(destination_id, {})
+            insert_rows.append(
+                {
+                    "id": destination_id,
+                    "category": str(existing.get("category") or "Notion移行"),
+                    **values,
+                }
+            )
+        else:
+            update_rows.append({"id": destination_id, **values})
+    return insert_rows, update_rows
 
 
 def _verify_destinations(
@@ -549,8 +604,18 @@ def run_import(
     if not report["safe_apply_gate_open"]:
         raise ImportError("selected safe batch failed the mapping gate")
 
-    wbs_rows = _wbs_mutation_rows(selected, site_rows)
-    client.upsert("wbs_tasks", wbs_rows, on_conflict="id")
+    wbs_insert_rows, wbs_update_rows = _wbs_mutation_batches(
+        selected,
+        site_rows,
+    )
+    client.upsert("wbs_tasks", wbs_insert_rows, on_conflict="id")
+    for row in wbs_update_rows:
+        destination_id = str(row["id"])
+        client.patch(
+            "wbs_tasks",
+            [("id", f"eq.{destination_id}")],
+            {key: value for key, value in row.items() if key != "id"},
+        )
     refreshed_site_rows = client.all_rows(
         "wbs_tasks",
         [
@@ -593,7 +658,7 @@ def run_import(
         now=now,
     )
     report["mutations"] = {
-        "wbs_rows": len(wbs_rows),
+        "wbs_rows": len(wbs_insert_rows) + len(wbs_update_rows),
         "items_imported_now": imported_now,
         "items_already_imported_or_later": sum(
             1
@@ -612,8 +677,8 @@ def _write_summary(path: Path, report: dict[str, Any]) -> None:
     lines = [
         "## Notion WBS cloud import",
         "",
-        f"- Mode: \`{report['mode']}\`",
-        f"- Plan SHA-256: \`{report['plan_sha256']}\`",
+        f"- Mode: `{report['mode']}`",
+        f"- Plan SHA-256: `{report['plan_sha256']}`",
         f"- Safe logical groups: {report['safe_logical_groups']}",
         f"- Blocked logical groups: {report['blocked_logical_groups']}",
         f"- Selected logical groups: {report['selected_logical_groups']}",

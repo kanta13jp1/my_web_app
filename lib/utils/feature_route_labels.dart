@@ -45,6 +45,7 @@ const Map<String, String> kCanonicalFeatureRouteAliases = <String, String>{
 
 const Map<String, String> _consolidatedFeatureLabels = <String, String>{
   '/ai-writing-assistant': 'AI文章・要約アシスタント',
+  '/ai-university-toeic': 'AI大学 TOEIC対策',
   '/art-museums': '全国の美術館',
   '/asset-management': '資産・家計管理',
   '/autonomous-ops-console': '自律オペレーションコンソール',
