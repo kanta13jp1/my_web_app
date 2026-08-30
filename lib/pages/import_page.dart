@@ -41,7 +41,6 @@ class _ImportPageState extends State<ImportPage> {
   EvernoteCloudStageResult? _evernoteCloudStageResult;
   EvernoteCloudStageProgress? _evernoteCloudStageProgress;
   EvernoteMigrationTransferProgress? _evernoteTransferProgress;
-  Uint8List? _selectedFileBytes;
   ImportExecutionResult? _lastImportResult;
   String? _selectedSource;
   final TextEditingController _notionTokenController = TextEditingController();
@@ -149,7 +148,6 @@ class _ImportPageState extends State<ImportPage> {
       _isLoading = true;
       _selectedSource = sourceType;
       _preview = null;
-      _selectedFileBytes = null;
       _evernoteCloudStageResult = null;
       _evernoteCloudStageProgress = null;
       _evernoteTransferProgress = null;
@@ -189,7 +187,6 @@ class _ImportPageState extends State<ImportPage> {
         setState(() {
           _preview = staged.preview;
           _evernoteCloudStageResult = staged;
-          _selectedFileBytes = null;
         });
         await _recordEvernotePreview(staged.preview);
         unawaited(_acquisitionService.recordImportPreview(sourceType));
@@ -208,7 +205,6 @@ class _ImportPageState extends State<ImportPage> {
       if (!mounted) return;
       setState(() {
         _preview = preview;
-        _selectedFileBytes = bytes;
       });
       await _recordEvernotePreview(preview);
       unawaited(_acquisitionService.recordImportPreview(sourceType));
@@ -294,7 +290,6 @@ class _ImportPageState extends State<ImportPage> {
       if (!mounted) return;
       setState(() {
         _preview = preview;
-        _selectedFileBytes = null;
       });
       unawaited(_acquisitionService.recordImportPreview('notion_api'));
     } catch (error) {
@@ -353,15 +348,11 @@ class _ImportPageState extends State<ImportPage> {
       }
       if (!mounted) return;
       _showMessage(
-        'Imported ' +
-            result.insertedCount.toString() +
-            ' notes via ' +
-            result.importModeLabel.toLowerCase() +
-            '.',
+        'Imported ${result.insertedCount} notes via '
+        '${result.importModeLabel.toLowerCase()}.',
       );
       setState(() {
         _preview = null;
-        _selectedFileBytes = null;
         _evernoteCloudStageResult = null;
         _evernoteCloudStageProgress = null;
         _evernoteTransferProgress = null;
@@ -370,7 +361,6 @@ class _ImportPageState extends State<ImportPage> {
     } catch (error) {
       if (!mounted) return;
       if (preview.sourceType == 'evernote') {
-        setState(() => _selectedFileBytes = null);
         _showMessage(
           'Import failed, but the verified private cloud archive was kept. '
           'You can retry without selecting the ENEX again: $error',

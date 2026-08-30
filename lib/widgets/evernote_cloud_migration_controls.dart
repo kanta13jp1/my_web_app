@@ -26,7 +26,7 @@ class EvernoteCloudStageStatus extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Private cloud archive: $percent% · ' + progress.state.name,
+          'Private cloud archive: $percent% · ${progress.state.name}',
           key: const Key('evernote-cloud-stage-progress-label'),
           style: failed
               ? TextStyle(
@@ -142,16 +142,9 @@ class EvernoteCloudTransferStatus extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final failed = progress.state == EvernoteMigrationTransferState.failed;
-    final label = 'Cloud transfer: ' +
-        progress.percent.toString() +
-        '% · ' +
-        progress.state.label +
-        ' · ' +
-        progress.stageLabel +
-        ' · object ' +
-        progress.objectIndex.toString() +
-        '/' +
-        progress.objectCount.toString();
+    final label = 'Cloud transfer: ${progress.percent}% · '
+        '${progress.state.label} · ${progress.stageLabel} · '
+        'object ${progress.objectIndex}/${progress.objectCount}';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

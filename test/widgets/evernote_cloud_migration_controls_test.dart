@@ -7,10 +7,10 @@ import 'package:my_web_app/widgets/evernote_cloud_migration_controls.dart';
 void main() {
   testWidgets('shows cloud stage and transfer progress', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: Scaffold(
           body: Column(
-            children: const [
+            children: [
               EvernoteCloudStageStatus(
                 progress: EvernoteCloudStageProgress(
                   state: EvernoteCloudStageState.verifying,
@@ -36,68 +36,87 @@ void main() {
 
     expect(find.text('Private cloud archive: 50% · verifying'), findsOneWidget);
     expect(
-      find.text('Cloud transfer: 50% · Completed · Recovery archive · object 1/3'),
+      find.text(
+        'Cloud transfer: 50% · Completed · Recovery archive · object 1/3',
+      ),
       findsOneWidget,
     );
   });
 
-  testWidgets('stacks source hierarchy fields at narrow width', (tester) async {
-    final notebook = TextEditingController(text: 'Notebook');
-    final stack = TextEditingController();
-    final space = TextEditingController();
-    addTearDown(notebook.dispose);
-    addTearDown(stack.dispose);
-    addTearDown(space.dispose);
+  testWidgets(
+    'stacks source hierarchy fields at narrow width',
+    (tester) async {
+      final notebook = TextEditingController(text: 'Notebook');
+      final stack = TextEditingController();
+      final space = TextEditingController();
+      addTearDown(notebook.dispose);
+      addTearDown(stack.dispose);
+      addTearDown(space.dispose);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 390,
-            child: EvernoteSourceContextFields(
-              notebookController: notebook,
-              stackController: stack,
-              spaceController: space,
-              onChanged: () {},
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 390,
+              child: EvernoteSourceContextFields(
+                notebookController: notebook,
+                stackController: stack,
+                spaceController: space,
+                onChanged: () {},
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    expect(find.byKey(const Key('evernote-source-context-narrow')), findsOneWidget);
-    expect(find.byKey(const Key('evernote-source-context-wide')), findsNothing);
-    expect(find.byType(TextField), findsNWidgets(3));
-    expect(tester.takeException(), isNull);
-  });
+      expect(
+        find.byKey(const Key('evernote-source-context-narrow')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('evernote-source-context-wide')),
+        findsNothing,
+      );
+      expect(find.byType(TextField), findsNWidgets(3));
+      expect(tester.takeException(), isNull);
+    },
+  );
 
-  testWidgets('places optional hierarchy fields in a row at wide width',
-      (tester) async {
-    final notebook = TextEditingController(text: 'Notebook');
-    final stack = TextEditingController();
-    final space = TextEditingController();
-    addTearDown(notebook.dispose);
-    addTearDown(stack.dispose);
-    addTearDown(space.dispose);
+  testWidgets(
+    'places optional hierarchy fields in a row at wide width',
+    (tester) async {
+      final notebook = TextEditingController(text: 'Notebook');
+      final stack = TextEditingController();
+      final space = TextEditingController();
+      addTearDown(notebook.dispose);
+      addTearDown(stack.dispose);
+      addTearDown(space.dispose);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 900,
-            child: EvernoteSourceContextFields(
-              notebookController: notebook,
-              stackController: stack,
-              spaceController: space,
-              onChanged: () {},
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              child: EvernoteSourceContextFields(
+                notebookController: notebook,
+                stackController: stack,
+                spaceController: space,
+                onChanged: () {},
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    expect(find.byKey(const Key('evernote-source-context-wide')), findsOneWidget);
-    expect(find.byKey(const Key('evernote-source-context-narrow')), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
+      expect(
+        find.byKey(const Key('evernote-source-context-wide')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('evernote-source-context-narrow')),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
