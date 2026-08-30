@@ -25,6 +25,9 @@ env:
 
 jobs:
   readiness:
+    environment:
+      name: customer-operations-production
+      deployment: false
     permissions:
       contents: read
     runs-on: ubuntu-latest

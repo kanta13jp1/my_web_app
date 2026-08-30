@@ -21,6 +21,9 @@ concurrency:
 
 jobs:
   backfill:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: read
     name: Run blog.backfill_from_apis

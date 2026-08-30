@@ -33,6 +33,9 @@ permissions: {}
 
 jobs:
   review:
+    environment:
+      name: wbs-automation-production
+      deployment: false
     permissions:
       contents: read
     name: WBS AI Review
