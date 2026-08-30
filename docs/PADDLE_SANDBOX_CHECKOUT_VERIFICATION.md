@@ -136,14 +136,18 @@ call path.
 
 ## Execution record
 
-Real sandbox execution is not complete until project-specific sandbox values
-are supplied and all three rows below contain dated evidence.
+The project-specific Paddle sandbox matrix completed on a GitHub-hosted runner
+without retries. The linked run retains the sanitized event JSON, Playwright
+report, and post-result screenshots in artifact
+`paddle-real-sandbox-evidence-33308228516-1` until 2026-09-13.
 
 | Date (JST) | Browser | Scenario | Result | Evidence |
 | --- | --- | --- | --- | --- |
-| Pending | Chrome | Success | Not run: sandbox token/price not supplied | — |
-| Pending | Chrome | Failure | Not run: sandbox token/price not supplied | — |
-| Pending | Chrome | Cancel | Not run: sandbox token/price not supplied | — |
+| 2026-08-30 20:13:43 | Chromium 151.0.7922.34 | Success | Pass: `checkout.completed`; Flutter rendered **ホームへ戻る** | [run 33308228516](https://github.com/kanta13jp1/my_web_app/actions/runs/33308228516), checkout `che_01m195zvjvq96t9ernsvdatheb`, transaction `txn_01m195zvbetzh649m4bnjfstnr` |
+| 2026-08-30 20:13:23 | Chromium 151.0.7922.34 | Failure | Pass: `checkout.payment.failed`; Flutter rendered **もう一度試す** | [run 33308228516](https://github.com/kanta13jp1/my_web_app/actions/runs/33308228516), checkout `che_01m195za6xsb42v1pyy1c8h9w5`, failed transaction `txn_01m195z9z8ef5n84ps3saxz9bm` |
+| 2026-08-30 20:13:06 | Chromium 151.0.7922.34 | Cancel | Pass: `checkout.closed` without `checkout.completed`; Flutter rendered the no-charge cancellation state | [run 33308228516](https://github.com/kanta13jp1/my_web_app/actions/runs/33308228516), checkout `che_01m195yz4mj12bjams3erf7yx4`, incomplete transaction `txn_01m195yyw76bfakq9gd6ev3396` |
+
+The evidence was captured from Git commit `fae1935026bfd3578c4217e78c71afd49c890fc4`.
 
 Do not copy a client-side token, API key, full card form, customer address, or
 unredacted personal information into this document, an Issue, or a PR.
