@@ -313,6 +313,9 @@ class _NoteCollectionsPageState extends State<NoteCollectionsPage> {
                     label: Text(collection.isPinned ? 'ピン解除' : 'ピン留め'),
                   ),
                   TextButton.icon(
+                    key: ValueKey<String>(
+                      'note_collection_edit_${collection.id}',
+                    ),
                     onPressed: _saving || locked
                         ? null
                         : () => _showEditDialog(collection),
