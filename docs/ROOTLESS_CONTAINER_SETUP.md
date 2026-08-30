@@ -17,7 +17,9 @@ GitHub-hosted runner で並行実行します。production secret や hosted Sup
   `no-new-privileges` を確認する。
 - **Rootless Supabase Auth and DB**: rootless Podman の user socket を一時的な
   Docker API として Supabase CLI へ渡し、Auth health、`pg_isready`、DB volume の
-  permission error 0 件を確認する。
+  permission error 0 件を確認する。Podman と Supabase CLI の health-check 互換差を
+  避けるため CLI 起動時だけ `--ignore-health-check` を指定しますが、合格判定は script
+  自身の DB/Auth 待機と実測結果で行うため、サービス不健全を成功扱いにはしません。
 
 関連ファイルの Pull Request では自動実行されます。任意の branch を手動検証する場合は
 Actions 画面から **Rootless Container Cloud Smoke** を選ぶか、次を実行します。

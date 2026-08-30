@@ -90,6 +90,7 @@ class RootlessContainerSetupTest(unittest.TestCase):
         self.assertTrue(any("secrets." in error for error in errors), errors)
         self.assertTrue(any("--privileged" in error for error in errors), errors)
         self.assertTrue(any("supabase stop" in error for error in errors), errors)
+        self.assertTrue(any("--ignore-health-check" in error for error in errors), errors)
 
 
 if __name__ == "__main__":

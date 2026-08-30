@@ -27,8 +27,11 @@ cleanup() {
   status=$?
   set +e
   if [ "${supabase_started}" = true ]; then
-    supabase stop >/dev/null 2>&1
-    record "supabase_cleanup=stopped_with_backup"
+    if supabase stop >/dev/null 2>&1; then
+      record "supabase_cleanup=stopped_with_backup"
+    else
+      record "supabase_cleanup=stop_failed_runner_will_be_discarded"
+    fi
   fi
   if [ -n "${service_pid}" ]; then
     kill "${service_pid}" >/dev/null 2>&1
@@ -108,24 +111,51 @@ record "docker_api_compatibility=pass"
 record "supabase_cli=$(supabase --version 2>/dev/null | head -n 1)"
 
 start_log="${socket_dir}/supabase-start.log"
+supabase_started=true
 if ! supabase start \
   --exclude realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor \
+  --ignore-health-check \
   --yes >"${start_log}" 2>&1; then
   echo "Supabase start failed; relevant diagnostics:" >&2
-  grep -Ei 'error|failed|denied|unhealthy|permission|operation not permitted' \
-    "${start_log}" | tail -n 80 >&2 || true
+  diagnostics_file="${evidence_dir}/supabase-start-diagnostics.txt"
+  {
+    grep -Ei \
+      'error|failed|denied|unhealthy|permission|operation not permitted|does not exist|not ready|read-only|invalid|already exists|workdir|exit code' \
+      "${start_log}" | tail -n 120 || true
+    podman ps --all \
+      --filter label=com.supabase.cli.project \
+      --format 'container={{.Names}} state={{.State}} status={{.Status}}' || true
+  } | sed -E \
+    -e '/anon key|service_role key|jwt secret|API URL|DB URL|Studio URL/Id' \
+    -e 's#postgres(ql)?://[^[:space:]]+#postgresql://[redacted]#g' \
+    -e 's/eyJ[A-Za-z0-9._-]+/[redacted-jwt]/g' \
+    | tee "${diagnostics_file}" >&2
   exit 1
 fi
-supabase_started=true
-supabase status >/dev/null
 
 project_id="$(sed -nE 's/^project_id[[:space:]]*=[[:space:]]*"([^"]+)"/\1/p' \
   "${repo_root}/supabase/config.toml" | head -n 1)"
-db_container="$(podman ps \
-  --filter "label=com.supabase.cli.project=${project_id}" \
-  --format '{{.Names}}' | grep '^supabase_db_' | head -n 1)"
+db_container=""
+for _ in $(seq 1 30); do
+  db_container="$(podman ps \
+    --filter "label=com.supabase.cli.project=${project_id}" \
+    --format '{{.Names}}' | grep '^supabase_db_' | head -n 1 || true)"
+  if [ -n "${db_container}" ]; then
+    break
+  fi
+  sleep 2
+done
 test -n "${db_container}"
 
+database_ready=false
+for _ in $(seq 1 60); do
+  if podman exec "${db_container}" pg_isready -U postgres >/dev/null 2>&1; then
+    database_ready=true
+    break
+  fi
+  sleep 2
+done
+test "${database_ready}" = true
 podman exec "${db_container}" pg_isready -U postgres | tee -a "${evidence_file}"
 db_log="${socket_dir}/database.log"
 podman logs "${db_container}" >"${db_log}" 2>&1
@@ -136,7 +166,7 @@ fi
 record "database_volume_permission_errors=0"
 
 auth_status=""
-for _ in $(seq 1 30); do
+for _ in $(seq 1 60); do
   if auth_status="$(curl --fail --silent --output /dev/null \
     --write-out '%{http_code}' http://127.0.0.1:54321/auth/v1/health)"; then
     break
@@ -144,6 +174,7 @@ for _ in $(seq 1 30); do
   sleep 2
 done
 test "${auth_status}" = "200"
+supabase status >/dev/null
 record "supabase_auth_health=200"
 record "supabase_database_health=ready"
 record "supabase_rootless_smoke=pass"

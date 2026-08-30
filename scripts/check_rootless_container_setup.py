@@ -156,6 +156,7 @@ def validate_cloud_workflow(workflow: str, smoke_script: str) -> list[str]:
         "--userns=keep-id",
         "--cap-drop=ALL",
         "supabase start",
+        "--ignore-health-check",
         "supabase stop",
         "pg_isready",
         "/auth/v1/health",
