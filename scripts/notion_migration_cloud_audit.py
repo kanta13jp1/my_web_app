@@ -14,6 +14,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from scripts.notion_wbs_import_plan import build_wbs_import_plan
+
 
 class AuditError(RuntimeError):
     """Safe audit failure that never includes response data or credentials."""
@@ -46,11 +48,17 @@ class SupabaseAuditClient:
         self,
         resource: str,
         query: list[tuple[str, str]],
+        *,
+        range_start: int | None = None,
+        range_end: int | None = None,
     ) -> list[dict[str, Any]]:
         encoded = urllib.parse.urlencode(query)
+        headers = dict(self._headers)
+        if range_start is not None and range_end is not None:
+            headers["Range"] = f"{range_start}-{range_end}"
         request = urllib.request.Request(
             f"{self._rest_url}/{resource}?{encoded}",
-            headers=self._headers,
+            headers=headers,
             method="GET",
         )
         try:
@@ -72,6 +80,26 @@ class SupabaseAuditClient:
         ):
             raise AuditError(f"Supabase returned an invalid row set for {resource}")
         return payload
+
+    def all_rows(
+        self,
+        resource: str,
+        query: list[tuple[str, str]],
+        *,
+        page_size: int = 1000,
+    ) -> list[dict[str, Any]]:
+        result: list[dict[str, Any]] = []
+        for start in range(0, 100000, page_size):
+            page = self.rows(
+                resource,
+                query,
+                range_start=start,
+                range_end=start + page_size - 1,
+            )
+            result.extend(page)
+            if len(page) < page_size:
+                return result
+        raise AuditError(f"row pagination limit exceeded for {resource}")
 
 
 def _exactly_one(
@@ -171,6 +199,30 @@ def collect_audit(client: SupabaseAuditClient) -> dict[str, Any]:
         ],
     )
     vault = vault_rows[0] if vault_rows else None
+    staged_wbs_rows = client.all_rows(
+        "notion_migration_wbs_staging",
+        [
+            (
+                "select",
+                "source_page_id,task_id,title,instance,status,progress,"
+                "deadline,source_updated_at,source_last_edited_at",
+            ),
+            ("batch_id", f"eq.{batch_id}"),
+            ("is_current", "eq.true"),
+            ("order", "task_id.asc,source_page_id.asc"),
+        ],
+    )
+    site_wbs_rows = client.all_rows(
+        "wbs_tasks",
+        [
+            (
+                "select",
+                "id,title,instance,status,progress,end_date,updated_at,category",
+            ),
+            ("order", "id.asc"),
+        ],
+    )
+    wbs_import_plan = build_wbs_import_plan(staged_wbs_rows, site_wbs_rows)
 
     total = _integer(progress, "total_items")
     imported = _integer(progress, "imported_items")
@@ -242,6 +294,7 @@ def collect_audit(client: SupabaseAuditClient) -> dict[str, Any]:
             "invalid_task_ids": _integer(wbs, "invalid_task_ids"),
             "staged_at": wbs.get("staged_at"),
         },
+        "wbs_import_plan": wbs_import_plan,
         "vault_manifest": (
             None
             if vault is None
@@ -290,6 +343,7 @@ def render_summary(report: dict[str, Any]) -> str:
     items = report["items"]
     capabilities = report["capabilities"]
     wbs = report["wbs_stage"]
+    wbs_plan = report["wbs_import_plan"]
     vault = report["vault_manifest"]
     gates = report["gates"]
     lines.extend(
@@ -336,6 +390,34 @@ def render_summary(report: dict[str, Any]) -> str:
             (
                 f"| {wbs['rows']} | {wbs['distinct_task_ids']} | "
                 f"{wbs['duplicate_rows']} | {wbs['invalid_task_ids']} |"
+            ),
+            "",
+            "### WBS cloud import plan",
+            "",
+            "| canonical | insert | update | unchanged | site newer | blockers |",
+            "| ---: | ---: | ---: | ---: | ---: | ---: |",
+            (
+                f"| {wbs_plan['canonical_rows']} | "
+                f"{wbs_plan['decisions']['insert']} | "
+                f"{wbs_plan['decisions']['update_from_notion']} | "
+                f"{wbs_plan['decisions']['unchanged']} | "
+                f"{wbs_plan['decisions']['site_newer_preserved']} | "
+                f"{wbs_plan['blockers']} |"
+            ),
+            "",
+            (
+                "| duplicate groups | "
+                f"{wbs_plan['exact_duplicate_groups']} exact / "
+                f"{wbs_plan['conflicting_duplicate_groups']} conflicting |"
+            ),
+            (
+                "| plan SHA-256 | "
+                f"{wbs_plan['plan_sha256']} |"
+            ),
+            (
+                "| apply gate | "
+                + ("OPEN" if wbs_plan["apply_gate_open"] else "CLOSED")
+                + " |"
             ),
         ]
     )

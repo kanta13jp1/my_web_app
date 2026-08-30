@@ -7,7 +7,9 @@ on:
       - .github/workflows/notion-migration-cloud-audit.yml
       - docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md
       - scripts/notion_migration_cloud_audit.py
+      - scripts/notion_wbs_import_plan.py
       - test/scripts/test_notion_migration_cloud_audit.py
+      - test/scripts/test_notion_wbs_import_plan.py
   workflow_dispatch:
 
 permissions: {}
@@ -30,7 +32,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Run focused unit tests
-        run: PYTHONPATH=. python test/scripts/test_notion_migration_cloud_audit.py
+        run: |
+          PYTHONPATH=. python test/scripts/test_notion_migration_cloud_audit.py
+          PYTHONPATH=. python test/scripts/test_notion_wbs_import_plan.py
 
   audit:
     if: github.event_name != 'pull_request'
@@ -51,7 +55,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Verify audit logic
-        run: PYTHONPATH=. python test/scripts/test_notion_migration_cloud_audit.py
+        run: |
+          PYTHONPATH=. python test/scripts/test_notion_migration_cloud_audit.py
+          PYTHONPATH=. python test/scripts/test_notion_wbs_import_plan.py
 
       - name: Read aggregate progress only
         run: >-
