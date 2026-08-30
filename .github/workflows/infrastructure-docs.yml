@@ -1,0 +1,131 @@
+name: Infrastructure Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      - ".github/workflows/**"
+      - "scripts/generate_infrastructure_map.py"
+      - "scripts/generate_infrastructure_map_test.py"
+  pull_request:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      - ".github/workflows/**"
+      - "scripts/generate_infrastructure_map.py"
+      - "scripts/generate_infrastructure_map_test.py"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: infrastructure-documentation-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  generate:
+    name: Generate infrastructure map
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout source revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Test deterministic parser
+        run: python scripts/generate_infrastructure_map_test.py
+
+      - name: Generate infrastructure map
+        shell: bash
+        run: |
+          set -euo pipefail
+          generated_at="$(git show -s --format=%cI HEAD)"
+          python scripts/generate_infrastructure_map.py \
+            --source-revision="${GITHUB_SHA}" \
+            --generated-at="${generated_at}" \
+            --json
+          {
+            echo "### Infrastructure documentation"
+            echo ""
+            echo "- Source: \`${GITHUB_SHA}\`"
+            echo "- Artifact: \`infrastructure-map-${GITHUB_RUN_ID}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload generated document
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: infrastructure-map-${{ github.run_id }}
+          path: docs/generated/INFRASTRUCTURE_MAP.md
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish canonical document branch
+        if: >-
+          (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+          github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DOC_BRANCH: generated/infrastructure-docs
+          DOC_PATH: docs/generated/INFRASTRUCTURE_MAP.md
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          source_commit="${GITHUB_SHA}"
+          base_tree="$(gh api "repos/${GITHUB_REPOSITORY}/git/commits/${source_commit}" --jq '.tree.sha')"
+          if current_ref="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${DOC_BRANCH}" 2>/dev/null)"; then
+            parent_commit="$(jq -r '.object.sha' <<<"${current_ref}")"
+            update_ref=true
+          else
+            parent_commit="${source_commit}"
+            update_ref=false
+          fi
+
+          blob_sha="$(
+            base64 -w 0 "${DOC_PATH}" |
+              jq -Rs '{content: ., encoding: "base64"}' |
+              gh api --method POST "repos/${GITHUB_REPOSITORY}/git/blobs" --input - --jq '.sha'
+          )"
+          tree_sha="$(
+            jq -n \
+              --arg base_tree "${base_tree}" \
+              --arg path "${DOC_PATH}" \
+              --arg sha "${blob_sha}" \
+              '{base_tree: $base_tree, tree: [{path: $path, mode: "100644", type: "blob", sha: $sha}]}' |
+              gh api --method POST "repos/${GITHUB_REPOSITORY}/git/trees" --input - --jq '.sha'
+          )"
+
+          if [[ "${tree_sha}" == "${base_tree}" ]]; then
+            echo "Canonical infrastructure document is already current." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          commit_sha="$(
+            jq -n \
+              --arg message "docs(infra): publish map for ${source_commit}" \
+              --arg tree "${tree_sha}" \
+              --arg parent "${parent_commit}" \
+              '{message: $message, tree: $tree, parents: [$parent]}' |
+              gh api --method POST "repos/${GITHUB_REPOSITORY}/git/commits" --input - --jq '.sha'
+          )"
+
+          if [[ "${update_ref}" == "true" ]]; then
+            jq -n --arg sha "${commit_sha}" '{sha: $sha, force: false}' |
+              gh api --method PATCH \
+                "repos/${GITHUB_REPOSITORY}/git/refs/heads/${DOC_BRANCH}" --input -
+          else
+            jq -n --arg ref "refs/heads/${DOC_BRANCH}" --arg sha "${commit_sha}" \
+              '{ref: $ref, sha: $sha}' |
+              gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" --input -
+          fi
+
+          canonical_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/${DOC_BRANCH}/${DOC_PATH}"
+          echo "- Canonical document: ${canonical_url}" >> "${GITHUB_STEP_SUMMARY}"

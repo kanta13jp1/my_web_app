@@ -98,9 +98,21 @@ class CicdEfficiencyTest(unittest.TestCase):
             workflow,
         )
         self.assertIn("python scripts/cloud_first_route_test.py", workflow)
+        self.assertIn(
+            "python scripts/generate_infrastructure_map_test.py", workflow
+        )
+        precommit = self.read("scripts/pre_commit_quality_gate.py")
+        self.assertIn(
+            "scripts/generate_infrastructure_map_test.py", precommit
+        )
+        self.assertIn("expected_head_sha:", workflow)
+        self.assertIn('ref="${GITHUB_SHA}"', workflow)
 
         guide = self.read("docs/CLOUD_FIRST_DEVELOPMENT.md")
-        self.assertIn("gh workflow run ci.yml --ref", guide)
+        self.assertIn(
+            "python scripts/cloud_ci_handoff.py --execute --watch",
+            guide,
+        )
         self.assertIn("30 GiB", guide)
         self.assertIn("4 GiB", guide)
 
