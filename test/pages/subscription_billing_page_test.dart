@@ -5,6 +5,7 @@ import 'package:my_web_app/services/activation_revenue_experiment_service.dart';
 import 'package:my_web_app/services/activation_revenue_tracker.dart';
 import 'package:my_web_app/services/billing_service.dart';
 import 'package:my_web_app/services/growth_acquisition_service.dart';
+import 'package:my_web_app/services/paddle_checkout.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -353,6 +354,53 @@ void main() {
       containsPair('utm_content', 'outcome_first_a'),
     );
   });
+
+  testWidgets('keeps the Paddle sandbox card hidden by default', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: _FakeBillingGateway(),
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
+          initialUri: Uri.parse('https://example.com/subscription-billing'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('paddle_sandbox_checkout_card')), findsNothing);
+  });
+
+  testWidgets('shows the Paddle sandbox card only when explicitly enabled', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: _FakeBillingGateway(),
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
+          initialUri: Uri.parse('https://example.com/subscription-billing'),
+          paddleSandboxConfig: const PaddleSandboxConfig(
+            enabled: true,
+            clientSideToken: 'test_client_token',
+            priceId: 'pri_sandbox_price',
+            releaseMode: false,
+          ),
+          paddleCheckoutGateway: _FakePaddleCheckoutGateway(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('paddle_sandbox_checkout_card')),
+      findsOneWidget,
+    );
+    expect(find.text('SANDBOX ONLY'), findsOneWidget);
+  });
 }
 
 final _treatment = ActivationRevenueAssignment(
@@ -461,4 +509,15 @@ class _RecordingAcquisitionService extends GrowthAcquisitionService {
       capturedAt: DateTime.utc(2026, 7, 24),
     );
   }
+}
+
+class _FakePaddleCheckoutGateway implements PaddleCheckoutGateway {
+  @override
+  Future<void> openCheckout({
+    required PaddleSandboxConfig config,
+    required void Function(PaddleCheckoutEvent event) onEvent,
+  }) async {}
+
+  @override
+  void dispose() {}
 }

@@ -58,7 +58,7 @@ def site(
 
 
 class NotionWbsImportPlanTest(unittest.TestCase):
-    def test_exact_duplicate_collapses_without_losing_gate(self) -> None:
+    def test_exact_same_id_duplicate_collapses(self) -> None:
         rows = [
             staged(
                 IDS[0],
@@ -75,13 +75,13 @@ class NotionWbsImportPlanTest(unittest.TestCase):
         plan = build_wbs_import_plan(rows, [])
 
         self.assertEqual(plan["canonical_rows"], 1)
+        self.assertEqual(plan["logical_rows"], 1)
         self.assertEqual(plan["duplicate_rows"], 1)
         self.assertEqual(plan["exact_duplicate_groups"], 1)
-        self.assertEqual(plan["conflicting_duplicate_groups"], 0)
         self.assertEqual(plan["decisions"]["insert"], 1)
         self.assertTrue(plan["apply_gate_open"])
 
-    def test_conflicting_duplicate_blocks_automatic_apply(self) -> None:
+    def test_conflicting_same_id_duplicate_blocks_apply(self) -> None:
         rows = [
             staged(
                 IDS[0],
@@ -135,14 +135,57 @@ class NotionWbsImportPlanTest(unittest.TestCase):
         self.assertEqual(plan["decisions"]["manual_timestamp_conflict"], 1)
         self.assertFalse(plan["apply_gate_open"])
 
-    def test_title_instance_collision_blocks_insert(self) -> None:
+    def test_different_source_id_can_alias_existing_logical_task(self) -> None:
         plan = build_wbs_import_plan(
             [staged(IDS[1], "occupied")],
             [site(IDS[0], "occupied")],
         )
 
-        self.assertEqual(plan["title_instance_conflicts"], 1)
-        self.assertEqual(plan["decisions"]["title_instance_conflict"], 1)
+        self.assertEqual(plan["logical_rows"], 1)
+        self.assertEqual(plan["identity_alias_rows"], 1)
+        self.assertEqual(plan["decisions"]["unchanged"], 1)
+        self.assertEqual(plan["identity_collisions"], 0)
+        self.assertTrue(plan["apply_gate_open"])
+
+    def test_existing_id_cannot_take_another_existing_title(self) -> None:
+        plan = build_wbs_import_plan(
+            [staged(IDS[1], "occupied")],
+            [
+                site(IDS[0], "occupied"),
+                site(IDS[1], "different"),
+            ],
+        )
+
+        self.assertEqual(plan["identity_collisions"], 1)
+        self.assertEqual(plan["decisions"]["identity_collision"], 1)
+        self.assertFalse(plan["apply_gate_open"])
+
+    def test_exact_multi_id_sources_become_one_logical_insert(self) -> None:
+        plan = build_wbs_import_plan(
+            [
+                staged(IDS[0], "same logical task"),
+                staged(IDS[1], "same logical task"),
+            ],
+            [],
+        )
+
+        self.assertEqual(plan["canonical_rows"], 2)
+        self.assertEqual(plan["logical_rows"], 1)
+        self.assertEqual(plan["identity_alias_rows"], 1)
+        self.assertEqual(plan["decisions"]["insert"], 1)
+        self.assertTrue(plan["apply_gate_open"])
+
+    def test_conflicting_multi_id_logical_group_blocks_apply(self) -> None:
+        plan = build_wbs_import_plan(
+            [
+                staged(IDS[0], "same title", progress=10),
+                staged(IDS[1], "same title", progress=20),
+            ],
+            [],
+        )
+
+        self.assertEqual(plan["title_group_content_conflicts"], 1)
+        self.assertEqual(plan["decisions"]["title_group_content_conflict"], 1)
         self.assertFalse(plan["apply_gate_open"])
 
     def test_invalid_ids_and_fields_are_blockers(self) -> None:
