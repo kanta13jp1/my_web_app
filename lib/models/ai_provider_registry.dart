@@ -1313,7 +1313,6 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'格安 GPU マーケットプレイス — RTX3090 $0.19/h / Serverless 200ms CS / 30+ GPU SKU / 秒課金',
   ),
-
   AiProviderEntry(
     id: 'arize_ai',
     displayName: 'Arize AI',
