@@ -444,13 +444,12 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
           onCompletedChanged: (value) {
             unawaited(_setCompleted(tasks[index], value));
           },
-          onOpenNote:
-              tasks[index].noteTitle == null &&
-                      !tasks[index].isOwnedByCurrentUser
-                  ? null
-                  : () {
-                      unawaited(_openNote(tasks[index]));
-                    },
+          onOpenNote: tasks[index].noteTitle == null &&
+                  !tasks[index].isOwnedByCurrentUser
+              ? null
+              : () {
+                  unawaited(_openNote(tasks[index]));
+                },
         ),
       ),
     );

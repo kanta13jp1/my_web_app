@@ -710,7 +710,10 @@ class EvernoteEnexParser {
       _childText(task, 'assigneeName').trim(),
     ]);
     final compact = _nonEmpty(container?.innerText.trim());
-    if (userId == null && email == null && displayName == null && compact != null) {
+    if (userId == null &&
+        email == null &&
+        displayName == null &&
+        compact != null) {
       if (compact.contains('@')) {
         email = compact;
       } else {

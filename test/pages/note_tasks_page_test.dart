@@ -265,6 +265,13 @@ class _FakeNoteTaskRepository implements NoteTaskRepository {
   }
 
   @override
+  Future<void> assignTask({
+    required NoteTask task,
+    String? email,
+    String? displayName,
+  }) async {}
+
+  @override
   Future<void> addReminder({
     required NoteTask task,
     required DateTime remindAt,
