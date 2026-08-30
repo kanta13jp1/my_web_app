@@ -83,7 +83,8 @@ class VideoStudioPage extends StatelessWidget {
                                       child: Column(
                                         children: [
                                           _BalanceAndPacks(
-                                              viewModel: viewModel),
+                                            viewModel: viewModel,
+                                          ),
                                           const SizedBox(
                                             height: DesignTokens.space16,
                                           ),
@@ -99,10 +100,12 @@ class VideoStudioPage extends StatelessWidget {
                                   children: [
                                     _BalanceAndPacks(viewModel: viewModel),
                                     const SizedBox(
-                                        height: DesignTokens.space16),
+                                      height: DesignTokens.space16,
+                                    ),
                                     _Composer(viewModel: viewModel),
                                     const SizedBox(
-                                        height: DesignTokens.space16),
+                                      height: DesignTokens.space16,
+                                    ),
                                     _JobsPanel(viewModel: viewModel),
                                   ],
                                 ),
