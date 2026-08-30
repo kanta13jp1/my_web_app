@@ -3,6 +3,7 @@ name: Cloud Development Checks
 on:
   pull_request:
     paths:
+      - .devcontainer/**
       - .github/workflows/cloud-development.yml
       - docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md
       - AGENTS.md
@@ -14,6 +15,7 @@ on:
         default: full
         type: choice
         options:
+          - workspace
           - analyze
           - test
           - web-build
@@ -48,12 +50,20 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Validate cloud workspace descriptors
+        shell: bash
+        run: |
+          python -m json.tool .devcontainer/devcontainer.json > /dev/null
+          python -m json.tool .devcontainer/flutter-local/devcontainer.json > /dev/null
+
       - name: Set up repository-pinned Flutter SDK
+        if: env.CLOUD_PROFILE != 'workspace'
         uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x'
 
       - name: Resolve dependencies in cloud
+        if: env.CLOUD_PROFILE != 'workspace'
         run: flutter pub get
 
       - name: Analyze in cloud
@@ -91,5 +101,5 @@ jobs:
             echo "| ref | \`${GITHUB_REF}\` |"
             echo "| commit | \`${GITHUB_SHA}\` |"
             echo '| local Flutter/Dart work | none |'
-            echo '| artifact retention | 1 day |'
+            echo '| artifact retention | 1 day when a web build runs |'
           } >> "$GITHUB_STEP_SUMMARY"

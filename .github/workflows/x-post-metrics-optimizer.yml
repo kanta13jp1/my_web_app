@@ -27,6 +27,9 @@ concurrency:
 
 jobs:
   collect:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions: {}
     runs-on: ubuntu-latest
     timeout-minutes: 10

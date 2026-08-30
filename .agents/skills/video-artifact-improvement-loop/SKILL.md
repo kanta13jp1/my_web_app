@@ -8,6 +8,9 @@ description: Preserve, review, improve, and commercialize first-party GPU video 
 Use this workflow for the site's own GPU video generations. Read
 `references/schema.md` before changing tables, Edge Functions, worker
 completion, or the Video Studio UI.
+Read `references/cloud-execution.md` for manual and scheduled runs so media,
+queue state, review evidence, and inference stay in Supabase/GCP rather than
+the local PC.
 
 ## Choose the operating mode
 
@@ -65,6 +68,13 @@ recurring budget from a single completed purchase.
    append a new review. Continue only while the authorization envelope still
    has remaining iterations and budget and the stopping rules in
    `references/authorized-actions.md` permit another attempt.
+7. When a reviewed `improve` artifact has no recurring authorization ID, route
+   the owner to Video Studio's bounded authorization form. The form must
+   capture expiry, total iterations, total credits, and confirmations, then
+   atomically save the envelope and reserve its first job.
+8. On a later review in the same lineage, reuse the still-active envelope by
+   consuming the exact new artifact/review once. Never ask for a duplicate
+   approval while its expiry and remaining limits are valid.
 
 ## Commercialization gates
 
@@ -116,6 +126,9 @@ Verify these invariants in code and tests:
 - Failed generation still refunds and produces no sellable artifact.
 - Authorized credit purchases and regenerations cannot exceed the envelope's
   per-run and lifetime limits, and every mutation has an idempotency record.
+- Registering an envelope from Video Studio either returns both an
+  authorization ID and first queued job, or rolls back both; a successful
+  `improve` review is rediscovered after page reload until consumed.
 - Publication first creates an inactive draft, verifies price and protected
   delivery, then activates only the exact approved artifact and can be rolled
   back without deleting provenance or purchase records.

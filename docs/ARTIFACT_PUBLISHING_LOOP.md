@@ -72,7 +72,7 @@ manifestの主要fieldは`artifact_sha256`、`mime_type`、`file_size_bytes`、
 保守的に推定した`artifact_kind`、
 `provenance[]`、値を含まない`risk_scan.findings[]`です。importは自動送信ではありません。
 画像・音声・動画・文章・template以外の曖昧な拡張子では、`--artifact-kind`に
-`design`、`prompt`、`idea`、`game`、`bundle`などを明示します（defaultは`auto`）。
+`design`、`prompt`、`idea`、`game`、`application`、`bundle`などを明示します（defaultは`auto`）。
 1回の実行では入力全体に同じ種別を適用するため、種別が異なる成果物は実行を分けます。
 レビュー済みの管理者sessionから`intake_artifact_candidate` RPCへ各entryとprovenanceを
 渡すと、SHA-256をkeyに候補と出所を同一transactionでatomic upsertできます。RPCは
