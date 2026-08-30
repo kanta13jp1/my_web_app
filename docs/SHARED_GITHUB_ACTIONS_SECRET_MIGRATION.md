@@ -7,17 +7,25 @@ away from repository-level GitHub Actions secrets. The source-controlled
 inventory is `.github/privileged-workflow-credentials.json`.
 
 As of 2026-08-30, the operational inventory has 11 workflow files that resolve
-`ANTHROPIC_API_KEY`, 55 that resolve `SUPABASE_SERVICE_ROLE_KEY`, and 61 unique
+`ANTHROPIC_API_KEY`, 53 that resolve `SUPABASE_SERVICE_ROLE_KEY`, and 61 unique
 consumer workflows. The migration control workflow adds one source consumer
 and nine credential-canary jobs; it is tracked separately from the operational
 consumer count. The issue body's earlier 10 / 52 snapshot must not be used as
 a deletion gate.
 
-The repository copies are intentionally retained during the first migration
-phase. An environment declaration alone does not isolate a job while a
-same-named repository secret still exists. Internal branches can use repository
-secrets, so deterministic internal-PR isolation is complete only after both
-repository copies are deleted.
+Provisioning run [33301069460](https://github.com/kanta13jp1/my_web_app/actions/runs/33301069460)
+copied the approved source values directly between GitHub Environments, and
+validation run [33301113215](https://github.com/kanta13jp1/my_web_app/actions/runs/33301113215)
+passed all nine canaries. Deletion run
+[33301289531](https://github.com/kanta13jp1/my_web_app/actions/runs/33301289531)
+removed the repository-level `ANTHROPIC_API_KEY` after revalidating every
+Environment. The Supabase repository copy remains until its exception ledger
+and reduced consumer inventory are merged and validated.
+
+An environment declaration alone does not isolate a job while a same-named
+repository secret still exists. Internal branches can use repository secrets,
+so deterministic internal-PR isolation is complete only after both repository
+copies are deleted.
 
 ## Paid AI review pause
 
@@ -196,6 +204,32 @@ For direct REST calls:
 Keep a service-role exception only when the operation truly needs RLS bypass.
 Record the workflow, reason, data scope, approver, expiration/review date, and
 rotation owner. Store the exception credential in its declared environment.
+
+### 2026-08-30 production assessment
+
+The repository uses one production Supabase project,
+`smmkxxavexumewbfaqpy`. The following existing RLS-approved reads were moved to
+`SUPABASE_ANON_KEY_PROD`:
+
+- `competitor-monitoring.yml`: all `competitors` reads; no service role remains.
+- `blog-draft.yml`: the `ai_circuit_breaker` quota read; no Supabase service
+  role remains.
+- `competitor-discovery.yml`: the `competitors` read uses anon; service role is
+  injected only into the `competitor_candidates` staging write step.
+
+This reduces operational service-role consumers from 55 to 53 and removes the
+credential from read-only steps where RLS already grants access. The remaining
+seven trust-boundary groups require protected writes, service-role-only
+aggregate views, cross-user lifecycle operations, or security remediation.
+The approved temporary exceptions are recorded in
+`.github/privileged-workflow-credentials.json`; the static checker requires
+reason, data scope, owner approval basis, review date, rotation owner,
+replacement blocker, project ref, and rejected alternatives for every active
+service-role Environment. The next mandatory review date is 2026-11-30.
+
+An anon/publishable key is not a valid substitute for protected mutations, and
+a Supabase secret key still carries service-role authorization. Neither is
+counted as a low-privilege replacement.
 
 ## Phase 4: deletion and deterministic proof
 
