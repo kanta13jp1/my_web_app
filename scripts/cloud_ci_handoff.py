@@ -16,6 +16,8 @@ from typing import Any, Callable, Sequence
 
 FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
 PROTECTED_BRANCHES = frozenset({"main", "master", "staging", "develop"})
+CLOUD_DEVELOPMENT_WORKFLOW = "cloud-development.yml"
+CLOUD_PROFILES = ("workspace", "analyze", "test", "web-build", "full")
 
 
 @dataclass(frozen=True)
@@ -35,6 +37,7 @@ class HandoffState:
     workflow: str
     ready: bool
     reasons: tuple[str, ...]
+    profile: str | None = None
 
 
 Runner = Callable[[Sequence[str], Path], CommandResult]
@@ -97,6 +100,7 @@ def readiness_reasons(
 def inspect_handoff(
     repo_root: Path,
     workflow: str,
+    profile: str | None = None,
     runner: Runner = run_command,
 ) -> HandoffState:
     root_text = _require(
@@ -145,11 +149,12 @@ def inspect_handoff(
         workflow=workflow,
         ready=not reasons,
         reasons=reasons,
+        profile=profile,
     )
 
 
 def dispatch_command(state: HandoffState) -> list[str]:
-    return [
+    command = [
         "gh",
         "workflow",
         "run",
@@ -159,6 +164,9 @@ def dispatch_command(state: HandoffState) -> list[str]:
         "-f",
         f"expected_head_sha={state.head_sha}",
     ]
+    if state.profile is not None:
+        command.extend(["-f", f"profile={state.profile}"])
+    return command
 
 
 def list_runs(
@@ -244,7 +252,16 @@ def dispatch_and_locate(
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
-    parser.add_argument("--workflow", default="ci.yml")
+    parser.add_argument("--workflow", default=CLOUD_DEVELOPMENT_WORKFLOW)
+    parser.add_argument(
+        "--profile",
+        choices=CLOUD_PROFILES,
+        default="full",
+        help=(
+            "Cloud development scope. Used only with cloud-development.yml; "
+            "defaults to full."
+        ),
+    )
     parser.add_argument(
         "--execute",
         action="store_true",
@@ -271,6 +288,8 @@ def _emit(payload: dict[str, Any], as_json: bool) -> None:
     print(f"- Exact HEAD: {state['head_sha']}")
     print(f"- Origin HEAD: {state['remote_sha'] or 'missing'}")
     print(f"- Workflow: {state['workflow']}")
+    if state.get("profile"):
+        print(f"- Profile: {state['profile']}")
     for reason in state["reasons"]:
         print(f"- Blocker: {reason}")
     run = payload.get("run")
@@ -286,7 +305,16 @@ def main(argv: list[str]) -> int:
         print("--watch requires --execute", file=sys.stderr)
         return 2
     try:
-        state = inspect_handoff(args.repo_root.resolve(), args.workflow)
+        profile = (
+            args.profile
+            if Path(args.workflow).name == CLOUD_DEVELOPMENT_WORKFLOW
+            else None
+        )
+        state = inspect_handoff(
+            args.repo_root.resolve(),
+            args.workflow,
+            profile=profile,
+        )
         payload: dict[str, Any] = {
             "status": "ready" if state.ready else "blocked",
             "handoff": {**asdict(state), "reasons": list(state.reasons)},

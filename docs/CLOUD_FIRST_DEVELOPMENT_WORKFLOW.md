@@ -21,7 +21,11 @@ Run in GitHub Actions:
 - release and deployment gates;
 - generated build artifact creation.
 
-Do not start a local Flutter/Dart build, analysis, test, browser automation, or media pipeline when RAM usage is at least 85% or free physical memory is below 2 GB. Preserve edits, dispatch the cloud check, and wait for its result instead.
+Cloud execution is the default even on a healthy workstation. Do not start a
+local Flutter/Dart build, analysis, test, browser automation, or media pipeline
+when free disk is below 30 GiB, RAM usage is at least 85%, or free physical
+memory is below 4 GiB. Preserve edits, dispatch the cloud check, and wait for
+its result instead.
 
 ## Cloud editing workspace
 
@@ -43,32 +47,30 @@ gh codespace delete -c <codespace-name>
 For the smallest edits, prefer the GitHub web editor or Git Data API and skip provisioning a codespace. GitHub Codespaces can incur usage charges after included quota; this repository never creates one automatically.
 
 The former rootless-Podman Flutter environment remains available at `.devcontainer/flutter-local/devcontainer.json`. It is a resource-heavy local fallback, not the default. Select it only when local RAM and disk are healthy and local execution is explicitly required.
+
 ## Manual cloud validation
 
-The workflow supports four profiles:
+The workflow supports five profiles:
 
 | Profile | Cloud work |
 | --- | --- |
-| workspace | validate cloud/local workspace descriptors without installing Flutter |
+| `workspace` | validate cloud/local workspace descriptors without installing Flutter |
 | `analyze` | dependency resolution and static analysis |
 | `test` | dependency resolution and tests |
 | `web-build` | dependency resolution and release web build |
 | `full` | analysis, tests, and release web build |
 
-Dispatch against the branch that contains the change:
+Commit and push the branch, then dispatch through the exact-SHA helper:
 
 ```powershell
-gh workflow run cloud-development.yml --ref <branch> -f profile=full
-```
-
-Find and watch the run without creating local build output:
-
-```powershell
-$runId = gh run list --workflow cloud-development.yml --branch <branch> --limit 1 --json databaseId --jq '.[0].databaseId'
-gh run watch $runId --exit-status
+git push -u origin HEAD
+python scripts/cloud_ci_handoff.py --profile full --execute --watch
 ```
 
 Use `workspace` for dev-container-only changes, a narrower Flutter profile while iterating, and `full` before merge. The workflow cancels an older run for the same ref/profile, checks out only one commit of history, reuses the hosted Flutter cache, and keeps web artifacts for one day.
+The helper verifies that the worktree is clean, the pushed branch equals local
+`HEAD`, and the hosted runner checks out that exact SHA. Use raw `gh workflow
+run` only for diagnosing the helper itself.
 
 ## Pull requests and deployment
 
