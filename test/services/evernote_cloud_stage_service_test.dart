@@ -245,7 +245,7 @@ class _FakeStageStorage implements EvernoteMigrationStorageGateway {
     required String path,
   }) async* {
     final bytes = await downloadBinary(bucketId: bucketId, path: path);
-    yield* _chunked(bytes, 23);
+    yield* _chunked(bytes, 64 * 1024);
   }
 
   @override
