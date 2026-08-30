@@ -29,6 +29,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_TITLE: "[ops] Codex worktree/PR merge backlog"
+          CANONICAL_ISSUE_NUMBER: "3448"
+          LEGACY_ISSUE_TITLE: "[ops] Codex worktree merge backlog"
         run: |
           set -euo pipefail
           git fetch origin \
@@ -137,18 +139,34 @@ jobs:
               fi
             done)
 
-          existing=$(gh issue list --search '"Codex worktree/PR merge backlog" in:title state:open' \
-            --json number --jq '.[0].number' 2>/dev/null || true)
-          if [ -z "$existing" ]; then
-            existing=$(gh issue list --search '"Codex worktree merge backlog" in:title state:open' \
-              --json number --jq '.[0].number' 2>/dev/null || true)
+          existing=""
+          if gh issue view "$CANONICAL_ISSUE_NUMBER" --json number >/dev/null 2>&1; then
+            existing="$CANONICAL_ISSUE_NUMBER"
+          else
+            existing=$(gh issue list --state all \
+              --search '"Codex worktree/PR merge backlog" in:title' \
+              --limit 100 --json number,title \
+              | jq -r --arg title "$ISSUE_TITLE" \
+                'map(select(.title == $title)) | sort_by(.number) | last | .number // ""')
+            if [ -z "$existing" ]; then
+              existing=$(gh issue list --state all \
+                --search '"Codex worktree merge backlog" in:title' \
+                --limit 100 --json number,title \
+                | jq -r --arg title "$LEGACY_ISSUE_TITLE" \
+                  'map(select(.title == $title)) | sort_by(.number) | last | .number // ""')
+            fi
           fi
 
           if [ -z "$stale_branches" ] && [ -z "$ready_prs" ] && [ -z "$conflicted_prs" ] && [ -z "$cleanup_branches" ]; then
             if [ -n "$existing" ]; then
-              gh issue close "$existing" \
-                --comment "No Codex backlog detected by codex-backlog-check.yml."
-              echo "Issue #$existing closed."
+              existing_state=$(gh issue view "$existing" --json state --jq .state)
+              if [ "$existing_state" = "OPEN" ]; then
+                gh issue close "$existing" \
+                  --comment "No Codex backlog detected by codex-backlog-check.yml."
+                echo "Issue #$existing closed."
+              else
+                echo "Issue #$existing is already closed."
+              fi
             else
               echo "No Codex backlog detected."
             fi
@@ -198,6 +216,12 @@ jobs:
           } > "$body_file"
 
           if [ -n "$existing" ]; then
+            existing_state=$(gh issue view "$existing" --json state --jq .state)
+            if [ "$existing_state" = "CLOSED" ]; then
+              gh issue reopen "$existing" \
+                --comment "Codex backlog detected again by codex-backlog-check.yml."
+              echo "Issue #$existing reopened."
+            fi
             gh issue edit "$existing" --title "$ISSUE_TITLE" --body-file "$body_file"
             echo "Issue #$existing updated."
           else
