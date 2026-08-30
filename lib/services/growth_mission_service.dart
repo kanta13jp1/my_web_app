@@ -455,6 +455,101 @@ class WeeklyDigestChannelMetrics {
   }
 }
 
+class WeeklyDigestDecision {
+  final String id;
+  final String owner;
+  final String priorityChannelId;
+  final String priorityChannelLabel;
+  final int targetCvr;
+  final int minimumTouches;
+  final String nextAction;
+  final String dueDate;
+  final String outcomeStatus;
+
+  const WeeklyDigestDecision({
+    required this.id,
+    required this.owner,
+    required this.priorityChannelId,
+    required this.priorityChannelLabel,
+    required this.targetCvr,
+    required this.minimumTouches,
+    required this.nextAction,
+    required this.dueDate,
+    required this.outcomeStatus,
+  });
+
+  const WeeklyDigestDecision.empty()
+      : id = '',
+        owner = '',
+        priorityChannelId = '',
+        priorityChannelLabel = '',
+        targetCvr = 0,
+        minimumTouches = 0,
+        nextAction = '',
+        dueDate = '',
+        outcomeStatus = '';
+
+  factory WeeklyDigestDecision.fromJson(Map<String, dynamic> json) {
+    final priorityChannel = _weeklyDigestMap(json['priorityChannel']);
+    final threshold = _weeklyDigestMap(json['threshold']);
+    final outcome = _weeklyDigestMap(json['outcome']);
+    return WeeklyDigestDecision(
+      id: json['id']?.toString() ?? '',
+      owner: json['owner']?.toString() ?? '',
+      priorityChannelId: priorityChannel['id']?.toString() ?? '',
+      priorityChannelLabel: priorityChannel['label']?.toString() ?? '',
+      targetCvr: (threshold['target'] as num?)?.toInt() ?? 0,
+      minimumTouches: (threshold['minimumTouches'] as num?)?.toInt() ?? 0,
+      nextAction: json['nextAction']?.toString() ?? '',
+      dueDate: json['dueDate']?.toString() ?? '',
+      outcomeStatus: outcome['status']?.toString() ?? '',
+    );
+  }
+}
+
+class WeeklyDigestDecisionOutcome {
+  final String decisionId;
+  final String priorityChannelId;
+  final String priorityChannelLabel;
+  final String status;
+  final int actualCvr;
+  final int actualTouches;
+  final int actualSignupSubmits;
+
+  const WeeklyDigestDecisionOutcome({
+    required this.decisionId,
+    required this.priorityChannelId,
+    required this.priorityChannelLabel,
+    required this.status,
+    required this.actualCvr,
+    required this.actualTouches,
+    required this.actualSignupSubmits,
+  });
+
+  const WeeklyDigestDecisionOutcome.empty()
+      : decisionId = '',
+        priorityChannelId = '',
+        priorityChannelLabel = '',
+        status = '',
+        actualCvr = 0,
+        actualTouches = 0,
+        actualSignupSubmits = 0;
+
+  factory WeeklyDigestDecisionOutcome.fromJson(Map<String, dynamic> json) {
+    final priorityChannel = _weeklyDigestMap(json['priorityChannel']);
+    final actual = _weeklyDigestMap(json['actual']);
+    return WeeklyDigestDecisionOutcome(
+      decisionId: json['decisionId']?.toString() ?? '',
+      priorityChannelId: priorityChannel['id']?.toString() ?? '',
+      priorityChannelLabel: priorityChannel['label']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
+      actualCvr: (actual['cvr'] as num?)?.toInt() ?? 0,
+      actualTouches: (actual['touches'] as num?)?.toInt() ?? 0,
+      actualSignupSubmits: (actual['signupSubmits'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
 class WeeklyDigestSnapshot {
   final String currentWeekStart;
   final String currentWeekEnd;
@@ -465,6 +560,8 @@ class WeeklyDigestSnapshot {
   final int referralsDelta;
   final int importCtaClicks;
   final int publicMemoCtaClicks;
+  final WeeklyDigestDecision decision;
+  final WeeklyDigestDecisionOutcome previousDecisionOutcome;
   final String brief;
 
   const WeeklyDigestSnapshot({
@@ -477,6 +574,8 @@ class WeeklyDigestSnapshot {
     required this.referralsDelta,
     required this.importCtaClicks,
     required this.publicMemoCtaClicks,
+    required this.decision,
+    required this.previousDecisionOutcome,
     required this.brief,
   });
 
@@ -490,6 +589,8 @@ class WeeklyDigestSnapshot {
         referralsDelta = 0,
         importCtaClicks = 0,
         publicMemoCtaClicks = 0,
+        decision = const WeeklyDigestDecision.empty(),
+        previousDecisionOutcome = const WeeklyDigestDecisionOutcome.empty(),
         brief = '';
 
   factory WeeklyDigestSnapshot.fromJson(Map<String, dynamic> json) {
@@ -518,9 +619,19 @@ class WeeklyDigestSnapshot {
       referralsDelta: (json['referralsDelta'] as num?)?.toInt() ?? 0,
       importCtaClicks: (json['importCtaClicks'] as num?)?.toInt() ?? 0,
       publicMemoCtaClicks: (json['publicMemoCtaClicks'] as num?)?.toInt() ?? 0,
+      decision: WeeklyDigestDecision.fromJson(
+        _weeklyDigestMap(json['decision']),
+      ),
+      previousDecisionOutcome: WeeklyDigestDecisionOutcome.fromJson(
+        _weeklyDigestMap(json['previousDecisionOutcome']),
+      ),
       brief: json['brief']?.toString() ?? '',
     );
   }
+}
+
+Map<String, dynamic> _weeklyDigestMap(dynamic value) {
+  return value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{};
 }
 
 class GrowthMissionService {
