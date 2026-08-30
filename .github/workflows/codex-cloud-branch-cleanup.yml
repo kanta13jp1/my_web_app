@@ -207,6 +207,7 @@ jobs:
             echo
             echo "Local worktrees are intentionally untouched; recreate or remove them only from their owning machine."
           } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Refresh Codex backlog issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
