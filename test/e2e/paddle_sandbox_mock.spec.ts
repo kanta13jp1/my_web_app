@@ -62,7 +62,7 @@ test('sandbox checkout maps open, failed, cancelled, and completed events', asyn
       }),
     )
     .toBe(true);
-  await expect(page.getByText('Sandbox checkout を開きました')).toBeVisible();
+  await expect(page.getByLabel('Sandbox checkout を開きました')).toBeVisible();
 
   const initializedSafely = await page.evaluate(() => {
     const state = (window as any).__paddleSandboxMock;
@@ -89,13 +89,13 @@ test('sandbox checkout maps open, failed, cancelled, and completed events', asyn
       error: { detail: 'Sandbox card was declined' },
     });
   });
-  await expect(page.getByText('Sandbox 決済が拒否されました')).toBeVisible();
-  await expect(page.getByText('Sandbox card was declined')).toBeVisible();
+  await expect(page.getByLabel('Sandbox 決済が拒否されました')).toBeVisible();
+  await expect(page.getByLabel('Sandbox card was declined')).toBeVisible();
 
   await page.evaluate(() => {
     (window as any).__paddleSandboxMock.eventCallback({ name: 'checkout.closed' });
   });
-  await expect(page.getByText('チェックアウトを閉じました')).toBeVisible();
+  await expect(page.getByLabel('チェックアウトを閉じました')).toBeVisible();
 
   await page.evaluate(() => {
     (window as any).__paddleSandboxMock.eventCallback({
@@ -103,11 +103,13 @@ test('sandbox checkout maps open, failed, cancelled, and completed events', asyn
       data: { transaction_id: 'txn_sandbox_mock_2845' },
     });
   });
-  await expect(page.getByText('Sandbox決済が完了しました')).toBeVisible();
-  await expect(page.getByText('txn_sandbox_mock_2845')).toBeVisible();
+  await expect(page.getByLabel('Sandbox 決済が完了しました')).toBeVisible();
+  await expect(
+    page.getByLabel('transaction: txn_sandbox_mock_2845'),
+  ).toBeVisible();
 
   await page.evaluate(() => {
     (window as any).__paddleSandboxMock.eventCallback({ name: 'checkout.closed' });
   });
-  await expect(page.getByText('Sandbox決済が完了しました')).toBeVisible();
+  await expect(page.getByLabel('Sandbox 決済が完了しました')).toBeVisible();
 });
