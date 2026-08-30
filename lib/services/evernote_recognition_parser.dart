@@ -77,7 +77,7 @@ class EvernoteRecognitionIndex {
         .expand((region) => region.candidates)
         .map(
           (candidate) =>
-              candidate.text.replaceAll(RegExp(r'\\s+'), ' ').trim(),
+              candidate.text.replaceAll(RegExp(r'\s+'), ' ').trim(),
         )
         .where((text) => text.isNotEmpty)
         .join(' ');
