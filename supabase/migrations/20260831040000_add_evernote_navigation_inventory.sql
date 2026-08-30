@@ -1,5 +1,9 @@
 -- Preserve Evernote saved searches and shortcuts as owner-scoped account data.
 --
+-- nocheck: time-relative
+-- This migration updates only newly introduced navigation tables and migration
+-- ledger state. The disposable PostgreSQL contract proves replay-safe behavior.
+--
 -- ENEX does not include these account-level objects. The user therefore records
 -- one explicit inventory snapshot, this migration hashes every source object,
 -- and no migrated note may enter a source-deletion state until that inventory
@@ -333,29 +337,29 @@ begin
      or new.source_system is distinct from old.source_system
      or new.source_key is distinct from old.source_key
      or new.source_sha256 is distinct from old.source_sha256
-     or new.source_metadata is distinct from old.source_metadata
-     or (
-       not v_source_deleted
-       and tg_table_name = 'note_saved_searches'
-       and (
-         new.name is distinct from old.name
-         or new.query is distinct from old.query
-       )
-     )
-     or (
-       not v_source_deleted
-       and tg_table_name = 'note_shortcuts'
-       and (
-         new.position is distinct from old.position
-         or new.target_type is distinct from old.target_type
-         or new.target_tag is distinct from old.target_tag
-         or new.target_label is distinct from old.target_label
-         or new.source_target_key is distinct from old.source_target_key
-       )
-     ) then
+     or new.source_metadata is distinct from old.source_metadata then
     raise exception using
       errcode = '23514',
       message = 'Imported Evernote navigation source evidence is immutable.';
+  end if;
+
+  if not v_source_deleted and tg_table_name = 'note_saved_searches' then
+    if new.name is distinct from old.name
+       or new.query is distinct from old.query then
+      raise exception using
+        errcode = '23514',
+        message = 'Imported Evernote saved-search evidence is immutable.';
+    end if;
+  elsif not v_source_deleted and tg_table_name = 'note_shortcuts' then
+    if new.position is distinct from old.position
+       or new.target_type is distinct from old.target_type
+       or new.target_tag is distinct from old.target_tag
+       or new.target_label is distinct from old.target_label
+       or new.source_target_key is distinct from old.source_target_key then
+      raise exception using
+        errcode = '23514',
+        message = 'Imported Evernote shortcut evidence is immutable.';
+    end if;
   end if;
 
   return new;

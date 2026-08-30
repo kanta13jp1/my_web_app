@@ -46,12 +46,18 @@ class NoteListPage extends StatefulWidget {
   final bool prioritizeShareCandidates;
   final SupabaseClient? supabaseClient;
   final NoteSemanticSearchDataSource? semanticSearchService;
+  final String? initialSearchQuery;
+  final String? initialTag;
+  final int? initialCollectionId;
 
   const NoteListPage({
     super.key,
     this.prioritizeShareCandidates = false,
     this.supabaseClient,
     this.semanticSearchService,
+    this.initialSearchQuery,
+    this.initialTag,
+    this.initialCollectionId,
   });
 
   @override
@@ -75,6 +81,7 @@ class _NoteListPageState extends State<NoteListPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String? _selectedTag;
+  Set<int>? _allowedNotebookIds;
   Timer? _searchDebounce;
   List<NoteSearchResult> _semanticSearchResults = const <NoteSearchResult>[];
   String _semanticSearchMode = 'text_fallback';
@@ -90,6 +97,11 @@ class _NoteListPageState extends State<NoteListPage> {
     _publicMemoService = PublicMemoService(_supabase);
     _semanticSearchService =
         widget.semanticSearchService ?? NoteSemanticSearchService(_supabase);
+    _searchQuery = widget.initialSearchQuery?.trim() ?? '';
+    _searchController.text = _searchQuery;
+    final initialTag = widget.initialTag?.trim();
+    _selectedTag =
+        initialTag == null || initialTag.isEmpty ? null : initialTag;
     inboxCaptureRevision.addListener(_handleInboxCapture);
     _fetchNotes();
   }
@@ -187,11 +199,25 @@ class _NoteListPageState extends State<NoteListPage> {
   List<Map<String, dynamic>> _visibleNotesForSearch(
     List<Map<String, dynamic>> notes,
   ) {
+    final allowedNotebookIds = _allowedNotebookIds;
+    final collectionFiltered = allowedNotebookIds == null
+        ? notes
+        : notes
+            .where(
+              (note) => allowedNotebookIds.contains(
+                int.tryParse(
+                  note['notebook_collection_id']?.toString() ?? '',
+                ),
+              ),
+            )
+            .toList(growable: false);
     final viewFiltered = _showInboxOnly
-        ? notes.where(_isInbox).toList(growable: false)
+        ? collectionFiltered.where(_isInbox).toList(growable: false)
         : (_showFavoritesOnly
-            ? notes.where(_isFavorite).toList(growable: false)
-            : notes);
+            ? collectionFiltered
+                .where(_isFavorite)
+                .toList(growable: false)
+            : collectionFiltered);
     final selectedTag = _selectedTag;
     final locallyFiltered = selectedTag == null
         ? viewFiltered
@@ -217,7 +243,14 @@ class _NoteListPageState extends State<NoteListPage> {
         final matchesView = _showInboxOnly
             ? _isInbox(note)
             : (!_showFavoritesOnly || _isFavorite(note));
+        final matchesCollection = allowedNotebookIds == null ||
+            allowedNotebookIds.contains(
+              int.tryParse(
+                note['notebook_collection_id']?.toString() ?? '',
+              ),
+            );
         return matchesView &&
+            matchesCollection &&
             (selectedTag == null ||
                 NoteTagService.containsTag(note['tags'], selectedTag));
       },
@@ -260,6 +293,7 @@ class _NoteListPageState extends State<NoteListPage> {
         return;
       }
 
+      _allowedNotebookIds = await _resolveNotebookIds();
       final notes = await _fetchAllNotes(userId);
       final results = await Future.wait<dynamic>([
         _loadDraftEntries(notes),
@@ -288,6 +322,34 @@ class _NoteListPageState extends State<NoteListPage> {
     }
   }
 
+  Future<Set<int>?> _resolveNotebookIds() async {
+    final collectionId = widget.initialCollectionId;
+    if (collectionId == null) return null;
+    final rows = List<Map<String, dynamic>>.from(
+      await _supabase
+          .from('note_collections')
+          .select('id,parent_id,collection_type'),
+    );
+    final included = <int>{collectionId};
+    var changed = true;
+    while (changed) {
+      changed = false;
+      for (final row in rows) {
+        final id = int.tryParse(row['id']?.toString() ?? '');
+        final parentId = int.tryParse(row['parent_id']?.toString() ?? '');
+        if (id != null && parentId != null && included.contains(parentId)) {
+          changed = included.add(id) || changed;
+        }
+      }
+    }
+    return rows
+        .where((row) => row['collection_type'] == 'notebook')
+        .map((row) => int.tryParse(row['id']?.toString() ?? ''))
+        .whereType<int>()
+        .where(included.contains)
+        .toSet();
+  }
+
   Future<List<Map<String, dynamic>>> _fetchAllNotes(String userId) async {
     final notes = <Map<String, dynamic>>[];
     for (var from = 0;; from += _notesPageSize) {
@@ -295,7 +357,8 @@ class _NoteListPageState extends State<NoteListPage> {
           .from('notes')
           .select(
             'id, title, content, created_at, is_pinned, is_favorite, '
-            'reminder_date, tags, capture_status, capture_source, inbox_saved_at',
+            'reminder_date, tags, capture_status, capture_source, inbox_saved_at, '
+            'notebook_collection_id',
           )
           .eq('user_id', userId)
           .eq('is_archived', false)
@@ -1414,6 +1477,13 @@ class _NoteListPageState extends State<NoteListPage> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _fetchNotes,
+          ),
+          IconButton(
+            key: const Key('note_list_page_navigation_button'),
+            icon: const Icon(Icons.bookmarks_outlined),
+            tooltip: '保存済み検索・ショートカット',
+            onPressed: () =>
+                Navigator.of(context).pushNamed('/note-navigation'),
           ),
           IconButton(
             key: const Key('note_list_page_tasks_button'),
