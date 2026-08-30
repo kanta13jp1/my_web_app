@@ -628,8 +628,7 @@ class SupabaseEvernoteMigrationDatabaseGateway
         .toList(growable: false);
     final noteReminderSourceSha256 = noteReminderResponse.isEmpty
         ? null
-        : Map<String, dynamic>.from(noteReminderResponse.first)[
-                'source_sha256']
+        : Map<String, dynamic>.from(noteReminderResponse.first)['source_sha256']
             ?.toString();
     return EvernoteCommittedNoteSnapshot(
       noteId: _asInt(noteJson['id']),
@@ -1289,8 +1288,8 @@ class EvernoteMigrationCommitService {
             'content_sha256': note.contentSha256,
             'attributes': note.attributes,
             'links': note.links,
-          'tasks': _evernoteTaskPayloads(note),
-          'note_reminder': _evernoteNoteReminderPayload(note),
+            'tasks': _evernoteTaskPayloads(note),
+            'note_reminder': _evernoteNoteReminderPayload(note),
             'raw_note_xml_sha256':
                 sha256.convert(utf8.encode(note.rawXml)).toString(),
             'archive_path': archivePath,
@@ -1410,12 +1409,14 @@ class EvernoteMigrationCommitService {
     final expectedTaskReminderHashes = expectedTaskPayloads
         .expand(
           (task) =>
-              (task['reminders'] as List<dynamic>? ?? const <dynamic>[])
-                  .map(
-                    (reminder) => Map<String, dynamic>.from(
-                      reminder as Map,
-                    )['source_sha256']?.toString() ?? '',
-                  ),
+              (task['reminders'] as List<dynamic>? ?? const <dynamic>[]).map(
+            (reminder) =>
+                Map<String, dynamic>.from(
+                  reminder as Map,
+                )['source_sha256']
+                    ?.toString() ??
+                '',
+          ),
         )
         .toList(growable: false);
     final expectedNoteReminderHash =
@@ -1424,13 +1425,12 @@ class EvernoteMigrationCommitService {
         snapshot.taskSourceSha256.length == expectedTaskHashes.length;
     final taskHashesMatch = taskCountMatches &&
         _sameStringSets(snapshot.taskSourceSha256, expectedTaskHashes);
-    final taskReminderHashesMatch =
-        snapshot.taskReminderSourceSha256.length ==
-                expectedTaskReminderHashes.length &&
-            _sameStringSets(
-              snapshot.taskReminderSourceSha256,
-              expectedTaskReminderHashes,
-            );
+    final taskReminderHashesMatch = snapshot.taskReminderSourceSha256.length ==
+            expectedTaskReminderHashes.length &&
+        _sameStringSets(
+          snapshot.taskReminderSourceSha256,
+          expectedTaskReminderHashes,
+        );
     final noteReminderHashMatches =
         snapshot.noteReminderSourceSha256 == expectedNoteReminderHash;
 

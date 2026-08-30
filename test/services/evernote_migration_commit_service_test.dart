@@ -67,8 +67,9 @@ void main() {
           database.committedMetadata.single['note_reminder'];
       expect(committedTasks, hasLength(1));
       expect(
-        Map<String, dynamic>.from(committedTasks.single as Map)[
-            'source_sha256'],
+        Map<String, dynamic>.from(
+          committedTasks.single as Map,
+        )['source_sha256'],
         hasLength(64),
       );
       expect(
@@ -286,8 +287,7 @@ void main() {
       expect(database.verifyCalls, isEmpty);
     });
 
-    test('blocks verification when a committed Task hash mismatches',
-        () async {
+    test('blocks verification when a committed Task hash mismatches', () async {
       final fixture = _fixture();
       final storage = _FakeStorageGateway();
       final database = _FakeDatabaseGateway(corruptTaskHashes: true);
@@ -593,10 +593,10 @@ class _FakeDatabaseGateway implements EvernoteMigrationDatabaseGateway {
     committedContents.add(content);
     committedMetadata.add(Map<String, dynamic>.from(sourceMetadata));
     const noteId = 7001;
-    final taskPayloads = (sourceMetadata['tasks'] as List<dynamic>? ??
-            const <dynamic>[])
-        .map((value) => Map<String, dynamic>.from(value as Map))
-        .toList(growable: false);
+    final taskPayloads =
+        (sourceMetadata['tasks'] as List<dynamic>? ?? const <dynamic>[])
+            .map((value) => Map<String, dynamic>.from(value as Map))
+            .toList(growable: false);
     final taskHashes = taskPayloads
         .map((task) => task['source_sha256']?.toString() ?? '')
         .toList(growable: false);
@@ -606,12 +606,14 @@ class _FakeDatabaseGateway implements EvernoteMigrationDatabaseGateway {
     final taskReminderHashes = taskPayloads
         .expand(
           (task) =>
-              (task['reminders'] as List<dynamic>? ?? const <dynamic>[])
-                  .map(
-                    (reminder) => Map<String, dynamic>.from(
-                      reminder as Map,
-                    )['source_sha256']?.toString() ?? '',
-                  ),
+              (task['reminders'] as List<dynamic>? ?? const <dynamic>[]).map(
+            (reminder) =>
+                Map<String, dynamic>.from(
+                  reminder as Map,
+                )['source_sha256']
+                    ?.toString() ??
+                '',
+          ),
         )
         .toList(growable: false);
     final noteReminder = sourceMetadata['note_reminder'];

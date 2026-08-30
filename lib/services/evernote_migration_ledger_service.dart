@@ -148,14 +148,12 @@ class EvernoteMigrationItem {
       sourceTaskCount: _asIntValue(json['source_task_count']),
       importedTaskCount: _asIntValue(json['imported_task_count']),
       verifiedTaskCount: _asIntValue(json['verified_task_count']),
-      sourceTaskReminderCount:
-          _asIntValue(json['source_task_reminder_count']),
+      sourceTaskReminderCount: _asIntValue(json['source_task_reminder_count']),
       importedTaskReminderCount:
           _asIntValue(json['imported_task_reminder_count']),
       verifiedTaskReminderCount:
           _asIntValue(json['verified_task_reminder_count']),
-      sourceNoteReminderPresent:
-          json['source_note_reminder_present'] == true,
+      sourceNoteReminderPresent: json['source_note_reminder_present'] == true,
       noteReminderVerified: json['note_reminder_verified'] == true,
       noteTitle: _emptyStringToNull(note['title']),
     );
