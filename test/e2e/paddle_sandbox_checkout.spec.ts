@@ -174,7 +174,7 @@ async function completeCardForm(page: Page, cardNumber: string) {
     '100',
     'input[autocomplete="cc-csc"]',
   );
-  await fillIfVisible(page, /name on card|cardholder/i, 'Paddle Sandbox Test');
+  await fillIfVisible(page, /name on card|card\s*holder/i, 'Paddle Sandbox Test');
   await fillIfVisible(page, /zip|postal/i, '10001');
 
   await clickVisibleInFrames(
