@@ -267,9 +267,8 @@ def _latest_context(
         [
             (
                 "select",
-                "user_id,source_page_id,task_id,title,instance,status,progress,"
-                "deadline,source_updated_at,source_last_edited_at,source_payload,"
-                "staged_at",
+                "source_page_id,task_id,title,instance,status,progress,"
+                "deadline,source_updated_at,source_last_edited_at",
             ),
             ("batch_id", f"eq.{batch_id}"),
             ("is_current", "eq.true"),
@@ -424,6 +423,53 @@ def _inventory_repair_rows(
             continue
         rows.append(row)
     return rows, conflicts
+
+
+def _missing_page_ids(
+    actions: list[dict[str, Any]],
+    items: list[dict[str, Any]],
+) -> list[str]:
+    existing_sources = {str(item.get("source_id") or "") for item in items}
+    page_ids: list[str] = []
+    seen_sources: set[str] = set()
+    for action in actions:
+        for page_id in action["source_page_ids"]:
+            value = str(page_id or "").strip().lower()
+            source = _source_key(value)
+            if source in existing_sources or source in seen_sources:
+                continue
+            seen_sources.add(source)
+            page_ids.append(value)
+    return page_ids
+
+
+def _repair_staging_rows(
+    client: SupabaseImportClient,
+    batch_id: str,
+    page_ids: list[str],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for offset in range(0, len(page_ids), 50):
+        chunk = page_ids[offset : offset + 50]
+        if not chunk:
+            continue
+        rows.extend(
+            client.all_rows(
+                "notion_migration_wbs_staging",
+                [
+                    (
+                        "select",
+                        "user_id,source_page_id,title,source_updated_at,"
+                        "source_last_edited_at,source_payload,staged_at",
+                    ),
+                    ("batch_id", f"eq.{batch_id}"),
+                    ("is_current", "eq.true"),
+                    ("source_page_id", f"in.({','.join(chunk)})"),
+                    ("order", "source_page_id.asc"),
+                ],
+            )
+        )
+    return rows
 
 
 def _selected_item_bindings(
@@ -753,11 +799,16 @@ def run_import(
     selected = safe_actions[offset : offset + limit]
     bindings, missing, conflicts = _selected_item_bindings(selected, items)
     repair_now = datetime.now(timezone.utc).isoformat()
+    repair_staged_rows = _repair_staging_rows(
+        client,
+        str(batch.get("id") or ""),
+        _missing_page_ids(selected, items),
+    ) if missing > 0 else []
     repair_rows, repair_conflicts = _inventory_repair_rows(
         batch,
         selected,
         items,
-        staged_rows,
+        repair_staged_rows,
         now=repair_now,
     )
     report = _report_base(

@@ -93,6 +93,7 @@ class FakeClient:
         self.upserts: list[tuple[str, list[dict[str, Any]], str]] = []
         self.patches: list[tuple[str, list[tuple[str, str]], dict[str, Any]]] = []
         self.inserts: list[tuple[str, list[dict[str, Any]], str]] = []
+        self.all_row_resources: list[str] = []
 
     def rows(
         self,
@@ -117,6 +118,7 @@ class FakeClient:
         _query: list[tuple[str, str]],
         **_kwargs: object,
     ) -> list[dict[str, Any]]:
+        self.all_row_resources.append(resource)
         if resource == "notion_migration_wbs_staging":
             return deepcopy(self.stage_rows)
         if resource == "wbs_tasks":
@@ -282,6 +284,10 @@ class NotionWbsCloudImportTest(unittest.TestCase):
         self.assertNotIn("private staged title", encoded)
         self.assertNotIn(PAGE_IDS[0], encoded)
         self.assertFalse(report["source_deletion_attempted"])
+        self.assertEqual(
+            client.all_row_resources.count("notion_migration_wbs_staging"),
+            1,
+        )
 
     def test_apply_requires_the_current_digest_before_any_write(self) -> None:
         client = FakeClient(self.stage_rows, self.item_rows)
@@ -402,6 +408,10 @@ class NotionWbsCloudImportTest(unittest.TestCase):
         self.assertTrue(report["inventory_repair_gate_open"])
         self.assertFalse(report["safe_apply_gate_open"])
         self.assertEqual(client.upserts, [])
+        self.assertEqual(
+            client.all_row_resources.count("notion_migration_wbs_staging"),
+            2,
+        )
 
     def test_repair_inventory_promotes_durable_staging_without_importing(self) -> None:
         client = FakeClient(self.stage_rows, self.item_rows[:1])
