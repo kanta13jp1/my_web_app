@@ -67,26 +67,26 @@ void main() {
   test(
     'reuses verified staging and archive objects after duplicate errors',
     () async {
-    final bytes = Uint8List.fromList(utf8.encode(_fixture));
-    final first = await service.stage(
-      userId: 'owner-1',
-      fileName: 'batch.enex',
-      source: _chunked(bytes, 11),
-      totalBytes: bytes.length,
-    );
-    storage.rejectExisting = true;
-
-    final second = await service.stage(
-      userId: 'owner-1',
-      fileName: 'batch.enex',
-      source: _chunked(bytes, 13),
-      totalBytes: bytes.length,
-    );
-
-    expect(second.stagingPath, first.stagingPath);
-    expect(second.archivePath, first.archivePath);
-    expect(second.preview.sourceExportSha256, first.preview.sourceExportSha256);
-  },
+      final bytes = Uint8List.fromList(utf8.encode(_fixture));
+      final first = await service.stage(
+        userId: 'owner-1',
+        fileName: 'batch.enex',
+        source: _chunked(bytes, 11),
+        totalBytes: bytes.length,
+      );
+      storage.rejectExisting = true;
+  
+      final second = await service.stage(
+        userId: 'owner-1',
+        fileName: 'batch.enex',
+        source: _chunked(bytes, 13),
+        totalBytes: bytes.length,
+      );
+  
+      expect(second.stagingPath, first.stagingPath);
+      expect(second.archivePath, first.archivePath);
+      expect(second.preview.sourceExportSha256, first.preview.sourceExportSha256);
+    },
   );
 
   test('rejects same-prefix same-size staging collisions', () async {
