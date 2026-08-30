@@ -72,8 +72,8 @@ class _Dashboard extends StatelessWidget {
                   Text(
                     '学習ダッシュボード',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                   const SizedBox(height: 12),
                   Wrap(
@@ -123,15 +123,15 @@ class _Dashboard extends StatelessWidget {
                       Text(
                         'Part別トレーニング',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                              fontWeight: FontWeight.w800,
+                            ),
                       ),
                       Text(
                         'おすすめ: ${snapshot.recommendedPart.label}',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: _toeicBlue,
-                          fontWeight: FontWeight.w800,
-                        ),
+                              color: _toeicBlue,
+                              fontWeight: FontWeight.w800,
+                            ),
                       ),
                     ],
                   ),
@@ -300,8 +300,8 @@ class _MetricCard extends StatelessWidget {
                     Text(
                       value,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
+                            fontWeight: FontWeight.w900,
+                          ),
                     ),
                   ],
                 ),
@@ -377,9 +377,8 @@ class _PartCards extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 760;
-        final width = wide
-            ? (constraints.maxWidth - 24) / 3
-            : constraints.maxWidth;
+        final width =
+            wide ? (constraints.maxWidth - 24) / 3 : constraints.maxWidth;
         return Wrap(
           spacing: 12,
           runSpacing: 12,
@@ -607,16 +606,14 @@ class _QuestionSession extends StatelessWidget {
                     question.prompt,
                     key: const Key('toeic_question_prompt'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      height: 1.45,
-                    ),
+                          fontWeight: FontWeight.w800,
+                          height: 1.45,
+                        ),
                   ),
                   const SizedBox(height: 18),
-                  for (
-                    var index = 0;
-                    index < question.choices.length;
-                    index++
-                  ) ...[
+                  for (var index = 0;
+                      index < question.choices.length;
+                      index++) ...[
                     _AnswerChoice(
                       index: index,
                       text: question.choices[index],
@@ -800,17 +797,17 @@ class _SessionSummary extends StatelessWidget {
                   Text(
                     '今日のドリル完了！',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
+                          fontWeight: FontWeight.w900,
+                        ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     '${viewModel.sessionCorrect} / ${viewModel.sessionLength}問正解（$percent%）',
                     key: const Key('toeic_session_score'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: _toeicBlue,
-                      fontWeight: FontWeight.w900,
-                    ),
+                          color: _toeicBlue,
+                          fontWeight: FontWeight.w900,
+                        ),
                   ),
                   const SizedBox(height: 12),
                   Text(

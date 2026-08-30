@@ -14,9 +14,9 @@ class ToeicPracticeViewModel extends ChangeNotifier {
     BuildToeicDashboardSnapshotUseCase snapshotUseCase =
         const BuildToeicDashboardSnapshotUseCase(),
     DateTime Function()? clock,
-  }) : _repository = repository,
-       _snapshotUseCase = snapshotUseCase,
-       _clock = clock ?? DateTime.now;
+  })  : _repository = repository,
+        _snapshotUseCase = snapshotUseCase,
+        _clock = clock ?? DateTime.now;
 
   static const int dailyQuestionCount = 5;
 

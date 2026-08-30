@@ -9,13 +9,13 @@ class ToeicProgressModel {
   });
 
   factory ToeicProgressModel.initial() => const ToeicProgressModel(
-    targetScore: 730,
-    totalAnswered: 0,
-    totalCorrect: 0,
-    answeredByPart: <String, int>{},
-    correctByPart: <String, int>{},
-    practiceDateKeys: <String>[],
-  );
+        targetScore: 730,
+        totalAnswered: 0,
+        totalCorrect: 0,
+        answeredByPart: <String, int>{},
+        correctByPart: <String, int>{},
+        practiceDateKeys: <String>[],
+      );
 
   factory ToeicProgressModel.fromJson(Map<String, dynamic> json) {
     Map<String, int> readCounts(Object? raw) {
@@ -47,11 +47,11 @@ class ToeicProgressModel {
   final List<String> practiceDateKeys;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'target_score': targetScore,
-    'total_answered': totalAnswered,
-    'total_correct': totalCorrect,
-    'answered_by_part': answeredByPart,
-    'correct_by_part': correctByPart,
-    'practice_date_keys': practiceDateKeys,
-  };
+        'target_score': targetScore,
+        'total_answered': totalAnswered,
+        'total_correct': totalCorrect,
+        'answered_by_part': answeredByPart,
+        'correct_by_part': correctByPart,
+        'practice_date_keys': practiceDateKeys,
+      };
 }

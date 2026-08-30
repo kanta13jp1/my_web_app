@@ -4,28 +4,28 @@ enum ToeicPart { part5, part6, part7 }
 
 extension ToeicPartPresentation on ToeicPart {
   String get id => switch (this) {
-    ToeicPart.part5 => 'part5',
-    ToeicPart.part6 => 'part6',
-    ToeicPart.part7 => 'part7',
-  };
+        ToeicPart.part5 => 'part5',
+        ToeicPart.part6 => 'part6',
+        ToeicPart.part7 => 'part7',
+      };
 
   String get label => switch (this) {
-    ToeicPart.part5 => 'Part 5',
-    ToeicPart.part6 => 'Part 6',
-    ToeicPart.part7 => 'Part 7',
-  };
+        ToeicPart.part5 => 'Part 5',
+        ToeicPart.part6 => 'Part 6',
+        ToeicPart.part7 => 'Part 7',
+      };
 
   String get titleJa => switch (this) {
-    ToeicPart.part5 => '短文穴埋め',
-    ToeicPart.part6 => '長文穴埋め',
-    ToeicPart.part7 => '読解問題',
-  };
+        ToeicPart.part5 => '短文穴埋め',
+        ToeicPart.part6 => '長文穴埋め',
+        ToeicPart.part7 => '読解問題',
+      };
 
   String get description => switch (this) {
-    ToeicPart.part5 => '文法と語彙を素早く見抜く',
-    ToeicPart.part6 => '文脈に合う語句を選ぶ',
-    ToeicPart.part7 => 'メールや案内文から要点を探す',
-  };
+        ToeicPart.part5 => '文法と語彙を素早く見抜く',
+        ToeicPart.part6 => '文脈に合う語句を選ぶ',
+        ToeicPart.part7 => 'メールや案内文から要点を探す',
+      };
 }
 
 ToeicPart toeicPartFromId(String id) {
@@ -70,13 +70,13 @@ class ToeicProgress {
   });
 
   factory ToeicProgress.initial() => const ToeicProgress(
-    targetScore: 730,
-    totalAnswered: 0,
-    totalCorrect: 0,
-    answeredByPart: <ToeicPart, int>{},
-    correctByPart: <ToeicPart, int>{},
-    practiceDateKeys: <String>{},
-  );
+        targetScore: 730,
+        totalAnswered: 0,
+        totalCorrect: 0,
+        answeredByPart: <ToeicPart, int>{},
+        correctByPart: <ToeicPart, int>{},
+        practiceDateKeys: <String>{},
+      );
 
   final int targetScore;
   final int totalAnswered;

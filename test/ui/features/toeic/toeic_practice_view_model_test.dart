@@ -24,17 +24,17 @@ class _FakeRepository implements ToeicPracticeRepository {
 }
 
 List<ToeicQuestion> _questions() => List<ToeicQuestion>.generate(
-  5,
-  (index) => ToeicQuestion(
-    id: 'q$index',
-    part: ToeicPart.values[index % ToeicPart.values.length],
-    category: 'test',
-    prompt: 'Question $index',
-    choices: const <String>['correct', 'wrong', 'wronger', 'wrongest'],
-    answerIndex: 0,
-    explanation: 'Because this is the correct answer.',
-  ),
-);
+      5,
+      (index) => ToeicQuestion(
+        id: 'q$index',
+        part: ToeicPart.values[index % ToeicPart.values.length],
+        category: 'test',
+        prompt: 'Question $index',
+        choices: const <String>['correct', 'wrong', 'wronger', 'wrongest'],
+        answerIndex: 0,
+        explanation: 'Because this is the correct answer.',
+      ),
+    );
 
 void main() {
   test('completes five questions and persists the daily result', () async {

@@ -12,7 +12,7 @@ abstract interface class ToeicProgressService {
 
 class SharedPreferencesToeicProgressService implements ToeicProgressService {
   SharedPreferencesToeicProgressService({SharedPreferences? preferences})
-    : _preferences = preferences;
+      : _preferences = preferences;
 
   static const String storageKey = 'ai_university_toeic_progress_v1';
 

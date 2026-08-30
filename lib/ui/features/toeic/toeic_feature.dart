@@ -15,8 +15,7 @@ class ToeicFeature extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resolvedRepository =
-        repository ??
+    final resolvedRepository = repository ??
         LocalToeicPracticeRepository(
           catalogService: const LocalToeicQuestionCatalogService(),
           progressService: SharedPreferencesToeicProgressService(),
