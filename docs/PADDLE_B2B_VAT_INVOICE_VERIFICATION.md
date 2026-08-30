@@ -45,6 +45,16 @@ before the payment-provider adoption decision is complete.
 
 ## Cloud configuration
 
+### Official sandbox VAT scenario request
+
+On 2026-08-31 JST, the Owner sent Paddle Seller Support a request for an
+officially supported sandbox-only B2B VAT scenario. The request asks for a
+country, postal code, sandbox-safe VAT/tax identifier, and the expected tax or
+reverse-charge result without using a real third-party identifier. Paddle
+confirmed receipt and stated an expected response time of one to two business
+days. Do not send duplicate follow-ups or substitute an unverified identifier
+while the response is pending.
+
 Create these repository secrets. Never paste their values into an Issue, PR,
 artifact, log, or screenshot:
 
