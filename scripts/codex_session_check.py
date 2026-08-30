@@ -206,15 +206,6 @@ def resource_budget_snapshot(
             else "hold"
         )
 
-    disk_pressure = (
-        disk_free_gb is None or disk_free_gb < RESOURCE_DISK_FREE_WARN_GB
-    )
-    heavy_work_route = (
-        "github-actions-required"
-        if parallel_gate != "allow" or disk_pressure
-        else "github-actions-preferred"
-    )
-
     return {
         "memory": memory,
         "disk_path": str(disk_root),
@@ -222,7 +213,6 @@ def resource_budget_snapshot(
         "disk_free_gb": disk_free_gb,
         "registered_worktrees": len(worktrees),
         "parallel_agent_gate": parallel_gate,
-        "heavy_work_route": heavy_work_route,
         "thresholds": {
             "ram_used_warn_pct": RESOURCE_RAM_USED_WARN_PCT,
             "ram_free_warn_gb": RESOURCE_RAM_FREE_WARN_GB,
@@ -245,14 +235,12 @@ def resource_budget_warnings(snapshot: dict[str, Any]) -> list[str]:
         if used_pct >= thresholds["ram_used_warn_pct"]:
             warnings.append(
                 f"RAM usage {used_pct:.1f}% is at or above "
-                f"{thresholds['ram_used_warn_pct']:.1f}%; "
-                "offload heavy work to GitHub Actions"
+                f"{thresholds['ram_used_warn_pct']:.1f}%; hold parallel/heavy work"
             )
         if free_gb <= thresholds["ram_free_warn_gb"]:
             warnings.append(
                 f"free RAM {free_gb:.2f} GB is at or below "
-                f"{thresholds['ram_free_warn_gb']:.2f} GB; "
-                "offload heavy work to GitHub Actions"
+                f"{thresholds['ram_free_warn_gb']:.2f} GB; hold parallel/heavy work"
             )
 
     disk_free_gb = snapshot["disk_free_gb"]
@@ -759,8 +747,6 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- Disk free / total ({report['resource_budget']['disk_path']}): `{report['resource_budget']['disk_free_gb'] if report['resource_budget']['disk_free_gb'] is not None else 'unknown'} / {report['resource_budget']['disk_total_gb'] if report['resource_budget']['disk_total_gb'] is not None else 'unknown'} GB`",
         f"- Registered worktrees: `{report['resource_budget']['registered_worktrees']}`",
         f"- Parallel/heavy-work gate (single sample): `{report['resource_budget']['parallel_agent_gate']}`",
-        f"- Heavy validation route: `{report['resource_budget']['heavy_work_route']}`",
-        "- Cloud route covers full Flutter analyze/test/build, Docker/Testcontainers, and deployment checks; keep local work to editing and lightweight targeted checks when required.",
         f"- Thresholds: RAM `< {report['resource_budget']['thresholds']['ram_used_warn_pct']}%` and `> {report['resource_budget']['thresholds']['ram_free_warn_gb']} GB free`; disk `>= {report['resource_budget']['thresholds']['disk_free_warn_gb']} GB free`; worktree review `>= {report['resource_budget']['thresholds']['worktree_review_count']}`",
         "",
         "## Permission / Sandbox Snapshot",

@@ -89,6 +89,21 @@ class CicdEfficiencyTest(unittest.TestCase):
         self.assertIn("if: steps.changes.outputs.caption == 'true'", workflow)
         self.assertIn("steps.changes.outputs.web == 'true'", workflow)
 
+    def test_cloud_first_manual_gate_is_available(self) -> None:
+        workflow = self.read(".github/workflows/ci.yml")
+        self.assertIn("  workflow_dispatch:\n", workflow)
+        self.assertIn(
+            "github.event_name == 'pull_request' || "
+            "github.event_name == 'workflow_dispatch'",
+            workflow,
+        )
+        self.assertIn("python scripts/cloud_first_route_test.py", workflow)
+
+        guide = self.read("docs/CLOUD_FIRST_DEVELOPMENT.md")
+        self.assertIn("gh workflow run ci.yml --ref", guide)
+        self.assertIn("30 GiB", guide)
+        self.assertIn("4 GiB", guide)
+
     def test_required_ci_checks_are_emitted_for_docs_only_prs(self) -> None:
         workflow = self.read(".github/workflows/ci.yml")
         pull_request = workflow.split("  pull_request:", 1)[1].split(
