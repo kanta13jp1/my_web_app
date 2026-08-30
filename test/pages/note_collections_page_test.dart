@@ -34,8 +34,7 @@ void main() {
     expect(find.descendant(of: importedCard, matching: importedEdit), findsOne);
     expect(tester.widget<TextButton>(importedEdit).onPressed, isNull);
 
-    final nativeCard =
-        find.byKey(const ValueKey<String>('note_collection_4'));
+    final nativeCard = find.byKey(const ValueKey<String>('note_collection_4'));
     final makeDefault =
         find.byKey(const ValueKey<String>('note_collection_default_4'));
     expect(find.descendant(of: nativeCard, matching: makeDefault), findsOne);

@@ -116,7 +116,8 @@ class NoteCollectionSnapshot {
     final pending = <int>[rootId];
     while (pending.isNotEmpty) {
       final parentId = pending.removeLast();
-      for (final child in children[parentId] ?? const <NoteCollectionRecord>[]) {
+      for (final child
+          in children[parentId] ?? const <NoteCollectionRecord>[]) {
         if (result.add(child.id)) pending.add(child.id);
       }
     }
@@ -205,8 +206,7 @@ class SupabaseNoteCollectionDataSource implements NoteCollectionDataSource {
     for (final row in results[0]) {
       final id = int.tryParse(row['id']?.toString() ?? '');
       if (id != null) {
-        parentById[id] =
-            int.tryParse(row['parent_id']?.toString() ?? '');
+        parentById[id] = int.tryParse(row['parent_id']?.toString() ?? '');
       }
     }
     final noteCounts = <int, int>{};
@@ -232,8 +232,7 @@ class SupabaseNoteCollectionDataSource implements NoteCollectionDataSource {
           ),
         )
         .toList(growable: false);
-    final hasImported =
-        collections.any((collection) => collection.isImported);
+    final hasImported = collections.any((collection) => collection.isImported);
     final statuses = results[2]
         .map((row) => row['status']?.toString() ?? '')
         .toList(growable: false);
@@ -275,11 +274,15 @@ class SupabaseNoteCollectionDataSource implements NoteCollectionDataSource {
     required String description,
   }) async {
     final userId = _requireUserId();
-    await _client.from('note_collections').update(<String, dynamic>{
-      'name': _validName(name),
-      'description': _validDescription(description),
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', id).eq('user_id', userId);
+    await _client
+        .from('note_collections')
+        .update(<String, dynamic>{
+          'name': _validName(name),
+          'description': _validDescription(description),
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', id)
+        .eq('user_id', userId);
   }
 
   @override
@@ -288,10 +291,14 @@ class SupabaseNoteCollectionDataSource implements NoteCollectionDataSource {
       throw ArgumentError('A collection cannot be its own parent.');
     }
     final userId = _requireUserId();
-    await _client.from('note_collections').update(<String, dynamic>{
-      'parent_id': parentId,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', id).eq('user_id', userId);
+    await _client
+        .from('note_collections')
+        .update(<String, dynamic>{
+          'parent_id': parentId,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', id)
+        .eq('user_id', userId);
   }
 
   @override
@@ -305,10 +312,14 @@ class SupabaseNoteCollectionDataSource implements NoteCollectionDataSource {
   @override
   Future<void> setPinned({required int id, required bool pinned}) async {
     final userId = _requireUserId();
-    await _client.from('note_collections').update(<String, dynamic>{
-      'is_pinned': pinned,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', id).eq('user_id', userId);
+    await _client
+        .from('note_collections')
+        .update(<String, dynamic>{
+          'is_pinned': pinned,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', id)
+        .eq('user_id', userId);
   }
 
   @override
@@ -318,10 +329,14 @@ class SupabaseNoteCollectionDataSource implements NoteCollectionDataSource {
   }) async {
     if (sortOrder < 0) throw ArgumentError('Sort order cannot be negative.');
     final userId = _requireUserId();
-    await _client.from('note_collections').update(<String, dynamic>{
-      'sort_order': sortOrder,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', id).eq('user_id', userId);
+    await _client
+        .from('note_collections')
+        .update(<String, dynamic>{
+          'sort_order': sortOrder,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', id)
+        .eq('user_id', userId);
   }
 
   @override

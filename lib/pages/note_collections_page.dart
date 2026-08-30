@@ -398,9 +398,7 @@ class _NoteCollectionsPageState extends State<NoteCollectionsPage> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           title: Text(
-            parent == null
-                ? 'コレクションを作成'
-                : '${parent.name}にノートブックを作成',
+            parent == null ? 'コレクションを作成' : '${parent.name}にノートブックを作成',
           ),
           content: SizedBox(
             width: 420,
