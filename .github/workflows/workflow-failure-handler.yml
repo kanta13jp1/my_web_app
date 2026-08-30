@@ -49,6 +49,9 @@ permissions: {}
 
 jobs:
   cluster-or-recover:
+    environment:
+      name: ai-operations-production
+      deployment: false
     permissions:
       actions: read
       contents: read

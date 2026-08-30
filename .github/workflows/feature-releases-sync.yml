@@ -22,6 +22,9 @@ permissions: {}
 
 jobs:
   sync:
+    environment:
+      name: wbs-automation-production
+      deployment: false
     permissions:
       contents: read
     name: Sync feature_releases from release-notes.json
