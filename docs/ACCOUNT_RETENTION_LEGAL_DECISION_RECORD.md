@@ -45,7 +45,7 @@ scheduled workerは段階が`limited`または`full`で、かつ独立kill switc
 - 承認対象version: `2026-08-30.v2`
 - 修正条件 / legal hold運用責任者: repository owner。法令、事業者区分、processor方針、data inventoryの変更時に再レビューし、holdは対象・根拠・解除予定日を個別記録する
 - Supabase backup / PITR実測値と確認日: 2026-08-30、production project `smmkxxavexumewbfaqpy`をSupabase CLIで読み取り。完了済みdaily physical backup 7件（2026-08-23〜2026-08-29）、`pitr_enabled=false`、`walg_enabled=true`。これは確認時点の利用可能backup inventoryであり、契約上の固定保持期間とは扱わない
-- Auth JWT expiry実測値と確認日: GitHub Actionsの読み取り専用production config auditで確定後に記入する
+- Auth JWT expiry実測値と確認日: 2026-08-30、GitHub Actionsの読み取り専用production config auditで`jwt_exp=3600`秒を確認（run `33298236393`）。完全なAuth設定はログへ出力せず、65分のfinalization待ち前提と一致することを確認した
 
 ## 5. Release判断
 

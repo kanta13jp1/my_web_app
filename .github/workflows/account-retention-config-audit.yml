@@ -10,6 +10,10 @@ on:
 
 permissions: {}
 
+concurrency:
+  group: account-retention-config-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   audit:
     name: Read-only production retention configuration

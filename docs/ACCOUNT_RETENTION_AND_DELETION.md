@@ -69,7 +69,7 @@
 配備済みのcontrol planeは、workerを停止したまま退会申請、取消、inventory、retry状態を保持する。2026-08-29のproduction recovery deployと公開ポリシー / アプリ導線反映は完了済みである。
 
 - [x] [`ACCOUNT_RETENTION_LEGAL_DECISION_RECORD.md`](ACCOUNT_RETENTION_LEGAL_DECISION_RECORD.md)にownerのプロダクト方針採択、外部専門家レビュー未実施、保持例外と再レビュー条件を記録する
-- [ ] Supabaseのdaily backup / PITR実測値とAuth JWT expiry実測値を決裁記録へ転記する（backup / PITRは記入済み、JWTは読み取り専用cloud audit完了後に記入）
+- [x] Supabaseのdaily backup / PITR実測値とAuth JWT expiry実測値を決裁記録へ転記する（JWTの読み取り専用cloud audit: GitHub Actions run `33298236393`）
 - [x] disposable cloud fixtureで対象の削除可能行 / Auth / Storage残存0、90日audit例外の保持、control tenant無変更を確認する（GitHub Actions run `33296894254`）
 - [x] productionで`disabled`の非破壊preflightを実行し、`candidate:null / no_due_request`、破壊処理skipを確認する（GitHub Actions run `33297460725`）
 - [x] Issue完了時の段階を`disabled`と決定する。due requestがない状態で実アカウントを作為的に削除せず、将来の初回処理時だけ指定ID・1件・typed confirmation付き`canary`へ進む
