@@ -68,6 +68,24 @@ jobs:
           flutter pub get
           flutter pub get --dry-run
 
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Collect guarded real-sandbox tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-logs
+          npm ci
+          npx playwright test \
+            test/e2e/paddle_sandbox_checkout.spec.ts \
+            --project=chromium \
+            --list \
+            2>&1 | tee .ci-logs/paddle-real-sandbox-test-list.log
+
       - name: Prepare evidence directory
         shell: bash
         run: mkdir -p .ci-logs
