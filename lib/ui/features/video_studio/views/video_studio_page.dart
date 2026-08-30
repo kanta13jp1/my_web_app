@@ -36,88 +36,81 @@ class VideoStudioPage extends StatelessWidget {
           builder: (context, _) {
             return switch (viewModel.loadStatus) {
               VideoStudioLoadStatus.initial ||
-              VideoStudioLoadStatus.loading =>
-                const Center(
-                  child: CircularProgressIndicator(color: DesignTokens.orange),
-                ),
+              VideoStudioLoadStatus.loading => const Center(
+                child: CircularProgressIndicator(color: DesignTokens.orange),
+              ),
               VideoStudioLoadStatus.failure => _LoadFailure(
-                  viewModel: viewModel,
-                ),
+                viewModel: viewModel,
+              ),
               VideoStudioLoadStatus.ready => LayoutBuilder(
-                  builder: (context, constraints) {
-                    final wide = constraints.maxWidth >= _wideBreakpoint;
-                    return SingleChildScrollView(
-                      padding: const EdgeInsets.all(DesignTokens.space20),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1280),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const _Hero(),
-                              const SizedBox(height: DesignTokens.space16),
-                              if (viewModel.noticeMessage != null)
-                                _Notice(
-                                  key: const Key('video-studio-notice'),
-                                  message: viewModel.noticeMessage!,
-                                  color: DesignTokens.green,
-                                ),
-                              if (viewModel.errorMessage != null)
-                                _Notice(
-                                  key: const Key('video-studio-error'),
-                                  message: viewModel.errorMessage!,
-                                  color: DesignTokens.red,
-                                ),
-                              if (wide)
-                                Row(
-                                  key: const Key('video-studio-wide'),
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      flex: 3,
-                                      child: _Composer(viewModel: viewModel),
+                builder: (context, constraints) {
+                  final wide = constraints.maxWidth >= _wideBreakpoint;
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(DesignTokens.space20),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1280),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const _Hero(),
+                            const SizedBox(height: DesignTokens.space16),
+                            if (viewModel.noticeMessage != null)
+                              _Notice(
+                                key: const Key('video-studio-notice'),
+                                message: viewModel.noticeMessage!,
+                                color: DesignTokens.green,
+                              ),
+                            if (viewModel.errorMessage != null)
+                              _Notice(
+                                key: const Key('video-studio-error'),
+                                message: viewModel.errorMessage!,
+                                color: DesignTokens.red,
+                              ),
+                            if (wide)
+                              Row(
+                                key: const Key('video-studio-wide'),
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: _Composer(viewModel: viewModel),
+                                  ),
+                                  const SizedBox(width: DesignTokens.space16),
+                                  Expanded(
+                                    flex: 2,
+                                    child: Column(
+                                      children: [
+                                        _BalanceAndPacks(viewModel: viewModel),
+                                        const SizedBox(
+                                          height: DesignTokens.space16,
+                                        ),
+                                        _JobsPanel(viewModel: viewModel),
+                                      ],
                                     ),
-                                    const SizedBox(width: DesignTokens.space16),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Column(
-                                        children: [
-                                          _BalanceAndPacks(
-                                            viewModel: viewModel,
-                                          ),
-                                          const SizedBox(
-                                            height: DesignTokens.space16,
-                                          ),
-                                          _JobsPanel(viewModel: viewModel),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              else
-                                Column(
-                                  key: const Key('video-studio-compact'),
-                                  children: [
-                                    _BalanceAndPacks(viewModel: viewModel),
-                                    const SizedBox(
-                                      height: DesignTokens.space16,
-                                    ),
-                                    _Composer(viewModel: viewModel),
-                                    const SizedBox(
-                                      height: DesignTokens.space16,
-                                    ),
-                                    _JobsPanel(viewModel: viewModel),
-                                  ],
-                                ),
-                              const SizedBox(height: DesignTokens.space20),
-                              const _LegalLinks(),
-                            ],
-                          ),
+                                  ),
+                                ],
+                              )
+                            else
+                              Column(
+                                key: const Key('video-studio-compact'),
+                                children: [
+                                  _BalanceAndPacks(viewModel: viewModel),
+                                  const SizedBox(height: DesignTokens.space16),
+                                  _Composer(viewModel: viewModel),
+                                  const SizedBox(height: DesignTokens.space16),
+                                  _JobsPanel(viewModel: viewModel),
+                                ],
+                              ),
+                            const SizedBox(height: DesignTokens.space20),
+                            const _LegalLinks(),
+                          ],
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
+              ),
             };
           },
         ),
@@ -409,6 +402,7 @@ class _ImprovementAuthorizationCard extends StatelessWidget {
           if (active != null) ...[
             Text(
               '承認ID ${active.id}\n'
+              '状態 ${_authorizationStatusLabel(active)}\n'
               '有効期限 ${_formatAuthorizationDate(active.validUntil)}\n'
               '残り ${active.remainingRegenerations}回・${active.remainingCredits} credits',
               key: const Key('video-authorization-status'),
@@ -442,7 +436,7 @@ class _ImprovementAuthorizationCard extends StatelessWidget {
             ),
           ] else if (viewModel.hasAppliedImprovement) ...[
             const Text(
-              '期限と反復上限を選ぶと、承認IDの保存と最初の生成予約を同時に行います。承認だけが未使用で残ることはありません。',
+              '期限と反復上限を選ぶと承認IDを保存します。残高・最新レビュー・生成枠が揃えば最初の300 creditsを同時予約し、揃わない場合は理由付きで保留して後から同じ承認IDで再開します。',
               style: _secondaryStyle,
             ),
             const SizedBox(height: DesignTokens.space12),
@@ -522,6 +516,19 @@ class _ImprovementAuthorizationCard extends StatelessWidget {
 String _formatAuthorizationDate(DateTime value) {
   final local = value.toLocal().toString();
   return local.length >= 16 ? local.substring(0, 16) : local;
+}
+
+String _authorizationStatusLabel(VideoImprovementAuthorization value) {
+  return switch (value.status) {
+    'active' => '実行可能',
+    'pending_review' => 'レビュー待ち',
+    'pending_funding' => '残高待ち',
+    'pending_execution' => '生成枠待ち',
+    'exhausted' => '上限到達',
+    'expired' => '期限切れ',
+    'revoked' => '停止済み',
+    _ => value.status,
+  };
 }
 
 class _BalanceAndPacks extends StatelessWidget {
@@ -623,12 +630,15 @@ class _JobsPanel extends StatelessWidget {
       child: viewModel.jobs.isEmpty
           ? const Text('まだ動画はありません。', style: _secondaryStyle)
           : Column(
-              children: viewModel.jobs.take(8).map((job) {
-                final active = viewModel.activeJob?.id == job.id
-                    ? viewModel.activeJob!
-                    : job;
-                return _JobCard(job: active, viewModel: viewModel);
-              }).toList(growable: false),
+              children: viewModel.jobs
+                  .take(8)
+                  .map((job) {
+                    final active = viewModel.activeJob?.id == job.id
+                        ? viewModel.activeJob!
+                        : job;
+                    return _JobCard(job: active, viewModel: viewModel);
+                  })
+                  .toList(growable: false),
             ),
     );
   }

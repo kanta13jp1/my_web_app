@@ -118,8 +118,9 @@ void main() {
     final authorization = VideoImprovementAuthorization.fromJson({
       'id': 'authorization-1',
       'status': 'active',
-      'valid_until':
-          DateTime.now().add(const Duration(days: 7)).toIso8601String(),
+      'valid_until': DateTime.now()
+          .add(const Duration(days: 7))
+          .toIso8601String(),
       'total_credit_limit': 600,
       'reserved_credits': 300,
       'consumed_credits': 0,
@@ -136,5 +137,30 @@ void main() {
     expect(authorization.remainingCredits, 300);
     expect(authorization.remainingRegenerations, 1);
     expect(authorization.allowCreditPurchase, isFalse);
+  });
+
+  test('pending authorization remains resumable and exposes blockers', () {
+    final authorization = VideoImprovementAuthorization.fromJson({
+      'id': 'authorization-pending',
+      'status': 'pending_funding',
+      'pending_reasons': ['insufficient_credits'],
+      'valid_until': DateTime.now()
+          .add(const Duration(days: 7))
+          .toIso8601String(),
+      'total_credit_limit': 600,
+      'reserved_credits': 0,
+      'consumed_credits': 0,
+      'remaining_credits': 600,
+      'total_regeneration_limit': 2,
+      'consumed_regenerations': 0,
+      'remaining_regenerations': 2,
+      'root_artifact_id': 'artifact-1',
+      'initial_review_id': 'review-1',
+      'allow_credit_purchase': false,
+    });
+
+    expect(authorization.isActive, isTrue);
+    expect(authorization.isPending, isTrue);
+    expect(authorization.pendingReasons, ['insufficient_credits']);
   });
 }
