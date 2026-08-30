@@ -46,7 +46,15 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('Sandbox 決済に失敗'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, 'もう一度試す'), findsOneWidget);
+    expect(
+      find.byKey(const Key('paddle_sandbox_checkout_button')),
+      findsOneWidget,
+    );
+    expect(find.text('もう一度試す'), findsOneWidget);
+    final retryButton = tester.widget<FilledButton>(
+      find.byKey(const Key('paddle_sandbox_checkout_button')),
+    );
+    expect(retryButton.onPressed, isNotNull);
   });
 
   testWidgets('shows a neutral cancellation on a narrow viewport', (
