@@ -27,7 +27,33 @@ envelope.
 Recurring authorization must state both a per-run ceiling and a lifetime or
 expiry ceiling. A completed one-time purchase or generation has no remaining
 authority. If any required field is absent, perform the safe review work and
-report a proposed envelope instead of guessing.
+report a proposed envelope instead of guessing. When the owner is using Video
+Studio, provide a registration action in the product rather than leaving the
+item indefinitely in a report-only state.
+
+## Product registration fallback
+
+For a reviewed `improve` artifact without an authorization ID, Video Studio
+must offer an explicit bounded form with:
+
+- a 24-hour, 7-day, or 30-day validity window;
+- a total regeneration limit and the derived total credit ceiling;
+- the fixed 300-credit per-run limit and one generation per run;
+- the exact source artifact/review and current generation settings;
+- rights, adult, terms, and prohibited-content confirmations; and
+- a visible automatic-purchase ceiling.
+
+The balance-only form sets automatic purchase and both yen limits to zero.
+Saving the form and reserving the first 300-credit generation are one atomic
+operation. If the balance, source review, limits, or queue state fails
+validation, no authorization ID is created. This prevents the recurring task
+from repeatedly reporting “authorization missing” while also preventing a
+stranded approval that never starts.
+
+After the first result is reviewed, a still-active envelope follows the latest
+`improve` descendant of its root artifact. Each exact review may create only
+one child job. Cloud state, not a local file or scheduled-task prompt, holds
+remaining credits, attempts, expiry, and idempotency.
 
 ## Paid regeneration sequence
 
@@ -84,6 +110,7 @@ iterations, idempotency keys, external product IDs, and remaining authorization
 after each run.
 
 When no valid recurring envelope exists, the scheduled run remains review-only
-and reports the exact missing fields. When a valid envelope exists, reporting
+and reports the exact missing fields plus the Video Studio registration path.
+When a valid envelope exists, reporting
 alone is not completion: execute the approved payment, regeneration, review,
 and publication steps until a stopping condition is reached.
