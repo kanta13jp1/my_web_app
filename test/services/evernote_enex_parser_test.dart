@@ -65,8 +65,38 @@ void main() {
       expect(resource.mimeType, 'text/plain');
       expect(resource.data, Uint8List.fromList(utf8.encode('hello')));
       expect(resource.dataSha256, hasLength(64));
-      expect(resource.recognitionXml, contains('<recoIndex>'));
+      expect(resource.recognitionXml, contains('<recoIndex'));
+      expect(resource.recognition, isNotNull);
+      expect(resource.recognition!.documentType, 'printed');
+      expect(resource.recognition!.regions, hasLength(1));
+      expect(resource.recognition!.regions.single.x, 0);
+      expect(resource.recognition!.regions.single.displayCandidate.text, 'hello');
+      expect(resource.recognition!.searchText, contains('hello'));
+      expect(
+        resource.toManifestJson()['recognition'],
+        isA<Map<String, dynamic>>(),
+      );
       expect(resource.toManifestJson()['byte_length'], 5);
+    });
+
+    test('retains malformed recognition for cloud OCR fallback', () {
+      final malformed = _completeEnex.replaceFirst(
+        'x="0" y="0"',
+        'x="-1" y="0"',
+      );
+
+      final export = parser.parseText(malformed);
+      final resource = export.notes.single.resources.single;
+
+      expect(resource.recognition, isNull);
+      expect(resource.recognitionXml, contains('x="-1"'));
+      expect(
+        export.warnings,
+        contains(
+          'A resource contains invalid Evernote recognition data; '
+          'raw XML retained for cloud OCR fallback.',
+        ),
+      );
     });
 
     test('builds a deterministic source id when ENEX has no guid', () {
@@ -224,7 +254,24 @@ const _completeEnex = '''
       <mime>text/plain</mime>
       <width>10</width>
       <height>20</height>
-      <recognition><![CDATA[<recoIndex><item><t>hello</t></item></recoIndex>]]></recognition>
+      <recognition><![CDATA[
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE recoIndex SYSTEM "http://xml.evernote.com/pub/recoIndex.dtd">
+        <recoIndex
+            docType="printed"
+            objType="image"
+            objID="5d41402abc4b2a76b9719d911017c592"
+            engineVersion="5.5.22.7"
+            recoType="service"
+            lang="en"
+            objWidth="10"
+            objHeight="20">
+          <item x="0" y="0" w="10" h="20">
+            <t w="99">hello</t>
+            <t w="70">Hello</t>
+          </item>
+        </recoIndex>
+      ]]></recognition>
       <resource-attributes>
         <file-name>memo.txt</file-name>
         <attachment>true</attachment>
