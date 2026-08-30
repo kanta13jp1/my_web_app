@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a deterministic, content-free plan for staged Notion WBS import."""
+"""Build deterministic public summaries and private staged Notion WBS actions."""
 
 from __future__ import annotations
 
@@ -16,9 +16,21 @@ UUID_PATTERN = re.compile(
     r"[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
     re.IGNORECASE,
 )
+SAFE_WBS_DECISIONS = frozenset(
+    {"insert", "update_from_notion", "unchanged", "site_newer_preserved"}
+)
+BLOCKED_WBS_DECISIONS = frozenset(
+    {
+        "manual_timestamp_conflict",
+        "identity_collision",
+        "invalid_fields",
+        "conflicting_duplicate",
+        "title_group_content_conflict",
+    }
+)
 
 
-def _normalized_uuid(value: object) -> str | None:
+def normalized_wbs_uuid(value: object) -> str | None:
     text = str(value or "").strip().lower()
     return text if UUID_PATTERN.fullmatch(text) else None
 
@@ -77,7 +89,7 @@ def _epoch(value: object) -> float:
     return parsed.timestamp() if parsed is not None else float("-inf")
 
 
-def _staged_content(row: dict[str, Any]) -> dict[str, Any]:
+def staged_wbs_content(row: dict[str, Any]) -> dict[str, Any]:
     return {
         "title": str(row.get("title") or ""),
         "instance": _normalize_instance(row.get("instance")),
@@ -87,7 +99,7 @@ def _staged_content(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _site_content(row: dict[str, Any]) -> dict[str, Any]:
+def site_wbs_content(row: dict[str, Any]) -> dict[str, Any]:
     return {
         "title": str(row.get("title") or ""),
         "instance": _normalize_instance(row.get("instance")),
@@ -104,6 +116,10 @@ def _content_key(content: dict[str, Any]) -> str:
         sort_keys=True,
         separators=(",", ":"),
     )
+
+
+def wbs_content_sha256(content: dict[str, Any]) -> str:
+    return hashlib.sha256(_content_key(content).encode("utf-8")).hexdigest()
 
 
 def _canonical_row(rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -132,7 +148,7 @@ def _compare_to_destination(
 ) -> str:
     if destination is None:
         return "insert"
-    if source == _site_content(destination):
+    if source == site_wbs_content(destination):
         return "unchanged"
     source_time = _timestamp(source_row.get("source_updated_at"))
     destination_time = _timestamp(destination.get("updated_at"))
@@ -151,16 +167,19 @@ def _compare_to_destination(
     return "manual_timestamp_conflict"
 
 
-def build_wbs_import_plan(
+def build_wbs_import_plan_details(
     staged_rows: list[dict[str, Any]],
     site_rows: list[dict[str, Any]],
-) -> dict[str, Any]:
-    """Return aggregate decisions and a digest, never source content or IDs."""
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Return a content-free summary and private actions.
+
+    Callers must never log, artifact, or otherwise disclose the private actions.
+    """
 
     staged_groups: dict[str, list[dict[str, Any]]] = {}
     invalid_task_id_rows = 0
     for row in staged_rows:
-        task_id = _normalized_uuid(row.get("task_id"))
+        task_id = normalized_wbs_uuid(row.get("task_id"))
         if task_id is None:
             invalid_task_id_rows += 1
             continue
@@ -176,7 +195,7 @@ def build_wbs_import_plan(
         if len(rows) <= 1:
             continue
         duplicate_rows += len(rows) - 1
-        variants = {_content_key(_staged_content(row)) for row in rows}
+        variants = {_content_key(staged_wbs_content(row)) for row in rows}
         if len(variants) == 1:
             exact_duplicate_groups += 1
         else:
@@ -187,12 +206,12 @@ def build_wbs_import_plan(
     site_invalid_id_rows = 0
     site_title_owners: dict[tuple[str, str], set[str]] = {}
     for row in site_rows:
-        task_id = _normalized_uuid(row.get("id"))
+        task_id = normalized_wbs_uuid(row.get("id"))
         if task_id is None:
             site_invalid_id_rows += 1
             continue
         site_by_id[task_id] = row
-        content = _site_content(row)
+        content = site_wbs_content(row)
         key = (content["title"], content["instance"])
         site_title_owners.setdefault(key, set()).add(task_id)
     site_title_duplicate_groups = sum(
@@ -204,7 +223,7 @@ def build_wbs_import_plan(
         list[tuple[str, dict[str, Any]]],
     ] = {}
     for task_id, row in canonical.items():
-        content = _staged_content(row)
+        content = staged_wbs_content(row)
         key = (content["title"], content["instance"])
         logical_groups.setdefault(key, []).append((task_id, row))
 
@@ -219,7 +238,7 @@ def build_wbs_import_plan(
         "conflicting_duplicate": 0,
         "title_group_content_conflict": 0,
     }
-    digest_rows: list[dict[str, Any]] = []
+    private_actions: list[dict[str, Any]] = []
     blocked_logical_groups = 0
     identity_alias_rows = 0
     destination_ids: set[str] = set()
@@ -228,9 +247,9 @@ def build_wbs_import_plan(
         candidates = sorted(logical_groups[key], key=lambda item: item[0])
         task_ids = [task_id for task_id, _ in candidates]
         rows = [row for _, row in candidates]
-        contents = [_staged_content(row) for row in rows]
+        contents = [staged_wbs_content(row) for row in rows]
         source_row = _canonical_row(rows)
-        source_content = _staged_content(source_row)
+        source_content = staged_wbs_content(source_row)
         existing_candidate_ids = [
             task_id for task_id in task_ids if task_id in site_by_id
         ]
@@ -278,13 +297,7 @@ def build_wbs_import_plan(
             )
 
         decision_counts[decision] += 1
-        if decision in {
-            "manual_timestamp_conflict",
-            "identity_collision",
-            "invalid_fields",
-            "conflicting_duplicate",
-            "title_group_content_conflict",
-        }:
+        if decision in BLOCKED_WBS_DECISIONS:
             blocked_logical_groups += 1
         if destination_id is not None:
             destination_ids.add(destination_id)
@@ -292,12 +305,15 @@ def build_wbs_import_plan(
                 1 for task_id in task_ids if task_id != destination_id
             )
 
-        digest_rows.append(
+        source_page_ids = sorted(
+            str(row.get("source_page_id") or "")
+            for task_id in task_ids
+            for row in staged_groups[task_id]
+        )
+        private_actions.append(
             {
                 "source_task_ids": task_ids,
-                "source_page_ids": sorted(
-                    str(row.get("source_page_id") or "") for row in rows
-                ),
+                "source_page_ids": source_page_ids,
                 "destination_task_id": destination_id,
                 "source_updated_at": source_row.get("source_updated_at"),
                 "source_last_edited_at": source_row.get("source_last_edited_at"),
@@ -317,14 +333,14 @@ def build_wbs_import_plan(
     )
     plan_sha256 = hashlib.sha256(
         json.dumps(
-            digest_rows,
+            private_actions,
             ensure_ascii=False,
             sort_keys=True,
             separators=(",", ":"),
         ).encode("utf-8")
     ).hexdigest()
 
-    return {
+    summary = {
         "staged_rows": len(staged_rows),
         "canonical_rows": len(canonical),
         "logical_rows": len(logical_groups),
@@ -347,5 +363,22 @@ def build_wbs_import_plan(
         "blocked_logical_groups": blocked_logical_groups,
         "blockers": blockers,
         "apply_gate_open": blockers == 0 and len(logical_groups) > 0,
+        "safe_logical_groups": sum(
+            decision_counts[decision] for decision in SAFE_WBS_DECISIONS
+        ),
         "plan_sha256": plan_sha256,
     }
+    return summary, private_actions
+
+
+def build_wbs_import_plan(
+    staged_rows: list[dict[str, Any]],
+    site_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Return aggregate decisions and a digest, never source content or IDs."""
+
+    summary, _private_actions = build_wbs_import_plan_details(
+        staged_rows,
+        site_rows,
+    )
+    return summary
