@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-30T11:15:06.803844+00:00",
+  "generated_at": "2026-08-30T15:31:39.593095+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -29,50 +29,50 @@
     "operating_efficiency": 10
   },
   "latest_review": {
-    "cycle_id": "20260830T200304+0900",
-    "started_at": "2026-08-30T20:03:04+09:00",
+    "cycle_id": "20260831T000451+0900",
+    "started_at": "2026-08-31T00:04:51+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "user_manual",
-      "url": "https://my-web-app-b67f4.web.app/user-manual"
+      "slug": "admin_analytics",
+      "url": "https://my-web-app-b67f4.web.app/admin/analytics"
     },
     "reviewer": {
-      "seat": 11,
-      "name": "野口 功司",
-      "selection_score": 81.7188,
+      "seat": 7,
+      "name": "榊󠄀原 清一",
+      "selection_score": 72.5129,
       "division": 1,
-      "cycle_utility": 91.58,
-      "aggregate_utility": 90.39
+      "cycle_utility": 91.33,
+      "aggregate_utility": 92.76
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "レビュー設定の/manualと実際の/user-manualが不一致で、設定URLから対象マニュアルへ到達できない",
+        "summary": "The configured /admin/analytics review URL does not match the application route /admin, so automated and human checks cannot prove that they reached the intended dashboard.",
         "severity": "p1",
         "business_dimensions": [
           "customer_pain",
-          "go_to_market",
-          "trust_risk"
+          "trust_risk",
+          "go_to_market"
         ]
       },
       {
-        "summary": "随時更新を掲げるマニュアルの更新日が実ソースより約5か月古く、利用者向け手順と管理者・内部自動化情報が混在する",
+        "summary": "Several independent metric loaders turn failures into empty, hidden, null, or debug-only states without a page-level freshness and completeness ledger.",
         "severity": "p1",
         "business_dimensions": [
           "trust_risk",
-          "customer_pain",
-          "scalability"
+          "unit_economics",
+          "customer_pain"
         ]
       },
       {
-        "summary": "16節の機能列挙に初回価値までの短い導線と成功計測がなく、マニュアルが継続利用へ寄与したか検証できない",
-        "severity": "p1",
+        "summary": "A 6,362-line page combines many operator domains, but available tests and telemetry do not show which panels shorten decisions or improve commercial outcomes.",
+        "severity": "p2",
         "business_dimensions": [
-          "go_to_market",
+          "unit_economics",
           "market_demand",
-          "revenue_model"
+          "scalability"
         ]
       }
     ],
@@ -91,52 +91,141 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After canonical route compatibility and a three-step task guide are deployed, require /manual-to-/user-manual arrival at 100%, measure manual_view-to-task_complete conversion and median completion time, and compare D7 continuation plus support contacts for four weeks."
+      "next_cycle_experiment": "Instrument source-state badges and one top operator workflow, then measure successful-load rate and median time-to-decision for four weeks."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5110",
-      "detail": "A one-line review-config correction alone would not repair public compatibility, stale mixed-audience content, or the missing outcome funnel; the complete change needs a bounded remediation with product-owner content judgment and cloud validation.",
+      "label": "対策待ち・Issue #5131",
+      "detail": "A complete remedy spans route compatibility, evidence provenance, operator workflow design, and production telemetry. Authentication-sensitive and product-judgment changes are outside the shared low-risk automatic repair boundary.",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean at origin/main 6d8903dd63467d61cad2e692522a0d26d8d64bb1",
-        "passed: roster 2026-08-23, personas 2026-08-30, schema 2, 125 profiles each",
-        "passed: deterministic winner user_manual from 13 eligible features",
-        "passed: route mismatch, source freshness, 16-section content boundary, absent dedicated tests, and unknown production outcomes captured",
-        "executed exactly once against shared history: 125 profiles, seat 11"
+        "passed: dedicated worktree fast-forwarded cleanly to origin/main 4b02aac7ac657c6f61113d4c173a9eb42de7a1d7",
+        "passed: roster 2026-08-23 and personas 2026-08-30 schema 2, 125 profiles each",
+        "passed: deterministic winner admin_analytics from 13 eligible features",
+        "passed: route mismatch, 6,362-line surface, eleven loaders, silent degradation patterns, six widget tests, and unknown production outcomes captured",
+        "passed after rejecting one invalid draft dimension: 125 profiles, deterministic seat 7"
       ],
       "issue": {
-        "number": 5110,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5110",
+        "number": 5131,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5131",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260830T200304+0900:user_manual",
+        "dedupe_key": "tiger-feature-review:20260831T000451+0900:admin_analytics",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "user-manual-configured-route-mismatch",
-        "user-manual-stale-trust-and-audience-boundary",
-        "user-manual-first-value-and-measurement-gap"
+        "admin-analytics-configured-route-mismatch",
+        "admin-analytics-silent-evidence-degradation",
+        "admin-analytics-decision-surface-and-outcome-gap"
       ]
     },
     "feature": {
-      "slug": "user_manual",
-      "title": "user_manual",
+      "slug": "admin_analytics",
+      "title": "admin_analytics",
       "kind": "page",
-      "reason": "The deterministic selector chose user_manual. The neutral scan found a configured-route mismatch, an audibly stale last-updated claim, a 620-line mixed-audience manual without dedicated tests, and no production usage or outcome analytics; observed usage therefore remains neutral 50.",
-      "cycle_utility": 40.15,
-      "aggregate_utility": 40.15,
+      "reason": "The deterministic selector chose admin_analytics. The neutral scan found a configured-route mismatch, a 6,362-line multi-domain operator surface with eleven independent loaders, several silent degradation paths, six focused widget tests, and no production usage or decision-outcome evidence; observed usage therefore remains neutral 50.",
+      "cycle_utility": 43.4,
+      "aggregate_utility": 43.4,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260831T000451+0900",
+      "started_at": "2026-08-31T00:04:51+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "admin_analytics",
+        "title": "admin_analytics",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 7,
+        "name": "榊󠄀原 清一",
+        "selection_score": 72.5129
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Instrument source-state badges and one top operator workflow, then measure successful-load rate and median time-to-decision for four weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "admin-analytics-configured-route-mismatch",
+          "summary": "The configured /admin/analytics review URL does not match the application route /admin, so automated and human checks cannot prove that they reached the intended dashboard.",
+          "severity": "p1",
+          "suggested_action": "Choose one canonical URL, add an explicit compatibility alias or redirect for the other path, and protect both with a route-level contract test before changing shared links."
+        },
+        {
+          "finding_id": "admin-analytics-silent-evidence-degradation",
+          "summary": "Several independent metric loaders turn failures into empty, hidden, null, or debug-only states without a page-level freshness and completeness ledger.",
+          "severity": "p1",
+          "suggested_action": "Expose per-panel source, observed-at timestamp, success/failure state, and retry action; reserve zero for measured zero and label unavailable evidence explicitly."
+        },
+        {
+          "finding_id": "admin-analytics-decision-surface-and-outcome-gap",
+          "summary": "A 6,362-line page combines many operator domains, but available tests and telemetry do not show which panels shorten decisions or improve commercial outcomes.",
+          "severity": "p2",
+          "suggested_action": "Define the top three recurring operator decisions, group panels by decision and cadence, record time-to-decision and action completion, and continue extracting independently tested modules."
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5131",
+        "detail": "A complete remedy spans route compatibility, evidence provenance, operator workflow design, and production telemetry. Authentication-sensitive and product-judgment changes are outside the shared low-risk automatic repair boundary.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: dedicated worktree fast-forwarded cleanly to origin/main 4b02aac7ac657c6f61113d4c173a9eb42de7a1d7",
+          "passed: roster 2026-08-23 and personas 2026-08-30 schema 2, 125 profiles each",
+          "passed: deterministic winner admin_analytics from 13 eligible features",
+          "passed: route mismatch, 6,362-line surface, eleven loaders, silent degradation patterns, six widget tests, and unknown production outcomes captured",
+          "passed after rejecting one invalid draft dimension: 125 profiles, deterministic seat 7"
+        ],
+        "issue": {
+          "number": 5131,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5131",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260831T000451+0900:admin_analytics",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "admin-analytics-configured-route-mismatch",
+          "admin-analytics-silent-evidence-degradation",
+          "admin-analytics-decision-surface-and-outcome-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260830T200304+0900",
       "started_at": "2026-08-30T20:03:04+09:00",
@@ -195,7 +284,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5110",
-        "detail": "A one-line review-config correction alone would not repair public compatibility, stale mixed-audience content, or the missing outcome funnel; the complete change needs a bounded remediation with product-owner content judgment and cloud validation.",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -214,9 +303,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260830T200304+0900:user_manual",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-30T14:45:52.445967+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -241,7 +330,7 @@
         "name": "野口 功司",
         "selection_score": 69.9624
       },
-      "status": "issue_tracking",
+      "status": "issue_closed",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -282,9 +371,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4984",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "issue_closed",
+        "label": "Issue #4984 終了・反映証拠確認待ち",
+        "detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -300,12 +389,12 @@
         "issue": {
           "number": 4984,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4984",
-          "status": "created",
-          "github_state": "OPEN",
+          "status": "existing",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-feature-review:20260829T011200+0900:growth_weekly_digest",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "remediation_state": "closed_pending_proof",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-08-30T14:45:52.445967+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -396,7 +485,7 @@
           "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T14:45:52.445967+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -486,7 +575,7 @@
           "dedupe_key": "tiger-feature-review:20260828T120337+0900:philosophy",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T14:45:52.445967+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -568,7 +657,7 @@
           "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T14:45:52.445967+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -655,7 +744,7 @@
           "dedupe_key": "tiger-feature-review:20260828T042953+0900:horse_racing",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T14:45:52.445967+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -743,7 +832,7 @@
           "dedupe_key": "tiger-feature-review:20260828T004359+0900:ai_hub",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T14:45:52.445967+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -831,7 +920,7 @@
           "dedupe_key": "tiger-feature-review:20260827T221025+0900:core_hub",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T14:45:52.445967+00:00"
         },
         "implementation": {
           "commit_sha": "ec314d3f767ea3245c3af7aa1fd7db51cfad9f4c",
@@ -864,7 +953,7 @@
         "name": "野口 功司",
         "selection_score": 75.8089
       },
-      "status": "issue_tracking",
+      "status": "remediation_in_progress",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -905,9 +994,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4916",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "remediation_in_progress",
+        "label": "対策中・Issue #4916",
+        "detail": "専用対策キューが修正・検証・反映を処理しています。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -925,9 +1014,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260827T033027+0900:home",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "remediation_state": "in_progress",
+          "queue_status": "RUNNING",
+          "synced_at": "2026-08-30T14:45:52.445967+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1219,7 +1308,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T14:45:52.445967+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1244,7 +1333,7 @@
         "name": "ドラゴン細井",
         "selection_score": 79.5059
       },
-      "status": "issue_tracking",
+      "status": "issue_closed",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": null,
@@ -1269,9 +1358,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4738",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "issue_closed",
+        "label": "Issue #4738 終了・反映証拠確認待ち",
+        "detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1290,11 +1379,11 @@
           "number": 4738,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4738",
           "status": "existing",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "remediation_state": "closed_pending_proof",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-08-30T14:45:52.445967+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1471,22 +1560,6 @@
       "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
-      "slug": "admin_analytics",
-      "kind": "page",
-      "title": "admin_analytics",
-      "path": "/admin/analytics",
-      "source": "lib/pages/admin_analytics_page.dart",
-      "priority": "low",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": null,
-      "completed_cycles": 0,
-      "last_cycle_utility": null,
-      "last_reviewed_at": null,
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
-    },
-    {
       "slug": "ai_hub",
       "kind": "edge_function",
       "title": "ai-hub",
@@ -1548,6 +1621,22 @@
       "completed_cycles": 1,
       "last_cycle_utility": 44.35,
       "last_reviewed_at": "2026-08-28T16:12:00+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "admin_analytics",
+      "kind": "page",
+      "title": "admin_analytics",
+      "path": "/admin/analytics",
+      "source": "lib/pages/admin_analytics_page.dart",
+      "priority": "low",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 43.4,
+      "completed_cycles": 1,
+      "last_cycle_utility": 43.4,
+      "last_reviewed_at": "2026-08-30T15:04:51+00:00",
       "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
