@@ -1706,10 +1706,11 @@ def check_note_comments_security(conn: Any) -> dict[str, Any]:
 def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
     with conn.cursor() as cur:
         cur.execute(
-            "select n.user_id::text, n.source_key, count(*) over () "
+            "select n.id, n.user_id::text, n.source_key, count(*) over () "
             "from public.notes n "
-            "where n.id = %s",
-            (GENERATED_MEMO_NOTE_ID,),
+            "join public.public_memos pm on pm.note_id = n.id "
+            "where n.source_key = %s and pm.user_id = %s::uuid",
+            (f"local-election:{GENERATED_MEMO_NOTE_ID}", NOTE_OWNER),
         )
         repaired_rows = [tuple(row) for row in cur.fetchall()]
         cur.execute(
@@ -1726,14 +1727,20 @@ def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
         source_key_constraint_count = int(cur.fetchone()[0])
     conn.commit()
 
-    expected_repaired_rows = [
-        (
-            NOTE_OWNER,
-            f"local-election:{GENERATED_MEMO_NOTE_ID}",
-            1,
+    if len(repaired_rows) != 1:
+        raise AssertionError(f"generated memo backing note mismatch: {repaired_rows}")
+    backing_note_id, owner_id, source_key, matching_count = repaired_rows[0]
+    if not isinstance(backing_note_id, int) or not 0 < backing_note_id < 2**31:
+        raise AssertionError(
+            f"generated memo note ID is not an integer ID: {backing_note_id}"
         )
-    ]
-    if repaired_rows != expected_repaired_rows:
+    if backing_note_id == GENERATED_MEMO_NOTE_ID:
+        raise AssertionError("generated memo retained the out-of-range synthetic ID")
+    if (
+        owner_id != NOTE_OWNER
+        or source_key != f"local-election:{GENERATED_MEMO_NOTE_ID}"
+        or matching_count != 1
+    ):
         raise AssertionError(f"generated memo backing note mismatch: {repaired_rows}")
     if not foreign_key_validated:
         raise AssertionError("public_memos note foreign key was not validated")
@@ -1748,9 +1755,9 @@ def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
             "select note_id from public.public_memos "
             "where note_id = %s and is_public is true"
         ),
-        params=(GENERATED_MEMO_NOTE_ID,),
+        params=(backing_note_id,),
     )
-    if anonymous_rows != [(GENERATED_MEMO_NOTE_ID,)]:
+    if anonymous_rows != [(backing_note_id,)]:
         raise AssertionError(
             f"repaired generated memo is not public: {anonymous_rows}"
         )
@@ -1763,7 +1770,7 @@ def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
             "update public.public_memos set title = 'generated election update' "
             "where note_id = %s returning title"
         ),
-        params=(GENERATED_MEMO_NOTE_ID,),
+        params=(backing_note_id,),
     )
     if owner_update != [("generated election update",)]:
         raise AssertionError(f"generated memo owner update failed: {owner_update}")
@@ -1776,7 +1783,7 @@ def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
             "update public.public_memos set title = 'forged update' "
             "where note_id = %s returning title"
         ),
-        params=(GENERATED_MEMO_NOTE_ID,),
+        params=(backing_note_id,),
     )
     if outsider_update:
         raise AssertionError("outsider updated an owner-backed generated memo")
@@ -1795,8 +1802,8 @@ def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
         raise AssertionError("repair made a forged legacy publication readable")
 
     return {
-        "backing_note_id": GENERATED_MEMO_NOTE_ID,
-        "source_key": repaired_rows[0][1],
+        "backing_note_id": backing_note_id,
+        "source_key": source_key,
         "foreign_key_validated": foreign_key_validated,
         "owner_update": owner_update[0][0],
         "forged_publication_visible": False,
