@@ -143,6 +143,8 @@ def validate_cloud_workflow(
         "rootless_cloud_smoke.sh devcontainer",
         "docker-ce-rootless-extras",
         "ROOTLESS_DOCKER_APT_VERSION: 5:29.7.2-1~ubuntu.24.04~noble",
+        "https://download.docker.com/linux/ubuntu",
+        "060A61C51B558A7F742B77AAC52FEB6B621E9F35",
         "sudo systemctl disable --now docker.service docker.socket",
         "rootless_docker_supabase_smoke.sh",
         "supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf",
