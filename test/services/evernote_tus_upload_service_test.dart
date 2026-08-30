@@ -31,7 +31,8 @@ void main() {
   const endpoint = 'https://project.storage.supabase.co'
       '/storage/v1/upload/resumable';
 
-  test('uploads fixed chunks and sends owner-private object metadata', () async {
+  test('uploads fixed chunks and sends owner-private object metadata',
+      () async {
     var remoteOffset = 0;
     late final _RecordingClient client;
     client = _RecordingClient((request, body) async {
@@ -134,7 +135,8 @@ void main() {
     );
   });
 
-  test('resumes from the server offset without recreating the upload', () async {
+  test('resumes from the server offset without recreating the upload',
+      () async {
     var remoteOffset = 3;
     final client = _RecordingClient((request, body) async {
       if (request.method == 'HEAD') {
@@ -342,4 +344,3 @@ Map<String, String> _decodeMetadata(String value) {
   }
   return result;
 }
-
