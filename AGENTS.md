@@ -3,10 +3,34 @@
 This file is the Codex-facing companion to `CLAUDE.md`. Keep it short and
 actionable; detailed product memory stays in docs, issues, and NotebookLM.
 
+## Cloud-First Resource Policy
+
+- Treat GitHub-hosted runners and remote repository APIs as the default execution
+  venue. Keep the Windows PC focused on lightweight inspection, small edits, and
+  user interaction.
+- Do not start local `flutter analyze`, `flutter test`, Flutter builds, Playwright
+  browsers, emulators, dev servers, dependency installs, or artifact generation
+  when an equivalent GitHub Actions workflow exists.
+- Use `CI` (`ci.yml`) for analysis and tests, `E2E Smoke` (`e2e-smoke.yml`) for
+  browser evidence, and `Build Mobile Release Artifacts`
+  (`mobile-release-build.yml`) for Android/iOS builds. Treat their run URLs and
+  artifacts as the verification record.
+- When the root tree is dirty or disk/RAM pressure is reported, preserve it and
+  create the branch, commit, and PR through GitHub APIs or another approved cloud
+  environment. Do not create another local worktree merely to isolate the task.
+- A local heavy command is an exception. Run it only when the user explicitly
+  requests local execution, no cloud equivalent exists, and a fresh disk/RAM
+  check shows that the machine can safely absorb it. Record the reason in the PR
+  or handoff.
+- Do not download cloud artifacts unless the user needs to inspect or publish
+  them locally. Prefer GitHub summaries, logs, checks, and retained artifacts.
+
+See `docs/CLOUD_FIRST_EXECUTION_POLICY.md` for the routing matrix and commands.
+
 ## Session Start
 
 1. Check the working tree before editing.
-2. Prefer a fresh worktree from `origin/main` when the root tree is dirty.
+2. Prefer a scoped remote branch from `origin/main`. Create a local worktree only when cloud editing is unavailable and the resource gate is safe.
 3. Record the Codex session/worktree safety snapshot:
 
 ```powershell
@@ -67,8 +91,9 @@ same notebook.
 ## Codex Defaults
 
 - Work from a scoped branch and keep unrelated user changes intact.
-- Prefer deterministic checks over agent claims: `flutter analyze`,
-  `flutter test`, `deno lint`, migration checks, and GitHub Actions status.
+- Prefer deterministic cloud checks over agent claims. Use GitHub Actions for
+  Flutter analysis/tests/builds, Deno checks, browser automation, and artifacts;
+  reserve local execution for documented exceptions.
 - For WBS pressure, prioritize tasks that reduce repeated manual work:
   CI repair, deploy stability, merge backlog, issue sync, scheduled reports,
   and tool-change monitoring.

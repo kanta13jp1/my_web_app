@@ -57,7 +57,8 @@ Every delegated task must include this packet. If any field is unknown, write `T
 - Required validation:
 - Expected output:
 - Risk triggers that must return to Claude Code:
-- Memory/disk hygiene action for this session:
+- Execution venue: GitHub Actions / remote API / approved cloud environment / local exception
+- Local resource budget and memory/disk hygiene action for this session:
 - Subagent plan: none / roles, scope, budget, return contract
 
 ## Result Contract
@@ -102,6 +103,35 @@ Discard instead of merge when:
 - The Issue has become obsolete under the current two-instance flow.
 - The validation result is missing and CI does not cover the changed surface.
 
+## Cloud-First Execution Gate
+
+Route work before creating a worktree or starting a heavyweight process:
+
+| Work | Default venue | Evidence |
+| --- | --- | --- |
+| Branch/file changes while the root tree is dirty | GitHub API or approved cloud environment | Commit and PR URL |
+| Flutter/Dart analysis and tests | `CI` (`ci.yml`) on a pushed branch or PR | Successful check and analyzer artifact |
+| Browser/Playwright verification | `E2E Smoke` (`e2e-smoke.yml`) | Run URL and Playwright artifact |
+| Android/iOS builds | `Build Mobile Release Artifacts` (`mobile-release-build.yml`) | Run URL and retained build artifact |
+| Mechanical Dart/Deno formatting | `CI Auto-Fix (manual)` after human acknowledgement | Bot commit and PR comment |
+| GitHub/WBS/Supabase operations with an existing wrapper | The matching manual GitHub Actions workflow | Dispatch/run URL |
+
+Local execution is allowed only when no equivalent cloud path exists or the user
+explicitly requests it. Before the exception, record free disk, top memory
+processes, expected duration, and cleanup plan. Never start local Flutter,
+browser, emulator, build, or dependency-install work merely because it is the
+next traditional development step.
+
+For manual CI, push the scoped branch and run:
+
+```powershell
+gh workflow run ci.yml --ref <branch>
+gh run list --workflow ci.yml --branch <branch> --limit 1
+```
+
+Use `gh run view` for summaries and logs. Download artifacts only when local
+inspection or publication is explicitly needed.
+
 ## Session Hygiene Gate
 
 Every session must perform a cheap resource check before wrap-up:
@@ -109,9 +139,14 @@ Every session must perform a cheap resource check before wrap-up:
 ```powershell
 Get-PSDrive C
 Get-Process | Sort-Object WorkingSet64 -Descending | Select-Object -First 12 ProcessName,Id,@{Name='MB';Expression={[math]::Round($_.WorkingSet64/1MB,1)}}
-git worktree prune
-git gc --auto
+git status --short --branch
+git worktree list
 ```
+
+These checks are read-only. Do not run `git gc`, create a worktree, install
+packages, or download artifacts as an automatic session ritual when disk/RAM is
+under pressure. Cleanup must target a verified inactive process or stale
+worktree and remain a separate, explicit action.
 
 Safe cleanup candidates:
 

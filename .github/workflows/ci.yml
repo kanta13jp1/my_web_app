@@ -1,6 +1,9 @@
 name: CI
 
 on:
+  # Manual dispatch keeps analysis and tests on GitHub-hosted runners.
+  # Run with: gh workflow run ci.yml --ref <branch>
+  workflow_dispatch:
   pull_request:
     branches:
       - main
