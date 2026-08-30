@@ -18,9 +18,16 @@ GitHub-hosted runner で並行実行します。production secret や hosted Sup
   `no-new-privileges` を確認する。
 - **Rootless Docker Supabase Auth and DB**: GitHub runner の rootful Docker daemon を
   停止し、通常ユーザー所有の socket で Rootless Docker daemon を起動する。
-  `docker info` の rootless security option と UID map を確認してから Supabase CLI を
+  `docker info` の rootless security option、daemon UID、socket owner を確認してから Supabase CLI を
   実行し、Kong 経由の Auth HTTP 200、`pg_isready`、DB volume の permission error
-  0 件、通常の `supabase stop`、orphan container 0 件を必須とする。
+  0 件、正常な `supabase stop --no-backup`、orphan container 0 件を必須とする。
+
+2026-08-30 の [run 33298773318](https://github.com/kanta13jp1/my_web_app/actions/runs/33298773318)
+では、Podman 5.8.4 / Flutter 3.38.10 と Docker 29.7.2 / Supabase CLI 2.116.0 の
+両 job が成功しました。Supabase lane は repository の `config.toml` を一時 project へ
+コピーし、既存 application migration / seed を読み込まない状態で Auth/DB runtime の
+互換性だけを検証します。これにより rootless runtime の受け入れを既存 schema drift と
+分離します。この smoke は application schema の from-scratch 再構築テストを兼ねません。
 
 関連ファイルの Pull Request では自動実行されます。任意の branch を手動検証する場合は
 Actions 画面から **Rootless Container Cloud Smoke** を選ぶか、次を実行します。
@@ -33,7 +40,8 @@ gh workflow run rootless-container-cloud-smoke.yml `
 
 証跡は `rootless-devcontainer-evidence` と `rootless-supabase-evidence` artifact へ
 保存されます。runner は ephemeral なので、停止後の image、container、volume は
-ローカル PC へ残りません。Windows 上の VS Code provider 設定は repository contract
+ローカル PC へ残りません。このため cloud lane では backup volume を残さず停止します。
+Windows 上の VS Code provider 設定は repository contract
 test で検証し、実機 UI 確認が必要なときだけ次のローカル手順を使います。
 リポジトリ全体の resource routing と sparse checkout 方針は
 [`CLOUD_FIRST_DEVELOPMENT.md`](./CLOUD_FIRST_DEVELOPMENT.md) に従います。

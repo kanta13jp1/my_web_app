@@ -33559,3 +33559,11 @@ watcher が名指しできるのはスナップショット時点で**生存し�
 - Supabase最小構成はDB healthy到達後のschema初期化中にhost RAMが99.9%へ達しexit 137となった。`supabase stop`でvolume backupを保持し、Podman machineとuser-mode networkを停止した。image/volumeのpruneやrootful切替は行っていない。
 - 重いimage取得・Dev Container build・Supabase Auth/DB smokeを2つのGitHub-hosted runnerへ分離するcloud-first workflowを追加した。production secretを使わず、workflow/job権限はread-only、証跡はartifactへ保存する。
 - repository contractを8件へ拡張し、`pull_request_target`、secret参照、privileged container、不完全cleanupを拒否する。ローカル実機はVS Code統合の診断用途へ縮小し、標準の再現可能な証明はクラウドへ移した。
+
+### 開発基盤セッション記録: Rootlessコンテナ受け入れ完了 (2026-08-30 JST)
+
+- Issue #2842 の標準経路を、Flutter Dev Container は rootless Podman、Supabase Auth/DB は Rootless Docker とするクラウド分離構成へ固定した。
+- GitHub Actions run 33298773318 で Podman 5.8.4 / Flutter 3.38.10 の非root build、`keep-id` volume write、sudo拒否、capability削除、`no-new-privileges` が成功した。
+- 同runで Docker 29.7.2 / Supabase CLI 2.116.0 のrootless security option、daemon UID 1001、通常ユーザー所有socket、Docker API互換、DB ready、Auth gateway HTTP 200、volume permission error 0件を確認した。
+- Supabase検証はrepositoryの`config.toml`だけを一時projectへコピーし、既存application migration/seedのfrom-scratch driftをrootless runtime受け入れから分離した。停止はephemeral runner上で`--no-backup`を使用し、orphan container 0件とdaemon停止を確認した。
+- workflowはread-only権限、production secretなし、`pull_request_target`なし、privileged containerなしを維持した。ローカルのPodman/WSL2 machineは停止したままとし、重い再検証はクラウドへ限定する。
