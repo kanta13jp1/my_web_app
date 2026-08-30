@@ -169,6 +169,12 @@ def parse_inline_list(value: str) -> list[str]:
 def parse_workflow(path: Path, repo_root: Path) -> Workflow:
     relative = path.relative_to(repo_root).as_posix()
     raw = path.read_text(encoding="utf-8", errors="replace")
+    raw_lines = raw.splitlines()
+    meaningful = [line for line in raw_lines if line.strip()]
+    base_indent = min(
+        (len(line) - len(line.lstrip(" ")) for line in meaningful),
+        default=0,
+    )
     name = path.stem
     triggers: list[str] = []
     jobs: list[str] = []
@@ -176,8 +182,8 @@ def parse_workflow(path: Path, repo_root: Path) -> Workflow:
     section = ""
     current_job = ""
 
-    for raw_line in raw.splitlines():
-        line = strip_yaml_comment(raw_line)
+    for raw_line in raw_lines:
+        line = strip_yaml_comment(raw_line[base_indent:])
         if not line.strip():
             continue
         indent = len(line) - len(line.lstrip(" "))
