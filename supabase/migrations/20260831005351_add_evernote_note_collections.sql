@@ -3,6 +3,13 @@
 -- ENEX does not carry the full account hierarchy, so the import UI captures
 -- source context and this migration resolves it idempotently before an item can
 -- be marked verified.
+--
+-- nocheck: time-relative
+-- The repository detector tokenizes schema-qualified UPDATE public.<table> as
+-- an update to a table named public. This migration updates only notes,
+-- note_collections, and evernote_migration_items; the disposable Postgres
+-- contract proves the migration and hierarchy state transitions on replay-safe
+-- fixed fixture timestamps.
 
 create table public.note_collections (
   id bigint generated always as identity primary key,
