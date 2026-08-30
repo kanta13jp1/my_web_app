@@ -3345,7 +3345,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         Icons.lock_clock,
         '0xFF0F172A',
         'プリズンモード',
-        'スマホ依存・SNS中毒を断ち切る超高集中モード。指定時間内はSNS/動画を完全シャットアウトし、思考妨害をゼロに。刑務所級の集中力を自分で設計できる唯一のツール。',
+        'スマホ依存・SNS中毒を断ち切る超高集中モード。指定時間内はSNS/動画を完全シャットアウトし、思考妨害をゼロに。集中環境を自分で設計できるツール。',
       ),
       (
         Icons.hub,
@@ -3423,7 +3423,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         Icons.balance,
         '0xFF4338CA',
         '現実確認チェック',
-        '自分の目標・計画・実績を客観的にスコアリングし「見栄・感情・バイアス」を排除した現実ベースの意思決定を支援。唯一無二のAI自己客観化機能。',
+        '自分の目標・計画・実績を客観的にスコアリングし「見栄・感情・バイアス」を排除した現実ベースの意思決定を支援。AIによる自己客観化機能。',
       ),
       (
         Icons.compare_arrows,
