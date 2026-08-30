@@ -27,6 +27,9 @@ permissions: {}
 
 jobs:
   discover:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: write
     name: Discover Trending Competitors

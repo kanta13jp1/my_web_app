@@ -53,14 +53,24 @@ class WorkflowAuditTest(unittest.TestCase):
             self.assertTrue(errors)
             self.assertIn("missing guard", errors[0])
 
-    def test_read_only_quota_monitor_is_exempt(self) -> None:
+    def test_migration_control_is_exempt_only_without_provider_calls(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             directory = Path(tmp)
-            (directory / "quota-monitor.yml").write_text(
-                "OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}\n",
+            path = directory / "shared-secret-environment-migration.yml"
+            path.write_text(
+                "ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}\n"
+                "run: gh secret set ANTHROPIC_API_KEY\n",
                 encoding="utf-8",
             )
             self.assertEqual(audit_workflows(directory), [])
+            path.write_text(
+                "ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}\n"
+                "run: curl https://api.anthropic.com/v1/messages\n",
+                encoding="utf-8",
+            )
+            errors = audit_workflows(directory)
+            self.assertTrue(errors)
+            self.assertIn("must not call a paid provider", errors[0])
 
 
 if __name__ == "__main__":
