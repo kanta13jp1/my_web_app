@@ -163,6 +163,11 @@ jobs:
             -H "traceparent: $TRACEPARENT" \
             -H "tracestate: codex=issue-2849" \
             "$SUPABASE_URL/functions/v1/health-check" > trace-probe-response.json
+          jq --exit-status --arg trace "$TRACE_ID" '.trace_id == $trace' \
+            trace-probe-response.json >/dev/null || {
+              echo "::error::Production health-check did not return the propagated trace ID."
+              exit 1
+            }
 
           SQL="select timestamp, source, log_attributes['trace_id'] as trace_id, log_attributes['trace.id'] as trace_dot_id, event_message from logs where source in ('edge_logs','function_edge_logs','function_logs') and (log_attributes['trace_id'] = '$TRACE_ID' or log_attributes['trace.id'] = '$TRACE_ID' or position(event_message, '$TRACE_ID') > 0) order by timestamp desc limit 20"
           for attempt in 1 2 3 4 5 6 7 8; do
