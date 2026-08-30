@@ -3,12 +3,23 @@ name: Cloud Development Checks
 on:
   pull_request:
     paths:
+      - .agents/skills/site-trust-improvement-loop/**
       - .devcontainer/**
       - .github/workflows/cloud-development.yml
+      - scripts/cloud_ci_handoff.py
+      - scripts/cloud_ci_handoff_test.py
+      - scripts/cloud_first_route.py
+      - scripts/cloud_first_route_test.py
+      - docs/CLOUD_FIRST_DEVELOPMENT.md
       - docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md
+      - docs/CLAUDE_CODE_SETUP_RUNBOOK.md
       - AGENTS.md
   workflow_dispatch:
     inputs:
+      expected_head_sha:
+        description: Exact 40-character pushed HEAD that this run must validate
+        required: true
+        type: string
       profile:
         description: Cloud validation profile
         required: true
@@ -22,6 +33,11 @@ on:
           - full
   workflow_call:
     inputs:
+      expected_head_sha:
+        description: Optional exact HEAD assertion for reusable callers
+        required: false
+        default: ''
+        type: string
       profile:
         description: Cloud validation profile
         required: false
@@ -43,12 +59,29 @@ jobs:
       contents: read
     env:
       CLOUD_PROFILE: ${{ inputs.profile || 'full' }}
+      EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha || '' }}
 
     steps:
       - name: Checkout shallow source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 1
+
+      - name: Verify exact cloud handoff SHA
+        if: env.EXPECTED_HEAD_SHA != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_head_sha="$(git rev-parse HEAD)"
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::expected_head_sha must be a lowercase 40-character Git SHA."
+            exit 1
+          fi
+          if [ "$actual_head_sha" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::Cloud handoff mismatch: expected $EXPECTED_HEAD_SHA, checked out $actual_head_sha."
+            exit 1
+          fi
+          echo "Verified exact cloud handoff SHA: $actual_head_sha"
 
       - name: Validate cloud workspace descriptors
         shell: bash
@@ -100,6 +133,7 @@ jobs:
             echo "| profile | \`${CLOUD_PROFILE}\` |"
             echo "| ref | \`${GITHUB_REF}\` |"
             echo "| commit | \`${GITHUB_SHA}\` |"
+            echo "| expected commit | \`${EXPECTED_HEAD_SHA:-event SHA}\` |"
             echo '| local Flutter/Dart work | none |'
             echo '| artifact retention | 1 day when a web build runs |'
           } >> "$GITHUB_STEP_SUMMARY"
