@@ -249,15 +249,11 @@ class SupabaseNoteTaskRepository implements NoteTaskRepository {
     final ids = noteIds.where((id) => id > 0).toList(growable: false);
     final titles = <int, String>{};
     for (var offset = 0; offset < ids.length; offset += chunkSize) {
-      final end = offset + chunkSize < ids.length
-          ? offset + chunkSize
-          : ids.length;
+      final end =
+          offset + chunkSize < ids.length ? offset + chunkSize : ids.length;
       final chunk = ids.sublist(offset, end);
       final rows = List<Map<String, dynamic>>.from(
-        await _client
-            .from('notes')
-            .select('id,title')
-            .inFilter('id', chunk),
+        await _client.from('notes').select('id,title').inFilter('id', chunk),
       );
       for (final row in rows) {
         final id = _asInt(row['id']);

@@ -254,9 +254,7 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
               SizedBox(
                 width: 220,
                 child: Material(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .surfaceContainerLowest,
+                  color: Theme.of(context).colorScheme.surfaceContainerLowest,
                   child: ListView(
                     padding: const EdgeInsets.all(12),
                     children: [
@@ -520,10 +518,7 @@ class _TaskOverviewCard extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 10),
                     child: Text(
                       task.title,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             decoration: task.isCompleted
                                 ? TextDecoration.lineThrough
                                 : null,

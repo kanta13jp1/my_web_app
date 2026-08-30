@@ -4,7 +4,8 @@ import 'package:my_web_app/pages/note_tasks_page.dart';
 import 'package:my_web_app/services/note_task_service.dart';
 
 void main() {
-  testWidgets('shows open Evernote Tasks and filters completed on narrow screens',
+  testWidgets(
+      'shows open Evernote Tasks and filters completed on narrow screens',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(600, 820));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -48,7 +49,8 @@ void main() {
     expect(find.text('税務資料を確認'), findsNothing);
   });
 
-  testWidgets('searches by note title and opens the source note on wide screens',
+  testWidgets(
+      'searches by note title and opens the source note on wide screens',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1100, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -159,9 +161,18 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('期限切れ'), findsOneWidget);
-    expect(find.text('今後'), findsNothing);
-    expect(find.text('期限なし'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('note_tasks_page_card_overdue')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('note_tasks_page_card_future')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('note_tasks_page_card_undated')),
+      findsNothing,
+    );
   });
 }
 
@@ -173,8 +184,7 @@ class _FakeNoteTaskRepository implements NoteTaskRepository {
   final List<(String, bool)> completedChanges = <(String, bool)>[];
 
   @override
-  Future<List<NoteTask>> loadAllTasks() async =>
-      List<NoteTask>.from(_tasks);
+  Future<List<NoteTask>> loadAllTasks() async => List<NoteTask>.from(_tasks);
 
   @override
   Future<List<NoteTask>> loadTasks({required int noteId}) async {
