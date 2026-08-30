@@ -142,6 +142,44 @@ class NotionInventoryCloudExpandTest(unittest.TestCase):
         self.assertEqual(report["remaining_after"], 4754)
         self.assertFalse(report["source_deletion_attempted"])
 
+    def test_apply_allows_remaining_growth_explained_by_discovery(self) -> None:
+        hub = FakeHub()
+        hub.plan_payload["remaining_to_expand"] = 100
+        hub.apply_payload.update(
+            {
+                "discovered": 12,
+                "remaining_to_expand": 107,
+            }
+        )
+
+        report = execute(
+            hub,
+            mode="apply",
+            limit=5,
+            expected_plan_sha256=DIGEST,
+        )
+
+        self.assertEqual(report["remaining_after"], 107)
+        self.assertEqual(report["remaining_delta"], 7)
+
+    def test_apply_rejects_remaining_growth_beyond_discovery(self) -> None:
+        hub = FakeHub()
+        hub.plan_payload["remaining_to_expand"] = 100
+        hub.apply_payload.update(
+            {
+                "discovered": 12,
+                "remaining_to_expand": 113,
+            }
+        )
+
+        with self.assertRaisesRegex(ExpansionError, "evidence is inconsistent"):
+            execute(
+                hub,
+                mode="apply",
+                limit=5,
+                expected_plan_sha256=DIGEST,
+            )
+
     def test_stale_digest_fails_before_any_write(self) -> None:
         hub = FakeHub()
         with self.assertRaisesRegex(
@@ -220,6 +258,47 @@ class NotionInventoryCloudExpandTest(unittest.TestCase):
             )
 
         self.assertEqual(hub.apply_calls, [])
+
+    def test_drain_allows_growth_explained_by_discovered_children(self) -> None:
+        hub = FakeHub()
+        hub.plan_payload["remaining_to_expand"] = 100
+        hub.apply_payload.update(
+            {
+                "discovered": 12,
+                "remaining_to_expand": 107,
+            }
+        )
+
+        report = execute_drain(
+            hub,
+            limit=5,
+            max_items=5,
+            expected_plan_sha256=DIGEST,
+            pause=lambda _: None,
+        )
+
+        self.assertEqual(report["mutations"]["items_attempted"], 5)
+        self.assertEqual(report["remaining_after"], 107)
+        self.assertEqual(report["remaining_delta"], 7)
+
+    def test_drain_rejects_growth_beyond_discovered_children(self) -> None:
+        hub = FakeHub()
+        hub.plan_payload["remaining_to_expand"] = 100
+        hub.apply_payload.update(
+            {
+                "discovered": 12,
+                "remaining_to_expand": 113,
+            }
+        )
+
+        with self.assertRaisesRegex(ExpansionError, "evidence is inconsistent"):
+            execute_drain(
+                hub,
+                limit=5,
+                max_items=5,
+                expected_plan_sha256=DIGEST,
+                pause=lambda _: None,
+            )
 
     def test_drain_rejects_more_than_one_hundred_before_planning(self) -> None:
         hub = DrainHub()
