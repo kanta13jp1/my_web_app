@@ -58,6 +58,9 @@ same notebook.
 
 - GitHub Actions is the default authority for Flutter/Dart analysis, tests,
   Deno checks, production builds, coverage, and generated artifacts.
+- Prefer the GitHub connector, Git Data API, or GitHub web editor for bounded
+  source changes. Do not create a local worktree merely to make a remote-safe
+  edit; preserve work in a scoped remote branch and draft pull request.
 - Cloud execution is mandatory when free disk is below 30 GiB, free physical
   memory is below 4 GiB, or memory use is at least 85%. In that state, do not
   run `flutter pub get`, `flutter analyze`, `flutter test`, `flutter build`,
@@ -76,8 +79,10 @@ git push -u origin HEAD
 python scripts/cloud_ci_handoff.py --execute --watch
 ```
 
-- Manual dispatch validates the branch head. PR CI remains required because it
-  validates the GitHub merge ref. See `docs/CLOUD_FIRST_DEVELOPMENT.md`.
+- Manual dispatch must include the exact lowercase 40-character branch HEAD;
+  the workflow rejects a stale or malformed handoff. PR CI remains required
+  because it validates GitHub's immutable event revision. See
+  `docs/CLOUD_FIRST_DEVELOPMENT.md`.
 - Do not remove unrelated worktrees or caches to manufacture headroom. Clean
   only outputs created by the current task and preserve every dirty worktree.
 
@@ -146,6 +151,8 @@ python scripts/cloud_ci_handoff.py --execute --watch
 - Prefer remote-only GitHub API edits for small changes and the default GitHub Codespaces control-plane configuration for interactive multi-file editing.
 - The default `.devcontainer/devcontainer.json` must stay lightweight: do not add Flutter installation, `flutter pub get`, builds, browser automation, or media processing to its startup path.
 - Default heavy work to `.github/workflows/cloud-development.yml`; see `docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md`.
+- For manual runs, dispatch the scoped branch with both `profile` and
+  `expected_head_sha`. Never validate only a mutable branch name.
 - Keep local work to scoped inspection, emergency-safe edits, branch/PR operations, workflow dispatch, log inspection, and short HTTP/revision smoke checks.
 - Run Flutter dependency resolution, analysis, tests, release web builds, and deployment gates on GitHub-hosted runners whenever the workflow can cover the task.
 - Do not create a local worktree or start local Flutter/Dart builds, analysis, tests, browser automation, or media processing when RAM usage is at least 85% or free physical memory is below 2 GB. Preserve edits remotely and dispatch the cloud workflow instead.
