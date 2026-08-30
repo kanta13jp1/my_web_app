@@ -4,7 +4,10 @@ from __future__ import annotations
 import json
 import unittest
 
-from scripts.notion_wbs_import_plan import build_wbs_import_plan
+from scripts.notion_wbs_import_plan import (
+    build_wbs_import_plan,
+    build_wbs_import_plan_details,
+)
 
 
 IDS = [
@@ -58,7 +61,7 @@ def site(
 
 
 class NotionWbsImportPlanTest(unittest.TestCase):
-    def test_exact_same_id_duplicate_collapses(self) -> None:
+    def test_exact_same_id_duplicate_collapses_and_keeps_private_sources(self) -> None:
         rows = [
             staged(
                 IDS[0],
@@ -72,13 +75,14 @@ class NotionWbsImportPlanTest(unittest.TestCase):
             ),
         ]
 
-        plan = build_wbs_import_plan(rows, [])
+        plan, actions = build_wbs_import_plan_details(rows, [])
 
         self.assertEqual(plan["canonical_rows"], 1)
         self.assertEqual(plan["logical_rows"], 1)
         self.assertEqual(plan["duplicate_rows"], 1)
         self.assertEqual(plan["exact_duplicate_groups"], 1)
         self.assertEqual(plan["decisions"]["insert"], 1)
+        self.assertEqual(len(actions[0]["source_page_ids"]), 2)
         self.assertTrue(plan["apply_gate_open"])
 
     def test_conflicting_same_id_duplicate_blocks_apply(self) -> None:
@@ -201,7 +205,7 @@ class NotionWbsImportPlanTest(unittest.TestCase):
         self.assertEqual(plan["invalid_field_rows"], 1)
         self.assertFalse(plan["apply_gate_open"])
 
-    def test_result_never_contains_titles_or_source_page_ids(self) -> None:
+    def test_public_result_never_contains_private_action_data(self) -> None:
         plan = build_wbs_import_plan(
             [
                 staged(
@@ -217,6 +221,7 @@ class NotionWbsImportPlanTest(unittest.TestCase):
         self.assertNotIn("sensitive title", encoded)
         self.assertNotIn("aaaaaaaa-aaaa", encoded)
         self.assertRegex(plan["plan_sha256"], r"^[0-9a-f]{64}$")
+        self.assertEqual(plan["safe_logical_groups"], 1)
 
     def test_digest_changes_when_source_content_changes(self) -> None:
         first = build_wbs_import_plan([staged(IDS[0], "first")], [])
