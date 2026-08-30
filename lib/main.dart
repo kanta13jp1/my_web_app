@@ -248,6 +248,7 @@ import 'package:my_web_app/pages/crm_sales_pipeline_page.dart';
 import 'package:my_web_app/pages/horse_racing_predictor_page.dart';
 import 'package:my_web_app/pages/horse_provider_leaderboard_page.dart';
 import 'package:my_web_app/pages/travel_itinerary_page.dart';
+import 'package:my_web_app/pages/art_museum_directory_page.dart';
 import 'package:my_web_app/pages/virtual_whiteboard_page.dart';
 import 'package:my_web_app/pages/recipe_meal_planner_page.dart';
 import 'package:my_web_app/pages/meal_log_page.dart';
@@ -1466,6 +1467,11 @@ Route<dynamic> generateAppRoute(
     case '/travel-planner':
       return MaterialPageRoute(
         builder: (_) => const TravelItineraryPage(),
+      );
+    case '/art-museums':
+      return MaterialPageRoute(
+        builder: (_) => const ArtMuseumDirectoryPage(),
+        settings: settings,
       );
     case '/virtual-whiteboard':
       return MaterialPageRoute(
