@@ -107,9 +107,8 @@ class SupabaseSentryTraceContextProvider {
     return SupabaseTraceContext(
       traceparent: '00-$traceId-$spanId-${sampled ? '01' : '00'}',
       baggage: active?.baggage,
-      sentryTrace: active == null
-          ? null
-          : '$traceId-$spanId-${sampled ? '1' : '0'}',
+      sentryTrace:
+          active == null ? null : '$traceId-$spanId-${sampled ? '1' : '0'}',
     );
   }
 

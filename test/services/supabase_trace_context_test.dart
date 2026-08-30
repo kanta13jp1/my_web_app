@@ -82,12 +82,10 @@ void main() {
         return http.Response('{}', 200);
       }),
       traceContextProvider: () async => const SupabaseTraceContext(
-        traceparent:
-            '00-0123456789abcdef0123456789abcdef-0123456789abcdef-01',
+        traceparent: '00-0123456789abcdef0123456789abcdef-0123456789abcdef-01',
         tracestate: 'vendor=value',
         baggage: 'sentry-environment=production',
-        sentryTrace:
-            '0123456789abcdef0123456789abcdef-0123456789abcdef-1',
+        sentryTrace: '0123456789abcdef0123456789abcdef-0123456789abcdef-1',
       ),
     );
     addTearDown(client.close);
@@ -114,8 +112,7 @@ void main() {
         return http.Response('{}', 200);
       }),
       traceContextProvider: () async => const SupabaseTraceContext(
-        traceparent:
-            '00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-01',
+        traceparent: '00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-01',
       ),
     );
     addTearDown(client.close);
