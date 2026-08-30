@@ -177,7 +177,9 @@ class EvernoteTusUploadService {
       }
     }
     if (sourcePosition != totalBytes) {
-      throw StateError('The upload stream ended before the declared file size.');
+      throw StateError(
+        'The upload stream ended before the declared file size.',
+      );
     }
     if (buffer.isNotEmpty) {
       uploadOffset = await _sendChunk(
@@ -292,6 +294,9 @@ class EvernoteTusUploadService {
     final nextOffset = int.tryParse(
       response.headers['upload-offset'] ?? '',
     );
+    if (nextOffset == null) {
+      throw StateError('Supabase returned an invalid upload offset.');
+    }
     final expectedOffset = uploadOffset + chunk.length;
     if (nextOffset != expectedOffset) {
       throw StateError('Supabase returned an unexpected upload offset.');
@@ -339,4 +344,3 @@ class EvernoteTusUploadService {
     }
   }
 }
-
