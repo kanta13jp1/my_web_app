@@ -4,6 +4,9 @@
 -- can be linked to a local account by exact email. Assignees can read the Task
 -- and its Task reminders, but can only change completion through a narrow RPC.
 --
+-- nocheck: time-relative
+-- clock_timestamp() is used only for mutable audit timestamps, never inside
+-- a CHECK constraint.
 -- nocheck: auth-users-email
 -- The owner-initiated lookup returns only whether assignment linked.
 
