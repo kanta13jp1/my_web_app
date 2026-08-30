@@ -16,6 +16,11 @@ enum AiUniversityLearningOutcomeTask {
     provider: '01ai',
     category: 'models',
   ),
+  fireflyApi(
+    taskVersion: 'adobe_firefly_api_20260831_v1',
+    provider: 'adobe_firefly',
+    category: 'api',
+  ),
   llmMechanics(
     taskVersion: 'academic_llm_mechanics_20260829_v1',
     provider: 'academic',
@@ -66,6 +71,19 @@ class AiUniversityLearningOutcomeAnalytics {
     'correct_answers',
     'total_questions',
     'self_rating',
+    'learner_role',
+    'first_call_succeeded',
+    'secret_handling_passed',
+    'api_selection_passed',
+    'non_2xx_recovery_passed',
+    'estimated_daily_requests',
+    'completion_seconds',
+  };
+  static const Set<String> allowedFireflyLearnerRoles = <String>{
+    'developer',
+    'operations',
+    'creator',
+    'product_owner',
   };
 
   final AiUniversityLearningOutcomeWriter? _writer;
@@ -93,6 +111,50 @@ class AiUniversityLearningOutcomeAnalytics {
       'correct_answers': correctAnswers,
       'total_questions': 3,
       'self_rating': selfRating,
+    });
+  }
+
+  Future<bool> recordFireflyCompleted({
+    required int correctAnswers,
+    required int selfRating,
+    required String learnerRole,
+    required bool firstCallSucceeded,
+    required bool secretHandlingPassed,
+    required bool apiSelectionPassed,
+    required bool non2xxRecoveryPassed,
+    required int estimatedDailyRequests,
+    required int completionSeconds,
+  }) {
+    if (task != AiUniversityLearningOutcomeTask.fireflyApi) {
+      return Future.value(false);
+    }
+    if (correctAnswers < 0 || correctAnswers > 3) return Future.value(false);
+    if (selfRating < 1 || selfRating > 5) return Future.value(false);
+    if (!allowedFireflyLearnerRoles.contains(learnerRole)) {
+      return Future.value(false);
+    }
+    if (estimatedDailyRequests < 1 || estimatedDailyRequests > 9000) {
+      return Future.value(false);
+    }
+    if (completionSeconds < 1 || completionSeconds > 3600) {
+      return Future.value(false);
+    }
+
+    return _record(<String, Object>{
+      'event_name': 'task_completed',
+      'task_version': task.taskVersion,
+      'provider': task.provider,
+      'category': task.category,
+      'correct_answers': correctAnswers,
+      'total_questions': 3,
+      'self_rating': selfRating,
+      'learner_role': learnerRole,
+      'first_call_succeeded': firstCallSucceeded,
+      'secret_handling_passed': secretHandlingPassed,
+      'api_selection_passed': apiSelectionPassed,
+      'non_2xx_recovery_passed': non2xxRecoveryPassed,
+      'estimated_daily_requests': estimatedDailyRequests,
+      'completion_seconds': completionSeconds,
     });
   }
 
