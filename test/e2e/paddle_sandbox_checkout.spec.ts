@@ -63,6 +63,10 @@ test.describe('real Paddle sandbox checkout', () => {
       ]),
     );
     await closeCheckoutIfPresent(page);
+    await expect(
+      page.getByRole('button', { name: 'もう一度試す' }),
+      'checkout.closed must not replace the failed terminal state',
+    ).toBeVisible({ timeout: 30_000 });
   });
 
   test('valid test card completes and Flutter renders success state', async ({
@@ -84,6 +88,10 @@ test.describe('real Paddle sandbox checkout', () => {
       'checkout.completed evidence should include a transaction ID',
     ).toBe(true);
     await closeCheckoutIfPresent(page);
+    await expect(
+      page.getByRole('button', { name: 'ホームへ戻る' }),
+      'checkout.closed must not replace the completed terminal state',
+    ).toBeVisible({ timeout: 30_000 });
   });
 });
 
@@ -256,6 +264,7 @@ async function closeCheckoutIfPresent(page: Page) {
   const frame = page.locator('iframe[name="paddle_frame"]');
   if (!(await frame.isVisible().catch(() => false))) return;
   await closeCheckout(page);
+  await expect(frame).toBeHidden({ timeout: 30_000 });
 }
 
 async function expectFlutterText(
