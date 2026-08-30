@@ -108,9 +108,18 @@ class CicdEfficiencyTest(unittest.TestCase):
         self.assertIn("expected_head_sha:", workflow)
         self.assertIn('ref="${GITHUB_SHA}"', workflow)
 
+        cloud_workflow = self.read(".github/workflows/cloud-development.yml")
+        self.assertIn("  workflow_dispatch:\n", cloud_workflow)
+        self.assertIn("expected_head_sha:", cloud_workflow)
+        self.assertIn(
+            'actual_head_sha="$(git rev-parse HEAD)"',
+            cloud_workflow,
+        )
+
         guide = self.read("docs/CLOUD_FIRST_DEVELOPMENT.md")
         self.assertIn(
-            "python scripts/cloud_ci_handoff.py --execute --watch",
+            "python scripts/cloud_ci_handoff.py --profile full "
+            "--execute --watch",
             guide,
         )
         self.assertIn("30 GiB", guide)
