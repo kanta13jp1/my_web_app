@@ -31,6 +31,14 @@ void main() {
           'モビット': 15,
           'auPayカード': 10,
         },
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'famipay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 3000,
+            newUsageAmount: 100000,
+          ),
+        },
+        actualPaymentAmounts: const <String, double>{'famipay_card': 3000},
+        paidAccountNames: const <String>{'famipay_card'},
       );
       final famipayId =
           workbook.debtMasterRows.firstWhere((row) => row.name == 'ファミペイ').id;
@@ -57,7 +65,7 @@ void main() {
       // ③ 止血 (カード新規利用停止)。
       expect(plan.todaySteps[2].kind, AssetTriageStepKind.stopNewCardUsage);
       expect(plan.todaySteps[2].detail.contains('ファミペイ'), isTrue);
-      // 今週: 期限超過処理 + リボ解除電話。期限超過は昨日以前の支払のみ
+      // 今週: 期限超過処理 + 新規利用分の25日返済確保。期限超過は昨日以前の支払のみ
       // (本日期日のモビット10,000円は②に載せ、④へは二重計上しない)。
       expect(
         plan.weekSteps.map((step) => step.kind),
@@ -85,61 +93,67 @@ void main() {
       expect(plan.consultationNote!.contains('188'), isTrue);
     });
 
-    test(
-      'completed one-shot change removes phone advice but keeps repayment',
-      () {
-        final workbook = planner.buildWorkbook(
-          latestSnapshot: const <String, double>{
-            'bank': 500000,
-            'ファミペイ': -100000,
-          },
-          baseDate: DateTime(2026, 8, 29),
-          monthlyPaymentOverrides: const <String, double>{'ファミペイ': 5000},
-          cardUsagePolicies: <String, AssetCardUsagePolicy>{
-            'famipay_card': AssetCardUsagePolicy(
-              enforceOneShot: true,
-              changedAt: DateTime.utc(2026, 8, 29),
-              memo: '受付 ABC123',
-            ),
-          },
-        );
-        final discipline = monitor.evaluate(
-          workbook: workbook,
-          cardUsagePolicies: workbook.cardUsagePolicies,
-        );
-
-        final plan = triage.buildPlan(
-          workbook: workbook,
-          disciplineReport: discipline,
-        );
-
-        expect(
-          plan.weekSteps.any(
-            (step) => step.kind == AssetTriageStepKind.disableRevolving,
-          ),
-          isFalse,
-        );
-        expect(
-          plan.monthSteps.any(
-            (step) => step.kind == AssetTriageStepKind.reviewRepaymentPace,
-          ),
-          isTrue,
-        );
-      },
-    );
-
-    test('one-shot policy suppresses advice only for the matching card', () {
+    test('configured payday rule needs no corrective triage', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
           'bank': 500000,
           'ファミペイ': -100000,
-          'auPayカード': -80000,
         },
         baseDate: DateTime(2026, 8, 29),
-        monthlyPaymentOverrides: const <String, double>{
-          'ファミペイ': 5000,
-          'auPayカード': 5000,
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'famipay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 5000,
+            newUsageAmount: 10000,
+          ),
         },
+        cardUsagePolicies: <String, AssetCardUsagePolicy>{
+          'famipay_card': AssetCardUsagePolicy(
+            enforceOneShot: true,
+            changedAt: DateTime.utc(2026, 8, 29),
+            memo: '受付 ABC123',
+          ),
+        },
+      );
+      final discipline = monitor.evaluate(
+        workbook: workbook,
+        cardUsagePolicies: workbook.cardUsagePolicies,
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: discipline,
+      );
+
+      expect(discipline.revolvingCardViolations, isEmpty);
+      expect(
+        plan.weekSteps.any(
+          (step) => step.kind == AssetTriageStepKind.disableRevolving,
+        ),
+        isFalse,
+      );
+      expect(
+        plan.monthSteps.any(
+          (step) => step.kind == AssetTriageStepKind.reviewRepaymentPace,
+        ),
+        isFalse,
+      );
+    });
+
+    test('legacy one-shot record does not hide an actual repayment shortfall', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'ファミペイ': -100000,
+        },
+        baseDate: DateTime(2026, 8, 29),
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'famipay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 5000,
+            newUsageAmount: 30000,
+          ),
+        },
+        actualPaymentAmounts: const <String, double>{'famipay_card': 5000},
+        paidAccountNames: const <String>{'famipay_card'},
         cardUsagePolicies: const <String, AssetCardUsagePolicy>{
           'famipay_card': AssetCardUsagePolicy(enforceOneShot: true),
         },
@@ -157,8 +171,9 @@ void main() {
       final settingStep = plan.weekSteps.singleWhere(
         (step) => step.kind == AssetTriageStepKind.disableRevolving,
       );
-      expect(settingStep.detail, contains('auPayカード'));
-      expect(settingStep.detail, isNot(contains('ファミペイ')));
+      expect(settingStep.detail, contains('ファミペイ'));
+      expect(settingStep.detail, contains('25日'));
+      expect(settingStep.detail, contains('既存残高の一括返済は求めず'));
     });
 
     test('overdue step ignores unreceived income and due-today payments', () {

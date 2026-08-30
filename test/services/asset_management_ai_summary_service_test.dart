@@ -317,7 +317,11 @@ void main() {
       expect(encoded.contains('is_revolving'), true);
       expect(encoded.contains('revolving_billing'), true);
       expect(encoded.contains('reconciliation_note'), true);
-      expect(encoded.contains('reference_only_not_billed'), true);
+      expect(encoded.contains('statement_context'), true);
+      expect(encoded.contains('new_usage_amount'), true);
+      expect(encoded.contains('existing_balance_amount'), true);
+      expect(encoded.contains('payment_day'), true);
+      expect(encoded.contains('over_limit_amount'), false);
       expect(encoded.contains('ok_revolving_no_action_needed'), true);
       // カード請求グループ(au等の紐づけ負債)もリボ払いと明示し、請求額と比較させない。
       expect(encoded.contains('is_revolving_card'), true);

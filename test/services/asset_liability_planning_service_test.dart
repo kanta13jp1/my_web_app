@@ -909,7 +909,7 @@ void main() {
       expect(workbook.cardBillingReview.hasDoubleCountingRisk, isFalse);
     });
 
-    test('リボ払いカードは請求額を式から算出し不一致アラートを抑止する', () {
+    test('リボ払いカードは最低返済額へ明細の新規利用を上乗せし25日に返す', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{
           'cash': 50000,
@@ -919,6 +919,7 @@ void main() {
         revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
           'aupay_card': AssetLiabilityRevolvingCreditConfig(
             monthlyAmount: 10000,
+            newUsageAmount: 99999,
             creditLimit: 500000,
           ),
         },
@@ -945,18 +946,20 @@ void main() {
       final debtRow = workbook.debtMasterRows.firstWhere(
         (row) => row.id == 'aupay_card',
       );
-      // 請求額 = 設定額10000 + max(0, 530163 − 500000) = 40163。
-      expect(debtRow.scheduledPaymentAmount, 40163);
+      // 手入力99999より取込明細を優先し、最低返済10000 + (8066 + 15116) = 33182。
+      expect(debtRow.scheduledPaymentAmount, 33182);
       expect(debtRow.isRevolving, isTrue);
-      expect(debtRow.revolvingBilling!.overLimitAmount, 30163);
+      expect(debtRow.revolvingBilling!.newUsageAmount, 23182);
+      expect(debtRow.revolvingBilling!.existingBalanceAmount, 506981);
+      expect(debtRow.revolvingBilling!.overLimitAmount, 0);
+      expect(debtRow.paymentDay, 25);
       expect(debtRow.paymentAmountEstimated, isFalse);
 
       final group = workbook.cardStatementReconciliation.groups.singleWhere(
         (group) => group.billingAccountId == 'aupay_card',
       );
       expect(group.isRevolving, isTrue);
-      expect(group.billedAmount, 40163);
-      // 明細合計(新規利用) 8066 + 15116 = 23182 は請求額と一致しないが正常。
+      expect(group.billedAmount, 33182);
       expect(group.statementLineTotal, 23182);
       expect(
         group.alerts,
@@ -966,7 +969,7 @@ void main() {
           ),
         ),
       );
-      expect(group.revolvingBilling!.billedAmount, 40163);
+      expect(group.revolvingBilling!.billedAmount, 33182);
     });
 
     test('リボ払いカードは明細未取込でも催促アラートを出さない', () {

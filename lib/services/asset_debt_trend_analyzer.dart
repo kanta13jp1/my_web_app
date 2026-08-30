@@ -318,17 +318,16 @@ class AssetDebtTrendAnalyzer {
   }) {
     switch (category) {
       case AssetDebtTrendCategory.negativeAmortization:
-        return '①リボ払いを解除して一括返済する、'
-            '②または翌月から返済額を最低でも利息を上回る${_yen(breakEven)}（24ヶ月で完済するなら${_yen(payoff24)}）以上に引き上げてください。'
-            '元金を確実に減らすため、新規利用も止めるのが理想です。';
+        return '既存残高の一括返済は求めません。翌月から最低返済額を利息を上回る'
+            '${_yen(breakEven)}（24ヶ月で完済するなら${_yen(payoff24)}）以上にしてください。'
+            '新規利用分は別枠で全額上乗せし、給料日の25日に返済します。';
       case AssetDebtTrendCategory.balanceIncreasing:
-        final increase = delta ?? 0;
-        return '翌月は新規利用を返済額${_yen(payment)}以下に抑えるか、'
-            '返済額を今月の増加分${_yen(increase)}以上に引き上げて残高を増やさないでください。'
-            '可能ならリボを解除して一括返済し、24ヶ月で完済するなら月${_yen(payoff24)}が目安です。';
+        return '翌月は最低返済額に新規利用分を全額上乗せし、給料日の25日に返済して'
+            '残高を増やさないでください。既存残高は一括返済せず、'
+            '24ヶ月で完済するなら最低返済部分は月${_yen(payoff24)}が目安です。';
       case AssetDebtTrendCategory.slowPayoff:
         return '返済額を月${_yen(payoff24)}まで引き上げると24ヶ月で完済でき、利息総額を大きく圧縮できます。'
-            '余力がある月は繰上返済を、新規利用は控えてください。';
+            '余力がある月は繰上返済を行い、新規利用分は25日に全額上乗せしてください。';
     }
   }
 
