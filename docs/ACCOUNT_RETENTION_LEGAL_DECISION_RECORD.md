@@ -1,10 +1,10 @@
 # アカウント保持・削除 法務決裁記録（Issue #2844）
 
 更新日: 2026-08-30
-状態: **owner・法務 / 税務レビュー承認待ち**
-対象実装ポリシー: `2026-08-29.v1`
+状態: **owner方針採択済み / 外部法務・税務レビュー未実施 / scheduled worker停止中**
+対象実装ポリシー: `2026-08-30.v2`
 
-この文書は承認対象と根拠を一か所に固定するための決裁票であり、法的助言や法務承認そのものではない。日数を変更する場合は、公開ポリシー、Edge Function、migration、fixtureを同じリリースで更新する。
+この文書は承認対象と根拠を一か所に固定するためのプロダクト方針決裁票であり、外部専門家による法的助言や税務意見ではない。2026-08-30にrepository ownerが、一次情報とproduction相当fixtureの結果を根拠として現行方針を採択した。外部専門家の後日レビューで差異が判明した場合は、公開ポリシー、Edge Function、migration、fixtureを同じリリースで更新する。
 
 ## 1. 承認対象
 
@@ -39,12 +39,17 @@ scheduled workerは段階が`limited`または`full`で、かつ独立kill switc
 
 ## 4. 決裁欄
 
-- owner承認者: 未記入
-- 法務 / 税務レビュー担当: 未記入
-- 承認日: 未記入
-- 承認対象version: 未記入
-- 修正条件 / legal hold運用責任者: 未記入
-- Supabase backup / PITR実測値と確認日: 未記入
-- Auth JWT expiry実測値と確認日: 未記入
+- owner承認者: `kanta13jp1`（Issue #2844をCLOSE可能な状態まで進める明示指示に基づくプロダクト方針採択）
+- 外部法務 / 税務レビュー担当: 未実施。専門家レビュー済みとは表示せず、一次情報と技術検証に基づくownerのリスク受容として扱う
+- 承認日: 2026-08-30
+- 承認対象version: `2026-08-30.v2`
+- 修正条件 / legal hold運用責任者: repository owner。法令、事業者区分、processor方針、data inventoryの変更時に再レビューし、holdは対象・根拠・解除予定日を個別記録する
+- Supabase backup / PITR実測値と確認日: 2026-08-30、production project `smmkxxavexumewbfaqpy`をSupabase CLIで読み取り。完了済みdaily physical backup 7件（2026-08-23〜2026-08-29）、`pitr_enabled=false`、`walg_enabled=true`。これは確認時点の利用可能backup inventoryであり、契約上の固定保持期間とは扱わない
+- Auth JWT expiry実測値と確認日: GitHub Actionsの読み取り専用production config auditで確定後に記入する
 
-上記が記入されるまでは、repository variable `ACCOUNT_DELETION_ROLLOUT_STAGE`を`disabled`、`ACCOUNT_DELETION_AUTOMATION_ENABLED`を未設定または`false`とする。
+## 5. Release判断
+
+- Issue #2844の完了状態は`ACCOUNT_DELETION_ROLLOUT_STAGE=disabled`とし、`ACCOUNT_DELETION_AUTOMATION_ENABLED`は未設定または`false`を維持する。この状態でもself-service退会申請、30日取消猶予、削除キュー、手動preflight、実装済みworkerは提供される。
+- production preflightにdue requestがなく、実アカウントを作為的に削除する必要もないため、`canary`への移行はIssue完了条件にしない。将来due requestを処理するときだけ、指定ID・1件・typed confirmation付きcanaryから開始する。
+- disposable cloud DB + Edge fixtureで、対象の削除可能DB行とStorage残存0、90日audit保持、control tenant無変更、冪等性、部分失敗回復を確認済みである。
+- 外部法務 / 税務レビューは継続的ガバナンスとして実施できるが、レビュー実施を偽装せず、現時点のowner採択と公式一次情報によって公開・運用する。
