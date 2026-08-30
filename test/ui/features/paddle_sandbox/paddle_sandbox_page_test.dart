@@ -12,7 +12,6 @@ void main() {
     'opens checkout and renders all three outcomes on a narrow screen',
     (tester) async {
       final semanticsHandle = tester.ensureSemantics();
-      addTearDown(semanticsHandle.dispose);
       await tester.binding.setSurfaceSize(const Size(320, 640));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       final gateway = _FakePaddleSandboxGateway();
@@ -61,6 +60,7 @@ void main() {
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
+      semanticsHandle.dispose();
     },
   );
 
