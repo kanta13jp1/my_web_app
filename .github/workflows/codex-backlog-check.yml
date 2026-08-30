@@ -29,6 +29,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_TITLE: "[ops] Codex worktree/PR merge backlog"
+          CANONICAL_ISSUE_NUMBER: "3448"
           LEGACY_ISSUE_TITLE: "[ops] Codex worktree merge backlog"
         run: |
           set -euo pipefail
@@ -138,17 +139,22 @@ jobs:
               fi
             done)
 
-          existing=$(gh issue list --state all \
-            --search '"Codex worktree/PR merge backlog" in:title' \
-            --limit 100 --json number,title \
-            | jq -r --arg title "$ISSUE_TITLE" \
-              'map(select(.title == $title)) | sort_by(.number) | .[0].number // ""')
-          if [ -z "$existing" ]; then
+          existing=""
+          if gh issue view "$CANONICAL_ISSUE_NUMBER" --json number >/dev/null 2>&1; then
+            existing="$CANONICAL_ISSUE_NUMBER"
+          else
             existing=$(gh issue list --state all \
-              --search '"Codex worktree merge backlog" in:title' \
+              --search '"Codex worktree/PR merge backlog" in:title' \
               --limit 100 --json number,title \
-              | jq -r --arg title "$LEGACY_ISSUE_TITLE" \
-                'map(select(.title == $title)) | sort_by(.number) | .[0].number // ""')
+              | jq -r --arg title "$ISSUE_TITLE" \
+                'map(select(.title == $title)) | sort_by(.number) | last | .number // ""')
+            if [ -z "$existing" ]; then
+              existing=$(gh issue list --state all \
+                --search '"Codex worktree merge backlog" in:title' \
+                --limit 100 --json number,title \
+                | jq -r --arg title "$LEGACY_ISSUE_TITLE" \
+                  'map(select(.title == $title)) | sort_by(.number) | last | .number // ""')
+            fi
           fi
 
           if [ -z "$stale_branches" ] && [ -z "$ready_prs" ] && [ -z "$conflicted_prs" ] && [ -z "$cleanup_branches" ]; then
