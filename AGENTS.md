@@ -66,12 +66,14 @@ same notebook.
 - Under pressure, keep local work to sparse editing, `git diff --check`, and
   lightweight Python/YAML policy tests. Push the exact branch and either open a
   draft PR or dispatch `.github/workflows/ci.yml`; record the checked head SHA.
-- A manual cloud gate can be started after the branch exists on GitHub:
+- A manual cloud gate can be started after the committed branch exists on
+  GitHub. The helper rejects dirty, protected, missing, or unpushed branch
+  state, passes the exact 40-character HEAD to Actions, and finds only the new
+  run for that SHA:
 
 ```powershell
-gh workflow run ci.yml --ref <branch>
-gh run list --workflow ci.yml --branch <branch> --event workflow_dispatch --limit 1
-gh run watch <run-id> --exit-status
+git push -u origin HEAD
+python scripts/cloud_ci_handoff.py --execute --watch
 ```
 
 - Manual dispatch validates the branch head. PR CI remains required because it
@@ -139,3 +141,10 @@ gh run watch <run-id> --exit-status
 - PostToolUse anti-pattern warnings are review prompts, not proof of safety.
   Resolve each warning or record a narrow exception, then run the applicable
   formatter, analyzer, tests, security checks, and PR quality gates.
+## Cloud-first Execution
+
+- Default heavy work to `.github/workflows/cloud-development.yml`; see `docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md`.
+- Keep local work to scoped edits, diff review, branch/PR operations, workflow dispatch, log inspection, and short HTTP/revision smoke checks.
+- Run Flutter dependency resolution, analysis, tests, release web builds, and deployment gates on GitHub-hosted runners whenever the workflow can cover the task.
+- Do not start local Flutter/Dart builds, analysis, tests, browser automation, or media processing when RAM usage is at least 85% or free physical memory is below 2 GB. Preserve edits and dispatch the cloud workflow instead.
+- Use `analyze`, `test`, or `web-build` while iterating and `full` before merge. Do not download cloud build artifacts merely to redeploy them locally.

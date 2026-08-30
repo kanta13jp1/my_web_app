@@ -59,15 +59,23 @@ branch:
 
 ```powershell
 git push -u origin HEAD
-gh workflow run ci.yml --ref <branch>
-gh run list --workflow ci.yml --branch <branch> --event workflow_dispatch --limit 1
-gh run watch <run-id> --exit-status
+python scripts/cloud_ci_handoff.py --execute --watch
 ```
 
-The manual dispatch intentionally runs all scopes. It proves the pushed branch
-head without creating Flutter, Deno, Node, coverage, or build outputs locally.
-Record the run URL and head SHA in the PR. PR CI must still pass because it
-tests the merge ref, not only the branch head.
+Run the helper without `--execute` for a read-only preflight. It refuses a
+dirty checkout, a protected branch, an origin branch that is missing or differs
+from local `HEAD`, or a missing GitHub CLI. The dispatched workflow receives
+`expected_head_sha`, fetches the immutable event SHA instead of the moving
+branch ref, and fails if checkout does not equal the handoff SHA.
+
+The manual dispatch intentionally runs all scopes. It proves the exact pushed
+branch head without creating Flutter, Deno, Node, coverage, or build outputs
+locally. Record the emitted run URL and head SHA in the PR. PR CI must still
+pass because it tests the merge ref, not only the branch head.
+
+The GitHub CLI commands remain available for incident diagnosis, but do not
+dispatch `ci.yml` by hand: the required SHA input and new-run fencing belong to
+`cloud_ci_handoff.py`.
 
 ## Cleanup Boundary
 
