@@ -3,6 +3,7 @@ name: Cloud Development Checks
 on:
   pull_request:
     paths:
+      - .agents/skills/site-trust-improvement-loop/**
       - .devcontainer/**
       - .github/workflows/cloud-development.yml
       - scripts/cloud_ci_handoff.py

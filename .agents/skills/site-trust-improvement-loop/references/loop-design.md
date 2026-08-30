@@ -7,24 +7,42 @@ audits.
 ## 1. Control flow
 
 ```mermaid
-flowchart LR
-    O[Observe production] --> R[Rank trust risks]
-    R --> C[Select one defect and define contract]
-    C --> F[Fix minimally and honestly]
-    F --> L[Prove locally]
-    L -->|pass| P[PR and required CI]
-    L -. local failure .-> C
-    P -->|pass| D[Merge and deploy]
-    P -. CI failure .-> F
-    D -->|pass| V[Verify production SHA and UX]
+flowchart TB
+    subgraph LOCAL[Local lightweight control plane]
+        S[Recover ledger and run resource route]
+        O[Observe served production]
+        R[Rank trust risks]
+        C[Contract exactly one defect]
+        F[Remote or sparse scoped edit]
+        H[Cheap diff and policy checks]
+    end
+
+    subgraph CLOUD[GitHub cloud execution]
+        V[Exact-SHA targeted validation]
+        P[PR required CI and hosted E2E]
+        D[Protected merge and deploy]
+    end
+
+    subgraph PROD[Production evidence]
+        Q[Verify served SHA and repaired UX]
+        K[Record learning and next candidate]
+    end
+
+    S --> O --> R --> C --> F --> H
+    H -->|authorized push| V
+    H -->|no push authority| X[Pause at cloud_ready]
+    V -->|pass| P -->|pass| D -->|pass| Q -->|pass| K --> O
+    V -. cloud failure .-> F
+    P -. review or hosted E2E failure .-> F
     D -. deploy failure .-> P
-    V -->|pass| K[Record learning and next candidate]
-    V -. stale revision or UX failure .-> C
-    K --> O
+    Q -. stale SHA or UX failure .-> C
 ```
 
-The solid path advances evidence toward the user. Every failure edge stays in
-the current iteration. Only verified production evidence opens the next one.
+The local lane never hydrates the Flutter/Dart/Deno toolchain. It owns resource
+routing, evidence inspection, scoped editing, and cheap dependency-free checks.
+GitHub-hosted runners own dependencies, analysis, tests, builds, browser/E2E
+proof, and deployment. Every failure edge stays in the current iteration. Only
+verified production evidence opens the next one.
 
 ## 2. Iteration state machine
 
@@ -35,9 +53,10 @@ Use these states verbatim in a task handoff, Issue, or PR:
 | `observing` | Production revision and browser evidence | `observing` |
 | `ranking` | Candidate list and selected-defect rationale | `ranking` |
 | `contracted` | Expected/actual, reproduction, protected behavior, test matrix | `contracted` |
-| `implementing` | Scoped diff and rollback approach | `contracted` |
-| `locally_proven` | Focused tests, analysis/build, responsive browser QA | `implementing` |
-| `in_review` | PR and required-check evidence | `implementing` for code/CI failure |
+| `implementing` | Remote or sparse scoped diff and rollback approach | `contracted` |
+| `cloud_ready` | Cheap diff/policy proof plus an exact commit or patch ready to push | `implementing` |
+| `cloud_proven` | Exact pushed SHA, cloud run URL, focused tests, analysis/build, and hosted UX evidence | `implementing` |
+| `in_review` | PR merge-ref and required-check evidence | `implementing` for code/CI failure |
 | `deploying` | Merge SHA and matching deployment/readiness run | `in_review` for release failure |
 | `production_verified` | Served SHA, tag target, desktop/mobile UX proof | `contracted` for production failure |
 | `learned` | Residual risk and next candidate | `observing` |
@@ -76,7 +95,9 @@ Each iteration records:
 | `expected_actual` | Expected behavior versus observed behavior |
 | `protected_behaviors` | Routes, auth, billing, data, analytics, copy, and flows that must remain intact |
 | `fix_scope` | Responsible layer, changed files, and rollback approach |
-| `local_proof` | Focused tests, failure-state test, analysis/build, desktop/mobile QA |
+| `resource_route` | `CLOUD_REQUIRED` or `CLOUD_PREFERRED`, resource triggers, and prohibited local work |
+| `local_control_proof` | Diff check, dependency-free policy checks, and confirmation that no heavy local task ran |
+| `cloud_proof` | Exact pushed SHA, profile, run URL, focused/failure tests, analysis/build, and hosted desktop/mobile QA |
 | `release_proof` | PR, required checks, merge SHA, deploy/readiness run, release tag |
 | `production_proof` | Served SHA plus successful repaired and recovery journeys |
 | `residual_risk` | Next candidate or reason no remaining candidate crosses the threshold |
@@ -85,27 +106,41 @@ Each iteration records:
 Keep this record in the existing task, Issue, or PR. Do not create a parallel
 tracking system unless the repository has no durable handoff surface.
 
-## 5. Validation contract
+## 5. Cloud-first validation contract
 
-Choose checks proportional to the touched layers. For Flutter changes, the
-baseline is:
+Run `python scripts/cloud_first_route.py` before any validation. Locally, use
+only checks that neither install dependencies nor create build output:
 
 ```powershell
-dart format --output=none --set-exit-if-changed <changed-dart-paths>
-flutter analyze
-flutter test <focused-test-paths>
-flutter build web --release --pwa-strategy=none
+git diff --check
+python scripts/<dependency-free-targeted-policy-test>.py
 ```
 
-Add route, service, persistence, widget, or integration tests for the protected
-behavior. When an Edge Function changes, run its repository-pinned Deno format,
-lint, and check commands. Browser QA covers the repaired happy path and the
-failure/recovery state at desktop and 390 px, including reload, back/forward,
-console errors, failed requests, and horizontal overflow.
+Do not install a missing SDK or package merely to make a local check available.
+Once external push authority exists, commit and push the scoped branch, then
+hand the immutable SHA to GitHub Actions:
 
-When a provider failure cannot be forced live, inject a deterministic failure in
-a focused test and run the normal provider path in the browser. Record that
-limitation; never simulate the production success proof.
+```powershell
+git push -u origin HEAD
+python scripts/cloud_ci_handoff.py --profile test --execute --watch
+python scripts/cloud_ci_handoff.py --profile full --execute --watch
+```
+
+Choose the smallest profile that proves the current repair: `analyze` for
+static-only iterations, `test` for focused behavior, `web-build` for packaging,
+and `full` before review handoff. The cloud runner owns `flutter pub get`,
+format/static analysis, focused and regression tests, and the release web
+build. Changed Edge Functions use repository-pinned Deno checks in hosted CI.
+PR CI remains required because it validates the merge ref rather than only the
+branch head.
+
+Use hosted E2E/browser workflows or a cloud preview for the repaired happy path
+and failure/recovery state at desktop and 390 px, including reload,
+back/forward, console errors, failed requests, and horizontal overflow. When a
+provider failure cannot be forced live, inject it deterministically in a hosted
+test and run the normal provider path against the deployed site. Record any
+coverage limitation; never simulate production success proof or start a local
+dev server while `CLOUD_REQUIRED` is active.
 
 ## 6. Release and production proof
 
@@ -113,6 +148,7 @@ Use the repository's protected PR workflow. Match every release artifact by the
 actual merge SHA, not by `latest` or timestamp alone.
 
 ```powershell
+python scripts/cloud_ci_handoff.py --profile full --execute --watch
 gh pr checks <pr-number> --watch
 gh pr view <pr-number> --json mergeCommit,url
 gh run list --workflow "Deploy to Production" --commit <merge-sha> --json databaseId,headSha,status,conclusion,url
@@ -131,13 +167,16 @@ tag, and user-journey gates all pass.
 | Boundary | Authority required |
 | --- | --- |
 | Inspect code, workflow state, and public production behavior | Review or diagnosis request |
-| Edit and validate in a scoped worktree | Request to fix or implement |
+| Edit remotely or in a sparse worktree; run cheap local control checks | Request to fix or implement |
+| Push an exact SHA and dispatch hosted validation | Explicitly included external push/PR authority |
 | Push, open/update PR, merge, deploy, or notify | Explicitly included in the request; `本番デプロイまで` covers the normal protected release path |
 | Direct production data write, destructive migration, force-push, protection bypass, or existing-tag rewrite | Separate exact authorization; never infer it from deployment authority |
 
 If authority or credentials end at a gate, preserve the ledger and report the
-exact next command or action. If CI or deployment fails, stay in the same
-iteration. If `main` advances during release, match the target by SHA and rerun
+exact next command or action. Without push authority, stop at `cloud_ready`, not
+`cloud_proven`. If CI or deployment fails, stay in the same iteration and fix
+from its hosted logs; do not reproduce runner-scale work locally under resource
+pressure. If `main` advances during release, match the target by SHA and rerun
 only checks invalidated by the update.
 
 ## 8. Iteration completion
@@ -148,12 +187,12 @@ One iteration is closed only when all applicable gates are true:
 iteration_done = evidence_gate
                  and honesty_gate
                  and deterministic_gate
-                 and regression_gate
+                 and cloud_regression_gate
                  and release_gate
                  and production_gate
 ```
 
-When release is outside the authorized scope, report `locally_proven` rather
-than weakening the predicate. A new iteration starts only after
+When release is outside the authorized scope, report `cloud_ready` rather than
+weakening the predicate. A new iteration starts only after
 `production_verified` and `learned`, or in a later task that explicitly accepts
-the recorded local-only handoff.
+the recorded unpublished handoff.

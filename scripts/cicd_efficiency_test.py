@@ -110,6 +110,10 @@ class CicdEfficiencyTest(unittest.TestCase):
 
         cloud_workflow = self.read(".github/workflows/cloud-development.yml")
         self.assertIn("  workflow_dispatch:\n", cloud_workflow)
+        self.assertIn(
+            ".agents/skills/site-trust-improvement-loop/**",
+            cloud_workflow,
+        )
         self.assertIn("expected_head_sha:", cloud_workflow)
         self.assertIn(
             'actual_head_sha="$(git rev-parse HEAD)"',
@@ -124,6 +128,12 @@ class CicdEfficiencyTest(unittest.TestCase):
         )
         self.assertIn("30 GiB", guide)
         self.assertIn("4 GiB", guide)
+
+        trust_loop = self.read(
+            ".agents/skills/site-trust-improvement-loop/SKILL.md"
+        )
+        self.assertIn("python scripts/cloud_first_route.py", trust_loop)
+        self.assertIn("cloud_proven", trust_loop)
 
     def test_required_ci_checks_are_emitted_for_docs_only_prs(self) -> None:
         workflow = self.read(".github/workflows/ci.yml")

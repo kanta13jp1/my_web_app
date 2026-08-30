@@ -78,6 +78,20 @@ A pull request that changes this policy or its workflow runs the full cloud chec
 
 Verify deployment by matching the production `version.json` commit to the merged commit and checking the target route over HTTP. Browser QA is optional when API/HTTP evidence is sufficient and should run only after local resource pressure is safe.
 
+## Site trust improvement loop
+
+`$site-trust-improvement-loop` follows the same boundary. Production
+observation, risk ranking, scoped editing, diff inspection, workflow dispatch,
+and log review stay in the lightweight control plane. Dependency resolution,
+analysis, tests, web builds, and hosted E2E evidence run on GitHub. The loop may
+advance from `cloud_ready` to `cloud_proven` only when a hosted run identifies
+and passes the exact pushed SHA; PR CI then proves the merge ref before the
+protected deploy and production-revision checks.
+
+See
+`.agents/skills/site-trust-improvement-loop/references/loop-design.md` for the
+visual state machine and failure return paths.
+
 ## Recovery
 
 If a cloud run fails, inspect its logs and make the smallest source change. Do not reproduce a runner-scale failure locally unless the user explicitly requests it and the resource gate is healthy. Artifacts are temporary evidence, not a long-term store.
