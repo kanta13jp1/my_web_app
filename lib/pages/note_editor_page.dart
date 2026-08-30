@@ -14,6 +14,8 @@ import '../services/attachment_service.dart';
 import '../services/auto_save_service.dart';
 import '../services/note_comments_service.dart';
 import '../services/note_prompt_library_service.dart';
+import '../services/note_semantic_search_service.dart';
+import '../services/note_tag_service.dart';
 import '../services/public_memo_service.dart';
 import '../services/undo_redo_service.dart';
 import '../utils/note_image_clipboard.dart';
@@ -24,6 +26,8 @@ import '../widgets/markdown_preview.dart';
 import '../widgets/note_comments_panel.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
 import '../widgets/note_editor/editor_dialogs.dart';
+import '../widgets/note_tags_field.dart';
+import '../widgets/related_notes_strip.dart';
 
 class NoteEditorPage extends StatefulWidget {
   final String? noteId;
@@ -31,6 +35,7 @@ class NoteEditorPage extends StatefulWidget {
   final String? initialContent;
   final SupabaseClient? supabaseClient;
   final AIService? aiService;
+  final NoteSemanticSearchDataSource? semanticSearchService;
   final AiModelPreferenceService modelPreferenceService;
   final NotePromptLibraryService promptLibraryService;
 
@@ -41,6 +46,7 @@ class NoteEditorPage extends StatefulWidget {
     this.initialContent,
     this.supabaseClient,
     this.aiService,
+    this.semanticSearchService,
     this.modelPreferenceService = const AiModelPreferenceService(),
     this.promptLibraryService = const NotePromptLibraryService(),
   });
@@ -73,26 +79,26 @@ extension NoteEditorAiStyleX on NoteEditorAiStyle {
   String get label {
     switch (this) {
       case NoteEditorAiStyle.normal:
-        return 'Normal';
+        return '標準';
       case NoteEditorAiStyle.concise:
-        return 'Concise';
+        return '簡潔';
       case NoteEditorAiStyle.formal:
-        return 'Formal';
+        return '硬め';
       case NoteEditorAiStyle.explanatory:
-        return 'Explain';
+        return '詳しく';
     }
   }
 
   String get helperText {
     switch (this) {
       case NoteEditorAiStyle.normal:
-        return 'Balanced default tone for general editing.';
+        return 'ふだんの編集に向いたバランスの取れたトーンです。';
       case NoteEditorAiStyle.concise:
-        return 'Short, direct, and easy to scan.';
+        return '短く直接的で、ざっと読みやすい文章にします。';
       case NoteEditorAiStyle.formal:
-        return 'Polished, calm, and professional wording.';
+        return '落ち着いた、ビジネス向けの言い回しにします。';
       case NoteEditorAiStyle.explanatory:
-        return 'More context, guidance, and clear reasoning.';
+        return '背景や理由を補い、筋道を追いやすくします。';
     }
   }
 
@@ -143,17 +149,26 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   late final SupabaseClient _supabase;
   late final AIService _aiService;
   late final NoteCommentsService _noteCommentsService;
+  late final NoteSemanticSearchDataSource _semanticSearchService;
   NoteImagePasteRegistration? _imagePasteRegistration;
-  StreamSubscription<void>? _commentSubscription;
 
   String? _currentNoteId;
   DateTime? _reminderDate;
   bool _isFavorite = false;
+  List<String> _tags = const <String>[];
   bool _isLoading = false;
   bool _isLoadingAttachments = false;
   bool _isUploadingAttachment = false;
   bool _isRunningSlashCommand = false;
   bool _isApplyingSnapshot = false;
+  String _observedTitle = '';
+  String _observedContent = '';
+  String? _persistedTitle;
+  String? _persistedContent;
+  String? _persistedReminderIso;
+  bool? _persistedIsFavorite;
+  List<String>? _persistedTags;
+  DateTime? _serverUpdatedAt;
   bool _showMarkdownPreview = false;
   bool? _isSlashCommandBarExpanded;
   int _commentCount = 0;
@@ -161,8 +176,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   String? _selectedAiModel;
   List<NotePromptTemplate> _savedPromptTemplates = const <NotePromptTemplate>[];
   List<Attachment> _attachments = const <Attachment>[];
+  List<NoteSearchResult> _relatedNotes = const <NoteSearchResult>[];
+  bool _isLoadingRelatedNotes = false;
+  bool _relatedNotesHasError = false;
+  int _relatedNotesRequestId = 0;
   static const String _draftKeyPrefix = 'note_editor_draft_';
   static const String _aiStylePreferenceKey = 'note_editor_ai_style';
+  static const String _slashBarExpandedKey = 'note_editor_slash_bar_expanded';
   static const List<String> _slashCommandSuggestions = <String>[
     '/help',
     '/improve',
@@ -206,6 +226,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
     _aiService = widget.aiService ?? AIService(_supabase);
     _noteCommentsService = SupabaseNoteCommentsService(_supabase);
+    _semanticSearchService =
+        widget.semanticSearchService ?? NoteSemanticSearchService(_supabase);
     _currentNoteId = widget.noteId;
     _titleController = TextEditingController(text: widget.initialTitle ?? '');
     _contentController =
@@ -229,16 +251,34 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Future<void> _bootstrapEditor() async {
     await _loadPreferredAiModel();
     await _loadAiStylePreference();
+    await _loadSlashBarExpanded();
     await _loadPromptTemplates();
     if (_currentNoteId != null) {
       await _loadNote(_currentNoteId!);
-      _startCommentCountSubscription();
       unawaited(_loadCommentCount());
+      unawaited(_loadRelatedNotes());
     }
     await _loadAttachments();
     await _restoreDraftFromLocal();
     _initializeEditorHistory();
     _attachTextListeners();
+  }
+
+  /// スラッシュコマンド欄の開閉はメモを開き直すたびにリセットされていた
+  /// (= 折りたたんでも次回また 240px 占有する)。選択を端末に残す。
+  Future<void> _persistSlashBarExpanded(bool expanded) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_slashBarExpandedKey, expanded);
+  }
+
+  Future<void> _loadSlashBarExpanded() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!prefs.containsKey(_slashBarExpandedKey)) return;
+    final stored = prefs.getBool(_slashBarExpandedKey);
+    if (stored == null || !mounted) return;
+    setState(() {
+      _isSlashCommandBarExpanded = stored;
+    });
   }
 
   String _currentDraftKey() {
@@ -249,7 +289,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       _titleController.text.trim().isNotEmpty ||
       _contentController.text.trim().isNotEmpty ||
       _reminderDate != null ||
-      _isFavorite;
+      _isFavorite ||
+      _tags.isNotEmpty;
 
   bool _boolFromValue(dynamic value) => value == true;
 
@@ -266,7 +307,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       'content': content,
       'reminder_date': _reminderDate?.toIso8601String(),
       'is_favorite': _isFavorite,
-      'saved_at': DateTime.now().toIso8601String(),
+      'tags': _tags,
+      // サーバーの updated_at と比較するため UTC で保存する。
+      'saved_at': DateTime.now().toUtc().toIso8601String(),
     };
     await prefs.setString(_currentDraftKey(), jsonEncode(payload));
   }
@@ -280,6 +323,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     String content;
     DateTime? reminderDate;
     bool isFavorite;
+    List<String> tags;
+    DateTime? draftSavedAt;
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return;
@@ -289,30 +334,75 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           ? null
           : DateTime.tryParse(decoded['reminder_date'].toString())?.toLocal();
       isFavorite = _boolFromValue(decoded['is_favorite']);
+      tags = NoteTagService.normalize(decoded['tags']);
+      draftSavedAt = decoded['saved_at'] == null
+          ? null
+          : DateTime.tryParse(decoded['saved_at'].toString())?.toUtc();
     } catch (_) {
       return;
     }
     if (title.isEmpty &&
         content.isEmpty &&
         reminderDate == null &&
-        !isFavorite) {
+        !isFavorite &&
+        tags.isEmpty) {
       return;
     }
 
     final hasChanges = _titleController.text != title ||
         _contentController.text != content ||
         _reminderDate?.toIso8601String() != reminderDate?.toIso8601String() ||
-        _isFavorite != isFavorite;
+        _isFavorite != isFavorite ||
+        !NoteTagService.equals(_tags, tags);
     if (!hasChanges) return;
+
+    // 下書きより後にサーバー側が更新されている場合 (= 別端末での編集) は
+    // 黙って上書きしない。どちらを採用するかはユーザーに決めてもらう。
+    final serverUpdatedAt = _serverUpdatedAt;
+    final serverIsNewer = draftSavedAt != null &&
+        serverUpdatedAt != null &&
+        serverUpdatedAt.isAfter(draftSavedAt);
+    if (serverIsNewer) {
+      if (!mounted) return;
+      final restore = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: const Text('未送信の下書きがあります'),
+          content: const Text(
+            'この端末に残っている下書きより、サーバー側のメモの方が新しく更新されています。\n'
+            '別の端末で編集した可能性があります。どちらを表示しますか？',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('サーバー版を使う'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('下書きを復元'),
+            ),
+          ],
+        ),
+      );
+      if (restore == null) {
+        return;
+      }
+      if (!restore) {
+        await _clearDraftFromLocal();
+        return;
+      }
+    }
 
     _titleController.text = title;
     _contentController.text = content;
     _reminderDate = reminderDate;
     _isFavorite = isFavorite;
+    _tags = tags;
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Local draft restored.')),
+        const SnackBar(content: Text('ローカルの下書きを復元しました')),
       );
     }
   }
@@ -323,8 +413,52 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   void _attachTextListeners() {
+    _syncObservedText();
     _titleController.addListener(_onTextChanged);
     _contentController.addListener(_onTextChanged);
+  }
+
+  /// listener が「本文が変わった」と判断するための基準値を現在値に合わせる。
+  /// TextEditingController はキャレット移動・選択変更でも notifyListeners する
+  /// ため、この基準値と比較しないと no-op 保存が大量に走る。
+  void _syncObservedText() {
+    _observedTitle = _titleController.text;
+    _observedContent = _contentController.text;
+  }
+
+  /// サーバーに保存済みの内容を記録し、無変更 PATCH を弾けるようにする。
+  void _markStatePersisted({
+    required String title,
+    required String content,
+    required String? reminderIso,
+    required bool isFavorite,
+    required List<String> tags,
+  }) {
+    _persistedTitle = title;
+    _persistedContent = content;
+    _persistedReminderIso = reminderIso;
+    _persistedIsFavorite = isFavorite;
+    _persistedTags = NoteTagService.normalize(tags);
+  }
+
+  /// サーバー側の内容を一度でも取得できているか。取得できていない状態で
+  /// 自動保存すると、空のエディタ内容で既存メモを潰す危険がある。
+  bool get _hasServerBaseline =>
+      _currentNoteId == null || _persistedTitle != null;
+
+  /// 現在の編集内容がサーバー保存済みの内容と一致するか。
+  bool _matchesPersistedState({
+    required String title,
+    required String content,
+    required String? reminderIso,
+    required bool isFavorite,
+    required List<String> tags,
+  }) {
+    return _persistedTitle == title &&
+        _persistedContent == content &&
+        _persistedReminderIso == reminderIso &&
+        _persistedIsFavorite == isFavorite &&
+        NoteTagService.equals(_persistedTags, tags);
   }
 
   void _detachTextListeners() {
@@ -348,16 +482,46 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final hasAnyInput = _titleController.text.trim().isNotEmpty ||
         _contentController.text.trim().isNotEmpty ||
         _reminderDate != null ||
-        _isFavorite;
-    if (_currentNoteId != null || !hasAnyInput) {
+        _isFavorite ||
+        _tags.isNotEmpty;
+    // ローカル下書きを復元した直後は、画面上の内容がサーバーより新しい。
+    // 従来はここで無条件に markAsSaved していたため「保存済み」と表示され
+    // つつサーバーには届かず、次に何か入力するまで反映されなかった。
+    final matchesServer = _currentNoteId != null &&
+        _matchesPersistedState(
+          title: _titleController.text.trim(),
+          content: _contentController.text.trim(),
+          reminderIso: _reminderDate?.toUtc().toIso8601String(),
+          isFavorite: _isFavorite,
+          tags: _tags,
+        );
+
+    if (matchesServer || (_currentNoteId == null && !hasAnyInput)) {
       _autoSaveService.markAsSaved();
-    } else {
-      _autoSaveService.markAsModified();
+      return;
+    }
+
+    _autoSaveService.markAsModified();
+    // 既存メモの読み込みに失敗しているとサーバー側の基準値が無い。その状態で
+    // 自動保存すると空の本文で上書きしかねないので送らない。
+    if (_hasServerBaseline && _currentNoteId != null) {
+      _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
     }
   }
 
   void _onTextChanged() {
     if (_isApplyingSnapshot) return;
+
+    // キャレット移動・選択変更だけでも listener は発火する。本文が変わって
+    // いないなら履歴追加も自動保存もローカル下書き書き込みも不要。
+    final title = _titleController.text;
+    final content = _contentController.text;
+    if (title == _observedTitle && content == _observedContent) {
+      return;
+    }
+    _observedTitle = title;
+    _observedContent = content;
+
     _undoRedoService.addSnapshot(_buildCurrentSnapshot());
     _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
     _persistDraftToLocal();
@@ -370,6 +534,61 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _autoSaveService.markAsModified();
     _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
     _persistDraftToLocal();
+  }
+
+  void _handleTagsChanged(List<String> tags) {
+    final normalized = NoteTagService.normalize(tags);
+    if (NoteTagService.equals(_tags, normalized)) return;
+    setState(() {
+      _tags = normalized;
+    });
+    _autoSaveService.markAsModified();
+    _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
+    _persistDraftToLocal();
+  }
+
+  Future<void> _showTagsEditor() async {
+    var workingTags = List<String>.from(_tags);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  20,
+                  20,
+                  20 + MediaQuery.viewInsetsOf(context).bottom,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'タグを編集',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 16),
+                    NoteTagsField(
+                      tags: workingTags,
+                      onChanged: (tags) {
+                        setSheetState(() {
+                          workingTags = tags;
+                        });
+                        _handleTagsChanged(tags);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showMessage(String message) {
@@ -427,7 +646,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
 
     _currentNoteId = createdNoteId.toString();
-    _startCommentCountSubscription();
     unawaited(_loadCommentCount());
     _autoSaveService.markAsSaved();
     await _clearDraftFromLocal();
@@ -679,7 +897,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
     await _persistAiStylePreference(style);
     if (announce) {
-      _showMessage('AI style: ${style.label}');
+      _showMessage('文章のトーン: ${style.label}');
     }
   }
 
@@ -1201,9 +1419,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     try {
       final data = await _supabase
           .from('notes')
-          .select('title, content, reminder_date, is_favorite')
+          .select(
+            'title, content, reminder_date, is_favorite, tags, updated_at',
+          )
           .eq('id', id)
           .single();
+      _serverUpdatedAt = data['updated_at'] == null
+          ? null
+          : DateTime.tryParse(data['updated_at'].toString())?.toUtc();
 
       if (mounted) {
         setState(() {
@@ -1215,7 +1438,16 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   data['reminder_date'].toString(),
                 )?.toLocal();
           _isFavorite = _boolFromValue(data['is_favorite']);
+          _tags = NoteTagService.normalize(data['tags']);
         });
+        _markStatePersisted(
+          title: _titleController.text.trim(),
+          content: _contentController.text.trim(),
+          reminderIso: _reminderDate?.toUtc().toIso8601String(),
+          isFavorite: _isFavorite,
+          tags: _tags,
+        );
+        _syncObservedText();
       }
     } catch (e) {
       if (mounted) {
@@ -1228,11 +1460,85 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
   }
 
+  Future<void> _loadRelatedNotes() async {
+    final noteId = _currentNoteId;
+    if (noteId == null || !mounted) return;
+    final requestId = ++_relatedNotesRequestId;
+
+    setState(() {
+      _isLoadingRelatedNotes = true;
+      _relatedNotesHasError = false;
+    });
+    try {
+      final notes = await _semanticSearchService.relatedNotes(
+        noteId: noteId,
+        title: _titleController.text,
+        content: _contentController.text,
+        limit: 5,
+      );
+      if (!mounted ||
+          requestId != _relatedNotesRequestId ||
+          noteId != _currentNoteId) {
+        return;
+      }
+      setState(() {
+        _relatedNotes = notes;
+        _isLoadingRelatedNotes = false;
+      });
+    } catch (_) {
+      if (!mounted ||
+          requestId != _relatedNotesRequestId ||
+          noteId != _currentNoteId) {
+        return;
+      }
+      setState(() {
+        _isLoadingRelatedNotes = false;
+        _relatedNotesHasError = true;
+      });
+    }
+  }
+
+  Future<void> _indexAndRefreshRelatedNotes() async {
+    final noteId = _currentNoteId;
+    if (noteId == null) return;
+    try {
+      await _semanticSearchService.indexNote(noteId);
+    } catch (_) {
+      // Related search still provides a text fallback when vector indexing fails.
+    }
+    if (mounted && noteId == _currentNoteId) {
+      await _loadRelatedNotes();
+    }
+  }
+
+  Future<void> _openRelatedNote(NoteSearchResult note) async {
+    await Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/note-editor'),
+        builder: (_) => NoteEditorPage(
+          noteId: note.id,
+          supabaseClient: _supabase,
+          semanticSearchService: _semanticSearchService,
+          modelPreferenceService: widget.modelPreferenceService,
+          promptLibraryService: widget.promptLibraryService,
+        ),
+      ),
+    );
+    if (mounted) unawaited(_loadRelatedNotes());
+  }
+
   Future<void> _saveNoteWithoutClosing() async {
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
+    final reminderIso = _reminderDate?.toUtc().toIso8601String();
+    final isFavorite = _isFavorite;
+    final tags = NoteTagService.normalize(_tags);
 
     if (!_hasPersistableState && _currentNoteId == null) {
+      return;
+    }
+
+    if (_currentNoteId != null && !_hasServerBaseline) {
       return;
     }
 
@@ -1240,12 +1546,26 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     if (user == null) throw Exception('Login is required.');
 
     if (_currentNoteId != null) {
+      // 保存済みの内容と完全一致するなら PATCH を送らない。
+      if (_matchesPersistedState(
+        title: title,
+        content: content,
+        reminderIso: reminderIso,
+        isFavorite: isFavorite,
+        tags: tags,
+      )) {
+        _autoSaveService.markAsSaved();
+        return;
+      }
       await _supabase.from('notes').update({
         'title': title,
         'content': content,
-        'reminder_date': _reminderDate?.toUtc().toIso8601String(),
-        'is_favorite': _isFavorite,
-        'updated_at': DateTime.now().toIso8601String(),
+        'reminder_date': reminderIso,
+        'is_favorite': isFavorite,
+        'tags': tags,
+        // timestamptz 列にはオフセット付きで渡す。ローカル時刻のまま送ると
+        // サーバー側で UTC と解釈され JST 環境では 9 時間ずれる。
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
       }).eq('id', _currentNoteId!);
     } else {
       final dynamic inserted = await _supabase
@@ -1254,8 +1574,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             'user_id': user.id,
             'title': title,
             'content': content,
-            'reminder_date': _reminderDate?.toUtc().toIso8601String(),
-            'is_favorite': _isFavorite,
+            'reminder_date': reminderIso,
+            'is_favorite': isFavorite,
+            'tags': tags,
             'is_archived': false,
             'is_pinned': false,
           })
@@ -1264,7 +1585,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
       if (inserted is Map && inserted['id'] != null) {
         _currentNoteId = inserted['id'].toString();
-        _startCommentCountSubscription();
         unawaited(_loadCommentCount());
         if (mounted) {
           setState(() {});
@@ -1272,8 +1592,27 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       }
     }
 
-    _autoSaveService.markAsSaved();
-    await _clearDraftFromLocal();
+    _markStatePersisted(
+      title: title,
+      content: content,
+      reminderIso: reminderIso,
+      isFavorite: isFavorite,
+      tags: tags,
+    );
+
+    final currentMatchesSavedRequest = _matchesPersistedState(
+      title: _titleController.text.trim(),
+      content: _contentController.text.trim(),
+      reminderIso: _reminderDate?.toUtc().toIso8601String(),
+      isFavorite: _isFavorite,
+      tags: _tags,
+    );
+    if (currentMatchesSavedRequest) {
+      _autoSaveService.markAsSaved();
+      await _clearDraftFromLocal();
+    } else {
+      _autoSaveService.markAsModified();
+    }
   }
 
   Future<void> _saveManually() async {
@@ -1289,6 +1628,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     try {
       await _autoSaveService.saveImmediately(_saveNoteWithoutClosing);
       await _saveVersionSnapshot();
+      unawaited(_indexAndRefreshRelatedNotes());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('手動保存しました')),
@@ -1373,19 +1713,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         const SnackBar(content: Text('公開に失敗しました')),
       );
     }
-  }
-
-  void _startCommentCountSubscription() {
-    final noteId = int.tryParse(_currentNoteId ?? '');
-    if (noteId == null) return;
-    _commentSubscription?.cancel();
-    _commentSubscription =
-        _noteCommentsService.watchCommentChanges(noteId: noteId).listen(
-      (_) => unawaited(_loadCommentCount()),
-      onError: (Object error) {
-        debugPrint('Note comment realtime stream error: $error');
-      },
-    );
   }
 
   Future<void> _loadCommentCount() async {
@@ -1573,6 +1900,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       selection: TextSelection.collapsed(offset: snapshot.content.length),
     );
     _isApplyingSnapshot = false;
+    // listener を抑止したまま本文を差し替えたので基準値を追従させる。
+    _syncObservedText();
 
     _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
   }
@@ -1666,7 +1995,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           ),
           TextButton(
             onPressed: () => _handleReminderChanged(null),
-            child: const Text('Clear'),
+            child: const Text('解除'),
           ),
         ],
       ),
@@ -1681,11 +2010,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         final lastSaved = _autoSaveService.lastSavedTime;
         switch (state) {
           case SaveState.saved:
-            final suffix = lastSaved != null
-                ? '  Last saved ${_formatTime(lastSaved)}'
-                : '';
+            final suffix =
+                lastSaved != null ? '  最終保存 ${_formatTime(lastSaved)}' : '';
             return Text(
-              'Saved$suffix',
+              '保存済み$suffix',
               style: const TextStyle(
                 fontSize: 12,
                 color: Color(0xFF0D9488),
@@ -1694,7 +2022,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             );
           case SaveState.saving:
             return const Text(
-              'Saving...',
+              '保存中...',
               style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF6366F1),
@@ -1703,7 +2031,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             );
           case SaveState.modified:
             return const Text(
-              'Unsaved changes',
+              '未保存の変更があります',
               style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFFFF6B35),
@@ -1712,7 +2040,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             );
           case SaveState.error:
             return const Text(
-              'Save error',
+              '保存に失敗しました',
               style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFFB91C1C),
@@ -1765,7 +2093,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           const Icon(Icons.memory_rounded, size: 14),
           const SizedBox(width: 6),
           Text(
-            'Default model: $model',
+            '既定のモデル: $model',
             overflow: TextOverflow.ellipsis,
           ),
         ],
@@ -1927,7 +2255,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Claude Code-style slash commands',
+                      'スラッシュコマンド',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -1939,9 +2267,11 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                       isExpanded ? Icons.expand_less : Icons.expand_more,
                     ),
                     onPressed: () {
+                      final next = !isExpanded;
                       setState(() {
-                        _isSlashCommandBarExpanded = !isExpanded;
+                        _isSlashCommandBarExpanded = next;
                       });
+                      unawaited(_persistSlashBarExpanded(next));
                     },
                     tooltip: isExpanded ? '折りたたむ' : '展開する',
                     visualDensity: VisualDensity.compact,
@@ -1956,7 +2286,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   enabled: !_isRunningSlashCommand,
                   onSubmitted: (_) => _runSlashCommand(),
                   decoration: InputDecoration(
-                    hintText: 'Try /summarize or /favorite',
+                    hintText: '/summarize や /favorite を試す',
                     prefixIcon: const Icon(Icons.code_rounded),
                     suffixIcon: _isRunningSlashCommand
                         ? const Padding(
@@ -1973,7 +2303,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                             ),
                             onPressed: _runSlashCommand,
                             icon: const Icon(Icons.play_arrow_rounded),
-                            tooltip: 'Run command',
+                            tooltip: 'コマンドを実行',
                           ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1982,7 +2312,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Press Enter or use the play button to run a command.',
+                  'Enter キーか再生ボタンでコマンドを実行します。',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -1994,7 +2324,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   const SizedBox(height: 8),
                 ],
                 Text(
-                  'Claude-style writing mode',
+                  '文章のトーン',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -2033,7 +2363,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     );
   }
 
-  Widget _buildEditorBody() {
+  Widget _buildEditorSurface() {
     final theme = Theme.of(context);
     final isNarrow = MediaQuery.of(context).size.width < 600;
     final outerPadding =
@@ -2104,6 +2434,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                           : Icons.visibility_outlined,
                     ),
                     label: Text(previewLabel),
+                  ),
+                  OutlinedButton.icon(
+                    key: const Key('note_editor_tags_button'),
+                    onPressed: _showTagsEditor,
+                    icon: const Icon(Icons.sell_outlined),
+                    label: Text(isNarrow ? 'タグ' : 'タグ (${_tags.length})'),
                   ),
                 ],
               ),
@@ -2189,9 +2525,73 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     );
   }
 
+  Widget _buildEditorBody() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compactRelatedNotes = constraints.maxHeight < 620;
+        return Column(
+          children: [
+            Expanded(child: _buildEditorSurface()),
+            if (_currentNoteId != null)
+              RelatedNotesStrip(
+                notes: _relatedNotes,
+                isLoading: _isLoadingRelatedNotes,
+                hasError: _relatedNotesHasError,
+                compact: compactRelatedNotes,
+                onRetry: () => unawaited(_loadRelatedNotes()),
+                onNoteTap: (note) => unawaited(_openRelatedNote(note)),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// デバウンス待ち (入力後 2 秒以内) にエディタを閉じると、`dispose()` で
+  /// タイマーが破棄され未保存の編集がサーバーに届かない。破棄前に確定値を
+  /// 取り出して投げ切る (State には触れないので dispose 後も安全)。
+  void _flushPendingSaveOnExit() {
+    final noteId = _currentNoteId;
+    if (noteId == null) return; // 新規メモはローカル下書きで復元される
+    if (!_hasServerBaseline) return; // 読み込み失敗時は空内容で潰さない
+
+    final title = _titleController.text.trim();
+    final content = _contentController.text.trim();
+    final reminderIso = _reminderDate?.toUtc().toIso8601String();
+    final isFavorite = _isFavorite;
+    final tags = NoteTagService.normalize(_tags);
+    if (_matchesPersistedState(
+      title: title,
+      content: content,
+      reminderIso: reminderIso,
+      isFavorite: isFavorite,
+      tags: tags,
+    )) {
+      return;
+    }
+
+    unawaited(
+      _supabase
+          .from('notes')
+          .update({
+            'title': title,
+            'content': content,
+            'reminder_date': reminderIso,
+            'is_favorite': isFavorite,
+            'tags': tags,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', noteId)
+          .catchError((Object _) {
+            // 閉じた後なので UI 通知はできない。ローカル下書きが残るため
+            // 次回このメモを開いたときに復元される。
+          }),
+    );
+  }
+
   @override
   void dispose() {
-    _commentSubscription?.cancel();
+    _flushPendingSaveOnExit();
     _imagePasteRegistration?.dispose();
     _contentFocusNode.dispose();
     _detachTextListeners();
@@ -2213,7 +2613,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(isEditing ? 'Edit Note' : 'New Note'),
+            Text(isEditing ? 'メモを編集' : '新しいメモ'),
             _buildSaveStateIndicator(),
           ],
         ),
@@ -2252,12 +2652,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               currentReminder: _reminderDate,
               onReminderSet: _handleReminderChanged,
             ),
-            tooltip: 'Reminder',
+            tooltip: 'リマインダー',
           ),
           IconButton(
             icon: const Icon(Icons.save),
             onPressed: _saveManually,
-            tooltip: 'Save',
+            tooltip: '保存',
           ),
           if (_currentNoteId != null)
             IconButton(
@@ -2376,334 +2776,4 @@ class _RedoIntent extends Intent {
 
 class _SaveIntent extends Intent {
   const _SaveIntent();
-}
-
-// ── Note Comments Bottom Sheet ────────────────────────────────────────────────
-
-class _NoteCommentsSheet extends StatefulWidget {
-  final int noteId;
-  final SupabaseClient supabase;
-  final String commentsUrl;
-  final void Function(int count) onCountChanged;
-
-  const _NoteCommentsSheet({
-    required this.noteId,
-    required this.supabase,
-    required this.commentsUrl,
-    required this.onCountChanged,
-  });
-
-  @override
-  State<_NoteCommentsSheet> createState() => _NoteCommentsSheetState();
-}
-
-class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
-  final _inputController = TextEditingController();
-  List<Map<String, dynamic>> _comments = [];
-  bool _loading = true;
-  bool _submitting = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  @override
-  void dispose() {
-    _inputController.dispose();
-    super.dispose();
-  }
-
-  Future<String?> _getToken() async {
-    return widget.supabase.auth.currentSession?.accessToken;
-  }
-
-  Future<void> _load() async {
-    setState(() => _loading = true);
-    try {
-      final res = await widget.supabase
-          .from('note_comments')
-          .select('id, content, created_at')
-          .eq('note_id', widget.noteId)
-          .order('created_at', ascending: true);
-      final list = List<Map<String, dynamic>>.from(
-        (res as List).map((e) => Map<String, dynamic>.from(e as Map)),
-      );
-      if (mounted) {
-        setState(() {
-          _comments = list;
-          _loading = false;
-        });
-        widget.onCountChanged(list.length);
-      }
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _submit() async {
-    final content = _inputController.text.trim();
-    if (content.isEmpty || _submitting) return;
-
-    final token = await _getToken();
-    if (token == null) return;
-
-    if (!mounted) return;
-    setState(() => _submitting = true);
-    try {
-      final response = await widget.supabase
-          .from('note_comments')
-          .insert({
-            'note_id': widget.noteId,
-            'user_id': widget.supabase.auth.currentUser?.id ?? '',
-            'content': content,
-          })
-          .select('id, content, created_at')
-          .single();
-      final newComment = Map<String, dynamic>.from(response as Map);
-      if (mounted) {
-        setState(() {
-          _comments.add(newComment);
-          _inputController.clear();
-        });
-        widget.onCountChanged(_comments.length);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('送信に失敗しました: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
-  }
-
-  Future<void> _delete(String commentId) async {
-    try {
-      await widget.supabase
-          .from('note_comments')
-          .delete()
-          .eq('id', commentId)
-          .eq('user_id', widget.supabase.auth.currentUser?.id ?? '')
-          .select();
-      if (mounted) {
-        setState(() => _comments.removeWhere((c) => c['id'] == commentId));
-        widget.onCountChanged(_comments.length);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('削除に失敗しました: $e')),
-        );
-      }
-    }
-  }
-
-  String _formatDate(String? isoString) {
-    final dt = DateTime.tryParse(isoString ?? '')?.toLocal();
-    if (dt == null) return '';
-    return '${dt.month}/${dt.day} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.55,
-      maxChildSize: 0.9,
-      minChildSize: 0.3,
-      builder: (_, scrollCtrl) => Column(
-        children: [
-          const SizedBox(height: 8),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                const Icon(Icons.comment_outlined, size: 18),
-                const SizedBox(width: 8),
-                const Text(
-                  'コメント',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    height: 1.5,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '${_comments.length}件',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(),
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _comments.isEmpty
-                    ? Center(
-                        child: Text(
-                          'コメントはまだありません\n最初のメモを追加しましょう',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                            height: 1.5,
-                          ),
-                        ),
-                      )
-                    : ListView.separated(
-                        controller: scrollCtrl,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        itemCount: _comments.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
-                        itemBuilder: (_, i) {
-                          final c = _comments[i];
-                          return Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF6366F1)
-                                  .withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: const Color(0xFF6366F1)
-                                    .withValues(alpha: 0.15),
-                              ),
-                            ),
-                            child: ListTile(
-                              dense: true,
-                              leading: const CircleAvatar(
-                                radius: 14,
-                                backgroundColor: Color(0xFF6366F1),
-                                child: Icon(
-                                  Icons.person,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              title: Text(
-                                c['content'] as String? ?? '',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  height: 1.5,
-                                ),
-                              ),
-                              subtitle: Text(
-                                _formatDate(c['created_at']?.toString()),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                  height: 1.5,
-                                ),
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(
-                                  Icons.delete_outline,
-                                  size: 18,
-                                  color: Color(0xFFB91C1C),
-                                ),
-                                tooltip: '削除',
-                                onPressed: () async {
-                                  final id = c['id']?.toString() ?? '';
-                                  if (id.isEmpty) return;
-                                  final ok = await showDialog<bool>(
-                                    context: context,
-                                    builder: (_) => AlertDialog(
-                                      title: const Text('コメントを削除しますか？'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, false),
-                                          child: const Text('キャンセル'),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, true),
-                                          child: const Text(
-                                            '削除',
-                                            style: TextStyle(
-                                              color: Color(0xFFB91C1C),
-                                              height: 1.5,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  if (ok == true) await _delete(id);
-                                },
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-          ),
-          const Divider(height: 1),
-          Padding(
-            padding: EdgeInsets.only(
-              left: 12,
-              right: 12,
-              top: 8,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 12,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _inputController,
-                    maxLength: 2000,
-                    maxLines: null,
-                    textInputAction: TextInputAction.newline,
-                    decoration: InputDecoration(
-                      hintText: 'コメントを追加…',
-                      counterText: '',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _submitting
-                    ? const SizedBox(
-                        width: 36,
-                        height: 36,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : IconButton(
-                        icon: const Icon(Icons.send, color: Color(0xFF6366F1)),
-                        tooltip: '送信',
-                        onPressed: _submit,
-                      ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

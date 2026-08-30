@@ -1,0 +1,174 @@
+name: X First User Launch Candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      save_for_approval:
+        description: "Save an approval-pending candidate (never publishes)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: x-first-user-launch-candidate
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  candidate:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      MEDIA_URL: https://my-web-app-b67f4.web.app/lp-og-first-action-20260720.png
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Validate service credential
+        shell: bash
+        run: |
+          test -n "${SUPABASE_SERVICE_ROLE_KEY}" || {
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is required."
+            exit 1
+          }
+
+      - name: Validate reviewed campaign image
+        shell: bash
+        run: |
+          headers=$(mktemp)
+          curl --fail --location --silent --show-error \
+            --head --output /dev/null --dump-header "${headers}" \
+            "${MEDIA_URL}"
+          content_type=$(awk '
+            BEGIN { IGNORECASE=1 }
+            /^content-type:/ {
+              gsub("\r", "", $2)
+              value=$2
+            }
+            END { print value }
+          ' "${headers}")
+          if [ "${content_type}" != "image/png" ]; then
+            echo "::error::Expected image/png, received ${content_type:-missing}."
+            exit 1
+          fi
+
+      - name: Run read-only X preflight
+        shell: bash
+        run: |
+          http_code=$(curl --silent --show-error \
+            --output /tmp/x_post_preflight.json \
+            --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data '{"action":"x.post_preflight"}')
+          if [ "${http_code}" != "200" ]; then
+            echo "::warning::Read-only X preflight returned HTTP ${http_code}."
+          fi
+          jq -c . /tmp/x_post_preflight.json || cat /tmp/x_post_preflight.json
+
+      - name: Build exact candidate request
+        id: mode
+        shell: bash
+        env:
+          SAVE_FOR_APPROVAL: ${{ inputs.save_for_approval }}
+        run: |
+          dry_run=true
+          if [ "${SAVE_FOR_APPROVAL}" = "true" ]; then
+            dry_run=false
+          fi
+          python scripts/first_user_x_candidate.py \
+            --dry-run "${dry_run}" \
+            --actor "${GITHUB_ACTOR}" \
+            --run-id "${GITHUB_RUN_ID}" \
+            --run-attempt "${GITHUB_RUN_ATTEMPT}" \
+            --ref "${GITHUB_REF}" \
+            --sha "${GITHUB_SHA}" \
+            --output /tmp/x_first_user_candidate_request.json
+          jq -e '
+            .action == "x.candidate.create" and
+            .postPayload.action == "x.post" and
+            (.postPayload.text | contains("https://") | not) and
+            (.postPayload.replyTexts | length == 1) and
+            .postPayload.linkInReply == true and
+            .postPayload.mediaType == "image/png"
+          ' /tmp/x_first_user_candidate_request.json >/dev/null
+          echo "dry_run=${dry_run}" >> "${GITHUB_OUTPUT}"
+
+      - name: Preview or save approval-pending candidate
+        id: create
+        shell: bash
+        run: |
+          http_code=$(curl --silent --show-error \
+            --output /tmp/x_first_user_candidate_response.json \
+            --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data @/tmp/x_first_user_candidate_request.json)
+          cat /tmp/x_first_user_candidate_response.json
+          if [ "${http_code}" != "200" ]; then
+            echo "::error::Candidate endpoint returned HTTP ${http_code}."
+            exit 1
+          fi
+          jq -e --argjson expected_dry_run "${{ steps.mode.outputs.dry_run }}" '
+            .success == true and
+            .dryRun == $expected_dry_run and
+            .status == "pending_approval"
+          ' /tmp/x_first_user_candidate_response.json >/dev/null
+          candidate_id=$(jq -r '.candidateId // ""' \
+            /tmp/x_first_user_candidate_response.json)
+          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ] &&
+             [ -n "${candidate_id}" ]; then
+            echo "::error::Preview mode unexpectedly persisted a candidate."
+            exit 1
+          fi
+          if [ "${{ steps.mode.outputs.dry_run }}" = "false" ] &&
+             ! [[ "${candidate_id}" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+            echo "::error::Stored mode did not return a candidate UUID."
+            exit 1
+          fi
+          echo "candidate_id=${candidate_id}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload review evidence
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: x-first-user-launch-candidate-${{ github.run_id }}
+          path: |
+            /tmp/x_first_user_candidate_request.json
+            /tmp/x_first_user_candidate_response.json
+          retention-days: 30
+
+      - name: Publish review summary
+        shell: bash
+        env:
+          CANDIDATE_ID: ${{ steps.create.outputs.candidate_id }}
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+        run: |
+          {
+            echo "## X first-user launch candidate"
+            echo
+            if [ "${DRY_RUN}" = "true" ]; then
+              echo "- Result: preview only; nothing was saved or published"
+            else
+              echo "- Result: saved for approval; nothing was published"
+              echo "- Candidate ID: \`${CANDIDATE_ID}\`"
+              echo
+              echo "Publishing remains a separate explicit action:"
+              echo "- Workflow: \`X Candidate Draft & Approval\`"
+              echo "- operation: \`publish_approved_draft\`"
+              echo "- candidate_id: \`${CANDIDATE_ID}\`"
+              echo "- expected_candidate_type: \`first_user_launch\`"
+              echo "- expected_source_kind: \`x-first-user-launch-candidate.yml\`"
+              echo "- confirm_publish: \`true\`"
+              echo "- dry_run: \`false\`"
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"

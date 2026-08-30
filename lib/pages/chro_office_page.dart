@@ -5,7 +5,6 @@ import '../services/agent_org_service.dart';
 import '../widgets/agent_workspace_panel.dart';
 import 'people_help_page.dart';
 import 'rewards_page.dart';
-import 'stats_page.dart';
 
 class ChroOfficePage extends StatefulWidget {
   const ChroOfficePage({super.key});
@@ -87,17 +86,11 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
             const SizedBox(height: 16),
             _buildMenuCard(
               context,
-              'Rewards',
-              'Review incentives and keep the reward system visible.',
+              'Achievements & Rewards',
+              'Review points, levels, badges, and recognition in one place.',
               Icons.card_giftcard,
               const RewardsPage(),
-            ),
-            _buildMenuCard(
-              context,
-              'Stats',
-              'Check user-level and team-level HR metrics.',
-              Icons.bar_chart,
-              const StatsPage(),
+              '/rewards',
             ),
             _buildMenuCard(
               context,
@@ -105,6 +98,7 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
               'Keep onboarding and support notes for team operations.',
               Icons.menu_book,
               const PeopleHelpPage(),
+              '/people-help',
               tileKey: const Key('chro_menu_people_help'),
             ),
           ],
@@ -113,12 +107,15 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
     );
   }
 
+  /// [routeName] は遷移先画面の URL。`RouteSettings.name` を付けないと
+  /// Flutter Web でブラウザの URL が更新されないため必須にしている。
   Widget _buildMenuCard(
     BuildContext context,
     String title,
     String subtitle,
     IconData icon,
-    Widget? page, {
+    Widget? page,
+    String routeName, {
     Key? tileKey,
   }) {
     return Card(
@@ -144,7 +141,10 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
             ? null
             : () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => page),
+                  MaterialPageRoute(
+                    settings: RouteSettings(name: routeName),
+                    builder: (_) => page,
+                  ),
                 ),
       ),
     );

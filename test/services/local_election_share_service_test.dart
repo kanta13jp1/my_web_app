@@ -2,6 +2,7 @@
 
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/data/dpj_official_endorsements.dart';
 import 'package:my_web_app/models/local_election_plan.dart';
 import 'package:my_web_app/models/local_election_reality.dart';
 import 'package:my_web_app/services/local_election_share_service.dart';
@@ -157,6 +158,55 @@ void main() {
     });
   }
 
+  LocalElectionRealitySnapshot buildSnapshotWithLiveIntelligence() {
+    final json = buildSnapshot().toJson();
+    json['electionIntelligence'] = <String, dynamic>{
+      'schemaVersion': 1,
+      'selectedMode': 'local',
+      'modes': <Map<String, dynamic>>[],
+      'goals': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'local_members_700',
+          'mode': 'local',
+          'title': '地方議員700人',
+          'metric': 'local_member_count',
+          'currentValue': 333,
+          'targetValue': 700,
+          'unit': '人',
+          'deadlineLabel': '次期統一地方選終了時',
+          'sourceUrl': 'https://example.com/goal',
+          'sourcePublishedAt': '2026-07-14',
+          'verificationStatus': 'verified',
+        },
+      ],
+      'achievements': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'unified_local_election_wins_2023',
+          'mode': 'local',
+          'title': '2023年統一地方選 当選者',
+          'metric': 'unified_local_election_wins_2023',
+          'value': 183,
+          'unit': '人',
+          'periodLabel': '2023年統一地方選',
+          'sourceUrls': <String>['https://example.com/result'],
+        },
+      ],
+      'officialEndorsements': <String, dynamic>{
+        'sourceUrl': 'https://new-kokumin.jp/local-election-list',
+        'sourceAsOf': '2026-08-06',
+        'sourceDocumentSha256': List<String>.filled(64, 'b').join(),
+        'totalCount': 220,
+        'incumbentCount': 103,
+        'newcomerCount': 108,
+        'formerCount': 9,
+        'recommendationCount': 9,
+        'prefectureCount': 33,
+        'prefectures': <Map<String, dynamic>>[],
+      },
+    };
+    return LocalElectionRealitySnapshot.fromJson(json);
+  }
+
   LocalElectionPlanDashboard buildPlan() {
     return LocalElectionPlanDashboard(
       currentLocalMembers: 333,
@@ -184,6 +234,7 @@ void main() {
           prefectureOfficerSourceUrl:
               'https://www.new-kokumin.tokyo/2025/10/yakuin2025/',
           cdpLocalMembers: 83,
+          ldpLocalMembers: 362,
         ),
         LocalElectionPrefecturePlan(
           prefecture: '香川県',
@@ -199,6 +250,7 @@ void main() {
           announcedCandidateCount: 3,
           confirmedCandidateCount: 2,
           cdpLocalMembers: 20,
+          ldpLocalMembers: 112,
           endorsementConfirmed: true,
         ),
       ],
@@ -233,6 +285,13 @@ void main() {
     expect(draft.metadata['daysUntilNextUnifiedLocalElection'], 379);
     expect(draft.metadata['nextUnifiedLocalElectionTargetDate'], '2027/04/11');
     expect(draft.metadata['missingPrefectureCount'], greaterThanOrEqualTo(1));
+  });
+
+  test('generated memo source key keeps the synthetic draft identity', () {
+    expect(
+      LocalElectionShareService.generatedMemoSourceKey(90000007002027),
+      'local-election:90000007002027',
+    );
   });
 
   LocalElectionRealitySnapshot buildSnapshotWithCdpFallbackAlert() {
@@ -495,6 +554,85 @@ void main() {
     );
   });
 
+  test('公開ノートに自民参考値と公認予定候補が載る (共有面の欠落防止)', () {
+    final plan = buildPlan();
+    final draft = service.buildPlanDashboardDraft(
+      plan: plan,
+      snapshot: buildSnapshot(),
+      publicDashboardUrl: 'https://example.com/public/local-election-700',
+    );
+
+    // 全国サマリー: 立憲だけでなく自民と公認予定候補も出す。
+    expect(draft.content, contains('自民地方議員参考合計: 474人'));
+    expect(
+      draft.content,
+      contains('公認予定候補: $dpjOfficialEndorsementTotal件'),
+    );
+    expect(
+      draft.content,
+      contains('$dpjOfficialEndorsementPrefectureCount/47都道府県に掲載'),
+    );
+    // 県別行: 自民参考と地力差 (ラベルは自民であって立憲ではない)。
+    expect(draft.content, contains('自民参考362人'));
+    expect(draft.content, contains('自民+319'));
+    // metadata にも機械可読で載る。
+    expect(draft.metadata['totalLdpLocalMembers'], 474);
+    expect(
+      draft.metadata['officialEndorsementTotal'],
+      dpjOfficialEndorsementTotal,
+    );
+    expect(
+      draft.metadata['officialEndorsementAsOf'],
+      dpjOfficialEndorsementSourceAsOf,
+    );
+    expect(
+      draft.metadata['firstEndorsementTotal'],
+      dpjOfficialEndorsementTotal,
+    );
+    final prefectures = draft.metadata['prefectures'] as List<dynamic>;
+    final tokyo =
+        Map<String, dynamic>.from(prefectures.first as Map<dynamic, dynamic>);
+    expect(tokyo['ldpLocalMembers'], 362);
+    expect(tokyo['ldpMemberGap'], 319);
+  });
+
+  test('共有ノートは静的値より最新の選挙インテリジェンスを優先する', () {
+    final snapshot = buildSnapshotWithLiveIntelligence();
+    final draft = service.buildPlanDashboardDraft(
+      plan: buildPlan(),
+      snapshot: snapshot,
+      publicDashboardUrl: 'https://example.com/public/local-election-700',
+    );
+    final snapshotDraft = service.buildDraft(
+      snapshot: snapshot,
+      members: snapshot.members,
+      plan: buildPlan(),
+    );
+
+    expect(draft.content, contains('公認予定候補: 220件'));
+    expect(draft.content, contains('33/47都道府県に掲載'));
+    expect(draft.metadata['officialEndorsementTotal'], 220);
+    expect(draft.metadata['officialEndorsementAsOf'], '2026-08-06');
+    expect(snapshotDraft.metadata['electionMode'], 'local');
+    expect(snapshotDraft.metadata['partyGoals'], hasLength(1));
+    expect(
+      (snapshotDraft.metadata['officialEndorsements']
+          as Map<String, dynamic>)['totalCount'],
+      220,
+    );
+  });
+
+  test('地力差ラベルは比較相手の党名を取り違えない', () {
+    final plan = buildPlan();
+    final draft = service.buildPlanDashboardDraft(
+      plan: plan,
+      snapshot: buildSnapshot(),
+      publicDashboardUrl: 'https://example.com/public/local-election-700',
+    );
+    // 自民の差分行に立憲ラベルが混入しない (汎用ヘルパの党名直書き対策)。
+    expect(draft.content, isNot(contains('自民参考362人(立憲')));
+  });
+
   test('buildPlanDashboardDraft creates a public note for all prefecture KPIs',
       () {
     final plan = buildPlan();
@@ -603,5 +741,24 @@ void main() {
     expect(weekends[0], DateTime(2026, 4, 11));
     expect(weekends[1], DateTime(2026, 4, 18));
     expect(weekends[2], DateTime(2026, 4, 25));
+  });
+
+  test('unified election 2027 provisional dates stay statute-consistent', () {
+    final firstVote =
+        LocalElectionShareService.nextUnifiedLocalElectionFirstHalfTargetDate;
+    final firstAnnouncement = LocalElectionShareService
+        .nextUnifiedLocalElectionFirstHalfAnnouncementDate;
+    final secondVote =
+        LocalElectionShareService.nextUnifiedLocalElectionSecondHalfTargetDate;
+    final secondAnnouncement = LocalElectionShareService
+        .nextUnifiedLocalElectionSecondHalfAnnouncementDate;
+
+    // 投票日は日曜、第二次は第一次の2週間後。
+    expect(firstVote.weekday, DateTime.sunday);
+    expect(secondVote.weekday, DateTime.sunday);
+    expect(secondVote.difference(firstVote).inDays, 14);
+    // 告示日数ルール: 前半=知事選17日前 / 後半=市区議・市区長7日前 (2023実績と同じ)。
+    expect(firstVote.difference(firstAnnouncement).inDays, 17);
+    expect(secondVote.difference(secondAnnouncement).inDays, 7);
   });
 }

@@ -5,10 +5,13 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../models/kgi_csf_kpi.dart';
 import '../services/heygen_multilingual_sns_service.dart';
+import '../services/viral_ad_legacy_history_service.dart';
+import '../services/x_post_attribution.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// バイラル広告ジェネレーターページ
-/// viral-video-ad-generator / x-media-post / viral-growth-engine と連携
+/// viral-video-ad-generator / growth-hub (x.post / engine.run / engine.stats) と連携
 /// Dark War風動画広告の生成・X投稿・バイラル指標を管理
 class ViralAdGeneratorPage extends StatefulWidget {
   const ViralAdGeneratorPage({super.key});
@@ -18,14 +21,24 @@ class ViralAdGeneratorPage extends StatefulWidget {
 }
 
 class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['generator', 'stats', 'history'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
+  late final ViralAdLegacyHistoryService _legacyHistoryService;
 
   bool _loading = false;
   String? _errorMessage;
   List<Map<String, dynamic>> _templates = [];
   List<Map<String, dynamic>> _history = [];
+  List<ViralAdLegacyHistoryEntry> _legacyHistory = [];
+  List<String> _legacyHistoryWarnings = [];
   Map<String, dynamic>? _generatedAd;
   Map<String, dynamic>? _viralStats;
 
@@ -38,6 +51,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _legacyHistoryService = ViralAdLegacyHistoryService(client: _supabase);
     _loadData();
   }
 
@@ -103,8 +117,18 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
       if (!mounted) return;
       setState(() => _errorMessage = 'データ取得エラー: $e');
     } finally {
+      await _loadLegacyHistory();
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _loadLegacyHistory() async {
+    final result = await _legacyHistoryService.load();
+    if (!mounted) return;
+    setState(() {
+      _legacyHistory = result.entries;
+      _legacyHistoryWarnings = result.warnings;
+    });
   }
 
   Future<void> _generateAd() async {
@@ -142,38 +166,57 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
       final caption = _generatedAd!['caption']?.toString() ?? '';
       final imageUrl = _generatedAd!['generatedImageUrl']?.toString();
       final videoUrl = _generatedAd!['generatedVideoUrl']?.toString();
-      final adId = _generatedAd!['id']?.toString();
-
-      String endpoint;
-      Map<String, dynamic> body;
 
       final mediaUrl =
           (videoUrl != null && videoUrl.isNotEmpty) ? videoUrl : imageUrl;
+      final hasMedia = mediaUrl != null && mediaUrl.isNotEmpty;
 
-      if (mediaUrl != null && mediaUrl.isNotEmpty) {
-        endpoint = 'x-media-post';
-        body = {
+      final tracking = buildViralAdXPostAttribution(
+        videoUrl: videoUrl,
+        imageUrl: imageUrl,
+      );
+
+      // 旧 post-x-update / x-media-post は EF 統合で削除済み (呼ぶと 404)。
+      // growth-hub x.post が text / media 両方を 1 action で受ける
+      // (= universal_x_share_service と同じ経路)。
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.post',
           'text': caption.length > 280 ? caption.substring(0, 280) : caption,
-          'mediaUrl': mediaUrl,
-          'adGenerationId': adId,
-        };
-      } else {
-        endpoint = 'post-x-update';
-        body = {
-          'text': caption.length > 280 ? caption.substring(0, 280) : caption,
-        };
+          'mediaUrl': hasMedia ? mediaUrl : null,
+          'source': 'viral_ad_generator',
+          'contentKind': hasMedia ? 'media' : 'text',
+          ...tracking,
+        },
+      );
+      final result = res.data as Map<String, dynamic>?;
+      // 旧実装は success を見ずに tweetLink だけ読んでいたため、
+      // 失敗レスポンスでも「投稿完了」と表示されていた。
+      if (result?['success'] != true) {
+        throw Exception(result?['error']?.toString() ?? 'X post failed');
       }
 
-      final res = await _supabase.functions.invoke(endpoint, body: body);
-      final result = res.data as Map<String, dynamic>?;
-
       if (mounted) {
-        final tweetUrl =
-            result?['tweetLink']?.toString() ?? result?['tweetUrl']?.toString();
+        final tweetId = result?['tweetId']?.toString();
+        final tweetUrl = (tweetId != null && tweetId.isNotEmpty)
+            ? 'https://x.com/i/web/status/$tweetId'
+            : null;
+        // posted=false は dryRun か X 認証情報の未設定。success=true で返るので、
+        // ここを分けないと「投稿していないのに投稿成功」と表示されてしまう。
+        final posted = result?['posted'] == true;
+        final warning = result?['warning']?.toString();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(tweetUrl != null ? '✅ X投稿成功! $tweetUrl' : '✅ 投稿完了'),
-            backgroundColor: const Color(0xFF4CAF50),
+            content: Text(
+              !posted
+                  ? '⚠️ 未投稿: ${warning ?? 'dryRun または X 認証情報が未設定です'}'
+                  : tweetUrl != null
+                      ? '✅ X投稿成功! $tweetUrl'
+                      : '✅ 投稿完了',
+            ),
+            backgroundColor:
+                posted ? const Color(0xFF4CAF50) : const Color(0xFFF59E0B),
             duration: const Duration(seconds: 5),
           ),
         );
@@ -1215,7 +1258,9 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
   }
 
   Widget _buildHistoryTab(bool isDark) {
-    if (_history.isEmpty) {
+    if (_history.isEmpty &&
+        _legacyHistory.isEmpty &&
+        _legacyHistoryWarnings.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1243,103 +1288,151 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
       );
     }
 
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.all(16),
-      itemCount: _history.length,
-      itemBuilder: (context, index) {
-        final item = _history[index];
-        final templateKey = item['template_key']?.toString() ?? '';
-        final status = item['status']?.toString() ?? 'draft';
-        final type = item['type']?.toString() ?? 'image';
-        final postedAt = item['posted_at']?.toString();
-        final tweetUrl = item['posted_tweet_url']?.toString();
-        final generatedVideoUrl = item['generated_video_url']?.toString();
-        final createdAt = item['created_at']?.toString() ?? '';
-
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: status == 'posted'
-                  ? const Color(0xFF4CAF50).withAlpha(30)
-                  : const Color(0xFF6366F1).withAlpha(25),
-              child: Icon(
-                status == 'posted' ? Icons.check : Icons.auto_awesome,
-                color: status == 'posted'
-                    ? const Color(0xFF4CAF50)
-                    : const Color(0xFF6366F1),
-                size: 20,
+      children: [
+        if (_history.isNotEmpty) ...[
+          Text('現在の広告履歴', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          for (final item in _history) _buildCurrentHistoryCard(item),
+        ],
+        if (_legacyHistory.isNotEmpty) ...[
+          if (_history.isNotEmpty) const SizedBox(height: 16),
+          Text('旧ツールの生成履歴', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(
+            '統合前の「動画広告」「バイラル動画」で保存した履歴です。',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          for (final item in _legacyHistory) _buildLegacyHistoryCard(item),
+        ],
+        if (_legacyHistoryWarnings.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Card(
+            child: ListTile(
+              leading: Icon(
+                Icons.warning_amber_rounded,
+                color: Theme.of(context).colorScheme.error,
               ),
-            ),
-            title: Text(
-              '${_templateLabel(templateKey)}${type == 'presenter_video' ? ' / 動画' : ' / 画像'}',
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                height: 1.5,
-              ),
-            ),
-            subtitle: Text(
-              '${item['lang']?.toString().toUpperCase() ?? 'JA'}  |  ${createdAt.length > 10 ? createdAt.substring(0, 10) : createdAt}'
-              '${postedAt != null ? '  |  投稿: ${postedAt.substring(0, 10)}' : ''}',
-              style: const TextStyle(
-                fontSize: 11,
-                height: 1.5,
-              ),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (generatedVideoUrl != null && generatedVideoUrl.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(Icons.videocam_outlined, size: 18),
-                    onPressed: () async {
-                      final uri = Uri.tryParse(generatedVideoUrl);
-                      if (uri != null) {
-                        await launchUrl(
-                          uri,
-                          mode: LaunchMode.externalApplication,
-                        );
-                      }
-                    },
-                    tooltip: '動画を開く',
-                  ),
-                if (status == 'posted' && tweetUrl != null)
-                  IconButton(
-                    icon: const Icon(Icons.open_in_new, size: 18),
-                    onPressed: () async {
-                      final uri = Uri.tryParse(tweetUrl);
-                      if (uri != null) {
-                        await launchUrl(
-                          uri,
-                          mode: LaunchMode.externalApplication,
-                        );
-                      }
-                    },
-                    tooltip: 'Xで見る',
-                  )
-                else
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: _statusColor(status).withAlpha(25),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      _statusLabel(status),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: _statusColor(status),
-                        fontWeight: FontWeight.bold,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-              ],
+              title: const Text('旧ツール履歴の一部を取得できませんでした'),
+              subtitle: Text(_legacyHistoryWarnings.join('\n')),
             ),
           ),
-        );
-      },
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCurrentHistoryCard(Map<String, dynamic> item) {
+    final templateKey = item['template_key']?.toString() ?? '';
+    final status = item['status']?.toString() ?? 'draft';
+    final type = item['type']?.toString() ?? 'image';
+    final postedAt = item['posted_at']?.toString();
+    final tweetUrl = item['posted_tweet_url']?.toString();
+    final generatedVideoUrl = item['generated_video_url']?.toString();
+    final createdAt = item['created_at']?.toString() ?? '';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: status == 'posted'
+              ? const Color(0xFF4CAF50).withAlpha(30)
+              : const Color(0xFF6366F1).withAlpha(25),
+          child: Icon(
+            status == 'posted' ? Icons.check : Icons.auto_awesome,
+            color: status == 'posted'
+                ? const Color(0xFF4CAF50)
+                : const Color(0xFF6366F1),
+            size: 20,
+          ),
+        ),
+        title: Text(
+          '${_templateLabel(templateKey)}${type == 'presenter_video' ? ' / 動画' : ' / 画像'}',
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            height: 1.5,
+          ),
+        ),
+        subtitle: Text(
+          '${item['lang']?.toString().toUpperCase() ?? 'JA'}  |  '
+          '${_shortDate(createdAt)}'
+          '${postedAt != null ? '  |  投稿: ${_shortDate(postedAt)}' : ''}',
+          style: const TextStyle(
+            fontSize: 11,
+            height: 1.5,
+          ),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (generatedVideoUrl != null && generatedVideoUrl.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.videocam_outlined, size: 18),
+                onPressed: () async {
+                  final uri = Uri.tryParse(generatedVideoUrl);
+                  if (uri != null) {
+                    await launchUrl(
+                      uri,
+                      mode: LaunchMode.externalApplication,
+                    );
+                  }
+                },
+                tooltip: '動画を開く',
+              ),
+            if (status == 'posted' && tweetUrl != null)
+              IconButton(
+                icon: const Icon(Icons.open_in_new, size: 18),
+                onPressed: () async {
+                  final uri = Uri.tryParse(tweetUrl);
+                  if (uri != null) {
+                    await launchUrl(
+                      uri,
+                      mode: LaunchMode.externalApplication,
+                    );
+                  }
+                },
+                tooltip: 'Xで見る',
+              )
+            else
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: _statusColor(status).withAlpha(25),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _statusLabel(status),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: _statusColor(status),
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLegacyHistoryCard(ViralAdLegacyHistoryEntry item) {
+    final createdAt = item.createdAt?.toIso8601String() ?? '';
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: const CircleAvatar(child: Icon(Icons.history, size: 20)),
+        title: Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+        subtitle: Text(
+          '${item.sourceLabel}  |  ${item.detail}  |  '
+          '${_statusLabel(item.status)}'
+          '${createdAt.isEmpty ? '' : '  |  ${_shortDate(createdAt)}'}',
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
     );
   }
 
@@ -1418,4 +1511,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
         return '下書き';
     }
   }
+
+  String _shortDate(String raw) =>
+      raw.length >= 10 ? raw.substring(0, 10) : raw;
 }

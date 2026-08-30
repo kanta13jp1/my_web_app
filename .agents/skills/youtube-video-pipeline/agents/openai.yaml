@@ -1,0 +1,4 @@
+interface:
+  display_name: "YouTube動画・AI大学公開パイプライン"
+  short_description: "参考動画の制作からAI大学への公開・デプロイ監視まで実行"
+  default_prompt: "Use $youtube-video-pipeline to create and publish a narrated Japanese YouTube video, register it as a discoverable my_web_app AI大学 lesson, and monitor the production deployment through live verification."

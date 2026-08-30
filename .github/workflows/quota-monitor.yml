@@ -2,7 +2,7 @@ name: AI Quota Monitor
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 毎日 09:00 JST (UTC 00:00)
+    - cron: '11 0 * * *'  # 毎日 09:11 JST (2026-07-17 ci-audit: 00:00 UTC 8本集中を分散)
   workflow_dispatch:
     inputs:
       dry_run:
@@ -14,20 +14,21 @@ concurrency:
   group: quota-monitor
   cancel-in-progress: false
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   check-quotas:
+    permissions:
+      contents: read
     name: Check AI Tool Quotas
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -56,24 +57,40 @@ jobs:
           end = today.isoformat()
 
           try:
+              # Cost 取得は Admin API (要 sk-ant-admin... キー)。旧実装の
+              # https://api.anthropic.com/v1/usage は実在せず、失敗時に
+              # cost=0 を status=ok として保存していた (捏造値 / H6)。
               resp = requests.get(
-                  'https://api.anthropic.com/v1/usage',
+                  'https://api.anthropic.com/v1/organizations/cost_report',
                   headers={
                       'x-api-key': api_key,
                       'anthropic-version': '2023-06-01',
                   },
-                  params={'start_time': start, 'end_time': end},
+                  params={'starting_at': f'{start}T00:00:00Z', 'limit': 31},
                   timeout=10
               )
-              data = resp.json() if resp.ok else {}
-              usage = data.get('data', [{}])
-              total_cost = sum(u.get('cost', 0) for u in usage) if usage else 0
-              print(f'Anthropic usage: ${total_cost:.4f} this month')
-
-              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                  f.write(f'status=ok\n')
-                  f.write(f'cost={total_cost:.4f}\n')
-                  f.write(f'usage_json={json.dumps({"tool":"anthropic","cost_usd":round(total_cost,4),"period":f"{start}/{end}","alert":total_cost>50})}\n')
+              if resp.ok:
+                  data = resp.json()
+                  total_cost = 0.0
+                  for bucket in data.get('data', []):
+                      for r in bucket.get('results', []):
+                          try:
+                              # amount は最小通貨単位 (USD ならセント) の
+                              # decimal 文字列。"123.45" = $1.2345。
+                              total_cost += float(r.get('amount', 0) or 0) / 100.0
+                          except (TypeError, ValueError):
+                              pass
+                  print(f'Anthropic cost: ${total_cost:.4f} this month')
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write('status=ok\n')
+                      f.write(f'cost={total_cost:.4f}\n')
+                      f.write(f'usage_json={json.dumps({"tool":"anthropic","cost_usd":round(total_cost,4),"period":f"{start}/{end}","alert":total_cost>50})}\n')
+              else:
+                  # 通常 API キーは 401 になる。行を書かず UI は「未計測」を
+                  # 表示する (偽の「正常 $0」より誠実)。
+                  print(f'Anthropic cost_report error: {resp.status_code} — Admin API key (sk-ant-admin...) required')
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write('status=api_error\nusage_json={}\n')
           except Exception as e:
               print(f'Error: {e}')
               with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
@@ -83,11 +100,12 @@ jobs:
       - name: Check OpenAI (CODEX) Usage
         id: openai
         env:
+          # Admin API キー (sk-admin-...) が必要。通常キーでは 401。
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python3 - << 'EOF'
           import os, requests, json
-          from datetime import date
+          from datetime import date, datetime, timezone
 
           api_key = os.environ.get('OPENAI_API_KEY', '')
           if not api_key:
@@ -97,24 +115,36 @@ jobs:
               exit(0)
 
           try:
+              # 旧 /v1/usage は廃止系で通常キーでも 401 → 常に api_error だった
+              # (H6)。Costs API (Admin キー) で当月コストを取得する。
               today = date.today()
+              start_epoch = int(
+                  datetime(
+                      today.year, today.month, 1, tzinfo=timezone.utc
+                  ).timestamp()
+              )
               resp = requests.get(
-                  'https://api.openai.com/v1/usage',
+                  'https://api.openai.com/v1/organization/costs',
                   headers={'Authorization': f'Bearer {api_key}'},
-                  params={'date': today.strftime('%Y-%m-%d')},
+                  params={'start_time': start_epoch, 'limit': 31},
                   timeout=10
               )
               if resp.ok:
                   data = resp.json()
-                  total_tokens = data.get('total_tokens', 0)
-                  # 概算コスト: gpt-4.1 $2/1M tokens
-                  cost_est = total_tokens / 1_000_000 * 2.0
-                  print(f'OpenAI usage today: {total_tokens} tokens (~${cost_est:.4f})')
+                  total_cost = 0.0
+                  for bucket in data.get('data', []):
+                      for r in bucket.get('results', []):
+                          amount = r.get('amount') or {}
+                          try:
+                              total_cost += float(amount.get('value', 0) or 0)
+                          except (TypeError, ValueError):
+                              pass
+                  print(f'OpenAI cost this month: ${total_cost:.4f}')
                   with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                      f.write(f'status=ok\n')
-                      f.write(f'usage_json={json.dumps({"tool":"openai","tokens":total_tokens,"cost_usd_est":round(cost_est,4),"alert":cost_est>20})}\n')
+                      f.write('status=ok\n')
+                      f.write(f'usage_json={json.dumps({"tool":"openai","cost_usd":round(total_cost,4),"alert":total_cost>20})}\n')
               else:
-                  print(f'OpenAI API error: {resp.status_code}')
+                  print(f'OpenAI costs API error: {resp.status_code} — Admin API key (sk-admin-...) required')
                   with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                       f.write('status=api_error\nusage_json={}\n')
           except Exception as e:
@@ -220,7 +250,9 @@ jobs:
       - name: Check Gemini Code Assist Quota
         id: gemini
         env:
-          GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY }}
+          # repo secrets の登録名は GEMINI_API_KEY (GOOGLE_AI_API_KEY は未登録)。
+          # 参照名 mismatch で毎日 skip されていた (H6)。
+          GOOGLE_AI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python3 - << 'EOF'
           import os, requests, json
@@ -352,6 +384,7 @@ jobs:
           ANTHROPIC_USAGE: ${{ steps.anthropic.outputs.usage_json }}
           OPENAI_USAGE: ${{ steps.openai.outputs.usage_json }}
           COPILOT_USAGE: ${{ steps.copilot.outputs.usage_json }}
+          ACTIONS_MINUTES: ${{ steps.actions_minutes.outputs.usage_json }}
           GEMINI_USAGE: ${{ steps.gemini.outputs.usage_json }}
           HEDRA_USAGE: ${{ steps.hedra.outputs.usage_json }}
           QUOTA_ALERT_WEBHOOK_URL: ${{ secrets.QUOTA_ALERT_WEBHOOK_URL }}
@@ -372,7 +405,7 @@ jobs:
           }
           today = date.today().isoformat()
 
-          tools = ['ANTHROPIC_USAGE', 'OPENAI_USAGE', 'COPILOT_USAGE', 'GEMINI_USAGE', 'HEDRA_USAGE']
+          tools = ['ANTHROPIC_USAGE', 'OPENAI_USAGE', 'COPILOT_USAGE', 'ACTIONS_MINUTES', 'GEMINI_USAGE', 'HEDRA_USAGE']
           for env_key in tools:
               raw = os.environ.get(env_key, '{}')
               if not raw or raw == '{}':
@@ -423,8 +456,14 @@ jobs:
           ANTHROPIC_USAGE: ${{ steps.anthropic.outputs.usage_json }}
           OPENAI_USAGE: ${{ steps.openai.outputs.usage_json }}
           COPILOT_USAGE: ${{ steps.copilot.outputs.usage_json }}
+          ACTIONS_MINUTES: ${{ steps.actions_minutes.outputs.usage_json }}
           GEMINI_USAGE: ${{ steps.gemini.outputs.usage_json }}
           HEDRA_USAGE: ${{ steps.hedra.outputs.usage_json }}
+          ANTHROPIC_STATUS: ${{ steps.anthropic.outputs.status }}
+          OPENAI_STATUS: ${{ steps.openai.outputs.status }}
+          COPILOT_STATUS: ${{ steps.copilot.outputs.status }}
+          GEMINI_STATUS: ${{ steps.gemini.outputs.status }}
+          HEDRA_STATUS: ${{ steps.hedra.outputs.status }}
         run: |
           python3 - << 'EOF'
           import os, json
@@ -438,12 +477,25 @@ jobs:
               ('ANTHROPIC_USAGE', 'Claude (Anthropic)'),
               ('OPENAI_USAGE', 'OpenAI (CODEX)'),
               ('COPILOT_USAGE', 'GitHub Copilot'),
+              ('ACTIONS_MINUTES', 'GitHub Actions minutes'),
               ('GEMINI_USAGE', 'Gemini Code Assist'),
               ('HEDRA_USAGE', 'Hedra API credits'),
           ]:
               raw = os.environ.get(env_key, '{}')
               if not raw or raw == '{}':
-                  lines.append(f'- **{label}**: スキップ (APIキー未設定)')
+                  # キー未設定 (skipped) と API 失敗 (api_error/error) を
+                  # 混同しない — 原因が違えば是正手順も違う。
+                  status = os.environ.get(
+                      env_key.replace('_USAGE', '_STATUS'), ''
+                  )
+                  if status in ('api_error', 'error'):
+                      lines.append(
+                          f'- **{label}**: ⚠️ API エラー'
+                          ' (キーの権限/Admin キー要否を確認)'
+                      )
+                      alerts.append(label)
+                  else:
+                      lines.append(f'- **{label}**: スキップ (APIキー未設定)')
                   continue
               try:
                   d = json.loads(raw)

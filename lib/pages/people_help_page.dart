@@ -4,7 +4,6 @@ import '../services/people_leave_request_service.dart';
 import 'note_editor_page.dart';
 import 'note_list_page.dart';
 import 'rewards_page.dart';
-import 'stats_page.dart';
 
 class PeopleHelpPage extends StatefulWidget {
   final Widget? onboardingNotePage;
@@ -363,6 +362,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
             icon: Icons.sticky_note_2_outlined,
             color: const Color(0xFF3D5AFE),
             page: const NoteListPage(),
+            routeName: '/notes',
           ),
           _buildActionCard(
             context,
@@ -378,24 +378,17 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
                   initialContent:
                       'Team context\n- \n\nFirst-week checklist\n- Accounts and tools\n- Team introductions\n\n1:1 agenda\n- Role expectations\n- 30-day focus\n',
                 ),
+            routeName: '/note-editor',
           ),
           _buildActionCard(
             context,
             tileKey: const Key('people_help_quick_rewards'),
-            title: 'Rewards',
-            subtitle: 'Review incentives, kudos, and recognition updates.',
+            title: 'Achievements & Rewards',
+            subtitle: 'Review points, levels, badges, and recognition updates.',
             icon: Icons.card_giftcard,
             color: const Color(0xFFFF8F00),
             page: const RewardsPage(),
-          ),
-          _buildActionCard(
-            context,
-            tileKey: const Key('people_help_quick_stats'),
-            title: 'Stats',
-            subtitle: 'Open people metrics and trend snapshots.',
-            icon: Icons.bar_chart,
-            color: const Color(0xFF3D5AFE),
-            page: const StatsPage(),
+            routeName: '/rewards',
           ),
           const SizedBox(height: 24),
           _buildLeaveRequestsSection(),
@@ -492,6 +485,9 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
     required IconData icon,
     required Color color,
     required Widget page,
+    // 遷移先画面の URL。`RouteSettings.name` を付けないと
+    // Flutter Web でブラウザの URL が更新されないため必須にしている。
+    required String routeName,
   }) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -519,7 +515,10 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => page),
+          MaterialPageRoute(
+            settings: RouteSettings(name: routeName),
+            builder: (_) => page,
+          ),
         ),
       ),
     );

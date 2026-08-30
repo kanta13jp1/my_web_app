@@ -1,7 +1,14 @@
 {
   "version": "5",
   "specifiers": {
-    "npm:@supabase/supabase-js@2": "2.105.1"
+    "jsr:@b-fuze/deno-dom@0.1.56": "0.1.56",
+    "npm:@supabase/supabase-js@2": "2.105.1",
+    "npm:@supabase/supabase-js@2.105.1": "2.105.1"
+  },
+  "jsr": {
+    "@b-fuze/deno-dom@0.1.56": {
+      "integrity": "8030e2dc1d8750f1682b53462ab893d9c3470f2287feecbe22f44a88c54ab148"
+    }
   },
   "npm": {
     "@supabase/auth-js@2.105.1": {

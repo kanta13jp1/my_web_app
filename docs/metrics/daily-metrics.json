@@ -1,13 +1,13 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-07-14",
+    "date": "2026-08-30",
     "users": {
-      "total": 50
+      "total": 61
     },
     "featureRequests": {
       "newToday": 0,
-      "openCount": 119,
+      "openCount": 140,
       "newTodayList": [],
       "topOpen": [
         {
@@ -34,6 +34,10 @@
     },
     "recentAchievements": [
       {
+        "title": "Codex #4: tax export deterministic core (#2492)",
+        "completed_at": "2026-07-13T00:00:00+00:00"
+      },
+      {
         "title": "自分API v1 (Notion Developer Platform 対抗)",
         "completed_at": "2026-07-12T00:00:00+00:00"
       },
@@ -48,13 +52,9 @@
       {
         "title": "AI大学 FinTech/Trading AI 掲載コンテンツの日本語化",
         "completed_at": "2026-06-21T00:00:00+00:00"
-      },
-      {
-        "title": "AI大学「英語速読カリキュラム」導入",
-        "completed_at": "2026-06-20T00:00:00+00:00"
       }
     ]
   },
-  "fetched_at": "2026-07-15T08:26:01+09:00",
-  "report_date": "2026-07-15"
+  "fetched_at": "2026-08-30T09:34:52+09:00",
+  "report_date": "2026-08-30"
 }

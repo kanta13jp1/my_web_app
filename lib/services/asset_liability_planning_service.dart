@@ -86,6 +86,10 @@ class AssetLiabilityPlanningService {
       '設定済みカード内訳合計が請求額と一致しません';
   static const String cardStatementImportedConfiguredMismatchAlert =
       '取り込み明細合計が設定済み内訳合計と一致しません';
+  static const String cardStatementFixImportLabel = 'カード明細を取り込む';
+  static const String cardStatementFixAdjustBreakdownLabel = '設定内訳を修正する';
+  static const String cardStatementFixReviewLinesLabel = '取込明細を確認する';
+  static const String cardStatementFixAssignBillingLabel = '請求先カードを再設定する';
   static const String auCardBillingNotice =
       'auはauPayカード払いのため、資金繰りではauPayカード請求に含めて扱います。';
   static const String kddiProviderAccountId = 'kddi_provider';
@@ -116,11 +120,24 @@ class AssetLiabilityPlanningService {
   static const int anthropicAcomShoppingPaymentDay = 26;
   static const double anthropicAcomShoppingPaymentAmount = 40000;
   static const String smbcOtsukaBranchAccountId = 'smbc_otsuka_branch';
-  static const String jibunBankAccountId = 'jibun_bank_card_loan';
+
+  /// じぶん銀行 (預金 = 資産)。振替元/請求先/主口座になり得る cash-like 口座。
+  static const String jibunBankAccountId = 'jibun_bank';
+
+  /// じぶん銀行カードローン / じぶんローン (現金借入 = カードローン負債)。
+  /// かつては [jibunBankAccountId] と同一 ID に潰れており、じぶん銀行(預金)を
+  /// 振替元に選んでも保存 ID がこのカードローンを指して「原資未設定」に倒れる
+  /// バグの原因だった (#part341)。両者は別 ID に分離する。
+  static const String jibunBankCardLoanAccountId = 'jibun_bank_card_loan';
+  // 旧・固定額(¥80,000)の組み込み資金移動タスクの ID。かつては毎ビルドで
+  // 三井住友大塚→じぶん銀行の ¥80,000 移動を自動注入していたが、これは不足額と
+  // 無関係の固定値で、給料の入金先がじぶん銀行のとき「給料入金 + 移動入金」の
+  // 二重計上になり、逆に三井住友を ¥80,000 減らして幻の不足→逆方向の提案を
+  // 生んでいた (ユーザー報告)。自動注入は撤去し、資金移動は不足額に上限が
+  // 掛かる動的提案 (_buildTransferSuggestions) に一本化した。ID 定数は、過去に
+  // 「完了」で退避された永続タスクを組み込み扱いと認識するためだけに残す。
   static const String auPayCardFundingTransferTaskId =
       'transfer_smbc_otsuka_to_jibun_aupay_card_funding';
-  static const int auPayCardFundingTransferDay = 26;
-  static const double auPayCardFundingTransferAmount = 80000;
 
   /// ハードコードされた既定固定費 (家賃/KDDI/水道/ガス) のデータ駆動定義。
   /// `buildWorkbook(includeDefaultFixedPayments: true)` で当月該当かつ未計上の
@@ -175,6 +192,8 @@ class AssetLiabilityPlanningService {
     Map<String, String> cardBillingAccountIds = const <String, String>{},
     Map<String, AssetLiabilityRevolvingCreditConfig> revolvingConfigs =
         const <String, AssetLiabilityRevolvingCreditConfig>{},
+    Map<String, AssetCardUsagePolicy> cardUsagePolicies =
+        const <String, AssetCardUsagePolicy>{},
     List<AssetLiabilityIncomePlan> incomePlans =
         const <AssetLiabilityIncomePlan>[],
     List<AssetLiabilityTransferTask> transferTasks =
@@ -233,6 +252,14 @@ class AssetLiabilityPlanningService {
       baseDate: baseDate,
       salaryDay: salaryDay,
     );
+    // 実際に注入されたサブスク区分の固定費口座 ID (dedup / 当月該当を反映済み)。
+    // トリアージの「生命線を優先確保」から除外する。名前の再解決ではなく実注入
+    // 口座 ID を使うことで、組み込み生命線 ID (rent/gas_bill 等) との部分一致衝突で
+    // 本物の生命線を過剰除外する事故を避ける。
+    final subscriptionFixedCostAccountIds = <String>{
+      for (final injected in injectedFixedCosts)
+        if (injected.isSubscription) injected.account.id,
+    };
     if (injectedFixedCosts.isNotEmpty) {
       accounts
         ..addAll(injectedFixedCosts.map((injected) => injected.account))
@@ -253,14 +280,8 @@ class AssetLiabilityPlanningService {
       incomePlans: incomePlans,
       accountsById: accountsById,
     );
-    final effectiveTransferTasks = _withDefaultAuPayCardFundingTransfer(
-      transferTasks: transferTasks,
-      accounts: accounts,
-      baseDate: baseDate,
-      salaryDay: salaryDay,
-    );
     final resolvedTransferTasks = _resolveTransferTasks(
-      transferTasks: effectiveTransferTasks,
+      transferTasks: transferTasks,
       accounts: accounts,
       accountsById: accountsById,
     );
@@ -273,8 +294,10 @@ class AssetLiabilityPlanningService {
         if (injected.sourceAccountId != null &&
             injected.sourceAccountId!.isNotEmpty)
           injected.account.id: injected.sourceAccountId!,
-      ...defaultPaymentSourceAccountIds,
-      ...paymentSourceAccountIds,
+      for (final e in defaultPaymentSourceAccountIds.entries)
+        e.key: _migrateCollidedJibunSourceId(e.value, accountsById),
+      for (final e in paymentSourceAccountIds.entries)
+        e.key: _migrateCollidedJibunSourceId(e.value, accountsById),
     };
 
     final positiveAssetTotal = accounts.fold<double>(
@@ -434,6 +457,8 @@ class AssetLiabilityPlanningService {
           liabilityTotal == 0 ? 0 : topFourDebtTotal / liabilityTotal.abs(),
       manualPaymentCount: manualPaymentCount,
       estimatedPaymentCount: estimatedPaymentCount,
+      subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds,
+      cardUsagePolicies: cardUsagePolicies,
     );
   }
 
@@ -760,9 +785,19 @@ class AssetLiabilityPlanningService {
     // 振替元が自分自身を指す設定は不正 (ローンを自分自身からは返済できない) なので
     // 未設定扱いにする。これにより「支払原資口座の未設定」セクションに表示され、正しい
     // 口座 (例: じぶん銀行) へ修正できるようになり、見込み残高の自己宛て誤ルーティングも防ぐ。
-    final paymentSourceAccountId = rawPaymentSourceAccountId == account.id
+    var paymentSourceAccountId = rawPaymentSourceAccountId == account.id
         ? null
         : rawPaymentSourceAccountId;
+    // 振替元がカードローン (現金借入) を指す設定も不正扱いで未設定に落とす。
+    // cardLoan はどの振替元セレクタにも候補として出ない (請求先になれない) のに、
+    // legacy キー移行の名前衝突 (じぶん銀行→じぶんローン等) で保存され得る。
+    // 非 null のままだと「原資未設定」レビューに出ず、現金系口座の見込み残高
+    // からも静かに消える盲点になるため、未設定へ倒して修正導線に乗せる。
+    if (paymentSourceAccountId != null &&
+        accountsById[paymentSourceAccountId]?.kind ==
+            AssetLiabilityAccountKind.cardLoan) {
+      paymentSourceAccountId = null;
+    }
     final paymentSourceAccountName = paymentSourceAccountId == null
         ? null
         : accountsById[paymentSourceAccountId]?.name;
@@ -772,6 +807,10 @@ class AssetLiabilityPlanningService {
       cardBillingAccountIds: cardBillingAccountIds,
       accountsById: accountsById,
     );
+    final paid = paidAccountNames.contains(account.id) ||
+        paidAccountNames.contains(account.name.trim()) ||
+        paidAccountNames.contains(account.name);
+    final requiresAction = minimumPayment > 0 && scheduledPayment > 0 && !paid;
 
     return AssetLiabilityDebtRow(
       id: account.id,
@@ -806,9 +845,8 @@ class AssetLiabilityPlanningService {
         billingConfirmedAccountIds,
         account,
       ),
-      paid: paidAccountNames.contains(account.id) ||
-          paidAccountNames.contains(account.name.trim()) ||
-          paidAccountNames.contains(account.name),
+      paid: paid,
+      requiresAction: requiresAction,
     );
   }
 
@@ -1172,23 +1210,71 @@ class AssetLiabilityPlanningService {
       final revolvingBilling = billingRow?.revolvingBilling;
       final isRevolving = revolvingBilling != null;
       final alerts = <String>[];
+      // アラートは「何がずれているか」しか伝えないため、対応する修正
+      // アクション（何をすれば解消するか＋差分金額）を同時に算出する。
+      final fixActions = <AssetLiabilityCardStatementFixAction>[];
 
       if (billingRow == null) {
         alerts.add(cardStatementBillingAccountMissingAlert);
+        fixActions.add(
+          const AssetLiabilityCardStatementFixAction(
+            kind: AssetLiabilityCardStatementFixActionKind.assignBillingAccount,
+            title: cardStatementFixAssignBillingLabel,
+            description: '請求先カード口座が見つかりません。負債マスタで請求先カードを選び直してください。',
+          ),
+        );
       }
       if (!isRevolving && lines.isEmpty && group != null) {
         alerts.add(cardStatementMissingImportAlert);
+        // 請求先カード口座が無い(billingRow == null)場合、請求額はプレース
+        // ホルダ0のため取り込みより先に請求先の再設定(assignBillingAccount)
+        // を促す。取り込みアクションは請求額が実在するときだけ出す。
+        if (billingRow != null) {
+          fixActions.add(
+            AssetLiabilityCardStatementFixAction(
+              kind: AssetLiabilityCardStatementFixActionKind.importStatement,
+              title: cardStatementFixImportLabel,
+              description: 'カード明細を貼り付けて取り込むと、'
+                  '請求額${_formatFixActionAbsoluteYen(billedAmount)}と内訳の照合ができます。',
+            ),
+          );
+        }
       }
       if (!isRevolving &&
           lines.isNotEmpty &&
           _moneyDiffers(statementLineTotal, billedAmount)) {
         alerts.add(cardStatementAmountMismatchAlert);
+        if (billingRow != null) {
+          fixActions.add(
+            AssetLiabilityCardStatementFixAction(
+              kind:
+                  AssetLiabilityCardStatementFixActionKind.reviewStatementLines,
+              title: cardStatementFixReviewLinesLabel,
+              description: '取込明細合計が請求額と'
+                  '${_formatFixActionYen(statementLineTotal - billedAmount)}'
+                  'ずれています。取り込み漏れ・重複行・対象月違いの明細を確認してください。',
+              amount: statementLineTotal - billedAmount,
+            ),
+          );
+        }
       }
       if (!isRevolving &&
           group != null &&
           billingRow != null &&
           _moneyDiffers(configuredDetailTotal, billedAmount)) {
         alerts.add(cardStatementConfiguredMismatchAlert);
+        fixActions.add(
+          AssetLiabilityCardStatementFixAction(
+            kind: AssetLiabilityCardStatementFixActionKind
+                .adjustConfiguredBreakdown,
+            title: cardStatementFixAdjustBreakdownLabel,
+            description: '設定済みカード内訳合計が請求額と'
+                '${_formatFixActionYen(configuredDetailTotal - billedAmount)}'
+                'ずれています。負債マスタの「支払い方式」で内訳の追加・除外、'
+                '各行の今月支払予定額、またはカード側の請求額を見直してください。',
+            amount: configuredDetailTotal - billedAmount,
+          ),
+        );
       }
       if (!isRevolving &&
           lines.isNotEmpty &&
@@ -1208,6 +1294,7 @@ class AssetLiabilityPlanningService {
               group?.items ?? const <AssetLiabilityCardBillingReviewItem>[],
           statementLines: lines,
           alerts: alerts,
+          fixActions: fixActions,
           revolvingBilling: revolvingBilling,
         ),
       );
@@ -1220,6 +1307,25 @@ class AssetLiabilityPlanningService {
   }
 
   bool _moneyDiffers(double a, double b) => (a - b).abs() >= 0.5;
+
+  /// 修正アクションの説明文に使う符号付き差分円表記（例: +1,853円 / -947円）。
+  String _formatFixActionYen(double value) {
+    return '${value.round() < 0 ? '-' : '+'}'
+        '${_formatFixActionAbsoluteYen(value)}';
+  }
+
+  /// 修正アクションの説明文に使う絶対額の円表記（例: 20,000円）。
+  String _formatFixActionAbsoluteYen(double value) {
+    final digits = value.round().abs().toString();
+    final buffer = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) {
+        buffer.write(',');
+      }
+      buffer.write(digits[i]);
+    }
+    return '$buffer円';
+  }
 
   int _compareCardStatementLines(
     AssetLiabilityCardStatementLine a,
@@ -1256,7 +1362,7 @@ class AssetLiabilityPlanningService {
     required DateTime baseDate,
     int? salaryDay,
   }) {
-    final byDay = <int, List<AssetLiabilityDebtRow>>{};
+    final byDayAndAction = <(int, bool), List<AssetLiabilityDebtRow>>{};
     for (final row in rows) {
       final day = row.paymentDay;
       if (day == null) {
@@ -1268,12 +1374,16 @@ class AssetLiabilityPlanningService {
       if (row.paid) {
         continue;
       }
-      byDay.putIfAbsent(day, () => <AssetLiabilityDebtRow>[]).add(row);
+      byDayAndAction.putIfAbsent(
+        (day, row.requiresAction),
+        () => <AssetLiabilityDebtRow>[],
+      ).add(row);
     }
 
     final result = <AssetLiabilityPaymentDayRisk>[];
-    for (final entry in byDay.entries) {
-      final day = entry.key;
+    for (final entry in byDayAndAction.entries) {
+      final day = entry.key.$1;
+      final requiresAction = entry.key.$2;
       final paymentDate = _resolveCyclePaymentDate(baseDate, salaryDay, day);
       final rowsForDay = entry.value
         ..sort((a, b) => b.balance.abs().compareTo(a.balance.abs()));
@@ -1306,13 +1416,23 @@ class AssetLiabilityPlanningService {
               rowsForDay.where((row) => !row.paymentAmountEstimated).length,
           estimatedPaymentCount:
               rowsForDay.where((row) => row.paymentAmountEstimated).length,
+          requiresAction: requiresAction,
           isPast: paymentDate.isBefore(_dateOnly(baseDate)),
           isToday: paymentDate == _dateOnly(baseDate),
         ),
       );
     }
 
-    result.sort((a, b) => a.paymentDay.compareTo(b.paymentDay));
+    result.sort((a, b) {
+      final dayComparison = a.paymentDay.compareTo(b.paymentDay);
+      if (dayComparison != 0) {
+        return dayComparison;
+      }
+      if (a.requiresAction == b.requiresAction) {
+        return 0;
+      }
+      return a.requiresAction ? -1 : 1;
+    });
     return result;
   }
 
@@ -1370,7 +1490,7 @@ class AssetLiabilityPlanningService {
         paymentDay,
       );
       final overdue = row.isDirectCashflowTarget &&
-          !row.paid &&
+          row.requiresAction &&
           !paymentDate.isAfter(_dateOnly(baseDate));
       result.add(
         AssetLiabilityCashflowRow(
@@ -1612,45 +1732,6 @@ class AssetLiabilityPlanningService {
     return result;
   }
 
-  List<AssetLiabilityTransferTask> _withDefaultAuPayCardFundingTransfer({
-    required List<AssetLiabilityTransferTask> transferTasks,
-    required List<AssetLiabilityAccount> accounts,
-    required DateTime baseDate,
-    int? salaryDay,
-  }) {
-    if (transferTasks.any(
-      (task) => task.id == auPayCardFundingTransferTaskId,
-    )) {
-      return transferTasks;
-    }
-
-    final fromAccount = _findCashLikeAccountById(
-      accounts,
-      smbcOtsukaBranchAccountId,
-    );
-    final toAccount = _findCashLikeAccountById(accounts, jibunBankAccountId);
-    if (fromAccount == null || toAccount == null) {
-      return transferTasks;
-    }
-
-    return <AssetLiabilityTransferTask>[
-      ...transferTasks,
-      AssetLiabilityTransferTask(
-        id: auPayCardFundingTransferTaskId,
-        fromAccountId: fromAccount.id,
-        fromAccountName: fromAccount.name,
-        toAccountId: toAccount.id,
-        toAccountName: toAccount.name,
-        amount: auPayCardFundingTransferAmount,
-        dueDate: _resolveCyclePaymentDate(
-          baseDate,
-          salaryDay,
-          auPayCardFundingTransferDay,
-        ),
-      ),
-    ];
-  }
-
   AssetLiabilityAccount? _findCashLikeAccountById(
     List<AssetLiabilityAccount> accounts,
     String accountId,
@@ -1726,12 +1807,16 @@ class AssetLiabilityPlanningService {
     ];
   }
 
+  /// 口座間移動の提案で、移動元に残しておく最低額。この額を割り込む提案は
+  /// しない (移動元を新たな残高不足にしないため)。
+  static const double _transferDonorReserve = 30000;
+
   List<AssetLiabilityTransferSuggestion> _buildTransferSuggestions({
     required List<AssetLiabilityAccountCashflowSummary> summaries,
     required List<AssetLiabilityCashflowRow> cashflowRows,
   }) {
     final donors = summaries
-        .where((summary) => summary.projectedBalance > 30000)
+        .where((summary) => summary.projectedBalance > _transferDonorReserve)
         .toList()
       ..sort((a, b) => b.projectedBalance.compareTo(a.projectedBalance));
     final shortages = summaries.where((summary) => summary.isShort).toList()
@@ -1739,27 +1824,37 @@ class AssetLiabilityPlanningService {
 
     final suggestions = <AssetLiabilityTransferSuggestion>[];
     for (final shortage in shortages) {
-      final donor = donors.firstWhere(
-        (summary) => summary.accountId != shortage.accountId,
-        orElse: () => const AssetLiabilityAccountCashflowSummary(
-          accountId: '',
-          accountName: '',
-          currentBalance: 0,
-          upcomingPayments: 0,
-          upcomingIncome: 0,
-          projectedBalance: 0,
-          riskLevel: AssetLiabilityCashRiskLevel.short,
-        ),
-      );
-      if (donor.accountId.isEmpty) {
-        continue;
+      // 移動元は「見込み残高に余裕がある」だけでは不十分で、**今この口座に
+      // 実際にいくらあるか**で上限を掛ける必要がある。projectedBalance は
+      // 未着金の収入 (給料/入金予定) を含むため、それだけで決めると
+      // 「残高が無いのに移動を提案する」実行不能な提案になる (ユーザー報告:
+      // じぶん銀行 現在¥18,918 に対し ¥50,041 の移動を提案していた)。
+      // さらに移動予約済み (pendingTransferOut) は既に他へ約束済みなので、
+      // 同じ資金を二重に当て込まないよう差し引く。
+      AssetLiabilityAccountCashflowSummary? donor;
+      var amount = 0.0;
+      for (final candidate in donors) {
+        if (candidate.accountId == shortage.accountId) {
+          continue;
+        }
+        final donorSurplus = candidate.projectedBalance - _transferDonorReserve;
+        if (donorSurplus <= 0) {
+          continue;
+        }
+        final movableNow =
+            candidate.currentBalance - candidate.pendingTransferOut;
+        if (movableNow <= 0) {
+          continue;
+        }
+        final feasible = min(min(shortage.shortfall, donorSurplus), movableNow);
+        if (feasible <= 0) {
+          continue;
+        }
+        donor = candidate;
+        amount = feasible;
+        break;
       }
-      final donorSurplus = donor.projectedBalance - 30000;
-      if (donorSurplus <= 0) {
-        continue;
-      }
-      final amount = min(shortage.shortfall, donorSurplus);
-      if (amount <= 0) {
+      if (donor == null || amount <= 0) {
         continue;
       }
       suggestions.add(
@@ -1809,6 +1904,23 @@ class AssetLiabilityPlanningService {
     return b.balance.abs().compareTo(a.balance.abs());
   }
 
+  /// 旧 ID 衝突の移行: じぶん銀行(預金)がカードローンと同一 ID だった名残で、
+  /// 振替元に旧衝突 ID (= 現在のカードローン ID) が保存されている場合、預金口座が
+  /// 存在すればそちらへ読み替える。カードローンは支払原資になり得ないため、
+  /// 保存値がカードローン ID を指すのは「じぶん銀行(預金)を選んだつもり」の
+  /// 名残と解釈できる (#part341)。預金が無ければ元の値のまま
+  /// (round-2 の cardLoan→未設定 正規化に委ねる)。
+  String _migrateCollidedJibunSourceId(
+    String sourceAccountId,
+    Map<String, AssetLiabilityAccount> accountsById,
+  ) {
+    if (sourceAccountId == jibunBankCardLoanAccountId &&
+        accountsById.containsKey(jibunBankAccountId)) {
+      return jibunBankAccountId;
+    }
+    return sourceAccountId;
+  }
+
   String _accountIdForName(String name) {
     final key = _normalize(name);
 
@@ -1822,7 +1934,13 @@ class AssetLiabilityPlanningService {
       return 'mobit';
     }
     if (_containsAny(key, const <String>['じぶん', 'jibun'])) {
-      return 'jibun_bank_card_loan';
+      // 「じぶん銀行」(預金) と「じぶん銀行カードローン/じぶんローン」(現金借入) は
+      // 別口座。ローン語を含むものだけカードローン ID、それ以外は預金 ID にする。
+      // 同一 ID だと accountsById で片方に潰れ、預金を振替元に選べない (#part341)。
+      if (_containsAny(key, const <String>['ローン', 'loan'])) {
+        return jibunBankCardLoanAccountId;
+      }
+      return jibunBankAccountId;
     }
     if (_containsAny(key, const <String>[
           'smbcカードローン',
@@ -1881,8 +1999,12 @@ class AssetLiabilityPlanningService {
   /// 当月に該当する周期 (毎月/隔月) かつ金額>0 で、まだ同名/同IDの口座が無いものだけ
   /// を返す。`_liability` 経由で既定固定費 (水道/ガス) と同じ全額支払いの utility 負債
   /// として作る。振替元は呼び出し側で `effectivePaymentSourceAccountIds` に反映する。
-  List<({AssetLiabilityAccount account, String? sourceAccountId})>
-      _buildRecurringFixedCostInjections({
+  List<
+      ({
+        AssetLiabilityAccount account,
+        String? sourceAccountId,
+        bool isSubscription
+      })> _buildRecurringFixedCostInjections({
     required List<AssetRecurringFixedCost> recurringFixedCosts,
     required List<AssetLiabilityAccount> existingAccounts,
     required DateTime baseDate,
@@ -1891,14 +2013,18 @@ class AssetLiabilityPlanningService {
     if (recurringFixedCosts.isEmpty) {
       return const <({
         AssetLiabilityAccount account,
-        String? sourceAccountId
+        String? sourceAccountId,
+        bool isSubscription
       })>[];
     }
     final takenIds = existingAccounts.map((account) => account.id).toSet();
     final takenNames =
         existingAccounts.map((account) => _normalize(account.name)).toSet();
-    final result =
-        <({AssetLiabilityAccount account, String? sourceAccountId})>[];
+    final result = <({
+      AssetLiabilityAccount account,
+      String? sourceAccountId,
+      bool isSubscription
+    })>[];
     for (final cost in recurringFixedCosts) {
       if (cost.amount <= 0 ||
           !cost.appliesToMonth(
@@ -1922,7 +2048,14 @@ class AssetLiabilityPlanningService {
       }
       takenIds.add(account.id);
       takenNames.add(_normalize(account.name));
-      result.add((account: account, sourceAccountId: cost.sourceAccountId));
+      result.add(
+        (
+          account: account,
+          sourceAccountId: cost.sourceAccountId,
+          isSubscription:
+              cost.category == AssetRecurringFixedCostCategory.subscription,
+        ),
+      );
     }
     return result;
   }

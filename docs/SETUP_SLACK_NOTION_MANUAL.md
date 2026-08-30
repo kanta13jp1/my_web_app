@@ -244,7 +244,9 @@ abc123de-f456-ghi7-89jk-l012mno345pq
 |----------|------|
 | `NOTION_ROADMAP_PAGE_ID` | ROADMAP page |
 | `NOTION_WBS_DATABASE_ID` | WBS Tasks database |
+| `NOTION_WBS_DATA_SOURCE_ID` | WBS Tasks data source (複数 data source 時は必須) |
 | `NOTION_MEMORY_DATABASE_ID` | Memory Index database |
+| `NOTION_MEMORY_DATA_SOURCE_ID` | Memory Index data source (複数 data source 時は必須) |
 | `NOTION_DIGEST_PAGE_ID` | Today's Digest page |
 
 ### B-7. 動作確認
@@ -255,17 +257,23 @@ abc123de-f456-ghi7-89jk-l012mno345pq
 TOKEN="secret_xxxxxxxxxxxxxxxxxx"
 DB_ID="abc123def456ghi789..."  # WBS Database ID を指定
 
-# DB schema 取得
+# 2025-09-03 API: database container から data source ID を取得
 curl -sf "https://api.notion.com/v1/databases/$DB_ID" \
   -H "Authorization: Bearer $TOKEN" \
-  -H "Notion-Version: 2022-06-28" | python3 -m json.tool | head -30
+  -H "Notion-Version: 2025-09-03" | python3 -m json.tool
+
+# 返却された data_sources[0].id を指定して schema を取得
+DATA_SOURCE_ID="def456..."
+curl -sf "https://api.notion.com/v1/data_sources/$DATA_SOURCE_ID" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Notion-Version: 2025-09-03" | python3 -m json.tool | head -30
 ```
 
 成功例:
 
 ```json
 {
-    "object": "database",
+    "object": "data_source",
     "id": "abc123de-f456-...",
     "title": [{"plain_text": "WBS Tasks", ...}],
     "properties": {
@@ -277,7 +285,9 @@ curl -sf "https://api.notion.com/v1/databases/$DB_ID" \
 }
 ```
 
-`"object": "database"` + properties 一覧が返れば成功。
+`"object": "data_source"` + properties 一覧が返れば成功。database に複数の
+data source がある場合は `NOTION_*_DATA_SOURCE_ID`、または一意な
+`NOTION_*_DATA_SOURCE_NAME` を Supabase Secret に登録する。
 
 ### B-8. Secrets 登録
 
@@ -287,7 +297,9 @@ curl -sf "https://api.notion.com/v1/databases/$DB_ID" \
 gh secret set NOTION_API_TOKEN            --body "secret_xxx..."
 gh secret set NOTION_ROADMAP_PAGE_ID      --body "abc123..."
 gh secret set NOTION_WBS_DATABASE_ID      --body "def456..."
+gh secret set NOTION_WBS_DATA_SOURCE_ID   --body "def456..."
 gh secret set NOTION_MEMORY_DATABASE_ID   --body "ghi789..."
+gh secret set NOTION_MEMORY_DATA_SOURCE_ID --body "ghi789..."
 gh secret set NOTION_DIGEST_PAGE_ID       --body "jkl012..."
 ```
 
@@ -297,7 +309,9 @@ gh secret set NOTION_DIGEST_PAGE_ID       --body "jkl012..."
 supabase secrets set NOTION_API_TOKEN="secret_xxx..."
 supabase secrets set NOTION_ROADMAP_PAGE_ID="abc123..."
 supabase secrets set NOTION_WBS_DATABASE_ID="def456..."
+supabase secrets set NOTION_WBS_DATA_SOURCE_ID="def456..."
 supabase secrets set NOTION_MEMORY_DATABASE_ID="ghi789..."
+supabase secrets set NOTION_MEMORY_DATA_SOURCE_ID="ghi789..."
 supabase secrets set NOTION_DIGEST_PAGE_ID="jkl012..."
 ```
 

@@ -3,13 +3,20 @@ import {
   X_POST_CANDIDATE_SOURCE,
 } from "../growth-hub/x_post_candidate.ts";
 import { buildPartyGapCandidateMetadata } from "./party_gap_ranking.ts";
+import {
+  canonicalizeElectionIntelligenceSnapshot,
+  type ElectionAchievementSnapshot,
+  type ElectionGoalSnapshot,
+  type ElectionIntelligenceSnapshot,
+  type OfficialEndorsementSnapshot,
+} from "./election_mode.ts";
 
 export const LOCAL_ELECTION_DATASET = "kokumin_local_election_intelligence";
 export const LOCAL_ELECTION_DATASET_SOURCE = "local-election-intelligence";
 export const LOCAL_ELECTION_SNAPSHOT_HUB_SOURCE =
   "local_election_dataset_snapshot";
 export const X_POST_CANDIDATE_HUB_SOURCE = X_POST_CANDIDATE_SOURCE;
-export const LOCAL_ELECTION_SNAPSHOT_SCHEMA_VERSION = 1;
+export const LOCAL_ELECTION_SNAPSHOT_SCHEMA_VERSION = 2;
 
 export type JsonRecord = Record<string, unknown>;
 
@@ -64,19 +71,31 @@ export function evaluateScheduleCollectionQuality(
     source.requiredForPersistence && source.fetchSucceeded &&
     source.parsedEntryCount === 0
   ).map((source) => source.url).sort();
+  const requiredSources = sources.filter((source) =>
+    source.requiredForPersistence
+  );
+  const parsedRequiredSourceCount =
+    requiredSources.filter((source) =>
+      source.fetchSucceeded && source.parsedEntryCount > 0
+    ).length;
+  // Required schedule sources are independent, redundant providers. Persist
+  // when at least one remains healthy, while retaining the per-source arrays
+  // above for observability. A total required-source outage still blocks.
+  const requiredSourcesUnavailable = requiredSources.length > 0 &&
+    parsedRequiredSourceCount === 0;
   const issues = [
     ...(fetchSuccessCount === 0 ? ["schedule_sources_all_failed"] : []),
     ...(fetchSuccessCount > 0 && parsedSourceCount === 0
       ? ["schedule_sources_parser_empty"]
       : []),
-    ...(failedRequiredSourceUrls.length > 0
+    ...(requiredSourcesUnavailable && failedRequiredSourceUrls.length > 0
       ? [
         `required_schedule_source_fetch_failed:${
           failedRequiredSourceUrls.join(",")
         }`,
       ]
       : []),
-    ...(parserEmptyRequiredSourceUrls.length > 0
+    ...(requiredSourcesUnavailable && parserEmptyRequiredSourceUrls.length > 0
       ? [
         `required_schedule_source_parser_empty:${
           parserEmptyRequiredSourceUrls.join(",")
@@ -211,8 +230,14 @@ export interface CanonicalLocalElectionSnapshot {
     parserEmptyScheduleSourceUrls: string[];
     failedRequiredScheduleSourceUrls: string[];
     parserEmptyRequiredScheduleSourceUrls: string[];
+    electionModeRegistryLoaded: boolean;
+    officialEndorsementSnapshotLoaded: boolean;
+    verifiedGoalSourceCount: number;
+    expectedGoalSourceCount: number;
+    electionIntelligenceIssues: string[];
     issues: string[];
   };
+  electionIntelligence: ElectionIntelligenceSnapshot;
   sources: CanonicalSource[];
   prefectures: CanonicalPrefecture[];
   members: CanonicalMember[];
@@ -254,8 +279,31 @@ export interface LocalElectionSnapshotDiff {
       ChangedEntity<CanonicalScheduledCandidate> & ScheduleIdentity
     >;
   };
+  electionIntelligence: {
+    selectedModeChanged: boolean;
+    goals: {
+      added: ElectionGoalSnapshot[];
+      removed: ElectionGoalSnapshot[];
+      changed: Array<ChangedEntity<ElectionGoalSnapshot>>;
+    };
+    achievements: {
+      added: ElectionAchievementSnapshot[];
+      removed: ElectionAchievementSnapshot[];
+      changed: Array<ChangedEntity<ElectionAchievementSnapshot>>;
+    };
+    officialEndorsements: {
+      before: OfficialEndorsementSnapshot;
+      after: OfficialEndorsementSnapshot;
+      changedFields: string[];
+    };
+  };
   significantKinds: Array<
-    "member_delta" | "candidate_delta" | "schedule_delta"
+    | "member_delta"
+    | "candidate_delta"
+    | "schedule_delta"
+    | "goal_delta"
+    | "achievement_delta"
+    | "endorsement_delta"
   >;
 }
 
@@ -389,16 +437,31 @@ export function canonicalizeLocalElectionSnapshot(
 
   const upcomingSchedules = scheduleRows.map((value): CanonicalSchedule => {
     const row = asRecord(value);
-    const names = asStringArray(row.kokuminCandidateNames);
-    const statuses = asStringArray(row.kokuminCandidateStatuses);
-    const votes = asNumberArray(row.kokuminCandidateVotes);
-    const handles = asStringArray(row.kokuminCandidateXHandles);
-    const candidates = names.map((name, index) => ({
-      name,
-      statusLabel: statuses[index] ?? "",
-      votes: votes[index] ?? 0,
-      xHandle: handles[index] ?? "",
-    })).filter((candidate) => candidate.name !== "").sort(compareStable);
+    const canonicalCandidateRows = Array.isArray(row.candidates)
+      ? row.candidates
+      : [];
+    const candidates = canonicalCandidateRows.length > 0
+      ? canonicalCandidateRows.map((value): CanonicalScheduledCandidate => {
+        const candidate = asRecord(value);
+        return {
+          name: asString(candidate.name),
+          statusLabel: asString(candidate.statusLabel),
+          votes: asNumber(candidate.votes),
+          xHandle: asString(candidate.xHandle),
+        };
+      }).filter((candidate) => candidate.name !== "").sort(compareStable)
+      : (() => {
+        const names = asStringArray(row.kokuminCandidateNames);
+        const statuses = asStringArray(row.kokuminCandidateStatuses);
+        const votes = asNumberArray(row.kokuminCandidateVotes);
+        const handles = asStringArray(row.kokuminCandidateXHandles);
+        return names.map((name, index) => ({
+          name,
+          statusLabel: statuses[index] ?? "",
+          votes: votes[index] ?? 0,
+          xHandle: handles[index] ?? "",
+        })).filter((candidate) => candidate.name !== "").sort(compareStable);
+      })();
     return {
       electionName: asString(row.electionName),
       prefecture: asString(row.prefecture),
@@ -473,8 +536,26 @@ export function canonicalizeLocalElectionSnapshot(
       parserEmptyRequiredScheduleSourceUrls: asStringArray(
         rawCollectionQuality.parserEmptyRequiredScheduleSourceUrls,
       ).sort(),
+      electionModeRegistryLoaded: asBoolean(
+        rawCollectionQuality.electionModeRegistryLoaded,
+      ),
+      officialEndorsementSnapshotLoaded: asBoolean(
+        rawCollectionQuality.officialEndorsementSnapshotLoaded,
+      ),
+      verifiedGoalSourceCount: asNumber(
+        rawCollectionQuality.verifiedGoalSourceCount,
+      ),
+      expectedGoalSourceCount: asNumber(
+        rawCollectionQuality.expectedGoalSourceCount,
+      ),
+      electionIntelligenceIssues: asStringArray(
+        rawCollectionQuality.electionIntelligenceIssues,
+      ).sort(),
       issues: asStringArray(rawCollectionQuality.issues).sort(),
     },
+    electionIntelligence: canonicalizeElectionIntelligenceSnapshot(
+      raw.electionIntelligence,
+    ),
     sources,
     prefectures,
     members,
@@ -713,6 +794,23 @@ export function computeLocalElectionDiff(
     },
   ).sort(compareStable);
 
+  const goals = diffEntities(
+    before.electionIntelligence.goals,
+    after.electionIntelligence.goals,
+    (goal) => goal.id,
+  );
+  const achievements = diffEntities(
+    before.electionIntelligence.achievements,
+    after.electionIntelligence.achievements,
+    (achievement) => achievement.id,
+  );
+  const officialEndorsementChangedFields = changedFields(
+    before.electionIntelligence.officialEndorsements,
+    after.electionIntelligence.officialEndorsements,
+  );
+  const selectedModeChanged = before.electionIntelligence.selectedMode !==
+    after.electionIntelligence.selectedMode;
+
   const memberMetricFields = new Set([
     "officialCurrentLocalMembers",
     "targetLocalMembers",
@@ -732,10 +830,18 @@ export function computeLocalElectionDiff(
     removedCandidates.length > 0 || changedCandidates.length > 0;
   const hasScheduleDelta = addedSchedules.length > 0 ||
     removedSchedules.length > 0 || changedSchedules.length > 0;
+  const hasGoalDelta = selectedModeChanged || goals.added.length > 0 ||
+    goals.removed.length > 0 || goals.changed.length > 0;
+  const hasAchievementDelta = achievements.added.length > 0 ||
+    achievements.removed.length > 0 || achievements.changed.length > 0;
+  const hasEndorsementDelta = officialEndorsementChangedFields.length > 0;
   const significantKinds: LocalElectionSnapshotDiff["significantKinds"] = [];
   if (hasMemberDelta) significantKinds.push("member_delta");
   if (hasCandidateDelta) significantKinds.push("candidate_delta");
   if (hasScheduleDelta) significantKinds.push("schedule_delta");
+  if (hasGoalDelta) significantKinds.push("goal_delta");
+  if (hasAchievementDelta) significantKinds.push("achievement_delta");
+  if (hasEndorsementDelta) significantKinds.push("endorsement_delta");
 
   return {
     metrics: {
@@ -754,6 +860,16 @@ export function computeLocalElectionDiff(
       added: addedCandidates,
       removed: removedCandidates,
       changed: changedCandidates,
+    },
+    electionIntelligence: {
+      selectedModeChanged,
+      goals,
+      achievements,
+      officialEndorsements: {
+        before: before.electionIntelligence.officialEndorsements,
+        after: after.electionIntelligence.officialEndorsements,
+        changedFields: officialEndorsementChangedFields,
+      },
     },
     significantKinds,
   };
@@ -824,6 +940,14 @@ function diffCountSummary(diff: LocalElectionSnapshotDiff): JsonRecord {
     candidates_added: diff.candidates.added.length,
     candidates_removed: diff.candidates.removed.length,
     candidates_changed: diff.candidates.changed.length,
+    goals_added: diff.electionIntelligence.goals.added.length,
+    goals_removed: diff.electionIntelligence.goals.removed.length,
+    goals_changed: diff.electionIntelligence.goals.changed.length,
+    achievements_added: diff.electionIntelligence.achievements.added.length,
+    achievements_removed: diff.electionIntelligence.achievements.removed.length,
+    achievements_changed: diff.electionIntelligence.achievements.changed.length,
+    endorsement_fields_changed:
+      diff.electionIntelligence.officialEndorsements.changedFields,
   };
 }
 
@@ -1079,6 +1203,134 @@ export function buildLocalElectionPostCandidates(
   // は composer 側で null。observedAt は wall-clock(queueObservedAt)を使う:
   // snapshot 行の observed_at はデータ無変化週に前週のまま止まり、週キーが
   // 過去週で冪等スキップされ続ける(レビュー F3)。
+  if (diff.significantKinds.includes("goal_delta")) {
+    const goalDiff = diff.electionIntelligence.goals;
+    const changedGoals = [
+      ...goalDiff.added,
+      ...goalDiff.removed,
+      ...goalDiff.changed.map((item) => item.after),
+    ];
+    const sourceUrls = uniqueUrls([
+      ...changedGoals.map((goal) => goal.sourceUrl),
+      ...sourceUrlsForCategories(snapshot, ["official_party_goal"]),
+    ]);
+    const goalTitles = [...new Set(changedGoals.map((goal) => goal.title))]
+      .filter(Boolean).slice(0, 3).join(" / ");
+    const text = fitPostText(
+      [
+        "【国民民主党 公式目標データ更新】",
+        `追加${goalDiff.added.length}件 / 終了${goalDiff.removed.length}件 / 更新${goalDiff.changed.length}件`,
+      ],
+      [goalTitles ? `対象: ${goalTitles}` : ""],
+      sourceUrls[0] ?? "",
+      "#国民民主党 #選挙",
+    );
+    rows.push(commonCandidateMetadata(
+      snapshotObservationId,
+      snapshotHash,
+      previousSnapshotId,
+      previousSnapshotHash,
+      datasetVersion,
+      observedAt,
+      "goal_delta",
+      "official_party_goal_delta",
+      text,
+      sourceUrls,
+      {
+        type: "goal_delta",
+        selected_mode_changed: diff.electionIntelligence.selectedModeChanged,
+        added: goalDiff.added,
+        removed: goalDiff.removed,
+        changed: goalDiff.changed,
+      },
+    ));
+  }
+
+  if (diff.significantKinds.includes("achievement_delta")) {
+    const achievementDiff = diff.electionIntelligence.achievements;
+    const changedAchievements = [
+      ...achievementDiff.added,
+      ...achievementDiff.removed,
+      ...achievementDiff.changed.map((item) => item.after),
+    ];
+    const sourceUrls = uniqueUrls(
+      changedAchievements.flatMap((achievement) => achievement.sourceUrls),
+    );
+    const titles = [
+      ...new Set(changedAchievements.map((achievement) => achievement.title)),
+    ].filter(Boolean).slice(0, 3).join(" / ");
+    const text = fitPostText(
+      [
+        "【国民民主党 選挙実績データ更新】",
+        `追加${achievementDiff.added.length}件 / 終了${achievementDiff.removed.length}件 / 更新${achievementDiff.changed.length}件`,
+      ],
+      [titles ? `対象: ${titles}` : ""],
+      sourceUrls[0] ?? "",
+      "#国民民主党 #選挙",
+    );
+    rows.push(commonCandidateMetadata(
+      snapshotObservationId,
+      snapshotHash,
+      previousSnapshotId,
+      previousSnapshotHash,
+      datasetVersion,
+      observedAt,
+      "achievement_delta",
+      "official_election_achievement_delta",
+      text,
+      sourceUrls,
+      {
+        type: "achievement_delta",
+        added: achievementDiff.added,
+        removed: achievementDiff.removed,
+        changed: achievementDiff.changed,
+      },
+    ));
+  }
+
+  if (diff.significantKinds.includes("endorsement_delta")) {
+    const endorsementDiff = diff.electionIntelligence.officialEndorsements;
+    const before = endorsementDiff.before;
+    const after = endorsementDiff.after;
+    const sourceUrls = uniqueUrls([
+      after.sourceUrl,
+      before.sourceUrl,
+      ...sourceUrlsForCategories(snapshot, ["official_endorsement_snapshot"]),
+    ]);
+    const text = fitPostText(
+      [
+        "【国民民主党 公認予定候補データ更新】",
+        `公認掲載 ${before.totalCount}→${after.totalCount}件 (${
+          signed(after.totalCount - before.totalCount)
+        })`,
+      ],
+      [
+        `現職${after.incumbentCount} / 新人${after.newcomerCount} / 元職${after.formerCount}`,
+        `${after.prefectureCount}/47都道府県・${after.sourceAsOf}現在`,
+      ],
+      sourceUrls[0] ?? "",
+      "#国民民主党 #地方選",
+    );
+    rows.push(commonCandidateMetadata(
+      snapshotObservationId,
+      snapshotHash,
+      previousSnapshotId,
+      previousSnapshotHash,
+      datasetVersion,
+      observedAt,
+      "endorsement_delta",
+      "official_local_endorsement_delta",
+      text,
+      sourceUrls,
+      {
+        type: "endorsement_delta",
+        changed_fields: endorsementDiff.changedFields,
+        before,
+        after,
+      },
+    ));
+  }
+
   const partyGap = buildPartyGapCandidateMetadata(snapshot, {
     snapshotObservationId,
     snapshotHash,
@@ -1098,7 +1350,10 @@ function parseCanonicalSnapshot(
 ): CanonicalLocalElectionSnapshot | null {
   const record = asRecord(value);
   if (!record.metrics || !Array.isArray(record.members)) return null;
-  return record as unknown as CanonicalLocalElectionSnapshot;
+  return canonicalizeLocalElectionSnapshot({
+    ...record,
+    ...asRecord(record.metrics),
+  });
 }
 
 function snapshotVersion(snapshotHash: string): string {

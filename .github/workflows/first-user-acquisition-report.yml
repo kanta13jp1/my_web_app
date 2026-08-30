@@ -1,0 +1,144 @@
+name: First User Acquisition Report
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Measured acquisition source"
+        type: choice
+        options:
+          - zenn
+          - x
+        default: zenn
+      medium:
+        description: "UTM medium"
+        type: string
+        default: organic
+      content:
+        description: "UTM content variant"
+        type: string
+        default: oauth_case_study_a
+      campaign_started_at:
+        description: "Publication time in ISO 8601 UTC"
+        type: string
+        required: true
+        default: "2026-08-19T17:46:00Z"
+      limit:
+        description: "Maximum X log rows inspected (X source only)"
+        type: number
+        default: 100
+
+concurrency:
+  group: first-user-acquisition-report-${{ inputs.source }}-${{ inputs.content }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  report:
+    permissions:
+      contents: read
+    name: Build privacy-safe aggregate funnel report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD || 'https://smmkxxavexumewbfaqpy.supabase.co' }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      UTM_SOURCE: ${{ inputs.source }}
+      UTM_MEDIUM: ${{ inputs.medium }}
+      UTM_CONTENT: ${{ inputs.content }}
+      CAMPAIGN_STARTED_AT: ${{ inputs.campaign_started_at }}
+      REPORT_LIMIT: ${{ inputs.limit }}
+
+    steps:
+      - name: Validate report inputs and credential
+        shell: bash
+        run: |
+          test -n "${SUPABASE_SERVICE_ROLE_KEY:-}" || {
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is required."
+            exit 1
+          }
+          [[ "${UTM_SOURCE}" =~ ^(x|zenn)$ ]] || {
+            echo "::error::source must be x or zenn."
+            exit 1
+          }
+          [[ "${UTM_MEDIUM}" =~ ^[a-z0-9_-]{1,64}$ ]]
+          [[ "${UTM_CONTENT}" =~ ^[a-z0-9_-]{1,64}$ ]]
+          date --date="${CAMPAIGN_STARTED_AT}" >/dev/null
+
+      - name: Build aggregate report
+        shell: bash
+        run: |
+          mkdir -p tmp/first-user-acquisition-report
+          jq -n \
+            --arg action "acquisition.first_user_funnel" \
+            --arg source "${UTM_SOURCE}" \
+            --arg medium "${UTM_MEDIUM}" \
+            --arg content "${UTM_CONTENT}" \
+            --arg startedAt "${CAMPAIGN_STARTED_AT}" \
+            --argjson limit "${REPORT_LIMIT}" \
+            '{
+              action: $action,
+              utmSource: $source,
+              utmMedium: $medium,
+              utmContent: $content,
+              campaignStartedAt: $startedAt,
+              limit: $limit
+            }' > tmp/first-user-acquisition-report/request.json
+
+          http_code=$(curl --silent --show-error \
+            --output tmp/first-user-acquisition-report/report.json \
+            --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data @tmp/first-user-acquisition-report/request.json)
+          if [ "${http_code}" != "200" ]; then
+            jq -c . tmp/first-user-acquisition-report/report.json || true
+            echo "::error::First-user report returned HTTP ${http_code}."
+            exit 1
+          fi
+          jq -e --arg source "${UTM_SOURCE}" '
+            .success == true and
+            .attribution.utmSource == $source and
+            .privacy.aggregateOnly == true and
+            .privacy.containsRawVisitorIds == false
+          ' tmp/first-user-acquisition-report/report.json >/dev/null
+
+      - name: Publish aggregate summary
+        shell: bash
+        run: |
+          report=tmp/first-user-acquisition-report/report.json
+          {
+            echo "## First-user acquisition report"
+            echo
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Source | $(jq -r '.attribution.utmSource' "${report}") |"
+            echo "| Campaign | $(jq -r '.attribution.utmCampaign' "${report}") |"
+            echo "| Content | $(jq -r '.attribution.utmContent' "${report}") |"
+            echo "| Started at | $(jq -r '.campaign.startedAt // "not available"' "${report}") |"
+            echo "| Age (hours) | $(jq -r '.campaign.ageHours // "not available"' "${report}") |"
+            echo "| Decision | $(jq -r '.decision.stage' "${report}") |"
+            echo "| Next variable | $(jq -r '.decision.nextVariable' "${report}") |"
+            echo "| Revenue (JPY) | $(jq -r '.revenue.revenueJpy' "${report}") |"
+            echo
+            echo "### Unique-user funnel counts"
+            echo
+            echo '```json'
+            jq '.funnel.counts' "${report}"
+            echo '```'
+            echo
+            echo "The artifact contains aggregate counts only; raw visitor IDs are omitted."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload aggregate report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: first-user-acquisition-report-${{ inputs.source }}-${{ github.run_id }}
+          path: tmp/first-user-acquisition-report/
+          if-no-files-found: error
+          retention-days: 30

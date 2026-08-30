@@ -170,6 +170,76 @@ void main() {
         '承認待ち 1件',
       );
     });
+
+    test('R34 edge の total があれば実数を断定表示する', () {
+      // 取得は上限 10 件でも、総数 37 が来れば「37件」と出す。
+      final pendingAtCap = List.generate(
+        kXCandidateStatusFetchLimit,
+        (i) => make(id: 'p$i'),
+      );
+      expect(
+        candidateQueueHeaderLabel(
+          pendingAtCap,
+          totalsByStatus: const {'pending_approval': 37},
+        ),
+        '承認待ち 37件',
+      );
+
+      // 再試行は approved + publish_failed の総数を合算して出す。
+      expect(
+        candidateQueueHeaderLabel(
+          [make(id: 'p'), make(id: 'r', status: 'publish_failed')],
+          totalsByStatus: const {
+            'pending_approval': 5,
+            'approved': 2,
+            'publish_failed': 9,
+          },
+        ),
+        '承認待ち 5件・再試行 11件',
+      );
+    });
+
+    test('R34 total が無い status は従来の「N件以上」へ degrade する', () {
+      final pendingAtCap = List.generate(
+        kXCandidateStatusFetchLimit,
+        (i) => make(id: 'p$i'),
+      );
+      expect(
+        candidateQueueHeaderLabel(pendingAtCap),
+        '承認待ち $kXCandidateStatusFetchLimit件以上',
+      );
+    });
+
+    test('R32 取得上限に達した status は「N件以上」と下限表示にする', () {
+      // pending が取得上限ちょうど = 本当はもっとあるかもしれない → 「以上」。
+      final pendingAtCap = List.generate(
+        kXCandidateStatusFetchLimit,
+        (i) => make(id: 'p$i'),
+      );
+      expect(
+        candidateQueueHeaderLabel(pendingAtCap),
+        '承認待ち $kXCandidateStatusFetchLimit件以上',
+      );
+
+      // 上限未満はそのまま断定してよい。
+      expect(
+        candidateQueueHeaderLabel([make(id: 'a'), make(id: 'b')]),
+        '承認待ち 2件',
+      );
+
+      // 再試行側 (approved / publish_failed) が上限に達した場合も下限表示。
+      final retryAtCap = <XPostCandidateSummary>[
+        make(id: 'p'),
+        ...List.generate(
+          kXCandidateStatusFetchLimit,
+          (i) => make(id: 'r$i', status: 'publish_failed'),
+        ),
+      ];
+      expect(
+        candidateQueueHeaderLabel(retryAtCap),
+        '承認待ち 1件・再試行 $kXCandidateStatusFetchLimit件以上',
+      );
+    });
   });
 
   group('R26 preview and age labels', () {
@@ -245,6 +315,101 @@ void main() {
         }),
         contains('X API error'),
       );
+    });
+  });
+
+  group('candidate freshness (stale queue guard)', () {
+    final now = DateTime.utc(2026, 7, 17, 0, 0);
+
+    XPostCandidateSummary make({
+      String archetype = 'data_report',
+      String variant = 'household_tracker',
+      DateTime? generatedAt,
+    }) =>
+        XPostCandidateSummary(
+          id: 'id',
+          status: 'pending_approval',
+          candidateType: 't',
+          variant: variant,
+          archetype: archetype,
+          text: 'x',
+          replyTexts: const [],
+          generatedAt: generatedAt,
+        );
+
+    test('news_briefing expires after 24h', () {
+      final fresh = make(
+        archetype: 'news_briefing',
+        generatedAt: now.subtract(const Duration(hours: 23)),
+      );
+      final stale = make(
+        archetype: 'news_briefing',
+        generatedAt: now.subtract(const Duration(hours: 25)),
+      );
+      expect(isCandidateExpired(fresh, now), isFalse);
+      expect(isCandidateExpired(stale, now), isTrue);
+    });
+
+    test('data_report expires after 72h', () {
+      final fresh = make(
+        generatedAt: now.subtract(const Duration(hours: 71)),
+      );
+      final stale = make(
+        generatedAt: now.subtract(const Duration(days: 4)),
+      );
+      expect(isCandidateExpired(fresh, now), isFalse);
+      expect(isCandidateExpired(stale, now), isTrue);
+    });
+
+    test('election variants get the 72h window even without archetype', () {
+      final stale = make(
+        archetype: '',
+        variant: 'local_election_schedule_delta',
+        generatedAt: now.subtract(const Duration(days: 4)),
+      );
+      expect(isCandidateExpired(stale, now), isTrue);
+      expect(
+        candidateFreshnessWindow(stale),
+        const Duration(hours: 72),
+      );
+    });
+
+    test(
+        'unknown series falls back to 7 days and null generatedAt never '
+        'expires', () {
+      final unknown = make(
+        archetype: 'product_intro',
+        variant: 'brand_new_series',
+        generatedAt: now.subtract(const Duration(days: 6)),
+      );
+      expect(isCandidateExpired(unknown, now), isFalse);
+      expect(
+        isCandidateExpired(
+          make(
+            archetype: 'product_intro',
+            variant: 'brand_new_series',
+            generatedAt: now.subtract(const Duration(days: 8)),
+          ),
+          now,
+        ),
+        isTrue,
+      );
+      expect(isCandidateExpired(make(generatedAt: null), now), isFalse);
+    });
+
+    test('rejected status label is defined for the upcoming reject action', () {
+      const rejected = XPostCandidateSummary(
+        id: 'r',
+        status: 'rejected',
+        candidateType: 't',
+        variant: 'household_tracker',
+        archetype: 'data_report',
+        text: 'x',
+        replyTexts: [],
+        generatedAt: null,
+      );
+      expect(rejected.statusLabel, '却下済み');
+      expect(rejected.isActionable, isFalse);
     });
   });
 }

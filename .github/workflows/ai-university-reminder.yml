@@ -5,7 +5,7 @@ name: AI大学 学習リマインダー (毎日09:00 JST)
 
 on:
   schedule:
-    - cron: "0 0 * * *"  # 毎日 00:00 UTC = 09:00 JST
+    - cron: "19 0 * * *"  # 毎日 00:19 UTC = 09:19 JST (2026-07-17 ci-audit: 00:00 UTC 8本集中を分散)
   workflow_dispatch:
     inputs:
       dry_run:
@@ -21,11 +21,12 @@ concurrency:
   group: ai-university-reminder
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   send-reminders:
+    permissions:
+      contents: read
     name: Send Study Reminders
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -76,10 +77,11 @@ jobs:
         env:
           SENT_COUNT: ${{ steps.remind.outputs.sent }}
           ELIGIBLE_COUNT: ${{ steps.remind.outputs.eligible }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: |
           STATUS="${{ job.status }}"
           [ "$STATUS" = "success" ] && STATUS_KEY="success" || STATUS_KEY="error"
-          SUMMARY="ai-university-reminder: eligible=$ELIGIBLE_COUNT sent=$SENT_COUNT dry_run=${{ github.event.inputs.dry_run || 'false' }}"
+          SUMMARY="ai-university-reminder: eligible=$ELIGIBLE_COUNT sent=$SENT_COUNT dry_run=$DRY_RUN"
           curl -s -o /dev/null \
             -X POST \
             -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
@@ -96,8 +98,8 @@ jobs:
           SENT_COUNT: ${{ steps.remind.outputs.sent }}
           ELIGIBLE_COUNT: ${{ steps.remind.outputs.eligible }}
           SKIPPED_COUNT: ${{ steps.remind.outputs.skipped }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: |
-          DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
           STATUS="${{ job.status }}"
           ICON=$([ "$STATUS" = "success" ] && echo "✅" || echo "❌")
           {

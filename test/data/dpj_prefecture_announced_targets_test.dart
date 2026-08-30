@@ -89,4 +89,54 @@ void main() {
     expect(toyama.isRange, isFalse);
     expect(toyama.countLabel, '7人');
   });
+
+  test('第1次公認は神奈川に出典付きで構造化されている', () {
+    final kanagawa = dpjPrefectureAnnouncedTargets.firstWhere(
+      (item) => item.prefecture == '神奈川',
+    );
+    final endorsement = kanagawa.firstEndorsement;
+    expect(endorsement, isNotNull);
+    expect(endorsement!.totalCount, 30);
+    expect(endorsement.incumbentCount, 11);
+    expect(endorsement.newcomerCount, 19);
+    // 現職+新人が総数と一致する(内訳の整合性)。
+    expect(
+      endorsement.incumbentCount + endorsement.newcomerCount,
+      endorsement.totalCount,
+    );
+    expect(endorsement.hasBreakdown, isTrue);
+    expect(endorsement.breakdownLabel, '現職11 / 新人19');
+    // 捏造防止: 出典URLが必ず付いている。
+    expect(endorsement.sourceUrl, isNotEmpty);
+    expect(endorsement.asOf, '2026-06-25');
+  });
+
+  test('第1次公認の全国集計が県別データと一致する', () {
+    expect(dpjFirstEndorsementPrefectureCount, 1);
+    expect(dpjFirstEndorsementTotal, 30);
+    expect(dpjFirstEndorsementIncumbentTotal, 11);
+    expect(dpjFirstEndorsementNewcomerTotal, 19);
+    // 集計は県別 firstEndorsement の合計と一致する。
+    final manualTotal = dpjPrefectureAnnouncedTargets.fold<int>(
+      0,
+      (sum, item) => sum + (item.firstEndorsement?.totalCount ?? 0),
+    );
+    expect(dpjFirstEndorsementTotal, manualTotal);
+  });
+
+  test('第1次公認の出典を持つ県はすべて出典URLと基準日を持つ', () {
+    for (final item in dpjPrefecturesWithFirstEndorsement) {
+      final endorsement = item.firstEndorsement!;
+      expect(endorsement.sourceUrl, isNotEmpty, reason: item.prefecture);
+      expect(endorsement.asOf, isNotEmpty, reason: item.prefecture);
+      // 内訳を入れる場合は現職+新人+元 <= 総数(過大内訳を防ぐ)。
+      expect(
+        endorsement.incumbentCount +
+            endorsement.newcomerCount +
+            endorsement.formerCount,
+        lessThanOrEqualTo(endorsement.totalCount),
+        reason: item.prefecture,
+      );
+    }
+  });
 }

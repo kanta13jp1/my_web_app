@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 
 import '../models/kgi_csf_kpi.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
+import '../widgets/personal_dashboard_kpi_card.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 enum PersonalDashboardDataMode { live, fallback }
 
@@ -33,7 +35,7 @@ PersonalDashboardGridSpec personalDashboardGridSpec(double maxWidth) {
   }
   return const PersonalDashboardGridSpec(
     crossAxisCount: 1,
-    childAspectRatio: 2.7,
+    childAspectRatio: 2.2,
   );
 }
 
@@ -87,7 +89,13 @@ class PersonalDashboardPage extends StatefulWidget {
 }
 
 class _PersonalDashboardPageState extends State<PersonalDashboardPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['kpi', 'weekly', 'habits'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 
@@ -400,6 +408,13 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
     final taskRate = (_kpiData['task_rate'] as num?)?.toDouble() ?? 0.0;
 
     final focusHours = '${(focusMinutes / 60).toStringAsFixed(1)}h';
+    final noteSubtitle = noteGrowth > 0 ? '+$noteGrowth 今週' : '記録が増えると週次差分を表示';
+    final taskSubtitle = taskRate > 0
+        ? '達成率 ${(taskRate * 100).toStringAsFixed(0)}%'
+        : '記録前でも達成率バーを表示';
+    final focusSubtitle =
+        focusMinutes > 0 ? '合計 $focusMinutes分' : 'ポモドーロや集中ログを待機中';
+    final habitSubtitle = habitStreak >= 7 ? '🔥 週間達成！' : '習慣が入ると継続日数を追跡';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -451,35 +466,33 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                 mainAxisSpacing: 12,
                 childAspectRatio: gridSpec.childAspectRatio,
                 children: [
-                  _kpiCard(
-                    '総ノート数',
-                    totalNotes.toString(),
-                    Icons.note_alt,
-                    const Color(0xFF7C3AED),
-                    noteGrowth > 0 ? '+$noteGrowth 今週' : '記録が増えると週次差分を表示',
+                  PersonalDashboardKpiCard(
+                    label: '総ノート数',
+                    value: totalNotes.toString(),
+                    icon: Icons.note_alt,
+                    color: const Color(0xFF7C3AED),
+                    subtitle: noteSubtitle,
                   ),
-                  _kpiCard(
-                    'タスク完了',
-                    tasksCompleted.toString(),
-                    Icons.task_alt,
-                    const Color(0xFF059669),
-                    taskRate > 0
-                        ? '達成率 ${(taskRate * 100).toStringAsFixed(0)}%'
-                        : '記録前でも達成率バーを表示',
+                  PersonalDashboardKpiCard(
+                    label: 'タスク完了',
+                    value: tasksCompleted.toString(),
+                    icon: Icons.task_alt,
+                    color: const Color(0xFF059669),
+                    subtitle: taskSubtitle,
                   ),
-                  _kpiCard(
-                    '集中時間',
-                    focusHours,
-                    Icons.timer,
-                    const Color(0xFFDC2626),
-                    focusMinutes > 0 ? '合計 $focusMinutes分' : 'ポモドーロや集中ログを待機中',
+                  PersonalDashboardKpiCard(
+                    label: '集中時間',
+                    value: focusHours,
+                    icon: Icons.timer,
+                    color: const Color(0xFFDC2626),
+                    subtitle: focusSubtitle,
                   ),
-                  _kpiCard(
-                    '習慣ストリーク',
-                    '$habitStreak日',
-                    Icons.local_fire_department,
-                    const Color(0xFFF59E0B),
-                    habitStreak >= 7 ? '🔥 週間達成！' : '習慣が入ると継続日数を追跡',
+                  PersonalDashboardKpiCard(
+                    label: '習慣ストリーク',
+                    value: '$habitStreak日',
+                    icon: Icons.local_fire_department,
+                    color: const Color(0xFFF59E0B),
+                    subtitle: habitSubtitle,
                   ),
                 ],
               );
@@ -631,75 +644,6 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
       targetLabel: '70%以上',
       progress: (taskRatePercent / 70).clamp(0, 1).toDouble(),
       metrics: metrics,
-    );
-  }
-
-  Widget _kpiCard(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-    String? subtitle,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE2E8F0),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 18, color: color),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF64748B),
-                    fontWeight: FontWeight.w500,
-                    height: 1.5,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: color,
-              height: 1.5,
-            ),
-          ),
-          if (subtitle != null)
-            Text(
-              subtitle,
-              style: const TextStyle(
-                fontSize: 10,
-                height: 1.5,
-                color: Color(0xFF94A3B8),
-              ),
-            ),
-        ],
-      ),
     );
   }
 

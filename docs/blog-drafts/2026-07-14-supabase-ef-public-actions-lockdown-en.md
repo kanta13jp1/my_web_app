@@ -1,7 +1,7 @@
 ---
 title: "That anon Key Is Effectively Public: Closing an Auth Hole in a Supabase Edge Function's publicActions"
 tags: supabase, security, deno, buildinpublic
-published: false
+published: true
 ---
 
 # That anon Key Is Effectively Public: Closing an Auth Hole in a Supabase Edge Function's publicActions

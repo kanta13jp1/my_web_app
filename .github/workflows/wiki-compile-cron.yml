@@ -41,8 +41,7 @@ on:
           - "true"
           - "false"
 
-permissions:
-  contents: write
+permissions: {}
 
 concurrency:
   group: wiki-compile-cron
@@ -50,29 +49,40 @@ concurrency:
 
 jobs:
   compile:
+    permissions:
+      contents: write
     name: Run wiki_compile + commit
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 5
           token: ${{ secrets.BYPASS_RULES || github.token }}
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
 
       - name: Resolve params
         id: params
+        env:
+          DAYS_INPUT: ${{ inputs.days || '30' }}
+          MIN_SOURCES_INPUT: ${{ inputs.min_sources || '5' }}
+          LIMIT_INPUT: ${{ inputs.limit || '50' }}
+          APPLY_INPUT: ${{ inputs.apply }}
         run: |
-          DAYS="${{ inputs.days || '30' }}"
-          MIN_SRC="${{ inputs.min_sources || '5' }}"
-          LIMIT="${{ inputs.limit || '50' }}"
-          APPLY="${{ inputs.apply || 'true' }}"
+          DAYS="$DAYS_INPUT"
+          MIN_SRC="$MIN_SOURCES_INPUT"
+          LIMIT="$LIMIT_INPUT"
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            APPLY="true"
+          else
+            APPLY="$APPLY_INPUT"
+          fi
           echo "days=$DAYS"     >> $GITHUB_OUTPUT
           echo "min_src=$MIN_SRC" >> $GITHUB_OUTPUT
           echo "limit=$LIMIT"   >> $GITHUB_OUTPUT
@@ -105,6 +115,60 @@ jobs:
           git add docs/concepts/ docs/INDEX.md
           git commit -m "自動: wiki compile (Karpathy Compile cycle) $(date -u '+%Y-%m-%d %H:%M UTC')"
           git push origin HEAD:main
+
+      - name: Sync Wiki Index → Notion (optional)
+        if: steps.params.outputs.apply == 'true'
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys, urllib.error, urllib.request
+          from pathlib import Path
+
+          token = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+          if not token:
+              print("::warning::SUPABASE_SERVICE_ROLE_KEY not set — skip Notion wiki sync")
+              sys.exit(0)
+
+          index_path = Path("docs/INDEX.md")
+          if not index_path.exists():
+              print("::warning::docs/INDEX.md not found — skip Notion wiki sync")
+              sys.exit(0)
+
+          content = index_path.read_text(encoding="utf-8", errors="replace")
+          payload = {
+              "action": "notion.sync_wiki_index",
+              "content": content,
+              "source_path": "docs/INDEX.md",
+          }
+          req = urllib.request.Request(
+              "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub",
+              data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+              headers={
+                  "Content-Type": "application/json",
+                  "Authorization": f"Bearer {token}",
+              },
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=60) as res:
+                  text = res.read().decode("utf-8", errors="replace")
+          except urllib.error.HTTPError as exc:
+              text = exc.read().decode("utf-8", errors="replace")
+              print(text)
+              if "notion_not_configured" in text:
+                  print("::warning::NOTION_WIKI_PAGE_ID not configured — skip")
+                  sys.exit(0)
+              sys.exit(0)  # soft-fail: wiki sync is optional
+
+          data = json.loads(text)
+          if data.get("success"):
+              print(f"wiki index synced: {data.get('synced_chars')} chars, {data.get('chunks')} chunks → Notion page {data.get('page_id')}")
+          elif "notion_not_configured" in str(data.get("error", "")):
+              print("::warning::NOTION_WIKI_PAGE_ID not configured — skip")
+          else:
+              print(f"::warning::Notion wiki sync soft-failed: {data.get('error', 'unknown')}")
+          PY
 
       - name: Comment summary to tracking Issue (#1976)
         if: always()

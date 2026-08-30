@@ -2,7 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../models/admin_growth_evidence.dart';
 import '../services/growth_mission_service.dart';
+import '../widgets/admin_billing_overview.dart';
+import '../widgets/admin_growth_evidence_section.dart';
+import '../widgets/admin_registration_ops_card.dart';
+import '../widgets/admin_tool_execution_guard_card.dart';
+import '../widgets/admin_today_registration_goal_card.dart';
 import '../widgets/structured_field_chips.dart';
 import '../widgets/schedule_task_monitor_card.dart';
 import '../widgets/competitor_monitoring_card.dart';
@@ -29,18 +35,6 @@ class _FunnelMetrics {
     required this.magicLinkSends,
     required this.inboxOpens,
   });
-}
-
-class _PaidConversionMetrics {
-  final int paidCustomers;
-  final int mrrYen;
-
-  const _PaidConversionMetrics({
-    required this.paidCustomers,
-    required this.mrrYen,
-  });
-
-  static const empty = _PaidConversionMetrics(paidCustomers: 0, mrrYen: 0);
 }
 
 class _GrowthActionPlan {
@@ -82,7 +76,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   int _lpTotalViews = 0;
   int _allowedToolExecutionCount = 0;
   int _blockedToolExecutionCount = 0;
-  _PaidConversionMetrics _paidConversionMetrics = _PaidConversionMetrics.empty;
+  AdminPaidConversionMetrics _paidConversionMetrics =
+      AdminPaidConversionMetrics.empty;
   bool _hasLpViewStats = false;
   // R16: growth-hub x.today_status の結果(今日すでに投稿したか / 最新tweet+初速
   // インプレ / spend-cap ブロック中か)。取得失敗や available:false のときは null
@@ -96,7 +91,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   // pending_approval 候補をここで承認→投稿する(UUID 手掘り+workflow dispatch
   // の運用ボトルネック解消)。X operator 権限が無い/取得失敗は空=panel 非表示。
   List<XPostCandidateSummary> _xCandidates = const [];
+  // R34: edge の total (limit 前の総数) を status 別に保持。空なら「N件以上」表示。
+  Map<String, int> _xCandidateTotals = const <String, int>{};
   final Set<String> _xCandidatePublishing = <String>{};
+  // #4080: 鮮度切れ一括却下の実行中フラグ (二重送信防止)。
+  bool _xCandidateRejecting = false;
   bool _isLoading = true;
   WeeklyDigestSnapshot _weeklyDigest = const WeeklyDigestSnapshot.empty();
   // R18: fetch 完了フラグ。empty() のままか、完了して空かを区別し、静かに失敗/空の
@@ -132,6 +131,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Map<String, int> _comparisonTouches = {};
   int _comparisonSignups = 0;
   bool _comparisonCvrLoading = false;
+
+  // R29: 自動エラー報告 (error_reporter が hub_data へ無言送信する caught error)
+  // の可視化。管理者自身の直近報告を admin-hub errors.recent で取得する。
+  List<AutoErrorReportEntry> _autoErrorReports = const [];
+  bool _autoErrorReportsLoading = false;
 
   int _toInt(dynamic value) {
     if (value is int) return value;
@@ -221,6 +225,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
+  AdminBillingFunnelMetrics _extractBillingFunnelMetrics(
+    Map<String, int> sources,
+  ) {
+    return AdminBillingFunnelMetrics(
+      billingViews: sources['funnel_billing_view'] ?? 0,
+      upgradeClicks: sources['funnel_upgrade_click'] ?? 0,
+      checkoutSuccesses: sources['funnel_checkout_success'] ?? 0,
+      checkoutCancels: sources['funnel_checkout_cancel'] ?? 0,
+    );
+  }
+
   Map<String, int> _extractSourceCounts(dynamic rawSourceDetails) {
     final counts = <String, int>{};
     _mergeSourceCounts(counts, rawSourceDetails);
@@ -234,11 +249,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return '${(numerator / denominator * 100).toStringAsFixed(1)}%';
   }
 
-  String _formatPaidConversionRate(int paidCustomers, int totalUsers) {
-    // R17: 母数0のとき「0.0%」は測定した0%に見えて誤解を生む → 計測不能の「—」。
-    return formatRatePercent(paidCustomers, totalUsers);
-  }
-
   Map<String, dynamic> _firstMap(dynamic value) {
     if (value is Map) {
       return Map<String, dynamic>.from(value);
@@ -249,19 +259,19 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return <String, dynamic>{};
   }
 
-  _PaidConversionMetrics _paidConversionMetricsFromRpc(dynamic value) {
+  AdminPaidConversionMetrics _paidConversionMetricsFromRpc(dynamic value) {
     final row = _firstMap(value);
     if (row.isEmpty) {
-      return _PaidConversionMetrics.empty;
+      return AdminPaidConversionMetrics.empty;
     }
 
-    return _PaidConversionMetrics(
+    return AdminPaidConversionMetrics(
       paidCustomers: _toInt(row['paid_customers']),
       mrrYen: _toInt(row['mrr_yen']),
     );
   }
 
-  Future<_PaidConversionMetrics> _loadPaidConversionMetrics() async {
+  Future<AdminPaidConversionMetrics> _loadPaidConversionMetrics() async {
     try {
       final response = await _supabase.rpc(
         'get_billing_paid_conversion_summary',
@@ -269,7 +279,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       return _paidConversionMetricsFromRpc(response);
     } catch (error) {
       debugPrint('billing paid conversion summary is unavailable: $error');
-      return _PaidConversionMetrics.empty;
+      return AdminPaidConversionMetrics.empty;
     }
   }
 
@@ -320,8 +330,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   /// 例外・available!=true のときは null を返し、アクションカードは従来動作へ degrade。
   Future<Map<String, dynamic>?> _loadXTodayStatus() async {
     try {
-      final startOfDayIso =
-          _startOfDay(DateTime.now()).toUtc().toIso8601String();
+      final startOfDayIso = _startOfDay(
+        DateTime.now(),
+      ).toUtc().toIso8601String();
       final res = await _supabase.functions.invoke(
         'growth-hub',
         body: {
@@ -365,30 +376,126 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   /// window を埋め、古い承認待ちを黙って押し出す(レビュー F2)。
   /// X operator 権限が無いと edge が 403 を返すため、例外/非成功は空リストに
   /// degrade して panel ごと消す(ダッシュボードは必ず描画する)。
-  Future<List<XPostCandidateSummary>> _loadXCandidateQueue() async {
+  Future<XCandidateQueueSnapshot> _loadXCandidateQueue() async {
     const statuses = ['pending_approval', 'approved', 'publish_failed'];
-    final lists = await Future.wait(
-      statuses.map((status) async {
-        try {
-          final res = await _supabase.functions.invoke(
-            'growth-hub',
-            body: {
-              'action': 'x.candidate.list',
-              'status': status,
-              'limit': 10,
-            },
-          );
-          final data = res.data;
-          if (data is Map && data['success'] == true) {
-            return parseXPostCandidates(data['candidates']);
+    // #4080: statuses[] を渡して 1 往復にまとめる (従来は status ごとに 3 往復
+    // + それぞれに CORS preflight)。edge 側は per-status limit を維持するので
+    // 上記 F2 の窓圧迫は起きない。
+    final byStatus = <String, XCandidateStatusPage>{};
+    try {
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.candidate.list',
+          'statuses': statuses,
+          // R32: ヘッダの「N件以上」判定と同じ定数を使う (両者が drift すると
+          // 上限到達を検出できず backlog を過小表示する)。
+          'limit': kXCandidateStatusFetchLimit,
+        },
+      );
+      final data = res.data;
+      if (data is Map && data['success'] == true && data['byStatus'] is Map) {
+        final raw = Map<String, dynamic>.from(data['byStatus'] as Map);
+        for (final status in statuses) {
+          final entry = raw[status];
+          if (entry is Map) {
+            // R34: edge の total (limit 前の総数) を拾う。返さない場合は null の
+            // まま = ヘッダは「N件以上」へ degrade。
+            final rawTotal = entry['total'];
+            byStatus[status] = XCandidateStatusPage(
+              candidates: parseXPostCandidates(entry['candidates']),
+              total: rawTotal is num ? rawTotal.toInt() : null,
+            );
           }
-        } catch (error) {
-          debugPrint('x.candidate.list($status) unavailable: $error');
         }
-        return const <XPostCandidateSummary>[];
-      }),
+      }
+    } catch (error) {
+      debugPrint('x.candidate.list(batch) unavailable: $error');
+    }
+    final totals = <String, int>{
+      for (final entry in byStatus.entries)
+        if (entry.value.total != null) entry.key: entry.value.total!,
+    };
+    return XCandidateQueueSnapshot(
+      candidates: mergeCandidateSummaries([
+        for (final status in statuses)
+          byStatus[status]?.candidates ?? const <XPostCandidateSummary>[],
+      ]),
+      totalsByStatus: totals,
     );
-    return mergeCandidateSummaries(lists);
+  }
+
+  /// #4080: 鮮度切れ候補をまとめて却下する。鮮度切れは「承認して投稿」が
+  /// 既に無効化されている(古いニュースの誤公開防止)ため、そのままだと
+  /// キューに残り続けて本当に見るべき候補を埋没させる。終端 status
+  /// 'rejected' へ落として一覧から外す。
+  Future<void> _rejectStaleXCandidates(
+    List<XPostCandidateSummary> staleCandidates,
+  ) async {
+    if (staleCandidates.isEmpty || _xCandidateRejecting) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('鮮度切れ候補をまとめて却下'),
+        content: Text(
+          '${staleCandidates.length}件を却下します。'
+          '却下した候補は投稿できなくなります(一覧からは消えます)。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('却下する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _xCandidateRejecting = true);
+    try {
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.candidate.reject',
+          'candidateIds': staleCandidates.map((c) => c.id).toList(),
+          'reason': 'freshness_expired',
+        },
+      );
+      final data = res.data;
+      final rejected = data is Map && data['rejected'] is List
+          ? (data['rejected'] as List).length
+          : 0;
+      final failures = data is Map && data['failures'] is List
+          ? (data['failures'] as List).length
+          : 0;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            failures > 0
+                ? '$rejected件を却下しました($failures件は失敗)'
+                : '$rejected件を却下しました',
+          ),
+        ),
+      );
+      final refreshed = await _loadXCandidateQueue();
+      if (mounted) {
+        setState(() {
+          _xCandidates = refreshed.candidates;
+          _xCandidateTotals = refreshed.totalsByStatus;
+        });
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('却下に失敗しました: $error')));
+    } finally {
+      if (mounted) setState(() => _xCandidateRejecting = false);
+    }
   }
 
   /// R26: 候補を承認→投稿→確定する HITL フロー。無審査自動投稿はしない
@@ -449,10 +556,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       try {
         final approveRes = await _supabase.functions.invoke(
           'growth-hub',
-          body: {
-            'action': 'x.candidate.approve',
-            'candidateId': candidate.id,
-          },
+          body: {'action': 'x.candidate.approve', 'candidateId': candidate.id},
         );
         approveData = approveRes.data is Map
             ? Map<String, dynamic>.from(approveRes.data as Map)
@@ -460,11 +564,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       } catch (approveError) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '承認に失敗しました(投稿は行われていません): $approveError',
-            ),
-          ),
+          SnackBar(content: Text('承認に失敗しました(投稿は行われていません): $approveError')),
         );
         return;
       }
@@ -473,9 +573,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              '承認に失敗しました: ${approveData['error'] ?? '不明なエラー'}',
-            ),
+            content: Text('承認に失敗しました: ${approveData['error'] ?? '不明なエラー'}'),
           ),
         );
         return;
@@ -510,13 +608,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       );
       final refreshed = await _loadXCandidateQueue();
       if (mounted) {
-        setState(() => _xCandidates = refreshed);
+        setState(() {
+          _xCandidates = refreshed.candidates;
+          _xCandidateTotals = refreshed.totalsByStatus;
+        });
       }
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('候補の投稿処理でエラー: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('候補の投稿処理でエラー: $error')));
     } finally {
       if (mounted) {
         setState(() => _xCandidatePublishing.remove(candidate.id));
@@ -739,25 +840,29 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
-  Widget _buildAcquisitionTargetPage(String? channelKey) {
+  /// 遷移先ページと、その画面に対応する URL (= route 名) を必ず対で返す。
+  /// route を添えないと Flutter Web でブラウザの URL が更新されない。
+  ({Widget page, String route}) _buildAcquisitionTarget(String? channelKey) {
     switch (channelKey) {
-      case 'x_share':
-      case 'facebook':
-        return CmoPage(
-          initialChannel: channelKey,
-          autoGenerateOnOpen: true,
-        );
       case 'line':
-        return const AISecretaryPage(
-          initialStrategyType: 'now',
-          autoRunOnOpen: true,
+        return (
+          page: const AISecretaryPage(
+            initialStrategyType: 'now',
+            autoRunOnOpen: true,
+          ),
+          route: '/ai-secretary',
         );
       case 'qr_scan':
-        return const NoteListPage(prioritizeShareCandidates: true);
+        return (
+          page: const NoteListPage(prioritizeShareCandidates: true),
+          route: '/notes',
+        );
+      case 'x_share':
+      case 'facebook':
       default:
-        return CmoPage(
-          initialChannel: channelKey,
-          autoGenerateOnOpen: true,
+        return (
+          page: CmoPage(initialChannel: channelKey, autoGenerateOnOpen: true),
+          route: '/cmo',
         );
     }
   }
@@ -777,16 +882,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       }
       return;
     }
-    final targetPage = isAcquisitionAction
-        ? _buildAcquisitionTargetPage(priorityChannelKey)
-        : const AISecretaryPage(
-            initialStrategyType: 'now',
-            autoRunOnOpen: true,
+    final target = isAcquisitionAction
+        ? _buildAcquisitionTarget(priorityChannelKey)
+        : (
+            page: const AISecretaryPage(
+              initialStrategyType: 'now',
+              autoRunOnOpen: true,
+            ),
+            route: '/ai-secretary',
           );
 
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => targetPage),
+      MaterialPageRoute(
+        settings: RouteSettings(name: target.route),
+        builder: (_) => target.page,
+      ),
     );
 
     final hint = isAcquisitionAction
@@ -798,9 +909,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           }
         : 'AI秘書を導線改善モードで開きました。訴求文と導線文言を先に整えてください。';
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(hint)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(hint)));
   }
 
   List<Map<String, dynamic>> _buildMergedDailyStats({
@@ -874,6 +983,34 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     _loadGrowthSummary();
     _loadComparisonCvr();
     _loadAppFeedbacks();
+    _loadRecentErrors();
+  }
+
+  /// R29: 自動エラー報告を admin-hub errors.recent で取得する。取得失敗や未認証は
+  /// 空へ degrade し、カードは「正常」表示 or 非表示になる (ダッシュボードは必ず描画)。
+  Future<void> _loadRecentErrors() async {
+    if (!mounted) return;
+    if (_supabase.auth.currentUser == null) return;
+    setState(() => _autoErrorReportsLoading = true);
+    try {
+      final res = await _supabase.functions.invoke(
+        'admin-hub',
+        body: const {'action': 'errors.recent', 'limit': 20},
+      );
+      final data = res.data;
+      final entries = data is Map && data['success'] == true
+          ? parseAutoErrorReports(data['errors'])
+          : const <AutoErrorReportEntry>[];
+      if (mounted) {
+        setState(() {
+          _autoErrorReports = entries;
+          _autoErrorReportsLoading = false;
+        });
+      }
+    } catch (error) {
+      debugPrint('errors.recent unavailable: $error');
+      if (mounted) setState(() => _autoErrorReportsLoading = false);
+    }
   }
 
   Future<void> _loadAppFeedbacks() async {
@@ -1043,9 +1180,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final digestResult = results[0].data as Map<String, dynamic>?;
       final supportResult = results[1].data as Map<String, dynamic>?;
       if (digestResult?['success'] != true) {
-        throw Exception(
-          '${digestResult?['error'] ?? 'digest load failed'}',
-        );
+        throw Exception('${digestResult?['error'] ?? 'digest load failed'}');
       }
       if (supportResult?['success'] != true) {
         throw Exception(
@@ -1240,9 +1375,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       }).eq('id', id);
       await _loadFeatureRequests();
       if (!mounted) return;
-      messenger.showSnackBar(
-        const SnackBar(content: Text('優先度・工数・期日を更新しました')),
-      );
+      messenger.showSnackBar(const SnackBar(content: Text('優先度・工数・期日を更新しました')));
     } catch (e) {
       debugPrint('feature request fields update error: $e');
       if (!mounted) return;
@@ -1285,11 +1418,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       await _loadAutomationOps();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            escalate ? 'チケットをエスカレーションしました' : '返信を送信しました',
-          ),
-        ),
+        SnackBar(content: Text(escalate ? 'チケットをエスカレーションしました' : '返信を送信しました')),
       );
     } catch (e) {
       if (!mounted) return;
@@ -1400,9 +1529,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final reply = action['reply']?.toString().trim();
     final newStatus = action['status']?.toString() ?? 'in_progress';
     if (!escalate && (reply == null || reply.isEmpty)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('返信文を入力してください')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('返信文を入力してください')));
       return;
     }
 
@@ -1445,11 +1574,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final response = await _supabase.functions.invoke(
         'schedule-hub',
         headers: _adminAuthHeaders(session.accessToken),
-        body: {
-          'action': 'x.post',
-          'text': text,
-          'dryRun': dryRun,
-        },
+        body: {'action': 'x.post', 'text': text, 'dryRun': dryRun},
       );
       final data = response.data as Map<String, dynamic>?;
       if (data?['success'] != true) {
@@ -1575,15 +1700,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       }
       if (!mounted) return;
       setState(() => _sendingNotification = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$email に通知を送信しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$email に通知を送信しました')));
     } catch (e) {
       if (!mounted) return;
       setState(() => _sendingNotification = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('通知送信に失敗しました: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('通知送信に失敗しました: $e')));
     }
   }
 
@@ -1609,9 +1734,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       if (mounted) {
         final data = res.data as Map<String, dynamic>?;
         final sent = data?['sent'] ?? 0;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$sent 件に送信しました')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$sent 件に送信しました')));
       }
     } catch (e) {
       debugPrint('send notification error: $e');
@@ -1684,6 +1809,27 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     bodyCtrl.dispose();
   }
 
+  /// agent_tool_execution_logs を fail-safe に取得する (テーブル未整備でも
+  /// ダッシュボードは必ず描画する)。_loadStats の並列開始点から呼ぶ。
+  Future<List<Map<String, dynamic>>> _fetchToolExecutionLogsSafe() async {
+    try {
+      final dynamic rawToolLogs = await _supabase
+          .from('agent_tool_execution_logs')
+          .select('tool_name, allowed, blocked_reason, created_at')
+          .order('created_at', ascending: false)
+          .limit(80);
+      if (rawToolLogs is List) {
+        return [
+          for (final row in rawToolLogs.whereType<Map>())
+            Map<String, dynamic>.from(row),
+        ];
+      }
+    } catch (error) {
+      debugPrint('agent_tool_execution_logs is unavailable: $error');
+    }
+    return const [];
+  }
+
   Future<void> _loadStats() async {
     try {
       final today = _startOfDay(DateTime.now());
@@ -1691,10 +1837,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final startDateKey = _dateKey(startDate);
       final endDateKey = _dateKey(today);
 
-      final results = await Future.wait<dynamic>([
+      final statsFuture = Future.wait<dynamic>([
         _supabase
             .from('app_analytics')
-            .select()
+            .select(
+              'date, landing_views, conversions, share_count, source_details',
+            )
             .gte('date', startDateKey)
             .lte('date', endDateKey)
             .order('date', ascending: false),
@@ -1708,7 +1856,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             .count(CountOption.exact),
         _supabase.rpc('get_lp_view_stats'),
       ]);
+      // 相互依存の無いローダーは DB 4本と同時に開始する。旧実装は
+      // 「DB 4本 → growth-hub 4本 → tool logs」の3段直列で、全画面スピナーが
+      // 3段の合計時間 (数秒) ブロックしていた。並列化で最遅1本ぶんに縮む。
+      final paidConversionFuture = _loadPaidConversionMetrics();
+      final xTodayStatusFuture = _loadXTodayStatus();
+      final xPerformanceContextFuture = _loadXPerformanceContext();
+      final xCandidatesFuture = _loadXCandidateQueue();
+      final toolLogsFuture = _fetchToolExecutionLogsSafe();
 
+      final results = await statsFuture;
       final statsResponse = results[0] as List<dynamic>;
       final profileResponse = results[1] as List<dynamic>;
       final userCountResponse = results[2];
@@ -1729,45 +1886,32 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ? Map<String, dynamic>.from(lpStatsResponse)
           : <String, dynamic>{};
       final hasLpViewStats = lpStats.isNotEmpty;
-      final paidConversionMetrics = await _loadPaidConversionMetrics();
-      final xTodayStatus = await _loadXTodayStatus();
-      final xPerformanceContext = await _loadXPerformanceContext();
-      final xCandidates = await _loadXCandidateQueue();
+      final paidConversionMetrics = await paidConversionFuture;
+      final xTodayStatus = await xTodayStatusFuture;
+      final xPerformanceContext = await xPerformanceContextFuture;
+      final xCandidates = await xCandidatesFuture;
 
       final toolExecutionLogs = <Map<String, dynamic>>[];
       final blockedReasonCounts = <String, int>{};
       var allowedExecutionCount = 0;
       var blockedExecutionCount = 0;
 
-      try {
-        final dynamic rawToolLogs = await _supabase
-            .from('agent_tool_execution_logs')
-            .select('tool_name, allowed, blocked_reason, created_at')
-            .order('created_at', ascending: false)
-            .limit(80);
-
-        if (rawToolLogs is List) {
-          for (final row in rawToolLogs.whereType<Map>()) {
-            final log = Map<String, dynamic>.from(row);
-            final allowed = _toBool(log['allowed']);
-            if (allowed) {
-              allowedExecutionCount += 1;
-            } else {
-              blockedExecutionCount += 1;
-              final rawReason = log['blocked_reason']?.toString().trim() ?? '';
-              final reason =
-                  rawReason.isEmpty ? 'Unknown blocked reason' : rawReason;
-              blockedReasonCounts.update(
-                reason,
-                (current) => current + 1,
-                ifAbsent: () => 1,
-              );
-            }
-            toolExecutionLogs.add(log);
-          }
+      for (final log in await toolLogsFuture) {
+        final allowed = _toBool(log['allowed']);
+        if (allowed) {
+          allowedExecutionCount += 1;
+        } else {
+          blockedExecutionCount += 1;
+          final rawReason = log['blocked_reason']?.toString().trim() ?? '';
+          final reason =
+              rawReason.isEmpty ? 'Unknown blocked reason' : rawReason;
+          blockedReasonCounts.update(
+            reason,
+            (current) => current + 1,
+            ifAbsent: () => 1,
+          );
         }
-      } catch (error) {
-        debugPrint('agent_tool_execution_logs is unavailable: $error');
+        toolExecutionLogs.add(log);
       }
 
       final sortedBlockedReasons = blockedReasonCounts.entries.toList()
@@ -1790,81 +1934,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           _paidConversionMetrics = paidConversionMetrics;
           _xTodayStatus = xTodayStatus;
           _xPerformanceContext = xPerformanceContext;
-          _xCandidates = xCandidates;
+          _xCandidates = xCandidates.candidates;
+          _xCandidateTotals = xCandidates.totalsByStatus;
           _isLoading = false;
         });
       }
     } catch (e) {
       debugPrint('Error loading stats: $e');
       if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  // ★追加: データリセット処理
-  Future<void> _resetAnalyticsData() async {
-    // 確認ダイアログを表示
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('データのリセット'),
-        content: const Text(
-          '分析データ(app_analytics)をすべて削除します。\nこの操作は元に戻せません。\n本当によろしいですか？',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('キャンセル'),
-          ),
-          TextButton(
-            style:
-                TextButton.styleFrom(foregroundColor: const Color(0xFFB91C1C)),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('リセット実行'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      // app_analytics には id 列がないため、日付キー単位で全件削除する。
-      final rows = await _supabase.from('app_analytics').select('date');
-      final dateKeys = rows
-          .whereType<Map>()
-          .map((row) => row['date']?.toString())
-          .whereType<String>()
-          .where((value) => value.isNotEmpty)
-          .toSet()
-          .toList();
-
-      for (final dateKey in dateKeys) {
-        await _supabase
-            .from('app_analytics')
-            .delete()
-            .eq('date', dateKey)
-            .select();
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('分析データをリセットしました')),
-        );
-        // 再読み込み
-        await _loadStats();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('エラーが発生しました: $e'),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
-        setState(() => _isLoading = false);
-      }
     }
   }
 
@@ -1918,6 +1995,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       }
     }
 
+    final acquisitionEvidence = adminAcquisitionEvidenceFromAggregateSignals(
+      sourceBreakdown,
+    );
     final chartData = _dailyStats.reversed.toList();
     final effectiveTodayViews = _hasLpViewStats ? _lpTodayViews : todayViews;
     final effectiveTotalLpViews =
@@ -1927,6 +2007,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         : (todayRegistrations / effectiveTodayViews * 100);
     final todayFunnel = _extractFunnelMetrics(todaySourceDetails);
     final totalFunnel = _extractFunnelMetrics(funnelBreakdown);
+    final totalBillingFunnel = _extractBillingFunnelMetrics(funnelBreakdown);
     final total30DayRegistrations = _dailyStats.fold<int>(
       0,
       (sum, stat) => sum + _toInt(stat['conversions']),
@@ -1937,8 +2018,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final totalDropBeforeTrial = effectiveTotalLpViews > totalFunnel.trialRuns
         ? effectiveTotalLpViews - totalFunnel.trialRuns
         : 0;
-    final zeroRegistrationStreakDays =
-        _countConsecutiveNoRegistrationDays(_dailyStats);
+    final zeroRegistrationStreakDays = _countConsecutiveNoRegistrationDays(
+      _dailyStats,
+    );
     // R18: streak が集計窓(_dailyStats)を使い切っていると値は下限。実際はそれ以上
     // なので「N日以上」と正直に出す(30 をちょうどの安心値に見せない)。
     final zeroStreakAtCap = streakAtWindowCap(
@@ -1952,22 +2034,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       appBar: AppBar(
         title: const Text(
           '経営分析ダッシュボード',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            height: 1.5,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
         ),
         backgroundColor: const Color(0xFF6366F1),
         foregroundColor: const Color(0xFFE5E7EB),
         elevation: 0,
         scrolledUnderElevation: 0,
         actions: [
-          // ★追加: リセットボタン（ゴミ箱アイコン）
-          IconButton(
-            icon: const Icon(Icons.delete_forever),
-            onPressed: _resetAnalyticsData,
-            tooltip: 'データをリセット',
-          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
@@ -2017,8 +2090,44 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
+                            settings: const RouteSettings(
+                              name: '/quota-dashboard',
+                            ),
                             builder: (_) => const QuotaDashboardPage(),
                           ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Card(
+                      color: const Color(0xFF1A1A2E),
+                      child: ListTile(
+                        leading: const Icon(
+                          Icons.published_with_changes_outlined,
+                          color: Color(0xFFFF6B35),
+                        ),
+                        title: const Text(
+                          'AI成果物 公開ループ',
+                          style: TextStyle(
+                            color: Color(0xFFE5E7EB),
+                            fontWeight: FontWeight.bold,
+                            height: 1.5,
+                          ),
+                        ),
+                        subtitle: const Text(
+                          '候補、権利、検査、商品ステージを人手承認つきで管理',
+                          style: TextStyle(
+                            color: Color(0xB3E5E7EB),
+                            height: 1.5,
+                          ),
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right,
+                          color: Color(0x8AE5E7EB),
+                        ),
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          '/admin/artifact-publishing',
                         ),
                       ),
                     ),
@@ -2052,6 +2161,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
+                            settings: const RouteSettings(
+                              name: '/blog-management',
+                            ),
                             builder: (_) => const BlogManagementPage(),
                           ),
                         ),
@@ -2088,12 +2200,18 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       todayFunnel,
                     ),
                     const SizedBox(height: 16),
-                    _buildPaidConversionCard(
+                    AdminPaidConversionCard(
                       metrics: _paidConversionMetrics,
                       totalUsers: _actualUserCount,
                     ),
                     const SizedBox(height: 16),
-                    _buildRegistrationOpsCard(
+                    AdminBillingFunnelCard(metrics: totalBillingFunnel),
+                    const SizedBox(height: 16),
+                    AdminGrowthEvidenceSection(
+                      acquisitionEvidence: acquisitionEvidence,
+                    ),
+                    const SizedBox(height: 16),
+                    AdminRegistrationOpsCard(
                       todayDropBeforeTrial: todayDropBeforeTrial,
                       totalDropBeforeTrial: totalDropBeforeTrial,
                       zeroRegistrationStreakDays: zeroRegistrationStreakDays,
@@ -2122,8 +2240,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       height: 220,
                       padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
                       decoration: BoxDecoration(
-                        color:
-                            Theme.of(context).colorScheme.surfaceContainerLow,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
@@ -2175,7 +2294,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildToolExecutionGuardCard(),
+                    AdminToolExecutionGuardCard(
+                      toolExecutionLogs: _toolExecutionLogs,
+                      allowedToolExecutionCount: _allowedToolExecutionCount,
+                      blockedToolExecutionCount: _blockedToolExecutionCount,
+                      blockedReasonBreakdown: _blockedReasonBreakdown,
+                    ),
                     const SizedBox(height: 24),
                     const Text(
                       '週次ダイジェスト',
@@ -2211,6 +2335,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     _buildFeatureRequestsAdminCard(),
                     const SizedBox(height: 16),
                     _buildAutomationOpsCard(),
+                    const SizedBox(height: 16),
+                    _buildAutoErrorReportsCard(),
                     const SizedBox(height: 16),
                     const SelfDevinControlTowerCard(),
                     const SizedBox(height: 16),
@@ -2254,8 +2380,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }) {
     const dailyTarget = 1;
     final achieved = todayRegistrations >= dailyTarget;
-    final remaining = achieved ? 0 : dailyTarget - todayRegistrations;
-    final progress = (todayRegistrations / dailyTarget).clamp(0.0, 1.0);
     final priorityChannelKey = achieved || todayViews > 0
         ? null
         : _resolvePriorityAcquisitionChannel(sourceBreakdown);
@@ -2270,8 +2394,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       priorityChannelKey: priorityChannelKey,
       priorityChannelLabel: priorityChannelLabel,
     );
-    final accentColor =
-        achieved ? const Color(0xFF0D9488) : const Color(0xFFB91C1C);
     // R16: 今日すでに投稿済み(または spend-cap ブロック中)なら、todayViews==0 でも
     // 「流入不足/今日の流入がありません」を出さず、growthAction(投稿済み状態機械の
     // 出力)の診断・文言をそのまま使う。
@@ -2299,10 +2421,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             : todayFunnel.inboxOpens == 0
                                 ? const Color(0xFF92400E)
                                 : const Color(0xFFB91C1C);
-    final actionTitle = achieved ? null : growthAction.title;
-    final actionDetail = achieved ? null : growthAction.detail;
-    final actionIcon = achieved ? null : growthAction.icon;
-    final actionButtonLabel = achieved ? null : growthAction.buttonLabel;
     final statusText = achieved
         ? '今日の登録目標は達成済みです。次は流入改善で上振れを狙う。'
         : postedTodayActive
@@ -2319,241 +2437,28 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                 ? 'Magic Link送信はありますが、受信箱が開かれていません。送信後の次の行動をさらに明確にしてください。'
                                 : '流れ込みはありますが登録が出ていません。登録完了直前での離脱が発生しています。';
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: achieved
-              ? (isDark
-                  ? const [Color(0xFF0D2E1A), Color(0xFF0A1F12)]
-                  : const [Color(0xFFE8F5E9), Color(0xFFF6FFF7)])
-              : (isDark
-                  ? const [Color(0xFF2E0A0A), Color(0xFF1F0808)]
-                  : const [Color(0xFFFFEBEE), Color(0xFFFFF8F8)]),
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accentColor.withValues(alpha: 0.35)),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withValues(alpha: 0.1),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  achieved ? Icons.check_circle : Icons.track_changes,
-                  color: accentColor,
-                  size: 20,
-                ),
+    return AdminTodayRegistrationGoalCard(
+      todayViews: todayViews,
+      todayRegistrations: todayRegistrations,
+      trialRuns: todayFunnel.trialRuns,
+      magicLinkSends: todayFunnel.magicLinkSends,
+      cvrText: formatRatePercent(todayRegistrations, todayViews),
+      diagnosisLabel: diagnosisLabel,
+      diagnosisColor: diagnosisColor,
+      priorityChannelLabel: priorityChannelLabel,
+      statusText: statusText,
+      actionTitle: achieved ? null : growthAction.title,
+      actionDetail: achieved ? null : growthAction.detail,
+      actionIcon: achieved ? null : growthAction.icon,
+      actionButtonLabel: achieved ? null : growthAction.buttonLabel,
+      onActionPressed: achieved
+          ? null
+          : () => _openGrowthAction(
+                isAcquisitionAction: growthAction.isAcquisitionAction,
+                priorityChannelKey: priorityChannelKey,
+                priorityChannelLabel: priorityChannelLabel,
+                ctaUrl: growthAction.launchUrl,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '今日の登録目標',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$todayRegistrations / $dailyTarget',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w800,
-                        color: accentColor,
-                        height: 1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  achieved ? '達成' : '未達',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: accentColor,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              minHeight: 10,
-              value: progress,
-              backgroundColor: Colors.black.withValues(alpha: 0.06),
-              valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _buildMiniKpiChip(
-                label: '今日のLP View数',
-                value: '$todayViews',
-                color: const Color(0xFF6366F1),
-              ),
-              _buildMiniKpiChip(
-                label: '今日のCVR',
-                // R17: 流入0のとき「0.0%」は捏造 → 「—」(ファネル率セルと同じ規律)。
-                value: formatRatePercent(todayRegistrations, todayViews),
-                color: diagnosisColor,
-              ),
-              if (todayViews > 0)
-                _buildMiniKpiChip(
-                  label: '今日体験',
-                  value: '${todayFunnel.trialRuns}',
-                  color: const Color(0xFF0D9488),
-                ),
-              if (todayViews > 0)
-                _buildMiniKpiChip(
-                  label: '今日送信',
-                  value: '${todayFunnel.magicLinkSends}',
-                  color: const Color(0xFFFF6B35),
-                ),
-              _buildMiniKpiChip(
-                label: '登録率',
-                value: diagnosisLabel,
-                color: diagnosisColor,
-              ),
-              if (priorityChannelLabel != null)
-                _buildMiniKpiChip(
-                  label: '最優先チャネル',
-                  value: priorityChannelLabel,
-                  color: const Color(0xFF475569),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            achieved ? statusText : '$statusText あと$remaining人の登録が必要です。',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
-              height: 1.7,
-            ),
-          ),
-          if (actionTitle != null &&
-              actionDetail != null &&
-              actionIcon != null &&
-              actionButtonLabel != null) ...[
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: diagnosisColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: diagnosisColor.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: diagnosisColor.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      actionIcon,
-                      color: diagnosisColor,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          actionTitle,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: diagnosisColor,
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          actionDetail,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface,
-                            height: 1.7,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        FilledButton.icon(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: diagnosisColor,
-                            foregroundColor: const Color(0xFFE5E7EB),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                          ),
-                          onPressed: () {
-                            _openGrowthAction(
-                              isAcquisitionAction:
-                                  growthAction.isAcquisitionAction,
-                              priorityChannelKey: priorityChannelKey,
-                              priorityChannelLabel: priorityChannelLabel,
-                              ctaUrl: growthAction.launchUrl,
-                            );
-                          },
-                          icon: const Icon(Icons.arrow_forward, size: 16),
-                          label: Text(actionButtonLabel),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
     );
   }
 
@@ -2907,460 +2812,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
-  Widget _buildPaidConversionCard({
-    required _PaidConversionMetrics metrics,
-    required int totalUsers,
-  }) {
-    final conversionRate = _formatPaidConversionRate(
-      metrics.paidCustomers,
-      totalUsers,
-    );
-    final formattedMrr = NumberFormat.currency(
-      locale: 'ja_JP',
-      symbol: '¥',
-      decimalDigits: 0,
-    ).format(metrics.mrrYen);
-
-    return Card(
-      elevation: 3,
-      shadowColor: const Color(0x33000000),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(
-                  Icons.workspace_premium,
-                  color: Color(0xFF0D9488),
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    '有料転換',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-                Text(
-                  'active pro/team',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'billing_subscriptions の active な Pro/Team だけを集計します。',
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                _buildMiniKpiChip(
-                  label: '課金ユーザー数',
-                  value: '${metrics.paidCustomers}',
-                  color: const Color(0xFF0D9488),
-                ),
-                _buildMiniKpiChip(
-                  label: 'MRR',
-                  value: formattedMrr,
-                  color: const Color(0xFF7C3AED),
-                ),
-                _buildMiniKpiChip(
-                  label: 'free→paid CVR',
-                  value: conversionRate,
-                  color: const Color(0xFF6366F1),
-                ),
-                _buildMiniKpiChip(
-                  label: '登録総数',
-                  value: '$totalUsers',
-                  color: const Color(0xFF475569),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRegistrationOpsCard({
-    required int todayDropBeforeTrial,
-    required int totalDropBeforeTrial,
-    required int zeroRegistrationStreakDays,
-    required bool zeroStreakAtCap,
-    required double averageViewsLast7Days,
-    required String totalTrialRate,
-    required String? registrationsPerLpView,
-  }) {
-    // R18: 集計窓を使い切っていたら「N日以上」(実際はそれ以上)と正直に。
-    final streakLabel =
-        '$zeroRegistrationStreakDays日${zeroStreakAtCap ? '以上' : ''}';
-    final alertText = zeroRegistrationStreakDays >= 3
-        ? '登録ゼロが$streakLabel連続です。流入ではなく、体験開始と認証前の離脱を最優先で潰してください。'
-        : todayDropBeforeTrial > 0
-            ? '今日は流入がありますが、体験前に$todayDropBeforeTrial件が離脱しています。無料体験の訴求を最優先で確認してください。'
-            : '直近の登録導線は動いています。次は送信後の完了率を維持できているかを確認してください。';
-
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '登録管理の追加指標',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'LP View以外に、体験前離脱・継続未達・直近流量をまとめて確認します。',
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                _buildMiniKpiChip(
-                  label: '今日の体験前離脱',
-                  value: '$todayDropBeforeTrial',
-                  color: const Color(0xFF0D9488),
-                ),
-                _buildMiniKpiChip(
-                  label: '30日体験前離脱',
-                  value: '$totalDropBeforeTrial',
-                  color: const Color(0xFF475569),
-                ),
-                _buildMiniKpiChip(
-                  label: '連続登録ゼロ日',
-                  value: streakLabel,
-                  color: const Color(0xFFB91C1C),
-                ),
-                _buildMiniKpiChip(
-                  label: '直近7日平均LP',
-                  value: averageViewsLast7Days.toStringAsFixed(1),
-                  color: const Color(0xFF6366F1),
-                ),
-                _buildMiniKpiChip(
-                  label: '30日体験率',
-                  value: totalTrialRate,
-                  color: const Color(0xFF0D9488),
-                ),
-                _buildMiniKpiChip(
-                  label: '直近登録効率',
-                  value: registrationsPerLpView == null
-                      ? '登録未発生'
-                      : '$registrationsPerLpView LP/登録',
-                  color: const Color(0xFF6366F1),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                alertText,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
-                  height: 1.7,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildToolExecutionGuardCard() {
-    if (_toolExecutionLogs.isEmpty) {
-      return Card(
-        elevation: 1,
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            'agent_tool_execution_logs のデータがありません。マイグレーション適用後に表示されます。',
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              height: 1.5,
-            ),
-          ),
-        ),
-      );
-    }
-
-    final totalExecutions =
-        _allowedToolExecutionCount + _blockedToolExecutionCount;
-    final blockedRate = totalExecutions == 0
-        ? 0.0
-        : (_blockedToolExecutionCount / totalExecutions * 100);
-    final recentLogs = _toolExecutionLogs.take(12).toList();
-
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                _buildMiniKpiChip(
-                  label: 'Allowed',
-                  value: '$_allowedToolExecutionCount',
-                  color: const Color(0xFF0D9488),
-                ),
-                _buildMiniKpiChip(
-                  label: 'Blocked',
-                  value: '$_blockedToolExecutionCount',
-                  color: const Color(0xFFB91C1C),
-                ),
-                _buildMiniKpiChip(
-                  label: 'Blocked Rate',
-                  value: '${blockedRate.toStringAsFixed(1)}%',
-                  color: const Color(0xFFFF6B35),
-                ),
-              ],
-            ),
-            if (_blockedReasonBreakdown.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              const Text(
-                'Blocked Reasons',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-              ..._blockedReasonBreakdown.entries.take(6).map((entry) {
-                final ratio = _blockedToolExecutionCount == 0
-                    ? 0.0
-                    : (entry.value / _blockedToolExecutionCount)
-                        .clamp(0.0, 1.0);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              entry.key,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.onSurface,
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${entry.value}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFFB91C1C),
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(999),
-                        child: LinearProgressIndicator(
-                          minHeight: 6,
-                          value: ratio,
-                          backgroundColor: const Color(0xFFB91C1C).withValues(
-                            alpha: 0.08,
-                          ),
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            Color(0xFFB91C1C),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-            ],
-            const SizedBox(height: 12),
-            const Text(
-              'Recent Tool Executions',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 8),
-            ...recentLogs.map((log) {
-              final allowed = _toBool(log['allowed']);
-              final rawReason = log['blocked_reason']?.toString().trim() ?? '';
-              final reasonText =
-                  rawReason.isEmpty ? 'No block reason' : rawReason;
-              final toolName = _formatToolName(log['tool_name']?.toString());
-              final createdAt = _formatTimestamp(log['created_at']);
-
-              return Container(
-                width: double.infinity,
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: allowed
-                      ? const Color(0xFF0D9488).withValues(alpha: 0.05)
-                      : const Color(0xFFB91C1C).withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: allowed
-                        ? const Color(0xFF0D9488).withValues(alpha: 0.2)
-                        : const Color(0xFFB91C1C).withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          allowed ? Icons.check_circle : Icons.block,
-                          size: 16,
-                          color: allowed
-                              ? const Color(0xFF0D9488)
-                              : const Color(0xFFB91C1C),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            toolName,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              height: 1.5,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          createdAt,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (!allowed) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        reasonText,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontWeight: FontWeight.w600,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _formatToolName(String? raw) {
-    switch (raw) {
-      case 'delegate_task':
-        return 'delegate_task';
-      case 'process_task':
-        return 'process_task';
-      case 'update_task_status':
-        return 'update_task_status';
-      case 'send_message':
-        return 'send_message';
-      case 'append_memory':
-        return 'append_memory';
-      case 'set_agent_status':
-        return 'set_agent_status';
-      case 'run_heartbeat':
-        return 'run_heartbeat';
-      case 'run_nightly_consolidation':
-        return 'run_nightly_consolidation';
-      case 'run_forgetting':
-        return 'run_forgetting';
-      case 'run_runtime_cycle':
-        return 'run_runtime_cycle';
-      default:
-        return raw == null || raw.trim().isEmpty ? 'unknown_tool' : raw;
-    }
-  }
-
-  String _formatTimestamp(dynamic rawValue) {
-    if (rawValue == null) {
-      return '--';
-    }
-    final parsed = DateTime.tryParse(rawValue.toString())?.toLocal();
-    if (parsed == null) {
-      return '--';
-    }
-    // R20: 年なし MM/dd は2か月前(05/11)のログを今週に見せる。1か月超/別年は
-    // 年を前置して年齢を明示する(「Recent」ラベルの誤読を解消)。
-    final now = DateTime.now();
-    final stale = parsed.year != now.year || now.difference(parsed).inDays > 30;
-    return DateFormat(stale ? 'yyyy/MM/dd HH:mm:ss' : 'MM/dd HH:mm:ss')
-        .format(parsed);
-  }
-
   Color _getCvrColor(double cvr) {
     if (cvr >= 10) return const Color(0xFF0D9488);
     if (cvr >= 5) return const Color(0xFFFF6B35);
@@ -3495,10 +2946,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           child: Center(
             child: Text(
               'データなし',
-              style: TextStyle(
-                color: Color(0xFF9CA3AF),
-                height: 1.5,
-              ),
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
             ),
           ),
         ),
@@ -3558,10 +3006,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     const SizedBox(width: 6),
                     Text(
                       _formatSourceName(e.key),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        height: 1.5,
-                      ),
+                      style: const TextStyle(fontSize: 12, height: 1.5),
                     ),
                     Text(
                       ' $percent%',
@@ -3583,15 +3028,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   bool _isFunnelEventKey(String key) {
-    switch (key) {
-      case 'funnel_trial_run':
-      case 'funnel_save_cta':
-      case 'funnel_magic_link_send':
-      case 'funnel_inbox_open':
-        return true;
-      default:
-        return false;
-    }
+    return key.startsWith('funnel_') ||
+        key.startsWith('lp_exp_') ||
+        key.startsWith('activation_exp_');
   }
 
   bool _isShareActionKey(String key) {
@@ -3600,6 +3039,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       case 'share_line':
       case 'share_facebook':
       case 'share_copy':
+      case 'share_note':
       case 'public_memo_share':
       case 'public_memo_copy':
         return true;
@@ -3630,6 +3070,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return 'Facebook シェア';
       case 'share_copy':
         return 'リンクコピー';
+      case 'share_note':
+        return 'メモ共有';
       case 'public_memo_share':
         return 'Public memo share';
       case 'public_memo_copy':
@@ -3695,6 +3137,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return const Color(0xFF1877F2);
       case 'share_copy':
         return const Color(0xFF7C3AED);
+      case 'share_note':
+        return const Color(0xFF3D5AFE);
       case 'public_memo_share':
         return const Color(0xFFFF6B35);
       case 'public_memo_copy':
@@ -3945,12 +3389,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(8),
-            border:
-                Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
           ),
           child: ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 0,
+            ),
             title: Text(
               dateStr,
               style: const TextStyle(
@@ -4131,10 +3578,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   horizontal: 12,
                 ),
               ),
-              style: const TextStyle(
-                fontSize: 13,
-                height: 1.6,
-              ),
+              style: const TextStyle(fontSize: 13, height: 1.6),
               onChanged: (v) => setState(() => _userSearchQuery = v),
             ),
             const SizedBox(height: 8),
@@ -4150,10 +3594,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text(
                   'ユーザーが取得できませんでした',
-                  style: TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    height: 1.5,
-                  ),
+                  style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
                 ),
               )
             else
@@ -4174,10 +3615,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       padding: EdgeInsets.symmetric(vertical: 12),
                       child: Text(
                         '該当するユーザーが見つかりません',
-                        style: TextStyle(
-                          color: Color(0xFF9CA3AF),
-                          height: 1.5,
-                        ),
+                        style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
                       ),
                     );
                   }
@@ -4205,14 +3643,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       String createdStr = '日付なし';
                       String lastSignInStr = 'ログイン記録なし';
                       try {
-                        createdStr = DateFormat('yyyy/MM/dd').format(
-                          DateTime.parse(createdAt).toLocal(),
-                        );
+                        createdStr = DateFormat(
+                          'yyyy/MM/dd',
+                        ).format(DateTime.parse(createdAt).toLocal());
                       } catch (_) {}
                       try {
-                        lastSignInStr = DateFormat('MM/dd HH:mm').format(
-                          DateTime.parse(lastSignIn).toLocal(),
-                        );
+                        lastSignInStr = DateFormat(
+                          'MM/dd HH:mm',
+                        ).format(DateTime.parse(lastSignIn).toLocal());
                       } catch (_) {}
 
                       final isGoogle = provider.contains('google');
@@ -4282,13 +3720,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                               : (isDark
                                                   ? const Color(0xFF1A1E3A)
                                                   : const Color(0xFFE8EAF6)),
-                                          borderRadius:
-                                              BorderRadius.circular(6),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
                                         ),
                                         child: Text(
-                                          isGoogle
-                                              ? 'Google'
-                                              : (isAnonymous ? '匿名' : 'Email'),
+                                          // R30: edge users.list は provider を
+                                          // 返さない → isGoogle は常に false で
+                                          // 全員 'Email' と誤表示していた。
+                                          // 判別不能なので中立の '登録済' にする。
+                                          isAnonymous ? '匿名' : '登録済',
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
@@ -4316,9 +3757,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                       bio,
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
                                         height: 1.5,
                                       ),
                                       maxLines: 1,
@@ -4390,8 +3831,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                         ),
                                       ),
                                       style: TextButton.styleFrom(
-                                        foregroundColor:
-                                            const Color(0xFF3949AB),
+                                        foregroundColor: const Color(
+                                          0xFF3949AB,
+                                        ),
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 8,
                                           vertical: 2,
@@ -4451,14 +3893,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     String createdStr = '';
     String lastSignInStr = '';
     try {
-      createdStr = DateFormat('yyyy/MM/dd HH:mm').format(
-        DateTime.parse(createdAt).toLocal(),
-      );
+      createdStr = DateFormat(
+        'yyyy/MM/dd HH:mm',
+      ).format(DateTime.parse(createdAt).toLocal());
     } catch (_) {}
     try {
-      lastSignInStr = DateFormat('yyyy/MM/dd HH:mm').format(
-        DateTime.parse(lastSignIn).toLocal(),
-      );
+      lastSignInStr = DateFormat(
+        'yyyy/MM/dd HH:mm',
+      ).format(DateTime.parse(lastSignIn).toLocal());
     } catch (_) {}
 
     Color profileColor;
@@ -4515,16 +3957,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   saving = false;
                 });
                 _loadAdminUsers();
-                ScaffoldMessenger.of(ctx2).showSnackBar(
-                  const SnackBar(content: Text('プロフィールを更新しました')),
-                );
+                ScaffoldMessenger.of(
+                  ctx2,
+                ).showSnackBar(const SnackBar(content: Text('プロフィールを更新しました')));
               }
             } catch (e) {
               if (ctx2.mounted) {
                 setInner(() => saving = false);
-                ScaffoldMessenger.of(ctx2).showSnackBar(
-                  SnackBar(content: Text('更新失敗: $e')),
-                );
+                ScaffoldMessenger.of(
+                  ctx2,
+                ).showSnackBar(SnackBar(content: Text('更新失敗: $e')));
               }
             }
           }
@@ -4609,10 +4051,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   Chip(
                     label: const Text(
                       '編集中',
-                      style: TextStyle(
-                        fontSize: 10,
-                        height: 1.5,
-                      ),
+                      style: TextStyle(fontSize: 10, height: 1.5),
                     ),
                     backgroundColor: isDark
                         ? const Color(0xFF0A1A2E)
@@ -4636,9 +4075,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             child: LinearProgressIndicator(
                               value: completionPct / 100,
                               minHeight: 6,
-                              backgroundColor: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 profileColor,
                               ),
@@ -4747,10 +4186,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.6,
-                        ),
+                        style: const TextStyle(fontSize: 13, height: 1.6),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -4762,10 +4198,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           border: OutlineInputBorder(),
                         ),
                         maxLines: 2,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.6,
-                        ),
+                        style: const TextStyle(fontSize: 13, height: 1.6),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -4779,10 +4212,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.6,
-                        ),
+                        style: const TextStyle(fontSize: 13, height: 1.6),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -4793,10 +4223,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.6,
-                        ),
+                        style: const TextStyle(fontSize: 13, height: 1.6),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -4807,10 +4234,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.6,
-                        ),
+                        style: const TextStyle(fontSize: 13, height: 1.6),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -4821,10 +4245,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.6,
-                        ),
+                        style: const TextStyle(fontSize: 13, height: 1.6),
                       ),
                       const SizedBox(height: 8),
                       Row(
@@ -4837,10 +4258,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           const SizedBox(width: 6),
                           const Text(
                             '公開プロフィール',
-                            style: TextStyle(
-                              fontSize: 13,
-                              height: 1.6,
-                            ),
+                            style: TextStyle(fontSize: 13, height: 1.6),
                           ),
                           const Spacer(),
                           Switch(
@@ -4930,10 +4348,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
-              fontSize: 12,
-              height: 1.5,
-            ),
+            style: const TextStyle(fontSize: 12, height: 1.5),
             overflow: TextOverflow.ellipsis,
             maxLines: 3,
           ),
@@ -4990,10 +4405,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           children: [
             Row(
               children: [
-                const Icon(
-                  Icons.lightbulb_outline,
-                  color: Color(0xFFFFC107),
-                ),
+                const Icon(Icons.lightbulb_outline, color: Color(0xFFFFC107)),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
@@ -5007,10 +4419,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 Text(
                   '${_featureRequests.length}件',
-                  style: const TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    height: 1.5,
-                  ),
+                  style: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
                 ),
                 const SizedBox(width: 8),
                 IconButton(
@@ -5033,10 +4442,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text(
                   'リクエストはまだありません',
-                  style: TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    height: 1.5,
-                  ),
+                  style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
                 ),
               )
             else
@@ -5063,8 +4469,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   String? repliedAtStr;
                   if (adminRepliedAt != null) {
                     try {
-                      repliedAtStr = DateFormat('MM/dd HH:mm')
-                          .format(DateTime.parse(adminRepliedAt).toLocal());
+                      repliedAtStr = DateFormat(
+                        'MM/dd HH:mm',
+                      ).format(DateTime.parse(adminRepliedAt).toLocal());
                     } catch (_) {}
                   }
 
@@ -5089,9 +4496,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                               ? (isDarkFR
                                   ? const Color(0xFF2A1C06)
                                   : const Color(0xFFFEF3C7))
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest,
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
                           child: Text(
                             '$votes',
                             style: TextStyle(
@@ -5101,28 +4508,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                   ? (isDarkFR
                                       ? const Color(0xFFFDE68A)
                                       : const Color(0xFF92400E))
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                               height: 1.5,
                             ),
                           ),
                         ),
                         title: Text(
                           title,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            height: 1.6,
-                          ),
+                          style: const TextStyle(fontSize: 13, height: 1.6),
                         ),
                         subtitle: Row(
                           children: [
                             Text(
                               dateStr,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                height: 1.5,
-                              ),
+                              style: const TextStyle(fontSize: 11, height: 1.5),
                             ),
                             if (adminReply != null) ...[
                               const SizedBox(width: 6),
@@ -5132,12 +4533,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                   vertical: 1,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF6366F1)
-                                      .withValues(alpha: 0.08),
+                                  color: const Color(
+                                    0xFF6366F1,
+                                  ).withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
-                                    color: const Color(0xFF6366F1)
-                                        .withValues(alpha: 0.24),
+                                    color: const Color(
+                                      0xFF6366F1,
+                                    ).withValues(alpha: 0.24),
                                   ),
                                 ),
                                 child: Text(
@@ -5235,12 +4638,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             width: double.infinity,
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6366F1)
-                                  .withValues(alpha: 0.04),
+                              color: const Color(
+                                0xFF6366F1,
+                              ).withValues(alpha: 0.04),
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color: const Color(0xFF6366F1)
-                                    .withValues(alpha: 0.16),
+                                color: const Color(
+                                  0xFF6366F1,
+                                ).withValues(alpha: 0.16),
                               ),
                             ),
                             child: Text(
@@ -5416,8 +4821,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       contentPadding: EdgeInsets.zero,
                       leading: CircleAvatar(
                         radius: 14,
-                        backgroundColor:
-                            const Color(0xFF6366F1).withValues(alpha: 0.07),
+                        backgroundColor: const Color(
+                          0xFF6366F1,
+                        ).withValues(alpha: 0.07),
                         child: Text(
                           '$votes',
                           style: const TextStyle(
@@ -5430,17 +4836,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                       title: Text(
                         title,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          height: 1.5,
-                        ),
+                        style: const TextStyle(fontSize: 12, height: 1.5),
                       ),
                       subtitle: Text(
                         email == null || email.isEmpty ? 'メール未登録' : email,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          height: 1.5,
-                        ),
+                        style: const TextStyle(fontSize: 11, height: 1.5),
                       ),
                       trailing: TextButton(
                         onPressed: () => _showSupportReplyDialog(ticket),
@@ -5448,6 +4848,127 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     );
                   },
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // R29: 自動エラー報告 (error_reporter が hub_data へ無言送信していた caught
+  // error) の可視化カード。0件なら「正常」を明示し、あれば直近を先頭行だけ出す。
+  Widget _buildAutoErrorReportsCard() {
+    final theme = Theme.of(context);
+    final count = _autoErrorReports.length;
+    final hasErrors = count > 0;
+    final accent =
+        hasErrors ? const Color(0xFFB45309) : const Color(0xFF0D9488);
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  hasErrors
+                      ? Icons.report_gmailerrorred
+                      : Icons.verified_outlined,
+                  color: accent,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    autoErrorReportsHealthLabel(count),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                      color: accent,
+                    ),
+                  ),
+                ),
+                if (_autoErrorReportsLoading)
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  IconButton(
+                    icon: const Icon(Icons.refresh, size: 20),
+                    tooltip: '再取得',
+                    onPressed: _loadRecentErrors,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              hasErrors
+                  ? 'アプリが自動で捕捉・記録した例外です (公開 Issue 化はされません)。'
+                      '本文は自分のセッション分のみ表示しています。'
+                  : 'アプリが捕捉した例外は記録されていません。',
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.5,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (hasErrors) ...[
+              const SizedBox(height: 10),
+              ..._autoErrorReports.take(8).map((entry) {
+                final when = formatAgeAwareDate(
+                  entry.createdAt,
+                  DateTime.now(),
+                );
+                final line =
+                    entry.firstLine.isEmpty ? '(本文なし)' : entry.firstLine;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.chevron_right,
+                        size: 16,
+                        color: Color(0xFFB45309),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          line,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            height: 1.5,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        when,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              if (count > 8)
+                Text(
+                  'ほか ${count - 8}件',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
             ],
           ],
@@ -5473,11 +4994,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: 11,
-              color: color,
-              height: 1.5,
-            ),
+            style: TextStyle(fontSize: 11, color: color, height: 1.5),
           ),
           const SizedBox(height: 2),
           Text(
@@ -5554,10 +5071,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text(
                   '登録者はまだいません',
-                  style: TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    height: 1.5,
-                  ),
+                  style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
                 ),
               )
             else
@@ -5573,9 +5087,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   final createdAt = entry['created_at']?.toString() ?? '';
                   String dateStr = createdAt;
                   try {
-                    dateStr = DateFormat('MM/dd HH:mm').format(
-                      DateTime.parse(createdAt).toLocal(),
-                    );
+                    dateStr = DateFormat(
+                      'MM/dd HH:mm',
+                    ).format(DateTime.parse(createdAt).toLocal());
                   } catch (_) {}
 
                   return ListTile(
@@ -5587,17 +5101,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                     title: Text(
                       email,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        height: 1.6,
-                      ),
+                      style: const TextStyle(fontSize: 13, height: 1.6),
                     ),
                     subtitle: Text(
                       '$source  $dateStr',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        height: 1.5,
-                      ),
+                      style: const TextStyle(fontSize: 11, height: 1.5),
                     ),
                   );
                 },
@@ -5643,8 +5151,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: const Text('投稿URLを入力'),
           content: TextField(
             controller: urlController,
@@ -5869,8 +5378,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color:
-                                  statusColor(status).withValues(alpha: 0.08),
+                              color: statusColor(
+                                status,
+                              ).withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Row(
@@ -5952,9 +5462,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
 
     final totalTouches = _comparisonTouches.values.fold(0, (a, b) => a + b);
-    final cvrPct = totalTouches > 0
-        ? (_comparisonSignups / totalTouches * 100).toStringAsFixed(1)
-        : '0.0';
+    // R30: 母数0で「0.0%」は計測した0%に見える捏造 → ダッシュボード共通の
+    // formatRatePercent(母数0=「—」)に揃える。到達0で登録>0の自己矛盾表示も回避。
+    final cvrLabel = formatRatePercent(_comparisonSignups, totalTouches);
 
     final sorted = _comparisonTouches.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -6011,7 +5521,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const Color(0xFF059669),
               ),
               const SizedBox(width: 16),
-              _cvrStat('CVR', '$cvrPct%', const Color(0xFFFF6B35)),
+              _cvrStat('CVR', cvrLabel, const Color(0xFFFF6B35)),
             ],
           ),
           const SizedBox(height: 12),
@@ -6156,12 +5666,29 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final theme = Theme.of(context);
     // R20: 鮮度はパネル自身のデータ(perf-context 行)から出す。旧実装は今日の投稿の
     // 計測時刻を読み、12件計測済みでも今日未投稿だと「計測待ち」と矛盾していた。
+    final newestMeasuredAt = newestMeasuredCreatedAt(comparableRows);
     final freshness = resolveXGrowthLoopFreshness(
       measuredCount: comparisonSampleCount,
-      newestMeasuredAt: newestMeasuredCreatedAt(comparableRows),
+      newestMeasuredAt: newestMeasuredAt,
+      now: DateTime.now(),
+    );
+    // R27: 鮮度が3日を超えたら灰色フッター任せにせず警告行で知らせる
+    // (unlocked 以降は awaitingMetrics の cron 警告経路が二度と出ないため)。
+    final stalenessWarning = xGrowthLoopStalenessWarning(
+      measuredCount: comparisonSampleCount,
+      newestMeasuredAt: newestMeasuredAt,
       now: DateTime.now(),
     );
     final lines = <Widget>[];
+    if (stalenessWarning != null) {
+      lines.add(
+        _growthLoopLine(
+          Icons.warning_amber_rounded,
+          const Color(0xFFF59E0B),
+          stalenessWarning,
+        ),
+      );
+    }
 
     switch (loop.state) {
       case XGrowthLoopState.awaitingMetrics:
@@ -6185,8 +5712,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         );
         break;
       case XGrowthLoopState.unlocked:
-        final bestVariant = perf['bestVariant']?.toString();
-        if (bestVariant != null && bestVariant.isNotEmpty) {
+        // R27: サーバが「unknown」(タグ無し投稿の受け皿バケット)を勝ち型として
+        // 返す除外漏れへの防御。variants から unknown 除外で勝ち型を再解決する。
+        final bestVariant = resolveDisplayBestVariant(
+          perf['bestVariant']?.toString(),
+          variants,
+        );
+        if (bestVariant != null) {
           lines.add(
             _growthLoopLine(
               Icons.emoji_events_outlined,
@@ -6312,6 +5844,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildXCandidateQueueSection() {
     if (_xCandidates.isEmpty) return const SizedBox.shrink();
     final theme = Theme.of(context);
+    // #4080: 鮮度切れ候補は「承認して投稿」が無効化済み = キューに滞留して
+    // 見るべき候補を埋没させる。まとめて終端 status へ落とせるようにする。
+    final now = DateTime.now();
+    final staleCandidates = _xCandidates
+        .where((candidate) => isCandidateExpired(candidate, now))
+        .toList(growable: false);
     return Padding(
       padding: const EdgeInsets.only(top: 16),
       child: Card(
@@ -6333,7 +5871,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'X投稿候補キュー（${candidateQueueHeaderLabel(_xCandidates)}）',
+                      'X投稿候補キュー（${candidateQueueHeaderLabel(_xCandidates, totalsByStatus: _xCandidateTotals)}）',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
@@ -6341,6 +5879,23 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     ),
                   ),
+                  if (staleCandidates.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: _xCandidateRejecting
+                          ? null
+                          : () => _rejectStaleXCandidates(staleCandidates),
+                      icon: _xCandidateRejecting
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.block, size: 16),
+                      label: Text('鮮度切れ${staleCandidates.length}件を却下'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFB91C1C),
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -6361,7 +5916,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildXCandidateRow(XPostCandidateSummary candidate) {
     final theme = Theme.of(context);
     final publishing = _xCandidatePublishing.contains(candidate.id);
-    final age = candidateAgeLabel(candidate.generatedAt, DateTime.now());
+    final now = DateTime.now();
+    final age = candidateAgeLabel(candidate.generatedAt, now);
+    // 鮮度切れ (news_briefing 24h / data_report 72h / 既定7日) の候補は
+    // 承認ボタンを無効化し、古いニュースの誤投稿を防ぐ。
+    final expired = isCandidateExpired(candidate, now);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -6419,6 +5978,27 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           color: Color(0xFF9CA3AF),
                         ),
                       ),
+                    if (expired)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFFEF4444,
+                          ).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          '鮮度切れ',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFFB91C1C),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -6431,7 +6011,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ),
           const SizedBox(width: 8),
           FilledButton.tonal(
-            onPressed: publishing || !candidate.isActionable
+            onPressed: publishing || !candidate.isActionable || expired
                 ? null
                 : () => _publishXCandidate(candidate),
             child: publishing
@@ -6440,7 +6020,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     height: 14,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('承認して投稿'),
+                : Text(expired ? '鮮度切れ' : '承認して投稿'),
           ),
         ],
       ),
@@ -6472,15 +6052,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   /// variants(平均スコア降順)から上位3種を「{variant} 平均{score} (n={count})」に。
   List<String> _xGrowthVariantRankingLines(List<dynamic>? variants) {
-    if (variants == null) return const [];
+    // R28: 勝ち型と同じ畳み込み (unknown 除外 + `_fallback` を base へ) 済みの
+    // ランキングを出す。畳まないと「勝ち型: daily_briefing」なのに直下の
+    // ランキング先頭が「daily_briefing_fallback 平均89」という矛盾表示になる。
+    final folded = foldVariantsForDisplay(variants);
     final lines = <String>[];
-    for (final entry in variants) {
-      if (entry is! Map) continue;
-      final name = (entry['variant'] ?? '').toString().trim();
-      if (name.isEmpty || name == 'unknown') continue;
-      final score = _toInt(entry['averageScore']);
-      final count = _toInt(entry['count']);
-      lines.add('$name 平均$score (n=$count)');
+    for (final entry in folded) {
+      lines.add('${entry.variant} 平均${entry.averageScore} (n=${entry.count})');
       if (lines.length >= 3) break;
     }
     return lines;
@@ -6505,15 +6083,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final periods = [
       (
         '今日',
-        DateTime.now().copyWith(hour: 0, minute: 0, second: 0).toIso8601String()
+        DateTime.now()
+            .copyWith(hour: 0, minute: 0, second: 0)
+            .toIso8601String(),
       ),
       (
         '今週',
-        DateTime.now().subtract(const Duration(days: 7)).toIso8601String()
+        DateTime.now().subtract(const Duration(days: 7)).toIso8601String(),
       ),
       (
         '今月',
-        DateTime.now().subtract(const Duration(days: 30)).toIso8601String()
+        DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
       ),
       ('すべて', '2020-01-01T00:00:00Z'),
     ];
@@ -6567,10 +6147,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               return ActionChip(
                 label: Text(
                   lbl,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    height: 1.5,
-                  ),
+                  style: const TextStyle(fontSize: 12, height: 1.5),
                 ),
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
@@ -6588,7 +6165,20 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 height: 1.6,
               ),
             )
-          else if (_growthSummary != null) ...[
+          // R30: 期待するメトリクスキーが無いレスポンス(achievement.list は
+          // items のみ返す)では捏造ゼロを出さず、集計未接続を正直に示す。
+          else if (!growthSummaryHasMetrics(_growthSummary) &&
+              !_growthSummaryLoading)
+            const Text(
+              '成長サマリーの集計はまだ接続されていません。'
+              '各カード(登録目標・累計登録・比較CVR等)で実数をご確認ください。',
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF94A3B8),
+                height: 1.6,
+              ),
+            )
+          else if (growthSummaryHasMetrics(_growthSummary)) ...[
             Text(
               '期間: ${_growthSummary!['label'] ?? 'すべて'}',
               style: const TextStyle(
@@ -6643,10 +6233,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 13,
-                height: 1.6,
-              ),
+              style: const TextStyle(fontSize: 13, height: 1.6),
             ),
           ),
           Text(
@@ -6696,8 +6283,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 if (newCount > 0)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFB91C1C),
                       borderRadius: BorderRadius.circular(12),
@@ -6787,7 +6376,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const FeedbackListPage()),
+                  MaterialPageRoute(
+                    settings: const RouteSettings(name: '/admin-feedback'),
+                    builder: (_) => const FeedbackListPage(),
+                  ),
                 ),
               ),
             ),
@@ -6859,16 +6451,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     content,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      height: 1.6,
-                    ),
+                    style: const TextStyle(fontSize: 13, height: 1.6),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
@@ -6918,10 +6509,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                     child: const Text(
                       '確認済にする',
-                      style: TextStyle(
-                        fontSize: 11,
-                        height: 1.5,
-                      ),
+                      style: TextStyle(fontSize: 11, height: 1.5),
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -6938,10 +6526,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                     child: const Text(
                       '対応完了',
-                      style: TextStyle(
-                        fontSize: 11,
-                        height: 1.5,
-                      ),
+                      style: TextStyle(fontSize: 11, height: 1.5),
                     ),
                   ),
                 ],

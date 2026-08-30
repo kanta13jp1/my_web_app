@@ -412,10 +412,20 @@ class AgentOrgService {
         .map((row) => AgentTask.fromJson(Map<String, dynamic>.from(row)))
         .toList();
 
+    // R31: agent_memories は user_id に索引が無く (索引は
+    // idx_agent_memories_agent_created(agent_id, created_at DESC) のみ)、
+    // user_id 単独で絞ると追記専用ログの全表走査になり本番で statement timeout
+    // (500 / 57014) を起こしていた。自分の agent_id 群で絞れば既存索引に載る。
+    // 本番実測: agent_id 経由 122ms vs user_id 単独 7929ms(閾値8s付近で500と往復)。
+    // agent_memories.agent_id は agents(id) への NOT NULL FK で agents は本ユーザー
+    // の全件 (ensureExecutiveAgents→_loadAgentsForUser) のため取得行は同一。
+    // user_id 条件も RLS と意図明示のため残す (索引で絞った少数行への評価で安価)。
+    final agentIds = agents.map((agent) => agent.id).toList();
     final dynamic memoryRows = await _supabase
         .from('agent_memories')
         .select()
         .eq('user_id', userId)
+        .inFilter('agent_id', agentIds)
         .order('created_at', ascending: false)
         .limit(40);
     final memories = (memoryRows as List)
@@ -702,6 +712,7 @@ class AgentOrgService {
     String? conversationId,
     bool createMessage = true,
     String? actorAgentId,
+    Map<String, dynamic> metadata = const <String, dynamic>{},
   }) async {
     final userId = _requireUserId();
     final normalizedTitle = title.trim();
@@ -759,6 +770,7 @@ class AgentOrgService {
           'task_type': taskType,
           'source': source,
           'metadata': <String, dynamic>{
+            ...metadata,
             'delegated_at': DateTime.now().toIso8601String(),
           },
         })
@@ -814,6 +826,34 @@ class AgentOrgService {
     }
 
     return task;
+  }
+
+  Future<AgentTask> updateTaskClarity({
+    required String taskId,
+    required Map<String, dynamic> clarity,
+  }) async {
+    final userId = _requireUserId();
+    final task = await _loadTaskById(taskId);
+    if (task == null) {
+      throw StateError('Task not found.');
+    }
+
+    final dynamic updatedTask = await _supabase
+        .from('agent_tasks')
+        .update({
+          'metadata': <String, dynamic>{
+            ...task.metadata,
+            'clarity': clarity,
+          },
+        })
+        .eq('id', taskId)
+        .eq('user_id', userId)
+        .select()
+        .single();
+
+    return AgentTask.fromJson(
+      Map<String, dynamic>.from(updatedTask as Map),
+    );
   }
 
   Future<void> updateTaskStatus({

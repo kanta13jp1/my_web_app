@@ -225,6 +225,47 @@ void main() {
       );
     });
 
+    test('R27 staleness warning: 3日以上でのみ警告文を返す', () {
+      String? warn(int days) => xGrowthLoopStalenessWarning(
+            measuredCount: 12,
+            newestMeasuredAt: now.subtract(Duration(days: days)),
+            now: now,
+          );
+      expect(warn(0), isNull);
+      expect(warn(2), isNull);
+      expect(warn(3), contains('3日間増えていません'));
+      expect(warn(7), contains('7日間増えていません'));
+      // 断定できないので投稿停止/cron 停止の両論併記であること。
+      expect(warn(3), contains('cron'));
+    });
+
+    test('R27 staleness warning: 計測0件 / 日付不明 / 未来時刻は警告しない', () {
+      expect(
+        xGrowthLoopStalenessWarning(
+          measuredCount: 0,
+          newestMeasuredAt: now.subtract(const Duration(days: 10)),
+          now: now,
+        ),
+        isNull,
+      );
+      expect(
+        xGrowthLoopStalenessWarning(
+          measuredCount: 12,
+          newestMeasuredAt: null,
+          now: now,
+        ),
+        isNull,
+      );
+      expect(
+        xGrowthLoopStalenessWarning(
+          measuredCount: 12,
+          newestMeasuredAt: now.add(const Duration(days: 1)),
+          now: now,
+        ),
+        isNull,
+      );
+    });
+
     test('newestMeasuredCreatedAt: max across rows (rows are score-sorted)',
         () {
       // rows[0] は高スコアの古い投稿、後続に新しい投稿 → 最新を返すこと。
@@ -382,6 +423,146 @@ void main() {
         archetypeLiftSummaryLine(resolveArchetypeLift(const [])),
         isNull,
       );
+    });
+  });
+
+  group('R28 foldVariantsForDisplay + 勝ち型/ランキングの畳み込み', () {
+    // 本番観測: fallback(平均89 n=1) が本命(平均76 n=7)を抑えて勝ち型昇格。
+    final observed = [
+      {'variant': 'unknown', 'averageScore': 122, 'count': 16},
+      {'variant': 'daily_briefing_fallback', 'averageScore': 89, 'count': 1},
+      {'variant': 'daily_briefing', 'averageScore': 76, 'count': 7},
+      {'variant': 'daily_briefing_v2_numbers', 'averageScore': 27, 'count': 1},
+    ];
+
+    test('foldVariants: _fallback を base へ畳み unknown を除外', () {
+      final folded = foldVariantsForDisplay(observed);
+      expect(folded.map((e) => e.variant), [
+        'daily_briefing',
+        'daily_briefing_v2_numbers',
+      ]);
+      // (89*1 + 76*7)/8 = 77.6 → 78, n=8
+      expect(folded.first.averageScore, 78);
+      expect(folded.first.count, 8);
+    });
+
+    test('勝ち型は畳み込み後 n>=2 の最上位 (fallback 単独 n=1 は昇格させない)', () {
+      // 旧バグは daily_briefing_fallback を返していた。
+      expect(resolveDisplayBestVariant('unknown', observed), 'daily_briefing');
+    });
+
+    test('全 variant が n=1 → 勝ち型 null (断定しない)', () {
+      final allSingle = [
+        {'variant': 'daily_briefing', 'averageScore': 90, 'count': 1},
+        {'variant': 'question_post', 'averageScore': 10, 'count': 1},
+      ];
+      expect(resolveDisplayBestVariant('daily_briefing', allSingle), isNull);
+    });
+
+    test('サーバ bestVariant が名前でも実測が薄ければ信用しない', () {
+      // bestVariant='daily_briefing' でも variants 空 → 実測無し → null。
+      expect(resolveDisplayBestVariant('daily_briefing', const []), isNull);
+      expect(resolveDisplayBestVariant('daily_briefing', null), isNull);
+    });
+
+    test('不正要素は無視', () {
+      expect(
+        resolveDisplayBestVariant('unknown', [
+          {'variant': 'unknown', 'count': 9},
+          {'variant': ''},
+          'not-a-map',
+        ]),
+        isNull,
+      );
+    });
+  });
+
+  group('R28 archetypeLiftSummaryLine: 実測0件バケットは計測中のみ表示', () {
+    test('count=0 & pending>0 → 「実測不足 (0件…)」でなく「計測中N件」', () {
+      final line = archetypeLiftSummaryLine(
+        resolveArchetypeLift([
+          {'archetype': 'product_promo', 'i72h': 119},
+          {'archetype': 'product_promo', 'i72h': 118},
+          {'archetype': 'data_report', 'i72h': null},
+        ]),
+      );
+      expect(line, contains('データレポート型 計測中1件'));
+      expect(line, isNot(contains('データレポート型 実測不足')));
+      expect(line, isNot(contains('0件')));
+    });
+
+    test('count>=1 だが n<2 は従来どおり「実測不足 (N件…)」', () {
+      final line = archetypeLiftSummaryLine(
+        resolveArchetypeLift([
+          {'archetype': 'news_briefing', 'i72h': 100},
+          {'archetype': 'news_briefing', 'i72h': 90},
+          {'archetype': 'product_promo', 'i72h': 10},
+          {'archetype': 'product_promo', 'i72h': null},
+        ]),
+      );
+      expect(line, contains('製品紹介型 実測不足 (1件・計測中1件)'));
+    });
+  });
+  group('R29 auto error report helpers (可視化カード)', () {
+    test('autoErrorPreviewLine: firstLine 優先', () {
+      expect(
+        autoErrorPreviewLine(
+          {'firstLine': 'Null check operator', 'message': 'x'},
+        ),
+        'Null check operator',
+      );
+    });
+
+    test('autoErrorPreviewLine: firstLine 空なら message から復元 (ヘッダ除外)', () {
+      expect(
+        autoErrorPreviewLine({
+          'message': '[自動エラー報告]\nRangeError: bad index\n#0 foo',
+        }),
+        'RangeError: bad index',
+      );
+      expect(autoErrorPreviewLine({'message': '[自動エラー報告]'}), '');
+      expect(autoErrorPreviewLine({}), '');
+    });
+
+    test('parseAutoErrorReports: 行を写像・非Mapは無視', () {
+      final entries = parseAutoErrorReports([
+        {
+          'id': 'a1',
+          'firstLine': 'boom',
+          'createdAt': '2026-07-18T09:00:00Z',
+        },
+        'not-a-map',
+        {'id': 2, 'message': '[自動エラー報告]\nsecond'},
+      ]);
+      expect(entries.length, 2);
+      expect(entries[0].id, 'a1');
+      expect(entries[0].firstLine, 'boom');
+      expect(entries[1].id, '2');
+      expect(entries[1].firstLine, 'second');
+      expect(parseAutoErrorReports(null), isEmpty);
+    });
+
+    test('autoErrorReportsHealthLabel: 0件は正常表記', () {
+      expect(autoErrorReportsHealthLabel(0), '自動エラー報告なし（正常）');
+      expect(autoErrorReportsHealthLabel(3), '自動エラー報告 3件');
+    });
+  });
+  group('R30 growthSummaryHasMetrics (捏造ゼロ防止)', () {
+    test('metric キーがあれば true', () {
+      expect(growthSummaryHasMetrics({'newUsers': 3, 'label': '今日'}), isTrue);
+      expect(growthSummaryHasMetrics({'totalUsersEver': 44}), isTrue);
+    });
+
+    test('achievement.list の {success, items} は false (集計未接続)', () {
+      expect(
+        growthSummaryHasMetrics({'success': true, 'items': <dynamic>[]}),
+        isFalse,
+      );
+    });
+
+    test('null / 空は false', () {
+      expect(growthSummaryHasMetrics(null), isFalse);
+      expect(growthSummaryHasMetrics(<String, dynamic>{}), isFalse);
     });
   });
 }

@@ -181,6 +181,16 @@ def latest_migrations(migrations_dir: Path, limit: int) -> list[Path]:
     return sorted(files, key=lambda p: p.name, reverse=True)[:limit]
 
 
+def local_migration_versions(migrations_dir: Path) -> set[str]:
+    if not migrations_dir.exists():
+        return set()
+    return {
+        match.group(1)
+        for path in migrations_dir.iterdir()
+        if path.is_file() and (match := MIGRATION_FILE_RE.match(path.name))
+    }
+
+
 def read_log_text(path: Path) -> str:
     data = path.read_bytes()
     sample = data[:2000]
@@ -547,12 +557,68 @@ def log_digest(log_text: str, kind: str, max_lines: int) -> list[str]:
 
 def classify_migration_failure(log_text: str) -> tuple[str, list[str]]:
     lower = log_text.lower()
-    versions = sorted(set(VERSION_RE.findall(log_text)))
-    if "schema_migrations_pkey" in lower or "duplicate key" in lower:
-        return "applied", versions
+    recommended_statuses: set[str] = set()
+    recommended_versions: set[str] = set()
+    for line in log_text.splitlines():
+        if "supabase migration repair" not in line.lower():
+            continue
+        status_match = re.search(r"--status\s+(applied|reverted)\b", line, re.IGNORECASE)
+        versions = VERSION_RE.findall(line)
+        if status_match and versions:
+            recommended_statuses.add(status_match.group(1).lower())
+            recommended_versions.update(versions)
+    if len(recommended_statuses) == 1 and recommended_versions:
+        return recommended_statuses.pop(), sorted(recommended_versions)
+    if len(recommended_statuses) > 1:
+        return "unknown", []
+
+    if "schema_migrations_pkey" in lower and "duplicate key" in lower:
+        lines = log_text.splitlines()
+        duplicate_versions: set[str] = set()
+        for index, line in enumerate(lines):
+            match = re.search(
+                r"key\s*\(\s*version\s*\)\s*=\s*\(\s*(\d{14})\s*\)",
+                line,
+                re.IGNORECASE,
+            )
+            if not match:
+                continue
+            diagnostic_block = "\n".join(
+                lines[max(0, index - 3) : min(len(lines), index + 4)]
+            ).lower()
+            if (
+                "schema_migrations_pkey" in diagnostic_block
+                and "duplicate key" in diagnostic_block
+            ):
+                duplicate_versions.add(match.group(1))
+        return "applied", sorted(duplicate_versions)
     if "remote migration" in lower or "migration versions not found" in lower:
-        return "reverted", versions
-    return "unknown", versions
+        lines = log_text.splitlines()
+        marker = next(
+            (
+                index
+                for index, line in enumerate(lines)
+                if "remote migration" in line.lower()
+                or "migration versions not found" in line.lower()
+            ),
+            None,
+        )
+        if marker is not None:
+            remote_versions: set[str] = set()
+            table_started = False
+            for line in lines[marker + 1 : marker + 30]:
+                match = re.match(r"^\s*\|?\s*(\d{14})\s*(?:\|.*)?$", line)
+                if match:
+                    table_started = True
+                    remote_versions.add(match.group(1))
+                    continue
+                if table_started:
+                    break
+                if not line.strip() or re.match(r"^\s*[|+:-]+\s*$", line):
+                    continue
+                break
+            return "reverted", sorted(remote_versions)
+    return "unknown", []
 
 
 def run_command(command: list[str], log_path: Path) -> int:
@@ -641,8 +707,15 @@ def supabase_db_push(args: argparse.Namespace) -> int:
     log_dir.mkdir(parents=True, exist_ok=True)
     push_log = log_dir / "supabase-db-push.log"
     migration_list_log = log_dir / "supabase-migration-list.log"
+    preflight_log = log_dir / "supabase-migration-preflight.log"
 
-    recent = latest_migrations(Path(args.migrations_dir), args.recent_limit)
+    # Each invocation must classify only its own command output. Reusing a log
+    # directory must never replay an earlier repair recommendation or error.
+    push_log.write_text("", encoding="utf-8")
+    migration_list_log.write_text("", encoding="utf-8")
+
+    migrations_dir = Path(args.migrations_dir)
+    recent = latest_migrations(migrations_dir, args.recent_limit)
     timestamp = datetime.now(timezone.utc).isoformat()
     summary_lines = [
         f"- Checked at: `{timestamp}`",
@@ -655,7 +728,7 @@ def supabase_db_push(args: argparse.Namespace) -> int:
         summary_lines.append("```")
     append_summary(args.summary, "Supabase migration preflight", summary_lines)
 
-    with push_log.open("w", encoding="utf-8", newline="\n") as fh:
+    with preflight_log.open("w", encoding="utf-8", newline="\n") as fh:
         fh.write(f"checked_at={timestamp}\n")
         fh.write("recent_migrations:\n")
         for migration in recent:
@@ -689,8 +762,45 @@ def supabase_db_push(args: argparse.Namespace) -> int:
         print("No safe migration repair action detected; leaving failure intact.")
         return first_exit
 
+    local_versions = local_migration_versions(migrations_dir)
+    invalid_versions = (
+        [version for version in versions if version not in local_versions]
+        if repair_status == "applied"
+        else [version for version in versions if version in local_versions]
+    )
+    if invalid_versions:
+        append_summary(
+            args.summary,
+            "Supabase migration repair rejected",
+            [
+                f"- Repair status: `{repair_status}`",
+                f"- Unsafe versions: `{', '.join(invalid_versions)}`",
+                "- Result: no migration history changes were attempted.",
+            ],
+        )
+        print(
+            "Migration repair direction did not match the local migration set; "
+            "leaving failure intact."
+        )
+        return first_exit
+
     for version in versions:
-        run_command(["supabase", "migration", "repair", "--status", repair_status, version], push_log)
+        repair_exit = run_command(
+            ["supabase", "migration", "repair", "--status", repair_status, version],
+            push_log,
+        )
+        if repair_exit != 0:
+            append_summary(
+                args.summary,
+                "Supabase migration repair failed",
+                [
+                    f"- Repair status: `{repair_status}`",
+                    f"- Failed version: `{version}`",
+                    f"- Repair exit: `{repair_exit}`",
+                    "- Result: database push was not retried.",
+                ],
+            )
+            return repair_exit
 
     retry_exit = run_command(push_args, push_log)
     result = "succeeded" if retry_exit == 0 else "failed"

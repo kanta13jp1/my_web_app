@@ -16,6 +16,7 @@ import '../services/gamification_service.dart';
 import '../services/completion_goal_service.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 class MorningBriefingPage extends StatefulWidget {
   const MorningBriefingPage({super.key});
@@ -25,7 +26,19 @@ class MorningBriefingPage extends StatefulWidget {
 }
 
 class _MorningBriefingPageState extends State<MorningBriefingPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  // タブ: タスク / カレンダー / 履歴 / ストック
+  @override
+  List<String> get tabUrlSlugs => const <String>[
+        'tasks',
+        'calendar',
+        'history',
+        'stock',
+      ];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final TextEditingController _todoController = TextEditingController();
   List<Map<String, dynamic>> _todos = [];
   List<Map<String, dynamic>> _subtasks = [];

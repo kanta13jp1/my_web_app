@@ -14,6 +14,12 @@ on:
         description: "Number of recent X post logs to collect"
         required: false
         default: "100"
+      utm_content:
+        description: "First-user campaign variant to join to the LP funnel"
+        required: false
+        default: "outcome_first_a"
+
+permissions: {}
 
 concurrency:
   group: x-post-metrics-optimizer
@@ -21,6 +27,7 @@ concurrency:
 
 jobs:
   collect:
+    permissions: {}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -67,3 +74,59 @@ jobs:
           INPUT_LIMIT: ${{ github.event.inputs.limit }}
           EVENT_SCHEDULE: ${{ github.event.schedule }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Build first-user acquisition funnel checkpoint
+        shell: bash
+        run: |
+          utm_content="${INPUT_UTM_CONTENT:-outcome_first_a}"
+          payload=$(jq -cn \
+            --arg utm_content "${utm_content}" \
+            '{
+              action: "x.first_user_funnel",
+              limit: 100,
+              utmMedium: "organic",
+              utmContent: $utm_content
+            }')
+          http_code=$(curl --silent --show-error \
+            --output "${RUNNER_TEMP}/first-user-funnel.json" \
+            --write-out "%{http_code}" \
+            --request POST \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data "${payload}" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/growth-hub")
+          cat "${RUNNER_TEMP}/first-user-funnel.json"
+          success=$(jq -r '.success // false' \
+            "${RUNNER_TEMP}/first-user-funnel.json")
+          if [ "${http_code}" != "200" ] || [ "${success}" != "true" ]; then
+            echo "::error::First-user funnel report failed (HTTP ${http_code})."
+            exit 1
+          fi
+          {
+            echo "## First-user acquisition checkpoint"
+            echo
+            echo "- Attribution: \`x / organic / first_user_growth / ${utm_content}\`"
+            echo "- X window: $(jq -r '.x.metricWindowLabel // "awaiting publish"' "${RUNNER_TEMP}/first-user-funnel.json")"
+            echo "- Impressions: $(jq -r '.x.impressions // 0' "${RUNNER_TEMP}/first-user-funnel.json")"
+            echo "- Unique views: $(jq -r '.funnel.counts.view // 0' "${RUNNER_TEMP}/first-user-funnel.json")"
+            echo "- Trials: $(jq -r '.funnel.counts.trial // 0' "${RUNNER_TEMP}/first-user-funnel.json")"
+            echo "- Signup completes: $(jq -r '.funnel.counts.signup_complete // 0' "${RUNNER_TEMP}/first-user-funnel.json")"
+            echo "- First actions: $(jq -r '.funnel.counts.first_action_completed // 0' "${RUNNER_TEMP}/first-user-funnel.json")"
+            echo "- Supporter checkouts: $(jq -r '.funnel.counts.supporter_checkout // 0' "${RUNNER_TEMP}/first-user-funnel.json")"
+            echo "- Revenue JPY: $(jq -r '.revenue.revenueJpy // 0' "${RUNNER_TEMP}/first-user-funnel.json")"
+            echo "- Decision: \`$(jq -r '.decision.stage' "${RUNNER_TEMP}/first-user-funnel.json")\`"
+            echo "- Change one variable: \`$(jq -r '.decision.nextVariable' "${RUNNER_TEMP}/first-user-funnel.json")\`"
+            echo "- Next action: $(jq -r '.decision.nextAction' "${RUNNER_TEMP}/first-user-funnel.json")"
+          } >> "${GITHUB_STEP_SUMMARY}"
+        env:
+          INPUT_UTM_CONTENT: ${{ github.event.inputs.utm_content }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Upload first-user funnel evidence
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: first-user-funnel-${{ github.run_id }}
+          path: ${{ runner.temp }}/first-user-funnel.json
+          if-no-files-found: error
+          retention-days: 30

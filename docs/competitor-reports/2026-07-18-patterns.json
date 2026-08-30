@@ -1,0 +1,1185 @@
+{
+  "generated_at": "2026-07-17T22:44:46Z",
+  "source_files": [
+    "docs/competitor-reports/2026-07-18.md"
+  ],
+  "min_confidence": 0.5,
+  "entries_total": 39,
+  "filter_summary": {
+    "total": 39,
+    "by_verdict": {
+      "pass": 0,
+      "review": 39,
+      "drop": 0
+    },
+    "risk_flags": {
+      "missing_source_url": 39
+    }
+  },
+  "entries": [
+    {
+      "entry": {
+        "entry_id": "nf-44192ab42d14",
+        "title": "エグゼクティブサマリー (前回 [2026-07-17](./2026-07-17.md) 比 — 新シグナルのみ)",
+        "text": "エグゼクティブサマリー (前回 [2026-07-17](./2026-07-17.md) 比 — 新シグナルのみ)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "エグゼクティブサマリー (前回 [2026-07-17](./2026-07-17.md) 比 — 新シグナルのみ)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-44192ab42d14",
+        "title": "エグゼクティブサマリー (前回 [2026-07-17](./2026-07-17.md) 比 — 新シグナルのみ)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3bdb578df4bb",
+        "title": "詳細セクション (重大シグナルのみ深掘り)",
+        "text": "詳細セクション (重大シグナルのみ深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "詳細セクション (重大シグナルのみ深掘り)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3bdb578df4bb",
+        "title": "詳細セクション (重大シグナルのみ深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8aa1c80b45f9",
+        "title": "一次情報**: Visa Investor Relations newsroom「Visa Introduces AI Financial Assistant, Helping Banks Guide Customers from Insi",
+        "text": "一次情報**: Visa Investor Relations newsroom「Visa Introduces AI Financial Assistant, Helping Banks Guide Customers from Insight to Action」(2026-07-14)。American Banker / PYMNTS / Digital Commerce 360 が同日報道。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "一次情報**: Visa Investor Relations newsroom「Visa Introduces AI Financial Assistant, Helping Banks Guide Customers from Insight to Action」(2026-07-14)。American Banker / PYMNTS / Digital Commerce 360 が同日報道。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8aa1c80b45f9",
+        "title": "一次情報**: Visa Investor Relations newsroom「Visa Introduces AI Financial Assistant, Helping Banks Guide Customers from Insi",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9a05186eeb1b",
+        "title": "タイムライン**: 発表 2026-07-14 → **US 金融機関向け pilot は 8 月** → その後 **global rollout** 予定。",
+        "text": "タイムライン**: 発表 2026-07-14 → **US 金融機関向け pilot は 8 月** → その後 **global rollout** 予定。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "タイムライン**: 発表 2026-07-14 → **US 金融機関向け pilot は 8 月** → その後 **global rollout** 予定。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9a05186eeb1b",
+        "title": "タイムライン**: 発表 2026-07-14 → **US 金融機関向け pilot は 8 月** → その後 **global rollout** 予定。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a0826118bfe4",
+        "title": "アーキテクチャ (昨日の理解を強化)**:",
+        "text": "アーキテクチャ (昨日の理解を強化)**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "アーキテクチャ (昨日の理解を強化)**:"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a0826118bfe4",
+        "title": "アーキテクチャ (昨日の理解を強化)**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e4c67b1bc911",
+        "title": "Visa の**グローバル network = 年間 300B+ トランザクション**を基盤に、cardholder の行動 + リアルタイムデータ + **各金融機関自身のデータ**を組み合わせてパーソナライズ。",
+        "text": "Visa の**グローバル network = 年間 300B+ トランザクション**を基盤に、cardholder の行動 + リアルタイムデータ + **各金融機関自身のデータ**を組み合わせてパーソナライズ。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Visa の**グローバル network = 年間 300B+ トランザクション**を基盤に、cardholder の行動 + リアルタイムデータ + **各金融機関自身のデータ**を組み合わせてパーソナライズ。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e4c67b1bc911",
+        "title": "Visa の**グローバル network = 年間 300B+ トランザクション**を基盤に、cardholder の行動 + リアルタイムデータ + **各金融機関自身のデータ**を組み合わせてパーソナライズ。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8c2ffc81f093",
+        "title": "white-label / bank-branded**: 各 FI が**自社のブランド・look & feel** で提供でき、**カスタム開発不要**。Visa の AI・データガバナンス基準下で、secure banking 環境内",
+        "text": "white-label / bank-branded**: 各 FI が**自社のブランド・look & feel** で提供でき、**カスタム開発不要**。Visa の AI・データガバナンス基準下で、secure banking 環境内で稼働 (セキュリティ・コンプライアンス・不正対策込み)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "white-label / bank-branded**: 各 FI が**自社のブランド・look & feel** で提供でき、**カスタム開発不要**。Visa の AI・データガバナンス基準下で、secure banking 環境内で稼働 (セキュリティ・コンプライアンス・不正対策込み)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8c2ffc81f093",
+        "title": "white-label / bank-branded**: 各 FI が**自社のブランド・look & feel** で提供でき、**カスタム開発不要**。Visa の AI・データガバナンス基準下で、secure banking 環境内",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-927bf62791eb",
+        "title": "機能: 月次の支出インサイト / カード活動に基づく**自然言語 Q&A** / 会話内での**カード lock・アラート設定** / 銀行記録に基づくパーソナライズ提案。",
+        "text": "機能: 月次の支出インサイト / カード活動に基づく**自然言語 Q&A** / 会話内での**カード lock・アラート設定** / 銀行記録に基づくパーソナライズ提案。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "機能: 月次の支出インサイト / カード活動に基づく**自然言語 Q&A** / 会話内での**カード lock・アラート設定** / 銀行記録に基づくパーソナライズ提案。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-927bf62791eb",
+        "title": "機能: 月次の支出インサイト / カード活動に基づく**自然言語 Q&A** / 会話内での**カード lock・アラート設定** / 銀行記録に基づくパーソナライズ提案。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-89af74c2c2c1",
+        "title": "脅威分析 (対自社 個人 B/S)**:",
+        "text": "脅威分析 (対自社 個人 B/S)**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "脅威分析 (対自社 個人 B/S)**:"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-89af74c2c2c1",
+        "title": "脅威分析 (対自社 個人 B/S)**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-dfaf8823a4db",
+        "title": "ChatGPT は「ユーザーが**能動的に**口座接続」= 一定の獲得 friction。Visa は「ユーザーが**既に毎日使う銀行アプリの内側**」に AI 家計機能を**配給** = **獲得 friction ゼロ / 信頼済みチャ",
+        "text": "ChatGPT は「ユーザーが**能動的に**口座接続」= 一定の獲得 friction。Visa は「ユーザーが**既に毎日使う銀行アプリの内側**」に AI 家計機能を**配給** = **獲得 friction ゼロ / 信頼済みチャネル / 銀行の顧客基盤にそのまま乗る**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ChatGPT は「ユーザーが**能動的に**口座接続」= 一定の獲得 friction。Visa は「ユーザーが**既に毎日使う銀行アプリの内側**」に AI 家計機能を**配給** = **獲得 friction ゼロ / 信頼済みチャネル / 銀行の顧客基盤にそのまま乗る**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-dfaf8823a4db",
+        "title": "ChatGPT は「ユーザーが**能動的に**口座接続」= 一定の獲得 friction。Visa は「ユーザーが**既に毎日使う銀行アプリの内側**」に AI 家計機能を**配給** = **獲得 friction ゼロ / 信頼済みチャ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-6a0e5a564aa9",
+        "title": "つまり個人 B/S 可視化の競争は「アプリ単体の機能勝負」ではなく「**どの distribution channel を握るか**」へシフト。自社 (単体 Flutter Web アプリ) が最も薄くなる軸。",
+        "text": "つまり個人 B/S 可視化の競争は「アプリ単体の機能勝負」ではなく「**どの distribution channel を握るか**」へシフト。自社 (単体 Flutter Web アプリ) が最も薄くなる軸。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "つまり個人 B/S 可視化の競争は「アプリ単体の機能勝負」ではなく「**どの distribution channel を握るか**」へシフト。自社 (単体 Flutter Web アプリ) が最も薄くなる軸。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-6a0e5a564aa9",
+        "title": "つまり個人 B/S 可視化の競争は「アプリ単体の機能勝負」ではなく「**どの distribution channel を握るか**」へシフト。自社 (単体 Flutter Web アプリ) が最も薄くなる軸。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7437a645d341",
+        "title": "ただし現時点は**金融機関向け pilot 前段階** (消費者到達は 8 月 pilot 以降)。よって**採択せず signal 層維持**。**consumer 到達 or 日本の金融機関 (メガバンク/カード会社) への波及**を確",
+        "text": "ただし現時点は**金融機関向け pilot 前段階** (消費者到達は 8 月 pilot 以降)。よって**採択せず signal 層維持**。**consumer 到達 or 日本の金融機関 (メガバンク/カード会社) への波及**を確認でき次第、7-24 unlock 時の第 1 候補として昇格判断。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ただし現時点は**金融機関向け pilot 前段階** (消費者到達は 8 月 pilot 以降)。よって**採択せず signal 層維持**。**consumer 到達 or 日本の金融機関 (メガバンク/カード会社) への波及**を確認でき次第、7-24 unlock 時の第 1 候補として昇格判断。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7437a645d341",
+        "title": "ただし現時点は**金融機関向け pilot 前段階** (消費者到達は 8 月 pilot 以降)。よって**採択せず signal 層維持**。**consumer 到達 or 日本の金融機関 (メガバンク/カード会社) への波及**を確",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b4349c825dba",
+        "title": "自社への示唆**: 「口座接続 + ダッシュボード + AI Q&A」は ChatGPT ($20/月) に続き Visa (銀行埋込・実質無料) でもコモディティ化が進む。**日本語金融文脈 × 自己経営ナラティブ**以外の機能差別化は主",
+        "text": "自社への示唆**: 「口座接続 + ダッシュボード + AI Q&A」は ChatGPT ($20/月) に続き Visa (銀行埋込・実質無料) でもコモディティ化が進む。**日本語金融文脈 × 自己経営ナラティブ**以外の機能差別化は主張しにくくなる。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社への示唆**: 「口座接続 + ダッシュボード + AI Q&A」は ChatGPT ($20/月) に続き Visa (銀行埋込・実質無料) でもコモディティ化が進む。**日本語金融文脈 × 自己経営ナラティブ**以外の機能差別化は主張しにくくなる。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b4349c825dba",
+        "title": "自社への示唆**: 「口座接続 + ダッシュボード + AI Q&A」は ChatGPT ($20/月) に続き Visa (銀行埋込・実質無料) でもコモディティ化が進む。**日本語金融文脈 × 自己経営ナラティブ**以外の機能差別化は主",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-51504b6888e6",
+        "title": "personal finance: **Plus GA 6-25** (web/iOS/Android) / **Plaid 経由 12,000+ 金融機関** / ダッシュボード (ポートフォリオ性能・支出・サブスク・今後の支払い) / ",
+        "text": "personal finance: **Plus GA 6-25** (web/iOS/Android) / **Plaid 経由 12,000+ 金融機関** / ダッシュボード (ポートフォリオ性能・支出・サブスク・今後の支払い) / **Intuit 連携は \"coming soon\"**。本日巡回で GA 拡大・Intuit 実装・新地域の**新規シグナルなし**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "personal finance: **Plus GA 6-25** (web/iOS/Android) / **Plaid 経由 12,000+ 金融機関** / ダッシュボード (ポートフォリオ性能・支出・サブスク・今後の支払い) / **Intuit 連携は \"coming soon\"**。本日巡回で GA 拡大・Intuit 実装・新地域の**新規シグナルなし**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-51504b6888e6",
+        "title": "personal finance: **Plus GA 6-25** (web/iOS/Android) / **Plaid 経由 12,000+ 金融機関** / ダッシュボード (ポートフォリオ性能・支出・サブスク・今後の支払い) / ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-896246537e93",
+        "title": "ChatGPT Work / workspace agents: 7-6 従量課金 GA (input/cached/output メータ / 1 run ≈ 5-25 credit) 以降の**新シグナルなし**。",
+        "text": "ChatGPT Work / workspace agents: 7-6 従量課金 GA (input/cached/output メータ / 1 run ≈ 5-25 credit) 以降の**新シグナルなし**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ChatGPT Work / workspace agents: 7-6 従量課金 GA (input/cached/output メータ / 1 run ≈ 5-25 credit) 以降の**新シグナルなし**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-896246537e93",
+        "title": "ChatGPT Work / workspace agents: 7-6 従量課金 GA (input/cached/output メータ / 1 run ≈ 5-25 credit) 以降の**新シグナルなし**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9ab2f321ad54",
+        "title": "監視継続点: (a) Intuit 連携の GA 化、(b) personal finance の US 外 (日本含む) 展開、(c) workspace agent 課金/統治 UI の拡張。いずれも出れば次サイクルで深掘り。",
+        "text": "監視継続点: (a) Intuit 連携の GA 化、(b) personal finance の US 外 (日本含む) 展開、(c) workspace agent 課金/統治 UI の拡張。いずれも出れば次サイクルで深掘り。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "監視継続点: (a) Intuit 連携の GA 化、(b) personal finance の US 外 (日本含む) 展開、(c) workspace agent 課金/統治 UI の拡張。いずれも出れば次サイクルで深掘り。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9ab2f321ad54",
+        "title": "監視継続点: (a) Intuit 連携の GA 化、(b) personal finance の US 外 (日本含む) 展開、(c) workspace agent 課金/統治 UI の拡張。いずれも出れば次サイクルで深掘り。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3fde6e032ceb",
+        "title": "監視トリガー「**ME に AI エージェント/自律アドバイス層が載る瞬間**」は本日も**点火なし**。ME は個人資産管理として稼働 (7-7 に「暗号資産」独立カテゴリ化 = 既報)。",
+        "text": "監視トリガー「**ME に AI エージェント/自律アドバイス層が載る瞬間**」は本日も**点火なし**。ME は個人資産管理として稼働 (7-7 に「暗号資産」独立カテゴリ化 = 既報)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "監視トリガー「**ME に AI エージェント/自律アドバイス層が載る瞬間**」は本日も**点火なし**。ME は個人資産管理として稼働 (7-7 に「暗号資産」独立カテゴリ化 = 既報)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3fde6e032ceb",
+        "title": "監視トリガー「**ME に AI エージェント/自律アドバイス層が載る瞬間**」は本日も**点火なし**。ME は個人資産管理として稼働 (7-7 に「暗号資産」独立カテゴリ化 = 既報)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-77676e415c16",
+        "title": "AI Cowork** は 2026 年 7 月提供開始・先行受付、対象は「マネーフォワード クラウド」利用**法人**のバックオフィス (経理・労務・法務ほか)。中核は指示を解釈して適切な AI エージェントへ振り分ける**オーケストレー",
+        "text": "AI Cowork** は 2026 年 7 月提供開始・先行受付、対象は「マネーフォワード クラウド」利用**法人**のバックオフィス (経理・労務・法務ほか)。中核は指示を解釈して適切な AI エージェントへ振り分ける**オーケストレーター** (Claude Agent SDK / Claude API 基盤) + ガードレール。**個人 (家計) 向け進出は本日も未確認**。監視は ME × AI 側へ資源配分継続。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "AI Cowork** は 2026 年 7 月提供開始・先行受付、対象は「マネーフォワード クラウド」利用**法人**のバックオフィス (経理・労務・法務ほか)。中核は指示を解釈して適切な AI エージェントへ振り分ける**オーケストレーター** (Claude Agent SDK / Claude API 基盤) + ガードレール。**個人 (家計) 向け進出は本日も未確認**。監視は ME × AI 側へ資源配分継続。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-77676e415c16",
+        "title": "AI Cowork** は 2026 年 7 月提供開始・先行受付、対象は「マネーフォワード クラウド」利用**法人**のバックオフィス (経理・労務・法務ほか)。中核は指示を解釈して適切な AI エージェントへ振り分ける**オーケストレー",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-fb7710852fd3",
+        "title": "Anthropic**: 7 月の新機能 = **Reflect (月次 recap dashboard / 7-9 頃 / Free・Pro・Max beta / memory 前提)**、**Cowork の web/mobile 展開",
+        "text": "Anthropic**: 7 月の新機能 = **Reflect (月次 recap dashboard / 7-9 頃 / Free・Pro・Max beta / memory 前提)**、**Cowork の web/mobile 展開 (7-7 / Max 先行 / リモートセッションはサーバ実行)**、memory の categorized entries 化、M365 コネクタの write ツール、Claude for Teachers、HIPAA self-serve。Reflect は自社 **Second Brain / KPI** ナラティブに**隣接**するが**個人 B/S の直接競合ではない**。いずれも 7-14/7-15/7-17 既報の範囲で**戦略級 delta なし**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Anthropic**: 7 月の新機能 = **Reflect (月次 recap dashboard / 7-9 頃 / Free・Pro・Max beta / memory 前提)**、**Cowork の web/mobile 展開 (7-7 / Max 先行 / リモートセッションはサーバ実行)**、memory の categorized entries 化、M365 コネクタの write ツール、Claude for Teachers、HIPAA self-serve。Reflect は自社 **Second Brain / KPI** ナラティブに**隣接**するが**個人 B/S の直接競合ではない**。いずれも 7-14/7-15/7-17 既報の範囲で**戦略級 delta なし**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-fb7710852fd3",
+        "title": "Anthropic**: 7 月の新機能 = **Reflect (月次 recap dashboard / 7-9 頃 / Free・Pro・Max beta / memory 前提)**、**Cowork の web/mobile 展開",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e9b36aa0ce24",
+        "title": "dev-tool クラスタ** (Claude Code / Codex / Cursor / Copilot / Antigravity 他): 同一 agentic blueprint へ収斂し差は *harness* にあるという業界",
+        "text": "dev-tool クラスタ** (Claude Code / Codex / Cursor / Copilot / Antigravity 他): 同一 agentic blueprint へ収斂し差は *harness* にあるという業界総括が継続 = 自社ナラティブと同方向。**signal 層留置・深掘り不要**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "dev-tool クラスタ** (Claude Code / Codex / Cursor / Copilot / Antigravity 他): 同一 agentic blueprint へ収斂し差は *harness* にあるという業界総括が継続 = 自社ナラティブと同方向。**signal 層留置・深掘り不要**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e9b36aa0ce24",
+        "title": "dev-tool クラスタ** (Claude Code / Codex / Cursor / Copilot / Antigravity 他): 同一 agentic blueprint へ収斂し差は *harness* にあるという業界",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-547ec212c4ff",
+        "title": "Motion** (named-employee AI): 7-17 で確定した通り Series C ($60M @ $550M) は **2025-12 (~7 ヶ月前)** で**基準 c 不成立**。本日も新エージェント/個人向け展",
+        "text": "Motion** (named-employee AI): 7-17 で確定した通り Series C ($60M @ $550M) は **2025-12 (~7 ヶ月前)** で**基準 c 不成立**。本日も新エージェント/個人向け展開/新規調達の**新シグナルなし** → **保留継続**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Motion** (named-employee AI): 7-17 で確定した通り Series C ($60M @ $550M) は **2025-12 (~7 ヶ月前)** で**基準 c 不成立**。本日も新エージェント/個人向け展開/新規調達の**新シグナルなし** → **保留継続**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-547ec212c4ff",
+        "title": "Motion** (named-employee AI): 7-17 で確定した通り Series C ($60M @ $550M) は **2025-12 (~7 ヶ月前)** で**基準 c 不成立**。本日も新エージェント/個人向け展",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ad59f2feb100",
+        "title": "Monarch / Copilot Money / Cleo** (connected-account copilot 勢): 7 月の**新規調達・重大機能なし** (Monarch の AI Assistant/goals/equity",
+        "text": "Monarch / Copilot Money / Cleo** (connected-account copilot 勢): 7 月の**新規調達・重大機能なし** (Monarch の AI Assistant/goals/equity/receipt-scan は \"entering 2026\" 既存で 30 日内リリースに非該当)。**signal 層で基準値作り継続**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Monarch / Copilot Money / Cleo** (connected-account copilot 勢): 7 月の**新規調達・重大機能なし** (Monarch の AI Assistant/goals/equity/receipt-scan は \"entering 2026\" 既存で 30 日内リリースに非該当)。**signal 層で基準値作り継続**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ad59f2feb100",
+        "title": "Monarch / Copilot Money / Cleo** (connected-account copilot 勢): 7 月の**新規調達・重大機能なし** (Monarch の AI Assistant/goals/equity",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-002422975c33",
+        "title": "新興プレイヤー全体**: 7 月の AI エージェント調達 (~$1.8B / 12+ deals) は**エンタープライズ back-office / dev-tool 偏重**で、horizontal な個人ファイナンス / super",
+        "text": "新興プレイヤー全体**: 7 月の AI エージェント調達 (~$1.8B / 12+ deals) は**エンタープライズ back-office / dev-tool 偏重**で、horizontal な個人ファイナンス / super-app の新規参入は薄い。個人ライフ隣接は Savi ($7M seed / 家族向け通話・SMS の詐欺スクリーニング) 程度で**軸が遠い** → 候補昇格に足るものなし。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "新興プレイヤー全体**: 7 月の AI エージェント調達 (~$1.8B / 12+ deals) は**エンタープライズ back-office / dev-tool 偏重**で、horizontal な個人ファイナンス / super-app の新規参入は薄い。個人ライフ隣接は Savi ($7M seed / 家族向け通話・SMS の詐欺スクリーニング) 程度で**軸が遠い** → 候補昇格に足るものなし。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-002422975c33",
+        "title": "新興プレイヤー全体**: 7 月の AI エージェント調達 (~$1.8B / 12+ deals) は**エンタープライズ back-office / dev-tool 偏重**で、horizontal な個人ファイナンス / super",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0370a642fba5",
+        "title": "Discovery セクション",
+        "text": "Discovery セクション",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Discovery セクション"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0370a642fba5",
+        "title": "Discovery セクション",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1ffa3781c550",
+        "title": "cooldown**: 最終 discovery = OpenAI ChatGPT (7-17 採択) → 本日 7-18 = 1 日後。**次回 discovery unlock = 2026-07-24** (7 日後)。",
+        "text": "cooldown**: 最終 discovery = OpenAI ChatGPT (7-17 採択) → 本日 7-18 = 1 日後。**次回 discovery unlock = 2026-07-24** (7 日後)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "cooldown**: 最終 discovery = OpenAI ChatGPT (7-17 採択) → 本日 7-18 = 1 日後。**次回 discovery unlock = 2026-07-24** (7 日後)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1ffa3781c550",
+        "title": "cooldown**: 最終 discovery = OpenAI ChatGPT (7-17 採択) → 本日 7-18 = 1 日後。**次回 discovery unlock = 2026-07-24** (7 日後)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c2d4f72bebf0",
+        "title": "skip 記録**: `_competitors.json` の `discovery_history` に 2026-07-18 の skip entry を追記 (name=null / category=skip)。27 社 / ca",
+        "text": "skip 記録**: `_competitors.json` の `discovery_history` に 2026-07-18 の skip entry を追記 (name=null / category=skip)。27 社 / cap 50 変わらず。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "skip 記録**: `_competitors.json` の `discovery_history` に 2026-07-18 の skip entry を追記 (name=null / category=skip)。27 社 / cap 50 変わらず。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c2d4f72bebf0",
+        "title": "skip 記録**: `_competitors.json` の `discovery_history` に 2026-07-18 の skip entry を追記 (name=null / category=skip)。27 社 / ca",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d5d7dd0c3766",
+        "title": "次サイクル候補プール (優先度順 / 本日更新)**:",
+        "text": "次サイクル候補プール (優先度順 / 本日更新)**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "次サイクル候補プール (優先度順 / 本日更新)**:"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d5d7dd0c3766",
+        "title": "次サイクル候補プール (優先度順 / 本日更新)**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "text": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "アクション提案"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "text": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ソース"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7abf2d85d5f8",
+        "title": "[Visa Introduces AI Financial Assistant, Helping Banks Guide Customers from Insight to Action (Visa Investor Relations, ",
+        "text": "[Visa Introduces AI Financial Assistant, Helping Banks Guide Customers from Insight to Action (Visa Investor Relations, 2026-07-14)](https://investor.visa.com/news/news-details/2026/Visa-Introduces-AI-Financial-Assistant-Helping-Banks-Guide-Customers-from-Insight-to-Action/default.aspx)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Visa Introduces AI Financial Assistant, Helping Banks Guide Customers from Insight to Action (Visa Investor Relations, 2026-07-14)](https://investor.visa.com/news/news-details/2026/Visa-Introduces-AI-Financial-Assistant-Helping-Banks-Guide-Customers-from-Insight-to-Action/default.aspx)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7abf2d85d5f8",
+        "title": "[Visa Introduces AI Financial Assistant, Helping Banks Guide Customers from Insight to Action (Visa Investor Relations, ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3328e0b57a81",
+        "title": "[Visa Readies Rollout of AI Financial Assistant for Banking Apps (PYMNTS)](https://www.pymnts.com/news/artificial-intell",
+        "text": "[Visa Readies Rollout of AI Financial Assistant for Banking Apps (PYMNTS)](https://www.pymnts.com/news/artificial-intelligence/2026/visa-readies-rollout-ai-financial-assistant-banking-apps/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Visa Readies Rollout of AI Financial Assistant for Banking Apps (PYMNTS)](https://www.pymnts.com/news/artificial-intelligence/2026/visa-readies-rollout-ai-financial-assistant-banking-apps/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3328e0b57a81",
+        "title": "[Visa Readies Rollout of AI Financial Assistant for Banking Apps (PYMNTS)](https://www.pymnts.com/news/artificial-intell",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-6c6914d87082",
+        "title": "[Visa debuts AI financial advice feature (American Banker)](https://www.americanbanker.com/payments/news/visa-debuts-ai-",
+        "text": "[Visa debuts AI financial advice feature (American Banker)](https://www.americanbanker.com/payments/news/visa-debuts-ai-financial-advice-feature)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Visa debuts AI financial advice feature (American Banker)](https://www.americanbanker.com/payments/news/visa-debuts-ai-financial-advice-feature)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-6c6914d87082",
+        "title": "[Visa debuts AI financial advice feature (American Banker)](https://www.americanbanker.com/payments/news/visa-debuts-ai-",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-abe3b6107e37",
+        "title": "[Visa unveils AI Financial Assistant for banks (Digital Commerce 360)](https://www.digitalcommerce360.com/2026/07/15/vis",
+        "text": "[Visa unveils AI Financial Assistant for banks (Digital Commerce 360)](https://www.digitalcommerce360.com/2026/07/15/visa-unveils-ai-financial-assistant-for-banks/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Visa unveils AI Financial Assistant for banks (Digital Commerce 360)](https://www.digitalcommerce360.com/2026/07/15/visa-unveils-ai-financial-assistant-for-banks/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-abe3b6107e37",
+        "title": "[Visa unveils AI Financial Assistant for banks (Digital Commerce 360)](https://www.digitalcommerce360.com/2026/07/15/vis",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-803b66b32e9a",
+        "title": "[A new personal finance experience in ChatGPT (OpenAI)](https://openai.com/index/personal-finance-chatgpt/)",
+        "text": "[A new personal finance experience in ChatGPT (OpenAI)](https://openai.com/index/personal-finance-chatgpt/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[A new personal finance experience in ChatGPT (OpenAI)](https://openai.com/index/personal-finance-chatgpt/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-803b66b32e9a",
+        "title": "[A new personal finance experience in ChatGPT (OpenAI)](https://openai.com/index/personal-finance-chatgpt/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c3ca0ff52f7b",
+        "title": "[ChatGPT Plus Users Can Now Connect Financial Accounts (Dataconomy, 2026-07-01)](https://dataconomy.com/2026/07/01/opena",
+        "text": "[ChatGPT Plus Users Can Now Connect Financial Accounts (Dataconomy, 2026-07-01)](https://dataconomy.com/2026/07/01/openai-chatgpt-personal-finance-tools-us/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[ChatGPT Plus Users Can Now Connect Financial Accounts (Dataconomy, 2026-07-01)](https://dataconomy.com/2026/07/01/openai-chatgpt-personal-finance-tools-us/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c3ca0ff52f7b",
+        "title": "[ChatGPT Plus Users Can Now Connect Financial Accounts (Dataconomy, 2026-07-01)](https://dataconomy.com/2026/07/01/opena",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-647daba9e935",
+        "title": "[【変更】資産カテゴリ［暗号資産］新設のお知らせ（2026-07-07 / マネーフォワード ME）](https://support.me.moneyforward.com/hc/ja/articles/59246725622681)",
+        "text": "[【変更】資産カテゴリ［暗号資産］新設のお知らせ（2026-07-07 / マネーフォワード ME）](https://support.me.moneyforward.com/hc/ja/articles/59246725622681)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[【変更】資産カテゴリ［暗号資産］新設のお知らせ（2026-07-07 / マネーフォワード ME）](https://support.me.moneyforward.com/hc/ja/articles/59246725622681)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-647daba9e935",
+        "title": "[【変更】資産カテゴリ［暗号資産］新設のお知らせ（2026-07-07 / マネーフォワード ME）](https://support.me.moneyforward.com/hc/ja/articles/59246725622681)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7ac42216b12f",
+        "title": "[バックオフィスに、頼れるAIの同僚を「マネーフォワード AI Cowork」](https://biz.moneyforward.com/ai-cowork/)",
+        "text": "[バックオフィスに、頼れるAIの同僚を「マネーフォワード AI Cowork」](https://biz.moneyforward.com/ai-cowork/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[バックオフィスに、頼れるAIの同僚を「マネーフォワード AI Cowork」](https://biz.moneyforward.com/ai-cowork/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7ac42216b12f",
+        "title": "[バックオフィスに、頼れるAIの同僚を「マネーフォワード AI Cowork」](https://biz.moneyforward.com/ai-cowork/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4ca1fc70cd18",
+        "title": "[Claude Updates by Anthropic — July 2026 (Releasebot)](https://releasebot.io/updates/anthropic/claude)",
+        "text": "[Claude Updates by Anthropic — July 2026 (Releasebot)](https://releasebot.io/updates/anthropic/claude)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Claude Updates by Anthropic — July 2026 (Releasebot)](https://releasebot.io/updates/anthropic/claude)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4ca1fc70cd18",
+        "title": "[Claude Updates by Anthropic — July 2026 (Releasebot)](https://releasebot.io/updates/anthropic/claude)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-59e03c17fc5b",
+        "title": "[AI Agent Startup Funding Tracker: Q3 2026 (July Update)](https://gravity.fast/blog/ai-agent-funding-tracker-q3-2026/)",
+        "text": "[AI Agent Startup Funding Tracker: Q3 2026 (July Update)](https://gravity.fast/blog/ai-agent-funding-tracker-q3-2026/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[AI Agent Startup Funding Tracker: Q3 2026 (July Update)](https://gravity.fast/blog/ai-agent-funding-tracker-q3-2026/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-59e03c17fc5b",
+        "title": "[AI Agent Startup Funding Tracker: Q3 2026 (July Update)](https://gravity.fast/blog/ai-agent-funding-tracker-q3-2026/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    }
+  ],
+  "patterns": [],
+  "issue_candidates": []
+}

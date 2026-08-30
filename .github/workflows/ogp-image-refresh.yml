@@ -18,7 +18,7 @@ name: OGP Image Refresh (週次)
 
 on:
   schedule:
-    - cron: "0 0 * * 1"  # 毎週月曜 09:00 JST (UTC 00:00)
+    - cron: "43 0 * * 1"  # 毎週月曜 09:43 JST (2026-07-17 ci-audit: 00:00 UTC 8本集中を分散)
   workflow_dispatch:
     inputs:
       prompt_override:
@@ -34,11 +34,12 @@ concurrency:
   group: ogp-image-refresh
   cancel-in-progress: false
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   refresh:
+    permissions:
+      contents: write
     name: OGP Image Refresh
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -71,7 +72,7 @@ jobs:
 
       - name: Step 2 - Checkout
         if: steps.precheck.outputs.skip != 'true'
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           token: ${{ secrets.BYPASS_RULES || github.token }}
 

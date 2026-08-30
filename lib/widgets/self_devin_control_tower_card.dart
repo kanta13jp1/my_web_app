@@ -37,7 +37,7 @@ class _SelfDevinControlTowerCardState extends State<SelfDevinControlTowerCard> {
     }
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool force = false}) async {
     setState(() {
       _loading = true;
       _error = null;
@@ -45,6 +45,7 @@ class _SelfDevinControlTowerCardState extends State<SelfDevinControlTowerCard> {
     try {
       final snapshot = await _service.load(
         supabaseClient: widget.supabaseClient,
+        forceRefreshRuns: force,
       );
       if (!mounted) return;
       setState(() {
@@ -99,7 +100,7 @@ class _SelfDevinControlTowerCardState extends State<SelfDevinControlTowerCard> {
                 ),
                 if (widget.snapshotOverride == null)
                   IconButton(
-                    onPressed: _loading ? null : _load,
+                    onPressed: _loading ? null : () => _load(force: true),
                     tooltip: 'Refresh',
                     icon: const Icon(Icons.refresh, size: 20),
                   ),

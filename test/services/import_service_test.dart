@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/import_service.dart';
@@ -48,6 +51,51 @@ void main() {
       expect(drafts.first.content, 'First line\nSecond line');
       expect(drafts.first.tags, <String>['archive', 'ideas']);
       expect(drafts.first.source, 'evernote');
+      expect(drafts.first.sourceId, hasLength(64));
+      expect(drafts.first.sourceContentSha256, hasLength(64));
+      expect(drafts.first.sourceMetadata['enml'], contains('<en-note>'));
+    });
+
+    test('Evernote preview enables only the lossless commit path', () async {
+      const enex = '''
+<en-export export-date="20260823T034500Z" application="Evernote" version="10">
+  <note>
+    <title>Safe preview</title>
+    <content><![CDATA[<en-note><div>Body</div></en-note>]]></content>
+    <resource>
+      <data encoding="base64">aGVsbG8=</data>
+      <mime>text/plain</mime>
+      <resource-attributes><file-name>memo.txt</file-name></resource-attributes>
+    </resource>
+  </note>
+</en-export>
+''';
+
+      final preview = await service.buildPreview(
+        sourceType: 'evernote',
+        fileName: 'batch-001.enex',
+        bytes: Uint8List.fromList(utf8.encode(enex)),
+      );
+
+      expect(preview.usedEdgeFunction, isFalse);
+      expect(preview.canCommit, isTrue);
+      expect(preview.commitBlockedReason, isNull);
+      expect(preview.sourceExportSha256, hasLength(64));
+      expect(preview.resourceCount, 1);
+      expect(preview.notes.single.sourceResourceCount, 1);
+    });
+
+    test('Evernote drafts cannot enter the legacy commit path', () async {
+      const draft = ImportedNoteDraft(
+        title: 'Blocked',
+        content: 'Body',
+        source: 'evernote',
+      );
+
+      expect(
+        () => service.importNotes(userId: 'user-1', notes: const [draft]),
+        throwsA(isA<StateError>()),
+      );
     });
 
     test('ImportPreviewResult.fromJson reads edge preview metadata', () {

@@ -27,12 +27,19 @@ import {
 import {
   buildSaasApprovalStatus,
   externalSaasGateReason,
+  isPendingSaasApprovalStatus,
   normalizeSaasApprovalDecision,
   normalizeSaasConnectorSettings,
   SAAS_APPROVAL_REQUEST_SOURCE,
   SAAS_APPROVAL_SETTINGS_SOURCE,
   type SaasApprovalDecision,
 } from "../_shared/saas_human_approval.ts";
+import {
+  type EvalAutomationCalendarEvent,
+  type EvalAutomationTask,
+  executeEvalApprovalAutomation,
+  selectEvalApprovalAutomationPayload,
+} from "./eval_approval_automation.ts";
 import {
   buildMcpFeatureRequestPayload,
   buildMcpNotePayload,
@@ -43,6 +50,20 @@ import {
   type McpMyWebAppToolName,
   mcpRequestedScopes,
 } from "../_shared/mcp_my_web_app_tools.ts";
+import {
+  connectorsAvailableToUser,
+  MCP_FILE_CONTEXT_SOURCE,
+  type McpFileConnectorConfig,
+  normalizeExternalFileContent,
+  normalizeExternalFileSearchResults,
+  parseMcpFileConnectorConfigs,
+  publicMcpFileConnector,
+} from "../_shared/mcp_external_file.ts";
+import { callExternalMcpTool } from "../_shared/mcp_external_file_client.ts";
+import {
+  dispatchLocalBusinessReferenceAction,
+  fetchLocalBusinessReferences,
+} from "../_shared/local_business_reference.ts";
 import {
   createSupabaseJibunApiStore,
   handleJibunApiAction,
@@ -61,11 +82,68 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Max-Age": "86400",
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+
+class ToolsHubRequestError extends Error {
+  constructor(readonly status: number, message: string) {
+    super(message);
+    this.name = "ToolsHubRequestError";
+  }
+}
+
+function configuredMcpFileConnectors(): McpFileConnectorConfig[] {
+  try {
+    return parseMcpFileConnectorConfigs(
+      Deno.env.get("MCP_FILE_CONNECTORS_JSON") ?? "",
+      Deno.env.get("MCP_FILE_CONNECTOR_ALLOWED_HOSTS") ?? "",
+    );
+  } catch (error) {
+    console.error("MCP file connector configuration rejected", error);
+    throw new ToolsHubRequestError(503, "mcp_file_connector_unavailable");
+  }
+}
+
+function mcpFileConnectorForUser(
+  userId: string,
+  connectorId: unknown,
+): McpFileConnectorConfig {
+  const requestedId = String(connectorId ?? "").trim().toLowerCase();
+  if (!requestedId) {
+    throw new ToolsHubRequestError(400, "connector_id is required");
+  }
+  const connector = connectorsAvailableToUser(
+    configuredMcpFileConnectors(),
+    userId,
+  ).find((item) => item.id === requestedId);
+  if (!connector) {
+    throw new ToolsHubRequestError(404, "mcp_file_connector_not_found");
+  }
+  return connector;
+}
+
+async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(value),
+  );
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function externalMcpAuditContext(userId: string): McpAuthContext {
+  return {
+    client_id: `app-user:${userId}`,
+    subject: userId,
+    scopes: ["read"],
+    aud: [toolResourceUrn("external-file-search")],
+  };
+}
 
 function json(
   data: unknown,
@@ -957,6 +1035,7 @@ async function handleMcpFacade(
           "mcp.wbs.list",
           "mcp.feature_request.create",
           "mcp.user_tasks.list",
+          "mcp.public_businesses.reference_list",
           "mcp.notes.list",
           "mcp.notes.create",
         ],
@@ -1091,6 +1170,41 @@ async function handleMcpFacade(
       },
       content: mcpTextResult(`Found ${enriched.length} user task(s).`),
     });
+  }
+
+  if (toolName === "public_businesses.reference_list") {
+    const targetId = String(args.target_id ?? "fuchu-honmachi-1").trim();
+    if (targetId !== "fuchu-honmachi-1") {
+      await logMcpInvocation(auth.ctx, toolName, args, 400, req);
+      return mcpToolResponse(body, {
+        success: false,
+        tool: toolName,
+        error: "unsupported_target",
+      }, 400);
+    }
+    try {
+      const payload = await fetchLocalBusinessReferences({
+        limit: args.limit ?? 30,
+      });
+      await logMcpInvocation(auth.ctx, toolName, args, 200, req);
+      return mcpToolResponse(body, {
+        success: true,
+        tool: toolName,
+        structuredContent: payload,
+        content: mcpTextResult(
+          `Found ${payload.publicReference.count} public reference place(s). ` +
+            "Ownership type is unknown and the list does not identify the census aggregate.",
+        ),
+      });
+    } catch (error) {
+      console.error("MCP public business reference failed", error);
+      await logMcpInvocation(auth.ctx, toolName, args, 502, req);
+      return mcpToolResponse(body, {
+        success: false,
+        tool: toolName,
+        error: "public_reference_unavailable",
+      }, 502);
+    }
   }
 
   if (toolName === "feature_request.create") {
@@ -1941,6 +2055,72 @@ async function createSaasApprovalRequest(
   return publicSaasApprovalRequest(item as Record<string, unknown>);
 }
 
+async function addEvalAutomationItem(
+  admin: SupabaseClient,
+  userId: string,
+  source: "team_task" | "calendar_event",
+  metadata: Record<string, unknown>,
+): Promise<boolean> {
+  const { error } = await admin.from("hub_data").insert({
+    source,
+    metadata: { ...metadata, user_id: userId },
+  });
+  if (error?.code === "23505") return false;
+  if (error) throw new Error(error.message);
+  return true;
+}
+
+async function executeApprovedEvalAutomation(
+  admin: SupabaseClient,
+  userId: string,
+  requestId: string,
+  payload: Record<string, unknown>,
+  selectedOptionId: string,
+) {
+  if (!requestId) {
+    return {
+      success: false,
+      status: "failed",
+      error: "approval request id is required for internal automation",
+    };
+  }
+  return await executeEvalApprovalAutomation(payload, {
+    createTask: async (task: EvalAutomationTask, itemKey: string) => {
+      return await addEvalAutomationItem(admin, userId, "team_task", {
+        title: task.title,
+        description: task.description,
+        assignee: task.assignee ?? userId,
+        due_date: task.dueDate,
+        status: "pending",
+        priority: task.priority,
+        source: "eval_approval",
+        approval_request_id: requestId,
+        automation_item_key: itemKey,
+      });
+    },
+    createCalendarEvent: async (
+      event: EvalAutomationCalendarEvent,
+      itemKey: string,
+    ) => {
+      return await addEvalAutomationItem(admin, userId, "calendar_event", {
+        title: event.title,
+        description: event.description,
+        start_at: event.startAt,
+        end_at: event.endAt,
+        all_day: event.allDay,
+        color: event.color,
+        reminder_min: event.reminderMinutes,
+        calendar_id: event.calendarId,
+        rrule: null,
+        timezone: null,
+        source: "eval_approval",
+        approval_request_id: requestId,
+        automation_item_key: itemKey,
+      });
+    },
+  }, selectedOptionId);
+}
+
 async function executeApprovedSaasAction(
   admin: SupabaseClient,
   userId: string,
@@ -1948,6 +2128,15 @@ async function executeApprovedSaasAction(
 ) {
   const provider = normalizeText(metadata.provider);
   const payload = asRecord(metadata.payload) ?? {};
+  if (provider === "internal" || provider === "eval_automation") {
+    return await executeApprovedEvalAutomation(
+      admin,
+      userId,
+      normalizeText(metadata.request_id),
+      payload,
+      normalizeText(metadata.selected_option_id),
+    );
+  }
   if (provider !== "slack") {
     return {
       success: false,
@@ -1994,6 +2183,7 @@ async function decideSaasApprovalRequest(
     reviewNote: string;
     revisedPayload: Record<string, unknown> | null;
     execute: boolean;
+    selectedOptionId: string;
   },
 ) {
   const { data, error } = await admin.from("hub_data")
@@ -2006,6 +2196,27 @@ async function decideSaasApprovalRequest(
   if (!data) return null;
 
   const metadata = asRecord(data.metadata) ?? {};
+  if (!isPendingSaasApprovalStatus(metadata.status)) {
+    throw new ToolsHubRequestError(
+      409,
+      `approval request is already ${normalizeText(metadata.status)}`,
+    );
+  }
+  const provider = normalizeText(metadata.provider);
+  const payload = asRecord(input.revisedPayload ?? metadata.payload) ?? {};
+  if (
+    decision === "approved" && input.execute &&
+    (provider === "internal" || provider === "eval_automation")
+  ) {
+    try {
+      selectEvalApprovalAutomationPayload(payload, input.selectedOptionId);
+    } catch (error) {
+      throw new ToolsHubRequestError(
+        400,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
   const now = new Date().toISOString();
   const nextMetadata: Record<string, unknown> = {
     ...metadata,
@@ -2014,7 +2225,9 @@ async function decideSaasApprovalRequest(
     decided_by: userId,
     decided_at: now,
     review_note: input.reviewNote,
+    selected_option_id: input.selectedOptionId || null,
     updated_at: now,
+    request_id: requestId,
   };
   if (decision === "revision_requested") {
     nextMetadata.status = "pending";
@@ -2032,7 +2245,9 @@ async function decideSaasApprovalRequest(
       nextMetadata,
     );
     nextMetadata.execution = execution;
-    nextMetadata.execution_status = execution.success ? "sent" : "failed";
+    nextMetadata.execution_status = execution.success
+      ? normalizeText(execution.status, "sent")
+      : "failed";
     nextMetadata.executed_at = now;
   }
 
@@ -5696,6 +5911,14 @@ serve(async (req) => {
 
     const mcpResponse = await handleMcpFacade(req, action, body, admin);
     if (mcpResponse) return mcpResponse;
+
+    // Public, read-only business references used by the regional map. Keep this
+    // in tools-hub so the browser and authenticated MCP tool share one fetcher
+    // without consuming another production Edge Function slot.
+    if (action === "public_businesses.reference_list") {
+      const result = await dispatchLocalBusinessReferenceAction(body);
+      return json(result.body, result.status);
+    }
 
     // ── 自分API (Notion Developer Platform 対抗 / 2026-07-12 WEB版) ─────────
     // jibunapi.* = 管理系 (Supabase JWT) / api.* = 外部公開系 (jibun_sk_ キー)。
@@ -9393,6 +9616,171 @@ ${reportText ? `> ${reportText}` : ""}`,
     if (!userId) return json({ error: "Unauthorized" }, 401);
 
     switch (action) {
+      case "mcp_file.connectors": {
+        const connectors = connectorsAvailableToUser(
+          configuredMcpFileConnectors(),
+          userId,
+        ).map(publicMcpFileConnector);
+        return json({
+          success: true,
+          connectors: connectors.map((connector) => ({
+            id: connector.id,
+            name: connector.name,
+            search_tool: connector.searchTool,
+            can_attach_context: connector.canAttachContext,
+          })),
+        });
+      }
+      case "mcp_file.search": {
+        const query = String(body.query ?? "").trim();
+        if (!query) {
+          throw new ToolsHubRequestError(400, "query is required");
+        }
+        const connector = mcpFileConnectorForUser(
+          userId,
+          body.connector_id,
+        );
+        const requestedLimit = Number(body.limit ?? 20);
+        const limit = Number.isFinite(requestedLimit)
+          ? Math.min(Math.max(Math.trunc(requestedLimit), 1), 20)
+          : 20;
+        let status = 502;
+        try {
+          const toolResult = await callExternalMcpTool(
+            connector,
+            connector.searchTool,
+            { query: query.slice(0, 500), limit, user_id: userId },
+          );
+          const normalized = normalizeExternalFileSearchResults(
+            toolResult,
+            connector,
+            userId,
+          );
+          status = 200;
+          return json({
+            success: true,
+            connector: publicMcpFileConnector(connector),
+            results: normalized.results.map((item) => ({
+              id: item.id,
+              title: item.title,
+              uri: item.uri,
+              mime_type: item.mimeType,
+              snippet: item.snippet,
+              modified_at: item.modifiedAt,
+              score: item.score,
+              connector_id: item.connectorId,
+              connector_name: item.connectorName,
+              context_eligible: item.contextEligible,
+            })),
+            denied_count: normalized.deniedCount,
+            unsafe_count: normalized.unsafeCount,
+          });
+        } catch (error) {
+          console.warn("MCP file search failed", {
+            connector: connector.id,
+            error: String(error),
+          });
+          throw new ToolsHubRequestError(502, "mcp_file_search_failed");
+        } finally {
+          await logMcpInvocation(
+            externalMcpAuditContext(userId),
+            `external.${connector.searchTool}`,
+            { connector_id: connector.id, query: query.slice(0, 500), limit },
+            status,
+            req,
+          );
+        }
+      }
+      case "mcp_file.attach_context": {
+        const connector = mcpFileConnectorForUser(
+          userId,
+          body.connector_id,
+        );
+        const expectedId = String(body.file_id ?? body.id ?? "").trim().slice(
+          0,
+          512,
+        );
+        const expectedUri = String(body.uri ?? "").trim().slice(0, 2048);
+        if (!expectedId || !expectedUri) {
+          throw new ToolsHubRequestError(400, "file_id and uri are required");
+        }
+        let status = 502;
+        try {
+          const toolResult = await callExternalMcpTool(
+            connector,
+            connector.fetchTool,
+            {
+              id: expectedId,
+              file_id: expectedId,
+              uri: expectedUri,
+              user_id: userId,
+            },
+          );
+          const file = normalizeExternalFileContent(
+            toolResult,
+            connector,
+            userId,
+            expectedId,
+            expectedUri,
+          );
+          const item = await addItem(admin, MCP_FILE_CONTEXT_SOURCE, userId, {
+            connector_id: connector.id,
+            connector_name: connector.name,
+            external_file_id: file.id,
+            title: file.title,
+            uri: file.uri,
+            mime_type: file.mimeType,
+            content: file.content,
+            content_sha256: await sha256Hex(file.content),
+            truncated: file.truncated,
+            security_status: "allowed",
+            attached_at: new Date().toISOString(),
+          });
+          status = 201;
+          return json({
+            success: true,
+            context: {
+              id: item.id,
+              title: file.title,
+              uri: file.uri,
+              connector_id: connector.id,
+              connector_name: connector.name,
+              truncated: file.truncated,
+            },
+          }, 201);
+        } catch (error) {
+          const message = String(error);
+          if (message.includes("external_file_access_denied")) {
+            status = 403;
+            throw new ToolsHubRequestError(403, "external_file_access_denied");
+          }
+          if (message.includes("external_file_not_found")) {
+            status = 404;
+            throw new ToolsHubRequestError(404, "external_file_not_found");
+          }
+          if (message.includes("external_file_content_unsafe")) {
+            status = 422;
+            throw new ToolsHubRequestError(422, "external_file_content_unsafe");
+          }
+          console.warn("MCP file context attach failed", {
+            connector: connector.id,
+            error: message,
+          });
+          throw new ToolsHubRequestError(502, "mcp_file_context_failed");
+        } finally {
+          await logMcpInvocation(
+            externalMcpAuditContext(userId),
+            `external.${connector.fetchTool}`,
+            {
+              connector_id: connector.id,
+              file_id: expectedId,
+              uri: expectedUri,
+            },
+            status,
+            req,
+          );
+        }
+      }
       // ── Bookmarks ───────────────────────────────────────────────────────────
       case "bookmark.list":
         return json({
@@ -9841,32 +10229,84 @@ ${reportText ? `> ${reportText}` : ""}`,
       case "focus.stats": {
         const days = parseInt(String(body.days ?? "30"), 10);
         const since = new Date(Date.now() - days * 86400000).toISOString();
-        const allItems = await listItems(admin, "focus_timer", userId, 200);
-        const recent = allItems.filter((i: Record<string, unknown>) =>
-          String(i.created_at ?? "") >= since
+        const [focusItems, legacyPomodoroItems] = await Promise.all([
+          listItems(admin, "focus_timer", userId, 200),
+          listItems(admin, "pomodoro", userId, 200),
+        ]);
+        const normalizedFocus = focusItems.map(
+          (item: Record<string, unknown>) => ({
+            ...(item.metadata as Record<string, unknown>),
+            id: item.id,
+            created_at: item.created_at,
+          }),
         );
+        // 旧 `/pomodoro-timer` は `source=pomodoro` に保存していた。
+        // 統合後の集中タイマーで過去実績を失わないよう、新形式へ読み替える。
+        const normalizedLegacy = legacyPomodoroItems.map(
+          (item: Record<string, unknown>) => {
+            const metadata = (item.metadata ?? {}) as Record<string, unknown>;
+            const completedAt = String(
+              metadata.completed_at ?? item.created_at ?? "",
+            );
+            return {
+              id: item.id,
+              task_label: metadata.task_name ?? "ポモドーロ",
+              duration_minutes: metadata.duration_minutes ??
+                metadata.duration_min ?? 25,
+              status: metadata.status === "done"
+                ? "completed"
+                : metadata.status ?? "completed",
+              started_at: metadata.started_at ?? completedAt,
+              completed_at: completedAt,
+              created_at: item.created_at,
+              legacy_source: "pomodoro",
+            };
+          },
+        );
+        const recent = [...normalizedFocus, ...normalizedLegacy]
+          .filter((item: Record<string, unknown>) =>
+            String(item.started_at ?? item.created_at ?? "") >= since
+          )
+          .sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
+            String(b.started_at ?? b.created_at ?? "").localeCompare(
+              String(a.started_at ?? a.created_at ?? ""),
+            )
+          );
         const completed = recent.filter((i: Record<string, unknown>) =>
-          (i.metadata as Record<string, unknown>)?.status === "completed"
+          i.status === "completed"
         );
         const totalMinutes = completed.reduce(
           (s: number, i: Record<string, unknown>) =>
-            s +
-            (Number(
-              (i.metadata as Record<string, unknown>)?.duration_minutes,
-            ) || 25),
+            s + (Number(i.duration_minutes) || 25),
           0,
         );
+        const completedDays = new Set(
+          completed.map((item: Record<string, unknown>) =>
+            String(
+              item.completed_at ?? item.started_at ?? item.created_at ?? "",
+            )
+              .slice(0, 10)
+          ),
+        );
+        const cursor = new Date();
+        cursor.setUTCHours(0, 0, 0, 0);
+        if (!completedDays.has(cursor.toISOString().slice(0, 10))) {
+          cursor.setUTCDate(cursor.getUTCDate() - 1);
+        }
+        let streakDays = 0;
+        while (completedDays.has(cursor.toISOString().slice(0, 10))) {
+          streakDays += 1;
+          cursor.setUTCDate(cursor.getUTCDate() - 1);
+        }
         const focusScore = Math.min(100, Math.round(completed.length * 10));
         return json({
           success: true,
-          sessions: recent.map((i: Record<string, unknown>) => ({
-            ...(i.metadata as Record<string, unknown>),
-            id: i.id,
-            created_at: i.created_at,
-          })),
+          sessions: recent,
           stats: {
-            total_sessions: completed.length,
+            total_sessions: recent.length,
+            completed_sessions: completed.length,
             total_minutes: totalMinutes,
+            streak_days: streakDays,
             focus_score: focusScore,
           },
         });
@@ -10337,6 +10777,7 @@ ${reportText ? `> ${reportText}` : ""}`,
             reviewNote: normalizeText(body.review_note),
             revisedPayload: asRecord(body.revised_payload),
             execute: body.execute === true,
+            selectedOptionId: normalizeText(body.selected_option_id),
           },
         );
         if (!approval) {
@@ -10477,8 +10918,12 @@ ${reportText ? `> ${reportText}` : ""}`,
             "mcp.wbs.list",
             "mcp.feature_request.create",
             "mcp.user_tasks.list",
+            "mcp.public_businesses.reference_list",
             "mcp.notes.list",
             "mcp.notes.create",
+            "mcp_file.connectors",
+            "mcp_file.search",
+            "mcp_file.attach_context",
             "legal.harvey.complete",
             "legal-assistant.harvey.complete",
             "legal-assistant.review",
@@ -10486,6 +10931,9 @@ ${reportText ? `> ${reportText}` : ""}`,
         }, 400);
     }
   } catch (e) {
+    if (e instanceof ToolsHubRequestError) {
+      return json({ error: e.message }, e.status);
+    }
     return json({ error: String(e) }, 500);
   }
 });

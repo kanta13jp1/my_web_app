@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_web_app/main.dart';
 import 'package:my_web_app/services/theme_service.dart';
+import 'package:my_web_app/services/landing_signup_completion_service.dart';
 import 'package:my_web_app/pages/home_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
 import 'package:my_web_app/pages/onboarding_page.dart';
@@ -43,6 +44,24 @@ class FakePostgrestTransformBuilder<T> extends Fake
     Function? onError,
   }) async {
     return onValue(_value);
+  }
+}
+
+class _SignupCompletionRecorder extends LandingSignupCompletionService {
+  _SignupCompletionRecorder();
+
+  final List<(String?, String?, DateTime?)> calls =
+      <(String?, String?, DateTime?)>[];
+
+  @override
+  Future<bool> completeIfPending({
+    required String? signupUserId,
+    String? signupEmail,
+    DateTime? accountCreatedAt,
+    SharedPreferences? preferences,
+  }) async {
+    calls.add((signupUserId, signupEmail, accountCreatedAt));
+    return true;
   }
 }
 
@@ -94,6 +113,7 @@ void main() {
       // Assert
       expect(find.byType(LandingPage), findsOneWidget);
       expect(find.byType(HomePage), findsNothing);
+      expect(find.byKey(const Key('global_header_clock_bar')), findsNothing);
     });
 
     testWidgets('ログイン済みでオンボーディング未完了時は OnboardingPage が表示されること',
@@ -104,6 +124,9 @@ void main() {
       when(mockGoTrueClient.currentSession).thenReturn(mockSession);
       when(mockGoTrueClient.currentUser).thenReturn(mockUser);
       when(mockUser.id).thenReturn('test-user-id');
+      when(mockUser.email).thenReturn('new-user@example.com');
+      when(mockUser.createdAt).thenReturn('2026-07-23T01:00:02Z');
+      final signupCompletion = _SignupCompletionRecorder();
 
       // DB呼び出しのモック: user_stats が存在しない (null) -> オンボーディング表示
       final mockQueryBuilder = MockSupabaseQueryBuilder();
@@ -125,7 +148,7 @@ void main() {
       await tester.pumpWidget(
         ChangeNotifierProvider<ThemeService>.value(
           value: mockThemeService,
-          child: const MyApp(),
+          child: MyApp(signupCompletionService: signupCompletion),
         ),
       );
       // FutureBuilder の完了を待つ
@@ -136,6 +159,13 @@ void main() {
       // Assert
       expect(find.byType(OnboardingPage), findsOneWidget);
       expect(find.byType(HomePage), findsNothing);
+      expect(signupCompletion.calls, <(String?, String?, DateTime?)>[
+        (
+          'test-user-id',
+          'new-user@example.com',
+          DateTime.utc(2026, 7, 23, 1, 0, 2),
+        ),
+      ]);
     });
 
     testWidgets('ログイン済みでオンボーディング完了時は HomePage が表示されること',
@@ -178,6 +208,7 @@ void main() {
 
       // Assert
       expect(find.byType(HomePage), findsOneWidget);
+      expect(find.byKey(const Key('global_header_clock_bar')), findsOneWidget);
     });
 
     testWidgets('オンボーディングは保存済みページから再開できること', (WidgetTester tester) async {
@@ -186,7 +217,14 @@ void main() {
       when(mockGoTrueClient.currentUser).thenReturn(mockUser);
       when(mockUser.id).thenReturn('test-user-id');
       SharedPreferences.setMockInitialValues({
-        'onboarding_progress_page_test-user-id': 1,
+        'activation_onboarding_draft_v1_test-user-id_stage': 1,
+        'activation_onboarding_draft_v1_test-user-id_intent': 'work',
+        'activation_onboarding_draft_v1_test-user-id_first_action':
+            '今日終える仕事を1つだけ選び、完了条件を書く',
+        'activation_onboarding_draft_v1_test-user-id_reason':
+            '優先順位を増やすより、完了条件を1つ固定します。',
+        'activation_onboarding_draft_v1_test-user-id_ten_minute_step':
+            '最初の10分だけ着手する',
       });
 
       // Act
@@ -199,8 +237,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.text('最強の経営布陣'), findsOneWidget);
-      expect(find.text('戻る'), findsOneWidget);
+      expect(find.text('あなた向けの最初の一手'), findsOneWidget);
+      expect(find.text('入力を直す'), findsOneWidget);
     });
 
     testWidgets('テーマ設定が反映されていること', (WidgetTester tester) async {
@@ -255,7 +293,8 @@ void main() {
       expect(find.byType(AiUniversityPage), findsOneWidget);
     });
 
-    testWidgets('ルーティング: /danshari へ遷移できること', (WidgetTester tester) async {
+    testWidgets('ルーティング: /digital-danshari へ遷移できること',
+        (WidgetTester tester) async {
       // Arrange
       when(mockGoTrueClient.currentSession).thenReturn(null);
 
@@ -286,7 +325,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final BuildContext context = tester.element(find.byType(LandingPage));
-      Navigator.of(context).pushNamed('/danshari');
+      Navigator.of(context).pushNamed('/digital-danshari');
       await tester.pumpAndSettle();
 
       // Assert
@@ -315,7 +354,7 @@ void main() {
       expect(find.byType(LandingPage), findsAtLeastNWidgets(1));
     });
 
-    testWidgets('オンボーディング判定: DBエラー時は HomePage (false) となること',
+    testWidgets('オンボーディング判定: DBエラー時も初回価値導線を表示すること',
         (WidgetTester tester) async {
       // Arrange
       final mockSession = MockSession();
@@ -341,7 +380,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.byType(HomePage), findsOneWidget);
+      expect(find.byType(OnboardingPage), findsOneWidget);
+      expect(find.byType(HomePage), findsNothing);
     });
   });
 }

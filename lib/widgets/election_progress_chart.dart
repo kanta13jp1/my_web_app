@@ -90,7 +90,8 @@ class ElectionProgressChart extends StatelessWidget {
                     PieChartSectionData(
                       color: Colors.redAccent.shade400,
                       value: shortfallValue <= 0 ? 1 : shortfallValue,
-                      title: '残り\n$shortfall人',
+                      // 目標到達後 (残り<=0) は負数を出さず「達成」と表示。
+                      title: shortfall <= 0 ? '達成' : '残り\n$shortfall人',
                       radius: 60,
                       titleStyle: const TextStyle(
                         fontSize: 14,
@@ -123,7 +124,7 @@ class ElectionProgressChart extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               targetValue > 0
-                  ? '達成率 ${(currentTotal / targetValue * 100).toStringAsFixed(1)}%'
+                  ? '達成率 ${(currentTotal / targetValue * 100).clamp(0, 100).toStringAsFixed(1)}%'
                   : '達成率 0%',
               style: const TextStyle(
                 fontSize: 12,

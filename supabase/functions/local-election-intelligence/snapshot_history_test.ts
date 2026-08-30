@@ -145,6 +145,101 @@ function changedSnapshot(): JsonRecord {
   return snapshot;
 }
 
+function intelligenceSnapshot(): JsonRecord {
+  const snapshot = structuredClone(baseSnapshot());
+  (snapshot.prefectures as JsonRecord[])[0].cdpLocalMembers = 0;
+  snapshot.electionIntelligence = {
+    schemaVersion: 1,
+    selectedMode: "local",
+    modes: [
+      {
+        id: "local",
+        label: "地方選",
+        shortLabel: "地方",
+        availability: "active",
+        description: "地方選を追跡",
+        collectors: ["official_endorsements", "local_members"],
+      },
+      {
+        id: "house_of_representatives",
+        label: "衆院選",
+        shortLabel: "衆院",
+        availability: "registered",
+        description: "準備中",
+        collectors: [],
+      },
+      {
+        id: "house_of_councillors",
+        label: "参院選",
+        shortLabel: "参院",
+        availability: "registered",
+        description: "準備中",
+        collectors: [],
+      },
+    ],
+    goals: [{
+      id: "local_members_700",
+      mode: "local",
+      title: "地方議員700人",
+      metric: "local_member_count",
+      currentValue: 1,
+      targetValue: 700,
+      unit: "人",
+      deadlineLabel: "次期統一地方選終了時",
+      sourceUrl: "https://example.com/goal",
+      sourcePublishedAt: "2026-07-14",
+      verificationStatus: "verified",
+    }],
+    achievements: [{
+      id: "unified_local_election_wins_2023",
+      mode: "local",
+      title: "2023年統一地方選 当選者",
+      metric: "unified_local_election_wins_2023",
+      value: 30,
+      unit: "人",
+      periodLabel: "2023年統一地方選",
+      sourceUrls: ["https://example.com/result"],
+    }],
+    officialEndorsements: {
+      sourceUrl: "https://new-kokumin.jp/local-election-list",
+      sourceAsOf: "2026-08-05",
+      sourceDocumentSha256: "a".repeat(64),
+      totalCount: 1,
+      incumbentCount: 0,
+      newcomerCount: 1,
+      formerCount: 0,
+      recommendationCount: 0,
+      prefectureCount: 1,
+      prefectures: [{
+        prefecture: "東京",
+        totalCount: 1,
+        incumbentCount: 0,
+        newcomerCount: 1,
+        formerCount: 0,
+      }],
+    },
+  };
+  return snapshot;
+}
+
+function changedIntelligenceSnapshot(): JsonRecord {
+  const snapshot = structuredClone(intelligenceSnapshot());
+  const intelligence = snapshot.electionIntelligence as JsonRecord;
+  const goals = intelligence.goals as JsonRecord[];
+  goals[0].targetValue = 750;
+  const achievements = intelligence.achievements as JsonRecord[];
+  achievements[0].value = 31;
+  const endorsements = intelligence.officialEndorsements as JsonRecord;
+  endorsements.sourceAsOf = "2026-08-06";
+  endorsements.sourceDocumentSha256 = "b".repeat(64);
+  endorsements.totalCount = 2;
+  endorsements.incumbentCount = 1;
+  const prefectures = endorsements.prefectures as JsonRecord[];
+  prefectures[0].totalCount = 2;
+  prefectures[0].incumbentCount = 1;
+  return snapshot;
+}
+
 class MemoryStore implements LocalElectionHubStore {
   snapshots: HubDataRow[] = [];
   candidates: HubDataRow[] = [];
@@ -214,7 +309,7 @@ class MemoryStore implements LocalElectionHubStore {
   }
 }
 
-Deno.test("schedule quality enforces required sources but tolerates optional helpers", () => {
+Deno.test("schedule quality requires one healthy primary and tolerates optional helpers", () => {
   const allFailed = evaluateScheduleCollectionQuality([
     {
       url: "https://example.com/a",
@@ -257,30 +352,55 @@ Deno.test("schedule quality enforces required sources but tolerates optional hel
     "required_schedule_source_parser_empty:https://example.com/a",
   ]);
 
-  const requiredFailureWithOptionalSuccess = evaluateScheduleCollectionQuality([
-    {
-      url: "https://example.com/required-base",
-      requiredForPersistence: true,
-      fetchSucceeded: false,
-      parsedEntryCount: 0,
-    },
-    {
-      url: "https://example.com/required-official",
-      requiredForPersistence: true,
-      fetchSucceeded: true,
-      parsedEntryCount: 12,
-    },
-    {
-      url: "https://example.com/optional-year",
-      requiredForPersistence: false,
-      fetchSucceeded: true,
-      parsedEntryCount: 8,
-    },
-  ], 4);
-  assertEquals(requiredFailureWithOptionalSuccess.parsedSourceCount, 2);
-  assertEquals(requiredFailureWithOptionalSuccess.issues, [
+  const loneRequiredFailureWithOptionalSuccess =
+    evaluateScheduleCollectionQuality([
+      {
+        url: "https://example.com/required-base",
+        requiredForPersistence: true,
+        fetchSucceeded: false,
+        parsedEntryCount: 0,
+      },
+      {
+        url: "https://example.com/optional-year",
+        requiredForPersistence: false,
+        fetchSucceeded: true,
+        parsedEntryCount: 8,
+      },
+    ], 4);
+  assertEquals(loneRequiredFailureWithOptionalSuccess.parsedSourceCount, 1);
+  assertEquals(loneRequiredFailureWithOptionalSuccess.issues, [
     "required_schedule_source_fetch_failed:https://example.com/required-base",
   ]);
+
+  const redundantRequiredFailureWithHealthyPeer =
+    evaluateScheduleCollectionQuality([
+      {
+        url: "https://example.com/required-base",
+        requiredForPersistence: true,
+        fetchSucceeded: false,
+        parsedEntryCount: 0,
+      },
+      {
+        url: "https://example.com/required-official",
+        requiredForPersistence: true,
+        fetchSucceeded: true,
+        parsedEntryCount: 12,
+      },
+      {
+        url: "https://example.com/optional-year",
+        requiredForPersistence: false,
+        fetchSucceeded: true,
+        parsedEntryCount: 8,
+      },
+    ], 4);
+  assertEquals(redundantRequiredFailureWithHealthyPeer.parsedSourceCount, 2);
+  assertEquals(redundantRequiredFailureWithHealthyPeer.issues, []);
+  assertEquals(
+    redundantRequiredFailureWithHealthyPeer.failedRequiredSourceUrls,
+    [
+      "https://example.com/required-base",
+    ],
+  );
 
   const requiredParserEmptyWithOptionalSuccess =
     evaluateScheduleCollectionQuality([
@@ -304,9 +424,11 @@ Deno.test("schedule quality enforces required sources but tolerates optional hel
       },
     ], 4);
   assertEquals(requiredParserEmptyWithOptionalSuccess.parsedSourceCount, 2);
-  assertEquals(requiredParserEmptyWithOptionalSuccess.issues, [
-    "required_schedule_source_parser_empty:https://example.com/required-base",
-  ]);
+  assertEquals(requiredParserEmptyWithOptionalSuccess.issues, []);
+  assertEquals(
+    requiredParserEmptyWithOptionalSuccess.parserEmptyRequiredSourceUrls,
+    ["https://example.com/required-base"],
+  );
 
   const optionalFailureWithRequiredSourcesHealthy =
     evaluateScheduleCollectionQuality([
@@ -395,6 +517,46 @@ Deno.test("diff separates member, candidate, and schedule changes", () => {
     "高橋三郎",
   ]);
   assertEquals(diff.schedules.changed[0].changedFields, ["seatCount"]);
+});
+
+Deno.test("diff tracks official goals, achievements, and endorsements", () => {
+  const diff = computeLocalElectionDiff(
+    canonicalizeLocalElectionSnapshot(intelligenceSnapshot()),
+    canonicalizeLocalElectionSnapshot(changedIntelligenceSnapshot()),
+  );
+
+  assertEquals(diff.significantKinds, [
+    "goal_delta",
+    "achievement_delta",
+    "endorsement_delta",
+  ]);
+  assertEquals(diff.electionIntelligence.goals.changed[0].changedFields, [
+    "targetValue",
+  ]);
+  assertEquals(
+    diff.electionIntelligence.achievements.changed[0].changedFields,
+    ["value"],
+  );
+  assertEquals(
+    diff.electionIntelligence.officialEndorsements.after.totalCount,
+    2,
+  );
+});
+
+Deno.test("intelligence transition queues one candidate per diff kind", async () => {
+  const store = new MemoryStore();
+  await persistLocalElectionSnapshot(store, intelligenceSnapshot());
+  const result = await persistLocalElectionSnapshot(
+    store,
+    changedIntelligenceSnapshot(),
+  );
+
+  assertEquals(result.candidateCount, 3);
+  assertEquals(result.candidatesCreated, 3);
+  assertEquals(
+    store.candidates.map((row) => row.metadata.diff_kind).sort(),
+    ["achievement_delta", "endorsement_delta", "goal_delta"],
+  );
 });
 
 Deno.test("first persistence creates baseline history without a post candidate", async () => {

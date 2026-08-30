@@ -172,6 +172,101 @@ String resolveXGrowthLoopFreshness({
   return '最新サンプル: 1時間以内';
 }
 
+/// R27: 鮮度が閾値(既定3日)を超えたときだけ返る警告文。従来は unlocked に
+/// なった時点で cron 停止系の警告経路が消え、「最新サンプル: 3日前」が灰色
+/// フッターに埋もれて計測停止に気づけなかった。createdAt は投稿時刻なので
+/// 「投稿が止まった」「計測 cron が止まった」のどちらも有り得る旨を両論併記
+/// する(どちらか断定はデータ上できない)。
+String? xGrowthLoopStalenessWarning({
+  required int measuredCount,
+  required DateTime? newestMeasuredAt,
+  required DateTime now,
+  int staleAfterDays = 3,
+}) {
+  if (measuredCount <= 0 || newestMeasuredAt == null) return null;
+  final diff = now.difference(newestMeasuredAt);
+  if (diff.isNegative || diff.inDays < staleAfterDays) return null;
+  return '計測サンプルが${diff.inDays}日間増えていません。投稿が止まっているか、'
+      'metrics 収集 cron / spend-cap を確認してください。';
+}
+
+/// 畳み込み済み variant 実測。edge の x_best_variant.ts FoldedVariant と対の
+/// クライアント表現。
+class FoldedVariant {
+  final String variant;
+  final int averageScore;
+  final int count;
+
+  const FoldedVariant({
+    required this.variant,
+    required this.averageScore,
+    required this.count,
+  });
+}
+
+/// R28: variants(各 {variant, averageScore, count})を unknown 除外 + `_fallback`
+/// を base へ畳んで再集計する。edge の x_best_variant.ts foldVariants と同じ戦略
+/// 同一視。クライアントには totalScore が無いため averageScore*count で近似
+/// (edge は exact totalScore を持つ)。平均降順・同点は件数降順。
+List<FoldedVariant> foldVariantsForDisplay(List<dynamic>? variants) {
+  if (variants == null) return const [];
+  final totals = <String, num>{};
+  final counts = <String, int>{};
+  for (final entry in variants) {
+    if (entry is! Map) continue;
+    var name = (entry['variant'] ?? '').toString().trim();
+    if (name.isEmpty || name == 'unknown') continue;
+    if (name.endsWith('_fallback')) {
+      name = name.substring(0, name.length - '_fallback'.length);
+    }
+    if (name.isEmpty) continue;
+    final count = _toIntSignal(entry['count']);
+    final effectiveCount = count <= 0 ? 1 : count;
+    final avg = _toIntSignal(entry['averageScore']);
+    totals[name] = (totals[name] ?? 0) + avg * effectiveCount;
+    counts[name] = (counts[name] ?? 0) + effectiveCount;
+  }
+  final folded = counts.keys
+      .map(
+        (name) => FoldedVariant(
+          variant: name,
+          averageScore: (totals[name]! / counts[name]!).round(),
+          count: counts[name]!,
+        ),
+      )
+      .toList()
+    ..sort((a, b) {
+      final byAvg = b.averageScore.compareTo(a.averageScore);
+      if (byAvg != 0) return byAvg;
+      return b.count.compareTo(a.count);
+    });
+  return folded;
+}
+
+int _toIntSignal(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
+}
+
+/// R28: 勝ち型は畳み込み後 count>=minSample の最上位のみ。n=1 の外れ値や
+/// `_fallback` 単独 (part338 で unknown 除外を入れた副作用で 1 サンプルの
+/// daily_briefing_fallback が n=7 の daily_briefing を抑えて昇格していた) を
+/// 勝ち型に断定しない。該当が無ければ null(勝ち型行を出さない)。第1引数
+/// bestVariant はサーバ計算値だが、畳み込み前の生値なので信用せず variants
+/// から再判定する(古いレスポンス/キャッシュにも安全側)。
+String? resolveDisplayBestVariant(
+  String? bestVariant,
+  List<dynamic>? variants, {
+  int minSample = 2,
+}) {
+  for (final folded in foldVariantsForDisplay(variants)) {
+    if (folded.count >= minSample) return folded.variant;
+  }
+  return null;
+}
+
 /// R20: 年なし MM/dd は 3か月前の機能リクエストや 2か月前のツール実行ログを
 /// 「今月」に見せてしまう。別年、もしくは staleDays(既定30日=1か月超)超は
 /// yyyy/MM/dd を返して年齢を明示する(パース不能は raw をそのまま返す)。
@@ -294,10 +389,96 @@ String? archetypeLiftSummaryLine(List<ArchetypeLiftEntry> entries) {
   if (entries.isEmpty) return null;
   final parts = entries.map((e) {
     final pending = e.pendingCount > 0 ? '・計測中${e.pendingCount}件' : '';
-    return e.measured
-        ? '${e.label} 平均${e.averageImpressions} imp '
-            '(${e.count}件$pending)'
-        : '${e.label} 実測不足 (${e.count}件$pending)';
+    if (e.measured) {
+      return '${e.label} 平均${e.averageImpressions} imp (${e.count}件$pending)';
+    }
+    // R28: 実測 0 件のバケット(全て計測中)は「実測不足 (0件・計測中N件)」だと
+    // 「0件」が二重に不自然。計測中のみ簡潔に出す。
+    if (e.count == 0) {
+      return '${e.label} 計測中${e.pendingCount}件';
+    }
+    return '${e.label} 実測不足 (${e.count}件$pending)';
   });
   return '型別実測（投稿72時間後・imp）: ${parts.join(' / ')}';
+}
+
+// R29: error_reporter が hub_data へ無言で送っている caught error
+// (auto_error_report) を /admin で可視化するカードの純ロジック。edge の
+// admin-hub errors.recent が {id, message, firstLine, createdAt} を返す。
+
+class AutoErrorReportEntry {
+  final String id;
+  final String firstLine;
+  final String createdAt;
+
+  const AutoErrorReportEntry({
+    required this.id,
+    required this.firstLine,
+    required this.createdAt,
+  });
+}
+
+const String _autoErrorHeader = '[自動エラー報告]';
+
+/// message から表示用の先頭意味行を抽出する (edge の extractAutoErrorFirstLine
+/// と同じ規律)。firstLine が edge から来ていればそれを優先し、無ければ message
+/// から復元する (後方互換・防御)。
+String autoErrorPreviewLine(Map<String, dynamic> row) {
+  final firstLine = (row['firstLine'] ?? '').toString().trim();
+  if (firstLine.isNotEmpty) return firstLine;
+  final message = (row['message'] ?? '').toString();
+  final lines = message
+      .split('\n')
+      .map((line) => line.trim())
+      .where((line) => line.isNotEmpty)
+      .toList();
+  final meaningful = lines.firstWhere(
+    (line) => line != _autoErrorHeader,
+    orElse: () => '',
+  );
+  return meaningful.length > 140
+      ? '${meaningful.substring(0, 138)}…'
+      : meaningful;
+}
+
+/// errors.recent のレスポンス行を表示用エントリへ写像する。
+List<AutoErrorReportEntry> parseAutoErrorReports(dynamic rawErrors) {
+  if (rawErrors is! List) return const [];
+  final entries = <AutoErrorReportEntry>[];
+  for (final row in rawErrors) {
+    if (row is! Map) continue;
+    final map = Map<String, dynamic>.from(row);
+    entries.add(
+      AutoErrorReportEntry(
+        id: (map['id'] ?? '').toString(),
+        firstLine: autoErrorPreviewLine(map),
+        createdAt: (map['createdAt'] ?? map['created_at'] ?? '').toString(),
+      ),
+    );
+  }
+  return entries;
+}
+
+/// カードのヘッダラベル。0件は「異常なし」を明示し、誤って警戒させない。
+String autoErrorReportsHealthLabel(int count) {
+  if (count <= 0) return '自動エラー報告なし（正常）';
+  return '自動エラー報告 $count件';
+}
+
+// R30: 成長実績サマリーカードは growth-hub `achievement.list` を呼ぶが、この
+// action は {success, items:[]} を返すだけで newUsers/totalUsersEver/
+// acquisitionSignals/referralsCompleted/importPreviews を一切返さない。カードは
+// それらのキーを `?? 0` で読むため、実データがあっても常に「0人/0件」を捏造表示
+// していた。集計 action が未実装なので、期待キーが無いレスポンスを「集計未接続」
+// として扱い、捏造ゼロを出さないためのガード。
+bool growthSummaryHasMetrics(Map<String, dynamic>? summary) {
+  if (summary == null) return false;
+  const metricKeys = [
+    'newUsers',
+    'totalUsersEver',
+    'acquisitionSignals',
+    'referralsCompleted',
+    'importPreviews',
+  ];
+  return metricKeys.any(summary.containsKey);
 }
