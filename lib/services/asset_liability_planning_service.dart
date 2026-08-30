@@ -192,6 +192,8 @@ class AssetLiabilityPlanningService {
     Map<String, String> cardBillingAccountIds = const <String, String>{},
     Map<String, AssetLiabilityRevolvingCreditConfig> revolvingConfigs =
         const <String, AssetLiabilityRevolvingCreditConfig>{},
+    Map<String, AssetCardUsagePolicy> cardUsagePolicies =
+        const <String, AssetCardUsagePolicy>{},
     List<AssetLiabilityIncomePlan> incomePlans =
         const <AssetLiabilityIncomePlan>[],
     List<AssetLiabilityTransferTask> transferTasks =
@@ -456,6 +458,7 @@ class AssetLiabilityPlanningService {
       manualPaymentCount: manualPaymentCount,
       estimatedPaymentCount: estimatedPaymentCount,
       subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds,
+      cardUsagePolicies: cardUsagePolicies,
     );
   }
 
@@ -804,6 +807,10 @@ class AssetLiabilityPlanningService {
       cardBillingAccountIds: cardBillingAccountIds,
       accountsById: accountsById,
     );
+    final paid = paidAccountNames.contains(account.id) ||
+        paidAccountNames.contains(account.name.trim()) ||
+        paidAccountNames.contains(account.name);
+    final requiresAction = minimumPayment > 0 && scheduledPayment > 0 && !paid;
 
     return AssetLiabilityDebtRow(
       id: account.id,
@@ -838,9 +845,8 @@ class AssetLiabilityPlanningService {
         billingConfirmedAccountIds,
         account,
       ),
-      paid: paidAccountNames.contains(account.id) ||
-          paidAccountNames.contains(account.name.trim()) ||
-          paidAccountNames.contains(account.name),
+      paid: paid,
+      requiresAction: requiresAction,
     );
   }
 
@@ -1356,7 +1362,7 @@ class AssetLiabilityPlanningService {
     required DateTime baseDate,
     int? salaryDay,
   }) {
-    final byDay = <int, List<AssetLiabilityDebtRow>>{};
+    final byDayAndAction = <(int, bool), List<AssetLiabilityDebtRow>>{};
     for (final row in rows) {
       final day = row.paymentDay;
       if (day == null) {
@@ -1368,12 +1374,16 @@ class AssetLiabilityPlanningService {
       if (row.paid) {
         continue;
       }
-      byDay.putIfAbsent(day, () => <AssetLiabilityDebtRow>[]).add(row);
+      byDayAndAction.putIfAbsent(
+        (day, row.requiresAction),
+        () => <AssetLiabilityDebtRow>[],
+      ).add(row);
     }
 
     final result = <AssetLiabilityPaymentDayRisk>[];
-    for (final entry in byDay.entries) {
-      final day = entry.key;
+    for (final entry in byDayAndAction.entries) {
+      final day = entry.key.$1;
+      final requiresAction = entry.key.$2;
       final paymentDate = _resolveCyclePaymentDate(baseDate, salaryDay, day);
       final rowsForDay = entry.value
         ..sort((a, b) => b.balance.abs().compareTo(a.balance.abs()));
@@ -1406,13 +1416,23 @@ class AssetLiabilityPlanningService {
               rowsForDay.where((row) => !row.paymentAmountEstimated).length,
           estimatedPaymentCount:
               rowsForDay.where((row) => row.paymentAmountEstimated).length,
+          requiresAction: requiresAction,
           isPast: paymentDate.isBefore(_dateOnly(baseDate)),
           isToday: paymentDate == _dateOnly(baseDate),
         ),
       );
     }
 
-    result.sort((a, b) => a.paymentDay.compareTo(b.paymentDay));
+    result.sort((a, b) {
+      final dayComparison = a.paymentDay.compareTo(b.paymentDay);
+      if (dayComparison != 0) {
+        return dayComparison;
+      }
+      if (a.requiresAction == b.requiresAction) {
+        return 0;
+      }
+      return a.requiresAction ? -1 : 1;
+    });
     return result;
   }
 
@@ -1470,7 +1490,7 @@ class AssetLiabilityPlanningService {
         paymentDay,
       );
       final overdue = row.isDirectCashflowTarget &&
-          !row.paid &&
+          row.requiresAction &&
           !paymentDate.isAfter(_dateOnly(baseDate));
       result.add(
         AssetLiabilityCashflowRow(

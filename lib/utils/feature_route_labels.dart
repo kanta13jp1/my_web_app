@@ -11,6 +11,8 @@ const Set<String> _nonFeatureRoutes = <String>{
   '/home',
   '/landing',
   '/maintenance',
+  // Retired compatibility URL. It resolves to the canonical home route.
+  '/app-analytics-dashboard',
 };
 
 /// 旧導線や重複実装から、利用者に見せる正規機能へ集約する対応表。
@@ -46,12 +48,15 @@ const Map<String, String> _consolidatedFeatureLabels = <String, String>{
   '/art-museums': '全国の美術館',
   '/asset-management': '資産・家計管理',
   '/autonomous-ops-console': '自律オペレーションコンソール',
+  '/custom-task-list': 'AI カスタムタスクリスト',
   '/focus-timer': '集中タイマー',
   '/life-goals': '人生目標管理',
   '/local-election-700': '2027 統一地方選 700必達管理室',
   '/daily-habits': '毎日の習慣',
   '/mind-map': 'マインドマップ',
   '/one-in-two-out-assist': '1 In 2 Out UI整理アシスト',
+  '/procrastination-reset': '先延ばしリセット',
+  '/proactive-form-check': '入力チェックアシスタント',
   '/referral': '友達招待・紹介プログラム',
   '/rewards': '実績・リワード',
   '/social-feed': 'MUSUBI ソーシャル',

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'evernote_enex_parser.dart';
 import 'gamification_service.dart';
 import 'office_document_parser.dart';
 
@@ -10,12 +11,24 @@ class ImportedNoteDraft {
   final String content;
   final String source;
   final List<String> tags;
+  final String? sourceId;
+  final DateTime? sourceCreatedAt;
+  final DateTime? sourceUpdatedAt;
+  final String? sourceContentSha256;
+  final int sourceResourceCount;
+  final Map<String, dynamic> sourceMetadata;
 
   const ImportedNoteDraft({
     required this.title,
     required this.content,
     required this.source,
     this.tags = const <String>[],
+    this.sourceId,
+    this.sourceCreatedAt,
+    this.sourceUpdatedAt,
+    this.sourceContentSha256,
+    this.sourceResourceCount = 0,
+    this.sourceMetadata = const <String, dynamic>{},
   });
 
   factory ImportedNoteDraft.fromJson(Map<String, dynamic> json) {
@@ -27,6 +40,20 @@ class ImportedNoteDraft {
           .map((tag) => tag.toString())
           .where((tag) => tag.trim().isNotEmpty)
           .toList(),
+      sourceId: json['sourceId']?.toString(),
+      sourceCreatedAt: DateTime.tryParse(
+        json['sourceCreatedAt']?.toString() ?? '',
+      ),
+      sourceUpdatedAt: DateTime.tryParse(
+        json['sourceUpdatedAt']?.toString() ?? '',
+      ),
+      sourceContentSha256: json['sourceContentSha256']?.toString(),
+      sourceResourceCount: ImportService._toIntValue(
+        json['sourceResourceCount'],
+      ),
+      sourceMetadata: json['sourceMetadata'] is Map
+          ? Map<String, dynamic>.from(json['sourceMetadata'] as Map)
+          : const <String, dynamic>{},
     );
   }
 
@@ -36,6 +63,12 @@ class ImportedNoteDraft {
       'content': content,
       'source': source,
       'tags': tags,
+      'sourceId': sourceId,
+      'sourceCreatedAt': sourceCreatedAt?.toUtc().toIso8601String(),
+      'sourceUpdatedAt': sourceUpdatedAt?.toUtc().toIso8601String(),
+      'sourceContentSha256': sourceContentSha256,
+      'sourceResourceCount': sourceResourceCount,
+      'sourceMetadata': sourceMetadata,
     };
   }
 }
@@ -47,6 +80,9 @@ class ImportPreviewResult {
   final List<ImportedNoteDraft> notes;
   final List<String> warnings;
   final String previewMode;
+  final String? sourceExportSha256;
+  final int resourceCount;
+  final String? commitBlockedReason;
 
   const ImportPreviewResult({
     required this.sourceType,
@@ -55,6 +91,9 @@ class ImportPreviewResult {
     required this.notes,
     this.warnings = const <String>[],
     this.previewMode = 'edge-function',
+    this.sourceExportSha256,
+    this.resourceCount = 0,
+    this.commitBlockedReason,
   });
 
   factory ImportPreviewResult.fromJson(Map<String, dynamic> json) {
@@ -75,6 +114,9 @@ class ImportPreviewResult {
           .where((warning) => warning.trim().isNotEmpty)
           .toList(),
       previewMode: json['previewMode']?.toString() ?? 'edge-function',
+      sourceExportSha256: json['sourceExportSha256']?.toString(),
+      resourceCount: ImportService._toIntValue(json['resourceCount']),
+      commitBlockedReason: json['commitBlockedReason']?.toString(),
     );
   }
 
@@ -82,6 +124,8 @@ class ImportPreviewResult {
 
   String get previewModeLabel =>
       usedEdgeFunction ? 'Edge Function preview' : 'Local fallback preview';
+
+  bool get canCommit => commitBlockedReason == null;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -91,6 +135,9 @@ class ImportPreviewResult {
       'notes': notes.map((note) => note.toJson()).toList(),
       'warnings': warnings,
       'previewMode': previewMode,
+      'sourceExportSha256': sourceExportSha256,
+      'resourceCount': resourceCount,
+      'commitBlockedReason': commitBlockedReason,
     };
   }
 }
@@ -113,8 +160,11 @@ class ImportExecutionResult {
 
   bool get usedEdgeFunction => importMode == 'edge-function';
 
-  String get importModeLabel =>
-      usedEdgeFunction ? 'Edge Function import' : 'Local fallback import';
+  String get importModeLabel => switch (importMode) {
+        'edge-function' => 'Edge Function import',
+        'evernote-lossless' => 'Lossless Evernote import + verification',
+        _ => 'Local fallback import',
+      };
 }
 
 class ImportService {
@@ -135,7 +185,9 @@ class ImportService {
   }) async {
     // XLSX/DOCX はバイナリ (ZIP) のため、テキスト前提の Edge Function を経由せず
     // クライアントで直接解析する (無駄な base64 アップロードを避ける)。
-    if (sourceType == 'xlsx' || sourceType == 'docx') {
+    if (sourceType == 'evernote' ||
+        sourceType == 'xlsx' ||
+        sourceType == 'docx') {
       return _buildPreviewLocally(
         sourceType: sourceType,
         fileName: fileName,
@@ -228,16 +280,10 @@ class ImportService {
           previewMode: 'local-fallback',
         );
       case 'evernote':
-        return ImportPreviewResult(
-          sourceType: 'evernote',
-          sourceLabel: 'Evernote',
+        return _buildEvernotePreview(
           fileName: fileName,
-          notes: parseEvernoteEnexBytes(bytes),
-          warnings: <String>[
-            'The preview strips ENEX markup and imports the plain text body plus tags.',
-            if (fallbackWarning != null) fallbackWarning,
-          ],
-          previewMode: 'local-fallback',
+          bytes: bytes,
+          fallbackWarning: fallbackWarning,
         );
       case 'markdown':
         return ImportPreviewResult(
@@ -339,59 +385,69 @@ class ImportService {
   }
 
   List<ImportedNoteDraft> parseEvernoteEnexBytes(Uint8List bytes) {
-    final text = utf8.decode(bytes, allowMalformed: true);
-    return parseEvernoteEnexText(text);
+    return parseEvernoteEnexExportBytes(bytes)
+        .notes
+        .map(_toImportedEvernoteDraft)
+        .toList(growable: false);
   }
 
   List<ImportedNoteDraft> parseEvernoteEnexText(String enexText) {
-    final noteMatches = RegExp(
-      r'<note>([\s\S]*?)</note>',
-      caseSensitive: false,
-    ).allMatches(enexText);
+    return parseEvernoteEnexExportText(enexText)
+        .notes
+        .map(_toImportedEvernoteDraft)
+        .toList(growable: false);
+  }
 
-    final drafts = <ImportedNoteDraft>[];
-    for (final match in noteMatches) {
-      final rawNote = match.group(1) ?? '';
-      final title = _extractTag(rawNote, 'title').trim();
-      final contentBlock = _extractTag(rawNote, 'content');
-      final tagMatches = RegExp(
-        r'<tag>([\s\S]*?)</tag>',
-        caseSensitive: false,
-      ).allMatches(rawNote);
-      final tags = tagMatches
-          .map((tagMatch) => (tagMatch.group(1) ?? '').trim())
-          .where((tag) => tag.isNotEmpty)
-          .toList();
+  EvernoteEnexExport parseEvernoteEnexExportBytes(Uint8List bytes) =>
+      _evernoteEnexParser.parseBytes(bytes);
 
-      final strippedContent = _normalizeWhitespace(
-        _stripHtml(
-          contentBlock
-              .replaceAll(
-                RegExp(r'<!\[CDATA\[|\]\]>', caseSensitive: false),
-                '',
-              )
-              .replaceAll('&nbsp;', ' ')
-              .replaceAll('&amp;', '&')
-              .replaceAll('&lt;', '<')
-              .replaceAll('&gt;', '>'),
-        ),
-      );
+  EvernoteEnexExport parseEvernoteEnexExportText(String enexText) =>
+      _evernoteEnexParser.parseText(enexText);
 
-      if (title.isEmpty && strippedContent.isEmpty) {
-        continue;
-      }
+  ImportPreviewResult _buildEvernotePreview({
+    required String fileName,
+    required Uint8List bytes,
+    String? fallbackWarning,
+  }) {
+    final export = parseEvernoteEnexExportBytes(bytes);
+    final hasEmptyResource = export.notes.any(
+      (note) => note.resources.any((resource) => resource.data.isEmpty),
+    );
+    final commitBlockedReason = export.warnings.isNotEmpty || hasEmptyResource
+        ? 'Evernote commit remains paused because at least one attachment '
+            'could not be decoded without warnings.'
+        : null;
+    return ImportPreviewResult(
+      sourceType: 'evernote',
+      sourceLabel: 'Evernote',
+      fileName: fileName,
+      notes: export.notes.map(_toImportedEvernoteDraft).toList(growable: false),
+      warnings: <String>[
+        'ENML, timestamps, note attributes, links, and attachment manifests were preserved for verification.',
+        '${export.resourceCount} attachment resource(s) were detected.',
+        ...export.warnings,
+        if (fallbackWarning != null) fallbackWarning,
+      ],
+      previewMode: 'local-fallback',
+      sourceExportSha256: export.exportSha256,
+      resourceCount: export.resourceCount,
+      commitBlockedReason: commitBlockedReason,
+    );
+  }
 
-      drafts.add(
-        ImportedNoteDraft(
-          title: title.isEmpty ? 'Evernote import' : title,
-          content: strippedContent,
-          source: 'evernote',
-          tags: tags,
-        ),
-      );
-    }
-
-    return drafts;
+  ImportedNoteDraft _toImportedEvernoteDraft(EvernoteEnexNote note) {
+    return ImportedNoteDraft(
+      title: note.title,
+      content: note.plainText,
+      source: 'evernote',
+      tags: note.tags,
+      sourceId: note.sourceId,
+      sourceCreatedAt: note.createdAt,
+      sourceUpdatedAt: note.updatedAt,
+      sourceContentSha256: note.contentSha256,
+      sourceResourceCount: note.resources.length,
+      sourceMetadata: note.toImportMetadata(),
+    );
   }
 
   ImportedNoteDraft parseMarkdownBytes(
@@ -525,6 +581,11 @@ class ImportService {
       return const ImportExecutionResult(
         insertedCount: 0,
         importMode: 'edge-function',
+      );
+    }
+    if (notes.any((note) => note.source == 'evernote')) {
+      throw StateError(
+        'Evernote import requires the lossless migration commit pipeline.',
       );
     }
 
@@ -706,30 +767,6 @@ class ImportService {
     return row[index];
   }
 
-  String _extractTag(String source, String tagName) {
-    final match = RegExp(
-      '<$tagName[^>]*>([\\s\\S]*?)</$tagName>',
-      caseSensitive: false,
-    ).firstMatch(source);
-    return match?.group(1) ?? '';
-  }
-
-  String _stripHtml(String value) {
-    return value
-        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
-        .replaceAll(RegExp(r'</div\s*>', caseSensitive: false), '\n')
-        .replaceAll(RegExp(r'</p\s*>', caseSensitive: false), '\n')
-        .replaceAll(RegExp(r'<[^>]+>'), '');
-  }
-
-  String _normalizeWhitespace(String value) {
-    return value
-        .split('\n')
-        .map((line) => line.trim())
-        .where((line) => line.isNotEmpty)
-        .join('\n');
-  }
-
   String _deriveTitleFromMarkdown(String text, String fileName) {
     final lines = const LineSplitter().convert(text);
     for (final line in lines) {
@@ -749,3 +786,5 @@ class ImportService {
     return fileName;
   }
 }
+
+const EvernoteEnexParser _evernoteEnexParser = EvernoteEnexParser();

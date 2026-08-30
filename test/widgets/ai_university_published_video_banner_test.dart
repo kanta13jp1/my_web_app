@@ -58,6 +58,67 @@ void main() {
     expect(secondPlayCount, 1);
   });
 
+  testWidgets('PC幅では動画一覧の高さを制限し、最後の動画まで縦スクロールできる', (tester) async {
+    var lastPlayCount = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: Scaffold(
+          body: Column(
+            children: [
+              AiUniversityPublishedVideoBanner(
+                videos: [
+                  for (var index = 0; index < 16; index++)
+                    AiUniversityPublishedVideoBannerItem(
+                      title: '公開動画 ${index + 1}',
+                      providerLabel: 'OpenAI',
+                      onPlay: index == 15 ? () => lastPlayCount++ : () {},
+                    ),
+                ],
+              ),
+              const Expanded(
+                child: ColoredBox(
+                  key: Key('content-below-published-videos'),
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final banner = tester.getRect(
+      find.byKey(const Key('published-video-banner')),
+    );
+    final contentBelow = tester.getRect(
+      find.byKey(const Key('content-below-published-videos')),
+    );
+
+    expect(
+      find.byKey(const Key('published-video-desktop-grid')),
+      findsOneWidget,
+    );
+    expect(banner.height, lessThan(310));
+    expect(contentBelow.height, greaterThan(0));
+    expect(contentBelow.top, banner.bottom);
+
+    await tester.drag(
+      find.byKey(const Key('published-video-desktop-scroll-view')),
+      const Offset(0, -1000),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('published-video-play-button-15')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('published-video-play-button-15')));
+    await tester.pump();
+    expect(lastPlayCount, 1);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('狭い幅では動画を固定高の横カルーセルにして本文を押し出さない', (tester) async {
     await tester.pumpWidget(
       subject(onFirstPlay: () {}, onSecondPlay: () {}, width: 320),

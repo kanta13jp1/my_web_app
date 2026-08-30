@@ -294,7 +294,9 @@ class PublicRouteTest(unittest.TestCase):
         self.assertIn('data-prerender="public-faq"', out)
         self.assertIn("自分株式会社とは何ですか？", out)
         self.assertIn('href="/development-achievements"', out)
-        self.assertIn('<time datetime="2026-08-19">2026-08-19</time>', out)
+        self.assertIn('href="https://github.com/kanta13jp1"', out)
+        self.assertIn("GitHub @kanta13jp1", out)
+        self.assertIn('<time datetime="2026-08-23">2026-08-23</time>', out)
 
         blocks = re.findall(
             r'<script type="application/ld\+json" data-prerender="public">'
@@ -308,7 +310,7 @@ class PublicRouteTest(unittest.TestCase):
         self.assertEqual(types, ["WebPage", "BreadcrumbList", "FAQPage"])
         webpage = parsed["@graph"][0]
         self.assertEqual(webpage["datePublished"], "2026-04-18")
-        self.assertEqual(webpage["dateModified"], "2026-08-19")
+        self.assertEqual(webpage["dateModified"], "2026-08-23")
         faq = parsed["@graph"][2]
         self.assertEqual(len(faq["mainEntity"]), 4)
 
@@ -379,6 +381,67 @@ class PublicRouteTest(unittest.TestCase):
             )
         )
 
+    def test_billing_route_exposes_approved_prices_and_direct_marker(
+        self,
+    ) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        routes = json.loads(
+            (repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        route = next(
+            item
+            for item in routes["routes"]
+            if item["path"] == "/subscription-billing"
+        )
+
+        out = build_public_route_html(TEMPLATE, route, BASE)
+
+        self.assertIn("<title>プランと応援 | 自分株式会社</title>", out)
+        self.assertIn("月額980円", out)
+        self.assertIn("月額2,980円", out)
+        self.assertIn("1回100円", out)
+        self.assertIn(
+            'href="/subscription-billing?entry=static_pricing"',
+            out,
+        )
+
+    def test_privacy_route_renders_approved_markdown_verbatim(self) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        routes = json.loads(
+            (repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        route = next(
+            item for item in routes["routes"] if item["path"] == "/privacy"
+        )
+        policy = (repo_root / route["markdown_source"]).read_text(
+            encoding="utf-8"
+        )
+
+        out = build_public_route_html(
+            TEMPLATE,
+            {**route, "_markdown_text": policy},
+            BASE,
+        )
+
+        self.assertIn('data-prerender="markdown-source"', out)
+        self.assertIn(
+            'data-source="assets/legal/privacy_policy.md"',
+            out,
+        )
+        self.assertIn("Privacy Policy / プライバシーポリシー", out)
+        self.assertIn("ユーザーの権利", out)
+        self.assertIn("Stripe, Inc.", out)
+        self.assertIn(
+            "本サービスはカード番号を保持しない",
+            out,
+        )
+        self.assertNotIn("<https://stripe.com/privacy>", out)
+        self.assertIn("&lt;https://stripe.com/privacy&gt;", out)
+
 
 class SitemapTest(unittest.TestCase):
     def test_sitemap_contents_and_wellformed(self) -> None:
@@ -404,7 +467,7 @@ class SitemapTest(unittest.TestCase):
             BASE,
             ["notion"],
             None,
-            {"/philosophy": "2026-08-19"},
+            {"/philosophy": "2026-08-23"},
         )
 
         self.assertEqual(doc.count("<lastmod>"), 1)
@@ -416,7 +479,7 @@ class SitemapTest(unittest.TestCase):
             "</url>", 1
         )[0]
 
-        self.assertIn("<lastmod>2026-08-19</lastmod>", philosophy)
+        self.assertIn("<lastmod>2026-08-23</lastmod>", philosophy)
         self.assertNotIn("<lastmod>", home)
         self.assertNotIn("<lastmod>", comparison)
 

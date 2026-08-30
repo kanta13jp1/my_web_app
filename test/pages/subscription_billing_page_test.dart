@@ -149,6 +149,41 @@ void main() {
     ]);
   });
 
+  testWidgets('keeps the static pricing entry marker through checkout return', (
+    tester,
+  ) async {
+    final billing = _FakeBillingGateway();
+    final acquisition = _RecordingAcquisitionService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: billing,
+          acquisitionService: acquisition,
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
+          initialUri: Uri.parse(
+            'https://example.com/subscription-billing?entry=static_pricing',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final checkoutButton = find.byKey(const Key('billing_pro_checkout_button'));
+    await tester.ensureVisible(checkoutButton);
+    await tester.tap(checkoutButton);
+    await tester.pumpAndSettle();
+
+    final checkoutReturnUri = Uri.parse(billing.checkoutReturnUrl!);
+    expect(checkoutReturnUri.path, '/subscription-billing');
+    expect(checkoutReturnUri.queryParameters['entry'], 'static_pricing');
+    expect(acquisition.billingStages, [
+      GrowthAcquisitionService.funnelBillingView,
+      GrowthAcquisitionService.funnelUpgradeClick,
+    ]);
+  });
+
   testWidgets('shows supporter success confirmation', (tester) async {
     final billing = _FakeBillingGateway();
     final acquisition = _RecordingAcquisitionService();
@@ -174,6 +209,68 @@ void main() {
     expect(acquisition.billingStages, [
       GrowthAcquisitionService.funnelBillingView,
     ]);
+  });
+
+  testWidgets('does not expose billing status exception details', (
+    tester,
+  ) async {
+    const secret = 'internal-token=do-not-render';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: _FakeBillingGateway(
+            fetchStatusError: BillingServiceException(
+              secret,
+              statusCode: 503,
+            ),
+          ),
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
+          initialUri: Uri.parse('https://example.com/subscription-billing'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('プラン情報を読み込めませんでした。時間をおいて再度お試しください。'),
+      findsOneWidget,
+    );
+    expect(find.textContaining(secret), findsNothing);
+  });
+
+  testWidgets('does not expose checkout exception details', (tester) async {
+    const secret = 'stripe-secret=do-not-render';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: _FakeBillingGateway(
+            checkoutError: BillingServiceException(
+              secret,
+              statusCode: 500,
+            ),
+          ),
+          acquisitionService: _RecordingAcquisitionService(),
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
+          initialUri: Uri.parse('https://example.com/subscription-billing'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final checkoutButton = find.byKey(const Key('billing_pro_checkout_button'));
+    await tester.ensureVisible(checkoutButton);
+    await tester.tap(checkoutButton);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('決済画面を準備できませんでした。時間をおいて再度お試しください。'),
+      findsOneWidget,
+    );
+    expect(find.textContaining(secret), findsNothing);
   });
 
   testWidgets('shows value framing after onboarding on a narrow viewport', (
@@ -257,15 +354,22 @@ class _FakeBillingGateway implements BillingGateway {
       aiQueryCount: 0,
       efCallCount: 0,
     ),
+    this.fetchStatusError,
+    this.checkoutError,
   });
 
   final BillingStatus status;
+  final Exception? fetchStatusError;
+  final Exception? checkoutError;
   int fetchStatusCount = 0;
   BillingSupporterAttribution? supporterAttribution;
+  String? checkoutReturnUrl;
 
   @override
   Future<BillingStatus> fetchStatus() async {
     fetchStatusCount += 1;
+    final error = fetchStatusError;
+    if (error != null) throw error;
     return status;
   }
 
@@ -275,6 +379,9 @@ class _FakeBillingGateway implements BillingGateway {
     required String returnUrl,
     BillingCheckoutAttribution attribution = const BillingCheckoutAttribution(),
   }) async {
+    checkoutReturnUrl = returnUrl;
+    final error = checkoutError;
+    if (error != null) throw error;
     return const BillingCheckoutSession(url: 'https://stripe.example.test');
   }
 

@@ -1,0 +1,66 @@
+{
+  "cSpell.words": [
+    "Cupertino",
+    "supabase"
+  ],
+  "cmake.ignoreCMakeListsMissing": true,
+  "dart.mcpServer": true,
+  "deno.enable": true,
+  "deno.lint": true,
+  "deno.unstable": [],
+  "files.encoding": "utf8",
+  "terminal.integrated.cwd": "${workspaceFolder}",
+  "terminal.integrated.splitCwd": "workspaceRoot",
+  "terminal.integrated.defaultProfile.windows": "my_web_app PowerShell",
+  "terminal.integrated.profiles.windows": {
+    "my_web_app PowerShell": {
+      "source": "PowerShell",
+      "args": [
+        "-NoLogo"
+      ]
+    }
+  },
+  "terminal.integrated.defaultProfile.osx": "my_web_app zsh",
+  "terminal.integrated.profiles.osx": {
+    "my_web_app zsh": {
+      "path": "/bin/zsh",
+      "args": [
+        "-l"
+      ]
+    }
+  },
+  "terminal.integrated.defaultProfile.linux": "my_web_app bash",
+  "terminal.integrated.profiles.linux": {
+    "my_web_app bash": {
+      "path": "/bin/bash",
+      "args": [
+        "-l"
+      ]
+    }
+  },
+  "terminal.integrated.env.windows": {
+    "PYTHONUTF8": "1",
+    "PYTHONIOENCODING": "utf-8"
+  },
+  "terminal.integrated.env.osx": {
+    "PYTHONUTF8": "1",
+    "PYTHONIOENCODING": "utf-8"
+  },
+  "terminal.integrated.env.linux": {
+    "PYTHONUTF8": "1",
+    "PYTHONIOENCODING": "utf-8"
+  },
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-action.json": [
+      ".github/actions/**/action.yml",
+      ".github/actions/**/action.yaml"
+    ],
+    "https://json.schemastore.org/github-workflow.json": [
+      ".github/workflows/*.yml",
+      ".github/workflows/*.yaml"
+    ]
+  },
+  "containers.containerClient": "com.microsoft.visualstudio.containers.podman",
+  "containers.orchestratorClient": "com.microsoft.visualstudio.orchestrators.podmancompose",
+  "dev.containers.dockerPath": "podman"
+}

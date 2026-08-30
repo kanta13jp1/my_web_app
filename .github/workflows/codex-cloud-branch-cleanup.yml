@@ -1,0 +1,214 @@
+name: Codex Cloud Branch Cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Preview candidates without deleting remote branches
+        required: true
+        default: true
+        type: boolean
+      minimum_age_days:
+        description: Only include branches whose exact merged PR is at least this old
+        required: true
+        default: 7
+        type: number
+      max_deletions:
+        description: Maximum remote branches to delete in one run
+        required: true
+        default: 20
+        type: number
+      confirmation:
+        description: Type DELETE_PROVEN_BRANCHES when dry_run is false
+        required: false
+        default: ''
+        type: string
+
+concurrency:
+  group: codex-cloud-branch-cleanup
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  cleanup:
+    name: Audit and clean proven remote branches in GitHub Actions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Validate deletion controls
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          MINIMUM_AGE_DAYS: ${{ inputs.minimum_age_days }}
+          MAX_DELETIONS: ${{ inputs.max_deletions }}
+        run: |
+          set -euo pipefail
+          [[ "$MINIMUM_AGE_DAYS" =~ ^[0-9]+$ ]] || { echo "minimum_age_days must be a non-negative integer" >&2; exit 1; }
+          [[ "$MAX_DELETIONS" =~ ^[1-9][0-9]*$ ]] || { echo "max_deletions must be a positive integer" >&2; exit 1; }
+          if [ "$DRY_RUN" != "true" ] && [ "$CONFIRMATION" != "DELETE_PROVEN_BRANCHES" ]; then
+            echo "Live deletion requires confirmation=DELETE_PROVEN_BRANCHES." >&2
+            exit 1
+          fi
+
+      - name: Build immutable cleanup manifest
+        id: manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MINIMUM_AGE_DAYS: ${{ inputs.minimum_age_days }}
+          MAX_DELETIONS: ${{ inputs.max_deletions }}
+        run: |
+          set -euo pipefail
+          tmp_dir=$(mktemp -d)
+          trap 'rm -rf "$tmp_dir"' EXIT
+          merged_json="$tmp_dir/merged.json"
+          open_heads="$tmp_dir/open-heads.txt"
+          protected_heads="$tmp_dir/protected-heads.txt"
+          candidates="$tmp_dir/candidates.tsv"
+          selected="$RUNNER_TEMP/codex-cloud-cleanup-selected.tsv"
+
+          gh pr list --state merged --limit 1000 \
+            --json number,headRefName,headRefOid,mergedAt,url > "$merged_json"
+          gh pr list --state open --limit 1000 \
+            --json headRefName --jq '.[].headRefName' > "$open_heads"
+          gh api --paginate "repos/$GITHUB_REPOSITORY/branches?per_page=100" \
+            --jq '.[] | select(.protected == true) | .name' > "$protected_heads"
+
+          now_epoch=$(date +%s)
+          : > "$candidates"
+          while IFS=$'\t' read -r sha ref; do
+            branch=${ref#refs/heads/}
+            if grep -Fxq "$branch" "$open_heads" || grep -Fxq "$branch" "$protected_heads"; then
+              continue
+            fi
+
+            proof=$(jq -c --arg branch "$branch" --arg sha "$sha" '
+              [ .[] |
+                select(.headRefName == $branch) |
+                select(.headRefOid == $sha) |
+                select(.mergedAt != null)
+              ] | sort_by(.mergedAt) | last // empty
+            ' "$merged_json")
+            if [ -z "$proof" ]; then
+              continue
+            fi
+
+            merged_at=$(jq -r '.mergedAt' <<<"$proof")
+            merged_epoch=$(date -d "$merged_at" +%s)
+            age_days=$(( (now_epoch - merged_epoch) / 86400 ))
+            if [ "$age_days" -lt "$MINIMUM_AGE_DAYS" ]; then
+              continue
+            fi
+
+            number=$(jq -r '.number' <<<"$proof")
+            url=$(jq -r '.url' <<<"$proof")
+            printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+              "$merged_at" "$branch" "$sha" "$number" "$age_days" "$url" >> "$candidates"
+          done < <(git ls-remote --heads origin 'refs/heads/codex/*')
+
+          sort -o "$candidates" "$candidates"
+          head -n "$MAX_DELETIONS" "$candidates" > "$selected"
+          candidate_count=$(wc -l < "$candidates" | tr -d ' ')
+          selected_count=$(wc -l < "$selected" | tr -d ' ')
+          echo "candidate_count=$candidate_count" >> "$GITHUB_OUTPUT"
+          echo "selected_count=$selected_count" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Codex cloud branch cleanup"
+            echo
+            echo "Candidates proven by exact merged-PR head SHA: **$candidate_count**"
+            echo "Selected by age and run cap: **$selected_count**"
+            echo
+            if [ "$selected_count" -gt 0 ]; then
+              echo '| Branch | SHA | PR | Age |'
+              echo '|---|---|---:|---:|'
+              while IFS=$'\t' read -r merged_at branch sha number age_days url; do
+                echo "| \`$branch\` | \`${sha:0:12}\` | [#$number]($url) | ${age_days}d |"
+              done < "$selected"
+            else
+              echo 'No branches meet the deletion proof and age requirements.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Delete selected remote branches with SHA leases
+        if: inputs.dry_run == false && steps.manifest.outputs.selected_count != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          selected="$RUNNER_TEMP/codex-cloud-cleanup-selected.tsv"
+          open_now="$RUNNER_TEMP/codex-cloud-cleanup-open-now.txt"
+          remote_now="$RUNNER_TEMP/codex-cloud-cleanup-remote-now.tsv"
+
+          gh pr list --state open --limit 1000 \
+            --json headRefName --jq '.[].headRefName' > "$open_now"
+          git ls-remote --heads origin 'refs/heads/codex/*' > "$remote_now"
+
+          delete_manifest="$RUNNER_TEMP/codex-cloud-cleanup-delete.tsv"
+          : > "$delete_manifest"
+          while IFS=$'\t' read -r merged_at branch sha number age_days url; do
+            if grep -Fxq "$branch" "$open_now"; then
+              echo "Skipping $branch because an open PR appeared." >&2
+              continue
+            fi
+            current_sha=$(awk -v ref="refs/heads/$branch" '$2 == ref {print $1}' "$remote_now")
+            if [ "$current_sha" != "$sha" ]; then
+              echo "Skipping $branch because the remote SHA changed." >&2
+              continue
+            fi
+            printf '%s\t%s\n' "$branch" "$sha" >> "$delete_manifest"
+          done < "$selected"
+
+          deleted=0
+          while IFS= read -r first; do
+            batch=$(mktemp)
+            printf '%s\n' "$first" > "$batch"
+            for _ in $(seq 1 9); do
+              if IFS= read -r next; then
+                printf '%s\n' "$next" >> "$batch"
+              else
+                break
+              fi
+            done
+
+            args=(push --atomic)
+            branches=()
+            while IFS=$'\t' read -r branch sha; do
+              args+=("--force-with-lease=refs/heads/$branch:$sha")
+              branches+=("$branch")
+            done < "$batch"
+            args+=(origin --delete)
+            args+=("${branches[@]}")
+            git "${args[@]}"
+            deleted=$((deleted + ${#branches[@]}))
+            rm -f "$batch"
+          done < "$delete_manifest"
+
+          remaining=$(git ls-remote --heads origin 'refs/heads/codex/*')
+          while IFS=$'\t' read -r branch sha; do
+            if grep -Fq $'\t'"refs/heads/$branch" <<<"$remaining"; then
+              echo "Remote branch still exists after deletion: $branch" >&2
+              exit 1
+            fi
+          done < "$delete_manifest"
+
+          {
+            echo
+            echo "Deleted and verified remote branches: **$deleted**"
+            echo
+            echo "Local worktrees are intentionally untouched; recreate or remove them only from their owning machine."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Refresh Codex backlog issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run codex-backlog-check.yml --ref main

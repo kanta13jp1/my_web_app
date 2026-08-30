@@ -25,6 +25,11 @@ import {
   parseElectionMode,
   verifyElectionGoalSources,
 } from "./election_mode.ts";
+import {
+  parseGo2SenkyoScheduleHtml,
+  parseNewKokuminElectionListHtml,
+  type ScheduleOverviewEntry,
+} from "./schedule_source_parsers.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -64,7 +69,7 @@ const MINIMUM_EXPECTED_OFFICIAL_ELECTION_PREFECTURE_LINKS = 10;
 const SCHEDULE_PAST_DAYS = 14;
 const NEXT_UNIFIED_LOCAL_ELECTION_SCHEDULE_END = "2027-04-25";
 // ユーザー要件: 最低でも 1ヶ月分 (30日) の地方選予定を取得する。
-// new-kokumin は 1,014件のデータを返すため cap に余裕を持たせる。
+// new-kokumin は 1,000件超のデータを返すため cap に余裕を持たせる。
 // PS版#112: window 60→90 / cap 100→200
 // Win版#80: cap 200→300 + SCHEDULE_MIN_WINDOW_DAYS=30 の最低保証を追加
 const SCHEDULE_WINDOW_DAYS = 90;
@@ -222,13 +227,6 @@ interface ScheduleCandidateRow {
   statusLabel: string;
   votes: number;
   xHandle: string;
-}
-
-interface ScheduleOverviewEntry {
-  electionName: string;
-  prefecture: string;
-  voteDate: string;
-  detailUrl: string;
 }
 
 interface ScheduleSourceEntries {
@@ -1602,7 +1600,7 @@ async function fetchScheduleOverviewEntries(
       urls.map(async (url) => {
         try {
           const html = await fetchText(url);
-          const entries = parseScheduleOverviewEntries(html);
+          const entries = parseGo2SenkyoScheduleHtml(html);
           return {
             entries,
             health: {
@@ -1673,65 +1671,6 @@ async function fetchNewKokuminScheduleEntries(): Promise<
       parsedEntryCount: entries.length,
     },
   };
-}
-
-function parseNewKokuminElectionListHtml(
-  html: string,
-): ScheduleOverviewEntry[] {
-  const entries: ScheduleOverviewEntry[] = [];
-  const prefSectionRegex =
-    /<section[^>]+class="[^"]*\bpref-section\b[^"]*"[^>]*>([\s\S]*?)<\/section>/gi;
-  for (const sectionMatch of html.matchAll(prefSectionRegex)) {
-    const sectionHtml = sectionMatch[1] ?? "";
-    const prefTitleMatch = sectionHtml.match(
-      /<h2[^>]+class="[^"]*pref-section-title[^"]*"[^>]*>([\s\S]*?)<\/h2>/i,
-    );
-    const prefecture = normalizeWhitespace(
-      decodeHtml(stripTags(prefTitleMatch?.[1] ?? "")),
-    ).trim();
-    if (!isPrefectureName(prefecture)) continue;
-
-    const itemRegex =
-      /<li[^>]+class="[^"]*\belection-item\b[^"]*"[^>]*>([\s\S]*?)<\/li>/gi;
-    for (const itemMatch of sectionHtml.matchAll(itemRegex)) {
-      const itemHtml = itemMatch[1] ?? "";
-      const nameMatch = itemHtml.match(
-        /<p[^>]+class="[^"]*election-item-name[^"]*"[^>]*>([\s\S]*?)<\/p>/i,
-      );
-      const electionName = normalizeWhitespace(
-        decodeHtml(stripTags(nameMatch?.[1] ?? "")),
-      ).trim();
-      if (!electionName) continue;
-
-      const datesMatch = itemHtml.match(
-        /<p[^>]+class="[^"]*election-item-dates[^"]*"[^>]*>([\s\S]*?)<\/p>/i,
-      );
-      const datesText = normalizeWhitespace(
-        decodeHtml(stripTags(datesMatch?.[1] ?? "")),
-      );
-      const voteDate = extractNewKokuminVoteDate(datesText);
-      if (!voteDate) continue;
-
-      const linkMatch = itemHtml.match(
-        /href="(https?:\/\/local-elections\.new-kokumin\.jp\/form\/[^"]+)"/i,
-      );
-      const detailUrl = linkMatch?.[1]?.trim() ?? "";
-      entries.push({ electionName, prefecture, voteDate, detailUrl });
-    }
-  }
-  return entries;
-}
-
-function extractNewKokuminVoteDate(datesText: string): string {
-  const voteMatch = datesText.match(
-    /投開票[：:]\s*(\d{4}年\d{1,2}月\d{1,2}日)/,
-  );
-  if (voteMatch?.[1]) return extractIsoDate(voteMatch[1]);
-  const termMatch = datesText.match(
-    /任期満了[：:]\s*(\d{4}年\d{1,2}月\d{1,2}日)/,
-  );
-  if (termMatch?.[1]) return extractIsoDate(termMatch[1]);
-  return "";
 }
 
 function buildManualScheduledCandidates(
@@ -1848,57 +1787,6 @@ function mergeScheduledCandidates(
     });
   }
   return [...merged.values()];
-}
-
-function parseScheduleOverviewEntries(html: string): ScheduleOverviewEntry[] {
-  const entries: ScheduleOverviewEntry[] = [];
-  const seen = new Set<string>();
-  let currentVoteDate = "";
-  for (const match of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gsi)) {
-    const rowHtml = match[1] ?? "";
-    const cells = [...rowHtml.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gsi)].map((
-      cellMatch,
-    ) => cellMatch[1] ?? "");
-    if (cells.length < 2) {
-      continue;
-    }
-    const detectedVoteDate = normalizeSlashedDate(
-      normalizeWhitespace(decodeHtml(stripTags(cells[0]))),
-    );
-    if (detectedVoteDate !== "") {
-      currentVoteDate = detectedVoteDate;
-    }
-    const electionCell = cells.length >= 3 ? cells[1] : cells[0];
-    const prefectureCell = cells.length >= 3 ? cells[2] : cells[1];
-    const detailMatch = electionCell.match(
-      /<a[^>]+href="([^"]*\/local\/senkyo\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/i,
-    );
-    if (!detailMatch || currentVoteDate === "") {
-      continue;
-    }
-    const electionName = normalizeWhitespace(
-      decodeHtml(stripTags(detailMatch[2] ?? "")),
-    ).trim();
-    const prefecture = extractPrefectureLabel(
-      normalizeWhitespace(decodeHtml(stripTags(prefectureCell))),
-    );
-    if (electionName === "" || !isPrefectureName(prefecture)) {
-      continue;
-    }
-    const detailUrl = new URL(detailMatch[1], ELECTION_SCHEDULE_URL).toString();
-    const key = `${currentVoteDate}:${prefecture}:${electionName}:${detailUrl}`;
-    if (seen.has(key)) {
-      continue;
-    }
-    seen.add(key);
-    entries.push({
-      electionName,
-      prefecture,
-      voteDate: currentVoteDate,
-      detailUrl,
-    });
-  }
-  return entries;
 }
 
 async function enrichScheduleEntry(

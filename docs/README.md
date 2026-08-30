@@ -24,6 +24,9 @@ implementation. See
 | [DESIGN_TOOLING_SETUP.md](./DESIGN_TOOLING_SETUP.md) | Figma MCP / AIDesigner MCP セットアップ |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | コーディング規約・PR作成ガイド |
 | [CICD_SETUP_GUIDE.md](./CICD_SETUP_GUIDE.md) | GitHub Actions / Secrets セットアップ手順 |
+| [SUPABASE_LOG_DRAINS_REQUIREMENTS.md](./SUPABASE_LOG_DRAINS_REQUIREMENTS.md) | Supabase外部ログ転送の費用・セキュリティ・90日保持方針 |
+| [CONTAINER_RESOURCE_CLEANUP.md](./CONTAINER_RESOURCE_CLEANUP.md) | Docker/Dev Containerの安全な定期清掃とSupabaseローカルDB保護 |
+| [ROOTLESS_CONTAINER_SETUP.md](./ROOTLESS_CONTAINER_SETUP.md) | Rootless Podman/DockerによるFlutter Dev Container・Supabase検証手順 |
 
 ---
 

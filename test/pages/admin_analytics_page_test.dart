@@ -260,6 +260,11 @@ void main() {
     expect(find.text('今日の登録ファネル'), findsOneWidget);
     expect(find.text('過去30日の登録ファネル'), findsOneWidget);
     expect(find.text('過去30日の課金ファネル'), findsOneWidget);
+    expect(find.text('獲得元別コホート判断証拠'), findsOneWidget);
+    expect(find.text('プラン別ユニットエコノミクス'), findsOneWidget);
+    expect(find.text('集計信号 150'), findsOneWidget);
+    expect(find.textContaining('ユーザーコホート人数として扱いません'), findsWidgets);
+    expect(find.byKey(const Key('plan_economics_empty')), findsOneWidget);
     final billingCard = find.byKey(const Key('billing_funnel_card'));
     final billingMetrics = tester
         .widgetList<RichText>(
@@ -387,6 +392,8 @@ void main() {
     expect(find.text('今日の登録目標'), findsOneWidget);
     expect(find.text('有料転換'), findsOneWidget);
     expect(find.text('過去30日の課金ファネル'), findsOneWidget);
+    expect(find.byKey(const Key('acquisition_evidence_empty')), findsOneWidget);
+    expect(find.byKey(const Key('plan_economics_empty')), findsOneWidget);
     expect(find.text('¥0'), findsOneWidget);
   });
 

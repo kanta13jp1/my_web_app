@@ -48,12 +48,14 @@ concurrency:
 # workflows and needs one consistent change to an id verified via ListModels.
 # Keep logging the bodies: the status codes alone pointed at the wrong cause.
 
-permissions:
-  contents: read
-  pull-requests: write
+permissions: {}
 
 jobs:
   review:
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: write
     name: AI Agent Code Review
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -63,10 +65,16 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
 
       - name: Extract PR diff
         id: diff
@@ -105,7 +113,7 @@ jobs:
       - name: AI Review (Claude primary / Gemini fallback)
         id: review
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           DIFF_LINES="${{ steps.diff.outputs.lines }}"
@@ -119,11 +127,12 @@ jobs:
           REVIEW_PROMPT="自分株式会社 (Flutter Web + Supabase) のPRをレビューしてください。
 
           【観点 — static アナライザが検出できないものに集中】
-          1. セキュリティ: ハードコードシークレット / SQL injection / 認証バイパス
-          2. ルール違反: ダミーデータ使用 / flutter analyze スキップ / continue-on-error 不適切追加
-          3. EF 上限管理: 新規 supabase function が Tier1 (100本デプロイ制限) 超過リスク
-          4. アーキテクチャ: 複雑ロジックがフロントに置かれ Edge Function ファーストに反する
-          5. データ整合性: 実 Supabase データを使っているか (ダミーデータ禁止)
+          1. ルール違反: ダミーデータ使用 / flutter analyze スキップ / continue-on-error 不適切追加
+          2. EF 上限管理: 新規 supabase function が Tier1 (100本デプロイ制限) 超過リスク
+          3. アーキテクチャ: 複雑ロジックがフロントに置かれ Edge Function ファーストに反する
+          4. データ整合性: 実 Supabase データを使っているか (ダミーデータ禁止)
+
+          セキュリティ観点は独立した high-risk-dual-security-review.yml に委譲する。
 
           問題なし → 「✅ LGTM — 問題なし」の1行のみ。
           問題あり → 各問題を「### 問題N: タイトル\n**ファイル:** path\n**内容:** 説明\n**修正:** 方法」で列挙。
@@ -223,7 +232,7 @@ jobs:
       - name: Post Review Comment
         if: steps.review.outputs.text != '' && !startsWith(steps.review.outputs.text, '✅ LGTM')
         continue-on-error: true
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           REVIEW_BODY: ${{ steps.review.outputs.text }}
           REVIEW_MODEL: ${{ steps.review.outputs.model }}
@@ -273,7 +282,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -305,7 +314,7 @@ jobs:
 
       - name: Upload gate evidence
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: high-risk-ultrareview-gate
           path: .ci-logs/high-risk-*.txt
@@ -321,6 +330,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.ultrareview == 'true'
     permissions:
       contents: read
+      issues: read
       pull-requests: write
 
     steps:
@@ -349,25 +359,38 @@ jobs:
           echo "Reviewing PR #${PR_NUM}"
 
       - name: Checkout PR head
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           ref: refs/pull/${{ steps.pr.outputs.number }}/head
           persist-credentials: false
 
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
+
+      - name: Record owner-requested ultrareview suspension
+        if: steps.paid_ai_policy.outputs.enabled != 'true'
+        run: echo "Claude ultrareview is disabled by owner policy." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '20'
 
       - name: Install Claude Code CLI
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
         run: npm install -g @anthropic-ai/claude-code@latest 2>&1 | tail -3
 
       - name: Run ultrareview
         id: ultrareview
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUM: ${{ steps.pr.outputs.number }}
@@ -434,7 +457,7 @@ jobs:
 
       - name: Post ultrareview comment
         if: steps.ultrareview.outputs.ran == 'true'
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           PR_NUMBER: ${{ steps.pr.outputs.number }}
         with:
