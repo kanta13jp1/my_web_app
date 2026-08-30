@@ -86,8 +86,7 @@ class EvernoteSourceContextFields extends StatelessWidget {
           maxLength: 200,
           decoration: const InputDecoration(
             labelText: '元ノートブック名（必須）',
-            helperText:
-                'ファイル名から推定しています。Evernote上の名前に修正してください。',
+            helperText: 'ファイル名から推定しています。Evernote上の名前に修正してください。',
             border: OutlineInputBorder(),
           ),
           onChanged: (_) => onChanged(),
