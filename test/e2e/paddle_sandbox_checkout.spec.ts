@@ -21,7 +21,7 @@ const realSandboxEnabled = process.env.PADDLE_SANDBOX_E2E === 'true';
 const testEmail = 'paddle-sandbox-e2e@example.com';
 
 test.describe('real Paddle sandbox checkout', () => {
-  test.describe.configure({ mode: 'serial' });
+  test.describe.configure({ mode: 'serial', timeout: 180_000 });
   test.skip(
     !realSandboxEnabled,
     'Set PADDLE_SANDBOX_E2E=true only in the guarded manual cloud workflow.',
@@ -89,12 +89,10 @@ test.describe('real Paddle sandbox checkout', () => {
 });
 
 async function openFlutterCheckout(page: Page) {
-  await page.addInitScript(() => {
-    if (window === window.top && window.location.hostname === 'localhost') {
-      window.history.replaceState(null, '', '/subscription-billing');
-    }
-  });
-  const response = await page.goto('/', {
+  // The short-lived evidence server is a static server without SPA fallback.
+  // Use Flutter's supported hash deep link so `/` serves index.html while the
+  // app still starts on the subscription billing route.
+  const response = await page.goto('/#/subscription-billing', {
     waitUntil: 'domcontentloaded',
   });
   expect(response?.ok()).toBe(true);
