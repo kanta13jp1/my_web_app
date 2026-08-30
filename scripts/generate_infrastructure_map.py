@@ -98,12 +98,13 @@ def sql_files(repo_root: Path) -> Iterable[Path]:
 
 
 def parse_sql(repo_root: Path, inventory: Inventory) -> None:
+    parsed_files: list[tuple[str, str]] = []
     for path in sql_files(repo_root):
         relative = path.relative_to(repo_root).as_posix()
         source = strip_sql_comments(path.read_text(encoding="utf-8", errors="replace"))
+        parsed_files.append((relative, source))
 
-        table_matches = list(CREATE_TABLE_RE.finditer(source))
-        for match in table_matches:
+        for match in CREATE_TABLE_RE.finditer(source):
             table = clean_identifier(match.group("name"))
             add_resource(inventory, table, "table", relative)
             segment_end = source.find(";", match.end())
@@ -112,22 +113,6 @@ def parse_sql(repo_root: Path, inventory: Inventory) -> None:
                 target = clean_identifier(reference.group("name"))
                 add_resource(inventory, target, "table (referenced)", relative)
                 inventory.dependencies.add(Dependency(table, target, "foreign key", relative))
-
-        data_targets = {
-            clean_identifier(match.group("name"))
-            for match in DATA_REFERENCE_RE.finditer(source)
-            if clean_identifier(match.group("name")).lower()
-            not in {"public.select", "public.values", "public.set"}
-        }
-        for match in CREATE_FUNCTION_RE.finditer(source):
-            function = clean_identifier(match.group("name"))
-            add_resource(inventory, function, "RPC/function", relative)
-            for target in sorted(data_targets):
-                if target != function:
-                    add_resource(inventory, target, "table (referenced)", relative)
-                    inventory.dependencies.add(
-                        Dependency(function, target, "reads/writes (conservative)", relative)
-                    )
 
         for insert in BUCKET_INSERT_RE.finditer(source):
             value = QUOTED_VALUE_RE.search(insert.group("body"))
@@ -139,6 +124,69 @@ def parse_sql(repo_root: Path, inventory: Inventory) -> None:
                     relative,
                 )
 
+    ignored_schemas = {"old", "new", "excluded"}
+    ignored_identifiers = {
+        "anon",
+        "authenticated",
+        "false",
+        "null",
+        "on",
+        "own",
+        "public",
+        "select",
+        "service_role",
+        "set",
+        "to",
+        "true",
+        "values",
+    }
+    for relative, source in parsed_files:
+        function_matches = list(CREATE_FUNCTION_RE.finditer(source))
+        for index, match in enumerate(function_matches):
+            function = clean_identifier(match.group("name"))
+            add_resource(inventory, function, "RPC/function", relative)
+
+            limit = (
+                function_matches[index + 1].start()
+                if index + 1 < len(function_matches)
+                else len(source)
+            )
+            function_tail = source[match.end() : limit]
+            quote = re.search(
+                r"\bas\s+(?P<tag>\$[A-Za-z0-9_]*\$)",
+                function_tail,
+                flags=re.IGNORECASE,
+            )
+            if quote:
+                closing = function_tail.find(quote.group("tag"), quote.end())
+                body = (
+                    function_tail[quote.end() : closing]
+                    if closing >= 0
+                    else function_tail[quote.end() :]
+                )
+            else:
+                body = function_tail
+
+            for data_match in DATA_REFERENCE_RE.finditer(body):
+                raw_target = data_match.group("name").strip().strip('"')
+                parts = [part.strip('"') for part in raw_target.split(".")]
+                if parts[0].lower() in ignored_schemas:
+                    continue
+                if len(parts) == 1 and parts[0].lower() in ignored_identifiers:
+                    continue
+
+                target = clean_identifier(raw_target)
+                known = inventory.resources.get(target)
+                if len(parts) == 1 and (
+                    known is None or not known.kind.startswith("table")
+                ):
+                    continue
+                if target == function:
+                    continue
+                add_resource(inventory, target, "table (referenced)", relative)
+                inventory.dependencies.add(
+                    Dependency(function, target, "reads/writes (conservative)", relative)
+                )
 
 def strip_yaml_comment(line: str) -> str:
     in_single = False
