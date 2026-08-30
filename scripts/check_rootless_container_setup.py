@@ -80,6 +80,38 @@ def validate_devcontainer(config: dict[str, Any]) -> list[str]:
     return errors
 
 
+def validate_cloud_control_plane(config: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if config.get("name") != "my_web_app Cloud Control Plane":
+        errors.append("default devcontainer must identify the cloud control plane.")
+
+    if "build" in config or "image" in config:
+        errors.append("cloud control plane must use the GitHub default Codespaces image.")
+
+    if config.get("postCreateCommand") != "gh --version && git status --short":
+        errors.append("cloud control plane startup must remain lightweight and deterministic.")
+
+    if config.get("remoteEnv", {}).get("CLOUD_DEVELOPMENT_MODE") != "control-plane":
+        errors.append("cloud control plane must expose CLOUD_DEVELOPMENT_MODE=control-plane.")
+
+    requirements = config.get("hostRequirements", {})
+    if (
+        requirements.get("cpus") != 2
+        or requirements.get("memory") != "4gb"
+        or requirements.get("storage") != "16gb"
+    ):
+        errors.append("cloud control plane must retain the 2 CPU, 4gb memory, and 16gb storage gate.")
+
+    serialized = json.dumps(config).lower()
+    for forbidden in ("flutter", "flutter pub get", "--privileged", "docker.sock", "podman.sock"):
+        if forbidden in serialized:
+            errors.append(f"cloud control plane must not contain {forbidden!r}.")
+
+    open_files = config.get("customizations", {}).get("codespaces", {}).get("openFiles", [])
+    if "docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md" not in open_files:
+        errors.append("cloud control plane must open the cloud-first workflow guide.")
+    return errors
+
 def validate_dockerfile(text: str) -> list[str]:
     errors: list[str] = []
     normalized = text.strip()
@@ -200,7 +232,14 @@ def validate_cloud_workflow(
 def validate_repository(root: Path) -> list[str]:
     errors: list[str] = []
     errors.extend(validate_settings(load_json(root / ".vscode" / "settings.json")))
-    errors.extend(validate_devcontainer(load_json(root / ".devcontainer" / "devcontainer.json")))
+    errors.extend(
+        validate_cloud_control_plane(load_json(root / ".devcontainer" / "devcontainer.json"))
+    )
+    errors.extend(
+        validate_devcontainer(
+            load_json(root / ".devcontainer" / "flutter-local" / "devcontainer.json")
+        )
+    )
     errors.extend(
         validate_dockerfile((root / ".devcontainer" / "Dockerfile").read_text(encoding="utf-8"))
     )
