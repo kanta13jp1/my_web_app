@@ -90,7 +90,7 @@ class RootlessContainerSetupTest(unittest.TestCase):
         self.assertTrue(any("pull_request_target" in error for error in errors), errors)
         self.assertTrue(any("secrets." in error for error in errors), errors)
         self.assertTrue(any("--privileged" in error for error in errors), errors)
-        self.assertTrue(any("supabase stop" in error for error in errors), errors)
+        self.assertTrue(any("stop --no-backup" in error for error in errors), errors)
         self.assertTrue(any("sudo dockerd" in error for error in errors), errors)
         self.assertTrue(any("--ignore-health-check" in error for error in errors), errors)
 

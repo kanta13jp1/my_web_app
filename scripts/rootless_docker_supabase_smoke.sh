@@ -9,10 +9,12 @@ cd "${repo_root}"
 
 runtime_root="$(mktemp -d "${RUNNER_TEMP:-/tmp}/rootless-docker.XXXXXX")"
 runtime_dir="${runtime_root}/run"
+smoke_project="${runtime_root}/project"
 daemon_log="${runtime_root}/dockerd-rootless.log"
 start_log="${runtime_root}/supabase-start.log"
-mkdir -p "${runtime_dir}"
+mkdir -p "${runtime_dir}" "${smoke_project}/supabase"
 chmod 700 "${runtime_dir}"
+cp "${repo_root}/supabase/config.toml" "${smoke_project}/supabase/config.toml"
 
 export XDG_RUNTIME_DIR="${runtime_dir}"
 export DOCKER_HOST="unix://${runtime_dir}/docker.sock"
@@ -39,8 +41,8 @@ cleanup() {
   set +e
 
   if [ "${supabase_started}" = true ]; then
-    if supabase stop >/dev/null 2>&1; then
-      record "supabase_cleanup=stopped_with_backup"
+    if supabase --workdir "${smoke_project}" stop --no-backup >/dev/null 2>&1; then
+      record "supabase_cleanup=stopped_no_backup"
       if [ -n "${project_id}" ]; then
         remaining="$(docker ps --all --quiet \
           --filter "label=com.supabase.cli.project=${project_id}" 2>/dev/null)"
@@ -122,9 +124,13 @@ record "docker_daemon_uid=${daemon_uid}"
 record "docker_daemon_uid_map=$(tr '\n' ';' < "/proc/${daemon_pid}/uid_map")"
 record "docker_socket=$(stat -c '%U:%G:%a' "${runtime_dir}/docker.sock")"
 record "docker_api_compatibility=pass"
+record "schema_mode=config_only_without_repository_migrations_or_seed"
 
+project_id="$(sed -nE 's/^project_id[[:space:]]*=[[:space:]]*"([^"]+)"/\1/p' \
+  "${smoke_project}/supabase/config.toml" | head -n 1)"
+test -n "${project_id}"
 supabase_started=true
-if ! supabase start \
+if ! supabase --workdir "${smoke_project}" start \
   --exclude realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor \
   --yes >"${start_log}" 2>&1; then
   echo "Supabase start failed; relevant diagnostics:" >&2
@@ -139,10 +145,6 @@ if ! supabase start \
   } | sanitize | tee "${diagnostics_file}" >&2
   exit 1
 fi
-
-project_id="$(sed -nE 's/^project_id[[:space:]]*=[[:space:]]*"([^"]+)"/\1/p' \
-  "${repo_root}/supabase/config.toml" | head -n 1)"
-test -n "${project_id}"
 
 db_container="$(docker ps \
   --filter "label=com.supabase.cli.project=${project_id}" \
@@ -165,7 +167,7 @@ record "database_volume_permission_errors=0"
 auth_status="$(curl --fail --silent --output /dev/null \
   --write-out '%{http_code}' http://127.0.0.1:54321/auth/v1/health)"
 test "${auth_status}" = "200"
-supabase status >/dev/null
+supabase --workdir "${smoke_project}" status >/dev/null
 
 record "supabase_auth_container=${auth_container}"
 record "supabase_auth_gateway_health=200"
