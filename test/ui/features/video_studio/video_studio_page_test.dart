@@ -170,6 +170,71 @@ void main() {
     );
     expect(find.text('保存して次回へ反映'), findsOneWidget);
   });
+
+  testWidgets(
+    'pending improvement exposes bounded authorization and immediate run',
+    (tester) async {
+      final review = VideoArtifactReview(
+        id: '33333333-3333-4333-8333-333333333333',
+        artifactId: '22222222-2222-4222-8222-222222222222',
+        iteration: 1,
+        qualityScore: 3,
+        promptAlignmentScore: 4,
+        motionQualityScore: 3,
+        commercialValueScore: 3,
+        decision: 'improve',
+        strengths: '構図',
+        improvementRequest: '動きを自然に',
+        suggestedPrompt: 'Natural office motion',
+        notes: '',
+        createdAt: DateTime.utc(2026, 8, 20),
+      );
+      final artifact = VideoArtifact(
+        id: review.artifactId,
+        jobId: '11111111-1111-4111-8111-111111111111',
+        title: 'Office scene',
+        lifecycleStage: 'productizing',
+        rightsStatus: 'allowed',
+        privacyStatus: 'cleared',
+        commerceStatus: 'sale_candidate',
+        intendedForSale: true,
+        iteration: 1,
+        latestReview: review,
+        createdAt: DateTime.utc(2026, 8, 20),
+      );
+      final job = VideoGenerationJob(
+        id: artifact.jobId,
+        modelKey: 'studio-video-v1',
+        prompt: 'Office scene',
+        durationSeconds: 5,
+        aspectRatio: '16:9',
+        resolution: '720p',
+        status: 'succeeded',
+        quotedCredits: 300,
+        chargedCredits: 300,
+        createdAt: DateTime.utc(2026, 8, 20),
+        artifact: artifact,
+      );
+
+      await tester.pumpWidget(_app(jobs: [job]));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('video-improvement-authorization')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('video-authorization-expiry')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('video-authorization-iterations')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('総上限 600 credits・自動購入 0円'), findsOneWidget);
+      expect(find.byKey(const Key('video-authorize-and-run')), findsOneWidget);
+    },
+  );
 }
 
 Widget _app({
@@ -179,8 +244,8 @@ Widget _app({
   return MaterialApp(
     routes: {
       '/login': (_) => const Scaffold(
-            body: Text('Login page', key: Key('video-studio-login-page')),
-          ),
+        body: Text('Login page', key: Key('video-studio-login-page')),
+      ),
       '/terms': (_) => const SizedBox(),
       '/privacy': (_) => const SizedBox(),
       '/tokusho': (_) => const SizedBox(),
@@ -199,36 +264,40 @@ class _PageGateway implements VideoStudioGateway {
 
   @override
   Future<VideoStudioCatalog> loadCatalog() async => const VideoStudioCatalog(
-        models: [
-          VideoGenerationModelOption(
-            key: 'studio-video-v1',
-            name: 'Studio Video 1',
-            description: '当サイト運営GPUによる動画生成',
-            durations: [5],
-            aspectRatios: ['16:9', '9:16'],
-            resolutions: ['720p'],
-            creditsPerSecond: 60,
-          ),
-        ],
-        creditPacks: [
-          VideoCreditPackOption(
-            key: 'starter',
-            name: 'Starter',
-            credits: 500,
-            amountJpy: 500,
-          ),
-        ],
-      );
+    models: [
+      VideoGenerationModelOption(
+        key: 'studio-video-v1',
+        name: 'Studio Video 1',
+        description: '当サイト運営GPUによる動画生成',
+        durations: [5],
+        aspectRatios: ['16:9', '9:16'],
+        resolutions: ['720p'],
+        creditsPerSecond: 60,
+      ),
+    ],
+    creditPacks: [
+      VideoCreditPackOption(
+        key: 'starter',
+        name: 'Starter',
+        credits: 500,
+        amountJpy: 500,
+      ),
+    ],
+  );
 
   @override
   Future<VideoCreditBalance> loadBalance() async => const VideoCreditBalance(
-        availableCredits: 500,
-        reservedCredits: 0,
-        creditDebt: 0,
-      );
+    availableCredits: 500,
+    reservedCredits: 0,
+    creditDebt: 0,
+  );
 
   @override
   Future<List<VideoGenerationJob>> listJobs() async => jobs;
+
+  @override
+  Future<List<VideoImprovementAuthorization>> loadAuthorizations() async =>
+      const [];
 
   @override
   Future<VideoCreateResult> createJob({
@@ -240,8 +309,7 @@ class _PageGateway implements VideoStudioGateway {
     required String resolution,
     String? parentArtifactId,
     String? appliedReviewId,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 
   @override
   Future<VideoGenerationJob> refreshJob(String jobId) =>
@@ -251,15 +319,35 @@ class _PageGateway implements VideoStudioGateway {
   Future<VideoArtifactReviewResult> reviewArtifact({
     required String artifactId,
     required VideoArtifactReviewDraft review,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
+
+  @override
+  Future<VideoAuthorizationCreateResult> authorizeImprovement({
+    required String idempotencyKey,
+    required String sourceArtifactId,
+    required String sourceReviewId,
+    required int validityHours,
+    required int totalRegenerations,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<VideoAuthorizationCreateResult> runAuthorizedImprovement({
+    required String idempotencyKey,
+    required String authorizationId,
+    required String sourceArtifactId,
+    required String sourceReviewId,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<VideoImprovementAuthorization> revokeAuthorization(
+    String authorizationId,
+  ) => throw UnimplementedError();
 
   @override
   Future<Uri> createCreditCheckout({
     required String packKey,
     required String returnUrl,
-  }) async =>
-      Uri.parse('https://checkout.stripe.test/session');
+  }) async => Uri.parse('https://checkout.stripe.test/session');
 }
 
 class _AuthenticationRequiredGateway extends _PageGateway {

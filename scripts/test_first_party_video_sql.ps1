@@ -8,9 +8,11 @@ $postgresPassword = 'local-video-contract-only'
 $migrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260819165405_create_first_party_video_service.sql'
 $artifactFixturePath = Join-Path $repositoryRoot 'supabase/tests/video_artifact_review_loop_pre_migration.sql'
 $artifactMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260822084126_add_video_artifact_review_loop.sql'
+$authorizationMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260830053403_video_improvement_authorization_envelopes.sql'
 $bootstrapPath = Join-Path $repositoryRoot 'supabase/tests/video_service_bootstrap.sql'
 $contractPath = Join-Path $repositoryRoot 'supabase/tests/first_party_video_service_contract.sql'
 $artifactContractPath = Join-Path $repositoryRoot 'supabase/tests/video_artifact_review_loop_contract.sql'
+$authorizationContractPath = Join-Path $repositoryRoot 'supabase/tests/video_improvement_authorization_contract.sql'
 
 try {
   docker run --detach --rm `
@@ -42,8 +44,10 @@ try {
       $migrationPath,
       $artifactFixturePath,
       $artifactMigrationPath,
+      $authorizationMigrationPath,
       $contractPath,
-      $artifactContractPath
+      $artifactContractPath,
+      $authorizationContractPath
     )) {
     Get-Content -LiteralPath $sqlPath -Raw |
       docker exec --interactive $containerName `
