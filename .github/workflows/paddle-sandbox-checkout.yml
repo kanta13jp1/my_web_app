@@ -292,7 +292,9 @@ jobs:
           for attempt in $(seq 1 30); do
             if curl --fail --silent --show-error \
               http://localhost:7357/subscription-billing \
-              | grep --quiet '<title>'; then
+              --output .ci-logs/paddle-real-sandbox-health.html \
+              && grep --quiet '<title>' \
+                .ci-logs/paddle-real-sandbox-health.html; then
               exit 0
             fi
             sleep 1
