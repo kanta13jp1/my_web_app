@@ -1,8 +1,8 @@
 # アカウント保持・削除設計（Issue #2844）
 
-更新日: 2026-08-29
-実装ポリシー: `2026-08-29.v1`
-状態: 実装済み / production 適用前に owner・法務レビュー必須
+更新日: 2026-08-30
+実装ポリシー: `2026-08-30.v2`
+状態: production配備済み / owner方針採択済み / scheduled worker停止中 / 外部法務・税務レビュー未実施
 
 ## 1. 決定事項
 
@@ -64,16 +64,14 @@
 - inventory blocker: 自動削除を開始しない。対象 table / column の保持根拠を決め、CASCADE、SET NULL、匿名化 adapter のいずれかを migration で追加する。
 - 10回失敗: 自動 claim 対象外となる。operator が原因を修正し、attempt / retry state を明示的に回復する。
 
-## 6. production 適用前ゲート
+## 6. production rolloutゲート
 
-- [ ] owner / 法務が30日取消猶予、90日アクセスログ、決済 / 税務 / 不正防止の保持例外を承認
-- [ ] Supabase Dashboard の実プランと daily backup / PITR retention を確認し、公開ポリシーの「最大30日」と一致
-- [ ] Supabase Auth の JWT expiry が60分以下であることを確認し、65分の finalization 待機が全既発行 access token を覆う
-- [ ] staging fixture で inventory blocker 0、tenant 境界、二重申請、取消、worker 冪等性、途中失敗 retry を検証
-- [ ] Storage 各 bucket の owner metadata と削除件数を staging で検証
-- [ ] Stripe test mode Customer で削除 / resource missing / active subscription guard を検証
-- [ ] `account-lifecycle` Edge Function と daily workflow を同一 release で配備
-- [ ] backup restore runbook に、通常公開前の削除 request 再適用手順を追加
-- [ ] プライバシーポリシー公開とアプリ導線の同時反映を確認
+配備済みのcontrol planeは、workerを停止したまま退会申請、取消、inventory、retry状態を保持する。2026-08-29のproduction recovery deployと公開ポリシー / アプリ導線反映は完了済みである。
 
-法務承認前に production migration、function deploy、scheduled worker の有効化を行わない。
+- [x] [`ACCOUNT_RETENTION_LEGAL_DECISION_RECORD.md`](ACCOUNT_RETENTION_LEGAL_DECISION_RECORD.md)にownerのプロダクト方針採択、外部専門家レビュー未実施、保持例外と再レビュー条件を記録する
+- [x] Supabaseのdaily backup / PITR実測値とAuth JWT expiry実測値を決裁記録へ転記する（JWTの読み取り専用cloud audit: GitHub Actions run `33298236393`）
+- [x] disposable cloud fixtureで対象の削除可能行 / Auth / Storage残存0、90日audit例外の保持、control tenant無変更を確認する（GitHub Actions run `33296894254`）
+- [x] productionで`disabled`の非破壊preflightを実行し、`candidate:null / no_due_request`、破壊処理skipを確認する（GitHub Actions run `33297460725`）
+- [x] Issue完了時の段階を`disabled`と決定する。due requestがない状態で実アカウントを作為的に削除せず、将来の初回処理時だけ指定ID・1件・typed confirmation付き`canary`へ進む
+
+workerは`ACCOUNT_DELETION_ROLLOUT_STAGE=disabled`をIssue完了時の承認済みsteady stateとする。scheduled処理は`limited` / `full`かつ`ACCOUNT_DELETION_AUTOMATION_ENABLED=true`の場合だけ動作する。新しいdue requestを初めて処理するときは決裁記録のcanary条件を満たし、実行後の匿名完了と残存0を確認するまでscheduled workerを有効化しない。
