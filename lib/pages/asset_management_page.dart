@@ -304,7 +304,8 @@ class AssetManagementPage extends StatefulWidget {
   final Map<String, dynamic>? debugDebtOverrideDeletedMirror;
 
   /// テスト専用: リボ払い設定の集約ミラー値
-  /// (`{debtId: {monthlyAmount, creditLimit}}`) を注入し、端末間同期
+  /// (`{debtId: {monthlyAmount, newUsageAmount, paymentDay, creditLimit}}`)
+  /// を注入し、端末間同期
   /// (起動時のミラー復元) をネットワークなしで検証する。
   @visibleForTesting
   final Map<String, dynamic>? debugRevolvingConfigsMirror;
@@ -734,7 +735,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, String> _paymentDifferenceReasons = <String, String>{};
   Map<String, double> _annualRateOverrides = <String, double>{};
   Map<String, int> _debtPaymentDayOverrides = <String, int>{};
-  // リボ払いカードの設定 (負債IDごと)。v1 はローカル永続化のみ。
+  // リボ払いカードの返済ルール (最低返済額 + 新規利用額を25日に返済)。
   Map<String, AssetLiabilityRevolvingCreditConfig> _revolvingConfigs =
       <String, AssetLiabilityRevolvingCreditConfig>{};
   // カード会社で「今後は一括（1回）払い」へ変更した実行記録。
@@ -12904,12 +12905,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debtId,
       AssetLiabilityRevolvingCreditConfig(
         monthlyAmount: amount < 0 ? 0 : amount,
+        newUsageAmount: existing.newUsageAmount,
+        paymentDay: existing.paymentDay,
         creditLimit: existing.creditLimit,
       ),
     );
   }
 
-  void _updateRevolvingCreditLimit(String debtId, double amount) {
+  void _updateRevolvingNewUsageAmount(String debtId, double amount) {
     final existing = _revolvingConfigs[debtId] ??
         const AssetLiabilityRevolvingCreditConfig(
           monthlyAmount: 0,
@@ -12919,6 +12922,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debtId,
       AssetLiabilityRevolvingCreditConfig(
         monthlyAmount: existing.monthlyAmount,
+        newUsageAmount: amount < 0 ? 0 : amount,
+        paymentDay: 25,
+        creditLimit: existing.creditLimit,
+      ),
+    );
+  }
+
+  void _updateRevolvingCreditLimit(String debtId, double amount) {
+    final existing = _revolvingConfigs[debtId] ??
+        const AssetLiabilityRevolvingCreditConfig(monthlyAmount: 0);
+    _persistRevolvingConfig(
+      debtId,
+      AssetLiabilityRevolvingCreditConfig(
+        monthlyAmount: existing.monthlyAmount,
+        newUsageAmount: existing.newUsageAmount,
+        paymentDay: 25,
         creditLimit: amount < 0 ? 0 : amount,
       ),
     );
@@ -22828,7 +22847,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String _assetDisciplineTypeLabel(AssetDebtDisciplineViolationType type) {
     return switch (type) {
       AssetDebtDisciplineViolationType.newBorrowing => '追加借入の発生',
-      AssetDebtDisciplineViolationType.revolvingCard => 'カード非一括（リボ/分割）',
+      AssetDebtDisciplineViolationType.revolvingCard => '新規利用分の25日返済不足',
     };
   }
 
@@ -23048,13 +23067,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             runSpacing: 6,
             children: [
               _buildAssetDisciplinePledgeChip(
-                '① 追加借入ゼロ',
+                '① カード以外の追加借入ゼロ',
                 achieved: report.zeroNewBorrowingAchieved,
                 evaluated: report.hasPriorMonthData,
               ),
               _buildAssetDisciplinePledgeChip(
-                '② カードは全額一括',
-                achieved: report.lumpSumAchieved,
+                '② 新規利用分は25日に全額返済',
+                achieved: report.newUsageRepaymentAchieved,
                 evaluated: true,
               ),
             ],
@@ -23063,8 +23082,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           if (compliant)
             Text(
               report.hasPriorMonthData
-                  ? '🎉 今月は「追加借入ゼロ」と「カードは全額一括」をどちらも達成しています。この調子を続けましょう。'
-                  : '今のところカードの繰越（リボ/分割）はありません。新規利用の判定は来月以降の履歴蓄積後に有効化されます。',
+                  ? '🎉 今月は「カード以外の追加借入ゼロ」と「新規利用分を25日に全額返済」を達成しています。'
+                      '既存残高は無理なく圧縮していきましょう。'
+                  : 'カード新規利用分の25日返済ルールは守れています。'
+                      'カード以外の追加借入判定は来月以降の履歴蓄積後に有効化されます。',
               style: const TextStyle(fontSize: 12, height: 1.5),
             )
           else
@@ -23220,92 +23241,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
             ],
           ),
-          // 脱却月額が現在の返済予定より大きい(=増額提案)ときだけ反映導線を出す。
-          // 既に脱却額以上を返している人にボタンを出すと、押した瞬間に返済額を
-          // 引き下げてしまい利息を増やす逆効果になるため。
-          if (violation.type ==
-                  AssetDebtDisciplineViolationType.revolvingCard &&
-              violation.hasEscapePlan &&
-              violation.escapeMonthlyPayment! >
-                  (violation.currentBalance - violation.amount)) ...[
-            const SizedBox(height: 4),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                key: Key(
-                  'asset_discipline_apply_escape_${violation.accountId}',
-                ),
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  foregroundColor: const Color(0xFF0D9488),
-                ),
-                onPressed: () =>
-                    unawaited(_confirmApplyEscapePlanPayment(violation)),
-                icon: const Icon(Icons.playlist_add_check_rounded, size: 16),
-                label: Text(
-                  '脱却月額 ${_formatManagementYen(violation.escapeMonthlyPayment!)} へ増額（今月予定に反映）',
-                ),
-              ),
-            ),
-          ],
         ],
-      ),
-    );
-  }
-
-  /// リボ違反の「◯ヶ月脱却の月額」を当月の支払予定額へ反映する。
-  /// 資金繰りが即座に変わるため、必ず確認ダイアログを挟む (part337 教訓:
-  /// 反映対象は違反元の口座のみ = 操作先コントロールと同一の id 空間)。
-  Future<void> _confirmApplyEscapePlanPayment(
-    AssetDebtDisciplineViolation violation,
-  ) async {
-    final escapePayment = violation.escapeMonthlyPayment;
-    if (escapePayment == null) {
-      return;
-    }
-    // 繰越額 = 残高 − 今月返済予定 なので、現在の予定額は差分から復元できる。
-    final currentPayment = violation.currentBalance - violation.amount;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('今月の支払予定に反映'),
-        content: Text(
-          '${violation.accountName}の今月支払予定額を'
-          '${_formatManagementYen(currentPayment)}から'
-          '${_formatManagementYen(escapePayment)}へ変更します'
-          '（約${violation.escapeMonths}ヶ月でリボ脱却の目安額）。\n'
-          '資金繰り・使用可能額に直ちに反映されます。よろしいですか？',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            key: const Key('asset_discipline_apply_escape_confirm'),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('反映する'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) {
-      return;
-    }
-    final amount = escapePayment.round();
-    _monthlyPaymentControllers[violation.accountId]?.text = amount.toString();
-    setState(() {
-      _monthlyPaymentOverrides[violation.accountId] = amount.toDouble();
-      _billingConfirmedAccountIds.add(violation.accountId);
-    });
-    unawaited(_saveAssetLiabilityMonthlyState());
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${violation.accountName}の今月支払予定を'
-          '${_formatManagementYen(amount)}に更新しました。',
-        ),
       ),
     );
   }
@@ -25696,18 +25632,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// 照合行の「確認事項」表示文。リボ払いカードは不一致アラートの代わりに
-  /// 請求内訳 (設定額 + 限度超過分) を説明し、明細合計との不一致が正常である旨を示す。
+  /// 返済内訳 (最低返済額 + 新規利用額) と毎月25日のルールを説明する。
   String _cardReconciliationNote(
     AssetLiabilityCardStatementReconciliationGroup group,
   ) {
     final billing = group.revolvingBilling;
     if (billing != null) {
-      return 'リボ払い: 設定額 ${_formatManagementYen(billing.monthlyAmount)}'
-          ' ＋ 限度超過 ${_formatManagementYen(billing.overLimitAmount)}'
-          ' ＝ 請求 ${_formatManagementYen(billing.billedAmount)}'
-          '（残高 ${_formatManagementYen(billing.balance)}'
-          ' / 限度額 ${_formatManagementYen(billing.creditLimit)}）。'
-          '明細合計は今月の新規利用のため請求額と一致しません。';
+      return 'リボ返済ルール: 最低返済 ${_formatManagementYen(billing.monthlyAmount)}'
+          ' ＋ 新規利用分の全額返済 ${_formatManagementYen(billing.newUsageAmount)}'
+          ' ＝ 25日の返済予定 ${_formatManagementYen(billing.billedAmount)}。'
+          '既存残高 ${_formatManagementYen(billing.existingBalanceAmount)}は'
+          '一括返済せず、最低返済額で圧縮します。';
     }
     return group.alerts.isEmpty ? 'OK' : group.alerts.join(' / ');
   }
@@ -28867,8 +28802,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           Tooltip(
                             key: Key('asset_revolving_payoff_chip_${row.id}'),
                             message: 'リボ払いの概算です（Dart計算値準拠）。'
-                                '請求額はリボ設定額＋限度超過分で確定し、明細合計と'
-                                '一致しないことがあります。'
+                                '25日の返済予定は最低返済額＋当月の新規利用額です。'
+                                '既存残高の一括返済は求めません。'
                                 '今月の元金返済見込みは'
                                 '${_formatManagementYen(row.principalPaymentEstimate)}です。',
                             triggerMode: TooltipTriggerMode.tap,
@@ -28960,7 +28895,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               if (AssetDebtDisciplineMonitor.isLumpSumCardKind(row.kind))
                 _buildDebtMasterControl(
-                  label: '一括払い化',
+                  label: '新規利用の1回払い化',
                   child: _buildCardUsagePolicyControl(row),
                   maxWidth: 320,
                 ),
@@ -29300,7 +29235,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildMonthlyPaymentInput(AssetLiabilityDebtRow row) {
     if (row.isRevolving) {
-      // リボ払いは請求額を式から自動算出するため手入力欄は出さない。
+      // リボ払いは最低返済額と新規利用額から自動算出するため手入力欄は出さない。
       final billing = row.revolvingBilling!;
       return SizedBox(
         width: 150,
@@ -29312,7 +29247,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _formatManagementYen(billing.billedAmount),
               style: const TextStyle(fontWeight: FontWeight.bold, height: 1.3),
             ),
-            const Text('リボ自動算出', style: TextStyle(fontSize: 11, height: 1.3)),
+            const Text(
+              '25日・最低返済＋新規利用',
+              style: TextStyle(fontSize: 11, height: 1.3),
+            ),
           ],
         ),
       );
@@ -29362,7 +29300,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(width: 4),
             const Flexible(
               child: Text(
-                'リボ払い (請求=設定額+限度超過分)',
+                'リボ返済 (最低返済＋新規利用を25日に返済)',
                 style: TextStyle(fontSize: 11, height: 1.3),
               ),
             ),
@@ -29372,7 +29310,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 6),
           _buildRevolvingField(
             row: row,
-            label: 'リボ設定額',
+            label: '最低返済額',
             hint: '例: 10000',
             value: config.monthlyAmount,
             onChanged: (amount) =>
@@ -29381,15 +29319,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 6),
           _buildRevolvingField(
             row: row,
+            label: '新規利用額',
+            hint: '明細未取込時のみ',
+            value: config.newUsageAmount,
+            onChanged: (amount) =>
+                _updateRevolvingNewUsageAmount(row.id, amount),
+          ),
+          const SizedBox(height: 6),
+          _buildRevolvingField(
+            row: row,
             label: '利用限度額',
-            hint: '例: 500000',
+            hint: '与信枠確認用',
             value: config.creditLimit,
             onChanged: (amount) => _updateRevolvingCreditLimit(row.id, amount),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            '返済日: 毎月25日（給料日）／明細を取り込むと新規利用額を自動反映。'
+            '利用限度額は返済額ではなく与信枠不足の確認だけに使用',
+            style: TextStyle(fontSize: 11, height: 1.3),
           ),
           if (row.revolvingBilling != null) ...[
             const SizedBox(height: 6),
             Text(
-              '今月請求 ${_formatManagementYen(row.revolvingBilling!.billedAmount)}',
+              '25日返済 ${_formatManagementYen(row.revolvingBilling!.billedAmount)}'
+              '（既存残高の一括返済なし）',
               style: const TextStyle(
                 fontSize: 11,
                 height: 1.3,
@@ -29451,7 +29405,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           controlAffinity: ListTileControlAffinity.leading,
           value: completed,
           title: const Text(
-            '一括化完了（今後は1回払い）',
+            '完了（今後の新規利用は1回払い）',
             style: TextStyle(fontSize: 12, height: 1.3),
           ),
           onChanged: (value) =>
@@ -29483,7 +29437,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           const SizedBox(height: 4),
           const Text(
-            '設定変更の再案内は停止し、返済月額目標だけを継続表示します。',
+            'この記録に関係なく、新規利用分の25日返済不足は継続監視します。',
             style: TextStyle(fontSize: 11, height: 1.3),
           ),
         ],
