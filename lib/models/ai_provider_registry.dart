@@ -548,8 +548,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     status: AiProviderStatus.notImplemented,
     tier: AiProviderTier.premium,
     entryPoint: 'https://scale.com/',
-    note:
-        r'Data labeling to enterprise AI — RLHF supply / Scale Donovan (DoD)',
+    note: r'Data labeling to enterprise AI — RLHF supply / Scale Donovan (DoD)',
   ),
   AiProviderEntry(
     id: 'poolside',
