@@ -910,6 +910,7 @@ def run_import(
     )
     report["mutations"] = {
         "wbs_rows": len(wbs_insert_rows) + len(wbs_update_rows),
+        "items_inventoried_now": 0,
         "items_imported_now": imported_now,
         "items_already_imported_or_later": sum(
             1
