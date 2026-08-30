@@ -68,8 +68,8 @@ void main() {
       );
       expect(
         capturedBody?['message'].toString().contains(
-          'GitHub Flavored Markdown',
-        ),
+              'GitHub Flavored Markdown',
+            ),
         true,
       );
       expect(
@@ -85,20 +85,20 @@ void main() {
       );
       expect(
         capturedBody?['message'].toString().contains(
-          '"external_ai_receives_exact_account_data":true',
-        ),
+              '"external_ai_receives_exact_account_data":true',
+            ),
         true,
       );
       expect(
         capturedBody?['message'].toString().contains(
-          '"must_respond_in_japanese":true',
-        ),
+              '"must_respond_in_japanese":true',
+            ),
         true,
       );
       expect(
         capturedBody?['message'].toString().contains(
-          '"external_ai_may_reference_exact_money_values":true',
-        ),
+              '"external_ai_may_reference_exact_money_values":true',
+            ),
         true,
       );
       expect(capturedBody?['message'].toString().contains('50,000'), true);
@@ -131,8 +131,7 @@ void main() {
         report: _report(),
         previousAnalyses: <AssetManagementAiAnalysisHistoryEntry>[
           _historyEntry(
-            summaryText:
-                '前回は支払い確認と生活費確保を最優先にした分析です。'
+            summaryText: '前回は支払い確認と生活費確保を最優先にした分析です。'
                 '本日使用可能額は-27337円で安全残高未満、横浜銀行が期限超過で未払いよ。',
           ),
         ],

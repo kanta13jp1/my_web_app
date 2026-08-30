@@ -37,9 +37,8 @@ void main() {
         actualPaymentAmounts: const <String, double>{'famipay_card': 3000},
         paidAccountNames: const <String>{'famipay_card'},
       );
-      final famipayId = workbook.debtMasterRows
-          .firstWhere((row) => row.name == 'ファミペイ')
-          .id;
+      final famipayId =
+          workbook.debtMasterRows.firstWhere((row) => row.name == 'ファミペイ').id;
       final discipline = monitor.evaluate(
         workbook: workbook,
         priorBalancesByAccountId: <String, double>{famipayId: 200000},
@@ -363,7 +362,8 @@ void main() {
       );
     });
 
-    test('surfaces directly-debited rent as a lifeline but excludes '
+    test(
+        'surfaces directly-debited rent as a lifeline but excludes '
         'card-billed telecom', () {
       // 家賃は口座直接引落の生命線→出す。au(通信)は auPay カード請求に内包され
       // (includedInBillingAccount=true)、そのカードの請求行で支払われるため、
@@ -434,7 +434,8 @@ void main() {
       expect(lifeline.detail.contains('30,000円'), isFalse);
     });
 
-    test('cancelSubscriptions names subscription fixed costs but not '
+    test(
+        'cancelSubscriptions names subscription fixed costs but not '
         'utilities', () {
       // サブスク (ChatGPT/Claude) は名指しで解約候補に。光熱費 (電気代) は含めない。
       // 借入 (モビット) がある家計でのみ発火する。
