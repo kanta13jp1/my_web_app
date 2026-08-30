@@ -14,8 +14,7 @@ on:
         default: true
         type: boolean
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: stripe-account-readiness
@@ -26,10 +25,12 @@ env:
 
 jobs:
   readiness:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Request redacted Stripe account status
         id: request
@@ -151,7 +152,7 @@ jobs:
 
       - name: Upload redacted readiness evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: stripe-account-readiness-${{ github.run_id }}
           path: stripe-account-readiness.json

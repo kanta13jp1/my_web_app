@@ -226,7 +226,9 @@ Map<String, dynamic> _noteRow({
   required String id,
   required String title,
   required bool isFavorite,
+  String captureStatus = 'organized',
   String userId = 'test-user-id',
+  List<String> tags = const <String>[],
 }) {
   return <String, dynamic>{
     'id': id,
@@ -238,6 +240,14 @@ Map<String, dynamic> _noteRow({
     'is_favorite': isFavorite,
     'is_archived': false,
     'reminder_date': null,
+    'tags': <String>[
+      if (captureStatus == 'inbox') 'inbox',
+      ...tags,
+    ],
+    'capture_status': captureStatus,
+    'capture_source': captureStatus == 'inbox' ? 'quick_inbox' : 'editor',
+    'inbox_saved_at':
+        captureStatus == 'inbox' ? '2026-03-18T09:00:00.000Z' : null,
   };
 }
 
@@ -299,7 +309,80 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Regular note'), findsNothing);
-    expect(find.byIcon(Icons.list_alt), findsOneWidget);
+    expect(find.text('すべてのメモを見る'), findsOneWidget);
+  });
+
+  testWidgets('lists Inbox notes first and filters out organized notes', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(360, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final client = _FakeSupabaseClient(
+      noteRows: <Map<String, dynamic>>[
+        _noteRow(
+          id: 'inbox-note',
+          title: 'Captured thought',
+          isFavorite: false,
+          captureStatus: 'inbox',
+        ),
+        _noteRow(
+          id: 'organized-note',
+          title: 'Organized note',
+          isFavorite: false,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: NoteListPage(supabaseClient: client)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Inbox（未整理）'), findsOneWidget);
+    expect(find.text('Captured thought'), findsOneWidget);
+    expect(find.text('Organized note'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('note_list_page_inbox_filter')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Captured thought'), findsOneWidget);
+    expect(find.text('Organized note'), findsNothing);
+    final title = tester.widget<Text>(
+      find.byKey(const Key('note_list_page_title')),
+    );
+    expect(title.data, contains('Inbox'));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('moves an Inbox note to the organized list', (
+    WidgetTester tester,
+  ) async {
+    final rows = <Map<String, dynamic>>[
+      _noteRow(
+        id: 'inbox-note',
+        title: 'Sort this later',
+        isFavorite: false,
+        captureStatus: 'inbox',
+      ),
+    ];
+    final client = _FakeSupabaseClient(noteRows: rows);
+
+    await tester.pumpWidget(
+      MaterialApp(home: NoteListPage(supabaseClient: client)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byWidgetPredicate((widget) => widget is PopupMenuButton).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('整理済みにする'));
+    await tester.pumpAndSettle();
+
+    expect(rows.first['capture_status'], 'organized');
+    expect(rows.first['tags'], isEmpty);
+    expect(find.text('Inbox（未整理）'), findsNothing);
+    expect(find.text('Sort this later'), findsOneWidget);
   });
 
   testWidgets('archives a note from the popup delete action', (
@@ -450,5 +533,86 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(client.noteRanges, <(int, int)>[(0, 499), (500, 999)]);
+  });
+
+  testWidgets('カードのタグで一覧を絞り込み、解除できる', (tester) async {
+    final client = _FakeSupabaseClient(
+      noteRows: <Map<String, dynamic>>[
+        _noteRow(
+          id: 'work-note',
+          title: 'Work note',
+          isFavorite: false,
+          tags: const <String>['Work'],
+        ),
+        _noteRow(
+          id: 'private-note',
+          title: 'Private note',
+          isFavorite: false,
+          tags: const <String>['Private'],
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: NoteListPage(supabaseClient: client)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('note_list_tag_work-note_Work')),
+    );
+    await tester.pump();
+
+    expect(find.text('Work note'), findsOneWidget);
+    expect(find.text('Private note'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('note_list_tag_filter_clear')));
+    await tester.pump();
+
+    expect(find.text('Work note'), findsOneWidget);
+    expect(find.text('Private note'), findsOneWidget);
+  });
+
+  testWidgets('タグ名もローカル検索の対象になる', (tester) async {
+    final client = _FakeSupabaseClient(
+      noteRows: <Map<String, dynamic>>[
+        _noteRow(
+          id: 'migration-note',
+          title: 'Untitled record',
+          isFavorite: false,
+          tags: const <String>['Evernote移行'],
+        ),
+        _noteRow(
+          id: 'other-note',
+          title: 'Another record',
+          isFavorite: false,
+        ),
+      ],
+    );
+    final semanticSearch = _FakeSemanticSearchService(
+      const NoteSemanticSearchResponse(
+        searchMode: 'text_fallback',
+        results: <NoteSearchResult>[],
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NoteListPage(
+          supabaseClient: client,
+          semanticSearchService: semanticSearch,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('note_list_page_search_field')),
+      'Evernote移行',
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Untitled record'), findsOneWidget);
+    expect(find.text('Another record'), findsNothing);
   });
 }

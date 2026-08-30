@@ -42,6 +42,8 @@ class DebtGuardPanel extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    _buildFoundationMindset(context),
+                    const SizedBox(height: 12),
                     _buildBugMindset(context),
                     const SizedBox(height: 12),
                     _buildSafetyNotice(context),
@@ -153,6 +155,80 @@ class DebtGuardPanel extends StatelessWidget {
     );
   }
 
+  Widget _buildFoundationMindset(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final essentialActions =
+        DebtGuardFoundationPolicy.essentialActions.join('・');
+    return DecoratedBox(
+      key: const Key('debt-guard-foundation-mindset'),
+      decoration: BoxDecoration(
+        color: colors.secondaryContainer.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              DebtGuardFoundationPolicy.motto,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              DebtGuardFoundationPolicy.dailyFoundationCopy,
+              style: TextStyle(fontSize: 12, height: 1.55),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              '先に守る土台（制限しない）',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 3),
+            Text(essentialActions, style: const TextStyle(fontSize: 12)),
+            const SizedBox(height: 8),
+            const Text(
+              '毎日の生活基盤チェック',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 3),
+            const Text(
+              DebtGuardFoundationPolicy.routineCopy,
+              style: TextStyle(fontSize: 12, height: 1.55),
+            ),
+            const SizedBox(height: 8),
+            for (final cadence in DebtGuardFoundationCadence.values) ...[
+              Text(
+                cadence.label,
+                style:
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                debtGuardFoundationTasks
+                    .where((task) => task.cadence == cadence)
+                    .map((task) => task.title)
+                    .join('・'),
+                style: const TextStyle(fontSize: 12, height: 1.5),
+              ),
+              const SizedBox(height: 6),
+            ],
+            const SizedBox(height: 2),
+            const Text(
+              'その後の一歩（必須でない拡大）',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 3),
+            const Text(
+              DebtGuardFoundationPolicy.expansionCopy,
+              style: TextStyle(fontSize: 12, height: 1.55),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildBugMindset(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return DecoratedBox(
@@ -178,11 +254,12 @@ class DebtGuardPanel extends StatelessWidget {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    '「やってはいけないことをしたい」「すべきことをできない」は、'
-                    'あなた自身ではなく一時的な脳内バグの命令だと考えます。'
-                    '命令に少し従わない、または逆の小さな行動を無理やり始めるたびに、'
-                    '虫は弱り、繰り返すほど死んで消えていく、と考えます。'
-                    'これは行動を切り替えるための比喩です。',
+                    '「やってはいけないことをしたい」「すべきことをできない」を、'
+                    'あなた自身ではなく一時的な「脳内の虫（バグ）」の命令に見立てます。'
+                    '命令に少し従わない、または逆の小さな行動を始めるたびに、'
+                    '虫が弱り、やがて死んで消えるイメージです。'
+                    'これは行動を切り替えるための動機づけの比喩であり、'
+                    '脳が物理的に変化するという説明ではありません。',
                     style: TextStyle(fontSize: 12, height: 1.55),
                   ),
                 ],
@@ -210,8 +287,7 @@ class DebtGuardPanel extends StatelessWidget {
             SizedBox(width: 10),
             Expanded(
               child: Text(
-                '睡眠・食事・医療・緊急連絡・仕事・返済先や支援者との連絡など、'
-                '生命と生活の維持に必要な行動は制限しません。必要な睡眠は毎日確保してください。',
+                DebtGuardFoundationPolicy.safetyCopy,
                 style: TextStyle(fontSize: 12, height: 1.55),
               ),
             ),
@@ -258,6 +334,17 @@ class DebtGuardPanel extends StatelessWidget {
       runSpacing: 10,
       children: [
         FilledButton.icon(
+          key: const Key('debt-guard-start-foundation'),
+          onPressed: viewModel.isSaving
+              ? null
+              : () => _showUrgeDialog(
+                    context,
+                    initialMode: _BugResponseMode.startRequiredAction,
+                  ),
+          icon: const Icon(Icons.play_arrow_rounded),
+          label: const Text('まず生活を1つ整える'),
+        ),
+        FilledButton.tonalIcon(
           key: const Key('debt-guard-check-in-all'),
           onPressed: viewModel.isSaving ? null : () => _checkInAll(context),
           icon: const Icon(Icons.done_all),
@@ -446,11 +533,13 @@ class DebtGuardPanel extends StatelessWidget {
   Future<void> _showUrgeDialog(
     BuildContext context, {
     DebtGuardRule? rule,
+    _BugResponseMode initialMode = _BugResponseMode.resistProhibitedAction,
   }) async {
     final result = await _showActionDialog(
       context,
       fixedRule: rule,
       showPausePlan: true,
+      initialBugMode: initialMode,
     );
     if (result == null || !context.mounted) return;
     await _record(
@@ -483,6 +572,7 @@ class DebtGuardPanel extends StatelessWidget {
     BuildContext context, {
     required DebtGuardRule? fixedRule,
     required bool showPausePlan,
+    _BugResponseMode initialBugMode = _BugResponseMode.resistProhibitedAction,
   }) async {
     var selectedRuleId = fixedRule?.id ?? debtGuardRules.first.id;
     final requiredActionRules = debtGuardRules
@@ -491,7 +581,7 @@ class DebtGuardPanel extends StatelessWidget {
     var requiredActionRuleId = fixedRule?.requiredAction != null
         ? fixedRule!.id
         : requiredActionRules.first.id;
-    var bugMode = _BugResponseMode.resistProhibitedAction;
+    var bugMode = initialBugMode;
     final noteController = TextEditingController();
     try {
       return await showDialog<_DebtGuardActionResult>(
@@ -513,7 +603,13 @@ class DebtGuardPanel extends StatelessWidget {
             final selectableRules =
                 isRequiredActionMode ? requiredActionRules : debtGuardRules;
             return AlertDialog(
-              title: Text(showPausePlan ? '脳内バグ退治' : '違反を記録'),
+              title: Text(
+                showPausePlan
+                    ? isRequiredActionMode
+                        ? '生活を1つ整える'
+                        : '脳内バグ退治'
+                    : '違反を記録',
+              ),
               content: SizedBox(
                 width: 520,
                 child: SingleChildScrollView(
@@ -524,8 +620,9 @@ class DebtGuardPanel extends StatelessWidget {
                       if (showPausePlan) ...[
                         const Text(
                           'いまの衝動や抵抗を、あなた自身ではなく一時的な'
-                          '「脳内の虫（バグ）」の命令として扱います。'
-                          '命令と逆の行動を1回するたびに、虫は弱ります。',
+                          '「脳内の虫（バグ）」の命令に見立てます。'
+                          'これは動機づけの比喩です。'
+                          '命令と逆の安全な行動を1回するたびに、虫は弱ります。',
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             height: 1.5,

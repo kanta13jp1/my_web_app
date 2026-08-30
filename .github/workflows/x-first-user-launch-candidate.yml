@@ -12,11 +12,12 @@ concurrency:
   group: x-first-user-launch-candidate
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   candidate:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -25,7 +26,7 @@ jobs:
       MEDIA_URL: https://my-web-app-b67f4.web.app/lp-og-first-action-20260720.png
     steps:
       - name: Check out source
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Validate service credential
         shell: bash
@@ -138,7 +139,7 @@ jobs:
           echo "candidate_id=${candidate_id}" >> "${GITHUB_OUTPUT}"
 
       - name: Upload review evidence
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: x-first-user-launch-candidate-${{ github.run_id }}
           path: |

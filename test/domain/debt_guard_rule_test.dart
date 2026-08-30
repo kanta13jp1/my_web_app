@@ -44,6 +44,88 @@ void main() {
     });
   });
 
+  group('DebtGuardFoundationPolicy', () {
+    test('puts the daily foundation before nonessential expansion', () {
+      expect(DebtGuardFoundationPolicy.motto, '整える → 生き抜く → 一歩進む');
+      expect(
+        DebtGuardFoundationPolicy.dailyFoundationCopy,
+        contains('今日を生き抜く'),
+      );
+      expect(DebtGuardFoundationPolicy.expansionCopy, contains('土台が整ってから'));
+    });
+
+    test('protects every essential action from the guard', () {
+      expect(
+        DebtGuardFoundationPolicy.essentialActions,
+        containsAll(<String>[
+          '睡眠',
+          '食事',
+          '水分補給',
+          '医療',
+          '衛生',
+          '仕事',
+          '緊急対応',
+          '借金返済',
+          '必要な連絡',
+        ]),
+      );
+      expect(DebtGuardFoundationPolicy.safetyCopy, contains('決して制限しません'));
+    });
+
+    test('defines the requested 20 concrete foundation tasks once each', () {
+      expect(debtGuardFoundationTasks, hasLength(20));
+      expect(
+        debtGuardFoundationTasks.map((task) => task.id).toSet(),
+        hasLength(20),
+      );
+      expect(
+        debtGuardFoundationTasks.map((task) => task.title),
+        containsAll(<String>[
+          '掃除',
+          '洗濯',
+          '洗い物',
+          '整理整頓',
+          '風呂',
+          '自炊',
+          '食事',
+          '食料品・調味料の賞味期限管理',
+          '不用品の廃棄',
+          '歯磨き',
+          '毎日着替える',
+          '髭を剃る',
+          '髪を切る',
+          '爪を切る',
+          '資産管理',
+          '日記をつける',
+          '読書',
+          '学習',
+          '運動',
+          '筋トレ',
+        ]),
+      );
+    });
+
+    test('uses safe frequencies for periodic care and training', () {
+      final haircut = debtGuardFoundationTasks.firstWhere(
+        (task) => task.id == 'haircut',
+      );
+      final strengthTraining = debtGuardFoundationTasks.firstWhere(
+        (task) => task.id == 'strength_training',
+      );
+      final meals = debtGuardFoundationTasks.firstWhere(
+        (task) => task.id == 'meals',
+      );
+
+      expect(haircut.cadence, DebtGuardFoundationCadence.whenDue);
+      expect(
+        strengthTraining.cadence,
+        DebtGuardFoundationCadence.recoveryAware,
+      );
+      expect(strengthTraining.minimumAction, contains('回復'));
+      expect(meals.minimumAction, contains('食事を抜かず'));
+    });
+  });
+
   group('DebtGuardDailySnapshot', () {
     test('a violation cannot be overwritten by a later check-in', () {
       final events = [

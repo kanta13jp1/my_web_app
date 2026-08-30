@@ -4,14 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/models/asset_obsidian_vault_import.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/services/asset_card_usage_policy_store.dart';
 import 'package:my_web_app/services/asset_chat_privacy_settings_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
+import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
+import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
 import 'package:my_web_app/services/asset_subscription_audit_store.dart';
@@ -28,10 +32,19 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// 他のロード/保存は SharedPreferences 実装に委譲(テストでは空)。
 class _FakeDebtOverrideRepository
     extends SharedPreferencesAssetLiabilityRepository {
-  _FakeDebtOverrideRepository(this._seed);
+  _FakeDebtOverrideRepository(
+    this._seed, {
+    this.monthlyState = const AssetLiabilityMonthlyState(),
+  });
 
   final Map<String, int> _seed;
+  final AssetLiabilityMonthlyState monthlyState;
   Map<String, int>? savedDebtOverrides;
+
+  @override
+  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
+    return monthlyState;
+  }
 
   @override
   Future<Map<String, int>> loadDebtPaymentDayOverrides() async {
@@ -68,10 +81,24 @@ class _ThrowingWatchlistService extends AssetWatchlistService {
   }
 }
 
+class _ThrowingRecurringFixedCostStore extends AssetRecurringFixedCostStore {
+  const _ThrowingRecurringFixedCostStore();
+
+  @override
+  Future<void> save(
+    List<AssetRecurringFixedCost> costs, {
+    SharedPreferences? prefs,
+  }) async {
+    throw StateError('simulated recurring fixed cost save failure');
+  }
+}
+
 /// 資産管理ページの widget スモーク足場 (#3260)。
 /// 未ログイン (auth.currentUser == null) では Supabase フェッチ群が
 /// 早期 return する性質を利用し、ネットワークなしで UI 契約だけを検証する。
 Future<void> _pumpAssetPage(WidgetTester tester) async {
+  AssetSyncDirtyKeysStore.resetWriteLockForTest();
+  AssetRecurringTombstoneSyncService.resetSharedForTest();
   await tester.pumpWidget(
     const MaterialApp(home: AssetManagementPage()),
   );
@@ -100,6 +127,77 @@ void main() {
     // static write-lock future を現在の zone の完了済み future へ再初期化する
     // (= 将来ログイン状態の編集 smoke が write 経路を踏んでも orphan-hang しない)。
     AssetSyncDirtyKeysStore.resetWriteLockForTest();
+    AssetRecurringTombstoneSyncService.resetSharedForTest();
+  });
+
+  test('Obsidian解約候補は全変更前に現在のサブスクへ再照合する', () {
+    const current = <AssetRecurringFixedCost>[
+      AssetRecurringFixedCost(
+        id: 'sub_xbox',
+        name: 'Xbox Game Pass',
+        amount: 1550,
+        paymentDay: 7,
+        category: AssetRecurringFixedCostCategory.subscription,
+      ),
+    ];
+    const valid = AssetObsidianSubscriptionCancellationCandidate(
+      sourceSubscriptionName: 'Xbox Game Pass',
+      sourceStatus: '解約完了',
+      status: AssetObsidianSubscriptionCancellationStatus.matched,
+      sourcePaths: <String>['SUBSCRIPTION_LIST.md'],
+      matchedSubscriptionId: 'sub_xbox',
+      matchedSubscriptionName: 'Xbox Game Pass',
+      matchedMonthlyAmount: 1550,
+    );
+
+    expect(
+      validateObsidianSubscriptionCancellations(
+        const <AssetObsidianSubscriptionCancellationCandidate>[valid],
+        current,
+      ),
+      current,
+    );
+    expect(
+      () => validateObsidianSubscriptionCancellations(
+        const <AssetObsidianSubscriptionCancellationCandidate>[
+          AssetObsidianSubscriptionCancellationCandidate(
+            sourceSubscriptionName: 'Xbox Game Pass',
+            sourceStatus: '解約完了',
+            status: AssetObsidianSubscriptionCancellationStatus.notRegistered,
+            sourcePaths: <String>['SUBSCRIPTION_LIST.md'],
+            matchedSubscriptionId: 'sub_xbox',
+            matchedSubscriptionName: 'Xbox Game Pass',
+            matchedMonthlyAmount: 1550,
+          ),
+        ],
+        current,
+      ),
+      throwsStateError,
+    );
+    expect(
+      () => validateObsidianSubscriptionCancellations(
+        const <AssetObsidianSubscriptionCancellationCandidate>[valid, valid],
+        current,
+      ),
+      throwsStateError,
+    );
+    expect(
+      () => validateObsidianSubscriptionCancellations(
+        const <AssetObsidianSubscriptionCancellationCandidate>[
+          AssetObsidianSubscriptionCancellationCandidate(
+            sourceSubscriptionName: 'Xbox Game Pass',
+            sourceStatus: '解約完了',
+            status: AssetObsidianSubscriptionCancellationStatus.matched,
+            sourcePaths: <String>['SUBSCRIPTION_LIST.md'],
+            matchedSubscriptionId: 'sub_xbox',
+            matchedSubscriptionName: 'Xbox Game Pass',
+            matchedMonthlyAmount: 999,
+          ),
+        ],
+        current,
+      ),
+      throwsStateError,
+    );
   });
 
   group('AssetManagementPage smoke', () {
@@ -1199,6 +1297,82 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets('zero-yen payment is shown only in the gray review section', (
+      tester,
+    ) async {
+      final dateKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final repo = _FakeDebtOverrideRepository(
+        const <String, int>{},
+        monthlyState: const AssetLiabilityMonthlyState(
+          paymentOverrides: <String, double>{
+            AssetLiabilityPlanningService.jibunBankCardLoanAccountId: 0,
+            'paypay_card': 5000,
+          },
+        ),
+      );
+      await tester.binding.setSurfaceSize(const Size(1200, 4000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: repo,
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 50000,
+                'じぶん銀行カードローン': -100000,
+                'PayPayカード': -10000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final actionSection =
+          find.byKey(const Key('asset_payment_risk_action_section'));
+      final reviewSection =
+          find.byKey(const Key('asset_payment_risk_review_only_section'));
+      expect(actionSection, findsOneWidget);
+      expect(reviewSection, findsOneWidget);
+      expect(
+        find.descendant(
+          of: actionSection,
+          matching: find.text('PayPayカード'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: actionSection,
+          matching: find.text('じぶん銀行カードローン'),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: reviewSection,
+          matching: find.text('じぶん銀行カードローン'),
+        ),
+        findsOneWidget,
+      );
+
+      final reviewBadge = find.byKey(
+        const Key('asset_payment_risk_status_review_27'),
+      );
+      expect(reviewBadge, findsOneWidget);
+      final reviewBadgeText = tester.widget<Text>(
+        find.descendant(
+          of: reviewBadge,
+          matching: find.text('確認のみ'),
+        ),
+      );
+      expect(reviewBadgeText.style?.color, const Color(0xFF64748B));
+
+      await _unmount(tester);
+    });
+
     testWidgets('shortfall warning appears and clears via expected inflow', (
       tester,
     ) async {
@@ -1428,6 +1602,67 @@ void main() {
       expect(store.getDouble('asset_minimum_safety_balance_v1'), 30000);
       // 使用可能額カードの安全余裕表示にも反映される。
       expect(find.textContaining('安全余裕 ¥30,000'), findsWidgets);
+
+      await _unmount(tester);
+    });
+
+    testWidgets('living expense priority toggle immediately reorders actions', (
+      tester,
+    ) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 3200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: _FakeDebtOverrideRepository(
+              <String, int>{'mobit': now.day},
+            ),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 1000,
+                'モビット': -300000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final toggle = find.byKey(
+        const Key('asset_living_expense_priority_toggle'),
+      );
+      final livingExpense = find.text('本日の生活費が不足しています');
+      final overdue = find.text('モビットが期限超過です');
+      expect(toggle, findsOneWidget);
+      expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+      expect(livingExpense, findsOneWidget);
+      expect(overdue, findsOneWidget);
+      expect(
+        tester.getTopLeft(overdue).dy,
+        lessThan(tester.getTopLeft(livingExpense).dy),
+      );
+
+      await tester.ensureVisible(toggle);
+      await tester.tap(toggle);
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
+      expect(livingExpense, findsOneWidget);
+      expect(overdue, findsNothing);
+
+      await tester.tap(toggle);
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+      expect(overdue, findsOneWidget);
+      expect(
+        tester.getTopLeft(overdue).dy,
+        lessThan(tester.getTopLeft(livingExpense).dy),
+      );
 
       await _unmount(tester);
     });
@@ -1918,6 +2153,50 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets(
+      'completed one-shot policy restores its memo and suppresses setup advice',
+      (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetCardUsagePolicyStore.prefsKey: jsonEncode(<String, dynamic>{
+            'famipay_card': <String, dynamic>{
+              'enforce_one_shot': true,
+              'changed_at': '2026-08-29T06:18:55.608Z',
+              'memo': '受付 ABC123 / 8月29日 電話',
+            },
+          }),
+        });
+        final dateKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        await tester.binding.setSurfaceSize(const Size(1200, 3600));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'ファミペイ': -100000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 250));
+        await tester.pump(const Duration(milliseconds: 250));
+
+        final checkbox = tester.widget<CheckboxListTile>(
+          find.byKey(const Key('asset_card_one_shot_completed_famipay_card')),
+        );
+        expect(checkbox.value, isTrue);
+        expect(find.text('受付 ABC123 / 8月29日 電話'), findsOneWidget);
+        expect(find.textContaining('12ヶ月脱却の月額'), findsWidgets);
+        expect(find.textContaining('リボ/分割の設定解除を電話する'), findsNothing);
+        expect(find.textContaining('設定を解除し'), findsNothing);
+
+        await _unmount(tester);
+      },
+    );
 
     testWidgets('mirror update notice offers and applies remote prefs', (
       tester,
@@ -2547,6 +2826,161 @@ void main() {
     );
 
     testWidgets(
+      'subscription delete confirms history retention and records tombstone',
+      (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetRecurringFixedCostStore.prefsKey: jsonEncode(
+            AssetRecurringFixedCostStore.encodeMirrorValue(
+              const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'sub_xbox',
+                  name: 'Xbox Game Pass',
+                  amount: 1550,
+                  paymentDay: 7,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+              ],
+            ),
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 3000));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await _pumpAssetPage(tester);
+        final deleteButton = find.byTooltip('Xbox Game Pass を削除');
+        expect(deleteButton, findsOneWidget);
+        await tester.ensureVisible(deleteButton);
+        await tester.tap(deleteButton);
+        await tester.pump(const Duration(milliseconds: 100));
+
+        expect(find.text('サブスクを削除'), findsOneWidget);
+        expect(find.textContaining('月額 ¥1,550'), findsOneWidget);
+        expect(find.textContaining('過去の月次履歴・取引履歴は残ります'), findsOneWidget);
+        await tester.tap(find.widgetWithText(TextButton, 'キャンセル'));
+        await tester.pump(const Duration(milliseconds: 400));
+        expect(find.text('サブスクを削除'), findsNothing);
+        final afterCancel = await const AssetRecurringFixedCostStore().load();
+        expect(
+          afterCancel.map((cost) => cost.id),
+          contains('sub_xbox'),
+        );
+
+        await tester.ensureVisible(deleteButton);
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.tap(deleteButton.hitTestable());
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.text('サブスクを削除'), findsOneWidget);
+        final confirmDelete = tester.widget<FilledButton>(
+          find.widgetWithText(FilledButton, '削除'),
+        );
+        confirmDelete.onPressed!();
+        await tester.pump(const Duration(milliseconds: 400));
+        expect(find.text('サブスクを削除'), findsNothing);
+        for (var attempt = 0; attempt < 50; attempt++) {
+          await tester.pump(const Duration(milliseconds: 100));
+          final persisted = await const AssetRecurringFixedCostStore().load();
+          if (persisted.every((cost) => cost.id != 'sub_xbox')) break;
+        }
+
+        final afterDelete = await const AssetRecurringFixedCostStore().load();
+        final preferences = await SharedPreferences.getInstance();
+        const tombstones = MirrorTombstoneStore(
+          storageKey: 'recurring_fixed_costs_deleted_v1',
+        );
+        final activeTombstones = tombstones.activeIds(preferences);
+        final pendingSync = await const AssetSyncDirtyKeysStore().loadDirty(
+          'recurring_fixed_costs_deleted',
+          prefs: preferences,
+        );
+        expect(
+          afterDelete.map((cost) => cost.id),
+          isNot(contains('sub_xbox')),
+          reason: 'tombstones=$activeTombstones pending=$pendingSync',
+        );
+        expect(activeTombstones, contains('sub_xbox'));
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'failed subscription re-add save restores pending and tombstone state',
+      (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetRecurringFixedCostStore.prefsKey: jsonEncode(
+            AssetRecurringFixedCostStore.encodeMirrorValue(
+              const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'sub_xbox',
+                  name: 'Xbox Game Pass',
+                  amount: 1550,
+                  paymentDay: 7,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+              ],
+            ),
+          ),
+        });
+        AssetSyncDirtyKeysStore.resetWriteLockForTest();
+        AssetRecurringTombstoneSyncService.resetSharedForTest();
+        await tester.binding.setSurfaceSize(const Size(1200, 3000));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: AssetManagementPage(
+              debugRecurringFixedCostStore: _ThrowingRecurringFixedCostStore(),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 400));
+
+        final preferences = await SharedPreferences.getInstance();
+        const tombstones = MirrorTombstoneStore(
+          storageKey: 'recurring_fixed_costs_deleted_v1',
+        );
+        await tombstones.addId(preferences, 'sub_xbox');
+        await const AssetSyncDirtyKeysStore().updateDirty(
+          'recurring_fixed_costs_deleted',
+          addKeys: <String>['add:sub_xbox'],
+          prefs: preferences,
+        );
+
+        final reviewMenu = find.byKey(
+          const Key('subscription_review_sub_xbox'),
+        );
+        await tester.ensureVisible(reviewMenu);
+        await tester.tap(reviewMenu);
+        await tester.pump(const Duration(milliseconds: 500));
+        final keepLabel = find.text('残す').last;
+        expect(keepLabel, findsOneWidget);
+        Navigator.of(tester.element(keepLabel)).pop(
+          AssetSubscriptionReviewDecision.keep,
+        );
+        await tester.pump(const Duration(milliseconds: 500));
+
+        final persisted = await const AssetRecurringFixedCostStore().load(
+          prefs: preferences,
+        );
+        expect(
+          persisted.single.subscriptionReviewDecision,
+          AssetSubscriptionReviewDecision.unreviewed,
+        );
+        expect(tombstones.activeIds(preferences), contains('sub_xbox'));
+        expect(
+          await const AssetSyncDirtyKeysStore().loadDirty(
+            'recurring_fixed_costs_deleted',
+            prefs: preferences,
+          ),
+          contains('add:sub_xbox'),
+        );
+        expect(find.textContaining('元の状態を保持'), findsOneWidget);
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
       'tombstoned recurring fixed cost is not resurfaced when the server '
       'mirror still contains it',
       (tester) async {
@@ -2610,6 +3044,142 @@ void main() {
         final local = await const AssetRecurringFixedCostStore().load();
         expect(local.map((c) => c.id), isNot(contains('fc_denki')));
         expect(local.map((c) => c.id), contains('fc_netflix'));
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'pending tombstone removal preserves a deliberately re-added subscription',
+      (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetRecurringFixedCostStore.prefsKey: jsonEncode(
+            AssetRecurringFixedCostStore.encodeMirrorValue(
+              const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'sub_xbox',
+                  name: 'Xbox Game Pass',
+                  amount: 1550,
+                  paymentDay: 7,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+              ],
+            ),
+          ),
+          'recurring_fixed_costs_deleted_v1': jsonEncode(
+            const <Map<String, String>>[
+              <String, String>{
+                'id': 'sub_xbox',
+                'at': '2026-08-27T00:00:00.000Z',
+              },
+            ],
+          ),
+          AssetSyncDirtyKeysStore.prefsKey: jsonEncode(
+            const <String, List<String>>{
+              'recurring_fixed_costs_deleted': <String>['remove:sub_xbox'],
+            },
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: AssetManagementPage(
+              debugRecurringFixedCostsDeletedMirror: <String, dynamic>{
+                'ids': <String>[],
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final local = await const AssetRecurringFixedCostStore().load();
+        expect(local.map((cost) => cost.id), contains('sub_xbox'));
+        final preferences = await SharedPreferences.getInstance();
+        const tombstones = MirrorTombstoneStore(
+          storageKey: 'recurring_fixed_costs_deleted_v1',
+        );
+        expect(tombstones.activeIds(preferences), isNot(contains('sub_xbox')));
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'legacy local tombstone is journaled before remote-authoritative boot',
+      (tester) async {
+        AssetSyncDirtyKeysStore.resetWriteLockForTest();
+        AssetRecurringTombstoneSyncService.resetSharedForTest();
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetRecurringFixedCostStore.prefsKey: jsonEncode(
+            AssetRecurringFixedCostStore.encodeMirrorValue(
+              const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'sub_legacy_deleted',
+                  name: 'Legacy deleted subscription',
+                  amount: 980,
+                  paymentDay: 8,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+              ],
+            ),
+          ),
+          'recurring_fixed_costs_deleted_v1': jsonEncode(
+            const <String>['sub_legacy_deleted'],
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: AssetManagementPage(
+              debugRecurringFixedCostsDeletedMirror: <String, dynamic>{
+                'ids': <String>[],
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        for (var attempt = 0; attempt < 30; attempt++) {
+          final preferences = await SharedPreferences.getInstance();
+          if (preferences.getBool(
+                'recurring_fixed_cost_tombstone_pending_v2_migrated',
+              ) ==
+              true) {
+            break;
+          }
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+
+        final preferences = await SharedPreferences.getInstance();
+        const tombstones = MirrorTombstoneStore(
+          storageKey: 'recurring_fixed_costs_deleted_v1',
+        );
+        final activeTombstones = tombstones.activeIds(preferences);
+        final pendingSync = await const AssetSyncDirtyKeysStore().loadDirty(
+          'recurring_fixed_costs_deleted',
+          prefs: preferences,
+        );
+        final local = await const AssetRecurringFixedCostStore().load();
+        expect(
+          local.map((cost) => cost.id),
+          isNot(contains('sub_legacy_deleted')),
+          reason: 'tombstones=$activeTombstones pending=$pendingSync',
+        );
+        expect(
+          pendingSync,
+          contains('add:sub_legacy_deleted'),
+        );
+        expect(
+          preferences.getBool(
+            'recurring_fixed_cost_tombstone_pending_v2_migrated',
+          ),
+          isTrue,
+        );
 
         await _unmount(tester);
       },

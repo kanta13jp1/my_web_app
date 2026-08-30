@@ -33,6 +33,7 @@
 | Function | 用途 |
 | --- | --- |
 | `health-check` | インフラヘルスチェック |
+| `resource-optimizer` | 認証ユーザーの習慣実績をRLS下で相関・パレート分析し、境界内の習慣だけをAIメンターまたは決定論フォールバックで提案する |
 
 サポートチケットと機能リクエスト通知は EF 単体ではなく hub action に統合済み
 (= `admin-hub` `support.list` / `support.reply`, `core-hub` `notify.feature_request`)。

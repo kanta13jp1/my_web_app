@@ -883,6 +883,17 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                               '/ai-university-voice',
                             ),
                           ),
+                          _AiCardActionButton(
+                            label: '多言語ダビング',
+                            icon: Icons.record_voice_over_outlined,
+                            foregroundColor: DesignTokens.amber,
+                            borderColor: const Color(0x33FFC107),
+                            compact: true,
+                            onTap: () => Navigator.pushNamed(
+                              context,
+                              '/content-dubbing',
+                            ),
+                          ),
                         ],
                       ),
                   ],

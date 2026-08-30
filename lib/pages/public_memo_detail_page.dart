@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -31,8 +29,6 @@ class PublicMemoDetailPage extends StatefulWidget {
 // Win版#132 part 50: 旧 memo-reactions EF は core-hub に統合済 (b4c91bc2 2026-04-24)
 // だが action 完全実装が漏れていたため part 50 で `memo.react.list` /
 // `memo.react.toggle` を core-hub に追加 + Flutter 側を切り替え。
-const _kReactionsHubUrl =
-    'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub';
 const _kAllReactions = ['👍', '❤️', '🔥', '💡', '🎉'];
 
 class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
@@ -150,18 +146,10 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
 
   Future<void> _loadReactions() async {
     try {
-      final res = await http.post(
-        Uri.parse(_kReactionsHubUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'action': 'memo.react.list',
-          'memo_id': widget.memoId,
-        }),
-      );
-      if (!mounted || res.statusCode != 200) {
+      final body = await _publicMemoService.loadReactions(widget.memoId);
+      if (!mounted) {
         return;
       }
-      final body = jsonDecode(res.body) as Map<String, dynamic>;
       final rawCounts = (body['reactions'] as Map<String, dynamic>?) ?? {};
       final rawUser = (body['userReactions'] as List<dynamic>?) ?? [];
       setState(() {
@@ -182,19 +170,13 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
     }
     setState(() => _reactionsLoading = true);
     try {
-      final res = await http.post(
-        Uri.parse(_kReactionsHubUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'action': 'memo.react.toggle',
-          'memo_id': widget.memoId,
-          'reaction': reaction,
-        }),
+      final body = await _publicMemoService.toggleReaction(
+        memoId: widget.memoId,
+        reaction: reaction,
       );
-      if (!mounted || res.statusCode != 200) {
+      if (!mounted) {
         return;
       }
-      final body = jsonDecode(res.body) as Map<String, dynamic>;
       final added = body['added'] as bool? ?? false;
       final rawCounts = (body['counts'] as Map<String, dynamic>?) ?? {};
       setState(() {
