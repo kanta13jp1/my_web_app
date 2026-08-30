@@ -7,8 +7,9 @@ the Issue #2773 fail-closed RLS migration, Issue #2484 asset-chat isolation,
 Issue #4091 app-analytics write boundary, and Issue #1202 voice-dubbing quota
 state machine, Issue #1233 resource-optimizer tenant/analysis/quota contracts,
 Issue #4956 WBS administrator/review contracts, Issue #4927 recurring-cost
-tombstone concurrency, checks the real Edge Function import policy, Issue #2668
-note-comment authorization, and runs a Deno HTTP fixture against the container.
+tombstone concurrency, Issue #2844 account-deletion retention contracts, checks
+the real Edge Function import policy, Issue #2668 note-comment authorization,
+and runs a Deno HTTP fixture against the container.
 Logs are written as
 artifacts so CI failures point to the migration, function, or seed boundary that
 broke.
@@ -151,6 +152,14 @@ ISSUE_4927_RECURRING_TOMBSTONE_SQL_FILES = (
     ROOT / "supabase" / "tests" / "issue4927_recurring_tombstone_contract.sql",
 )
 ISSUE_4927_USER = "00000000-0000-4000-8000-000000004927"
+ISSUE_2844_ACCOUNT_DELETION_SQL_FILES = (
+    ROOT / "supabase" / "tests" / "issue2844_account_deletion_bootstrap.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260829095836_account_retention_and_deletion.sql",
+    ROOT / "supabase" / "tests" / "issue2844_account_deletion_contract.sql",
+)
 VIDEO_ARTIFACT_SQL_FILES = (
     ROOT / "supabase" / "tests" / "video_service_bootstrap.sql",
     ROOT / "supabase" / "migrations" / "20260819165405_create_first_party_video_service.sql",
@@ -488,6 +497,19 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "RPC guard state is restored after success",
             "initial concurrent additions and a concurrent add/remove preserve the exact set",
             "migration applies twice in the disposable database",
+        ],
+        "issue_2844_account_deletion_sql": [
+            path.relative_to(ROOT).as_posix()
+            for path in ISSUE_2844_ACCOUNT_DELETION_SQL_FILES
+        ],
+        "issue_2844_account_deletion_checks": [
+            "queue and RPC access is service-role only",
+            "due requests are claimed atomically",
+            "direct auth.users CASCADE references are accepted",
+            "populated unclassified user references fail closed",
+            "Storage owner metadata and approved user path conventions are inventoried",
+            "failed work records a bounded retry",
+            "completed request evidence removes user_id",
         ],
         "video_artifact_contract": [
             path.relative_to(ROOT).as_posix() for path in VIDEO_ARTIFACT_SQL_FILES
@@ -2778,6 +2800,8 @@ def run_smoke(args: argparse.Namespace) -> int:
                     psycopg.connect,
                 )
             )
+            for issue_2844_sql in ISSUE_2844_ACCOUNT_DELETION_SQL_FILES:
+                apply_sql_fixture(conn, issue_2844_sql, artifacts_dir)
             apply_sql_fixture(conn, ASSET_CHAT_MIGRATION, artifacts_dir)
             seed_asset_chat_fixture(conn)
             asset_chat_rls = check_asset_chat_rls(conn)
@@ -2809,6 +2833,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "issue_4927_recurring_tombstone_contract": (
                 issue_4927_tombstone_concurrency
             ),
+            "issue_2844_account_deletion_contract": "passed",
             "video_artifact_contract": "passed",
         },
         "edge_fixture": {
