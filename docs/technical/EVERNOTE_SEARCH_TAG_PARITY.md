@@ -53,7 +53,7 @@ contains: は公式の内容種別だけを受理し、添付・URL・表・リ�
 
 ## クラウド検証
 
-- GitHub Actions runnerでDart format、Flutter analyze、対象テストを実行する。
+- commit `e0ceb2bbae8c44014126e3a8568a3c75cc06f383` をGitHub Actions run 33336463358で検証した。Dart formatは47ファイル・差分0、Flutter analyzeは問題0、対象114テストは全件成功。
 - 使い捨てPostgreSQL 17で、RLS、親子循環拒否、正確な再実行、ゼロ件棚卸し、クロスオーナー分離、不変原本、複合削除ゲートを実行する。
 - 個人ENEX、添付、OCR、認証情報はGitHubやActions artifactへ送らない。
 - ローカルPCではFlutter/Dart build・analyze・test、ブラウザ自動操作、ENEX展開を実行しない。
