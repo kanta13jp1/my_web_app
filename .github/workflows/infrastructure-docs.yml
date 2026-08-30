@@ -80,13 +80,12 @@ jobs:
           set -euo pipefail
 
           source_commit="${GITHUB_SHA}"
+          base_tree="$(gh api "repos/${GITHUB_REPOSITORY}/git/commits/${source_commit}" --jq '.tree.sha')"
           if current_ref="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${DOC_BRANCH}" 2>/dev/null)"; then
             parent_commit="$(jq -r '.object.sha' <<<"${current_ref}")"
-            base_tree="$(gh api "repos/${GITHUB_REPOSITORY}/git/commits/${parent_commit}" --jq '.tree.sha')"
             update_ref=true
           else
             parent_commit="${source_commit}"
-            base_tree="$(gh api "repos/${GITHUB_REPOSITORY}/git/commits/${source_commit}" --jq '.tree.sha')"
             update_ref=false
           fi
 

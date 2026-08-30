@@ -87,6 +87,8 @@ def clean_identifier(value: str, default_schema: str = "public") -> str:
 
 def add_resource(inventory: Inventory, name: str, kind: str, source_path: str) -> None:
     current = inventory.resources.setdefault(name, Resource(name=name, kind=kind))
+    if current.kind == "table (referenced)" and kind == "table":
+        current.kind = kind
     current.source_paths.add(source_path)
 
 
@@ -229,6 +231,7 @@ def parse_workflow(path: Path, repo_root: Path) -> Workflow:
     needs: list[tuple[str, str]] = []
     section = ""
     current_job = ""
+    collecting_needs = False
 
     for raw_line in raw_lines:
         line = strip_yaml_comment(raw_line[base_indent:])
@@ -239,6 +242,7 @@ def parse_workflow(path: Path, repo_root: Path) -> Workflow:
 
         if indent == 0:
             current_job = ""
+            collecting_needs = False
             if stripped.startswith("name:"):
                 name = strip_quotes(stripped.split(":", 1)[1]) or name
                 continue
@@ -262,11 +266,21 @@ def parse_workflow(path: Path, repo_root: Path) -> Workflow:
         if section == "jobs":
             if indent == 2 and stripped.endswith(":"):
                 current_job = strip_quotes(stripped[:-1])
+                collecting_needs = False
                 jobs.append(current_job)
                 continue
+            if current_job and collecting_needs:
+                if indent >= 4 and stripped.startswith("- "):
+                    dependency = strip_quotes(stripped[2:])
+                    if dependency:
+                        needs.append((current_job, dependency))
+                    continue
+                collecting_needs = False
             if current_job and indent >= 4 and stripped.startswith("needs:"):
-                for dependency in parse_inline_list(stripped.split(":", 1)[1]):
+                dependencies = parse_inline_list(stripped.split(":", 1)[1])
+                for dependency in dependencies:
                     needs.append((current_job, dependency))
+                collecting_needs = not dependencies
 
     lowered = raw.lower()
     infrastructure = sorted(
@@ -282,7 +296,6 @@ def parse_workflow(path: Path, repo_root: Path) -> Workflow:
         needs=sorted(set(needs)),
         infrastructure=infrastructure,
     )
-
 
 def parse_workflows(repo_root: Path, inventory: Inventory) -> None:
     workflow_dir = repo_root / ".github" / "workflows"

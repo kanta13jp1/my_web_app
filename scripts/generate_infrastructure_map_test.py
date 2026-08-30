@@ -45,7 +45,8 @@ class InfrastructureMapTest(unittest.TestCase):
               lint:
                 runs-on: ubuntu-latest
               deploy:
-                needs: [lint]
+                needs:
+                  - lint
                 runs-on: ubuntu-latest
                 steps:
                   - run: supabase db push
