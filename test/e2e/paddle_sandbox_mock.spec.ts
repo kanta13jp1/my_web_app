@@ -50,7 +50,18 @@ test('sandbox checkout maps open, failed, cancelled, and completed events', asyn
   });
   await expect(page.getByText('検証専用・実課金なし')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Sandbox checkout を開く' }).click();
+  await page
+    .getByRole('button', { name: 'Sandbox checkout を開く' })
+    .evaluate((element: HTMLElement) => element.click());
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const state = (window as any).__paddleSandboxMock;
+        return Boolean(state.initializeOptions && state.checkoutOptions);
+      }),
+    )
+    .toBe(true);
   await expect(page.getByText('Sandbox checkout を開きました')).toBeVisible();
 
   const initializedSafely = await page.evaluate(() => {
