@@ -50,6 +50,13 @@ UI; do not paste either value into an Issue, PR, shell log, or chat:
 - `PADDLE_SANDBOX_CLIENT_TOKEN`: exact `test_...` client-side token
 - `PADDLE_SANDBOX_PRICE_ID`: sandbox catalog `pri_...` value
 
+The configured artifact also reuses the repository's existing DEV public
+Supabase settings (`SUPABASE_URL_DEV` and
+`SUPABASE_PUBLISHABLE_KEY_DEV`, with `SUPABASE_ANON_KEY_DEV` as the legacy
+fallback) so the full Flutter app can reach `runApp`. The deterministic mock
+job uses non-routable CI-shaped public values and does not connect to a real
+Supabase project.
+
 Then dispatch the configured build from GitHub Actions, or with GitHub CLI:
 
 ```powershell

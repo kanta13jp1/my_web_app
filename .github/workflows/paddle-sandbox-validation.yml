@@ -38,6 +38,8 @@ jobs:
     env:
       PADDLE_TEST_TOKEN: test_123456789012345678901234567
       PADDLE_TEST_PRICE: pri_01sandboxbrowserproof
+      SUPABASE_TEST_URL: https://paddle-sandbox-ci.supabase.co
+      SUPABASE_TEST_KEY: sb_publishable_0123456789abcdef0123456789abcdef
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -86,6 +88,9 @@ jobs:
       - name: Build deterministic mock Sandbox Web app
         run: >-
           flutter build web --release --pwa-strategy=none
+          --dart-define=ENVIRONMENT=ci
+          --dart-define=SUPABASE_URL=${SUPABASE_TEST_URL}
+          --dart-define=SUPABASE_PUBLISHABLE_KEY=${SUPABASE_TEST_KEY}
           --dart-define=PADDLE_SANDBOX_ENABLED=true
           --dart-define=PADDLE_SANDBOX_CLIENT_TOKEN=${PADDLE_TEST_TOKEN}
           --dart-define=PADDLE_SANDBOX_PRICE_ID=${PADDLE_TEST_PRICE}
@@ -155,6 +160,8 @@ jobs:
     env:
       PADDLE_SANDBOX_CLIENT_TOKEN: ${{ secrets.PADDLE_SANDBOX_CLIENT_TOKEN }}
       PADDLE_SANDBOX_PRICE_ID: ${{ secrets.PADDLE_SANDBOX_PRICE_ID }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL_DEV }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_DEV || secrets.SUPABASE_ANON_KEY_DEV }}
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -171,8 +178,16 @@ jobs:
             echo "PADDLE_SANDBOX_CLIENT_TOKEN is missing or is not an exact Paddle sandbox client token." >&2
             exit 1
           fi
-          if [[ ! "$PADDLE_SANDBOX_PRICE_ID" =~ ^pri_[a-zA-Z0-9]+$ ]]; then
+          if [[ ! "$PADDLE_SANDBOX_PRICE_ID" =~ ^pri_[a-z0-9]+$ ]]; then
             echo "PADDLE_SANDBOX_PRICE_ID is missing or invalid." >&2
+            exit 1
+          fi
+          if [[ ! "$SUPABASE_URL" =~ ^https://[a-z0-9.-]+$ ]]; then
+            echo "SUPABASE_URL_DEV is missing or invalid." >&2
+            exit 1
+          fi
+          if [[ ! "$SUPABASE_PUBLISHABLE_KEY" =~ ^(sb_publishable_|eyJ) ]]; then
+            echo "The DEV Supabase publishable/anon key is missing or invalid." >&2
             exit 1
           fi
 
@@ -180,6 +195,9 @@ jobs:
         run: |
           flutter pub get
           flutter build web --release --pwa-strategy=none \
+            --dart-define=ENVIRONMENT=development \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
             --dart-define=PADDLE_SANDBOX_ENABLED=true \
             --dart-define=PADDLE_SANDBOX_CLIENT_TOKEN="$PADDLE_SANDBOX_CLIENT_TOKEN" \
             --dart-define=PADDLE_SANDBOX_PRICE_ID="$PADDLE_SANDBOX_PRICE_ID"
