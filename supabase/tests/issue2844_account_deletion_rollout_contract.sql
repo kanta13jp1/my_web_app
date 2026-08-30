@@ -194,6 +194,24 @@ begin
     raise exception 'documented 90-day audit exception was not retained';
   end if;
 
+  perform public.complete_account_deletion(v_target_request_id, 1, false);
+  if not exists (
+    select 1
+    from public.account_deletion_requests
+    where id = v_target_request_id
+      and status = 'completed'
+      and user_id is null
+      and database_rows_remaining = 0
+  ) then
+    raise exception 'residual-zero target request did not complete anonymously';
+  end if;
+end;
+$contract$;
+
+reset role;
+
+do $contract$
+begin
   if not exists (
     select 1 from auth.users
     where id = '00000000-0000-4000-8000-000000042844'::uuid
@@ -213,22 +231,8 @@ begin
   ) then
     raise exception 'control tenant data crossed the deletion boundary';
   end if;
-
-  perform public.complete_account_deletion(v_target_request_id, 1, false);
-  if not exists (
-    select 1
-    from public.account_deletion_requests
-    where id = v_target_request_id
-      and status = 'completed'
-      and user_id is null
-      and database_rows_remaining = 0
-  ) then
-    raise exception 'residual-zero target request did not complete anonymously';
-  end if;
 end;
 $contract$;
-
-reset role;
 
 delete from public.account_deletion_requests
 where user_id = '00000000-0000-4000-8000-000000042844'::uuid;
