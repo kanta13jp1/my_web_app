@@ -276,9 +276,11 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining(secret), findsNothing);
-    expect(find.byKey(const Key('billing_error_retry_button')), findsOneWidget);
+    final retryButton = find.byKey(const Key('billing_error_retry_button'));
+    expect(retryButton, findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('billing_error_retry_button')));
+    await tester.ensureVisible(retryButton);
+    await tester.tap(retryButton);
     await tester.pumpAndSettle();
 
     expect(billing.checkoutAttemptCount, 2);
