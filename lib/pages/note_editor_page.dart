@@ -16,6 +16,7 @@ import '../services/note_comments_service.dart';
 import '../services/note_prompt_library_service.dart';
 import '../services/note_semantic_search_service.dart';
 import '../services/note_tag_service.dart';
+import '../services/note_task_service.dart';
 import '../services/public_memo_service.dart';
 import '../services/undo_redo_service.dart';
 import '../utils/note_image_clipboard.dart';
@@ -27,6 +28,7 @@ import '../widgets/note_comments_panel.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
 import '../widgets/note_editor/editor_dialogs.dart';
 import '../widgets/note_tags_field.dart';
+import '../widgets/note_tasks_panel.dart';
 import '../widgets/related_notes_strip.dart';
 
 class NoteEditorPage extends StatefulWidget {
@@ -588,6 +590,26 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           },
         );
       },
+    );
+  }
+
+  Future<void> _showTasksPanel() async {
+    final noteId = int.tryParse(_currentNoteId ?? '');
+    if (noteId == null) {
+      _showMessage('タスクを追加する前にメモを保存してください');
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (sheetContext) => FractionallySizedBox(
+        heightFactor: 0.9,
+        child: NoteTasksPanel(
+          noteId: noteId,
+          repository: SupabaseNoteTaskRepository(_supabase),
+        ),
+      ),
     );
   }
 
@@ -2441,6 +2463,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                     icon: const Icon(Icons.sell_outlined),
                     label: Text(isNarrow ? 'タグ' : 'タグ (${_tags.length})'),
                   ),
+                  if (_currentNoteId != null)
+                    OutlinedButton.icon(
+                      key: const Key('note_editor_tasks_button'),
+                      onPressed: _showTasksPanel,
+                      icon: const Icon(Icons.checklist_rtl_outlined),
+                      label: Text(isNarrow ? 'タスク' : 'タスクを管理'),
+                    ),
                 ],
               ),
               if (!isNarrow) ...[

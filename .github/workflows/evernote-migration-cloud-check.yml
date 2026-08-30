@@ -7,12 +7,15 @@ on:
       - 'lib/**/enex*.dart'
       - 'lib/pages/import_page.dart'
       - 'lib/pages/note_editor_page.dart'
+      - 'lib/services/note_task_service.dart'
+      - 'lib/widgets/note_tasks_panel.dart'
       - 'lib/pages/note_list_page.dart'
       - 'lib/widgets/markdown_preview.dart'
       - 'test/**/evernote*.dart'
       - 'test/**/enex*.dart'
       - 'test/pages/import_page_test.dart'
       - 'test/pages/note_editor_page_test.dart'
+      - 'test/widgets/note_tasks_panel_test.dart'
       - 'test/pages/note_list_page_test.dart'
       - 'test/widgets/markdown_preview_test.dart'
       - 'pubspec.yaml'
@@ -30,12 +33,15 @@ on:
       - 'lib/**/enex*.dart'
       - 'lib/pages/import_page.dart'
       - 'lib/pages/note_editor_page.dart'
+      - 'lib/services/note_task_service.dart'
+      - 'lib/widgets/note_tasks_panel.dart'
       - 'lib/pages/note_list_page.dart'
       - 'lib/widgets/markdown_preview.dart'
       - 'test/**/evernote*.dart'
       - 'test/**/enex*.dart'
       - 'test/pages/import_page_test.dart'
       - 'test/pages/note_editor_page_test.dart'
+      - 'test/widgets/note_tasks_panel_test.dart'
       - 'test/pages/note_list_page_test.dart'
       - 'test/widgets/markdown_preview_test.dart'
       - 'pubspec.yaml'
@@ -136,10 +142,13 @@ jobs:
             printf '%s\n' \
               lib/pages/import_page.dart \
               lib/pages/note_editor_page.dart \
+              lib/services/note_task_service.dart \
+              lib/widgets/note_tasks_panel.dart \
               lib/pages/note_list_page.dart \
               lib/widgets/markdown_preview.dart \
               test/pages/import_page_test.dart \
               test/pages/note_editor_page_test.dart \
+              test/widgets/note_tasks_panel_test.dart \
               test/pages/note_list_page_test.dart \
               test/widgets/markdown_preview_test.dart
           } | while IFS= read -r file; do
