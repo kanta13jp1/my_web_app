@@ -159,6 +159,118 @@ void main() {
     expect(openButton.onPressed, isNull);
   });
 
+  testWidgets(
+      'shows assignment and reminder inbox without exposing an unshared note',
+      (tester) async {
+    final repository = _FakeNoteTaskRepository(
+      const <NoteTask>[],
+      notifications: <NoteFeatureNotification>[
+        _notification(
+          id: 'assigned',
+          kind: NoteFeatureNotificationKind.taskAssigned,
+          title: 'タスクが割り当てられました',
+          message: 'Review the private draft',
+          noteId: 61,
+        ),
+        _notification(
+          id: 'note-reminder',
+          kind: NoteFeatureNotificationKind.noteReminder,
+          title: 'ノートリマインダー',
+          message: '公開可能な自分のメモ',
+          noteId: 62,
+          noteTitle: '公開可能な自分のメモ',
+          notifyAt: DateTime.now().subtract(const Duration(minutes: 1)),
+        ),
+      ],
+    );
+    int? openedNoteId;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NoteTasksPage(
+          repository: repository,
+          onOpenNote: (noteId) {
+            openedNoteId = noteId;
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('通知 2'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const Key('note_tasks_notification_unread_count')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('note_tasks_notification_inbox')),
+      findsOneWidget,
+    );
+    expect(find.text('Review the private draft'), findsOneWidget);
+    expect(find.text('元のメモは共有されていません'), findsOneWidget);
+
+    final privateOpen = tester.widget<IconButton>(
+      find.byKey(
+        const ValueKey('note_feature_notification_open_assigned'),
+      ),
+    );
+    expect(privateOpen.onPressed, isNull);
+
+    await tester.tap(
+      find.byKey(
+        const ValueKey('note_feature_notification_read_assigned'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(repository.readChanges, <(String, bool)>[('assigned', true)]);
+    expect(find.text('通知 1'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(
+        const ValueKey('note_feature_notification_open_note-reminder'),
+      ),
+    );
+    await tester.pump();
+    expect(openedNoteId, 62);
+  });
+
+  testWidgets('dismisses a reminder from the inbox', (tester) async {
+    final repository = _FakeNoteTaskRepository(
+      const <NoteTask>[],
+      notifications: <NoteFeatureNotification>[
+        _notification(
+          id: 'dismiss-me',
+          kind: NoteFeatureNotificationKind.taskReminder,
+          title: 'タスクリマインダー',
+          message: '提出',
+          noteId: 71,
+          notifyAt: DateTime.now().subtract(const Duration(minutes: 1)),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: NoteTasksPage(repository: repository)),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('note_tasks_notification_unread_count')),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(
+        const ValueKey('note_feature_notification_dismiss_dismiss-me'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(repository.dismissedIds, <String>['dismiss-me']);
+    expect(find.text('通知はありません。'), findsOneWidget);
+  });
+
   testWidgets('isolates overdue Tasks from future and undated Tasks',
       (tester) async {
     final repository = _FakeNoteTaskRepository(<NoteTask>[
@@ -210,11 +322,18 @@ void main() {
 }
 
 class _FakeNoteTaskRepository implements NoteTaskRepository {
-  _FakeNoteTaskRepository(List<NoteTask> tasks)
-      : _tasks = List<NoteTask>.from(tasks);
+  _FakeNoteTaskRepository(
+    List<NoteTask> tasks, {
+    List<NoteFeatureNotification> notifications =
+        const <NoteFeatureNotification>[],
+  })  : _tasks = List<NoteTask>.from(tasks),
+        _notifications = List<NoteFeatureNotification>.from(notifications);
 
   List<NoteTask> _tasks;
+  List<NoteFeatureNotification> _notifications;
   final List<(String, bool)> completedChanges = <(String, bool)>[];
+  final List<(String, bool)> readChanges = <(String, bool)>[];
+  final List<String> dismissedIds = <String>[];
 
   @override
   Future<List<NoteTask>> loadAllTasks() async => List<NoteTask>.from(_tasks);
@@ -223,6 +342,37 @@ class _FakeNoteTaskRepository implements NoteTaskRepository {
   Future<List<NoteTask>> loadTasks({required int noteId}) async {
     return _tasks
         .where((task) => task.noteId == noteId)
+        .toList(growable: false);
+  }
+
+  @override
+  Future<List<NoteFeatureNotification>> loadNotifications() async {
+    return List<NoteFeatureNotification>.from(_notifications);
+  }
+
+  @override
+  Future<void> markNotificationRead({
+    required NoteFeatureNotification notification,
+    required bool read,
+  }) async {
+    readChanges.add((notification.id, read));
+    _notifications = _notifications.map((candidate) {
+      if (candidate.id != notification.id) return candidate;
+      return _copyNotification(
+        candidate,
+        readAt: read ? DateTime.now().toUtc() : null,
+        clearReadAt: !read,
+      );
+    }).toList(growable: false);
+  }
+
+  @override
+  Future<void> dismissNotification(
+    NoteFeatureNotification notification,
+  ) async {
+    dismissedIds.add(notification.id);
+    _notifications = _notifications
+        .where((candidate) => candidate.id != notification.id)
         .toList(growable: false);
   }
 
@@ -294,6 +444,49 @@ class _FakeNoteTaskRepository implements NoteTaskRepository {
     required NoteTask task,
     required NoteTaskDraft draft,
   }) async {}
+}
+
+
+NoteFeatureNotification _notification({
+  required String id,
+  required NoteFeatureNotificationKind kind,
+  required String title,
+  required String message,
+  required int noteId,
+  String? noteTitle,
+  DateTime? notifyAt,
+}) {
+  return NoteFeatureNotification(
+    id: id,
+    noteId: noteId,
+    kind: kind,
+    title: title,
+    message: message,
+    sourceKey: 'source-$id',
+    createdAt: DateTime.utc(2026, 8, 31),
+    notifyAt: notifyAt?.toUtc(),
+    noteTitle: noteTitle,
+  );
+}
+
+NoteFeatureNotification _copyNotification(
+  NoteFeatureNotification notification, {
+  DateTime? readAt,
+  bool clearReadAt = false,
+}) {
+  return NoteFeatureNotification(
+    id: notification.id,
+    noteId: notification.noteId,
+    taskId: notification.taskId,
+    kind: notification.kind,
+    title: notification.title,
+    message: notification.message,
+    notifyAt: notification.notifyAt,
+    readAt: clearReadAt ? null : (readAt ?? notification.readAt),
+    sourceKey: notification.sourceKey,
+    createdAt: notification.createdAt,
+    noteTitle: notification.noteTitle,
+  );
 }
 
 NoteTask _task({

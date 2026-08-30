@@ -14,6 +14,73 @@ const String _noteTaskReminderColumns =
     'source_created_at,source_updated_at,source_system,source_key,'
     'created_at,updated_at';
 
+const String _noteFeatureNotificationColumns =
+    'id,user_id,owner_user_id,note_id,task_id,task_reminder_id,'
+    'note_reminder_id,kind,title,message,notify_at,read_at,dismissed_at,'
+    'cancelled_at,source_key,created_at,updated_at';
+
+enum NoteFeatureNotificationKind {
+  taskAssigned,
+  taskReminder,
+  noteReminder,
+}
+
+class NoteFeatureNotification {
+  const NoteFeatureNotification({
+    required this.id,
+    required this.noteId,
+    required this.kind,
+    required this.title,
+    required this.message,
+    required this.sourceKey,
+    required this.createdAt,
+    this.taskId,
+    this.notifyAt,
+    this.readAt,
+    this.noteTitle,
+  });
+
+  final String id;
+  final int noteId;
+  final String? taskId;
+  final NoteFeatureNotificationKind kind;
+  final String title;
+  final String message;
+  final DateTime? notifyAt;
+  final DateTime? readAt;
+  final String sourceKey;
+  final DateTime createdAt;
+  final String? noteTitle;
+
+  bool get isRead => readAt != null;
+  bool get isReminder => kind != NoteFeatureNotificationKind.taskAssigned;
+  bool get canOpenNote => noteTitle != null;
+
+  factory NoteFeatureNotification.fromJson(Map<String, dynamic> json) {
+    return NoteFeatureNotification(
+      id: json['id']?.toString() ?? '',
+      noteId: _asInt(json['note_id']),
+      taskId: _emptyToNull(json['task_id']),
+      kind: switch (json['kind']?.toString()) {
+        'task_assigned' => NoteFeatureNotificationKind.taskAssigned,
+        'task_reminder' => NoteFeatureNotificationKind.taskReminder,
+        'note_reminder' => NoteFeatureNotificationKind.noteReminder,
+        _ => throw FormatException(
+            'Unsupported note notification kind: ${json['kind']}',
+          ),
+      },
+      title: json['title']?.toString() ?? '',
+      message: json['message']?.toString() ?? '',
+      notifyAt: _asOptionalDateTime(json['notify_at']),
+      readAt: _asOptionalDateTime(json['read_at']),
+      sourceKey: json['source_key']?.toString() ?? '',
+      createdAt: _asOptionalDateTime(json['created_at']) ??
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+      noteTitle: _emptyToNull(json['note_title']),
+    );
+  }
+}
+
 class NoteTaskReminder {
   const NoteTaskReminder({
     required this.id,
@@ -175,6 +242,23 @@ abstract class NoteTaskRepository {
 
   Future<List<NoteTask>> loadAllTasks();
 
+  Future<List<NoteFeatureNotification>> loadNotifications() async {
+    return const <NoteFeatureNotification>[];
+  }
+
+  Future<void> markNotificationRead({
+    required NoteFeatureNotification notification,
+    required bool read,
+  }) {
+    throw UnsupportedError('Notification read state is not supported.');
+  }
+
+  Future<void> dismissNotification(
+    NoteFeatureNotification notification,
+  ) {
+    throw UnsupportedError('Notification dismissal is not supported.');
+  }
+
   Future<void> createTask({
     required int noteId,
     required NoteTaskDraft draft,
@@ -324,6 +408,63 @@ class SupabaseNoteTaskRepository implements NoteTaskRepository {
         );
       },
     ).toList(growable: false);
+  }
+
+  @override
+  Future<List<NoteFeatureNotification>> loadNotifications() async {
+    const pageSize = 500;
+    final rows = <Map<String, dynamic>>[];
+    for (var offset = 0;; offset += pageSize) {
+      final page = List<Map<String, dynamic>>.from(
+        await _client
+            .from('note_feature_notifications')
+            .select(_noteFeatureNotificationColumns)
+            .isFilter('dismissed_at', null)
+            .isFilter('cancelled_at', null)
+            .order('created_at', ascending: false)
+            .order('id')
+            .range(offset, offset + pageSize - 1),
+      );
+      rows.addAll(page);
+      if (page.length < pageSize) break;
+    }
+
+    final noteTitles = await _loadNoteTitles(
+      rows.map((row) => _asInt(row['note_id'])).toSet(),
+    );
+    return rows.map((row) {
+      final json = Map<String, dynamic>.from(row);
+      json['note_title'] = noteTitles[_asInt(row['note_id'])];
+      return NoteFeatureNotification.fromJson(json);
+    }).toList(growable: false);
+  }
+
+  @override
+  Future<void> markNotificationRead({
+    required NoteFeatureNotification notification,
+    required bool read,
+  }) async {
+    _requireUser();
+    await _client.rpc(
+      'note_feature_notification_mark_read',
+      params: <String, dynamic>{
+        'p_notification_id': notification.id,
+        'p_read': read,
+      },
+    );
+  }
+
+  @override
+  Future<void> dismissNotification(
+    NoteFeatureNotification notification,
+  ) async {
+    _requireUser();
+    await _client.rpc(
+      'note_feature_notification_dismiss',
+      params: <String, dynamic>{
+        'p_notification_id': notification.id,
+      },
+    );
   }
 
   @override

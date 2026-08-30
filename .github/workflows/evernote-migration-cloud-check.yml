@@ -287,6 +287,8 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 \
             -f supabase/migrations/20260831023000_add_note_task_assignees.sql
           psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831031500_add_note_feature_notifications.sql
+          psql -X -v ON_ERROR_STOP=1 \
             -f supabase/tests/evernote_note_collections_contract.sql
           psql -X -v ON_ERROR_STOP=1 \
             -f supabase/tests/evernote_note_tasks_contract.sql

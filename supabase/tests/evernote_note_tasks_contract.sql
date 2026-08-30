@@ -92,6 +92,33 @@ begin
 end
 $$;
 
+-- The owner receives the note reminder but not assignee-only Task delivery.
+do $
+begin
+  if (
+    select count(*)
+    from public.note_feature_notifications
+  ) <> 1 then
+    raise exception 'The owner inbox did not isolate the note reminder.';
+  end if;
+  if (
+    select kind
+    from public.note_feature_notifications
+  ) <> 'note_reminder' then
+    raise exception 'The owner inbox contained the wrong notification kind.';
+  end if;
+
+  begin
+    update public.note_feature_notifications
+    set read_at = clock_timestamp();
+    raise exception 'Direct notification state mutation unexpectedly succeeded.';
+  exception
+    when insufficient_privilege then
+      null;
+  end;
+end
+$;
+
 -- Imported source evidence remains immutable and cannot be deleted while the
 -- corresponding Evernote source item still exists. Mutable Task fields remain
 -- editable for native use.
@@ -245,6 +272,22 @@ begin
     raise exception 'Task assignment exposed owner-only note reminders.';
   end if;
 
+  if (
+    select count(*)
+    from public.note_feature_notifications
+    where cancelled_at is null
+      and dismissed_at is null
+  ) <> 2 then
+    raise exception 'The assignee inbox did not receive assignment and reminder.';
+  end if;
+  if (
+    select count(*)
+    from public.note_feature_notifications
+    where kind = 'note_reminder'
+  ) <> 0 then
+    raise exception 'Task assignment exposed an owner note reminder notification.';
+  end if;
+
   select id into strict v_task_id
   from public.note_tasks
   where source_system = 'evernote';
@@ -299,6 +342,94 @@ begin
   end;
 end
 $$;
+
+-- Read/dismiss state is recipient-only. Reassignment removes the old recipient's
+-- derived notification rows together with Task visibility.
+do $
+declare
+  v_assignment_notification_id uuid;
+  v_reminder_notification_id uuid;
+begin
+  select id into strict v_assignment_notification_id
+  from public.note_feature_notifications
+  where kind = 'task_assigned';
+
+  perform public.note_feature_notification_mark_read(
+    v_assignment_notification_id,
+    true
+  );
+  if (
+    select read_at
+    from public.note_feature_notifications
+    where id = v_assignment_notification_id
+  ) is null then
+    raise exception 'The assignee could not mark an assignment as read.';
+  end if;
+
+  select id into strict v_reminder_notification_id
+  from public.note_feature_notifications
+  where kind = 'task_reminder';
+
+  perform public.note_feature_notification_dismiss(
+    v_reminder_notification_id
+  );
+  if (
+    select dismissed_at
+    from public.note_feature_notifications
+    where id = v_reminder_notification_id
+  ) is null then
+    raise exception 'The assignee could not dismiss a Task reminder.';
+  end if;
+end
+$;
+
+select set_config(
+  'request.jwt.claim.sub',
+  '00000000-0000-4000-8000-000000000101',
+  false
+);
+
+select public.note_task_assign(
+  (select id from public.note_tasks where source_system = 'evernote'),
+  'owner@example.com',
+  'Owner'
+);
+
+select set_config(
+  'request.jwt.claim.sub',
+  '00000000-0000-4000-8000-000000000102',
+  false
+);
+
+do $
+begin
+  if (select count(*) from public.note_tasks) <> 0 then
+    raise exception 'Reassignment did not revoke old assignee Task visibility.';
+  end if;
+  if (select count(*) from public.note_feature_notifications) <> 0 then
+    raise exception 'Reassignment retained old recipient notification content.';
+  end if;
+end
+$;
+
+select set_config(
+  'request.jwt.claim.sub',
+  '00000000-0000-4000-8000-000000000101',
+  false
+);
+
+do $
+begin
+  if (
+    select count(*)
+    from public.note_feature_notifications
+    where cancelled_at is null
+      and dismissed_at is null
+  ) <> 3 then
+    raise exception 'Owner reassignment inbox backfill was incomplete.';
+  end if;
+end
+$;
 
 -- Even when history is already reviewed, pending Task verification must block
 -- source deletion. An explicit zero-feature verification unlocks only this item.

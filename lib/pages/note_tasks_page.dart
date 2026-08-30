@@ -5,7 +5,10 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/note_task_service.dart';
+import '../services/notification_service.dart';
 import 'note_editor_page.dart';
+
+enum _NoteTasksSection { tasks, notifications }
 
 enum NoteTaskOverviewFilter {
   open,
@@ -41,10 +44,12 @@ class NoteTasksPage extends StatefulWidget {
     super.key,
     this.repository,
     this.onOpenNote,
+    this.notificationService,
   });
 
   final NoteTaskRepository? repository;
   final ValueChanged<int>? onOpenNote;
+  final NotificationService? notificationService;
 
   @override
   State<NoteTasksPage> createState() => _NoteTasksPageState();
@@ -52,11 +57,17 @@ class NoteTasksPage extends StatefulWidget {
 
 class _NoteTasksPageState extends State<NoteTasksPage> {
   late final NoteTaskRepository _repository;
+  late final NotificationService _notificationService;
+  late final bool _localNotificationSchedulingEnabled;
   final TextEditingController _searchController = TextEditingController();
   List<NoteTask> _tasks = const <NoteTask>[];
+  List<NoteFeatureNotification> _notifications =
+      const <NoteFeatureNotification>[];
   NoteTaskOverviewFilter _filter = NoteTaskOverviewFilter.open;
+  _NoteTasksSection _section = _NoteTasksSection.tasks;
   bool _isLoading = true;
   final Set<String> _mutatingTaskIds = <String>{};
+  final Set<String> _mutatingNotificationIds = <String>{};
   String _searchQuery = '';
   String? _error;
 
@@ -65,6 +76,9 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
     super.initState();
     _repository = widget.repository ??
         SupabaseNoteTaskRepository(Supabase.instance.client);
+    _notificationService = widget.notificationService ?? NotificationService();
+    _localNotificationSchedulingEnabled =
+        widget.repository == null || widget.notificationService != null;
     unawaited(_loadTasks());
   }
 
@@ -82,13 +96,19 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
       });
     }
     try {
-      final tasks = await _repository.loadAllTasks();
+      final tasksFuture = _repository.loadAllTasks();
+      final notificationsFuture = _repository.loadNotifications();
+      final tasks = await tasksFuture;
+      final notifications = await notificationsFuture;
       tasks.sort(_compareTasks);
+      notifications.sort(_compareNotifications);
       if (!mounted) return;
       setState(() {
         _tasks = tasks;
+        _notifications = notifications;
         _error = null;
       });
+      unawaited(_schedulePendingNotifications(notifications));
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -99,6 +119,51 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
         setState(() {
           _isLoading = false;
         });
+      }
+    }
+  }
+
+  int _compareNotifications(
+    NoteFeatureNotification left,
+    NoteFeatureNotification right,
+  ) {
+    if (left.isRead != right.isRead) return left.isRead ? 1 : -1;
+    final leftAt = left.notifyAt ?? left.createdAt;
+    final rightAt = right.notifyAt ?? right.createdAt;
+    return rightAt.compareTo(leftAt);
+  }
+
+  Future<void> _schedulePendingNotifications(
+    List<NoteFeatureNotification> notifications,
+  ) async {
+    if (!_localNotificationSchedulingEnabled) return;
+    final now = DateTime.now().toUtc();
+    for (final notification in notifications) {
+      final notifyAt = notification.notifyAt;
+      if (!notification.isReminder ||
+          notification.isRead ||
+          notifyAt == null ||
+          !notifyAt.isAfter(now)) {
+        continue;
+      }
+      try {
+        await _notificationService.scheduleNoteFeatureReminder(
+          sourceKey: notification.sourceKey,
+          title: notification.title,
+          body: notification.message,
+          notifyAt: notifyAt,
+        );
+      } catch (error, stackTrace) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stackTrace,
+            library: 'note_tasks_page',
+            context: ErrorDescription(
+              'while scheduling a Task or note reminder',
+            ),
+          ),
+        );
       }
     }
   }
@@ -193,6 +258,89 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
     }
   }
 
+  Future<void> _markNotificationRead(
+    NoteFeatureNotification notification,
+    bool read,
+  ) async {
+    if (_mutatingNotificationIds.contains(notification.id)) return;
+    setState(() {
+      _mutatingNotificationIds.add(notification.id);
+      _error = null;
+    });
+    try {
+      await _repository.markNotificationRead(
+        notification: notification,
+        read: read,
+      );
+      await _loadTasks(showLoading: false);
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _error = error.toString();
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _mutatingNotificationIds.remove(notification.id);
+        });
+      }
+    }
+  }
+
+  Future<void> _dismissNotification(
+    NoteFeatureNotification notification,
+  ) async {
+    if (_mutatingNotificationIds.contains(notification.id)) return;
+    setState(() {
+      _mutatingNotificationIds.add(notification.id);
+      _error = null;
+    });
+    try {
+      await _repository.dismissNotification(notification);
+      if (notification.isReminder && _localNotificationSchedulingEnabled) {
+        await _notificationService.cancelNoteFeatureReminder(
+          sourceKey: notification.sourceKey,
+        );
+      }
+      await _loadTasks(showLoading: false);
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _error = error.toString();
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _mutatingNotificationIds.remove(notification.id);
+        });
+      }
+    }
+  }
+
+  Future<void> _openNotificationNote(
+    NoteFeatureNotification notification,
+  ) async {
+    if (!notification.canOpenNote) return;
+    final callback = widget.onOpenNote;
+    if (callback != null) {
+      callback(notification.noteId);
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/note-editor'),
+        builder: (_) => NoteEditorPage(
+          noteId: notification.noteId.toString(),
+        ),
+      ),
+    );
+    if (mounted) {
+      await _loadTasks(showLoading: false);
+    }
+  }
+
   Future<void> _openNote(NoteTask task) async {
     final callback = widget.onOpenNote;
     if (callback != null) {
@@ -230,64 +378,180 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
           ),
         ],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isNarrow = constraints.maxWidth < 760;
-          final content = _buildContent(
-            openCount: openCount,
-            overdueCount: overdueCount,
-            todayCount: todayCount,
-            completedCount: completedCount,
-          );
-          if (isNarrow) {
-            return Column(
-              key: const Key('note_tasks_page_narrow'),
-              children: [
-                _buildNarrowFilters(),
-                Expanded(child: content),
-              ],
-            );
-          }
-          return Row(
-            key: const Key('note_tasks_page_wide'),
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                width: 220,
-                child: Material(
-                  color: Theme.of(context).colorScheme.surfaceContainerLowest,
-                  child: ListView(
-                    padding: const EdgeInsets.all(12),
-                    children: [
-                      Text(
-                        '表示',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      for (final filter in NoteTaskOverviewFilter.values)
-                        ListTile(
-                          key: ValueKey(
-                            'note_tasks_filter_${filter.name}',
+      body: Column(
+        children: [
+          _buildSectionSelector(),
+          const Divider(height: 1),
+          Expanded(
+            child: _section == _NoteTasksSection.notifications
+                ? _buildNotificationContent()
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isNarrow = constraints.maxWidth < 760;
+                      final content = _buildContent(
+                        openCount: openCount,
+                        overdueCount: overdueCount,
+                        todayCount: todayCount,
+                        completedCount: completedCount,
+                      );
+                      if (isNarrow) {
+                        return Column(
+                          key: const Key('note_tasks_page_narrow'),
+                          children: [
+                            _buildNarrowFilters(),
+                            Expanded(child: content),
+                          ],
+                        );
+                      }
+                      return Row(
+                        key: const Key('note_tasks_page_wide'),
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SizedBox(
+                            width: 220,
+                            child: Material(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerLowest,
+                              child: ListView(
+                                padding: const EdgeInsets.all(12),
+                                children: [
+                                  Text(
+                                    '表示',
+                                    style:
+                                        Theme.of(context).textTheme.titleSmall,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  for (final filter
+                                      in NoteTaskOverviewFilter.values)
+                                    ListTile(
+                                      key: ValueKey(
+                                        'note_tasks_filter_${filter.name}',
+                                      ),
+                                      selected: _filter == filter,
+                                      leading: Icon(filter.icon),
+                                      title: Text(filter.label),
+                                      onTap: () {
+                                        setState(() {
+                                          _filter = filter;
+                                        });
+                                      },
+                                    ),
+                                ],
+                              ),
+                            ),
                           ),
-                          selected: _filter == filter,
-                          leading: Icon(filter.icon),
-                          title: Text(filter.label),
-                          onTap: () {
-                            setState(() {
-                              _filter = filter;
-                            });
-                          },
-                        ),
-                    ],
+                          const VerticalDivider(width: 1),
+                          Expanded(child: content),
+                        ],
+                      );
+                    },
                   ),
-                ),
-              ),
-              const VerticalDivider(width: 1),
-              Expanded(child: content),
-            ],
-          );
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionSelector() {
+    final unreadCount =
+        _notifications.where((notification) => !notification.isRead).length;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      child: SegmentedButton<_NoteTasksSection>(
+        key: const Key('note_tasks_page_section_selector'),
+        segments: <ButtonSegment<_NoteTasksSection>>[
+          const ButtonSegment<_NoteTasksSection>(
+            value: _NoteTasksSection.tasks,
+            icon: Icon(Icons.task_alt_outlined),
+            label: Text('タスク'),
+          ),
+          ButtonSegment<_NoteTasksSection>(
+            value: _NoteTasksSection.notifications,
+            icon: const Icon(Icons.notifications_outlined),
+            label: Text(
+              '通知 $unreadCount',
+              key: const Key('note_tasks_notification_unread_count'),
+            ),
+          ),
+        ],
+        selected: <_NoteTasksSection>{_section},
+        onSelectionChanged: (selection) {
+          setState(() {
+            _section = selection.single;
+          });
         },
       ),
+    );
+  }
+
+  Widget _buildNotificationContent() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Column(
+      key: const Key('note_tasks_notification_inbox'),
+      children: [
+        if (_error != null)
+          MaterialBanner(
+            content: Text('通知の読み込みまたは更新に失敗しました: $_error'),
+            actions: [
+              TextButton(
+                onPressed: _loadTasks,
+                child: const Text('再試行'),
+              ),
+            ],
+          ),
+        if (_mutatingNotificationIds.isNotEmpty)
+          const LinearProgressIndicator(minHeight: 2),
+        Expanded(
+          child: _notifications.isEmpty
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(32),
+                  children: const [
+                    Icon(Icons.notifications_none, size: 52),
+                    SizedBox(height: 12),
+                    Text(
+                      '通知はありません。',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadTasks,
+                  child: ListView.separated(
+                    key: const Key('note_tasks_notification_list'),
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+                    itemCount: _notifications.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final notification = _notifications[index];
+                      return _NoteFeatureNotificationCard(
+                        notification: notification,
+                        busy: _mutatingNotificationIds
+                            .contains(notification.id),
+                        onReadChanged: (read) {
+                          unawaited(
+                            _markNotificationRead(notification, read),
+                          );
+                        },
+                        onDismiss: () {
+                          unawaited(_dismissNotification(notification));
+                        },
+                        onOpenNote: notification.canOpenNote
+                            ? () {
+                                unawaited(
+                                  _openNotificationNote(notification),
+                                );
+                              }
+                            : null,
+                      );
+                    },
+                  ),
+                ),
+        ),
+      ],
     );
   }
 
@@ -450,6 +714,149 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
               : () {
                   unawaited(_openNote(tasks[index]));
                 },
+        ),
+      ),
+    );
+  }
+}
+
+class _NoteFeatureNotificationCard extends StatelessWidget {
+  const _NoteFeatureNotificationCard({
+    required this.notification,
+    required this.busy,
+    required this.onReadChanged,
+    required this.onDismiss,
+    required this.onOpenNote,
+  });
+
+  final NoteFeatureNotification notification;
+  final bool busy;
+  final ValueChanged<bool> onReadChanged;
+  final VoidCallback onDismiss;
+  final VoidCallback? onOpenNote;
+
+  @override
+  Widget build(BuildContext context) {
+    final notifyAt = notification.notifyAt?.toLocal();
+    final isDue = notifyAt != null && !notifyAt.isAfter(DateTime.now());
+    final colorScheme = Theme.of(context).colorScheme;
+    final kindLabel = switch (notification.kind) {
+      NoteFeatureNotificationKind.taskAssigned => '担当タスク',
+      NoteFeatureNotificationKind.taskReminder => 'タスクリマインダー',
+      NoteFeatureNotificationKind.noteReminder => 'ノートリマインダー',
+    };
+    final icon = switch (notification.kind) {
+      NoteFeatureNotificationKind.taskAssigned => Icons.assignment_ind_outlined,
+      NoteFeatureNotificationKind.taskReminder => Icons.alarm_outlined,
+      NoteFeatureNotificationKind.noteReminder =>
+        Icons.notifications_active_outlined,
+    };
+
+    return Card(
+      key: ValueKey('note_feature_notification_${notification.id}'),
+      color: notification.isRead
+          ? null
+          : colorScheme.primaryContainer.withValues(alpha: 0.34),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 8, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(icon, color: colorScheme.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        notification.title,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(notification.message),
+                    ],
+                  ),
+                ),
+                if (!notification.isRead)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4, right: 8),
+                    child: Icon(Icons.circle, size: 10),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Chip(
+                  avatar: Icon(icon, size: 16),
+                  label: Text(kindLabel),
+                ),
+                if (notifyAt != null)
+                  Chip(
+                    avatar: Icon(
+                      isDue ? Icons.notification_important : Icons.schedule,
+                      size: 16,
+                    ),
+                    label: Text(
+                      DateFormat('yyyy/MM/dd HH:mm').format(notifyAt),
+                    ),
+                  ),
+                if (notification.noteTitle != null)
+                  Chip(
+                    avatar: const Icon(Icons.note_outlined, size: 16),
+                    label: Text(notification.noteTitle!),
+                  )
+                else
+                  const Chip(
+                    avatar: Icon(Icons.lock_outline, size: 16),
+                    label: Text('元のメモは共有されていません'),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  key: ValueKey(
+                    'note_feature_notification_read_${notification.id}',
+                  ),
+                  onPressed: busy
+                      ? null
+                      : () => onReadChanged(!notification.isRead),
+                  icon: Icon(
+                    notification.isRead
+                        ? Icons.mark_email_unread_outlined
+                        : Icons.done,
+                  ),
+                  label: Text(notification.isRead ? '未読に戻す' : '既読'),
+                ),
+                IconButton(
+                  key: ValueKey(
+                    'note_feature_notification_open_${notification.id}',
+                  ),
+                  tooltip:
+                      onOpenNote == null ? '元のメモは共有されていません' : '元のメモを開く',
+                  onPressed: busy ? null : onOpenNote,
+                  icon: const Icon(Icons.open_in_new),
+                ),
+                IconButton(
+                  key: ValueKey(
+                    'note_feature_notification_dismiss_${notification.id}',
+                  ),
+                  tooltip: '非表示',
+                  onPressed: busy ? null : onDismiss,
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
