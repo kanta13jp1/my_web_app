@@ -23,12 +23,33 @@ Run in GitHub Actions:
 
 Do not start a local Flutter/Dart build, analysis, test, browser automation, or media pipeline when RAM usage is at least 85% or free physical memory is below 2 GB. Preserve edits, dispatch the cloud check, and wait for its result instead.
 
+## Cloud editing workspace
+
+Use the default `.devcontainer/devcontainer.json` with GitHub Codespaces when a change needs an interactive editor. It intentionally uses the GitHub default Codespaces image as a lightweight control plane: it provides Git and GitHub CLI, but it does not install Flutter, run `flutter pub get`, or create build output. The workflow guide opens automatically.
+
+Create a codespace only after checking the payer and available quota:
+
+```powershell
+gh codespace create -r kanta13jp1/my_web_app -b <branch> --devcontainer-path .devcontainer/devcontainer.json
+```
+
+Stop or delete the codespace when the edit is preserved in a remote branch:
+
+```powershell
+gh codespace stop -c <codespace-name>
+gh codespace delete -c <codespace-name>
+```
+
+For the smallest edits, prefer the GitHub web editor or Git Data API and skip provisioning a codespace. GitHub Codespaces can incur usage charges after included quota; this repository never creates one automatically.
+
+The former rootless-Podman Flutter environment remains available at `.devcontainer/flutter-local/devcontainer.json`. It is a resource-heavy local fallback, not the default. Select it only when local RAM and disk are healthy and local execution is explicitly required.
 ## Manual cloud validation
 
 The workflow supports four profiles:
 
 | Profile | Cloud work |
 | --- | --- |
+| workspace | validate cloud/local workspace descriptors without installing Flutter |
 | `analyze` | dependency resolution and static analysis |
 | `test` | dependency resolution and tests |
 | `web-build` | dependency resolution and release web build |
@@ -47,7 +68,7 @@ $runId = gh run list --workflow cloud-development.yml --branch <branch> --limit 
 gh run watch $runId --exit-status
 ```
 
-Use a narrower profile while iterating and `full` before merge. The workflow cancels an older run for the same ref/profile, checks out only one commit of history, reuses the hosted Flutter cache, and keeps web artifacts for one day.
+Use `workspace` for dev-container-only changes, a narrower Flutter profile while iterating, and `full` before merge. The workflow cancels an older run for the same ref/profile, checks out only one commit of history, reuses the hosted Flutter cache, and keeps web artifacts for one day.
 
 ## Pull requests and deployment
 
