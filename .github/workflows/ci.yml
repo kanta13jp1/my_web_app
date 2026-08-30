@@ -32,6 +32,11 @@ on:
         required: true
         type: string
   workflow_call:
+    inputs:
+      expected_head_sha:
+        description: Exact 40-character HEAD supplied by the calling workflow
+        required: false
+        type: string
 
 permissions: {}
 
