@@ -185,6 +185,7 @@ def execute(
             "inventory_items_discovered": 0,
         },
         "remaining_after": plan["remaining_before"],
+        "remaining_delta": 0,
         "source_deletion_attempted": False,
     }
     if mode == "plan":
@@ -206,7 +207,10 @@ def execute(
         applied.get("remaining_to_expand"),
         "remaining_to_expand",
     )
-    if attempted != plan["selected"] or remaining_after > plan["remaining_before"]:
+    if (
+        attempted != plan["selected"]
+        or remaining_after > plan["remaining_before"] + discovered
+    ):
         raise ExpansionError("cloud inventory apply evidence is inconsistent")
     if applied.get("source_deletion_attempted") is not False:
         raise ExpansionError("cloud inventory apply did not prove deletion safety")
@@ -216,6 +220,7 @@ def execute(
         "inventory_items_discovered": discovered,
     }
     report["remaining_after"] = remaining_after
+    report["remaining_delta"] = remaining_after - plan["remaining_before"]
     report["inventory_complete"] = applied.get("inventory_complete") is True
     report["applied_at"] = datetime.now(timezone.utc).isoformat()
     return report
@@ -256,6 +261,7 @@ def execute_drain(
             "inventory_items_discovered": 0,
         },
         "remaining_after": plan["remaining_before"],
+        "remaining_delta": 0,
         "inventory_complete": plan["remaining_before"] == 0,
         "source_deletion_attempted": False,
     }
@@ -283,7 +289,10 @@ def execute_drain(
             applied.get("remaining_to_expand"),
             "remaining_to_expand",
         )
-        if attempted != plan["selected"] or remaining_after > plan["remaining_before"]:
+        if (
+            attempted != plan["selected"]
+            or remaining_after > plan["remaining_before"] + discovered
+        ):
             raise ExpansionError("cloud inventory drain evidence is inconsistent")
         if applied.get("source_deletion_attempted") is not False:
             raise ExpansionError("cloud inventory drain did not prove deletion safety")
@@ -318,6 +327,7 @@ def execute_drain(
         "inventory_items_discovered": discovered_total,
     }
     report["remaining_after"] = remaining_after
+    report["remaining_delta"] = remaining_after - report["remaining_before"]
     report["inventory_complete"] = inventory_complete
     report["applied_at"] = datetime.now(timezone.utc).isoformat()
     report["stopped_reason"] = (
@@ -337,6 +347,7 @@ def render_summary(report: dict[str, Any]) -> str:
         f"- selected: {report['selected']}",
         f"- remaining before: {report['remaining_before']}",
         f"- remaining after: {report['remaining_after']}",
+        f"- remaining delta: {report['remaining_delta']}",
         f"- items attempted: {mutations['items_attempted']}",
         f"- inventory items discovered: {mutations['inventory_items_discovered']}",
         (
