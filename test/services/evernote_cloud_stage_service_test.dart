@@ -20,7 +20,9 @@ void main() {
     );
   });
 
-  test('stages one-use stream and verifies content-addressed archive', () async {
+  test(
+    'stages one-use stream and verifies content-addressed archive',
+    () async {
     final bytes = Uint8List.fromList(utf8.encode(_fixture));
     final states = <EvernoteCloudStageState>[];
 
@@ -54,15 +56,19 @@ void main() {
       storage.objects['$evernoteArchiveBucket/${result.archivePath}'],
       bytes,
     );
-    expect(states, containsAllInOrder(<EvernoteCloudStageState>[
-      EvernoteCloudStageState.preparing,
-      EvernoteCloudStageState.uploading,
-      EvernoteCloudStageState.parsing,
-      EvernoteCloudStageState.copying,
-      EvernoteCloudStageState.verifying,
-      EvernoteCloudStageState.completed,
-    ]));
-  });
+    expect(
+      states,
+      containsAllInOrder(<EvernoteCloudStageState>[
+        EvernoteCloudStageState.preparing,
+        EvernoteCloudStageState.uploading,
+        EvernoteCloudStageState.parsing,
+        EvernoteCloudStageState.copying,
+        EvernoteCloudStageState.verifying,
+        EvernoteCloudStageState.completed,
+      ]),
+    );
+  },
+  );
 
   test(
     'reuses verified staging and archive objects after duplicate errors',
@@ -85,7 +91,10 @@ void main() {
   
       expect(second.stagingPath, first.stagingPath);
       expect(second.archivePath, first.archivePath);
-      expect(second.preview.sourceExportSha256, first.preview.sourceExportSha256);
+      expect(
+        second.preview.sourceExportSha256,
+        first.preview.sourceExportSha256,
+      );
     },
   );
 
@@ -164,9 +173,8 @@ void main() {
 
 Stream<List<int>> _chunked(Uint8List bytes, int chunkSize) async* {
   for (var offset = 0; offset < bytes.length; offset += chunkSize) {
-    final end = offset + chunkSize > bytes.length
-        ? bytes.length
-        : offset + chunkSize;
+    final end =
+        offset + chunkSize > bytes.length ? bytes.length : offset + chunkSize;
     yield Uint8List.sublistView(bytes, offset, end);
   }
 }

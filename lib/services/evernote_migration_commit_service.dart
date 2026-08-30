@@ -255,8 +255,7 @@ class SupabaseEvernoteMigrationStorageGateway
   SupabaseEvernoteMigrationStorageGateway(
     this._client, {
     EvernoteTusResumeStore? resumeStore,
-  }) : _resumeStore =
-            resumeStore ?? SharedPreferencesEvernoteTusResumeStore();
+  }) : _resumeStore = resumeStore ?? SharedPreferencesEvernoteTusResumeStore();
 
   final SupabaseClient _client;
   final EvernoteTusResumeStore _resumeStore;
@@ -748,9 +747,8 @@ class EvernoteMigrationCommitService {
           onProgress: (objectBytes, objectTotalBytes) {
             final isFirstProgress = !observedObjectProgress;
             observedObjectProgress = true;
-            final boundedObjectBytes = objectBytes
-                .clamp(0, objectTotalBytes)
-                .toInt();
+            final boundedObjectBytes =
+                objectBytes.clamp(0, objectTotalBytes).toInt();
             lastObjectBytes = boundedObjectBytes;
             final state = boundedObjectBytes >= objectTotalBytes
                 ? EvernoteMigrationTransferState.verifying
@@ -869,8 +867,7 @@ class EvernoteMigrationCommitService {
         );
       }
 
-      final editableContent =
-          EvernoteEnmlMarkdownConverter.resolveResourceUrls(
+      final editableContent = EvernoteEnmlMarkdownConverter.resolveResourceUrls(
         note.markdownText,
         resourceUrlsByHash,
       );
@@ -1100,9 +1097,8 @@ class EvernoteMigrationCommitService {
           onProgress: (objectBytes, objectTotalBytes) {
             final isFirstProgress = !observedObjectProgress;
             observedObjectProgress = true;
-            final boundedObjectBytes = objectBytes
-                .clamp(0, objectTotalBytes)
-                .toInt();
+            final boundedObjectBytes =
+                objectBytes.clamp(0, objectTotalBytes).toInt();
             lastObjectBytes = boundedObjectBytes;
             final state = boundedObjectBytes >= objectTotalBytes
                 ? EvernoteMigrationTransferState.verifying

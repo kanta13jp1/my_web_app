@@ -462,8 +462,7 @@ class _FakeStorageGateway implements EvernoteMigrationStorageGateway {
 class _FakeDatabaseGateway implements EvernoteMigrationDatabaseGateway {
   final List<String> commitCalls = <String>[];
   final List<String> committedContents = <String>[];
-  final List<Map<String, dynamic>> committedMetadata =
-      <Map<String, dynamic>>[];
+  final List<Map<String, dynamic>> committedMetadata = <Map<String, dynamic>>[];
   final List<Map<String, bool>> verifyCalls = <Map<String, bool>>[];
   final Map<int, EvernoteCommittedNoteSnapshot> snapshots =
       <int, EvernoteCommittedNoteSnapshot>{};
