@@ -38,7 +38,8 @@ class _FakeRepository implements MicroSurveyRepository {
 }
 
 void main() {
-  test('eligible prompt is presented and ineligible prompt is skipped', () async {
+  test('eligible prompt is presented and ineligible prompt is skipped',
+      () async {
     final repository = _FakeRepository();
     final controller = MicroSurveyController(repository: repository);
     addTearDown(controller.dispose);
@@ -48,7 +49,8 @@ void main() {
     expect(await controller.shouldPresent(_surveyContext), isFalse);
   });
 
-  test('claim failure is fail-closed and does not break the product task', () async {
+  test('claim failure is fail-closed and does not break the product task',
+      () async {
     final repository = _FakeRepository()..throwOnClaim = true;
     final controller = MicroSurveyController(repository: repository);
     addTearDown(controller.dispose);

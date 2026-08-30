@@ -37,8 +37,7 @@ class MicroSurveyBottomSheet extends StatefulWidget {
   final MicroSurveyContext surveyContext;
 
   @override
-  State<MicroSurveyBottomSheet> createState() =>
-      _MicroSurveyBottomSheetState();
+  State<MicroSurveyBottomSheet> createState() => _MicroSurveyBottomSheetState();
 }
 
 class _MicroSurveyBottomSheetState extends State<MicroSurveyBottomSheet> {

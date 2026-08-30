@@ -17,7 +17,8 @@ void main() {
       expect(sql, contains("survey_key = 'task_completion_v1'"));
       expect(
         sql,
-        contains("trigger in ('deployment_monitoring_created', 'resource_created')"),
+        contains(
+            "trigger in ('deployment_monitoring_created', 'resource_created')"),
       );
       expect(
         sql,
