@@ -15,15 +15,16 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Plan or apply one bounded inventory expansion
+        description: Plan, apply one batch, or drain repeated bounded batches
         required: true
         default: plan
         type: choice
         options:
           - plan
           - apply
+          - drain
       expected_plan_sha256:
-        description: Exact current plan digest; required for apply
+        description: Exact current plan digest; required for apply or drain
         required: false
         default: ""
         type: string
@@ -31,6 +32,11 @@ on:
         description: Notion containers to expand (1-5)
         required: true
         default: "5"
+        type: string
+      max_items:
+        description: Maximum attempts for drain mode (1-100; each plan remains 1-5)
+        required: true
+        default: "100"
         type: string
 
 permissions: {}
@@ -66,9 +72,9 @@ jobs:
 
   expand:
     if: github.event_name != 'pull_request'
-    name: Plan or apply one inventory expansion
+    name: Plan, apply, or drain inventory expansion
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     environment:
       name: wbs-automation-production
       deployment: false
@@ -81,6 +87,7 @@ jobs:
       INVENTORY_MODE: ${{ inputs.mode }}
       EXPECTED_PLAN_SHA256: ${{ inputs.expected_plan_sha256 }}
       INVENTORY_LIMIT: ${{ inputs.limit }}
+      INVENTORY_MAX_ITEMS: ${{ inputs.max_items }}
 
     steps:
       - name: Checkout trusted main revision
@@ -101,7 +108,7 @@ jobs:
             supabase/functions/notion-migration-hub/cloud_inventory_auth_test.ts \
             supabase/functions/notion-migration-hub/inventory_expansion_plan_test.ts
 
-      - name: Plan or apply bounded expansion
+      - name: Plan, apply, or drain bounded expansion
         run: >-
           python scripts/notion_inventory_cloud_expand.py
           --json-output notion-inventory-cloud-expand.json
