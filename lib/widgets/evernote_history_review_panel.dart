@@ -192,8 +192,7 @@ class _EvernoteHistoryReviewPanelState
   ) {
     final busy = widget.busyItemId == item.id;
     final canImport = item.sourceHistoryVersionCount > 0 &&
-        item.verifiedHistoryVersionCount <
-            item.sourceHistoryVersionCount &&
+        item.verifiedHistoryVersionCount < item.sourceHistoryVersionCount &&
         !busy;
     final statusColor = item.historyDeletionGatePassed
         ? Colors.green
@@ -214,9 +213,7 @@ class _EvernoteHistoryReviewPanelState
         const SizedBox(height: 4),
         Chip(
           avatar: Icon(
-            item.historyDeletionGatePassed
-                ? Icons.verified
-                : Icons.lock_clock,
+            item.historyDeletionGatePassed ? Icons.verified : Icons.lock_clock,
             size: 18,
             color: statusColor,
           ),
@@ -254,9 +251,7 @@ class _EvernoteHistoryReviewPanelState
         ),
         FilledButton.icon(
           key: ValueKey('evernote-history-import-${item.id}'),
-          onPressed: canImport
-              ? () => widget.onImportRevision(item)
-              : null,
+          onPressed: canImport ? () => widget.onImportRevision(item) : null,
           icon: busy
               ? const SizedBox(
                   width: 18,

@@ -60,7 +60,6 @@ class EvernoteMigrationBatch {
   }
 }
 
-
 class EvernoteMigrationItem {
   const EvernoteMigrationItem({
     required this.id,
@@ -91,8 +90,7 @@ class EvernoteMigrationItem {
   bool get isImported => targetNoteId != null;
 
   bool get historyDeletionGatePassed =>
-      historyStatus == 'verified' ||
-      historyStatus == 'reviewed_no_versions';
+      historyStatus == 'verified' || historyStatus == 'reviewed_no_versions';
 
   String get displayTitle {
     final title = noteTitle?.trim();
@@ -271,7 +269,6 @@ class EvernoteMigrationLedgerService {
         .toList(growable: false);
   }
 
-
   Future<List<EvernoteMigrationItem>> loadItems({
     required String userId,
     int limit = 200,
@@ -330,4 +327,3 @@ String? _emptyStringToNull(dynamic value) {
   final text = value?.toString().trim();
   return text == null || text.isEmpty ? null : text;
 }
-

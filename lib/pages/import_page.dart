@@ -33,8 +33,7 @@ class _ImportPageState extends State<ImportPage> {
   late ImportService _importService;
   late EvernoteMigrationLedgerService _evernoteMigrationLedgerService;
   late EvernoteMigrationCommitService _evernoteMigrationCommitService;
-  late EvernoteNoteHistoryMigrationService
-      _evernoteNoteHistoryMigrationService;
+  late EvernoteNoteHistoryMigrationService _evernoteNoteHistoryMigrationService;
   late EvernoteCloudStageService _evernoteCloudStageService;
   bool _migrationLedgerInitialized = false;
   bool _isMigrationLedgerLoading = false;
