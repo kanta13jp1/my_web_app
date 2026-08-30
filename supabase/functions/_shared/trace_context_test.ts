@@ -4,7 +4,9 @@ import { requestTraceId } from "./trace_context.ts";
 
 Deno.test("shared CORS allows W3C and Sentry trace headers", () => {
   const allowed = corsHeaders["Access-Control-Allow-Headers"];
-  for (const header of ["traceparent", "tracestate", "baggage", "sentry-trace"]) {
+  for (
+    const header of ["traceparent", "tracestate", "baggage", "sentry-trace"]
+  ) {
     assertEquals(allowed.includes(header), true);
   }
 });
@@ -13,15 +15,30 @@ Deno.test("ai-hub browser CORS allows propagated trace headers", async () => {
   const source = await Deno.readTextFile(
     new URL("../ai-hub/index.ts", import.meta.url),
   );
-  for (const header of ["traceparent", "tracestate", "baggage", "sentry-trace"]) {
+  for (
+    const header of ["traceparent", "tracestate", "baggage", "sentry-trace"]
+  ) {
     assertEquals(source.includes(header), true);
   }
   assertEquals(source.includes("requestTraceId(req, body.trace_id)"), true);
 });
 
+Deno.test("health-check returns and logs the propagated trace ID", async () => {
+  const source = await Deno.readTextFile(
+    new URL("../health-check/index.ts", import.meta.url),
+  );
+  assertEquals(source.includes("const traceId = requestTraceId(req)"), true);
+  assertEquals(source.includes("trace_id: traceId"), true);
+  assertEquals(source.includes('"X-Trace-Id": traceId'), true);
+  assertEquals(source.includes('event: "health_check.completed"'), true);
+});
+
 async function* typescriptFiles(directory: URL): AsyncGenerator<URL> {
   for await (const entry of Deno.readDir(directory)) {
-    const child = new URL(entry.name + (entry.isDirectory ? "/" : ""), directory);
+    const child = new URL(
+      entry.name + (entry.isDirectory ? "/" : ""),
+      directory,
+    );
     if (entry.isDirectory) {
       yield* typescriptFiles(child);
     } else if (entry.isFile && entry.name.endsWith(".ts")) {
@@ -36,8 +53,14 @@ Deno.test("every Edge CORS declaration allows trace propagation", async () => {
     const source = await Deno.readTextFile(file);
     if (!source.includes("Access-Control-Allow-Headers")) continue;
     checked += 1;
-    for (const header of ["traceparent", "tracestate", "baggage", "sentry-trace"]) {
-      assertEquals(source.includes(header), true, `${file.pathname} misses ${header}`);
+    for (
+      const header of ["traceparent", "tracestate", "baggage", "sentry-trace"]
+    ) {
+      assertEquals(
+        source.includes(header),
+        true,
+        `${file.pathname} misses ${header}`,
+      );
     }
   }
   assertEquals(checked >= 27, true);
