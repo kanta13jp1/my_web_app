@@ -23,51 +23,51 @@ void main() {
   test(
     'stages one-use stream and verifies content-addressed archive',
     () async {
-    final bytes = Uint8List.fromList(utf8.encode(_fixture));
-    final states = <EvernoteCloudStageState>[];
+      final bytes = Uint8List.fromList(utf8.encode(_fixture));
+      final states = <EvernoteCloudStageState>[];
 
-    final result = await service.stage(
-      userId: 'owner-1',
-      fileName: 'Private Notebook.enex',
-      source: _chunked(bytes, 7),
-      totalBytes: bytes.length,
-      onProgress: (progress) => states.add(progress.state),
-    );
+      final result = await service.stage(
+        userId: 'owner-1',
+        fileName: 'Private Notebook.enex',
+        source: _chunked(bytes, 7),
+        totalBytes: bytes.length,
+        onProgress: (progress) => states.add(progress.state),
+      );
 
-    final exportHash = sha256.convert(bytes).toString();
-    final fileNameHash = sha256
-        .convert(utf8.encode('Private Notebook.enex'))
-        .toString()
-        .substring(0, 32);
-    expect(result.preview.notes, hasLength(1));
-    expect(result.preview.resourceCount, 1);
-    expect(result.preview.sourceExportSha256, exportHash);
-    expect(
-      result.stagingPath,
-      'owner-1/evernote/incoming/'
-      'v2-${bytes.length}-$exportHash-$fileNameHash.enex',
-    );
-    expect(result.stagingPath, isNot(contains('Private Notebook')));
-    expect(
-      result.archivePath,
-      'owner-1/evernote/$exportHash/source.enex',
-    );
-    expect(
-      storage.objects['$evernoteArchiveBucket/${result.archivePath}'],
-      bytes,
-    );
-    expect(
-      states,
-      containsAllInOrder(<EvernoteCloudStageState>[
-        EvernoteCloudStageState.preparing,
-        EvernoteCloudStageState.uploading,
-        EvernoteCloudStageState.parsing,
-        EvernoteCloudStageState.copying,
-        EvernoteCloudStageState.verifying,
-        EvernoteCloudStageState.completed,
-      ]),
-    );
-  },
+      final exportHash = sha256.convert(bytes).toString();
+      final fileNameHash = sha256
+          .convert(utf8.encode('Private Notebook.enex'))
+          .toString()
+          .substring(0, 32);
+      expect(result.preview.notes, hasLength(1));
+      expect(result.preview.resourceCount, 1);
+      expect(result.preview.sourceExportSha256, exportHash);
+      expect(
+        result.stagingPath,
+        'owner-1/evernote/incoming/'
+        'v2-${bytes.length}-$exportHash-$fileNameHash.enex',
+      );
+      expect(result.stagingPath, isNot(contains('Private Notebook')));
+      expect(
+        result.archivePath,
+        'owner-1/evernote/$exportHash/source.enex',
+      );
+      expect(
+        storage.objects['$evernoteArchiveBucket/${result.archivePath}'],
+        bytes,
+      );
+      expect(
+        states,
+        containsAllInOrder(<EvernoteCloudStageState>[
+          EvernoteCloudStageState.preparing,
+          EvernoteCloudStageState.uploading,
+          EvernoteCloudStageState.parsing,
+          EvernoteCloudStageState.copying,
+          EvernoteCloudStageState.verifying,
+          EvernoteCloudStageState.completed,
+        ]),
+      );
+    },
   );
 
   test(
@@ -81,14 +81,14 @@ void main() {
         totalBytes: bytes.length,
       );
       storage.rejectExisting = true;
-  
+
       final second = await service.stage(
         userId: 'owner-1',
         fileName: 'batch.enex',
         source: _chunked(bytes, 13),
         totalBytes: bytes.length,
       );
-  
+
       expect(second.stagingPath, first.stagingPath);
       expect(second.archivePath, first.archivePath);
       expect(
