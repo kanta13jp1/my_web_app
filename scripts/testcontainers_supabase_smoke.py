@@ -7,8 +7,9 @@ the Issue #2773 fail-closed RLS migration, Issue #2484 asset-chat isolation,
 Issue #4091 app-analytics write boundary, and Issue #1202 voice-dubbing quota
 state machine, Issue #1233 resource-optimizer tenant/analysis/quota contracts,
 Issue #4956 WBS administrator/review contracts, Issue #4927 recurring-cost
-tombstone concurrency, checks the real Edge Function import policy, Issue #2668
-note-comment authorization, and runs a Deno HTTP fixture against the container.
+tombstone concurrency, Issue #2844 account-deletion retention contracts, checks
+the real Edge Function import policy, Issue #2668 note-comment authorization,
+and runs a Deno HTTP fixture against the container.
 Logs are written as
 artifacts so CI failures point to the migration, function, or seed boundary that
 broke.
@@ -109,6 +110,26 @@ AI_UNIVERSITY_MIGRATION = (
     / "20260824135127_add_ai_university_evidence_and_content_analytics.sql"
 )
 AI_UNIVERSITY_LEGACY_ROW = "00000000-0000-4000-8000-000000004738"
+AGENTLESS_COURSE_MIGRATION = (
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830120000_remediate_agentless_course.sql"
+)
+AGENTLESS_COURSE_ID = "50609809-2da6-41ba-9c35-4bbec9668493"
+AGENTLESS_TASK_VERSION = "agentless_lab_20260830_v1"
+AGENTLESS_COMPLETION_INSERT_SQL = (
+    "insert into public.ai_university_agentless_lab_events ("
+    "event_name, task_version, python_version, agentless_release, "
+    "agentless_revision, dataset, dataset_revision, instance_id, model, "
+    "candidate_count, max_threads, prompt_tokens, completion_tokens, "
+    "embedding_tokens, api_cost_usd, predicted_api_cost_usd, "
+    "wall_time_seconds, localization_correct, regression_result, "
+    "reproduction_result, test_result, reproducibility_result, "
+    "workplace_application) values ("
+    "'lab_completed', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "
+    "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+)
 VOICE_DUBBING_BOOTSTRAP = (
     ROOT / "supabase" / "tests" / "voice_dubbing_bootstrap.sql"
 )
@@ -151,6 +172,22 @@ ISSUE_4927_RECURRING_TOMBSTONE_SQL_FILES = (
     ROOT / "supabase" / "tests" / "issue4927_recurring_tombstone_contract.sql",
 )
 ISSUE_4927_USER = "00000000-0000-4000-8000-000000004927"
+ISSUE_2844_ACCOUNT_DELETION_SQL_FILES = (
+    ROOT / "supabase" / "tests" / "issue2844_account_deletion_bootstrap.sql",
+    ROOT
+    / "supabase"
+     / "migrations"
+     / "20260829095836_account_retention_and_deletion.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830054326_account_deletion_rollout_preflight.sql",
+    ROOT / "supabase" / "tests" / "issue2844_account_deletion_contract.sql",
+    ROOT
+    / "supabase"
+    / "tests"
+    / "issue2844_account_deletion_rollout_contract.sql",
+)
 VIDEO_ARTIFACT_SQL_FILES = (
     ROOT / "supabase" / "tests" / "video_service_bootstrap.sql",
     ROOT / "supabase" / "migrations" / "20260819165405_create_first_party_video_service.sql",
@@ -429,6 +466,18 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "clients cannot select events or supply server-owned fields",
             "event table has RLS and no user/session/error payload columns",
         ],
+        "agentless_course_migration": AGENTLESS_COURSE_MIGRATION.relative_to(
+            ROOT
+        ).as_posix(),
+        "agentless_course_checks": [
+            "the exact Agentless course row receives the versioned evidence block and fixed lab manifest",
+            "the migration creates no learner outcome rows",
+            "anon and authenticated can insert only bounded manifest columns",
+            "malformed and incomplete completion manifests fail closed",
+            "clients cannot read events or the service-role-only aggregate view",
+            "service_role can read aggregate start, completion, cost, reproducibility, and workplace metrics",
+            "the migration applies twice without widening privileges or duplicating evidence",
+        ],
         "voice_dubbing_sql": [
             VOICE_DUBBING_BOOTSTRAP.relative_to(ROOT).as_posix(),
             BILLING_MIGRATION.relative_to(ROOT).as_posix(),
@@ -488,6 +537,22 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "RPC guard state is restored after success",
             "initial concurrent additions and a concurrent add/remove preserve the exact set",
             "migration applies twice in the disposable database",
+        ],
+        "issue_2844_account_deletion_sql": [
+            path.relative_to(ROOT).as_posix()
+            for path in ISSUE_2844_ACCOUNT_DELETION_SQL_FILES
+        ],
+        "issue_2844_account_deletion_checks": [
+            "queue and RPC access is service-role only",
+            "due requests are claimed atomically",
+            "direct auth.users CASCADE references are accepted",
+            "populated unclassified user references fail closed",
+            "Storage owner metadata and approved user path conventions are inventoried",
+            "failed work records a bounded retry",
+            "completed request evidence removes user_id",
+            "preflight is non-mutating and exposes no user identifier",
+            "exact-id canary preserves the control tenant",
+            "target residual is zero except the documented audit retention",
         ],
         "video_artifact_contract": [
             path.relative_to(ROOT).as_posix() for path in VIDEO_ARTIFACT_SQL_FILES
@@ -686,9 +751,31 @@ def check_issue_1233_ai_quota_concurrency(
 
 def seed_ai_university_legacy_fixture(conn: Any) -> None:
     with conn.cursor() as cur:
+        # The compact Testcontainers fixture predates the production course
+        # catalog shape. Add only the columns consumed by the remediation so
+        # the real migration is exercised without loading the full seed set.
+        cur.execute(
+            "alter table public.ai_university_content "
+            "add column if not exists provider text, "
+            "add column if not exists category text, "
+            "add column if not exists content text, "
+            "add column if not exists source_url text, "
+            "add column if not exists published_at date"
+        )
         cur.execute(
             "insert into public.ai_university_content (id, title) values (%s::uuid, %s)",
             (AI_UNIVERSITY_LEGACY_ROW, "legacy course"),
+        )
+        cur.execute(
+            "insert into public.ai_university_content "
+            "(id, provider, category, title, content, source_url, published_at) "
+            "values (%s::uuid, 'agentless', 'overview', %s, %s, %s, date '2024-07-01')",
+            (
+                AGENTLESS_COURSE_ID,
+                "Agentless legacy course",
+                "unversioned legacy benchmark claim",
+                "https://github.com/OpenAutoCoder/Agentless",
+            ),
         )
     conn.commit()
 
@@ -843,6 +930,294 @@ def check_ai_university_migration(conn: Any) -> dict[str, Any]:
         "client_event_inserts": event_count,
         "client_select_sqlstate": denied_select_sqlstate,
         "server_field_insert_sqlstate": denied_server_field_sqlstate,
+    }
+
+
+def agentless_expect_sqlstate(
+    conn: Any,
+    *,
+    role: str,
+    statement: str,
+    expected_sqlstate: str,
+    params: tuple[Any, ...] = (),
+) -> str:
+    if role not in {"anon", "authenticated", "service_role"}:
+        raise ValueError(f"unexpected role for Agentless contract query: {role}")
+    try:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(f"set local role {role}")
+                cur.execute(statement, params)
+    except Exception as exc:  # psycopg is loaded only for the integration run.
+        sqlstate = getattr(exc, "sqlstate", None)
+        if sqlstate != expected_sqlstate:
+            raise AssertionError(
+                f"expected SQLSTATE {expected_sqlstate}, got {sqlstate}: {exc}"
+            ) from exc
+        return sqlstate
+    raise AssertionError(
+        f"Agentless contract operation unexpectedly succeeded for role {role}"
+    )
+
+
+def check_agentless_course_migration(conn: Any) -> dict[str, Any]:
+    completion_columns = {
+        "python_version",
+        "agentless_release",
+        "agentless_revision",
+        "dataset",
+        "dataset_revision",
+        "instance_id",
+        "model",
+        "candidate_count",
+        "max_threads",
+        "prompt_tokens",
+        "completion_tokens",
+        "embedding_tokens",
+        "api_cost_usd",
+        "predicted_api_cost_usd",
+        "wall_time_seconds",
+        "localization_correct",
+        "regression_result",
+        "reproduction_result",
+        "test_result",
+        "reproducibility_result",
+        "workplace_application",
+    }
+    event_columns = {
+        "id",
+        "event_name",
+        "task_version",
+        "occurred_at",
+        *completion_columns,
+    }
+    client_columns = {"event_name", "task_version", *completion_columns}
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "select content, source_url, published_at, target_audience, "
+            "observable_learning_outcome, assessment_verification_method, "
+            "evidence_source_url, evidence_verified_at "
+            "from public.ai_university_content "
+            "where id = %s::uuid and provider = 'agentless' and category = 'overview'",
+            (AGENTLESS_COURSE_ID,),
+        )
+        course = cur.fetchone()
+        cur.execute(
+            "select column_name from information_schema.columns "
+            "where table_schema = 'public' "
+            "and table_name = 'ai_university_agentless_lab_events'"
+        )
+        actual_event_columns = {row[0] for row in cur.fetchall()}
+        cur.execute(
+            "select c.relrowsecurity from pg_class c "
+            "join pg_namespace n on n.oid = c.relnamespace "
+            "where n.nspname = 'public' "
+            "and c.relname = 'ai_university_agentless_lab_events'"
+        )
+        rls_row = cur.fetchone()
+        cur.execute(
+            "select policyname, cmd from pg_policies "
+            "where schemaname = 'public' "
+            "and tablename = 'ai_university_agentless_lab_events'"
+        )
+        policies = cur.fetchall()
+        cur.execute(
+            "select reloptions from pg_class c "
+            "join pg_namespace n on n.oid = c.relnamespace "
+            "where n.nspname = 'public' "
+            "and c.relname = 'ai_university_agentless_lab_summary'"
+        )
+        view_options_row = cur.fetchone()
+        cur.execute("select count(*) from public.ai_university_agentless_lab_events")
+        seeded_event_count = int(cur.fetchone()[0])
+    conn.commit()
+
+    if course is None:
+        raise AssertionError("the exact Agentless course row was not remediated")
+    content = str(course[0])
+    required_markers = (
+        "Versioned evidence block v1",
+        "96/300 (32.00%)",
+        "82/300 (27.3%)",
+        "60分lab v1: `django__django-10914`",
+        AGENTLESS_TASK_VERSION,
+        "公開時点のseed証拠: 未収集",
+    )
+    missing_markers = [marker for marker in required_markers if marker not in content]
+    if missing_markers:
+        raise AssertionError(f"Agentless course evidence markers missing: {missing_markers}")
+    if course[1] != "https://github.com/OpenAutoCoder/Agentless/tree/v1.5.0":
+        raise AssertionError(f"unexpected Agentless source URL: {course[1]}")
+    if str(course[2]) != "2026-08-30":
+        raise AssertionError(f"unexpected Agentless published date: {course[2]}")
+    if any(value is None for value in course[3:]):
+        raise AssertionError("Agentless evidence metadata is incomplete")
+    if actual_event_columns != event_columns:
+        raise AssertionError(
+            "unexpected Agentless event payload columns: "
+            f"{sorted(actual_event_columns)}"
+        )
+    if rls_row is None or not bool(rls_row[0]):
+        raise AssertionError("Agentless lab event table does not have RLS enabled")
+    if policies != [
+        ("anonymous clients insert bounded Agentless lab evidence", "INSERT")
+    ]:
+        raise AssertionError(f"unexpected Agentless event policies: {policies}")
+    view_options = set(view_options_row[0] or []) if view_options_row else set()
+    if "security_invoker=true" not in view_options:
+        raise AssertionError(f"Agentless summary is not security-invoker: {view_options}")
+    if seeded_event_count != 0:
+        raise AssertionError(f"Agentless migration manufactured learner rows: {seeded_event_count}")
+
+    with conn.cursor() as cur:
+        for role in ("anon", "authenticated"):
+            for column in client_columns:
+                cur.execute(
+                    "select has_column_privilege(%s, %s, %s, 'INSERT')",
+                    (role, "public.ai_university_agentless_lab_events", column),
+                )
+                if not bool(cur.fetchone()[0]):
+                    raise AssertionError(f"{role} lacks Agentless INSERT column {column}")
+            for column in ("id", "occurred_at"):
+                cur.execute(
+                    "select has_column_privilege(%s, %s, %s, 'INSERT')",
+                    (role, "public.ai_university_agentless_lab_events", column),
+                )
+                if bool(cur.fetchone()[0]):
+                    raise AssertionError(f"{role} can write server-owned column {column}")
+            for privilege in ("SELECT", "UPDATE", "DELETE"):
+                cur.execute(
+                    "select has_table_privilege(%s, %s, %s)",
+                    (role, "public.ai_university_agentless_lab_events", privilege),
+                )
+                if bool(cur.fetchone()[0]):
+                    raise AssertionError(
+                        f"{role} unexpectedly has Agentless {privilege} privilege"
+                    )
+            cur.execute(
+                "select has_table_privilege(%s, %s, 'SELECT')",
+                (role, "public.ai_university_agentless_lab_summary"),
+            )
+            if bool(cur.fetchone()[0]):
+                raise AssertionError(f"{role} can read the Agentless summary view")
+        for relation in (
+            "public.ai_university_agentless_lab_events",
+            "public.ai_university_agentless_lab_summary",
+        ):
+            cur.execute(
+                "select has_table_privilege('service_role', %s, 'SELECT')",
+                (relation,),
+            )
+            if not bool(cur.fetchone()[0]):
+                raise AssertionError(f"service_role cannot read {relation}")
+    conn.commit()
+
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute("set local role anon")
+            cur.execute(
+                "insert into public.ai_university_agentless_lab_events "
+                "(event_name, task_version) values ('lab_started', %s)",
+                (AGENTLESS_TASK_VERSION,),
+            )
+
+    incomplete_sqlstate = agentless_expect_sqlstate(
+        conn,
+        role="authenticated",
+        statement=(
+            "insert into public.ai_university_agentless_lab_events "
+            "(event_name, task_version) values ('lab_completed', %s)"
+        ),
+        params=(AGENTLESS_TASK_VERSION,),
+        expected_sqlstate="23514",
+    )
+    server_field_sqlstate = agentless_expect_sqlstate(
+        conn,
+        role="anon",
+        statement=(
+            "insert into public.ai_university_agentless_lab_events "
+            "(id, event_name, task_version) "
+            "values (gen_random_uuid(), 'lab_started', %s)"
+        ),
+        params=(AGENTLESS_TASK_VERSION,),
+        expected_sqlstate="42501",
+    )
+    event_select_sqlstate = agentless_expect_sqlstate(
+        conn,
+        role="anon",
+        statement="select count(*) from public.ai_university_agentless_lab_events",
+        expected_sqlstate="42501",
+    )
+    summary_select_sqlstate = agentless_expect_sqlstate(
+        conn,
+        role="authenticated",
+        statement="select * from public.ai_university_agentless_lab_summary",
+        expected_sqlstate="42501",
+    )
+
+    completed_values = (
+        "3.11.9",
+        "v1.5.0",
+        "b150f28465a77a81a7f4776384957a4271f5bd69",
+        "princeton-nlp/SWE-bench_Lite",
+        "6ec7bb89b9342f664a54a6e0a6ea6501d3437cc2",
+        "django__django-10914",
+        "gpt-4o-2024-05-13",
+        4,
+        10,
+        1000,
+        250,
+        0,
+        0.7000,
+        0.7000,
+        1800,
+        True,
+        "passed",
+        "passed",
+        "resolved",
+        "reproduced",
+        "planned",
+    )
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute("set local role authenticated")
+            cur.execute(
+                AGENTLESS_COMPLETION_INSERT_SQL,
+                (AGENTLESS_TASK_VERSION, *completed_values),
+            )
+
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.execute("set local role service_role")
+            cur.execute(
+                "select start_count, completion_count, completion_rate_percent, "
+                "localization_correct_percent, resolved_percent, "
+                "average_cost_prediction_error_percent, reproduced_percent, "
+                "workplace_applied_percent "
+                "from public.ai_university_agentless_lab_summary "
+                "where task_version = %s",
+                (AGENTLESS_TASK_VERSION,),
+            )
+            summary = cur.fetchone()
+    expected_summary = (1, 1, 100.0, 100.0, 100.0, 0.0, 100.0, 0.0)
+    if summary is None or tuple(float(value) for value in summary) != tuple(
+        float(value) for value in expected_summary
+    ):
+        raise AssertionError(f"unexpected Agentless summary metrics: {summary}")
+
+    return {
+        "course_id": AGENTLESS_COURSE_ID,
+        "task_version": AGENTLESS_TASK_VERSION,
+        "event_columns": sorted(event_columns),
+        "seeded_event_count": seeded_event_count,
+        "rls_enabled": bool(rls_row[0]),
+        "policy": policies[0][0],
+        "incomplete_manifest_sqlstate": incomplete_sqlstate,
+        "server_field_sqlstate": server_field_sqlstate,
+        "client_event_select_sqlstate": event_select_sqlstate,
+        "client_summary_select_sqlstate": summary_select_sqlstate,
+        "runtime_summary": [float(value) for value in summary],
     }
 
 
@@ -1684,10 +2059,11 @@ def check_note_comments_security(conn: Any) -> dict[str, Any]:
 def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
     with conn.cursor() as cur:
         cur.execute(
-            "select n.user_id::text, n.source_key, count(*) over () "
+            "select n.id, n.user_id::text, n.source_key, count(*) over () "
             "from public.notes n "
-            "where n.id = %s",
-            (GENERATED_MEMO_NOTE_ID,),
+            "join public.public_memos pm on pm.note_id = n.id "
+            "where n.source_key = %s and pm.user_id = %s::uuid",
+            (f"local-election:{GENERATED_MEMO_NOTE_ID}", NOTE_OWNER),
         )
         repaired_rows = [tuple(row) for row in cur.fetchall()]
         cur.execute(
@@ -1704,14 +2080,20 @@ def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
         source_key_constraint_count = int(cur.fetchone()[0])
     conn.commit()
 
-    expected_repaired_rows = [
-        (
-            NOTE_OWNER,
-            f"local-election:{GENERATED_MEMO_NOTE_ID}",
-            1,
+    if len(repaired_rows) != 1:
+        raise AssertionError(f"generated memo backing note mismatch: {repaired_rows}")
+    backing_note_id, owner_id, source_key, matching_count = repaired_rows[0]
+    if not isinstance(backing_note_id, int) or not 0 < backing_note_id < 2**31:
+        raise AssertionError(
+            f"generated memo note ID is not an integer ID: {backing_note_id}"
         )
-    ]
-    if repaired_rows != expected_repaired_rows:
+    if backing_note_id == GENERATED_MEMO_NOTE_ID:
+        raise AssertionError("generated memo retained the out-of-range synthetic ID")
+    if (
+        owner_id != NOTE_OWNER
+        or source_key != f"local-election:{GENERATED_MEMO_NOTE_ID}"
+        or matching_count != 1
+    ):
         raise AssertionError(f"generated memo backing note mismatch: {repaired_rows}")
     if not foreign_key_validated:
         raise AssertionError("public_memos note foreign key was not validated")
@@ -1726,9 +2108,9 @@ def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
             "select note_id from public.public_memos "
             "where note_id = %s and is_public is true"
         ),
-        params=(GENERATED_MEMO_NOTE_ID,),
+        params=(backing_note_id,),
     )
-    if anonymous_rows != [(GENERATED_MEMO_NOTE_ID,)]:
+    if anonymous_rows != [(backing_note_id,)]:
         raise AssertionError(
             f"repaired generated memo is not public: {anonymous_rows}"
         )
@@ -1741,7 +2123,7 @@ def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
             "update public.public_memos set title = 'generated election update' "
             "where note_id = %s returning title"
         ),
-        params=(GENERATED_MEMO_NOTE_ID,),
+        params=(backing_note_id,),
     )
     if owner_update != [("generated election update",)]:
         raise AssertionError(f"generated memo owner update failed: {owner_update}")
@@ -1754,7 +2136,7 @@ def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
             "update public.public_memos set title = 'forged update' "
             "where note_id = %s returning title"
         ),
-        params=(GENERATED_MEMO_NOTE_ID,),
+        params=(backing_note_id,),
     )
     if outsider_update:
         raise AssertionError("outsider updated an owner-backed generated memo")
@@ -1773,8 +2155,8 @@ def check_generated_memo_repair(conn: Any) -> dict[str, Any]:
         raise AssertionError("repair made a forged legacy publication readable")
 
     return {
-        "backing_note_id": GENERATED_MEMO_NOTE_ID,
-        "source_key": repaired_rows[0][1],
+        "backing_note_id": backing_note_id,
+        "source_key": source_key,
         "foreign_key_validated": foreign_key_validated,
         "owner_update": owner_update[0][0],
         "forged_publication_visible": False,
@@ -2684,6 +3066,9 @@ def run_smoke(args: argparse.Namespace) -> int:
             apply_sql_fixture(conn, AI_UNIVERSITY_MIGRATION, artifacts_dir)
             apply_sql_fixture(conn, AI_UNIVERSITY_MIGRATION, artifacts_dir)
             ai_university = check_ai_university_migration(conn)
+            apply_sql_fixture(conn, AGENTLESS_COURSE_MIGRATION, artifacts_dir)
+            apply_sql_fixture(conn, AGENTLESS_COURSE_MIGRATION, artifacts_dir)
+            agentless_course = check_agentless_course_migration(conn)
             apply_sql_fixture(conn, ISSUE_2773_RLS_MIGRATION, artifacts_dir)
             seed_issue_2773_fixture(conn)
             tenant_rls = check_issue_2773_rls(conn)
@@ -2778,6 +3163,8 @@ def run_smoke(args: argparse.Namespace) -> int:
                     psycopg.connect,
                 )
             )
+            for issue_2844_sql in ISSUE_2844_ACCOUNT_DELETION_SQL_FILES:
+                apply_sql_fixture(conn, issue_2844_sql, artifacts_dir)
             apply_sql_fixture(conn, ASSET_CHAT_MIGRATION, artifacts_dir)
             seed_asset_chat_fixture(conn)
             asset_chat_rls = check_asset_chat_rls(conn)
@@ -2802,6 +3189,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "asset_chat_rls": asset_chat_rls,
             "tax_records_rls": tax_records_rls,
             "ai_university": ai_university,
+            "agentless_course": agentless_course,
             "voice_dubbing_quota_contract": "passed",
             "issue_1233_resource_optimizer_contract": "passed",
             "issue_1233_ai_quota_concurrency": issue_1233_quota_concurrency,
@@ -2809,6 +3197,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "issue_4927_recurring_tombstone_contract": (
                 issue_4927_tombstone_concurrency
             ),
+            "issue_2844_account_deletion_contract": "passed",
             "video_artifact_contract": "passed",
         },
         "edge_fixture": {

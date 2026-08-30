@@ -26,6 +26,11 @@ on:
   # dependencies on the developer machine. workflow_dispatch intentionally
   # runs every scope; PR CI later validates the merge ref with path scoping.
   workflow_dispatch:
+    inputs:
+      expected_head_sha:
+        description: Exact 40-character pushed HEAD that this run must validate
+        required: true
+        type: string
   workflow_call:
 
 permissions: {}
@@ -63,10 +68,33 @@ jobs:
               exit 0
             fi
           else
-            ref="${GITHUB_REF}"
-            git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"
+            # Pin push, workflow_call, and cloud-first manual runs to the event
+            # SHA. Fetching a moving branch ref here could silently validate a
+            # later commit than the one handed off from the local control plane.
+            ref="${GITHUB_SHA}"
+            git fetch --depth=1 origin "${ref}"
+            git checkout --force FETCH_HEAD
+            exit 0
           fi
           git checkout --force refs/remotes/origin/checkout
+
+      - name: Verify manual cloud gate SHA
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          set -euo pipefail
+          actual_head_sha="$(git rev-parse HEAD)"
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::expected_head_sha must be a lowercase 40-character Git SHA."
+            exit 1
+          fi
+          if [ "$actual_head_sha" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::Cloud handoff mismatch: expected $EXPECTED_HEAD_SHA, checked out $actual_head_sha."
+            exit 1
+          fi
+          echo "Verified exact cloud handoff SHA: $actual_head_sha"
 
       - name: Collect PR changed files
         if: github.event_name == 'pull_request'
@@ -106,7 +134,9 @@ jobs:
       - name: Test CI scope classifier
         run: |
           python scripts/classify_ci_changes_test.py
+          python scripts/cloud_ci_handoff_test.py
           python scripts/cloud_first_route_test.py
+          python scripts/generate_infrastructure_map_test.py
           python scripts/cicd_efficiency_test.py
           python scripts/pre_commit_quality_gate_test.py
           python scripts/container_cleanup_guard_test.py
@@ -114,6 +144,8 @@ jobs:
           python scripts/check_rootless_container_setup.py
           python scripts/vscode_terminal_settings_test.py
           python scripts/ci_failure_digest_test.py
+          python scripts/test_paid_ai_policy.py
+          python scripts/paid_ai_policy.py audit --workflows-dir .github/workflows
 
       - name: Test high-risk dual security review
         run: >-

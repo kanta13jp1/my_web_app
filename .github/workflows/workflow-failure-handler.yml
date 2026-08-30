@@ -64,6 +64,12 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
+
       - name: Detect failed job and log
         id: detect_failure
         if: github.event.workflow_run.conclusion == 'failure'
@@ -155,7 +161,7 @@ jobs:
           WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
           FAILED_STEP: ${{ steps.detect_failure.outputs.failed_step }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
           ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL }}
         run: |
           python scripts/ci_failure_digest.py workflow-ai-summary \
