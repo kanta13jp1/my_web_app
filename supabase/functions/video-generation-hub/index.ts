@@ -56,6 +56,8 @@ type AuthorizationRow = {
   environment: string;
   authorization_scope: string;
   status: string;
+  pending_reasons: string[];
+  last_reservation_attempt_at: string | null;
   valid_from: string;
   valid_until: string;
   per_run_credit_limit: number;
@@ -330,12 +332,18 @@ async function revokeAuthorizationResponse(
     .from("video_improvement_authorizations")
     .update({
       status: "revoked",
+      pending_reasons: [],
       revoked_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
     .eq("id", authorizationId)
     .eq("user_id", userId)
-    .eq("status", "active")
+    .in("status", [
+      "active",
+      "pending_review",
+      "pending_funding",
+      "pending_execution",
+    ])
     .select("*")
     .maybeSingle();
   if (error) throw error;
@@ -393,8 +401,27 @@ async function authorizedReservationResponse(
   const reservationRecord = asRecord(reservation);
   const jobId = asString(reservationRecord.job_id);
   const authorizationId = asString(reservationRecord.authorization_id);
-  if (!jobId || !authorizationId) {
+  if (!authorizationId) {
     throw new Error("authorization_reservation_incomplete");
+  }
+  if (!jobId) {
+    const authorization = await loadOwnedAuthorization(
+      admin,
+      userId,
+      authorizationId,
+    );
+    return jsonResponse({
+      success: true,
+      pending: true,
+      idempotent_replay: reservationRecord.idempotent_replay === true,
+      pending_reasons: publicPendingReasons(
+        reservationRecord.pending_reasons,
+        authorization.pending_reasons,
+      ),
+      authorization: publicAuthorization(authorization),
+      job: null,
+      balance: publicBalance(reservation),
+    }, 202);
   }
   let job = await loadOwnedJob(admin, userId, jobId);
   if (!isTerminal(job.status)) {
@@ -750,7 +777,12 @@ async function publicJob(
 }
 
 function publicAuthorization(authorization: AuthorizationRow) {
-  const expired = authorization.status === "active" &&
+  const expired = [
+    "active",
+    "pending_review",
+    "pending_funding",
+    "pending_execution",
+  ].includes(authorization.status) &&
     Date.parse(authorization.valid_until) <= Date.now();
   const status = expired ? "expired" : authorization.status;
   const remainingCredits = Math.max(
@@ -768,6 +800,8 @@ function publicAuthorization(authorization: AuthorizationRow) {
     environment: authorization.environment,
     scope: authorization.authorization_scope,
     status,
+    pending_reasons: expired ? [] : authorization.pending_reasons ?? [],
+    last_reservation_attempt_at: authorization.last_reservation_attempt_at,
     valid_from: authorization.valid_from,
     valid_until: authorization.valid_until,
     per_run_credit_limit: authorization.per_run_credit_limit,
@@ -790,6 +824,23 @@ function publicAuthorization(authorization: AuthorizationRow) {
     updated_at: authorization.updated_at,
     revoked_at: authorization.revoked_at,
   };
+}
+
+function publicPendingReasons(
+  rpcValue: unknown,
+  storedValue: readonly string[],
+): string[] {
+  const allowed = new Set([
+    "review_not_latest",
+    "review_not_improve",
+    "review_consumed",
+    "insufficient_credits",
+    "active_generation",
+  ]);
+  const values = Array.isArray(rpcValue) ? rpcValue : storedValue;
+  return values.filter((value): value is string =>
+    typeof value === "string" && allowed.has(value)
+  );
 }
 
 function publicArtifact(artifact: ArtifactWithReview) {
