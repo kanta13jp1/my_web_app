@@ -6,8 +6,8 @@
 
 ## 統計
 
-- 総出現 source 数: **298**
-- レイヤー別: competitor: 82, cs-notes: 84, daily-report: 123, incident: 2, memory: 7
+- 総出現 source 数: **299**
+- レイヤー別: competitor: 82, cs-notes: 84, daily-report: 124, incident: 2, memory: 7
 
 ## 出典 (= raw layer 言及あり / 直近 30 日)
 

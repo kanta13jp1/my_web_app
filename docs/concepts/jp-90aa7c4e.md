@@ -6,8 +6,8 @@
 
 ## 統計
 
-- 総出現 source 数: **137**
-- レイヤー別: daily-report: 137
+- 総出現 source 数: **138**
+- レイヤー別: daily-report: 138
 
 ## 出典 (= raw layer 言及あり / 直近 30 日)
 

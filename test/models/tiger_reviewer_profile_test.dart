@@ -16,11 +16,15 @@ void main() {
 
       expect(catalog.schemaVersion, 2);
       expect(catalog.profilesBySeat, hasLength(125));
-      expect(catalog.enrichmentRound, greaterThanOrEqualTo(7));
+      expect(catalog.enrichmentRound, greaterThanOrEqualTo(8));
       expect(catalog.averageProfileCompletenessPercent, greaterThan(0));
       expect(catalog.averageReviewReflectionPercent, greaterThan(0));
-      expect(catalog.verifiedBirthDates, 9);
+      expect(catalog.verifiedBirthDates, 10);
       expect(catalog.nextBatchNames, hasLength(5));
+      expect(
+        catalog.nextBatchNames,
+        <String>['渡正行', '足立暢', '泉舞', '六川正男', '岡田修一'],
+      );
       expect(catalog.profilesBySeat.keys.toSet(), hasLength(125));
       expect(
         catalog.profilesBySeat.values.every(
@@ -107,6 +111,20 @@ void main() {
       expect(aizawa.reviewReflectionPercent, 72);
       expect(aizawa.reviewReflectionMode, 'profile_balanced');
       expect(aizawa.evidenceLinks, hasLength(3));
+      final kawahara = catalog.profilesBySeat[104]!;
+      expect(kawahara.ageLabel(DateTime(2026, 8, 30)), '62歳（2026年8月30日時点）');
+      expect(kawahara.companyRole, contains('なんでんかんでん社長'));
+      expect(kawahara.profileCompletenessPercent, 80);
+      expect(kawahara.reviewReflectionPercent, 72);
+      expect(kawahara.reviewReflectionMode, 'profile_balanced');
+      expect(kawahara.evidenceLinks, hasLength(2));
+      final yasuda = catalog.profilesBySeat[105]!;
+      expect(yasuda.ageLabel(DateTime(2026, 8, 30)), '公開情報未確認');
+      expect(yasuda.companyRole, contains('代表取締役社長'));
+      expect(yasuda.profileCompletenessPercent, 65);
+      expect(yasuda.reviewReflectionPercent, 72);
+      expect(yasuda.reviewReflectionMode, 'profile_balanced');
+      expect(yasuda.evidenceLinks, hasLength(3));
       final kataishi = catalog.profilesBySeat[125]!;
       expect(kataishi.ageLabel(DateTime(2026, 8, 25)), '32歳（2026年8月25日時点）');
       expect(

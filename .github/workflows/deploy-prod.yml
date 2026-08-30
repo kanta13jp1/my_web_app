@@ -640,6 +640,10 @@ jobs:
           # worker APIは用途を分けた専用tokenで認証する。
           deploy_function video-generation-hub --no-verify-jwt
           deploy_function video-worker-hub --no-verify-jwt
+          # 退会申請は user JWT、期限到来後の破壊的 worker は service_role を
+          # 関数内で再検証する。scheduled workflow は owner/legal 承認後に
+          # ACCOUNT_DELETION_AUTOMATION_ENABLED=true で有効化する。
+          deploy_function account-lifecycle --no-verify-jwt
 
           # --- Mega-Hub (5本: 旧Tier2全統合) ---
           deploy_function tools-hub --no-verify-jwt
@@ -656,7 +660,7 @@ jobs:
           deploy_function memory-search-hub --no-verify-jwt
           deploy_function mcp-well-known --no-verify-jwt
 
-          # Total: 30 functions deployed (ハードキャップ50本に対し30本 — 余裕20本)
+          # Total: 32 functions deployed (ハードキャップ50本に対し32本 — 余裕18本)
           # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
           #
           # Hub対応表:
@@ -758,6 +762,13 @@ jobs:
           # 実在ルートのみの sitemap を当日 lastmod で再生成 (build 済みへ出力)
           python3 scripts/generate_sitemap.py --out build/web/sitemap.xml
           echo "prerendered vs-* pages:"; ls build/web/ | grep -c '^vs-' || true
+
+      - name: Verify production journey static route contract
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          python3 scripts/production_journey_probe.py \
+            --root-dir build/web \
+            --public-routes web/seo/public-routes.json
 
       - name: Setup Node for Firebase CLI
         if: steps.changes.outputs.web == 'true'

@@ -54,6 +54,7 @@ jobs:
   review:
     permissions:
       contents: read
+      issues: read
       pull-requests: write
     name: AI Agent Code Review
     runs-on: ubuntu-latest
@@ -68,6 +69,12 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
 
       - name: Extract PR diff
         id: diff
@@ -106,7 +113,7 @@ jobs:
       - name: AI Review (Claude primary / Gemini fallback)
         id: review
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           DIFF_LINES="${{ steps.diff.outputs.lines }}"
@@ -323,6 +330,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.ultrareview == 'true'
     permissions:
       contents: read
+      issues: read
       pull-requests: write
 
     steps:
@@ -357,19 +365,32 @@ jobs:
           ref: refs/pull/${{ steps.pr.outputs.number }}/head
           persist-credentials: false
 
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
+
+      - name: Record owner-requested ultrareview suspension
+        if: steps.paid_ai_policy.outputs.enabled != 'true'
+        run: echo "Claude ultrareview is disabled by owner policy." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Setup Node.js
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '20'
 
       - name: Install Claude Code CLI
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
         run: npm install -g @anthropic-ai/claude-code@latest 2>&1 | tail -3
 
       - name: Run ultrareview
         id: ultrareview
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUM: ${{ steps.pr.outputs.number }}

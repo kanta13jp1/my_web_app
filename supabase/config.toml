@@ -244,3 +244,10 @@ enabled = true
 # VIDEO_WORKER_TOKEN is verified in-function before any lease operation.
 verify_jwt = false
 entrypoint = "./functions/video-worker-hub/index.ts"
+
+[functions.account-lifecycle]
+enabled = true
+# Browser preflight has no JWT. User requests are verified again with
+# auth.getUser(); scheduled destructive processing requires service_role.
+verify_jwt = false
+entrypoint = "./functions/account-lifecycle/index.ts"

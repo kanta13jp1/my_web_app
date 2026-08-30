@@ -130,6 +130,27 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
             plan["ai_university_checks"],
         )
 
+    def test_plan_includes_agentless_course_runtime_proof(self) -> None:
+        plan = module.build_plan(
+            ROOT / "test" / "fixtures" / "testcontainers" / "sql",
+            ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts",
+            ROOT / "supabase" / "functions" / "health-check" / "index.ts",
+        )
+        self.assertEqual(
+            plan["agentless_course_migration"],
+            "supabase/migrations/20260830120000_remediate_agentless_course.sql",
+        )
+        checks = " ".join(plan["agentless_course_checks"])
+        self.assertIn("exact Agentless course row", checks)
+        self.assertIn("creates no learner outcome rows", checks)
+        self.assertIn("fail closed", checks)
+        self.assertIn("service-role-only aggregate view", checks)
+        self.assertIn("applies twice", checks)
+
+    def test_agentless_completion_insert_matches_fixed_manifest_shape(self) -> None:
+        self.assertEqual(module.AGENTLESS_COMPLETION_INSERT_SQL.count("%s"), 22)
+        self.assertIn("'lab_completed'", module.AGENTLESS_COMPLETION_INSERT_SQL)
+
     def test_plan_includes_app_analytics_write_boundary(self) -> None:
         plan = module.build_plan(
             ROOT / "test" / "fixtures" / "testcontainers" / "sql",
@@ -248,6 +269,29 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
         self.assertIn("concurrent add/remove", checks)
         self.assertIn("applies twice", checks)
 
+    def test_plan_includes_issue_2844_account_deletion_contract(self) -> None:
+        plan = module.build_plan(
+            ROOT / "test" / "fixtures" / "testcontainers" / "sql",
+            ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts",
+            ROOT / "supabase" / "functions" / "health-check" / "index.ts",
+        )
+        self.assertEqual(
+            plan["issue_2844_account_deletion_sql"],
+            [
+                "supabase/tests/issue2844_account_deletion_bootstrap.sql",
+                "supabase/migrations/20260829095836_account_retention_and_deletion.sql",
+                "supabase/tests/issue2844_account_deletion_contract.sql",
+            ],
+        )
+        checks = " ".join(plan["issue_2844_account_deletion_checks"])
+        self.assertIn("service-role only", checks)
+        self.assertIn("atomically", checks)
+        self.assertIn("CASCADE", checks)
+        self.assertIn("fail closed", checks)
+        self.assertIn("Storage owner metadata", checks)
+        self.assertIn("bounded retry", checks)
+        self.assertIn("removes user_id", checks)
+
     def test_plan_includes_note_comments_authorization_boundary(self) -> None:
         plan = module.build_plan(
             ROOT / "test" / "fixtures" / "testcontainers" / "sql",
@@ -262,6 +306,16 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
         self.assertIn("body user_id forgery", checks)
         self.assertIn("direct self-join", checks)
         self.assertIn("applies twice", checks)
+        self.assertEqual(
+            plan["generated_memo_repair_migration"],
+            "supabase/migrations/"
+            "20260830021402_restore_generated_public_memo_publishing.sql",
+        )
+        repair_checks = " ".join(plan["generated_memo_repair_checks"])
+        self.assertIn("owner-backed notes", repair_checks)
+        self.assertIn("foreign key is validated", repair_checks)
+        self.assertIn("forged legacy publications", repair_checks)
+        self.assertIn("applies twice", repair_checks)
 
     def test_tenant_role_count_rejects_untrusted_identifiers(self) -> None:
         with self.assertRaisesRegex(ValueError, "unexpected role"):
