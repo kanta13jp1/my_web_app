@@ -18,3 +18,22 @@ gh workflow run notion-wbs-cloud-import.yml --ref main -f mode=apply -f expected
 After every applied batch, run `plan` again because inserts and updates intentionally change the digest. Advance `safe_offset` only after the prior batch has persisted destination and migration evidence. The workflow serializes runs, bulk-upserts each phase, verifies destination content before recording import evidence, and is safe to re-run after an interrupted phase. Conflicting groups stay untouched for separate preservation review.
 
 This workflow never deletes Notion content. Source deletion remains controlled by seven per-item verification checks plus separately recorded owner authorization; subscription cancellation remains blocked until every item and required capability passes the migration control-plane gates. 
+
+### Repairing a staged inventory gap
+
+When a plan reports missing source items, use `repair_inventory` only if the
+same sanitized plan reports that every missing item is repairable and the
+inventory-repair gate is open. The repair promotes the already durable,
+owner-scoped WBS staging record into the latest migration inventory without
+importing it, overwriting an existing inventory row, or deleting any Notion
+content:
+
+```powershell
+gh workflow run notion-wbs-cloud-import.yml --ref main -f mode=repair_inventory -f expected_plan_sha256=<digest-from-latest-plan> -f safe_offset=<same-offset> -f limit=<same-limit>
+```
+
+After the repair, run `plan` again for the exact same range. Continue with
+`apply` only when missing items and mapping conflicts are both zero and the
+normal safe-apply gate is open. Artifacts and summaries remain content-free;
+they expose counts and gate states, never page titles, source IDs, task IDs, or
+payloads.
