@@ -70,7 +70,10 @@ void main() {
       expect(resource.recognition!.documentType, 'printed');
       expect(resource.recognition!.regions, hasLength(1));
       expect(resource.recognition!.regions.single.x, 0);
-      expect(resource.recognition!.regions.single.displayCandidate.text, 'hello');
+      expect(
+        resource.recognition!.regions.single.displayCandidate.text,
+        'hello',
+      );
       expect(resource.recognition!.searchText, contains('hello'));
       expect(
         resource.toManifestJson()['recognition'],
@@ -169,12 +172,18 @@ void main() {
       expect(summary.resourceCount, full.resourceCount);
       expect(summary.warnings, full.warnings);
       expect(summary.processedBytes, bytes.length);
-      expect(notes.map((note) => note.sourceId),
-          full.notes.map((note) => note.sourceId));
-      expect(notes.map((note) => note.title),
-          full.notes.map((note) => note.title));
-      expect(notes.map((note) => note.contentSha256),
-          full.notes.map((note) => note.contentSha256));
+      expect(
+        notes.map((note) => note.sourceId),
+        full.notes.map((note) => note.sourceId),
+      );
+      expect(
+        notes.map((note) => note.title),
+        full.notes.map((note) => note.title),
+      );
+      expect(
+        notes.map((note) => note.contentSha256),
+        full.notes.map((note) => note.contentSha256),
+      );
       expect(notes.first.resources.single.data, utf8.encode('hello'));
       expect(notes.last.title, '日本語ノート');
       expect(maximumActiveCallbacks, 1);
