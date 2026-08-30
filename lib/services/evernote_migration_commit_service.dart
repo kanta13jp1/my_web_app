@@ -1244,9 +1244,9 @@ class EvernoteMigrationCommitService {
             'content_sha256': note.contentSha256,
             'attributes': note.attributes,
             'links': note.links,
-          'tasks':
-              note.tasks.map((task) => task.toJson()).toList(growable: false),
-          'note_reminder': note.noteReminder?.toJson(),
+            'tasks':
+                note.tasks.map((task) => task.toJson()).toList(growable: false),
+            'note_reminder': note.noteReminder?.toJson(),
             'raw_note_xml_sha256':
                 sha256.convert(utf8.encode(note.rawXml)).toString(),
             'archive_path': archivePath,

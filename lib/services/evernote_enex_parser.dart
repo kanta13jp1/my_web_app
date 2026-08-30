@@ -67,7 +67,6 @@ typedef EvernoteEnexNoteCallback = FutureOr<void> Function(
   EvernoteEnexNote note,
 );
 
-
 class EvernoteEnexNoteReminder {
   const EvernoteEnexNoteReminder({
     this.order,
@@ -549,7 +548,6 @@ class EvernoteEnexParser {
     );
   }
 
-
   EvernoteEnexNoteReminder? _parseNoteReminder(
     Map<String, dynamic> attributes,
     List<String> warnings,
@@ -620,10 +618,9 @@ class EvernoteEnexParser {
         sortWeight.isNotEmpty &&
         noteLevelId.isNotEmpty &&
         taskGroupNoteLevelId.isNotEmpty;
-    final optionalFieldsAreValid =
-        (rawDueAt.isEmpty || dueAt != null) &&
-            (rawRepeat.isEmpty || repeatAfterCompletion != null) &&
-            (rawStatusUpdated.isEmpty || statusUpdatedAt != null);
+    final optionalFieldsAreValid = (rawDueAt.isEmpty || dueAt != null) &&
+        (rawRepeat.isEmpty || repeatAfterCompletion != null) &&
+        (rawStatusUpdated.isEmpty || statusUpdatedAt != null);
     if (!requiredFieldsAreValid || !optionalFieldsAreValid) {
       warnings.add(
         'An Evernote task contains invalid structured fields; raw XML retained.',
