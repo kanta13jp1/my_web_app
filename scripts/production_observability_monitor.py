@@ -17,6 +17,8 @@ METRIC_LINE = re.compile(
     r"^([a-zA-Z_:][a-zA-Z0-9_:]*)(?:\{[^}]*\})?\s+"
     r"([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)$"
 )
+FORCED_LABEL_PATTERN = re.compile(r"^[a-zA-Z0-9_.-]{1,64}$")
+SENTRY_STATUSES = {"configured", "unconfigured"}
 
 
 def _number(value: Any, default: float = 0.0) -> float:
@@ -69,7 +71,14 @@ def build_report(
     error_rate_alert: float,
     sentry_error_alert: int,
     resource_alerts: dict[str, float],
+    sentry_status: str = "configured",
+    forced_alert_label: str | None = None,
 ) -> dict[str, Any]:
+    if sentry_status not in SENTRY_STATUSES:
+        raise ValueError(f"invalid Sentry status: {sentry_status}")
+    if forced_alert_label and not FORCED_LABEL_PATTERN.fullmatch(forced_alert_label):
+        raise ValueError("invalid forced alert label")
+
     alerts: list[dict[str, Any]] = []
     summarized_providers = []
     for row in providers:
@@ -91,11 +100,19 @@ def build_report(
         if total > 0 and error_rate >= error_rate_alert:
             alerts.append({"source": "ai_hub", "reason": "error_rate", "label": provider})
 
-    if sentry_errors >= sentry_error_alert:
+    if sentry_status == "configured" and sentry_errors >= sentry_error_alert:
         alerts.append({"source": "sentry", "reason": "error_volume", "label": "project"})
     for name, maximum in resource_alerts.items():
         if resources.get(name, 0.0) >= maximum:
             alerts.append({"source": "supabase_metrics", "reason": "resource", "label": name})
+    if forced_alert_label:
+        alerts.append(
+            {
+                "source": "manual_validation",
+                "reason": "forced_breach",
+                "label": forced_alert_label,
+            }
+        )
 
     fingerprint = "|".join(
         sorted(f"{item['source']}:{item['reason']}:{item['label']}" for item in alerts)
@@ -104,8 +121,13 @@ def build_report(
         "schema_version": 1,
         "sources": {
             "ai_hub": "provider_health_view (24h aggregate)",
-            "supabase": "Prometheus Metrics API",
+            "supabase": "Management API Prometheus metrics endpoint",
             "sentry": "project received-error stats (24h aggregate)",
+        },
+        "source_status": {
+            "ai_hub": "configured",
+            "supabase": "configured",
+            "sentry": sentry_status,
         },
         "providers": summarized_providers,
         "resources": resources,
@@ -118,6 +140,7 @@ def build_report(
         },
         "alerts": alerts,
         "breach": bool(alerts),
+        "forced_alert": bool(forced_alert_label),
         "dedupe_key": hashlib.sha256(fingerprint.encode()).hexdigest()[:16] if alerts else "none",
         "privacy": "aggregate identifiers and counters only; no prompts, responses, request bodies, or secrets",
     }
@@ -131,11 +154,20 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- Sentry errors (24h): **{report['sentry_errors_24h']}**",
         f"- Dedupe key: `{report['dedupe_key']}`",
         "",
+        "## Source status",
+        "",
+    ]
+    lines.extend(
+        f"- `{name}`: **{status}**"
+        for name, status in report["source_status"].items()
+    )
+    lines.extend([
+        "",
         "## AI Hub latency and errors",
         "",
         "| Provider | Requests | Errors | Error rate | P95 latency |",
         "| --- | ---: | ---: | ---: | ---: |",
-    ]
+    ])
     for row in report["providers"]:
         lines.append(
             f"| {row['provider']} | {row['requests']} | {row['errors']} | "
@@ -175,6 +207,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--error-rate-alert", type=float, default=0.2)
     parser.add_argument("--sentry-error-alert", type=int, default=20)
     parser.add_argument("--resource-alert", action="append", default=[])
+    parser.add_argument(
+        "--sentry-status",
+        choices=sorted(SENTRY_STATUSES),
+        default="configured",
+    )
+    parser.add_argument("--force-alert-label")
     args = parser.parse_args(argv)
     report = build_report(
         load_ai_hub(args.ai_hub_json),
@@ -184,11 +222,14 @@ def main(argv: list[str] | None = None) -> int:
         error_rate_alert=args.error_rate_alert,
         sentry_error_alert=args.sentry_error_alert,
         resource_alerts=parse_resource_alerts(args.resource_alert),
+        sentry_status=args.sentry_status,
+        forced_alert_label=args.force_alert_label,
     )
     args.output_json.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     args.output_md.write_text(render_markdown(report), encoding="utf-8", newline="\n")
     print(f"breach={str(report['breach']).lower()}")
     print(f"dedupe_key={report['dedupe_key']}")
+    print(f"forced_alert={str(report['forced_alert']).lower()}")
     return 0
 
 

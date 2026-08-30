@@ -10,7 +10,16 @@ from scripts import production_observability_monitor as monitor
 
 
 class ProductionObservabilityMonitorTest(unittest.TestCase):
-    def report(self, *, p95=1200, errors=0, sentry=1, load=0.5):
+    def report(
+        self,
+        *,
+        p95=1200,
+        errors=0,
+        sentry=1,
+        load=0.5,
+        sentry_status="configured",
+        forced_alert_label=None,
+    ):
         return monitor.build_report(
             [{"provider": "openai", "total_requests": 10, "error_count": errors, "p95_latency_ms": p95}],
             {"node_load5": load, "pg_stat_database_numbackends": 4},
@@ -19,6 +28,8 @@ class ProductionObservabilityMonitorTest(unittest.TestCase):
             error_rate_alert=0.2,
             sentry_error_alert=20,
             resource_alerts={"node_load5": 4},
+            sentry_status=sentry_status,
+            forced_alert_label=forced_alert_label,
         )
 
     def test_normal_signals_do_not_alert(self):
@@ -58,6 +69,20 @@ class ProductionObservabilityMonitorTest(unittest.TestCase):
             path = Path(tmp) / "ai-hub.json"
             path.write_text(json.dumps(payload), encoding="utf-8")
             self.assertEqual(monitor.load_ai_hub(path), payload["providers"])
+
+    def test_unconfigured_sentry_is_reported_without_false_alert(self):
+        report = self.report(sentry=999, sentry_status="unconfigured")
+        self.assertFalse(report["breach"])
+        self.assertEqual(report["source_status"]["sentry"], "unconfigured")
+        self.assertNotIn("error_volume", {alert["reason"] for alert in report["alerts"]})
+
+    def test_forced_manual_validation_alert_is_deterministic(self):
+        first = self.report(forced_alert_label="issue-2849-live-proof")
+        second = self.report(forced_alert_label="issue-2849-live-proof")
+        self.assertTrue(first["breach"])
+        self.assertTrue(first["forced_alert"])
+        self.assertEqual(first["dedupe_key"], second["dedupe_key"])
+        self.assertEqual(first["alerts"][-1]["source"], "manual_validation")
 
 
 if __name__ == "__main__":
