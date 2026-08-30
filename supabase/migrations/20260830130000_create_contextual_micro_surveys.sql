@@ -144,12 +144,24 @@ begin
     return false;
   end if;
 
-  update public.micro_survey_preferences
-  set last_prompted_at = v_now,
-      prompt_window_started_at = v_preference.prompt_window_started_at,
-      prompt_count_in_window = v_preference.prompt_count_in_window + 1,
-      updated_at = v_now
-  where user_id = v_user_id;
+  insert into public.micro_survey_preferences (
+    user_id,
+    last_prompted_at,
+    prompt_window_started_at,
+    prompt_count_in_window,
+    updated_at
+  ) values (
+    v_user_id,
+    v_now,
+    v_preference.prompt_window_started_at,
+    v_preference.prompt_count_in_window + 1,
+    v_now
+  )
+  on conflict (user_id) do update
+  set last_prompted_at = excluded.last_prompted_at,
+      prompt_window_started_at = excluded.prompt_window_started_at,
+      prompt_count_in_window = excluded.prompt_count_in_window,
+      updated_at = excluded.updated_at;
 
   return true;
 end;
