@@ -29,7 +29,7 @@ const SITE_URL = Deno.env.get("SHOP_SITE_URL") ??
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, traceparent, tracestate, baggage, sentry-trace",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
