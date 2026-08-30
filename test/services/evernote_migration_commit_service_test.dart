@@ -243,6 +243,35 @@ void main() {
       expect(database.commitCalls, hasLength(2));
     });
 
+    test('blocks verification when the committed note has no notebook',
+        () async {
+      final fixture = _fixture();
+      final storage = _FakeStorageGateway();
+      final database = _FakeDatabaseGateway(notebookCollectionId: null);
+      final service = EvernoteMigrationCommitService(
+        ledger: _FakeLedgerGateway(),
+        storage: storage,
+        database: database,
+      );
+
+      await expectLater(
+        service.commit(
+          userId: _userId,
+          exportBytes: fixture.bytes,
+          preview: fixture.preview,
+          sourceContext: _sourceContext,
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('hierarchy'),
+          ),
+        ),
+      );
+      expect(database.verifyCalls, isEmpty);
+    });
+
     test('does not commit database rows when a stored hash mismatches',
         () async {
       final fixture = _fixture();
@@ -460,6 +489,9 @@ class _FakeStorageGateway implements EvernoteMigrationStorageGateway {
 }
 
 class _FakeDatabaseGateway implements EvernoteMigrationDatabaseGateway {
+  _FakeDatabaseGateway({this.notebookCollectionId = 9901});
+
+  final int? notebookCollectionId;
   final List<String> commitCalls = <String>[];
   final List<String> committedContents = <String>[];
   final List<Map<String, dynamic>> committedMetadata = <Map<String, dynamic>>[];
@@ -488,6 +520,7 @@ class _FakeDatabaseGateway implements EvernoteMigrationDatabaseGateway {
       createdAt: note.createdAt!,
       updatedAt: note.updatedAt!,
       tags: note.tags,
+      notebookCollectionId: notebookCollectionId,
       attachments: resources
           .map(
             (resource) => EvernoteCommittedAttachmentSnapshot(

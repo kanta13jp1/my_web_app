@@ -19,6 +19,8 @@ on:
       - 'pubspec.lock'
       - 'docs/CLOUD_FIRST_DEVELOPMENT.md'
       - 'docs/technical/EVERNOTE_*.md'
+      - 'supabase/migrations/*evernote*.sql'
+      - 'supabase/tests/evernote_*.sql'
       - '.github/workflows/evernote-migration-cloud-check.yml'
   push:
     branches:
@@ -39,6 +41,8 @@ on:
       - 'pubspec.yaml'
       - 'pubspec.lock'
       - 'docs/technical/EVERNOTE_*.md'
+      - 'supabase/migrations/*evernote*.sql'
+      - 'supabase/tests/evernote_*.sql'
       - '.github/workflows/evernote-migration-cloud-check.yml'
   workflow_dispatch:
     inputs:
@@ -214,3 +218,49 @@ jobs:
         run: |
           echo "::error::Apply and review the evernote-cloud-format-patch artifact."
           exit 1
+
+
+  hierarchy-db-contract:
+    name: Evernote hierarchy database contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGDATABASE: postgres
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - name: Checkout immutable event revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Apply hierarchy migration to disposable Postgres
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install --yes postgresql-client
+          fi
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_note_collections_bootstrap.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831005351_add_evernote_note_collections.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_note_collections_contract.sql

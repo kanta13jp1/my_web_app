@@ -157,6 +157,7 @@ class EvernoteCommittedNoteSnapshot {
     required this.createdAt,
     required this.updatedAt,
     required this.tags,
+    required this.notebookCollectionId,
     required this.attachments,
   });
 
@@ -166,6 +167,7 @@ class EvernoteCommittedNoteSnapshot {
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<String> tags;
+  final int? notebookCollectionId;
   final List<EvernoteCommittedAttachmentSnapshot> attachments;
 }
 
@@ -532,7 +534,7 @@ class SupabaseEvernoteMigrationDatabaseGateway
     required String archivePath,
   }) async {
     final response = await _client.rpc(
-      'evernote_commit_note',
+      'evernote_commit_note_with_hierarchy',
       params: <String, dynamic>{
         'p_batch_id': batchId,
         'p_source_item_key': sourceItemKey,
@@ -564,7 +566,10 @@ class SupabaseEvernoteMigrationDatabaseGateway
   }) async {
     final noteResponse = await _client
         .from('notes')
-        .select('id,title,content,created_at,updated_at,tags')
+        .select(
+          'id,title,content,created_at,updated_at,tags,'
+          'notebook_collection_id',
+        )
         .eq('id', noteId)
         .single();
     final noteJson = Map<String, dynamic>.from(noteResponse);
@@ -592,6 +597,9 @@ class SupabaseEvernoteMigrationDatabaseGateway
       tags: (noteJson['tags'] as List<dynamic>? ?? const <dynamic>[])
           .map((value) => value.toString())
           .toList(growable: false),
+      notebookCollectionId: noteJson['notebook_collection_id'] == null
+          ? null
+          : _asInt(noteJson['notebook_collection_id']),
       attachments: attachments,
     );
   }
@@ -603,7 +611,7 @@ class SupabaseEvernoteMigrationDatabaseGateway
     required Map<String, bool> checks,
   }) async {
     await _client.rpc(
-      'evernote_verify_note',
+      'evernote_verify_note_with_hierarchy',
       params: <String, dynamic>{
         'p_batch_id': batchId,
         'p_source_item_key': sourceItemKey,
@@ -1352,6 +1360,7 @@ class EvernoteMigrationCommitService {
       'tags': tagsMatch,
       'resource_count': resourceCountMatches,
       'resource_sha256': resourceHashesMatch,
+      'hierarchy': (snapshot.notebookCollectionId ?? 0) > 0,
     };
     if (checks.values.any((passed) => !passed)) {
       final failed = checks.entries
