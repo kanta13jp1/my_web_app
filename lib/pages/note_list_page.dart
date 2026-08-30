@@ -100,8 +100,7 @@ class _NoteListPageState extends State<NoteListPage> {
     _searchQuery = widget.initialSearchQuery?.trim() ?? '';
     _searchController.text = _searchQuery;
     final initialTag = widget.initialTag?.trim();
-    _selectedTag =
-        initialTag == null || initialTag.isEmpty ? null : initialTag;
+    _selectedTag = initialTag == null || initialTag.isEmpty ? null : initialTag;
     inboxCaptureRevision.addListener(_handleInboxCapture);
     _fetchNotes();
   }
@@ -214,9 +213,7 @@ class _NoteListPageState extends State<NoteListPage> {
     final viewFiltered = _showInboxOnly
         ? collectionFiltered.where(_isInbox).toList(growable: false)
         : (_showFavoritesOnly
-            ? collectionFiltered
-                .where(_isFavorite)
-                .toList(growable: false)
+            ? collectionFiltered.where(_isFavorite).toList(growable: false)
             : collectionFiltered);
     final selectedTag = _selectedTag;
     final locallyFiltered = selectedTag == null

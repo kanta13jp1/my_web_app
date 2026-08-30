@@ -706,5 +706,4 @@ void main() {
     expect(find.text('Inside stack'), findsOneWidget);
     expect(find.text('Outside stack'), findsNothing);
   });
-
 }

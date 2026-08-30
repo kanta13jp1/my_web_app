@@ -154,8 +154,7 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
   }
 
   Widget _buildSavedSearchSection(NoteNavigationSnapshot snapshot) {
-    final sourceDeleted =
-        snapshot.migrationState?.status == 'source_deleted';
+    final sourceDeleted = snapshot.migrationState?.status == 'source_deleted';
     return Card(
       key: const Key('saved_search_section'),
       child: Padding(
@@ -252,8 +251,7 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
   }
 
   Widget _buildShortcutSection(NoteNavigationSnapshot snapshot) {
-    final sourceDeleted =
-        snapshot.migrationState?.status == 'source_deleted';
+    final sourceDeleted = snapshot.migrationState?.status == 'source_deleted';
     return Card(
       key: const Key('shortcut_section'),
       child: Padding(
@@ -312,9 +310,7 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
                       children: [
                         IconButton(
                           tooltip: '上へ',
-                          onPressed: _saving ||
-                                  locked ||
-                                  shortcut.position <= 1
+                          onPressed: _saving || locked || shortcut.position <= 1
                               ? null
                               : () => _runMutation(
                                     () => _repository.moveShortcut(
@@ -329,8 +325,7 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
                           tooltip: '下へ',
                           onPressed: _saving ||
                                   locked ||
-                                  shortcut.position >=
-                                      snapshot.shortcuts.length
+                                  shortcut.position >= snapshot.shortcuts.length
                               ? null
                               : () => _runMutation(
                                     () => _repository.moveShortcut(
@@ -415,8 +410,7 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
   Future<void> _showSavedSearchDialog({
     NoteSavedSearch? savedSearch,
   }) async {
-    final nameController =
-        TextEditingController(text: savedSearch?.name ?? '');
+    final nameController = TextEditingController(text: savedSearch?.name ?? '');
     final queryController =
         TextEditingController(text: savedSearch?.query ?? '');
     final result = await showDialog<(String, String)>(
@@ -544,8 +538,7 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
                     DropdownButtonFormField<String>(
                       key: const Key('shortcut_saved_search_field'),
                       initialValue: savedSearchId,
-                      decoration:
-                          const InputDecoration(labelText: '保存済み検索'),
+                      decoration: const InputDecoration(labelText: '保存済み検索'),
                       items: snapshot.savedSearches
                           .map(
                             (search) => DropdownMenuItem(
@@ -601,10 +594,9 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
                                     targetType == NoteShortcutTargetType.stack
                                 ? numericTarget
                                 : null,
-                            targetTag:
-                                targetType == NoteShortcutTargetType.tag
-                                    ? targetController.text
-                                    : null,
+                            targetTag: targetType == NoteShortcutTargetType.tag
+                                ? targetController.text
+                                : null,
                             targetSavedSearchId:
                                 usesSavedSearch ? savedSearchId : null,
                           ),
@@ -841,9 +833,8 @@ class _MigrationCard extends StatelessWidget {
             ),
             FilledButton.icon(
               key: const Key('open_navigation_verify_button'),
-              onPressed: busy || current?.status != 'imported'
-                  ? null
-                  : onVerify,
+              onPressed:
+                  busy || current?.status != 'imported' ? null : onVerify,
               icon: const Icon(Icons.fact_check_outlined),
               label: const Text('照合して検証'),
             ),

@@ -153,12 +153,10 @@ class EvernoteNavigationMigrationState {
     return EvernoteNavigationMigrationState(
       status: json['status']?.toString() ?? 'pending',
       savedSearchCount: _asInt(json['source_saved_search_count']),
-      verifiedSavedSearchCount:
-          _asInt(json['verified_saved_search_count']),
+      verifiedSavedSearchCount: _asInt(json['verified_saved_search_count']),
       shortcutCount: _asInt(json['source_shortcut_count']),
       verifiedShortcutCount: _asInt(json['verified_shortcut_count']),
-      sourceSnapshotSha256:
-          _emptyToNull(json['source_snapshot_sha256']),
+      sourceSnapshotSha256: _emptyToNull(json['source_snapshot_sha256']),
       verifiedAt: _asDateTime(json['verified_at']),
     );
   }
@@ -321,14 +319,11 @@ class SupabaseNoteNavigationRepository implements NoteNavigationRepository {
     required String name,
     required String query,
   }) async {
-    await _client
-        .from('note_saved_searches')
-        .update(<String, dynamic>{
-          'name': _validatedText(name, field: '名前', maximum: 200),
-          'query': _validatedText(query, field: '検索条件', maximum: 4096),
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('id', savedSearch.id);
+    await _client.from('note_saved_searches').update(<String, dynamic>{
+      'name': _validatedText(name, field: '名前', maximum: 200),
+      'query': _validatedText(query, field: '検索条件', maximum: 4096),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', savedSearch.id);
   }
 
   @override
@@ -354,8 +349,7 @@ class SupabaseNoteNavigationRepository implements NoteNavigationRepository {
       'target_collection_id': draft.targetCollectionId,
       'target_tag': _nullableTrimmed(draft.targetTag),
       'target_saved_search_id': draft.targetSavedSearchId,
-      'target_label':
-          _validatedText(draft.label, field: '表示名', maximum: 200),
+      'target_label': _validatedText(draft.label, field: '表示名', maximum: 200),
       'source_system': 'native',
     });
   }

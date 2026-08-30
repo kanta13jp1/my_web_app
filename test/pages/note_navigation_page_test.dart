@@ -64,7 +64,10 @@ void main() {
 
     expect(repository.createdSavedSearches, hasLength(1));
     expect(repository.createdSavedSearches.single.$1, '今週の計画');
-    expect(repository.createdSavedSearches.single.$2, 'tag:project updated:week');
+    expect(
+      repository.createdSavedSearches.single.$2,
+      'tag:project updated:week',
+    );
     expect(find.text('今週の計画'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

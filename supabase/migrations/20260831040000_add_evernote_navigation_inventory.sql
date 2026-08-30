@@ -773,7 +773,7 @@ begin
       errcode = '42501',
       message = 'Authentication is required.';
   end if;
-  set constraints note_shortcuts_user_position_key deferred;
+  set constraints all deferred;
   if p_new_position < 1 then
     raise exception using
       errcode = '22023',
