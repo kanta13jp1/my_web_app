@@ -207,6 +207,26 @@ jobs:
           cat monitor-output.txt >> "$GITHUB_OUTPUT"
           cat production-observability.md >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Publish aggregate observability dashboard
+        id: dashboard
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          MARKER="[observability-dashboard:v1]"
+          { echo "$MARKER"; cat production-observability.md; } > dashboard-body.md
+          ISSUE=$(gh issue list --state open --search "$MARKER in:body" --json number --jq '.[0].number // empty')
+          if [ -n "$ISSUE" ]; then
+            gh issue edit "$ISSUE" --body-file dashboard-body.md
+          else
+            URL=$(gh issue create \
+              --title "[Dashboard][Observability] Production telemetry" \
+              --body-file dashboard-body.md \
+              --label automation)
+            ISSUE=${URL##*/}
+          fi
+          echo "issue=$ISSUE" >> "$GITHUB_OUTPUT"
+          echo "Production dashboard: #$ISSUE" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Create or update deduplicated breach issue
         if: steps.evaluate.outputs.breach == 'true'
         env:
