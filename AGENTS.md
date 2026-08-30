@@ -66,12 +66,14 @@ same notebook.
 - Under pressure, keep local work to sparse editing, `git diff --check`, and
   lightweight Python/YAML policy tests. Push the exact branch and either open a
   draft PR or dispatch `.github/workflows/ci.yml`; record the checked head SHA.
-- A manual cloud gate can be started after the branch exists on GitHub:
+- A manual cloud gate can be started after the committed branch exists on
+  GitHub. The helper rejects dirty, protected, missing, or unpushed branch
+  state, passes the exact 40-character HEAD to Actions, and finds only the new
+  run for that SHA:
 
 ```powershell
-gh workflow run ci.yml --ref <branch>
-gh run list --workflow ci.yml --branch <branch> --event workflow_dispatch --limit 1
-gh run watch <run-id> --exit-status
+git push -u origin HEAD
+python scripts/cloud_ci_handoff.py --execute --watch
 ```
 
 - Manual dispatch validates the branch head. PR CI remains required because it
