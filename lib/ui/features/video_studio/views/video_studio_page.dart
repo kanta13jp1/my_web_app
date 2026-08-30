@@ -36,81 +36,85 @@ class VideoStudioPage extends StatelessWidget {
           builder: (context, _) {
             return switch (viewModel.loadStatus) {
               VideoStudioLoadStatus.initial ||
-              VideoStudioLoadStatus.loading => const Center(
-                child: CircularProgressIndicator(color: DesignTokens.orange),
-              ),
+              VideoStudioLoadStatus.loading =>
+                const Center(
+                  child: CircularProgressIndicator(color: DesignTokens.orange),
+                ),
               VideoStudioLoadStatus.failure => _LoadFailure(
-                viewModel: viewModel,
-              ),
+                  viewModel: viewModel,
+                ),
               VideoStudioLoadStatus.ready => LayoutBuilder(
-                builder: (context, constraints) {
-                  final wide = constraints.maxWidth >= _wideBreakpoint;
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.all(DesignTokens.space20),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1280),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const _Hero(),
-                            const SizedBox(height: DesignTokens.space16),
-                            if (viewModel.noticeMessage != null)
-                              _Notice(
-                                key: const Key('video-studio-notice'),
-                                message: viewModel.noticeMessage!,
-                                color: DesignTokens.green,
-                              ),
-                            if (viewModel.errorMessage != null)
-                              _Notice(
-                                key: const Key('video-studio-error'),
-                                message: viewModel.errorMessage!,
-                                color: DesignTokens.red,
-                              ),
-                            if (wide)
-                              Row(
-                                key: const Key('video-studio-wide'),
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    flex: 3,
-                                    child: _Composer(viewModel: viewModel),
-                                  ),
-                                  const SizedBox(width: DesignTokens.space16),
-                                  Expanded(
-                                    flex: 2,
-                                    child: Column(
-                                      children: [
-                                        _BalanceAndPacks(viewModel: viewModel),
-                                        const SizedBox(
-                                          height: DesignTokens.space16,
-                                        ),
-                                        _JobsPanel(viewModel: viewModel),
-                                      ],
+                  builder: (context, constraints) {
+                    final wide = constraints.maxWidth >= _wideBreakpoint;
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(DesignTokens.space20),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1280),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const _Hero(),
+                              const SizedBox(height: DesignTokens.space16),
+                              if (viewModel.noticeMessage != null)
+                                _Notice(
+                                  key: const Key('video-studio-notice'),
+                                  message: viewModel.noticeMessage!,
+                                  color: DesignTokens.green,
+                                ),
+                              if (viewModel.errorMessage != null)
+                                _Notice(
+                                  key: const Key('video-studio-error'),
+                                  message: viewModel.errorMessage!,
+                                  color: DesignTokens.red,
+                                ),
+                              if (wide)
+                                Row(
+                                  key: const Key('video-studio-wide'),
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      flex: 3,
+                                      child: _Composer(viewModel: viewModel),
                                     ),
-                                  ),
-                                ],
-                              )
-                            else
-                              Column(
-                                key: const Key('video-studio-compact'),
-                                children: [
-                                  _BalanceAndPacks(viewModel: viewModel),
-                                  const SizedBox(height: DesignTokens.space16),
-                                  _Composer(viewModel: viewModel),
-                                  const SizedBox(height: DesignTokens.space16),
-                                  _JobsPanel(viewModel: viewModel),
-                                ],
-                              ),
-                            const SizedBox(height: DesignTokens.space20),
-                            const _LegalLinks(),
-                          ],
+                                    const SizedBox(width: DesignTokens.space16),
+                                    Expanded(
+                                      flex: 2,
+                                      child: Column(
+                                        children: [
+                                          _BalanceAndPacks(
+                                              viewModel: viewModel),
+                                          const SizedBox(
+                                            height: DesignTokens.space16,
+                                          ),
+                                          _JobsPanel(viewModel: viewModel),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              else
+                                Column(
+                                  key: const Key('video-studio-compact'),
+                                  children: [
+                                    _BalanceAndPacks(viewModel: viewModel),
+                                    const SizedBox(
+                                        height: DesignTokens.space16),
+                                    _Composer(viewModel: viewModel),
+                                    const SizedBox(
+                                        height: DesignTokens.space16),
+                                    _JobsPanel(viewModel: viewModel),
+                                  ],
+                                ),
+                              const SizedBox(height: DesignTokens.space20),
+                              const _LegalLinks(),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
-              ),
+                    );
+                  },
+                ),
             };
           },
         ),
@@ -616,15 +620,12 @@ class _JobsPanel extends StatelessWidget {
       child: viewModel.jobs.isEmpty
           ? const Text('まだ動画はありません。', style: _secondaryStyle)
           : Column(
-              children: viewModel.jobs
-                  .take(8)
-                  .map((job) {
-                    final active = viewModel.activeJob?.id == job.id
-                        ? viewModel.activeJob!
-                        : job;
-                    return _JobCard(job: active, viewModel: viewModel);
-                  })
-                  .toList(growable: false),
+              children: viewModel.jobs.take(8).map((job) {
+                final active = viewModel.activeJob?.id == job.id
+                    ? viewModel.activeJob!
+                    : job;
+                return _JobCard(job: active, viewModel: viewModel);
+              }).toList(growable: false),
             ),
     );
   }

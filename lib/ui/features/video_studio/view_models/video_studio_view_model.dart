@@ -13,9 +13,9 @@ class VideoStudioViewModel extends ChangeNotifier {
     required VideoStudioGateway gateway,
     Uuid uuid = const Uuid(),
     Duration pollInterval = const Duration(seconds: 8),
-  }) : _gateway = gateway,
-       _uuid = uuid,
-       _pollInterval = pollInterval;
+  })  : _gateway = gateway,
+        _uuid = uuid,
+        _pollInterval = pollInterval;
 
   final VideoStudioGateway _gateway;
   final Uuid _uuid;
@@ -147,8 +147,8 @@ class VideoStudioViewModel extends ChangeNotifier {
     _errorMessage = null;
     _noticeMessage =
         currentUri?.queryParameters['billing'] == 'video_credits_success'
-        ? '決済を受け付けました。残高への反映に数秒かかる場合があります。'
-        : null;
+            ? '決済を受け付けました。残高への反映に数秒かかる場合があります。'
+            : null;
     notifyListeners();
     try {
       final results = await Future.wait<Object>([
@@ -171,8 +171,7 @@ class VideoStudioViewModel extends ChangeNotifier {
       if (_activeJob != null) _startPolling();
     } catch (error) {
       _loadStatus = VideoStudioLoadStatus.failure;
-      _authenticationRequired =
-          error is VideoStudioException &&
+      _authenticationRequired = error is VideoStudioException &&
           error.code == 'authentication_required';
       _errorMessage = _friendlyError(error);
     }
@@ -513,10 +512,8 @@ class VideoStudioViewModel extends ChangeNotifier {
   }
 
   void _restorePendingImprovement() {
-    final consumedReviewIds = _jobs
-        .map((job) => job.appliedReviewId)
-        .whereType<String>()
-        .toSet();
+    final consumedReviewIds =
+        _jobs.map((job) => job.appliedReviewId).whereType<String>().toSet();
     for (final job in _jobs) {
       final artifact = job.artifact;
       final review = artifact?.latestReview;
@@ -576,7 +573,8 @@ class VideoStudioViewModel extends ChangeNotifier {
       'invalid_review_score' ||
       'invalid_review_decision' ||
       'invalid_review_clearance' ||
-      'invalid_review_text' => 'レビュー内容を確認してください。点数は1〜5、次回プロンプトは1000文字以内です。',
+      'invalid_review_text' =>
+        'レビュー内容を確認してください。点数は1〜5、次回プロンプトは1000文字以内です。',
       'generation_iteration_unavailable' =>
         '改善履歴を生成ジョブへ関連付けられませんでした。クレジットは返却済みです。',
       'improvement_review_already_consumed' =>
@@ -585,10 +583,12 @@ class VideoStudioViewModel extends ChangeNotifier {
         '新しいレビューが追加されています。再読み込みして最新の改善案を選んでください。',
       'artifact_clearance_blocked' => '権利またはプライバシーがブロックされた素材は再生成できません。',
       'invalid_authorization_expiry' ||
-      'invalid_authorization_iterations' => '継続承認の有効期限または反復回数を確認してください。',
+      'invalid_authorization_iterations' =>
+        '継続承認の有効期限または反復回数を確認してください。',
       'authorization_confirmations_required' => '権利・年齢・利用規約・禁止事項への同意が必要です。',
       'authorization_not_found' ||
-      'video_authorization_inactive' => '継続承認を確認できません。最新状態を読み込んでください。',
+      'video_authorization_inactive' =>
+        '継続承認を確認できません。最新状態を読み込んでください。',
       'video_authorization_exhausted' => '継続承認のクレジットまたは反復回数を使い切りました。',
       'video_credit_checkout_unavailable' => '購入画面を開けませんでした。時間をおいて再度お試しください。',
       _ => '動画サービスに接続できませんでした。時間をおいて再度お試しください。',

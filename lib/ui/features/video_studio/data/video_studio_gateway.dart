@@ -76,7 +76,7 @@ abstract class VideoStudioGateway {
 
 class SupabaseVideoStudioGateway implements VideoStudioGateway {
   SupabaseVideoStudioGateway({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+      : _client = client ?? Supabase.instance.client;
 
   final SupabaseClient _client;
 
