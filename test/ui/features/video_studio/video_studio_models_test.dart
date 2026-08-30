@@ -118,9 +118,8 @@ void main() {
     final authorization = VideoImprovementAuthorization.fromJson({
       'id': 'authorization-1',
       'status': 'active',
-      'valid_until': DateTime.now()
-          .add(const Duration(days: 7))
-          .toIso8601String(),
+      'valid_until':
+          DateTime.now().add(const Duration(days: 7)).toIso8601String(),
       'total_credit_limit': 600,
       'reserved_credits': 300,
       'consumed_credits': 0,
@@ -144,9 +143,8 @@ void main() {
       'id': 'authorization-pending',
       'status': 'pending_funding',
       'pending_reasons': ['insufficient_credits'],
-      'valid_until': DateTime.now()
-          .add(const Duration(days: 7))
-          .toIso8601String(),
+      'valid_until':
+          DateTime.now().add(const Duration(days: 7)).toIso8601String(),
       'total_credit_limit': 600,
       'reserved_credits': 0,
       'consumed_credits': 0,

@@ -445,7 +445,8 @@ class _FakeVideoStudioGateway implements VideoStudioGateway {
   @override
   Future<VideoImprovementAuthorization> revokeAuthorization(
     String authorizationId,
-  ) async => _authorization(status: 'revoked');
+  ) async =>
+      _authorization(status: 'revoked');
 
   @override
   Future<Uri> createCreditCheckout({
@@ -480,10 +481,10 @@ const _catalog = VideoStudioCatalog(
 );
 
 VideoCreditBalance _balance(int available) => VideoCreditBalance(
-  availableCredits: available,
-  reservedCredits: 0,
-  creditDebt: 0,
-);
+      availableCredits: available,
+      reservedCredits: 0,
+      creditDebt: 0,
+    );
 
 VideoGenerationJob _job({
   String status = 'queued',
@@ -517,36 +518,37 @@ const _reviewId = '33333333-3333-4333-8333-333333333333';
 const _authorizationId = '44444444-4444-4444-8444-444444444444';
 
 VideoArtifact _artifact({VideoArtifactReview? latestReview}) => VideoArtifact(
-  id: _artifactId,
-  jobId: '11111111-1111-4111-8111-111111111111',
-  title: 'paper city',
-  lifecycleStage: latestReview == null ? 'captured' : 'productizing',
-  rightsStatus: latestReview == null ? 'review_required' : 'allowed',
-  privacyStatus: latestReview == null ? 'review_required' : 'cleared',
-  commerceStatus: 'sale_candidate',
-  intendedForSale: true,
-  iteration: 1,
-  latestReview: latestReview,
-  createdAt: DateTime.utc(2026, 8, 20),
-);
+      id: _artifactId,
+      jobId: '11111111-1111-4111-8111-111111111111',
+      title: 'paper city',
+      lifecycleStage: latestReview == null ? 'captured' : 'productizing',
+      rightsStatus: latestReview == null ? 'review_required' : 'allowed',
+      privacyStatus: latestReview == null ? 'review_required' : 'cleared',
+      commerceStatus: 'sale_candidate',
+      intendedForSale: true,
+      iteration: 1,
+      latestReview: latestReview,
+      createdAt: DateTime.utc(2026, 8, 20),
+    );
 
 VideoArtifactReview _review({
   String suggestedPrompt = 'Natural hand movement in a bright office',
-}) => VideoArtifactReview(
-  id: _reviewId,
-  artifactId: _artifactId,
-  iteration: 1,
-  qualityScore: 4,
-  promptAlignmentScore: 3,
-  motionQualityScore: 3,
-  commercialValueScore: 4,
-  decision: 'improve',
-  strengths: '構図が明快',
-  improvementRequest: '手元の動きを自然にする',
-  suggestedPrompt: suggestedPrompt,
-  notes: '',
-  createdAt: DateTime.utc(2026, 8, 20, 1),
-);
+}) =>
+    VideoArtifactReview(
+      id: _reviewId,
+      artifactId: _artifactId,
+      iteration: 1,
+      qualityScore: 4,
+      promptAlignmentScore: 3,
+      motionQualityScore: 3,
+      commercialValueScore: 4,
+      decision: 'improve',
+      strengths: '構図が明快',
+      improvementRequest: '手元の動きを自然にする',
+      suggestedPrompt: suggestedPrompt,
+      notes: '',
+      createdAt: DateTime.utc(2026, 8, 20, 1),
+    );
 
 VideoImprovementAuthorization _authorization({
   String status = 'active',
@@ -554,19 +556,20 @@ VideoImprovementAuthorization _authorization({
   int remainingCredits = 300,
   int remainingRegenerations = 1,
   List<String> pendingReasons = const [],
-}) => VideoImprovementAuthorization(
-  id: _authorizationId,
-  status: status,
-  validUntil: DateTime.now().add(const Duration(days: 7)),
-  totalCreditLimit: 600,
-  reservedCredits: reservedCredits,
-  consumedCredits: 0,
-  remainingCredits: remainingCredits,
-  totalRegenerationLimit: 2,
-  consumedRegenerations: 1,
-  remainingRegenerations: remainingRegenerations,
-  rootArtifactId: _artifactId,
-  initialReviewId: _reviewId,
-  allowCreditPurchase: false,
-  pendingReasons: pendingReasons,
-);
+}) =>
+    VideoImprovementAuthorization(
+      id: _authorizationId,
+      status: status,
+      validUntil: DateTime.now().add(const Duration(days: 7)),
+      totalCreditLimit: 600,
+      reservedCredits: reservedCredits,
+      consumedCredits: 0,
+      remainingCredits: remainingCredits,
+      totalRegenerationLimit: 2,
+      consumedRegenerations: 1,
+      remainingRegenerations: remainingRegenerations,
+      rootArtifactId: _artifactId,
+      initialReviewId: _reviewId,
+      allowCreditPurchase: false,
+      pendingReasons: pendingReasons,
+    );
