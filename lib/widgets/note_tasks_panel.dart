@@ -130,6 +130,22 @@ class _NoteTasksPanelState extends State<NoteTasksPanel> {
     );
   }
 
+  Future<void> _showAssigneeEditor(NoteTask task) async {
+    final draft = await showDialog<_NoteTaskAssigneeDraft>(
+      context: context,
+      builder: (_) => _NoteTaskAssigneeDialog(task: task),
+    );
+    if (draft == null || !mounted) return;
+    await _runMutation(
+      () => widget.repository.assignTask(
+        task: task,
+        email: draft.remove ? null : draft.email,
+        displayName: draft.remove ? null : draft.displayName,
+      ),
+      successMessage: draft.remove ? '担当者を解除しました' : '担当者を更新しました',
+    );
+  }
+
   Future<void> _addReminder(NoteTask task) async {
     final remindAt = await _pickDateTime(task.dueAt);
     if (remindAt == null || !mounted) return;
@@ -307,19 +323,33 @@ class _NoteTasksPanelState extends State<NoteTasksPanel> {
                 ),
                 IconButton(
                   key: ValueKey('note_task_edit_${task.id}'),
-                  onPressed: _isMutating ? null : () => _showTaskEditor(task),
+                  onPressed: _isMutating || !task.isOwnedByCurrentUser
+                      ? null
+                      : () => _showTaskEditor(task),
                   icon: const Icon(Icons.edit_outlined),
                   tooltip: '編集',
                 ),
                 IconButton(
+                  key: ValueKey('note_task_assignee_${task.id}'),
+                  onPressed: _isMutating || !task.isOwnedByCurrentUser
+                      ? null
+                      : () => _showAssigneeEditor(task),
+                  icon: const Icon(Icons.person_add_alt_1_outlined),
+                  tooltip: '担当者を設定',
+                ),
+                IconButton(
                   key: ValueKey('note_task_add_reminder_${task.id}'),
-                  onPressed: _isMutating ? null : () => _addReminder(task),
+                  onPressed: _isMutating || !task.isOwnedByCurrentUser
+                      ? null
+                      : () => _addReminder(task),
                   icon: const Icon(Icons.add_alarm_outlined),
                   tooltip: 'リマインダーを追加',
                 ),
                 IconButton(
                   key: ValueKey('note_task_delete_${task.id}'),
-                  onPressed: _isMutating || task.isImported
+                  onPressed: _isMutating ||
+                          task.isImported ||
+                          !task.isOwnedByCurrentUser
                       ? null
                       : () => _deleteTask(task),
                   icon: const Icon(Icons.delete_outline),
@@ -338,6 +368,12 @@ class _NoteTasksPanelState extends State<NoteTasksPanel> {
                     const Chip(
                       avatar: Icon(Icons.cloud_done_outlined, size: 16),
                       label: Text('Evernote移行'),
+                    ),
+                  if (task.hasAssignee)
+                    Chip(
+                      key: ValueKey('note_task_assignee_chip_${task.id}'),
+                      avatar: const Icon(Icons.person_outline, size: 16),
+                      label: Text(task.assigneeLabel!),
                     ),
                   if (dueAt != null)
                     Chip(
@@ -393,6 +429,125 @@ class _NoteTasksPanelState extends State<NoteTasksPanel> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _NoteTaskAssigneeDraft {
+  const _NoteTaskAssigneeDraft({
+    this.email,
+    this.displayName,
+    this.remove = false,
+  });
+
+  final String? email;
+  final String? displayName;
+  final bool remove;
+}
+
+class _NoteTaskAssigneeDialog extends StatefulWidget {
+  const _NoteTaskAssigneeDialog({required this.task});
+
+  final NoteTask task;
+
+  @override
+  State<_NoteTaskAssigneeDialog> createState() =>
+      _NoteTaskAssigneeDialogState();
+}
+
+class _NoteTaskAssigneeDialogState extends State<_NoteTaskAssigneeDialog> {
+  late final TextEditingController _emailController;
+  late final TextEditingController _nameController;
+  String? _emailError;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController(text: widget.task.assigneeEmail);
+    _nameController =
+        TextEditingController(text: widget.task.assigneeDisplayName);
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('タスクの担当者'),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'メールが本サイトの利用者と一致すると、担当タスクとして'
+              '表示されます。元のメモ本文は自動共有されません。',
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              key: const Key('note_task_assignee_email_field'),
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: 'メールアドレス',
+                errorText: _emailError,
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              key: const Key('note_task_assignee_name_field'),
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: '表示名（任意）',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('キャンセル'),
+        ),
+        if (widget.task.hasAssignee)
+          TextButton(
+            key: const Key('note_task_assignee_remove_button'),
+            onPressed: () => Navigator.pop(
+              context,
+              const _NoteTaskAssigneeDraft(remove: true),
+            ),
+            child: const Text('担当解除'),
+          ),
+        FilledButton(
+          key: const Key('note_task_assignee_save_button'),
+          onPressed: () {
+            final email = _emailController.text.trim();
+            final validEmail =
+                RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email);
+            if (!validEmail) {
+              setState(() {
+                _emailError = '有効なメールアドレスを入力してください。';
+              });
+              return;
+            }
+            Navigator.pop(
+              context,
+              _NoteTaskAssigneeDraft(
+                email: email,
+                displayName: _nameController.text.trim(),
+              ),
+            );
+          },
+          child: const Text('保存'),
+        ),
+      ],
     );
   }
 }

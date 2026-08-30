@@ -73,6 +73,14 @@ void main() {
       expect(task.recurrence, 'RRULE:FREQ=WEEKLY');
       expect(task.repeatAfterCompletion, isTrue);
       expect(task.creator, 'owner@example.com');
+      expect(task.assigneeUserId, 'evernote-user-42');
+      expect(task.assigneeEmail, 'delegate@example.com');
+      expect(task.assigneeDisplayName, 'Delegated reviewer');
+      expect(task.assigneeRawXml, contains('<assignee>'));
+      expect(
+        task.toJson()['assignee'],
+        containsPair('email', 'delegate@example.com'),
+      );
       expect(task.reminders, hasLength(1));
       expect(task.reminders.single.status, 'active');
       expect(
@@ -305,6 +313,11 @@ const _completeEnex = '''
       <statusUpdated>20240602T020304Z</statusUpdated>
       <creator>owner@example.com</creator>
       <lastEditor>editor@example.com</lastEditor>
+      <assignee>
+        <userID>evernote-user-42</userID>
+        <email>delegate@example.com</email>
+        <displayName>Delegated reviewer</displayName>
+      </assignee>
       <reminder>
         <created>20240601T010203Z</created>
         <updated>20240602T020304Z</updated>

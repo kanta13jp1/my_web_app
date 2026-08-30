@@ -64,6 +64,46 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('assigns a Task by email and shows the assignee', (tester) async {
+    final repository = _FakeNoteTaskRepository(
+      tasks: <NoteTask>[
+        _task(
+          id: 'assigned',
+          assigneeEmail: 'old@example.com',
+          assigneeDisplayName: 'Old reviewer',
+        ),
+      ],
+    );
+
+    await _pumpPanel(tester, repository, width: 900);
+
+    expect(find.text('Old reviewer'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey('note_task_assignee_assigned')),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('note_task_assignee_email_field')),
+      'new@example.com',
+    );
+    await tester.enterText(
+      find.byKey(const Key('note_task_assignee_name_field')),
+      'New reviewer',
+    );
+    await tester.tap(
+      find.byKey(const Key('note_task_assignee_save_button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      repository.assigneeChanges,
+      <(String, String?, String?)>[
+        ('assigned', 'new@example.com', 'New reviewer'),
+      ],
+    );
+    expect(find.text('New reviewer'), findsOneWidget);
+  });
+
   testWidgets('deletes a native reminder but preserves imported reminders',
       (tester) async {
     final nativeReminder = _reminder(id: 'native-reminder');
@@ -129,6 +169,8 @@ NoteTask _task({
   String status = 'open',
   String sourceSystem = 'native',
   List<NoteTaskReminder> reminders = const <NoteTaskReminder>[],
+  String? assigneeEmail,
+  String? assigneeDisplayName,
 }) {
   return NoteTask(
     id: id,
@@ -145,6 +187,8 @@ NoteTask _task({
     dueAt: DateTime.utc(2026, 9, 1, 9),
     recurrence: 'RRULE:FREQ=WEEKLY',
     repeatAfterCompletion: true,
+    assigneeEmail: assigneeEmail,
+    assigneeDisplayName: assigneeDisplayName,
   );
 }
 
@@ -170,6 +214,8 @@ class _FakeNoteTaskRepository implements NoteTaskRepository {
   final List<String> completedTaskIds = <String>[];
   final List<NoteTaskDraft> createdDrafts = <NoteTaskDraft>[];
   final List<String> deletedReminderIds = <String>[];
+  final List<(String, String?, String?)> assigneeChanges =
+      <(String, String?, String?)>[];
 
   @override
   Future<List<NoteTask>> loadAllTasks() async {
@@ -192,6 +238,25 @@ class _FakeNoteTaskRepository implements NoteTaskRepository {
         id: 'created-${createdDrafts.length}',
         title: draft.title,
       ),
+    );
+  }
+
+  @override
+  Future<void> assignTask({
+    required NoteTask task,
+    String? email,
+    String? displayName,
+  }) async {
+    assigneeChanges.add((task.id, email, displayName));
+    final index = _tasks.indexWhere((candidate) => candidate.id == task.id);
+    _tasks[index] = _task(
+      id: task.id,
+      title: task.title,
+      status: task.status,
+      sourceSystem: task.sourceSystem,
+      reminders: task.reminders,
+      assigneeEmail: email,
+      assigneeDisplayName: displayName,
     );
   }
 

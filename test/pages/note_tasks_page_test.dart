@@ -126,6 +126,39 @@ void main() {
     expect(find.text('未完了のタスクはありません。'), findsOneWidget);
   });
 
+  testWidgets('searches assignees and protects an unshared source note',
+      (tester) async {
+    final repository = _FakeNoteTaskRepository(<NoteTask>[
+      _task(
+        id: 'shared',
+        title: 'Review the draft',
+        noteId: 51,
+        noteTitle: null,
+        isOwnedByCurrentUser: false,
+        assigneeEmail: 'delegate@example.com',
+        assigneeDisplayName: 'Delegated reviewer',
+      ),
+    ]);
+
+    await tester.pumpWidget(
+      MaterialApp(home: NoteTasksPage(repository: repository)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('note_tasks_page_search')),
+      'Delegated reviewer',
+    );
+    await tester.pump();
+
+    expect(find.text('Review the draft'), findsOneWidget);
+    expect(find.text('共有タスク（メモ本文は非公開）'), findsOneWidget);
+    final openButton = tester.widget<IconButton>(
+      find.byKey(const ValueKey('note_tasks_page_open_note_shared')),
+    );
+    expect(openButton.onPressed, isNull);
+  });
+
   testWidgets('isolates overdue Tasks from future and undated Tasks',
       (tester) async {
     final repository = _FakeNoteTaskRepository(<NoteTask>[
@@ -222,6 +255,11 @@ class _FakeNoteTaskRepository implements NoteTaskRepository {
         statusUpdatedAt: candidate.statusUpdatedAt,
         creator: candidate.creator,
         lastEditor: candidate.lastEditor,
+        ownerUserId: candidate.ownerUserId,
+        isOwnedByCurrentUser: candidate.isOwnedByCurrentUser,
+        assigneeUserId: candidate.assigneeUserId,
+        assigneeEmail: candidate.assigneeEmail,
+        assigneeDisplayName: candidate.assigneeDisplayName,
       );
     }).toList(growable: false);
   }
@@ -255,10 +293,13 @@ NoteTask _task({
   required String id,
   required String title,
   required int noteId,
-  required String noteTitle,
+  required String? noteTitle,
   String status = 'open',
   String sourceSystem = 'native',
   DateTime? dueAt,
+  bool isOwnedByCurrentUser = true,
+  String? assigneeEmail,
+  String? assigneeDisplayName,
 }) {
   return NoteTask(
     id: id,
@@ -274,5 +315,8 @@ NoteTask _task({
     reminders: const <NoteTaskReminder>[],
     noteTitle: noteTitle,
     dueAt: dueAt?.toUtc(),
+    isOwnedByCurrentUser: isOwnedByCurrentUser,
+    assigneeEmail: assigneeEmail,
+    assigneeDisplayName: assigneeDisplayName,
   );
 }

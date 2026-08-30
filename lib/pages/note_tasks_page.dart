@@ -159,7 +159,8 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
       if (!_matchesFilter(task)) return false;
       if (query.isEmpty) return true;
       return task.title.toLowerCase().contains(query) ||
-          (task.noteTitle ?? '').toLowerCase().contains(query);
+          (task.noteTitle ?? '').toLowerCase().contains(query) ||
+          (task.assigneeLabel ?? '').toLowerCase().contains(query);
     }).toList(growable: false);
   }
 
@@ -334,7 +335,7 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
               });
             },
             decoration: InputDecoration(
-              labelText: 'タスクまたはメモ名を検索',
+              labelText: 'タスク・メモ名・担当者を検索',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: _searchQuery.isEmpty
                   ? null
@@ -443,9 +444,13 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
           onCompletedChanged: (value) {
             unawaited(_setCompleted(tasks[index], value));
           },
-          onOpenNote: () {
-            unawaited(_openNote(tasks[index]));
-          },
+          onOpenNote:
+              tasks[index].noteTitle == null &&
+                      !tasks[index].isOwnedByCurrentUser
+                  ? null
+                  : () {
+                      unawaited(_openNote(tasks[index]));
+                    },
         ),
       ),
     );
@@ -488,12 +493,15 @@ class _TaskOverviewCard extends StatelessWidget {
   final bool overdue;
   final bool dueToday;
   final ValueChanged<bool> onCompletedChanged;
-  final VoidCallback onOpenNote;
+  final VoidCallback? onOpenNote;
 
   @override
   Widget build(BuildContext context) {
     final dueAt = task.dueAt?.toLocal();
-    final noteTitle = task.noteTitle ?? 'メモ #${task.noteId}';
+    final noteTitle = task.noteTitle ??
+        (task.isOwnedByCurrentUser
+            ? 'メモ #${task.noteId}'
+            : '共有タスク（メモ本文は非公開）');
     return Card(
       key: ValueKey('note_tasks_page_card_${task.id}'),
       child: Padding(
@@ -530,7 +538,9 @@ class _TaskOverviewCard extends StatelessWidget {
                   key: ValueKey(
                     'note_tasks_page_open_note_${task.id}',
                   ),
-                  tooltip: '元のメモを開く',
+                  tooltip: onOpenNote == null
+                      ? '元のメモは共有されていません'
+                      : '元のメモを開く',
                   onPressed: onOpenNote,
                   icon: const Icon(Icons.open_in_new),
                 ),
@@ -558,6 +568,14 @@ class _TaskOverviewCard extends StatelessWidget {
                     const Chip(
                       avatar: Icon(Icons.cloud_done_outlined, size: 16),
                       label: Text('Evernote移行'),
+                    ),
+                  if (task.hasAssignee)
+                    Chip(
+                      key: ValueKey(
+                        'note_tasks_page_assignee_${task.id}',
+                      ),
+                      avatar: const Icon(Icons.person_outline, size: 16),
+                      label: Text(task.assigneeLabel!),
                     ),
                   if (dueAt != null)
                     Chip(
