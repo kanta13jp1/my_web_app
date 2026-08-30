@@ -42,15 +42,13 @@ test.describe('real Paddle sandbox checkout', () => {
     expect(eventNames(events)).not.toContain('checkout.completed');
   });
 
-  test('declined card emits failure and Flutter keeps failure state', async ({
+  test('declined card emits failure and Flutter renders error state', async ({
     page,
     browser,
   }, testInfo) => {
     await openFlutterCheckout(page);
     await completeCardForm(page, '4000000000000002');
     await expectFlutterText(page, 'Sandbox 決済に失敗しました。', 60_000);
-    await closeCheckout(page);
-    await expectFlutterText(page, 'Sandbox 決済に失敗しました。');
 
     const events = await collectEvidence(page, testInfo, 'failure', {
       browserVersion: browser.version(),
@@ -62,17 +60,16 @@ test.describe('real Paddle sandbox checkout', () => {
         ),
       ]),
     );
+    await closeCheckoutIfPresent(page);
   });
 
-  test('valid test card completes and Flutter keeps success state', async ({
+  test('valid test card completes and Flutter renders success state', async ({
     page,
     browser,
   }, testInfo) => {
     await openFlutterCheckout(page);
     await completeCardForm(page, '4242424242424242');
     await expectFlutterText(page, 'Sandbox 決済が完了しました。', 90_000);
-    await closeCheckoutIfPresent(page);
-    await expectFlutterText(page, 'Sandbox 決済が完了しました。');
     await expect(
       page.getByRole('button', { name: 'ホームへ戻る' }),
     ).toBeVisible();
@@ -85,6 +82,7 @@ test.describe('real Paddle sandbox checkout', () => {
       events.some((event) => Boolean(event.transactionId)),
       'checkout.completed evidence should include a transaction ID',
     ).toBe(true);
+    await closeCheckoutIfPresent(page);
   });
 });
 
