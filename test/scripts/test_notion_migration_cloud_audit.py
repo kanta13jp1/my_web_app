@@ -3,19 +3,26 @@ from __future__ import annotations
 
 import unittest
 
-from scripts.notion_migration_cloud_audit import collect_audit, render_summary
+from scripts.notion_migration_cloud_audit import (
+    AuditError,
+    collect_audit,
+    render_summary,
+)
 
 
 class FakeClient:
     def __init__(self, responses: dict[str, list[dict[str, object]]]) -> None:
         self.responses = responses
+        self.calls: list[
+            tuple[str, str, list[tuple[str, str]]]
+        ] = []
 
     def rows(
         self,
         resource: str,
         query: list[tuple[str, str]],
     ) -> list[dict[str, object]]:
-        del query
+        self.calls.append(("rows", resource, query))
         return self.responses.get(resource, [])
 
     def all_rows(
@@ -25,7 +32,8 @@ class FakeClient:
         *,
         page_size: int = 1000,
     ) -> list[dict[str, object]]:
-        del query, page_size
+        del page_size
+        self.calls.append(("all_rows", resource, query))
         return self.responses.get(resource, [])
 
 
@@ -39,6 +47,15 @@ def fixture(
     deleted: int = 0,
     capability_verified: int = 3,
 ) -> dict[str, list[dict[str, object]]]:
+    item_statuses = (
+        ["source_deleted"] * deleted
+        + ["ready_for_source_deletion"] * ready
+        + ["verified"] * (verified - ready - deleted)
+        + ["imported"] * (imported - verified)
+        + ["inventoried"] * (total - imported)
+    )
+    if total > imported:
+        item_statuses[imported] = "failed"
     return {
         "notion_migration_batches": [
             {
@@ -56,7 +73,7 @@ def fixture(
                 "verified_items": verified,
                 "deletion_ready_items": ready,
                 "source_deleted_items": deleted,
-                "failed_items": 1,
+                "failed_items": 1 if total > imported else 0,
             }
         ],
         "notion_migration_capability_progress": [
@@ -75,6 +92,15 @@ def fixture(
                 "invalid_task_ids": 0,
                 "staged_at": "2026-08-30T00:30:00Z",
             }
+        ],
+        "notion_migration_items": [
+            {
+                "source_kind": "page",
+                "status": status,
+                "source_id": "must-not-leak",
+                "title": "must-not-leak",
+            }
+            for status in item_statuses
         ],
         "notion_migration_wbs_staging": [
             {
@@ -158,7 +184,8 @@ class NotionMigrationCloudAuditTest(unittest.TestCase):
         self.assertTrue(report["gates"]["subscription_cancellation_open"])
 
     def test_summary_contains_only_aggregate_evidence(self) -> None:
-        report = collect_audit(FakeClient(fixture()))
+        client = FakeClient(fixture())
+        report = collect_audit(client)
         summary = render_summary(report)
 
         self.assertIn("棚卸し 10", summary)
@@ -169,6 +196,35 @@ class NotionMigrationCloudAuditTest(unittest.TestCase):
         self.assertNotIn("must-not-leak", summary)
         self.assertNotIn("aggregate-only source", summary)
         self.assertNotIn("aaaaaaaa-aaaa", summary)
+        self.assertEqual(
+            report["item_breakdown"]["by_source_kind"]["page"],
+            {
+                "total": 10,
+                "imported_or_later": 4,
+                "remaining": 6,
+                "failed": 1,
+                "skipped": 0,
+            },
+        )
+        item_calls = [
+            query
+            for method, resource, query in client.calls
+            if method == "all_rows" and resource == "notion_migration_items"
+        ]
+        self.assertEqual(len(item_calls), 1)
+        self.assertIn(("select", "source_kind,status"), item_calls[0])
+
+    def test_unknown_item_enum_is_rejected_without_echoing_value(self) -> None:
+        responses = fixture(total=1, imported=0, verified=0)
+        responses["notion_migration_items"] = [
+            {"source_kind": "private-value", "status": "inventoried"}
+        ]
+
+        with self.assertRaisesRegex(
+            AuditError,
+            "invalid migration item source kind",
+        ):
+            collect_audit(FakeClient(responses))
 
     def test_no_batch_is_safe_and_actionable(self) -> None:
         report = collect_audit(FakeClient({}))
