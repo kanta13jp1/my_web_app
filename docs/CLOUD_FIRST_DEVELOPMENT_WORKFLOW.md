@@ -79,6 +79,7 @@ Verify deployment by matching the production `version.json` commit to the merged
 ## Recovery
 
 If a cloud run fails, inspect its logs and make the smallest source change. Do not reproduce a runner-scale failure locally unless the user explicitly requests it and the resource gate is healthy. Artifacts are temporary evidence, not a long-term store.
+
 ## Notion migration cloud audit
 
 Use the read-only cloud audit to inspect the latest migration batch without opening Notion, running Flutter locally, or downloading source content:
