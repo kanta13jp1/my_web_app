@@ -36,6 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
+      actions: write
       contents: write
       pull-requests: read
     steps:
@@ -206,3 +207,7 @@ jobs:
             echo
             echo "Local worktrees are intentionally untouched; recreate or remove them only from their owning machine."
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Refresh Codex backlog issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run codex-backlog-check.yml --ref main
