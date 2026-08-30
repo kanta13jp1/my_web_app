@@ -27,6 +27,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('note_navigation_page')), findsOneWidget);
+    expect(
+      find.byKey(const Key('note_navigation_collections')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('navigation_migration_card')), findsOneWidget);
     expect(find.text('Evernoteアカウント棚卸し: verified'), findsOneWidget);
     expect(find.byKey(const Key('shortcut_shortcut-1')), findsOneWidget);

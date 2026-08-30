@@ -9,8 +9,10 @@ on:
       - 'lib/pages/note_editor_page.dart'
       - 'lib/pages/note_tasks_page.dart'
       - 'lib/pages/note_navigation_page.dart'
+      - 'lib/pages/note_collections_page.dart'
       - 'lib/services/note_task_service.dart'
       - 'lib/services/note_navigation_service.dart'
+      - 'lib/services/note_collection_service.dart'
       - 'lib/widgets/note_tasks_panel.dart'
       - 'lib/pages/note_list_page.dart'
       - 'lib/main.dart'
@@ -21,6 +23,8 @@ on:
       - 'test/pages/note_editor_page_test.dart'
       - 'test/pages/note_tasks_page_test.dart'
       - 'test/pages/note_navigation_page_test.dart'
+      - 'test/pages/note_collections_page_test.dart'
+      - 'test/services/note_collection_service_test.dart'
       - 'test/widgets/note_tasks_panel_test.dart'
       - 'test/pages/note_list_page_test.dart'
       - 'test/widgets/markdown_preview_test.dart'
@@ -41,8 +45,10 @@ on:
       - 'lib/pages/note_editor_page.dart'
       - 'lib/pages/note_tasks_page.dart'
       - 'lib/pages/note_navigation_page.dart'
+      - 'lib/pages/note_collections_page.dart'
       - 'lib/services/note_task_service.dart'
       - 'lib/services/note_navigation_service.dart'
+      - 'lib/services/note_collection_service.dart'
       - 'lib/widgets/note_tasks_panel.dart'
       - 'lib/pages/note_list_page.dart'
       - 'lib/main.dart'
@@ -53,6 +59,8 @@ on:
       - 'test/pages/note_editor_page_test.dart'
       - 'test/pages/note_tasks_page_test.dart'
       - 'test/pages/note_navigation_page_test.dart'
+      - 'test/pages/note_collections_page_test.dart'
+      - 'test/services/note_collection_service_test.dart'
       - 'test/widgets/note_tasks_panel_test.dart'
       - 'test/pages/note_list_page_test.dart'
       - 'test/widgets/markdown_preview_test.dart'
@@ -156,10 +164,12 @@ jobs:
               lib/pages/note_editor_page.dart \
               lib/pages/note_tasks_page.dart \
               lib/pages/note_navigation_page.dart \
+              lib/pages/note_collections_page.dart \
               lib/pages/note_tags_page.dart \
               lib/services/note_task_service.dart \
               lib/services/note_tag_hierarchy_service.dart \
               lib/services/note_navigation_service.dart \
+              lib/services/note_collection_service.dart \
               lib/widgets/note_tasks_panel.dart \
               lib/pages/note_list_page.dart \
               lib/main.dart \
@@ -168,7 +178,9 @@ jobs:
               test/pages/note_editor_page_test.dart \
               test/pages/note_tasks_page_test.dart \
               test/pages/note_navigation_page_test.dart \
+              test/pages/note_collections_page_test.dart \
               test/pages/note_tags_page_test.dart \
+              test/services/note_collection_service_test.dart \
               test/services/note_tag_hierarchy_service_test.dart \
               test/widgets/note_tasks_panel_test.dart \
               test/pages/note_list_page_test.dart \
@@ -314,7 +326,11 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 \
             -f supabase/migrations/20260831041000_add_evernote_nested_tags.sql
           psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831050000_add_evernote_note_collection_management.sql
+          psql -X -v ON_ERROR_STOP=1 \
             -f supabase/tests/evernote_note_collections_contract.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_note_collection_management_contract.sql
           psql -X -v ON_ERROR_STOP=1 \
             -f supabase/tests/evernote_nested_tags_contract.sql
           psql -X -v ON_ERROR_STOP=1 \
