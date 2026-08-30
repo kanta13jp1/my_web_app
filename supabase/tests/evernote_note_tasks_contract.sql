@@ -93,7 +93,7 @@ end
 $$;
 
 -- The owner receives the note reminder but not assignee-only Task delivery.
-do $
+do $$
 begin
   if (
     select count(*)
@@ -117,7 +117,7 @@ begin
       null;
   end;
 end
-$;
+$$;
 
 -- Imported source evidence remains immutable and cannot be deleted while the
 -- corresponding Evernote source item still exists. Mutable Task fields remain
@@ -345,7 +345,7 @@ $$;
 
 -- Read/dismiss state is recipient-only. Reassignment removes the old recipient's
 -- derived notification rows together with Task visibility.
-do $
+do $$
 declare
   v_assignment_notification_id uuid;
   v_reminder_notification_id uuid;
@@ -381,7 +381,7 @@ begin
     raise exception 'The assignee could not dismiss a Task reminder.';
   end if;
 end
-$;
+$$;
 
 select set_config(
   'request.jwt.claim.sub',
@@ -401,7 +401,7 @@ select set_config(
   false
 );
 
-do $
+do $$
 begin
   if (select count(*) from public.note_tasks) <> 0 then
     raise exception 'Reassignment did not revoke old assignee Task visibility.';
@@ -410,7 +410,7 @@ begin
     raise exception 'Reassignment retained old recipient notification content.';
   end if;
 end
-$;
+$$;
 
 select set_config(
   'request.jwt.claim.sub',
@@ -418,7 +418,7 @@ select set_config(
   false
 );
 
-do $
+do $$
 begin
   if (
     select count(*)
@@ -429,7 +429,7 @@ begin
     raise exception 'Owner reassignment inbox backfill was incomplete.';
   end if;
 end
-$;
+$$;
 
 -- Even when history is already reviewed, pending Task verification must block
 -- source deletion. An explicit zero-feature verification unlocks only this item.

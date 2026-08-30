@@ -57,6 +57,7 @@ class NoteTasksPage extends StatefulWidget {
 
 class _NoteTasksPageState extends State<NoteTasksPage> {
   late final NoteTaskRepository _repository;
+  late final NoteTaskNotificationRepository? _notificationRepository;
   late final NotificationService _notificationService;
   late final bool _localNotificationSchedulingEnabled;
   final TextEditingController _searchController = TextEditingController();
@@ -76,6 +77,9 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
     super.initState();
     _repository = widget.repository ??
         SupabaseNoteTaskRepository(Supabase.instance.client);
+    _notificationRepository = _repository is NoteTaskNotificationRepository
+        ? _repository as NoteTaskNotificationRepository
+        : null;
     _notificationService = widget.notificationService ?? NotificationService();
     _localNotificationSchedulingEnabled =
         widget.repository == null || widget.notificationService != null;
@@ -97,7 +101,10 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
     }
     try {
       final tasksFuture = _repository.loadAllTasks();
-      final notificationsFuture = _repository.loadNotifications();
+      final notificationsFuture = _notificationRepository?.loadNotifications() ??
+          Future<List<NoteFeatureNotification>>.value(
+            const <NoteFeatureNotification>[],
+          );
       final tasks = await tasksFuture;
       final notifications = await notificationsFuture;
       tasks.sort(_compareTasks);
@@ -268,7 +275,9 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
       _error = null;
     });
     try {
-      await _repository.markNotificationRead(
+      final notificationRepository = _notificationRepository;
+      if (notificationRepository == null) return;
+      await notificationRepository.markNotificationRead(
         notification: notification,
         read: read,
       );
@@ -297,7 +306,9 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
       _error = null;
     });
     try {
-      await _repository.dismissNotification(notification);
+      final notificationRepository = _notificationRepository;
+      if (notificationRepository == null) return;
+      await notificationRepository.dismissNotification(notification);
       if (notification.isReminder && _localNotificationSchedulingEnabled) {
         await _notificationService.cancelNoteFeatureReminder(
           sourceKey: notification.sourceKey,
@@ -529,8 +540,8 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
                       final notification = _notifications[index];
                       return _NoteFeatureNotificationCard(
                         notification: notification,
-                        busy: _mutatingNotificationIds
-                            .contains(notification.id),
+                        busy:
+                            _mutatingNotificationIds.contains(notification.id),
                         onReadChanged: (read) {
                           unawaited(
                             _markNotificationRead(notification, read),
@@ -827,9 +838,8 @@ class _NoteFeatureNotificationCard extends StatelessWidget {
                   key: ValueKey(
                     'note_feature_notification_read_${notification.id}',
                   ),
-                  onPressed: busy
-                      ? null
-                      : () => onReadChanged(!notification.isRead),
+                  onPressed:
+                      busy ? null : () => onReadChanged(!notification.isRead),
                   icon: Icon(
                     notification.isRead
                         ? Icons.mark_email_unread_outlined
@@ -841,8 +851,7 @@ class _NoteFeatureNotificationCard extends StatelessWidget {
                   key: ValueKey(
                     'note_feature_notification_open_${notification.id}',
                   ),
-                  tooltip:
-                      onOpenNote == null ? '元のメモは共有されていません' : '元のメモを開く',
+                  tooltip: onOpenNote == null ? '元のメモは共有されていません' : '元のメモを開く',
                   onPressed: busy ? null : onOpenNote,
                   icon: const Icon(Icons.open_in_new),
                 ),

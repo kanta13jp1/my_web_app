@@ -321,7 +321,8 @@ void main() {
   });
 }
 
-class _FakeNoteTaskRepository implements NoteTaskRepository {
+class _FakeNoteTaskRepository
+    implements NoteTaskRepository, NoteTaskNotificationRepository {
   _FakeNoteTaskRepository(
     List<NoteTask> tasks, {
     List<NoteFeatureNotification> notifications =
@@ -445,7 +446,6 @@ class _FakeNoteTaskRepository implements NoteTaskRepository {
     required NoteTaskDraft draft,
   }) async {}
 }
-
 
 NoteFeatureNotification _notification({
   required String id,

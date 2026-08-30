@@ -237,27 +237,23 @@ class NoteTaskDraft {
   final bool repeatAfterCompletion;
 }
 
-abstract class NoteTaskRepository {
-  Future<List<NoteTask>> loadTasks({required int noteId});
-
-  Future<List<NoteTask>> loadAllTasks();
-
-  Future<List<NoteFeatureNotification>> loadNotifications() async {
-    return const <NoteFeatureNotification>[];
-  }
+abstract class NoteTaskNotificationRepository {
+  Future<List<NoteFeatureNotification>> loadNotifications();
 
   Future<void> markNotificationRead({
     required NoteFeatureNotification notification,
     required bool read,
-  }) {
-    throw UnsupportedError('Notification read state is not supported.');
-  }
+  });
 
   Future<void> dismissNotification(
     NoteFeatureNotification notification,
-  ) {
-    throw UnsupportedError('Notification dismissal is not supported.');
-  }
+  );
+}
+
+abstract class NoteTaskRepository {
+  Future<List<NoteTask>> loadTasks({required int noteId});
+
+  Future<List<NoteTask>> loadAllTasks();
 
   Future<void> createTask({
     required int noteId,
@@ -292,7 +288,8 @@ abstract class NoteTaskRepository {
   Future<void> deleteReminder(NoteTaskReminder reminder);
 }
 
-class SupabaseNoteTaskRepository implements NoteTaskRepository {
+class SupabaseNoteTaskRepository
+    implements NoteTaskRepository, NoteTaskNotificationRepository {
   SupabaseNoteTaskRepository(this._client);
 
   final SupabaseClient _client;
