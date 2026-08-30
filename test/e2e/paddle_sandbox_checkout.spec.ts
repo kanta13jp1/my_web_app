@@ -179,7 +179,7 @@ async function completeCardForm(page: Page, cardNumber: string) {
 
   await clickVisibleInFrames(
     page,
-    /^(pay now|subscribe now|complete purchase|purchase|buy now|start subscription)(?:\s.*)?$/i,
+    /^(?:pay\s+[$€£¥]\s*\d[\d.,]*|pay now|subscribe now|complete purchase|purchase|buy now|start subscription)(?:\s.*)?$/i,
     30_000,
   );
 }
