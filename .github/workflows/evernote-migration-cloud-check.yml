@@ -8,7 +8,9 @@ on:
       - 'lib/pages/import_page.dart'
       - 'lib/pages/note_editor_page.dart'
       - 'lib/pages/note_tasks_page.dart'
+      - 'lib/pages/note_navigation_page.dart'
       - 'lib/services/note_task_service.dart'
+      - 'lib/services/note_navigation_service.dart'
       - 'lib/widgets/note_tasks_panel.dart'
       - 'lib/pages/note_list_page.dart'
       - 'lib/main.dart'
@@ -18,6 +20,7 @@ on:
       - 'test/pages/import_page_test.dart'
       - 'test/pages/note_editor_page_test.dart'
       - 'test/pages/note_tasks_page_test.dart'
+      - 'test/pages/note_navigation_page_test.dart'
       - 'test/widgets/note_tasks_panel_test.dart'
       - 'test/pages/note_list_page_test.dart'
       - 'test/widgets/markdown_preview_test.dart'
@@ -37,7 +40,9 @@ on:
       - 'lib/pages/import_page.dart'
       - 'lib/pages/note_editor_page.dart'
       - 'lib/pages/note_tasks_page.dart'
+      - 'lib/pages/note_navigation_page.dart'
       - 'lib/services/note_task_service.dart'
+      - 'lib/services/note_navigation_service.dart'
       - 'lib/widgets/note_tasks_panel.dart'
       - 'lib/pages/note_list_page.dart'
       - 'lib/main.dart'
@@ -47,6 +52,7 @@ on:
       - 'test/pages/import_page_test.dart'
       - 'test/pages/note_editor_page_test.dart'
       - 'test/pages/note_tasks_page_test.dart'
+      - 'test/pages/note_navigation_page_test.dart'
       - 'test/widgets/note_tasks_panel_test.dart'
       - 'test/pages/note_list_page_test.dart'
       - 'test/widgets/markdown_preview_test.dart'
@@ -149,7 +155,9 @@ jobs:
               lib/pages/import_page.dart \
               lib/pages/note_editor_page.dart \
               lib/pages/note_tasks_page.dart \
+              lib/pages/note_navigation_page.dart \
               lib/services/note_task_service.dart \
+              lib/services/note_navigation_service.dart \
               lib/widgets/note_tasks_panel.dart \
               lib/pages/note_list_page.dart \
               lib/main.dart \
@@ -157,6 +165,7 @@ jobs:
               test/pages/import_page_test.dart \
               test/pages/note_editor_page_test.dart \
               test/pages/note_tasks_page_test.dart \
+              test/pages/note_navigation_page_test.dart \
               test/widgets/note_tasks_panel_test.dart \
               test/pages/note_list_page_test.dart \
               test/widgets/markdown_preview_test.dart
@@ -239,7 +248,7 @@ jobs:
 
 
   hierarchy-db-contract:
-    name: Evernote hierarchy, history, and Task database contract
+    name: Evernote hierarchy, navigation, history, and Task database contract
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -268,7 +277,7 @@ jobs:
       - name: Checkout immutable event revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Apply hierarchy, history, and Task migrations to disposable Postgres
+      - name: Apply hierarchy, navigation, history, and Task migrations to disposable Postgres
         shell: bash
         run: |
           set -euo pipefail
@@ -289,7 +298,11 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 \
             -f supabase/migrations/20260831031500_add_note_feature_notifications.sql
           psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831040000_add_evernote_navigation_inventory.sql
+          psql -X -v ON_ERROR_STOP=1 \
             -f supabase/tests/evernote_note_collections_contract.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_navigation_contract.sql
           psql -X -v ON_ERROR_STOP=1 \
             -f supabase/tests/evernote_note_tasks_contract.sql
           psql -X -v ON_ERROR_STOP=1 \
