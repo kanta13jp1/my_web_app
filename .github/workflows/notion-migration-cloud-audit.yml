@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Run focused unit tests
-        run: python test/scripts/test_notion_migration_cloud_audit.py
+        run: python -m unittest test.scripts.test_notion_migration_cloud_audit
 
   audit:
     if: github.event_name != 'pull_request'
@@ -51,7 +51,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Verify audit logic
-        run: python test/scripts/test_notion_migration_cloud_audit.py
+        run: python -m unittest test.scripts.test_notion_migration_cloud_audit
 
       - name: Read aggregate progress only
         run: >-
