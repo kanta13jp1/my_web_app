@@ -35,6 +35,13 @@ create index note_collections_owner_tree_order_idx
     normalized_name
   );
 
+grant insert (
+  description,
+  sort_order,
+  is_default,
+  is_pinned
+) on table public.note_collections to authenticated;
+
 grant update (
   description,
   sort_order,
