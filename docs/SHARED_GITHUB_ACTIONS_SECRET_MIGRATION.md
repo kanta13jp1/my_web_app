@@ -7,7 +7,7 @@ away from repository-level GitHub Actions secrets. The source-controlled
 inventory is `.github/privileged-workflow-credentials.json`.
 
 As of 2026-08-30, the operational inventory has 11 workflow files that resolve
-`ANTHROPIC_API_KEY`, 53 that resolve `SUPABASE_SERVICE_ROLE_KEY`, and 61 unique
+`ANTHROPIC_API_KEY`, 54 that resolve `SUPABASE_SERVICE_ROLE_KEY`, and 62 unique
 consumer workflows. The migration control workflow adds one source consumer
 and nine credential-canary jobs; it is tracked separately from the operational
 consumer count. The issue body's earlier 10 / 52 snapshot must not be used as
@@ -19,8 +19,30 @@ validation run [33301113215](https://github.com/kanta13jp1/my_web_app/actions/ru
 passed all nine canaries. Deletion run
 [33301289531](https://github.com/kanta13jp1/my_web_app/actions/runs/33301289531)
 removed the repository-level `ANTHROPIC_API_KEY` after revalidating every
-Environment. The Supabase repository copy remains until its exception ledger
-and reduced consumer inventory are merged and validated.
+Environment. PR [#5098](https://github.com/kanta13jp1/my_web_app/pull/5098)
+then merged the least-privilege replacements and the approved temporary
+service-role exception ledger. Final validation run
+[33302920644](https://github.com/kanta13jp1/my_web_app/actions/runs/33302920644)
+passed all nine Environment canaries plus the two anon-key public-read
+canaries. Deletion run
+[33302947473](https://github.com/kanta13jp1/my_web_app/actions/runs/33302947473)
+removed the repository-level `SUPABASE_SERVICE_ROLE_KEY`, and post-delete audit
+[33302986150](https://github.com/kanta13jp1/my_web_app/actions/runs/33302986150)
+revalidated all Environment credentials and proved both repository names
+absent.
+
+Internal canary PR [#5104](https://github.com/kanta13jp1/my_web_app/pull/5104)
+used no Environment and its dedicated
+[absence check](https://github.com/kanta13jp1/my_web_app/actions/runs/33303044722)
+proved that both secret expressions resolved empty. The PR was closed without
+merge and its branch was deleted. Its normal paid-AI policy check rejected the
+deliberate unguarded credential-name references as designed; the dedicated
+absence check, workflow syntax check, and security check succeeded, and the
+temporary workflow never reached `main`.
+
+Both tracked repository copies are now deleted and validated. Their required
+Environment copies remain available behind the declared main-only trust
+boundaries.
 
 An environment declaration alone does not isolate a job while a same-named
 repository secret still exists. Internal branches can use repository secrets,
@@ -217,9 +239,11 @@ The repository uses one production Supabase project,
 - `competitor-discovery.yml`: the `competitors` read uses anon; service role is
   injected only into the `competitor_candidates` staging write step.
 
-This reduces operational service-role consumers from 55 to 53 and removes the
-credential from read-only steps where RLS already grants access. The remaining
-seven trust-boundary groups require protected writes, service-role-only
+These changes reduced the then-current operational service-role consumers from
+55 to 53 and removed the credential from read-only steps where RLS already
+grants access. A subsequently merged production observability workflow added
+one declared consumer, so the current count is 54. The remaining seven
+trust-boundary groups require protected writes, service-role-only
 aggregate views, cross-user lifecycle operations, or security remediation.
 The approved temporary exceptions are recorded in
 `.github/privileged-workflow-credentials.json`; the static checker requires
