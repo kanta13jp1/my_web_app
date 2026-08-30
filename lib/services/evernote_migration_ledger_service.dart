@@ -70,6 +70,15 @@ class EvernoteMigrationItem {
     required this.sourceHistoryVersionCount,
     required this.importedHistoryVersionCount,
     required this.verifiedHistoryVersionCount,
+    this.taskStatus = 'pending',
+    this.sourceTaskCount = 0,
+    this.importedTaskCount = 0,
+    this.verifiedTaskCount = 0,
+    this.sourceTaskReminderCount = 0,
+    this.importedTaskReminderCount = 0,
+    this.verifiedTaskReminderCount = 0,
+    this.sourceNoteReminderPresent = false,
+    this.noteReminderVerified = false,
     this.sourceNoteId,
     this.targetNoteId,
     this.noteTitle,
@@ -85,12 +94,27 @@ class EvernoteMigrationItem {
   final int sourceHistoryVersionCount;
   final int importedHistoryVersionCount;
   final int verifiedHistoryVersionCount;
+  final String taskStatus;
+  final int sourceTaskCount;
+  final int importedTaskCount;
+  final int verifiedTaskCount;
+  final int sourceTaskReminderCount;
+  final int importedTaskReminderCount;
+  final int verifiedTaskReminderCount;
+  final bool sourceNoteReminderPresent;
+  final bool noteReminderVerified;
   final String? noteTitle;
 
   bool get isImported => targetNoteId != null;
 
   bool get historyDeletionGatePassed =>
       historyStatus == 'verified' || historyStatus == 'reviewed_no_versions';
+
+  bool get taskDeletionGatePassed =>
+      taskStatus == 'verified' || taskStatus == 'verified_no_features';
+
+  bool get sourceDeletionGatePassed =>
+      historyDeletionGatePassed && taskDeletionGatePassed;
 
   String get displayTitle {
     final title = noteTitle?.trim();
@@ -120,6 +144,19 @@ class EvernoteMigrationItem {
           _asIntValue(json['imported_history_version_count']),
       verifiedHistoryVersionCount:
           _asIntValue(json['verified_history_version_count']),
+      taskStatus: json['task_status']?.toString() ?? 'pending',
+      sourceTaskCount: _asIntValue(json['source_task_count']),
+      importedTaskCount: _asIntValue(json['imported_task_count']),
+      verifiedTaskCount: _asIntValue(json['verified_task_count']),
+      sourceTaskReminderCount:
+          _asIntValue(json['source_task_reminder_count']),
+      importedTaskReminderCount:
+          _asIntValue(json['imported_task_reminder_count']),
+      verifiedTaskReminderCount:
+          _asIntValue(json['verified_task_reminder_count']),
+      sourceNoteReminderPresent:
+          json['source_note_reminder_present'] == true,
+      noteReminderVerified: json['note_reminder_verified'] == true,
       noteTitle: _emptyStringToNull(note['title']),
     );
   }
@@ -281,6 +318,10 @@ class EvernoteMigrationLedgerService {
           'id,batch_id,source_item_key,source_note_id,target_note_id,status,'
           'history_status,source_history_version_count,'
           'imported_history_version_count,verified_history_version_count,'
+          'task_status,source_task_count,imported_task_count,'
+          'verified_task_count,source_task_reminder_count,'
+          'imported_task_reminder_count,verified_task_reminder_count,'
+          'source_note_reminder_present,note_reminder_verified,'
           'notes!evernote_migration_items_target_note_fkey(title)',
         )
         .eq('user_id', ownerId)

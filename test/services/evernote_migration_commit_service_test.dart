@@ -61,6 +61,20 @@ void main() {
           'space_name': 'Space A',
         },
       );
+      final committedTasks =
+          database.committedMetadata.single['tasks'] as List<dynamic>;
+      final committedReminder =
+          database.committedMetadata.single['note_reminder'];
+      expect(committedTasks, hasLength(1));
+      expect(
+        Map<String, dynamic>.from(committedTasks.single as Map)[
+            'source_sha256'],
+        hasLength(64),
+      );
+      expect(
+        Map<String, dynamic>.from(committedReminder as Map)['source_sha256'],
+        hasLength(64),
+      );
       expect(database.committedContents.single, contains('(attachment:'));
       expect(
         database.committedContents.single,
@@ -272,6 +286,35 @@ void main() {
       expect(database.verifyCalls, isEmpty);
     });
 
+    test('blocks verification when a committed Task hash mismatches',
+        () async {
+      final fixture = _fixture();
+      final storage = _FakeStorageGateway();
+      final database = _FakeDatabaseGateway(corruptTaskHashes: true);
+      final service = EvernoteMigrationCommitService(
+        ledger: _FakeLedgerGateway(),
+        storage: storage,
+        database: database,
+      );
+
+      await expectLater(
+        service.commit(
+          userId: _userId,
+          exportBytes: fixture.bytes,
+          preview: fixture.preview,
+          sourceContext: _sourceContext,
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('task_hashes'),
+          ),
+        ),
+      );
+      expect(database.verifyCalls, isEmpty);
+    });
+
     test('does not commit database rows when a stored hash mismatches',
         () async {
       final fixture = _fixture();
@@ -330,6 +373,39 @@ _Fixture _fixture() {
     <created>20240102T030405Z</created>
     <updated>20240203T040506Z</updated>
     <tag>migration</tag>
+    <note-attributes>
+      <reminder-order>1710000000000</reminder-order>
+      <reminder-time>20240701T090000Z</reminder-time>
+    </note-attributes>
+    <task>
+      <title>Structured follow up</title>
+      <created>20240601T010203Z</created>
+      <updated>20240602T020304Z</updated>
+      <taskStatus>open</taskStatus>
+      <inNote>true</inNote>
+      <taskFlag>priority</taskFlag>
+      <sortWeight>100</sortWeight>
+      <noteLevelID>task-1</noteLevelID>
+      <taskGroupNoteLevelID>group-1</taskGroupNoteLevelID>
+      <dueDate>20240710T090000Z</dueDate>
+      <dueDateUIOption>date_time</dueDateUIOption>
+      <timeZone>Asia/Tokyo</timeZone>
+      <recurrence>RRULE:FREQ=WEEKLY</recurrence>
+      <repeatAfterCompletion>true</repeatAfterCompletion>
+      <statusUpdated>20240602T020304Z</statusUpdated>
+      <creator>owner@example.com</creator>
+      <lastEditor>editor@example.com</lastEditor>
+      <reminder>
+        <created>20240601T010203Z</created>
+        <updated>20240602T020304Z</updated>
+        <noteLevelID>reminder-1</noteLevelID>
+        <reminderDate>20240709T090000Z</reminderDate>
+        <reminderDateUIOption>date_time</reminderDateUIOption>
+        <timeZone>Asia/Tokyo</timeZone>
+        <dueDateOffset>-86400000</dueDateOffset>
+        <reminderStatus>active</reminderStatus>
+      </reminder>
+    </task>
     <content><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">
 <en-note>Hello<en-media type="text/plain" hash="fixturehash"/></en-note>]]></content>
@@ -489,9 +565,13 @@ class _FakeStorageGateway implements EvernoteMigrationStorageGateway {
 }
 
 class _FakeDatabaseGateway implements EvernoteMigrationDatabaseGateway {
-  _FakeDatabaseGateway({this.notebookCollectionId = 9901});
+  _FakeDatabaseGateway({
+    this.notebookCollectionId = 9901,
+    this.corruptTaskHashes = false,
+  });
 
   final int? notebookCollectionId;
+  final bool corruptTaskHashes;
   final List<String> commitCalls = <String>[];
   final List<String> committedContents = <String>[];
   final List<Map<String, dynamic>> committedMetadata = <Map<String, dynamic>>[];
@@ -513,6 +593,28 @@ class _FakeDatabaseGateway implements EvernoteMigrationDatabaseGateway {
     committedContents.add(content);
     committedMetadata.add(Map<String, dynamic>.from(sourceMetadata));
     const noteId = 7001;
+    final taskPayloads = (sourceMetadata['tasks'] as List<dynamic>? ??
+            const <dynamic>[])
+        .map((value) => Map<String, dynamic>.from(value as Map))
+        .toList(growable: false);
+    final taskHashes = taskPayloads
+        .map((task) => task['source_sha256']?.toString() ?? '')
+        .toList(growable: false);
+    if (corruptTaskHashes && taskHashes.isNotEmpty) {
+      taskHashes[0] = 'corrupt';
+    }
+    final taskReminderHashes = taskPayloads
+        .expand(
+          (task) =>
+              (task['reminders'] as List<dynamic>? ?? const <dynamic>[])
+                  .map(
+                    (reminder) => Map<String, dynamic>.from(
+                      reminder as Map,
+                    )['source_sha256']?.toString() ?? '',
+                  ),
+        )
+        .toList(growable: false);
+    final noteReminder = sourceMetadata['note_reminder'];
     snapshots[noteId] = EvernoteCommittedNoteSnapshot(
       noteId: noteId,
       title: note.title,
@@ -532,6 +634,11 @@ class _FakeDatabaseGateway implements EvernoteMigrationDatabaseGateway {
             ),
           )
           .toList(growable: false),
+      taskSourceSha256: taskHashes,
+      taskReminderSourceSha256: taskReminderHashes,
+      noteReminderSourceSha256: noteReminder is Map
+          ? Map<String, dynamic>.from(noteReminder)['source_sha256']?.toString()
+          : null,
     );
     return noteId;
   }

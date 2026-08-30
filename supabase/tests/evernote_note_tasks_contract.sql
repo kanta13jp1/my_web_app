@@ -77,8 +77,6 @@ select set_config(
 );
 
 do $$
-declare
-  v_note_id bigint;
 begin
   if (select count(*) from public.note_tasks) <> 0 then
     raise exception 'RLS exposed another user Tasks.';
@@ -90,11 +88,6 @@ begin
     raise exception 'RLS exposed another user note reminders.';
   end if;
 
-  select id into strict v_note_id
-  from public.notes
-  where user_id = '00000000-0000-4000-8000-000000000102'
-  limit 1;
-
   begin
     insert into public.note_tasks (
       note_id,
@@ -104,7 +97,7 @@ begin
       task_group_note_level_id
     )
     values (
-      v_note_id,
+      0,
       '00000000-0000-4000-8000-000000000101',
       'Forged',
       'forged-task',
@@ -115,9 +108,6 @@ begin
     when insufficient_privilege then
       null;
   end;
-exception
-  when no_data_found then
-    null;
 end
 $$;
 

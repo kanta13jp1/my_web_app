@@ -159,6 +159,9 @@ class EvernoteCommittedNoteSnapshot {
     required this.tags,
     required this.notebookCollectionId,
     required this.attachments,
+    required this.taskSourceSha256,
+    required this.taskReminderSourceSha256,
+    required this.noteReminderSourceSha256,
   });
 
   final int noteId;
@@ -169,6 +172,9 @@ class EvernoteCommittedNoteSnapshot {
   final List<String> tags;
   final int? notebookCollectionId;
   final List<EvernoteCommittedAttachmentSnapshot> attachments;
+  final List<String> taskSourceSha256;
+  final List<String> taskReminderSourceSha256;
+  final String? noteReminderSourceSha256;
 }
 
 class EvernoteMigrationCommitResult {
@@ -534,7 +540,7 @@ class SupabaseEvernoteMigrationDatabaseGateway
     required String archivePath,
   }) async {
     final response = await _client.rpc(
-      'evernote_commit_note_with_hierarchy',
+      'evernote_commit_note_with_features',
       params: <String, dynamic>{
         'p_batch_id': batchId,
         'p_source_item_key': sourceItemKey,
@@ -545,6 +551,8 @@ class SupabaseEvernoteMigrationDatabaseGateway
         'p_tags': note.tags,
         'p_source_enml': note.enml,
         'p_source_metadata': sourceMetadata,
+        'p_tasks': sourceMetadata['tasks'] ?? const <dynamic>[],
+        'p_note_reminder': sourceMetadata['note_reminder'],
         'p_resources': resources
             .map((resource) => resource.toJson())
             .toList(growable: false),
@@ -588,6 +596,41 @@ class SupabaseEvernoteMigrationDatabaseGateway
           ),
         )
         .toList(growable: false);
+    final taskResponse = await _client
+        .from('note_tasks')
+        .select('source_sha256')
+        .eq('note_id', noteId)
+        .eq('source_system', 'evernote')
+        .order('source_sha256');
+    final taskReminderResponse = await _client
+        .from('note_task_reminders')
+        .select('source_sha256')
+        .eq('note_id', noteId)
+        .eq('source_system', 'evernote')
+        .order('source_sha256');
+    final noteReminderResponse = await _client
+        .from('note_reminders')
+        .select('source_sha256')
+        .eq('note_id', noteId)
+        .eq('source_system', 'evernote')
+        .limit(1);
+    final taskSourceSha256 = taskResponse
+        .map(
+          (row) =>
+              Map<String, dynamic>.from(row)['source_sha256']?.toString() ?? '',
+        )
+        .toList(growable: false);
+    final taskReminderSourceSha256 = taskReminderResponse
+        .map(
+          (row) =>
+              Map<String, dynamic>.from(row)['source_sha256']?.toString() ?? '',
+        )
+        .toList(growable: false);
+    final noteReminderSourceSha256 = noteReminderResponse.isEmpty
+        ? null
+        : Map<String, dynamic>.from(noteReminderResponse.first)[
+                'source_sha256']
+            ?.toString();
     return EvernoteCommittedNoteSnapshot(
       noteId: _asInt(noteJson['id']),
       title: noteJson['title']?.toString() ?? '',
@@ -601,6 +644,9 @@ class SupabaseEvernoteMigrationDatabaseGateway
           ? null
           : _asInt(noteJson['notebook_collection_id']),
       attachments: attachments,
+      taskSourceSha256: taskSourceSha256,
+      taskReminderSourceSha256: taskReminderSourceSha256,
+      noteReminderSourceSha256: noteReminderSourceSha256,
     );
   }
 
@@ -611,7 +657,7 @@ class SupabaseEvernoteMigrationDatabaseGateway
     required Map<String, bool> checks,
   }) async {
     await _client.rpc(
-      'evernote_verify_note_with_hierarchy',
+      'evernote_verify_note_with_features',
       params: <String, dynamic>{
         'p_batch_id': batchId,
         'p_source_item_key': sourceItemKey,
@@ -895,9 +941,8 @@ class EvernoteMigrationCommitService {
           'content_sha256': note.contentSha256,
           'attributes': note.attributes,
           'links': note.links,
-          'tasks':
-              note.tasks.map((task) => task.toJson()).toList(growable: false),
-          'note_reminder': note.noteReminder?.toJson(),
+          'tasks': _evernoteTaskPayloads(note),
+          'note_reminder': _evernoteNoteReminderPayload(note),
           'raw_note_xml_sha256':
               sha256.convert(utf8.encode(note.rawXml)).toString(),
           'archive_path': archivePath,
@@ -1244,9 +1289,8 @@ class EvernoteMigrationCommitService {
             'content_sha256': note.contentSha256,
             'attributes': note.attributes,
             'links': note.links,
-            'tasks':
-                note.tasks.map((task) => task.toJson()).toList(growable: false),
-            'note_reminder': note.noteReminder?.toJson(),
+          'tasks': _evernoteTaskPayloads(note),
+          'note_reminder': _evernoteNoteReminderPayload(note),
             'raw_note_xml_sha256':
                 sha256.convert(utf8.encode(note.rawXml)).toString(),
             'archive_path': archivePath,
@@ -1359,6 +1403,37 @@ class EvernoteMigrationCommitService {
       }
     }
 
+    final expectedTaskPayloads = _evernoteTaskPayloads(note);
+    final expectedTaskHashes = expectedTaskPayloads
+        .map((task) => task['source_sha256']?.toString() ?? '')
+        .toList(growable: false);
+    final expectedTaskReminderHashes = expectedTaskPayloads
+        .expand(
+          (task) =>
+              (task['reminders'] as List<dynamic>? ?? const <dynamic>[])
+                  .map(
+                    (reminder) => Map<String, dynamic>.from(
+                      reminder as Map,
+                    )['source_sha256']?.toString() ?? '',
+                  ),
+        )
+        .toList(growable: false);
+    final expectedNoteReminderHash =
+        _evernoteNoteReminderPayload(note)?['source_sha256']?.toString();
+    final taskCountMatches =
+        snapshot.taskSourceSha256.length == expectedTaskHashes.length;
+    final taskHashesMatch = taskCountMatches &&
+        _sameStringSets(snapshot.taskSourceSha256, expectedTaskHashes);
+    final taskReminderHashesMatch =
+        snapshot.taskReminderSourceSha256.length ==
+                expectedTaskReminderHashes.length &&
+            _sameStringSets(
+              snapshot.taskReminderSourceSha256,
+              expectedTaskReminderHashes,
+            );
+    final noteReminderHashMatches =
+        snapshot.noteReminderSourceSha256 == expectedNoteReminderHash;
+
     final checks = <String, bool>{
       'archive_sha256': archiveVerified,
       'note_content': contentMatches,
@@ -1367,6 +1442,10 @@ class EvernoteMigrationCommitService {
       'resource_count': resourceCountMatches,
       'resource_sha256': resourceHashesMatch,
       'hierarchy': (snapshot.notebookCollectionId ?? 0) > 0,
+      'task_count': taskCountMatches,
+      'task_hashes': taskHashesMatch,
+      'task_reminder_hashes': taskReminderHashesMatch,
+      'note_reminder_hash': noteReminderHashMatches,
     };
     if (checks.values.any((passed) => !passed)) {
       final failed = checks.entries
@@ -1476,6 +1555,13 @@ class EvernoteMigrationCommitService {
         stored.toUtc().microsecondsSinceEpoch;
   }
 
+  bool _sameStringSets(List<String> left, List<String> right) {
+    if (left.length != right.length) return false;
+    final sortedLeft = <String>[...left]..sort();
+    final sortedRight = <String>[...right]..sort();
+    return _sameStrings(sortedLeft, sortedRight);
+  }
+
   bool _sameStrings(List<String> left, List<String> right) {
     if (left.length != right.length) return false;
     for (var index = 0; index < left.length; index += 1) {
@@ -1483,6 +1569,33 @@ class EvernoteMigrationCommitService {
     }
     return true;
   }
+}
+
+List<Map<String, dynamic>> _evernoteTaskPayloads(EvernoteEnexNote note) {
+  return note.tasks.map((task) {
+    final payload = Map<String, dynamic>.from(task.toJson());
+    payload['reminders'] = task.reminders
+        .map(
+          (reminder) => _evernoteSourcePayload(reminder.toJson()),
+        )
+        .toList(growable: false);
+    return _evernoteSourcePayload(payload);
+  }).toList(growable: false);
+}
+
+Map<String, dynamic>? _evernoteNoteReminderPayload(EvernoteEnexNote note) {
+  final reminder = note.noteReminder;
+  if (reminder == null) return null;
+  return _evernoteSourcePayload(reminder.toJson());
+}
+
+Map<String, dynamic> _evernoteSourcePayload(Map<String, dynamic> source) {
+  final payload = Map<String, dynamic>.from(source)..remove('source_sha256');
+  return <String, dynamic>{
+    ...payload,
+    'source_sha256':
+        sha256.convert(utf8.encode(jsonEncode(payload))).toString(),
+  };
 }
 
 String? _trimmedOrNull(String? value) {
