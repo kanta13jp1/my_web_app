@@ -117,6 +117,18 @@ AGENTLESS_COURSE_MIGRATION = (
 )
 AGENTLESS_COURSE_ID = "50609809-2da6-41ba-9c35-4bbec9668493"
 AGENTLESS_TASK_VERSION = "agentless_lab_20260830_v1"
+AGENTLESS_COMPLETION_INSERT_SQL = (
+    "insert into public.ai_university_agentless_lab_events ("
+    "event_name, task_version, python_version, agentless_release, "
+    "agentless_revision, dataset, dataset_revision, instance_id, model, "
+    "candidate_count, max_threads, prompt_tokens, completion_tokens, "
+    "embedding_tokens, api_cost_usd, predicted_api_cost_usd, "
+    "wall_time_seconds, localization_correct, regression_result, "
+    "reproduction_result, test_result, reproducibility_result, "
+    "workplace_application) values ("
+    "'lab_completed', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "
+    "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+)
 VOICE_DUBBING_BOOTSTRAP = (
     ROOT / "supabase" / "tests" / "voice_dubbing_bootstrap.sql"
 )
@@ -1138,16 +1150,7 @@ def check_agentless_course_migration(conn: Any) -> dict[str, Any]:
         with conn.cursor() as cur:
             cur.execute("set local role authenticated")
             cur.execute(
-                "insert into public.ai_university_agentless_lab_events ("
-                "event_name, task_version, python_version, agentless_release, "
-                "agentless_revision, dataset, dataset_revision, instance_id, model, "
-                "candidate_count, max_threads, prompt_tokens, completion_tokens, "
-                "embedding_tokens, api_cost_usd, predicted_api_cost_usd, "
-                "wall_time_seconds, localization_correct, regression_result, "
-                "reproduction_result, test_result, reproducibility_result, "
-                "workplace_application) values ("
-                "'lab_completed', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "
-                "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                AGENTLESS_COMPLETION_INSERT_SQL,
                 (AGENTLESS_TASK_VERSION, *completed_values),
             )
 

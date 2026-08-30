@@ -147,6 +147,10 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
         self.assertIn("service-role-only aggregate view", checks)
         self.assertIn("applies twice", checks)
 
+    def test_agentless_completion_insert_matches_fixed_manifest_shape(self) -> None:
+        self.assertEqual(module.AGENTLESS_COMPLETION_INSERT_SQL.count("%s"), 22)
+        self.assertIn("'lab_completed'", module.AGENTLESS_COMPLETION_INSERT_SQL)
+
     def test_plan_includes_app_analytics_write_boundary(self) -> None:
         plan = module.build_plan(
             ROOT / "test" / "fixtures" / "testcontainers" / "sql",
