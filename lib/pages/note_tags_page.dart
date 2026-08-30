@@ -327,7 +327,6 @@ class _NoteTagsPageState extends State<NoteTagsPage> {
         ],
       ),
     );
-    controller.dispose();
     if (name == null || name.isEmpty) return;
     await _mutate(
       tag == null
