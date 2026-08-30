@@ -37,7 +37,7 @@ const b2bExpectedTax = process.env.PADDLE_SANDBOX_B2B_EXPECTED_TAX ?? '';
 test.use({ screenshot: 'off', trace: 'off', video: 'off' });
 
 test.describe('real Paddle sandbox checkout', () => {
-  test.describe.configure({ mode: 'serial' });
+  test.describe.configure({ mode: 'serial', timeout: 180_000 });
   test.skip(
     !realSandboxEnabled,
     'Set PADDLE_SANDBOX_E2E=true only in the guarded manual cloud workflow.',
@@ -58,15 +58,15 @@ test.describe('real Paddle sandbox checkout', () => {
     expect(eventNames(events)).not.toContain('checkout.completed');
   });
 
-  test('declined card emits failure and Flutter keeps failure state', async ({
+  test('declined card emits failure and Flutter renders error state', async ({
     page,
     browser,
   }, testInfo) => {
     await openFlutterCheckout(page);
     await completeCardForm(page, '4000000000000002');
-    await expectFlutterText(page, 'Sandbox 決済に失敗しました。', 60_000);
-    await closeCheckout(page);
-    await expectFlutterText(page, 'Sandbox 決済に失敗しました。');
+    await expect(
+      page.getByRole('button', { name: 'もう一度試す' }),
+    ).toBeVisible({ timeout: 60_000 });
 
     const events = await collectEvidence(page, testInfo, 'failure', {
       browserVersion: browser.version(),
@@ -78,20 +78,22 @@ test.describe('real Paddle sandbox checkout', () => {
         ),
       ]),
     );
+    await closeCheckoutIfPresent(page);
+    await expect(
+      page.getByRole('button', { name: 'もう一度試す' }),
+      'checkout.closed must not replace the failed terminal state',
+    ).toBeVisible({ timeout: 30_000 });
   });
 
-  test('valid test card completes and Flutter keeps success state', async ({
+  test('valid test card completes and Flutter renders success state', async ({
     page,
     browser,
   }, testInfo) => {
     await openFlutterCheckout(page);
     await completeCardForm(page, '4242424242424242');
-    await expectFlutterText(page, 'Sandbox 決済が完了しました。', 90_000);
-    await closeCheckoutIfPresent(page);
-    await expectFlutterText(page, 'Sandbox 決済が完了しました。');
     await expect(
       page.getByRole('button', { name: 'ホームへ戻る' }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 90_000 });
 
     const events = await collectEvidence(page, testInfo, 'success', {
       browserVersion: browser.version(),
@@ -101,6 +103,11 @@ test.describe('real Paddle sandbox checkout', () => {
       events.some((event) => Boolean(event.transactionId)),
       'checkout.completed evidence should include a transaction ID',
     ).toBe(true);
+    await closeCheckoutIfPresent(page);
+    await expect(
+      page.getByRole('button', { name: 'ホームへ戻る' }),
+      'checkout.closed must not replace the completed terminal state',
+    ).toBeVisible({ timeout: 30_000 });
   });
 
   test('business VAT ID is accepted and tax is recalculated', async ({
@@ -138,12 +145,8 @@ test.describe('real Paddle sandbox checkout', () => {
 });
 
 async function openFlutterCheckout(page: Page) {
-  await page.addInitScript(() => {
-    if (window === window.top && window.location.hostname === 'localhost') {
-      window.history.replaceState(null, '', '/subscription-billing');
-    }
-  });
-  const response = await page.goto('/', {
+  // The evidence server falls back to index.html for Flutter path routes.
+  const response = await page.goto('/subscription-billing', {
     waitUntil: 'domcontentloaded',
   });
   expect(response?.ok()).toBe(true);
@@ -159,16 +162,17 @@ async function openFlutterCheckout(page: Page) {
   );
   await enableFlutterAccessibility(page);
 
-  await expect(page.getByText('Paddle checkout 検証')).toBeVisible({
+  const checkoutButton = page.getByRole('button', {
+    name: /Paddle sandbox を開く|もう一度試す/,
+  });
+  await expect(checkoutButton).toBeVisible({
     timeout: 30_000,
   });
-  await page
-    .getByRole('button', { name: /Paddle sandbox を開く|もう一度試す/ })
-    .click();
+  await checkoutButton.scrollIntoViewIfNeeded();
+  await checkoutButton.click();
   await expect(page.locator('iframe[name="paddle_frame"]')).toBeVisible({
     timeout: 30_000,
   });
-  await expectFlutterText(page, 'Paddle sandbox checkout を表示しています。');
 }
 
 async function enableFlutterAccessibility(page: Page) {
@@ -177,7 +181,13 @@ async function enableFlutterAccessibility(page: Page) {
     () => undefined,
   );
   if ((await placeholder.count()) > 0) {
-    await placeholder.click({ force: true });
+    // Flutter's semantics placeholder can be intentionally zero-sized and
+    // outside the rendered viewport. Dispatch the element's click handler
+    // directly so headless cloud runners can enable accessibility without a
+    // coordinate-based Playwright click.
+    await placeholder.evaluate((element) =>
+      (element as HTMLElement).click(),
+    );
   }
 }
 
@@ -224,12 +234,12 @@ async function completeCardPayment(page: Page, cardNumber: string) {
     '100',
     'input[autocomplete="cc-csc"]',
   );
-  await fillIfVisible(page, /name on card|cardholder/i, 'Paddle Sandbox Test');
+  await fillIfVisible(page, /name on card|card\s*holder/i, 'Paddle Sandbox Test');
   await fillIfVisible(page, /zip|postal/i, '10001');
 
   await clickVisibleInFrames(
     page,
-    /^(pay now|subscribe now|complete purchase|purchase|buy now|start subscription)(?:\s.*)?$/i,
+    /^(?:pay\s+[$€£¥]\s*\d[\d.,]*|pay now|subscribe now|complete purchase|purchase|buy now|start subscription)(?:\s.*)?$/i,
     30_000,
   );
 }
@@ -395,6 +405,7 @@ async function closeCheckoutIfPresent(page: Page) {
   const frame = page.locator('iframe[name="paddle_frame"]');
   if (!(await frame.isVisible().catch(() => false))) return;
   await closeCheckout(page);
+  await expect(frame).toBeHidden({ timeout: 30_000 });
 }
 
 async function expectFlutterText(

@@ -217,13 +217,14 @@ void main() {
     tester,
   ) async {
     const secret = 'internal-token=do-not-render';
+    final billing = _FakeBillingGateway(
+      fetchStatusError: BillingServiceException(secret, statusCode: 503),
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: SubscriptionBillingPage(
-          service: _FakeBillingGateway(
-            fetchStatusError: BillingServiceException(secret, statusCode: 503),
-          ),
+          service: billing,
           tracker: const NoopActivationRevenueEventTracker(),
           assignment: _treatment,
           initialUri: Uri.parse('https://example.com/subscription-billing'),
@@ -234,17 +235,27 @@ void main() {
 
     expect(find.text('プラン情報を読み込めませんでした。時間をおいて再度お試しください。'), findsOneWidget);
     expect(find.textContaining(secret), findsNothing);
+    final retryButton = find.byKey(const Key('billing_error_retry_button'));
+    expect(retryButton, findsOneWidget);
+
+    await tester.ensureVisible(retryButton);
+    await tester.tap(retryButton);
+    await tester.pumpAndSettle();
+
+    expect(billing.fetchStatusCount, 2);
+    expect(find.textContaining(secret), findsNothing);
   });
 
   testWidgets('does not expose checkout exception details', (tester) async {
     const secret = 'stripe-secret=do-not-render';
+    final billing = _FakeBillingGateway(
+      checkoutError: BillingServiceException(secret, statusCode: 500),
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: SubscriptionBillingPage(
-          service: _FakeBillingGateway(
-            checkoutError: BillingServiceException(secret, statusCode: 500),
-          ),
+          service: billing,
           acquisitionService: _RecordingAcquisitionService(),
           tracker: const NoopActivationRevenueEventTracker(),
           assignment: _treatment,
@@ -260,6 +271,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('決済画面を準備できませんでした。時間をおいて再度お試しください。'), findsOneWidget);
+    expect(find.textContaining(secret), findsNothing);
+    final retryButton = find.byKey(const Key('billing_error_retry_button'));
+    expect(retryButton, findsOneWidget);
+
+    await tester.ensureVisible(retryButton);
+    await tester.tap(retryButton);
+    await tester.pumpAndSettle();
+
+    expect(billing.checkoutAttemptCount, 2);
     expect(find.textContaining(secret), findsNothing);
   });
 
@@ -411,6 +431,7 @@ class _FakeBillingGateway implements BillingGateway {
   final Exception? fetchStatusError;
   final Exception? checkoutError;
   int fetchStatusCount = 0;
+  int checkoutAttemptCount = 0;
   BillingSupporterAttribution? supporterAttribution;
   String? checkoutReturnUrl;
 
@@ -428,6 +449,7 @@ class _FakeBillingGateway implements BillingGateway {
     required String returnUrl,
     BillingCheckoutAttribution attribution = const BillingCheckoutAttribution(),
   }) async {
+    checkoutAttemptCount += 1;
     checkoutReturnUrl = returnUrl;
     final error = checkoutError;
     if (error != null) throw error;

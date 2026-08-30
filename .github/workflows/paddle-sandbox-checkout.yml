@@ -8,6 +8,11 @@ on:
         required: true
         default: false
         type: boolean
+      run_static_validation:
+        description: Run analysis, focused tests, and compile-only Web builds first
+        required: true
+        default: true
+        type: boolean
   pull_request:
     branches:
       - main
@@ -40,6 +45,7 @@ concurrency:
 jobs:
   validate:
     name: Analyze, browser-test, and build in cloud
+    if: github.event_name != 'workflow_dispatch' || inputs.run_static_validation
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -199,7 +205,11 @@ jobs:
 
   real-sandbox-e2e:
     name: Real Paddle sandbox checkout and B2B VAT
-    if: github.event_name == 'workflow_dispatch' && inputs.run_real_sandbox_e2e
+    if: >-
+      always() &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.run_real_sandbox_e2e &&
+      (needs.validate.result == 'success' || needs.validate.result == 'skipped')
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -218,6 +228,8 @@ jobs:
       PADDLE_SANDBOX_B2B_EXPECTED_TAX: ${{ vars.PADDLE_SANDBOX_B2B_EXPECTED_TAX }}
       PADDLE_SANDBOX_E2E: 'true'
       E2E_BASE_URL: http://localhost:7357
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL_DEV }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_DEV || secrets.SUPABASE_ANON_KEY_DEV }}
 
     steps:
       - name: Checkout code
@@ -275,6 +287,14 @@ jobs:
             echo '::error::PADDLE_SANDBOX_B2B_EXPECTED_TAX must be a Paddle minor-unit integer.'
             exit 1
           fi
+          if [[ -z "$SUPABASE_URL" || -z "$SUPABASE_PUBLISHABLE_KEY" ]]; then
+            echo '::error::The development Supabase URL and publishable key are required to start the Flutter app.'
+            exit 1
+          fi
+          if [[ "$SUPABASE_PUBLISHABLE_KEY" == sb_secret_* ]]; then
+            echo '::error::A Supabase secret key must never be compiled into Flutter Web.'
+            exit 1
+          fi
 
       - name: Setup Flutter
         uses: ./.github/actions/setup-flutter-sdk
@@ -301,6 +321,9 @@ jobs:
           set -euo pipefail
           mkdir -p .ci-logs
           flutter build web --debug --pwa-strategy=none \
+            --dart-define=ENVIRONMENT=development \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
             --dart-define=PADDLE_SANDBOX_ENABLED=true \
             --dart-define=PADDLE_SANDBOX_CLIENT_TOKEN="$PADDLE_SANDBOX_CLIENT_TOKEN" \
             --dart-define=PADDLE_SANDBOX_PRICE_ID="$PADDLE_SANDBOX_PRICE_ID" \
@@ -311,12 +334,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m http.server 7357 --directory build/web \
+          python3 scripts/flutter_spa_server.py \
+            --directory build/web \
+            --port 7357 \
             > .ci-logs/paddle-real-sandbox-server.log 2>&1 &
           echo "$!" > .ci-logs/paddle-real-sandbox-server.pid
           for attempt in $(seq 1 30); do
-            if curl --fail --silent --show-error http://localhost:7357/ \
-              > /dev/null; then
+            if curl --fail --silent --show-error \
+              http://localhost:7357/subscription-billing \
+              --output .ci-logs/paddle-real-sandbox-health.html \
+              && grep --quiet '<title>' \
+                .ci-logs/paddle-real-sandbox-health.html; then
               exit 0
             fi
             sleep 1

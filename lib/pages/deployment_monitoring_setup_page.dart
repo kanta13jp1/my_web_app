@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:my_web_app/models/micro_survey.dart';
 import 'package:my_web_app/services/deployment_monitoring_service.dart';
+import 'package:my_web_app/services/micro_survey_repository.dart';
+import 'package:my_web_app/widgets/micro_survey_bottom_sheet.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DeploymentMonitoringSetupPage extends StatefulWidget {
@@ -79,6 +82,15 @@ class _DeploymentMonitoringSetupPageState
         _saveMessage =
             setup.autoMonitoringEnabled ? 'モニタリング設定を作成しました' : 'オプトアウトを記録しました';
       });
+      await presentMicroSurveyIfEligible(
+        context: context,
+        repository: SupabaseMicroSurveyRepository(_supabase),
+        surveyContext: const MicroSurveyContext(
+          trigger: MicroSurveyTrigger.deploymentMonitoringCreated,
+          route: '/deployment-monitoring',
+          resourceType: 'deployment_monitoring_setup',
+        ),
+      );
     } catch (error) {
       if (!mounted) return;
       setState(() => _saveMessage = '保存は未完了です: $error');

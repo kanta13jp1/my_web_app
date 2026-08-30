@@ -1,0 +1,75 @@
+name: Notion Migration Cloud Audit
+
+on:
+  pull_request:
+    paths:
+      - .github/privileged-workflow-credentials.json
+      - .github/workflows/notion-migration-cloud-audit.yml
+      - docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md
+      - scripts/notion_migration_cloud_audit.py
+      - scripts/notion_wbs_import_plan.py
+      - test/scripts/test_notion_migration_cloud_audit.py
+      - test/scripts/test_notion_wbs_import_plan.py
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: notion-migration-cloud-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    if: github.event_name == 'pull_request'
+    name: Validate content-free audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Run focused unit tests
+        run: |
+          PYTHONPATH=. python test/scripts/test_notion_migration_cloud_audit.py
+          PYTHONPATH=. python test/scripts/test_notion_wbs_import_plan.py
+
+  audit:
+    if: github.event_name != 'pull_request'
+    name: Read aggregate migration evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: wbs-automation-production
+      deployment: false
+    permissions:
+      contents: read
+    env:
+      PYTHONPATH: .
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Verify audit logic
+        run: |
+          PYTHONPATH=. python test/scripts/test_notion_migration_cloud_audit.py
+          PYTHONPATH=. python test/scripts/test_notion_wbs_import_plan.py
+
+      - name: Read aggregate progress only
+        run: >-
+          python scripts/notion_migration_cloud_audit.py
+          --json-output notion-migration-audit.json
+          --summary-output "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve sanitized counts briefly
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: notion-migration-audit-${{ github.run_id }}
+          path: notion-migration-audit.json
+          if-no-files-found: error
+          retention-days: 1

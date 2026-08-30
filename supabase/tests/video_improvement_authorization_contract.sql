@@ -23,6 +23,7 @@ declare
   v_replay jsonb;
   v_authorization uuid;
   v_job uuid;
+  v_retry_job uuid;
   v_blocked boolean := false;
 begin
   insert into public.video_credit_accounts (user_id, available_credits)
@@ -142,20 +143,45 @@ begin
     'a failed wake must refund credits while still counting the bounded attempt'
   );
 
+  v_result := public.video_reserve_authorized_improvement(
+    v_user,
+    v_authorization,
+    v_artifact,
+    v_review,
+    'authorization-contract-2'
+  );
+  v_retry_job := (v_result ->> 'job_id')::uuid;
+  perform pg_temp.assert_true(
+    v_retry_job <> v_job
+      and (v_result ->> 'available_credits')::bigint = 100
+      and (v_result ->> 'reserved_credits')::bigint = 300
+      and (v_result ->> 'authorization_remaining_regenerations')::integer = 0
+      and exists (
+        select 1
+        from public.video_generation_jobs
+        where id = v_retry_job
+          and status = 'queued'
+          and authorization_id = v_authorization
+          and parent_artifact_id = v_artifact
+          and applied_review_id = v_review
+      ),
+    'a failed child must be retryable within the remaining bounded approval'
+  );
+
   begin
     perform public.video_reserve_authorized_improvement(
       v_user,
       v_authorization,
       v_artifact,
       v_review,
-      'authorization-contract-2'
+      'authorization-contract-3'
     );
   exception when others then
-    v_blocked := sqlerrm = 'improvement_review_already_consumed';
+    v_blocked := sqlerrm = 'video_authorization_exhausted';
   end;
   perform pg_temp.assert_true(
     v_blocked,
-    'the exact review must never be consumed by two child jobs'
+    'the recurring approval must stop after its configured attempt limit'
   );
 
   perform pg_temp.assert_true(
