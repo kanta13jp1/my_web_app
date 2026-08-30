@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '35 0 * * *'  # daily 09:35 JST (2026-07-17 ci-audit: 00:00 UTC 8本集中を分散)
   workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Codex Cloud Branch Cleanup
+    types:
+      - completed
 
 concurrency:
   group: codex-backlog-check-${{ github.ref }}
@@ -191,6 +196,7 @@ jobs:
             echo "- Review each ready PR and merge or request changes."
             echo "- Rebase or fresh-port conflicted PRs before review."
             echo "- Delete closed or already-applied branches only after owner confirmation."
+            echo "- Prefer the manual Codex Cloud Branch Cleanup workflow (dry-run first) so branch audit and deletion run on GitHub-hosted compute."
             echo "- For stale branches without useful PRs, close, delete, or rebase them."
             echo
             echo "Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
