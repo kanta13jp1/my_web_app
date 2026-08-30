@@ -117,6 +117,40 @@ def _canonical_row(rows: list[dict[str, Any]]) -> dict[str, Any]:
     )[0]
 
 
+def _invalid_content(content: dict[str, Any]) -> bool:
+    return (
+        not content["title"].strip()
+        or content["progress"] is None
+        or len(content["title"]) > 10000
+    )
+
+
+def _compare_to_destination(
+    source: dict[str, Any],
+    source_row: dict[str, Any],
+    destination: dict[str, Any] | None,
+) -> str:
+    if destination is None:
+        return "insert"
+    if source == _site_content(destination):
+        return "unchanged"
+    source_time = _timestamp(source_row.get("source_updated_at"))
+    destination_time = _timestamp(destination.get("updated_at"))
+    if (
+        source_time is not None
+        and destination_time is not None
+        and source_time > destination_time
+    ):
+        return "update_from_notion"
+    if (
+        source_time is not None
+        and destination_time is not None
+        and source_time < destination_time
+    ):
+        return "site_newer_preserved"
+    return "manual_timestamp_conflict"
+
+
 def build_wbs_import_plan(
     staged_rows: list[dict[str, Any]],
     site_rows: list[dict[str, Any]],
@@ -151,7 +185,7 @@ def build_wbs_import_plan(
 
     site_by_id: dict[str, dict[str, Any]] = {}
     site_invalid_id_rows = 0
-    site_title_owners: dict[tuple[str, str], str] = {}
+    site_title_owners: dict[tuple[str, str], set[str]] = {}
     for row in site_rows:
         task_id = _normalized_uuid(row.get("id"))
         if task_id is None:
@@ -159,22 +193,20 @@ def build_wbs_import_plan(
             continue
         site_by_id[task_id] = row
         content = _site_content(row)
-        site_title_owners[(content["title"], content["instance"])] = task_id
+        key = (content["title"], content["instance"])
+        site_title_owners.setdefault(key, set()).add(task_id)
+    site_title_duplicate_groups = sum(
+        1 for owners in site_title_owners.values() if len(owners) > 1
+    )
 
-    desired_key_owners: dict[tuple[str, str], set[str]] = {}
+    logical_groups: dict[
+        tuple[str, str],
+        list[tuple[str, dict[str, Any]]],
+    ] = {}
     for task_id, row in canonical.items():
         content = _staged_content(row)
         key = (content["title"], content["instance"])
-        desired_key_owners.setdefault(key, set()).add(task_id)
-
-    title_conflict_ids: set[str] = set()
-    for key, desired_ids in desired_key_owners.items():
-        site_owner = site_title_owners.get(key)
-        for task_id in desired_ids:
-            if site_owner is not None and site_owner != task_id:
-                title_conflict_ids.add(task_id)
-        if len(desired_ids) > 1:
-            title_conflict_ids.update(desired_ids)
+        logical_groups.setdefault(key, []).append((task_id, row))
 
     decision_counts = {
         "insert": 0,
@@ -182,71 +214,106 @@ def build_wbs_import_plan(
         "unchanged": 0,
         "site_newer_preserved": 0,
         "manual_timestamp_conflict": 0,
-        "title_instance_conflict": 0,
+        "identity_collision": 0,
         "invalid_fields": 0,
         "conflicting_duplicate": 0,
+        "title_group_content_conflict": 0,
     }
     digest_rows: list[dict[str, Any]] = []
-    invalid_field_ids: set[str] = set()
-    for task_id in sorted(canonical):
-        row = canonical[task_id]
-        content = _staged_content(row)
-        if (
-            not content["title"].strip()
-            or content["progress"] is None
-            or len(content["title"]) > 10000
-        ):
+    blocked_logical_groups = 0
+    identity_alias_rows = 0
+    destination_ids: set[str] = set()
+
+    for key in sorted(logical_groups):
+        candidates = sorted(logical_groups[key], key=lambda item: item[0])
+        task_ids = [task_id for task_id, _ in candidates]
+        rows = [row for _, row in candidates]
+        contents = [_staged_content(row) for row in rows]
+        source_row = _canonical_row(rows)
+        source_content = _staged_content(source_row)
+        existing_candidate_ids = [
+            task_id for task_id in task_ids if task_id in site_by_id
+        ]
+        title_owners = site_title_owners.get(key, set())
+        destination_id: str | None = None
+
+        if any(_invalid_content(content) for content in contents):
             decision = "invalid_fields"
-            invalid_field_ids.add(task_id)
-        elif task_id in conflicting_duplicate_ids:
+        elif any(task_id in conflicting_duplicate_ids for task_id in task_ids):
             decision = "conflicting_duplicate"
-        elif task_id in title_conflict_ids:
-            decision = "title_instance_conflict"
-        else:
-            site = site_by_id.get(task_id)
-            if site is None:
-                decision = "insert"
-            elif content == _site_content(site):
-                decision = "unchanged"
+        elif len(existing_candidate_ids) > 1:
+            decision = "identity_collision"
+        elif len(title_owners) > 1:
+            decision = "identity_collision"
+        elif existing_candidate_ids:
+            destination_id = existing_candidate_ids[0]
+            if title_owners and destination_id not in title_owners:
+                decision = "identity_collision"
+            elif len({_content_key(content) for content in contents}) > 1:
+                decision = "title_group_content_conflict"
             else:
-                source_time = _timestamp(row.get("source_updated_at"))
-                site_time = _timestamp(site.get("updated_at"))
-                if (
-                    source_time is not None
-                    and site_time is not None
-                    and source_time > site_time
-                ):
-                    decision = "update_from_notion"
-                elif (
-                    source_time is not None
-                    and site_time is not None
-                    and source_time < site_time
-                ):
-                    decision = "site_newer_preserved"
-                else:
-                    decision = "manual_timestamp_conflict"
+                decision = _compare_to_destination(
+                    source_content,
+                    source_row,
+                    site_by_id[destination_id],
+                )
+        elif title_owners:
+            destination_id = next(iter(title_owners))
+            if len({_content_key(content) for content in contents}) > 1:
+                decision = "title_group_content_conflict"
+            else:
+                decision = _compare_to_destination(
+                    source_content,
+                    source_row,
+                    site_by_id[destination_id],
+                )
+        elif len({_content_key(content) for content in contents}) > 1:
+            decision = "title_group_content_conflict"
+        else:
+            destination_id = min(task_ids)
+            decision = _compare_to_destination(
+                source_content,
+                source_row,
+                site_by_id.get(destination_id),
+            )
 
         decision_counts[decision] += 1
+        if decision in {
+            "manual_timestamp_conflict",
+            "identity_collision",
+            "invalid_fields",
+            "conflicting_duplicate",
+            "title_group_content_conflict",
+        }:
+            blocked_logical_groups += 1
+        if destination_id is not None:
+            destination_ids.add(destination_id)
+            identity_alias_rows += sum(
+                1 for task_id in task_ids if task_id != destination_id
+            )
+
         digest_rows.append(
             {
-                "task_id": task_id,
-                "source_page_id": str(row.get("source_page_id") or ""),
-                "source_updated_at": row.get("source_updated_at"),
-                "source_last_edited_at": row.get("source_last_edited_at"),
-                "content": content,
+                "source_task_ids": task_ids,
+                "source_page_ids": sorted(
+                    str(row.get("source_page_id") or "") for row in rows
+                ),
+                "destination_task_id": destination_id,
+                "source_updated_at": source_row.get("source_updated_at"),
+                "source_last_edited_at": source_row.get("source_last_edited_at"),
+                "content": source_content,
                 "decision": decision,
             }
         )
 
     canonical_ids = set(canonical)
     site_only_rows = len(set(site_by_id) - canonical_ids)
+    site_unmatched_rows = len(set(site_by_id) - destination_ids)
     blockers = (
         invalid_task_id_rows
         + site_invalid_id_rows
-        + conflicting_duplicate_groups
-        + len(title_conflict_ids)
-        + len(invalid_field_ids)
-        + decision_counts["manual_timestamp_conflict"]
+        + site_title_duplicate_groups
+        + blocked_logical_groups
     )
     plan_sha256 = hashlib.sha256(
         json.dumps(
@@ -260,17 +327,25 @@ def build_wbs_import_plan(
     return {
         "staged_rows": len(staged_rows),
         "canonical_rows": len(canonical),
+        "logical_rows": len(logical_groups),
+        "identity_alias_rows": identity_alias_rows,
         "site_rows": len(site_rows),
         "site_only_rows": site_only_rows,
+        "site_unmatched_rows": site_unmatched_rows,
         "duplicate_rows": duplicate_rows,
         "exact_duplicate_groups": exact_duplicate_groups,
         "conflicting_duplicate_groups": conflicting_duplicate_groups,
         "invalid_task_id_rows": invalid_task_id_rows,
         "site_invalid_id_rows": site_invalid_id_rows,
-        "title_instance_conflicts": len(title_conflict_ids),
-        "invalid_field_rows": len(invalid_field_ids),
+        "site_title_duplicate_groups": site_title_duplicate_groups,
+        "identity_collisions": decision_counts["identity_collision"],
+        "title_group_content_conflicts": decision_counts[
+            "title_group_content_conflict"
+        ],
+        "invalid_field_rows": decision_counts["invalid_fields"],
         "decisions": decision_counts,
+        "blocked_logical_groups": blocked_logical_groups,
         "blockers": blockers,
-        "apply_gate_open": blockers == 0 and len(canonical) > 0,
+        "apply_gate_open": blockers == 0 and len(logical_groups) > 0,
         "plan_sha256": plan_sha256,
     }
