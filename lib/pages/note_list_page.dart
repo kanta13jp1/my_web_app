@@ -156,8 +156,7 @@ class _NoteListPageState extends State<NoteListPage> {
       final noteId = _noteNumericId(note);
       final features = noteId == null
           ? const EvernoteSearchFeatures()
-          : (_searchFeaturesByNoteId[noteId] ??
-              const EvernoteSearchFeatures());
+          : (_searchFeaturesByNoteId[noteId] ?? const EvernoteSearchFeatures());
       return _evernoteSearchQuery.matches(
         EvernoteSearchDocument(
           title: note['title']?.toString() ?? '',
@@ -326,8 +325,7 @@ class _NoteListPageState extends State<NoteListPage> {
             );
         return matchesView &&
             matchesCollection &&
-            (selectedTag == null ||
-                _matchesSelectedTag(note, selectedTag));
+            (selectedTag == null || _matchesSelectedTag(note, selectedTag));
       },
     ).toList(growable: false);
     final semanticIds = semanticMatches.map(_noteId).toSet();
@@ -398,8 +396,7 @@ class _NoteListPageState extends State<NoteListPage> {
       ]);
       final drafts = results[0] as List<_LocalDraftEntry>;
       final publishedNoteIds = results[1] as Set<String>;
-      final searchFeatures =
-          results[2] as Map<int, EvernoteSearchFeatures>;
+      final searchFeatures = results[2] as Map<int, EvernoteSearchFeatures>;
       final tagScope = results[3] as Set<int>?;
 
       if (!mounted) return;
@@ -440,8 +437,7 @@ class _NoteListPageState extends State<NoteListPage> {
   Future<Set<int>?> _loadTagScope() async {
     final tagId = widget.initialTagId;
     if (tagId == null) return null;
-    final snapshot =
-        await SupabaseNoteTagHierarchyDataSource(_supabase).load();
+    final snapshot = await SupabaseNoteTagHierarchyDataSource(_supabase).load();
     return snapshot.noteIdsForTag(
       tagId,
       includeDescendants: widget.includeNestedTags,
@@ -504,8 +500,7 @@ class _NoteListPageState extends State<NoteListPage> {
     }
     final metadata = <int, Map<String, dynamic>>{};
     for (final row in results[2]) {
-      final noteId =
-          int.tryParse(row['target_note_id']?.toString() ?? '');
+      final noteId = int.tryParse(row['target_note_id']?.toString() ?? '');
       final raw = row['source_metadata'];
       if (noteId != null && raw is Map) {
         metadata[noteId] = Map<String, dynamic>.from(raw);

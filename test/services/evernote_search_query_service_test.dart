@@ -122,7 +122,10 @@ void main() {
         EvernoteSearchQueryService.parse('source:mobile.*').matches(base),
         isTrue,
       );
-      expect(EvernoteSearchQueryService.parse('todo:true').matches(base), isTrue);
+      expect(
+        EvernoteSearchQueryService.parse('todo:true').matches(base),
+        isTrue,
+      );
       expect(
         EvernoteSearchQueryService.parse('encryption:').matches(base),
         isTrue,
@@ -145,8 +148,9 @@ void main() {
     });
 
     test('reports unsupported operators and leaves results unfiltered', () {
-      final query =
-          EvernoteSearchQueryService.parse('project latitude:35.0');
+      final query = EvernoteSearchQueryService.parse(
+        'project latitude:35.0',
+      );
 
       expect(query.unsupportedOperators, <String>['latitude']);
       expect(query.isFullySupported, isFalse);

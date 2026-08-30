@@ -939,7 +939,7 @@ class EvernoteMigrationCommitService {
           'source_guid': note.sourceGuid,
           'content_sha256': note.contentSha256,
           'attributes': note.attributes,
-            'has_encrypted_text': note.enml.toLowerCase().contains('<en-crypt'),
+          'has_encrypted_text': note.enml.toLowerCase().contains('<en-crypt'),
           'links': note.links,
           'tasks': _evernoteTaskPayloads(note),
           'note_reminder': _evernoteNoteReminderPayload(note),

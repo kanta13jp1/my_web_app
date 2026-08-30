@@ -144,9 +144,7 @@ class _NoteTagsPageState extends State<NoteTagsPage> {
                 Text('本サイト作成: ${snapshot.tags.length - imported}'),
                 const SizedBox(height: 12),
                 Text(
-                  snapshot.evernoteSourceDeleted
-                      ? '原本削除確認済み'
-                      : '移行済み原本は証跡保護中',
+                  snapshot.evernoteSourceDeleted ? '原本削除確認済み' : '移行済み原本は証跡保護中',
                 ),
                 const SizedBox(height: 12),
                 const Text(
@@ -174,8 +172,7 @@ class _NoteTagsPageState extends State<NoteTagsPage> {
               child: Text('タグはまだありません。'),
             ),
           ),
-        for (final entry in entries)
-          _tagCard(snapshot, entry.tag, entry.depth),
+        for (final entry in entries) _tagCard(snapshot, entry.tag, entry.depth),
       ],
     );
   }
@@ -253,15 +250,13 @@ class _NoteTagsPageState extends State<NoteTagsPage> {
                     child: const Text('名前'),
                   ),
                   TextButton(
-                    onPressed: _saving || locked
-                        ? null
-                        : () => _move(snapshot, tag),
+                    onPressed:
+                        _saving || locked ? null : () => _move(snapshot, tag),
                     child: const Text('移動'),
                   ),
                   TextButton(
-                    onPressed: _saving || locked
-                        ? null
-                        : () => _delete(snapshot, tag),
+                    onPressed:
+                        _saving || locked ? null : () => _delete(snapshot, tag),
                     child: const Text('削除'),
                   ),
                 ],
@@ -284,6 +279,7 @@ class _NoteTagsPageState extends State<NoteTagsPage> {
         add(child, depth + 1);
       }
     }
+
     for (final root in byParent[null] ?? const <NoteTagRecord>[]) {
       add(root, 0);
     }

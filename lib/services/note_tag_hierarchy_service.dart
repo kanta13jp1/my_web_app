@@ -80,16 +80,13 @@ class NoteTagHierarchySnapshot {
   }
 
   Set<int> noteIdsForTag(int tagId, {required bool includeDescendants}) {
-    final tagIds = includeDescendants
-        ? descendantIds(tagId)
-        : <int>{tagId};
+    final tagIds = includeDescendants ? descendantIds(tagId) : <int>{tagId};
     return <int>{
       for (final id in tagIds) ...noteIdsByTagId[id] ?? const <int>{},
     };
   }
 
-  bool isLocked(NoteTagRecord tag) =>
-      tag.isImported && !evernoteSourceDeleted;
+  bool isLocked(NoteTagRecord tag) => tag.isImported && !evernoteSourceDeleted;
 }
 
 abstract class NoteTagHierarchyDataSource {
@@ -100,8 +97,7 @@ abstract class NoteTagHierarchyDataSource {
   Future<void> deleteTag(int id);
 }
 
-class SupabaseNoteTagHierarchyDataSource
-    implements NoteTagHierarchyDataSource {
+class SupabaseNoteTagHierarchyDataSource implements NoteTagHierarchyDataSource {
   SupabaseNoteTagHierarchyDataSource(this._client);
 
   static const int _pageSize = 500;
@@ -142,8 +138,8 @@ class SupabaseNoteTagHierarchyDataSource
         .map(
           (row) => NoteTagRecord.fromJson(
             row,
-            noteCount: noteIdsByTagId[
-                    int.tryParse(row['id']?.toString() ?? '')]?.length ??
+            noteCount: noteIdsByTagId[int.tryParse(row['id']?.toString() ?? '')]
+                    ?.length ??
                 0,
           ),
         )
