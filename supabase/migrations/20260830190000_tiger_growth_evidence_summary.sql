@@ -20,7 +20,7 @@ CREATE OR REPLACE FUNCTION public.get_tiger_growth_evidence_summary(
 RETURNS jsonb
 LANGUAGE plpgsql
 STABLE
-SECURITY DEFINER
+SECURITY INVOKER
 SET search_path = ''
 AS $$
 DECLARE

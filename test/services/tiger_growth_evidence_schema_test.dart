@@ -35,7 +35,8 @@ void main() {
     });
 
     test('keeps the aggregate RPC service-role only', () {
-      expect(sql, contains('security definer'));
+      expect(sql, contains('security invoker'));
+      expect(sql, isNot(contains('security definer')));
       expect(sql, contains("set search_path = ''"));
       expect(
         sql,
