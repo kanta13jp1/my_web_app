@@ -22,8 +22,7 @@ class _PaddleSandboxPageState extends State<PaddleSandboxPage> {
   void initState() {
     super.initState();
     _ownsViewModel = widget.viewModel == null;
-    _viewModel =
-        widget.viewModel ??
+    _viewModel = widget.viewModel ??
         PaddleSandboxViewModel(
           config: PaddleSandboxConfig.fromEnvironment(),
           gateway: createPaddleSandboxGateway(),
@@ -141,11 +140,11 @@ class _StatusCard extends StatelessWidget {
                       Text(
                         snapshot.title,
                         key: const Key('paddle_sandbox_status_title'),
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: color,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: color,
+                                ),
                       ),
                       const SizedBox(height: 6),
                       Text(snapshot.message),
@@ -172,7 +171,8 @@ class _StatusCard extends StatelessWidget {
     return switch (phase) {
       PaddleSandboxPhase.completed => const Color(0xFF1B5E20),
       PaddleSandboxPhase.paymentFailed ||
-      PaddleSandboxPhase.error => scheme.error,
+      PaddleSandboxPhase.error =>
+        scheme.error,
       PaddleSandboxPhase.cancelled => const Color(0xFF8A4B08),
       _ => scheme.primary,
     };
@@ -184,11 +184,13 @@ class _StatusCard extends StatelessWidget {
       PaddleSandboxPhase.paymentFailed => Icons.credit_card_off_outlined,
       PaddleSandboxPhase.cancelled => Icons.cancel_outlined,
       PaddleSandboxPhase.error ||
-      PaddleSandboxPhase.misconfigured => Icons.error_outline,
+      PaddleSandboxPhase.misconfigured =>
+        Icons.error_outline,
       PaddleSandboxPhase.disabled => Icons.lock_outline,
       PaddleSandboxPhase.unsupported => Icons.web_asset_off_outlined,
       PaddleSandboxPhase.initializing ||
-      PaddleSandboxPhase.opening => Icons.hourglass_top,
+      PaddleSandboxPhase.opening =>
+        Icons.hourglass_top,
       _ => Icons.shopping_cart_checkout,
     };
   }

@@ -8,10 +8,10 @@ class PaddleSandboxViewModel extends ChangeNotifier {
     required PaddleSandboxConfig config,
     required PaddleSandboxGateway gateway,
     required Uri currentUri,
-  }) : _config = config,
-       _gateway = gateway,
-       _currentUri = currentUri,
-       _snapshot = _initialSnapshot(config, gateway);
+  })  : _config = config,
+        _gateway = gateway,
+        _currentUri = currentUri,
+        _snapshot = _initialSnapshot(config, gateway);
 
   final PaddleSandboxConfig _config;
   final PaddleSandboxGateway _gateway;
@@ -185,9 +185,9 @@ class PaddleSandboxViewModel extends ChangeNotifier {
 
   String _safeError(Object error) {
     final text = error.toString().replaceAll(
-      _config.clientSideToken,
-      '[token]',
-    );
+          _config.clientSideToken,
+          '[token]',
+        );
     return text.length <= 240 ? text : '${text.substring(0, 240)}…';
   }
 }

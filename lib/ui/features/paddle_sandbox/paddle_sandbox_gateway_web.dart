@@ -32,14 +32,14 @@ class _WebPaddleSandboxGateway implements PaddleSandboxGateway {
   }) async {
     _eventCallback =
         (JSString eventName, JSString transactionId, JSString message) {
-          onEvent(
-            PaddleSandboxEvent(
-              name: eventName.toDart,
-              transactionId: transactionId.toDart,
-              message: message.toDart,
-            ),
-          );
-        }.toJS;
+      onEvent(
+        PaddleSandboxEvent(
+          name: eventName.toDart,
+          transactionId: transactionId.toDart,
+          message: message.toDart,
+        ),
+      );
+    }.toJS;
 
     await _initializePaddleSandbox(
       clientSideToken.toJS,
