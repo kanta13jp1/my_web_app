@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-30T10:41:20.993020+00:00",
+  "generated_at": "2026-08-30T12:50:51.794200+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "site_review",
   "publication_state": "latest_review",
@@ -10,52 +10,52 @@
     "status": "PAUSED",
     "schedule": "毎時25分（1時間ごと）"
   },
-  "review_count": 20,
+  "review_count": 21,
   "latest_review": {
-    "cycle_id": "20260830T192700+0900",
-    "started_at": "2026-08-30T19:27:00+09:00",
+    "cycle_id": "20260830T210736+0900",
+    "started_at": "2026-08-30T21:07:36+09:00",
     "source_format": "site_review",
     "surface": {
       "slug": "whole_site",
       "url": "https://my-web-app-b67f4.web.app/"
     },
     "reviewer": {
-      "seat": 9,
-      "name": "平出 心",
-      "selection_score": 74.8631,
+      "seat": 7,
+      "name": "榊󠄀原 清一",
+      "selection_score": 74.5633,
       "division": 1,
-      "cycle_utility": 94.05,
-      "aggregate_utility": 89.89
+      "cycle_utility": 94.25,
+      "aggregate_utility": 94.07
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 5,
+    "finding_count": 4,
     "top_findings": [
       {
-        "summary": "task完了直後のmicro-surveyは安全に収集できるが、回答を継続・paid成果と結ぶ意思決定ループが未定義である",
+        "summary": "route別需要証拠は最大2ユーザーに留まり、全routeでpaidUsers=1かつ運用面を含むため、顧客需要として読む前の小標本・内部利用除外ゲートが必要である",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
-          "customer_pain",
-          "trust_risk"
+          "trust_risk",
+          "unit_economics"
         ]
       },
       {
-        "summary": "獲得元別のD7・D30・paid cohort証拠は実装中だが、PR #5107が未検証でproduction判断には使えない",
+        "summary": "zenn施策は258.22時間後も全funnelと90日cohortがゼロであり、次の配信変更をowner・露出母数・期限・停止条件を持つ一変数実験へ固定する必要がある",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
-          "revenue_model",
-          "go_to_market"
+          "go_to_market",
+          "founder_execution"
         ]
       },
       {
-        "summary": "CAC・回収月数・churn・LTVの計算枠はあるが、プラン別の実測入力と意思決定証拠が未投入である",
+        "summary": "全routeのpaidUsers=1と獲得cohortのpaidConvertedUsers=0・revenue=0は定義上両立するが、現状の表示ではroute価値と新規paid転換を誤って同一視し得る",
         "severity": "p1",
         "business_dimensions": [
           "unit_economics",
           "revenue_model",
-          "founder_execution"
+          "trust_risk"
         ]
       }
     ],
@@ -70,15 +70,15 @@
         "relevant": 100
       },
       "gate_passed": true,
-      "baseline_cycle_id": "20260830T170216+0900",
+      "baseline_cycle_id": "20260830T192700+0900",
       "focus_dimension": "complete",
       "overall_delta": 0.0,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After one complete monthly survey window, compare route-level response, rating, opt-out, D7/D30, and paid-conversion deltas, and record one owner decision with its post-change outcome."
+      "next_cycle_experiment": "Add privacy-safe operator and synthetic exclusion counts plus minimum-sample status, then run one zenn distribution-surface or headline change with fixed CTA and URL, named owner, exposure target, deadline, and stop or go rule."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5108",
+      "label": "対策待ち・Issue #5119",
       "detail": "提案のみで、対策実施の記録はありません。",
       "summary": "",
       "files": [],
@@ -86,34 +86,130 @@
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean worktree aligned with origin/main 9f188a4f66e3efc8b802866cfb0b21cb4ac50a36",
+        "passed: clean dedicated worktree aligned with origin/main fbf306fc58bd992c03d05898e3d4c1e870f80454",
         "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers and distinct response digests",
         "passed: 125 profiles",
         "passed: 125 personas",
-        "passed: current evidence gaps and the feedback-to-outcome decision-loop boundary recorded",
+        "passed: post-merge production evidence inspected and interpretation boundaries recorded",
         "not run: cloud-first resource policy prohibits local heavy validation for this report-only review"
       ],
       "issue": {
-        "number": 5108,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5108",
+        "number": 5119,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5119",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-site-review:20260830T192700+0900:whole_site",
+        "dedupe_key": "tiger-site-review:20260830T210736+0900:whole_site",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "site-micro-survey-outcome-loop-gap",
-        "site-acquisition-retention-paid-cohort-proof",
-        "site-plan-economics-production-input-gap",
-        "site-superiority-claim-evidence-gap",
-        "site-delivery-scalability-gap"
+        "site-growth-evidence-small-n-contamination-gate",
+        "site-zero-cohort-bounded-acquisition-experiment",
+        "site-paid-route-unit-economics-definition-gap",
+        "site-retention-experiment-insufficient-sample"
       ]
     }
   },
   "history": [
+    {
+      "cycle_id": "20260830T210736+0900",
+      "started_at": "2026-08-30T21:07:36+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 7,
+        "name": "榊󠄀原 清一",
+        "selection_score": 74.5633
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260830T192700+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Add privacy-safe operator and synthetic exclusion counts plus minimum-sample status, then run one zenn distribution-surface or headline change with fixed CTA and URL, named owner, exposure target, deadline, and stop or go rule."
+      },
+      "findings": [
+        {
+          "finding_id": "site-growth-evidence-small-n-contamination-gate",
+          "summary": "route別需要証拠は最大2ユーザーに留まり、全routeでpaidUsers=1かつ運用面を含むため、顧客需要として読む前の小標本・内部利用除外ゲートが必要である",
+          "severity": "p1",
+          "suggested_action": "個人IDを公開せず、集計生成前に承認済みoperator・synthetic分類を除外し、対象母数、除外件数、最小標本、成熟状態、判断可否をartifactへ必須出力する。閾値未達ではroute順位を表示せずinsufficient_sampleとする。"
+        },
+        {
+          "finding_id": "site-zero-cohort-bounded-acquisition-experiment",
+          "summary": "zenn施策は258.22時間後も全funnelと90日cohortがゼロであり、次の配信変更をowner・露出母数・期限・停止条件を持つ一変数実験へ固定する必要がある",
+          "severity": "p1",
+          "suggested_action": "CTAとlanding URLを固定したまま記事配信面またはheadlineの一方だけを変更し、owner、開始日時、目標表示数、view到達閾値、signup閾値、判定日時、継続・停止基準をartifact内decision recordへ追加する。"
+        },
+        {
+          "finding_id": "site-paid-route-unit-economics-definition-gap",
+          "summary": "全routeのpaidUsers=1と獲得cohortのpaidConvertedUsers=0・revenue=0は定義上両立するが、現状の表示ではroute価値と新規paid転換を誤って同一視し得る",
+          "severity": "p1",
+          "suggested_action": "paidUsersをactive-paid-at-snapshotと明示し、new-paid-after-acquisition、paid revenue、variable cost、gross marginを別列にする。各指標の期間・母数・帰属規則をartifactと管理画面で同じ定義に固定する。"
+        },
+        {
+          "finding_id": "site-retention-experiment-insufficient-sample",
+          "summary": "表示mode retentionはinitial-full 3件、initial-standard 0件、retained 0件で率がnullのため、勝者選定ではなく標本形成を次の判断にすべきである",
+          "severity": "p2",
+          "suggested_action": "mode割当の健全性と最低eligible数を先に満たし、週別にinitial、eligible、retained、rate、欠測理由を出す。片側ゼロまたは率nullではwinnerを出さず、instrumentation_or_sample_buildingを明示する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5119",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated worktree aligned with origin/main fbf306fc58bd992c03d05898e3d4c1e870f80454",
+          "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers and distinct response digests",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: post-merge production evidence inspected and interpretation boundaries recorded",
+          "not run: cloud-first resource policy prohibits local heavy validation for this report-only review"
+        ],
+        "issue": {
+          "number": 5119,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5119",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260830T210736+0900:whole_site",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-growth-evidence-small-n-contamination-gate",
+          "site-zero-cohort-bounded-acquisition-experiment",
+          "site-paid-route-unit-economics-definition-gap",
+          "site-retention-experiment-insufficient-sample"
+        ]
+      }
+    },
     {
       "cycle_id": "20260830T192700+0900",
       "started_at": "2026-08-30T19:27:00+09:00",
@@ -184,7 +280,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5108",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -204,9 +300,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-site-review:20260830T192700+0900:whole_site",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -288,7 +384,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5096",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -308,9 +404,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-site-review:20260830T170216+0900:whole_site",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -392,7 +488,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5085",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -412,9 +508,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-site-review:20260830T150936+0900:whole_site",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -441,7 +537,7 @@
         "name": "高澤 有紀",
         "selection_score": 71.885
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -488,9 +584,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4985",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #4985 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -507,13 +603,21 @@
           "number": 4985,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4985",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-site-review:20260829T012910+0900:whole_site",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "e9caa539b664ff39cf1ae7460611fafbffb07941",
+          "workflow_run": "33296540045",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33296540045/job/99218122802",
+          "pr_number": 5025,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5025",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "site-static-decision-route-collapse",
           "site-pricing-prequalification-observability-gap",
@@ -537,7 +641,7 @@
         "name": "高澤 有紀",
         "selection_score": 72.382
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -584,9 +688,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4961",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #4961 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -603,13 +707,21 @@
           "number": 4961,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4961",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-site-review:20260828T190700+0900:whole_site",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "e80ac2271d0806624219227531bcbc046eddb9a6",
+          "workflow_run": "33247082532",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33247082532/job/99087931215",
+          "pr_number": 5014,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5014",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "site-static-decision-route-collapse",
           "site-pricing-prequalification-observability-gap",
@@ -703,7 +815,7 @@
           "dedupe_key": "tiger-site-review:20260828T145600+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -799,7 +911,7 @@
           "dedupe_key": "tiger-site-review:20260828T090106+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -895,7 +1007,7 @@
           "dedupe_key": "tiger-site-review:20260828T051725+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -991,7 +1103,7 @@
           "dedupe_key": "tiger-site-review:20260828T011400+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1092,7 +1204,7 @@
           "dedupe_key": "tiger-site-review:20260827T214913+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1197,8 +1309,8 @@
           "github_state": "OPEN",
           "dedupe_key": "tiger-site-review:20260826T220910+0900:whole_site",
           "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "queue_status": "PARTIAL_WAIT",
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1300,7 +1412,7 @@
           "dedupe_key": "tiger-site-review:20260825T133307+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1403,7 +1515,7 @@
           "dedupe_key": "tiger-site-review:20260825T124533+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1505,7 +1617,7 @@
           "dedupe_key": "tiger-site-review:20260825T090429+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1607,7 +1719,7 @@
           "dedupe_key": "tiger-site-review:20260825T083902+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1713,7 +1825,7 @@
           "dedupe_key": "tiger-site-review:20260823T214617+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1813,7 +1925,7 @@
           "dedupe_key": "tiger-site-review:20260823T195559+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1892,7 +2004,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1917,7 +2029,7 @@
         "name": "ドラゴン細井",
         "selection_score": 79.5059
       },
-      "status": "issue_tracking",
+      "status": "issue_closed",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": null,
@@ -1942,9 +2054,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4738",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "issue_closed",
+        "label": "Issue #4738 終了・反映証拠確認待ち",
+        "detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1963,11 +2075,11 @@
           "number": 4738,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4738",
           "status": "existing",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "remediation_state": "closed_pending_proof",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-08-30T12:40:16.656847+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
