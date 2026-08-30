@@ -42,7 +42,8 @@ create table public.notes (
   updated_at timestamptz not null default now(),
   tags text[] not null default '{}',
   is_archived boolean not null default false,
-  is_pinned boolean not null default false
+  is_pinned boolean not null default false,
+  reminder_date timestamptz
 );
 
 create index notes_user_id_idx on public.notes (user_id);
