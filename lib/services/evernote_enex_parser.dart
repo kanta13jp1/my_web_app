@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:xml/xml.dart';
+import 'package:xml/xml_events.dart';
+
+import 'evernote_enml_markdown_converter.dart';
 
 /// A loss-preserving representation of one Evernote ENEX export.
 ///
@@ -31,11 +35,38 @@ class EvernoteEnexExport {
       notes.fold(0, (count, note) => count + note.resources.length);
 }
 
+class EvernoteEnexStreamSummary {
+  const EvernoteEnexStreamSummary({
+    required this.exportSha256,
+    required this.noteCount,
+    required this.resourceCount,
+    required this.warnings,
+    required this.processedBytes,
+    this.exportDate,
+    this.application,
+    this.version,
+  });
+
+  final String exportSha256;
+  final DateTime? exportDate;
+  final String? application;
+  final String? version;
+  final int noteCount;
+  final int resourceCount;
+  final List<String> warnings;
+  final int processedBytes;
+}
+
+typedef EvernoteEnexNoteCallback = FutureOr<void> Function(
+  EvernoteEnexNote note,
+);
+
 class EvernoteEnexNote {
   const EvernoteEnexNote({
     required this.sourceId,
     required this.title,
     required this.enml,
+    required this.markdownText,
     required this.plainText,
     required this.tags,
     required this.attributes,
@@ -55,6 +86,7 @@ class EvernoteEnexNote {
   final String? sourceGuid;
   final String title;
   final String enml;
+  final String markdownText;
   final String plainText;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -143,6 +175,111 @@ class EvernoteEnexParser {
     );
   }
 
+  /// Parses one `<note>` subtree at a time instead of retaining the complete
+  /// ENEX document and all decoded attachments in memory.
+  Future<EvernoteEnexStreamSummary> parseStream(
+    Stream<List<int>> source, {
+    required EvernoteEnexNoteCallback onNote,
+    int? totalBytes,
+    void Function(int processedBytes, int? totalBytes)? onProgress,
+  }) async {
+    if (totalBytes != null && totalBytes <= 0) {
+      throw ArgumentError.value(totalBytes, 'totalBytes', 'must be positive');
+    }
+
+    final digestOutput = _EvernoteDigestSink();
+    final digestInput = sha256.startChunkedConversion(digestOutput);
+    final warnings = <String>[];
+    var processedBytes = 0;
+    var noteCount = 0;
+    var resourceCount = 0;
+    var rootSeen = false;
+    DateTime? exportDate;
+    String? application;
+    String? version;
+    onProgress?.call(0, totalBytes);
+
+    final byteStream = source.map((chunk) {
+      if (chunk.isEmpty) return chunk;
+      processedBytes += chunk.length;
+      if (totalBytes != null && processedBytes > totalBytes) {
+        throw StateError(
+          'The ENEX stream is larger than its declared file size.',
+        );
+      }
+      digestInput.add(chunk);
+      onProgress?.call(processedBytes, totalBytes);
+      return chunk;
+    });
+
+    try {
+      final noteNodes = byteStream
+          .transform(const Utf8Decoder(allowMalformed: true))
+          .toXmlEvents(
+            validateNesting: true,
+            validateDocument: true,
+          )
+          .map((events) {
+            for (final event in events.whereType<XmlStartElementEvent>()) {
+              if (!rootSeen) {
+                if (event.localName != 'en-export') {
+                  throw const FormatException(
+                    'Invalid Evernote ENEX: en-export missing.',
+                  );
+                }
+                rootSeen = true;
+                exportDate = _parseEvernoteDate(
+                  _eventAttribute(event, 'export-date'),
+                );
+                application = _nonEmpty(
+                  _eventAttribute(event, 'application'),
+                );
+                version = _nonEmpty(_eventAttribute(event, 'version'));
+                break;
+              }
+            }
+            return events;
+          })
+          .normalizeEvents()
+          .selectSubtreeEvents((event) => event.localName == 'note')
+          .toXmlNodes();
+
+      await for (final nodes in noteNodes) {
+        for (final element in nodes.whereType<XmlElement>()) {
+          final note = _parseNote(element, warnings);
+          noteCount += 1;
+          resourceCount += note.resources.length;
+          await onNote(note);
+        }
+      }
+    } on XmlException catch (error) {
+      throw FormatException('Invalid Evernote ENEX: $error');
+    }
+
+    if (!rootSeen) {
+      throw const FormatException(
+        'Invalid Evernote ENEX: en-export missing.',
+      );
+    }
+    if (totalBytes != null && processedBytes != totalBytes) {
+      throw StateError(
+        'The ENEX stream ended before its declared file size.',
+      );
+    }
+    digestInput.close();
+
+    return EvernoteEnexStreamSummary(
+      exportSha256: digestOutput.value.toString(),
+      exportDate: exportDate,
+      application: application,
+      version: version,
+      noteCount: noteCount,
+      resourceCount: resourceCount,
+      warnings: List<String>.unmodifiable(warnings),
+      processedBytes: processedBytes,
+    );
+  }
+
   EvernoteEnexExport _parse(String text, {required String exportSha256}) {
     final XmlDocument document;
     try {
@@ -205,6 +342,36 @@ class EvernoteEnexParser {
         .toList(growable: false);
     final links = _extractLinks(enml);
     final plainText = _enmlToPlainText(enml, resources);
+    var markdownText = plainText;
+    try {
+      final conversion = const EvernoteEnmlMarkdownConverter().convert(
+        enml: enml,
+        resources: resources.map(
+          (resource) => EvernoteEnmlResourceReference(
+            hash: resource.evernoteHash ?? '',
+            mimeType: resource.mimeType,
+            label: resource.fileName ?? resource.mimeType,
+          ),
+        ),
+      );
+      markdownText = conversion.markdown;
+      if (conversion.unresolvedResourceHashes.isNotEmpty) {
+        warnings.add(
+          '${conversion.unresolvedResourceHashes.length} ENML attachment '
+          'reference(s) could not be matched to an ENEX resource.',
+        );
+      }
+      if (conversion.encryptedSectionCount > 0) {
+        warnings.add(
+          '${conversion.encryptedSectionCount} encrypted ENML section(s) '
+          'must be unlocked in Evernote before commit.',
+        );
+      }
+    } on XmlException {
+      warnings.add(
+        'ENML could not be converted to editable Markdown without loss.',
+      );
+    }
     final fallbackId = sha256
         .convert(
           utf8.encode(
@@ -219,6 +386,7 @@ class EvernoteEnexParser {
       sourceGuid: sourceGuid,
       title: title.isEmpty ? 'Evernote import' : title,
       enml: enml,
+      markdownText: markdownText,
       plainText: plainText,
       createdAt: createdAt,
       updatedAt: updatedAt,
@@ -452,6 +620,40 @@ class EvernoteEnexParser {
     }
     return null;
   }
+
+  String? _eventAttribute(XmlStartElementEvent event, String localName) {
+    for (final attribute in event.attributes) {
+      if (attribute.localName == localName) return attribute.value;
+    }
+    return null;
+  }
+}
+
+class _EvernoteDigestSink implements Sink<Digest> {
+  Digest? _value;
+
+  Digest get value {
+    final digest = _value;
+    if (digest == null) {
+      throw StateError('The ENEX digest is not available yet.');
+    }
+    return digest;
+  }
+
+  @override
+  void add(Digest data) {
+    if (_value != null) {
+      throw StateError('The ENEX digest was already completed.');
+    }
+    _value = data;
+  }
+
+  @override
+  void close() {
+    if (_value == null) {
+      throw StateError('The ENEX digest was not completed.');
+    }
+  }
 }
 
 extension<T> on Iterable<T> {
@@ -460,3 +662,4 @@ extension<T> on Iterable<T> {
     return iterator.moveNext() ? iterator.current : null;
   }
 }
+
