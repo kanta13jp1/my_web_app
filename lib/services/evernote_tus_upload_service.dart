@@ -25,7 +25,7 @@ class EvernoteTusUploadService {
   EvernoteTusUploadService.forTesting({
     required http.Client client,
     required int chunkSize,
-  }) : _client = client,
+  })  : _client = client,
         _chunkSize = chunkSize {
     if (chunkSize <= 0) {
       throw ArgumentError.value(chunkSize, 'chunkSize', 'must be positive');
@@ -233,9 +233,8 @@ class EvernoteTusUploadService {
     if (location == null || location.trim().isEmpty) {
       throw StateError('Supabase did not return a resumable upload URL.');
     }
-    final uploadUrl = endpoint
-        .replace(path: '${endpoint.path}/')
-        .resolve(location.trim());
+    final uploadUrl =
+        endpoint.replace(path: '${endpoint.path}/').resolve(location.trim());
     _validateUploadUrl(endpoint: endpoint, uploadUrl: uploadUrl);
     return uploadUrl;
   }
