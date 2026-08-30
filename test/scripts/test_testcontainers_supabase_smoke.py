@@ -248,6 +248,29 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
         self.assertIn("concurrent add/remove", checks)
         self.assertIn("applies twice", checks)
 
+    def test_plan_includes_issue_2844_account_deletion_contract(self) -> None:
+        plan = module.build_plan(
+            ROOT / "test" / "fixtures" / "testcontainers" / "sql",
+            ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts",
+            ROOT / "supabase" / "functions" / "health-check" / "index.ts",
+        )
+        self.assertEqual(
+            plan["issue_2844_account_deletion_sql"],
+            [
+                "supabase/tests/issue2844_account_deletion_bootstrap.sql",
+                "supabase/migrations/20260829095836_account_retention_and_deletion.sql",
+                "supabase/tests/issue2844_account_deletion_contract.sql",
+            ],
+        )
+        checks = " ".join(plan["issue_2844_account_deletion_checks"])
+        self.assertIn("service-role only", checks)
+        self.assertIn("atomically", checks)
+        self.assertIn("CASCADE", checks)
+        self.assertIn("fail closed", checks)
+        self.assertIn("Storage owner metadata", checks)
+        self.assertIn("bounded retry", checks)
+        self.assertIn("removes user_id", checks)
+
     def test_plan_includes_note_comments_authorization_boundary(self) -> None:
         plan = module.build_plan(
             ROOT / "test" / "fixtures" / "testcontainers" / "sql",
