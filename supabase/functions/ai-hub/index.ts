@@ -10,6 +10,10 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { checkAndRecordAiUsage, supabaseUsageStore } from "./usage_gate.ts";
 import {
+  authorizeAiHubAction,
+  resolveAuthenticatedUserId,
+} from "./action_access_policy.ts";
+import {
   AI_CHARACTER_PREAMBLE,
   prependCharacter,
 } from "../_shared/ai_character_preamble.ts";
@@ -4363,80 +4367,12 @@ serve(async (req: Request) => {
       body.action ?? requestUrl.searchParams.get("action") ?? "",
     );
 
-    // Actions that require authentication
-    const authRequired = [
-      "search.query",
-      "task.clarity.evaluate",
-      "secretary.task",
-      "secretary.history",
-      "summarize.text",
-      "agent.list",
-      "agent.create",
-      "agent.run",
-      "agent.tool_policy.evaluate",
-      "org.get",
-      "my_agent.chat",
-      "my_agent.history",
-      "challenges.list",
-      "trigger.analyze",
-      "analyze.reality",
-      "company_builder.list",
-      "company_builder.get",
-      "company_builder.bootstrap",
-      "company_builder.research.add",
-      "company_builder.start",
-      "company_builder.pause",
-      "company_builder.resume",
-      "company_builder.stop",
-      "company_builder.global_kill_switch",
-      // AI大学 v2 (P1〜P4)
-      "quiz.fsrs_next",
-      "quiz.fsrs_grade",
-      "quiz.fsrs_stats",
-      "university.rlhf_signal",
-      "university.rlhf_snapshot",
-      "user_data.finetune_readiness",
-      "learner.update_profile",
-      "quiz.evaluate",
-      "quiz.explain",
-      "kpi.monthly_summary",
-      "asset.market_price.fetch",
-      "asset.investment.market_price.fetch",
-      "ai_hub.fetch_market_price",
-      "asset.monthly_report.generate",
-      "asset_liability.monthly_report.generate",
-      "asset_subscription.analyze_statement",
-      "asset.chat",
-      "ai_hub.asset_chat",
-      "department_finance_summary",
-      "ai_hub.department_finance_summary",
-      "payslip.parse",
-      "parse-payslip",
-      "expense.classify",
-      "classify-expense",
-      "expense.weekly_coaching.generate",
-      "asset.disposable_balance.compute",
-      "compute-disposable-balance",
-      "asset.anomaly.detect",
-      "detect-anomalies",
-      "knowledge_graph.status",
-      "knowledge_graph.upload",
-      "knowledge_graph.query",
-      "knowledge_graph.delete_document",
-      "voice.tts",
-      "voice.catalog",
-      "voice.usage",
-      "voice.dubbing.generate",
-      "voice.stt",
-      "voice.cartesia_session.start",
-      "voice.cartesia_session.finish",
-      // 英語速読カリキュラム (実力測定 / AI 生成は要認証 / 教材閲覧は公開)
-      "english_reading.submit_attempt",
-      "english_reading.ability",
-      "english_reading.generate_lesson",
-    ];
-    if (authRequired.includes(action) && !userId) {
-      return json({ error: "Unauthorized" }, 401);
+    const authorization = authorizeAiHubAction(action, {
+      userId,
+      isServiceRole: isServiceRoleRequest(req),
+    });
+    if (!authorization.allowed) {
+      return json({ error: authorization.error }, authorization.status);
     }
 
     switch (action) {
@@ -8490,11 +8426,19 @@ serve(async (req: Request) => {
         // Windows版#94: home_tier AI おすすめ機能 (VSCode#98)
         // 現状はヒューリスティックで user_feature_usage を集計し、
         // 直近未使用のシステム固定機能を返す (Gemini 推論は次段階)
-        const userId = String(body.user_id ?? "");
-        if (!userId) return json({ error: "user_id required" }, 400);
+        const recommendationScope = resolveAuthenticatedUserId(
+          userId!,
+          body.user_id,
+        );
+        if ("error" in recommendationScope) {
+          return json(
+            { error: recommendationScope.error },
+            recommendationScope.status,
+          );
+        }
         const { data: usage } = await admin.from("user_feature_usage")
           .select("feature_route, tapped_at")
-          .eq("user_id", userId)
+          .eq("user_id", recommendationScope.userId)
           .order("tapped_at", { ascending: false })
           .limit(30);
         const recent = new Set(
