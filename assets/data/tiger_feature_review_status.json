@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-31T02:42:41.831052+00:00",
+  "generated_at": "2026-08-31T05:32:44.867646+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -13,10 +13,10 @@
   "pool": {
     "total": 13,
     "eligible": 13,
-    "provisional": 10,
+    "provisional": 11,
     "division_1": 0,
-    "division_2": 3,
-    "division_3": 10,
+    "division_2": 2,
+    "division_3": 11,
     "division_4": 0,
     "division_5": 0,
     "eliminated": 0
@@ -33,46 +33,46 @@
     "started_at": "2026-08-31T08:00:10+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "landing",
-      "url": "https://my-web-app-b67f4.web.app/lp"
+      "slug": "comparison",
+      "url": "https://my-web-app-b67f4.web.app/competitors"
     },
     "reviewer": {
-      "seat": 7,
-      "name": "榊󠄀原 清一",
-      "selection_score": 77.2791,
+      "seat": 11,
+      "name": "野口 功司",
+      "selection_score": 76.1943,
       "division": 1,
-      "cycle_utility": 91.83,
-      "aggregate_utility": 93.01
+      "cycle_utility": 84.94,
+      "aggregate_utility": 88.36
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 3,
+    "finding_count": 4,
     "top_findings": [
       {
-        "summary": "The visible X share action bypasses the existing share service, so shared visits can lose source and UTM attribution before trial or signup measurement.",
+        "summary": "174社規模の一覧に名称検索とcategory絞り込みがなく、目的の比較候補へ到達しにくい",
         "severity": "p1",
         "business_dimensions": [
-          "go_to_market",
+          "customer_pain",
           "market_demand",
-          "unit_economics"
+          "go_to_market"
         ]
       },
       {
-        "summary": "Service tests prove tagged URL and analytics behavior, but no page-level contract proves that the visible X button invokes that service, allowing the two share paths to drift silently.",
+        "summary": "料金、日本展開、overlap、脅威度に更新日時や根拠が表示されず、比較判断の鮮度を確認できない",
         "severity": "p1",
         "business_dimensions": [
           "trust_risk",
-          "go_to_market",
-          "scalability"
+          "customer_pain",
+          "go_to_market"
         ]
       },
       {
-        "summary": "A 7,380-line stateful landing implementation coordinates acquisition, trial, signup, social proof, experiments, and direct sharing, raising the cost of safely improving conversion.",
+        "summary": "review設定sourceが実際の/competitors実装と一致しない状態が前回指摘後も残る",
         "severity": "p2",
         "business_dimensions": [
-          "unit_economics",
           "scalability",
-          "trust_risk"
+          "go_to_market",
+          "customer_pain"
         ]
       }
     ],
@@ -91,48 +91,51 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "Route the visible X control through the existing adapter and service in a bounded remediation, then compare attributed share return, trial, and signup rates for four weeks."
+      "next_cycle_experiment": "After maintainers publish search/category controls and freshness metadata, compare representative-card discovery time, zero-result rate, source reachability, /vs-* progression, and comparison-assisted registration against the current baseline."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5155",
-      "detail": "A complete remedy changes visible sharing behavior, analytics attribution, adapter contracts, and PR CI coverage. It requires a bounded implementation lane and cloud validation, exceeding the shared low-risk automatic repair scope for this review tick.",
+      "label": "対策待ち・Issue #5158",
+      "detail": "検索・category UX、freshness data contract、analytics/privacy設計、保護されたreview設定の判断が必要で、証拠から一意に定まる低リスク自動修正ではない。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
-      "resolved_finding_ids": [],
+      "resolved_finding_ids": [
+        "comparison-discovery-search-category-gap"
+      ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: dedicated worktree fast-forwarded cleanly to origin/main f70623fd5e58ca4092c5c7ccff3fe0e4fef3f7b9",
-        "passed: roster 2026-08-23 and personas 2026-08-30 schema 2, 125 profiles each",
-        "passed: deterministic winner landing from 13 eligible features",
-        "passed: 7,380-line landing surface, 16 matched tests, direct X share bypass, existing tagged share service, and unknown production outcomes captured",
-        "passed: 125 profiles, deterministic seat 32"
+        "passed: clean dedicated branch ready at origin/main 3bbefe8e22a2dea5e034d7fc636ddd4de4f5562f",
+        "passed: 125 roster profiles and 125 personas",
+        "executed successfully: deterministic comparison winner from 13 eligible features",
+        "passed: no schema-v5 comparable baseline, focus_dimension=evidence",
+        "passed: production HTTP 200, current route, browse source, focused widget test, and feature configuration inspected",
+        "executed once successfully: 125 profiles, seat 11"
       ],
       "issue": {
-        "number": 5155,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5155",
+        "number": 5158,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5158",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260831T080010+0900:landing",
+        "dedupe_key": "tiger-feature-review:20260831T080010+0900:comparison",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "landing-x-share-attribution-bypass",
-        "landing-share-contract-regression-gap",
-        "landing-implementation-concentration"
+        "comparison-freshness-provenance-gap",
+        "comparison-review-source-drift-persistent",
+        "comparison-browse-outcome-evidence-gap"
       ]
     },
     "feature": {
-      "slug": "landing",
-      "title": "Landing page",
+      "slug": "comparison",
+      "title": "競合比較一覧",
       "kind": "page",
-      "reason": "The deterministic selector chose landing. The neutral scan confirmed that the earlier social-proof failure state is fixed and the public shell is reachable, but the visible X share action bypasses the existing source-tagged share service, so share-to-return and downstream conversion attribution can silently break while observed usage remains neutral 50.",
-      "cycle_utility": 73.0,
-      "aggregate_utility": 73.97,
+      "reason": "公開URLはHTTP 200で174社一覧を掲げ、前回の取得失敗時retry修復もsourceと専用testに残る。一方、実routeはCompetitorBrowsePageなのに設定sourceは巨大なcomparison_page.dartのままで、一覧はcategoryを取得しながら検索・category filterを提供せず、pricing、日本展開、overlap、threatに更新日時や一次根拠を表示しない。機能別利用分析は取得できないためobserved usageは契約どおり中立50点とした。",
+      "cycle_utility": 61.7,
+      "aggregate_utility": 65.14,
       "division": 2
     }
   },
@@ -143,14 +146,14 @@
       "source_format": "feature_review",
       "subject": {
         "kind": "feature",
-        "id": "landing",
-        "title": "Landing page",
+        "id": "comparison",
+        "title": "競合比較一覧",
         "url": null
       },
       "reviewer": {
-        "seat": 7,
-        "name": "榊󠄀原 清一",
-        "selection_score": 77.2791
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 76.1943
       },
       "status": "issue_tracking",
       "review_status": "review_only",
@@ -170,59 +173,68 @@
         "focus_dimension": "evidence",
         "overall_delta": null,
         "next_focus_dimension": "complete",
-        "next_cycle_experiment": "Route the visible X control through the existing adapter and service in a bounded remediation, then compare attributed share return, trial, and signup rates for four weeks."
+        "next_cycle_experiment": "After maintainers publish search/category controls and freshness metadata, compare representative-card discovery time, zero-result rate, source reachability, /vs-* progression, and comparison-assisted registration against the current baseline."
       },
       "findings": [
         {
-          "finding_id": "landing-x-share-attribution-bypass",
-          "summary": "The visible X share action bypasses the existing share service, so shared visits can lose source and UTM attribution before trial or signup measurement.",
+          "finding_id": "comparison-discovery-search-category-gap",
+          "summary": "174社規模の一覧に名称検索とcategory絞り込みがなく、目的の比較候補へ到達しにくい",
           "severity": "p1",
-          "suggested_action": "Route the visible X control through LandingPageAdapter.shareLandingPage and the existing LandingShareService, retaining a bounded fallback only when the adapter reports failure."
+          "suggested_action": "表示名とcategoryを対象にしたkeyboard-accessible検索、category filter、結果件数、全解除操作を追加し、代表fixtureで目的候補への到達時間を測る。"
         },
         {
-          "finding_id": "landing-share-contract-regression-gap",
-          "summary": "Service tests prove tagged URL and analytics behavior, but no page-level contract proves that the visible X button invokes that service, allowing the two share paths to drift silently.",
+          "finding_id": "comparison-freshness-provenance-gap",
+          "summary": "料金、日本展開、overlap、脅威度に更新日時や根拠が表示されず、比較判断の鮮度を確認できない",
           "severity": "p1",
-          "suggested_action": "Add a focused page contract that taps the visible X control, verifies the adapter call with the selected channel, and covers the bounded failure fallback without browser or free-form analytics data."
+          "suggested_action": "competitor単位のverified_atとsource URLを保持し、cardまたはdetail handoffで最終確認日と根拠を表示し、期限超過データを明示する。"
         },
         {
-          "finding_id": "landing-implementation-concentration",
-          "summary": "A 7,380-line stateful landing implementation coordinates acquisition, trial, signup, social proof, experiments, and direct sharing, raising the cost of safely improving conversion.",
+          "finding_id": "comparison-review-source-drift-persistent",
+          "summary": "review設定sourceが実際の/competitors実装と一致しない状態が前回指摘後も残る",
           "severity": "p2",
-          "suggested_action": "After fixing and measuring the share contract, extract independently owned acquisition and sharing behavior behind the existing adapter interfaces with focused contract tests."
+          "suggested_action": "保護されたfeature_review_configのcomparison.sourceをcompetitor_browse_page.dartへ更新し、個別/vs-*ページは別featureとして明示管理する。"
+        },
+        {
+          "finding_id": "comparison-browse-outcome-evidence-gap",
+          "summary": "一覧表示、filter、カード遷移の実利用成果がなく、観測利用を中立50点から更新できない",
+          "severity": "p2",
+          "suggested_action": "privacy境界を確認し、一覧表示、検索/filter利用、zero result、/vs-*遷移を匿名集計する最小event contractを設ける。"
         }
       ],
       "countermeasure": {
         "state": "issue_tracking",
-        "label": "対策待ち・Issue #5155",
-        "detail": "A complete remedy changes visible sharing behavior, analytics attribution, adapter contracts, and PR CI coverage. It requires a bounded implementation lane and cloud validation, exceeding the shared low-risk automatic repair scope for this review tick.",
+        "label": "対策待ち・Issue #5158",
+        "detail": "検索・category UX、freshness data contract、analytics/privacy設計、保護されたreview設定の判断が必要で、証拠から一意に定まる低リスク自動修正ではない。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
-        "resolved_finding_ids": [],
+        "resolved_finding_ids": [
+          "comparison-discovery-search-category-gap"
+        ],
         "validation_status": "passed",
         "validation_messages": [
-          "passed: dedicated worktree fast-forwarded cleanly to origin/main f70623fd5e58ca4092c5c7ccff3fe0e4fef3f7b9",
-          "passed: roster 2026-08-23 and personas 2026-08-30 schema 2, 125 profiles each",
-          "passed: deterministic winner landing from 13 eligible features",
-          "passed: 7,380-line landing surface, 16 matched tests, direct X share bypass, existing tagged share service, and unknown production outcomes captured",
-          "passed: 125 profiles, deterministic seat 32"
+          "passed: clean dedicated branch ready at origin/main 3bbefe8e22a2dea5e034d7fc636ddd4de4f5562f",
+          "passed: 125 roster profiles and 125 personas",
+          "executed successfully: deterministic comparison winner from 13 eligible features",
+          "passed: no schema-v5 comparable baseline, focus_dimension=evidence",
+          "passed: production HTTP 200, current route, browse source, focused widget test, and feature configuration inspected",
+          "executed once successfully: 125 profiles, seat 11"
         ],
         "issue": {
-          "number": 5155,
-          "url": "https://github.com/kanta13jp1/my_web_app/issues/5155",
+          "number": 5158,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5158",
           "status": "created",
           "github_state": "OPEN",
-          "dedupe_key": "tiger-feature-review:20260831T080010+0900:landing",
+          "dedupe_key": "tiger-feature-review:20260831T080010+0900:comparison",
           "remediation_state": null,
           "queue_status": null,
           "synced_at": null
         },
         "implementation": null,
         "findings_without_individual_trace": [
-          "landing-x-share-attribution-bypass",
-          "landing-share-contract-regression-gap",
-          "landing-implementation-concentration"
+          "comparison-freshness-provenance-gap",
+          "comparison-review-source-drift-persistent",
+          "comparison-browse-outcome-evidence-gap"
         ]
       }
     },
@@ -1626,22 +1638,6 @@
   ],
   "features": [
     {
-      "slug": "landing",
-      "kind": "page",
-      "title": "landing",
-      "path": "/lp",
-      "source": "lib/widgets/landing_page_content.dart",
-      "priority": "high",
-      "division": 2,
-      "provisional": false,
-      "eligible": true,
-      "utility_score": 73.97,
-      "completed_cycles": 2,
-      "last_cycle_utility": 73.0,
-      "last_reviewed_at": "2026-08-30T23:00:10+00:00",
-      "reason": "機能レビュー2回・効用74.0点で2部"
-    },
-    {
       "slug": "comparison",
       "kind": "page",
       "title": "comparison",
@@ -1651,11 +1647,11 @@
       "division": 2,
       "provisional": false,
       "eligible": true,
-      "utility_score": 68.58,
-      "completed_cycles": 2,
-      "last_cycle_utility": 74.1,
-      "last_reviewed_at": "2026-08-23T15:24:32+00:00",
-      "reason": "機能レビュー2回・効用68.6点で2部"
+      "utility_score": 65.14,
+      "completed_cycles": 3,
+      "last_cycle_utility": 61.7,
+      "last_reviewed_at": "2026-08-30T23:00:10+00:00",
+      "reason": "機能レビュー3回・効用65.1点で2部"
     },
     {
       "slug": "ai_university",
@@ -1672,6 +1668,22 @@
       "last_cycle_utility": 65.2,
       "last_reviewed_at": "2026-08-30T19:07:50+00:00",
       "reason": "機能レビュー4回・効用65.1点で2部"
+    },
+    {
+      "slug": "landing",
+      "kind": "page",
+      "title": "landing",
+      "path": "/lp",
+      "source": "lib/widgets/landing_page_content.dart",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 75.9,
+      "completed_cycles": 1,
+      "last_cycle_utility": 75.9,
+      "last_reviewed_at": "2026-08-24T13:04:00+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
       "slug": "home",
