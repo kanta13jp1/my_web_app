@@ -27,6 +27,9 @@ permissions: {}
 
 jobs:
   create-draft:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: read
     runs-on: ubuntu-latest

@@ -143,6 +143,19 @@ class ProductionJourneyProbeTest(unittest.TestCase):
         self.assertIn("--base-url", workflow)
         self.assertIn("github.event.workflow_run.conclusion == 'success'", workflow)
 
+    def test_deploy_prod_blocks_on_built_static_route_contract(self) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        workflow = (
+            repo_root / ".github" / "workflows" / "deploy-prod.yml"
+        ).read_text(encoding="utf-8")
+
+        probe_position = workflow.index("scripts/production_journey_probe.py")
+        deploy_position = workflow.index("npx -y firebase-tools@latest deploy")
+        self.assertLess(probe_position, deploy_position)
+        self.assertEqual(workflow.count("scripts/production_journey_probe.py"), 1)
+        self.assertIn("--root-dir build/web", workflow)
+        self.assertIn("--public-routes web/seo/public-routes.json", workflow)
+
     def test_real_generator_output_satisfies_the_local_contract(self) -> None:
         repo_root = Path(__file__).resolve().parents[2]
         output = self.root / "real-build"

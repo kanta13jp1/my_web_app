@@ -19,6 +19,9 @@ permissions: {}
 
 jobs:
   smoke:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: read
     name: Blog/news production smoke

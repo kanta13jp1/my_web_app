@@ -18,6 +18,9 @@ permissions: {}
 
 jobs:
   check-quotas:
+    environment:
+      name: observability-production
+      deployment: false
     permissions:
       contents: read
     name: Check AI Tool Quotas
@@ -26,6 +29,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
@@ -39,7 +48,7 @@ jobs:
       - name: Check Anthropic Claude Usage
         id: anthropic
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
         run: |
           python3 - << 'EOF'
           import os, requests, json
@@ -101,7 +110,7 @@ jobs:
         id: openai
         env:
           # Admin API キー (sk-admin-...) が必要。通常キーでは 401。
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.OPENAI_API_KEY || '' }}
         run: |
           python3 - << 'EOF'
           import os, requests, json

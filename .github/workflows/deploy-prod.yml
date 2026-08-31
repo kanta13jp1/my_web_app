@@ -52,6 +52,8 @@ jobs:
     # an operator-triggered deployment that has no preceding protected PR.
     if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/ci.yml
+    with:
+      expected_head_sha: ${{ github.sha }}
     permissions:
       contents: read
       pull-requests: write
@@ -536,9 +538,9 @@ jobs:
           # 全250本を16本のhubにaction分岐統合 (11 hub + 5 standalone)。新規機能は既存hubへのaction追加のみ。
           # 新しいEFを作成する場合は必ず既存hubの数を減らして50本以下を維持すること。
           #
-          # All browser-facing functions use --no-verify-jwt so that CORS OPTIONS
-          # preflight requests (which carry no Authorization header) are not
-          # rejected by Supabase's platform-level JWT check.
+          # Public/browser functions that own a custom auth handshake use
+          # --no-verify-jwt. Sensitive owner-only endpoints keep gateway JWT
+          # verification and repeat authorization inside the handler.
           #
           # Remote dependency CDNs can occasionally return transient 5xx errors
           # while the Supabase CLI builds each function graph. Retry per
@@ -601,7 +603,9 @@ jobs:
           # local-election-intelligence は line 275 にあり (並び順維持のため)
           deploy_function get-home-dashboard --no-verify-jwt
           deploy_function ai-assistant --no-verify-jwt
-          deploy_function growth-weekly-digest --no-verify-jwt
+          # Owner-only growth aggregates. Gateway JWT verification remains on;
+          # the handler also requires user_profiles admin or service role.
+          deploy_function growth-weekly-digest
           deploy_function guitar-recording-studio --no-verify-jwt
           deploy_function autonomous-ops --no-verify-jwt
           # Owner-only Notion inventory. Browser JWT + user_profiles.is_admin
@@ -638,6 +642,9 @@ jobs:
           # worker APIは用途を分けた専用tokenで認証する。
           deploy_function video-generation-hub --no-verify-jwt
           deploy_function video-worker-hub --no-verify-jwt
+          # 承認済みの exact artifact/review だけを、非公開配信・Stripe固定価格・
+          # /shop 検証・rollback の順に公開する。service role定期実行も関数内で再認証。
+          deploy_function video-commerce-hub --no-verify-jwt
           # 退会申請は user JWT、期限到来後の破壊的 worker は service_role を
           # 関数内で再検証する。scheduled workflow は owner/legal 承認後に
           # ACCOUNT_DELETION_AUTOMATION_ENABLED=true で有効化する。
@@ -658,7 +665,7 @@ jobs:
           deploy_function memory-search-hub --no-verify-jwt
           deploy_function mcp-well-known --no-verify-jwt
 
-          # Total: 32 functions deployed (ハードキャップ50本に対し32本 — 余裕18本)
+          # Total: 33 functions deployed (ハードキャップ50本に対し33本 — 余裕17本)
           # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
           #
           # Hub対応表:
@@ -760,6 +767,13 @@ jobs:
           # 実在ルートのみの sitemap を当日 lastmod で再生成 (build 済みへ出力)
           python3 scripts/generate_sitemap.py --out build/web/sitemap.xml
           echo "prerendered vs-* pages:"; ls build/web/ | grep -c '^vs-' || true
+
+      - name: Verify production journey static route contract
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          python3 scripts/production_journey_probe.py \
+            --root-dir build/web \
+            --public-routes web/seo/public-routes.json
 
       - name: Setup Node for Firebase CLI
         if: steps.changes.outputs.web == 'true'

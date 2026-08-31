@@ -32,6 +32,11 @@ on:
         required: true
         type: string
   workflow_call:
+    inputs:
+      expected_head_sha:
+        description: Exact 40-character HEAD supplied by the calling workflow
+        required: false
+        type: string
 
 permissions: {}
 
@@ -136,11 +141,16 @@ jobs:
           python scripts/classify_ci_changes_test.py
           python scripts/cloud_ci_handoff_test.py
           python scripts/cloud_first_route_test.py
+          python scripts/generate_infrastructure_map_test.py
           python scripts/cicd_efficiency_test.py
           python scripts/pre_commit_quality_gate_test.py
           python scripts/container_cleanup_guard_test.py
+          python scripts/check_rootless_container_setup_test.py
+          python scripts/check_rootless_container_setup.py
           python scripts/vscode_terminal_settings_test.py
           python scripts/ci_failure_digest_test.py
+          python scripts/test_paid_ai_policy.py
+          python scripts/paid_ai_policy.py audit --workflows-dir .github/workflows
 
       - name: Test high-risk dual security review
         run: >-
@@ -386,6 +396,10 @@ jobs:
             -s test/scripts \
             -p 'test_check_github_actions_security_policy.py'
           python scripts/check_github_actions_security_policy.py
+          python -m unittest discover \
+            -s test/scripts \
+            -p 'test_check_privileged_workflow_credentials.py'
+          python scripts/check_privileged_workflow_credentials.py
         continue-on-error: false
 
       - name: Test tools-hub MCP smoke response compatibility

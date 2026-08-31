@@ -7,6 +7,8 @@ import '../services/activation_revenue_experiment_service.dart';
 import '../services/activation_revenue_tracker.dart';
 import '../services/billing_service.dart';
 import '../services/growth_acquisition_service.dart';
+import '../services/paddle_checkout.dart';
+import '../ui/features/billing/views/paddle_sandbox_checkout_card.dart';
 
 class SubscriptionBillingPage extends StatefulWidget {
   const SubscriptionBillingPage({
@@ -17,6 +19,8 @@ class SubscriptionBillingPage extends StatefulWidget {
     this.experimentService = const ActivationRevenueExperimentService(),
     this.tracker = const SupabaseActivationRevenueEventTracker(),
     this.assignment,
+    this.paddleSandboxConfig,
+    this.paddleCheckoutGateway,
   });
 
   final BillingGateway? service;
@@ -25,6 +29,8 @@ class SubscriptionBillingPage extends StatefulWidget {
   final ActivationRevenueExperimentService experimentService;
   final ActivationRevenueEventTracker tracker;
   final ActivationRevenueAssignment? assignment;
+  final PaddleSandboxConfig? paddleSandboxConfig;
+  final PaddleCheckoutGateway? paddleCheckoutGateway;
 
   @override
   State<SubscriptionBillingPage> createState() =>
@@ -38,6 +44,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
   bool _isLoading = true;
   bool _isOpeningStripe = false;
   String? _errorMessage;
+  VoidCallback? _retryAction;
   BillingStatus? _status;
   _BillingReturnNotice? _returnNotice;
 
@@ -98,6 +105,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _retryAction = null;
     });
     try {
       final status = await _service.fetchStatus();
@@ -105,9 +113,10 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     } catch (error) {
       debugPrint('Billing status fetch failed: $error');
       if (mounted) {
-        setState(
-          () => _errorMessage = 'プラン情報を読み込めませんでした。時間をおいて再度お試しください。',
-        );
+        setState(() {
+          _errorMessage = 'プラン情報を読み込めませんでした。時間をおいて再度お試しください。';
+          _retryAction = _fetchBillingInfo;
+        });
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -165,6 +174,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     setState(() {
       _isOpeningStripe = true;
       _errorMessage = null;
+      _retryAction = null;
     });
     try {
       final session = await createSession();
@@ -176,9 +186,10 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     } catch (error) {
       debugPrint('Billing session preparation failed: $error');
       if (mounted) {
-        setState(
-          () => _errorMessage = '決済画面を準備できませんでした。時間をおいて再度お試しください。',
-        );
+        setState(() {
+          _errorMessage = '決済画面を準備できませんでした。時間をおいて再度お試しください。';
+          _retryAction = () => _openStripeSession(createSession);
+        });
       }
     } finally {
       if (mounted) setState(() => _isOpeningStripe = false);
@@ -213,6 +224,8 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
         );
     final fromOnboarding = _sourceUri.queryParameters['entry'] == 'onboarding';
     final valueFraming = _enabled('a10');
+    final paddleSandboxConfig =
+        widget.paddleSandboxConfig ?? PaddleSandboxConfig.fromEnvironment();
     return Scaffold(
       appBar: AppBar(
         title: const Text('プランと応援'),
@@ -234,7 +247,11 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (_errorMessage != null) _ErrorBanner(_errorMessage!),
+                      if (_errorMessage != null)
+                        _ErrorBanner(
+                          _errorMessage!,
+                          onRetry: _retryAction,
+                        ),
                       if (_returnNotice != null) ...[
                         _BillingReturnBanner(_returnNotice!),
                         const SizedBox(height: 12),
@@ -265,6 +282,16 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                         },
                         onUpgrade: _openCheckout,
                       ),
+                      if (paddleSandboxConfig.shouldExpose) ...[
+                        const SizedBox(height: 16),
+                        PaddleSandboxCheckoutCard(
+                          config: paddleSandboxConfig,
+                          gateway: widget.paddleCheckoutGateway,
+                          onContinue: () {
+                            Navigator.of(context).pushReplacementNamed('/home');
+                          },
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       _UsageCard(status: status),
                       const SizedBox(height: 16),
@@ -448,9 +475,10 @@ class _BillingReturnBanner extends StatelessWidget {
 }
 
 class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner(this.message);
+  const _ErrorBanner(this.message, {required this.onRetry});
 
   final String message;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -463,7 +491,24 @@ class _ErrorBanner extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE57373)),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(message, style: const TextStyle(color: Color(0xFFC62828))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(message, style: const TextStyle(color: Color(0xFFC62828))),
+          if (onRetry != null) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                key: const Key('billing_error_retry_button'),
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('再試行'),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

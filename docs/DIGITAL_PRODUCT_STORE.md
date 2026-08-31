@@ -31,6 +31,7 @@ PII、権利、人間の寄与、価格、private object、SHA-256をレビュ�
 | `prompt` | プロンプト | AI用プロンプト集、ワークフロー |
 | `idea` | アイデア | 企画書、コンセプト集、事業アイデア |
 | `game` | ゲーム | Windowsゲーム、追加コンテンツ |
+| `application` | アプリ | Windowsアプリ、デスクトップツール |
 | `template` | テンプレート | 表計算、文書、スライド、制作雛形 |
 
 複数ファイルはZIPにまとめます。`download_file_name` は購入者に表示する保存名で、

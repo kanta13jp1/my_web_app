@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:my_web_app/models/micro_survey.dart';
+import 'package:my_web_app/services/micro_survey_repository.dart';
+import 'package:my_web_app/widgets/micro_survey_bottom_sheet.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
@@ -117,6 +120,15 @@ class _TeamWorkspacePageState extends State<TeamWorkspacePage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('チームを作成しました')),
+        );
+        await presentMicroSurveyIfEligible(
+          context: context,
+          repository: SupabaseMicroSurveyRepository(_supabase),
+          surveyContext: const MicroSurveyContext(
+            trigger: MicroSurveyTrigger.resourceCreated,
+            route: '/team-workspace',
+            resourceType: 'team',
+          ),
         );
       }
       // ignore: avoid_catches_without_on_clauses

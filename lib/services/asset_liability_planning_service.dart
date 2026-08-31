@@ -320,6 +320,21 @@ class AssetLiabilityPlanningService {
           : sum,
     );
 
+    // リボカードの新規利用額は取込明細を正とする。明細が無いカードだけ設定の
+    // 手入力値へフォールバックし、同じ利用額を二重加算しない。
+    final cardStatementTotalsByBillingId = <String, double>{};
+    for (final line in cardStatementLines) {
+      final billingAccountId = line.billingAccountId.trim();
+      if (billingAccountId.isEmpty) {
+        continue;
+      }
+      cardStatementTotalsByBillingId.update(
+        billingAccountId,
+        (current) => current + line.amount,
+        ifAbsent: () => line.amount,
+      );
+    }
+
     final debtMasterRows = accounts
         .where((account) => account.isLiability)
         .map(
@@ -336,6 +351,7 @@ class AssetLiabilityPlanningService {
             defaultCardBillingAccountIds: defaultCardBillingAccountIds,
             cardBillingAccountIds: cardBillingAccountIds,
             revolvingConfigs: revolvingConfigs,
+            cardStatementTotalsByBillingId: cardStatementTotalsByBillingId,
             accountsById: accountsById,
           ),
         )
@@ -736,6 +752,7 @@ class AssetLiabilityPlanningService {
     required Map<String, String> defaultCardBillingAccountIds,
     required Map<String, String> cardBillingAccountIds,
     required Map<String, AssetLiabilityRevolvingCreditConfig> revolvingConfigs,
+    required Map<String, double> cardStatementTotalsByBillingId,
     required Map<String, AssetLiabilityAccount> accountsById,
   }) {
     final principal = account.liabilityBalance;
@@ -757,17 +774,20 @@ class AssetLiabilityPlanningService {
       account: account,
       monthlyPaymentOverrides: monthlyPaymentOverrides,
     );
-    // リボ払いカードは 請求額 = 設定額 + max(0, リボ残高 − 利用限度額) で確定する。
-    // リボ残高は負債残高 (principal) を用い、手入力/推定額より優先する。
+    // リボ払いカードは「最低返済額 + 当月新規利用額」を25日に返す。
+    // 既存残高は一括返済へ跳ね上げず、明細がある場合は新規利用額を自動反映する。
     final revolvingConfig = _revolvingConfigFor(
       account: account,
       revolvingConfigs: revolvingConfigs,
     );
+    final importedNewUsage = cardStatementTotalsByBillingId[account.id] ??
+        cardStatementTotalsByBillingId[account.name.trim()];
     final revolvingBilling = revolvingConfig == null
         ? null
         : const AssetRevolvingCreditService().computeBilling(
             balance: principal,
             config: revolvingConfig,
+            newUsageAmount: importedNewUsage,
           );
     final scheduledPayment =
         revolvingBilling?.billedAmount ?? manualPayment ?? minimumPayment;
@@ -817,7 +837,7 @@ class AssetLiabilityPlanningService {
       name: account.name,
       kind: account.kind,
       balance: account.balance,
-      paymentDay: account.paymentDay,
+      paymentDay: revolvingBilling?.paymentDay ?? account.paymentDay,
       paymentSourceAccountId: paymentSourceAccountId,
       paymentSourceAccountName: paymentSourceAccountName,
       paymentMethod: paymentRouting.paymentMethod,
@@ -1204,9 +1224,9 @@ class AssetLiabilityPlanningService {
         0,
         (sum, line) => sum + line.amount,
       );
-      // リボ払いカードは 請求額 = 設定額 + 限度額超過分 で決まり、利用明細(新規利用)は
-      // リボ残高に積み増されるだけなので「明細合計 ≠ 請求額」が正常。一括払い前提の
-      // 不一致アラートは抑止し、内訳は revolvingBilling で表示する。
+      // リボ払いカードは最低返済額へ新規利用額を全額上乗せする。明細がある場合は
+      // その合計が上乗せ額の正となるため、一括払い前提の不一致アラートは抑止し、
+      // 内訳は revolvingBilling で説明する。
       final revolvingBilling = billingRow?.revolvingBilling;
       final isRevolving = revolvingBilling != null;
       final alerts = <String>[];
@@ -1374,10 +1394,11 @@ class AssetLiabilityPlanningService {
       if (row.paid) {
         continue;
       }
-      byDayAndAction.putIfAbsent(
-        (day, row.requiresAction),
-        () => <AssetLiabilityDebtRow>[],
-      ).add(row);
+      byDayAndAction.putIfAbsent((
+        day,
+        row.requiresAction,
+        // ignore: require_trailing_commas
+      ), () => <AssetLiabilityDebtRow>[]).add(row);
     }
 
     final result = <AssetLiabilityPaymentDayRisk>[];
@@ -1816,7 +1837,9 @@ class AssetLiabilityPlanningService {
     required List<AssetLiabilityCashflowRow> cashflowRows,
   }) {
     final donors = summaries
-        .where((summary) => summary.projectedBalance > _transferDonorReserve)
+        .where(
+          (summary) => summary.projectedBalance > _transferDonorReserve,
+        )
         .toList()
       ..sort((a, b) => b.projectedBalance.compareTo(a.projectedBalance));
     final shortages = summaries.where((summary) => summary.isShort).toList()
@@ -2003,7 +2026,7 @@ class AssetLiabilityPlanningService {
       ({
         AssetLiabilityAccount account,
         String? sourceAccountId,
-        bool isSubscription
+        bool isSubscription,
       })> _buildRecurringFixedCostInjections({
     required List<AssetRecurringFixedCost> recurringFixedCosts,
     required List<AssetLiabilityAccount> existingAccounts,
@@ -2014,7 +2037,7 @@ class AssetLiabilityPlanningService {
       return const <({
         AssetLiabilityAccount account,
         String? sourceAccountId,
-        bool isSubscription
+        bool isSubscription,
       })>[];
     }
     final takenIds = existingAccounts.map((account) => account.id).toSet();
@@ -2023,7 +2046,7 @@ class AssetLiabilityPlanningService {
     final result = <({
       AssetLiabilityAccount account,
       String? sourceAccountId,
-      bool isSubscription
+      bool isSubscription,
     })>[];
     for (final cost in recurringFixedCosts) {
       if (cost.amount <= 0 ||
@@ -2048,14 +2071,13 @@ class AssetLiabilityPlanningService {
       }
       takenIds.add(account.id);
       takenNames.add(_normalize(account.name));
-      result.add(
-        (
-          account: account,
-          sourceAccountId: cost.sourceAccountId,
-          isSubscription:
-              cost.category == AssetRecurringFixedCostCategory.subscription,
-        ),
-      );
+      result.add((
+        account: account,
+        sourceAccountId: cost.sourceAccountId,
+        isSubscription:
+            cost.category == AssetRecurringFixedCostCategory.subscription,
+        // ignore: require_trailing_commas
+      ));
     }
     return result;
   }

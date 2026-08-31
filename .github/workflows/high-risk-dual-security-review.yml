@@ -25,10 +25,13 @@ jobs:
     if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    environment: high-risk-security-review
+    environment:
+      name: high-risk-security-review
+      deployment: false
     permissions:
       contents: read
       id-token: write
+      issues: read
       pull-requests: write
     env:
       PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
@@ -46,6 +49,12 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
 
       - name: Resolve immutable review inputs
         id: refs
@@ -122,20 +131,20 @@ jobs:
           fi
 
       - name: Setup fixed Python runtime
-        if: steps.classify.outputs.high_risk == 'true' && steps.authorize.outputs.authorized == 'true'
+        if: steps.paid_ai_policy.outputs.enabled == 'true' && steps.classify.outputs.high_risk == 'true' && steps.authorize.outputs.authorized == 'true'
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.12'
 
       - name: Install hash-locked OpenAI SDK dependency set
-        if: steps.classify.outputs.high_risk == 'true' && steps.authorize.outputs.authorized == 'true'
+        if: steps.paid_ai_policy.outputs.enabled == 'true' && steps.classify.outputs.high_risk == 'true' && steps.authorize.outputs.authorized == 'true'
         run: >-
           python -m pip install --disable-pip-version-check --no-cache-dir
           --only-binary=:all: --require-hashes
           -r scripts/requirements-high-risk-security-review.txt
 
       - name: Record maintainer-approval requirement
-        if: steps.classify.outputs.high_risk == 'true' && steps.authorize.outputs.authorized != 'true'
+        if: steps.paid_ai_policy.outputs.enabled == 'true' && steps.classify.outputs.high_risk == 'true' && steps.authorize.outputs.authorized != 'true'
         run: |
           printf '%s\n' \
             '## High-risk dual security review' \
@@ -147,15 +156,29 @@ jobs:
             '- Recovery: a maintainer must inspect the immutable diff and run this workflow with `workflow_dispatch`.' \
             > /tmp/dual-security-review.md
 
+      - name: Record owner-requested paid-review suspension
+        if: steps.paid_ai_policy.outputs.enabled != 'true' && steps.classify.outputs.high_risk == 'true'
+        run: |
+          printf '%s\n' \
+            '## High-risk dual security review' \
+            '' \
+            '**OWNER POLICY EXCEPTION — paid Claude/Codex review is suspended until open Issues reach zero.**' \
+            '' \
+            '- Claude evidence: `NOT RUN — owner-requested billing suspension.`' \
+            '- Codex evidence: `NOT RUN — owner-requested billing suspension.`' \
+            '- This is not a dual-model review and must not be represented as one.' \
+            '- Reactivation requires zero open Issues and a manual owner opt-in.' \
+            > /tmp/dual-security-review.md
+
       - name: Run independent reviews and persist evidence
         id: dual
-        if: steps.classify.outputs.high_risk == 'true' && steps.authorize.outputs.authorized == 'true'
+        if: steps.paid_ai_policy.outputs.enabled == 'true' && steps.classify.outputs.high_risk == 'true' && steps.authorize.outputs.authorized == 'true'
         continue-on-error: true
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          OPENAI_WIF_AUDIENCE: ${{ vars.OPENAI_WIF_AUDIENCE }}
-          OPENAI_IDENTITY_PROVIDER_ID: ${{ vars.OPENAI_IDENTITY_PROVIDER_ID }}
-          OPENAI_SERVICE_ACCOUNT_ID: ${{ vars.OPENAI_SERVICE_ACCOUNT_ID }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
+          OPENAI_WIF_AUDIENCE: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && vars.OPENAI_WIF_AUDIENCE || '' }}
+          OPENAI_IDENTITY_PROVIDER_ID: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && vars.OPENAI_IDENTITY_PROVIDER_ID || '' }}
+          OPENAI_SERVICE_ACCOUNT_ID: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && vars.OPENAI_SERVICE_ACCOUNT_ID || '' }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DECISION_EVENTS_URL: https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/decision-events
           CLAUDE_SECURITY_MODEL: ${{ vars.CLAUDE_SECURITY_MODEL || 'claude-opus-4-7' }}
@@ -180,7 +203,7 @@ jobs:
           cat /tmp/dual-security-review.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Enforce fail-closed dual-review result
-        if: steps.classify.outputs.high_risk == 'true' && always()
+        if: steps.paid_ai_policy.outputs.enabled == 'true' && steps.classify.outputs.high_risk == 'true' && always()
         run: |
           if [ "${{ steps.authorize.outputs.authorized }}" != "true" ]; then
             echo "::error::External contributors require an explicit maintainer workflow_dispatch run."

@@ -6848,6 +6848,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   void _handleUniversityMenuAction(String action) {
     switch (action) {
+      case 'toeic':
+        Navigator.pushNamed(context, '/ai-university-toeic');
+        return;
       case 'reading':
         Navigator.pushNamed(context, '/english-reading-curriculum');
         return;
@@ -7006,6 +7009,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               onSelected: _handleUniversityMenuAction,
               itemBuilder: (_) => [
                 _universityMenuItem(
+                  'toeic',
+                  Icons.school_outlined,
+                  'TOEIC対策',
+                ),
+                _universityMenuItem(
                   'reading',
                   Icons.menu_book_outlined,
                   '英語速読カリキュラム',
@@ -7023,6 +7031,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               ],
             )
           else ...[
+            IconButton(
+              icon: const Icon(Icons.school_outlined),
+              tooltip: 'TOEIC対策',
+              onPressed: () => _handleUniversityMenuAction('toeic'),
+            ),
             IconButton(
               icon: const Icon(Icons.menu_book_outlined),
               tooltip: '英語速読カリキュラム',

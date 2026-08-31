@@ -23,16 +23,16 @@ on:
         default: 'false'
         type: string
       pr_number:
-        description: 'PR number to ultrareview (required when ultrareview=true)'
-        required: false
+        description: 'PR number to review from a trusted main dispatch'
+        required: true
         default: ''
         type: string
 
 concurrency:
-  group: claude-agent-review-${{ github.event.pull_request.number || github.run_id }}
+  group: claude-agent-review-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.run_id }}
   cancel-in-progress: true
 
-# Multi-provider AI PR review with automatic fallback:
+# Multi-provider AI PR review with manual, main-only credential access:
 #   Primary:  Claude claude-sonnet-5 (ANTHROPIC_API_KEY)
 #   Fallback: Gemini 1.5 Flash free tier (GEMINI_API_KEY)
 #   Both fail → skip gracefully with a ::warning::, PRs are never blocked
@@ -52,34 +52,82 @@ permissions: {}
 
 jobs:
   review:
+    environment:
+      name: ai-review-production
+      deployment: false
     permissions:
       contents: read
+      issues: read
       pull-requests: write
     name: AI Agent Code Review
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # PR-only: on workflow_dispatch this job diffed HEAD~1 of the dispatched ref
-    # and could never post a comment, so it burned API quota for nothing.
-    if: github.event_name == 'pull_request'
+    # A pull_request workflow is branch-controlled and must never receive a
+    # repository or environment credential. Review is explicitly dispatched
+    # from main; PR contents are fetched as immutable data and never executed.
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.ultrareview != 'true' && github.ref == 'refs/heads/main'
 
     steps:
+      - name: Resolve PR number
+        id: pr
+        env:
+          INPUT_PR_NUMBER: ${{ github.event.inputs.pr_number }}
+        run: |
+          PR_NUM=$(printf '%s' "$INPUT_PR_NUMBER" | tr -d '[:space:]#')
+          case "$PR_NUM" in
+            ''|*[!0-9]*)
+              echo "::error::pr_number must be a non-empty integer."
+              exit 1
+              ;;
+          esac
+          echo "number=$PR_NUM" >> "$GITHUB_OUTPUT"
+
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Fetch immutable PR commits
+        id: commits
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" > /tmp/pr.json
+          BASE_REF=$(jq -r '.base.ref' /tmp/pr.json)
+          BASE_SHA=$(jq -r '.base.sha' /tmp/pr.json)
+          HEAD_SHA=$(jq -r '.head.sha' /tmp/pr.json)
+          if [ "$BASE_REF" != "main" ]; then
+            echo "::error::Credential-bearing review is restricted to PRs targeting main."
+            exit 1
+          fi
+          test "$BASE_SHA" != null && test "$HEAD_SHA" != null
+          git cat-file -e "${BASE_SHA}^{commit}" || git fetch --no-tags origin "$BASE_SHA"
+          git fetch --no-tags origin \
+            "+refs/pull/${PR_NUMBER}/head:refs/remotes/pull/${PR_NUMBER}/head"
+          FETCHED_HEAD=$(git rev-parse "refs/remotes/pull/${PR_NUMBER}/head")
+          if [ "$FETCHED_HEAD" != "$HEAD_SHA" ]; then
+            echo "::error::Fetched PR head does not match the GitHub API head SHA."
+            exit 1
+          fi
+          echo "base=$BASE_SHA" >> "$GITHUB_OUTPUT"
+          echo "head=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
+
       - name: Extract PR diff
         id: diff
+        env:
+          BASE_SHA: ${{ steps.commits.outputs.base }}
+          HEAD_SHA: ${{ steps.commits.outputs.head }}
         run: |
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          HEAD_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
-
-          if [ -n "$BASE_SHA" ]; then
-            RANGE="${BASE_SHA}...${HEAD_SHA}"
-          else
-            RANGE="HEAD~1...HEAD"
-          fi
+          RANGE="${BASE_SHA}...${HEAD_SHA}"
 
           # These must match the extensions the repo actually uses. The list
           # previously carried '*.yaml' (4 files) while omitting '*.yml' (124,
@@ -106,7 +154,7 @@ jobs:
       - name: AI Review (Claude primary / Gemini fallback)
         id: review
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           DIFF_LINES="${{ steps.diff.outputs.lines }}"
@@ -234,14 +282,10 @@ jobs:
             const body = process.env.REVIEW_BODY || '';
             const model = process.env.REVIEW_MODEL || 'AI';
             if (!body || body.startsWith('✅ LGTM')) return;
-            if (!context.issue || !context.issue.number) {
-              core.info('PR コンテキストなし (workflow_dispatch) — コメントスキップ');
-              return;
-            }
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: Number('${{ steps.pr.outputs.number }}'),
               body: `## 🤖 AI Agent コードレビュー\n\n${body}\n\n---\n*Powered by ${model}*`
             });
 
@@ -261,7 +305,7 @@ jobs:
               echo "スキップ (差分なし / API キー未設定 / 両プロバイダー quota 超過)"
             fi
             echo ""
-            echo "**PR**: #${{ github.event.pull_request.number || 'N/A' }} | **Actor**: ${{ github.actor }}"
+            echo "**PR**: #${{ steps.pr.outputs.number }} | **Actor**: ${{ github.actor }}"
           } >> $GITHUB_STEP_SUMMARY
 
   high-risk-ultrareview-gate:
@@ -317,12 +361,16 @@ jobs:
   # Runs comprehensive multi-agent review via Claude Code CLI.
   # Triggered manually; never blocks PRs; billed separately.
   ultrareview:
+    environment:
+      name: ai-review-production
+      deployment: false
     name: Claude ultrareview (opt-in)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.ultrareview == 'true'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.ultrareview == 'true' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
+      issues: read
       pull-requests: write
 
     steps:
@@ -357,19 +405,32 @@ jobs:
           ref: refs/pull/${{ steps.pr.outputs.number }}/head
           persist-credentials: false
 
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
+
+      - name: Record owner-requested ultrareview suspension
+        if: steps.paid_ai_policy.outputs.enabled != 'true'
+        run: echo "Claude ultrareview is disabled by owner policy." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Setup Node.js
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '20'
 
       - name: Install Claude Code CLI
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
         run: npm install -g @anthropic-ai/claude-code@latest 2>&1 | tail -3
 
       - name: Run ultrareview
         id: ultrareview
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUM: ${{ steps.pr.outputs.number }}

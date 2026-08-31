@@ -49,6 +49,9 @@ concurrency:
 
 jobs:
   compile:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: write
     name: Run wiki_compile + commit

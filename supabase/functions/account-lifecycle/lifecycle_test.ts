@@ -9,6 +9,7 @@ import {
   canCancelDeletionRequest,
   deletionScheduledFor,
   isServiceRoleRequest,
+  positiveRequestId,
   remainingDeletionDependencyCount,
   requiresSubscriptionCancellation,
   sessionIdFromAccessToken,
@@ -135,4 +136,13 @@ Deno.test("service role comparison requires an exact bearer token", () => {
     ),
   );
   assertEquals(ACCOUNT_DELETION_CONFIRMATION, "アカウントを削除する");
+});
+
+Deno.test("staged worker accepts only positive safe request identifiers", () => {
+  assertEquals(positiveRequestId(2844), 2844);
+  assertEquals(positiveRequestId(" 2844 "), 2844);
+  assertEquals(positiveRequestId(0), null);
+  assertEquals(positiveRequestId("1.5"), null);
+  assertEquals(positiveRequestId(Number.MAX_SAFE_INTEGER + 1), null);
+  assertEquals(positiveRequestId(null), null);
 });

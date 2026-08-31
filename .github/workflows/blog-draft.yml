@@ -31,9 +31,13 @@ permissions: {}
 
 jobs:
   generate:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: write
       pull-requests: write
+      issues: read
     name: Generate Blog Draft via Claude API
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -43,6 +47,12 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 100
+
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
 
       - name: Setup Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
@@ -55,11 +65,12 @@ jobs:
       - name: Quota Guard — Anthropic circuit breaker check
         id: quota_check
         env:
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # ai_circuit_breakerはRLSでanon SELECTのみ許可されている。
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
         run: |
           RESPONSE=$(curl -s \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
             "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/ai_circuit_breaker?provider=eq.anthropic&select=state,expires_at" \
             --max-time 5 2>/dev/null || echo "[]")
           STATE=$(echo "$RESPONSE" | jq -r '.[0].state // "closed"' 2>/dev/null || echo "closed")
@@ -146,9 +157,9 @@ jobs:
           echo "gitlog_b64=$(cat /tmp/gitlog.b64)" >> $GITHUB_OUTPUT
 
       - name: Generate draft (Claude → Gemini → template fallback)
-        if: steps.skip_check.outputs.skip == 'false' && steps.gitlog.outputs.has_log == 'true' && steps.quota_check.outputs.anthropic_available == 'true'
+        if: steps.skip_check.outputs.skip == 'false' && steps.gitlog.outputs.has_log == 'true'
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && steps.quota_check.outputs.anthropic_available == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TARGET_DATE: ${{ steps.period.outputs.target_date }}
           GITLOG_B64: ${{ steps.gitlog.outputs.gitlog_b64 }}
@@ -161,7 +172,6 @@ jobs:
         if: |
           steps.skip_check.outputs.skip == 'false' &&
           steps.gitlog.outputs.has_log == 'true' &&
-          steps.quota_check.outputs.anthropic_available == 'true' &&
           github.event.inputs.dry_run != 'true'
         env:
           TRACE_ID: blog-draft-${{ github.run_id }}-${{ github.run_attempt }}

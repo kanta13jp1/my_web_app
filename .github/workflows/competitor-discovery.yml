@@ -27,6 +27,9 @@ permissions: {}
 
 jobs:
   discover:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: write
     name: Discover Trending Competitors
@@ -36,7 +39,7 @@ jobs:
     env:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
 
     steps:
       - name: Checkout
@@ -49,9 +52,9 @@ jobs:
         id: existing
         run: |
           EXISTING_IDS=$(curl -sf \
-            "$SUPABASE_URL/rest/v1/competitors?select=id,name&is_active=eq.true" \
-            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" 2>/dev/null || echo "[]")
+            "$SUPABASE_URL/rest/v1/competitors?select=id,display_name&is_active=eq.true" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" 2>/dev/null || echo "[]")
           echo "$EXISTING_IDS" > /tmp/existing_competitors.json
           COUNT=$(echo "$EXISTING_IDS" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
           echo "existing_count=$COUNT" >> $GITHUB_OUTPUT
@@ -78,6 +81,10 @@ jobs:
       # ── Step 3: 既存競合と重複除去 + Supabase staging ────────────────────
       - name: Step 3 - 重複除去 + competitor_candidates に INSERT
         id: stage
+        env:
+          # competitor_candidates はservice-role write限定。read-only discovery
+          # stepには渡さず、この書込みstepだけへ限定する。
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           python3 .github/scripts/competitor_stage.py
 

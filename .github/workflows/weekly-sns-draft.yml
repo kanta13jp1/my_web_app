@@ -26,8 +26,12 @@ permissions: {}
 
 jobs:
   generate:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: write
+      issues: read
     name: Generate Weekly SNS Draft via AI API
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -37,6 +41,12 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
+
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
 
       - name: Setup Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
@@ -129,7 +139,7 @@ jobs:
       - name: Generate weekly SNS draft
         if: steps.skip_check.outputs.skip == 'false'
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TARGET_DATE: ${{ steps.period.outputs.target_date }}
           WEEK_START: ${{ steps.period.outputs.week_start }}

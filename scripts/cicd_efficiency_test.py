@@ -98,6 +98,13 @@ class CicdEfficiencyTest(unittest.TestCase):
             workflow,
         )
         self.assertIn("python scripts/cloud_first_route_test.py", workflow)
+        self.assertIn(
+            "python scripts/generate_infrastructure_map_test.py", workflow
+        )
+        precommit = self.read("scripts/pre_commit_quality_gate.py")
+        self.assertIn(
+            "scripts/generate_infrastructure_map_test.py", precommit
+        )
         self.assertIn("expected_head_sha:", workflow)
         self.assertIn('ref="${GITHUB_SHA}"', workflow)
 

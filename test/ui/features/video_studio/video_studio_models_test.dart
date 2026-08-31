@@ -71,6 +71,7 @@ void main() {
       'created_at': '2026-08-20T10:00:00Z',
       'parent_artifact_id': 'artifact-1',
       'applied_review_id': 'review-1',
+      'authorization_id': 'authorization-1',
       'artifact': {
         'id': 'artifact-2',
         'job_id': 'job-2',
@@ -105,10 +106,59 @@ void main() {
 
     expect(job.parentArtifactId, 'artifact-1');
     expect(job.appliedReviewId, 'review-1');
+    expect(job.authorizationId, 'authorization-1');
     expect(job.artifact?.isSaleCandidate, isTrue);
     expect(job.artifact?.iteration, 2);
     expect(job.artifact?.fileSizeBytes, 1024);
     expect(job.artifact?.latestReview?.decision, 'keep');
     expect(job.artifact?.latestReview?.promptAlignmentScore, 5);
+  });
+
+  test('authorization exposes machine-checkable remaining limits', () {
+    final authorization = VideoImprovementAuthorization.fromJson({
+      'id': 'authorization-1',
+      'status': 'active',
+      'valid_until':
+          DateTime.now().add(const Duration(days: 7)).toIso8601String(),
+      'total_credit_limit': 600,
+      'reserved_credits': 300,
+      'consumed_credits': 0,
+      'remaining_credits': 300,
+      'total_regeneration_limit': 2,
+      'consumed_regenerations': 1,
+      'remaining_regenerations': 1,
+      'root_artifact_id': 'artifact-1',
+      'initial_review_id': 'review-1',
+      'allow_credit_purchase': false,
+    });
+
+    expect(authorization.isActive, isTrue);
+    expect(authorization.remainingCredits, 300);
+    expect(authorization.remainingRegenerations, 1);
+    expect(authorization.allowCreditPurchase, isFalse);
+  });
+
+  test('pending authorization remains resumable and exposes blockers', () {
+    final authorization = VideoImprovementAuthorization.fromJson({
+      'id': 'authorization-pending',
+      'status': 'pending_funding',
+      'pending_reasons': ['insufficient_credits'],
+      'valid_until':
+          DateTime.now().add(const Duration(days: 7)).toIso8601String(),
+      'total_credit_limit': 600,
+      'reserved_credits': 0,
+      'consumed_credits': 0,
+      'remaining_credits': 600,
+      'total_regeneration_limit': 2,
+      'consumed_regenerations': 0,
+      'remaining_regenerations': 2,
+      'root_artifact_id': 'artifact-1',
+      'initial_review_id': 'review-1',
+      'allow_credit_purchase': false,
+    });
+
+    expect(authorization.isActive, isTrue);
+    expect(authorization.isPending, isTrue);
+    expect(authorization.pendingReasons, ['insufficient_credits']);
   });
 }

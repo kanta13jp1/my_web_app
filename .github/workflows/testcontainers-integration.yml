@@ -7,6 +7,8 @@ on:
     paths:
       - ".github/workflows/testcontainers-integration.yml"
       - "scripts/testcontainers_supabase_smoke.py"
+      - "scripts/account_deletion_rollout.py"
+      - "scripts/account_deletion_rollout_test.py"
       - "scripts/requirements-testcontainers.txt"
       - "test/fixtures/testcontainers/**"
       - "test/scripts/test_testcontainers_supabase_smoke.py"
@@ -14,6 +16,7 @@ on:
       - "supabase/functions/**"
       - "supabase/migrations/**"
       - "supabase/tests/**"
+      - ".github/workflows/account-deletion-retention.yml"
   workflow_dispatch:
 
 concurrency:
@@ -55,6 +58,9 @@ jobs:
 
       - name: Unit-test smoke helpers
         run: python test/scripts/test_testcontainers_supabase_smoke.py
+
+      - name: Unit-test account deletion rollout policy
+        run: python scripts/account_deletion_rollout_test.py
 
       - name: Print smoke plan
         run: python scripts/testcontainers_supabase_smoke.py --plan

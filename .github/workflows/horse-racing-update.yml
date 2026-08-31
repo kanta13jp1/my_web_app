@@ -31,6 +31,9 @@ permissions: {}
 
 jobs:
   horse-racing-update:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: read
     name: 競馬情報更新 (出走表+AI予想+結果)

@@ -29,13 +29,15 @@ concurrency:
 
 jobs:
   review:
+    environment:
+      name: ai-operations-production
+      deployment: false
     permissions:
       contents: read
       issues: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       ANTHROPIC_MODEL: ${{ vars.FEATURE_REVIEW_ANTHROPIC_MODEL }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GITHUB_REPOSITORY: ${{ github.repository }}
@@ -50,12 +52,24 @@ jobs:
         with:
           fetch-depth: 100
 
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
+
+      - name: Record owner-requested feature-review suspension
+        if: steps.paid_ai_policy.outputs.enabled != 'true'
+        run: echo "Paid Claude feature review is disabled by owner policy." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Setup Python
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
 
       - name: Cache pip
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/pip
@@ -64,17 +78,22 @@ jobs:
             ${{ runner.os }}-pip-feature-review-
 
       - name: Setup Deno
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
         with:
           deno-version: v2.x
 
       - name: Install dependencies
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
         run: |
           python -m pip install --upgrade pip
           pip install anthropic playwright requests
           python -m playwright install --with-deps chromium
 
       - name: Run feature review
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
         run: |
           ARGS="--config scripts/feature_review_config.json"
           if [ "$DRY_RUN" = "true" ]; then ARGS="$ARGS --dry-run"; fi
@@ -83,7 +102,7 @@ jobs:
           PYTHONUTF8=1 python scripts/feature_review.py $ARGS
 
       - name: Upload review artifacts
-        if: always()
+        if: always() && steps.paid_ai_policy.outputs.enabled == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: feature-review-${{ github.run_id }}
@@ -94,7 +113,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Slack notify
-        if: always()
+        if: always() && steps.paid_ai_policy.outputs.enabled == 'true'
         run: |
           if [ -z "$SLACK_WEBHOOK_URL" ]; then
             echo "::notice::SLACK_WEBHOOK_URL not set"

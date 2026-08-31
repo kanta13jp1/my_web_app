@@ -29,6 +29,8 @@ abstract class VideoStudioGateway {
 
   Future<List<VideoGenerationJob>> listJobs();
 
+  Future<List<VideoImprovementAuthorization>> loadAuthorizations();
+
   Future<VideoCreateResult> createJob({
     required String idempotencyKey,
     required String modelKey,
@@ -46,6 +48,25 @@ abstract class VideoStudioGateway {
     required String artifactId,
     required VideoArtifactReviewDraft review,
   });
+
+  Future<VideoAuthorizationCreateResult> authorizeImprovement({
+    required String idempotencyKey,
+    required String sourceArtifactId,
+    required String sourceReviewId,
+    required int validityHours,
+    required int totalRegenerations,
+  });
+
+  Future<VideoAuthorizationCreateResult> runAuthorizedImprovement({
+    required String idempotencyKey,
+    required String authorizationId,
+    required String sourceArtifactId,
+    required String sourceReviewId,
+  });
+
+  Future<VideoImprovementAuthorization> revokeAuthorization(
+    String authorizationId,
+  );
 
   Future<Uri> createCreditCheckout({
     required String packKey,
@@ -76,6 +97,42 @@ class SupabaseVideoStudioGateway implements VideoStudioGateway {
     final data = await _invokeVideo({'action': 'list'});
     return videoStudioList(data['jobs'])
         .map((value) => VideoGenerationJob.fromJson(videoStudioMap(value)))
+        .toList(growable: false);
+  }
+
+  @override
+  Future<VideoAuthorizationCreateResult> runAuthorizedImprovement({
+    required String idempotencyKey,
+    required String authorizationId,
+    required String sourceArtifactId,
+    required String sourceReviewId,
+  }) async {
+    final data = await _invokeVideo({
+      'action': 'run_authorized_improvement',
+      'idempotency_key': idempotencyKey,
+      'authorization_id': authorizationId,
+      'source_artifact_id': sourceArtifactId,
+      'source_review_id': sourceReviewId,
+    });
+    return VideoAuthorizationCreateResult(
+      authorization: VideoImprovementAuthorization.fromJson(
+        videoStudioMap(data['authorization']),
+      ),
+      job: data['job'] == null
+          ? null
+          : VideoGenerationJob.fromJson(videoStudioMap(data['job'])),
+      balance: VideoCreditBalance.fromJson(videoStudioMap(data['balance'])),
+    );
+  }
+
+  @override
+  Future<List<VideoImprovementAuthorization>> loadAuthorizations() async {
+    final data = await _invokeVideo({'action': 'authorization_status'});
+    return videoStudioList(data['authorizations'])
+        .map(
+          (value) =>
+              VideoImprovementAuthorization.fromJson(videoStudioMap(value)),
+        )
         .toList(growable: false);
   }
 
@@ -138,6 +195,50 @@ class SupabaseVideoStudioGateway implements VideoStudioGateway {
     return VideoArtifactReviewResult(
       artifact: VideoArtifact.fromJson(videoStudioMap(data['artifact'])),
       review: VideoArtifactReview.fromJson(videoStudioMap(data['review'])),
+    );
+  }
+
+  @override
+  Future<VideoAuthorizationCreateResult> authorizeImprovement({
+    required String idempotencyKey,
+    required String sourceArtifactId,
+    required String sourceReviewId,
+    required int validityHours,
+    required int totalRegenerations,
+  }) async {
+    final data = await _invokeVideo({
+      'action': 'authorize_improvement',
+      'idempotency_key': idempotencyKey,
+      'source_artifact_id': sourceArtifactId,
+      'source_review_id': sourceReviewId,
+      'validity_hours': validityHours,
+      'total_regenerations': totalRegenerations,
+      'rights_confirmed': true,
+      'adult_confirmed': true,
+      'terms_confirmed': true,
+      'prohibited_content_confirmed': true,
+    });
+    return VideoAuthorizationCreateResult(
+      authorization: VideoImprovementAuthorization.fromJson(
+        videoStudioMap(data['authorization']),
+      ),
+      job: data['job'] == null
+          ? null
+          : VideoGenerationJob.fromJson(videoStudioMap(data['job'])),
+      balance: VideoCreditBalance.fromJson(videoStudioMap(data['balance'])),
+    );
+  }
+
+  @override
+  Future<VideoImprovementAuthorization> revokeAuthorization(
+    String authorizationId,
+  ) async {
+    final data = await _invokeVideo({
+      'action': 'revoke_authorization',
+      'authorization_id': authorizationId,
+    });
+    return VideoImprovementAuthorization.fromJson(
+      videoStudioMap(data['authorization']),
     );
   }
 

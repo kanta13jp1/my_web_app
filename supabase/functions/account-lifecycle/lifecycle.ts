@@ -130,6 +130,14 @@ export function bearerToken(request: Request): string {
     : "";
 }
 
+export function positiveRequestId(value: unknown): number | null {
+  if (typeof value !== "number" && typeof value !== "string") return null;
+  const normalized = typeof value === "string" ? value.trim() : value;
+  if (normalized === "") return null;
+  const parsed = Number(normalized);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
 export function isServiceRoleRequest(
   request: Request,
   serviceRoleKey: string,

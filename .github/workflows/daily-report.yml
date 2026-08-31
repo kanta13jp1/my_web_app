@@ -13,6 +13,9 @@ permissions: {}
 
 jobs:
   daily-report:
+    environment:
+      name: analytics-production
+      deployment: false
     permissions:
       contents: write
       issues: read

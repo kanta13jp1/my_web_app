@@ -31,6 +31,8 @@ JOB_ID_RE = re.compile(
 WORKER_ID_RE = re.compile(r"^[A-Za-z0-9._-]{3,80}$")
 LEASE_TOKEN_RE = re.compile(r"^[a-f0-9]{64}$", re.IGNORECASE)
 SAFE_ERROR_DETAIL_RE = re.compile(r"^[a-z0-9_]{1,120}$")
+TRANSIENT_HUB_STATUS_CODES = frozenset({408, 429, 500, 502, 503, 504})
+HEARTBEAT_RETRY_DELAYS_SECONDS = (1.0, 2.0, 4.0)
 
 
 class WorkerError(RuntimeError):
@@ -188,9 +190,29 @@ class WorkerApi:
         return value if isinstance(value, dict) else None
 
     def heartbeat(self, job_id: str, lease_token: str) -> bool:
-        return self.call(
-            "heartbeat", job_id=job_id, lease_token=lease_token
-        ).get("lease_active") is True
+        for attempt in range(len(HEARTBEAT_RETRY_DELAYS_SECONDS) + 1):
+            try:
+                return self.call(
+                    "heartbeat", job_id=job_id, lease_token=lease_token
+                ).get("lease_active") is True
+            except (requests.RequestException, WorkerError) as error:
+                status_errors = {
+                    f"worker_hub_http_{status}"
+                    for status in TRANSIENT_HUB_STATUS_CODES
+                }
+                is_transient = isinstance(error, requests.RequestException) or (
+                    isinstance(error, WorkerError) and str(error) in status_errors
+                )
+                if not is_transient or attempt >= len(HEARTBEAT_RETRY_DELAYS_SECONDS):
+                    raise
+                delay = HEARTBEAT_RETRY_DELAYS_SECONDS[attempt]
+                print(
+                    f"worker hub heartbeat unavailable; retrying in {delay:g}s",
+                    flush=True,
+                )
+                time.sleep(delay)
+
+        raise RuntimeError("unreachable heartbeat retry state")
 
     def fail(
         self,

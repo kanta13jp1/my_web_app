@@ -74,6 +74,25 @@ class WorkerContractTest(unittest.TestCase):
         self.assertIn("dst=/run/secrets/video-worker-token,readonly", startup)
         self.assertNotIn('--env "VIDEO_WORKER_TOKEN=${token}"', startup)
 
+    def test_gcp_startup_keeps_worker_stopped_until_gpu_is_ready(self) -> None:
+        startup = (Path(__file__).parent / "gcp" / "startup.sh").read_text(
+            encoding="utf-8"
+        )
+
+        early_stop = startup.index("systemctl disable --now video-worker.service")
+        docker_restart = startup.index("systemctl restart docker")
+        gpu_retry = startup.index('for gpu_attempt in $(seq 1 "${GPU_READY_ATTEMPTS}")')
+        gpu_check = startup.index("assert torch.cuda.is_available()")
+        worker_start = startup.rindex("systemctl start video-worker.service")
+
+        self.assertLess(early_stop, docker_restart)
+        self.assertLess(docker_restart, gpu_retry)
+        self.assertLess(gpu_retry, gpu_check)
+        self.assertLess(gpu_check, worker_start)
+        self.assertIn('sleep "${GPU_READY_RETRY_SECONDS}"', startup)
+        self.assertIn('if [[ "${gpu_ready}" != "true" ]]', startup)
+        self.assertNotIn("systemctl enable --now video-worker.service", startup)
+
     def test_wan_patch_enables_cpu_blended_tiled_vae_decode(self) -> None:
         root = Path(__file__).parent
         dockerfile = (root / "Dockerfile").read_text(encoding="utf-8")
@@ -215,6 +234,52 @@ class WorkerContractTest(unittest.TestCase):
                     job_id="11111111-1111-4111-8111-111111111111",
                     lease_token="ab" * 32,
                 )
+
+    def test_worker_api_retries_transient_heartbeat_503(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            api = WorkerApi(self._settings(Path(root)))
+            api.session.post = Mock(
+                side_effect=[
+                    Mock(
+                        status_code=503,
+                        json=Mock(return_value={"error": "worker_service_unavailable"}),
+                    ),
+                    Mock(
+                        status_code=200,
+                        json=Mock(
+                            return_value={"success": True, "lease_active": True}
+                        ),
+                    ),
+                ]
+            )
+            with patch("worker.time.sleep") as sleep:
+                active = api.heartbeat(
+                    "11111111-1111-4111-8111-111111111111",
+                    "ab" * 32,
+                )
+
+            self.assertTrue(active)
+            self.assertEqual(api.session.post.call_count, 2)
+            sleep.assert_called_once_with(1.0)
+
+    def test_worker_api_does_not_retry_non_transient_heartbeat_error(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            api = WorkerApi(self._settings(Path(root)))
+            api.session.post = Mock(
+                return_value=Mock(
+                    status_code=400,
+                    json=Mock(return_value={"error": "invalid_lease"}),
+                )
+            )
+            with patch("worker.time.sleep") as sleep:
+                with self.assertRaisesRegex(WorkerError, "worker_hub_http_400"):
+                    api.heartbeat(
+                        "11111111-1111-4111-8111-111111111111",
+                        "ab" * 32,
+                    )
+
+            self.assertEqual(api.session.post.call_count, 1)
+            sleep.assert_not_called()
 
     def test_ambiguous_upload_is_completed_when_storage_has_the_object(self) -> None:
         with tempfile.TemporaryDirectory() as root:

@@ -7,6 +7,17 @@ GitHub Actions OIDC and OpenAI Workload Identity Federation (WIF). It must not
 use a long-lived `OPENAI_API_KEY`. The Claude lane and decision-event service
 keep their existing, separately scoped credentials.
 
+As of 2026-08-30, the owner has suspended all paid Claude/Codex automation
+until this repository has zero open GitHub Issues. Repository variable
+`PAID_AI_CLAUDE_CODEX_ENABLED` must remain `false`, and credential-bearing
+workflows remain manually disabled during the rollout. Credentials and WIF
+mappings are retained for later recovery; they are not exposed to workflow
+steps while the policy is disabled.
+
+The reusable `.github/actions/paid-ai-policy` gate requires both an explicit
+owner opt-in and a live open-Issue count of zero. Any lookup error disables the
+paid path. Reaching zero Issues never changes the variable automatically.
+
 OpenAI references:
 
 - [GitHub Actions workload identity federation](https://developers.openai.com/api/docs/guides/workload-identity-federation/github-actions)
@@ -94,6 +105,7 @@ Set these under repository **Settings → Secrets and variables → Actions →
 Variables**. They identify WIF resources but are not bearer credentials.
 
 ```text
+PAID_AI_CLAUDE_CODEX_ENABLED=false
 OPENAI_WIF_AUDIENCE=https://api.openai.com/v1
 OPENAI_IDENTITY_PROVIDER_ID=<OpenAI provider ID>
 OPENAI_SERVICE_ACCOUNT_ID=<OpenAI service account ID>
@@ -150,10 +162,28 @@ After the workflow is on the base branch:
 6. Confirm the OpenAI project usage increased by the expected single request
    and no credential or raw token appears in Actions logs.
 
-Any missing variable, OIDC endpoint, review result, or decision-event write
-continues to fail closed. Safe diagnostics retain an exception class and HTTP
-status only; response bodies, headers, URLs with query strings, and tokens are
-discarded.
+When paid review is enabled, any missing variable, OIDC endpoint, review
+result, or decision-event write continues to fail closed. While owner policy
+is disabled, the workflow records an explicit non-review exception and does
+not enforce or misrepresent dual-model evidence. Safe diagnostics retain an
+exception class and HTTP status only; response bodies, headers, URLs with query
+strings, and tokens are discarded.
+
+## Manual reactivation after Issues=0
+
+Do not automate these steps. The owner must perform and review them in order:
+
+1. Confirm `repo:kanta13jp1/my_web_app is:issue is:open` returns `0`.
+2. Confirm the dedicated OpenAI hard spend limit and Anthropic billing controls
+   still match the approved budget.
+3. Set `PAID_AI_CLAUDE_CODEX_ENABLED=true`.
+4. Re-enable only the required workflows, starting with a single manual run.
+5. Verify the gate summary says `enabled-after-issues-zero` before accepting
+   any model result.
+
+If open Issues rise above zero later, the live gate blocks new paid requests
+even while the variable remains true. Set the variable back to `false` as the
+owner-visible durable state.
 
 ## Revocation and recovery
 

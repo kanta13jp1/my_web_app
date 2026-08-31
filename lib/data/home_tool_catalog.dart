@@ -14,6 +14,7 @@ import '../pages/agent_board_page.dart';
 import '../pages/autonomous_ops_console_page.dart';
 import '../pages/agent_gpa_dashboard_page.dart';
 import '../pages/english_reading_curriculum_page.dart';
+import '../ui/features/toeic/toeic_feature.dart';
 import '../pages/ai_company_builder_page.dart';
 import '../pages/ai_secretary_page.dart';
 import '../pages/my_skills_page.dart';
@@ -63,6 +64,7 @@ import '../pages/reality_check_page.dart';
 import '../pages/real_world_danshari_page.dart';
 import '../pages/referral_page.dart';
 import '../pages/shopping_list_page.dart';
+import '../pages/spreadsheet_database_page.dart';
 import '../pages/stock_tasks_page.dart';
 import '../pages/table_data_page.dart';
 import '../pages/tech_blog_tracker_page.dart';
@@ -168,6 +170,7 @@ import '../pages/work_menu_page.dart';
 import '../pages/workflow_templates_page.dart';
 import '../pages/crm_sales_pipeline_page.dart';
 import '../pages/travel_itinerary_page.dart';
+import '../pages/art_museum_directory_page.dart';
 import '../pages/virtual_whiteboard_page.dart';
 import '../pages/recipe_meal_planner_page.dart';
 import '../pages/language_learning_page.dart';
@@ -839,6 +842,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       ],
       onOpen: (context) =>
           _pushPage(context, const EnglishReadingCurriculumPage()),
+    ),
+    HomeToolEntry(
+      id: 'ai-university-toeic',
+      sectionId: 'knowledge',
+      title: 'AI大学 TOEIC対策',
+      subtitle: '毎日5問のPart別ドリルで目標スコアへ',
+      icon: Icons.school_outlined,
+      color: const Color(0xFF2563EB),
+      keywords: const <String>[
+        'TOEIC',
+        '英語',
+        '文法',
+        '語彙',
+        'Part 5',
+        'Part 6',
+        'Part 7',
+        'English',
+      ],
+      onOpen: (context) => _pushPage(context, const ToeicFeature()),
     ),
     HomeToolEntry(
       id: 'agent-gpa-dashboard',
@@ -1936,6 +1958,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
     ),
     // office セクション
     HomeToolEntry(
+      id: 'spreadsheet-database',
+      sectionId: 'office',
+      title: '表計算',
+      subtitle: 'セル編集・基本数式・自動保存に対応したデスクトップ表計算',
+      icon: Icons.grid_on_outlined,
+      color: const Color(0xFF107C41),
+      keywords: const <String>['表計算', 'スプレッドシート', 'Excel', '数式', '集計', 'SUM'],
+      onOpen: (context) => _pushPage(context, const SpreadsheetDatabasePage()),
+    ),
+    HomeToolEntry(
       id: 'shop',
       sectionId: 'office',
       title: 'デジタル作品ストア',
@@ -2510,6 +2542,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'TripAdvisor',
       ],
       onOpen: (context) => _pushPage(context, const TravelItineraryPage()),
+    ),
+    HomeToolEntry(
+      id: 'art-museums',
+      sectionId: 'knowledge',
+      title: '全国の美術館',
+      subtitle: '文化庁データから全国の美術館を地域・都道府県・名称で探す',
+      icon: Icons.museum_outlined,
+      color: const Color(0xFF7C3AED),
+      keywords: const <String>[
+        '美術館',
+        'アート',
+        '博物館',
+        '文化',
+        '展覧会',
+        '都道府県',
+        'museum',
+        'art',
+      ],
+      onOpen: (context) => _pushPage(context, const ArtMuseumDirectoryPage()),
     ),
     HomeToolEntry(
       id: 'virtual-whiteboard',

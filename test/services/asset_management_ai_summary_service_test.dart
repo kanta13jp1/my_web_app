@@ -67,27 +67,18 @@ void main() {
         true,
       );
       expect(
-        capturedBody?['message']
-            .toString()
-            .contains('GitHub Flavored Markdown'),
+        capturedBody?['message'].toString().contains(
+              'GitHub Flavored Markdown',
+            ),
         true,
       );
       expect(
         capturedBody?['message'].toString().contains('8. 最後にズバッと総評'),
         true,
       );
-      expect(
-        capturedBody?['message'].toString().contains('細木数子'),
-        true,
-      );
-      expect(
-        capturedBody?['message'].toString().contains('負債マスタ詳細'),
-        true,
-      );
-      expect(
-        capturedBody?['message'].toString().contains('今月の支払いと利息'),
-        true,
-      );
+      expect(capturedBody?['message'].toString().contains('細木数子'), true);
+      expect(capturedBody?['message'].toString().contains('負債マスタ詳細'), true);
+      expect(capturedBody?['message'].toString().contains('今月の支払いと利息'), true);
       expect(
         capturedBody?['message'].toString().contains('英語の見出しや英語ラベルは使わないでください'),
         true,
@@ -262,49 +253,40 @@ void main() {
       },
     );
 
-    test(
-      'ai detailed payload includes exact account and debt values',
-      () {
-        final service = AssetManagementAiSummaryService(
-          now: () => DateTime(2026, 5, 1, 12),
-        );
+    test('ai detailed payload includes exact account and debt values', () {
+      final service = AssetManagementAiSummaryService(
+        now: () => DateTime(2026, 5, 1, 12),
+      );
 
-        final payload = service.buildAiDetailedPayload(_emergencyReport());
-        final encoded = payload.toString();
+      final payload = service.buildAiDetailedPayload(_emergencyReport());
+      final encoded = payload.toString();
 
-        expect(encoded.contains('50000'), true);
-        expect(encoded.contains('200000'), true);
-        expect(encoded.contains('PayPay'), true);
-        expect(encoded.contains('自営業'), true);
-        expect(encoded.contains('annual_income'), true);
-        expect(encoded.contains('favorite_foods'), true);
-        expect(encoded.contains('debt_master_rows'), true);
-        expect(encoded.contains('minimum_payment_estimate'), true);
-        expect(encoded.contains('scheduled_payment_amount'), true);
-        expect(encoded.contains('annual_rate'), true);
-        expect(encoded.contains('monthly_interest_estimate'), true);
-        expect(encoded.contains('liability_share'), true);
-        expect(encoded.contains('available_money'), true);
-        expect(encoded.contains('personal_context_signals'), true);
-        expect(encoded.contains('priority_situation_cards'), true);
-        expect(encoded.contains('recommended_next_step'), true);
-        expect(encoded.contains('implementation_context'), true);
-        expect(encoded.contains('source_references'), true);
-        expect(encoded.contains('acceptance_criteria'), true);
-        expect(
-          encoded.contains('external_ai_receives_exact_account_data'),
-          true,
-        );
-        expect(
-          encoded.contains('external_ai_receives_exact_profile_data'),
-          true,
-        );
-        expect(
-          encoded.contains('external_ai_receives_implementation_context'),
-          true,
-        );
-      },
-    );
+      expect(encoded.contains('50000'), true);
+      expect(encoded.contains('200000'), true);
+      expect(encoded.contains('PayPay'), true);
+      expect(encoded.contains('自営業'), true);
+      expect(encoded.contains('annual_income'), true);
+      expect(encoded.contains('favorite_foods'), true);
+      expect(encoded.contains('debt_master_rows'), true);
+      expect(encoded.contains('minimum_payment_estimate'), true);
+      expect(encoded.contains('scheduled_payment_amount'), true);
+      expect(encoded.contains('annual_rate'), true);
+      expect(encoded.contains('monthly_interest_estimate'), true);
+      expect(encoded.contains('liability_share'), true);
+      expect(encoded.contains('available_money'), true);
+      expect(encoded.contains('personal_context_signals'), true);
+      expect(encoded.contains('priority_situation_cards'), true);
+      expect(encoded.contains('recommended_next_step'), true);
+      expect(encoded.contains('implementation_context'), true);
+      expect(encoded.contains('source_references'), true);
+      expect(encoded.contains('acceptance_criteria'), true);
+      expect(encoded.contains('external_ai_receives_exact_account_data'), true);
+      expect(encoded.contains('external_ai_receives_exact_profile_data'), true);
+      expect(
+        encoded.contains('external_ai_receives_implementation_context'),
+        true,
+      );
+    });
 
     test('リボ払いカードはAIペイロードに内訳と注記を渡し差分を出さない', () {
       final service = AssetManagementAiSummaryService(
@@ -317,7 +299,11 @@ void main() {
       expect(encoded.contains('is_revolving'), true);
       expect(encoded.contains('revolving_billing'), true);
       expect(encoded.contains('reconciliation_note'), true);
-      expect(encoded.contains('reference_only_not_billed'), true);
+      expect(encoded.contains('statement_context'), true);
+      expect(encoded.contains('new_usage_amount'), true);
+      expect(encoded.contains('existing_balance_amount'), true);
+      expect(encoded.contains('payment_day'), true);
+      expect(encoded.contains('over_limit_amount'), false);
       expect(encoded.contains('ok_revolving_no_action_needed'), true);
       // カード請求グループ(au等の紐づけ負債)もリボ払いと明示し、請求額と比較させない。
       expect(encoded.contains('is_revolving_card'), true);
@@ -346,38 +332,40 @@ void main() {
       expect(result.text.contains('Dartルール'), true);
     });
 
-    test('routed summary passes a generous token budget for thinking models',
-        () async {
-      int? capturedMaxTokens;
-      final chatService = AiHubChatService(
-        invoker: (body) async {
-          capturedMaxTokens = body['max_tokens'] as int?;
-          return <String, dynamic>{
-            'success': true,
-            'text': 'これはAI要約のテスト本文です。',
-            'provider': 'anthropic',
-          };
-        },
-      );
-      final service = AssetManagementAiSummaryService(
-        aiEnabled: true,
-        chatService: chatService,
-        providerRouter: const AssetManagementAiProviderRouter(
-          routingEnabled: true,
-        ),
-        now: () => DateTime(2026, 6, 1, 12),
-      );
+    test(
+      'routed summary passes a generous token budget for thinking models',
+      () async {
+        int? capturedMaxTokens;
+        final chatService = AiHubChatService(
+          invoker: (body) async {
+            capturedMaxTokens = body['max_tokens'] as int?;
+            return <String, dynamic>{
+              'success': true,
+              'text': 'これはAI要約のテスト本文です。',
+              'provider': 'anthropic',
+            };
+          },
+        );
+        final service = AssetManagementAiSummaryService(
+          aiEnabled: true,
+          chatService: chatService,
+          providerRouter: const AssetManagementAiProviderRouter(
+            routingEnabled: true,
+          ),
+          now: () => DateTime(2026, 6, 1, 12),
+        );
 
-      await service.generateSummary(report: _report());
+        await service.generateSummary(report: _report());
 
-      // ai-hub の `normalizeMaxTokens` が min(8192, ...) にクランプするため、
-      // クライアントが 8192 超を送っても本番の実効値は 8192。ここでは
-      // 「実効上限いっぱいを要求している」ことを検証する (旧テストは 16000 以上を
-      // 期待していたが、その予算が本番で成立したことは一度も無かった)。
-      // 実測の本文は ~3,000-3,500 トークンなので 8192 で十分な余裕がある。
-      expect(capturedMaxTokens, isNotNull);
-      expect(capturedMaxTokens, 8192);
-    });
+        // ai-hub の `normalizeMaxTokens` が min(8192, ...) にクランプするため、
+        // クライアントが 8192 超を送っても本番の実効値は 8192。ここでは
+        // 「実効上限いっぱいを要求している」ことを検証する (旧テストは 16000 以上を
+        // 期待していたが、その予算が本番で成立したことは一度も無かった)。
+        // 実測の本文は ~3,000-3,500 トークンなので 8192 で十分な余裕がある。
+        expect(capturedMaxTokens, isNotNull);
+        expect(capturedMaxTokens, 8192);
+      },
+    );
 
     test('builds payload from calculated insights only', () {
       final report = _report();
@@ -414,14 +402,8 @@ void main() {
       expect(guardrails['calculation_owner'], 'dart_service');
       expect(guardrails['external_ai_receives_exact_account_data'], true);
       expect(guardrails['external_ai_receives_exact_profile_data'], true);
-      expect(
-        guardrails['external_ai_receives_implementation_context'],
-        true,
-      );
-      expect(
-        guardrails['external_ai_may_reference_account_names'],
-        true,
-      );
+      expect(guardrails['external_ai_receives_implementation_context'], true);
+      expect(guardrails['external_ai_may_reference_account_names'], true);
       expect(guardrails['must_not_recommend_starvation_or_water_only'], true);
     });
 
@@ -518,10 +500,7 @@ void main() {
       expect(message.contains('"number":3064'), true);
       expect(message.contains('既にGitHub Issue起票済み'), true);
       expect(message.contains('本文にもJSONにも出力禁止'), true);
-      expect(
-        message.contains('新規提案なし（既知の提案はすべて起票済みです）'),
-        true,
-      );
+      expect(message.contains('新規提案なし（既知の提案はすべて起票済みです）'), true);
       expect(message.contains('起票済み。本文・JSONブロックとも再掲禁止。'), true);
       expect(message.contains('ai-new-proposals'), true);
       // 起票済みテンプレートの本文 (echo の材料) はプロンプトへ渡さない。

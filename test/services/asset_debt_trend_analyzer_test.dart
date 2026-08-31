@@ -109,8 +109,12 @@ void main() {
       expect(insight.category, AssetDebtTrendCategory.negativeAmortization);
       expect(insight.severity, AssetDebtTrendSeverity.critical);
       expect(insight.estimatedPayoffMonths, isNull);
-      expect(insight.nextMonthAction.contains('一括返済'), isTrue);
+      expect(
+        insight.nextMonthAction.contains('既存残高の一括返済は求めません'),
+        isTrue,
+      );
       expect(insight.nextMonthAction.contains('新規利用'), isTrue);
+      expect(insight.nextMonthAction.contains('25日'), isTrue);
       expect(insight.problem.contains('元金'), isTrue);
     });
 
@@ -142,7 +146,8 @@ void main() {
       expect(insight.problem.contains('先月比+70,000円'), isTrue);
       expect(insight.problem.contains('純増'), isTrue);
       expect(insight.nextMonthAction.contains('新規利用'), isTrue);
-      expect(insight.nextMonthAction.contains('一括返済'), isTrue);
+      expect(insight.nextMonthAction.contains('既存残高は一括返済せず'), isTrue);
+      expect(insight.nextMonthAction.contains('25日'), isTrue);
     });
 
     test('flags a very slow payoff even without history', () {

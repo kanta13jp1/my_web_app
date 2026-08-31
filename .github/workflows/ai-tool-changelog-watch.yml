@@ -18,6 +18,9 @@ permissions: {}
 
 jobs:
   fetch-and-summarize:
+    environment:
+      name: ai-operations-production
+      deployment: false
     permissions:
       contents: write
       issues: write
@@ -26,7 +29,6 @@ jobs:
     timeout-minutes: 15
 
     env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       GH_TOKEN: ${{ secrets.BYPASS_RULES || github.token }}
 
     steps:
@@ -35,6 +37,12 @@ jobs:
         with:
           fetch-depth: 5
           token: ${{ secrets.BYPASS_RULES || github.token }}
+
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
 
       - name: Setup Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
@@ -84,6 +92,8 @@ jobs:
             || echo "WARN: Replit updates changelog fetch failed (non-fatal)"
 
       - name: Summarize changelogs
+        env:
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
         run: |
           python scripts/ai_tool_changelog_summarize.py \
             --month "${{ steps.tag.outputs.month }}" \

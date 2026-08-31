@@ -280,7 +280,9 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
             [
                 "supabase/tests/issue2844_account_deletion_bootstrap.sql",
                 "supabase/migrations/20260829095836_account_retention_and_deletion.sql",
+                "supabase/migrations/20260830054326_account_deletion_rollout_preflight.sql",
                 "supabase/tests/issue2844_account_deletion_contract.sql",
+                "supabase/tests/issue2844_account_deletion_rollout_contract.sql",
             ],
         )
         checks = " ".join(plan["issue_2844_account_deletion_checks"])
@@ -291,6 +293,9 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
         self.assertIn("Storage owner metadata", checks)
         self.assertIn("bounded retry", checks)
         self.assertIn("removes user_id", checks)
+        self.assertIn("non-mutating", checks)
+        self.assertIn("control tenant", checks)
+        self.assertIn("residual is zero", checks)
 
     def test_plan_includes_note_comments_authorization_boundary(self) -> None:
         plan = module.build_plan(
@@ -316,6 +321,16 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
         self.assertIn("foreign key is validated", repair_checks)
         self.assertIn("forged legacy publications", repair_checks)
         self.assertIn("applies twice", repair_checks)
+        self.assertEqual(
+            plan["public_memo_returning_rls_migration"],
+            "supabase/migrations/"
+            "20260830063839_fix_public_memo_returning_rls.sql",
+        )
+        returning_checks = " ".join(plan["public_memo_returning_rls_checks"])
+        self.assertIn("insert with RETURNING", returning_checks)
+        self.assertIn("conflict update with RETURNING", returning_checks)
+        self.assertIn("does not self-read", returning_checks)
+        self.assertIn("applies twice", returning_checks)
 
     def test_tenant_role_count_rejects_untrusted_identifiers(self) -> None:
         with self.assertRaisesRegex(ValueError, "unexpected role"):

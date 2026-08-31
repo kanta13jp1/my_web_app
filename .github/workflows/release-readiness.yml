@@ -41,6 +41,9 @@ env:
 
 jobs:
   readiness:
+    environment:
+      name: observability-production
+      deployment: false
     permissions:
       contents: read
     name: Alpha release readiness

@@ -109,7 +109,7 @@
       "h1": "自分株式会社とは — 人生を会社として経営する方法",
       "breadcrumb_label": "自分株式会社とは",
       "date_published": "2026-04-18",
-      "date_modified": "2026-08-19",
+      "date_modified": "2026-08-23",
       "points": [
         "最終決定権を持つCEOは自分自身",
         "時間・お金・健康・スキルを経営資源として捉える",
@@ -231,6 +231,7 @@
       "links": [
         {"href": "/", "label": "自分株式会社を無料で試す"},
         {"href": "/development-achievements", "label": "開発実績と更新履歴を見る"},
+        {"href": "https://github.com/kanta13jp1", "label": "GitHub @kanta13jp1"},
         {"href": "/project-gantt", "label": "公開WBSと進捗を見る"},
         {"href": "/privacy", "label": "データの取り扱いを確認する"}
       ]

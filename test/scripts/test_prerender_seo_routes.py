@@ -294,7 +294,9 @@ class PublicRouteTest(unittest.TestCase):
         self.assertIn('data-prerender="public-faq"', out)
         self.assertIn("自分株式会社とは何ですか？", out)
         self.assertIn('href="/development-achievements"', out)
-        self.assertIn('<time datetime="2026-08-19">2026-08-19</time>', out)
+        self.assertIn('href="https://github.com/kanta13jp1"', out)
+        self.assertIn("GitHub @kanta13jp1", out)
+        self.assertIn('<time datetime="2026-08-23">2026-08-23</time>', out)
 
         blocks = re.findall(
             r'<script type="application/ld\+json" data-prerender="public">'
@@ -308,7 +310,7 @@ class PublicRouteTest(unittest.TestCase):
         self.assertEqual(types, ["WebPage", "BreadcrumbList", "FAQPage"])
         webpage = parsed["@graph"][0]
         self.assertEqual(webpage["datePublished"], "2026-04-18")
-        self.assertEqual(webpage["dateModified"], "2026-08-19")
+        self.assertEqual(webpage["dateModified"], "2026-08-23")
         faq = parsed["@graph"][2]
         self.assertEqual(len(faq["mainEntity"]), 4)
 
@@ -465,7 +467,7 @@ class SitemapTest(unittest.TestCase):
             BASE,
             ["notion"],
             None,
-            {"/philosophy": "2026-08-19"},
+            {"/philosophy": "2026-08-23"},
         )
 
         self.assertEqual(doc.count("<lastmod>"), 1)
@@ -477,7 +479,7 @@ class SitemapTest(unittest.TestCase):
             "</url>", 1
         )[0]
 
-        self.assertIn("<lastmod>2026-08-19</lastmod>", philosophy)
+        self.assertIn("<lastmod>2026-08-23</lastmod>", philosophy)
         self.assertNotIn("<lastmod>", home)
         self.assertNotIn("<lastmod>", comparison)
 

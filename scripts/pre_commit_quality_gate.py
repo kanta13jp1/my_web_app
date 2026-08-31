@@ -49,6 +49,7 @@ def commands_for_paths(paths: list[str]) -> list[list[str]]:
                 [python, "scripts/classify_ci_changes_test.py"],
                 [python, "scripts/cloud_ci_handoff_test.py"],
                 [python, "scripts/cloud_first_route_test.py"],
+                [python, "scripts/generate_infrastructure_map_test.py"],
                 [python, "scripts/cicd_efficiency_test.py"],
                 [python, "scripts/quality_gate_test.py"],
                 [python, "scripts/pre_commit_quality_gate_test.py"],
