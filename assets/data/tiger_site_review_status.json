@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-31T07:28:05.157324+00:00",
+  "generated_at": "2026-08-31T11:13:40.726307+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "site_review",
   "publication_state": "latest_review",
@@ -10,10 +10,10 @@
     "status": "PAUSED",
     "schedule": "毎時25分（1時間ごと）"
   },
-  "review_count": 25,
+  "review_count": 26,
   "latest_review": {
-    "cycle_id": "20260831T161649+0900",
-    "started_at": "2026-08-31T16:16:49+09:00",
+    "cycle_id": "20260831T200351+0900",
+    "started_at": "2026-08-31T20:03:51+09:00",
     "source_format": "site_review",
     "surface": {
       "slug": "whole_site",
@@ -22,21 +22,21 @@
     "reviewer": {
       "seat": 26,
       "name": "荒木 杏奈",
-      "selection_score": 71.7195,
-      "division": 3,
-      "cycle_utility": 93.75,
-      "aggregate_utility": 93.75
+      "selection_score": 79.4618,
+      "division": 1,
+      "cycle_utility": 94.0,
+      "aggregate_utility": 93.92
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 1,
     "top_findings": [
       {
-        "summary": "Issue #5156の作成後もTiger状態公開3件が完全な本番デプロイを再度起動し、既知のstatus-only公開コストが合計697秒分さらに累積した",
+        "summary": "plan別economicsの集計基盤は本番反映済みだが、対応workflowはmerge後に一度も走っておらず、粗利・CAC・回収期間・churn・LTVは設計上nullのままで意思決定証拠がまだ生成されていない",
         "severity": "p1",
         "business_dimensions": [
-          "scalability",
           "unit_economics",
+          "revenue_model",
           "founder_execution"
         ]
       }
@@ -52,15 +52,15 @@
         "relevant": 100
       },
       "gate_passed": true,
-      "baseline_cycle_id": "20260831T120514+0900",
+      "baseline_cycle_id": "20260831T161649+0900",
       "focus_dimension": "complete",
       "overall_delta": 0.0,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "Route one Tiger status-only publication through a guarded cloud artifact-only canary, then compare runner seconds, queue delay, release count, freshness, and fixed-probe success against the current full-deploy path."
+      "next_cycle_experiment": "Run the current Weekly Existing-user and Revenue KPI workflow once in GitHub Actions, record plans, five decision-metric non-null counts, and missingInputs, then compare the same fields after one 30-day measurement window."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5159",
+      "label": "対策待ち・Issue #5163",
       "detail": "提案のみで、対策実施の記録はありません。",
       "summary": "",
       "files": [],
@@ -68,31 +68,110 @@
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean dedicated worktree at exact origin/main a1fca7847aae768f1b8186ae25e44bfbb085b2d0",
-        "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers and current deploy timestamps",
+        "passed: clean dedicated worktree fast-forwarded to exact origin/main f62a42cd410eda32d7f7d4119f3652fe10fc47b3",
+        "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers",
         "passed: 125 profiles",
         "passed: 125 personas, 103 unique weight profiles, 105 unique domain profiles",
-        "passed: three post-Issue Tiger status-only commits repeated the full production path for 697 seconds total",
-        "passed: cycle Issue #5159 records the recurrence evidence and explicitly retains Issue #5156 as the underlying remediation target",
-        "not run: cloud-first resource policy prohibits local heavy validation for this report-only review"
+        "passed: exact economics-readiness commit deployed the migration with DB smoke and intentionally skipped unrelated Flutter/Hosting work",
+        "passed: latest successful aggregate report predates economics-readiness merge and therefore contains no current plan-economics artifact",
+        "passed: cycle Issue #5163 advances #5149 with new readiness/deployment evidence and excludes the already-tracked status-deploy recurrence",
+        "not run: report-only review requires no Flutter validation"
       ],
       "issue": {
-        "number": 5159,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5159",
+        "number": 5163,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5163",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-site-review:20260831T161649+0900:whole_site",
+        "dedupe_key": "tiger-site-review:20260831T200351+0900:whole_site",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "site-review-status-deploy-recurrence"
+        "site-review-plan-economics-evidence-not-generated"
       ]
     }
   },
   "history": [
+    {
+      "cycle_id": "20260831T200351+0900",
+      "started_at": "2026-08-31T20:03:51+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 26,
+        "name": "荒木 杏奈",
+        "selection_score": 79.4618
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260831T161649+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Run the current Weekly Existing-user and Revenue KPI workflow once in GitHub Actions, record plans, five decision-metric non-null counts, and missingInputs, then compare the same fields after one 30-day measurement window."
+      },
+      "findings": [
+        {
+          "finding_id": "site-review-plan-economics-evidence-not-generated",
+          "summary": "plan別economicsの集計基盤は本番反映済みだが、対応workflowはmerge後に一度も走っておらず、粗利・CAC・回収期間・churn・LTVは設計上nullのままで意思決定証拠がまだ生成されていない",
+          "severity": "p1",
+          "suggested_action": "新規の計測機能は増やさず、Issue #5149を親追跡として現在mainのWeekly Existing-user and Revenue KPIをcloudで1回実行する。plan-economics.jsonのplans・decisionMetrics・missingInputsを保存し、nullの5指標と5欠測入力をowner、計測窓、取得元、次回判定日へ割り当てる。実測が揃うまでlistPriceMrrYenを売上や粗利として扱わない。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5163",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated worktree fast-forwarded to exact origin/main f62a42cd410eda32d7f7d4119f3652fe10fc47b3",
+          "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers",
+          "passed: 125 profiles",
+          "passed: 125 personas, 103 unique weight profiles, 105 unique domain profiles",
+          "passed: exact economics-readiness commit deployed the migration with DB smoke and intentionally skipped unrelated Flutter/Hosting work",
+          "passed: latest successful aggregate report predates economics-readiness merge and therefore contains no current plan-economics artifact",
+          "passed: cycle Issue #5163 advances #5149 with new readiness/deployment evidence and excludes the already-tracked status-deploy recurrence",
+          "not run: report-only review requires no Flutter validation"
+        ],
+        "issue": {
+          "number": 5163,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5163",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260831T200351+0900:whole_site",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-review-plan-economics-evidence-not-generated"
+        ]
+      }
+    },
     {
       "cycle_id": "20260831T161649+0900",
       "started_at": "2026-08-31T16:16:49+09:00",
