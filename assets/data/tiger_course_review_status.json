@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-31T04:51:56.602337+00:00",
+  "generated_at": "2026-08-31T08:17:08.186838+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -11,12 +11,12 @@
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 20,
-    "eligible": 20,
-    "provisional": 18,
+    "total": 21,
+    "eligible": 21,
+    "provisional": 19,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 19,
+    "division_3": 20,
     "division_4": 1,
     "division_5": 0
   },
@@ -28,27 +28,27 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260831T134103+0900",
-    "started_at": "2026-08-31T13:41:03+09:00",
+    "cycle_id": "20260831T170208+0900",
+    "started_at": "2026-08-31T17:02:08+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
-      "url": "https://www.ai21.com/"
+      "slug": "course-0ee90f87-2319-4b2f-af0f-d298083c752c",
+      "url": "https://aider.chat/docs/usage/tutorial.html"
     },
     "reviewer": {
       "seat": 94,
       "name": "戸村 光",
-      "selection_score": 76.1036,
-      "division": 3,
-      "cycle_utility": 85.62,
-      "aggregate_utility": 85.62
+      "selection_score": 77.1966,
+      "division": 1,
+      "cycle_utility": 83.08,
+      "aggregate_utility": 83.93
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 4,
+    "finding_count": 3,
     "top_findings": [
       {
-        "summary": "AI21の現行provider boundaryであるMaestro、Jamba、導入形態の関係が教材から欠落している",
+        "summary": "Aider入門の主要一次資料URLが404で、現行導線へ到達できない",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
@@ -57,17 +57,17 @@
         ]
       },
       {
-        "summary": "Maestro、Jamba/API、private deploymentを要件から選ぶ再現可能な意思決定labがない",
+        "summary": "Git変更・undo・テストを一つの再現可能な成果物で検証する契約がない",
         "severity": "p1",
         "business_dimensions": [
-          "market_demand",
           "scalability",
-          "competitive_advantage"
+          "competitive_advantage",
+          "unit_economics"
         ]
       },
       {
-        "summary": "対象者、観測可能な学習成果、評価方法、証拠URL、検証日時がすべて未設定",
-        "severity": "p1",
+        "summary": "Aider入門の実在学習者成果を示す匿名集計がない",
+        "severity": "p2",
         "business_dimensions": [
           "market_demand",
           "revenue_model",
@@ -90,57 +90,148 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After the production-data owner publishes one dated product map and a 30-to-60-minute decision lab, run one cohort and compare product-path accuracy, 60-minute completion, rubric score, source reachability, support contacts, reproducibility, and workplace application."
+      "next_cycle_experiment": "After the production-data owner replaces the dead source and publishes one 30-to-60-minute Git workflow lab, run one cohort and compare source reachability, 60-minute completion, rubric score, undo success, lint/test success, support contacts, token-context discipline, and workplace application."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5157",
+      "label": "対策待ち・Issue #5160",
       "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [
-        "course-ai21-overview-product-boundary-gap"
+        "course-aider-dead-primary-source"
       ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean dedicated branch fast-forwarded to origin/main b7048433823ab2fff81974724768acbc06630d43",
+        "passed: clean dedicated branch at origin/main 41f5123c25aa06e46317f137779a9ee68c40d47d",
         "passed: 125 roster profiles and 125 personas",
         "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
-        "executed once successfully: AI21 Labs 概要 selected from fresh catalog",
+        "executed once successfully: Aider 入門 selected from fresh catalog",
         "passed: no comparable baseline, focus_dimension=evidence",
-        "passed: current AI21 homepage, overview, Maestro, Jamba documentation, and the named tracked migration were inspected separately",
+        "passed: configured tutorial URL returned 404; current official installation, usage, Git, chat-mode, and lint/test sources were inspected separately",
         "executed once successfully: 125 profiles, seat 94"
       ],
       "issue": {
-        "number": 5157,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5157",
+        "number": 5160,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5160",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260831T134103+0900:9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
+        "dedupe_key": "tiger-course-review:20260831T170208+0900:0ee90f87-2319-4b2f-af0f-d298083c752c",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-ai21-overview-decision-lab-gap",
-        "course-ai21-overview-evidence-contract-gap",
-        "course-ai21-overview-learner-outcome-gap"
+        "course-aider-verifiable-git-workflow-gap",
+        "course-aider-learner-outcome-gap"
       ]
     },
     "course": {
-      "content_id": "9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
-      "provider": "ai21",
-      "title": "AI21 Labs 概要",
-      "source_url": "https://www.ai21.com/",
-      "reason": "Fresh公開Data APIで対象行を確認したが、5つのevidence fieldはすべてnullだった。掲載source_urlは到達可能な広いmarketing homepageで、named tracked courseはAI21を主にJamba architecture、long context、efficiencyとして説明する。現行公式資料はMaestroによるmodel-agnostic agent orchestration、budget control、validation/traceability、Jamba family、private deploymentもprovider boundaryに含める。courseにはこれらの導入判断、実行課題、rubric、合格閾値、実在学習者成果がないためlearner evidenceは契約どおり中立50点とした。",
-      "cycle_utility": 40.25,
-      "aggregate_utility": 40.25,
+      "content_id": "0ee90f87-2319-4b2f-af0f-d298083c752c",
+      "provider": "aider",
+      "title": "Aider 入門 — インストール・基本操作・Git 連携ワークフロー",
+      "source_url": "https://aider.chat/docs/usage/tutorial.html",
+      "reason": "Fresh公開Data APIで対象行を確認したが、5つのevidence fieldはすべてnullだった。掲載source_urlはHTTP 404で、現行公式資料はinstallation、usage、Git integration、chat modes、lint/testへ分かれている。courseがこれらを一つの再現可能なGit変更課題へ結び、到達可能な一次根拠、rubric、合格閾値、実在学習者成果を示した証拠は得られないため、learner evidenceは契約どおり中立50点とした。",
+      "cycle_utility": 32.5,
+      "aggregate_utility": 32.5,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260831T170208+0900",
+      "started_at": "2026-08-31T17:02:08+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "0ee90f87-2319-4b2f-af0f-d298083c752c",
+        "title": "Aider 入門 — インストール・基本操作・Git 連携ワークフロー",
+        "url": "https://aider.chat/docs/usage/tutorial.html"
+      },
+      "reviewer": {
+        "seat": 94,
+        "name": "戸村 光",
+        "selection_score": 77.1966
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner replaces the dead source and publishes one 30-to-60-minute Git workflow lab, run one cohort and compare source reachability, 60-minute completion, rubric score, undo success, lint/test success, support contacts, token-context discipline, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-aider-dead-primary-source",
+          "summary": "Aider入門の主要一次資料URLが404で、現行導線へ到達できない",
+          "severity": "p1",
+          "suggested_action": "source_urlを現行の公式UsageまたはInstallationへ更新し、確認日、対象者、到達可能な学習成果、検証方法を5項目のevidence contractとして同時に公開する。"
+        },
+        {
+          "finding_id": "course-aider-verifiable-git-workflow-gap",
+          "summary": "Git変更・undo・テストを一つの再現可能な成果物で検証する契約がない",
+          "severity": "p1",
+          "suggested_action": "小さなfixture repositoryで必要ファイルだけを追加し、ask/code、差分、undo、再実行、commit、lint/test成功証拠を提出する30〜60分labとrubricを追加する。"
+        },
+        {
+          "finding_id": "course-aider-learner-outcome-gap",
+          "summary": "Aider入門の実在学習者成果を示す匿名集計がない",
+          "severity": "p2",
+          "suggested_action": "匿名の開始/完了、Git差分、undo、lint/test、rubric score、職場適用を一cohortで取得し、repository内容やAPI keyを保存せず集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5160",
+        "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-aider-dead-primary-source"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch at origin/main 41f5123c25aa06e46317f137779a9ee68c40d47d",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
+          "executed once successfully: Aider 入門 selected from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: configured tutorial URL returned 404; current official installation, usage, Git, chat-mode, and lint/test sources were inspected separately",
+          "executed once successfully: 125 profiles, seat 94"
+        ],
+        "issue": {
+          "number": 5160,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5160",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260831T170208+0900:0ee90f87-2319-4b2f-af0f-d298083c752c",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-aider-verifiable-git-workflow-gap",
+          "course-aider-learner-outcome-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260831T134103+0900",
       "started_at": "2026-08-31T13:41:03+09:00",
@@ -2405,6 +2496,20 @@
       "completed_cycles": 1,
       "last_cycle_utility": 34.75,
       "last_reviewed_at": "2026-08-30T18:00:06+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "0ee90f87-2319-4b2f-af0f-d298083c752c",
+      "provider": "aider",
+      "title": "Aider 入門 — インストール・基本操作・Git 連携ワークフロー",
+      "source_url": "https://aider.chat/docs/usage/tutorial.html",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 32.5,
+      "completed_cycles": 1,
+      "last_cycle_utility": 32.5,
+      "last_reviewed_at": "2026-08-31T08:02:08+00:00",
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
