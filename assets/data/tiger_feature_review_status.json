@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-30T19:40:30.846475+00:00",
+  "generated_at": "2026-08-31T02:42:41.831052+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -13,10 +13,10 @@
   "pool": {
     "total": 13,
     "eligible": 13,
-    "provisional": 11,
+    "provisional": 10,
     "division_1": 0,
-    "division_2": 2,
-    "division_3": 11,
+    "division_2": 3,
+    "division_3": 10,
     "division_4": 0,
     "division_5": 0,
     "eliminated": 0
@@ -29,45 +29,45 @@
     "operating_efficiency": 10
   },
   "latest_review": {
-    "cycle_id": "20260831T040750+0900",
-    "started_at": "2026-08-31T04:07:50+09:00",
+    "cycle_id": "20260831T080010+0900",
+    "started_at": "2026-08-31T08:00:10+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "ai_university",
-      "url": "https://my-web-app-b67f4.web.app/ai-university"
+      "slug": "landing",
+      "url": "https://my-web-app-b67f4.web.app/lp"
     },
     "reviewer": {
-      "seat": 12,
-      "name": "迫 佑樹",
-      "selection_score": 83.8473,
+      "seat": 7,
+      "name": "榊󠄀原 清一",
+      "selection_score": 77.2791,
       "division": 1,
-      "cycle_utility": 91.67,
-      "aggregate_utility": 88.6
+      "cycle_utility": 91.83,
+      "aggregate_utility": 93.01
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "The entry page records content-recovery events and several bounded learning-task outcomes, but it lacks one measurable path from discovery choice to first lesson, completion, repeat learning, and paid conversion.",
+        "summary": "The visible X share action bypasses the existing share service, so shared visits can lose source and UTM attribution before trial or signup measurement.",
         "severity": "p1",
         "business_dimensions": [
+          "go_to_market",
           "market_demand",
-          "revenue_model",
           "unit_economics"
         ]
       },
       {
-        "summary": "The entry surface exposes many simultaneous discovery modes without evidence that a first-time learner can identify the best next lesson quickly.",
+        "summary": "Service tests prove tagged URL and analytics behavior, but no page-level contract proves that the visible X button invokes that service, allowing the two share paths to drift silently.",
         "severity": "p1",
         "business_dimensions": [
-          "customer_pain",
-          "market_demand",
-          "revenue_model"
+          "trust_risk",
+          "go_to_market",
+          "scalability"
         ]
       },
       {
-        "summary": "An 8,483-line stateful page coordinates discovery, content loading, progress, sharing, quizzes, RLHF, and analytics, raising the cost of safely improving the learner funnel.",
+        "summary": "A 7,380-line stateful landing implementation coordinates acquisition, trial, signup, social proof, experiments, and direct sharing, raising the cost of safely improving conversion.",
         "severity": "p2",
         "business_dimensions": [
           "unit_economics",
@@ -91,52 +91,141 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "Instrument one privacy-safe entry-to-first-lesson funnel by discovery path and compare first-lesson start plus seven-day repeat-learning rates for four weeks."
+      "next_cycle_experiment": "Route the visible X control through the existing adapter and service in a bounded remediation, then compare attributed share return, trial, and signup rates for four weeks."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5146",
-      "detail": "A complete remedy requires a product-defined learner funnel, privacy-safe production measurement, discovery design judgment, and cross-cutting module boundaries. These exceed the shared low-risk automatic repair scope.",
+      "label": "対策待ち・Issue #5155",
+      "detail": "A complete remedy changes visible sharing behavior, analytics attribution, adapter contracts, and PR CI coverage. It requires a bounded implementation lane and cloud validation, exceeding the shared low-risk automatic repair scope for this review tick.",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: dedicated worktree fast-forwarded cleanly to origin/main 724624964cc5a90743884a4724ae5e38e7f9591e",
+        "passed: dedicated worktree fast-forwarded cleanly to origin/main f70623fd5e58ca4092c5c7ccff3fe0e4fef3f7b9",
         "passed: roster 2026-08-23 and personas 2026-08-30 schema 2, 125 profiles each",
-        "passed: deterministic winner ai_university from 13 eligible features",
-        "passed: 8,483-line entry surface, 40 matched tests, recovery semantics, broad discovery controls, and unknown production outcomes captured",
-        "passed: 125 profiles, deterministic seat 12"
+        "passed: deterministic winner landing from 13 eligible features",
+        "passed: 7,380-line landing surface, 16 matched tests, direct X share bypass, existing tagged share service, and unknown production outcomes captured",
+        "passed: 125 profiles, deterministic seat 32"
       ],
       "issue": {
-        "number": 5146,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5146",
+        "number": 5155,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5155",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260831T040750+0900:ai_university",
+        "dedupe_key": "tiger-feature-review:20260831T080010+0900:landing",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "ai-university-entry-outcome-funnel-gap",
-        "ai-university-discovery-decision-overload",
-        "ai-university-monolith-operating-cost"
+        "landing-x-share-attribution-bypass",
+        "landing-share-contract-regression-gap",
+        "landing-implementation-concentration"
       ]
     },
     "feature": {
-      "slug": "ai_university",
-      "title": "AI University entry",
+      "slug": "landing",
+      "title": "Landing page",
       "kind": "page",
-      "reason": "The deterministic selector chose ai_university. The neutral scan found strong recovery semantics and broad content discovery, but no unified page-level contract links entry, discovery path, first lesson, completion, repeat learning, and paid conversion; observed usage therefore remains neutral 50.",
-      "cycle_utility": 65.2,
-      "aggregate_utility": 65.12,
+      "reason": "The deterministic selector chose landing. The neutral scan confirmed that the earlier social-proof failure state is fixed and the public shell is reachable, but the visible X share action bypasses the existing source-tagged share service, so share-to-return and downstream conversion attribution can silently break while observed usage remains neutral 50.",
+      "cycle_utility": 73.0,
+      "aggregate_utility": 73.97,
       "division": 2
     }
   },
   "history": [
+    {
+      "cycle_id": "20260831T080010+0900",
+      "started_at": "2026-08-31T08:00:10+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "landing",
+        "title": "Landing page",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 7,
+        "name": "榊󠄀原 清一",
+        "selection_score": 77.2791
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Route the visible X control through the existing adapter and service in a bounded remediation, then compare attributed share return, trial, and signup rates for four weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "landing-x-share-attribution-bypass",
+          "summary": "The visible X share action bypasses the existing share service, so shared visits can lose source and UTM attribution before trial or signup measurement.",
+          "severity": "p1",
+          "suggested_action": "Route the visible X control through LandingPageAdapter.shareLandingPage and the existing LandingShareService, retaining a bounded fallback only when the adapter reports failure."
+        },
+        {
+          "finding_id": "landing-share-contract-regression-gap",
+          "summary": "Service tests prove tagged URL and analytics behavior, but no page-level contract proves that the visible X button invokes that service, allowing the two share paths to drift silently.",
+          "severity": "p1",
+          "suggested_action": "Add a focused page contract that taps the visible X control, verifies the adapter call with the selected channel, and covers the bounded failure fallback without browser or free-form analytics data."
+        },
+        {
+          "finding_id": "landing-implementation-concentration",
+          "summary": "A 7,380-line stateful landing implementation coordinates acquisition, trial, signup, social proof, experiments, and direct sharing, raising the cost of safely improving conversion.",
+          "severity": "p2",
+          "suggested_action": "After fixing and measuring the share contract, extract independently owned acquisition and sharing behavior behind the existing adapter interfaces with focused contract tests."
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5155",
+        "detail": "A complete remedy changes visible sharing behavior, analytics attribution, adapter contracts, and PR CI coverage. It requires a bounded implementation lane and cloud validation, exceeding the shared low-risk automatic repair scope for this review tick.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: dedicated worktree fast-forwarded cleanly to origin/main f70623fd5e58ca4092c5c7ccff3fe0e4fef3f7b9",
+          "passed: roster 2026-08-23 and personas 2026-08-30 schema 2, 125 profiles each",
+          "passed: deterministic winner landing from 13 eligible features",
+          "passed: 7,380-line landing surface, 16 matched tests, direct X share bypass, existing tagged share service, and unknown production outcomes captured",
+          "passed: 125 profiles, deterministic seat 32"
+        ],
+        "issue": {
+          "number": 5155,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5155",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260831T080010+0900:landing",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "landing-x-share-attribution-bypass",
+          "landing-share-contract-regression-gap",
+          "landing-implementation-concentration"
+        ]
+      }
+    },
     {
       "cycle_id": "20260831T040750+0900",
       "started_at": "2026-08-31T04:07:50+09:00",
@@ -1537,6 +1626,22 @@
   ],
   "features": [
     {
+      "slug": "landing",
+      "kind": "page",
+      "title": "landing",
+      "path": "/lp",
+      "source": "lib/widgets/landing_page_content.dart",
+      "priority": "high",
+      "division": 2,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 73.97,
+      "completed_cycles": 2,
+      "last_cycle_utility": 73.0,
+      "last_reviewed_at": "2026-08-30T23:00:10+00:00",
+      "reason": "機能レビュー2回・効用74.0点で2部"
+    },
+    {
       "slug": "comparison",
       "kind": "page",
       "title": "comparison",
@@ -1567,22 +1672,6 @@
       "last_cycle_utility": 65.2,
       "last_reviewed_at": "2026-08-30T19:07:50+00:00",
       "reason": "機能レビュー4回・効用65.1点で2部"
-    },
-    {
-      "slug": "landing",
-      "kind": "page",
-      "title": "landing",
-      "path": "/lp",
-      "source": "lib/widgets/landing_page_content.dart",
-      "priority": "high",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": 75.9,
-      "completed_cycles": 1,
-      "last_cycle_utility": 75.9,
-      "last_reviewed_at": "2026-08-24T13:04:00+00:00",
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
       "slug": "home",
