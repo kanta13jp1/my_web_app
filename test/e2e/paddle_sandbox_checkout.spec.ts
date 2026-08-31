@@ -13,12 +13,28 @@ type PaddleEvent = {
   checkoutId?: string | null;
   transactionId?: string | null;
   message?: string | null;
+  currencyCode?: string | null;
+  subtotal?: string | null;
+  tax?: string | null;
+  total?: string | null;
+  hasBusiness?: boolean;
+  hasTaxIdentifier?: boolean;
 };
 
-type Scenario = 'success' | 'failure' | 'cancel';
+type Scenario = 'success' | 'failure' | 'cancel' | 'b2b-vat';
 
 const realSandboxEnabled = process.env.PADDLE_SANDBOX_E2E === 'true';
 const testEmail = 'paddle-sandbox-e2e@example.com';
+const b2bEmail = process.env.PADDLE_SANDBOX_B2B_EMAIL ?? '';
+const b2bCountryCode = process.env.PADDLE_SANDBOX_B2B_COUNTRY_CODE ?? '';
+const b2bCountryName = process.env.PADDLE_SANDBOX_B2B_COUNTRY_NAME ?? '';
+const b2bPostalCode = process.env.PADDLE_SANDBOX_B2B_POSTAL_CODE ?? '';
+const b2bBusinessName = process.env.PADDLE_SANDBOX_B2B_BUSINESS_NAME ?? '';
+const b2bTaxIdentifier =
+  process.env.PADDLE_SANDBOX_B2B_TAX_IDENTIFIER ?? '';
+const b2bExpectedTax = process.env.PADDLE_SANDBOX_B2B_EXPECTED_TAX ?? '';
+
+test.use({ screenshot: 'off', trace: 'off', video: 'off' });
 
 test.describe('real Paddle sandbox checkout', () => {
   test.describe.configure({ mode: 'serial', timeout: 180_000 });
@@ -93,6 +109,39 @@ test.describe('real Paddle sandbox checkout', () => {
       'checkout.closed must not replace the completed terminal state',
     ).toBeVisible({ timeout: 30_000 });
   });
+
+  test('business VAT ID is accepted and tax is recalculated', async ({
+    page,
+    browser,
+  }, testInfo) => {
+    await openFlutterCheckout(page);
+    const { before, after } = await enterBusinessTaxDetails(page);
+
+    expect(after.hasBusiness).toBe(true);
+    expect(after.hasTaxIdentifier).toBe(true);
+    expect(after.tax).toBe(b2bExpectedTax);
+    expect(
+      before.tax !== after.tax || before.total !== after.total,
+      'The configured B2B scenario must produce a changed tax or total.',
+    ).toBe(true);
+    await expectFlutterText(page, 'VAT / Tax ID を反映したSandbox税額');
+
+    await completeCardPayment(page, '4242424242424242');
+    await expectFlutterText(page, 'Sandbox 決済が完了しました。', 90_000);
+    await closeCheckoutIfPresent(page);
+
+    const events = await collectEvidence(page, testInfo, 'b2b-vat', {
+      browserVersion: browser.version(),
+    });
+    expect(eventNames(events)).toContain('checkout.completed');
+    expect(events.some((event) => event.hasTaxIdentifier)).toBe(true);
+    expect(
+      events.some((event) =>
+        Object.prototype.hasOwnProperty.call(event, 'taxIdentifier'),
+      ),
+      'Raw tax identifiers must never be written to evidence.',
+    ).toBe(false);
+  });
 });
 
 async function openFlutterCheckout(page: Page) {
@@ -154,10 +203,14 @@ async function completeCardForm(page: Page, cardNumber: string) {
   );
   await email.fill(testEmail);
 
-  await chooseCountryIfRequired(page);
+  await chooseCountryIfRequired(page, 'US', 'United States');
   await fillIfVisible(page, /zip|postal/i, '10001');
   await clickVisibleInFrames(page, /continue|next|次へ/i, 30_000);
 
+  await completeCardPayment(page, cardNumber);
+}
+
+async function completeCardPayment(page: Page, cardNumber: string) {
   const card = await findVisibleInFrames(
     page,
     (frame) =>
@@ -191,15 +244,103 @@ async function completeCardForm(page: Page, cardNumber: string) {
   );
 }
 
-async function chooseCountryIfRequired(page: Page) {
+async function enterBusinessTaxDetails(page: Page) {
+  const email = await findVisibleInFrames(
+    page,
+    (frame) =>
+      frame
+        .getByLabel(/email/i)
+        .or(frame.getByPlaceholder(/email/i))
+        .or(frame.locator('input[type="email"]')),
+    30_000,
+  );
+  await email.fill(b2bEmail);
+  await chooseCountryIfRequired(page, b2bCountryCode, b2bCountryName);
+  await fillIfVisible(page, /zip|postal/i, b2bPostalCode);
+
+  const before = await waitForFinancialSnapshot(page, false);
+  await clickVisibleInFrames(
+    page,
+    /add (?:a )?(?:tax|vat)(?: id| number)?|business purchase/i,
+    30_000,
+  );
+  const businessName = await findVisibleInFrames(
+    page,
+    (frame) =>
+      frame
+        .getByLabel(/business|company|organization/i)
+        .or(frame.getByPlaceholder(/business|company|organization/i)),
+    30_000,
+  );
+  await businessName.fill(b2bBusinessName);
+  const taxId = await findVisibleInFrames(
+    page,
+    (frame) =>
+      frame
+        .getByLabel(/tax|vat/i)
+        .or(frame.getByPlaceholder(/tax|vat/i)),
+    30_000,
+  );
+  await taxId.fill(b2bTaxIdentifier);
+
+  const apply = await maybeFindVisibleInFrames(page, (frame) =>
+    frame.getByRole('button', {
+      name: /^(add|apply|save|confirm)(?: tax| vat| business)?$/i,
+    }),
+  );
+  if (apply) await apply.click();
+
+  const after = await waitForFinancialSnapshot(page, true);
+  await clickVisibleInFrames(page, /continue|next|次へ/i, 30_000);
+  return { before, after };
+}
+
+async function waitForFinancialSnapshot(
+  page: Page,
+  requireTaxIdentifier: boolean,
+) {
+  await page.waitForFunction(
+    (required) => {
+      const readLog = (
+        window as Window & {
+          getPaddleSandboxEventLog?: () => PaddleEvent[];
+        }
+      ).getPaddleSandboxEventLog;
+      const events = typeof readLog === 'function' ? readLog() : [];
+      return events.some(
+        (event) =>
+          Boolean(event.currencyCode && event.tax != null && event.total != null) &&
+          (!required || event.hasTaxIdentifier === true),
+      );
+    },
+    requireTaxIdentifier,
+    { timeout: 30_000 },
+  );
+  const events = await readPaddleEvents(page);
+  const snapshot = [...events]
+    .reverse()
+    .find(
+      (event) =>
+        Boolean(event.currencyCode && event.tax != null && event.total != null) &&
+        (!requireTaxIdentifier || event.hasTaxIdentifier === true),
+    );
+  if (!snapshot) throw new Error('Paddle did not emit a financial snapshot.');
+  return snapshot;
+}
+
+async function chooseCountryIfRequired(
+  page: Page,
+  countryCode: string,
+  countryName: string,
+) {
   const select = await maybeFindVisibleInFrames(page, (frame) =>
     frame.locator(
       'select[autocomplete="country"], select[name*="country" i]',
     ),
   );
   if (select) {
-    await select.selectOption('US').catch(async () => {
-      await select.selectOption({ label: 'United States' });
+    await select.selectOption(countryCode).catch(async () => {
+      await select.selectOption({ label: countryName });
     });
     return;
   }
@@ -214,7 +355,7 @@ async function chooseCountryIfRequired(page: Page) {
   await country.click();
   const option = await findVisibleInFrames(
     page,
-    (frame) => frame.getByRole('option', { name: /United States/i }),
+    (frame) => frame.getByRole('option', { name: countryName, exact: true }),
     10_000,
   );
   await option.click();
@@ -324,14 +465,7 @@ async function collectEvidence(
   scenario: Scenario,
   metadata: { browserVersion: string },
 ) {
-  const events = await page.evaluate<PaddleEvent[]>(() => {
-    const readLog = (
-      window as Window & {
-        getPaddleSandboxEventLog?: () => PaddleEvent[];
-      }
-    ).getPaddleSandboxEventLog;
-    return typeof readLog === 'function' ? readLog() : [];
-  });
+  const events = await readPaddleEvents(page);
   const evidence = {
     scenario,
     result: testInfo.status,
@@ -350,6 +484,17 @@ async function collectEvidence(
     contentType: 'image/png',
   });
   return events;
+}
+
+async function readPaddleEvents(page: Page) {
+  return page.evaluate<PaddleEvent[]>(() => {
+    const readLog = (
+      window as Window & {
+        getPaddleSandboxEventLog?: () => PaddleEvent[];
+      }
+    ).getPaddleSandboxEventLog;
+    return typeof readLog === 'function' ? readLog() : [];
+  });
 }
 
 function eventNames(events: PaddleEvent[]) {

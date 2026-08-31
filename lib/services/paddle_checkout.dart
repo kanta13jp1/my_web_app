@@ -21,9 +21,7 @@ class PaddleSandboxConfig {
   factory PaddleSandboxConfig.fromEnvironment() {
     return const PaddleSandboxConfig(
       enabled: bool.fromEnvironment('PADDLE_SANDBOX_ENABLED'),
-      clientSideToken: String.fromEnvironment(
-        'PADDLE_SANDBOX_CLIENT_TOKEN',
-      ),
+      clientSideToken: String.fromEnvironment('PADDLE_SANDBOX_CLIENT_TOKEN'),
       priceId: String.fromEnvironment('PADDLE_SANDBOX_PRICE_ID'),
       releaseMode: kReleaseMode,
     );
@@ -62,12 +60,27 @@ class PaddleCheckoutEvent {
     this.checkoutId,
     this.transactionId,
     this.message,
+    this.currencyCode,
+    this.subtotal,
+    this.tax,
+    this.total,
+    this.hasBusiness = false,
+    this.hasTaxIdentifier = false,
   });
 
   final String name;
   final String? checkoutId;
   final String? transactionId;
   final String? message;
+  final String? currencyCode;
+  final String? subtotal;
+  final String? tax;
+  final String? total;
+  final bool hasBusiness;
+  final bool hasTaxIdentifier;
+
+  bool get hasFinancialSnapshot =>
+      currencyCode != null || subtotal != null || tax != null || total != null;
 
   factory PaddleCheckoutEvent.fromJson(Map<String, dynamic> json) {
     return PaddleCheckoutEvent(
@@ -75,6 +88,12 @@ class PaddleCheckoutEvent {
       checkoutId: _nonEmpty(json['checkoutId']),
       transactionId: _nonEmpty(json['transactionId']),
       message: _nonEmpty(json['message']),
+      currencyCode: _nonEmpty(json['currencyCode']),
+      subtotal: _nonEmpty(json['subtotal']),
+      tax: _nonEmpty(json['tax']),
+      total: _nonEmpty(json['total']),
+      hasBusiness: json['hasBusiness'] == true,
+      hasTaxIdentifier: json['hasTaxIdentifier'] == true,
     );
   }
 }
@@ -85,22 +104,43 @@ class PaddleCheckoutState {
     required this.message,
     this.checkoutId,
     this.transactionId,
+    this.currencyCode,
+    this.subtotal,
+    this.tax,
+    this.total,
+    this.hasBusiness = false,
+    this.hasTaxIdentifier = false,
   });
 
   const PaddleCheckoutState.idle()
       : phase = PaddleCheckoutPhase.idle,
         message = 'Paddle sandbox checkout を開始できます。',
         checkoutId = null,
-        transactionId = null;
+        transactionId = null,
+        currencyCode = null,
+        subtotal = null,
+        tax = null,
+        total = null,
+        hasBusiness = false,
+        hasTaxIdentifier = false;
 
   final PaddleCheckoutPhase phase;
   final String message;
   final String? checkoutId;
   final String? transactionId;
+  final String? currencyCode;
+  final String? subtotal;
+  final String? tax;
+  final String? total;
+  final bool hasBusiness;
+  final bool hasTaxIdentifier;
 
   bool get isBusy =>
       phase == PaddleCheckoutPhase.opening ||
       phase == PaddleCheckoutPhase.opened;
+
+  bool get hasFinancialSnapshot =>
+      currencyCode != null || subtotal != null || tax != null || total != null;
 }
 
 abstract interface class PaddleCheckoutGateway {
