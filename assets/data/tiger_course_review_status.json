@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-30T04:24:32.859422+00:00",
+  "generated_at": "2026-08-31T04:51:56.602337+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -11,12 +11,12 @@
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 14,
-    "eligible": 14,
-    "provisional": 12,
+    "total": 20,
+    "eligible": 20,
+    "provisional": 18,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 13,
+    "division_3": 19,
     "division_4": 1,
     "division_5": 0
   },
@@ -28,50 +28,50 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260830T130051+0900",
-    "started_at": "2026-08-30T13:00:51+09:00",
+    "cycle_id": "20260831T134103+0900",
+    "started_at": "2026-08-31T13:41:03+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-c2dc853b-071e-479c-acc8-cbe679cc510d",
-      "url": "https://github.com/OpenBMB/AgentVerse"
+      "slug": "course-9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
+      "url": "https://www.ai21.com/"
     },
     "reviewer": {
-      "seat": 12,
-      "name": "迫 佑樹",
-      "selection_score": 74.5105,
-      "division": 1,
-      "cycle_utility": 85.69,
-      "aggregate_utility": 85.66
+      "seat": 94,
+      "name": "戸村 光",
+      "selection_score": 76.1036,
+      "division": 3,
+      "cycle_utility": 85.62,
+      "aggregate_utility": 85.62
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 4,
     "top_findings": [
       {
-        "summary": "実行例のAgentVerse、ConversationAgent、TaskDrivenAgentVerseが公式package exportと一致しない",
-        "severity": "p1",
-        "business_dimensions": [
-          "trust_risk",
-          "market_demand",
-          "scalability"
-        ]
-      },
-      {
-        "summary": "refactor中のsimulationとstable release、main commit、依存環境を区別するversion contractがない",
-        "severity": "p1",
-        "business_dimensions": [
-          "trust_risk",
-          "unit_economics",
-          "scalability"
-        ]
-      },
-      {
-        "summary": "役割分担と動的group compositionを一つのtaskで比較する提出物とrubricがない",
+        "summary": "AI21の現行provider boundaryであるMaestro、Jamba、導入形態の関係が教材から欠落している",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
-          "competitive_advantage",
-          "revenue_model"
+          "scalability",
+          "competitive_advantage"
+        ]
+      },
+      {
+        "summary": "Maestro、Jamba/API、private deploymentを要件から選ぶ再現可能な意思決定labがない",
+        "severity": "p1",
+        "business_dimensions": [
+          "market_demand",
+          "scalability",
+          "competitive_advantage"
+        ]
+      },
+      {
+        "summary": "対象者、観測可能な学習成果、評価方法、証拠URL、検証日時がすべて未設定",
+        "severity": "p1",
+        "business_dimensions": [
+          "market_demand",
+          "revenue_model",
+          "scalability"
         ]
       }
     ],
@@ -90,57 +90,651 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After the production-data owner replaces the example with one commit-pinned official Simulation or TaskSolving workflow, run one cohort and compare import success, 60-minute completion, rubric gain, role-selection justification, wall time, and token or backend cost."
+      "next_cycle_experiment": "After the production-data owner publishes one dated product map and a 30-to-60-minute decision lab, run one cohort and compare product-path accuracy, 60-minute completion, rubric score, source reachability, support contacts, reproducibility, and workplace application."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5049",
+      "label": "対策待ち・Issue #5157",
       "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [
-        "course-agentverse-nonexistent-api-example"
+        "course-ai21-overview-product-boundary-gap"
       ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean dedicated branch fast-forwarded to origin/main 2e6eac446879e0e0b51d846e0fc0ddfe5f20b8c2",
+        "passed: clean dedicated branch fast-forwarded to origin/main b7048433823ab2fff81974724768acbc06630d43",
         "passed: 125 roster profiles and 125 personas",
-        "passed: active=1079, reviewable=534, excluded_missing_source_url=536, evidence_complete=3",
-        "passed: deterministic winner from fresh catalog",
+        "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
+        "executed once successfully: AI21 Labs 概要 selected from fresh catalog",
         "passed: no comparable baseline, focus_dimension=evidence",
-        "passed: AgentVerse repository, package exports, paper v3, seed migration, named page, and named provider-evidence test inspected",
-        "executed once successfully: 125 profiles, seat 12"
+        "passed: current AI21 homepage, overview, Maestro, Jamba documentation, and the named tracked migration were inspected separately",
+        "executed once successfully: 125 profiles, seat 94"
       ],
       "issue": {
-        "number": 5049,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5049",
+        "number": 5157,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5157",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260830T130051+0900:c2dc853b-071e-479c-acc8-cbe679cc510d",
+        "dedupe_key": "tiger-course-review:20260831T134103+0900:9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-agentverse-version-stability-contract-gap",
-        "course-agentverse-role-collaboration-lab-gap",
-        "course-agentverse-learner-outcome-gap"
+        "course-ai21-overview-decision-lab-gap",
+        "course-ai21-overview-evidence-contract-gap",
+        "course-ai21-overview-learner-outcome-gap"
       ]
     },
     "course": {
-      "content_id": "c2dc853b-071e-479c-acc8-cbe679cc510d",
-      "provider": "agentverse",
-      "title": "AgentVerse (OpenBMB/清華大学) — マルチエージェントシミュレーション・役割ベース協調・動的チーム編成 (9/9)",
-      "source_url": "https://github.com/OpenBMB/AgentVerse",
-      "reason": "fresh公開Data APIで対象行を確認したが、5つのevidence fieldはすべてnullだった。公式repositoryはtask-solvingとsimulationを分離し、simulationをrefactor中として安定用途にrelease-0.1を案内する。公式main commit f90c4bd9680fdd3bcff8c52c9170911a59b23478のpackage exportはSimulationとTaskSolvingで、tracked courseのAgentVerse、ConversationAgent、TaskDrivenAgentVerseという実行例を裏づけない。primary paperは動的なgroup compositionを報告するが、講座固有API、環境、合格条件、費用、実在学習者成果は確認できないため、learner evidenceは契約どおり中立50点とした。",
-      "cycle_utility": 26.25,
-      "aggregate_utility": 26.25,
+      "content_id": "9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
+      "provider": "ai21",
+      "title": "AI21 Labs 概要",
+      "source_url": "https://www.ai21.com/",
+      "reason": "Fresh公開Data APIで対象行を確認したが、5つのevidence fieldはすべてnullだった。掲載source_urlは到達可能な広いmarketing homepageで、named tracked courseはAI21を主にJamba architecture、long context、efficiencyとして説明する。現行公式資料はMaestroによるmodel-agnostic agent orchestration、budget control、validation/traceability、Jamba family、private deploymentもprovider boundaryに含める。courseにはこれらの導入判断、実行課題、rubric、合格閾値、実在学習者成果がないためlearner evidenceは契約どおり中立50点とした。",
+      "cycle_utility": 40.25,
+      "aggregate_utility": 40.25,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260831T134103+0900",
+      "started_at": "2026-08-31T13:41:03+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
+        "title": "AI21 Labs 概要",
+        "url": "https://www.ai21.com/"
+      },
+      "reviewer": {
+        "seat": 94,
+        "name": "戸村 光",
+        "selection_score": 76.1036
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner publishes one dated product map and a 30-to-60-minute decision lab, run one cohort and compare product-path accuracy, 60-minute completion, rubric score, source reachability, support contacts, reproducibility, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-ai21-overview-product-boundary-gap",
+          "summary": "AI21の現行provider boundaryであるMaestro、Jamba、導入形態の関係が教材から欠落している",
+          "severity": "p1",
+          "suggested_action": "現行公式overviewを基にMaestro、Jamba、AI21 API、第三者model/BYOK、private deploymentを一枚のdated product mapで分け、各経路の適用条件と一次根拠を示す。"
+        },
+        {
+          "finding_id": "course-ai21-overview-decision-lab-gap",
+          "summary": "Maestro、Jamba/API、private deploymentを要件から選ぶ再現可能な意思決定labがない",
+          "severity": "p1",
+          "suggested_action": "3つのworkload fixtureにprivacy、latency SLO、budget、model constraint、traceability要件を与え、Maestro、Jamba/API、private deploymentから経路を選び一次根拠とtrade-offを提出する30〜60分labを追加する。"
+        },
+        {
+          "finding_id": "course-ai21-overview-evidence-contract-gap",
+          "summary": "対象者、観測可能な学習成果、評価方法、証拠URL、検証日時がすべて未設定",
+          "severity": "p1",
+          "suggested_action": "対象者をenterprise AI導入担当、成果を要件から製品・導入経路を選ぶdecision memo、評価をrubric、証拠を現行official overview群、検証日時をpublish時刻として公開fieldへ設定する。"
+        },
+        {
+          "finding_id": "course-ai21-overview-learner-outcome-gap",
+          "summary": "実在学習者がAI21の製品・導入経路を正しく選べた成果証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名の開始/完了、経路選択、rubric score、再現率、職場適用を一cohortで取得し、秘密情報やprompt本文を保存せず集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5157",
+        "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-ai21-overview-product-boundary-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch fast-forwarded to origin/main b7048433823ab2fff81974724768acbc06630d43",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
+          "executed once successfully: AI21 Labs 概要 selected from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: current AI21 homepage, overview, Maestro, Jamba documentation, and the named tracked migration were inspected separately",
+          "executed once successfully: 125 profiles, seat 94"
+        ],
+        "issue": {
+          "number": 5157,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5157",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260831T134103+0900:9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-ai21-overview-decision-lab-gap",
+          "course-ai21-overview-evidence-contract-gap",
+          "course-ai21-overview-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T061237+0900",
+      "started_at": "2026-08-31T06:12:37+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
+        "title": "AI21 Labs — 利用可能モデル (2026)",
+        "url": "https://docs.ai21.com/docs/jamba-models"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 79.4436
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner publishes one dated platform matrix and model-selection lab, run one cohort and compare source reachability, platform-selection accuracy, endpoint success, 60-minute completion, rubric score, cost-prediction error, support contacts, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-ai21-model-source-platform-contract",
+          "summary": "掲載source URLが404で、platform非区別のjamba-1.5-large/miniを現行モデル一覧として提示している",
+          "severity": "p1",
+          "suggested_action": "source_urlを現行Jambaページへ更新し、AI21 SaaS、managed cloud、self-deployを分けたdated matrixでversion、endpoint、context、availability、deprecationを示す。"
+        },
+        {
+          "finding_id": "course-ai21-model-decision-rubric-gap",
+          "summary": "用途別推奨はあるが、platform、version、品質、latency、costを比較する再現可能な意思決定rubricがない",
+          "severity": "p1",
+          "suggested_action": "3つのworkload fixtureについてcontext、quality threshold、latency SLO、budget、privacy、deployment constraintを与え、dated model/platformを選んで根拠を提出するrubricを追加する。"
+        },
+        {
+          "finding_id": "course-ai21-cost-quality-verification-gap",
+          "summary": "cost efficient・最高精度という主張に、現行platform別の費用、latency、qualityを再計算する課題がない",
+          "severity": "p2",
+          "suggested_action": "日付付き公式pricing/availabilityを参照し、一つのlong-context workloadでtokenまたはhosting cost、latency、quality thresholdを比較して選択理由を提出させる。"
+        },
+        {
+          "finding_id": "course-ai21-model-selection-learner-outcome-gap",
+          "summary": "実在学習者が現行AI21 model/platformを再現可能に選定できた証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名の開始/完了、platform選択、dated endpoint成功、rubric score、cost予測誤差、再現率、職場適用を一cohortで取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5150",
+        "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-ai21-model-source-platform-contract"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch ready at origin/main 28438d008d072ed5a0c96614804e258c62f0d81b",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
+          "passed: deterministic AI21 model-availability winner from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: source 404, current AI21 Jamba and platform availability documentation, and the named tracked course migration were inspected separately",
+          "executed once successfully: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 5150,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5150",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260831T061237+0900:5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-ai21-model-decision-rubric-gap",
+          "course-ai21-cost-quality-verification-gap",
+          "course-ai21-model-selection-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T033107+0900",
+      "started_at": "2026-08-31T03:29:37+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "363d108c-37e3-4bb5-a4a2-a34f65416938",
+        "title": "AI21 Labs API 入門",
+        "url": "https://docs.ai21.com/docs/quickstart"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 79.7131
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner publishes one dated-endpoint lab, run one cohort and compare source reachability, first-call success, 60-minute completion, rubric score, token-cost prediction error, support contacts, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-ai21-deprecated-api-contract",
+          "summary": "掲載URLとAI21 SaaSモデル名が現行公式契約から外れている",
+          "severity": "p1",
+          "suggested_action": "source_urlを現行SDKページへ更新し、AI21推奨どおりdated endpointまたはjamba-large/miniを選び、ChatMessageを用いた一つの最小exampleと移行注記を掲載する。"
+        },
+        {
+          "finding_id": "course-ai21-reproducible-lab-gap",
+          "summary": "versioned environment、期待出力、評価rubric、合格閾値がない",
+          "severity": "p1",
+          "suggested_action": "Python/ai21 SDK pin、AI21_API_KEY環境変数、dated model endpoint、fixture、run command、expected output、failure table、rubric、合格閾値を一つの60分labにする。"
+        },
+        {
+          "finding_id": "course-ai21-pricing-evidence-gap",
+          "summary": "固定価格表と無料トライアル記述の検証日・計算課題がない",
+          "severity": "p2",
+          "suggested_action": "価格を現行pricing URLへの日付付き参照へ置換し、API usage fieldから入力・出力token費用を算出する課題と許容誤差を追加する。"
+        },
+        {
+          "finding_id": "course-ai21-learner-outcome-gap",
+          "summary": "実在学習者が現行AI21 APIを再現し費用と品質を判断できた証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名のlab開始/完了、初回成功、rubric score、token費用予測誤差、再現率、職場適用を一cohortで取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5144",
+        "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-ai21-deprecated-api-contract"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch ready at origin/main 139410e80d48f9ec3196e614cf877f71d0446a2d",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
+          "passed: deterministic AI21 Labs API winner from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: current AI21 SDK, Jamba, API, and pricing docs plus the named tracked migration inspected separately",
+          "executed once successfully: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 5144,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5144",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260831T033107+0900:363d108c-37e3-4bb5-a4a2-a34f65416938",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-ai21-reproducible-lab-gap",
+          "course-ai21-pricing-evidence-gap",
+          "course-ai21-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T030006+0900",
+      "started_at": "2026-08-31T03:00:06+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "6dba658f-c89c-4a8e-86c6-750c26d51fa2",
+        "title": "Agno エージェント設計パターン & 料金 (2026)",
+        "url": "https://docs.agno.com/"
+      },
+      "reviewer": {
+        "seat": 9,
+        "name": "平出 心",
+        "selection_score": 72.6763
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner publishes a dated architecture-and-TCO lab, run one cohort and compare 60-minute completion, architecture rubric, model-call and latency estimates, TCO estimate error, reproducibility, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-agno-pricing-contract-gap",
+          "summary": "料金表が現行Free・Pro・Enterprise体系と一致せず総運用費の境界もない",
+          "severity": "p1",
+          "suggested_action": "確認日付きでFree $0、Pro $150/月、3 seats、1 live connection、追加seat $30/月、追加connection $95/月、Enterprise customを示し、別欄でmodel token、cloud compute、database/storage、運用工数を入力する月額TCO worksheetと更新手順を追加する。"
+        },
+        {
+          "finding_id": "course-agno-architecture-decision-gap",
+          "summary": "Team modeが現行仕様と一致せずAgent・Team・Workflowを選ぶ決定課題がない",
+          "severity": "p1",
+          "suggested_action": "現行coordinate、route、broadcast、tasksとWorkflowを反映し、同じ業務要件をAgent、Team、Workflowの三案で設計して、役割数、制御の決定性、失敗回復、model call、latency、token、監査性から一案を選ぶ60分labとrubricを追加する。"
+        },
+        {
+          "finding_id": "course-agno-verification-gap",
+          "summary": "実行環境、期待出力、失敗診断、提出物、rubric、合格閾値がない",
+          "severity": "p1",
+          "suggested_action": "Python/Agno pin、credential、fixture、run command、expected output、failure table、architecture/TCO提出物、rubric、合格閾値を一つの検証contractとして公開する。"
+        },
+        {
+          "finding_id": "course-agno-design-learner-outcome-gap",
+          "summary": "実在学習者が構成と費用を適切に選べた証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名のlab開始/完了、architecture rubric、TCO見積り誤差、実行成功、再設計、職場適用を一cohortで取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5142",
+        "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-agno-pricing-contract-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch ready at origin/main d2892ac6eb1429f296321e8a1b88a27b8a20cdee",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
+          "passed: deterministic Agno design-and-pricing winner from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: current Agno Agent, Team, Workflow, orchestration, quickstart, and pricing pages plus the named tracked migration inspected separately",
+          "executed once successfully: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 5142,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5142",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260831T030006+0900:6dba658f-c89c-4a8e-86c6-750c26d51fa2",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-agno-architecture-decision-gap",
+          "course-agno-verification-gap",
+          "course-agno-design-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260830T230009+0900",
+      "started_at": "2026-08-30T23:00:09+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "41283504-615b-4911-9ebb-af81298a5770",
+        "title": "Agno API 入門 — Memory × Knowledge × Tools エージェント構築",
+        "url": "https://docs.agno.com/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 72.1282
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 96.0,
+        "scores": {
+          "complete": 90,
+          "logical": 100,
+          "evidence": 90,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner replaces the examples with one commit-pinned workflow, run one cohort and compare setup success, 60-minute completion, answer-quality rubric, mis-memory rate, latency, token use, storage, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-agno-api-current-contract-gap",
+          "summary": "掲載されたMemory・Knowledge APIが現行公式例と一致せずversionも固定されていない",
+          "severity": "p1",
+          "suggested_action": "Agnoの固定versionまたはcommitを明記し、現行のSqliteDb、MemoryManager、Knowledge、vector store、one toolを使う一つの実行例へ置換して、Python version、install command、credential、期待出力、代表的エラー、合格条件を付ける。"
+        },
+        {
+          "finding_id": "course-agno-versioned-environment-gap",
+          "summary": "環境manifest、期待出力、失敗診断、評価方法、合格閾値がない",
+          "severity": "p1",
+          "suggested_action": "Python/Agno pin、provider key、DB/vector backend、fixture、run command、expected output、failure table、rubric、合格閾値を一つの検証contractとして公開する。"
+        },
+        {
+          "finding_id": "course-agno-integrated-lab-gap",
+          "summary": "Memory × Knowledge × Toolsを同じtaskで統合・比較する提出物とrubricがない",
+          "severity": "p1",
+          "suggested_action": "固定taskをstateless、memoryのみ、knowledgeのみ、tools統合構成で実行し、回答品質、再現率、wall time、token、storage、誤記憶を比較する60分labとrubricを設ける。"
+        },
+        {
+          "finding_id": "course-agno-api-learner-outcome-gap",
+          "summary": "実在学習者が現行Agnoで統合agentを再現し設計と費用を判断できた証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名のlab開始/完了、setup成功、rubric score、誤記憶率、token/latency/storage差、再現率、職場適用を一cohortで取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5126",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-agno-api-current-contract-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch ready at origin/main 1f9feb474a305d6a7c1b9e2bfc65663e13c21238",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1080, reviewable=535, excluded_missing_source_url=536, evidence_complete=5",
+          "passed: deterministic Agno API winner from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: current Agno tools, memory, and knowledge docs plus named tracked migration inspected separately",
+          "executed once successfully: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 5126,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5126",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260830T230009+0900:41283504-615b-4911-9ebb-af81298a5770",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-agno-versioned-environment-gap",
+          "course-agno-integrated-lab-gap",
+          "course-agno-api-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260830T162547+0900",
+      "started_at": "2026-08-30T16:25:47+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "0ba849ce-c494-495f-b7c8-b7185f2e2a95",
+        "title": "Agno (旧 phidata) — Python-native エージェントフレームワーク (Memory / Knowledge / Tools)",
+        "url": "https://www.agno.com/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 72.567
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner replaces the examples with one commit-pinned v3 workflow, run one cohort and compare setup success, 60-minute completion, answer-quality rubric, mis-memory rate, migration row-count equality, latency, token use, storage, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-agno-v3-api-drift",
+          "summary": "掲載されたmemory・knowledge APIが公式v3.0.1 quickstartと一致せずversionも固定されていない",
+          "severity": "p1",
+          "suggested_action": "Agno v3.0.1または固定commitを明記し、公式SqliteDb、MemoryManager、Knowledge、vector databaseを使う一つの実行例へ置換して、開始コマンド、期待出力、代表的エラー、合格条件を付ける。"
+        },
+        {
+          "finding_id": "course-agno-v3-migration-contract-gap",
+          "summary": "v2からv3へのrun storage移行と後方互換性を扱うenvironment contractがない",
+          "severity": "p1",
+          "suggested_action": "Python、agno version、DB backend、fresh DB前提、v2 fixture、dry-run migration、row-count検証、backup/rollback、credential要否を一つのenvironment manifestとmigration exerciseへ固定する。"
+        },
+        {
+          "finding_id": "course-agno-memory-knowledge-lab-gap",
+          "summary": "memoryとknowledgeの役割を同じtaskで比較する提出物、rubric、cost traceがない",
+          "severity": "p1",
+          "suggested_action": "固定taskをstateless、memoryのみ、knowledgeのみ、統合構成で実行し、回答品質、再現率、wall time、token、storage、誤記憶を比較する60分labを設ける。"
+        },
+        {
+          "finding_id": "course-agno-learner-outcome-gap",
+          "summary": "実在学習者が現行Agnoで統合agentを再現し費用と設計を判断できた証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名のlab開始/完了、setup成功、rubric score、誤記憶率、token/latency/storage差、再現率、職場適用を一cohortで取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5093",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-agno-v3-api-drift"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch ready at origin/main 4ce2b9ec8aa58e77647862097fdd5d63c5c9a563",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1080, reviewable=535, excluded_missing_source_url=536, evidence_complete=5",
+          "passed: deterministic Agno winner from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: Agno v3.0.1 release and current memory/knowledge quickstarts plus named tracked migrations inspected separately",
+          "executed once successfully: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 5093,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5093",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260830T162547+0900:0ba849ce-c494-495f-b7c8-b7185f2e2a95",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-agno-v3-migration-contract-gap",
+          "course-agno-memory-knowledge-lab-gap",
+          "course-agno-learner-outcome-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260830T130051+0900",
       "started_at": "2026-08-30T13:00:51+09:00",
@@ -205,7 +799,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5049",
-        "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -228,9 +822,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260830T130051+0900:c2dc853b-071e-479c-acc8-cbe679cc510d",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -255,7 +849,7 @@
         "name": "迫 佑樹",
         "selection_score": 72.7025
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -302,9 +896,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4982",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #4982 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -324,13 +918,21 @@
           "number": 4982,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4982",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260829T002706+0900:50609809-2da6-41ba-9c35-4bbec9668493",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "07434f750b30d914f124e299bcfa9a13f42495bf",
+          "workflow_run": "33294134019",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33294134019/job/99211875004",
+          "pr_number": 5048,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5048",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-agentless-one-issue-lab-gap",
           "course-agentless-runtime-cost-trace-gap",
@@ -426,7 +1028,7 @@
           "dedupe_key": "tiger-course-review:20260828T235300+0900:f0ce952d-841b-4d6b-88ed-4d6317f74a9e",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -524,7 +1126,7 @@
           "dedupe_key": "tiger-course-review:20260828T100917+0900:c1ea41da-b447-4c7b-aee7-630d03c6a516",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -622,7 +1224,7 @@
           "dedupe_key": "tiger-course-review:20260828T021401+0900:955ae2e6-9909-4635-aacd-790ab23aa7c8",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -715,7 +1317,7 @@
           "dedupe_key": "tiger-course-review:20260827T232859+0900:746a2878-6a2d-4787-91e2-1778ebdda8ce",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -739,7 +1341,7 @@
         "name": "迫 佑樹",
         "selection_score": 76.6278
       },
-      "status": "issue_tracking",
+      "status": "issue_closed",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -780,9 +1382,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4905",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "issue_closed",
+        "label": "Issue #4905 終了・反映証拠確認待ち",
+        "detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -807,11 +1409,11 @@
           "number": 4905,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4905",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260826T230834+0900:fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "remediation_state": "closed_pending_proof",
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -910,7 +1512,7 @@
           "dedupe_key": "tiger-course-review:20260826T151103+0900:63c96c0b-834c-4979-b387-ff4d4393aced",
           "remediation_state": "production_verified",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": {
           "commit_sha": "379d95b69c88ce2eeb9b6a1a85ed477f3209ba78",
@@ -1015,7 +1617,7 @@
           "dedupe_key": "tiger-course-review:20260826T071116+0900:4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
           "remediation_state": "production_verified",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": {
           "commit_sha": "3c725dd9cf7d81d14504a090bfc471750a7a0147",
@@ -1047,7 +1649,7 @@
         "name": "迫 佑樹",
         "selection_score": 74.9248
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -1088,9 +1690,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4850",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #4850 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1113,13 +1715,21 @@
           "number": 4850,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4850",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260826T061027+0900:5b7e5f70-2652-4949-b00d-6bbc768fbb96",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "8017a3761b9a536126ecf1342090a3a6c5976f11",
+          "workflow_run": "33295179209",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33295179209/job/99214790019",
+          "pr_number": 5060,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5060",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-adept-verifiable-api-path-gap",
           "course-adept-source-verification-gap",
@@ -1199,7 +1809,7 @@
           "dedupe_key": "tiger-course-review:20260824T011146+0900:647dc452-f75d-4dd9-8292-332bada2e2f9",
           "remediation_state": "production_verified",
           "queue_status": "EXTERNAL_IN_PROGRESS",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": {
           "commit_sha": "7b30251dc8cbd3398e7ad044f536670ba6c640ad",
@@ -1276,7 +1886,7 @@
           "dedupe_key": "tiger-course-review:20260823T232120+0900:e1712bb5-2bca-4fc0-8347-0529513411d3",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1348,7 +1958,7 @@
           "dedupe_key": "tiger-course-review:20260823T175240+0900:525273ba-539f-4dd4-b436-a6a74a5e8cc5",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": {
           "commit_sha": "20b20d3ce18515752a09e11beb6efd32cee12e49",
@@ -1424,7 +2034,7 @@
           "dedupe_key": "tiger-course-review:20260823T165404+0900:22befb67-6147-4a4b-999c-ee1ad6fa9615",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": {
           "commit_sha": "18eedc47ea0769b871ba191b7ff9162252afb8f3",
@@ -1504,7 +2114,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1529,7 +2139,7 @@
         "name": "ドラゴン細井",
         "selection_score": 79.5059
       },
-      "status": "issue_tracking",
+      "status": "issue_closed",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": null,
@@ -1554,9 +2164,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4738",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "issue_closed",
+        "label": "Issue #4738 終了・反映証拠確認待ち",
+        "detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1575,11 +2185,11 @@
           "number": 4738,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4738",
           "status": "existing",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-29T06:24:25.423750+00:00"
+          "remediation_state": "closed_pending_proof",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-08-30T15:34:56.652193+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1728,6 +2338,20 @@
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
+      "content_id": "9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
+      "provider": "ai21",
+      "title": "AI21 Labs 概要",
+      "source_url": "https://www.ai21.com/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 40.25,
+      "completed_cycles": 1,
+      "last_cycle_utility": 40.25,
+      "last_reviewed_at": "2026-08-31T04:41:03+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
       "content_id": "63c96c0b-834c-4979-b387-ff4d4393aced",
       "provider": "adept",
       "title": "Adept AI とは",
@@ -1756,6 +2380,34 @@
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
+      "content_id": "0ba849ce-c494-495f-b7c8-b7185f2e2a95",
+      "provider": "agno",
+      "title": "Agno (旧 phidata) — Python-native エージェントフレームワーク (Memory / Knowledge / Tools)",
+      "source_url": "https://www.agno.com/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 37.0,
+      "completed_cycles": 1,
+      "last_cycle_utility": 37.0,
+      "last_reviewed_at": "2026-08-30T07:25:47+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "6dba658f-c89c-4a8e-86c6-750c26d51fa2",
+      "provider": "agno",
+      "title": "Agno エージェント設計パターン & 料金 (2026)",
+      "source_url": "https://docs.agno.com/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 34.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 34.75,
+      "last_reviewed_at": "2026-08-30T18:00:06+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
       "content_id": "50609809-2da6-41ba-9c35-4bbec9668493",
       "provider": "agentless",
       "title": "Agentless — 最小構成バグ修正エージェント・エージェントレス設計哲学・SWE-bench高効率 (9/9)",
@@ -1767,6 +2419,34 @@
       "completed_cycles": 1,
       "last_cycle_utility": 31.25,
       "last_reviewed_at": "2026-08-28T15:27:06+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
+      "provider": "ai21",
+      "title": "AI21 Labs — 利用可能モデル (2026)",
+      "source_url": "https://docs.ai21.com/docs/jamba-models",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 31.0,
+      "completed_cycles": 1,
+      "last_cycle_utility": 31.0,
+      "last_reviewed_at": "2026-08-30T21:12:37+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "41283504-615b-4911-9ebb-af81298a5770",
+      "provider": "agno",
+      "title": "Agno API 入門 — Memory × Knowledge × Tools エージェント構築",
+      "source_url": "https://docs.agno.com/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 30.25,
+      "completed_cycles": 1,
+      "last_cycle_utility": 30.25,
+      "last_reviewed_at": "2026-08-30T14:00:09+00:00",
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
@@ -1823,6 +2503,20 @@
       "completed_cycles": 1,
       "last_cycle_utility": 26.25,
       "last_reviewed_at": "2026-08-30T04:00:51+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "363d108c-37e3-4bb5-a4a2-a34f65416938",
+      "provider": "ai21",
+      "title": "AI21 Labs API 入門",
+      "source_url": "https://docs.ai21.com/docs/quickstart",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 25.25,
+      "completed_cycles": 1,
+      "last_cycle_utility": 25.25,
+      "last_reviewed_at": "2026-08-30T18:29:37+00:00",
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {

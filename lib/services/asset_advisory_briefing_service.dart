@@ -280,8 +280,9 @@ class AssetAdvisoryBriefingService {
             signalKey: 'discipline_violation',
             headline: '「借金しない宣言」に違反',
             detail: '${violation.action}'
-                '（誓約①追加借入ゼロ: $pledgeOneLabel / '
-                '誓約②カード一括: ${disciplineReport.lumpSumAchieved ? '達成' : '未達'}）',
+                '（誓約①カード以外の追加借入ゼロ: $pledgeOneLabel / '
+                '誓約②新規利用分の25日全額返済: '
+                '${disciplineReport.newUsageRepaymentAchieved ? '達成' : '未達'}）',
           ),
         );
       } else if (pledgeOneEvaluated) {
@@ -291,7 +292,7 @@ class AssetAdvisoryBriefingService {
             severity: AdvisorySeverity.info,
             signalKey: 'discipline_ok',
             headline: '規律を維持',
-            detail: '今月は追加借入ゼロ・カード一括返済を達成。'
+            detail: '今月はカード以外の追加借入ゼロ・新規利用分の25日全額返済を達成。'
                 '習慣として来月も固定費の自動引落を月初に点検する。',
           ),
         );
@@ -301,9 +302,9 @@ class AssetAdvisoryBriefingService {
             department: AdvisoryDepartment.chro,
             severity: AdvisorySeverity.info,
             signalKey: 'discipline_ok',
-            headline: 'カード一括は維持（追加借入は判定保留）',
-            detail: '今月はカードの繰越（リボ/分割）はありません。'
-                '追加借入ゼロは前月残高が未蓄積のため判定しておらず、来月以降に有効化されます。'
+            headline: '新規利用分の25日返済を維持（追加借入は判定保留）',
+            detail: '今月はカード新規利用分の返済ルールを守れています。'
+                'カード以外の追加借入ゼロは前月残高が未蓄積のため判定しておらず、来月以降に有効化されます。'
                 '習慣として来月も固定費の自動引落を月初に点検する。',
           ),
         );

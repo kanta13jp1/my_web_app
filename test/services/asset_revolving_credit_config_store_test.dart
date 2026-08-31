@@ -16,6 +16,8 @@ void main() {
         <String, AssetLiabilityRevolvingCreditConfig>{
           'aupay': const AssetLiabilityRevolvingCreditConfig(
             monthlyAmount: 10000,
+            newUsageAmount: 23182,
+            paymentDay: 25,
             creditLimit: 500000,
           ),
         },
@@ -25,6 +27,8 @@ void main() {
       final loaded = await store.load(prefs: prefs);
       expect(loaded.keys, ['aupay']);
       expect(loaded['aupay']!.monthlyAmount, 10000);
+      expect(loaded['aupay']!.newUsageAmount, 23182);
+      expect(loaded['aupay']!.paymentDay, 25);
       expect(loaded['aupay']!.creditLimit, 500000);
     });
 
@@ -59,6 +63,8 @@ void main() {
       final configs = <String, AssetLiabilityRevolvingCreditConfig>{
         'aupay': const AssetLiabilityRevolvingCreditConfig(
           monthlyAmount: 10000,
+          newUsageAmount: 23182,
+          paymentDay: 25,
           creditLimit: 500000,
         ),
         'rakuten': const AssetLiabilityRevolvingCreditConfig(
@@ -75,6 +81,8 @@ void main() {
 
       expect(decoded.keys, unorderedEquals(<String>['aupay', 'rakuten']));
       expect(decoded['aupay']!.monthlyAmount, 10000);
+      expect(decoded['aupay']!.newUsageAmount, 23182);
+      expect(decoded['aupay']!.paymentDay, 25);
       expect(decoded['aupay']!.creditLimit, 500000);
       expect(decoded['rakuten']!.monthlyAmount, 5000);
       expect(decoded['rakuten']!.creditLimit, 0);
@@ -101,6 +109,22 @@ void main() {
       );
       expect(decoded.keys, <String>['aupay']);
       expect(decoded['aupay']!.monthlyAmount, 8000);
+    });
+
+    test('旧保存形式は新規利用額0・25日として復元する', () {
+      final decoded = AssetRevolvingCreditConfigStore.decodeMirrorValue(
+        <String, dynamic>{
+          'legacy': <String, dynamic>{
+            'monthlyAmount': 8000,
+            'creditLimit': 200000,
+          },
+        },
+      );
+
+      expect(decoded['legacy']!.monthlyAmount, 8000);
+      expect(decoded['legacy']!.newUsageAmount, 0);
+      expect(decoded['legacy']!.paymentDay, 25);
+      expect(decoded['legacy']!.creditLimit, 200000);
     });
   });
 }

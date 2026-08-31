@@ -118,7 +118,9 @@ class SupabaseVideoStudioGateway implements VideoStudioGateway {
       authorization: VideoImprovementAuthorization.fromJson(
         videoStudioMap(data['authorization']),
       ),
-      job: VideoGenerationJob.fromJson(videoStudioMap(data['job'])),
+      job: data['job'] == null
+          ? null
+          : VideoGenerationJob.fromJson(videoStudioMap(data['job'])),
       balance: VideoCreditBalance.fromJson(videoStudioMap(data['balance'])),
     );
   }
@@ -220,7 +222,9 @@ class SupabaseVideoStudioGateway implements VideoStudioGateway {
       authorization: VideoImprovementAuthorization.fromJson(
         videoStudioMap(data['authorization']),
       ),
-      job: VideoGenerationJob.fromJson(videoStudioMap(data['job'])),
+      job: data['job'] == null
+          ? null
+          : VideoGenerationJob.fromJson(videoStudioMap(data['job'])),
       balance: VideoCreditBalance.fromJson(videoStudioMap(data['balance'])),
     );
   }

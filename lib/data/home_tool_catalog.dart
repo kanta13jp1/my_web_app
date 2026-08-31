@@ -14,6 +14,7 @@ import '../pages/agent_board_page.dart';
 import '../pages/autonomous_ops_console_page.dart';
 import '../pages/agent_gpa_dashboard_page.dart';
 import '../pages/english_reading_curriculum_page.dart';
+import '../ui/features/toeic/toeic_feature.dart';
 import '../pages/ai_company_builder_page.dart';
 import '../pages/ai_secretary_page.dart';
 import '../pages/my_skills_page.dart';
@@ -841,6 +842,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       ],
       onOpen: (context) =>
           _pushPage(context, const EnglishReadingCurriculumPage()),
+    ),
+    HomeToolEntry(
+      id: 'ai-university-toeic',
+      sectionId: 'knowledge',
+      title: 'AI大学 TOEIC対策',
+      subtitle: '毎日5問のPart別ドリルで目標スコアへ',
+      icon: Icons.school_outlined,
+      color: const Color(0xFF2563EB),
+      keywords: const <String>[
+        'TOEIC',
+        '英語',
+        '文法',
+        '語彙',
+        'Part 5',
+        'Part 6',
+        'Part 7',
+        'English',
+      ],
+      onOpen: (context) => _pushPage(context, const ToeicFeature()),
     ),
     HomeToolEntry(
       id: 'agent-gpa-dashboard',

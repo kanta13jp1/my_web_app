@@ -201,6 +201,29 @@ VIDEO_ARTIFACT_SQL_FILES = (
     ROOT / "supabase" / "migrations" / "20260822084126_add_video_artifact_review_loop.sql",
     ROOT / "supabase" / "tests" / "first_party_video_service_contract.sql",
     ROOT / "supabase" / "tests" / "video_artifact_review_loop_contract.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830053403_video_improvement_authorization_envelopes.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830123038_allow_authorized_video_retry_after_failure.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830123552_allow_authorized_video_retry_index.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830162041_persist_pending_video_improvement_authorizations.sql",
+    ROOT / "supabase" / "tests" / "video_improvement_authorization_contract.sql",
+    ROOT / "supabase" / "tests" / "video_publication_pre_migration.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830151707_create_video_publication_authorizations.sql",
+    ROOT / "supabase" / "tests" / "video_publication_authorization_contract.sql",
 )
 EDGE_FIXTURE_ENV_ALLOW = (
     "DATABASE_URL",
@@ -579,6 +602,8 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "reviews advance rights/privacy readiness without auto-publishing",
             "next-generation jobs preserve source artifact and review lineage",
             "original provenance is immutable and lifecycle evidence is append-only",
+            "publication packets are immutable, owner-scoped and exact-source",
+            "shop activation follows inactive staging and supports rollback",
         ],
         "edge_db_fixture": edge_fixture.relative_to(ROOT).as_posix(),
         "actual_edge_checks": [

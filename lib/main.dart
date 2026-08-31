@@ -316,6 +316,7 @@ import 'package:my_web_app/pages/ai_university_streaks_page.dart';
 import 'package:my_web_app/pages/english_reading_curriculum_page.dart';
 import 'package:my_web_app/pages/english_reading_practice_page.dart';
 import 'package:my_web_app/pages/english_reading_dashboard_page.dart';
+import 'package:my_web_app/ui/features/toeic/toeic_feature.dart';
 import 'package:my_web_app/pages/ai_workflow_automation_page.dart';
 import 'package:my_web_app/pages/ab_testing_manager_page.dart';
 import 'package:my_web_app/pages/habit_tracker_page.dart';
@@ -607,6 +608,11 @@ Route<dynamic> generateAppRoute(
           initialProvider: args?['provider'] as String?,
           initialCategory: args?['category'] as String?,
         ),
+      );
+    case '/ai-university-toeic':
+      return MaterialPageRoute(
+        builder: (_) => const ToeicFeature(),
+        settings: settings,
       );
     case '/ai-university':
     case '/gemini-university':

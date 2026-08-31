@@ -1527,16 +1527,17 @@ void main() {
       await _unmount(tester);
     });
 
-    testWidgets('revolving payoff chip appears on revolving debt cards', (
+    testWidgets('revolving payoff chip and payday rule appear on debt cards', (
       tester,
     ) async {
-      // auPayカードにリボ設定 → 負債カード行に「概算残りXヶ月」ピルが出る。
+      // auPayカードに返済ルール設定 → 概算期間と25日返済の内訳が出る。
       final now = DateTime.now();
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
         <String, AssetLiabilityRevolvingCreditConfig>{
           'aupay_card': const AssetLiabilityRevolvingCreditConfig(
             monthlyAmount: 10000,
+            newUsageAmount: 20000,
             creditLimit: 500000,
           ),
         },
@@ -1567,6 +1568,16 @@ void main() {
         findsOneWidget,
       );
       expect(find.textContaining('リボ: 概算残り'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('revolving:aupay_card:新規利用額')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('revolving:aupay_card:利用限度額')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('返済日: 毎月25日'), findsOneWidget);
+      expect(find.textContaining('25日返済'), findsWidgets);
 
       await _unmount(tester);
     });
@@ -1667,13 +1678,33 @@ void main() {
       await _unmount(tester);
     });
 
-    testWidgets('discipline badge and escape-plan apply flow works', (
+    testWidgets('repayment shortfall shows a discipline violation', (
       tester,
     ) async {
-      // ファミペイ残高10万・最低返済のみ → リボ違反バッジ + 脱却月額の反映導線。
       final now = DateTime.now();
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
-      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final monthKey =
+          AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(now);
+      final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+        <String, AssetLiabilityRevolvingCreditConfig>{
+          'famipay_card': const AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 5000,
+            newUsageAmount: 30000,
+          ),
+        },
+      );
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        AssetLiabilityMonthlyStateStore.actualPaymentPrefsKey: jsonEncode(
+          <String, Map<String, double>>{
+            monthKey: <String, double>{'famipay_card': 5000},
+          },
+        ),
+        AssetLiabilityMonthlyStateStore.paidPrefsKey: jsonEncode(
+          <String, List<String>>{
+            monthKey: <String>['famipay_card'],
+          },
+        ),
+      });
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -1681,6 +1712,7 @@ void main() {
         MaterialApp(
           home: AssetManagementPage(
             debugCalendarNow: DateTime(2026, 7, 10),
+            debugRevolvingConfigsMirror: mirrorValue,
             debugInitialAssetData: <String, Map<String, double>>{
               dateKey: const <String, double>{
                 '財布(現金)': 50000,
@@ -1696,76 +1728,9 @@ void main() {
         find.byKey(const Key('asset_discipline_violation_badge')),
         findsOneWidget,
       );
-
-      final applyButton = find.byKey(
-        const Key('asset_discipline_apply_escape_famipay_card'),
-      );
-      await tester.ensureVisible(applyButton);
-      await tester.tap(applyButton);
-      await tester.pump(const Duration(milliseconds: 200));
-
-      // 確認ダイアログを経由してから今月予定へ反映される。
-      expect(find.text('今月の支払予定に反映'), findsOneWidget);
-      await tester.tap(
-        find.byKey(const Key('asset_discipline_apply_escape_confirm')),
-      );
-      await tester.pump(const Duration(milliseconds: 200));
-
-      expect(find.textContaining('今月支払予定を'), findsOneWidget);
-
-      await _unmount(tester);
-    });
-
-    testWidgets('escape-plan button hidden when already paying above the plan',
-        (
-      tester,
-    ) async {
-      // ファミペイ残高10万を月9万返済 → 繰越1万でリボ違反だが、脱却月額
-      // (12ヶ月・約9千) より現状の返済が多い → 反映(減額)ボタンは出さない。
-      // ページは資産の当日キー(_todayDateKey)も給与サイクル月キー
-      // (_currentSalaryCycleKey は _now = DateTime.now() 基準)も実 now で読む。
-      // payment を固定日で保存すると CI 実行日が給料日(既定25日)の給与サイクル
-      // 境界を跨いだ際にキー不一致で payment が読まれず、脱却ボタンの表示判定が
-      // 反転して日付依存で落ちる。資産・payment 双方を実 now 基準に統一する。
-      final now = DateTime.now();
-      final dateKey = DateFormat('yyyy-MM-dd').format(now);
-      // 支払予定額は給与サイクル月キーでネストされる。
-      final monthKey =
-          AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(now);
-      SharedPreferences.setMockInitialValues(<String, Object>{
-        AssetLiabilityMonthlyStateStore.paymentPrefsKey: jsonEncode(
-          <String, Map<String, double>>{
-            monthKey: <String, double>{'famipay_card': 90000},
-          },
-        ),
-      });
-      await tester.binding.setSurfaceSize(const Size(1200, 2400));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: AssetManagementPage(
-            debugCalendarNow: DateTime(2026, 7, 10),
-            debugInitialAssetData: <String, Map<String, double>>{
-              dateKey: const <String, double>{
-                '財布(現金)': 200000,
-                'ファミペイ': -100000,
-              },
-            },
-          ),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 200));
-
-      // 違反バッジ自体は出る (繰越1万) が、増額導線ボタンは出ない。
+      expect(find.textContaining('不足30,000円'), findsWidgets);
       expect(
-        find.byKey(const Key('asset_discipline_violation_badge')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(
-          const Key('asset_discipline_apply_escape_famipay_card'),
-        ),
+        find.byKey(const Key('asset_discipline_apply_escape_famipay_card')),
         findsNothing,
       );
 
@@ -2125,17 +2090,27 @@ void main() {
     });
 
     testWidgets(
-        'a revolving credit card trips the no-new-debt discipline monitor',
+        'an existing revolving balance complies when the payday rule is scheduled',
         (tester) async {
       final now = DateTime.now();
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
-      // ファミペイに残高（最低返済のみ＝リボ繰越）→ 「カードは全額一括」違反。
+      // 既存残高は一括返済を求めず、新規利用分を25日に全額上乗せする。
+      final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+        <String, AssetLiabilityRevolvingCreditConfig>{
+          'famipay_card': const AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 5000,
+            newUsageAmount: 30000,
+          ),
+        },
+      );
+      SharedPreferences.setMockInitialValues(<String, Object>{});
       await tester.binding.setSurfaceSize(const Size(1200, 3000));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(
         MaterialApp(
           home: AssetManagementPage(
+            debugRevolvingConfigsMirror: mirrorValue,
             debugInitialAssetData: <String, Map<String, double>>{
               dateKey: const <String, double>{
                 '財布(現金)': 500000,
@@ -2149,11 +2124,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.textContaining('借金しない宣言モニター'), findsOneWidget);
-      expect(find.textContaining('カードは全額一括: 違反'), findsWidgets);
+      expect(find.textContaining('新規利用分は25日に全額返済: 達成'), findsWidgets);
+      expect(find.textContaining('カードは全額一括'), findsNothing);
 
       await _unmount(tester);
     });
-
     testWidgets(
       'completed one-shot policy restores its memo and suppresses setup advice',
       (tester) async {
@@ -2190,7 +2165,6 @@ void main() {
         );
         expect(checkbox.value, isTrue);
         expect(find.text('受付 ABC123 / 8月29日 電話'), findsOneWidget);
-        expect(find.textContaining('12ヶ月脱却の月額'), findsWidgets);
         expect(find.textContaining('リボ/分割の設定解除を電話する'), findsNothing);
         expect(find.textContaining('設定を解除し'), findsNothing);
 
