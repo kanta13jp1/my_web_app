@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-31T05:32:44.867646+00:00",
+  "generated_at": "2026-08-31T09:22:40.435794+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -13,10 +13,10 @@
   "pool": {
     "total": 13,
     "eligible": 13,
-    "provisional": 11,
+    "provisional": 10,
     "division_1": 0,
-    "division_2": 2,
-    "division_3": 11,
+    "division_2": 3,
+    "division_3": 10,
     "division_4": 0,
     "division_5": 0,
     "eliminated": 0
@@ -29,50 +29,50 @@
     "operating_efficiency": 10
   },
   "latest_review": {
-    "cycle_id": "20260831T080010+0900",
-    "started_at": "2026-08-31T08:00:10+09:00",
+    "cycle_id": "20260831T180859+0900",
+    "started_at": "2026-08-31T18:08:59+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "comparison",
-      "url": "https://my-web-app-b67f4.web.app/competitors"
+      "slug": "landing",
+      "url": "https://my-web-app-b67f4.web.app/lp"
     },
     "reviewer": {
       "seat": 11,
       "name": "野口 功司",
-      "selection_score": 76.1943,
+      "selection_score": 77.2198,
       "division": 1,
-      "cycle_utility": 84.94,
-      "aggregate_utility": 88.36
+      "cycle_utility": 92.42,
+      "aggregate_utility": 89.79
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 4,
+    "finding_count": 3,
     "top_findings": [
       {
-        "summary": "174社規模の一覧に名称検索とcategory絞り込みがなく、目的の比較候補へ到達しにくい",
+        "summary": "10仮説・20アームに対して最新登録送信が5件で、実験の意思決定信号が分散している",
         "severity": "p1",
         "business_dimensions": [
-          "customer_pain",
           "market_demand",
-          "go_to_market"
-        ]
-      },
-      {
-        "summary": "料金、日本展開、overlap、脅威度に更新日時や根拠が表示されず、比較判断の鮮度を確認できない",
-        "severity": "p1",
-        "business_dimensions": [
-          "trust_risk",
-          "customer_pain",
-          "go_to_market"
-        ]
-      },
-      {
-        "summary": "review設定sourceが実際の/competitors実装と一致しない状態が前回指摘後も残る",
-        "severity": "p2",
-        "business_dimensions": [
-          "scalability",
           "go_to_market",
           "customer_pain"
+        ]
+      },
+      {
+        "summary": "X共有文はギター録音と21 SaaS統合を主役にし、heroのAI生活経営・今日の最優先1件と焦点がずれる",
+        "severity": "p2",
+        "business_dimensions": [
+          "go_to_market",
+          "customer_pain",
+          "market_demand"
+        ]
+      },
+      {
+        "summary": "7,608行の単一landing実装に実験・auth・trial・social proof・sharingが集中している",
+        "severity": "p2",
+        "business_dimensions": [
+          "go_to_market",
+          "customer_pain",
+          "revenue_model"
         ]
       }
     ],
@@ -91,55 +91,147 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After maintainers publish search/category controls and freshness metadata, compare representative-card discovery time, zero-result rate, source reachability, /vs-* progression, and comparison-assisted registration against the current baseline."
+      "next_cycle_experiment": "After maintainers reduce the active hypothesis set and publish minimum-sample and stopping rules, compare time-to-decision, signup completion per active arm, and share-origin CTA progression against this cycle."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5158",
-      "detail": "検索・category UX、freshness data contract、analytics/privacy設計、保護されたreview設定の判断が必要で、証拠から一意に定まる低リスク自動修正ではない。",
+      "label": "対策待ち・Issue #5161",
+      "detail": "実験の優先順位、最小標本量、停止条件、共有メッセージ、段階分割にはproduct判断が必要で、証拠から一意に定まる低リスク自動修正ではない。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [
-        "comparison-discovery-search-category-gap"
+        "landing-experiment-decision-signal-sparse"
       ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean dedicated branch ready at origin/main 3bbefe8e22a2dea5e034d7fc636ddd4de4f5562f",
+        "passed: clean dedicated branch fast-forwarded to origin/main 7773883a4ed33ebd9b0bde352c51520fddc339fa",
         "passed: 125 roster profiles and 125 personas",
-        "executed successfully: deterministic comparison winner from 13 eligible features",
-        "passed: no schema-v5 comparable baseline, focus_dimension=evidence",
-        "passed: production HTTP 200, current route, browse source, focused widget test, and feature configuration inspected",
-        "executed once successfully: 125 profiles, seat 11"
+        "executed successfully: deterministic landing winner from 13 eligible features",
+        "passed: no schema-v5 comparable landing baseline, focus_dimension=evidence",
+        "passed: production HTTP 200 and current landing source, service, tests, prior cycle inspected",
+        "passed: latest ten report runs succeeded; latest run 33361189926 reported 20 arms and 5 signup submits",
+        "executed successfully after schema correction: 125 profiles, seat 11"
       ],
       "issue": {
-        "number": 5158,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5158",
+        "number": 5161,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5161",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260831T080010+0900:comparison",
+        "dedupe_key": "tiger-feature-review:20260831T180859+0900:landing",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "comparison-freshness-provenance-gap",
-        "comparison-review-source-drift-persistent",
-        "comparison-browse-outcome-evidence-gap"
+        "landing-share-message-divergence",
+        "landing-responsibility-concentration"
       ]
     },
     "feature": {
-      "slug": "comparison",
-      "title": "競合比較一覧",
+      "slug": "landing",
+      "title": "ランディングページ",
       "kind": "page",
-      "reason": "公開URLはHTTP 200で174社一覧を掲げ、前回の取得失敗時retry修復もsourceと専用testに残る。一方、実routeはCompetitorBrowsePageなのに設定sourceは巨大なcomparison_page.dartのままで、一覧はcategoryを取得しながら検索・category filterを提供せず、pricing、日本展開、overlap、threatに更新日時や一次根拠を表示しない。機能別利用分析は取得できないためobserved usageは契約どおり中立50点とした。",
-      "cycle_utility": 61.7,
-      "aggregate_utility": 65.14,
+      "reason": "公開ページはHTTP 200で、前回のsocial-proof障害時の通知・retry修復もsourceとtestに残る。日次のcloud集計も直近10回すべて成功している一方、最新集計は20アームに対してsignup submitが5件であり、10仮説を同時に意思決定する信号としては薄い。共有文言とheroの主約束もずれ、7,608行の実装へ実験・auth・trial・social proof・sharingが集中する。実利用は集計できるが判断可能な標本量ではないためobserved usageを35点とした。",
+      "cycle_utility": 64.4,
+      "aggregate_utility": 68.23,
       "division": 2
     }
   },
   "history": [
+    {
+      "cycle_id": "20260831T180859+0900",
+      "started_at": "2026-08-31T18:08:59+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "landing",
+        "title": "ランディングページ",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 77.2198
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After maintainers reduce the active hypothesis set and publish minimum-sample and stopping rules, compare time-to-decision, signup completion per active arm, and share-origin CTA progression against this cycle."
+      },
+      "findings": [
+        {
+          "finding_id": "landing-experiment-decision-signal-sparse",
+          "summary": "10仮説・20アームに対して最新登録送信が5件で、実験の意思決定信号が分散している",
+          "severity": "p1",
+          "suggested_action": "仮説を顧客課題と獲得経路で優先順位づけし、同時稼働数を絞り、各仮説の最小標本量・停止条件・採用判断をcloud reportへ明示する。"
+        },
+        {
+          "finding_id": "landing-share-message-divergence",
+          "summary": "X共有文はギター録音と21 SaaS統合を主役にし、heroのAI生活経営・今日の最優先1件と焦点がずれる",
+          "severity": "p2",
+          "suggested_action": "共有文の主語をheroの一文価値提案へ合わせ、ギター録音やSaaS統合は検証済みの補助証拠として扱う候補を比較する。"
+        },
+        {
+          "finding_id": "landing-responsibility-concentration",
+          "summary": "7,608行の単一landing実装に実験・auth・trial・social proof・sharingが集中している",
+          "severity": "p2",
+          "suggested_action": "既存の契約testを保ちながら、editorial section、experiment decision、conversion handoff、social proof、sharingを独立した責務へ段階分割する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5161",
+        "detail": "実験の優先順位、最小標本量、停止条件、共有メッセージ、段階分割にはproduct判断が必要で、証拠から一意に定まる低リスク自動修正ではない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "landing-experiment-decision-signal-sparse"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch fast-forwarded to origin/main 7773883a4ed33ebd9b0bde352c51520fddc339fa",
+          "passed: 125 roster profiles and 125 personas",
+          "executed successfully: deterministic landing winner from 13 eligible features",
+          "passed: no schema-v5 comparable landing baseline, focus_dimension=evidence",
+          "passed: production HTTP 200 and current landing source, service, tests, prior cycle inspected",
+          "passed: latest ten report runs succeeded; latest run 33361189926 reported 20 arms and 5 signup submits",
+          "executed successfully after schema correction: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 5161,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5161",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260831T180859+0900:landing",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "landing-share-message-divergence",
+          "landing-responsibility-concentration"
+        ]
+      }
+    },
     {
       "cycle_id": "20260831T080010+0900",
       "started_at": "2026-08-31T08:00:10+09:00",
@@ -1638,6 +1730,22 @@
   ],
   "features": [
     {
+      "slug": "landing",
+      "kind": "page",
+      "title": "landing",
+      "path": "/lp",
+      "source": "lib/widgets/landing_page_content.dart",
+      "priority": "high",
+      "division": 2,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 68.23,
+      "completed_cycles": 2,
+      "last_cycle_utility": 64.4,
+      "last_reviewed_at": "2026-08-31T09:08:59+00:00",
+      "reason": "機能レビュー2回・効用68.2点で2部"
+    },
+    {
       "slug": "comparison",
       "kind": "page",
       "title": "comparison",
@@ -1668,22 +1776,6 @@
       "last_cycle_utility": 65.2,
       "last_reviewed_at": "2026-08-30T19:07:50+00:00",
       "reason": "機能レビュー4回・効用65.1点で2部"
-    },
-    {
-      "slug": "landing",
-      "kind": "page",
-      "title": "landing",
-      "path": "/lp",
-      "source": "lib/widgets/landing_page_content.dart",
-      "priority": "high",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": 75.9,
-      "completed_cycles": 1,
-      "last_cycle_utility": 75.9,
-      "last_reviewed_at": "2026-08-24T13:04:00+00:00",
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
       "slug": "home",
