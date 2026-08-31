@@ -42,6 +42,7 @@ CHECK_KEYS = (
     "permissions",
 )
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+NOTION_MIGRATION_API_VERSION = "2026-03-11"
 
 
 class ImportError(RuntimeError):
@@ -165,6 +166,43 @@ class SupabaseImportClient:
         except urllib.error.URLError as exc:
             raise ImportError(f"Supabase write failed for {resource}") from exc
 
+    def insert_ignore_duplicates(
+        self,
+        resource: str,
+        rows: list[dict[str, Any]],
+        *,
+        on_conflict: str,
+    ) -> None:
+        if not rows:
+            return
+        encoded = urllib.parse.urlencode({"on_conflict": on_conflict})
+        headers = {
+            **self._headers,
+            "Content-Type": "application/json",
+            "Prefer": "resolution=ignore-duplicates,return=minimal",
+        }
+        request = urllib.request.Request(
+            f"{self._rest_url}/{resource}?{encoded}",
+            data=json.dumps(
+                rows,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ).encode("utf-8"),
+            headers=headers,
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=45) as response:
+                response.read()
+        except urllib.error.HTTPError as exc:
+            postgrest_code = _safe_postgrest_code(exc)
+            raise ImportError(
+                f"Supabase returned HTTP {exc.code} code {postgrest_code} "
+                f"while inserting {resource}"
+            ) from None
+        except urllib.error.URLError as exc:
+            raise ImportError(f"Supabase insert failed for {resource}") from exc
+
     def patch(
         self,
         resource: str,
@@ -269,6 +307,171 @@ def _source_key(page_id: object) -> str:
     return f"page:{str(page_id or '').strip().lower()}"
 
 
+def _parent_source_id(source_payload: object) -> str | None:
+    if not isinstance(source_payload, dict):
+        return None
+    parent = source_payload.get("parent")
+    if not isinstance(parent, dict):
+        return None
+    parent_type = str(parent.get("type") or "").strip()
+    if parent_type == "workspace":
+        return "workspace:root"
+    raw_parent_id = str(parent.get(parent_type) or "").strip()
+    if not parent_type or not raw_parent_id:
+        return None
+    parent_kind = parent_type.removesuffix("_id")
+    value = f"{parent_kind}:{raw_parent_id}"
+    return value if len(value) <= 512 else None
+
+
+def _staged_inventory_row(
+    batch: dict[str, Any],
+    staged: dict[str, Any],
+    *,
+    now: str,
+) -> dict[str, Any] | None:
+    batch_id = str(batch.get("id") or "")
+    batch_user_id = str(batch.get("user_id") or "")
+    staged_user_id = str(staged.get("user_id") or "")
+    page_id = str(staged.get("source_page_id") or "").strip().lower()
+    source_payload = staged.get("source_payload")
+    if (
+        not batch_id
+        or not batch_user_id
+        or staged_user_id != batch_user_id
+        or not page_id
+        or len(page_id) > 507
+        or not isinstance(source_payload, dict)
+    ):
+        return None
+    properties = source_payload.get("properties")
+    property_names = sorted(properties) if isinstance(properties, dict) else []
+    title = str(staged.get("title") or "")[:1000]
+    return {
+        "batch_id": batch_id,
+        "user_id": batch_user_id,
+        "source_id": _source_key(page_id),
+        "parent_source_id": _parent_source_id(source_payload),
+        "source_kind": "page",
+        "title": title,
+        "source_path": title,
+        "status": "inventoried",
+        "source_updated_at": (
+            staged.get("source_last_edited_at")
+            or staged.get("source_updated_at")
+        ),
+        "metadata": {
+            "notion_object": str(source_payload.get("object") or "page"),
+            "notion_type": str(source_payload.get("type") or ""),
+            "created_time": source_payload.get("created_time"),
+            "in_trash": source_payload.get("in_trash") is True,
+            "has_children": source_payload.get("has_children") is True,
+            "property_names": property_names,
+            "inventory_expanded": False,
+            "inventory_seen_at": staged.get("staged_at") or now,
+            "api_version": NOTION_MIGRATION_API_VERSION,
+            "inventory_reconciled_from": "wbs_staging",
+            "inventory_reconciled_at": now,
+        },
+    }
+
+
+def _inventory_repair_rows(
+    batch: dict[str, Any],
+    actions: list[dict[str, Any]],
+    items: list[dict[str, Any]],
+    staged_rows: list[dict[str, Any]],
+    *,
+    now: str,
+) -> tuple[list[dict[str, Any]], int]:
+    existing_sources = {str(item.get("source_id") or "") for item in items}
+    staged_by_source: dict[str, dict[str, Any]] = {}
+    duplicate_staged_sources: set[str] = set()
+    for staged in staged_rows:
+        source = _source_key(staged.get("source_page_id"))
+        if source in staged_by_source:
+            duplicate_staged_sources.add(source)
+        else:
+            staged_by_source[source] = staged
+
+    missing_sources: list[str] = []
+    seen_missing: set[str] = set()
+    conflicts = 0
+    for action in actions:
+        for page_id in action["source_page_ids"]:
+            source = _source_key(page_id)
+            if source in existing_sources:
+                continue
+            if source in seen_missing:
+                conflicts += 1
+                continue
+            seen_missing.add(source)
+            missing_sources.append(source)
+
+    rows: list[dict[str, Any]] = []
+    for source in missing_sources:
+        if source in duplicate_staged_sources:
+            conflicts += 1
+            continue
+        staged = staged_by_source.get(source)
+        if staged is None:
+            conflicts += 1
+            continue
+        row = _staged_inventory_row(batch, staged, now=now)
+        if row is None or row["source_id"] != source:
+            conflicts += 1
+            continue
+        rows.append(row)
+    return rows, conflicts
+
+
+def _missing_page_ids(
+    actions: list[dict[str, Any]],
+    items: list[dict[str, Any]],
+) -> list[str]:
+    existing_sources = {str(item.get("source_id") or "") for item in items}
+    page_ids: list[str] = []
+    seen_sources: set[str] = set()
+    for action in actions:
+        for page_id in action["source_page_ids"]:
+            value = str(page_id or "").strip().lower()
+            source = _source_key(value)
+            if source in existing_sources or source in seen_sources:
+                continue
+            seen_sources.add(source)
+            page_ids.append(value)
+    return page_ids
+
+
+def _repair_staging_rows(
+    client: SupabaseImportClient,
+    batch_id: str,
+    page_ids: list[str],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for offset in range(0, len(page_ids), 50):
+        chunk = page_ids[offset : offset + 50]
+        if not chunk:
+            continue
+        rows.extend(
+            client.all_rows(
+                "notion_migration_wbs_staging",
+                [
+                    (
+                        "select",
+                        "user_id,source_page_id,title,source_updated_at,"
+                        "source_last_edited_at,source_payload,staged_at",
+                    ),
+                    ("batch_id", f"eq.{batch_id}"),
+                    ("is_current", "eq.true"),
+                    ("source_page_id", f"in.({','.join(chunk)})"),
+                    ("order", "source_page_id.asc"),
+                ],
+            )
+        )
+    return rows
+
+
 def _selected_item_bindings(
     actions: list[dict[str, Any]],
     items: list[dict[str, Any]],
@@ -314,6 +517,8 @@ def _report_base(
     bindings: list[tuple[dict[str, Any], dict[str, Any]]],
     missing: int,
     conflicts: int,
+    repairable_missing: int,
+    repair_conflicts: int,
     *,
     mode: str,
     offset: int,
@@ -337,6 +542,14 @@ def _report_base(
         "selected_source_items": len(bindings),
         "missing_source_items": missing,
         "mapping_conflicts": conflicts,
+        "repairable_missing_source_items": repairable_missing,
+        "inventory_repair_conflicts": repair_conflicts,
+        "inventory_repair_gate_open": (
+            missing > 0
+            and repairable_missing == missing
+            and conflicts == 0
+            and repair_conflicts == 0
+        ),
         "selected_decisions": selected_decisions,
         "remaining_safe_groups_after_selection": max(
             0,
@@ -350,6 +563,7 @@ def _report_base(
             "items_imported_now": 0,
             "items_already_imported_or_later": 0,
             "checks_upserted": 0,
+            "items_inventoried_now": 0,
         },
         "source_deletion_attempted": False,
     }
@@ -565,14 +779,14 @@ def run_import(
     offset: int,
     limit: int,
 ) -> dict[str, Any]:
-    if mode not in {"plan", "apply"}:
-        raise ImportError("mode must be plan or apply")
+    if mode not in {"plan", "repair_inventory", "apply"}:
+        raise ImportError("mode must be plan, repair_inventory, or apply")
     if offset < 0:
         raise ImportError("safe offset must be non-negative")
     if not 1 <= limit <= 100:
         raise ImportError("limit must be between 1 and 100")
 
-    _batch, staged_rows, site_rows, items = _latest_context(client)
+    batch, staged_rows, site_rows, items = _latest_context(client)
     summary, private_actions = build_wbs_import_plan_details(
         staged_rows,
         site_rows,
@@ -584,12 +798,27 @@ def run_import(
     ]
     selected = safe_actions[offset : offset + limit]
     bindings, missing, conflicts = _selected_item_bindings(selected, items)
+    repair_now = datetime.now(timezone.utc).isoformat()
+    repair_staged_rows = _repair_staging_rows(
+        client,
+        str(batch.get("id") or ""),
+        _missing_page_ids(selected, items),
+    ) if missing > 0 else []
+    repair_rows, repair_conflicts = _inventory_repair_rows(
+        batch,
+        selected,
+        items,
+        repair_staged_rows,
+        now=repair_now,
+    )
     report = _report_base(
         summary,
         selected,
         bindings,
         missing,
         conflicts,
+        len(repair_rows),
+        repair_conflicts,
         mode=mode,
         offset=offset,
         limit=limit,
@@ -598,9 +827,31 @@ def run_import(
         return report
 
     if not SHA256_PATTERN.fullmatch(expected_plan_sha256):
-        raise ImportError("apply requires a lowercase SHA-256 plan digest")
+        raise ImportError("write mode requires a lowercase SHA-256 plan digest")
     if expected_plan_sha256 != summary["plan_sha256"]:
         raise ImportError("expected plan digest does not match the current plan")
+    if mode == "repair_inventory":
+        if not report["inventory_repair_gate_open"]:
+            raise ImportError("selected batch failed the inventory repair gate")
+        client.insert_ignore_duplicates(
+            "notion_migration_items",
+            repair_rows,
+            on_conflict="batch_id,source_id",
+        )
+        _batch, _staged, _site, refreshed_items = _latest_context(client)
+        _bindings, missing_after, conflicts_after = _selected_item_bindings(
+            selected,
+            refreshed_items,
+        )
+        if missing_after != 0 or conflicts_after != 0:
+            raise ImportError("inventory repair verification failed")
+        report["mutations"]["items_inventoried_now"] = missing
+        report["missing_source_items_after_repair"] = missing_after
+        report["mapping_conflicts_after_repair"] = conflicts_after
+        report["post_repair_safe_apply_gate_open"] = True
+        report["applied_at"] = repair_now
+        return report
+
     if not report["safe_apply_gate_open"]:
         raise ImportError("selected safe batch failed the mapping gate")
 
@@ -659,6 +910,7 @@ def run_import(
     )
     report["mutations"] = {
         "wbs_rows": len(wbs_insert_rows) + len(wbs_update_rows),
+        "items_inventoried_now": 0,
         "items_imported_now": imported_now,
         "items_already_imported_or_later": sum(
             1
@@ -685,7 +937,11 @@ def _write_summary(path: Path, report: dict[str, Any]) -> None:
         f"- Selected source items: {report['selected_source_items']}",
         f"- Missing source items: {report['missing_source_items']}",
         f"- Mapping conflicts: {report['mapping_conflicts']}",
+        "- Repairable missing source items: "
+        f"{report['repairable_missing_source_items']}",
+        f"- Inventory repair gate open: {report['inventory_repair_gate_open']}",
         f"- WBS rows written: {mutations['wbs_rows']}",
+        f"- Items inventoried now: {mutations['items_inventoried_now']}",
         f"- Items imported now: {mutations['items_imported_now']}",
         f"- Checks written: {mutations['checks_upserted']}",
         "- Notion source deletion attempted: no",
@@ -698,7 +954,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--mode",
-        choices=("plan", "apply"),
+        choices=("plan", "repair_inventory", "apply"),
         default=os.environ.get("IMPORT_MODE", "plan"),
     )
     parser.add_argument(

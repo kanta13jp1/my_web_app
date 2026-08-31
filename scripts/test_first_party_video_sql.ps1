@@ -11,6 +11,7 @@ $artifactMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260822
 $authorizationMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260830053403_video_improvement_authorization_envelopes.sql'
 $authorizationRetryMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260830123038_allow_authorized_video_retry_after_failure.sql'
 $authorizationRetryIndexMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260830123552_allow_authorized_video_retry_index.sql'
+$pendingAuthorizationMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260830162041_persist_pending_video_improvement_authorizations.sql'
 $publicationFixturePath = Join-Path $repositoryRoot 'supabase/tests/video_publication_pre_migration.sql'
 $publicationMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260830151707_create_video_publication_authorizations.sql'
 $bootstrapPath = Join-Path $repositoryRoot 'supabase/tests/video_service_bootstrap.sql'
@@ -52,6 +53,7 @@ try {
       $authorizationMigrationPath,
       $authorizationRetryMigrationPath,
       $authorizationRetryIndexMigrationPath,
+      $pendingAuthorizationMigrationPath,
       $publicationFixturePath,
       $publicationMigrationPath,
       $contractPath,

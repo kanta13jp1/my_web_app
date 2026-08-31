@@ -201,6 +201,23 @@ VIDEO_ARTIFACT_SQL_FILES = (
     ROOT / "supabase" / "migrations" / "20260822084126_add_video_artifact_review_loop.sql",
     ROOT / "supabase" / "tests" / "first_party_video_service_contract.sql",
     ROOT / "supabase" / "tests" / "video_artifact_review_loop_contract.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830053403_video_improvement_authorization_envelopes.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830123038_allow_authorized_video_retry_after_failure.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830123552_allow_authorized_video_retry_index.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830162041_persist_pending_video_improvement_authorizations.sql",
+    ROOT / "supabase" / "tests" / "video_improvement_authorization_contract.sql",
     ROOT / "supabase" / "tests" / "video_publication_pre_migration.sql",
     ROOT
     / "supabase"
