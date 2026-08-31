@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-30T16:20:39.403641+00:00",
+  "generated_at": "2026-08-31T07:28:05.157324+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "site_review",
   "publication_state": "latest_review",
@@ -10,52 +10,34 @@
     "status": "PAUSED",
     "schedule": "毎時25分（1時間ごと）"
   },
-  "review_count": 22,
+  "review_count": 25,
   "latest_review": {
-    "cycle_id": "20260831T010530+0900",
-    "started_at": "2026-08-31T01:05:30.1461527+09:00",
+    "cycle_id": "20260831T161649+0900",
+    "started_at": "2026-08-31T16:16:49+09:00",
     "source_format": "site_review",
     "surface": {
       "slug": "whole_site",
       "url": "https://my-web-app-b67f4.web.app/"
     },
     "reviewer": {
-      "seat": 7,
-      "name": "榊󠄀原 清一",
-      "selection_score": 74.1878,
-      "division": 1,
-      "cycle_utility": 94.25,
-      "aggregate_utility": 93.28
+      "seat": 26,
+      "name": "荒木 杏奈",
+      "selection_score": 71.7195,
+      "division": 3,
+      "cycle_utility": 93.75,
+      "aggregate_utility": 93.75
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 4,
+    "finding_count": 1,
     "top_findings": [
       {
-        "summary": "現行mainの利用マニュアルは全機能完全無料と断定する一方、課金面は有料Pro・Teamを提示しており、公開情報の一貫性が本番で成立していない",
+        "summary": "Issue #5156の作成後もTiger状態公開3件が完全な本番デプロイを再度起動し、既知のstatus-only公開コストが合計697秒分さらに累積した",
         "severity": "p1",
         "business_dimensions": [
-          "trust_risk",
-          "market_demand",
-          "revenue_model"
-        ]
-      },
-      {
-        "summary": "本番は最新mainへ更新されたが、需要・転換・売上の最新成功snapshotはそれ以前のcommitに留まり、現在の変更に対する事業判断を更新できない",
-        "severity": "p1",
-        "business_dimensions": [
-          "market_demand",
-          "go_to_market",
-          "founder_execution"
-        ]
-      },
-      {
-        "summary": "Paddle sandboxは決済機構を証明したが本番Stripeの実売上・手数料・返金・粗利を証明せず、provider実装完了を事業成立と扱えない",
-        "severity": "p1",
-        "business_dimensions": [
+          "scalability",
           "unit_economics",
-          "revenue_model",
-          "trust_risk"
+          "founder_execution"
         ]
       }
     ],
@@ -70,15 +52,15 @@
         "relevant": 100
       },
       "gate_passed": true,
-      "baseline_cycle_id": "20260830T210736+0900",
+      "baseline_cycle_id": "20260831T120514+0900",
       "focus_dimension": "complete",
       "overall_delta": 0.0,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After #5133 and #5134 merge or are rejected, run one KPI snapshot tied to a dated pricing and acquisition decision and compare eligible non-operator users, signup, paid conversion, captured revenue, and gross margin against explicit thresholds."
+      "next_cycle_experiment": "Route one Tiger status-only publication through a guarded cloud artifact-only canary, then compare runner seconds, queue delay, release count, freshness, and fixed-probe success against the current full-deploy path."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5135",
+      "label": "対策待ち・Issue #5159",
       "detail": "提案のみで、対策実施の記録はありません。",
       "summary": "",
       "files": [],
@@ -86,33 +68,289 @@
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean dedicated worktree aligned with origin/main 5e234e3ff5377c5f3f8640eaac4e72860522e646",
-        "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers and distinct response digests",
+        "passed: clean dedicated worktree at exact origin/main a1fca7847aae768f1b8186ae25e44bfbb085b2d0",
+        "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers and current deploy timestamps",
         "passed: 125 profiles",
-        "passed: 125 personas",
-        "passed: exact-head production status, stale business snapshot boundary, pricing mismatch, sandbox-only payment evidence, and delivery backlog were inspected",
+        "passed: 125 personas, 103 unique weight profiles, 105 unique domain profiles",
+        "passed: three post-Issue Tiger status-only commits repeated the full production path for 697 seconds total",
+        "passed: cycle Issue #5159 records the recurrence evidence and explicitly retains Issue #5156 as the underlying remediation target",
         "not run: cloud-first resource policy prohibits local heavy validation for this report-only review"
       ],
       "issue": {
-        "number": 5135,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5135",
+        "number": 5159,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5159",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-site-review:20260831T010530+0900:whole_site",
+        "dedupe_key": "tiger-site-review:20260831T161649+0900:whole_site",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "site-pricing-claim-production-trust-gap",
-        "site-current-main-business-kpi-lag",
-        "site-sandbox-to-live-revenue-proof-gap",
-        "site-business-critical-pr-decision-gate"
+        "site-review-status-deploy-recurrence"
       ]
     }
   },
   "history": [
+    {
+      "cycle_id": "20260831T161649+0900",
+      "started_at": "2026-08-31T16:16:49+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 26,
+        "name": "荒木 杏奈",
+        "selection_score": 71.7195
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260831T120514+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Route one Tiger status-only publication through a guarded cloud artifact-only canary, then compare runner seconds, queue delay, release count, freshness, and fixed-probe success against the current full-deploy path."
+      },
+      "findings": [
+        {
+          "finding_id": "site-review-status-deploy-recurrence",
+          "summary": "Issue #5156の作成後もTiger状態公開3件が完全な本番デプロイを再度起動し、既知のstatus-only公開コストが合計697秒分さらに累積した",
+          "severity": "p1",
+          "suggested_action": "新規Issueは増やさずIssue #5156を優先し、最初の1件のTiger status-only commitを既存bundle再利用またはartifact-only公開のcloud canaryへ通す。固定3journey probeとrollbackを維持し、現行完全deployとのrunner時間、queue、release数、freshnessを比較する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5159",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated worktree at exact origin/main a1fca7847aae768f1b8186ae25e44bfbb085b2d0",
+          "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers and current deploy timestamps",
+          "passed: 125 profiles",
+          "passed: 125 personas, 103 unique weight profiles, 105 unique domain profiles",
+          "passed: three post-Issue Tiger status-only commits repeated the full production path for 697 seconds total",
+          "passed: cycle Issue #5159 records the recurrence evidence and explicitly retains Issue #5156 as the underlying remediation target",
+          "not run: cloud-first resource policy prohibits local heavy validation for this report-only review"
+        ],
+        "issue": {
+          "number": 5159,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5159",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260831T161649+0900:whole_site",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-review-status-deploy-recurrence"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T120514+0900",
+      "started_at": "2026-08-31T12:05:14+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 32,
+        "name": "高澤 有紀",
+        "selection_score": 69.478
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260831T055606+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Route one Tiger status-only update through a guarded artifact-only cloud publication canary, then compare runner minutes, queue delay, release count, freshness, and fixed-probe success against the current full-deploy path."
+      },
+      "findings": [
+        {
+          "finding_id": "site-review-status-full-deploy-coupling",
+          "summary": "Tigerレビュー状態JSONの公開だけでもassets/**分類によりFlutter本番ビルド、Firebase反映、release作成まで毎回実行され、定期レビューの頻度がそのまま本番リリース負荷へ変換されている",
+          "severity": "p1",
+          "suggested_action": "Tiger status JSON専用の軽量公開経路または変更分類を設け、アプリbundleに影響しないstatus-only commitでは既存bundleを再ビルドせず対象artifactだけを公開する。導入前後でrunner時間、deploy queue、release数、status freshnessを比較し、完全なpublic probeとrollback手順を維持する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5156",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated worktree at origin/main f0637d2935c9ac3a2e6f0ef88b731409507896f9",
+          "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers and stable response metadata",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: four Tiger publication commits triggered full production deploys and assets/data is classified as web scope",
+          "passed: prior demand, retention, revenue, and competitor-claim findings remain open and were not duplicated",
+          "not run: cloud-first resource policy prohibits local heavy validation for this report-only review"
+        ],
+        "issue": {
+          "number": 5156,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5156",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260831T120514+0900:whole_site",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-review-status-full-deploy-coupling"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T055606+0900",
+      "started_at": "2026-08-31T05:56:06+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 7,
+        "name": "榊󠄀原 清一",
+        "selection_score": 76.7043
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260831T010530+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Run one owner-assigned acquisition experiment with a fixed channel, exposure target, operator-excluded eligibility rule, dated stop/go thresholds, and same-window paid conversion and gross-margin measures."
+      },
+      "findings": [
+        {
+          "finding_id": "site-current-main-business-kpi-lag",
+          "summary": "本番は最新mainへ更新されたが、需要・転換・売上の最新成功snapshotはそれ以前のcommitに留まり、現在の変更に対する事業判断を更新できない",
+          "severity": "p1",
+          "suggested_action": "対象変更、owner、計測窓、判定日、継続・停止閾値を固定したprivacy-safe KPI snapshotをcloudで1回実行し、eligible non-operator users、signup、paid conversion、captured revenueを前回と比較する。"
+        },
+        {
+          "finding_id": "site-demand-sample-quality-gate",
+          "summary": "route別利用証拠は最大2ユーザーに留まり運用面を含むため、顧客需要として読む前のoperator除外と最小標本ゲートが未成立である",
+          "severity": "p1",
+          "suggested_action": "個人IDを公開せず承認済みoperator・synthetic分類を集計前に除外し、対象母数、除外件数、最小標本、判断可否をartifactへ必須出力する。閾値未達ではinsufficient_sampleとする。"
+        },
+        {
+          "finding_id": "site-retention-sample-formation",
+          "summary": "retention evidenceは片側標本ゼロかつ率nullであり、勝者選定ではなく標本形成と計測健全性が次の判断である",
+          "severity": "p1",
+          "suggested_action": "mode割当の健全性と最低eligible数を先に満たし、週別initial、eligible、retained、rate、欠測理由を出す。片側ゼロまたは率nullではwinnerを出さずsample_buildingと明示する。"
+        },
+        {
+          "finding_id": "site-live-revenue-proof-gap",
+          "summary": "価格面とsandbox決済は存在するが、実支払・手数料・返金・変動費後の粗利を示す本番証拠がなく、収益モデル成立を判断できない",
+          "severity": "p1",
+          "suggested_action": "現行providerのprivacy-safe期間集計で成功支払数、captured revenue、決済手数料、返金・失敗、変動費、粗利を揃え、zeroも実測として次の価格・訴求実験のstop/go閾値にする。"
+        },
+        {
+          "finding_id": "site-competitor-claim-methodology-gap",
+          "summary": "利用マニュアルの『競合21製品を上回る』見出しには、比較日・評価軸・一次根拠・顧客成果が付かず、差別化主張を再現できない",
+          "severity": "p2",
+          "suggested_action": "owner reviewの下で、比較日、対象製品、評価軸、一次根拠、未検証項目を公開し、顧客成果がない項目は『機能差』として限定する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5149",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated worktree at origin/main d9d88cf68433056111f746f366e6885df9d3afbb",
+          "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers and stable response digests",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: exact-head production status, stale business snapshot boundary, sample-quality gaps, pricing evidence, and comparison claim were inspected",
+          "not run: cloud-first resource policy prohibits local heavy validation for this report-only review"
+        ],
+        "issue": {
+          "number": 5149,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5149",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260831T055606+0900:whole_site",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-current-main-business-kpi-lag",
+          "site-demand-sample-quality-gate",
+          "site-retention-sample-formation",
+          "site-live-revenue-proof-gap",
+          "site-competitor-claim-methodology-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260831T010530+0900",
       "started_at": "2026-08-31T01:05:30.1461527+09:00",
