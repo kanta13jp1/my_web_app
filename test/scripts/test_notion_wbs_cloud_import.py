@@ -316,6 +316,7 @@ class NotionWbsCloudImportTest(unittest.TestCase):
         )
 
         self.assertEqual(report["mutations"]["wbs_rows"], 1)
+        self.assertEqual(report["mutations"]["items_inventoried_now"], 0)
         self.assertEqual(report["mutations"]["items_imported_now"], 2)
         self.assertEqual(report["mutations"]["checks_upserted"], 14)
         self.assertTrue(all(row["status"] == "imported" for row in client.item_rows))
