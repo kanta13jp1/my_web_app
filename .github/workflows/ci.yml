@@ -22,6 +22,7 @@ on:
       - '.github/**/*.md'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/PULL_REQUEST_TEMPLATE.md'
+      - 'assets/data/tiger_*'
   # Cloud-first manual gate for branches that should not hydrate Flutter/Deno
   # dependencies on the developer machine. workflow_dispatch intentionally
   # runs every scope; PR CI later validates the merge ref with path scoping.

@@ -40,6 +40,11 @@ GROUPS: dict[str, tuple[str, ...]] = {
     "migration": ("supabase/migrations/**",),
 }
 
+IGNORED_PATTERNS: dict[str, tuple[str, ...]] = {
+    "flutter": ("assets/data/tiger_*",),
+    "web": ("assets/data/tiger_*",),
+}
+
 
 def classify(paths: list[str], force_all: bool = False) -> dict[str, bool]:
     normalized = [path.strip().replace("\\", "/") for path in paths if path.strip()]
@@ -47,6 +52,10 @@ def classify(paths: list[str], force_all: bool = False) -> dict[str, bool]:
         group: force_all
         or any(
             fnmatch.fnmatchcase(path, pattern)
+            and not any(
+                fnmatch.fnmatchcase(path, ignored)
+                for ignored in IGNORED_PATTERNS.get(group, ())
+            )
             for path in normalized
             for pattern in patterns
         )
