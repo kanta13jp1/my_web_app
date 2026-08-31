@@ -104,4 +104,82 @@ void main() {
     expect(rows.last['total_questions'], 3);
     expect(rows.last['self_rating'], 4);
   });
+
+  test('Firefly API task records only bounded role-level metrics', () async {
+    final rows = <Map<String, Object>>[];
+    final analytics = AiUniversityLearningOutcomeAnalytics(
+      task: AiUniversityLearningOutcomeTask.fireflyApi,
+      writer: (row) async => rows.add(row),
+    );
+
+    expect(await analytics.recordViewed(), isTrue);
+    expect(
+      await analytics.recordFireflyCompleted(
+        correctAnswers: 3,
+        selfRating: 4,
+        learnerRole: 'developer',
+        firstCallSucceeded: true,
+        secretHandlingPassed: true,
+        apiSelectionPassed: true,
+        non2xxRecoveryPassed: true,
+        estimatedDailyRequests: 500,
+        completionSeconds: 420,
+      ),
+      isTrue,
+    );
+
+    expect(rows.first, <String, Object>{
+      'event_name': 'task_viewed',
+      'task_version': 'adobe_firefly_api_20260831_v1',
+      'provider': 'adobe_firefly',
+      'category': 'api',
+    });
+    expect(rows.last, <String, Object>{
+      'event_name': 'task_completed',
+      'task_version': 'adobe_firefly_api_20260831_v1',
+      'provider': 'adobe_firefly',
+      'category': 'api',
+      'correct_answers': 3,
+      'total_questions': 3,
+      'self_rating': 4,
+      'learner_role': 'developer',
+      'first_call_succeeded': true,
+      'secret_handling_passed': true,
+      'api_selection_passed': true,
+      'non_2xx_recovery_passed': true,
+      'estimated_daily_requests': 500,
+      'completion_seconds': 420,
+    });
+  });
+
+  test('Firefly API task rejects unbounded role, usage, and duration',
+      () async {
+    var writes = 0;
+    final analytics = AiUniversityLearningOutcomeAnalytics(
+      task: AiUniversityLearningOutcomeTask.fireflyApi,
+      writer: (_) async => writes += 1,
+    );
+
+    Future<bool> submit({
+      String learnerRole = 'developer',
+      int estimatedDailyRequests = 500,
+      int completionSeconds = 420,
+    }) =>
+        analytics.recordFireflyCompleted(
+          correctAnswers: 3,
+          selfRating: 4,
+          learnerRole: learnerRole,
+          firstCallSucceeded: true,
+          secretHandlingPassed: true,
+          apiSelectionPassed: true,
+          non2xxRecoveryPassed: true,
+          estimatedDailyRequests: estimatedDailyRequests,
+          completionSeconds: completionSeconds,
+        );
+
+    expect(await submit(learnerRole: 'unknown'), isFalse);
+    expect(await submit(estimatedDailyRequests: 9001), isFalse);
+    expect(await submit(completionSeconds: 0), isFalse);
+    expect(writes, 0);
+  });
 }

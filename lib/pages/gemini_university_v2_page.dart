@@ -25,6 +25,7 @@ import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 import '../services/user_data_finetune_readiness_service.dart';
 import '../widgets/ai_university_latest_info_task_card.dart';
+import '../widgets/ai_university_firefly_api_task_card.dart';
 import '../widgets/ai_university_fuyu_lab_task_card.dart';
 import '../widgets/ai_university_agentless_lab_task_card.dart';
 import '../widgets/ai_university_llm_mechanics_task_card.dart';
@@ -5707,6 +5708,7 @@ class AiUniversityPage extends StatefulWidget {
     this.contentAnalytics,
     this.learningOutcomeAnalytics,
     this.modelSelectionLearningOutcomeAnalytics,
+    this.fireflyApiLearningOutcomeAnalytics,
     this.fuyuLabAnalytics,
     this.agentlessLabAnalytics,
   });
@@ -5716,6 +5718,8 @@ class AiUniversityPage extends StatefulWidget {
   final AiUniversityLearningOutcomeAnalytics? learningOutcomeAnalytics;
   final AiUniversityLearningOutcomeAnalytics?
       modelSelectionLearningOutcomeAnalytics;
+  final AiUniversityLearningOutcomeAnalytics?
+      fireflyApiLearningOutcomeAnalytics;
   final AiUniversityFuyuLabAnalytics? fuyuLabAnalytics;
   final AiUniversityAgentlessLabAnalytics? agentlessLabAnalytics;
 
@@ -5739,6 +5743,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   late final AiUniversityLearningOutcomeAnalytics _learningOutcomeAnalytics;
   late final AiUniversityLearningOutcomeAnalytics
       _modelSelectionLearningOutcomeAnalytics;
+  late final AiUniversityLearningOutcomeAnalytics
+      _fireflyApiLearningOutcomeAnalytics;
   late final AiUniversityLearningOutcomeAnalytics
       _llmMechanicsLearningOutcomeAnalytics;
   late final AiUniversityFuyuLabAnalytics _fuyuLabAnalytics;
@@ -5788,6 +5794,12 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             AiUniversityLearningOutcomeAnalytics.supabase(
               _supabase,
               task: AiUniversityLearningOutcomeTask.modelSelection,
+            );
+    _fireflyApiLearningOutcomeAnalytics =
+        widget.fireflyApiLearningOutcomeAnalytics ??
+            AiUniversityLearningOutcomeAnalytics.supabase(
+              _supabase,
+              task: AiUniversityLearningOutcomeTask.fireflyApi,
             );
     _llmMechanicsLearningOutcomeAnalytics =
         AiUniversityLearningOutcomeAnalytics.supabase(
@@ -8013,17 +8025,22 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         AiUniversityVideoLessonService.youtubeVideoIdFromUrl(sourceUrl);
     final isLatestInfoTask = provider == '01ai' && category == 'news';
     final isModelSelectionTask = provider == '01ai' && category == 'models';
+    final isFireflyApiTask = provider == 'adobe_firefly' && category == 'api';
     final isLlmMechanicsTask =
         provider == 'academic' && category == 'llm_mechanics';
     final isFuyuLab = provider == 'adept' && category == 'api';
     final isAgentlessLab = provider == 'agentless' && category == 'overview';
     final learningOutcomeAnalytics = isLlmMechanicsTask
         ? _llmMechanicsLearningOutcomeAnalytics
-        : isModelSelectionTask
-            ? _modelSelectionLearningOutcomeAnalytics
-            : _learningOutcomeAnalytics;
-    final hasLearningOutcomeTask =
-        isLatestInfoTask || isModelSelectionTask || isLlmMechanicsTask;
+        : isFireflyApiTask
+            ? _fireflyApiLearningOutcomeAnalytics
+            : isModelSelectionTask
+                ? _modelSelectionLearningOutcomeAnalytics
+                : _learningOutcomeAnalytics;
+    final hasLearningOutcomeTask = isLatestInfoTask ||
+        isModelSelectionTask ||
+        isFireflyApiTask ||
+        isLlmMechanicsTask;
     final taskViewKey = row['id']?.toString() ?? '$provider:$category';
 
     return Card(
@@ -8136,6 +8153,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   AiUniversityModelSelectionTaskCard(
                     onSubmit:
                         _modelSelectionLearningOutcomeAnalytics.recordCompleted,
+                  ),
+                ],
+                if (isFireflyApiTask) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityFireflyApiTaskCard(
+                    onSubmit: _fireflyApiLearningOutcomeAnalytics
+                        .recordFireflyCompleted,
                   ),
                 ],
                 if (isLlmMechanicsTask) ...[
