@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-30T21:02:17.164745+00:00",
+  "generated_at": "2026-08-31T03:13:10.165974+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "site_review",
   "publication_state": "latest_review",
@@ -10,52 +10,34 @@
     "status": "PAUSED",
     "schedule": "毎時25分（1時間ごと）"
   },
-  "review_count": 23,
+  "review_count": 24,
   "latest_review": {
-    "cycle_id": "20260831T055606+0900",
-    "started_at": "2026-08-31T05:56:06+09:00",
+    "cycle_id": "20260831T120514+0900",
+    "started_at": "2026-08-31T12:05:14+09:00",
     "source_format": "site_review",
     "surface": {
       "slug": "whole_site",
       "url": "https://my-web-app-b67f4.web.app/"
     },
     "reviewer": {
-      "seat": 7,
-      "name": "榊󠄀原 清一",
-      "selection_score": 76.7043,
+      "seat": 32,
+      "name": "高澤 有紀",
+      "selection_score": 69.478,
       "division": 1,
-      "cycle_utility": 94.15,
-      "aggregate_utility": 93.71
+      "cycle_utility": 93.5,
+      "aggregate_utility": 93.41
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 5,
+    "finding_count": 1,
     "top_findings": [
       {
-        "summary": "本番は最新mainへ更新されたが、需要・転換・売上の最新成功snapshotはそれ以前のcommitに留まり、現在の変更に対する事業判断を更新できない",
+        "summary": "Tigerレビュー状態JSONの公開だけでもassets/**分類によりFlutter本番ビルド、Firebase反映、release作成まで毎回実行され、定期レビューの頻度がそのまま本番リリース負荷へ変換されている",
         "severity": "p1",
         "business_dimensions": [
-          "market_demand",
-          "go_to_market",
+          "scalability",
+          "unit_economics",
           "founder_execution"
-        ]
-      },
-      {
-        "summary": "route別利用証拠は最大2ユーザーに留まり運用面を含むため、顧客需要として読む前のoperator除外と最小標本ゲートが未成立である",
-        "severity": "p1",
-        "business_dimensions": [
-          "market_demand",
-          "go_to_market",
-          "unit_economics"
-        ]
-      },
-      {
-        "summary": "retention evidenceは片側標本ゼロかつ率nullであり、勝者選定ではなく標本形成と計測健全性が次の判断である",
-        "severity": "p1",
-        "business_dimensions": [
-          "market_demand",
-          "go_to_market",
-          "competitive_advantage"
         ]
       }
     ],
@@ -70,15 +52,15 @@
         "relevant": 100
       },
       "gate_passed": true,
-      "baseline_cycle_id": "20260831T010530+0900",
+      "baseline_cycle_id": "20260831T055606+0900",
       "focus_dimension": "complete",
       "overall_delta": 0.0,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "Run one owner-assigned acquisition experiment with a fixed channel, exposure target, operator-excluded eligibility rule, dated stop/go thresholds, and same-window paid conversion and gross-margin measures."
+      "next_cycle_experiment": "Route one Tiger status-only update through a guarded artifact-only cloud publication canary, then compare runner minutes, queue delay, release count, freshness, and fixed-probe success against the current full-deploy path."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5149",
+      "label": "対策待ち・Issue #5156",
       "detail": "提案のみで、対策実施の記録はありません。",
       "summary": "",
       "files": [],
@@ -86,34 +68,108 @@
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean dedicated worktree at origin/main d9d88cf68433056111f746f366e6885df9d3afbb",
-        "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers and stable response digests",
+        "passed: clean dedicated worktree at origin/main f0637d2935c9ac3a2e6f0ef88b731409507896f9",
+        "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers and stable response metadata",
         "passed: 125 profiles",
         "passed: 125 personas",
-        "passed: exact-head production status, stale business snapshot boundary, sample-quality gaps, pricing evidence, and comparison claim were inspected",
+        "passed: four Tiger publication commits triggered full production deploys and assets/data is classified as web scope",
+        "passed: prior demand, retention, revenue, and competitor-claim findings remain open and were not duplicated",
         "not run: cloud-first resource policy prohibits local heavy validation for this report-only review"
       ],
       "issue": {
-        "number": 5149,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5149",
+        "number": 5156,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5156",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-site-review:20260831T055606+0900:whole_site",
+        "dedupe_key": "tiger-site-review:20260831T120514+0900:whole_site",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "site-current-main-business-kpi-lag",
-        "site-demand-sample-quality-gate",
-        "site-retention-sample-formation",
-        "site-live-revenue-proof-gap",
-        "site-competitor-claim-methodology-gap"
+        "site-review-status-full-deploy-coupling"
       ]
     }
   },
   "history": [
+    {
+      "cycle_id": "20260831T120514+0900",
+      "started_at": "2026-08-31T12:05:14+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 32,
+        "name": "高澤 有紀",
+        "selection_score": 69.478
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260831T055606+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Route one Tiger status-only update through a guarded artifact-only cloud publication canary, then compare runner minutes, queue delay, release count, freshness, and fixed-probe success against the current full-deploy path."
+      },
+      "findings": [
+        {
+          "finding_id": "site-review-status-full-deploy-coupling",
+          "summary": "Tigerレビュー状態JSONの公開だけでもassets/**分類によりFlutter本番ビルド、Firebase反映、release作成まで毎回実行され、定期レビューの頻度がそのまま本番リリース負荷へ変換されている",
+          "severity": "p1",
+          "suggested_action": "Tiger status JSON専用の軽量公開経路または変更分類を設け、アプリbundleに影響しないstatus-only commitでは既存bundleを再ビルドせず対象artifactだけを公開する。導入前後でrunner時間、deploy queue、release数、status freshnessを比較し、完全なpublic probeとrollback手順を維持する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5156",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated worktree at origin/main f0637d2935c9ac3a2e6f0ef88b731409507896f9",
+          "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers and stable response metadata",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: four Tiger publication commits triggered full production deploys and assets/data is classified as web scope",
+          "passed: prior demand, retention, revenue, and competitor-claim findings remain open and were not duplicated",
+          "not run: cloud-first resource policy prohibits local heavy validation for this report-only review"
+        ],
+        "issue": {
+          "number": 5156,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5156",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260831T120514+0900:whole_site",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-review-status-full-deploy-coupling"
+        ]
+      }
+    },
     {
       "cycle_id": "20260831T055606+0900",
       "started_at": "2026-08-31T05:56:06+09:00",
