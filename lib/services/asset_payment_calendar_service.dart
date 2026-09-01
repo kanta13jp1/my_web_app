@@ -23,7 +23,8 @@ class AssetCalendarDebtInput {
       paymentDay: row.paymentDay,
       scheduledPaymentAmount: row.scheduledPaymentAmount,
       isDirectCashflowTarget: row.isDirectCashflowTarget,
-      isFixedCost: row.kind == AssetLiabilityAccountKind.utility ||
+      isFixedCost:
+          row.kind == AssetLiabilityAccountKind.utility ||
           row.fullPaymentEstimate,
       paid: row.paid,
     );
@@ -170,8 +171,8 @@ class AssetPaymentCalendarMonth {
   /// ショート回避に必要な追加入金額(=最大不足幅)。ショートなしなら 0。
   double get shortfallRecoveryAmount =>
       worstProjectedBalance != null && worstProjectedBalance! < 0
-          ? -worstProjectedBalance!
-          : 0;
+      ? -worstProjectedBalance!
+      : 0;
 
   double get scheduledOutflowTotal =>
       scheduledDebtPaymentTotal + subscriptionTotal;
@@ -277,8 +278,10 @@ class AssetPaymentCalendarService {
     }
 
     String fixedCostKey(String name, DateTime date, double amount) {
-      final normalizedName =
-          name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '');
+      final normalizedName = name.trim().toLowerCase().replaceAll(
+        RegExp(r'\s+'),
+        '',
+      );
       return '$normalizedName|${_dateKey(date)}|${amount.toStringAsFixed(2)}';
     }
 
@@ -286,8 +289,11 @@ class AssetPaymentCalendarService {
     // 窓は高々2暦月に跨るが、任意長でも正しく動く。
     final overlappingMonths = <DateTime>[];
     if (rangeStart.isBefore(rangeEnd)) {
-      final lastMonth = DateTime(rangeEnd.year, rangeEnd.month, rangeEnd.day)
-          .subtract(const Duration(days: 1));
+      final lastMonth = DateTime(
+        rangeEnd.year,
+        rangeEnd.month,
+        rangeEnd.day,
+      ).subtract(const Duration(days: 1));
       var cursor = DateTime(rangeStart.year, rangeStart.month);
       final endMonth = DateTime(lastMonth.year, lastMonth.month);
       while (!cursor.isAfter(endMonth)) {
@@ -353,7 +359,7 @@ class AssetPaymentCalendarService {
         if (!inSchedule(date)) {
           continue;
         }
-        final amount = row.scheduledPaymentAmount > _epsilon
+        final amount = (!row.paid && row.scheduledPaymentAmount > _epsilon)
             ? row.scheduledPaymentAmount
             : null;
         if (amount != null) {
@@ -372,9 +378,12 @@ class AssetPaymentCalendarService {
             kind: row.isFixedCost
                 ? AssetCalendarEventKind.subscription
                 : AssetCalendarEventKind.debtPayment,
-            label: row.isFixedCost ? row.name : '${row.name} 返済',
+            label: row.isFixedCost
+                ? (row.paid ? '${row.name} (支払済)' : row.name)
+                : (row.paid ? '${row.name} (支払済)' : '${row.name} 返済'),
             amount: amount,
             sourceId: row.id.isEmpty ? null : row.id,
+            isPaid: row.paid,
           ),
         );
       }
@@ -477,8 +486,9 @@ class AssetPaymentCalendarService {
           date: date,
           expenseTotal: expenseByDate[key] ?? 0,
           incomeTotal: incomeByDate[key] ?? 0,
-          events:
-              _sortEvents(eventsByDate[key] ?? const <AssetCalendarEvent>[]),
+          events: _sortEvents(
+            eventsByDate[key] ?? const <AssetCalendarEvent>[],
+          ),
           scheduledOutflow: outflow,
           projectedBalance: runningBalance,
         ),
