@@ -58,8 +58,8 @@ dependencies:
   http: any
   graphview: ^1.2.0
   flutter_secure_storage: ^10.3.1
-  pdf: 3.13.0                      # PDF生成 (選挙KPIレポート出力)
-  printing: 5.15.0                 # PDF印刷 (選挙KPIレポート出力)
+  pdf: 3.12.0                      # PDF生成 (選挙KPIレポート出力)
+  printing: 5.14.3                 # PDF印刷 (選挙KPIレポート出力)
   sentry_flutter: ^9.28.0
   rrule: ^0.2.18
 
