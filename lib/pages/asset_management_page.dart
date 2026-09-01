@@ -25666,8 +25666,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: DataTable(
         headingRowHeight: 34,
         dataRowMinHeight: 46,
-        // 確認事項は長文になり得るため行高さを可変にし、セル側で折り返す。
-        dataRowMaxHeight: double.infinity,
+        // 確認事項は長文になり得るため行高さを可変にし、上限120pxでセル側で折り返す。
+        dataRowMaxHeight: 120,
         columns: const [
           DataColumn(label: Text('請求先カード')),
           DataColumn(label: Text('請求額'), numeric: true),
@@ -30377,9 +30377,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final netDelta = latest == null || previous == null
         ? null
         : latest.netWorth - previous.netWorth;
-    final dateLabel = latest == null
+    final parsedDate = latest == null ? null : DateTime.tryParse(latest.date);
+    final dateLabel = parsedDate == null
         ? '未記録'
-        : DateFormat('yyyy/MM/dd').format(DateTime.parse(latest.date));
+        : DateFormat('yyyy/MM/dd').format(parsedDate);
 
     return Container(
       width: double.infinity,
@@ -30709,9 +30710,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     : spot.barIndex == 1
                         ? const Color(0xFF2563EB)
                         : const Color(0xFFDC2626);
-                final date = DateFormat(
-                  'yyyy/MM/dd',
-                ).format(DateTime.parse(point.date));
+                final parsedDate = DateTime.tryParse(point.date);
+                final date = parsedDate == null
+                    ? point.date
+                    : DateFormat('yyyy/MM/dd').format(parsedDate);
                 final prefix = spot == spots.first ? '$date\n' : '';
                 return LineTooltipItem(
                   '$prefix$label: ${_formatYen(spot.y)}',
@@ -30763,9 +30765,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 if (index < 0 || index >= points.length) {
                   return const SizedBox.shrink();
                 }
-                final date = DateFormat(
-                  'M/d',
-                ).format(DateTime.parse(points[index].date));
+                final parsedDate = DateTime.tryParse(points[index].date);
+                final date = parsedDate == null
+                    ? points[index].date
+                    : DateFormat('M/d').format(parsedDate);
                 return SideTitleWidget(
                   meta: meta,
                   child: Text(
