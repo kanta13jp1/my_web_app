@@ -15,13 +15,13 @@ class AssetLiabilityDebtDuplicateWarning {
   });
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'rowAId': rowA.id,
-    'rowBId': rowB.id,
-    'rowAName': rowA.name,
-    'rowBName': rowB.name,
-    'similarity': similarity,
-    'message': message,
-  };
+        'rowAId': rowA.id,
+        'rowBId': rowB.id,
+        'rowAName': rowA.name,
+        'rowBName': rowB.name,
+        'similarity': similarity,
+        'message': message,
+      };
 }
 
 /// 負債重複検知サービス。
