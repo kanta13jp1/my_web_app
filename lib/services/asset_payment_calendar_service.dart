@@ -12,6 +12,7 @@ class AssetCalendarDebtInput {
     this.isDirectCashflowTarget = true,
     this.isFixedCost = false,
     this.id = '',
+    this.paid = false,
   });
 
   factory AssetCalendarDebtInput.fromDebtRow(AssetLiabilityDebtRow row) {
@@ -24,6 +25,7 @@ class AssetCalendarDebtInput {
       isDirectCashflowTarget: row.isDirectCashflowTarget,
       isFixedCost: row.kind == AssetLiabilityAccountKind.utility ||
           row.fullPaymentEstimate,
+      paid: row.paid,
     );
   }
 
@@ -38,6 +40,9 @@ class AssetCalendarDebtInput {
   /// 家賃・通信費・サブスク等の全額支払い固定費か。
   /// true の行は返済額ではなく固定費額へ集計する。
   final bool isFixedCost;
+
+  /// 支払完了済みフラグ。
+  final bool paid;
 }
 
 /// カレンダーに載せる日次イベントの種別。
