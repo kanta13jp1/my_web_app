@@ -23,8 +23,7 @@ class AssetCalendarDebtInput {
       paymentDay: row.paymentDay,
       scheduledPaymentAmount: row.scheduledPaymentAmount,
       isDirectCashflowTarget: row.isDirectCashflowTarget,
-      isFixedCost:
-          row.kind == AssetLiabilityAccountKind.utility ||
+      isFixedCost: row.kind == AssetLiabilityAccountKind.utility ||
           row.fullPaymentEstimate,
       paid: row.paid,
     );
@@ -171,8 +170,8 @@ class AssetPaymentCalendarMonth {
   /// ショート回避に必要な追加入金額(=最大不足幅)。ショートなしなら 0。
   double get shortfallRecoveryAmount =>
       worstProjectedBalance != null && worstProjectedBalance! < 0
-      ? -worstProjectedBalance!
-      : 0;
+          ? -worstProjectedBalance!
+          : 0;
 
   double get scheduledOutflowTotal =>
       scheduledDebtPaymentTotal + subscriptionTotal;
@@ -279,9 +278,9 @@ class AssetPaymentCalendarService {
 
     String fixedCostKey(String name, DateTime date, double amount) {
       final normalizedName = name.trim().toLowerCase().replaceAll(
-        RegExp(r'\s+'),
-        '',
-      );
+            RegExp(r'\s+'),
+            '',
+          );
       return '$normalizedName|${_dateKey(date)}|${amount.toStringAsFixed(2)}';
     }
 
