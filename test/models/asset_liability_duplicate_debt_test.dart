@@ -36,6 +36,7 @@ AssetLiabilityDebtRow _createTestDebtRow({
     paid: false,
     fullPaymentEstimate: false,
     revolvingBilling: null,
+    requiresAction: false,
   );
 }
 
