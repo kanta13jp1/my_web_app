@@ -70,6 +70,7 @@ class AssetCalendarEvent {
     required this.label,
     this.amount,
     this.sourceId,
+    this.isPaid = false,
   });
 
   final AssetCalendarEventKind kind;
@@ -78,6 +79,9 @@ class AssetCalendarEvent {
 
   /// 元データのID(debtPayment は workbook 行ID)。アクション連携用。
   final String? sourceId;
+
+  /// 支払完了済みフラグ。
+  final bool isPaid;
 }
 
 /// 1日分のサマリ。支出/収入はフロー記録の合算。
