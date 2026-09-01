@@ -1,55 +1,63 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 
+AssetLiabilityDebtRow _createTestDebtRow({
+  required String id,
+  required String name,
+  double balance = 1000000,
+  double annualRate = 15.0,
+}) {
+  return AssetLiabilityDebtRow(
+    id: id,
+    name: name,
+    kind: AssetLiabilityAccountKind.cardLoan,
+    balance: balance,
+    paymentDay: 10,
+    paymentSourceAccountId: null,
+    paymentSourceAccountName: null,
+    paymentMethod: AssetLiabilityPaymentMethod.direct,
+    paymentMethodLabel: '直接',
+    paymentMethodSettingSource:
+        AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+    billingAccountId: null,
+    billingAccountName: null,
+    includedInBillingAccount: false,
+    annualRate: annualRate,
+    minimumPaymentEstimate: 20000,
+    manualPaymentAmount: null,
+    scheduledPaymentAmount: 20000,
+    monthlyInterestEstimate: 12500,
+    principalPaymentEstimate: 7500,
+    balanceAfterPaymentEstimate: 992500,
+    liabilityShare: 0.5,
+    priorityLabel: '中',
+    paymentAmountEstimated: false,
+    billingConfirmed: true,
+    paid: false,
+    fullPaymentEstimate: false,
+    revolvingBilling: null,
+  );
+}
+
 void main() {
   group('detectDuplicateDebts', () {
-    test('Issue #5189: detects duplicate debt between じぶんローン and じぶん銀行カードローン', () {
-      final rowA = AssetLiabilityDebtRow(
+    test(
+        'Issue #5189: detects duplicate debt between じぶんローン and じぶん銀行カードローン',
+        () {
+      final rowA = _createTestDebtRow(
         id: 'jibun_loan',
         name: 'じぶんローン',
-        balance: 1000000,
-        annualRate: 15.0,
-        monthlyPayment: 20000,
-        accountKind: AssetLiabilityAccountKind.cardLoan,
-        isDirectCashflowTarget: true,
-        paymentAmountEstimated: false,
-        billingConfirmed: true,
-        scheduledPaymentAmount: 20000,
-        actualPaymentAmount: 0,
-        paid: false,
-        annualRateRisk: null,
       );
 
-      final rowB = AssetLiabilityDebtRow(
+      final rowB = _createTestDebtRow(
         id: 'jibun_bank_card_loan',
         name: 'じぶん銀行カードローン',
-        balance: 1000000,
-        annualRate: 15.0,
-        monthlyPayment: 20000,
-        accountKind: AssetLiabilityAccountKind.cardLoan,
-        isDirectCashflowTarget: true,
-        paymentAmountEstimated: false,
-        billingConfirmed: true,
-        scheduledPaymentAmount: 20000,
-        actualPaymentAmount: 0,
-        paid: false,
-        annualRateRisk: null,
       );
 
-      final otherRow = AssetLiabilityDebtRow(
+      final otherRow = _createTestDebtRow(
         id: 'rakuten_card',
         name: '楽天カード',
         balance: 50000,
-        annualRate: 15.0,
-        monthlyPayment: 10000,
-        accountKind: AssetLiabilityAccountKind.creditCard,
-        isDirectCashflowTarget: true,
-        paymentAmountEstimated: false,
-        billingConfirmed: true,
-        scheduledPaymentAmount: 10000,
-        actualPaymentAmount: 0,
-        paid: false,
-        annualRateRisk: null,
       );
 
       final warnings = detectDuplicateDebts([rowA, rowB, otherRow]);
@@ -63,36 +71,16 @@ void main() {
     });
 
     test('distinct debts produce no false positive duplicate warnings', () {
-      final rowA = AssetLiabilityDebtRow(
+      final rowA = _createTestDebtRow(
         id: 'mizuho_loan',
         name: 'みずほ銀行カードローン',
         balance: 500000,
-        annualRate: 14.0,
-        monthlyPayment: 15000,
-        accountKind: AssetLiabilityAccountKind.cardLoan,
-        isDirectCashflowTarget: true,
-        paymentAmountEstimated: false,
-        billingConfirmed: true,
-        scheduledPaymentAmount: 15000,
-        actualPaymentAmount: 0,
-        paid: false,
-        annualRateRisk: null,
       );
 
-      final rowB = AssetLiabilityDebtRow(
+      final rowB = _createTestDebtRow(
         id: 'smbc_loan',
         name: '三井住友銀行カードローン',
         balance: 300000,
-        annualRate: 14.5,
-        monthlyPayment: 10000,
-        accountKind: AssetLiabilityAccountKind.cardLoan,
-        isDirectCashflowTarget: true,
-        paymentAmountEstimated: false,
-        billingConfirmed: true,
-        scheduledPaymentAmount: 10000,
-        actualPaymentAmount: 0,
-        paid: false,
-        annualRateRisk: null,
       );
 
       final warnings = detectDuplicateDebts([rowA, rowB]);
