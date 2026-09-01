@@ -26,7 +26,13 @@ if hasattr(sys.stderr, "reconfigure"):
 
 
 DEFAULT_BASE_URL = "https://my-web-app-b67f4.web.app"
-JOURNEY_PATHS = ("/", "/subscription-billing", "/privacy")
+JOURNEY_PATHS = (
+    "/",
+    "/subscription-billing",
+    "/privacy",
+    "/terms",
+    "/tokusho",
+)
 ROOT_EXPECTATION = {
     "title": "自分株式会社とは？ | 人生を経営するAIライフマネジメントアプリ",
     "description": (
