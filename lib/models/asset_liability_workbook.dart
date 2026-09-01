@@ -99,17 +99,22 @@ class AssetLiabilityAnnualRateEvidence {
   }
 
   static AssetLiabilityAnnualRateEvidence? fromJson(Map<String, Object?> json) {
-    final accountId = json['accountId']?.toString().trim() ??
+    final accountId =
+        json['accountId']?.toString().trim() ??
         json['account_id']?.toString().trim();
-    final fileName = json['fileName']?.toString().trim() ??
+    final fileName =
+        json['fileName']?.toString().trim() ??
         json['file_name']?.toString().trim();
-    final mimeType = json['mimeType']?.toString().trim() ??
+    final mimeType =
+        json['mimeType']?.toString().trim() ??
         json['mime_type']?.toString().trim();
     final submittedAtText =
         json['submittedAt']?.toString() ?? json['submitted_at']?.toString();
-    final submittedAt =
-        submittedAtText == null ? null : DateTime.tryParse(submittedAtText);
-    final submittedAnnualRate = _parseEvidenceDouble(
+    final submittedAt = submittedAtText == null
+        ? null
+        : DateTime.tryParse(submittedAtText);
+    final submittedAnnualRate =
+        _parseEvidenceDouble(
           json['submittedAnnualRate'] ?? json['submitted_annual_rate'],
         ) ??
         -1;
@@ -137,8 +142,9 @@ class AssetLiabilityAnnualRateEvidence {
     }
     final rawError =
         json['errorMessage']?.toString() ?? json['error_message']?.toString();
-    final error =
-        rawError == null || rawError.trim().isEmpty ? null : rawError.trim();
+    final error = rawError == null || rawError.trim().isEmpty
+        ? null
+        : rawError.trim();
     return AssetLiabilityAnnualRateEvidence(
       accountId: accountId,
       fileName: fileName,
@@ -254,21 +260,23 @@ class AssetLiabilityRevolvingCreditConfig {
   });
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'monthlyAmount': monthlyAmount,
-        'newUsageAmount': newUsageAmount,
-        'paymentDay': paymentDay,
-        'creditLimit': creditLimit,
-      };
+    'monthlyAmount': monthlyAmount,
+    'newUsageAmount': newUsageAmount,
+    'paymentDay': paymentDay,
+    'creditLimit': creditLimit,
+  };
 
   factory AssetLiabilityRevolvingCreditConfig.fromJson(
     Map<String, dynamic> json,
   ) {
     return AssetLiabilityRevolvingCreditConfig(
       monthlyAmount: (json['monthlyAmount'] as num?)?.toDouble() ?? 0,
-      newUsageAmount: (json['newUsageAmount'] as num?)?.toDouble() ??
+      newUsageAmount:
+          (json['newUsageAmount'] as num?)?.toDouble() ??
           (json['new_usage_amount'] as num?)?.toDouble() ??
           0,
-      paymentDay: (json['paymentDay'] as num?)?.toInt() ??
+      paymentDay:
+          (json['paymentDay'] as num?)?.toInt() ??
           (json['payment_day'] as num?)?.toInt() ??
           25,
       creditLimit: (json['creditLimit'] as num?)?.toDouble() ?? 0,
@@ -310,11 +318,10 @@ class AssetCardUsagePolicy {
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'enforce_one_shot': enforceOneShot,
-        if (changedAt != null)
-          'changed_at': changedAt!.toUtc().toIso8601String(),
-        if (memo.trim().isNotEmpty) 'memo': memo.trim(),
-      };
+    'enforce_one_shot': enforceOneShot,
+    if (changedAt != null) 'changed_at': changedAt!.toUtc().toIso8601String(),
+    if (memo.trim().isNotEmpty) 'memo': memo.trim(),
+  };
 
   factory AssetCardUsagePolicy.fromJson(Map<String, dynamic> json) {
     final changedAtRaw = json['changed_at'] ?? json['changedAt'];
@@ -542,12 +549,14 @@ class AssetRecurringFixedCost {
     if (name.isEmpty) {
       return null;
     }
-    final amount = (json['amount'] as num?)?.toDouble() ??
+    final amount =
+        (json['amount'] as num?)?.toDouble() ??
         double.tryParse(json['amount']?.toString() ?? '');
     if (amount == null || amount <= 0) {
       return null;
     }
-    final paymentDay = (json['paymentDay'] as num?)?.toInt() ??
+    final paymentDay =
+        (json['paymentDay'] as num?)?.toInt() ??
         int.tryParse(json['paymentDay']?.toString() ?? '');
     if (paymentDay == null || paymentDay < 1 || paymentDay > 31) {
       return null;
@@ -566,11 +575,11 @@ class AssetRecurringFixedCost {
     final reviewDecisionName = json['subscriptionReviewDecision']?.toString();
     final reviewDecision =
         category == AssetRecurringFixedCostCategory.subscription
-            ? AssetSubscriptionReviewDecision.values.firstWhere(
-                (value) => value.name == reviewDecisionName,
-                orElse: () => AssetSubscriptionReviewDecision.unreviewed,
-              )
-            : AssetSubscriptionReviewDecision.unreviewed;
+        ? AssetSubscriptionReviewDecision.values.firstWhere(
+            (value) => value.name == reviewDecisionName,
+            orElse: () => AssetSubscriptionReviewDecision.unreviewed,
+          )
+        : AssetSubscriptionReviewDecision.unreviewed;
     final gatewayName = json['billingGateway']?.toString();
     final billingGateway = AssetSubscriptionBillingGateway.values.firstWhere(
       (value) => value.name == gatewayName,
@@ -581,7 +590,8 @@ class AssetRecurringFixedCost {
       (value) => value.name == currencyName,
       orElse: () => AssetRecurringFixedCostCurrency.jpy,
     );
-    final usdAmount = (json['usdAmount'] as num?)?.toDouble() ??
+    final usdAmount =
+        (json['usdAmount'] as num?)?.toDouble() ??
         double.tryParse(json['usdAmount']?.toString() ?? '');
     return AssetRecurringFixedCost(
       id: trimmedId,
@@ -589,8 +599,9 @@ class AssetRecurringFixedCost {
       amount: amount,
       paymentDay: paymentDay,
       cadence: cadence,
-      sourceAccountId:
-          rawSource == null || rawSource.isEmpty ? null : rawSource,
+      sourceAccountId: rawSource == null || rawSource.isEmpty
+          ? null
+          : rawSource,
       category: category,
       subscriptionReviewDecision: reviewDecision,
       billingGateway: billingGateway,
@@ -1305,10 +1316,10 @@ class AssetLiabilityCardStatementReconciliationGroup {
 
   /// 設定済み内訳合計が請求額とずれているか（＝内訳の修正が必要か）。
   bool get hasConfiguredMismatchFix => fixActions.any(
-        (action) =>
-            action.kind ==
-            AssetLiabilityCardStatementFixActionKind.adjustConfiguredBreakdown,
-      );
+    (action) =>
+        action.kind ==
+        AssetLiabilityCardStatementFixActionKind.adjustConfiguredBreakdown,
+  );
 
   /// リボ払いカードか。
   bool get isRevolving => revolvingBilling != null;
@@ -1404,7 +1415,7 @@ class AssetLiabilityWorkbook {
   final List<AssetLiabilityTransferSuggestion> transferSuggestions;
   final AssetLiabilityCardBillingReviewData cardBillingReview;
   final AssetLiabilityCardStatementReconciliationData
-      cardStatementReconciliation;
+  cardStatementReconciliation;
   final double cashLikeTotal;
   final double securitiesTotal;
   final double positiveAssetTotal;
@@ -1626,7 +1637,6 @@ class AssetLiabilityWorkbook {
   }
 }
 
-
 /// 口座名・ローン名の表記ゆれや類似名称による二重登録（例: 「じぶんローン」と「じぶん銀行カードローン」）の警告。
 class AssetLiabilityDebtDuplicateWarning {
   final AssetLiabilityDebtRow rowA;
@@ -1642,19 +1652,23 @@ class AssetLiabilityDebtDuplicateWarning {
   });
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'rowAId': rowA.id,
-        'rowBId': rowB.id,
-        'rowAName': rowA.name,
-        'rowBName': rowB.name,
-        'similarity': similarity,
-        'message': message,
-      };
+    'rowAId': rowA.id,
+    'rowBId': rowB.id,
+    'rowAName': rowA.name,
+    'rowBName': rowB.name,
+    'similarity': similarity,
+    'message': message,
+  };
 }
 
 /// 負債名称からストップワードを除去して正規化コアステムを抽出する。
 String normalizeDebtStem(String name) {
   var s = name.toLowerCase().replaceAll(RegExp(r'[\s　・_-]'), '');
-  s = s.replaceAll('（', '').replaceAll('）', '').replaceAll('(', '').replaceAll(')', '');
+  s = s
+      .replaceAll('（', '')
+      .replaceAll('）', '')
+      .replaceAll('(', '')
+      .replaceAll(')', '');
   s = s.replaceAll('株式会社', '').replaceAll('合同会社', '');
   s = s.replaceAll('カードローン', '').replaceAll('ローン', '').replaceAll('loan', '');
   s = s.replaceAll('クレジットカード', '').replaceAll('カード', '').replaceAll('card', '');
@@ -1705,7 +1719,8 @@ List<AssetLiabilityDebtDuplicateWarning> detectDuplicateDebts(
             rowA: a,
             rowB: b,
             similarity: sim,
-            message: '「${a.name}」と「${b.name}」は同一の借入・ローンである可能性があります。二重計上にご注意ください。',
+            message:
+                '「${a.name}」と「${b.name}」は同一の借入・ローンである可能性があります。二重計上にご注意ください。',
           ),
         );
       }

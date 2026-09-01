@@ -43,33 +43,31 @@ AssetLiabilityDebtRow _createTestDebtRow({
 void main() {
   group('detectDuplicateDebts', () {
     test(
-        'Issue #5189: detects duplicate debt between じぶんローン and じぶん銀行カードローン',
-        () {
-      final rowA = _createTestDebtRow(
-        id: 'jibun_loan',
-        name: 'じぶんローン',
-      );
+      'Issue #5189: detects duplicate debt between じぶんローン and じぶん銀行カードローン',
+      () {
+        final rowA = _createTestDebtRow(id: 'jibun_loan', name: 'じぶんローン');
 
-      final rowB = _createTestDebtRow(
-        id: 'jibun_bank_card_loan',
-        name: 'じぶん銀行カードローン',
-      );
+        final rowB = _createTestDebtRow(
+          id: 'jibun_bank_card_loan',
+          name: 'じぶん銀行カードローン',
+        );
 
-      final otherRow = _createTestDebtRow(
-        id: 'rakuten_card',
-        name: '楽天カード',
-        balance: 50000,
-      );
+        final otherRow = _createTestDebtRow(
+          id: 'rakuten_card',
+          name: '楽天カード',
+          balance: 50000,
+        );
 
-      final warnings = detectDuplicateDebts([rowA, rowB, otherRow]);
-      expect(warnings, isNotEmpty);
-      expect(warnings.length, equals(1));
-      expect(warnings.first.rowA.id, equals('jibun_loan'));
-      expect(warnings.first.rowB.id, equals('jibun_bank_card_loan'));
-      expect(warnings.first.similarity, greaterThanOrEqualTo(0.75));
-      expect(warnings.first.message, contains('じぶんローン'));
-      expect(warnings.first.message, contains('じぶん銀行カードローン'));
-    });
+        final warnings = detectDuplicateDebts([rowA, rowB, otherRow]);
+        expect(warnings, isNotEmpty);
+        expect(warnings.length, equals(1));
+        expect(warnings.first.rowA.id, equals('jibun_loan'));
+        expect(warnings.first.rowB.id, equals('jibun_bank_card_loan'));
+        expect(warnings.first.similarity, greaterThanOrEqualTo(0.75));
+        expect(warnings.first.message, contains('じぶんローン'));
+        expect(warnings.first.message, contains('じぶん銀行カードローン'));
+      },
+    );
 
     test('distinct debts produce no false positive duplicate warnings', () {
       final rowA = _createTestDebtRow(
