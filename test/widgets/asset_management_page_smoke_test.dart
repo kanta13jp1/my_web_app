@@ -99,7 +99,9 @@ class _ThrowingRecurringFixedCostStore extends AssetRecurringFixedCostStore {
 Future<void> _pumpAssetPage(WidgetTester tester) async {
   AssetSyncDirtyKeysStore.resetWriteLockForTest();
   AssetRecurringTombstoneSyncService.resetSharedForTest();
-  await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
+  await tester.pumpWidget(
+    const MaterialApp(home: AssetManagementPage()),
+  );
   await tester.pump(const Duration(milliseconds: 100));
 }
 
@@ -226,9 +228,8 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await _pumpAssetPage(tester);
-      final customizeButton = find.byKey(
-        const Key('asset_section_customize_button'),
-      );
+      final customizeButton =
+          find.byKey(const Key('asset_section_customize_button'));
       await tester.ensureVisible(customizeButton);
       await tester.tap(customizeButton);
       await tester.pump(const Duration(milliseconds: 200));
@@ -373,7 +374,10 @@ void main() {
       // さらに前(4/25〜5/24)は記録なし → 空メッセージ。
       await tester.tap(find.byKey(const Key('asset_calendar_prev_month')));
       await tester.pump(const Duration(milliseconds: 100));
-      expect(find.textContaining('この期間に記録されたフローはありません'), findsOneWidget);
+      expect(
+        find.textContaining('この期間に記録されたフローはありません'),
+        findsOneWidget,
+      );
 
       await _unmount(tester);
     });
@@ -434,7 +438,9 @@ void main() {
         );
         await tester.pump(const Duration(milliseconds: 200));
 
-        final card = find.byKey(const Key('asset_monthly_flow_priority_card'));
+        final card = find.byKey(
+          const Key('asset_monthly_flow_priority_card'),
+        );
         expect(card, findsOneWidget);
 
         // 当サイクルの給料(280,000)が収入として計上される。
@@ -454,7 +460,10 @@ void main() {
         );
         // 見出しは暦月ラベルではなく給料サイクルの期間ラベルになっている。
         expect(
-          find.descendant(of: card, matching: find.textContaining('給料サイクル(')),
+          find.descendant(
+            of: card,
+            matching: find.textContaining('給料サイクル('),
+          ),
           findsOneWidget,
         );
 
@@ -497,7 +506,9 @@ void main() {
         );
         await tester.pump(const Duration(milliseconds: 200));
 
-        final card = find.byKey(const Key('asset_monthly_flow_priority_card'));
+        final card = find.byKey(
+          const Key('asset_monthly_flow_priority_card'),
+        );
         expect(card, findsOneWidget);
 
         // 給与明細の給料(280,000)が収入として計上される。
@@ -665,7 +676,9 @@ void main() {
         );
         await tester.pump(const Duration(milliseconds: 200));
 
-        final card = find.byKey(const Key('asset_monthly_flow_priority_card'));
+        final card = find.byKey(
+          const Key('asset_monthly_flow_priority_card'),
+        );
         expect(card, findsOneWidget);
 
         // 二重計上されず1件分(280,000)だけ計上される。
@@ -834,7 +847,10 @@ void main() {
       expect(find.textContaining('保持設定 (50件/90日)'), findsOneWidget);
 
       // ローカルにも保存される。
-      expect((await AssetExpectedInflowStore.loadGcConfig()).maxCount, 50);
+      expect(
+        (await AssetExpectedInflowStore.loadGcConfig()).maxCount,
+        50,
+      );
 
       await _unmount(tester);
     });
@@ -853,16 +869,14 @@ void main() {
         ]),
         // 2020 年の古い削除記録 → inflow は maxAgeDays:10、override は既定365日で
         // どちらも期限切れ → 一括掃除で 2 件 (#part292)。
-        'asset_expected_inflow_deleted_ids_v1': jsonEncode(
-          <Map<String, String>>[
-            <String, String>{'id': 'old1', 'at': '2020-01-01T00:00:00.000Z'},
-          ],
-        ),
-        'asset_management_section_override_deleted_v1': jsonEncode(
-          <Map<String, String>>[
-            <String, String>{'id': 'chart', 'at': '2020-01-01T00:00:00.000Z'},
-          ],
-        ),
+        'asset_expected_inflow_deleted_ids_v1':
+            jsonEncode(<Map<String, String>>[
+          <String, String>{'id': 'old1', 'at': '2020-01-01T00:00:00.000Z'},
+        ]),
+        'asset_management_section_override_deleted_v1':
+            jsonEncode(<Map<String, String>>[
+          <String, String>{'id': 'chart', 'at': '2020-01-01T00:00:00.000Z'},
+        ]),
       });
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -905,15 +919,14 @@ void main() {
       final now = DateTime.now();
       SharedPreferences.setMockInitialValues(<String, Object>{
         // 期限切れ(2020) + 期限内(現在) を混在させる。
-        'asset_expected_inflow_deleted_ids_v1': jsonEncode(
-          <Map<String, String>>[
-            <String, String>{'id': 'old1', 'at': '2020-01-01T00:00:00.000Z'},
-            <String, String>{
-              'id': 'recent',
-              'at': now.toUtc().toIso8601String(),
-            },
-          ],
-        ),
+        'asset_expected_inflow_deleted_ids_v1':
+            jsonEncode(<Map<String, String>>[
+          <String, String>{'id': 'old1', 'at': '2020-01-01T00:00:00.000Z'},
+          <String, String>{
+            'id': 'recent',
+            'at': now.toUtc().toIso8601String(),
+          },
+        ]),
       });
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -923,9 +936,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       // boot 自動 prune が期限切れ(old1)を物理削除し、期限内(recent)は残す。
-      final raw = (await SharedPreferences.getInstance()).getString(
-        'asset_expected_inflow_deleted_ids_v1',
-      );
+      final raw = (await SharedPreferences.getInstance())
+          .getString('asset_expected_inflow_deleted_ids_v1');
       expect(raw, isNotNull);
       expect(raw!.contains('old1'), isFalse);
       expect(raw.contains('recent'), isTrue);
@@ -937,9 +949,9 @@ void main() {
       tester,
     ) async {
       SharedPreferences.setMockInitialValues(<String, Object>{
-        'asset_management_section_overrides_v1': jsonEncode(<String, String>{
-          'chart': 'hidden',
-        }),
+        'asset_management_section_overrides_v1': jsonEncode(
+          <String, String>{'chart': 'hidden'},
+        ),
       });
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -966,8 +978,8 @@ void main() {
 
       final dropdown = tester
           .widget<DropdownButton<AssetManagementSectionVisibilityOverride>>(
-            find.byKey(const Key('asset_section_override_chart')),
-          );
+        find.byKey(const Key('asset_section_override_chart')),
+      );
       expect(dropdown.value, AssetManagementSectionVisibilityOverride.auto);
 
       await _unmount(tester);
@@ -1028,7 +1040,9 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: AssetManagementPage(debugRevolvingConfigsMirror: mirrorValue),
+          home: AssetManagementPage(
+            debugRevolvingConfigsMirror: mirrorValue,
+          ),
         ),
       );
       await tester.pump(const Duration(milliseconds: 300));
@@ -1067,13 +1081,13 @@ void main() {
           home: AssetManagementPage(
             debugRevolvingConfigsMirror:
                 AssetRevolvingCreditConfigStore.encodeMirrorValue(
-                  <String, AssetLiabilityRevolvingCreditConfig>{
-                    'aupay': const AssetLiabilityRevolvingCreditConfig(
-                      monthlyAmount: 99999,
-                      creditLimit: 999999,
-                    ),
-                  },
+              <String, AssetLiabilityRevolvingCreditConfig>{
+                'aupay': const AssetLiabilityRevolvingCreditConfig(
+                  monthlyAmount: 99999,
+                  creditLimit: 999999,
                 ),
+              },
+            ),
           ),
         ),
       );
@@ -1118,15 +1132,16 @@ void main() {
       tester,
     ) async {
       // 端末A が保存したウォッチリストを集約ミラー値へエンコードする。
-      final mirrorValue =
-          AssetWatchlistService.encodeMirrorValue(<AssetWatchlistEntry>[
-            AssetWatchlistEntry(
-              assetType: 'gold',
-              group: 'invest',
-              memo: 'hedge',
-              addedAt: DateTime.utc(2026, 6, 14),
-            ),
-          ]);
+      final mirrorValue = AssetWatchlistService.encodeMirrorValue(
+        <AssetWatchlistEntry>[
+          AssetWatchlistEntry(
+            assetType: 'gold',
+            group: 'invest',
+            memo: 'hedge',
+            addedAt: DateTime.utc(2026, 6, 14),
+          ),
+        ],
+      );
 
       // 端末B はローカル空で起動する。
       SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -1135,7 +1150,9 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: AssetManagementPage(debugWatchlistMirror: mirrorValue),
+          home: AssetManagementPage(
+            debugWatchlistMirror: mirrorValue,
+          ),
         ),
       );
       await tester.pump(const Duration(milliseconds: 300));
@@ -1201,11 +1218,13 @@ void main() {
       await _unmount(tester);
     });
 
-    testWidgets('hidden override removes an essential section', (tester) async {
+    testWidgets('hidden override removes an essential section', (
+      tester,
+    ) async {
       SharedPreferences.setMockInitialValues(<String, Object>{
-        'asset_management_section_overrides_v1': jsonEncode(<String, String>{
-          'calendar': 'hidden',
-        }),
+        'asset_management_section_overrides_v1': jsonEncode(
+          <String, String>{'calendar': 'hidden'},
+        ),
       });
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -1311,24 +1330,31 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      final actionSection = find.byKey(
-        const Key('asset_payment_risk_action_section'),
-      );
-      final reviewSection = find.byKey(
-        const Key('asset_payment_risk_review_only_section'),
-      );
+      final actionSection =
+          find.byKey(const Key('asset_payment_risk_action_section'));
+      final reviewSection =
+          find.byKey(const Key('asset_payment_risk_review_only_section'));
       expect(actionSection, findsOneWidget);
       expect(reviewSection, findsOneWidget);
       expect(
-        find.descendant(of: actionSection, matching: find.text('PayPayカード')),
+        find.descendant(
+          of: actionSection,
+          matching: find.text('PayPayカード'),
+        ),
         findsOneWidget,
       );
       expect(
-        find.descendant(of: actionSection, matching: find.text('じぶん銀行カードローン')),
+        find.descendant(
+          of: actionSection,
+          matching: find.text('じぶん銀行カードローン'),
+        ),
         findsNothing,
       );
       expect(
-        find.descendant(of: reviewSection, matching: find.text('じぶん銀行カードローン')),
+        find.descendant(
+          of: reviewSection,
+          matching: find.text('じぶん銀行カードローン'),
+        ),
         findsOneWidget,
       );
 
@@ -1337,7 +1363,10 @@ void main() {
       );
       expect(reviewBadge, findsOneWidget);
       final reviewBadgeText = tester.widget<Text>(
-        find.descendant(of: reviewBadge, matching: find.text('確認のみ')),
+        find.descendant(
+          of: reviewBadge,
+          matching: find.text('確認のみ'),
+        ),
       );
       expect(reviewBadgeText.style?.color, const Color(0xFF64748B));
 
@@ -1357,7 +1386,10 @@ void main() {
           home: AssetManagementPage(
             debugCalendarNow: DateTime(2026, 7, 10),
             debugInitialAssetData: <String, Map<String, double>>{
-              dateKey: const <String, double>{'財布(現金)': 10000, 'モビット': -300000},
+              dateKey: const <String, double>{
+                '財布(現金)': 10000,
+                'モビット': -300000,
+              },
             },
           ),
         ),
@@ -1420,7 +1452,10 @@ void main() {
           home: AssetManagementPage(
             debugCalendarNow: DateTime(2026, 7, 10),
             debugInitialAssetData: <String, Map<String, double>>{
-              dateKey: const <String, double>{'財布(現金)': 10000, 'モビット': -300000},
+              dateKey: const <String, double>{
+                '財布(現金)': 10000,
+                'モビット': -300000,
+              },
             },
           ),
         ),
@@ -1438,60 +1473,59 @@ void main() {
     });
 
     testWidgets(
-      'account shortfall banner links a transfer task and clears on create',
-      (tester) async {
-        // 全体では黒字(三井住友 500000)でも、モビットの支払原資に割り当てた
-        // 現金だけが不足する。先読みバナー→移動タスク作成→見込み残高へ即時
-        // 反映されてバナーが解消するまでを検証する。
-        final now = DateTime.now();
-        final dateKey = DateFormat('yyyy-MM-dd').format(now);
-        SharedPreferences.setMockInitialValues(<String, Object>{
-          AssetLiabilityMonthlyStateStore.defaultPaymentSourcePrefsKey:
-              jsonEncode(<String, String>{'mobit': 'wallet_cash'}),
-        });
-        await tester.binding.setSurfaceSize(const Size(1200, 2400));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
+        'account shortfall banner links a transfer task and clears on create',
+        (tester) async {
+      // 全体では黒字(三井住友 500000)でも、モビットの支払原資に割り当てた
+      // 現金だけが不足する。先読みバナー→移動タスク作成→見込み残高へ即時
+      // 反映されてバナーが解消するまでを検証する。
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        AssetLiabilityMonthlyStateStore.defaultPaymentSourcePrefsKey:
+            jsonEncode(<String, String>{'mobit': 'wallet_cash'}),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: AssetManagementPage(
-              debugCalendarNow: DateTime(2026, 7, 10),
-              debugInitialAssetData: <String, Map<String, double>>{
-                dateKey: const <String, double>{
-                  '財布(現金)': 1000,
-                  '三井住友銀行大塚支店': 500000,
-                  'モビット': -45000,
-                },
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 1000,
+                '三井住友銀行大塚支店': 500000,
+                'モビット': -45000,
               },
-            ),
+            },
           ),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
 
-        expect(
-          find.byKey(const Key('asset_account_shortfall_banner')),
-          findsOneWidget,
-        );
+      expect(
+        find.byKey(const Key('asset_account_shortfall_banner')),
+        findsOneWidget,
+      );
 
-        // 三井住友→現金の移動提案がタスク化ボタン付きで表示される。
-        final createButton = find.byKey(
-          const Key('asset_account_shortfall_create_task_wallet_cash'),
-        );
-        expect(createButton, findsOneWidget);
+      // 三井住友→現金の移動提案がタスク化ボタン付きで表示される。
+      final createButton = find.byKey(
+        const Key('asset_account_shortfall_create_task_wallet_cash'),
+      );
+      expect(createButton, findsOneWidget);
 
-        await tester.tap(createButton);
-        await tester.pump(const Duration(milliseconds: 200));
+      await tester.tap(createButton);
+      await tester.pump(const Duration(milliseconds: 200));
 
-        expect(find.text('Transfer task created.'), findsOneWidget);
-        // 保留中の口座移動が見込み残高に反映され、バナーが解消される。
-        expect(
-          find.byKey(const Key('asset_account_shortfall_banner')),
-          findsNothing,
-        );
+      expect(find.text('Transfer task created.'), findsOneWidget);
+      // 保留中の口座移動が見込み残高に反映され、バナーが解消される。
+      expect(
+        find.byKey(const Key('asset_account_shortfall_banner')),
+        findsNothing,
+      );
 
-        await _unmount(tester);
-      },
-    );
+      await _unmount(tester);
+    });
 
     testWidgets('revolving payoff chip and payday rule appear on debt cards', (
       tester,
@@ -1595,11 +1629,14 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: AssetManagementPage(
-            assetLiabilityRepository: _FakeDebtOverrideRepository(<String, int>{
-              'mobit': now.day,
-            }),
+            assetLiabilityRepository: _FakeDebtOverrideRepository(
+              <String, int>{'mobit': now.day},
+            ),
             debugInitialAssetData: <String, Map<String, double>>{
-              dateKey: const <String, double>{'財布(現金)': 1000, 'モビット': -300000},
+              dateKey: const <String, double>{
+                '財布(現金)': 1000,
+                'モビット': -300000,
+              },
             },
           ),
         ),
@@ -1726,7 +1763,10 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.byKey(const Key('asset_triage_guide_card')), findsOneWidget);
+      expect(
+        find.byKey(const Key('asset_triage_guide_card')),
+        findsOneWidget,
+      );
       expect(find.textContaining('まず、これだけ'), findsWidgets);
       expect(find.textContaining('食費・移動費を確保する'), findsOneWidget);
       // 負債 320万 ≥ 300万 → 専門窓口の案内も出る。
@@ -1766,10 +1806,16 @@ void main() {
         find.byKey(const Key('asset_payment_source_missing_banner')),
         findsOneWidget,
       );
-      expect(find.textContaining('支払原資口座が未設定の支払い'), findsOneWidget);
+      expect(
+        find.textContaining('支払原資口座が未設定の支払い'),
+        findsOneWidget,
+      );
       // 残高最大の三井住友大塚支店が候補として提示される (現在残高付き)。
       // 本番経路ではデフォルト固定費 (家賃等) も原資未設定になるため複数行出る。
-      expect(find.textContaining('候補: 三井住友銀行大塚支店（現在 ¥500,000'), findsWidgets);
+      expect(
+        find.textContaining('候補: 三井住友銀行大塚支店（現在 ¥500,000'),
+        findsWidgets,
+      );
       expect(
         find.byKey(const Key('asset_payment_source_missing_jump')),
         findsOneWidget,
@@ -1810,7 +1856,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
 
       final breakdownFix = find.byKey(
-        const Key('asset_card_recon_fix_adjustConfiguredBreakdown_paypay_card'),
+        const Key(
+          'asset_card_recon_fix_adjustConfiguredBreakdown_paypay_card',
+        ),
       );
       await tester.ensureVisible(breakdownFix);
       expect(breakdownFix, findsOneWidget);
@@ -1840,51 +1888,51 @@ void main() {
       await _unmount(tester);
     });
 
-    testWidgets(
-      'salary inflow suggestion registers a monthly rule in one tap',
-      (tester) async {
-        // 給与明細/salary_incomes でのみ給料を管理していると入金予定ルールが
-        // 未登録になり、asOf 起点カレンダーでは次サイクル頭の見込み残高が細く
-        // 見える (#3799)。最新給与額のワンタップ登録導線を検証する。
-        await tester.binding.setSurfaceSize(const Size(1200, 2400));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
+    testWidgets('salary inflow suggestion registers a monthly rule in one tap',
+        (tester) async {
+      // 給与明細/salary_incomes でのみ給料を管理していると入金予定ルールが
+      // 未登録になり、asOf 起点カレンダーでは次サイクル頭の見込み残高が細く
+      // 見える (#3799)。最新給与額のワンタップ登録導線を検証する。
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: AssetManagementPage(
-              debugCalendarNow: DateTime(2026, 7, 10),
-              debugInitialPayslipSalaryIncomes: const <Map<String, dynamic>>[
-                <String, dynamic>{'pay_date': '2026-05-25', 'amount': 400000},
-                <String, dynamic>{'pay_date': '2026-06-25', 'amount': 452815},
-              ],
-            ),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialPayslipSalaryIncomes: const <Map<String, dynamic>>[
+              <String, dynamic>{'pay_date': '2026-05-25', 'amount': 400000},
+              <String, dynamic>{'pay_date': '2026-06-25', 'amount': 452815},
+            ],
           ),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
 
-        await tester.ensureVisible(
-          find.byKey(const Key('asset_salary_inflow_suggestion')),
-        );
-        // 最新 (6/25) の手取りが提示される。
-        expect(find.textContaining('給料 ¥452,815 を毎月25日に登録'), findsOneWidget);
+      await tester.ensureVisible(
+        find.byKey(const Key('asset_salary_inflow_suggestion')),
+      );
+      // 最新 (6/25) の手取りが提示される。
+      expect(
+        find.textContaining('給料 ¥452,815 を毎月25日に登録'),
+        findsOneWidget,
+      );
 
-        await tester.tap(find.byKey(const Key('asset_salary_inflow_register')));
-        await tester.pump(const Duration(milliseconds: 200));
+      await tester.tap(find.byKey(const Key('asset_salary_inflow_register')));
+      await tester.pump(const Duration(milliseconds: 200));
 
-        // 登録後は導線が消え、サイクル窓内 (6/25) の給料チップとして反映される。
-        expect(
-          find.byKey(const Key('asset_salary_inflow_suggestion')),
-          findsNothing,
-        );
-        expect(find.textContaining('6/25 給料 ¥452,815'), findsOneWidget);
+      // 登録後は導線が消え、サイクル窓内 (6/25) の給料チップとして反映される。
+      expect(
+        find.byKey(const Key('asset_salary_inflow_suggestion')),
+        findsNothing,
+      );
+      expect(find.textContaining('6/25 給料 ¥452,815'), findsOneWidget);
 
-        await _unmount(tester);
-      },
-    );
+      await _unmount(tester);
+    });
 
-    testWidgets('salary suggestion stays hidden when a salary rule exists', (
-      tester,
-    ) async {
+    testWidgets('salary suggestion stays hidden when a salary rule exists',
+        (tester) async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         'asset_expected_inflow_rules_v1': jsonEncode(<Map<String, dynamic>>[
           <String, dynamic>{
@@ -1918,9 +1966,8 @@ void main() {
       await _unmount(tester);
     });
 
-    testWidgets('dismissing the salary suggestion persists to prefs', (
-      tester,
-    ) async {
+    testWidgets('dismissing the salary suggestion persists to prefs',
+        (tester) async {
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -1947,7 +1994,10 @@ void main() {
         findsNothing,
       );
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getBool('asset_salary_inflow_prompt_dismissed_v1'), isTrue);
+      expect(
+        prefs.getBool('asset_salary_inflow_prompt_dismissed_v1'),
+        isTrue,
+      );
 
       await _unmount(tester);
     });
@@ -1975,7 +2025,10 @@ void main() {
           home: AssetManagementPage(
             debugCalendarNow: DateTime(2026, 7, 10),
             debugInitialAssetData: <String, Map<String, double>>{
-              dateKey: const <String, double>{'財布(現金)': 10000, 'モビット': -300000},
+              dateKey: const <String, double>{
+                '財布(現金)': 10000,
+                'モビット': -300000,
+              },
             },
           ),
         ),
@@ -1994,92 +2047,88 @@ void main() {
       await _unmount(tester);
     });
 
-    testWidgets(
-      'revolving balance growth surfaces the monthly debt trend card',
-      (tester) async {
-        final now = DateTime.now();
-        final dateKey = DateFormat('yyyy-MM-dd').format(now);
-        final priorMonth = DateTime(now.year, now.month - 1, 1);
-        final priorKey =
-            '${priorMonth.year.toString().padLeft(4, '0')}-'
-            '${priorMonth.month.toString().padLeft(2, '0')}';
-        // 前月末のモビット残高 3 万円を履歴に仕込み、今月 30 万へ増加させる。
-        SharedPreferences.setMockInitialValues(<String, Object>{
-          'asset_account_balance_history_v1': jsonEncode(<String, dynamic>{
-            priorKey: <String, dynamic>{'mobit': 30000},
-          }),
-        });
-        await tester.binding.setSurfaceSize(const Size(1200, 3000));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
+    testWidgets('revolving balance growth surfaces the monthly debt trend card',
+        (tester) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      final priorMonth = DateTime(now.year, now.month - 1, 1);
+      final priorKey = '${priorMonth.year.toString().padLeft(4, '0')}-'
+          '${priorMonth.month.toString().padLeft(2, '0')}';
+      // 前月末のモビット残高 3 万円を履歴に仕込み、今月 30 万へ増加させる。
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_account_balance_history_v1': jsonEncode(<String, dynamic>{
+          priorKey: <String, dynamic>{'mobit': 30000},
+        }),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 3000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: AssetManagementPage(
-              debugInitialAssetData: <String, Map<String, double>>{
-                dateKey: const <String, double>{
-                  '財布(現金)': 500000,
-                  'モビット': -300000,
-                },
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 500000,
+                'モビット': -300000,
               },
-            ),
+            },
           ),
-        );
-        // 履歴の非同期ロード → setState → 再描画を待つ。
-        await tester.pump(const Duration(milliseconds: 200));
-        await tester.pump(const Duration(milliseconds: 200));
-        await tester.pump(const Duration(milliseconds: 200));
+        ),
+      );
+      // 履歴の非同期ロード → setState → 再描画を待つ。
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
 
-        expect(
-          find.textContaining('家計トラッカー（給料日サイクル / 負債トレンド）'),
-          findsOneWidget,
-        );
-        expect(find.textContaining('残高が先月より増加'), findsWidgets);
+      expect(
+        find.textContaining('家計トラッカー（給料日サイクル / 負債トレンド）'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('残高が先月より増加'), findsWidgets);
 
-        await _unmount(tester);
-      },
-    );
+      await _unmount(tester);
+    });
 
     testWidgets(
-      'an existing revolving balance complies when the payday rule is scheduled',
-      (tester) async {
-        final now = DateTime.now();
-        final dateKey = DateFormat('yyyy-MM-dd').format(now);
-        // 既存残高は一括返済を求めず、新規利用分を25日に全額上乗せする。
-        final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
-          <String, AssetLiabilityRevolvingCreditConfig>{
-            'famipay_card': const AssetLiabilityRevolvingCreditConfig(
-              monthlyAmount: 5000,
-              newUsageAmount: 30000,
-            ),
-          },
-        );
-        SharedPreferences.setMockInitialValues(<String, Object>{});
-        await tester.binding.setSurfaceSize(const Size(1200, 3000));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: AssetManagementPage(
-              debugRevolvingConfigsMirror: mirrorValue,
-              debugInitialAssetData: <String, Map<String, double>>{
-                dateKey: const <String, double>{
-                  '財布(現金)': 500000,
-                  'ファミペイ': -100000,
-                },
-              },
-            ),
+        'an existing revolving balance complies when the payday rule is scheduled',
+        (tester) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      // 既存残高は一括返済を求めず、新規利用分を25日に全額上乗せする。
+      final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+        <String, AssetLiabilityRevolvingCreditConfig>{
+          'famipay_card': const AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 5000,
+            newUsageAmount: 30000,
           ),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
-        await tester.pump(const Duration(milliseconds: 200));
+        },
+      );
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 3000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
-        expect(find.textContaining('借金しない宣言モニター'), findsOneWidget);
-        expect(find.textContaining('新規利用分は25日に全額返済: 達成'), findsWidgets);
-        expect(find.textContaining('カードは全額一括'), findsNothing);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugRevolvingConfigsMirror: mirrorValue,
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 500000,
+                'ファミペイ': -100000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
 
-        await _unmount(tester);
-      },
-    );
+      expect(find.textContaining('借金しない宣言モニター'), findsOneWidget);
+      expect(find.textContaining('新規利用分は25日に全額返済: 達成'), findsWidgets);
+      expect(find.textContaining('カードは全額一括'), findsNothing);
+
+      await _unmount(tester);
+    });
     testWidgets(
       'completed one-shot policy restores its memo and suppresses setup advice',
       (tester) async {
@@ -2198,9 +2247,9 @@ void main() {
         // だが、'chart' セクション上書きを過去に削除した削除トゥームストーンを持つ。
         // サーバには 'chart' の上書きがまだ残っている状態を注入する。
         SharedPreferences.setMockInitialValues(<String, Object>{
-          'asset_management_section_override_deleted_v1': jsonEncode(<String>[
-            'chart',
-          ]),
+          'asset_management_section_override_deleted_v1': jsonEncode(
+            <String>['chart'],
+          ),
         });
         await tester.binding.setSurfaceSize(const Size(1200, 2400));
         addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -2307,15 +2356,16 @@ void main() {
         MaterialApp(
           home: AssetManagementPage(
             debugMirrorReadsAuthoritative: true,
-            debugWatchlistMirror:
-                AssetWatchlistService.encodeMirrorValue(<AssetWatchlistEntry>[
-                  AssetWatchlistEntry(
-                    assetType: 'gold',
-                    group: 'new',
-                    memo: '',
-                    addedAt: DateTime.utc(2026, 6, 14),
-                  ),
-                ]),
+            debugWatchlistMirror: AssetWatchlistService.encodeMirrorValue(
+              <AssetWatchlistEntry>[
+                AssetWatchlistEntry(
+                  assetType: 'gold',
+                  group: 'new',
+                  memo: '',
+                  addedAt: DateTime.utc(2026, 6, 14),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -2362,21 +2412,22 @@ void main() {
           MaterialApp(
             home: AssetManagementPage(
               debugMirrorReadsAuthoritative: true,
-              debugWatchlistMirror:
-                  AssetWatchlistService.encodeMirrorValue(<AssetWatchlistEntry>[
-                    AssetWatchlistEntry(
-                      assetType: 'gold',
-                      group: 'server_gold',
-                      memo: '',
-                      addedAt: DateTime.utc(2026, 6, 14),
-                    ),
-                    AssetWatchlistEntry(
-                      assetType: 'silver',
-                      group: 'server_silver',
-                      memo: '',
-                      addedAt: DateTime.utc(2026, 6, 14),
-                    ),
-                  ]),
+              debugWatchlistMirror: AssetWatchlistService.encodeMirrorValue(
+                <AssetWatchlistEntry>[
+                  AssetWatchlistEntry(
+                    assetType: 'gold',
+                    group: 'server_gold',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 6, 14),
+                  ),
+                  AssetWatchlistEntry(
+                    assetType: 'silver',
+                    group: 'server_silver',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 6, 14),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -2425,17 +2476,17 @@ void main() {
               debugMirrorReadsAuthoritative: true,
               debugRevolvingConfigsMirror:
                   AssetRevolvingCreditConfigStore.encodeMirrorValue(
-                    <String, AssetLiabilityRevolvingCreditConfig>{
-                      'dirty_card': const AssetLiabilityRevolvingCreditConfig(
-                        monthlyAmount: 9000,
-                        creditLimit: 500000,
-                      ),
-                      'clean_card': const AssetLiabilityRevolvingCreditConfig(
-                        monthlyAmount: 8000,
-                        creditLimit: 500000,
-                      ),
-                    },
+                <String, AssetLiabilityRevolvingCreditConfig>{
+                  'dirty_card': const AssetLiabilityRevolvingCreditConfig(
+                    monthlyAmount: 9000,
+                    creditLimit: 500000,
                   ),
+                  'clean_card': const AssetLiabilityRevolvingCreditConfig(
+                    monthlyAmount: 8000,
+                    creditLimit: 500000,
+                  ),
+                },
+              ),
             ),
           ),
         );
@@ -2509,15 +2560,16 @@ void main() {
         MaterialApp(
           home: AssetManagementPage(
             // debugMirrorReadsAuthoritative 未指定 = 既定 OFF。
-            debugWatchlistMirror:
-                AssetWatchlistService.encodeMirrorValue(<AssetWatchlistEntry>[
-                  AssetWatchlistEntry(
-                    assetType: 'gold',
-                    group: 'new',
-                    memo: '',
-                    addedAt: DateTime.utc(2026, 6, 14),
-                  ),
-                ]),
+            debugWatchlistMirror: AssetWatchlistService.encodeMirrorValue(
+              <AssetWatchlistEntry>[
+                AssetWatchlistEntry(
+                  assetType: 'gold',
+                  group: 'new',
+                  memo: '',
+                  addedAt: DateTime.utc(2026, 6, 14),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -2532,54 +2584,54 @@ void main() {
       await _unmount(tester);
     });
 
-    testWidgets(
-      'revolving union-merge: server card fills in, local card kept',
-      (tester) async {
-        // 端末B はローカルに別カードのリボ設定だけ持つ (auPAY は未設定)。
-        SharedPreferences.setMockInitialValues(<String, Object>{
-          AssetRevolvingCreditConfigStore.prefsKey: jsonEncode(
-            AssetRevolvingCreditConfigStore.encodeMirrorValue(
+    testWidgets('revolving union-merge: server card fills in, local card kept',
+        (
+      tester,
+    ) async {
+      // 端末B はローカルに別カードのリボ設定だけ持つ (auPAY は未設定)。
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        AssetRevolvingCreditConfigStore.prefsKey: jsonEncode(
+          AssetRevolvingCreditConfigStore.encodeMirrorValue(
+            <String, AssetLiabilityRevolvingCreditConfig>{
+              'other_card': const AssetLiabilityRevolvingCreditConfig(
+                monthlyAmount: 3000,
+                creditLimit: 100000,
+              ),
+            },
+          ),
+        ),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // 端末A が auPAY のリボ設定をサーバへ保存済みの状態をミラー注入。
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugRevolvingConfigsMirror:
+                AssetRevolvingCreditConfigStore.encodeMirrorValue(
               <String, AssetLiabilityRevolvingCreditConfig>{
-                'other_card': const AssetLiabilityRevolvingCreditConfig(
-                  monthlyAmount: 3000,
-                  creditLimit: 100000,
+                'aupay_card': const AssetLiabilityRevolvingCreditConfig(
+                  monthlyAmount: 10000,
+                  creditLimit: 500000,
                 ),
               },
             ),
           ),
-        });
-        await tester.binding.setSurfaceSize(const Size(1200, 2400));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
 
-        // 端末A が auPAY のリボ設定をサーバへ保存済みの状態をミラー注入。
-        await tester.pumpWidget(
-          MaterialApp(
-            home: AssetManagementPage(
-              debugRevolvingConfigsMirror:
-                  AssetRevolvingCreditConfigStore.encodeMirrorValue(
-                    <String, AssetLiabilityRevolvingCreditConfig>{
-                      'aupay_card': const AssetLiabilityRevolvingCreditConfig(
-                        monthlyAmount: 10000,
-                        creditLimit: 500000,
-                      ),
-                    },
-                  ),
-            ),
-          ),
-        );
-        await tester.pump(const Duration(milliseconds: 300));
-        await tester.pump(const Duration(milliseconds: 300));
+      // union マージ: サーバの auPAY が反映され、かつローカルの別カードも維持。
+      final merged = await const AssetRevolvingCreditConfigStore().load();
+      expect(merged.keys, containsAll(<String>['other_card', 'aupay_card']));
+      expect(merged['aupay_card']!.monthlyAmount, 10000);
+      expect(merged['aupay_card']!.creditLimit, 500000);
+      expect(merged['other_card']!.monthlyAmount, 3000);
 
-        // union マージ: サーバの auPAY が反映され、かつローカルの別カードも維持。
-        final merged = await const AssetRevolvingCreditConfigStore().load();
-        expect(merged.keys, containsAll(<String>['other_card', 'aupay_card']));
-        expect(merged['aupay_card']!.monthlyAmount, 10000);
-        expect(merged['aupay_card']!.creditLimit, 500000);
-        expect(merged['other_card']!.monthlyAmount, 3000);
-
-        await _unmount(tester);
-      },
-    );
+      await _unmount(tester);
+    });
 
     testWidgets('watchlist union-merge: server entry fills in, local kept', (
       tester,
@@ -2600,15 +2652,16 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: AssetManagementPage(
-            debugWatchlistMirror:
-                AssetWatchlistService.encodeMirrorValue(<AssetWatchlistEntry>[
-                  AssetWatchlistEntry(
-                    assetType: 'server_only',
-                    group: 'invest',
-                    memo: '',
-                    addedAt: DateTime.utc(2026, 6, 14),
-                  ),
-                ]),
+            debugWatchlistMirror: AssetWatchlistService.encodeMirrorValue(
+              <AssetWatchlistEntry>[
+                AssetWatchlistEntry(
+                  assetType: 'server_only',
+                  group: 'invest',
+                  memo: '',
+                  addedAt: DateTime.utc(2026, 6, 14),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -2697,53 +2750,54 @@ void main() {
       await _unmount(tester);
     });
 
-    testWidgets('recurring fixed cost deletion tombstone removes local cost', (
-      tester,
-    ) async {
-      // ローカルに電気代 / Netflix の定期固定費がある。
-      SharedPreferences.setMockInitialValues(<String, Object>{
-        AssetRecurringFixedCostStore.prefsKey: jsonEncode(
-          AssetRecurringFixedCostStore.encodeMirrorValue(
-            const <AssetRecurringFixedCost>[
-              AssetRecurringFixedCost(
-                id: 'fc_denki',
-                name: '電気代',
-                amount: 8000,
-                paymentDay: 27,
-              ),
-              AssetRecurringFixedCost(
-                id: 'fc_netflix',
-                name: 'Netflix',
-                amount: 1980,
-                paymentDay: 5,
-              ),
-            ],
+    testWidgets(
+      'recurring fixed cost deletion tombstone removes local cost',
+      (tester) async {
+        // ローカルに電気代 / Netflix の定期固定費がある。
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetRecurringFixedCostStore.prefsKey: jsonEncode(
+            AssetRecurringFixedCostStore.encodeMirrorValue(
+              const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'fc_denki',
+                  name: '電気代',
+                  amount: 8000,
+                  paymentDay: 27,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'fc_netflix',
+                  name: 'Netflix',
+                  amount: 1980,
+                  paymentDay: 5,
+                ),
+              ],
+            ),
           ),
-        ),
-      });
-      await tester.binding.setSurfaceSize(const Size(1200, 2400));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      // 他端末で fc_denki を削除した状態を削除トゥームストーンで注入。
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: AssetManagementPage(
-            debugRecurringFixedCostsDeletedMirror: <String, dynamic>{
-              'ids': <String>['fc_denki'],
-            },
+        // 他端末で fc_denki を削除した状態を削除トゥームストーンで注入。
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: AssetManagementPage(
+              debugRecurringFixedCostsDeletedMirror: <String, dynamic>{
+                'ids': <String>['fc_denki'],
+              },
+            ),
           ),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pump(const Duration(milliseconds: 300));
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
 
-      // 削除が伝播し fc_denki はローカルから消え、fc_netflix は残る。
-      final local = await const AssetRecurringFixedCostStore().load();
-      expect(local.map((c) => c.id), isNot(contains('fc_denki')));
-      expect(local.map((c) => c.id), contains('fc_netflix'));
+        // 削除が伝播し fc_denki はローカルから消え、fc_netflix は残る。
+        final local = await const AssetRecurringFixedCostStore().load();
+        expect(local.map((c) => c.id), isNot(contains('fc_denki')));
+        expect(local.map((c) => c.id), contains('fc_netflix'));
 
-      await _unmount(tester);
-    });
+        await _unmount(tester);
+      },
+    );
 
     testWidgets(
       'subscription delete confirms history retention and records tombstone',
@@ -2780,7 +2834,10 @@ void main() {
         await tester.pump(const Duration(milliseconds: 400));
         expect(find.text('サブスクを削除'), findsNothing);
         final afterCancel = await const AssetRecurringFixedCostStore().load();
-        expect(afterCancel.map((cost) => cost.id), contains('sub_xbox'));
+        expect(
+          afterCancel.map((cost) => cost.id),
+          contains('sub_xbox'),
+        );
 
         await tester.ensureVisible(deleteButton);
         await tester.pump(const Duration(milliseconds: 100));
@@ -2871,9 +2928,9 @@ void main() {
         await tester.pump(const Duration(milliseconds: 500));
         final keepLabel = find.text('残す').last;
         expect(keepLabel, findsOneWidget);
-        Navigator.of(
-          tester.element(keepLabel),
-        ).pop(AssetSubscriptionReviewDecision.keep);
+        Navigator.of(tester.element(keepLabel)).pop(
+          AssetSubscriptionReviewDecision.keep,
+        );
         await tester.pump(const Duration(milliseconds: 500));
 
         final persisted = await const AssetRecurringFixedCostStore().load(
@@ -2933,21 +2990,21 @@ void main() {
               // サーバミラーはまだ fc_denki を持つ (復活ベクタ)。
               debugRecurringFixedCostsMirror:
                   AssetRecurringFixedCostStore.encodeMirrorValue(
-                    const <AssetRecurringFixedCost>[
-                      AssetRecurringFixedCost(
-                        id: 'fc_denki',
-                        name: '電気代',
-                        amount: 8000,
-                        paymentDay: 27,
-                      ),
-                      AssetRecurringFixedCost(
-                        id: 'fc_netflix',
-                        name: 'Netflix',
-                        amount: 1980,
-                        paymentDay: 5,
-                      ),
-                    ],
+                const <AssetRecurringFixedCost>[
+                  AssetRecurringFixedCost(
+                    id: 'fc_denki',
+                    name: '電気代',
+                    amount: 8000,
+                    paymentDay: 27,
                   ),
+                  AssetRecurringFixedCost(
+                    id: 'fc_netflix',
+                    name: 'Netflix',
+                    amount: 1980,
+                    paymentDay: 5,
+                  ),
+                ],
+              ),
               // 同時に fc_denki の削除トゥームストーンが届く。
               debugRecurringFixedCostsDeletedMirror: const <String, dynamic>{
                 'ids': <String>['fc_denki'],
@@ -3043,9 +3100,9 @@ void main() {
               ],
             ),
           ),
-          'recurring_fixed_costs_deleted_v1': jsonEncode(const <String>[
-            'sub_legacy_deleted',
-          ]),
+          'recurring_fixed_costs_deleted_v1': jsonEncode(
+            const <String>['sub_legacy_deleted'],
+          ),
         });
         await tester.binding.setSurfaceSize(const Size(1200, 2400));
         addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -3087,7 +3144,10 @@ void main() {
           isNot(contains('sub_legacy_deleted')),
           reason: 'tombstones=$activeTombstones pending=$pendingSync',
         );
-        expect(pendingSync, contains('add:sub_legacy_deleted'));
+        expect(
+          pendingSync,
+          contains('add:sub_legacy_deleted'),
+        );
         expect(
           preferences.getBool(
             'recurring_fixed_cost_tombstone_pending_v2_migrated',
@@ -3126,21 +3186,21 @@ void main() {
             home: AssetManagementPage(
               debugRecurringFixedCostsMirror:
                   AssetRecurringFixedCostStore.encodeMirrorValue(
-                    const <AssetRecurringFixedCost>[
-                      AssetRecurringFixedCost(
-                        id: 'fc_denki',
-                        name: '電気代',
-                        amount: 8000,
-                        paymentDay: 27,
-                      ),
-                      AssetRecurringFixedCost(
-                        id: 'fc_gym',
-                        name: 'ジム',
-                        amount: 7000,
-                        paymentDay: 1,
-                      ),
-                    ],
+                const <AssetRecurringFixedCost>[
+                  AssetRecurringFixedCost(
+                    id: 'fc_denki',
+                    name: '電気代',
+                    amount: 8000,
+                    paymentDay: 27,
                   ),
+                  AssetRecurringFixedCost(
+                    id: 'fc_gym',
+                    name: 'ジム',
+                    amount: 7000,
+                    paymentDay: 1,
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -3157,32 +3217,33 @@ void main() {
       },
     );
 
-    testWidgets('subscription audit syncs check state from the server mirror', (
-      tester,
-    ) async {
-      // ローカルは空。新端末がサーバミラーから確認状況を取り込む。
-      SharedPreferences.setMockInitialValues(<String, Object>{});
-      await tester.binding.setSurfaceSize(const Size(1200, 2400));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+    testWidgets(
+      'subscription audit syncs check state from the server mirror',
+      (tester) async {
+        // ローカルは空。新端末がサーバミラーから確認状況を取り込む。
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: AssetManagementPage(
-            debugSubscriptionAuditMirror:
-                AssetSubscriptionAuditStore.encodeMirrorValue(
-                  <String, DateTime>{'apple_id': DateTime.utc(2026, 6, 1)},
-                ),
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugSubscriptionAuditMirror:
+                  AssetSubscriptionAuditStore.encodeMirrorValue(
+                <String, DateTime>{'apple_id': DateTime.utc(2026, 6, 1)},
+              ),
+            ),
           ),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pump(const Duration(milliseconds: 300));
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
 
-      final state = await const AssetSubscriptionAuditStore().load();
-      expect(state['apple_id'], DateTime.utc(2026, 6, 1));
+        final state = await const AssetSubscriptionAuditStore().load();
+        expect(state['apple_id'], DateTime.utc(2026, 6, 1));
 
-      await _unmount(tester);
-    });
+        await _unmount(tester);
+      },
+    );
 
     testWidgets(
       'subscription audit MAX-merges and never clobbers a newer check',
@@ -3190,10 +3251,12 @@ void main() {
         // apple_id: local 古 + mirror 新 → 新。au_kantan: local 新 + mirror 古 → 新。
         SharedPreferences.setMockInitialValues(<String, Object>{
           AssetSubscriptionAuditStore.prefsKey: jsonEncode(
-            AssetSubscriptionAuditStore.encodeMirrorValue(<String, DateTime>{
-              'apple_id': DateTime.utc(2026, 6, 1),
-              'au_kantan': DateTime.utc(2026, 6, 10),
-            }),
+            AssetSubscriptionAuditStore.encodeMirrorValue(
+              <String, DateTime>{
+                'apple_id': DateTime.utc(2026, 6, 1),
+                'au_kantan': DateTime.utc(2026, 6, 10),
+              },
+            ),
           ),
         });
         await tester.binding.setSurfaceSize(const Size(1200, 2400));
@@ -3204,11 +3267,11 @@ void main() {
             home: AssetManagementPage(
               debugSubscriptionAuditMirror:
                   AssetSubscriptionAuditStore.encodeMirrorValue(
-                    <String, DateTime>{
-                      'apple_id': DateTime.utc(2026, 6, 10),
-                      'au_kantan': DateTime.utc(2026, 6, 1),
-                    },
-                  ),
+                <String, DateTime>{
+                  'apple_id': DateTime.utc(2026, 6, 10),
+                  'au_kantan': DateTime.utc(2026, 6, 1),
+                },
+              ),
             ),
           ),
         );
@@ -3240,7 +3303,9 @@ void main() {
         await tester.binding.setSurfaceSize(const Size(1200, 2400));
         addTearDown(() => tester.binding.setSurfaceSize(null));
 
-        await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
+        await tester.pumpWidget(
+          const MaterialApp(home: AssetManagementPage()),
+        );
         await tester.pump(const Duration(milliseconds: 300));
         await tester.pump(const Duration(milliseconds: 300));
 
@@ -3250,34 +3315,37 @@ void main() {
       },
     );
 
-    testWidgets('proposal cards survive hiding the salary-breakdown section', (
-      tester,
-    ) async {
-      // 給与内訳セクションを hidden にしても、定期取引/定期収入の自動検出
-      // (提案カード) は専用 proposals セクションとして残る (相乗り解消 = 候補#2)。
-      SharedPreferences.setMockInitialValues(<String, Object>{
-        'asset_management_display_mode_v1':
-            AssetManagementDisplayMode.standard.storageId,
-        'asset_management_section_overrides_v1': jsonEncode(<String, String>{
-          AssetManagementSectionId.salaryBreakdown.storageId:
-              AssetManagementSectionVisibilityOverride.hidden.storageId,
-        }),
-      });
-      await tester.binding.setSurfaceSize(const Size(1200, 2400));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+    testWidgets(
+      'proposal cards survive hiding the salary-breakdown section',
+      (tester) async {
+        // 給与内訳セクションを hidden にしても、定期取引/定期収入の自動検出
+        // (提案カード) は専用 proposals セクションとして残る (相乗り解消 = 候補#2)。
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.standard.storageId,
+          'asset_management_section_overrides_v1': jsonEncode(<String, String>{
+            AssetManagementSectionId.salaryBreakdown.storageId:
+                AssetManagementSectionVisibilityOverride.hidden.storageId,
+          }),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pump(const Duration(milliseconds: 300));
+        await tester.pumpWidget(
+          const MaterialApp(home: AssetManagementPage()),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
 
-      // 検出データが無くてもカード widget 自体は構築される (内部で shrink)。
-      expect(
-        find.byType(AssetRecurringTransactionSuggestionCard),
-        findsWidgets,
-      );
+        // 検出データが無くてもカード widget 自体は構築される (内部で shrink)。
+        expect(
+          find.byType(AssetRecurringTransactionSuggestionCard),
+          findsWidgets,
+        );
 
-      await _unmount(tester);
-    });
+        await _unmount(tester);
+      },
+    );
 
     testWidgets('watchlist deletion tombstone removes local entry', (
       tester,
@@ -3353,21 +3421,22 @@ void main() {
           MaterialApp(
             home: AssetManagementPage(
               // サーバミラーはまだ gold を持つ (復活ベクタ)。
-              debugWatchlistMirror:
-                  AssetWatchlistService.encodeMirrorValue(<AssetWatchlistEntry>[
-                    AssetWatchlistEntry(
-                      assetType: 'gold',
-                      group: '',
-                      memo: '',
-                      addedAt: DateTime.utc(2026, 1, 1),
-                    ),
-                    AssetWatchlistEntry(
-                      assetType: 'btc',
-                      group: '',
-                      memo: '',
-                      addedAt: DateTime.utc(2026, 1, 1),
-                    ),
-                  ]),
+              debugWatchlistMirror: AssetWatchlistService.encodeMirrorValue(
+                <AssetWatchlistEntry>[
+                  AssetWatchlistEntry(
+                    assetType: 'gold',
+                    group: '',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 1, 1),
+                  ),
+                  AssetWatchlistEntry(
+                    assetType: 'btc',
+                    group: '',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 1, 1),
+                  ),
+                ],
+              ),
               // 同時に gold の削除トゥームストーンが届く。
               debugWatchlistDeletedMirror: const <String, dynamic>{
                 'ids': <String>['gold'],
@@ -3410,21 +3479,22 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: AssetManagementPage(
-              debugWatchlistMirror:
-                  AssetWatchlistService.encodeMirrorValue(<AssetWatchlistEntry>[
-                    AssetWatchlistEntry(
-                      assetType: 'shared',
-                      group: '',
-                      memo: '',
-                      addedAt: DateTime.utc(2026, 1, 1),
-                    ),
-                    AssetWatchlistEntry(
-                      assetType: 'extra',
-                      group: 'invest',
-                      memo: '',
-                      addedAt: DateTime.utc(2026, 6, 14),
-                    ),
-                  ]),
+              debugWatchlistMirror: AssetWatchlistService.encodeMirrorValue(
+                <AssetWatchlistEntry>[
+                  AssetWatchlistEntry(
+                    assetType: 'shared',
+                    group: '',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 1, 1),
+                  ),
+                  AssetWatchlistEntry(
+                    assetType: 'extra',
+                    group: 'invest',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 6, 14),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -3453,29 +3523,32 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: AssetManagementPage(
-              watchlistService: _ThrowingWatchlistService(<AssetWatchlistEntry>[
-                AssetWatchlistEntry(
-                  assetType: 'gold',
-                  group: '',
-                  memo: '',
-                  addedAt: DateTime.utc(2026, 1, 1),
-                ),
-              ]),
-              debugWatchlistMirror:
-                  AssetWatchlistService.encodeMirrorValue(<AssetWatchlistEntry>[
-                    AssetWatchlistEntry(
-                      assetType: 'gold',
-                      group: '',
-                      memo: '',
-                      addedAt: DateTime.utc(2026, 1, 1),
-                    ),
-                    AssetWatchlistEntry(
-                      assetType: 'extra',
-                      group: 'invest',
-                      memo: '',
-                      addedAt: DateTime.utc(2026, 6, 14),
-                    ),
-                  ]),
+              watchlistService: _ThrowingWatchlistService(
+                <AssetWatchlistEntry>[
+                  AssetWatchlistEntry(
+                    assetType: 'gold',
+                    group: '',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 1, 1),
+                  ),
+                ],
+              ),
+              debugWatchlistMirror: AssetWatchlistService.encodeMirrorValue(
+                <AssetWatchlistEntry>[
+                  AssetWatchlistEntry(
+                    assetType: 'gold',
+                    group: '',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 1, 1),
+                  ),
+                  AssetWatchlistEntry(
+                    assetType: 'extra',
+                    group: 'invest',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 6, 14),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -3524,30 +3597,36 @@ void main() {
       },
     );
 
-    testWidgets('missing asset data does not claim debt release or payoff', (
-      tester,
-    ) async {
-      SharedPreferences.setMockInitialValues(<String, Object>{
-        'asset_management_display_mode_v1':
-            AssetManagementDisplayMode.minimum.storageId,
-      });
-      await tester.binding.setSurfaceSize(const Size(1200, 2400));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+    testWidgets(
+      'missing asset data does not claim debt release or payoff',
+      (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.minimum.storageId,
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pump(const Duration(milliseconds: 300));
+        await tester.pumpWidget(
+          const MaterialApp(home: AssetManagementPage()),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.text('判定不可'), findsNWidgets(2));
-      expect(
-        find.text('資産・負債が未登録のため、完済状態を判定できません。まず残高を登録してください。'),
-        findsNWidgets(2),
-      );
-      expect(find.text('釈放'), findsNothing);
-      expect(find.text('借金は完済済みです。収監モードは解除されました。'), findsNothing);
+        expect(find.text('判定不可'), findsNWidgets(2));
+        expect(
+          find.text('資産・負債が未登録のため、完済状態を判定できません。まず残高を登録してください。'),
+          findsNWidgets(2),
+        );
+        expect(find.text('釈放'), findsNothing);
+        expect(
+          find.text('借金は完済済みです。収監モードは解除されました。'),
+          findsNothing,
+        );
 
-      await _unmount(tester);
-    });
+        await _unmount(tester);
+      },
+    );
 
     testWidgets(
       'registered zero-debt snapshot still shows the paid-off state',
@@ -3574,7 +3653,10 @@ void main() {
 
         expect(find.text('判定不可'), findsNothing);
         expect(find.text('釈放'), findsNWidgets(2));
-        expect(find.text('借金は完済済みです。収監モードは解除されました。'), findsOneWidget);
+        expect(
+          find.text('借金は完済済みです。収監モードは解除されました。'),
+          findsOneWidget,
+        );
 
         await _unmount(tester);
       },
