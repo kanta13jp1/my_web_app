@@ -1638,6 +1638,8 @@ class AssetLiabilityWorkbook {
 }
 
 /// 口座名・ローン名の表記ゆれや類似名称による二重登録（例: 「じぶんローン」と「じぶん銀行カードローン」）の警告。
+
+/// 口座名・ローン名の表記ゆれや類似名称による二重登録（例: 「じぶんローン」と「じぶん銀行カードローン」）の警告。
 class AssetLiabilityDebtDuplicateWarning {
   final AssetLiabilityDebtRow rowA;
   final AssetLiabilityDebtRow rowB;
