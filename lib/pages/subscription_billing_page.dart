@@ -8,7 +8,9 @@ import '../services/activation_revenue_tracker.dart';
 import '../services/billing_service.dart';
 import '../services/growth_acquisition_service.dart';
 import '../services/paddle_checkout.dart';
+import '../services/paddle_invoice_access.dart';
 import '../ui/features/billing/views/paddle_sandbox_checkout_card.dart';
+import '../ui/features/billing/views/paddle_sandbox_invoice_access_card.dart';
 
 class SubscriptionBillingPage extends StatefulWidget {
   const SubscriptionBillingPage({
@@ -21,6 +23,8 @@ class SubscriptionBillingPage extends StatefulWidget {
     this.assignment,
     this.paddleSandboxConfig,
     this.paddleCheckoutGateway,
+    this.paddleInvoiceAccessConfig,
+    this.paddleInvoicePortalLauncher,
   });
 
   final BillingGateway? service;
@@ -31,6 +35,8 @@ class SubscriptionBillingPage extends StatefulWidget {
   final ActivationRevenueAssignment? assignment;
   final PaddleSandboxConfig? paddleSandboxConfig;
   final PaddleCheckoutGateway? paddleCheckoutGateway;
+  final PaddleInvoiceAccessConfig? paddleInvoiceAccessConfig;
+  final PaddleInvoicePortalLauncher? paddleInvoicePortalLauncher;
 
   @override
   State<SubscriptionBillingPage> createState() =>
@@ -168,6 +174,10 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     });
   }
 
+  Future<bool> _openPaddleInvoicePortal(Uri uri) {
+    return launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   Future<void> _openStripeSession(
     Future<dynamic> Function() createSession,
   ) async {
@@ -226,6 +236,8 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     final valueFraming = _enabled('a10');
     final paddleSandboxConfig =
         widget.paddleSandboxConfig ?? PaddleSandboxConfig.fromEnvironment();
+    final paddleInvoiceAccessConfig = widget.paddleInvoiceAccessConfig ??
+        PaddleInvoiceAccessConfig.fromEnvironment();
     return Scaffold(
       appBar: AppBar(
         title: const Text('プランと応援'),
@@ -290,6 +302,12 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                           onContinue: () {
                             Navigator.of(context).pushReplacementNamed('/home');
                           },
+                        ),
+                        const SizedBox(height: 16),
+                        PaddleSandboxInvoiceAccessCard(
+                          config: paddleInvoiceAccessConfig,
+                          launchPortal: widget.paddleInvoicePortalLauncher ??
+                              _openPaddleInvoicePortal,
                         ),
                       ],
                       const SizedBox(height: 16),

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       run_real_sandbox_e2e:
-        description: Run the real Paddle sandbox success/failure/cancel matrix
+        description: Run the real Paddle sandbox checkout and B2B VAT matrix
         required: true
         default: false
         type: boolean
@@ -19,8 +19,10 @@ on:
     paths:
       - '.github/workflows/paddle-sandbox-checkout.yml'
       - 'docs/PADDLE_SANDBOX_CHECKOUT_VERIFICATION.md'
+      - 'docs/PADDLE_B2B_VAT_INVOICE_VERIFICATION.md'
       - 'lib/pages/subscription_billing_page.dart'
       - 'lib/services/paddle_checkout.dart'
+      - 'lib/services/paddle_invoice_access.dart'
       - 'lib/services/paddle_js_checkout_gateway.dart'
       - 'lib/services/paddle_js_checkout_gateway_stub.dart'
       - 'lib/services/paddle_js_checkout_gateway_web.dart'
@@ -28,6 +30,7 @@ on:
       - 'test/pages/subscription_billing_page_test.dart'
       - 'test/e2e/paddle_sandbox_checkout.spec.ts'
       - 'test/services/paddle_checkout_test.dart'
+      - 'test/services/paddle_invoice_access_test.dart'
       - 'test/services/paddle_sandbox_web_entrypoint_test.dart'
       - 'test/ui/features/billing/**'
       - 'web/index.html'
@@ -106,15 +109,19 @@ jobs:
           dart format --output=none --set-exit-if-changed
           lib/pages/subscription_billing_page.dart
           lib/services/paddle_checkout.dart
+          lib/services/paddle_invoice_access.dart
           lib/services/paddle_js_checkout_gateway.dart
           lib/services/paddle_js_checkout_gateway_stub.dart
           lib/services/paddle_js_checkout_gateway_web.dart
           lib/ui/features/billing/view_models/paddle_sandbox_checkout_controller.dart
           lib/ui/features/billing/views/paddle_sandbox_checkout_card.dart
+          lib/ui/features/billing/views/paddle_sandbox_invoice_access_card.dart
           test/pages/subscription_billing_page_test.dart
           test/services/paddle_checkout_test.dart
+          test/services/paddle_invoice_access_test.dart
           test/services/paddle_sandbox_web_entrypoint_test.dart
           test/ui/features/billing/paddle_sandbox_checkout_card_test.dart
+          test/ui/features/billing/paddle_sandbox_invoice_access_card_test.dart
 
       - name: Analyze project
         shell: bash
@@ -129,8 +136,10 @@ jobs:
           set -euo pipefail
           flutter test --concurrency=1 \
             test/services/paddle_checkout_test.dart \
+            test/services/paddle_invoice_access_test.dart \
             test/services/paddle_sandbox_web_entrypoint_test.dart \
             test/ui/features/billing/paddle_sandbox_checkout_card_test.dart \
+            test/ui/features/billing/paddle_sandbox_invoice_access_card_test.dart \
             test/pages/subscription_billing_page_test.dart \
             2>&1 | tee .ci-logs/paddle-vm-tests.log
 
@@ -140,6 +149,7 @@ jobs:
           set -euo pipefail
           flutter test --platform chrome --concurrency=1 \
             test/ui/features/billing/paddle_sandbox_checkout_card_test.dart \
+            test/ui/features/billing/paddle_sandbox_invoice_access_card_test.dart \
             test/pages/subscription_billing_page_test.dart \
             2>&1 | tee .ci-logs/paddle-chrome-tests.log
 
@@ -151,6 +161,7 @@ jobs:
             --dart-define=PADDLE_SANDBOX_ENABLED=true \
             --dart-define=PADDLE_SANDBOX_CLIENT_TOKEN=test_ci_compile_only \
             --dart-define=PADDLE_SANDBOX_PRICE_ID=pri_ci_compile_only \
+            --dart-define=PADDLE_SANDBOX_CUSTOMER_PORTAL_URL=https://sandbox-customer-portal.paddle.com/cpl_01abcdefghijklmnopqrstuvwx \
             2>&1 | tee .ci-logs/paddle-debug-web-build.log
           test -s build/web/main.dart.js
           test -s build/web/paddle_sandbox_bridge.js
@@ -163,6 +174,7 @@ jobs:
             --dart-define=PADDLE_SANDBOX_ENABLED=true \
             --dart-define=PADDLE_SANDBOX_CLIENT_TOKEN=test_ci_compile_only \
             --dart-define=PADDLE_SANDBOX_PRICE_ID=pri_ci_compile_only \
+            --dart-define=PADDLE_SANDBOX_CUSTOMER_PORTAL_URL=https://sandbox-customer-portal.paddle.com/cpl_01abcdefghijklmnopqrstuvwx \
             2>&1 | tee .ci-logs/paddle-release-web-build.log
           test -s build/web/main.dart.js
           test -s build/web/paddle_sandbox_bridge.js
@@ -192,7 +204,7 @@ jobs:
           retention-days: 7
 
   real-sandbox-e2e:
-    name: Real Paddle sandbox success, failure, and cancel
+    name: Real Paddle sandbox checkout and B2B VAT
     if: >-
       always() &&
       github.event_name == 'workflow_dispatch' &&
@@ -206,6 +218,14 @@ jobs:
     env:
       PADDLE_SANDBOX_CLIENT_TOKEN: ${{ secrets.PADDLE_SANDBOX_CLIENT_TOKEN }}
       PADDLE_SANDBOX_PRICE_ID: ${{ vars.PADDLE_SANDBOX_PRICE_ID }}
+      PADDLE_SANDBOX_CUSTOMER_PORTAL_URL: ${{ vars.PADDLE_SANDBOX_CUSTOMER_PORTAL_URL }}
+      PADDLE_SANDBOX_B2B_EMAIL: ${{ secrets.PADDLE_SANDBOX_B2B_EMAIL }}
+      PADDLE_SANDBOX_B2B_TAX_IDENTIFIER: ${{ secrets.PADDLE_SANDBOX_B2B_TAX_IDENTIFIER }}
+      PADDLE_SANDBOX_B2B_COUNTRY_CODE: ${{ vars.PADDLE_SANDBOX_B2B_COUNTRY_CODE }}
+      PADDLE_SANDBOX_B2B_COUNTRY_NAME: ${{ vars.PADDLE_SANDBOX_B2B_COUNTRY_NAME }}
+      PADDLE_SANDBOX_B2B_POSTAL_CODE: ${{ vars.PADDLE_SANDBOX_B2B_POSTAL_CODE }}
+      PADDLE_SANDBOX_B2B_BUSINESS_NAME: ${{ vars.PADDLE_SANDBOX_B2B_BUSINESS_NAME }}
+      PADDLE_SANDBOX_B2B_EXPECTED_TAX: ${{ vars.PADDLE_SANDBOX_B2B_EXPECTED_TAX }}
       PADDLE_SANDBOX_E2E: 'true'
       E2E_BASE_URL: http://localhost:7357
       SUPABASE_URL: ${{ secrets.SUPABASE_URL_DEV }}
@@ -222,6 +242,8 @@ jobs:
         run: |
           set -euo pipefail
           echo "::add-mask::$PADDLE_SANDBOX_CLIENT_TOKEN"
+          echo "::add-mask::$PADDLE_SANDBOX_B2B_EMAIL"
+          echo "::add-mask::$PADDLE_SANDBOX_B2B_TAX_IDENTIFIER"
           if [[ -z "$PADDLE_SANDBOX_CLIENT_TOKEN" ]]; then
             echo '::error::Repository secret PADDLE_SANDBOX_CLIENT_TOKEN is missing.'
             exit 1
@@ -236,6 +258,33 @@ jobs:
           fi
           if [[ "$PADDLE_SANDBOX_PRICE_ID" != pri_* ]]; then
             echo '::error::PADDLE_SANDBOX_PRICE_ID must be a pri_ identifier.'
+            exit 1
+          fi
+          if [[ ! "$PADDLE_SANDBOX_CUSTOMER_PORTAL_URL" =~ ^https://sandbox-customer-portal\.paddle\.com/cpl_[a-z0-9]{10,}$ ]]; then
+            echo '::error::PADDLE_SANDBOX_CUSTOMER_PORTAL_URL must be a stable generic sandbox portal URL.'
+            exit 1
+          fi
+          required_b2b_values=(
+            PADDLE_SANDBOX_B2B_EMAIL
+            PADDLE_SANDBOX_B2B_TAX_IDENTIFIER
+            PADDLE_SANDBOX_B2B_COUNTRY_CODE
+            PADDLE_SANDBOX_B2B_COUNTRY_NAME
+            PADDLE_SANDBOX_B2B_POSTAL_CODE
+            PADDLE_SANDBOX_B2B_BUSINESS_NAME
+            PADDLE_SANDBOX_B2B_EXPECTED_TAX
+          )
+          for variable_name in "${required_b2b_values[@]}"; do
+            if [[ -z "${!variable_name}" ]]; then
+              echo "::error::${variable_name} is required for the B2B VAT scenario."
+              exit 1
+            fi
+          done
+          if [[ ! "$PADDLE_SANDBOX_B2B_COUNTRY_CODE" =~ ^[A-Z]{2}$ ]]; then
+            echo '::error::PADDLE_SANDBOX_B2B_COUNTRY_CODE must be a two-letter uppercase code.'
+            exit 1
+          fi
+          if [[ ! "$PADDLE_SANDBOX_B2B_EXPECTED_TAX" =~ ^[0-9]+$ ]]; then
+            echo '::error::PADDLE_SANDBOX_B2B_EXPECTED_TAX must be a Paddle minor-unit integer.'
             exit 1
           fi
           if [[ -z "$SUPABASE_URL" || -z "$SUPABASE_PUBLISHABLE_KEY" ]]; then
@@ -278,6 +327,7 @@ jobs:
             --dart-define=PADDLE_SANDBOX_ENABLED=true \
             --dart-define=PADDLE_SANDBOX_CLIENT_TOKEN="$PADDLE_SANDBOX_CLIENT_TOKEN" \
             --dart-define=PADDLE_SANDBOX_PRICE_ID="$PADDLE_SANDBOX_PRICE_ID" \
+            --dart-define=PADDLE_SANDBOX_CUSTOMER_PORTAL_URL="$PADDLE_SANDBOX_CUSTOMER_PORTAL_URL" \
             2>&1 | tee .ci-logs/paddle-real-sandbox-build.log
 
       - name: Start short-lived Web server
@@ -326,8 +376,9 @@ jobs:
             echo '## Real Paddle sandbox matrix'
             echo
             echo '- The GitHub-hosted runner used a short-lived localhost debug build.'
-            echo '- Playwright ran success, declined-card, and customer-cancel scenarios serially with retries disabled.'
-            echo '- Review the uploaded report, sanitized event log, and post-checkout screenshots before closing #2845.'
+            echo '- Playwright ran success, declined-card, customer-cancel, and B2B VAT recalculation scenarios serially with retries disabled.'
+            echo '- VAT evidence contains only tax-ID presence and financial totals; it never stores the tax identifier itself.'
+            echo '- Review the uploaded report, sanitized event log, and post-checkout screenshots before closing #2845 and #2846.'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload real sandbox evidence

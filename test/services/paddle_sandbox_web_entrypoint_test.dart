@@ -11,15 +11,15 @@ void main() {
 
     expect(index, contains(paddleTag));
     expect(index, contains(bootstrapTag));
-    expect(
-      index.indexOf(paddleTag),
-      lessThan(index.indexOf(bootstrapTag)),
-    );
+    expect(index.indexOf(paddleTag), lessThan(index.indexOf(bootstrapTag)));
     expect(bridge, contains('https://cdn.paddle.com/paddle/v2/paddle.js'));
     expect(bridge, contains("paddle.Environment.set('sandbox')"));
     expect(bridge, contains('paddle.Initialize({'));
     expect(bridge, contains('paddle.Checkout.open({'));
+    expect(bridge, contains('showAddTaxId: true'));
     expect(bridge, contains('window.getPaddleSandboxEventLog'));
     expect(bridge, contains('receivedAt: new Date().toISOString()'));
+    expect(bridge, contains('hasTaxIdentifier: Boolean(taxIdentifier)'));
+    expect(bridge, contains('tax: optionalText(totals.tax)'));
   });
 }

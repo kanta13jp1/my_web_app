@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-30T19:40:30.846475+00:00",
+  "generated_at": "2026-08-31T15:30:31.988409+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -13,10 +13,10 @@
   "pool": {
     "total": 13,
     "eligible": 13,
-    "provisional": 11,
+    "provisional": 9,
     "division_1": 0,
-    "division_2": 2,
-    "division_3": 11,
+    "division_2": 4,
+    "division_3": 9,
     "division_4": 0,
     "division_5": 0,
     "eliminated": 0
@@ -29,50 +29,50 @@
     "operating_efficiency": 10
   },
   "latest_review": {
-    "cycle_id": "20260831T040750+0900",
-    "started_at": "2026-08-31T04:07:50+09:00",
+    "cycle_id": "20260831T233058+0900",
+    "started_at": "2026-08-31T23:30:58+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "ai_university",
-      "url": "https://my-web-app-b67f4.web.app/ai-university"
+      "slug": "home",
+      "url": "https://my-web-app-b67f4.web.app/"
     },
     "reviewer": {
-      "seat": 12,
-      "name": "迫 佑樹",
-      "selection_score": 83.8473,
+      "seat": 11,
+      "name": "野口 功司",
+      "selection_score": 76.4343,
       "division": 1,
-      "cycle_utility": 91.67,
-      "aggregate_utility": 88.6
+      "cycle_utility": 82.08,
+      "aggregate_utility": 86.0
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "The entry page records content-recovery events and several bounded learning-task outcomes, but it lacks one measurable path from discovery choice to first lesson, completion, repeat learning, and paid conversion.",
+        "summary": "Homeの主要導線と追加要望フローが継続価値・登録・支払いへ寄与するかを機能単位で判断できない",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
-          "revenue_model",
-          "unit_economics"
-        ]
-      },
-      {
-        "summary": "The entry surface exposes many simultaneous discovery modes without evidence that a first-time learner can identify the best next lesson quickly.",
-        "severity": "p1",
-        "business_dimensions": [
-          "customer_pain",
-          "market_demand",
+          "go_to_market",
           "revenue_model"
         ]
       },
       {
-        "summary": "An 8,483-line stateful page coordinates discovery, content loading, progress, sharing, quizzes, RLHF, and analytics, raising the cost of safely improving the learner funnel.",
+        "summary": "Homeは前回の失敗案内修復後も10,041行・69 imports・11 FutureBuilder・15 collapsible sectionsを単一ページで調整している",
         "severity": "p2",
         "business_dimensions": [
-          "unit_economics",
           "scalability",
-          "trust_risk"
+          "go_to_market",
+          "customer_pain"
+        ]
+      },
+      {
+        "summary": "前回の追加要望3失敗経路の修復はsource・unit test・CI・本番deploy証拠で維持されている",
+        "severity": "p3",
+        "business_dimensions": [
+          "trust_risk",
+          "customer_pain",
+          "go_to_market"
         ]
       }
     ],
@@ -87,56 +87,341 @@
         "relevant": 100
       },
       "gate_passed": true,
-      "baseline_cycle_id": null,
-      "focus_dimension": "evidence",
-      "overall_delta": null,
+      "baseline_cycle_id": "20260827T033027+0900",
+      "focus_dimension": "complete",
+      "overall_delta": 0.0,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "Instrument one privacy-safe entry-to-first-lesson funnel by discovery path and compare first-lesson start plus seven-day repeat-learning rates for four weeks."
+      "next_cycle_experiment": "After maintainers approve an anonymous consent-compatible Home funnel, compare section start-to-completion, D7 retention, paid conversion, and feature-request completion by journey, then choose one measured high-value responsibility for extraction."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5146",
-      "detail": "A complete remedy requires a product-defined learner funnel, privacy-safe production measurement, discovery design judgment, and cross-cutting module boundaries. These exceed the shared low-risk automatic repair scope.",
+      "label": "対策待ち・Issue #5166",
+      "detail": "匿名計測は同意・privacy・analytics契約の確認を要し、Home分割も3 files/200 linesの低リスク自動修正境界を超えるため、product変更を行わない。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
-      "resolved_finding_ids": [],
+      "resolved_finding_ids": [
+        "home-outcome-evidence-gap"
+      ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: dedicated worktree fast-forwarded cleanly to origin/main 724624964cc5a90743884a4724ae5e38e7f9591e",
-        "passed: roster 2026-08-23 and personas 2026-08-30 schema 2, 125 profiles each",
-        "passed: deterministic winner ai_university from 13 eligible features",
-        "passed: 8,483-line entry surface, 40 matched tests, recovery semantics, broad discovery controls, and unknown production outcomes captured",
-        "passed: 125 profiles, deterministic seat 12"
+        "passed: dedicated branch fast-forwarded to origin/main e74e2c86c33b31269c297e79bf09f7b52b7d8a78",
+        "passed: 125 roster profiles and 125 personas",
+        "executed successfully: deterministic home winner from 13 eligible features",
+        "passed: baseline 20260827T033027+0900 at CLEAR 100, focus_dimension=complete",
+        "passed: production HTTP 200; current Home source and failure contract inspected without Flutter or Dart",
+        "passed: Issue #4916 records PR #5118, CI 33316719113, deploy 33317282783, and remaining scope",
+        "executed successfully once after neutral evidence scan: 125 profiles, seat 11"
       ],
       "issue": {
-        "number": 5146,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5146",
+        "number": 5166,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5166",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260831T040750+0900:ai_university",
+        "dedupe_key": "tiger-feature-review:20260831T233058+0900:home",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "ai-university-entry-outcome-funnel-gap",
-        "ai-university-discovery-decision-overload",
-        "ai-university-monolith-operating-cost"
+        "home-implementation-concentration-persists",
+        "home-error-recovery-repair-retained"
       ]
     },
     "feature": {
-      "slug": "ai_university",
-      "title": "AI University entry",
+      "slug": "home",
+      "title": "Home",
       "kind": "page",
-      "reason": "The deterministic selector chose ai_university. The neutral scan found strong recovery semantics and broad content discovery, but no unified page-level contract links entry, discovery path, first lesson, completion, repeat learning, and paid conversion; observed usage therefore remains neutral 50.",
-      "cycle_utility": 65.2,
-      "aggregate_utility": 65.12,
+      "reason": "The deterministic selector returned the public home entrypoint. Production and the prior error-handling repair are healthy, while the feature still concentrates many asynchronous and navigation responsibilities in a 10,041-line file and exposes no review-accessible feature-level outcome analytics; observed usage therefore remains the required neutral 50.",
+      "cycle_utility": 71.3,
+      "aggregate_utility": 70.37,
       "division": 2
     }
   },
   "history": [
+    {
+      "cycle_id": "20260831T233058+0900",
+      "started_at": "2026-08-31T23:30:58+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "home",
+        "title": "Home",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 76.4343
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260827T033027+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After maintainers approve an anonymous consent-compatible Home funnel, compare section start-to-completion, D7 retention, paid conversion, and feature-request completion by journey, then choose one measured high-value responsibility for extraction."
+      },
+      "findings": [
+        {
+          "finding_id": "home-outcome-evidence-gap",
+          "summary": "Homeの主要導線と追加要望フローが継続価値・登録・支払いへ寄与するかを機能単位で判断できない",
+          "severity": "p1",
+          "suggested_action": "既存の同意・分析境界を確認したうえで、今日の1件、主要セクション、追加要望の表示・開始・完了を匿名集計し、D7継続と有料転換へ接続する最小ファネルを設計する。"
+        },
+        {
+          "finding_id": "home-implementation-concentration-persists",
+          "summary": "Homeは前回の失敗案内修復後も10,041行・69 imports・11 FutureBuilder・15 collapsible sectionsを単一ページで調整している",
+          "severity": "p2",
+          "suggested_action": "匿名ファネルで優先度を確定してから、追加要望、今日の1件、課金ナッジ、非同期summaryを独立widgetと注入可能なcontrollerへ段階分割する。"
+        },
+        {
+          "finding_id": "home-error-recovery-repair-retained",
+          "summary": "前回の追加要望3失敗経路の修復はsource・unit test・CI・本番deploy証拠で維持されている",
+          "severity": "p3",
+          "suggested_action": "現在の公開failure分類とretry契約を回帰基準として維持し、今後のHome分割時も同じ契約testを移行する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5166",
+        "detail": "匿名計測は同意・privacy・analytics契約の確認を要し、Home分割も3 files/200 linesの低リスク自動修正境界を超えるため、product変更を行わない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "home-outcome-evidence-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: dedicated branch fast-forwarded to origin/main e74e2c86c33b31269c297e79bf09f7b52b7d8a78",
+          "passed: 125 roster profiles and 125 personas",
+          "executed successfully: deterministic home winner from 13 eligible features",
+          "passed: baseline 20260827T033027+0900 at CLEAR 100, focus_dimension=complete",
+          "passed: production HTTP 200; current Home source and failure contract inspected without Flutter or Dart",
+          "passed: Issue #4916 records PR #5118, CI 33316719113, deploy 33317282783, and remaining scope",
+          "executed successfully once after neutral evidence scan: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 5166,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5166",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260831T233058+0900:home",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "home-implementation-concentration-persists",
+          "home-error-recovery-repair-retained"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T180859+0900",
+      "started_at": "2026-08-31T18:08:59+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "landing",
+        "title": "ランディングページ",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 77.2198
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After maintainers reduce the active hypothesis set and publish minimum-sample and stopping rules, compare time-to-decision, signup completion per active arm, and share-origin CTA progression against this cycle."
+      },
+      "findings": [
+        {
+          "finding_id": "landing-experiment-decision-signal-sparse",
+          "summary": "10仮説・20アームに対して最新登録送信が5件で、実験の意思決定信号が分散している",
+          "severity": "p1",
+          "suggested_action": "仮説を顧客課題と獲得経路で優先順位づけし、同時稼働数を絞り、各仮説の最小標本量・停止条件・採用判断をcloud reportへ明示する。"
+        },
+        {
+          "finding_id": "landing-share-message-divergence",
+          "summary": "X共有文はギター録音と21 SaaS統合を主役にし、heroのAI生活経営・今日の最優先1件と焦点がずれる",
+          "severity": "p2",
+          "suggested_action": "共有文の主語をheroの一文価値提案へ合わせ、ギター録音やSaaS統合は検証済みの補助証拠として扱う候補を比較する。"
+        },
+        {
+          "finding_id": "landing-responsibility-concentration",
+          "summary": "7,608行の単一landing実装に実験・auth・trial・social proof・sharingが集中している",
+          "severity": "p2",
+          "suggested_action": "既存の契約testを保ちながら、editorial section、experiment decision、conversion handoff、social proof、sharingを独立した責務へ段階分割する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5161",
+        "detail": "実験の優先順位、最小標本量、停止条件、共有メッセージ、段階分割にはproduct判断が必要で、証拠から一意に定まる低リスク自動修正ではない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "landing-experiment-decision-signal-sparse"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch fast-forwarded to origin/main 7773883a4ed33ebd9b0bde352c51520fddc339fa",
+          "passed: 125 roster profiles and 125 personas",
+          "executed successfully: deterministic landing winner from 13 eligible features",
+          "passed: no schema-v5 comparable landing baseline, focus_dimension=evidence",
+          "passed: production HTTP 200 and current landing source, service, tests, prior cycle inspected",
+          "passed: latest ten report runs succeeded; latest run 33361189926 reported 20 arms and 5 signup submits",
+          "executed successfully after schema correction: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 5161,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5161",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260831T180859+0900:landing",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "landing-share-message-divergence",
+          "landing-responsibility-concentration"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T080010+0900",
+      "started_at": "2026-08-31T08:00:10+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "comparison",
+        "title": "競合比較一覧",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 76.1943
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After maintainers publish search/category controls and freshness metadata, compare representative-card discovery time, zero-result rate, source reachability, /vs-* progression, and comparison-assisted registration against the current baseline."
+      },
+      "findings": [
+        {
+          "finding_id": "comparison-discovery-search-category-gap",
+          "summary": "174社規模の一覧に名称検索とcategory絞り込みがなく、目的の比較候補へ到達しにくい",
+          "severity": "p1",
+          "suggested_action": "表示名とcategoryを対象にしたkeyboard-accessible検索、category filter、結果件数、全解除操作を追加し、代表fixtureで目的候補への到達時間を測る。"
+        },
+        {
+          "finding_id": "comparison-freshness-provenance-gap",
+          "summary": "料金、日本展開、overlap、脅威度に更新日時や根拠が表示されず、比較判断の鮮度を確認できない",
+          "severity": "p1",
+          "suggested_action": "competitor単位のverified_atとsource URLを保持し、cardまたはdetail handoffで最終確認日と根拠を表示し、期限超過データを明示する。"
+        },
+        {
+          "finding_id": "comparison-review-source-drift-persistent",
+          "summary": "review設定sourceが実際の/competitors実装と一致しない状態が前回指摘後も残る",
+          "severity": "p2",
+          "suggested_action": "保護されたfeature_review_configのcomparison.sourceをcompetitor_browse_page.dartへ更新し、個別/vs-*ページは別featureとして明示管理する。"
+        },
+        {
+          "finding_id": "comparison-browse-outcome-evidence-gap",
+          "summary": "一覧表示、filter、カード遷移の実利用成果がなく、観測利用を中立50点から更新できない",
+          "severity": "p2",
+          "suggested_action": "privacy境界を確認し、一覧表示、検索/filter利用、zero result、/vs-*遷移を匿名集計する最小event contractを設ける。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5158",
+        "detail": "検索・category UX、freshness data contract、analytics/privacy設計、保護されたreview設定の判断が必要で、証拠から一意に定まる低リスク自動修正ではない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "comparison-discovery-search-category-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch ready at origin/main 3bbefe8e22a2dea5e034d7fc636ddd4de4f5562f",
+          "passed: 125 roster profiles and 125 personas",
+          "executed successfully: deterministic comparison winner from 13 eligible features",
+          "passed: no schema-v5 comparable baseline, focus_dimension=evidence",
+          "passed: production HTTP 200, current route, browse source, focused widget test, and feature configuration inspected",
+          "executed once successfully: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 5158,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5158",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260831T080010+0900:comparison",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "comparison-freshness-provenance-gap",
+          "comparison-review-source-drift-persistent",
+          "comparison-browse-outcome-evidence-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260831T040750+0900",
       "started_at": "2026-08-31T04:07:50+09:00",
@@ -1537,6 +1822,38 @@
   ],
   "features": [
     {
+      "slug": "home",
+      "kind": "page",
+      "title": "home",
+      "path": "/",
+      "source": "lib/pages/home_page.dart",
+      "priority": "high",
+      "division": 2,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 70.37,
+      "completed_cycles": 2,
+      "last_cycle_utility": 71.3,
+      "last_reviewed_at": "2026-08-31T14:30:58+00:00",
+      "reason": "機能レビュー2回・効用70.4点で2部"
+    },
+    {
+      "slug": "landing",
+      "kind": "page",
+      "title": "landing",
+      "path": "/lp",
+      "source": "lib/widgets/landing_page_content.dart",
+      "priority": "high",
+      "division": 2,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 68.23,
+      "completed_cycles": 2,
+      "last_cycle_utility": 64.4,
+      "last_reviewed_at": "2026-08-31T09:08:59+00:00",
+      "reason": "機能レビュー2回・効用68.2点で2部"
+    },
+    {
       "slug": "comparison",
       "kind": "page",
       "title": "comparison",
@@ -1546,11 +1863,11 @@
       "division": 2,
       "provisional": false,
       "eligible": true,
-      "utility_score": 68.58,
-      "completed_cycles": 2,
-      "last_cycle_utility": 74.1,
-      "last_reviewed_at": "2026-08-23T15:24:32+00:00",
-      "reason": "機能レビュー2回・効用68.6点で2部"
+      "utility_score": 65.14,
+      "completed_cycles": 3,
+      "last_cycle_utility": 61.7,
+      "last_reviewed_at": "2026-08-30T23:00:10+00:00",
+      "reason": "機能レビュー3回・効用65.1点で2部"
     },
     {
       "slug": "ai_university",
@@ -1567,38 +1884,6 @@
       "last_cycle_utility": 65.2,
       "last_reviewed_at": "2026-08-30T19:07:50+00:00",
       "reason": "機能レビュー4回・効用65.1点で2部"
-    },
-    {
-      "slug": "landing",
-      "kind": "page",
-      "title": "landing",
-      "path": "/lp",
-      "source": "lib/widgets/landing_page_content.dart",
-      "priority": "high",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": 75.9,
-      "completed_cycles": 1,
-      "last_cycle_utility": 75.9,
-      "last_reviewed_at": "2026-08-24T13:04:00+00:00",
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
-    },
-    {
-      "slug": "home",
-      "kind": "page",
-      "title": "home",
-      "path": "/",
-      "source": "lib/pages/home_page.dart",
-      "priority": "high",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": 68.5,
-      "completed_cycles": 1,
-      "last_cycle_utility": 68.5,
-      "last_reviewed_at": "2026-08-26T18:30:27+00:00",
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
       "slug": "core_hub",

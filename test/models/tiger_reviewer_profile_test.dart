@@ -16,14 +16,14 @@ void main() {
 
       expect(catalog.schemaVersion, 2);
       expect(catalog.profilesBySeat, hasLength(125));
-      expect(catalog.enrichmentRound, greaterThanOrEqualTo(8));
+      expect(catalog.enrichmentRound, greaterThanOrEqualTo(9));
       expect(catalog.averageProfileCompletenessPercent, greaterThan(0));
       expect(catalog.averageReviewReflectionPercent, greaterThan(0));
-      expect(catalog.verifiedBirthDates, 10);
+      expect(catalog.verifiedBirthDates, 12);
       expect(catalog.nextBatchNames, hasLength(5));
       expect(
         catalog.nextBatchNames,
-        <String>['渡正行', '足立暢', '泉舞', '六川正男', '岡田修一'],
+        <String>['渡正行', '足立暢', '泉舞', '西村博之（ひろゆき）', '後藤 和良'],
       );
       expect(catalog.profilesBySeat.keys.toSet(), hasLength(125));
       expect(
@@ -77,6 +77,21 @@ void main() {
       expect(watari.ageLabel(DateTime(2026, 8, 26)), '公開情報未確認');
       expect(watari.reviewReflectionMode, 'neutral_guarded');
       expect(watari.evidenceLinks, hasLength(2));
+      final rokugawa = catalog.profilesBySeat[106]!;
+      expect(rokugawa.ageLabel(DateTime(2026, 9, 1)), '39歳（2026年9月1日時点）');
+      expect(rokugawa.companyRole, contains('代表取締役'));
+      expect(rokugawa.businessDomains, contains('不動産・建設・住宅'));
+      expect(rokugawa.profileCompletenessPercent, 91);
+      expect(rokugawa.reviewReflectionPercent, 88);
+      expect(rokugawa.reviewReflectionMode, 'profile_guided');
+      expect(rokugawa.evidenceLinks, hasLength(3));
+      final okada = catalog.profilesBySeat[107]!;
+      expect(okada.ageLabel(DateTime(2026, 9, 1)), '33歳（2026年9月1日時点）');
+      expect(okada.companyRole, contains('代表・創業者'));
+      expect(okada.profileCompletenessPercent, 85);
+      expect(okada.reviewReflectionPercent, 79);
+      expect(okada.reviewReflectionMode, 'profile_balanced');
+      expect(okada.evidenceLinks, hasLength(3));
       for (final seat in <int>[92, 94, 95, 96]) {
         final profile = catalog.profilesBySeat[seat]!;
         expect(profile.profileCompletenessPercent, greaterThanOrEqualTo(65));

@@ -12,6 +12,7 @@ import {
 } from "./artifact_review.ts";
 import type { VideoImprovementLink } from "./artifact_review.ts";
 import { validateImprovementAuthorization } from "./authorization.ts";
+import { resolveVideoOperator } from "./operator_auth.ts";
 import { loadWorkerWakeConfiguration, wakeVideoWorker } from "./worker_wake.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -190,11 +191,6 @@ serve(async (req: Request) => {
       return jsonResponse({ error: "request_too_large" }, 413);
     }
 
-    const user = await authenticatedUser(req);
-    if (!user || user.isAnonymous) {
-      return jsonResponse({ error: "authentication_required" }, 401);
-    }
-
     const rawBody = await req.text();
     if (new TextEncoder().encode(rawBody).byteLength > MAX_BODY_BYTES) {
       return jsonResponse({ error: "request_too_large" }, 413);
@@ -205,6 +201,21 @@ serve(async (req: Request) => {
     }
     const input = body;
     const action = asString(input.action);
+    const operator = resolveVideoOperator({
+      authorization: req.headers.get("Authorization") ?? "",
+      serviceRoleKey: SERVICE_ROLE_KEY,
+      action,
+      requestedUserId: asString(input.user_id),
+    });
+    if (operator.kind === "error") {
+      return jsonResponse({ error: operator.code }, operator.status);
+    }
+    const user = operator.kind === "service_role"
+      ? { id: operator.userId, isAnonymous: false }
+      : await authenticatedUser(req);
+    if (!user || user.isAnonymous) {
+      return jsonResponse({ error: "authentication_required" }, 401);
+    }
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     switch (action) {
