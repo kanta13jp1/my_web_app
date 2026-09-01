@@ -763,8 +763,7 @@ class AssetLiabilityPlanningService {
     final interest = principal * annualRate / 12;
     final isBorrowing = account.kind == AssetLiabilityAccountKind.cardLoan ||
         account.kind == AssetLiabilityAccountKind.shoppingDebt ||
-        account.kind == AssetLiabilityAccountKind.creditCard ||
-        account.kind == AssetLiabilityAccountKind.mortgage;
+        account.kind == AssetLiabilityAccountKind.creditCard;
     final minimumPayment = (!isBorrowing && account.fullPaymentEstimate)
         ? principal + interest
         : min(
