@@ -30377,8 +30377,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final netDelta = latest == null || previous == null
         ? null
         : latest.netWorth - previous.netWorth;
-    final parsedDate =
-        latest == null ? null : DateTime.tryParse(latest.date);
+    final parsedDate = latest == null ? null : DateTime.tryParse(latest.date);
     final dateLabel = parsedDate == null
         ? '未記録'
         : DateFormat('yyyy/MM/dd').format(parsedDate);
