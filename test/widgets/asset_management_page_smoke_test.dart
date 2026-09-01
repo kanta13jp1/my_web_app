@@ -3697,5 +3697,38 @@ void main() {
         await _unmount(tester);
       },
     );
+
+    testWidgets(
+      'Issue #5187: card reconciliation table renders without RenderBox layout exception',
+      (tester) async {
+        final now = DateTime.now();
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        await tester.binding.setSurfaceSize(const Size(1200, 4000));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 50000,
+                  '三井住友カード': -120000,
+                  'PayPayカード': -45000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // カード請求内訳レビュー / 管理ボードおよび資産負債全容把握カードが正常に描画される
+        expect(find.byKey(const Key('asset_liability_workbook_board')), findsOneWidget);
+        expect(find.text('資産/負債 管理ボード'), findsOneWidget);
+        expect(find.text('①資産・②負債の全容把握'), findsOneWidget);
+
+        await _unmount(tester);
+      },
+    );
   });
 }
