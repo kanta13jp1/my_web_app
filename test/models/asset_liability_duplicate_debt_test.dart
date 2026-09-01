@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/services/asset_duplicate_debt_service.dart';
 
 AssetLiabilityDebtRow _createTestDebtRow({
   required String id,
@@ -41,7 +42,7 @@ AssetLiabilityDebtRow _createTestDebtRow({
 }
 
 void main() {
-  group('detectDuplicateDebts', () {
+  group('AssetDuplicateDebtService', () {
     test(
       'Issue #5189: detects duplicate debt between じぶんローン and じぶん銀行カードローン',
       () {
@@ -58,7 +59,11 @@ void main() {
           balance: 50000,
         );
 
-        final warnings = detectDuplicateDebts([rowA, rowB, otherRow]);
+        final warnings = AssetDuplicateDebtService.detectDuplicates([
+          rowA,
+          rowB,
+          otherRow,
+        ]);
         expect(warnings, isNotEmpty);
         expect(warnings.length, equals(1));
         expect(warnings.first.rowA.id, equals('jibun_loan'));
@@ -82,7 +87,7 @@ void main() {
         balance: 300000,
       );
 
-      final warnings = detectDuplicateDebts([rowA, rowB]);
+      final warnings = AssetDuplicateDebtService.detectDuplicates([rowA, rowB]);
       expect(warnings, isEmpty);
     });
   });
