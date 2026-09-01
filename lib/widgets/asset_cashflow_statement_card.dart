@@ -96,7 +96,7 @@ class AssetCashflowStatementCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '月収 − 月支出 = 当月キャッシュフロー',
+              '月収 − 月支出 = 当月現預金出納 / 純資産増減 (B/S実質損益)',
               style: theme.textTheme.bodySmall?.copyWith(color: _muted),
             ),
             const SizedBox(height: 16),
