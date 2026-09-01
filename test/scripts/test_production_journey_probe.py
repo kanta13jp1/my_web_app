@@ -58,6 +58,18 @@ class ProductionJourneyProbeTest(unittest.TestCase):
                             "description": "承認済みデータ取扱方針です。",
                             "contract_markers": ["ユーザーの権利"],
                         },
+                        {
+                            "path": "/terms",
+                            "title": "利用規約 | 自分株式会社",
+                            "description": "承認済み利用条件です。",
+                            "contract_markers": ["月額制で自動更新"],
+                        },
+                        {
+                            "path": "/tokusho",
+                            "title": "特定商取引法に基づく表記 | 自分株式会社",
+                            "description": "承認済み販売条件です。",
+                            "contract_markers": ["特定商取引法第11条"],
+                        },
                     ]
                 },
                 ensure_ascii=False,
@@ -95,15 +107,43 @@ class ProductionJourneyProbeTest(unittest.TestCase):
             ),
             encoding="utf-8",
         )
+        terms = self.root / "terms"
+        terms.mkdir()
+        (terms / "index.html").write_text(
+            render_html(
+                title="利用規約 | 自分株式会社",
+                description="承認済み利用条件です。",
+                path="/terms",
+                marker="月額制で自動更新",
+            ),
+            encoding="utf-8",
+        )
+        tokusho = self.root / "tokusho"
+        tokusho.mkdir()
+        (tokusho / "index.html").write_text(
+            render_html(
+                title="特定商取引法に基づく表記 | 自分株式会社",
+                description="承認済み販売条件です。",
+                path="/tokusho",
+                marker="特定商取引法第11条",
+            ),
+            encoding="utf-8",
+        )
 
     def test_local_build_accepts_unique_route_specific_responses(self) -> None:
         results = run_probe(config_path=self.config, root_dir=self.root)
 
-        self.assertEqual([item["status"] for item in results], [200, 200, 200])
-        self.assertEqual(len({item["sha256"] for item in results}), 3)
+        self.assertEqual([item["status"] for item in results], [200] * 5)
+        self.assertEqual(len({item["sha256"] for item in results}), 5)
         self.assertEqual(
             [item["canonical"] for item in results],
-            [f"{BASE}/", f"{BASE}/subscription-billing", f"{BASE}/privacy"],
+            [
+                f"{BASE}/",
+                f"{BASE}/subscription-billing",
+                f"{BASE}/privacy",
+                f"{BASE}/terms",
+                f"{BASE}/tokusho",
+            ],
         )
 
     def test_contract_rejects_missing_approved_content(self) -> None:
@@ -180,7 +220,7 @@ class ProductionJourneyProbeTest(unittest.TestCase):
             config_path=repo_root / "web" / "seo" / "public-routes.json",
             root_dir=output,
         )
-        self.assertEqual(len({item["sha256"] for item in results}), 3)
+        self.assertEqual(len({item["sha256"] for item in results}), 5)
 
 
 if __name__ == "__main__":

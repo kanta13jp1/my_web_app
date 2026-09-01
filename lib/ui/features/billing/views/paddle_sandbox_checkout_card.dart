@@ -73,6 +73,10 @@ class _PaddleSandboxCheckoutCardState extends State<PaddleSandboxCheckoutCard> {
                 const Text('Stripe の既存課金は変更せず、Paddle.js のモーダルとイベント処理だけを検証します。'),
                 const SizedBox(height: 12),
                 _PaddleCheckoutStatusBanner(state: state),
+                if (state.hasFinancialSnapshot) ...[
+                  const SizedBox(height: 10),
+                  _PaddleTaxEvidenceSummary(state: state),
+                ],
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 10,
@@ -110,6 +114,48 @@ class _PaddleSandboxCheckoutCardState extends State<PaddleSandboxCheckoutCard> {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class _PaddleTaxEvidenceSummary extends StatelessWidget {
+  const _PaddleTaxEvidenceSummary({required this.state});
+
+  final PaddleCheckoutState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final currency = state.currencyCode ?? '—';
+    return Container(
+      key: const Key('paddle_sandbox_tax_evidence'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            state.hasTaxIdentifier
+                ? 'VAT / Tax ID 適用済み（番号は保存しません）'
+                : '税額スナップショット',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 12,
+            runSpacing: 6,
+            children: [
+              Text('通貨: $currency'),
+              Text('小計: ${state.subtotal ?? '—'}'),
+              Text('税額: ${state.tax ?? '—'}'),
+              Text('合計: ${state.total ?? '—'}'),
+            ],
+          ),
+        ],
       ),
     );
   }

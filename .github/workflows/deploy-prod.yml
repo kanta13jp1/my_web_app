@@ -25,6 +25,7 @@ on:
       - 'scripts/pre_commit_quality_gate.py'
       - 'scripts/pre_commit_quality_gate_test.py'
       - 'scripts/check_ga_readiness_gate.py'
+      - 'assets/data/tiger_*'
   workflow_dispatch:
 
 concurrency:

@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-30T21:18:33.566925+00:00",
+  "generated_at": "2026-08-31T12:24:05.338112+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -11,12 +11,12 @@
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 19,
-    "eligible": 19,
-    "provisional": 17,
+    "total": 22,
+    "eligible": 22,
+    "provisional": 20,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 18,
+    "division_3": 21,
     "division_4": 1,
     "division_5": 0
   },
@@ -28,50 +28,50 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260831T061237+0900",
-    "started_at": "2026-08-31T06:12:37+09:00",
+    "cycle_id": "20260831T211401+0900",
+    "started_at": "2026-08-31T21:14:01+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
-      "url": "https://docs.ai21.com/docs/jamba-models"
+      "slug": "course-2240c679-a2bc-4322-8643-7499385a1bde",
+      "url": "https://aider.chat/"
     },
     "reviewer": {
-      "seat": 12,
-      "name": "迫 佑樹",
-      "selection_score": 79.4436,
+      "seat": 94,
+      "name": "戸村 光",
+      "selection_score": 76.4431,
       "division": 1,
-      "cycle_utility": 85.44,
-      "aggregate_utility": 87.52
+      "cycle_utility": 83.0,
+      "aggregate_utility": 83.46
     },
     "status": "review_only",
     "validation": "passed",
-    "finding_count": 4,
+    "finding_count": 3,
     "top_findings": [
       {
-        "summary": "掲載source URLが404で、platform非区別のjamba-1.5-large/miniを現行モデル一覧として提示している",
+        "summary": "Aider CLI course has no public learner, outcome, verification, source-evidence, or freshness contract",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
-          "unit_economics",
-          "scalability"
-        ]
-      },
-      {
-        "summary": "用途別推奨はあるが、platform、version、品質、latency、costを比較する再現可能な意思決定rubricがない",
-        "severity": "p1",
-        "business_dimensions": [
-          "unit_economics",
           "scalability",
           "competitive_advantage"
         ]
       },
       {
-        "summary": "cost efficient・最高精度という主張に、現行platform別の費用、latency、qualityを再計算する課題がない",
+        "summary": "The public contract does not verify a bounded multi-file Git workflow despite that being the course promise",
+        "severity": "p1",
+        "business_dimensions": [
+          "scalability",
+          "competitive_advantage",
+          "unit_economics"
+        ]
+      },
+      {
+        "summary": "No real learner outcome evidence is available for the Aider CLI course",
         "severity": "p2",
         "business_dimensions": [
-          "unit_economics",
+          "market_demand",
           "revenue_model",
-          "trust_risk"
+          "scalability"
         ]
       }
     ],
@@ -90,57 +90,339 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After the production-data owner publishes one dated platform matrix and model-selection lab, run one cohort and compare source reachability, platform-selection accuracy, endpoint success, 60-minute completion, rubric score, cost-prediction error, support contacts, and workplace application."
+      "next_cycle_experiment": "After the production-data owner publishes the five evidence fields and one 30-to-60-minute fixture-repository lab, run one cohort and compare enrollment-to-start conversion, completion, rubric score, files added to context, undo success, lint/test success, support contacts, and workplace application."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5150",
-      "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
+      "label": "対策待ち・Issue #5165",
+      "detail": "The finding requires changing protected production course data that is not represented by a bounded tracked course source file, which is outside the automatic repair boundary.",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [
-        "course-ai21-model-source-platform-contract"
+        "course-aider-missing-evidence-contract"
       ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean dedicated branch ready at origin/main 28438d008d072ed5a0c96614804e258c62f0d81b",
+        "passed: clean dedicated branch at origin/main f38154bfea8a7cdae97a8efe02be3f8aa989970f",
         "passed: 125 roster profiles and 125 personas",
-        "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
-        "passed: deterministic AI21 model-availability winner from fresh catalog",
+        "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=6",
+        "executed once successfully: Aider CLI course selected from fresh catalog",
         "passed: no comparable baseline, focus_dimension=evidence",
-        "passed: source 404, current AI21 Jamba and platform availability documentation, and the named tracked course migration were inspected separately",
-        "executed once successfully: 125 profiles, seat 12"
+        "passed: official Aider homepage, usage, Git, and GitHub repository evidence inspected separately; no matching tracked course row found",
+        "executed once successfully: 125 profiles, seat 94"
       ],
       "issue": {
-        "number": 5150,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5150",
+        "number": 5165,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5165",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260831T061237+0900:5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
+        "dedupe_key": "tiger-course-review:20260831T211401+0900:2240c679-a2bc-4322-8643-7499385a1bde",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-ai21-model-decision-rubric-gap",
-        "course-ai21-cost-quality-verification-gap",
-        "course-ai21-model-selection-learner-outcome-gap"
+        "course-aider-multi-file-git-lab-gap",
+        "course-aider-learner-outcome-gap"
       ]
     },
     "course": {
-      "content_id": "5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
-      "provider": "ai21",
-      "title": "AI21 Labs — 利用可能モデル (2026)",
-      "source_url": "https://docs.ai21.com/docs/jamba-models",
-      "reason": "Fresh公開Data APIで対象行を確認したが、5つのevidence fieldはすべてnullだった。掲載source_urlは404で、tracked courseはjamba-1.5-large/miniをプラットフォーム非区別の一般選択肢として提示する。現行公式AI21 SaaSはjamba-large 1.7とjamba-mini 2を案内しdated endpointを推奨する一方、Azure・AWSの一部は1.5を提供しており、選択にはplatform、version、cost、latency、qualityの明示が必要である。courseには実行課題、rubric、合格閾値、実在学習者成果がないためlearner evidenceは契約どおり中立50点とした。",
-      "cycle_utility": 31.0,
-      "aggregate_utility": 31.0,
+      "content_id": "2240c679-a2bc-4322-8643-7499385a1bde",
+      "provider": "aider",
+      "title": "Aider — AI ペアプログラマー CLI (Git連携 / 複数ファイル編集 / 22k+ Stars)",
+      "source_url": "https://aider.chat/",
+      "reason": "The fresh public catalog proves that the selected Aider CLI course is active and points to a reachable official source, but all five evidence-contract fields are null. Official evidence confirms terminal, codebase-map, Git, explicit-file, multi-file, and test capabilities, yet the public course metadata does not define a learner, observable multi-file Git outcome, verification rubric, dated evidence source, or real learner result. Learner evidence is therefore disclosed at the neutral score of 50.",
+      "cycle_utility": 45.75,
+      "aggregate_utility": 45.75,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260831T211401+0900",
+      "started_at": "2026-08-31T21:14:01+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "2240c679-a2bc-4322-8643-7499385a1bde",
+        "title": "Aider — AI ペアプログラマー CLI (Git連携 / 複数ファイル編集 / 22k+ Stars)",
+        "url": "https://aider.chat/"
+      },
+      "reviewer": {
+        "seat": 94,
+        "name": "戸村 光",
+        "selection_score": 76.4431
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner publishes the five evidence fields and one 30-to-60-minute fixture-repository lab, run one cohort and compare enrollment-to-start conversion, completion, rubric score, files added to context, undo success, lint/test success, support contacts, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-aider-missing-evidence-contract",
+          "summary": "Aider CLI course has no public learner, outcome, verification, source-evidence, or freshness contract",
+          "severity": "p1",
+          "suggested_action": "Publish all five evidence-contract fields together: target learner, one observable multi-file Git outcome, a rubric-backed verification method, dated official evidence sources, and the verification timestamp."
+        },
+        {
+          "finding_id": "course-aider-multi-file-git-lab-gap",
+          "summary": "The public contract does not verify a bounded multi-file Git workflow despite that being the course promise",
+          "severity": "p1",
+          "suggested_action": "Add a 30-to-60-minute fixture-repository lab requiring explicit file selection, one multi-file change, diff review, commit and undo evidence, and a passing lint or test command under a fixed rubric."
+        },
+        {
+          "finding_id": "course-aider-learner-outcome-gap",
+          "summary": "No real learner outcome evidence is available for the Aider CLI course",
+          "severity": "p2",
+          "suggested_action": "Collect one privacy-safe cohort aggregate for start, completion, rubric score, Git/undo/test success, support demand, and workplace application without storing repositories, prompts, or API keys."
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5165",
+        "detail": "The finding requires changing protected production course data that is not represented by a bounded tracked course source file, which is outside the automatic repair boundary.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-aider-missing-evidence-contract"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch at origin/main f38154bfea8a7cdae97a8efe02be3f8aa989970f",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=6",
+          "executed once successfully: Aider CLI course selected from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: official Aider homepage, usage, Git, and GitHub repository evidence inspected separately; no matching tracked course row found",
+          "executed once successfully: 125 profiles, seat 94"
+        ],
+        "issue": {
+          "number": 5165,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5165",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260831T211401+0900:2240c679-a2bc-4322-8643-7499385a1bde",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-aider-multi-file-git-lab-gap",
+          "course-aider-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T170208+0900",
+      "started_at": "2026-08-31T17:02:08+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "0ee90f87-2319-4b2f-af0f-d298083c752c",
+        "title": "Aider 入門 — インストール・基本操作・Git 連携ワークフロー",
+        "url": "https://aider.chat/docs/usage/tutorial.html"
+      },
+      "reviewer": {
+        "seat": 94,
+        "name": "戸村 光",
+        "selection_score": 77.1966
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner replaces the dead source and publishes one 30-to-60-minute Git workflow lab, run one cohort and compare source reachability, 60-minute completion, rubric score, undo success, lint/test success, support contacts, token-context discipline, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-aider-dead-primary-source",
+          "summary": "Aider入門の主要一次資料URLが404で、現行導線へ到達できない",
+          "severity": "p1",
+          "suggested_action": "source_urlを現行の公式UsageまたはInstallationへ更新し、確認日、対象者、到達可能な学習成果、検証方法を5項目のevidence contractとして同時に公開する。"
+        },
+        {
+          "finding_id": "course-aider-verifiable-git-workflow-gap",
+          "summary": "Git変更・undo・テストを一つの再現可能な成果物で検証する契約がない",
+          "severity": "p1",
+          "suggested_action": "小さなfixture repositoryで必要ファイルだけを追加し、ask/code、差分、undo、再実行、commit、lint/test成功証拠を提出する30〜60分labとrubricを追加する。"
+        },
+        {
+          "finding_id": "course-aider-learner-outcome-gap",
+          "summary": "Aider入門の実在学習者成果を示す匿名集計がない",
+          "severity": "p2",
+          "suggested_action": "匿名の開始/完了、Git差分、undo、lint/test、rubric score、職場適用を一cohortで取得し、repository内容やAPI keyを保存せず集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5160",
+        "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-aider-dead-primary-source"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch at origin/main 41f5123c25aa06e46317f137779a9ee68c40d47d",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
+          "executed once successfully: Aider 入門 selected from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: configured tutorial URL returned 404; current official installation, usage, Git, chat-mode, and lint/test sources were inspected separately",
+          "executed once successfully: 125 profiles, seat 94"
+        ],
+        "issue": {
+          "number": 5160,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5160",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260831T170208+0900:0ee90f87-2319-4b2f-af0f-d298083c752c",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-aider-verifiable-git-workflow-gap",
+          "course-aider-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T134103+0900",
+      "started_at": "2026-08-31T13:41:03+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
+        "title": "AI21 Labs 概要",
+        "url": "https://www.ai21.com/"
+      },
+      "reviewer": {
+        "seat": 94,
+        "name": "戸村 光",
+        "selection_score": 76.1036
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner publishes one dated product map and a 30-to-60-minute decision lab, run one cohort and compare product-path accuracy, 60-minute completion, rubric score, source reachability, support contacts, reproducibility, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-ai21-overview-product-boundary-gap",
+          "summary": "AI21の現行provider boundaryであるMaestro、Jamba、導入形態の関係が教材から欠落している",
+          "severity": "p1",
+          "suggested_action": "現行公式overviewを基にMaestro、Jamba、AI21 API、第三者model/BYOK、private deploymentを一枚のdated product mapで分け、各経路の適用条件と一次根拠を示す。"
+        },
+        {
+          "finding_id": "course-ai21-overview-decision-lab-gap",
+          "summary": "Maestro、Jamba/API、private deploymentを要件から選ぶ再現可能な意思決定labがない",
+          "severity": "p1",
+          "suggested_action": "3つのworkload fixtureにprivacy、latency SLO、budget、model constraint、traceability要件を与え、Maestro、Jamba/API、private deploymentから経路を選び一次根拠とtrade-offを提出する30〜60分labを追加する。"
+        },
+        {
+          "finding_id": "course-ai21-overview-evidence-contract-gap",
+          "summary": "対象者、観測可能な学習成果、評価方法、証拠URL、検証日時がすべて未設定",
+          "severity": "p1",
+          "suggested_action": "対象者をenterprise AI導入担当、成果を要件から製品・導入経路を選ぶdecision memo、評価をrubric、証拠を現行official overview群、検証日時をpublish時刻として公開fieldへ設定する。"
+        },
+        {
+          "finding_id": "course-ai21-overview-learner-outcome-gap",
+          "summary": "実在学習者がAI21の製品・導入経路を正しく選べた成果証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名の開始/完了、経路選択、rubric score、再現率、職場適用を一cohortで取得し、秘密情報やprompt本文を保存せず集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5157",
+        "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-ai21-overview-product-boundary-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch fast-forwarded to origin/main b7048433823ab2fff81974724768acbc06630d43",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
+          "executed once successfully: AI21 Labs 概要 selected from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: current AI21 homepage, overview, Maestro, Jamba documentation, and the named tracked migration were inspected separately",
+          "executed once successfully: 125 profiles, seat 94"
+        ],
+        "issue": {
+          "number": 5157,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5157",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260831T134103+0900:9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-ai21-overview-decision-lab-gap",
+          "course-ai21-overview-evidence-contract-gap",
+          "course-ai21-overview-learner-outcome-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260831T061237+0900",
       "started_at": "2026-08-31T06:12:37+09:00",
@@ -2225,6 +2507,20 @@
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
+      "content_id": "2240c679-a2bc-4322-8643-7499385a1bde",
+      "provider": "aider",
+      "title": "Aider — AI ペアプログラマー CLI (Git連携 / 複数ファイル編集 / 22k+ Stars)",
+      "source_url": "https://aider.chat/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 45.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 45.75,
+      "last_reviewed_at": "2026-08-31T12:14:01+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
       "content_id": "fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
       "provider": "adept",
       "title": "Adept AI モデル一覧 (2026年)",
@@ -2236,6 +2532,20 @@
       "completed_cycles": 1,
       "last_cycle_utility": 42.75,
       "last_reviewed_at": "2026-08-26T14:08:34+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
+      "provider": "ai21",
+      "title": "AI21 Labs 概要",
+      "source_url": "https://www.ai21.com/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 40.25,
+      "completed_cycles": 1,
+      "last_cycle_utility": 40.25,
+      "last_reviewed_at": "2026-08-31T04:41:03+00:00",
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
@@ -2292,6 +2602,20 @@
       "completed_cycles": 1,
       "last_cycle_utility": 34.75,
       "last_reviewed_at": "2026-08-30T18:00:06+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "0ee90f87-2319-4b2f-af0f-d298083c752c",
+      "provider": "aider",
+      "title": "Aider 入門 — インストール・基本操作・Git 連携ワークフロー",
+      "source_url": "https://aider.chat/docs/usage/tutorial.html",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 32.5,
+      "completed_cycles": 1,
+      "last_cycle_utility": 32.5,
+      "last_reviewed_at": "2026-08-31T08:02:08+00:00",
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {

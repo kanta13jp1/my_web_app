@@ -173,12 +173,49 @@ jobs:
               all(test("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$") | not))
           ' "${report_dir}/growth-evidence.json" >/dev/null
 
+      - name: Build plan economics readiness evidence
+        shell: bash
+        run: |
+          report_dir=tmp/first-user-acquisition-report
+          http_code=$(curl --silent --show-error \
+            --output "${report_dir}/plan-economics.json" \
+            --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/rest/v1/rpc/get_tiger_plan_economics_summary" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data '{"p_window_days":30}')
+          if [ "${http_code}" != "200" ]; then
+            jq -c . "${report_dir}/plan-economics.json" || true
+            echo "::error::Plan economics report returned HTTP ${http_code}."
+            exit 1
+          fi
+          jq -e '
+            type == "object" and
+            .privacy.aggregateOnly == true and
+            .privacy.containsUserIds == false and
+            .privacy.containsCustomerIds == false and
+            .privacy.containsEmail == false and
+            .privacy.containsPromptText == false and
+            (.plans | type == "array") and
+            (.missingInputs | type == "array" and length > 0) and
+            .decisionMetrics.grossMarginRate == null and
+            .decisionMetrics.customerAcquisitionCostYen == null and
+            .decisionMetrics.paybackMonths == null and
+            .decisionMetrics.monthlyChurnRate == null and
+            .decisionMetrics.lifetimeValueYen == null and
+            ([paths(scalars) as $path | $path[-1] | tostring] |
+              all(. != "user_id" and . != "customer_id" and . != "email"))
+          ' "${report_dir}/plan-economics.json" >/dev/null
+
       - name: Publish aggregate summary
         shell: bash
         run: |
           report=tmp/first-user-acquisition-report/report.json
           retention=tmp/first-user-acquisition-report/existing-user-retention.json
           growth=tmp/first-user-acquisition-report/growth-evidence.json
+          economics=tmp/first-user-acquisition-report/plan-economics.json
           retention_rate=$(jq -r '.weekly_retention[0].rate // "not available"' "${retention}")
           if [ "${retention_rate}" != "not available" ]; then
             retention_rate="${retention_rate}%"
@@ -218,7 +255,13 @@ jobs:
             jq '.routes[:20]' "${growth}"
             echo '```'
             echo
-            echo "Metric definitions are included in growth-evidence.json. The artifact contains aggregate counts only; user and visitor IDs are omitted."
+            echo "### Plan economics readiness"
+            echo
+            echo '```json'
+            jq '{plans, decisionMetrics, missingInputs}' "${economics}"
+            echo '```'
+            echo
+            echo "Metric definitions are included in the JSON reports. The artifact contains aggregate counts only; user, customer, and visitor IDs are omitted."
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload aggregate report
