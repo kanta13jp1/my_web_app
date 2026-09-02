@@ -1,22 +1,39 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/platform_view.dart' as platform_view;
+import '../services/philosophy_funnel_analytics.dart';
 import '../utils/route_document_title.dart';
+import '../widgets/philosophy_quick_inventory.dart';
 
 /// 自分株式会社 — 基本理念ページ
 ///
-/// docs/PHILOSOPHY.md の 9 原則を可視化し、NotebookLM 動画 8 本を埋め込む。
+/// docs/PHILOSOPHY.md の 9 原則を可視化し、理念動画 5 本を埋め込む。
 /// 全機能はこのページに記載された理念に照らして方向性を検証する (CLAUDE.md Rule 22)。
+const String philosophyQuickInventoryRoute =
+    '/philosophy?step=quick-inventory';
+
+enum PhilosophyInitialStep { overview, quickInventory }
+
 class PhilosophyPage extends StatefulWidget {
-  const PhilosophyPage({super.key});
+  const PhilosophyPage({
+    super.key,
+    this.initialStep = PhilosophyInitialStep.overview,
+    this.analytics = const PostHogPhilosophyFunnelAnalytics(),
+  });
+
+  final PhilosophyInitialStep initialStep;
+  final PhilosophyFunnelAnalytics analytics;
 
   @override
   State<PhilosophyPage> createState() => _PhilosophyPageState();
 }
 
 class _PhilosophyPageState extends State<PhilosophyPage> {
+  final GlobalKey _quickInventoryKey = GlobalKey();
   int _selectedVideoIdx = 1; // default = A 完全版
 
   @override
@@ -25,6 +42,32 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
     for (final v in _videos) {
       final src = v.mp4Url ?? 'https://www.youtube.com/embed/${v.id}';
       platform_view.registerIframeViewFactory('youtube-${v.id}', src);
+    }
+    unawaited(
+      widget.analytics.capture(
+        PhilosophyFunnelEvent(
+          stage: PhilosophyFunnelStage.pageView,
+          properties: <String, Object>{
+            'path': '/philosophy',
+            'entry_mode': widget.initialStep == PhilosophyInitialStep.quickInventory
+                ? 'quick_inventory_route'
+                : 'overview',
+          },
+        ),
+      ),
+    );
+    if (widget.initialStep == PhilosophyInitialStep.quickInventory) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final inventoryContext = _quickInventoryKey.currentContext;
+        if (inventoryContext == null) return;
+        Scrollable.ensureVisible(
+          inventoryContext,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+          alignment: 0.05,
+        );
+      });
     }
   }
 
@@ -67,6 +110,13 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
                     const SizedBox(height: 48),
                     _inventoryExampleSection(),
                     const SizedBox(height: 48),
+                    PhilosophyQuickInventory(
+                      key: _quickInventoryKey,
+                      analytics: widget.analytics,
+                      trackViewOnMount:
+                          widget.initialStep == PhilosophyInitialStep.quickInventory,
+                    ),
+                    const SizedBox(height: 48),
                     _editorialPolicySection(),
                     const SizedBox(height: 48),
                     _videoSelector(),
@@ -74,6 +124,18 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
                     _videoEmbed(video),
                     const SizedBox(height: 12),
                     _videoMeta(video),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        key: const Key('philosophy_ai_university_video_link'),
+                        onPressed: () => Navigator.of(
+                          context,
+                        ).pushNamed('/ai-university-video'),
+                        icon: const Icon(Icons.school_outlined),
+                        label: const Text('AI大学の動画講座を見る'),
+                      ),
+                    ),
                     const SizedBox(height: 48),
                     _ninePrinciplesSection(),
                     const SizedBox(height: 48),
@@ -819,7 +881,20 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
           ),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () => Navigator.of(context).pushNamed('/'),
+            onPressed: () {
+              unawaited(
+                widget.analytics.capture(
+                  const PhilosophyFunnelEvent(
+                    stage: PhilosophyFunnelStage.ctaClick,
+                    properties: <String, Object>{
+                      'path': '/philosophy',
+                      'destination': philosophyQuickInventoryRoute,
+                    },
+                  ),
+                ),
+              );
+              Navigator.of(context).pushNamed(philosophyQuickInventoryRoute);
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: const Color(0xFFCC4A1A),
@@ -829,7 +904,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
               ),
             ),
             child: const Text(
-              'サービスを試す',
+              '3分棚卸しを始める',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
@@ -1070,42 +1145,6 @@ const _videos = [
     label: 'D: プレミアム版',
     duration: '6:49',
     description: 'intro/outro カード + カラーグレード + 字幕。公式映像・ピッチ用途。',
-  ),
-  _Video(
-    id: 'Zclp_zK9cYM',
-    label: '番外: AnthropicのClaude Apps 解説 (D variant)',
-    duration: '7:10',
-    description: 'NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。'
-        'Anthropic Claude Apps の MCP オープン化戦略・市場シェア 18→29%・3500億ドル評価・'
-        'ChatGPT との設計思想の違いを 7 分で解説。AI大学シリーズ #1。',
-  ),
-  _Video(
-    id: 'di5SbHouAVY',
-    label: '番外: Google Gemini で暮らしを整える 8 つのコツ (D variant)',
-    duration: '6:27',
-    description: 'NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。'
-        'Google Gemini の agentic AI で Gmail / Google Calendar / Photos / Lens / Keep を横断する'
-        '実践テクニック 8 つを解説。AI大学シリーズ #2。',
-  ),
-  _Video(
-    id: 'shdsy9qqcNM',
-    label: '番外: Nomic Platform — 建設・設計業界特化 AI (D variant)',
-    duration: '8:17',
-    description: 'NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。'
-        'Nomic Platform (Nomic AEC) — 建築 / エンジニアリング / 建設 業界向け Domain-Specific AI。'
-        '3000 ページ規模の RFI / RFP / 仕様書を AI で横断検索・分析。BIM / Revit / Procore 統合。'
-        'AI大学シリーズ #3。',
-  ),
-  _Video(
-    id: 'multi-agent-convergence',
-    mp4Url: '/assets/videos/multi-agent-convergence.mp4',
-    label: '番外: 2026年AIのパラダイムシフト — Multi-Agent Convergence (暫定MP4)',
-    duration: '9:19',
-    description:
-        'NotebookLM Video Overview 原版 (= 720p H.264 圧縮 / 12MB / 暫定 self-host)。'
-        '2026 AI Agent Blueprint + 多エージェント収束トレンド + 思考コスト 97% 減のインパクト。'
-        'YouTube アップロードは GHA secrets (GITHUB_PAT / YOUTUBE_*) 設定後に実施予定 → 完了後 id を YouTube ID に置換。'
-        'AI大学シリーズ #4。',
   ),
 ];
 
