@@ -64,8 +64,7 @@ class ProcessQualityMetric {
 
   double get findingDensity => scopeSize <= 0 ? 0 : findingCount / scopeSize;
 
-  bool get reviewDensityBelowThreshold =>
-      reviewDensity < minimumReviewDensity;
+  bool get reviewDensityBelowThreshold => reviewDensity < minimumReviewDensity;
 
   bool get findingDensityBelowThreshold =>
       findingDensity < minimumFindingDensity;

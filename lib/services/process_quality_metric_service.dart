@@ -23,9 +23,7 @@ class SupabaseProcessQualityMetricRepository
         .select()
         .order('reviewed_at', ascending: false)
         .limit(100);
-    return rows
-        .map(ProcessQualityMetric.fromJson)
-        .toList(growable: false);
+    return rows.map(ProcessQualityMetric.fromJson).toList(growable: false);
   }
 
   @override

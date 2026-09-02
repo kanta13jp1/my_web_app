@@ -85,10 +85,8 @@ class _ProcessQualityDashboardPageState
           scopeSize: double.parse(_scopeController.text),
           reviewMinutes: int.parse(_minutesController.text),
           findingCount: int.parse(_findingsController.text),
-          minimumReviewDensity:
-              double.parse(_reviewThresholdController.text),
-          minimumFindingDensity:
-              double.parse(_findingThresholdController.text),
+          minimumReviewDensity: double.parse(_reviewThresholdController.text),
+          minimumFindingDensity: double.parse(_findingThresholdController.text),
           reviewedAt: DateTime.now(),
         ),
       );
@@ -367,9 +365,7 @@ class _ProcessQualityDashboardPageState
             return '0以上の数値を入力してください';
           }
           if (parsed < 0 || (strictlyPositive && parsed <= 0)) {
-            return strictlyPositive
-                ? '0より大きい数値を入力してください'
-                : '0以上の数値を入力してください';
+            return strictlyPositive ? '0より大きい数値を入力してください' : '0以上の数値を入力してください';
           }
           if (!allowDecimal && parsed != parsed.roundToDouble()) {
             return '整数を入力してください';
@@ -576,8 +572,7 @@ class _ProcessQualityDashboardPageState
       child: LinearProgressIndicator(
         value: ratio.clamp(0.0, 1.0).toDouble(),
         minHeight: 12,
-        color:
-            warning ? theme.colorScheme.error : const Color(0xFF15803D),
+        color: warning ? theme.colorScheme.error : const Color(0xFF15803D),
         backgroundColor: theme.colorScheme.surfaceContainerHighest,
       ),
     );
