@@ -15,12 +15,17 @@ class AssetCalendarDebtInput {
     this.paid = false,
   });
 
-  factory AssetCalendarDebtInput.fromDebtRow(AssetLiabilityDebtRow row) {
+  factory AssetCalendarDebtInput.fromDebtRow(
+    AssetLiabilityDebtRow row, {
+    Map<String, int>? paymentDayOverrides,
+  }) {
+    final overrideDay = paymentDayOverrides?[row.id] ??
+        paymentDayOverrides?[row.name];
     return AssetCalendarDebtInput(
       id: row.id,
       name: row.name,
       balance: row.balance,
-      paymentDay: row.paymentDay,
+      paymentDay: overrideDay ?? row.paymentDay,
       scheduledPaymentAmount: row.scheduledPaymentAmount,
       isDirectCashflowTarget: row.isDirectCashflowTarget,
       isFixedCost: row.kind == AssetLiabilityAccountKind.utility ||
