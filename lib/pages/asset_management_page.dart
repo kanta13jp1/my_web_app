@@ -898,8 +898,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final AssetAlertDismissalStore _assetAlertDismissalStore =
       const AssetAlertDismissalStore();
   Set<String> _assetAlertDismissedIds = <String>{};
-  List<AssetAnomalyDetection> _activeAssetAnomalies =
-      <AssetAnomalyDetection>[];
+  List<AssetAnomalyDetection> _activeAssetAnomalies = <AssetAnomalyDetection>[];
   final Set<String> _dismissingAssetAnomalyIds = <String>{};
   final AssetLiabilityRepaymentSimulationService
       _assetLiabilityRepaymentSimulationService =
