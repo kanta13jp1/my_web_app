@@ -60,6 +60,7 @@ import '../pages/payment_reminder_page.dart';
 import '../pages/prison_mode_page.dart';
 import '../pages/public_memo_directory_page.dart';
 import '../pages/purchase_log_page.dart';
+import '../pages/process_quality_dashboard_page.dart';
 import '../pages/reality_check_page.dart';
 import '../pages/real_world_danshari_page.dart';
 import '../pages/referral_page.dart';
@@ -2844,6 +2845,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'build',
       ],
       onOpen: (context) => Navigator.of(context).pushNamed('/release-notes'),
+    ),
+    HomeToolEntry(
+      id: 'process-quality-dashboard',
+      sectionId: 'ai',
+      title: 'プロセス品質ダッシュボード',
+      subtitle: '対象規模あたりのレビュー時間・指摘件数を比較し、閾値未達を確認',
+      icon: Icons.analytics_outlined,
+      color: const Color(0xFF0369A1),
+      keywords: const <String>[
+        'プロセス品質',
+        'レビュー密度',
+        '指摘密度',
+        '品質指標',
+        'ダッシュボード',
+      ],
+      onOpen: (context) =>
+          _pushPage(context, const ProcessQualityDashboardPage()),
     ),
     HomeToolEntry(
       id: 'tiger-reviewers',
