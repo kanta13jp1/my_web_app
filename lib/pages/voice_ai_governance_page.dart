@@ -149,8 +149,7 @@ class _VoiceAiGovernancePageState extends State<VoiceAiGovernancePage> {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
-                  for (final row in _usage)
-                    _UsageSummaryTile(row: row),
+                  for (final row in _usage) _UsageSummaryTile(row: row),
                   if (_usage.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),

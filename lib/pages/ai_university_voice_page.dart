@@ -119,8 +119,8 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
       if (!mounted) return;
       setState(
         () => _ttsStatus = error.toString().contains(
-              'voice_training_consent_or_provider_zdr_required',
-            )
+                  'voice_training_consent_or_provider_zdr_required',
+                )
             ? 'privacy_blocked'
             : 'error',
       );

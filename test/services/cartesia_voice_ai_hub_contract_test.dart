@@ -8,8 +8,8 @@ void main() {
 
   setUpAll(() {
     source = File('supabase/functions/ai-hub/index.ts')
-        .readAsStringSync()
-        .replaceAll('\r\n', '\n') +
+            .readAsStringSync()
+            .replaceAll('\r\n', '\n') +
         File('supabase/functions/ai-hub/voice_ai.ts')
             .readAsStringSync()
             .replaceAll('\r\n', '\n');
@@ -32,14 +32,16 @@ void main() {
   test('returns only the scoped proxy token and never the account API key', () {
     expect(source, contains('"sonic-3-2026-01-12"'));
     expect(source, contains('websocket_access_token: accessToken'));
-    expect(source, contains('max_session_seconds: CARTESIA_MAX_SESSION_SECONDS'));
+    expect(
+        source, contains('max_session_seconds: CARTESIA_MAX_SESSION_SECONDS'));
     expect(source, contains('model_id: CARTESIA_MODEL_ID'));
     expect(source, contains('id: Deno.env.get("CARTESIA_VOICE_ID")'));
     expect(source, isNot(contains('api_key: apiKey')));
     expect(source, isNot(contains('sendUpstream(upstream, message)')));
   });
 
-  test('enforces privacy before provider access and queues PCM continuously', () {
+  test('enforces privacy before provider access and queues PCM continuously',
+      () {
     expect(source, contains('.from("voice_ai_user_preferences")'));
     expect(
       source,
