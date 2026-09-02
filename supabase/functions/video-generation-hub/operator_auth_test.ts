@@ -9,6 +9,7 @@ Deno.test("service role may inspect and resume one explicit owner", () => {
     const action of [
       "authorization_status",
       "run_authorized_improvement",
+      "review_authorized_artifact",
       "status",
     ]
   ) {
