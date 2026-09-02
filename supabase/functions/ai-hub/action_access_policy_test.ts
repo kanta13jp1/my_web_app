@@ -71,6 +71,17 @@ Deno.test("authorizeAiHubAction protects service-role actions", () => {
   assertEquals(serviceRoleDecision, { allowed: true });
 });
 
+Deno.test("resolveAuthenticatedUserId checks matching user id", () => {
+  const matched = resolveAuthenticatedUserId("user-1", "user-1");
+  assertEquals(matched, { userId: "user-1" });
+
+  const mismatched = resolveAuthenticatedUserId("user-1", "user-2");
+  assertEquals(mismatched, { status: 403, error: "Forbidden" });
+
+  const emptyRequested = resolveAuthenticatedUserId("user-1", "");
+  assertEquals(emptyRequested, { userId: "user-1" });
+});
+
 Deno.test("disjointness of action registry sets", () => {
   const pub = [...PUBLIC_AI_HUB_ACTIONS];
   const auth = [...AUTHENTICATED_AI_HUB_ACTIONS];
@@ -82,5 +93,9 @@ Deno.test("disjointness of action registry sets", () => {
   }
   for (const a of auth) {
     assertEquals(SERVICE_ROLE_AI_HUB_ACTIONS.has(a), false, `${a} is in both authenticated and service_role`);
+  }
+  for (const a of srv) {
+    assertEquals(PUBLIC_AI_HUB_ACTIONS.has(a), false, `${a} is in both service_role and public`);
+    assertEquals(AUTHENTICATED_AI_HUB_ACTIONS.has(a), false, `${a} is in both service_role and authenticated`);
   }
 });
