@@ -16,14 +16,14 @@ void main() {
 
       expect(catalog.schemaVersion, 2);
       expect(catalog.profilesBySeat, hasLength(125));
-      expect(catalog.enrichmentRound, greaterThanOrEqualTo(10));
+      expect(catalog.enrichmentRound, greaterThanOrEqualTo(11));
       expect(catalog.averageProfileCompletenessPercent, greaterThan(0));
       expect(catalog.averageReviewReflectionPercent, greaterThan(0));
       expect(catalog.verifiedBirthDates, 12);
       expect(catalog.nextBatchNames, hasLength(5));
       expect(
         catalog.nextBatchNames,
-        <String>['渡正行', '足立暢', '泉舞', '吉野繁', '山澤 礼明'],
+        <String>['渡正行', '足立暢', '泉舞', '川中子 輝昂', '磯遊晋介'],
       );
       expect(catalog.profilesBySeat.keys.toSet(), hasLength(125));
       expect(
@@ -47,6 +47,24 @@ void main() {
             .every((profile) => profile.birthDateSourceUrl?.hasScheme == true),
         isTrue,
       );
+      final yoshino = catalog.profilesBySeat[66]!;
+      expect(yoshino.companyRole, contains('2023年11月時点'));
+      expect(yoshino.profileCompletenessPercent, 56);
+      expect(yoshino.reviewReflectionPercent, 58);
+      expect(yoshino.reviewReflectionMode, 'profile_balanced');
+      expect(yoshino.evidenceLinks, hasLength(2));
+
+      final yamasawa = catalog.profilesBySeat[68]!;
+      expect(yamasawa.companyRole, '株式会社FIT PLACE 代表取締役');
+      expect(yamasawa.profileCompletenessPercent, 73);
+      expect(yamasawa.reviewReflectionPercent, 83);
+      expect(yamasawa.reviewReflectionMode, 'profile_guided');
+      expect(yamasawa.evidenceLinks, hasLength(3));
+
+      final adachi = catalog.profilesBySeat[97]!;
+      expect(adachi.businessSummary, contains('豚骨ラーメン店'));
+      expect(adachi.reviewReflectionMode, 'neutral_guarded');
+      expect(adachi.evidenceLinks, hasLength(2));
       for (final seat in <int>[117, 120, 121]) {
         final profile = catalog.profilesBySeat[seat]!;
         expect(profile.profileCompletenessPercent, greaterThanOrEqualTo(62));
