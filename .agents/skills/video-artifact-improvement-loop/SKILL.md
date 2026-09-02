@@ -50,6 +50,10 @@ recurring budget from a single completed purchase.
 1. Let only the artifact owner read it. Perform review writes through the
    authenticated Edge Function and service-role RPC; do not grant browser
    insert/update access to artifact tables.
+   Scheduled re-review must call `review_authorized_artifact`, never the
+   owner-only `review_artifact` action. The bounded action requires one explicit
+   owner and authorization ID; its atomic RPC accepts only an unreviewed
+   artifact produced by a succeeded job under that exact authorization.
 2. Append a review rather than overwriting an earlier review. Collect four
    1–5 scores, keep/improve/reject, strengths, improvement request, a concrete
    next prompt, notes, rights status, and privacy status.
@@ -122,6 +126,8 @@ Verify these invariants in code and tests:
 - Direct browser mutation remains denied and RLS is owner-scoped.
 - The original storage path and provenance cannot be changed.
 - Reviews append and rights/privacy gates cannot auto-publish.
+- Scheduled review rejects already-reviewed artifacts and artifacts outside the
+  exact owner authorization.
 - An improvement job records both parent artifact and applied review.
 - Failed generation still refunds and produces no sellable artifact.
 - Authorized credit purchases and regenerations cannot exceed the envelope's
