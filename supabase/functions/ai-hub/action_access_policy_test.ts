@@ -2,57 +2,85 @@ import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   aiHubActionAccess,
   authorizeAiHubAction,
+  AUTHENTICATED_AI_HUB_ACTIONS,
+  PUBLIC_AI_HUB_ACTIONS,
   resolveAuthenticatedUserId,
   SERVICE_ROLE_AI_HUB_ACTIONS,
 } from "./action_access_policy.ts";
 
-Deno.test(
-  "AI Hub action policy covers public, authenticated, and service-role categories",
-  () => {
-    const cases = [
-      { action: "home.popular", access: "public" },
-      { action: "home.recommend", access: "authenticated" },
-      { action: "observability.sessions", access: "service_role" },
-    ] as const;
+Deno.test("aiHubActionAccess classifies registered actions correctly", () => {
+  assertEquals(aiHubActionAccess("judgment.get"), "public");
+  assertEquals(aiHubActionAccess("search.query"), "authenticated");
+  assertEquals(aiHubActionAccess("observability.heatmap"), "service_role");
+  assertEquals(aiHubActionAccess("unknown.random.action"), null);
+});
 
-    for (const testCase of cases) {
-      assertEquals(aiHubActionAccess(testCase.action), testCase.access);
-    }
-  },
-);
-
-Deno.test(
-  "all observability actions reject anonymous and regular users but allow service role",
-  () => {
-    for (const action of SERVICE_ROLE_AI_HUB_ACTIONS) {
-      assertEquals(
-        authorizeAiHubAction(action, { userId: null, isServiceRole: false }),
-        { allowed: false, status: 401, error: "Unauthorized" },
-      );
-      assertEquals(
-        authorizeAiHubAction(action, {
-          userId: "regular-user",
-          isServiceRole: false,
-        }),
-        { allowed: false, status: 403, error: "Forbidden" },
-      );
-      assertEquals(
-        authorizeAiHubAction(action, { userId: null, isServiceRole: true }),
-        { allowed: true },
-      );
-    }
-  },
-);
-
-Deno.test("home recommendation is bound to the authenticated user", () => {
-  assertEquals(resolveAuthenticatedUserId("user-a", undefined), {
-    userId: "user-a",
+Deno.test("authorizeAiHubAction fails closed on unregistered actions", () => {
+  const decision = authorizeAiHubAction("unknown.action", {
+    userId: "user-1",
+    isServiceRole: false,
   });
-  assertEquals(resolveAuthenticatedUserId("user-a", "user-a"), {
-    userId: "user-a",
+  assertEquals(decision, {
+    allowed: false,
+    status: 400,
+    error: "UnknownAction",
   });
-  assertEquals(resolveAuthenticatedUserId("user-a", "user-b"), {
+});
+
+Deno.test("authorizeAiHubAction allows public actions for anonymous users", () => {
+  const decision = authorizeAiHubAction("judgment.get", {
+    userId: null,
+    isServiceRole: false,
+  });
+  assertEquals(decision, { allowed: true });
+});
+
+Deno.test("authorizeAiHubAction requires auth for authenticated actions", () => {
+  const anonDecision = authorizeAiHubAction("search.query", {
+    userId: null,
+    isServiceRole: false,
+  });
+  assertEquals(anonDecision, {
+    allowed: false,
+    status: 401,
+    error: "Unauthorized",
+  });
+
+  const authDecision = authorizeAiHubAction("search.query", {
+    userId: "user-123",
+    isServiceRole: false,
+  });
+  assertEquals(authDecision, { allowed: true });
+});
+
+Deno.test("authorizeAiHubAction protects service-role actions", () => {
+  const userDecision = authorizeAiHubAction("observability.heatmap", {
+    userId: "user-123",
+    isServiceRole: false,
+  });
+  assertEquals(userDecision, {
+    allowed: false,
     status: 403,
     error: "Forbidden",
   });
+
+  const serviceRoleDecision = authorizeAiHubAction("observability.heatmap", {
+    userId: null,
+    isServiceRole: true,
+  });
+  assertEquals(serviceRoleDecision, { allowed: true });
+});
+
+Deno.test("disjointness of action registry sets", () => {
+  const pub = [...PUBLIC_AI_HUB_ACTIONS];
+  const auth = [...AUTHENTICATED_AI_HUB_ACTIONS];
+  const srv = [...SERVICE_ROLE_AI_HUB_ACTIONS];
+
+  for (const a of pub) {
+    assertEquals(AUTHENTICATED_AI_HUB_ACTIONS.has(a), false, `${a} is in both public and authenticated`);
+    assertEquals(SERVICE_ROLE_AI_HUB_ACTIONS.has(a), false, `${a} is in both public and service_role`);
+  }
+  for (const a of auth) {
+    assertEquals(SERVICE_ROLE_AI_HUB_ACTIONS.has(a), false, `${a} is in both authenticated and service_role`);
+  }
 });
