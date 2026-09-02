@@ -6,6 +6,7 @@ export type VideoOperatorResolution =
 const SERVICE_ROLE_ACTIONS = new Set([
   "authorization_status",
   "run_authorized_improvement",
+  "review_authorized_artifact",
   "status",
 ]);
 
