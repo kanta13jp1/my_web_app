@@ -659,8 +659,11 @@ Route<dynamic> generateAppRoute(
         settings: RouteSettings(name: settings.name),
       );
     case '/manual':
-    case '/user-manual':
-      return MaterialPageRoute(builder: (_) => const UserManualPage());
+    case '/manual' || '/user-manual':
+      return MaterialPageRoute(
+        builder: (_) => const UserManualPage(),
+        settings: settings,
+      );
     case '/site-guide-ai':
       final argumentQuestion =
           settings.arguments is String ? settings.arguments as String : null;

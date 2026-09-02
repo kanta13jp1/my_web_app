@@ -328,10 +328,15 @@ String? _catalogRouteForId(String id) => switch (id) {
 
 Set<String> _registeredRoutes() {
   final body = _generateAppRouteBody();
-  return RegExp(r"^    case '([^']+)':", multiLine: true)
-      .allMatches(body)
-      .map((m) => m.group(1)!)
-      .toSet()
+  final routes = <String>{};
+  for (final match
+      in RegExp(r'^    case\s+([^:]+):', multiLine: true).allMatches(body)) {
+    final caseExpr = match.group(1)!;
+    for (final routeMatch in RegExp(r"'([^']+)'").allMatches(caseExpr)) {
+      routes.add(routeMatch.group(1)!);
+    }
+  }
+  return routes
     // 定数経由で宣言している route。
     ..add('/compatibility-result');
 }
