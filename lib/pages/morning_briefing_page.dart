@@ -1684,12 +1684,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             final methods = model['supportedGenerationMethods'];
             return methods is List && methods.contains('generateContent');
           })
-          .map<Map<String, dynamic>>((model) => {
-                'name': model['name']?.toString() ?? '',
-                'methods': List<String>.from(
-                  model['supportedGenerationMethods'] as List,
-                ),
-              })
+          .map<Map<String, dynamic>>(
+            (model) => <String, dynamic>{
+              'name': model['name']?.toString() ?? '',
+              'methods': List<String>.from(
+                model['supportedGenerationMethods'] as List,
+              ),
+            },
+          )
           .where((model) => (model['name'] as String).isNotEmpty)
           .toList();
     } catch (e) {
@@ -2698,7 +2700,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                   ],
                                 ),
                                 const Divider(height: 12),
-                                Row(
+                                const Row(
                                   children: [
                                     const Icon(
                                       Icons.cloud_done,
