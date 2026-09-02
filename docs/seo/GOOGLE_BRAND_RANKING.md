@@ -279,6 +279,7 @@ Google Search Centralは、`lastmod`を継続的かつ検証可能に正確な�
 そこで、本文を再度変更せず、`public-routes.json`に明示された重要な`date_modified`だけをsitemapへ出すよう生成器を修正した。現時点では`/philosophy`だけが`lastmod: 2026-08-19`を持ち、更新日を検証できない46 URLでは`lastmod`を省略する。URL一覧、canonical、ページ本文は変更しない。
 
 原因仮説、反証、観測期間は[`SEO_ROOT_CAUSE_LEDGER.md`](SEO_ROOT_CAUSE_LEDGER.md)へ記録した。次回は、無関係デプロイ後も理念ページの日付が維持されることと、週次計測時の再クロール・インデックス変化を分けて確認する。
+
 ## 2026-09-02 週次監視
 
 - 検索日時: 2026-09-02 20:13 JST
