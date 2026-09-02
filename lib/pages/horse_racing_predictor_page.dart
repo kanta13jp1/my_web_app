@@ -95,8 +95,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final initialIndex = widget.initialTabIndex < 0
         ? 0
         : widget.initialTabIndex > 3
-        ? 3
-        : widget.initialTabIndex;
+            ? 3
+            : widget.initialTabIndex;
     _lastSyncedTabIndex = initialIndex;
     _tabController = TabController(
       length: 4,
@@ -396,15 +396,13 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final now = DateTime.now();
     final nowMinutes = now.hour * 60 + now.minute;
-    final races =
-        _todayRaces
-            .where(
-              (race) =>
-                  _selectedDate != today ||
-                  _postTimeMinutes(race) >= nowMinutes,
-            )
-            .toList()
-          ..sort((a, b) => _postTimeMinutes(a).compareTo(_postTimeMinutes(b)));
+    final races = _todayRaces
+        .where(
+          (race) =>
+              _selectedDate != today || _postTimeMinutes(race) >= nowMinutes,
+        )
+        .toList()
+      ..sort((a, b) => _postTimeMinutes(a).compareTo(_postTimeMinutes(b)));
     return races.isEmpty ? null : races.first;
   }
 
@@ -554,8 +552,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 _ => Icons.warning,
               },
               size: 64,
-              color:
-                  _errorType == ErrorType.network ||
+              color: _errorType == ErrorType.network ||
                       _errorType == ErrorType.serviceUnavailable
                   ? const Color(0xFFFF6B35)
                   : const Color(0xFFE53935),
@@ -684,9 +681,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   Widget _buildTodayActionBar() {
     final total = _todayRaces.length;
     final predicted = _todayRaces.where(_hasPrediction).length;
-    final entriesReady = _todayRaces
-        .where((race) => _entriesOf(race).length >= 3)
-        .length;
+    final entriesReady =
+        _todayRaces.where((race) => _entriesOf(race).length >= 3).length;
     final next = _nextRace();
     final nextLabel = next == null
         ? '次走なし'
@@ -853,10 +849,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               final cols = w >= 1100
                   ? 4
                   : w >= 820
-                  ? 3
-                  : w >= 540
-                  ? 2
-                  : 1;
+                      ? 3
+                      : w >= 540
+                          ? 2
+                          : 1;
               if (cols == 1) {
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -921,8 +917,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final color = isOverseas
         ? const Color(0xFF059669)
         : isJra
-        ? const Color(0xFF2563EB)
-        : const Color(0xFF7C3AED);
+            ? const Color(0xFF2563EB)
+            : const Color(0xFF7C3AED);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -937,8 +933,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             isOverseas
                 ? Icons.flight_takeoff
                 : isJra
-                ? Icons.stadium
-                : Icons.location_on,
+                    ? Icons.stadium
+                    : Icons.location_on,
             color: color,
             size: 16,
           ),
@@ -963,8 +959,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               isOverseas
                   ? '海外'
                   : isJra
-                  ? 'JRA'
-                  : '地方',
+                      ? 'JRA'
+                      : '地方',
               style: TextStyle(
                 color: color,
                 fontSize: 10,
@@ -1015,9 +1011,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       statusColor = const Color(0xFFF59E0B);
       statusLabel = '再取得待ち';
     } else if (hasResult) {
-      statusColor = isCorrect == true
-          ? const Color(0xFF4CAF50)
-          : const Color(0xFFE53935);
+      statusColor =
+          isCorrect == true ? const Color(0xFF4CAF50) : const Color(0xFFE53935);
       statusLabel = isCorrect == true ? '的中' : '外れ';
     } else if (status == 'scheduled') {
       statusColor = const Color(0xFFFF6B35);
@@ -1250,18 +1245,16 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color:
-                      (isCorrect == true
-                              ? const Color(0xFF4CAF50)
-                              : const Color(0xFFE53935))
-                          .withValues(alpha: 0.08),
+                  color: (isCorrect == true
+                          ? const Color(0xFF4CAF50)
+                          : const Color(0xFFE53935))
+                      .withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color:
-                        (isCorrect == true
-                                ? const Color(0xFF4CAF50)
-                                : const Color(0xFFE53935))
-                            .withValues(alpha: 0.3),
+                    color: (isCorrect == true
+                            ? const Color(0xFF4CAF50)
+                            : const Color(0xFFE53935))
+                        .withValues(alpha: 0.3),
                   ),
                 ),
                 child: Column(
@@ -1691,13 +1684,13 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   ) {
     if (suggestions.isEmpty) return const SizedBox.shrink();
     final recommended =
-        suggestions.where((item) => item['recommended'] == true).toList()..sort(
-          (a, b) => ((a['priority'] as num?)?.toInt() ?? 99).compareTo(
-            (b['priority'] as num?)?.toInt() ?? 99,
-          ),
-        );
-    final sorted = [...suggestions]
-      ..sort(
+        suggestions.where((item) => item['recommended'] == true).toList()
+          ..sort(
+            (a, b) => ((a['priority'] as num?)?.toInt() ?? 99).compareTo(
+              (b['priority'] as num?)?.toInt() ?? 99,
+            ),
+          );
+    final sorted = [...suggestions]..sort(
         (a, b) => ((a['priority'] as num?)?.toInt() ?? 99).compareTo(
           (b['priority'] as num?)?.toInt() ?? 99,
         ),
@@ -1772,8 +1765,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final borderColor = hit == true
         ? const Color(0xFF4CAF50)
         : hit == false
-        ? const Color(0xFFE53935)
-        : riskColor;
+            ? const Color(0xFFE53935)
+            : riskColor;
     return Container(
       constraints: const BoxConstraints(minWidth: 128),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
@@ -1803,10 +1796,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 hit == true
                     ? '的中'
                     : hit == false
-                    ? '不的中'
-                    : isSkip
-                    ? '見送り'
-                    : _riskLabel(risk),
+                        ? '不的中'
+                        : isSkip
+                            ? '見送り'
+                            : _riskLabel(risk),
                 style: TextStyle(
                   color: borderColor,
                   fontSize: 10,
@@ -1989,7 +1982,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         : (entries.length * 0.6).ceil().clamp(1, entries.length);
     final hasOdds =
         entries.where((entry) => entry['win_odds'] != null).length >=
-        requiredOdds;
+            requiredOdds;
     final skipRecommended = confidence < 0.42 || dataQuality < 0.28 || !hasOdds;
     final n1 = _horseNumberValue(entries, first);
     final n2 = _horseNumberValue(entries, second);
@@ -2213,20 +2206,16 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       '単勝' => horses.first == first,
       '複勝' => actualTop3.contains(horses.first),
       '馬単' => horses.length >= 2 && horses[0] == first && horses[1] == second,
-      '馬連' =>
-        horses.length >= 2 &&
-            (([horses[0], horses[1]]..sort()).join('|') ==
-                actualPair.join('|')),
+      '馬連' => horses.length >= 2 &&
+          (([horses[0], horses[1]]..sort()).join('|') == actualPair.join('|')),
       'ワイド' => _wideSuggestionHit(suggestion, actualTop3),
-      '3連複' =>
-        horses.length >= 3 &&
-            (([horses[0], horses[1], horses[2]]..sort()).join('|') ==
-                ([first, second, third]..sort()).join('|')),
-      '3連単' =>
-        horses.length >= 3 &&
-            horses[0] == first &&
-            horses[1] == second &&
-            horses[2] == third,
+      '3連複' => horses.length >= 3 &&
+          (([horses[0], horses[1], horses[2]]..sort()).join('|') ==
+              ([first, second, third]..sort()).join('|')),
+      '3連単' => horses.length >= 3 &&
+          horses[0] == first &&
+          horses[1] == second &&
+          horses[2] == third,
       _ => null,
     };
   }
@@ -2263,16 +2252,15 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final entries = _entriesOf(race);
     final pred = _firstMap(race['horse_predictions']);
     if (pred == null) return [_BetLineDraft(betType: 'ワイド')];
-    final suggestions =
-        _predictionBetSuggestions(
-            pred,
-            entries,
-          ).where((suggestion) => suggestion['recommended'] == true).toList()
-          ..sort(
-            (a, b) => ((a['priority'] as num?)?.toInt() ?? 99).compareTo(
-              (b['priority'] as num?)?.toInt() ?? 99,
-            ),
-          );
+    final suggestions = _predictionBetSuggestions(
+      pred,
+      entries,
+    ).where((suggestion) => suggestion['recommended'] == true).toList()
+      ..sort(
+        (a, b) => ((a['priority'] as num?)?.toInt() ?? 99).compareTo(
+          (b['priority'] as num?)?.toInt() ?? 99,
+        ),
+      );
     final recommendedDrafts = <_BetLineDraft>[];
     for (final suggestion in suggestions) {
       final betType = suggestion['bet_type']?.toString() ?? 'ワイド';
@@ -2377,7 +2365,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             final recordedToday = _recordedStakeForDate(_selectedDate);
             final isSkipRecord =
                 drafts.any((draft) => draft.betType == '購入しない') &&
-                drafts.every((draft) => draft.betType == '購入しない');
+                    drafts.every((draft) => draft.betType == '購入しない');
             final exceedsBudget =
                 !isSkipRecord && recordedToday + total > _dailyBudgetYen;
 
@@ -2595,16 +2583,15 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                       : () async {
                           final lines = <Map<String, dynamic>>[];
                           for (final draft in drafts) {
-                            final combination = draft.combinationCtrl.text
-                                .trim();
+                            final combination =
+                                draft.combinationCtrl.text.trim();
                             final amount = _toIntValue(draft.amountCtrl.text);
                             if (draft.betType == '購入しない') {
                               if (!isSkipRecord) continue;
                               lines.add({
                                 'bet_type': '購入しない',
-                                'combination': combination.isEmpty
-                                    ? '見送り'
-                                    : combination,
+                                'combination':
+                                    combination.isEmpty ? '見送り' : combination,
                                 'amount': 0,
                               });
                               continue;
@@ -2951,11 +2938,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     settled ? '確定' : '未確定',
                     style: const TextStyle(fontSize: 11, height: 1.4),
                   ),
-                  backgroundColor:
-                      (settled
-                              ? const Color(0xFF4CAF50)
-                              : const Color(0xFFFFC107))
-                          .withValues(alpha: 0.16),
+                  backgroundColor: (settled
+                          ? const Color(0xFF4CAF50)
+                          : const Color(0xFFFFC107))
+                      .withValues(alpha: 0.16),
                 ),
               ],
             ),
@@ -3322,12 +3308,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   ) {
     final dailyAccuracy = _mapList(learning['daily_accuracy']);
     final backfillStatus = _mapList(learning['backfill_status']);
-    final placeRow = betTypeAccuracy
-        .where((r) => r['bet_type'] == '複勝')
-        .firstOrNull;
-    final wideRow = betTypeAccuracy
-        .where((r) => r['bet_type'] == 'ワイド')
-        .firstOrNull;
+    final placeRow =
+        betTypeAccuracy.where((r) => r['bet_type'] == '複勝').firstOrNull;
+    final wideRow =
+        betTypeAccuracy.where((r) => r['bet_type'] == 'ワイド').firstOrNull;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -3627,8 +3611,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final color = rate >= 50
         ? const Color(0xFF4CAF50)
         : rate >= 25
-        ? const Color(0xFFFFC107)
-        : const Color(0xFFFF6B35);
+            ? const Color(0xFFFFC107)
+            : const Color(0xFFFF6B35);
     return Container(
       width: 184,
       padding: const EdgeInsets.all(10),
@@ -3691,16 +3675,16 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
 
   List<Widget> _systemInfoRows() {
     return [
-          ('予想対象', '全レースの購入しない・単勝・複勝・枠連・馬連・ワイド・馬単・3連複・3連単'),
-          ('購入判断', '予測は購入を推奨しない。データ不足や迷いがあれば購入しない'),
-          ('学習ループ', '結果取得後に券種別の母数・的中率・見送り判断を計算し、参考指標へ蓄積'),
-          ('AIモデル', 'Gemini / GPT / Sonnet / Opus / grok・xAI / DeepSeek を候補化'),
-          ('取得パラメータ', '血統・前走・馬体重・騎手・調教師・厩舎・タイム・オッズ・人気'),
-          ('データソース', 'netkeiba.com (JRA/NAR)'),
-          ('予想方式', '全券種の参考候補 + 購入見送り判断（結果保証なし）'),
-          ('取得タイミング', '毎朝 07:30 JST 自動実行'),
-          ('結果取得', '毎日 17:30 / 21:00 JST 自動実行'),
-        ]
+      ('予想対象', '全レースの購入しない・単勝・複勝・枠連・馬連・ワイド・馬単・3連複・3連単'),
+      ('購入判断', '予測は購入を推奨しない。データ不足や迷いがあれば購入しない'),
+      ('学習ループ', '結果取得後に券種別の母数・的中率・見送り判断を計算し、参考指標へ蓄積'),
+      ('AIモデル', 'Gemini / GPT / Sonnet / Opus / grok・xAI / DeepSeek を候補化'),
+      ('取得パラメータ', '血統・前走・馬体重・騎手・調教師・厩舎・タイム・オッズ・人気'),
+      ('データソース', 'netkeiba.com (JRA/NAR)'),
+      ('予想方式', '全券種の参考候補 + 購入見送り判断（結果保証なし）'),
+      ('取得タイミング', '毎朝 07:30 JST 自動実行'),
+      ('結果取得', '毎日 17:30 / 21:00 JST 自動実行'),
+    ]
         .map<Widget>(
           (pair) => Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
@@ -3789,8 +3773,8 @@ class _BetLineDraft {
     required this.betType,
     String combination = '',
     int amount = 100,
-  }) : combinationCtrl = TextEditingController(text: combination),
-       amountCtrl = TextEditingController(text: amount.toString());
+  })  : combinationCtrl = TextEditingController(text: combination),
+        amountCtrl = TextEditingController(text: amount.toString());
 
   String betType;
   final TextEditingController combinationCtrl;

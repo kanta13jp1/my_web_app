@@ -92,9 +92,8 @@ class HorseRacingResponsibleUseCard extends StatelessWidget {
             icon: Icon(paused ? Icons.play_arrow : Icons.pause_circle_outline),
             label: Text(paused ? '休止を解除' : '今日は購入しない'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: paused
-                  ? const Color(0xFF86EFAC)
-                  : const Color(0xFFFDE68A),
+              foregroundColor:
+                  paused ? const Color(0xFF86EFAC) : const Color(0xFFFDE68A),
             ),
           ),
           if (paused)
@@ -128,11 +127,10 @@ class HorseRacingEvidencePanel extends StatelessWidget {
         color: const Color(0xFF111827),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color:
-              (summary.rankingOnHold
-                      ? const Color(0xFFF59E0B)
-                      : const Color(0xFF60A5FA))
-                  .withValues(alpha: 0.45),
+          color: (summary.rankingOnHold
+                  ? const Color(0xFFF59E0B)
+                  : const Color(0xFF60A5FA))
+              .withValues(alpha: 0.45),
         ),
       ),
       child: Column(

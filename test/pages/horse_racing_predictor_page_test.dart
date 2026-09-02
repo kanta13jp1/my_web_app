@@ -122,12 +122,12 @@ void main() {
     final locations = <String>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.navigation, (call) async {
-          if (call.method == 'routeInformationUpdated') {
-            final arguments = Map<Object?, Object?>.from(call.arguments as Map);
-            locations.add(arguments['location']?.toString() ?? '');
-          }
-          return null;
-        });
+      if (call.method == 'routeInformationUpdated') {
+        final arguments = Map<Object?, Object?>.from(call.arguments as Map);
+        locations.add(arguments['location']?.toString() ?? '');
+      }
+      return null;
+    });
 
     await tester.pumpWidget(
       MaterialApp(

@@ -46,7 +46,7 @@ abstract interface class HorseRacingDataGateway {
 
 class SupabaseHorseRacingDataGateway implements HorseRacingDataGateway {
   SupabaseHorseRacingDataGateway({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+      : _client = client ?? Supabase.instance.client;
 
   final SupabaseClient _client;
 

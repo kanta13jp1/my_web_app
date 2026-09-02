@@ -55,15 +55,14 @@ class HorseRacingPerformanceViewModel {
   }) {
     final resultCount = _asInt(accuracyStats['total_results']);
     final hits = _asInt(accuracyStats['correct_count']);
-    final hitRate =
-        _asDouble(accuracyStats['hit_rate_pct']) ??
+    final hitRate = _asDouble(accuracyStats['hit_rate_pct']) ??
         (resultCount > 0 ? hits / resultCount * 100 : 0);
     final predictedProbability = _predictedProbability(accuracyStats);
     final ticketSummary = _summarizeTickets(betTickets);
     final roi = ticketSummary.stake > 0
         ? (ticketSummary.payout - ticketSummary.stake) /
-              ticketSummary.stake *
-              100
+            ticketSummary.stake *
+            100
         : null;
     final interval = _wilson(hits: hits, total: resultCount);
 
@@ -73,16 +72,14 @@ class HorseRacingPerformanceViewModel {
       final betType = row['bet_type']?.toString() ?? '-';
       final sampleSize = _asInt(row['total_predictions']);
       final typeHits = _asInt(row['hits']);
-      final typeRate =
-          _asDouble(row['hit_rate_pct']) ??
+      final typeRate = _asDouble(row['hit_rate_pct']) ??
           (sampleSize > 0 ? typeHits / sampleSize * 100 : 0);
       final typeStake = ticketSummary.stakesByType[betType] ?? 0;
       final payoutIsKnown = !ticketSummary.ambiguousPayoutTypes.contains(
         betType,
       );
-      final typePayout = payoutIsKnown
-          ? ticketSummary.payoutsByType[betType] ?? 0
-          : null;
+      final typePayout =
+          payoutIsKnown ? ticketSummary.payoutsByType[betType] ?? 0 : null;
       final typeRoi = typeStake > 0 && typePayout != null
           ? (typePayout - typeStake) / typeStake * 100
           : null;
@@ -114,8 +111,7 @@ class HorseRacingPerformanceViewModel {
           : (predictedProbability - hitRate).abs(),
       confidenceInterval: interval,
       periodLabel: ticketSummary.periodLabel,
-      rankingOnHold:
-          resultCount < 30 ||
+      rankingOnHold: resultCount < 30 ||
           ticketSummary.stake <= 0 ||
           predictedProbability == null,
       betTypes: betTypes,
@@ -199,8 +195,8 @@ _TicketSummary _summarizeTickets(List<Map<String, dynamic>> tickets) {
   final periodLabel = dates.isEmpty
       ? '記録なし'
       : dates.first == dates.last
-      ? _dateLabel(dates.first)
-      : '${_dateLabel(dates.first)}〜${_dateLabel(dates.last)}';
+          ? _dateLabel(dates.first)
+          : '${_dateLabel(dates.first)}〜${_dateLabel(dates.last)}';
   return _TicketSummary(
     stake: stake,
     payout: payout,
@@ -235,8 +231,7 @@ HorseRacingConfidenceInterval? _wilson({
   final proportion = math.max(0, math.min(hits, total)) / total;
   final denominator = 1 + z * z / total;
   final center = (proportion + z * z / (2 * total)) / denominator;
-  final margin =
-      z /
+  final margin = z /
       denominator *
       math.sqrt(
         proportion * (1 - proportion) / total + z * z / (4 * total * total),
@@ -247,8 +242,7 @@ HorseRacingConfidenceInterval? _wilson({
   );
 }
 
-String _dateLabel(DateTime date) =>
-    '${date.year.toString().padLeft(4, '0')}-'
+String _dateLabel(DateTime date) => '${date.year.toString().padLeft(4, '0')}-'
     '${date.month.toString().padLeft(2, '0')}-'
     '${date.day.toString().padLeft(2, '0')}';
 
