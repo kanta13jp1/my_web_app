@@ -77,9 +77,9 @@ class CfoAssetSummaryCard extends StatelessWidget {
 
   Widget _buildBody(BuildContext context) {
     if (viewModel.isLoading && viewModel.summary == null) {
-      return const Semantics(
+      return Semantics(
         label: '資産サマリを読み込み中',
-        child: LinearProgressIndicator(),
+        child: const LinearProgressIndicator(),
       );
     }
     final errorMessage = viewModel.errorMessage;
@@ -221,7 +221,8 @@ class CfoAssetSummaryCard extends StatelessWidget {
   }
 
   String _money(num? value, FinanceMetricAvailability availability) {
-    if (value == null || availability == FinanceMetricAvailability.notRecorded) {
+    if (value == null ||
+        availability == FinanceMetricAvailability.notRecorded) {
       return '未記録';
     }
     return _yenFormat.format(value);
