@@ -958,12 +958,6 @@ $inviteUrl
 
   Future<void> _runAggregateRefresh(SupabaseClient client) async {
     try {
-      await client.rpc('cleanup_old_presence');
-    } catch (error) {
-      debugPrint('cleanup_old_presence failed: $error');
-    }
-
-    try {
       await client.rpc('update_site_statistics');
     } catch (error) {
       debugPrint('update_site_statistics failed: $error');

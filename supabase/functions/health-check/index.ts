@@ -100,7 +100,7 @@ serve(async (req) => {
       ? String((hygieneData as { status?: unknown }).status)
       : "unknown";
     checks["session_hygiene"] = {
-      ok: !hygieneError && hygieneStatus !== "unhealthy",
+      ok: !hygieneError && hygieneStatus === "healthy",
       detail: hygieneError
         ? hygieneError.message
         : `session hygiene ${hygieneStatus}`,

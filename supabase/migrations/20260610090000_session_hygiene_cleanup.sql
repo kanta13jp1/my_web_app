@@ -1,6 +1,11 @@
 -- Session hygiene for stale authenticated presence rows (#2910).
+-- nocheck: time-relative
+-- user_presence only has the generic updated_at trigger; this backfill does not
+-- cross a date constraint and remains replay-safe as time advances.
 -- Adds a 48h inactivity timeout, preserves invalidated rows briefly so the
 -- client can request re-login, and schedules cleanup when pg_cron is available.
+-- This is application presence hygiene; it does not revoke Supabase Auth
+-- access or refresh tokens. The client signs out on its next presence sync.
 
 alter table public.user_presence
   add column if not exists expires_at timestamptz,
