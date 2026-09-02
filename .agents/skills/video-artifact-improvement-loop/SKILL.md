@@ -50,8 +50,10 @@ recurring budget from a single completed purchase.
 1. Let only the artifact owner read it. Perform review writes through the
    authenticated Edge Function and service-role RPC; do not grant browser
    insert/update access to artifact tables.
-   Scheduled re-review must call `review_authorized_artifact`, never the
-   owner-only `review_artifact` action. The bounded action requires one explicit
+   Scheduled re-review must first call the read-only `capabilities` action and
+   require `review_authorized_artifact` in `scheduler_actions`. It must then
+   call `review_authorized_artifact`, never the owner-only `review_artifact`
+   action. The bounded action requires one explicit
    owner and authorization ID; its atomic RPC accepts only an unreviewed
    artifact produced by a succeeded job under that exact authorization.
 2. Append a review rather than overwriting an earlier review. Collect four
