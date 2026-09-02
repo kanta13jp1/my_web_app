@@ -17,7 +17,7 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: AssetAlertCenterCard(
-            center: AssetAlertCenter(
+            center: const AssetAlertCenter(
               alerts: [
                 AssetAlert(
                   id: id,
@@ -43,7 +43,7 @@ void main() {
     );
     expect(tester.takeException(), isNull);
 
-    await tester.tap(find.byKey(Key('asset_alert_dismiss_$id')));
+    await tester.tap(find.byKey(const Key('asset_alert_dismiss_$id')));
     expect(dismissedId, id);
   });
 }
