@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_logger.dart';
 import 'supabase_client_provider.dart';
@@ -128,11 +127,6 @@ class AiQuotaGuard {
 /// AI 機能を提供するサービス
 class AIService {
   final SupabaseClient _supabase;
-  final String? _googleAIApiKey;
-  final String? _openAIApiKey;
-  final String? _anthropicApiKey;
-  final String? _deepSeekApiKey;
-  final http.Client _httpClient;
   final MagiSystemSettingsService _magiSettingsService;
   final OfflineSecureModeSettingsService _offlineSettingsService;
   static const int _maxRetries = 3;
@@ -148,20 +142,16 @@ class AIService {
 
   AIService([
     SupabaseClient? supabaseClient,
-    this._googleAIApiKey,
-    String? openAIApiKey,
-    String? anthropicApiKey,
-    String? deepSeekApiKey,
-    http.Client? httpClient,
+    String? _legacyGoogleAiApiKey,
+    String? _legacyOpenAiApiKey,
+    String? _legacyAnthropicApiKey,
+    String? _legacyDeepSeekApiKey,
+    Object? _legacyHttpClient,
     MagiSystemSettingsService magiSettingsService =
         const MagiSystemSettingsService(),
     OfflineSecureModeSettingsService offlineSettingsService =
         const OfflineSecureModeSettingsService(),
   ])  : _supabase = supabaseClient ?? supabase,
-        _openAIApiKey = openAIApiKey,
-        _anthropicApiKey = anthropicApiKey,
-        _deepSeekApiKey = deepSeekApiKey,
-        _httpClient = httpClient ?? http.Client(),
         _magiSettingsService = magiSettingsService,
         _offlineSettingsService = offlineSettingsService;
 
@@ -171,7 +161,7 @@ class AIService {
     String? openAIApiKey,
     String? anthropicApiKey,
     String? deepSeekApiKey,
-    http.Client? httpClient,
+    Object? httpClient,
     MagiSystemSettingsService magiSettingsService =
         const MagiSystemSettingsService(),
     OfflineSecureModeSettingsService offlineSettingsService =
@@ -360,7 +350,8 @@ class AIService {
   ) async {
     if (functionName != 'ai-hub') return body;
     final action = body['action']?.toString().trim();
-    if (action != 'provider.chat' &&
+    if (action != 'provider.generate' &&
+        action != 'provider.chat' &&
         action != 'provider.chat_auto' &&
         action != 'edge_llm.invoke') {
       return body;
@@ -404,12 +395,6 @@ class AIService {
       fallback: magiSettings.synthesisModel,
     );
 
-    if (effectiveUseMagi && !_hasAnyMagiProvider) {
-      throw AIServiceException(
-        'MAGI providers are not configured. Set at least one API key.',
-      );
-    }
-
     return _retryWithBackoff(
       () async {
         if (!effectiveUseMagi) {
@@ -432,13 +417,6 @@ class AIService {
       operationName:
           effectiveUseMagi ? 'generateContent(MAGI)' : 'generateContent',
     );
-  }
-
-  bool get _hasAnyMagiProvider {
-    return _isProviderConfigured(_MagiProvider.openai) ||
-        _isProviderConfigured(_MagiProvider.anthropic) ||
-        _isProviderConfigured(_MagiProvider.gemini) ||
-        _isProviderConfigured(_MagiProvider.deepseek);
   }
 
   Future<MagiSystemSettings> _loadMagiSettings() {
@@ -467,13 +445,9 @@ class AIService {
   }
 
   bool _isProviderConfigured(_MagiProvider provider) {
-    final key = switch (provider) {
-      _MagiProvider.openai => _openAIApiKey,
-      _MagiProvider.anthropic => _anthropicApiKey,
-      _MagiProvider.gemini => _googleAIApiKey,
-      _MagiProvider.deepseek => _deepSeekApiKey,
-    };
-    return key != null && key.trim().isNotEmpty;
+    // Provider credentials are resolved only inside ai-hub. Availability is
+    // reported by the Edge Function without exposing secret values.
+    return _MagiProvider.values.contains(provider);
   }
 
   _MagiProvider _inferProviderFromModel(String model) {
@@ -542,217 +516,58 @@ class AIService {
     required String model,
     required String prompt,
   }) async {
-    final apiKey = _openAIApiKey?.trim();
-    if (apiKey == null || apiKey.isEmpty) {
-      throw AIServiceException('OpenAI API key is not configured.');
-    }
-    try {
-      final response = await _httpClient.post(
-        Uri.parse('https://api.openai.com/v1/chat/completions'),
-        headers: <String, String>{
-          'Authorization': 'Bearer $apiKey',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(<String, dynamic>{
-          'model': model,
-          'messages': <Map<String, String>>[
-            <String, String>{'role': 'user', 'content': prompt},
-          ],
-        }),
-      );
-      if (response.statusCode >= 400) {
-        throw _mapHttpApiError('OpenAI', response);
-      }
-
-      final dynamic decoded = jsonDecode(response.body);
-      if (decoded is! Map<String, dynamic>) {
-        return null;
-      }
-      final choices = decoded['choices'];
-      if (choices is! List || choices.isEmpty) {
-        return null;
-      }
-      final firstChoice = choices.first;
-      if (firstChoice is! Map<String, dynamic>) {
-        return null;
-      }
-      final message = firstChoice['message'];
-      if (message is! Map<String, dynamic>) {
-        return null;
-      }
-      final content = message['content'];
-      if (content is String) {
-        return content;
-      }
-      if (content is List) {
-        final text = content
-            .whereType<Map<String, dynamic>>()
-            .map((part) => part['text']?.toString() ?? '')
-            .where((part) => part.trim().isNotEmpty)
-            .join('\n')
-            .trim();
-        return text.isEmpty ? null : text;
-      }
-      return null;
-    } catch (e) {
-      if (e is AIServiceException) rethrow;
-      throw _mapAiModelError(e);
-    }
+    return _generateServerManagedContent(
+      provider: 'openai',
+      model: model,
+      prompt: prompt,
+    );
   }
 
   Future<String?> _generateSingleAnthropicContent({
     required String model,
     required String prompt,
   }) async {
-    final apiKey = _anthropicApiKey?.trim();
-    if (apiKey == null || apiKey.isEmpty) {
-      throw AIServiceException('Anthropic API key is not configured.');
-    }
-    try {
-      final response = await _httpClient.post(
-        Uri.parse('https://api.anthropic.com/v1/messages'),
-        headers: <String, String>{
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: jsonEncode(<String, dynamic>{
-          'model': model,
-          'max_tokens': 1024,
-          'messages': <Map<String, String>>[
-            <String, String>{'role': 'user', 'content': prompt},
-          ],
-        }),
-      );
-      if (response.statusCode >= 400) {
-        throw _mapHttpApiError('Anthropic', response);
-      }
-
-      final dynamic decoded = jsonDecode(response.body);
-      if (decoded is! Map<String, dynamic>) {
-        return null;
-      }
-      final content = decoded['content'];
-      if (content is! List || content.isEmpty) {
-        return null;
-      }
-      final text = content
-          .whereType<Map<String, dynamic>>()
-          .map((part) => part['text']?.toString() ?? '')
-          .where((part) => part.trim().isNotEmpty)
-          .join('\n')
-          .trim();
-      return text.isEmpty ? null : text;
-    } catch (e) {
-      if (e is AIServiceException) rethrow;
-      throw _mapAiModelError(e);
-    }
+    return _generateServerManagedContent(
+      provider: 'anthropic',
+      model: model,
+      prompt: prompt,
+    );
   }
 
   Future<String?> _generateSingleDeepSeekContent({
     required String model,
     required String prompt,
   }) async {
-    final apiKey = _deepSeekApiKey?.trim();
-    if (apiKey == null || apiKey.isEmpty) {
-      throw AIServiceException('DeepSeek API key is not configured.');
-    }
-    try {
-      final response = await _httpClient.post(
-        Uri.parse('https://api.deepseek.com/chat/completions'),
-        headers: <String, String>{
-          'Authorization': 'Bearer $apiKey',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(<String, dynamic>{
-          'model': model,
-          'messages': <Map<String, String>>[
-            <String, String>{'role': 'user', 'content': prompt},
-          ],
-        }),
-      );
-      if (response.statusCode >= 400) {
-        throw _mapHttpApiError('DeepSeek', response);
-      }
+    return _generateServerManagedContent(
+      provider: 'deepseek',
+      model: model,
+      prompt: prompt,
+    );
+  }
 
-      final dynamic decoded = jsonDecode(response.body);
-      if (decoded is! Map<String, dynamic>) {
-        return null;
+  Future<String?> _generateServerManagedContent({
+    required String provider,
+    required String model,
+    required String prompt,
+  }) async {
+    try {
+      final data = await _invokeFunction('ai-hub', {
+        'action': 'provider.generate',
+        'provider': provider,
+        'model': model,
+        'message': prompt,
+      });
+      if (data['success'] != true) {
+        throw AIServiceException(
+          data['message']?.toString() ?? 'Server-managed AI request failed.',
+        );
       }
-      final choices = decoded['choices'];
-      if (choices is! List || choices.isEmpty) {
-        return null;
-      }
-      final firstChoice = choices.first;
-      if (firstChoice is! Map<String, dynamic>) {
-        return null;
-      }
-      final message = firstChoice['message'];
-      if (message is! Map<String, dynamic>) {
-        return null;
-      }
-      final content = message['content'];
-      if (content is String) {
-        return content;
-      }
-      if (content is List) {
-        final text = content
-            .whereType<Map<String, dynamic>>()
-            .map((part) => part['text']?.toString() ?? '')
-            .where((part) => part.trim().isNotEmpty)
-            .join('\n')
-            .trim();
-        return text.isEmpty ? null : text;
-      }
-      return null;
+      final text = data['text']?.toString().trim();
+      return text == null || text.isEmpty ? null : text;
     } catch (e) {
       if (e is AIServiceException) rethrow;
       throw _mapAiModelError(e);
     }
-  }
-
-  AIServiceException _mapHttpApiError(String provider, http.Response response) {
-    final retryAfter = response.headers['retry-after'];
-    final detail = _extractApiErrorMessage(response.body);
-    final status = response.statusCode;
-    if (status == 429) {
-      return AIServiceException(
-        '$provider API rate limit exceeded.',
-        errorType: 'RATE_LIMIT',
-        retryAfter: retryAfter,
-      );
-    }
-    return AIServiceException(
-      '$provider API error ($status): $detail',
-    );
-  }
-
-  String _extractApiErrorMessage(String body) {
-    try {
-      final dynamic decoded = jsonDecode(body);
-      if (decoded is Map<String, dynamic>) {
-        final error = decoded['error'];
-        if (error is String && error.trim().isNotEmpty) {
-          return error;
-        }
-        if (error is Map<String, dynamic>) {
-          final message = error['message']?.toString();
-          if (message != null && message.trim().isNotEmpty) {
-            return message;
-          }
-          final type = error['type']?.toString();
-          if (type != null && type.trim().isNotEmpty) {
-            return type;
-          }
-        }
-        final message = decoded['message']?.toString();
-        if (message != null && message.trim().isNotEmpty) {
-          return message;
-        }
-      }
-    } catch (_) {}
-    final trimmed = body.trim();
-    return trimmed.isEmpty ? 'Unknown error' : trimmed;
   }
 
   Future<String?> _generateContentWithMagi({
