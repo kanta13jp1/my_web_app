@@ -40,6 +40,9 @@ payloads.
 
 ## Cloud formatter output
 
+Together with `format`, the workflow now exposes six profiles; the original
+five validation profiles remain unchanged.
+
 Use the `format` profile when the repository-pinned Dart formatter differs
 from the SDK available on the local machine. The runner formats only Dart
 files changed between the selected branch and the default branch. It does not
