@@ -1,8 +1,10 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/abstinence_guard_store.dart';
+import '../services/self_touch_consent_store.dart';
 
 class SelfTouchTrackerPage extends StatefulWidget {
   final bool quickLogOnOpen;
@@ -22,14 +24,18 @@ class _SelfTouchTrackerPageState extends State<SelfTouchTrackerPage>
   static const int _alertThreshold = 3;
 
   static const List<_AlternativeAction> _alternatives = [
-    _AlternativeAction('🤲', '利き手でない手で頭をゆっくり撫でる', 'オキシトシン分泌を促す代替行動'),
+    _AlternativeAction('🤲', '利き手でない手で頭をゆっくり撫でる', 'やさしい感覚へ意識を移す'),
     _AlternativeAction('🏐', 'ストレスボールを握る', '手の筋肉へ意識を向けて衝動を逃がす'),
-    _AlternativeAction('💨', '4-7-8 呼吸法', '4秒吸って・7秒止めて・8秒吐く'),
-    _AlternativeAction('🧊', '冷たい水で手を洗う', '感覚を切り替えて衝動をリセット'),
-    _AlternativeAction('🖊️', '今の気持ちをメモする', '言語化で衝動の強度が下がる'),
+    _AlternativeAction('💨', 'ゆっくり呼吸する', '無理のない長さで息を吐くことに意識を向ける'),
+    _AlternativeAction('🧊', '冷たい水で手を洗う', '別の感覚へ意識を切り替える'),
+    _AlternativeAction('🖊️', '今の気持ちをメモする', '気持ちを整理するきっかけにする'),
     _AlternativeAction('🚶', '5分だけ席を立つ', '環境を変えて刺激から距離を置く'),
   ];
 
+  SelfTouchDisclosure _disclosure = SelfTouchDisclosure.fallback;
+  bool _consentChecked = false;
+  bool _consentGranted = false;
+  bool _consentDialogOpen = false;
   int _todayCount = 0;
   List<AbstinenceSlipDailyCount> _weekTrend = [];
   bool _loading = true;
@@ -47,10 +53,7 @@ class _SelfTouchTrackerPageState extends State<SelfTouchTrackerPage>
     _pulseAnim = Tween<double>(begin: 1.0, end: 1.12).animate(
       CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
     );
-    final initialLoad = _load();
-    if (widget.quickLogOnOpen) {
-      initialLoad.whenComplete(_runQuickLog);
-    }
+    _initialize();
   }
 
   @override
@@ -85,10 +88,115 @@ class _SelfTouchTrackerPageState extends State<SelfTouchTrackerPage>
     return d.year == now.year && d.month == now.month && d.day == now.day;
   }
 
+  Future<void> _initialize() async {
+    final disclosure = await SelfTouchConsentStore.loadDisclosure();
+    final granted = await SelfTouchConsentStore.hasCurrentConsent(
+      version: disclosure.version,
+    );
+    if (!mounted) return;
+    setState(() {
+      _disclosure = disclosure;
+      _consentChecked = true;
+      _consentGranted = granted;
+      if (!granted) {
+        _loading = false;
+      }
+    });
+
+    if (!granted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _requestConsent();
+      });
+      return;
+    }
+
+    await _load();
+    if (widget.quickLogOnOpen) {
+      await _runQuickLog();
+    }
+  }
+
+  Future<void> _requestConsent() async {
+    if (!mounted || _consentGranted || _consentDialogOpen) return;
+    _consentDialogOpen = true;
+    final accepted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(_disclosure.title),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(_disclosure.body),
+              const SizedBox(height: 12),
+              Text(
+                '説明文の版: ${_disclosure.version}',
+                style: Theme.of(dialogContext).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('今は記録しない'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('内容を理解して記録を始める'),
+          ),
+        ],
+      ),
+    );
+    _consentDialogOpen = false;
+    if (accepted != true || !mounted) return;
+
+    try {
+      await SelfTouchConsentStore.grantConsent(
+        version: _disclosure.version,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('同意状態を保存できませんでした。通信状況を確認してください。')),
+      );
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _consentGranted = true);
+    await _load();
+    if (widget.quickLogOnOpen) {
+      await _runQuickLog();
+    }
+  }
+
+  Future<void> _openSupportResources() async {
+    var opened = false;
+    try {
+      opened = await launchUrl(
+        _disclosure.supportUrl,
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (_) {
+      opened = false;
+    }
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('相談窓口を開けませんでした。ブラウザの設定を確認してください。')),
+      );
+    }
+  }
+
   Future<void> _record({
     bool showSuccess = false,
     bool showFailure = false,
   }) async {
+    if (!_consentGranted) {
+      await _requestConsent();
+      return;
+    }
     try {
       await _pulseCtrl.forward(from: 0);
       await AbstinenceGuardStore.incrementSlip(
@@ -201,6 +309,19 @@ class _SelfTouchTrackerPageState extends State<SelfTouchTrackerPage>
               ),
             ),
             const SizedBox(height: 16),
+            const Text(
+              '記録回数は診断結果ではありません。つらさが続くときや自分を傷つける心配があるときは、専門家や公的な相談窓口を利用してください。',
+              style: TextStyle(fontSize: 12, height: 1.4),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _openSupportResources();
+              },
+              icon: const Icon(Icons.open_in_new),
+              label: const Text('相談先を確認'),
+            ),
             TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: const Text('OK、やってみる'),
@@ -214,28 +335,112 @@ class _SelfTouchTrackerPageState extends State<SelfTouchTrackerPage>
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    if (!_consentChecked || _loading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('髪・自己接触トラッカー')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (!_consentGranted) {
+      return _buildConsentGate(cs);
+    }
     final alertColor =
         _todayCount >= _alertThreshold ? Colors.orange[700]! : cs.primary;
 
     return Scaffold(
       appBar: AppBar(title: const Text('髪・自己接触トラッカー')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _load,
-              child: ListView(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(
+          padding: const EdgeInsets.all(24),
+          children: [
+            _buildSafetyCard(cs),
+            const SizedBox(height: 16),
+            _buildTodayCard(cs, alertColor),
+            const SizedBox(height: 24),
+            _buildTapButton(alertColor),
+            const SizedBox(height: 32),
+            _buildWeekChart(cs),
+            const SizedBox(height: 24),
+            _buildTipsSection(cs),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConsentGate(ColorScheme cs) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('髪・自己接触トラッカー')),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: Card(
+              child: Padding(
                 padding: const EdgeInsets.all(24),
-                children: [
-                  _buildTodayCard(cs, alertColor),
-                  const SizedBox(height: 24),
-                  _buildTapButton(alertColor),
-                  const SizedBox(height: 32),
-                  _buildWeekChart(cs),
-                  const SizedBox(height: 24),
-                  _buildTipsSection(cs),
-                ],
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.health_and_safety_outlined,
+                        size: 40, color: cs.primary),
+                    const SizedBox(height: 12),
+                    Text(
+                      _disclosure.title,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(_disclosure.body),
+                    const SizedBox(height: 20),
+                    FilledButton(
+                      onPressed: _requestConsent,
+                      child: const Text('説明を確認する'),
+                    ),
+                    TextButton.icon(
+                      onPressed: _openSupportResources,
+                      icon: const Icon(Icons.open_in_new),
+                      label: Text(_disclosure.supportLabel),
+                    ),
+                  ],
+                ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSafetyCard(ColorScheme cs) {
+    return Card(
+      color: cs.secondaryContainer.withValues(alpha: 0.55),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '医療上の診断・治療ではありません',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: cs.onSecondaryContainer,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '回数は自己観察のメモです。心身の不調が続く場合は、医療機関や公的な相談窓口を利用してください。',
+              style: TextStyle(color: cs.onSecondaryContainer, height: 1.4),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: _openSupportResources,
+              icon: const Icon(Icons.open_in_new),
+              label: Text(_disclosure.supportLabel),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -250,7 +455,7 @@ class _SelfTouchTrackerPageState extends State<SelfTouchTrackerPage>
         child: Row(
           children: [
             Icon(
-              isAlert ? Icons.warning_amber_rounded : Icons.touch_app,
+              isAlert ? Icons.self_improvement : Icons.touch_app,
               color: alertColor,
               size: 36,
             ),
@@ -276,7 +481,7 @@ class _SelfTouchTrackerPageState extends State<SelfTouchTrackerPage>
                   ),
                   if (isAlert)
                     Text(
-                      '代替アクションを試してみよう',
+                      'ひと休みや代替アクションを選べます',
                       style: TextStyle(color: alertColor, fontSize: 12),
                     ),
                 ],
@@ -408,7 +613,7 @@ class _SelfTouchTrackerPageState extends State<SelfTouchTrackerPage>
               margin: const EdgeInsets.only(right: 4),
             ),
             Text(
-              '警戒ライン（$_alertThreshold回以上）',
+              'セルフケア提案（$_alertThreshold回以上）',
               style: TextStyle(
                 fontSize: 11,
                 color: cs.onSurface.withValues(alpha: 0.5),
