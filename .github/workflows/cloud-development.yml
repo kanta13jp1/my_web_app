@@ -16,6 +16,7 @@ on:
         type: choice
         options:
           - workspace
+          - format
           - analyze
           - test
           - web-build
@@ -66,6 +67,52 @@ jobs:
         if: env.CLOUD_PROFILE != 'workspace'
         run: flutter pub get
 
+      - name: Format changed Dart files in cloud
+        id: format
+        if: env.CLOUD_PROFILE == 'format'
+        shell: bash
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git fetch --no-tags --depth=1 origin "${DEFAULT_BRANCH}"
+          mapfile -t files < <(
+            git diff --name-only --diff-filter=ACMR \
+              "origin/${DEFAULT_BRANCH}" HEAD -- '*.dart' \
+              | while IFS= read -r file; do
+                  [ -f "$file" ] && printf '%s\n' "$file"
+                done
+          )
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changed Dart files were found."
+            exit 0
+          fi
+
+          dart format "${files[@]}"
+          if git diff --quiet -- "${files[@]}"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "The changed Dart files already match the pinned formatter."
+            exit 0
+          fi
+
+          mkdir -p .cloud-format-output/files
+          git diff --binary -- "${files[@]}" > .cloud-format-output/cloud-format.patch
+          printf '%s\n' "${files[@]}" > .cloud-format-output/manifest.txt
+          for file in "${files[@]}"; do
+            mkdir -p ".cloud-format-output/files/$(dirname "$file")"
+            cp "$file" ".cloud-format-output/files/$file"
+          done
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Preserve formatter output briefly
+        if: steps.format.outputs.changed == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: cloud-format-${{ github.run_id }}
+          path: .cloud-format-output
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Analyze in cloud
         if: env.CLOUD_PROFILE == 'analyze' || env.CLOUD_PROFILE == 'full'
         run: flutter analyze
@@ -101,5 +148,5 @@ jobs:
             echo "| ref | \`${GITHUB_REF}\` |"
             echo "| commit | \`${GITHUB_SHA}\` |"
             echo '| local Flutter/Dart work | none |'
-            echo '| artifact retention | 1 day when a web build runs |'
+            echo '| artifact retention | 1 day when a web build or formatter output runs |'
           } >> "$GITHUB_STEP_SUMMARY"
