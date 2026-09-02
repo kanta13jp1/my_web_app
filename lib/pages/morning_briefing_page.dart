@@ -2702,13 +2702,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                 const Divider(height: 12),
                                 const Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.cloud_done,
                                       color: Color(0xFF0D9488),
                                       size: 16,
                                     ),
-                                    const SizedBox(width: 8),
-                                    const Expanded(
+                                    SizedBox(width: 8),
+                                    Expanded(
                                       child: Text(
                                         'AI認証情報はサーバーで管理',
                                         style: TextStyle(
