@@ -10,6 +10,7 @@ const List<String> kAllAppRoutes = <String>[
   '/activity-feed',
   '/address-book',
   '/admin',
+  '/admin/analytics',
   '/admin/artifact-publishing',
   '/admin-feedback',
   '/admin-notifications',
