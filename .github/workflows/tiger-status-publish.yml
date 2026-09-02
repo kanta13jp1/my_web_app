@@ -29,8 +29,9 @@ jobs:
           python-version: '3.12'
 
       - name: Validate JSON syntax and structure
+        shell: bash
         run: |
-          python -c "
+          python3 <<'PY'
           import json, glob, sys
           files = glob.glob('assets/data/tiger_*.json')
           if not files:
@@ -41,4 +42,4 @@ jobs:
                   data = json.load(fp)
                   print(f'Validated {f}: {len(data) if isinstance(data, (list, dict)) else 1} entries')
           print('All Tiger status JSON files are valid and ready for serving!')
-          "
+          PY
