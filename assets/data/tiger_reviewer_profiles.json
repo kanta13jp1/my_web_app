@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "snapshot_date": "2026-09-01",
-  "source_snapshot": "canonical tiger-personas.json (2026-09-01)",
+  "snapshot_date": "2026-09-02",
+  "source_snapshot": "canonical tiger-personas.json (2026-09-02)",
   "reviewer_count": 125,
   "disclaimer": "年齢は生年月日を公開一次情報で確認できた場合のみ、スナップショット日時点で表示します。未確認の年齢は推測していません。肩書き・事業内容・出演実績は公開情報から構成したスナップショットです。",
   "profiles": [
@@ -7002,8 +7002,8 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "インターネット事業家。2ちゃんねる開設、4chan運営などを経験",
-      "business_summary": "IT・SaaS・プラットフォーム、マーケティング・メディア",
+      "company_role": "4chan管理人。2channel創設者で、2015年から4chanを所有・運営",
+      "business_summary": "匿名画像掲示板4chanの運営・管理と、匿名掲示板2channelの創設",
       "business_domains": [
         "IT・SaaS・プラットフォーム",
         "マーケティング・メディア"
@@ -7011,12 +7011,22 @@
       "appearances": 2,
       "investment_count": 0,
       "public_viewpoint_summary": "前提の矛盾、反証可能性、代替手段、少ない資本で検証できるかを問い、感情より論理の整合性を優先する。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/2/",
-      "evidence_confidence": 2.3,
-      "profile_completeness_percent": 48,
-      "review_reflection_percent": 47,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "profile_url": "https://4chan.org/faq",
+      "evidence_links": [
+        {
+          "label": "現職・運営事業（4chan公式FAQ）",
+          "url": "https://4chan.org/faq"
+        },
+        {
+          "label": "4chan所有・2channel創設（4chan公式運営履歴）",
+          "url": "https://4chan.org/blotter"
+        }
+      ],
+      "evidence_confidence": 3.0,
+      "profile_completeness_percent": 58,
+      "review_reflection_percent": 61,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "market_demand",
@@ -7050,7 +7060,6 @@
       ],
       "next_research_targets": [
         "生年月日の一次公開情報",
-        "現職肩書き・事業内容の一次公開情報",
         "本人の審査姿勢が確認できる一次公開情報",
         "出演・出資実績の追加検証"
       ],
@@ -7058,7 +7067,9 @@
         "S002",
         "S083",
         "S008",
-        "S004"
+        "S004",
+        "S111",
+        "S112"
       ]
     },
     {
@@ -7132,21 +7143,34 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "有限会社 カグヤマ商会 代表",
-      "business_summary": "M&A・事業再生、営業・販売組織",
+      "company_role": "有限会社カグヤマ商会 代表・事業再生版令和の虎 主宰",
+      "business_summary": "中古車販売、Web制作、企画・マーケティング、デザイン・システム開発、自社メディア、プロモーション、フランチャイズ、電気通信および事業再生プロジェクト運営",
       "business_domains": [
         "M&A・事業再生",
-        "営業・販売組織"
+        "小売・通販・EC",
+        "IT・SaaS・プラットフォーム",
+        "マーケティング・メディア",
+        "フランチャイズ・多店舗展開"
       ],
       "appearances": 2,
       "investment_count": 0,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。M&A・事業再生、営業・販売組織の公開職歴と、番組集計上の出演2回・出資0回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/2/",
-      "evidence_confidence": 2.3,
-      "profile_completeness_percent": 48,
-      "review_reflection_percent": 47,
-      "review_reflection_mode": "neutral_guarded",
-      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "FiNANCiEの公式発表では、後藤和良が主宰する『事業再生の虎』は、窮地に立つ事業者が現況と再生計画を開示し、専門家からフィードバックと支援を受けて再生・成長を目指すプロジェクトと説明されている。これは公開されたプロジェクト方針の要約であり、個別案件への本人の意見としては扱わない。",
+      "profile_url": "https://xn--lckk2lxa.com/%E4%BC%9A%E7%A4%BE%E6%A6%82%E8%A6%81/",
+      "evidence_links": [
+        {
+          "label": "現職肩書き・事業内容（有限会社カグヤマ商会公式）",
+          "url": "https://xn--lckk2lxa.com/%E4%BC%9A%E7%A4%BE%E6%A6%82%E8%A6%81/"
+        },
+        {
+          "label": "事業再生プロジェクト方針（FiNANCiE公式発表）",
+          "url": "https://prtimes.jp/main/html/rd/p/000000477.000042665.html"
+        }
+      ],
+      "evidence_confidence": 3.7,
+      "profile_completeness_percent": 70,
+      "review_reflection_percent": 79,
+      "review_reflection_mode": "profile_balanced",
+      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "unit_economics",
@@ -7174,18 +7198,21 @@
         }
       ],
       "review_style_tags": [
-        "balanced_risk"
+        "turnaround_support",
+        "business_plan_disclosure",
+        "recovery_execution"
       ],
       "next_research_targets": [
         "生年月日の一次公開情報",
-        "現職肩書き・事業内容の一次公開情報",
         "本人の審査姿勢が確認できる一次公開情報",
         "出演・出資実績の追加検証"
       ],
       "evidence_source_ids": [
         "S002",
         "S008",
-        "S004"
+        "S004",
+        "S113",
+        "S114"
       ]
     },
     {
@@ -8220,11 +8247,11 @@
     }
   ],
   "enrichment": {
-    "round": 9,
+    "round": 10,
     "batch_size": 5,
     "policy": "一次公開情報を優先し、未確認情報は推測しない。プロフィール由来のレビュー観点は証拠強度に応じて段階反映する。",
-    "average_profile_completeness_percent": 67.4,
-    "average_review_reflection_percent": 72.7,
+    "average_profile_completeness_percent": 67.6,
+    "average_review_reflection_percent": 73.1,
     "verified_birth_dates": 12,
     "next_batch": [
       {
@@ -8261,9 +8288,9 @@
         ]
       },
       {
-        "seat": 108,
-        "name": "西村博之（ひろゆき）",
-        "profile_completeness_percent": 48,
+        "seat": 66,
+        "name": "吉野繁",
+        "profile_completeness_percent": 51,
         "research_targets": [
           "生年月日の一次公開情報",
           "現職肩書き・事業内容の一次公開情報",
@@ -8272,9 +8299,9 @@
         ]
       },
       {
-        "seat": 110,
-        "name": "後藤 和良",
-        "profile_completeness_percent": 48,
+        "seat": 68,
+        "name": "山澤 礼明",
+        "profile_completeness_percent": 51,
         "research_targets": [
           "生年月日の一次公開情報",
           "現職肩書き・事業内容の一次公開情報",

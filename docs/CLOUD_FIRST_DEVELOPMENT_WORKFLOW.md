@@ -37,3 +37,24 @@ After the repair, run `plan` again for the exact same range. Continue with
 normal safe-apply gate is open. Artifacts and summaries remain content-free;
 they expose counts and gate states, never page titles, source IDs, task IDs, or
 payloads.
+
+## Cloud formatter output
+
+Together with `format`, the workflow now exposes six profiles; the original
+five validation profiles remain unchanged.
+
+Use the `format` profile when the repository-pinned Dart formatter differs
+from the SDK available on the local machine. The runner formats only Dart
+files changed between the selected branch and the default branch. It does not
+push or commit changes.
+
+```powershell
+gh workflow run cloud-development.yml --ref <branch> -f profile=format
+```
+
+When formatting changes are needed, the run uploads a one-day
+`cloud-format-<run-id>` artifact containing a binary patch, a manifest, and
+the formatted files. Review the patch before applying or committing it. This
+keeps dependency resolution and formatter-version work on GitHub-hosted
+runners without bypassing the repository's human-review requirement for the
+separate bot-commit auto-fix workflow.

@@ -1576,11 +1576,15 @@ class AssetLiabilityWorkbook {
   /// 照合は生の ID で行う (per-account 集計も生 ID の一致で突き合わせるため)。
   /// 空白混じりの ID は実際にどの口座とも一致せず引かれないので、拾うのが正しい。
   List<AssetLiabilityDebtRow> get paymentSourceInvalidRows {
-    final cashLikeIds = <String>{
-      for (final account in accounts)
-        if (account.kind == AssetLiabilityAccountKind.cash ||
-            account.kind == AssetLiabilityAccountKind.deposit)
-          account.id,
+    final validSourceIdentifiers = <String>{
+      for (final account in accounts) ...[
+        account.id,
+        account.name,
+      ],
+      for (final debt in debtMasterRows) ...[
+        debt.id,
+        debt.name,
+      ],
     };
     return debtMasterRows
         .where(
@@ -1590,7 +1594,7 @@ class AssetLiabilityWorkbook {
               !row.paid &&
               row.paymentSourceAccountId != null &&
               row.paymentSourceAccountId!.trim().isNotEmpty &&
-              !cashLikeIds.contains(row.paymentSourceAccountId),
+              !validSourceIdentifiers.contains(row.paymentSourceAccountId),
         )
         .toList();
   }

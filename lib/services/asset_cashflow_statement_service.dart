@@ -15,10 +15,18 @@ class AssetCashflowMonth {
   /// その月に実際に支払った支出合計 (paid payment total)。
   final double expense;
 
+  /// その月時点の純資産 (B/S)。null = 未追跡。
+  final double? netWorth;
+
+  /// 前月からの純資産増減 (当月純資産 - 前月純資産)。前月または当月が未追跡なら null。
+  final double? netWorthDelta;
+
   const AssetCashflowMonth({
     required this.monthKey,
     required this.income,
     required this.expense,
+    this.netWorth,
+    this.netWorthDelta,
   });
 
   /// 収入が追跡されているか (0 円でも追跡済みなら true)。
@@ -126,16 +134,17 @@ class AssetCashflowStatementService {
     AssetLiabilityMonthlySnapshot? currentMonthSnapshot,
     required DateTime asOf,
   }) {
-    final byMonth = <String, AssetCashflowMonth>{};
+    final rawMonthData =
+        <String, ({double? income, double expense, double? netWorth})>{};
     for (final snapshot in snapshots) {
       final key = snapshot.monthKey.trim();
       if (key.isEmpty) {
         continue;
       }
-      byMonth[key] = AssetCashflowMonth(
-        monthKey: key,
+      rawMonthData[key] = (
         income: snapshot.monthlyReceivedIncomeTotal,
         expense: snapshot.monthlyPaidPaymentTotal,
+        netWorth: snapshot.netWorth,
       );
     }
 
@@ -144,15 +153,36 @@ class AssetCashflowStatementService {
       final key = currentMonthSnapshot.monthKey.trim().isEmpty
           ? currentMonthKey
           : currentMonthSnapshot.monthKey.trim();
-      byMonth[key] = AssetCashflowMonth(
-        monthKey: key,
+      rawMonthData[key] = (
         income: currentMonthSnapshot.monthlyReceivedIncomeTotal,
         expense: currentMonthSnapshot.monthlyPaidPaymentTotal,
+        netWorth: currentMonthSnapshot.netWorth,
       );
     }
 
-    final months = byMonth.values.toList()
-      ..sort((a, b) => a.monthKey.compareTo(b.monthKey));
+    final sortedKeys = rawMonthData.keys.toList()..sort();
+    final months = <AssetCashflowMonth>[];
+    final byMonth = <String, AssetCashflowMonth>{};
+    double? previousNetWorth;
+
+    for (final key in sortedKeys) {
+      final data = rawMonthData[key]!;
+      double? delta;
+      if (data.netWorth != null && previousNetWorth != null) {
+        delta = data.netWorth! - previousNetWorth;
+      }
+      previousNetWorth = data.netWorth;
+
+      final month = AssetCashflowMonth(
+        monthKey: key,
+        income: data.income,
+        expense: data.expense,
+        netWorth: data.netWorth,
+        netWorthDelta: delta,
+      );
+      months.add(month);
+      byMonth[key] = month;
+    }
 
     final currentMonth = byMonth[currentMonthKey];
 

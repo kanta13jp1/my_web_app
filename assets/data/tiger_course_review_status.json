@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-31T12:24:05.338112+00:00",
+  "generated_at": "2026-09-02T10:22:00.159441+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -11,12 +11,12 @@
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 22,
-    "eligible": 22,
-    "provisional": 20,
+    "total": 23,
+    "eligible": 23,
+    "provisional": 21,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 21,
+    "division_3": 22,
     "division_4": 1,
     "division_5": 0
   },
@@ -28,49 +28,49 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260831T211401+0900",
-    "started_at": "2026-08-31T21:14:01+09:00",
+    "cycle_id": "20260902T183425+0900",
+    "started_at": "2026-09-02T18:34:25+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-2240c679-a2bc-4322-8643-7499385a1bde",
-      "url": "https://aider.chat/"
+      "slug": "course-256fce47-54de-4716-ad2c-478bc2e9613b",
+      "url": "https://aider.chat/docs/config/options.html"
     },
     "reviewer": {
       "seat": 94,
       "name": "戸村 光",
-      "selection_score": 76.4431,
+      "selection_score": 77.3157,
       "division": 1,
-      "cycle_utility": 83.0,
-      "aggregate_utility": 83.46
+      "cycle_utility": 83.42,
+      "aggregate_utility": 83.22
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "Aider CLI course has no public learner, outcome, verification, source-evidence, or freshness contract",
+        "summary": "The Aider model-selection course has no public learner, outcome, verification, source-evidence, or freshness contract",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
-          "scalability",
-          "competitive_advantage"
+          "trust_risk",
+          "scalability"
         ]
       },
       {
-        "summary": "The public contract does not verify a bounded multi-file Git workflow despite that being the course promise",
+        "summary": "The static 2026 model-family promise lacks a reproducible cost-quality decision rubric and a current dated evidence contract",
         "severity": "p1",
         "business_dimensions": [
-          "scalability",
+          "unit_economics",
           "competitive_advantage",
-          "unit_economics"
+          "trust_risk"
         ]
       },
       {
-        "summary": "No real learner outcome evidence is available for the Aider CLI course",
+        "summary": "No real learner outcome evidence is available for the Aider model-selection course",
         "severity": "p2",
         "business_dimensions": [
           "market_demand",
-          "revenue_model",
+          "unit_economics",
           "scalability"
         ]
       }
@@ -90,56 +90,148 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After the production-data owner publishes the five evidence fields and one 30-to-60-minute fixture-repository lab, run one cohort and compare enrollment-to-start conversion, completion, rubric score, files added to context, undo success, lint/test success, support contacts, and workplace application."
+      "next_cycle_experiment": "After the production-data owner publishes all five evidence fields and one fixed-workload comparison lab, run one cohort and compare task pass rate, cost per passing run, latency, tokens, retries, budget compliance, rubric agreement, support contacts, and workplace reuse."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5165",
-      "detail": "The finding requires changing protected production course data that is not represented by a bounded tracked course source file, which is outside the automatic repair boundary.",
+      "label": "対策待ち・Issue #5227",
+      "detail": "The findings require changing protected production course data that is not represented by a bounded tracked course source file, which is outside the automatic repair boundary.",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [
-        "course-aider-missing-evidence-contract"
+        "course-aider-static-model-cost-rubric-gap"
       ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean dedicated branch at origin/main f38154bfea8a7cdae97a8efe02be3f8aa989970f",
+        "passed: clean dedicated branch at origin/main ddbc364a4e711555cb74330dd81bed60dca41464",
         "passed: 125 roster profiles and 125 personas",
-        "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=6",
-        "executed once successfully: Aider CLI course selected from fresh catalog",
+        "passed: active=1083, reviewable=538, excluded_missing_source_url=536, evidence_complete=6",
+        "executed once successfully: Aider model-selection course selected from fresh catalog",
         "passed: no comparable baseline, focus_dimension=evidence",
-        "passed: official Aider homepage, usage, Git, and GitHub repository evidence inspected separately; no matching tracked course row found",
+        "passed: official Aider options, leaderboard, and prompt-caching evidence inspected separately; no matching tracked course row found",
         "executed once successfully: 125 profiles, seat 94"
       ],
       "issue": {
-        "number": 5165,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5165",
+        "number": 5227,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5227",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260831T211401+0900:2240c679-a2bc-4322-8643-7499385a1bde",
+        "dedupe_key": "tiger-course-review:20260902T183425+0900:256fce47-54de-4716-ad2c-478bc2e9613b",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-aider-multi-file-git-lab-gap",
-        "course-aider-learner-outcome-gap"
+        "course-aider-model-selection-missing-evidence-contract",
+        "course-aider-model-selection-learner-outcome-gap"
       ]
     },
     "course": {
-      "content_id": "2240c679-a2bc-4322-8643-7499385a1bde",
+      "content_id": "256fce47-54de-4716-ad2c-478bc2e9613b",
       "provider": "aider",
-      "title": "Aider — AI ペアプログラマー CLI (Git連携 / 複数ファイル編集 / 22k+ Stars)",
-      "source_url": "https://aider.chat/",
-      "reason": "The fresh public catalog proves that the selected Aider CLI course is active and points to a reachable official source, but all five evidence-contract fields are null. Official evidence confirms terminal, codebase-map, Git, explicit-file, multi-file, and test capabilities, yet the public course metadata does not define a learner, observable multi-file Git outcome, verification rubric, dated evidence source, or real learner result. Learner evidence is therefore disclosed at the neutral score of 50.",
-      "cycle_utility": 45.75,
-      "aggregate_utility": 45.75,
+      "title": "Aider モデル選択 & コスト最適化 — Claude / DeepSeek / GPT-4o 比較 (2026)",
+      "source_url": "https://aider.chat/docs/config/options.html",
+      "reason": "The fresh public catalog proves that the selected Aider model-selection course is active and points to a reachable official source, but all five evidence-contract fields are null. Official Aider evidence exposes model selection controls, model metadata, a dated 225-task leaderboard, benchmark correctness and cost, edit format, reasoning settings, prompt caching, and context controls. The public course nevertheless defines no learner, reproducible workload, dated price-and-benchmark snapshot, decision rubric, or real learner result. Learner evidence is therefore disclosed at the neutral score of 50.",
+      "cycle_utility": 42.0,
+      "aggregate_utility": 42.0,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260902T183425+0900",
+      "started_at": "2026-09-02T18:34:25+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "256fce47-54de-4716-ad2c-478bc2e9613b",
+        "title": "Aider モデル選択 & コスト最適化 — Claude / DeepSeek / GPT-4o 比較 (2026)",
+        "url": "https://aider.chat/docs/config/options.html"
+      },
+      "reviewer": {
+        "seat": 94,
+        "name": "戸村 光",
+        "selection_score": 77.3157
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner publishes all five evidence fields and one fixed-workload comparison lab, run one cohort and compare task pass rate, cost per passing run, latency, tokens, retries, budget compliance, rubric agreement, support contacts, and workplace reuse."
+      },
+      "findings": [
+        {
+          "finding_id": "course-aider-model-selection-missing-evidence-contract",
+          "summary": "The Aider model-selection course has no public learner, outcome, verification, source-evidence, or freshness contract",
+          "severity": "p1",
+          "suggested_action": "Publish all five evidence-contract fields together around one budget-constrained Aider workload and a dated evidence snapshot."
+        },
+        {
+          "finding_id": "course-aider-static-model-cost-rubric-gap",
+          "summary": "The static 2026 model-family promise lacks a reproducible cost-quality decision rubric and a current dated evidence contract",
+          "severity": "p1",
+          "suggested_action": "Replace the static three-brand promise with a rerunnable lab that fixes one repository task and budget, records the complete Aider configuration, measures success, tokens, latency, and cost, and separates Aider benchmark cost from current provider pricing."
+        },
+        {
+          "finding_id": "course-aider-model-selection-learner-outcome-gap",
+          "summary": "No real learner outcome evidence is available for the Aider model-selection course",
+          "severity": "p2",
+          "suggested_action": "Collect one privacy-safe cohort aggregate for workload completion, cost per passing run, rubric score, budget compliance, support demand, and workplace reuse without retaining code, prompts, or API keys."
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5227",
+        "detail": "The findings require changing protected production course data that is not represented by a bounded tracked course source file, which is outside the automatic repair boundary.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-aider-static-model-cost-rubric-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch at origin/main ddbc364a4e711555cb74330dd81bed60dca41464",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1083, reviewable=538, excluded_missing_source_url=536, evidence_complete=6",
+          "executed once successfully: Aider model-selection course selected from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: official Aider options, leaderboard, and prompt-caching evidence inspected separately; no matching tracked course row found",
+          "executed once successfully: 125 profiles, seat 94"
+        ],
+        "issue": {
+          "number": 5227,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5227",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260902T183425+0900:256fce47-54de-4716-ad2c-478bc2e9613b",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-aider-model-selection-missing-evidence-contract",
+          "course-aider-model-selection-learner-outcome-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260831T211401+0900",
       "started_at": "2026-08-31T21:14:01+09:00",
@@ -2532,6 +2624,20 @@
       "completed_cycles": 1,
       "last_cycle_utility": 42.75,
       "last_reviewed_at": "2026-08-26T14:08:34+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "256fce47-54de-4716-ad2c-478bc2e9613b",
+      "provider": "aider",
+      "title": "Aider モデル選択 & コスト最適化 — Claude / DeepSeek / GPT-4o 比較 (2026)",
+      "source_url": "https://aider.chat/docs/config/options.html",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 42.0,
+      "completed_cycles": 1,
+      "last_cycle_utility": 42.0,
+      "last_reviewed_at": "2026-09-02T09:34:25+00:00",
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {

@@ -16,14 +16,14 @@ void main() {
 
       expect(catalog.schemaVersion, 2);
       expect(catalog.profilesBySeat, hasLength(125));
-      expect(catalog.enrichmentRound, greaterThanOrEqualTo(9));
+      expect(catalog.enrichmentRound, greaterThanOrEqualTo(10));
       expect(catalog.averageProfileCompletenessPercent, greaterThan(0));
       expect(catalog.averageReviewReflectionPercent, greaterThan(0));
       expect(catalog.verifiedBirthDates, 12);
       expect(catalog.nextBatchNames, hasLength(5));
       expect(
         catalog.nextBatchNames,
-        <String>['渡正行', '足立暢', '泉舞', '西村博之（ひろゆき）', '後藤 和良'],
+        <String>['渡正行', '足立暢', '泉舞', '吉野繁', '山澤 礼明'],
       );
       expect(catalog.profilesBySeat.keys.toSet(), hasLength(125));
       expect(
@@ -92,6 +92,22 @@ void main() {
       expect(okada.reviewReflectionPercent, 79);
       expect(okada.reviewReflectionMode, 'profile_balanced');
       expect(okada.evidenceLinks, hasLength(3));
+      final hiroyuki = catalog.profilesBySeat[108]!;
+      expect(hiroyuki.ageLabel(DateTime(2026, 9, 2)), '公開情報未確認');
+      expect(hiroyuki.companyRole, contains('4chan管理人'));
+      expect(hiroyuki.businessDomains, contains('IT・SaaS・プラットフォーム'));
+      expect(hiroyuki.profileCompletenessPercent, 58);
+      expect(hiroyuki.reviewReflectionPercent, 61);
+      expect(hiroyuki.reviewReflectionMode, 'profile_balanced');
+      expect(hiroyuki.evidenceLinks, hasLength(2));
+      final goto = catalog.profilesBySeat[110]!;
+      expect(goto.ageLabel(DateTime(2026, 9, 2)), '公開情報未確認');
+      expect(goto.companyRole, contains('事業再生版令和の虎 主宰'));
+      expect(goto.businessDomains, contains('M&A・事業再生'));
+      expect(goto.profileCompletenessPercent, 70);
+      expect(goto.reviewReflectionPercent, 79);
+      expect(goto.reviewReflectionMode, 'profile_balanced');
+      expect(goto.evidenceLinks, hasLength(2));
       for (final seat in <int>[92, 94, 95, 96]) {
         final profile = catalog.profilesBySeat[seat]!;
         expect(profile.profileCompletenessPercent, greaterThanOrEqualTo(65));

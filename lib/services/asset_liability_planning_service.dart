@@ -761,7 +761,10 @@ class AssetLiabilityPlanningService {
       annualRateOverrides: annualRateOverrides,
     );
     final interest = principal * annualRate / 12;
-    final minimumPayment = account.fullPaymentEstimate
+    final isBorrowing = account.kind == AssetLiabilityAccountKind.cardLoan ||
+        account.kind == AssetLiabilityAccountKind.shoppingDebt ||
+        account.kind == AssetLiabilityAccountKind.creditCard;
+    final minimumPayment = (!isBorrowing && account.fullPaymentEstimate)
         ? principal + interest
         : min(
             principal + interest,
@@ -801,7 +804,10 @@ class AssetLiabilityPlanningService {
     );
     final principalPayment = max(0.0, scheduledPayment - interest);
     final afterPayment = -max(0.0, principal + interest - scheduledPayment);
-    final rawPaymentSourceAccountId = paymentSourceAccountIds[account.id];
+    final rawPaymentSourceAccountId = _lookupPaymentSourceAccountId(
+      account: account,
+      paymentSourceAccountIds: paymentSourceAccountIds,
+    );
     // 振替元が自分自身を指す設定は不正 (ローンを自分自身からは返済できない) なので
     // 未設定扱いにする。これにより「支払原資口座の未設定」セクションに表示され、正しい
     // 口座 (例: じぶん銀行) へ修正できるようになり、見込み残高の自己宛て誤ルーティングも防ぐ。
@@ -1942,6 +1948,37 @@ class AssetLiabilityPlanningService {
       return jibunBankAccountId;
     }
     return sourceAccountId;
+  }
+
+  String? _lookupPaymentSourceAccountId({
+    required AssetLiabilityAccount account,
+    required Map<String, String> paymentSourceAccountIds,
+  }) {
+    if (paymentSourceAccountIds.isEmpty) return null;
+    final direct = paymentSourceAccountIds[account.id] ??
+        paymentSourceAccountIds[account.name.trim()] ??
+        paymentSourceAccountIds[account.name];
+    if (direct != null && direct.trim().isNotEmpty) return direct;
+
+    final normalizedTarget = _normalize(account.name);
+    final strippedTarget = normalizedTarget.replaceAll(
+      RegExp(r'[^a-zA-Z0-9぀-ゟ゠-ヿ一-龯]'),
+      '',
+    );
+    for (final entry in paymentSourceAccountIds.entries) {
+      final normKey = _normalize(entry.key);
+      final strippedKey = normKey.replaceAll(
+        RegExp(r'[^a-zA-Z0-9぀-ゟ゠-ヿ一-龯]'),
+        '',
+      );
+      if (normKey == normalizedTarget ||
+          (strippedKey.isNotEmpty && strippedKey == strippedTarget) ||
+          normKey.contains(normalizedTarget) ||
+          normalizedTarget.contains(normKey)) {
+        if (entry.value.trim().isNotEmpty) return entry.value;
+      }
+    }
+    return null;
   }
 
   String _accountIdForName(String name) {
