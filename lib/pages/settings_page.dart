@@ -98,6 +98,9 @@ class SettingsPage extends StatelessWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
+                settings: const RouteSettings(
+                  name: '/settings/voice-ai-governance',
+                ),
                 builder: (_) => const VoiceAiGovernancePage(),
               ),
             ),

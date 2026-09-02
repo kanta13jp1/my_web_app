@@ -1,7 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../main.dart';
-
 class VoiceAiSettings {
   final bool trainingConsent;
   final DateTime? consentUpdatedAt;
@@ -69,7 +67,7 @@ class VoiceAiSettingsService {
   final SupabaseClient _supabase;
 
   VoiceAiSettingsService([SupabaseClient? supabaseClient])
-      : _supabase = supabaseClient ?? supabase;
+      : _supabase = supabaseClient ?? Supabase.instance.client;
 
   Future<VoiceAiSettings> loadSettings() async {
     final user = _supabase.auth.currentUser;

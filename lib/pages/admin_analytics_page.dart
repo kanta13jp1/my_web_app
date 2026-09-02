@@ -2163,6 +2163,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
+                            settings: const RouteSettings(
+                              name: '/admin/voice-ai-governance',
+                            ),
                             builder: (_) =>
                                 const VoiceAiGovernancePage(adminMode: true),
                           ),
