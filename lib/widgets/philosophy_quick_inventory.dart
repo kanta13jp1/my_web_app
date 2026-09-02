@@ -19,8 +19,7 @@ class PhilosophyQuickInventory extends StatefulWidget {
       _PhilosophyQuickInventoryState();
 }
 
-class _PhilosophyQuickInventoryState
-    extends State<PhilosophyQuickInventory> {
+class _PhilosophyQuickInventoryState extends State<PhilosophyQuickInventory> {
   String? _departmentId;
   String? _actionId;
   String? _feedbackValue;
@@ -78,8 +77,7 @@ class _PhilosophyQuickInventoryState
           properties: <String, Object>{
             'path': '/philosophy',
             'feedback_value': feedbackValue,
-            if (_unresolvedArea != null)
-              'unresolved_area': _unresolvedArea!,
+            if (_unresolvedArea != null) 'unresolved_area': _unresolvedArea!,
           },
         ),
       ),
@@ -215,7 +213,8 @@ class _PhilosophyQuickInventoryState
                   ),
                   const SizedBox(height: 8),
                   TextButton.icon(
-                    onPressed: () => Navigator.of(context).pushNamed('/life-goals'),
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed('/life-goals'),
                     icon: const Icon(Icons.flag_outlined),
                     label: const Text('目標として記録する'),
                   ),

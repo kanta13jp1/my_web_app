@@ -13,8 +13,7 @@ import '../widgets/philosophy_quick_inventory.dart';
 ///
 /// docs/PHILOSOPHY.md の 9 原則を可視化し、理念動画 5 本を埋め込む。
 /// 全機能はこのページに記載された理念に照らして方向性を検証する (CLAUDE.md Rule 22)。
-const String philosophyQuickInventoryRoute =
-    '/philosophy?step=quick-inventory';
+const String philosophyQuickInventoryRoute = '/philosophy?step=quick-inventory';
 
 enum PhilosophyInitialStep { overview, quickInventory }
 
@@ -49,9 +48,10 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
           stage: PhilosophyFunnelStage.pageView,
           properties: <String, Object>{
             'path': '/philosophy',
-            'entry_mode': widget.initialStep == PhilosophyInitialStep.quickInventory
-                ? 'quick_inventory_route'
-                : 'overview',
+            'entry_mode':
+                widget.initialStep == PhilosophyInitialStep.quickInventory
+                    ? 'quick_inventory_route'
+                    : 'overview',
           },
         ),
       ),
@@ -113,8 +113,8 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
                     PhilosophyQuickInventory(
                       key: _quickInventoryKey,
                       analytics: widget.analytics,
-                      trackViewOnMount:
-                          widget.initialStep == PhilosophyInitialStep.quickInventory,
+                      trackViewOnMount: widget.initialStep ==
+                          PhilosophyInitialStep.quickInventory,
                     ),
                     const SizedBox(height: 48),
                     _editorialPolicySection(),

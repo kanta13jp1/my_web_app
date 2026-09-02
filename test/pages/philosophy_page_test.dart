@@ -157,6 +157,7 @@ void main() {
     expect(completed.safeProperties['action_id'], 'start_one');
   });
 }
+
 class _RecordingPhilosophyAnalytics implements PhilosophyFunnelAnalytics {
   final List<PhilosophyFunnelEvent> events = <PhilosophyFunnelEvent>[];
 

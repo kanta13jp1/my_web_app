@@ -14,8 +14,7 @@ void main() {
       },
     );
     expect(
-      aiUniversityCuratedVideos
-          .where((video) => video.youtubeVideoId != null),
+      aiUniversityCuratedVideos.where((video) => video.youtubeVideoId != null),
       hasLength(3),
     );
     for (final video in aiUniversityCuratedVideos) {

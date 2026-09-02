@@ -62,8 +62,7 @@ abstract interface class PhilosophyFunnelAnalytics {
 ///
 /// Person profiles, lifecycle capture, surveys, and session replay remain off.
 /// The feature continues to work when PostHog is unavailable or unconfigured.
-class PostHogPhilosophyFunnelAnalytics
-    implements PhilosophyFunnelAnalytics {
+class PostHogPhilosophyFunnelAnalytics implements PhilosophyFunnelAnalytics {
   const PostHogPhilosophyFunnelAnalytics();
 
   static const String _projectToken = String.fromEnvironment(

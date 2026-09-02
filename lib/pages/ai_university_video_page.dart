@@ -658,6 +658,7 @@ class _CuratedVideoLibrary extends StatelessWidget {
     );
   }
 }
+
 class _HeyGenV3PlanCard extends StatelessWidget {
   const _HeyGenV3PlanCard({
     required this.plan,
