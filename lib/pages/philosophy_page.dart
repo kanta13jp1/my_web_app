@@ -881,6 +881,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
           ),
           const SizedBox(height: 20),
           ElevatedButton(
+            key: const Key('philosophy_start_quick_inventory'),
             onPressed: () {
               unawaited(
                 widget.analytics.capture(
