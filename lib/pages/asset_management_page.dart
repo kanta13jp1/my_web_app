@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_management_ai_analysis_history.dart';
+import 'package:my_web_app/models/asset_anomaly_detection.dart';
 import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/asset_obsidian_vault_import.dart';
@@ -76,6 +77,7 @@ import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 import 'package:my_web_app/services/asset_account_shortfall_basis_service.dart';
 import 'package:my_web_app/services/asset_alert_center_service.dart';
 import 'package:my_web_app/services/asset_alert_dismissal_store.dart';
+import 'package:my_web_app/services/asset_anomaly_detection_repository.dart';
 import 'package:my_web_app/services/asset_cashflow_statement_service.dart';
 import 'package:my_web_app/services/asset_net_worth_panel_service.dart';
 import 'package:my_web_app/services/asset_category_budget_service.dart';
@@ -271,6 +273,7 @@ class AssetManagementPage extends StatefulWidget {
   final AssetWatchlistService watchlistService;
   final AssetLiabilityRepository? assetLiabilityRepository;
   final InvestmentAssetRepository? investmentAssetRepository;
+  final AssetAnomalyDetectionRepository? anomalyDetectionRepository;
   final String? entryLabel;
   final String? entryDescription;
 
@@ -397,6 +400,7 @@ class AssetManagementPage extends StatefulWidget {
     this.watchlistService = const AssetWatchlistService(),
     this.assetLiabilityRepository,
     this.investmentAssetRepository,
+    this.anomalyDetectionRepository,
     this.entryLabel,
     this.entryDescription,
     this.debugInitialAssetData,
@@ -884,6 +888,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // --- 返済計画用 ---
   late final AssetLiabilityRepository _assetLiabilityRepository;
   late final InvestmentAssetRepository _investmentAssetRepository;
+  late final AssetAnomalyDetectionRepository _anomalyDetectionRepository;
   final AssetLiabilityPlanningService _assetLiabilityPlanner =
       const AssetLiabilityPlanningService();
   final AssetLiabilityPaymentReminderService _assetLiabilityReminderService =
@@ -893,6 +898,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final AssetAlertDismissalStore _assetAlertDismissalStore =
       const AssetAlertDismissalStore();
   Set<String> _assetAlertDismissedIds = <String>{};
+  List<AssetAnomalyDetection> _activeAssetAnomalies =
+      <AssetAnomalyDetection>[];
+  final Set<String> _dismissingAssetAnomalyIds = <String>{};
   final AssetLiabilityRepaymentSimulationService
       _assetLiabilityRepaymentSimulationService =
       const AssetLiabilityRepaymentSimulationService();
@@ -1173,6 +1181,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
     _investmentAssetRepository = widget.investmentAssetRepository ??
         SupabaseInvestmentAssetRepository(client: _supabase);
+    _anomalyDetectionRepository = widget.anomalyDetectionRepository ??
+        SupabaseAssetAnomalyDetectionRepository(client: _supabase);
     unawaited(_loadMinimumSafetyBalance());
     // 起動時の asset_pref_mirror 個別読み取りを 1 回のバッチ取得へ集約する
     // (端末跨ぎ同期の多数 REST が ERR_INSUFFICIENT_RESOURCES を誘発するのを緩和)。
@@ -1207,6 +1217,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_loadDuplicateIgnored());
     unawaited(_loadDrinkChallenge());
     unawaited(_loadAssetAlertDismissedIds());
+    unawaited(_loadActiveAssetAnomalies());
     _loadExpectedInflows();
     // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
     unawaited(_initTombstoneGcAndPull());
@@ -16168,12 +16179,70 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     setState(() => _assetAlertDismissedIds = ids);
   }
 
+  /// RLS に加え user_id を明示して、未確認の異常だけを取得する (Issue #2479)。
+  Future<void> _loadActiveAssetAnomalies() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final anomalies = await _anomalyDetectionRepository.fetchActive(
+        userId: userId,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() => _activeAssetAnomalies = anomalies);
+    } catch (error, stackTrace) {
+      debugPrint('Failed to load asset anomalies: $error\n$stackTrace');
+    }
+  }
+
   Future<void> _dismissAssetAlert(String id) async {
+    if (AssetAnomalyDetection.isAnomalyAlertId(id)) {
+      await _dismissAssetAnomaly(id);
+      return;
+    }
     final next = await _assetAlertDismissalStore.dismiss(id);
     if (!mounted) {
       return;
     }
     setState(() => _assetAlertDismissedIds = next);
+  }
+
+  Future<void> _dismissAssetAnomaly(String alertId) async {
+    if (!_dismissingAssetAnomalyIds.add(alertId)) {
+      return;
+    }
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      _dismissingAssetAnomalyIds.remove(alertId);
+      return;
+    }
+    try {
+      await _anomalyDetectionRepository.dismiss(
+        userId: userId,
+        detectionId: AssetAnomalyDetection.detectionIdFromAlertId(alertId),
+        dismissedAt: DateTime.now().toUtc(),
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(
+        () => _activeAssetAnomalies = _activeAssetAnomalies
+            .where((anomaly) => anomaly.alertId != alertId)
+            .toList(growable: false),
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Failed to dismiss asset anomaly: $error\n$stackTrace');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('異常の非表示に失敗しました。もう一度お試しください。')),
+        );
+      }
+    } finally {
+      _dismissingAssetAnomalyIds.remove(alertId);
+    }
   }
 
   Future<void> _restoreDismissedAssetAlerts() async {
@@ -16186,8 +16255,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// 統合アラートパネル (Issue #2475)。延滞・口座ショート・支払リマインダー(#2453)・
-  /// 支払原資未設定を重要度別に集約する。異常検知 (第2弾D) は将来 anomalyAlerts で
-  /// 注入する統合設計。金額・重要度判定は純サービスで deterministic に行う。
+  /// 支払原資未設定・異常検知を重要度別に集約する。金額・重要度判定は純サービスで
+  /// deterministic に行う。
   /// アラートパネルの中身。データが無ければ null (グリッドから除外される)。
   Widget? _assetAlertCenterPanelChild(AssetLiabilityWorkbook? workbook) {
     if (workbook == null) {
@@ -16197,6 +16266,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       workbook: workbook,
       now: _now,
       dismissedIds: _assetAlertDismissedIds,
+      anomalyAlerts: [
+        for (final anomaly in _activeAssetAnomalies) anomaly.toAlert(),
+      ],
     );
     // 表示するアラートも dismiss 済みも無ければカードを出さない。
     if (!center.hasAlerts && center.dismissedCount == 0) {
