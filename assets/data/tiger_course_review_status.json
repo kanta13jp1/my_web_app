@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-09-02T20:31:43.319819+00:00",
+  "generated_at": "2026-09-02T22:10:05.309844+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -11,12 +11,12 @@
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 25,
-    "eligible": 25,
-    "provisional": 23,
+    "total": 26,
+    "eligible": 26,
+    "provisional": 24,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 24,
+    "division_3": 25,
     "division_4": 1,
     "division_5": 0
   },
@@ -28,27 +28,27 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260903T052534+0900",
-    "started_at": "2026-09-03T05:25:34+09:00",
+    "cycle_id": "20260903T070419+0900",
+    "started_at": "2026-09-03T07:04:19+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-40980f39-5721-42f4-b08f-5b9483eb1671",
-      "url": "https://docs.aleph-alpha.com/docs/introduction/getting-started/"
+      "slug": "course-a11d6e8d-014b-4622-a1ea-6bc6281b63dd",
+      "url": "https://docs.aleph-alpha.com/docs/introduction/luminous/"
     },
     "reviewer": {
-      "seat": 9,
-      "name": "平出 心",
-      "selection_score": 71.6958,
+      "seat": 12,
+      "name": "迫 佑樹",
+      "selection_score": 71.4434,
       "division": 1,
-      "cycle_utility": 93.33,
-      "aggregate_utility": 90.9
+      "cycle_utility": 93.5,
+      "aggregate_utility": 88.74
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "API入門なのに対象開発者、観察可能な初回成果、確認方法、根拠URL、確認日時がすべて未設定",
+        "summary": "2026年モデル一覧なのに対象開発者、観察可能な選定成果、確認方法、根拠URL、確認日時がすべて未設定",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
@@ -57,7 +57,7 @@
         ]
       },
       {
-        "summary": "設定済みgetting-started URLがAPI手順ではなくPhariaAI HOMEへ転送され、講座タイトルの約束を検証できない",
+        "summary": "設定済みLuminous URLがPhariaAI HOMEへ転送され、一覧のモデル名・文脈長・推奨状態を検証できない",
         "severity": "p1",
         "business_dimensions": [
           "trust_risk",
@@ -66,7 +66,7 @@
         ]
       },
       {
-        "summary": "公開UIで確認できるAleph Alpha固有評価はAtMan名称の再生問題で、API入門の実行能力を証明しない",
+        "summary": "モデル一覧とAtMan再生問題だけでは、用途・品質・速度・コスト・説明可能性のトレードオフを選べない",
         "severity": "p2",
         "business_dimensions": [
           "market_demand",
@@ -90,55 +90,148 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After a curator verifies the current official API path and publishes a credential-safe first-request fixture, compare source reachability, task start, valid request construction, completion time, support contacts, and follow-on conversion for four weeks."
+      "next_cycle_experiment": "After a curator publishes a dated availability source and credential-safe workload fixture, compare source reachability, shortlist accuracy, decision completion time, support contacts, and follow-on conversion for four weeks."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5279",
-      "detail": "The required source correction and course evidence contract mutate production course data and need curator verification of current provider documentation; they are outside the bounded automatic repair boundary.",
+      "label": "対策待ち・Issue #5283",
+      "detail": "Correcting model availability and the evidence contract mutates production course data and requires curator verification of current provider documentation; it is outside the bounded automatic repair boundary.",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean dedicated branch at origin/main 3df2211b9efac8354cbf228552fcd4deb611b029",
+        "passed: clean dedicated branch at origin/main c8d1f419ce800ec7361e9f60ac11f497446cee0b",
         "passed: 125 roster profiles and 125 personas",
         "passed: active=1083, reviewable=538, excluded_missing_source_url=536, evidence_complete=6",
-        "executed once successfully: Aleph Alpha API introduction selected from 538 eligible courses",
+        "executed once successfully: Aleph Alpha model-list course selected from 538 eligible courses",
         "passed: no comparable baseline, focus_dimension=evidence",
-        "passed: configured URL redirected to PhariaAI HOME; evidence-contract fields absent; provider quiz and display logic inspected",
-        "executed once successfully against shared history: 125 profiles, seat 9"
+        "passed: configured URL redirected to PhariaAI HOME; seed and provider quiz inspected",
+        "executed once successfully against course history: 125 profiles, seat 12",
+        "not run: report-only cloud-first review"
       ],
       "issue": {
-        "number": 5279,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5279",
+        "number": 5283,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5283",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260903T052534+0900:40980f39-5721-42f4-b08f-5b9483eb1671",
+        "dedupe_key": "tiger-course-review:20260903T070419+0900:a11d6e8d-014b-4622-a1ea-6bc6281b63dd",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-aleph-alpha-api-evidence-contract-gap",
-        "course-aleph-alpha-api-source-redirect-gap",
-        "course-aleph-alpha-api-assessment-mismatch"
+        "course-aleph-alpha-model-evidence-contract-gap",
+        "course-aleph-alpha-model-source-staleness",
+        "course-aleph-alpha-model-decision-rubric-gap"
       ]
     },
     "course": {
-      "content_id": "40980f39-5721-42f4-b08f-5b9483eb1671",
+      "content_id": "a11d6e8d-014b-4622-a1ea-6bc6281b63dd",
       "provider": "aleph_alpha",
-      "title": "Aleph Alpha API 入門",
-      "source_url": "https://docs.aleph-alpha.com/docs/introduction/getting-started/",
-      "reason": "The fresh public catalog proves that the selected Aleph Alpha API introduction is active, but all five evidence-contract fields are null. Its configured official getting-started URL redirects to the broad PhariaAI HOME documentation root, and the named course UI source provides only a provider-level AtMan recall quiz rather than a verified first request. Practical actionability, source freshness, and learning clarity are therefore weak; no learner outcome evidence was available, so learner evidence remains neutral at 50.",
-      "cycle_utility": 35.8,
-      "aggregate_utility": 35.8,
+      "title": "Aleph Alpha — 利用可能モデル (2026)",
+      "source_url": "https://docs.aleph-alpha.com/docs/introduction/luminous/",
+      "reason": "The fresh catalog proves the selected model-list course is active, but all five evidence-contract fields are null. Its configured Luminous URL redirects to the broad PhariaAI HOME documentation root, while the tracked seed still claims specific Pharia and Luminous models, context limits, and positioning from 2026-04-12. The public UI offers a provider summary and an AtMan recall quiz rather than a current availability check or workload-based model decision. Practical actionability, source freshness, and learning clarity are weak; no learner outcome evidence was available, so learner evidence remains neutral at 50.",
+      "cycle_utility": 34.25,
+      "aggregate_utility": 34.25,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260903T070419+0900",
+      "started_at": "2026-09-03T07:04:19+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "a11d6e8d-014b-4622-a1ea-6bc6281b63dd",
+        "title": "Aleph Alpha — 利用可能モデル (2026)",
+        "url": "https://docs.aleph-alpha.com/docs/introduction/luminous/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 71.4434
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After a curator publishes a dated availability source and credential-safe workload fixture, compare source reachability, shortlist accuracy, decision completion time, support contacts, and follow-on conversion for four weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "course-aleph-alpha-model-evidence-contract-gap",
+          "summary": "2026年モデル一覧なのに対象開発者、観察可能な選定成果、確認方法、根拠URL、確認日時がすべて未設定",
+          "severity": "p1",
+          "suggested_action": "対象者と代表ワークロードを定め、利用可能・非推奨・廃止の状態、根拠URL、確認日時、比較課題を一括公開する。"
+        },
+        {
+          "finding_id": "course-aleph-alpha-model-source-staleness",
+          "summary": "設定済みLuminous URLがPhariaAI HOMEへ転送され、一覧のモデル名・文脈長・推奨状態を検証できない",
+          "severity": "p1",
+          "suggested_action": "Aleph Alphaの現行公式資料で各モデルの提供状態を確認し、一覧を確認日付きで更新し、リンクとモデル名を定期検証する。"
+        },
+        {
+          "finding_id": "course-aleph-alpha-model-decision-rubric-gap",
+          "summary": "モデル一覧とAtMan再生問題だけでは、用途・品質・速度・コスト・説明可能性のトレードオフを選べない",
+          "severity": "p2",
+          "suggested_action": "秘密情報を使わない固定fixtureで、2つの代表ワークロードについて候補、品質、速度、概算費用、説明可能性、go/no-goを記録する課題へ置き換える。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5283",
+        "detail": "Correcting model availability and the evidence contract mutates production course data and requires curator verification of current provider documentation; it is outside the bounded automatic repair boundary.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch at origin/main c8d1f419ce800ec7361e9f60ac11f497446cee0b",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1083, reviewable=538, excluded_missing_source_url=536, evidence_complete=6",
+          "executed once successfully: Aleph Alpha model-list course selected from 538 eligible courses",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: configured URL redirected to PhariaAI HOME; seed and provider quiz inspected",
+          "executed once successfully against course history: 125 profiles, seat 12",
+          "not run: report-only cloud-first review"
+        ],
+        "issue": {
+          "number": 5283,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5283",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260903T070419+0900:a11d6e8d-014b-4622-a1ea-6bc6281b63dd",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-aleph-alpha-model-evidence-contract-gap",
+          "course-aleph-alpha-model-source-staleness",
+          "course-aleph-alpha-model-decision-rubric-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260903T052534+0900",
       "started_at": "2026-09-03T05:25:34+09:00",
@@ -3006,6 +3099,20 @@
       "completed_cycles": 1,
       "last_cycle_utility": 34.75,
       "last_reviewed_at": "2026-08-30T18:00:06+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "a11d6e8d-014b-4622-a1ea-6bc6281b63dd",
+      "provider": "aleph_alpha",
+      "title": "Aleph Alpha — 利用可能モデル (2026)",
+      "source_url": "https://docs.aleph-alpha.com/docs/introduction/luminous/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 34.25,
+      "completed_cycles": 1,
+      "last_cycle_utility": 34.25,
+      "last_reviewed_at": "2026-09-02T22:04:19+00:00",
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
