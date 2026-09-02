@@ -1,16 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:my_web_app/models/asset_liability_state.dart';
+import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 
 void main() {
   group('AssetLiability auto-reconciliation', () {
     test(
         'Issue #5211: reconciles billing confirmations from server paid and actual amounts',
         () {
-      final state = AssetLiabilityMonthlyState(
-        month: DateTime(2026, 8),
-        paidAccountNames: const <String>{'NOTION LABS, INC.', '横浜銀行'},
-        actualPaymentAmounts: const <String, double>{'mobit': 10000},
-        paymentSourceAccountIds: const <String, String>{'notion': 'smbc_bank'},
+      const state = AssetLiabilityMonthlyState(
+        paidAccountNames: <String>{'NOTION LABS, INC.', '横浜銀行'},
+        actualPaymentAmounts: <String, double>{'mobit': 10000},
+        paymentSourceAccountIds: <String, String>{'notion': 'smbc_bank'},
       );
 
       final autoReconciled = <String>{...state.billingConfirmedAccountIds};
