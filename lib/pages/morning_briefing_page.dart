@@ -15,7 +15,6 @@ import 'package:table_calendar/table_calendar.dart';
 import '../services/gamification_service.dart';
 import '../services/completion_goal_service.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 class MorningBriefingPage extends StatefulWidget {
@@ -66,7 +65,6 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   int? _selectedDuration; // 新規タスク用の見積もり時間（分）
   String _sortOrder = 'manual'; // 並び替え順 ('manual', 'estimated_asc')
   String _selectedDifficulty = 'normal'; // 新規タスク用の難易度
-  String? _geminiApiKey; // 日報生成用APIキー
   static const String _defaultGeminiModel = 'gemini-2.5-flash';
   static const Set<String> _legacyGeminiModels = {
     'gemini-pro',
@@ -149,24 +147,6 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     'normal': 10,
     'hard': 20,
   };
-
-  static const _secureStorage = FlutterSecureStorage();
-  static const String _secureKeyGeminiApiKey = 'gemini_api_key';
-
-// 保存
-  Future<void> _saveGeminiApiKey(String key) async {
-    await _secureStorage.write(key: _secureKeyGeminiApiKey, value: key);
-  }
-
-// 読み込み
-  Future<String?> _loadGeminiApiKey() async {
-    return _secureStorage.read(key: _secureKeyGeminiApiKey);
-  }
-
-// 削除（必要なら使う）
-  Future<void> _deleteGeminiApiKey() async {
-    await _secureStorage.delete(key: _secureKeyGeminiApiKey);
-  }
 
   @override
   void initState() {
@@ -331,24 +311,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final prompt =
         prefs.getString('daily_report_prompt') ?? _defaultPromptInstructions;
 
-    // 2) APIキーは SecureStorage から読む
-    String? secureKey = await _loadGeminiApiKey();
-
-    // 3) 旧: SharedPreferences に残っている場合は移行
-    final legacyKey = prefs.getString('gemini_api_key');
-    if ((secureKey == null || secureKey.isEmpty) &&
-        legacyKey != null &&
-        legacyKey.isNotEmpty) {
-      await _saveGeminiApiKey(legacyKey);
-      await prefs.remove('gemini_api_key'); // ✅ 平文を消す
-      secureKey = legacyKey;
-    }
-
     if (!mounted) return;
     setState(() {
       _customPromptInstructions = prompt;
       _selectedModel = savedModel;
-      _geminiApiKey = secureKey; // ✅ SecureStorage由来
     });
   }
 
@@ -1586,11 +1552,6 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       return;
     }
 
-    if (_geminiApiKey == null) {
-      await showApiKeyDialog();
-      if (_geminiApiKey == null) return;
-    }
-
     if (Supabase.instance.client.auth.currentUser == null) {
       setState(() => _isLoading = false);
       return;
@@ -1708,111 +1669,29 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
   }
 
-  Future<void> showApiKeyDialog() async {
-    final controller = TextEditingController();
-    bool obscureKey = true;
-    await showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Gemini APIキーの設定'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('日報を自動生成するにはGemini APIキーが必要です。'),
-              const SizedBox(height: 8),
-              TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  labelText: 'API Key',
-                  border: const OutlineInputBorder(),
-                  suffixIcon: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          obscureKey ? Icons.visibility_off : Icons.visibility,
-                        ),
-                        onPressed: () =>
-                            setDialogState(() => obscureKey = !obscureKey),
-                        tooltip: obscureKey ? '表示' : '非表示',
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.content_paste_rounded),
-                        onPressed: () async {
-                          final data = await Clipboard.getData(
-                            Clipboard.kTextPlain,
-                          );
-                          if (data?.text != null) {
-                            controller.text = data!.text!;
-                          }
-                        },
-                        tooltip: '貼り付け',
-                      ),
-                    ],
-                  ),
-                ),
-                obscureText: obscureKey,
-                enableInteractiveSelection: true,
-                keyboardType: TextInputType.visiblePassword,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                final key = controller.text.trim();
-                if (key.isNotEmpty) {
-                  await _saveGeminiApiKey(key);
-                  if (!mounted || !context.mounted) return;
-                  setState(() => _geminiApiKey = key);
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('設定'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<List<Map<String, dynamic>>> fetchGeminiModels(String apiKey) async {
+  Future<List<Map<String, dynamic>>> fetchGeminiModels() async {
     try {
-      final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey',
+      final response = await Supabase.instance.client.functions.invoke(
+        'ai-hub',
+        body: const {'action': 'provider.models'},
       );
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data =
-            json.decode(response.body) as Map<String, dynamic>;
-        final modelsRaw = data['models'];
-        if (modelsRaw is List) {
-          return modelsRaw
-              .whereType<Map>()
-              .map((m) => Map<String, dynamic>.from(m))
-              .where((m) {
-            final methods = m['supportedGenerationMethods'];
+      final data = Map<String, dynamic>.from(response.data as Map);
+      return (data['models'] as List<dynamic>? ?? const <dynamic>[])
+          .whereType<Map>()
+          .map((model) => Map<String, dynamic>.from(model))
+          .where((model) => model['provider'] == 'google')
+          .where((model) {
+            final methods = model['supportedGenerationMethods'];
             return methods is List && methods.contains('generateContent');
-          }).map<Map<String, dynamic>>((m) {
-            final methods = (m['supportedGenerationMethods'] as List)
-                .cast<Object>()
-                .map((v) => v.toString())
-                .toList();
-            return {
-              'name': (m['name'] ?? '').toString().replaceFirst(
-                    'models/',
-                    '',
-                  ),
-              'methods': methods,
-            };
-          }).toList();
-        }
-      }
+          })
+          .map<Map<String, dynamic>>((model) => {
+                'name': model['name']?.toString() ?? '',
+                'methods': List<String>.from(
+                  model['supportedGenerationMethods'] as List,
+                ),
+              })
+          .where((model) => (model['name'] as String).isNotEmpty)
+          .toList();
     } catch (e) {
       debugPrint('Failed to fetch models: $e');
     }
@@ -1985,10 +1864,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
   Future<void> showPromptSettingsDialog() async {
     final controller = TextEditingController(text: _customPromptInstructions);
-    final apiKeyController = TextEditingController(text: _geminiApiKey ?? '');
     String tempSelectedModel = _selectedModel;
     bool isFetchingModels = false;
-    bool obscureApiKey = true;
     List<Map<String, dynamic>> currentSelectableModels =
         List.from(_selectableModels);
 
@@ -2010,48 +1887,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Gemini APIの設定を行います。'),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: apiKeyController,
-                    decoration: InputDecoration(
-                      labelText: 'Gemini API Key',
-                      border: const OutlineInputBorder(),
-                      hintText: 'APIキーを入力してください',
-                      suffixIcon: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              obscureApiKey
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                            ),
-                            onPressed: () => setDialogState(
-                              () => obscureApiKey = !obscureApiKey,
-                            ),
-                            tooltip: obscureApiKey ? '表示' : '非表示',
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.content_paste_rounded),
-                            onPressed: () async {
-                              final data = await Clipboard.getData(
-                                Clipboard.kTextPlain,
-                              );
-                              if (data?.text != null) {
-                                apiKeyController.text = data!.text!;
-                              }
-                            },
-                            tooltip: '貼り付け',
-                          ),
-                        ],
-                      ),
-                    ),
-                    obscureText: obscureApiKey,
-                    enableInteractiveSelection: true,
-                    keyboardType: TextInputType.visiblePassword,
+                  const Text(
+                    'AI認証情報はサーバーで管理されています。モデルと日報プロンプトを設定できます。',
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   if (isFetchingModels)
                     const LinearProgressIndicator()
                   else
@@ -2059,15 +1898,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         onPressed: () async {
-                          if (apiKeyController.text.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('APIキーを入力してください')),
-                            );
-                            return;
-                          }
                           setDialogState(() => isFetchingModels = true);
-                          final models =
-                              await fetchGeminiModels(apiKeyController.text);
+                          final models = await fetchGeminiModels();
                           setDialogState(() {
                             isFetchingModels = false;
                             if (models.isNotEmpty) {
@@ -2145,18 +1977,6 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 onPressed: () => Navigator.pop(context),
                 child: const Text('キャンセル'),
               ),
-              TextButton(
-                onPressed: () async {
-                  await _deleteGeminiApiKey();
-                  apiKeyController.clear();
-                  if (!mounted || !context.mounted) return;
-                  setState(() => _geminiApiKey = null);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('APIキーを削除しました')),
-                  );
-                },
-                child: const Text('APIキー削除'),
-              ),
               FilledButton(
                 onPressed: () async {
                   final prefs = await SharedPreferences.getInstance();
@@ -2165,17 +1985,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     controller.text,
                   );
                   await prefs.setString('gemini_model', tempSelectedModel);
-                  final apiKey = apiKeyController.text.trim();
-                  if (apiKey.isNotEmpty) {
-                    await _saveGeminiApiKey(apiKey);
-                  }
                   if (mounted) {
                     setState(() {
                       _customPromptInstructions = controller.text;
                       _selectedModel = tempSelectedModel;
-                      if (apiKey.isNotEmpty) {
-                        _geminiApiKey = apiKey;
-                      }
                       // 取得したモデルリストを保存
                       _selectableModels = currentSelectableModels;
                     });
@@ -2887,31 +2700,19 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                 const Divider(height: 12),
                                 Row(
                                   children: [
-                                    Icon(
-                                      _geminiApiKey != null &&
-                                              _geminiApiKey!.isNotEmpty
-                                          ? Icons.check_circle
-                                          : Icons.warning_amber,
-                                      color: _geminiApiKey != null &&
-                                              _geminiApiKey!.isNotEmpty
-                                          ? const Color(0xFF0D9488)
-                                          : const Color(0xFFFF6B35),
+                                    const Icon(
+                                      Icons.cloud_done,
+                                      color: Color(0xFF0D9488),
                                       size: 16,
                                     ),
                                     const SizedBox(width: 8),
-                                    Expanded(
+                                    const Expanded(
                                       child: Text(
-                                        _geminiApiKey != null &&
-                                                _geminiApiKey!.isNotEmpty
-                                            ? 'APIキー設定済み'
-                                            : 'APIキーが設定されていません',
+                                        'AI認証情報はサーバーで管理',
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
-                                          color: _geminiApiKey != null &&
-                                                  _geminiApiKey!.isNotEmpty
-                                              ? const Color(0xFF0D9488)
-                                              : const Color(0xFFFF6B35),
+                                          color: Color(0xFF0D9488),
                                           height: 1.5,
                                         ),
                                       ),
