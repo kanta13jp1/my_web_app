@@ -115,13 +115,21 @@ void main() {
     await tester.tap(
       find.byKey(const Key('philosophy_department_finance')),
     );
+    await tester.pump();
     await tester.tap(
       find.byKey(const Key('philosophy_action_start_one')),
     );
-    await tester.tap(
-      find.byKey(const Key('philosophy_complete_first_action')),
+    await tester.pumpAndSettle();
+
+    final completeFirstAction =
+        find.byKey(const Key('philosophy_complete_first_action'));
+    await tester.scrollUntilVisible(
+      completeFirstAction,
+      300,
+      scrollable: find.byType(Scrollable).first,
     );
-    await tester.pump();
+    await tester.tap(completeFirstAction);
+    await tester.pumpAndSettle();
 
     expect(
       find.byKey(const Key('philosophy_first_action_completed')),
