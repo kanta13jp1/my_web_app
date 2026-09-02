@@ -29,7 +29,7 @@ class AssetPainMetricService {
     final hours = amount / hourlyWage;
     if (hours < 1) {
       final minutes = (hours * 60).round();
-      return '${minutes}分';
+      return '$minutes分';
     }
     return '${hours.toStringAsFixed(1)}時間';
   }
