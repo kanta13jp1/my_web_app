@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-09-01",
+    "date": "2026-09-02",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-09-01T00:00:00Z",
+  "generatedAt": "2026-09-02T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -31,30 +31,264 @@
       ],
       "changes": [
         {
-          "category": "automation",
-          "id": "pr-5152",
+          "category": "fix",
+          "id": "pr-5226",
           "links": [
             {
-              "title": "PR #5152",
+              "title": "PR #5226",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5152"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5226"
             }
           ],
-          "mergedAt": "2026-09-01T17:21:18Z",
-          "summary": "#5152 ci: bump the github-actions group across 1 directory with 5 updates"
+          "mergedAt": "2026-09-02T10:41:46Z",
+          "summary": "#5226 fix(manual): restore legacy manual route"
         },
         {
           "category": "feature",
-          "id": "pr-5153",
+          "id": "pr-5223",
           "links": [
             {
-              "title": "PR #5153",
+              "title": "PR #5223",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5153"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5223"
             }
           ],
-          "mergedAt": "2026-09-01T16:50:20Z",
-          "summary": "#5153 deps: bump the python-dependencies group with 3 updates"
+          "mergedAt": "2026-09-02T10:02:15Z",
+          "summary": "#5223 feat: enrich Tiger profiles round 10"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5224",
+          "links": [
+            {
+              "title": "PR #5224",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5224"
+            }
+          ],
+          "mergedAt": "2026-09-02T09:50:51Z",
+          "summary": "#5224 style: fix current Dart formatter drift"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5221",
+          "links": [
+            {
+              "title": "PR #5221",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5221"
+            }
+          ],
+          "mergedAt": "2026-09-02T05:18:31Z",
+          "summary": "#5221 fix(asset): suppress false positive payment source alerts for card-paid subscriptions"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5220",
+          "links": [
+            {
+              "title": "PR #5220",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5220"
+            }
+          ],
+          "mergedAt": "2026-09-02T05:10:27Z",
+          "summary": "#5220 fix(asset): resolve analyzer warnings and unused helper for clean CI"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5218",
+          "links": [
+            {
+              "title": "PR #5218",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5218"
+            }
+          ],
+          "mergedAt": "2026-09-02T05:02:38Z",
+          "summary": "#5218 fix(asset): allow valid credit cards and payment sources in paymentSourceInvalidRows"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5215",
+          "links": [
+            {
+              "title": "PR #5215",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5215"
+            }
+          ],
+          "mergedAt": "2026-09-02T04:32:54Z",
+          "summary": "#5215 fix(asset): do not mark future calendar events as paid"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5213",
+          "links": [
+            {
+              "title": "PR #5213",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5213"
+            }
+          ],
+          "mergedAt": "2026-09-02T04:09:37Z",
+          "summary": "#5213 fix(asset): eliminate TypeError in monthly state store via safe local storage reading"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5212",
+          "links": [
+            {
+              "title": "PR #5212",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5212"
+            }
+          ],
+          "mergedAt": "2026-09-02T04:07:38Z",
+          "summary": "#5212 fix(asset): make AssetLiabilityMonthlyStateStore fully resilient against malformed local storage types"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5209",
+          "links": [
+            {
+              "title": "PR #5209",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5209"
+            }
+          ],
+          "mergedAt": "2026-09-02T03:03:34Z",
+          "summary": "#5209 fix(asset): guard defaultPaymentSettings against null in monthly state loading"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5208",
+          "links": [
+            {
+              "title": "PR #5208",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5208"
+            }
+          ],
+          "mergedAt": "2026-09-02T01:50:37Z",
+          "summary": "#5208 fix(asset): bind _debtPaymentDayOverrides to AssetCalendarDebtInput in calendar widget"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5207",
+          "links": [
+            {
+              "title": "PR #5207",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5207"
+            }
+          ],
+          "mergedAt": "2026-09-02T00:50:17Z",
+          "summary": "#5207 feat(asset-management): implement AssetPainMetricService for time-cost and daily interest loss (#5203)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5206",
+          "links": [
+            {
+              "title": "PR #5206",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5206"
+            }
+          ],
+          "mergedAt": "2026-09-02T00:14:34Z",
+          "summary": "#5206 fix(asset-management): ensure AI assistant respects received income and scheduled payment amounts (#5201)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5205",
+          "links": [
+            {
+              "title": "PR #5205",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5205"
+            }
+          ],
+          "mergedAt": "2026-09-02T00:00:15Z",
+          "summary": "#5205 fix(asset-management): enforce strict factual data consistency for AI asset management assistant (#5196)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5204",
+          "links": [
+            {
+              "title": "PR #5204",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5204"
+            }
+          ],
+          "mergedAt": "2026-09-01T23:36:02Z",
+          "summary": "#5204 fix(asset-management): protect borrowing debts from lump-sum full payment calculation in cashflow shortfall (#5195)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5202",
+          "links": [
+            {
+              "title": "PR #5202",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5202"
+            }
+          ],
+          "mergedAt": "2026-09-01T23:06:10Z",
+          "summary": "#5202 fix(asset-management): expand bank debit and repayment keywords in salary spending categorization (#5194)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5200",
+          "links": [
+            {
+              "title": "PR #5200",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5200"
+            }
+          ],
+          "mergedAt": "2026-09-01T22:44:11Z",
+          "summary": "#5200 feat(asset-management): support net worth delta in monthly cashflow statement (#5193)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5199",
+          "links": [
+            {
+              "title": "PR #5199",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5199"
+            }
+          ],
+          "mergedAt": "2026-09-01T22:30:16Z",
+          "summary": "#5199 fix(asset-management): deduplicate recurring salary/income rules in forecast inputs (#5191)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5198",
+          "links": [
+            {
+              "title": "PR #5198",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5198"
+            }
+          ],
+          "mergedAt": "2026-09-01T22:05:53Z",
+          "summary": "#5198 fix(asset-management): apply payment day overrides and paid status in money calendar (#5190)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5197",
+          "links": [
+            {
+              "title": "PR #5197",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5197"
+            }
+          ],
+          "mergedAt": "2026-09-01T21:00:16Z",
+          "summary": "#5197 feat(asset-management): detect duplicate debt items from name variations (#5189)"
         },
         {
           "category": "feature",
@@ -185,243 +419,9 @@
           ],
           "mergedAt": "2026-08-31T12:29:30Z",
           "summary": "#5164 ci: exclude Tiger review status files from full deploy and CI triggers (#5156)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5139",
-          "links": [
-            {
-              "title": "PR #5139",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5139"
-            }
-          ],
-          "mergedAt": "2026-08-31T09:13:45Z",
-          "summary": "#5139 fix: Adobe Firefly API講座の安全運用演習を追加 (#4941)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5134",
-          "links": [
-            {
-              "title": "PR #5134",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5134"
-            }
-          ],
-          "mergedAt": "2026-08-31T08:39:56Z",
-          "summary": "#5134 feat(analytics): report plan economics readiness for #4744"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5147",
-          "links": [
-            {
-              "title": "PR #5147",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5147"
-            }
-          ],
-          "mergedAt": "2026-08-30T20:05:28Z",
-          "summary": "#5147 Allow discovery-backed Notion inventory growth"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5145",
-          "links": [
-            {
-              "title": "PR #5145",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5145"
-            }
-          ],
-          "mergedAt": "2026-08-30T18:59:00Z",
-          "summary": "#5145 Scale guarded cloud Notion inventory drain"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5141",
-          "links": [
-            {
-              "title": "PR #5141",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5141"
-            }
-          ],
-          "mergedAt": "2026-08-30T18:33:28Z",
-          "summary": "#5141 Expand Notion inventory through guarded cloud batches"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5140",
-          "links": [
-            {
-              "title": "PR #5140",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5140"
-            }
-          ],
-          "mergedAt": "2026-08-30T18:10:45Z",
-          "summary": "#5140 Classify remaining Notion inventory in cloud audits"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5138",
-          "links": [
-            {
-              "title": "PR #5138",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5138"
-            }
-          ],
-          "mergedAt": "2026-08-30T17:47:52Z",
-          "summary": "#5138 Fix Notion cloud apply summary after inventory repair"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5137",
-          "links": [
-            {
-              "title": "PR #5137",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5137"
-            }
-          ],
-          "mergedAt": "2026-08-30T17:28:13Z",
-          "summary": "#5137 Repair staged Notion inventory gaps safely in cloud"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5136",
-          "links": [
-            {
-              "title": "PR #5136",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5136"
-            }
-          ],
-          "mergedAt": "2026-08-30T17:24:05Z",
-          "summary": "#5136 feat(video): persist pending improvement approvals"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5133",
-          "links": [
-            {
-              "title": "PR #5133",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5133"
-            }
-          ],
-          "mergedAt": "2026-08-30T16:39:01Z",
-          "summary": "#5133 fix(manual): disclose paid plan limits honestly"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5132",
-          "links": [
-            {
-              "title": "PR #5132",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5132"
-            }
-          ],
-          "mergedAt": "2026-08-30T15:52:04Z",
-          "summary": "#5132 feat(video): add authorized cloud publication loop"
-        },
-        {
-          "category": "automation",
-          "id": "pr-5129",
-          "links": [
-            {
-              "title": "PR #5129",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5129"
-            }
-          ],
-          "mergedAt": "2026-08-30T15:17:03Z",
-          "summary": "#5129 feat: publish Claude Code workflow lesson in AI University"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5128",
-          "links": [
-            {
-              "title": "PR #5128",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5128"
-            }
-          ],
-          "mergedAt": "2026-08-30T15:12:43Z",
-          "summary": "#5128 fix: neutralize unsupported uniqueness claims"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5118",
-          "links": [
-            {
-              "title": "PR #5118",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5118"
-            }
-          ],
-          "mergedAt": "2026-08-30T14:35:27Z",
-          "summary": "#5118 fix(home): hide feature request exception details"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5121",
-          "links": [
-            {
-              "title": "PR #5121",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5121"
-            }
-          ],
-          "mergedAt": "2026-08-30T14:13:25Z",
-          "summary": "#5121 fix(a11y): isolate landing form accessible names"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5123",
-          "links": [
-            {
-              "title": "PR #5123",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5123"
-            }
-          ],
-          "mergedAt": "2026-08-30T14:08:04Z",
-          "summary": "#5123 fix: preserve WBS columns during Notion cloud import"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5122",
-          "links": [
-            {
-              "title": "PR #5122",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5122"
-            }
-          ],
-          "mergedAt": "2026-08-30T13:55:41Z",
-          "summary": "#5122 feat: AI大学にTOEIC対策機能を追加"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5120",
-          "links": [
-            {
-              "title": "PR #5120",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5120"
-            }
-          ],
-          "mergedAt": "2026-08-30T13:40:41Z",
-          "summary": "#5120 fix: validate Notion WBS writes before cloud apply"
         }
       ],
-      "date": "2026-09-01",
+      "date": "2026-09-02",
       "extensions": {
         "aiToolWatch": {
           "changedSourceCount": 5,
