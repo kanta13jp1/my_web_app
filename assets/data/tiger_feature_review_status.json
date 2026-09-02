@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-31T15:30:31.988409+00:00",
+  "generated_at": "2026-09-02T13:39:29.561583+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -13,10 +13,10 @@
   "pool": {
     "total": 13,
     "eligible": 13,
-    "provisional": 9,
+    "provisional": 8,
     "division_1": 0,
-    "division_2": 4,
-    "division_3": 9,
+    "division_2": 5,
+    "division_3": 8,
     "division_4": 0,
     "division_5": 0,
     "eliminated": 0
@@ -29,50 +29,50 @@
     "operating_efficiency": 10
   },
   "latest_review": {
-    "cycle_id": "20260831T233058+0900",
-    "started_at": "2026-08-31T23:30:58+09:00",
+    "cycle_id": "20260902T222324+0900",
+    "started_at": "2026-09-02T22:23:24+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "home",
-      "url": "https://my-web-app-b67f4.web.app/"
+      "slug": "core_hub",
+      "url": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub"
     },
     "reviewer": {
-      "seat": 11,
-      "name": "野口 功司",
-      "selection_score": 76.4343,
+      "seat": 7,
+      "name": "榊󠄀原 清一",
+      "selection_score": 74.8271,
       "division": 1,
-      "cycle_utility": 82.08,
-      "aggregate_utility": 86.0
+      "cycle_utility": 91.75,
+      "aggregate_utility": 92.9
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "Homeの主要導線と追加要望フローが継続価値・登録・支払いへ寄与するかを機能単位で判断できない",
+        "summary": "未認証のshare生成actionがキャッシュ回避付きで有償APIと特権DB書き込みへ到達できる",
         "severity": "p1",
         "business_dimensions": [
-          "market_demand",
-          "go_to_market",
-          "revenue_model"
+          "unit_economics",
+          "trust_risk",
+          "market_demand"
         ]
       },
       {
-        "summary": "Homeは前回の失敗案内修復後も10,041行・69 imports・11 FutureBuilder・15 collapsible sectionsを単一ページで調整している",
+        "summary": "生成・保存失敗がfallbackまたはsuccess応答へ吸収され、運用側が失敗を判別できない",
+        "severity": "p1",
+        "business_dimensions": [
+          "founder_execution",
+          "trust_risk",
+          "unit_economics"
+        ]
+      },
+      {
+        "summary": "core-hubが2026年末廃止予定のlegacy service_role key読込に依存している",
         "severity": "p2",
         "business_dimensions": [
-          "scalability",
-          "go_to_market",
-          "customer_pain"
-        ]
-      },
-      {
-        "summary": "前回の追加要望3失敗経路の修復はsource・unit test・CI・本番deploy証拠で維持されている",
-        "severity": "p3",
-        "business_dimensions": [
-          "trust_risk",
-          "customer_pain",
-          "go_to_market"
+          "founder_execution",
+          "competitive_advantage",
+          "trust_risk"
         ]
       }
     ],
@@ -87,59 +87,145 @@
         "relevant": 100
       },
       "gate_passed": true,
-      "baseline_cycle_id": "20260827T033027+0900",
+      "baseline_cycle_id": "20260827T221025+0900",
       "focus_dimension": "complete",
       "overall_delta": 0.0,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After maintainers approve an anonymous consent-compatible Home funnel, compare section start-to-completion, D7 retention, paid conversion, and feature-request completion by journey, then choose one measured high-value responsibility for extraction."
+      "next_cycle_experiment": "対策Issueで認証・rate limit・費用telemetryを追加後、7日間の拒否率、cache hit率、provider成功率、生成1件当たり費用を比較する。"
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5166",
-      "detail": "匿名計測は同意・privacy・analytics契約の確認を要し、Home分割も3 files/200 linesの低リスク自動修正境界を超えるため、product変更を行わない。",
+      "label": "対策待ち・Issue #5234",
+      "detail": "提案のみで、対策実施の記録はありません。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
-      "resolved_finding_ids": [
-        "home-outcome-evidence-gap"
-      ],
+      "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: dedicated branch fast-forwarded to origin/main e74e2c86c33b31269c297e79bf09f7b52b7d8a78",
-        "passed: 125 roster profiles and 125 personas",
-        "executed successfully: deterministic home winner from 13 eligible features",
-        "passed: baseline 20260827T033027+0900 at CLEAR 100, focus_dimension=complete",
-        "passed: production HTTP 200; current Home source and failure contract inspected without Flutter or Dart",
-        "passed: Issue #4916 records PR #5118, CI 33316719113, deploy 33317282783, and remaining scope",
-        "executed successfully once after neutral evidence scan: 125 profiles, seat 11"
+        "passed: 125 roster entries and 125 personas",
+        "baseline 20260827T221025+0900; focus complete; prior CLEAR 100",
+        "passed: Issue closed, PR merged, displayed required checks successful",
+        "memo.react.list=200; page.share_generate without page_path=400 handler validation",
+        "passed: findings reproduced at 14df09a56e620a9dd1abb34b61d71b69ebe79706"
       ],
       "issue": {
-        "number": 5166,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5166",
+        "number": 5234,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5234",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260831T233058+0900:home",
+        "dedupe_key": "tiger-feature-review:20260902T222324+0900:core_hub",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "home-implementation-concentration-persists",
-        "home-error-recovery-repair-retained"
+        "core-hub-anonymous-share-generation-cost-boundary",
+        "core-hub-share-generation-false-success",
+        "core-hub-legacy-supabase-secret-key-migration"
       ]
     },
     "feature": {
-      "slug": "home",
-      "title": "Home",
-      "kind": "page",
-      "reason": "The deterministic selector returned the public home entrypoint. Production and the prior error-handling repair are healthy, while the feature still concentrates many asynchronous and navigation responsibilities in a 10,041-line file and exposes no review-accessible feature-level outcome analytics; observed usage therefore remains the required neutral 50.",
-      "cycle_utility": 71.3,
-      "aggregate_utility": 70.37,
+      "slug": "core_hub",
+      "title": "core-hub",
+      "kind": "edge_function",
+      "reason": "The deterministic configured-feature selector chose core_hub for this single cycle. The previous anonymous-reaction defects are repaired, but the current anonymous share-generation path exposes an unmetered paid-operation boundary; no per-action usage analytics were available, so observed usage remains the neutral score of 50.",
+      "cycle_utility": 66.4,
+      "aggregate_utility": 65.23,
       "division": 2
     }
   },
   "history": [
+    {
+      "cycle_id": "20260902T222324+0900",
+      "started_at": "2026-09-02T22:23:24+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "core_hub",
+        "title": "core-hub",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 7,
+        "name": "榊󠄀原 清一",
+        "selection_score": 74.8271
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260827T221025+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "対策Issueで認証・rate limit・費用telemetryを追加後、7日間の拒否率、cache hit率、provider成功率、生成1件当たり費用を比較する。"
+      },
+      "findings": [
+        {
+          "finding_id": "core-hub-anonymous-share-generation-cost-boundary",
+          "summary": "未認証のshare生成actionがキャッシュ回避付きで有償APIと特権DB書き込みへ到達できる",
+          "severity": "p1",
+          "suggested_action": "page.share_generateを認証済み利用者またはservice-role専用へ移し、許可済みpath検証、force権限分離、IP/利用者単位レート制限、日次費用上限、拒否・費用メトリクス、未認証拒否テストを追加する。"
+        },
+        {
+          "finding_id": "core-hub-share-generation-false-success",
+          "summary": "生成・保存失敗がfallbackまたはsuccess応答へ吸収され、運用側が失敗を判別できない",
+          "severity": "p1",
+          "suggested_action": "fallback利用、外部API失敗、upsert失敗を型付き結果と構造化ログで区別し、保存失敗は非2xxにする。action、status、latency、provider、cost、cache outcomeを秘密情報なしで計測する。"
+        },
+        {
+          "finding_id": "core-hub-legacy-supabase-secret-key-migration",
+          "summary": "core-hubが2026年末廃止予定のlegacy service_role key読込に依存している",
+          "severity": "p2",
+          "suggested_action": "Supabaseの現行移行手順に従い、secret keyまたは@supabase/serverを段階導入し、旧新両経路のroute-policyテスト、secret未設定時の明示失敗、切替・rollback手順を用意する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5234",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 125 roster entries and 125 personas",
+          "baseline 20260827T221025+0900; focus complete; prior CLEAR 100",
+          "passed: Issue closed, PR merged, displayed required checks successful",
+          "memo.react.list=200; page.share_generate without page_path=400 handler validation",
+          "passed: findings reproduced at 14df09a56e620a9dd1abb34b61d71b69ebe79706"
+        ],
+        "issue": {
+          "number": 5234,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5234",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260902T222324+0900:core_hub",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "core-hub-anonymous-share-generation-cost-boundary",
+          "core-hub-share-generation-false-success",
+          "core-hub-legacy-supabase-secret-key-migration"
+        ]
+      }
+    },
     {
       "cycle_id": "20260831T233058+0900",
       "started_at": "2026-08-31T23:30:58+09:00",
@@ -1854,6 +1940,22 @@
       "reason": "機能レビュー2回・効用68.2点で2部"
     },
     {
+      "slug": "core_hub",
+      "kind": "edge_function",
+      "title": "core-hub",
+      "path": "",
+      "source": "supabase/functions/core-hub/index.ts",
+      "priority": "high",
+      "division": 2,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 65.23,
+      "completed_cycles": 2,
+      "last_cycle_utility": 66.4,
+      "last_reviewed_at": "2026-09-02T13:23:24+00:00",
+      "reason": "機能レビュー2回・効用65.2点で2部"
+    },
+    {
       "slug": "comparison",
       "kind": "page",
       "title": "comparison",
@@ -1884,22 +1986,6 @@
       "last_cycle_utility": 65.2,
       "last_reviewed_at": "2026-08-30T19:07:50+00:00",
       "reason": "機能レビュー4回・効用65.1点で2部"
-    },
-    {
-      "slug": "core_hub",
-      "kind": "edge_function",
-      "title": "core-hub",
-      "path": "",
-      "source": "supabase/functions/core-hub/index.ts",
-      "priority": "high",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": 62.9,
-      "completed_cycles": 1,
-      "last_cycle_utility": 62.9,
-      "last_reviewed_at": "2026-08-27T13:10:25+00:00",
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
       "slug": "horse_racing",
@@ -2017,7 +2103,7 @@
       "slug": "user_manual",
       "kind": "page",
       "title": "user_manual",
-      "path": "/manual",
+      "path": "/user-manual",
       "source": "lib/pages/user_manual_page.dart",
       "priority": "low",
       "division": 3,
