@@ -387,14 +387,7 @@ class AssetLiabilityMonthlyStateStore {
     await prefs.setString(annualRatePrefsKey, jsonEncode(allAnnualRates));
     await prefs.setString(
       annualRateEvidencePrefsKey,
-      jsonEncode(
-        allAnnualRateEvidences.map(
-          (month, evidences) => MapEntry(
-            month,
-            evidences.map((key, value) => MapEntry(key, value.toJson())),
-          ),
-        ),
-      ),
+      jsonEncode(_encodeAnnualRateEvidences(allAnnualRateEvidences)),
     );
 
     final allBillingConfirmed = decodePaidAccounts(
