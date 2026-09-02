@@ -633,43 +633,52 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         _buildTodayActionBar(),
         Expanded(
           child: _todayRaces.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.sports,
-                        size: 64,
-                        color: Color(0xFF9CA3AF),
+              ? LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '$_selectedDate のレースデータなし',
-                        style: const TextStyle(
-                          color: Color(0xFF9CA3AF),
-                          height: 1.5,
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.sports,
+                              size: 64,
+                              color: Color(0xFF9CA3AF),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              '$_selectedDate のレースデータなし',
+                              style: const TextStyle(
+                                color: Color(0xFF9CA3AF),
+                                height: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              '毎朝 07:30 に自動取得されます',
+                              style: TextStyle(
+                                color: Color(0xFF9CA3AF),
+                                fontSize: 12,
+                                height: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'AI予想はバッチ処理 (毎時00分 UTC) で自動生成されます',
+                              style: TextStyle(
+                                color: Color(0xFF9CA3AF),
+                                fontSize: 11,
+                                height: 1.5,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        '毎朝 07:30 に自動取得されます',
-                        style: TextStyle(
-                          color: Color(0xFF9CA3AF),
-                          fontSize: 12,
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'AI予想はバッチ処理 (毎時00分 UTC) で自動生成されます',
-                        style: TextStyle(
-                          color: Color(0xFF9CA3AF),
-                          fontSize: 11,
-                          height: 1.5,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                    ),
                   ),
                 )
               : _buildTodayRacesList(),

@@ -124,7 +124,11 @@ void main() {
         .setMockMethodCallHandler(SystemChannels.navigation, (call) async {
       if (call.method == 'routeInformationUpdated') {
         final arguments = Map<Object?, Object?>.from(call.arguments as Map);
-        locations.add(arguments['location']?.toString() ?? '');
+        locations.add(
+          arguments['uri']?.toString() ??
+              arguments['location']?.toString() ??
+              '',
+        );
       }
       return null;
     });
