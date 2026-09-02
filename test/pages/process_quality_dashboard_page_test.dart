@@ -62,10 +62,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('プロセス品質ダッシュボード'), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey<String>('quality-density-chart')),
-      findsOneWidget,
+    final chart = find.byKey(const ValueKey<String>('quality-density-chart'));
+    await tester.scrollUntilVisible(
+      chart,
+      300,
+      scrollable: find.byType(Scrollable).first,
     );
+    expect(chart, findsOneWidget);
     expect(find.textContaining('レビュー 5.00分/単位'), findsOneWidget);
     expect(find.textContaining('指摘 0.25件/単位'), findsOneWidget);
     expect(find.text('要確認'), findsOneWidget);
@@ -113,6 +116,11 @@ void main() {
     expect(repository.lastDraft?.reviewMinutes, 20);
     expect(repository.lastDraft?.findingCount, 4);
     expect(find.text('レビュー記録を保存しました。'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('基準到達'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('基準到達'), findsOneWidget);
   });
 }
