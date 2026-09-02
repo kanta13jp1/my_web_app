@@ -207,6 +207,7 @@ const List<String> kAllAppRoutes = <String>[
   '/login',
   '/loyalty-points',
   '/maintenance',
+  '/manual',
   '/market-intelligence',
   '/mcp-file-search',
   '/meal-log',
